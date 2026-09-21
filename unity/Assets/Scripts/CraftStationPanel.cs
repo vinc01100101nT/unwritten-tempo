@@ -101,7 +101,7 @@ public class CraftStationPanel : MonoBehaviour
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
         var viewport = UiKit.Window(canvas.transform, "Station", new Vector2(420, 460), Vector2.zero, out root);
-        // A LONG LIST SCROLLS. The rows are built into the same scroll column the Grimoire uses, so thirty swords
+        // A LONG LIST SCROLLS. The rows are built into the same scroll column the Skills window uses, so thirty swords
         // in the bag are a wheel away rather than off the bottom of the window.
         content = UiKit.ScrollColumn(viewport);
         var vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -235,7 +235,18 @@ public class CraftStationPanel : MonoBehaviour
     void QuenchControls(Character c, EquipmentInstance inst)
     {
         string itemId = inst.def.id;
-        if (!offer.canQuench) { Line("This is the best grade there is.", 12, Sub); return; }
+        if (offer.atTheTop) { Line("This is the best grade there is.", 12, Sub); return; }
+        if (!offer.canQuench)
+        {
+            Line("Fold it to +" + offer.foldCap + " first — a quench spends the folds, and this one is at +"
+                 + offer.folds + ".", 12, Sub, 2);
+            // THE ODDS STILL SHOW while folding toward the gate: they are what the work is FOR, and the server
+            // already sent them. Hiding them until the last fold would make the decision invisible until it
+            // is already paid for.
+            Line("When it is ready:  up " + offer.up + "%   ·   unchanged " + offer.same + "%   ·   down "
+                 + offer.down + "%", 12, Sub);
+            return;
+        }
 
         Row("Quench   " + offer.quenchMaterialCost + " " + BandMaterialName() + " · " + offer.quenchGoldCost + "g",
             () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToQuench(picked, itemId, saltPicked); });

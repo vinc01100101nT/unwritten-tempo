@@ -1,7 +1,7 @@
 ---
 status: current
 owner: vince
-last-updated: 2026-09-05
+last-updated: 2026-09-21
 tags:
   - ai-learnings
 ---
@@ -40,6 +40,13 @@ first patch felt like a diagnosis.
 different world servers" — without tracing the routing. The user pointed out that routing is by MAP, one map is
 held by one server, so both land on the same one, which already refuses a duplicate. **The scenario I was fixing
 did not exist.** Reasoning about a failure without following the actual path invents the failure.
+
+**And a third time, 2026-09-21, from a code comment.** Hunting a debuff that kept landing with no enemy near, I
+read a comment saying the server "holds every map at once in one set of coordinates", saw that a creature
+already chasing someone never re-checks their map, and told the user a creature in another map could reach them.
+The user told me to fix it. Only then did I open the function that places the maps: each map is set down 2,000
+units from the next, and a creature's reach is 11. The failure could not happen. One file, read before I spoke,
+would have kept an invented cause out of a reply the user acted on.
 
 ## How to apply
 

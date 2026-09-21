@@ -429,7 +429,7 @@ public class NetPlayer : NetworkBehaviour
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
         if (isClient) FollowTheServer();
     }
@@ -871,6 +871,20 @@ public class NetPlayer : NetworkBehaviour
         }
     }
 
+    /// <summary>SERVER ONLY: tell the owner's machine which creature a taunt has locked them onto.</summary>
+    public void TauntOnOwnersMachine(NetworkConnectionToClient owner, uint taunterNetId) => TargetTaunted(owner, taunterNetId);
+
+    [TargetRpc]
+    void TargetTaunted(NetworkConnectionToClient target, uint taunterNetId)
+    {
+        var me = Character.Instance;
+        if (me == null) return;
+        if (!NetworkClient.spawned.TryGetValue(taunterNetId, out var identity) || identity == null) return;
+        var shell = identity.GetComponent<NetMob>();
+        var mob = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
+        if (mob != null) me.LockOntoTaunter(mob);
+    }
+
     // ---- the owner's half: believe it ---------------------------------------------------------------------
 
     int lastToldHealth = -1;
@@ -1121,6 +1135,76 @@ public class NetPlayer : NetworkBehaviour
     // more than somebody else has.
 
     [Command]
+    // A RING POINT IS REAL POWER TOO, and is decided here like a stat point: the stat must be one of the cards the
+    // server's own draft is showing, the wildcard being the one the server rolled. Whatever the answer, the walk as
+    // it now stands goes straight back, so a refused pick redraws the window instead of leaving it waiting.
+    void CmdPickRingStat(int stat)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        if (System.Enum.IsDefined(typeof(StatId), stat) && c.Passives.MayPick((StatId)stat)
+            && c.Passives.Pick((StatId)stat))
+        {
+            c.Passives.RollWildcard(null);
+            GameLog.Info(LogCat.Server, playerName + " put a ring point in " + (StatId)stat
+                         + " — " + c.Passives.BankedPoints + " left");
+            SaveSoon();
+            nextSheetPush = 0f;
+        }
+        else GameLog.Info(LogCat.Server, playerName + " was refused a ring point in " + stat);
+        sentRingVersion = -1;
+        PushMyRing();
+    }
+
+    public void AskToPickRingStat(StatId stat) => CmdPickRingStat((int)stat);
+
+    // ---- the ring's walk: the server spends the points, this machine draws them -------------------------
+    // Sent whenever it moved (a pick, a ring level banking a point, a load) and on arrival.
+    int sentRingVersion = -1;
+
+    void PushMyRing()
+    {
+        if (connectionToClient == null) return;
+        if (ServerCombatUnit is not Character person || person == null) return;
+        var p = person.Passives;
+        if (p.HasLeader && !p.HasWildcard) p.RollWildcard(null);   // a walk loaded from a save has no wildcard yet
+
+        if (p.Version == sentRingVersion) return;
+        sentRingVersion = p.Version;
+
+        var map = p.RankMap;
+        var stats = new int[map.Count];
+        var values = new int[map.Count];
+        int i = 0;
+        foreach (var kv in map) { stats[i] = (int)kv.Key; values[i] = kv.Value; i++; }
+        TargetRing(connectionToClient, stats, values, (int)p.Leader, p.HasLeader, p.BankedPoints,
+                   (int)p.Wildcard, p.HasWildcard);
+    }
+
+    [TargetRpc]
+    void TargetRing(NetworkConnectionToClient target, int[] stats, int[] values, int leader, bool hasLeader,
+                    int banked, int wildcard, bool hasWildcard)
+    {
+        ringWaitingForACharacter = new object[] { stats, values, leader, hasLeader, banked, wildcard, hasWildcard };
+        GiveWaitingRingToTheCharacter();
+    }
+
+    object[] ringWaitingForACharacter;
+
+    void GiveWaitingRingToTheCharacter()
+    {
+        if (ringWaitingForACharacter == null || Character.Instance == null) return;
+        var r = ringWaitingForACharacter;
+        ringWaitingForACharacter = null;
+        var ints = (int[])r[0];
+        var stats = new StatId[ints.Length];
+        for (int i = 0; i < ints.Length; i++) stats[i] = (StatId)ints[i];
+        Character.Instance.Passives.TakeFromServer(stats, (int[])r[1], (StatId)(int)r[2], (bool)r[3], (int)r[4],
+                                                   (StatId)(int)r[5], (bool)r[6]);
+    }
+
+    [Command]
     // EVERY REQUEST BELOW REFUSES A PERSON ON THEIR WAY OUT. Their state on this process is finished the moment
     // a move starts and is about to be thrown away, so anything accepted after that is simply lost to the player.
     void CmdSpendStatPoint(int stat)
@@ -1165,8 +1249,8 @@ public class NetPlayer : NetworkBehaviour
         // weapon, which nobody learns, can still be bound and still fires.
         c.KeepOnlyBindable(bindings);
         c.Hotbar.Restore(bindings);
-        // AND THE SKILLS BEHIND THE NEW BAR. What a character can use is built from four places — the bar, their
-        // ticked passives, their weapon and their bag — and a skill only gets something to run it when that list is
+        // AND THE SKILLS BEHIND THE NEW BAR. What a character can use is built from three places — the bar, their
+        // learned passives and their bag — and a skill only gets something to run it when that list is
         // rebuilt. Storing the bar without this left the server agreeing the skill was theirs and holding nothing to
         // cast it with, so the press was refused: their own machine spent the mana and the cooldown and the skill did
         // nothing. Their machine has always done this on the very same change (HotbarCommit.Now); this side never was.
@@ -1174,24 +1258,10 @@ public class NetPlayer : NetworkBehaviour
         SaveSoon();
     }
 
-    [Command]
-    void CmdSetPassives(string[] chosen)
-    {
-        if (Leaving) return;
-        var c = ServerCharacter;
-        if (c == null || chosen == null || chosen.Length > 64) return;
-        c.KeepOnlyBindable(chosen);
-        c.PassiveSkills.Restore(chosen);
-        c.RefreshUsableSkills();   // same rule as the bar above: what they can use changed, so the list is rebuilt
-        SaveSoon();
-    }
-
-    /// <summary>Client-side: tell the server this person spent a point / rearranged their bar / changed which
-    /// passives they are running. Silently does nothing with no world, where their own machine already is the
-    /// only thing that knows.</summary>
+    /// <summary>Client-side: tell the server this person spent a point / rearranged their bar. Silently does
+    /// nothing with no world, where their own machine already is the only thing that knows.</summary>
     public void AskToSpendStatPoint(PrimaryStat stat) => CmdSpendStatPoint((int)stat);
     public void AskToSetHotbar(string[] bindings) => CmdSetHotbar(bindings);
-    public void AskToSetPassives(string[] chosen) => CmdSetPassives(chosen);
 
     // ---- the bag: the server holds it, this machine shows it ---------------------------------------------
     //
@@ -1208,14 +1278,14 @@ public class NetPlayer : NetworkBehaviour
     /// the server makes to them, so there is exactly one way the client ever learns what it is holding.
     ///
     /// <para>Pass <paramref name="alsoTheBar"/> when the change was a WEAPON going on or coming off, which is the
-    /// one thing that makes this side rewrite somebody's hotbar and clear the passives they had ticked. Their
+    /// one thing that makes this side rewrite somebody's hotbar. Their
     /// machine then draws the bar this one decided instead of working the same rule out again. Every other change
     /// leaves the bar out — see the note in <see cref="BagWire"/>.</para></summary>
     public void PushBagToOwner(bool alsoTheBar = false)
     {
         if (!isServer) return;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
-        // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the four places
+        // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the three places
         // that list is built from — so a potion picked up mid-session had nothing behind it here and drinking it
         // did nothing at all. This is the one place every change the server makes to a bag passes through, which
         // is why the rebuild sits here rather than at each of them.
@@ -1230,6 +1300,9 @@ public class NetPlayer : NetworkBehaviour
     // moved — a level is thousands of kills wide, so it moves rarely.
     float sentPracticeTotal = -1f;
     int sentLearnedCount = -1;
+    // The weapon in hand and its grade decide which progress is shown and whether it is capped, so a swap resends.
+    WeaponType sentHeldWeapon = (WeaponType)(-1);
+    Quality sentHeldGrade;
 
     void PushMyMastery()
     {
@@ -1240,20 +1313,35 @@ public class NetPlayer : NetworkBehaviour
         float total = 0f;
         for (int i = 0; points != null && i < points.Length; i++) total += points[i];
         for (int i = 0; uses != null && i < uses.Length; i++) total += uses[i];
-        if (Mathf.Approximately(total, sentPracticeTotal) && known.Length == sentLearnedCount) return;
+        var held = person.HeldWeapon;
+        var grade = person.HeldQuality;
+        if (Mathf.Approximately(total, sentPracticeTotal) && known.Length == sentLearnedCount
+            && held == sentHeldWeapon && grade == sentHeldGrade) return;
 
         sentPracticeTotal = total;
         sentLearnedCount = known.Length;
-        TargetMastery(connectionToClient, weapons, points, skillIds, uses, known);
+        sentHeldWeapon = held;
+        sentHeldGrade = grade;
+        person.Mastery.CaptureProgress(held, grade, out var progWeapons, out var into, out var size, out var capped);
+        TargetMastery(connectionToClient, weapons, points, skillIds, uses, known, person.Mastery.EarnedLevels(weapons),
+                      progWeapons, into, size, capped);
     }
 
     [TargetRpc]
     void TargetMastery(NetworkConnectionToClient target, int[] weapons, float[] points,
-                       string[] skillIds, float[] uses, string[] known)
+                       string[] skillIds, float[] uses, string[] known, int[] levels,
+                       int[] progWeapons, float[] into, float[] size, bool[] capped)
     {
         var me = Character.Instance;
-        if (me == null) { masteryWaitingForACharacter = new object[] { weapons, points, skillIds, uses, known }; return; }
+        if (me == null)
+        {
+            masteryWaitingForACharacter = new object[] { weapons, points, skillIds, uses, known, levels,
+                                                         progWeapons, into, size, capped };
+            return;
+        }
         me.Mastery.Restore(weapons, points, skillIds, uses, known);
+        me.Mastery.TakeSentProgress(progWeapons, into, size, capped);
+        me.Mastery.TakeSentLevels(weapons, levels);
         me.RefreshUsableSkills();
     }
 
@@ -1266,6 +1354,8 @@ public class NetPlayer : NetworkBehaviour
         var p = masteryWaitingForACharacter;
         masteryWaitingForACharacter = null;
         Character.Instance.Mastery.Restore((int[])p[0], (float[])p[1], (string[])p[2], (float[])p[3], (string[])p[4]);
+        Character.Instance.Mastery.TakeSentProgress((int[])p[6], (float[])p[7], (float[])p[8], (bool[])p[9]);
+        Character.Instance.Mastery.TakeSentLevels((int[])p[0], (int[])p[5]);
         Character.Instance.RefreshUsableSkills();
     }
 
@@ -1279,6 +1369,7 @@ public class NetPlayer : NetworkBehaviour
     {
         var me = Character.Instance;
         GiveWaitingMasteryToTheCharacter();
+        GiveWaitingRingToTheCharacter();
         if (me == null) { bagWaitingForACharacter = bag; return; }
         bag.Onto(me);
         // The window redraws from what just arrived. NOT marked as needing saving: this IS what the server has,
@@ -1482,6 +1573,12 @@ public class NetPlayer : NetworkBehaviour
         if (!Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
 
         var made = EquipmentInstance.CreateFresh(def);
+        // THE WEAPON'S TRADEMARK, rolled here and nowhere else — the one random thing in a weapon's whole life.
+        if (def.slot == EquipSlotType.Weapon)
+        {
+            made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, Trademarks.RollTotal(def.weaponType)));
+            made.Recompute();
+        }
         c.TakeIntoBag(made);
         Done("Forged a " + ItemTooltip.CopyTitle(made) + " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + ".");
         // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an
@@ -1527,6 +1624,11 @@ public class NetPlayer : NetworkBehaviour
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (!CraftingMath.CanQuench(inst.quality))
         { Refused(ItemTooltip.CopyTitle(inst) + " is already " + GradeWord(CraftingMath.Best) + " — the best grade there is."); return; }
+        // THE FOLD CAP IS THE GATE (V4 §2): the folds are what a quench spends, so a piece that has not been
+        // folded to its grade's cap has not done the work the roll costs.
+        if (!CraftingMath.ReadyToQuench(inst.quality, inst.upgrade))
+        { Refused(ItemTooltip.CopyTitle(inst) + " must be folded to +" + CraftingMath.FoldCap(inst.quality)
+                  + " before it can be quenched — it is at +" + inst.upgrade + "."); return; }
 
         // The Salt, if the player chose one: it is spent whatever the quench does.
         var salt = SaltAt(c, saltIndex);
@@ -1797,7 +1899,8 @@ public class NetPlayer : NetworkBehaviour
             up = up, same = same, down = down,
             saltTier = saltTier,
             saltName = salt != null ? salt.def.displayName : "",
-            canQuench = CraftingMath.CanQuench(inst.quality),
+            canQuench = CraftingMath.ReadyToQuench(inst.quality, inst.upgrade),
+            atTheTop = !CraftingMath.CanQuench(inst.quality),
             canFold = inst.upgrade < CraftingMath.FoldCap(inst.quality),
         });
     }

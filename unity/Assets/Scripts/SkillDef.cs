@@ -466,9 +466,13 @@ public class SkillDef : ScriptableObject
     [Tooltip("A skill that must be learned FIRST, by id — so a skill that rides another can never be held " +
              "without it (Lock Blades needs Lunge). Empty = nothing comes first.")]
     public string needsSkillId = "";
-    [Tooltip("PUBLISHED = part of the game. Unpublished skills are still fully usable in the Grimoire (J) and " +
-             "the hotbar for testing.")]
+    [Tooltip("PUBLISHED = a forge may roll this as a weapon's trademark, and a creature may draw it as its extra " +
+             "skill. Unpublished or not, it is learned by mastering its weapon.")]
     public bool published = false;
+    [Tooltip("The name a forged weapon carries when this is its TRADEMARK skill — '+15 Hadori [C]'. Only a skill " +
+             "that belongs to a weapon and has a main number on at least one effect can be a trademark; the name " +
+             "lives here and nowhere else, and every weapon looks it up from this skill.")]
+    public string trademarkName = "";
 
     [Header("Codex (hover tooltip)")]
     [TextArea(2, 4)]
@@ -581,6 +585,11 @@ public class SkillDef : ScriptableObject
     /// even if it also answers other triggers: it still wants a slot, still pays MP, and the drop roll still files it
     /// as an active.</summary>
     public bool IsPassive => CastEntry == null;
+
+    /// <summary>True when Weapon Mastery may raise this skill's main numbers while <paramref name="held"/> is in hand:
+    /// only a skill that belongs to that weapon. A potion's skill, or any skill belonging to no weapon, never rides
+    /// Weapon Mastery. One rule for a player's passives and a creature's skills alike.</summary>
+    public bool RidesWeaponMastery(WeaponType held) => weaponType != WeaponType.None && weaponType == held;
 
     [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
     [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +

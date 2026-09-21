@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-21
 tags:
   - systems-combat-design
 ---
@@ -66,18 +66,15 @@ The default ring stat each channel scales off, **unless a skill deliberately ove
 | `damage` | Atk (Physical) / MAtk (Magic) `[V3]` |
 | `heal_amount`, `shield_amount` | **MP** `[V3: Heal→MP]` |
 | `dot_damage` | the DoT's **own damage type** (Physical→Atk, Magic→MAtk) |
-| `sub_stat_magnitude` — a defensive sub-stat (damage reduction) | **Def** |
-| `sub_stat_magnitude` — an offensive sub-stat aimed at an enemy | the caster's **offense stat** (Atk/MAtk per family) |
-| `sub_stat_magnitude` — HP/MP regen | **MP** |
-| `sub_stat_magnitude` — movement speed | **FLAT** — mobility isn't a stackable power axis, and move-speed ≠ attack-speed; its duration still scales off MP |
-| `sub_stat_magnitude` — a damage or attack/cast-speed buff on yourself | **FLAT — no scale** `[V3]` |
-| `sub_stat_magnitude` — mana leech, reflect | **raw — no scale** |
+| `sub_stat_magnitude` — EVERY sub-stat buff or debuff (damage reduction, attack speed, regen, move speed, leech, reflect, …), and an outgoing-damage boost or cut | **none by default** — every saved skill leaves this row empty. Its "boosts …" row is offered like any other, so a skill MAY name ring stats for it. **Always raised by Skill Mastery** (a passive: by Weapon Mastery), up to +30%. Both since 2026-09-21. Its duration scales off MP. |
 | **ALL** `duration`**s** | **MP** — the single support/uptime axis |
 | Execute base roll / `execute_scale` | base roll → Atk; scale raw `[V3]` |
 | `shove_speed` | **raw — no scale** `[V3]` |
 | `charges` | **raw** — a count of uses is not a number the ring grows |
 
-**The through-line:** offense magnitudes (damage, DoT, sub-stats aimed at an enemy) scale off **offense stats**; sustain magnitudes (heal, shield, damage reduction) scale off their defensive/support stat; **every duration** scales off **MP** (the support/uptime axis); a few raw utility numbers (shove speed, leech and reflect fractions, move speed, charge counts) don't scale at all. Every channel is defined — no undefined scaling left.
+**The through-line:** offense magnitudes (damage, DoT) scale off **offense stats**; sustain magnitudes (heal, shield) scale off their support stat; **every duration** scales off **MP** (the support/uptime axis); the size of a sub-stat change or an outgoing-damage boost is raised by practice, and by the ring only where a skill names stats for it; a few raw utility numbers (shove speed, charge counts) don't scale at all.
+
+**Where this lives in the game:** one set of functions, `EffectScaling` (in `SkillEffect.cs`), answers "can this number be boosted, which ring stats scale it, and does practice raise it" for every effect — ONE list of boostable numbers, and every one of them is offered as a "boosts …" row. The fight, the skill tooltip and the Skill Composer's "boosts …" rows all ask it, so the composer shows exactly what a fight does — including a *raised by Skill Mastery* line wherever practice applies.
 
 ## How to use this when authoring
 

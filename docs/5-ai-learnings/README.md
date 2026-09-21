@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-20
+last-updated: 2026-09-21
 tags:
   - ai-learnings
 ---
@@ -32,6 +32,9 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | You are seeing this | Open this |
 | --- | --- |
 | A play-test says only a couple of options ever get picked, or you are building a "random among ready" chooser over options with different costs | [Replay a Chooser With the Real Costs](replay-a-chooser-with-real-costs.md) — cheap options drain the shared pool and starve the expensive ones; replay the loop offline with the real numbers and count picks before building. |
+| Someone shows you an editor screen and asks "are we aligned — is this what the game does?" | [Before Saying Aligned, Check Both Readers](before-saying-aligned-check-both-readers.md) — the screen and the code often keep separate lists; confirm from both, and fix a disagreement by deleting one list, not syncing it. |
+| A feature you wrote is simply ABSENT at runtime — no error, nothing happens — and the code plainly has it | [The Code Adds It, the Committed Artifact Doesn't](the-code-adds-it-the-committed-artifact-doesnt-have-it.md) — a prefab, bundle or generated file in the repo was built before your line existed; the program loads that, not your source. Date it, then grep it for the thing. |
+| About to run one script that edits several files, and you will report them all done when it exits | [A Script That Edits Many Files Can Stop Halfway](a-script-that-edits-many-files-can-stop-halfway.md) — a failure part-way leaves the earlier files written and the later ones untouched, and names only the file it tripped on. Write each file as its edits finish, then verify per file. |
 | Something is running that you need to measure, and you cannot see into it | [Observe With a Disposable Second Instance](observe-with-a-disposable-second-instance.md) — stand up a throwaway copy on its own port with its output to a file; never reason around the live one. |
 | A command driving a windowed app has hung, and your other requests to that app are timing out too | [A Hanging Tool Is Usually a Dialog](a-hanging-tool-is-usually-a-dialog.md) — that is a window waiting for a click, not slow work. Ask the user what is on screen. |
 | About to run a build or regenerate script you have not read | [A Rebuild May Delete the Old Output First](a-rebuild-may-delete-the-old-output-first.md) — many delete the current output before building; a failed rebuild then leaves less than you started with. |

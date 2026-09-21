@@ -84,9 +84,10 @@ Example: an A-grade sword at +35 is 35 × 1.30 = 45.5 → **+46 Attack**.
 
 ## 4. Quench — ten units of the band, plus gold, plus an optional Salt
 
-Each quench costs **10 units** of the grade's band material and **500 gold × band number**. Every fold is
-spent whichever way it goes. A grade that falls also loses the LAST stat written on the piece. A is never
-quenched — it is the top.
+**A piece must be folded to its grade's cap before it can be quenched** — the cap IS the gate, because the folds
+are what a quench spends. Each quench then costs **10 units** of the grade's band material and **500 gold ×
+band number**. Every fold is spent whichever way it goes. A grade that falls also loses the LAST stat written on
+the piece. A is never quenched — it is the top.
 
 | From | Band material (smith / loom / tannery) | Gold | Up | Unchanged | Down |
 | --- | --- | --- | --- | --- | --- |
@@ -162,17 +163,19 @@ Mastery already earned is never lost; a poorer weapon in hand only caps what is 
 
 ## 7. Recycle — half of what the piece provably consumed
 
-Recycling destroys the piece and returns, each halved and rounded down: the forge bill (band 1); **10 units and
-the quench gold of every grade below the current one** (one successful quench per rung climbed); the folds
-standing on the piece now, at its own band; and one Ink per written stat, its tier read off the value. Failed
-quenches, the folds they spent, and Salt are not recorded and come back as nothing.
+Recycling destroys the piece and returns, each halved and rounded down: the forge bill (band 1); for **every
+grade below the current one**, that grade's full fold cap AND one quench (both at that grade's own band and
+prices — the gate above is what makes those folds provable); the folds standing on the piece now, at its own
+band; and one Ink per written stat, its tier read off the value. Failed quenches, the folds they spent, and Salt
+are not recorded and come back as nothing.
 
-| Piece | Consumed (counted) | Comes back |
-| --- | --- | --- |
-| Raw +3 Sword | 8 + 3 Copper, 800 + 150 g | 5 Copper, 475 g |
-| E +0 Sword | 8 + 10 Copper, 10 Bronze, 800 + 500 + 1,000 g | 9 Copper, 5 Bronze, 1,150 g |
-| A +35 Sword | 18 Copper, 10 each of Bronze–Mithril, 35 Adamant, 23,550 g | 9 Copper, 5 each of Bronze–Mithril, 17 Adamant, 11,775 g |
-| … with 2 Watery Ink stats written | + 2 Watery Ink | + 1 Watery Ink |
+| Piece | Comes back |
+| --- | --- |
+| Raw +3 Sword | 5 Copper, 475 g |
+| Raw +5 Sword (ready to quench) | 6 Copper, 525 g |
+| E +0 Sword | 11 Copper, 10 Bronze, 1,775 g |
+| A +35 Sword | 11 Copper, 10 Bronze, 12 Iron, 15 Steel, 17 Silver, 20 Mithril, 17 Adamant, 23,150 g |
+| … with 2 Watery Ink stats written | + 1 Watery Ink |
 
 ## 8. Worked example — a sword from nothing to A
 
@@ -180,7 +183,7 @@ quenches, the folds they spent, and Salt are not recorded and come back as nothi
 | --- | --- | --- |
 | Forge | 8 Copper + 800 g | Raw +0 |
 | Fold ×5 | 5 Copper + 250 g | Raw +5 (+5 Attack) |
-| Quench | 10 Copper + 500 g, 80% | F +0 |
+| Quench (allowed: at the +5 cap) | 10 Copper + 500 g, 80% | F +0 |
 | Fold ×10 | 10 Bronze + 1,000 g | F +10 (+10 Attack) |
 | Quench | 10 Bronze + 1,000 g, 60% | E +0 (2 Ink slots) |
 | Fold ×15 | 15 Iron + 2,250 g | E +15 (+16 Attack) |

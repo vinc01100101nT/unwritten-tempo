@@ -10,7 +10,7 @@ tags:
 
 Steps nobody has run. This file also holds the batch list and the rebuild-and-restart header the other three link to. Every step keeps the section and number it had in the single checklist, so a step referred to elsewhere as "step 2 of section 10" is still that step, and a step moves between these files as its verdict changes. The four files are [passed](passed.md), [failed](failed.md), [on-going](on-going.md) and [not done yet](not-done-yet.md).
 
-Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from twenty batches:
+Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from twenty-two batches:
 
 1. **The bag's columns** (2026-09-14).
 2. **Your machine works out no game number** (2026-09-14) — the server sends every number and your screen only draws it.
@@ -34,6 +34,9 @@ Everything built but never watched working, in two lists: the checks that can be
 20. **Repository audit fixes** (2026-09-20) — every creature now carries its authored level and stats (they all loaded at level 1 with every stat at 1); the level-up is worked out on the server and your screen copies the finished level, points and experience; the account service no longer answers for characters at all, which closes the door through which a signed-in player could overwrite their own save; the servers' shared secret is no longer the word "change-me" and the character server refuses to start without a real one; sign-ups and sign-ins are limited to ten a minute per address; the leaderboard reads twenty index entries instead of every character; entering the world asks only the map server that holds you; the door players arrive through no longer shuts itself on a hiccup; the main shadow map is 1024 instead of 4096, characters are animated on the graphics card, and eight unused packages are gone; the ground tiles are compressed (about 71 MB off the build) and three of them no longer ship twice; every plant lost its collider and its shadow, 28 hard props are batching-static and all foliage is occludee-static; the simplified copies of 17 prop families are wired into level-of-detail groups; saving a scene no longer moves portals on the save before Play and every snap can be undone; and opening the project only WARNS when effect timings drift — the write is a menu item.
 
 21. **Gameplay System V4 — forging, quality, Ink and mastery** (2026-09-20) — gear is no longer dropped or rolled: it is FORGED at a station in town from materials, FOLDED with the material band of its own grade, and QUENCHED to move that grade one rung on the F-to-A ladder, spending every fold each time. Rarity is gone from the game — labels, colours and all. Stats are written onto a piece with Ink. Weapons no longer carry skills: a character LEARNS skills by practising a weapon, and both that Weapon Mastery and each skill's own Skill Mastery are earned by fighting and capped by the grade of the weapon in hand. The Ring became part of the character and its slot is gone. Creatures stop dropping equipment. [Gameplay System — V4](../../2-systems/gameplay-system-v4/README.md).
+22. **Weapon trademarks** (2026-09-21) — a forged weapon rolls one TRADEMARK skill of its weapon type and is named for it ("+15 Hadori [C]"). The weapon raises every main number of that skill by a percentage set by its grade (+5% at Raw to +20% at A). The weapon's card lists the skill and one line per raised effect; the skill's card shows each effect's base number with the trademark bonus and the mastery bonus on their own lines. [Weapon Names & Trademarks](../../2-systems/gameplay-system-v4/weapon-names-and-trademarks.md).
+
+23. **The Ring moves into the Character window; the Skills window (K); ring picks decided by the server** (2026-09-21) — the ring now sits on the right of the Character window (C); K opens a new Skills window listing each weapon's skills on one mastery line; and a ring pick is now ASKED of the server, which checks it, spends the point, saves it and sends the walk back — before this the pick happened only on your screen, so the server never raised a stat and your next sign-in put every point back.
 
 ---
 
@@ -74,7 +77,7 @@ GM commands are typed into chat and need a GM account — see [Starting the Netw
 
 0. **Batch 21 needs all four of these, and a re-bake.** The save's shape changed (masteries, learned skills, a
    piece's grade and its written stats), so **both servers must be rebuilt and restarted together**: the string
-   they compare is now `unwritten-character-v13`, and one side left on v12 refuses the other. Run **Tools ▸
+   they compare is now `unwritten-character-v14` (batch 22 moved it from v13), and one side left behind refuses the other. Run **Tools ▸
    unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs** as well — every creature gained a Weapon Mastery, authored as its
    level, and a creature baked before that knows none of its weapon's skills. The UI shell was rebuilt with the
    station window on 2026-09-21 (the saved HUD prefab and the Systems scene both carry it now), so that step is
@@ -83,7 +86,7 @@ GM commands are typed into chat and need a GM account — see [Starting the Netw
 
 1. **Game server build — REBUILD.** **Batch 20 first needs three things in the editor, in this order: (a) a refresh (Ctrl+R) — it resolves the upgraded live-link package, compiles the new code and reimports the nine ground tiles with compression; (b) Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs — or every creature stays at level 1; (c) the level-of-detail wiring, run through the live link as `LodGroupWirer.WireAllCore()`.** Then: then batch 20 changed the message that carries your experience (it now carries the finished level, points and ring), so an old server and a new game cannot read each other's rewards. Game code changed in batches 1 to 5, 7 to 10, 12 and 13 (the server decides every creature's extra skill and runs `/summon`), batch 14 removes the two dragons from the roster the server picks a boss from, and batch 10 adds a new message that says an arrow was fired, a new value that carries what a person is wearing, and two new pieces on the message that carries a blow to a person, and batch 6 adds four new items, and a server only runs the code and items it was built with. The message that carries a blow changed shape in batch 5, so an old server and the new game cannot understand each other's blows. In Unity, let the editor finish compiling, then run `tools/build-game.sh server`.
 2. **Game server process — RESTART** after the rebuild. Stop it with `pkill -f 'unwritten-server.app/unwritten'`, check `lsof -nP -iUDP:7777` prints nothing, then start it with the command under *The game server ▸ Running it* in [Starting the Network](../../2-systems/networking/starting-the-network.md) — **that command now reads `SERVER_SECRET` out of `accounts/.env`; a server started with the old word "change-me" is refused by the character server.**
-3. **Character server — RESTART.** Batch 20 changed its code (it now remembers which map server holds each character) and it now REFUSES to start unless `SERVER_SECRET` is set in `accounts/.env` — it is, and `charserver/run.sh` reads it from there; a value typed on the command line is no longer needed. The one string both servers must agree on did not change.
+3. **Character server — RESTART.** Batch 20 changed its code (it now remembers which map server holds each character) and it now REFUSES to start unless `SERVER_SECRET` is set in `accounts/.env` — it is, and `charserver/run.sh` reads it from there; a value typed on the command line is no longer needed. Batch 22 moved the one string both servers must agree on to `unwritten-character-v14`, so restart it together with the rebuilt game server.
 4. **Account service — RESTART.** Batch 20 removed its character routes (the player-writable save door), added the per-address limit on sign-ups and sign-ins (a new dependency was installed) and rekeyed the wrong-password lockout. Also run `npm run migrate` in `accounts/` if it has not run since 2026-09-20 — it adds the leaderboard index (already applied on this machine).
 5. **The game you play — REBUILD** if you play the built game. Batch 20 changed the experience message (see 1), turned on GPU skinning, shrank the shadow map and removed eight packages — Unity resolves the package change and rewrites its own `packages-lock.json` the first time the editor regains focus; that is expected. **Batch 17 changed the MAPS, which live in both builds — so the game server must be rebuilt and restarted for it too, not just this one.**: `tools/build-game.sh client`. Batch 16 is entirely inside the windowless client (already rebuilt on 2026-09-18 12:30, nothing on the server side changed shape). Batches 1 and 2 changed what your own screen draws, batch 6 adds items your screen must know to draw them, batch 7 changed the message that describes a creature, batch 8 changed the message that carries your character sheet, batch 9 changed how your screen draws a creature's cast, and batch 10 adds the message that says an arrow was fired, the value that says what a person is wearing, and two new pieces on the message that carries a blow to YOU — an old game and a new server cannot read each other's creatures, sheets, arrows or blows on a person, and an old game draws no arrow, no weapon in anybody else's hand and no rising total over you. Batch 11 changed only what your screen draws, so it needs this rebuild and nothing on the server side. Batch 13 changes nothing your screen draws — only the `/help` line for `/summon`. Batch 14 changes how your screen draws a boss and the saved boss creatures it loads. Playing from the editor needs nothing extra: the game reads the character server's address from its own settings file.
 
@@ -405,20 +408,25 @@ Nothing about this batch can be checked without the rebuilds above, and one thin
 7. Open **Forge**. With 3 Copper, click **Sword   8 Copper · 800g**.
    *Should:* a red line at the bottom of the window AND in the chat: "Needs 8 Copper — you have 3." Nothing is
    taken. Then with 8 Copper and 800 gold (`/gold 5000`), click it again.
-   *Should:* a **Raw Sword** appears in the bag AND under "Work on" in the window, already picked, with its fold and
-   quench costs shown; the copper and the gold are gone; the window and the chat both read "Forged a Raw Sword for
-   8 Copper and 800 gold." Hover it: it reads "Raw" with no numbers of its own. Every later Fold, Quench, Ink and
+   *Should:* a new sword appears in the bag AND under "Work on" in the window, already picked, with its fold and
+   quench costs shown, named by the trademark it rolled (section 22) — **Tsuki [Raw]**, say; the copper and the
+   gold are gone; the window and the chat both read "Forged a Tsuki [Raw] for 8 Copper and 800 gold." Hover it:
+   no attack of its own. Every later Fold, Quench, Ink and
    Merge answers the same way — one sentence in both places, red when refused, with the numbers.
    *FAIL:* a sword with attack on it, nothing taken, or a sword with no materials paid.
-8. Open **Fold**, click the Raw Sword, then **Fold** five times.
-   *Should:* each fold takes 1 Copper and 50 gold, the title reads **Raw +1 … +5**, and the sixth fold is refused
+8. Open **Fold**, click the new sword, then **Fold** five times.
+   *Should:* each fold takes 1 Copper and 50 gold, the title reads **+1 Tsuki [Raw] … +5 Tsuki [Raw]**, and the sixth fold is refused
    with "Folded as far as this grade allows."
    *FAIL:* a sixth fold, a fold with no copper, or the attack not rising.
-9. Open **Quench**, pick the sword, and click **Quench** (10 Copper, 500 gold).
-   *Should:* the window says up 80% / unchanged 20% / down 0% beforehand; afterwards the sword is **F +0** or
-   **Raw +0**, and every fold is gone either way.
+9. Open **Quench** and pick a sword you have folded only two or three times.
+   *Should:* no Quench button — the page says "Fold it to +5 first — a quench spends the folds, and this one is
+   at +2." Fold it to +5, and the button appears.
+   *FAIL:* a quench offered, or accepted, below the grade's fold cap.
+   Then click **Quench** (10 Copper, 500 gold).
+   *Should:* the window says up 80% / unchanged 20% / down 0% beforehand; afterwards the sword is **Tsuki [F]** or
+   **Tsuki [Raw]**, and every fold is gone either way.
    *FAIL:* it keeps its folds, it jumps two grades, or it goes below Raw.
-10. Type `/mastery sword 7`, then press **J**.
+10. Type `/mastery sword 7`, then press **K** and open **Sword Skills**.
     *Should:* Lunge, Parry, Momentum, Guard Stance and Lock Blades are no longer greyed; the rest still read
     "Sword mastery N" and do nothing when clicked. Bind Lunge, hold the sword, and press it: it fires.
     *FAIL:* a locked skill binds, or an unlocked one is refused when pressed.
@@ -429,12 +437,13 @@ Nothing about this batch can be checked without the rebuilds above, and one thin
 12. Hold a bow (`/weapon bow`) and kill something.
     *Should:* Sword mastery does not move; Bow mastery does.
     *FAIL:* a kill with one weapon raising another's mastery.
-13. Kill a creature ten or more levels below you, then one at your own level.
-    *Should:* the far weaker one pays no practice at all (watch `/log loot on`); the even one pays about a full point.
-    *FAIL:* a grey creature paying practice.
+13. With the sword's line open in the Skills window (**K**), kill a creature and note the experience it paid in chat.
+    *Should:* the mastery experience in the heading rises by that same amount times the sword's grade speed (Raw
+    ×0.5, F ×0.75, E ×1.0 …) — a 5-experience kill with a Raw sword adds 2.5.
+    *FAIL:* mastery experience that does not move, or moves by a different amount.
 14. Hit a training dummy for a while.
-    *Should:* no practice at all — it never dies.
-    *FAIL:* practice from a dummy.
+    *Should:* no mastery experience at all — it never dies, so it pays no experience.
+    *FAIL:* mastery experience from a dummy.
 15. Before quenching, look for the Salt row under the odds.
     *Should:* with a Salt in the bag, one press adds it and the odds above change to include it; a second press
     leaves it out again. No Salt is ever spent without you turning it on.
@@ -453,24 +462,25 @@ Nothing about this batch can be checked without the rebuilds above, and one thin
 18. Press a skill you have practised, over and over, and watch its card.
     *Should:* its damage rises about 1% per skill mastery level, and a Raw sword holds that at level 4.
     *FAIL:* the number never moving, or moving past the cap.
-19. Tick a sword passive on in **J**, then hold a bow and fight.
-    *Should:* the sword passive does not fire while the bow is in your hands, and it is still ticked when you
+19. Learn a sword passive (`/mastery sword 3` gives Momentum), then hold a bow and fight.
+    *Should:* the sword passive does not fire while the bow is in your hands, and fires again as soon as you
     take the sword back.
-    *FAIL:* it fires with the bow out, or your tick is cleared by the swap.
+    *FAIL:* it fires with the bow out, or it stays silent once the sword is back.
 20. Hover a better sword in your bag while wearing a worse one.
     *Should:* the preview's attack, attack speed and HP include what your mastery would be worth at the BETTER
     sword's grade.
     *FAIL:* the preview shows the same mastery bonus as the sword you are wearing.
-21. Sign in as **Alpha** (a save from before this batch that had Blade Dance, Disarm, Overclock and Challenge on
-    its bar) and look at the hotbar.
-    *Should:* those four keys are gone — only skills you have learned, or skills that belong to no weapon, survive
-    a load. Then bind a learned skill, take the sword off and press it.
-    *Should:* the chat shows a dim line saying the skill needs a Sword in hand, and nothing fires. Press a skill
-    the Grimoire shows as locked (bind one on a second character with `/mastery sword 3`, then relog on the
-    first): the chat line says it is not learned and which mastery level opens it.
-    *FAIL:* a kit-era key still on the bar after a load, or a refused press with no chat line.
+21. Sign in as **Alpha** and look at the hotbar. Its saved bar holds Ember Bolt and Blink Step, which belong to
+    no weapon (measured in the database 2026-09-21).
+    *Should:* both are STILL on the bar after the load — a skill that belongs to no weapon is nobody's to learn
+    and must survive. Then `/mastery sword 3`, bind **Lunge**, take the sword off and press it.
+    *Should:* the chat shows a dim line saying Lunge needs a Sword in hand, and nothing fires. Put the sword back:
+    it fires. Then press a skill the Skills window (**K**) shows as locked (it cannot be bound, so press it from the bar
+    of a character that had it before it was locked, or simply confirm the Skills window refuses the click).
+    *Should:* a chat line naming the mastery level that opens it.
+    *FAIL:* Ember Bolt or Blink Step stripped from the bar by the load, or a refused press with no chat line.
 22. Wear a folded piece (fold a sword to +3, double-click it to wear it) and hover it in the equipment list.
-    *Should:* it reads **Raw +3** — the fold count survives the trip to your screen.
+    *Should:* it reads **+3 Tsuki [Raw]** (with its own trademark name) — the fold count survives the trip to your screen.
     *FAIL:* a worn piece reading +0 while its attack says otherwise.
 23. Press **F** on the smith.
     *Should:* the camera swings to the side-on two-shot of you and the smith, you face each other, the smith stops
@@ -478,16 +488,119 @@ Nothing about this batch can be checked without the rebuilds above, and one thin
     window, bring the camera back and release the smith. Then talk to an ordinary villager: the same close-up,
     with the HUD hidden and the dialogue box instead.
     *FAIL:* the smith strolls off with the window open, or the camera stays put for a station.
-24. Open **Recycle**, pick a **Raw +3 Sword**, and read the row it offers.
+24. Open **Recycle**, pick a forged sword folded to +3 (**+3 Tsuki [Raw]**, say), and read the row it offers.
     *Should:* **Recycle   → 5 Copper, 475 gold**. Press it: the sword is gone from the bag and the window, 5 Copper
-    and 475 gold arrived, and both the window and the chat read "Recycled Raw +3 Sword: got back 5 Copper, 475
-    gold." An E +0 sword offers 9 Copper, 5 Bronze, 1,150 gold. A piece with one written stat gives no Ink back;
-    with two Watery stats, 1 Watery Ink.
+    and 475 gold arrived, and both the window and the chat read "Recycled +3 Tsuki [Raw]: got back 5 Copper, 475
+    gold." A Raw +5 offers 6 Copper, 525 gold; an **E +0** offers 11 Copper, 10 Bronze, 1,775 gold (a climbed
+    grade pays back its folds as well as its quench). A piece with one written stat gives no Ink back; with two
+    Watery stats, 1 Watery Ink.
     *FAIL:* the recycled sword still listed, more than half of anything coming back, or Salt coming back.
 25. With about thirty pieces in the bag (`/item item.sword` thirty times), open **Fold** and spin the mouse wheel
     over the list.
-    *Should:* the list scrolls inside the window, the same way the Grimoire's does; nothing runs off the bottom.
+    *Should:* the list scrolls inside the window, the same way the Skills window's does; nothing runs off the bottom.
     *FAIL:* rows below the window's edge that no scroll reaches.
 26. Create a brand-new character and open the bag's **Material** tab.
     *Should:* empty. Consumables only, in the other tabs.
     *FAIL:* one of every material — Adamant, Sharp Ink, Pure Salt — in a fresh bag.
+27. With a sword in hand, press **K**, open the sword's line, and read the top-right heading; then kill a few creatures
+    with the window open.
+    *Should:* it reads **Sword Mastery 0  ·  0 / 20 exp** and the first number rises with every kill; at the level
+    the weapon's grade allows it reads **capped by this weapon's grade** instead.
+    *FAIL:* no numbers, or numbers that never move while kills pay experience.
+28. Hold a sword and look at the bottom-right of the screen, then kill a creature; then take the sword off.
+    *Should:* a bar sits just above the ring's bar, in the sword's colour, reading **Sword Mastery Lv N  x / y**; it
+    fills as kills pay experience, reads "capped by this weapon's grade" (full) at the grade's cap, and disappears
+    with nothing in hand.
+    *FAIL:* no bar, a bar that overlaps the ring bar or the hotbar, or one still shown with empty hands.
+29. With a sword in hand, reach Sword Mastery 3 (`/mastery sword 3`), then basic-attack a creature a few times.
+    *Should:* Momentum appears in the small squares above the hotbar without touching anything, and its damage buff
+    shows on the buff tray as your hits land. Press **K**: passives have no tick box. Take the sword off: the square
+    goes and Momentum stops firing; put it back: both return.
+    *FAIL:* a learned passive that needs switching on, one still firing with no sword in hand, or a passive row that
+    shows fewer squares than the passives you have learned for the weapon in hand.
+
+### 22. Weapon trademarks
+
+Set up as for section 21: `/station smith` beside a villager, `/item copper 40`, `/gold 20000`.
+
+1. Forge a **Sword** at the smith (section 21, step 7).
+   *Should:* the new sword's title is a trademark name and its grade — one of Tsuki, Hyōshi, Kamae, Tsubazeriai,
+   Heijō, Kuzushi, Nagare, Kote, Renzoku, Suki, Ichigeki, Seme, Hadori, Haisui, Futatabi, Todome, Kaeshi or Ranbu,
+   e.g. **Tsuki [Raw]**.
+   *FAIL:* "Raw Sword", or a name not on that list.
+2. Hover it.
+   *Should:* under its numbers, **Trademark Skill: <skill>** and one line per effect of that skill with a main
+   number, all at **+5%** — a Ranbu reads "+5% damage" and "+5% damage buff"; a Hadori reads "+5% attack speed buff"
+   and "+5% damage reduction debuff".
+   *FAIL:* no trademark lines, a line for a dash or a parry, or a percentage other than 5 on a Raw piece.
+3. Fold it to +5, then quench it until it reaches **F**.
+   *Should:* the title goes **+5 <name> [Raw]** then **<name> [F]**; the name never changes; the hover lines now
+   read **+7%**.
+   *FAIL:* a different name after the quench, or the lines still at +5%.
+4. Wear it, type `/mastery sword 70`, press **K**, open **Sword Skills** and hover the trademark skill.
+   *Should:* under each effect line that has a main number: "Trademark skill bonus <that number>: +7%"; nothing
+   under a dash, parry or taunt line. Hover any passive the weapon does not empower (Momentum on a Tsuki, say):
+   "Weapon mastery: +10%" under its effect, and no trademark line.
+   *FAIL:* a trademark line on a skill the weapon does not name, or on an effect with no main number.
+5. Bind the trademark skill if it is an active, cast it five times, and hover it again.
+   *Should:* a "Skill mastery: +1%" line under each main-number effect, beside the trademark line.
+   *FAIL:* the mastery percentage folded into the effect's own number instead of its own line.
+6. Type `/dummy` and hit it with the trademark skill ten times holding this sword, then ten times holding another
+   forged sword of the same grade and folds whose name is different.
+   *Should:* the trademark sword's numbers average about 7% higher (at F).
+   *FAIL:* the same average, or the other sword higher.
+7. Sign out and back in.
+   *Should:* the sword keeps its name, its grade, its folds and its hover lines.
+   *FAIL:* it comes back as a plain "F Sword", or with no trademark lines.
+8. Press **B** and find the trademark sword in the bag list, then type its name (say "ranbu") in the search box.
+   *Should:* the row reads its full title — **+15 Ranbu [C]**, with its own folds, name and grade — and a sword with
+   no trademark reads **B +12 Sword** style; the search finds it by its name.
+   *FAIL:* the row reads just "Sword", or the search misses it.
+9. With a sword in hand and `/mastery sword 70`, hover a **Healing Potion** in the bag, then drink one below full HP.
+   *Should:* the card shows the heal with no "Weapon mastery" line, and the heal lands at exactly that number (no
+   extra +10% from Weapon Mastery).
+   *FAIL:* a "Weapon mastery: +N%" line on the potion, or a heal bigger than the card says.
+
+### 23. The Ring in the Character window, the Skills window, and ring picks that stay
+
+Needs the rebuilt game server (the pick is a new request, and your mastery now arrives with its level).
+
+1. Press **C**.
+   *Should:* stats on the left, the Ring of Progression on the right, divided by a thin line; nothing overlaps, and
+   the title reads "Ring of Progression  Lv N" with no empty box in front of it.
+   *FAIL:* text on top of text, part of the window off screen, or the ring missing.
+2. With points to spend (`/ringxp 2000`), pick a card, then pick a neighbour, then the wildcard.
+   *Should:* each pick plays its slide or zoom a moment after the click, "N skill points to spend" goes down by one,
+   and the picked stat's row goes up; the character sheet's matching number (DEF, HP, ATK…) rises within a second.
+   The server log has one "put a ring point in <stat>" line per pick.
+   *FAIL:* nothing happens on click, the sheet number does not move, or a "was refused a ring point" line.
+3. Sign out and back in, press **C**.
+   *Should:* the same ranks, the same leader, and the same points left as before signing out.
+   *FAIL:* the ring back to "Choose your starting passive" or with the points restored.
+4. Press **K**.
+   *Should:* a Skills window with one button, **Sword Skills**.
+   *FAIL:* the ring opens, or any other window opens.
+5. Click **Sword Skills**, with `/mastery sword 20`.
+   *Should:* 22 skills on one line, Lunge and Parry at the bottom (Lv 1), Encore at the top (Lv 65); the line coloured
+   from the bottom to just above **Lv 19 Disarm**, part of the way to **Lv 21 Unwavering**; the header reads
+   "Sword Mastery 20"; every skill up to Lv 19 in colour, every one above grey.
+   *FAIL:* the line uncoloured, coloured past Unwavering, or a skill above Lv 20 in colour.
+6. Hover a grey skill and a coloured one.
+   *Should:* the same skill card the hotbar shows, to the right of the row.
+   *FAIL:* no card, or it appears off screen.
+7. Drag a coloured active (Lunge) onto the hotbar, then try to drag a grey one.
+   *Should:* Lunge lands on the slot and stays after signing out and in; the grey one does not drag at all, and a
+   coloured passive (Momentum) does not drag either.
+   *FAIL:* a grey skill or a passive can be dragged.
+8. Press **Back**, then **Esc**.
+   *Should:* Back returns to the weapon list; Esc closes the window.
+   *FAIL:* either does nothing.
+
+9. Open **K ▸ Sword Skills**, put the cursor over a skill row and turn the mouse wheel both ways.
+   *Should:* the list scrolls; the camera does not zoom.
+   *FAIL:* the list stays put, or the camera zooms behind the window.
+10. Do the same over the bag (**B**), the Character window (**C**) and the hotbar, then over
+    open ground.
+    *Should:* each list that is longer than its window scrolls and the camera never zooms while the cursor is on any
+    of them; over open ground the wheel zooms as before. Hovering a hotbar skill and a buff icon still shows its card.
+    *FAIL:* a zoom over any window, no zoom over the ground, or a hover card that no longer appears.

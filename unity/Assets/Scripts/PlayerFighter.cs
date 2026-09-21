@@ -103,7 +103,7 @@ public static class PlayerFighter
         }
 
         // AND NOW THEY GET THEIR SKILLS, NOT BEFORE. A character carries only the skills it can USE — its bar, its
-        // weapon's kit, the passives it ticked, whatever its bag can run — and NONE of that exists until the save
+        // learned passives, whatever its bag can run — and NONE of that exists until the save
         // above has been laid onto them. Bound any earlier and the answer is an empty list, which is a person
         // standing in the world who cannot cast anything at all. The binding a few lines up gives them their
         // positions; this is the one that fills them.

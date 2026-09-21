@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-03
+last-updated: 2026-09-21
 tags:
   - ai-learnings
 ---
@@ -36,6 +36,18 @@ Two things make this worse than it sounds:
 - **The evidence of what came before is destroyed by the same event.** An error thrown every frame fills the
   message buffer in seconds, so whatever was there before it is gone, and you can no longer check whether the
   errors predate you.
+
+## Why — the third time (2026-09-21): the page existed and nobody opened it
+
+I asked the editor to recompile so a just-written fix would be live. The user was in Play mode at that moment.
+Two scripts then threw a `NullReferenceException` **every frame** — a music player and a status panel, neither
+anywhere near my change — and the user had to stop Play and start it again to test the very fix I had just
+compiled. The whole answer was already on this page, written twice over; what failed was OPENING it.
+
+So this one stopped being a page you have to remember and became a line in the project's always-on rules:
+**read `editor_status` first, and if `playMode` is anything but `stopped`, do not recompile.** One call, before
+every reload, no judgement required. A lesson that has now cost three sessions does not belong only in a
+document.
 
 ## Why — what it cost, the second time (2026-09-03): the reload nobody asked for
 

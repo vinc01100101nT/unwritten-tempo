@@ -40,9 +40,10 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Unified Unit Stats](2-systems/active-skill-system-v3/unified-unit-stats.md) — players and mobs 1:1: one stat model, shared formulas + point budget; mobs wear gear/rings and drop what they wear. No tier, no multiplier.
     - […Implementation Notes](2-systems/active-skill-system-v3/unified-unit-stats-implementation-notes.md) — code-facing companion.
   - [Sword — Skill Roster](2-systems/active-skill-system-v3/sword-skill-roster.md) — first fully-authored weapon (3 ults + 10 actives + 9 passives; incl. the universal-but-specialized authoring rule).
-- [Gameplay System — V4](2-systems/gameplay-system-v4/README.md) — BUILT 2026-09-20, not play-tested: gear is forged, folded and quenched (F–A quality, no rarity), stats written on with Ink, weapon and skill mastery that unlock and power skills, the ring as part of the character.
+- [Gameplay System — V4](2-systems/gameplay-system-v4/README.md) — BUILT 2026-09-20, not play-tested: gear is forged, folded and quenched (F–A quality, no rarity), stats written on with Ink, weapon and skill mastery that unlock and power skills, a forged weapon's trademark that raises one skill, the ring as part of the character.
   - [Implementation Plan](2-systems/gameplay-system-v4/implementation-plan.md) — the six build slices, all landed.
   - [Crafting Tables](2-systems/gameplay-system-v4/crafting-tables.md) — every station's bands, what each design costs to forge, fold and quench costs and odds per grade, Salt, every Ink value, mastery caps by grade.
+  - [Weapon Names & Trademark Skills](2-systems/gameplay-system-v4/weapon-names-and-trademarks.md) — BUILT 2026-09-21, not play-tested: a forged weapon rolls one of its weapon's trademark skills and is named for it ("+15 Hadori [C]"), raising every main number of that skill by its grade's percentage.
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.

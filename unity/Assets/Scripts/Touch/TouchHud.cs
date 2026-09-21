@@ -146,8 +146,7 @@ public class TouchHud : MonoBehaviour
         // window already carries in the game.
         TrayRow("Inventory", KeyCode.B);
         TrayRow("Character", KeyCode.C);
-        TrayRow("Grimoire", KeyCode.J);
-        TrayRow("Ring of Progression", KeyCode.K);
+        TrayRow("Skills", KeyCode.K);
         TrayRow("Wardrobe", KeyCode.O);
         TrayRow("Calendar", KeyCode.L);
         TrayRow("World Map", KeyCode.N);

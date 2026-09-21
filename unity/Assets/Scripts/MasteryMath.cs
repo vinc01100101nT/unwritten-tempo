@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// THE ONE PLACE EVERY MASTERY NUMBER IS WORKED OUT — how much practice a kill is worth, what a level costs, and
+/// THE ONE PLACE EVERY MASTERY NUMBER IS WORKED OUT — what a kill pays a weapon mastery, what a level costs, and
 /// what a level is worth once it is earned. Plain functions over plain numbers, so a whole career can be checked
 /// by calling them rather than by playing one.
 ///
@@ -11,27 +11,53 @@ using UnityEngine;
 public static class MasteryMath
 {
     // ---- what a level costs -------------------------------------------------------------------------------
-    // WEAPON MASTERY: reaching level N costs N points, so level L in total costs L(L+1)/2 — 2,485 to reach 70.
-    // SKILL MASTERY: the same shape, five times as steep in USES — 2,325 to reach 30.
+    // WEAPON MASTERY: experience, earned like the character's and the ring's — every kill's experience also goes to
+    // the weapon in hand — on the RING's curve (UnitStatMath.RingXpToNextFrom).
+    // SKILL MASTERY: uses; reaching level N costs 5 × N uses, so 2,325 to reach 30.
     public const int SkillUsesPerLevelStep = 5;
 
-    /// <summary>Total practice points a weapon mastery of <paramref name="level"/> has cost.</summary>
-    public static float WeaponPointsFor(int level) => level <= 0 ? 0f : level * (level + 1) * 0.5f;
-
-    /// <summary>The weapon mastery level <paramref name="points"/> of practice buys.</summary>
-    public static int WeaponLevelFrom(float points)
+    /// <summary>Total experience a weapon mastery of <paramref name="level"/> has cost.</summary>
+    public static float WeaponXpFor(int level)
     {
-        if (points < 1f) return 0;
-        // L(L+1)/2 <= points  →  L = floor((sqrt(8p+1) − 1) / 2)
-        return Mathf.FloorToInt((Mathf.Sqrt(8f * points + 1f) - 1f) * 0.5f);
+        float total = 0f;
+        for (int l = 0; l < level; l++) total += UnitStatMath.RingXpToNextFrom(l);
+        return total;
     }
+
+    /// <summary>The weapon mastery level <paramref name="xp"/> of experience buys.</summary>
+    public static int WeaponLevelFrom(float xp)
+    {
+        int level = 0;
+        while (xp >= UnitStatMath.RingXpToNextFrom(level)) { xp -= UnitStatMath.RingXpToNextFrom(level); level++; }
+        return level;
+    }
+
+    /// <summary>How far <paramref name="xp"/> is into its current weapon mastery level, and how much experience that
+    /// level takes in all — "12 of 20" on the way from level 0 to 1.</summary>
+    public static void WeaponProgress(float xp, out float intoLevel, out float levelSize)
+    {
+        int level = WeaponLevelFrom(xp);
+        intoLevel = Mathf.Max(0f, xp - WeaponXpFor(level));
+        levelSize = UnitStatMath.RingXpToNextFrom(level);
+    }
+
+    /// <summary>The weapon mastery experience a kill worth <paramref name="xp"/> pays: the same experience, at the
+    /// speed the weapon in hand's grade trains.</summary>
+    public static float WeaponXpFromKill(int xp, Quality heldQuality)
+        => Mathf.Max(0, xp) * CraftingMath.TrainingSpeed(heldQuality);
 
     /// <summary>Total uses a skill mastery of <paramref name="level"/> has cost.</summary>
     public static float SkillUsesFor(int level)
         => level <= 0 ? 0f : SkillUsesPerLevelStep * level * (level + 1) * 0.5f;
 
     /// <summary>The skill mastery level <paramref name="uses"/> buys.</summary>
-    public static int SkillLevelFrom(float uses) => WeaponLevelFrom(uses / SkillUsesPerLevelStep);
+    public static int SkillLevelFrom(float uses)
+    {
+        float steps = uses / SkillUsesPerLevelStep;
+        if (steps < 1f) return 0;
+        // L(L+1)/2 <= steps  →  L = floor((sqrt(8s+1) − 1) / 2)
+        return Mathf.FloorToInt((Mathf.Sqrt(8f * steps + 1f) - 1f) * 0.5f);
+    }
 
     // ---- what a level is worth ----------------------------------------------------------------------------
     /// <summary>What ONE weapon mastery level adds to each of that weapon's three stats — +0.5%, so a level-70
@@ -54,37 +80,6 @@ public static class MasteryMath
     /// mastery of its own and rides the weapon's instead — half a percent a level, to the same ceiling.</summary>
     public static float PassiveLift(int weaponMasteryLevel)
         => Mathf.Min(MaxSkillLift, Mathf.Max(0, weaponMasteryLevel) * WeaponPercentPerLevel);
-
-    // ---- what a kill is worth -----------------------------------------------------------------------------
-    /// <summary>A creature far enough below you to teach nothing.</summary>
-    public const int NothingBelow = 10;
-    /// <summary>How far above your level a creature still counts as an even fight.</summary>
-    public const int EvenAbove = 5;
-    /// <summary>What each level above that adds, and the ceiling no single kill may pass.</summary>
-    public const float PerLevelAbove = 0.1f, MostPerKill = 1.5f;
-
-    /// <summary>How much of a full point of practice a fight with a creature <paramref name="victimLevel"/> is
-    /// worth to a character of <paramref name="characterLevel"/>: nothing ten levels below, rising straight to a
-    /// full point at their own level, a little more above it, and never past <see cref="MostPerKill"/>.</summary>
-    public static float Challenge(int victimLevel, int characterLevel)
-    {
-        int d = victimLevel - characterLevel;
-        if (d <= -NothingBelow) return 0f;
-        if (d < 0) return (d + NothingBelow) / (float)NothingBelow;
-        if (d <= EvenAbove) return 1f;
-        return Mathf.Min(MostPerKill, 1f + (d - EvenAbove) * PerLevelAbove);
-    }
-
-    /// <summary>The practice one kill pays: the SHARE of the creature's health this weapon took off it, scaled by
-    /// how challenging the fight was and by how fast the weapon in hand trains. A creature is worth one point in
-    /// total however big it is, so a level makes a fight harder, never richer.</summary>
-    public static float PracticeFromKill(int damageWithThisWeapon, int victimMaxHP,
-                                         int victimLevel, int characterLevel, Quality weaponQuality)
-    {
-        if (damageWithThisWeapon <= 0 || victimMaxHP <= 0) return 0f;
-        float share = Mathf.Clamp01(damageWithThisWeapon / (float)victimMaxHP);
-        return share * Challenge(victimLevel, characterLevel) * CraftingMath.TrainingSpeed(weaponQuality);
-    }
 
     /// <summary>What one completed press of a skill is worth toward that skill's mastery — one use, at the speed
     /// the weapon in hand trains.</summary>

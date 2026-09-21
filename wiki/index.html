@@ -207,6 +207,7 @@ function skillTable(b){
               // escapes < and >, so any HTML built into the string would print as literal characters.
               effects:s.effects||[],
               trigger:s.trigger,
+              trademark:s.trademark,
               unpublished:!s.published
             }));
     if(!list.length) return h+`<p class="skill-sub"><em>No ${esc(b.group||'')} skills exported for ${esc(b.source)} yet — run the Skill Composer's export.</em></p>`;
@@ -218,6 +219,8 @@ function skillTable(b){
        `<div class="head"><span class="name">${inline(s.name||'')}</span>`+
        (s.unpublished?'<span class="cost"><em>not in the game yet</em></span>':(s.cost?`<span class="cost">${inline(s.cost)}</span>`:''))+'</div>'+
        (s.trigger?`<div class="flavor"><strong>${inline(s.trigger)}</strong></div>`:'')+
+       // The weapon name this skill is the trademark of, read from the export — never typed on the page.
+       (s.trademark?`<div class="flavor">Trademark weapon: <strong>${inline(s.trademark)}</strong></div>`:'')+
        // A description is authored as separate lines (a flavour line, then what it does). HTML collapses newlines,
        // so each line gets its own element rather than being run together into one blob.
        (s.flavor?String(s.flavor).split('\n').filter(x=>x.trim()).map(x=>`<div class="flavor">${inline(x)}</div>`).join(''):'')+

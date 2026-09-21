@@ -1265,7 +1265,6 @@ GameObject:
   - component: {fileID: 4081205624232035964}
   - component: {fileID: 5373809207022398333}
   - component: {fileID: 1481781066900209576}
-  - component: {fileID: 4353415632890949807}
   - component: {fileID: 8118028101237992240}
   - component: {fileID: 9089076849142685705}
   - component: {fileID: 8032241874342879373}
@@ -1439,18 +1438,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06a7e547d9133154ea23ea12a0f4ed85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillDraftPanel
---- !u!114 &4353415632890949807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3183779459780461396}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86c23acca5367934cbabf7ab7173efdd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SkillBookPanel
 --- !u!114 &8118028101237992240
 MonoBehaviour:
   m_ObjectHideFlags: 0

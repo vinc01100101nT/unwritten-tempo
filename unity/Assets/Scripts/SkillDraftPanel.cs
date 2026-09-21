@@ -5,9 +5,9 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// The Phase G Skills (K) panel — the Trio-Ring passive draft, presented as <b>bankable
-/// points</b> (doc §11 #4). Lives on the persistent <c>GameUICanvas</c> and drives the
-/// panel <see cref="UIShellBuilder"/> built as an empty placeholder ("SkillsPanel/Content").
+/// The Ring of Progression — the Trio-Ring passive draft, presented as <b>bankable
+/// points</b> (doc §11 #4). Lives on the persistent <c>GameUICanvas</c> and draws into the right-hand
+/// column of the Character window (C), <see cref="ProgressionWindows.RingColumn"/>.
 ///
 /// The 4 cards live in a clipped <b>carousel viewport</b> so a pick can be ANIMATED to show
 /// the steering (doc §2 — "the draft is a steering wheel"):
@@ -18,8 +18,14 @@ using TMPro;
 public class SkillDraftPanel : MonoBehaviour
 {
     RectTransform content;          // the panel's "Content" node we build into
-    GameObject panelRoot;           // the "SkillsPanel" root we show/hide on K (code-driven, like the Inventory and Character windows)
-    DraftService.Draft? pending;    // the draft currently shown (cached so the wildcard is stable between renders)
+    GameObject panelRoot;           // the Character window (C) the ring is drawn inside
+    DraftService.Draft? pending;    // the draft currently shown — its wildcard is the one the server rolled and sent
+
+    // A pick ASKED of the server and not answered yet. The server spends the point; the window only animates once
+    // the walk it sends back shows that pick landed.
+    DraftService.Option askedPick;
+    int askedDir, bankedWhenAsked;
+    bool asking;
     bool bound, animating;
 
     // Persistent sub-pieces so a pick can refresh the header/ring without nuking the animating cards.
@@ -35,45 +41,35 @@ public class SkillDraftPanel : MonoBehaviour
     static readonly Color WildEdge   = new Color(0.85f, 0.55f, 1f);    // purple = the gamble
     static readonly Color RowDim     = new Color(1f, 1f, 1f, 0.5f);
 
-    void Start() => TryBind();
-    void Update()
+    bool wasOpen;
+
+    void Start()
     {
-        if (!bound) TryBind();   // Character/UI may not be ready on the very first frame
-        HandleHotkey();          // K = toggle, Esc = close — owned here in code so editing the key needs no rebake
+        // The Skills (K) window is added the same way the buff bar is — so it appears without a Build UI Shell
+        // rebuild. Idempotent: skips if the shell already added one.
+        if (GetComponent<SkillsWindow>() == null) gameObject.AddComponent<SkillsWindow>();
+        TryBind();
     }
 
-    // The Skills (K) toggle lives in runtime code (mirroring ProgressionWindows' B/V/C) rather than as
-    // serialized PanelToggle data, so changing the key is a source edit — no "Build UI Shell" rebake.
-    void HandleHotkey()
+    void Update()
     {
-        if (panelRoot == null)
-        {
-            foreach (var t in GetComponentsInChildren<Transform>(true))
-                if (t.name == "SkillsPanel") { panelRoot = t.gameObject; break; }
-            if (panelRoot == null) return;
-        }
-
-        if (Hotkeys.Down(KeyCode.K))
-        {
-            bool open = UiAnim.Toggle(panelRoot);
-            if (open) { Render(); UISounds.PlayOpen(); } else UISounds.PlayClose();   // refresh live ring XP on open
-        }
-        else if (UiAnim.IsOpen(panelRoot) && Hotkeys.CancelDown())
-        {
-            UiAnim.Close(panelRoot);
-            UISounds.PlayClose();
-            Hotkeys.MarkCancelHandled();
-        }
+        if (!bound) { TryBind(); return; }   // Character/UI may not be ready on the very first frame
+        // The ring lives inside the Character window (C), which ProgressionWindows opens and closes. Ring XP only
+        // redraws while it is on screen, so opening the window is when it catches up.
+        bool open = panelRoot != null && UiAnim.IsOpen(panelRoot);
+        if (open && !wasOpen) Render();
+        wasOpen = open;
     }
 
     void TryBind()
     {
         if (Character.Instance == null) return;
-        var viewport = FindContent();
+        var viewport = ProgressionWindows.RingColumn;
         if (viewport == null) return;
+        panelRoot = ProgressionWindows.CharacterRoot;
 
-        // The panel can hold more than its height (ring header + draft + the 10-row walk + the skills grid),
-        // so the build target is a SCROLLING child clipped to the panel — never spilling past the frame.
+        // The ring can hold more than its column's height (ring header + draft + the 10-row walk),
+        // so the build target is a SCROLLING child clipped to the column — never spilling past the frame.
         content = UiKit.ScrollColumn(viewport);
 
         var vlg = content.GetComponent<VerticalLayoutGroup>();
@@ -85,7 +81,7 @@ public class SkillDraftPanel : MonoBehaviour
         vlg.childForceExpandHeight = false;
         vlg.childAlignment = TextAnchor.UpperCenter;
 
-        Character.Instance.Passives.OnChanged += Render;
+        Character.Instance.Passives.OnChanged += OnWalkChanged;
         Character.Instance.OnStatsChanged += OnStatsChanged;
         Character.Instance.Ring.OnChanged += OnRingChanged;
         Character.Instance.Ring.OnLeveledUp += ShowRingLevelToast;
@@ -94,31 +90,17 @@ public class SkillDraftPanel : MonoBehaviour
     }
 
     // Ring XP ticks every kill — rebuilding the panel each time would be wasteful, so only refresh the live
-    // XP bar while the panel is actually open (you only see it then).
+    // XP bar while the window is actually open (you only see it then).
     void OnRingChanged() { if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Render(); }
 
     // The ring being equipped/unequipped arrives as a stat change (SetEquipped fires OnStatsChanged). Re-render
     // while open so the panel flips between its active and "ring unequipped" states immediately.
     void OnStatsChanged() { if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Render(); }
 
-    // The panel the shell builder created is named "SkillsPanel" with a "Content" child;
-    // it starts inactive (PanelToggle shows it on K), so search includes inactive objects.
-    RectTransform FindContent()
-    {
-        foreach (var t in GetComponentsInChildren<Transform>(true))
-            if (t.name == "SkillsPanel")
-            {
-                panelRoot = t.gameObject;
-                UiKit.ClickShield(t as RectTransform);   // catch clicks over the whole window (no leak to world)
-                return t.Find("Content") as RectTransform;
-            }
-        return null;
-    }
-
     void OnDestroy()
     {
         if (Character.Instance == null) return;
-        Character.Instance.Passives.OnChanged -= Render;
+        Character.Instance.Passives.OnChanged -= OnWalkChanged;
         Character.Instance.OnStatsChanged -= OnStatsChanged;
         Character.Instance.Ring.OnChanged -= OnRingChanged;
         Character.Instance.Ring.OnLeveledUp -= ShowRingLevelToast;
@@ -139,8 +121,7 @@ public class SkillDraftPanel : MonoBehaviour
         var c = Character.Instance;
         var p = c.Passives;
 
-        if (p.BankedPoints > 0) { if (pending == null) pending = DraftService.BuildDraft(p); }
-        else pending = null;
+        pending = p.BankedPoints > 0 ? DraftService.BuildDraft(p) : (DraftService.Draft?)null;
 
         for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
         headerText = null; cardViewport = null; cardSet = null; wildcardRow = null; ringContainer = null;
@@ -181,7 +162,7 @@ public class SkillDraftPanel : MonoBehaviour
     {
         var r = c.Ring;
 
-        var title = NewText(content, $"<color=#FFDB80>◈ Ring of Progression</color>   <b>Lv {r.Level}</b>",
+        var title = NewText(content, $"<color=#FFDB80>Ring of Progression</color>   <b>Lv {r.Level}</b>",
                             16, FontStyle.Bold, TextAnchor.MiddleCenter);
         SetHeight(title.gameObject, 24);
 
@@ -401,7 +382,9 @@ public class SkillDraftPanel : MonoBehaviour
 
     void OnPick(DraftService.Option opt)
     {
-        if (animating || content == null) return;
+        if (animating || asking || content == null) return;
+        var me = GameNetwork.MyPlayer;
+        if (me == null) return;
         var p = Character.Instance.Passives;
 
         // Direction only has meaning for a neighbor pick (the window slides along the ring).
@@ -410,7 +393,22 @@ public class SkillDraftPanel : MonoBehaviour
             dir = opt.stat == SkillRing.LeftOf(p.Leader) ? -1 : +1;
 
         UISounds.PlayClick();
-        StartCoroutine(AnimatePick(opt, dir));
+        askedPick = opt; askedDir = dir; bankedWhenAsked = p.BankedPoints; asking = true;
+        me.AskToPickRingStat(opt.stat);
+    }
+
+    // The walk changed — usually the server's answer to a pick. If it shows the asked pick landed (a point gone and
+    // the leader now on the picked stat), play the pick; otherwise (refused, or a change from elsewhere) redraw.
+    void OnWalkChanged()
+    {
+        var p = Character.Instance.Passives;
+        if (asking)
+        {
+            asking = false;
+            bool landed = p.HasLeader && p.Leader == askedPick.stat && p.BankedPoints < bankedWhenAsked;
+            if (landed && content != null && !animating) { StartCoroutine(AnimatePick(askedPick, askedDir)); return; }
+        }
+        Render();
     }
 
     IEnumerator AnimatePick(DraftService.Option opt, int dir)
@@ -423,16 +421,15 @@ public class SkillDraftPanel : MonoBehaviour
         var oldSet = cardSet;
         var oldCg = oldSet != null ? oldSet.GetComponent<CanvasGroup>() : null;
 
-        // Apply the pick. Render is gated by `animating`, so the panel won't rebuild under us.
-        pending = null;
-        p.Pick(opt.stat);
+        // The server has already applied the pick (see OnWalkChanged). Render is gated by `animating`, so the
+        // panel won't rebuild under us.
 
         // Header + ring reflect the new state immediately (they don't slide).
         if (headerText != null) headerText.text = HeaderString(p);
         BuildRingRows(p);
 
         bool morePoints = p.BankedPoints > 0;
-        if (morePoints) pending = DraftService.BuildDraft(p);     // re-roll the wildcard for the next point
+        pending = morePoints ? DraftService.BuildDraft(p) : (DraftService.Draft?)null;   // the server's new wildcard
 
         // A structural change (no points left, or opening→trio) can't slide — rebuild cleanly afterwards.
         bool rebuildAtEnd = !morePoints || wasOpening;
@@ -517,7 +514,7 @@ public class SkillDraftPanel : MonoBehaviour
     // while the ring is worn (RingProgress only levels when equipped) — so the prompt is always actionable.
     void ShowRingLevelToast(int ringLevel)
     {
-        string msg = $"RING LEVEL {ringLevel}!  +1 skill point  —  press K";
+        string msg = $"RING LEVEL {ringLevel}!  +1 skill point  —  press C";
         if (toastCo != null) StopCoroutine(toastCo);   // don't StopAllCoroutines — it'd kill a pick animation
         toastCo = StartCoroutine(ToastRoutine(msg));
     }

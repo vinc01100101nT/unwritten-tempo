@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 33
   needsSkillId: 
   published: 1
+  trademarkName: Seme
   description: 'Never let them recover.
 
     Every hit cuts the target''s HP regen

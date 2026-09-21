@@ -116,7 +116,7 @@ public class SaveManager : MonoBehaviour
             character.OnAppearanceChanged += SaveAppearance;
 
             // AND NOW THIS MACHINE KNOWS WHICH SKILLS THIS PERSON HAS. A character carries only the skills it can
-            // USE — its bar, its weapon's kit, its ticked passives — and none of that existed when the body first
+            // USE — its bar, its learned passives, its bag — and none of that existed when the body first
             // asked, because the save had not arrived. Without this the bar draws empty slots and nothing casts.
             character.RefreshUsableSkills();
             HotbarPanel.RebuildRequested?.Invoke();

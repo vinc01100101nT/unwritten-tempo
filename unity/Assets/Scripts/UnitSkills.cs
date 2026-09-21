@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// THE SKILLS ONE UNIT CARRIES, in a fixed order — what a passive moment is dispatched against, what a cast is found
 /// by, and what gives each passive its place in the no-self-feeding brake. One per unit: a person's is built from
-/// their bar, their weapon, their ticked passives and their bag; a creature's from the weapon it is holding plus its extra skills.
+/// their bar, their learned passives and their bag; a creature's from the weapon it is holding plus its extra skills.
 ///
 /// <para><b>Why it is its own thing.</b> It used to live inside <see cref="Character"/>, so only a person could carry
 /// skills and every creature's answer was "none". A creature wearing a weapon with a rolled kit is the same kind of

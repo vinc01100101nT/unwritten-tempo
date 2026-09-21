@@ -22,6 +22,7 @@
       "castRange": 6,
       "trigger": "",
       "description": "Step through the gap.\nInstantly teleports you to the aimed spot.",
+      "trademark": "",
       "effects": [
         "Blinks to the target location"
       ]
@@ -43,6 +44,7 @@
       "castRange": 6,
       "trigger": "",
       "description": "Brace behind a guard.\nCuts incoming damage by 50% for 5s and forces nearby foes to attack you.",
+      "trademark": "",
       "effects": [
         "+**50%** damage reduction for **5s**",
         "Taunts nearby enemies for **5s**"
@@ -65,6 +67,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "A single-target fire bolt that ignites the\ntarget, leaving a burning wound.",
+      "trademark": "",
       "effects": [
         "Deals **1×** magic damage",
         "+**100%** damage reduction for **0.5s**"
@@ -87,6 +90,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Ground that mends.\nRestores 100 HP.",
+      "trademark": "",
       "effects": [
         "Heals **100** HP"
       ]
@@ -108,6 +112,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Curse the ground so enemies inside are slowed and take extra damage.",
+      "trademark": "",
       "effects": [
         "Deals **1×** magic damage",
         "Stun for **4s**"
@@ -130,6 +135,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Clears up to 3 harmful effects.",
+      "trademark": "",
       "effects": [
         "Removes **3** debuff(s)"
       ]
@@ -151,6 +157,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Restores 200 HP at once.",
+      "trademark": "",
       "effects": [
         "Heals **200** HP"
       ]
@@ -172,6 +179,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Raises attack by 15% for 120s.",
+      "trademark": "",
       "effects": [
         "+**15%** attack for **120s**"
       ]
@@ -193,6 +201,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Raises defence by 15% for 120s.",
+      "trademark": "",
       "effects": [
         "+**15%** defense for **120s**"
       ]
@@ -214,6 +223,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Restores 80 HP at once.",
+      "trademark": "",
       "effects": [
         "Heals **80** HP"
       ]
@@ -235,6 +245,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Raises crit chance by 5% for 120s.",
+      "trademark": "",
       "effects": [
         "+0.05 crit chance for **120s**"
       ]
@@ -256,6 +267,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Restores 8 MP per second for 5s.",
+      "trademark": "",
       "effects": [
         "+8 MP regen for **5s**"
       ]
@@ -277,6 +289,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Restores 30 HP at once.",
+      "trademark": "",
       "effects": [
         "Heals **30** HP"
       ]
@@ -298,6 +311,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Restores 4 MP per second for 5s.",
+      "trademark": "",
       "effects": [
         "+4 MP regen for **5s**"
       ]
@@ -319,6 +333,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Raises attack speed by 10% for 120s.",
+      "trademark": "",
       "effects": [
         "+**10%** attack speed for **120s**"
       ]
@@ -340,6 +355,7 @@
       "castRange": 0,
       "trigger": "Passive",
       "description": "Raises movement speed by 20% for 120s.",
+      "trademark": "",
       "effects": [
         "+**20%** movement speed for **120s**"
       ]
@@ -361,6 +377,7 @@
       "castRange": 6,
       "trigger": "",
       "description": "A soothing tide.\nRestores 7.5 HP a second for 6s and washes away one debuff.",
+      "trademark": "",
       "effects": [
         "+7.5 HP regen for **6s**",
         "Removes **1** debuff(s)"
@@ -383,6 +400,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "",
+      "trademark": "",
       "effects": [
         "+**100%** damage per stack for **20.2s**"
       ]
@@ -404,6 +422,7 @@
       "castRange": 13,
       "trigger": "",
       "description": "The sky falls.\nCalls down 8x Magic damage across 3 strikes, then a second impact for 8x more. Sets the target burning for 3 a tick over 4s, and each hit has a 25% chance to stun.",
+      "trademark": "",
       "effects": [
         "Deals **8×** magic damage, **3×** hits",
         "Burn **3**/tick for **4s**",
@@ -428,6 +447,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 100% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
+      "trademark": "Ranbu",
       "effects": [
         "Deals **1×** physical damage",
         "Parries the next hit within **8s** — no damage taken",
@@ -452,6 +472,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Take it now, pay it later.\nArms 5 charges for 4s. Each holds back one incoming hit and banks the damage instead of paying it in health; the whole bill lands at once when the window ends.",
+      "trademark": "",
       "effects": [
         "Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends"
       ]
@@ -473,6 +494,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Force one enemy to fight you.\nTaunted for 5s: locked onto you, no skills, no pause between swings.",
+      "trademark": "",
       "effects": [
         "Taunts nearby enemies for **5s**"
       ]
@@ -494,6 +516,7 @@
       "castRange": 5,
       "trigger": "",
       "description": "Wind up and commit.\nA slow, telegraphed heavy blow for 200% Attack.",
+      "trademark": "Ichigeki",
       "effects": [
         "Deals **2×** physical damage"
       ]
@@ -515,6 +538,7 @@
       "castRange": 11,
       "trigger": "When you parry",
       "description": "A read pays for the next one.\nAfter a parry, MP returns at 2 per second for 4s.",
+      "trademark": "Heijō",
       "effects": [
         "+2 MP regen for **4s**"
       ]
@@ -536,6 +560,7 @@
       "castRange": 5,
       "trigger": "",
       "description": "Everything, in one swing.\nOne massive blow for 600% Attack, +40% per Momentum stack, and spends them all.",
+      "trademark": "Todome",
       "effects": [
         "Deals **6×** physical damage **+ 0.4 × stacks**"
       ]
@@ -557,6 +582,7 @@
       "castRange": 5,
       "trigger": "",
       "description": "Blunt their swing.\nA strike for 100% Attack; their next attack lands 40% weaker, within 6s.",
+      "trademark": "Kote",
       "effects": [
         "Deals **1×** physical damage",
         "Their next attack deals −**40%** damage within **6s**"
@@ -579,6 +605,7 @@
       "castRange": 11,
       "trigger": "When you kill a mob",
       "description": "The dance goes on.\nA kill during Blade Dance adds 7 more dance charges.",
+      "trademark": "Futatabi",
       "effects": [
         "Adds **7** to **Blade Dance**"
       ]
@@ -600,6 +627,7 @@
       "castRange": 1,
       "trigger": "When a basic attack lands",
       "description": "Stay on one foe.\nEvery basic attack grants extra Momentum equal to a third of your unbroken run of hits on that target.",
+      "trademark": "Nagare",
       "effects": [
         "Adds **1** to **Momentum**"
       ]
@@ -621,6 +649,7 @@
       "castRange": 0,
       "trigger": "",
       "description": "Weather it.\nTake 50% less damage for 6 seconds.",
+      "trademark": "Kamae",
       "effects": [
         "+**50%** damage reduction for **6s**"
       ]
@@ -642,6 +671,7 @@
       "castRange": 11,
       "trigger": "When your HP drops low",
       "description": "Cornered, you hold the line.\nDropping to low HP arms 5 more Brace charges.",
+      "trademark": "Haisui",
       "effects": [
         "Adds **5** to **Brace**"
       ]
@@ -662,7 +692,8 @@
       "castTime": 0,
       "castRange": 11,
       "trigger": "After casting Lunge",
-      "description": "No escape.\nCasting Lunge arms 5 charges, each +5% Attack Speed for 5s. Every hit you land spends one to lunge at the target again.",
+      "description": "No escape.\nCasting Lunge arms 5 charges, each +2 basic attack range for 5s. Every basic attack you start spends one to lunge at the target again.",
+      "trademark": "Tsubazeriai",
       "effects": [
         "+2 basic attack range per stack for **5s**"
       ]
@@ -684,6 +715,7 @@
       "castRange": 8,
       "trigger": "When you start a basic attack",
       "description": "Close the distance.\nDashes to the target and strikes for 100% Attack. With Lock Blades, casting it also arms 5 charges.",
+      "trademark": "Tsuki",
       "effects": [
         "Dashes to the target location",
         "Deals **1×** physical damage"
@@ -706,6 +738,7 @@
       "castRange": 11,
       "trigger": "When a basic attack lands",
       "description": "Every hit adds up.\nEach basic attack that lands grants a stack: +3% damage each, 5s apiece.",
+      "trademark": "Hyōshi",
       "effects": [
         "+**3%** damage per stack for **5s**"
       ]
@@ -727,6 +760,7 @@
       "castRange": 5,
       "trigger": "",
       "description": "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 30% for 5s.",
+      "trademark": "Kuzushi",
       "effects": [
         "Deals **1×** physical damage",
         "−**30%** attack speed for **5s**"
@@ -749,6 +783,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them as real basic attacks, two per swing — so every blow feeds Momentum.",
+      "trademark": "Renzoku",
       "effects": [
         "+**1%** damage per stack for **5s**",
         "Deals **1×** physical damage"
@@ -771,6 +806,7 @@
       "castRange": 11,
       "trigger": "When you parry",
       "description": "Find the weakness.\nA parry has a 50% chance to charge your next attack with +200% damage, within 5s — spent whether it hits or misses.",
+      "trademark": "Suki",
       "effects": [
         "**50%** per hit: your next attack deals +**200%** damage within **5s**"
       ]
@@ -792,6 +828,7 @@
       "castRange": 0,
       "trigger": "",
       "description": "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you take double damage for the first 3.",
+      "trademark": "Hadori",
       "effects": [
         "+**30%** attack speed for **8s**",
         "−**100%** damage reduction for **3s**"
@@ -814,6 +851,7 @@
       "castRange": 0,
       "trigger": "",
       "description": "Read the hit and punish it.\nFully negates the next incoming hit within 3 seconds.",
+      "trademark": "",
       "effects": [
         "Parries the next hit within **3s** — no damage taken"
       ]
@@ -835,6 +873,7 @@
       "castRange": 11,
       "trigger": "When you deal damage",
       "description": "Never let them recover.\nEvery hit cuts the target's HP regen by 3 a second for 5s, and the cuts stack.",
+      "trademark": "Seme",
       "effects": [
         "−3 HP regen per stack for **5s**"
       ]
@@ -856,6 +895,7 @@
       "castRange": 11,
       "trigger": "",
       "description": "Answer all of it at once.\nCashes the damage Brace banked: five strikes, each landing 100% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
+      "trademark": "Kaeshi",
       "effects": [
         "Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total**"
       ]
@@ -877,6 +917,7 @@
       "castRange": 11,
       "trigger": "After casting Guard Stance",
       "description": "Stand your ground.\nAfter casting Guard Stance, nothing stops you for 6s — no flinch, stun, freeze, silence, knockback or pull.",
+      "trademark": "",
       "effects": [
         "Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts"
       ]
@@ -898,6 +939,7 @@
       "castRange": 6,
       "trigger": "",
       "description": "Raise a rallying banner so you and nearby allies deal more damage for a while.",
+      "trademark": "",
       "effects": [
         "+**130%** damage for **8s**"
       ]

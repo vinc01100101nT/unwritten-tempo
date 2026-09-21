@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 11
   needsSkillId: skill.sword.parry
   published: 1
+  trademarkName: "Heij\u014D"
   description: 'A read pays for the next one.
 
     After a parry, MP returns at 2

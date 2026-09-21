@@ -527,10 +527,36 @@ public class UnitStates : MonoBehaviour
     /// brain and the player rig each used to keep a private end-time, and the "no skills while taunted" rule has to be
     /// readable by a unit that has no brain in front of it at all. Who the taunter IS stays with the brain — that is
     /// the role-specific half; how long the lock lasts is the shared half.</para></summary>
-    public void BeginTaunt(float seconds)
+    public void BeginTaunt(float seconds, ICombatUnit taunter)
     {
         if (seconds <= 0f) return;
-        Apply(StateId.Taunt, seconds);
+        var s = Apply(StateId.Taunt, seconds);
+        // The newest taunt decides who this unit is locked onto, so it also decides whose death releases it.
+        if (s != null) s.appliedBy = PlayerUnits.Gone(taunter) ? null : taunter;
+    }
+
+    /// <summary>End every taunt whose taunter has died or is no longer in this unit's map — the lock is ONTO that
+    /// unit, so without it there is nothing left to be locked onto. Called by the server's per-unit ticker; a
+    /// player's machine never decides this, it only shows the state leaving when the server says so. Costs one
+    /// cached bool while the unit is not taunted.</summary>
+    public void EndTauntIfTaunterGone()
+    {
+        EnsureFresh();
+        if (!taunted) return;
+        var me = OwnerUnit();
+        bool changed = false;
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            var s = active[i];
+            if (s.id != StateId.Taunt || s.appliedBy == null) continue;
+            var by = s.appliedBy;
+            if (!PlayerUnits.Gone(by) && !by.IsDead && (me == null || by.Map == me.Map)) continue;
+            LogStacksGone(s, s.stacks.Count, "ended, the taunter died or left the map", wholePile: true);
+            active.RemoveAt(i);
+            pool.Push(s);
+            changed = true;
+        }
+        if (changed) { Recompute(); OnChanged?.Invoke(); }
     }
 
     /// <summary>Is this unit taunted right now? THE single answer — the mob brain's chase lock, the player rig's

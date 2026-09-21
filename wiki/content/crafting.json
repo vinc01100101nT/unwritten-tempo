@@ -3,7 +3,7 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*Turn the weapons you find into the weapon you want.*"
+      "text": "*Turn what creatures drop into the gear you want.*"
     },
     {
       "type": "heading",
@@ -20,68 +20,61 @@
     },
     {
       "type": "heading",
-      "level": 2,
-      "text": "Potential — a weapon's crafting budget"
-    },
-    {
-      "type": "paragraph",
-      "text": "Every weapon has a **Potential** score — its personal, one-time crafting budget. You spend Potential to change its skills (**Add** and **Reforge**). Potential does **not** refill: once a weapon's Potential is gone, its skills are locked in for good — though you can still use, refine, and re-skin that weapon forever. A weapon with lots of Potential is simply a better canvas to invest in."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Shaping your skills"
+      "text": "The four things a station does"
     },
     {
       "type": "list",
       "items": [
-        "**Add** — fill an empty skill slot with a random skill from that weapon's pool.",
-        "**Reforge** — re-roll a weapon's normal skills, locking the ones you want to keep.",
-        "Your **Ultimate points at your build** (see *Skills*), so which one you get is the thing worth chasing. A drop is the fast way to one; forging it in is the slow way, and both are open to you."
+        "**Forge** — pay a design's base materials and gold, and take a **Raw +0** piece. A weapon rolls one thing, once — its **trademark** (see *Weapons*); nothing else about a piece is ever rolled.",
+        "**Fold** — 1 unit of your grade's band material and gold. Each fold raises the piece's attack or defence by one. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
+        "**Quench** — 10 units of the band and more gold. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
+        "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced."
       ]
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Refining (+N)"
     },
     {
       "type": "paragraph",
-      "text": "Separately, you can **refine** a weapon to raise its Attack (and any gear's Defense). Refining doesn't cost Potential — just materials."
+      "text": "**What a piece is called.** A weapon goes by its trademark name, its folds and its grade — **+15 Ranbu [C]**. Anything else goes by its grade, its folds and what it is — **B +12 Padded Vest**. The bag lists every piece by that title, and its search finds it."
     },
     {
       "type": "heading",
-      "level": 2,
-      "text": "Weapon Essence & recycling — nothing is wasted"
+      "text": "Where a piece is made"
     },
     {
       "type": "paragraph",
-      "text": "The weapons you don't want aren't trash:"
-    },
-    {
-      "type": "list",
-      "items": [
-        "**Recycle** them into **Weapon Essence** — a powder that fuels every kind of weapon crafting. Better weapons recycle into more Essence.",
-        "Or keep one for its **look**: **Transmog** lets you wear any same-type weapon's appearance on your own (a Sword's look on a Sword), without changing its skills or stats."
-      ]
+      "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. Each craft's material comes in **seven bands, one per grade** — Copper to Adamant, Burlap to Brocade, Rawhide to Wyrmhide — and a piece folds only with the band of its own grade. Band materials never merge into each other; the better ones drop from stronger creatures, so climbing the grades walks you across the world."
     },
     {
       "type": "heading",
-      "level": 2,
-      "text": "What everything costs"
+      "text": "Ink and Salt"
     },
     {
-      "type": "list",
-      "items": [
-        "**Add / Reforge** — Potential + Weapon Essence + Gold.",
-        "**Refine** — Weapon Essence + a Refinement Stone + Gold.",
-        "**Transmog** — Weapon Essence + Gold."
-      ]
+      "type": "paragraph",
+      "text": "**Ink** comes in five tiers — Watery, Thin, Faint, Clear, Sharp — and the tier sets how big the number is. One Ink writes **one** stat, drawn from eighteen: twelve sub-stats and the six primaries, which are far rarer and worth far more. A stat already on the piece cannot roll again. There is no failure outcome: a poor roll is the failure, and the Ink is spent. **Your grade decides how many stats the piece can carry**, from none at Raw to six at A."
+    },
+    {
+      "type": "paragraph",
+      "text": "**Salt** comes in three — Coarse, Fine, Pure — and does one thing: it shifts a quench's odds toward going up. It is used up whichever way the quench goes, it never makes success certain, and it never removes the chance of dropping a grade."
+    },
+    {
+      "type": "paragraph",
+      "text": "**Ten of one tier merge into one of the next**, for Ink and Salt both, with nothing to fail. Surplus low tiers are never trash."
+    },
+    {
+      "type": "heading",
+      "text": "Recycling — half of it comes back"
+    },
+    {
+      "type": "paragraph",
+      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back: the forge bill, every quench it successfully climbed, the folds standing on it now, and the Ink for the stats written on it."
+    },
+    {
+      "type": "paragraph",
+      "text": "**Quenches that failed are not counted** — nothing anywhere remembers them — and Salt never comes back. Each material is halved on its own and rounded down, so a single unit does not survive the trip."
     },
     {
       "type": "quote",
       "text": [
-        "*Status: the crafting loop above is designed; exact costs, drop rates, and Potential values are still being tuned.*"
+        "*Status: forging, folding, quenching, Ink, merging, recycling and weapon trademarks are all built. The costs, the odds, the Ink values and the trademark bonuses are first numbers, to be tuned in play.*"
       ]
     }
   ]

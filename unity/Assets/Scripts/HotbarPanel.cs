@@ -63,15 +63,6 @@ public class HotbarPanel : MonoBehaviour
     bool built;
     bool cellsEnsured;
 
-    // ONE shared modifier tooltip on the canvas ROOT (not parented inside a cell). The old per-cell tooltip
-    // lived under its cell, so a neighbouring cell — drawn later — could occlude it, and a parent could clip
-    // it: that's the "sometimes the helper doesn't show" bug. A single top-sibling panel, repositioned over
-    // the hovered cell, is always drawn above everything and never clipped.
-    GameObject tipRoot;
-    TMP_Text tipText;
-    RectTransform tipRT;
-    static readonly Vector3[] cornerBuf = new Vector3[4];   // reused by GetWorldCorners (no per-hover alloc)
-
     void Start()
     {
         RebuildRequested = Rebuild;
@@ -105,8 +96,8 @@ public class HotbarPanel : MonoBehaviour
         if (ult != null && ult.skill != null && Hotkeys.Down(KeyCode.R) && ult.skill.Activate()) UISounds.PlayClick();
     }
 
-    /// <summary>True when active skills may fire. Skills come from the equipped weapon now, so they're no longer
-    /// gated by the ring — a bound skill just works (the bar is empty anyway without a weapon/Grimoire binding).</summary>
+    /// <summary>True when active skills may fire — a bound skill just works; whether it is learned and its weapon is
+    /// in hand is the cast's own test.</summary>
     static bool SkillsEnabled => Character.Instance != null;
 
     static bool SlotKeyDown(int i) => Hotkeys.DigitDown(i);
@@ -121,11 +112,11 @@ public class HotbarPanel : MonoBehaviour
                 var cell = holder.GetChild(i);
                 for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
                 var btn = cell.GetComponent<Button>();       if (btn != null) Destroy(btn);
-                var trig = cell.GetComponent<EventTrigger>(); if (trig != null) Destroy(trig);
+                var trig = cell.GetComponent<HoverRelay>();  if (trig != null) Destroy(trig);
             }
         slots.Clear();
         ult = null;      // the ult cell is torn down with the rest — rebuilt in TryBuild
-        HideTip();       // the hovered cell may be torn down — don't leave a stale tooltip floating
+        SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating
         built = false;   // Update() will TryBuild() again next frame, reading the new bindings
     }
 
@@ -142,7 +133,6 @@ public class HotbarPanel : MonoBehaviour
 
         EnsureCells();
         EnsurePassiveRow();
-        EnsureSharedTooltip();
 
         slots.Clear();
         int n = Mathf.Min(HotbarBindings.SlotCount, holder.childCount);
@@ -194,7 +184,7 @@ public class HotbarPanel : MonoBehaviour
             clone.name = i < HotbarBindings.SlotCount ? "Hotslot" : "UltSlot";
             for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
             var b = clone.GetComponent<Button>();         if (b != null) Destroy(b);
-            var t = clone.GetComponent<EventTrigger>();    if (t != null) Destroy(t);
+            var t = clone.GetComponent<HoverRelay>();      if (t != null) Destroy(t);
             var s = clone.GetComponent<HotbarSlotTarget>();if (s != null) Destroy(s);
             var d = clone.GetComponent<HotbarSlotDragSource>(); if (d != null) Destroy(d);
         }
@@ -234,52 +224,55 @@ public class HotbarPanel : MonoBehaviour
             passiveRow.pivot = barRT.pivot;
             passiveRow.anchoredPosition = barRT.anchoredPosition + new Vector2(0f, barRT.sizeDelta.y * 0.5f + PassiveCellSize * 0.5f + 4f);
         }
-        passiveRow.sizeDelta = new Vector2(PassiveLoadout.MaxChecked * (PassiveCellSize + 4), PassiveCellSize);
+        passiveRow.sizeDelta = new Vector2(0f, PassiveCellSize);
 
         var lay = rowGO.AddComponent<HorizontalLayoutGroup>();
         lay.spacing = 4;
         lay.childAlignment = TextAnchor.MiddleCenter;
         lay.childControlWidth = lay.childControlHeight = false;
         lay.childForceExpandWidth = lay.childForceExpandHeight = false;
+    }
 
-        var template = holder.GetChild(0).gameObject;
-        for (int i = 0; i < PassiveLoadout.MaxChecked; i++)
+    // Cell i of the passive row, grown on demand from the bar's own first cell — only when the row gets longer, so
+    // never on a steady frame.
+    Image PassiveCell(int i)
+    {
+        while (passiveCells.Count <= i)
         {
-            var clone = Instantiate(template, passiveRow);
+            var clone = Instantiate(holder.GetChild(0).gameObject, passiveRow);
             clone.name = "PassiveSlot";
             for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
             // NOTHING ON A PASSIVE CELL IS TOUCHABLE. It is a readout of what is running, not a place to put
             // anything: a passive fires on its own trigger and has no key, so a click could only ever do nothing.
             var b = clone.GetComponent<Button>();               if (b != null) Destroy(b);
-            var t = clone.GetComponent<EventTrigger>();          if (t != null) Destroy(t);
+            var t = clone.GetComponent<HoverRelay>();            if (t != null) Destroy(t);
             var st = clone.GetComponent<HotbarSlotTarget>();     if (st != null) Destroy(st);
             var d = clone.GetComponent<HotbarSlotDragSource>();  if (d != null) Destroy(d);
-
-            var img = clone.GetComponent<Image>();
-            if (img != null)
-            {
-                img.raycastTarget = false;
-                passiveCells.Add(img);
-            }
             if (clone.transform is RectTransform crt) crt.sizeDelta = new Vector2(PassiveCellSize, PassiveCellSize);
+            var img = clone.GetComponent<Image>();
+            img.raycastTarget = false;
+            passiveCells.Add(img);
         }
+        return passiveCells[i];
     }
 
-    // Fill the row from what is actually running: the weapon's passives first, then the ones the player ticked.
+    // Fill the row from what is actually running: every learned passive of the weapon in hand. The row grows a cell
+    // for each one, so no passive that fires is ever missing from it.
     void RefreshPassiveRow()
     {
-        if (passiveCells.Count == 0 || Character.Instance == null) return;
+        if (passiveRow == null || Character.Instance == null) return;
 
         var me = Character.Instance;
         me.PassiveSkills.CollectActive(activePassives);
+        passiveRow.sizeDelta = new Vector2(activePassives.Count * (PassiveCellSize + 4), PassiveCellSize);
 
-        for (int i = 0; i < passiveCells.Count; i++)
+        for (int i = 0; i < activePassives.Count; i++)
         {
-            var cell = passiveCells[i];
-            if (cell == null) continue;
+            var cell = PassiveCell(i);
+            cell.gameObject.SetActive(true);
             for (int c = cell.transform.childCount - 1; c >= 0; c--) Destroy(cell.transform.GetChild(c).gameObject);
 
-            var def = i < activePassives.Count ? SkillCatalog.Get(activePassives[i]) : null;
+            var def = SkillCatalog.Get(activePassives[i]);
             if (def == null) { cell.color = CellEmpty; continue; }
 
             cell.color = SkillSymbol.ColorFor(def);
@@ -287,6 +280,8 @@ public class HotbarPanel : MonoBehaviour
             Stretch(label.rectTransform, 1, 1);
             label.raycastTarget = false;
         }
+        for (int i = activePassives.Count; i < passiveCells.Count; i++)
+            if (passiveCells[i] != null) passiveCells[i].gameObject.SetActive(false);
     }
 
     Slot BuildSlot(Image cell, int index)
@@ -355,7 +350,7 @@ public class HotbarPanel : MonoBehaviour
         s.cdNum.gameObject.SetActive(false);
 
         // Skill-info hover card (tags, cost, description, effects).
-        if (skill is SkillRunner sr && sr.def != null) AttachSkillTooltip(cell.transform, sr.def);
+        if (skill is SkillRunner sr && sr.def != null) SkillHoverCard.Attach(cell.transform, sr.def);
 
         return s;
     }
@@ -426,74 +421,8 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.cdNum.rectTransform, 2, 2);
         s.cdNum.gameObject.SetActive(false);
 
-        if (skill is SkillRunner sr2 && sr2.def != null) AttachSkillTooltip(cell.transform, sr2.def);
+        if (skill is SkillRunner sr2 && sr2.def != null) SkillHoverCard.Attach(cell.transform, sr2.def);
         return s;
-    }
-
-    // Build the ONE shared skill-info card on the canvas root (once). Fixed width, auto height via ContentSizeFitter;
-    // Hidden until a hover positions + shows it.
-    void EnsureSharedTooltip()
-    {
-        if (tipRoot != null) return;
-        var img = NewImage("SkillInfoCard", transform, new Color(0.06f, 0.06f, 0.08f, 0.97f));
-        tipRoot = img.gameObject;
-        tipRT = img.rectTransform;
-        tipRT.anchorMin = tipRT.anchorMax = new Vector2(0.5f, 0.5f);
-        tipRT.pivot = new Vector2(0.5f, 0f);   // grows upward from the point above the cell
-        tipRT.sizeDelta = new Vector2(288f, 120f);   // width fixed; height is driven by the fitter below
-        img.raycastTarget = false;
-
-        var vlg = tipRoot.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(10, 10, 8, 8);
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
-        var fit = tipRoot.AddComponent<ContentSizeFitter>();
-        fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        tipText = NewText("Text", tipRoot.transform, "", 12, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
-        tipText.richText = true;
-        tipText.textWrappingMode = TMPro.TextWrappingModes.Normal;
-
-
-        tipRoot.SetActive(false);
-    }
-
-    // Bind a cell's hover to the shared card: populate from the skill's def + position over THIS cell on enter, hide on exit.
-    void AttachSkillTooltip(Transform cell, SkillDef def)
-    {
-        if (def == null) return;
-        var captured = def;
-        var cellRT = (RectTransform)cell;
-        var trig = cell.gameObject.GetComponent<EventTrigger>() ?? cell.gameObject.AddComponent<EventTrigger>();
-        AddTrigger(trig, EventTriggerType.PointerEnter, () => ShowSkillTip(cellRT, captured));
-        AddTrigger(trig, EventTriggerType.PointerExit,  HideTip);
-    }
-
-    void ShowSkillTip(RectTransform cellRT, SkillDef def)
-    {
-        if (def == null) return;
-        EnsureSharedTooltip();
-        tipText.text = SkillTooltip.Build(def);
-        tipRoot.transform.SetAsLastSibling();   // above every cell — the fix for "sometimes it doesn't show"
-        tipRoot.SetActive(true);
-
-        var canvas = GetComponentInParent<Canvas>();
-        Camera cam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
-        cellRT.GetWorldCorners(cornerBuf);                       // [1]=top-left, [2]=top-right
-        Vector3 topCenter = (cornerBuf[1] + cornerBuf[2]) * 0.5f;
-        Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, topCenter);
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform, screen, cam, out var local))
-            tipRT.anchoredPosition = local + new Vector2(0f, 8f);
-    }
-
-    void HideTip() { if (tipRoot != null) tipRoot.SetActive(false); }
-
-    static void AddTrigger(EventTrigger trig, EventTriggerType type, System.Action fn)
-    {
-        var e = new EventTrigger.Entry { eventID = type };
-        e.callback.AddListener(_ => fn());
-        trig.triggers.Add(e);
     }
 
     void Refresh()

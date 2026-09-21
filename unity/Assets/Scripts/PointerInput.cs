@@ -82,7 +82,8 @@ public static class PointerInput
 
     /// <summary>Zoom intent as +1 / -1 / 0. Only the SIGN, never the magnitude: scroll units differ wildly per
     /// backend and per mouse driver (the new backend reports ~120 per notch on Windows), so one notch means one
-    /// step everywhere. A phone's pinch is reported in the same units for the same reason.</summary>
+    /// step everywhere. A phone's pinch is reported in the same units for the same reason. Always 0 while the mouse
+    /// is over the HUD.</summary>
     public static int ScrollDir
     {
         get
@@ -90,6 +91,10 @@ public static class PointerInput
 #if UNITY_ANDROID
             if (TouchControls.HasTouch) return TouchControls.ZoomDir;
 #endif
+            // A WHEEL TURNED OVER A WINDOW BELONGS TO THE WINDOW. Every scrolling list, and anything else on screen,
+            // gets it; the camera never zooms under an open window. The one gate for the whole HUD, so no window
+            // has to remember to claim it.
+            if (UiBlock.PointerOverUI()) return 0;
             float s;
 #if ENABLE_INPUT_SYSTEM
             if (Mouse.current != null) s = Mouse.current.scroll.ReadValue().y;

@@ -39,6 +39,12 @@ public class EquipmentInstance
     [Tooltip("Finished magic defence this copy grants (server-written).")]
     public int pieceMagicDefense;
 
+    [Tooltip("The id of this copy's TRADEMARK skill, rolled once at the forge and never changed. Empty = none. Its " +
+             "name and the numbers it raises are read from that skill, never stored here.")]
+    public string trademarkSkillId = "";
+    [Tooltip("Finished lift this copy's trademark adds to its skill's main numbers (server-written, from the grade).")]
+    public float trademarkLift;
+
     public EquipmentInstance() { }
     public EquipmentInstance(Item def, int upgrade = 0)
     {
@@ -64,6 +70,7 @@ public class EquipmentInstance
     /// cross in the same text the grade does, and that side only copies them in.</summary>
     public void Recompute()
     {
+        trademarkLift = string.IsNullOrEmpty(trademarkSkillId) ? 0f : CraftingMath.TrademarkLift(quality);
         if (def == null) { pieceAttack = pieceMagicAttack = pieceDefense = pieceMagicDefense = 0; return; }
         CraftingMath.PieceNumbers(def.slot, def.weaponType, upgrade, quality,
                                   out pieceAttack, out pieceMagicAttack, out pieceDefense, out pieceMagicDefense);
@@ -116,8 +123,9 @@ public class EquipmentInstance
         while (inkStats.Count < inkValues.Count) inkValues.RemoveAt(inkValues.Count - 1);
     }
 
-    /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, and its written stats,
-    /// joined for the save and the wire: "grade;attack,magic attack,defence,magic defence;stat:value,stat:value".
+    /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats and its
+    /// trademark, joined for the save and the wire:
+    /// "grade;attack,magic attack,defence,magic defence;stat:value,stat:value;trademark skill id:finished lift".
     /// Paired with <see cref="DecodeRoll"/>. Kept in the same slot the armour roll used, so the save and the wire
     /// need no new array — and carrying the finished numbers here is what lets a player's machine draw them
     /// without working any of them out.</summary>
@@ -134,6 +142,8 @@ public class EquipmentInstance
             if (i > 0) sb.Append(',');
             sb.Append(((int)inkStats[i]).ToString(ci)).Append(':').Append(inkValues[i].ToString("0.###", ci));
         }
+        if (!string.IsNullOrEmpty(trademarkSkillId))
+            sb.Append(';').Append(trademarkSkillId).Append(':').Append(trademarkLift.ToString("0.####", ci));
         return sb.ToString();
     }
 
@@ -144,6 +154,8 @@ public class EquipmentInstance
     {
         quality = Quality.Raw;
         pieceAttack = pieceMagicAttack = pieceDefense = pieceMagicDefense = 0;
+        trademarkSkillId = "";
+        trademarkLift = 0f;
         EnsureInkLists();
         inkStats.Clear();
         inkValues.Clear();
@@ -183,6 +195,17 @@ public class EquipmentInstance
                     inkValues.Add(v);
                 }
             TrimInkToSlots();
+
+            // The trademark: which skill, and the finished lift the server wrote for it. A save written before
+            // trademarks existed has no such part — that copy simply has none.
+            if (parts.Length > 3 && !string.IsNullOrEmpty(parts[3]))
+            {
+                int colon = parts[3].LastIndexOf(':');
+                trademarkSkillId = colon > 0 ? parts[3].Substring(0, colon) : parts[3];
+                if (colon > 0)
+                    float.TryParse(parts[3].Substring(colon + 1), System.Globalization.NumberStyles.Float, ci,
+                                   out trademarkLift);
+            }
         }
         RecomputeIfMine();
     }

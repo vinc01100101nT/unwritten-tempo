@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 60
   needsSkillId: skill.sword.overclock
   published: 1
+  trademarkName: Ranbu
   description: 'Become the storm.
 
     Arms dance charges and half as many parries
@@ -197,7 +198,9 @@ MonoBehaviour:
         weight: 20
       chanceAffinity: []
       durationAffinity: []
-      hitCountAffinity: []
+      hitCountAffinity:
+      - stat: 8
+        weight: 100
     - kind: 12
       useStacks: 0
       resolveAsBasicAttack: 0

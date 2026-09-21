@@ -47,7 +47,6 @@ SCREEN_NAMES = {
     "SkillBookPanel.cs": "Skill Book",
     "SkillDraftPanel.cs": "Skill Draft",
     "SkillTooltip.cs": "Skill Tooltip",
-    "WeaponSkillDetailsPanel.cs": "Weapon Skills",
     "HotbarPanel.cs": "Hotbar",
     "StatPanel.cs": "Character Sheet",
     "StatGlyph.cs": "Character Sheet",

@@ -81,7 +81,7 @@ Before running any of these, do what [not-done-yet.md ▸ Before you start](not-
 
 ### 4. The skill and server plumbing (`MT-1`)
 
-Open the Grimoire with **J** to tick or untick a passive and to put any skill on your bar. `/bind <skillId>` does the same from chat.
+Put a learned skill on your bar by dragging it from the Skills window (**K**); a learned passive works on its own. `/bind <skillId>` binds from chat.
 
 **Passives on a landed hit and on a kill:**
 

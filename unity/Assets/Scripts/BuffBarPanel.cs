@@ -152,18 +152,9 @@ public class BuffBarPanel : MonoBehaviour
         var cell = new Cell { buff = buff, rt = frame.rectTransform, fill = fill, time = time, stacks = stacks };
 
         // Hover → show the shared info card beside this cell; exit → hide it.
-        var trig = frame.gameObject.AddComponent<EventTrigger>();
-        AddTrigger(trig, EventTriggerType.PointerEnter,
-                   () => StateInfoCard.Show(canvas, cell.rt, cell.buff, StateInfoCard.Side.Left));
-        AddTrigger(trig, EventTriggerType.PointerExit, StateInfoCard.Hide);
+        HoverRelay.Set(frame.gameObject,
+                       () => StateInfoCard.Show(canvas, cell.rt, cell.buff, StateInfoCard.Side.Left), StateInfoCard.Hide);
         return cell;
-    }
-
-    static void AddTrigger(EventTrigger trig, EventTriggerType type, System.Action fn)
-    {
-        var entry = new EventTrigger.Entry { eventID = type };
-        entry.callback.AddListener(_ => fn());
-        trig.triggers.Add(entry);
     }
 
     void Refresh()

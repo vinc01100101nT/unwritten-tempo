@@ -2,8 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// THE one answer to "what does this skill look like on a tile" — its two letters, and the colour of the weapon it
-/// belongs to. Every surface that used to draw a skill icon asks here instead: the hotbar, the Grimoire, the buff
-/// tray, the mob nameplate and the unit status row, so all five can never disagree about a skill's face.
+/// belongs to. Every surface that used to draw a skill icon asks here instead: the hotbar, the Skills window, the
+/// buff tray, the mob nameplate and the unit status row, so all five can never disagree about a skill's face.
 /// </summary>
 public static class SkillSymbol
 {

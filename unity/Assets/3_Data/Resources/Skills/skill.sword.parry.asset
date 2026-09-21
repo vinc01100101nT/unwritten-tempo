@@ -193,6 +193,8 @@ MonoBehaviour:
       durationAffinity:
       - stat: 3
         weight: 100
+      - stat: 1
+        weight: 0
       hitCountAffinity: []
   shortLabel: Parry
   keyLabel: 

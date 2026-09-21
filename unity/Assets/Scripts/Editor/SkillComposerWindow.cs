@@ -923,8 +923,8 @@ public class SkillComposerWindow : EditorWindow
             string beforeId = sel.id;
             var beforeWeapon = sel.weaponType;
             var weapon = (WeaponType)EditorGUILayout.EnumPopup(new GUIContent("weapon",
-                "WHICH weapon's skill pool this belongs to. A dropped weapon rolls its kit only from PUBLISHED skills " +
-                "of its own type. None = in no pool: never rolled, but still usable from the Grimoire for testing."), sel.weaponType);
+                "WHICH weapon's skill pool this belongs to: it is learned by mastering that weapon, and only used " +
+                "while one is in hand. None = in no pool: nobody learns it."), sel.weaponType);
             string beforeName = sel.displayName;
             string named = EditorGUILayout.DelayedTextField(new GUIContent("display name",
                 "The skill's name shown to the player (hotbar hover, tooltips) — and the source of its id: " +
@@ -955,12 +955,31 @@ public class SkillComposerWindow : EditorWindow
             }
 
             sel.published = EditorGUILayout.Toggle(new GUIContent("published",
-                "PUBLISHED = this skill may be rolled onto a dropped weapon of its type. Unpublished skills stay fully " +
-                "usable in the Grimoire (J) and on the hotbar for testing — publishing only opens the loot roll. " +
-                "A skill with weapon = None can never be rolled, published or not."), sel.published);
+                "PUBLISHED = a forge may roll this as a weapon's trademark, and a creature may draw it as its extra " +
+                "skill. Unpublished or not, it is learned by mastering its weapon. " +
+                "A skill with weapon = None is never rolled as a trademark, published or not."), sel.published);
             if (sel.published && sel.weaponType == WeaponType.None)
                 EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
                     MessageType.Warning);
+
+            // Only a skill the forge can ROLL asks for a name — the forge's own test, asked again on every redraw, so
+            // adding or removing a main-number effect, the weapon or the published box shows or hides it at once.
+            if (Trademarks.Rollable(sel, sel.weaponType))
+            {
+                string beforeTrademark = sel.trademarkName ?? "";
+                string name = EditorGUILayout.TextField(new GUIContent("trademark name",
+                    "What a forged weapon is called when this is its trademark skill — '+15 Hadori [C]'. Every " +
+                    "published weapon skill with a main number on any effect is a trademark, so every one of them needs a name."),
+                    beforeTrademark);
+                if (name != beforeTrademark)
+                {
+                    sel.trademarkName = name;
+                    EditorUtility.SetDirty(sel);
+                }
+                if (string.IsNullOrWhiteSpace(sel.trademarkName))
+                    EditorGUILayout.HelpBox("This skill is a trademark but has no name — a weapon that rolls it is " +
+                        "called by its item name instead.", MessageType.Warning);
+            }
 
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
@@ -1905,7 +1924,7 @@ public class SkillComposerWindow : EditorWindow
 
             // An instant effect has NO duration — keep seconds 0 so the buff tray (which validates by duration) never
             // shows a phantom icon for it, and so switching a durational kind to an instant one clears the leftover.
-            if (!HasDurationChannel(ef)) ef.seconds.value = 0f;
+            if (!EffectScaling.HasDuration(ef.kind)) ef.seconds.value = 0f;
 
             // SCALING & STACKS live behind a fold, CLOSED by default: an effect's identity is its verb and its one or
             // two numbers, and those were being buried under ring-scaling rows and stacking knobs that most effects
@@ -1918,17 +1937,18 @@ public class SkillComposerWindow : EditorWindow
                 // slow amount, …), its odds, its duration. A channel that scales nothing is hidden rather than shown
                 // dead — a pure stun has no output number, and a certain effect has no odds to improve. Weights are
                 // relative; empty = ×1 (no scaling).
-                string affLabel = AffinityOutputLabel(ef);
-                if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
-                if (SkillEffect.RollsChance(ef.kind) && ef.chance.value < 1f) DrawAffinity("boosts CHANCE", ref ef.chanceAffinity);
-                if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
-                // A MODIFIER's numbers live in fields of their own (they describe another skill's pile rather than this
-                // effect's body), so they can't ride the two rows above — but they are the same two channels, and there
-                // is no reason a modifier should be the one kind whose numbers nothing is allowed to lift.
-                if (ef.kind == SkillEffectKind.AddStacks) DrawAffinity("boosts STACKS ADDED", ref ef.affinity);
-                if (ef.kind == SkillEffectKind.ExtendDuration) DrawAffinity("boosts SECONDS ADDED", ref ef.durationAffinity);
+                // EVERY ROW IS THE FIGHT'S OWN ANSWER (EffectScaling): a row appears here exactly when the fight scales
+                // that number, under the same label. This window keeps no list of its own.
+                string outRow = EffectScaling.OutputRingRow(ef);
+                if (outRow != null) DrawAffinity(outRow, ref ef.affinity);
+                DrawPracticeLine(ef);
+                string chanceRow = EffectScaling.ChanceRingRow(ef);
+                if (chanceRow != null) DrawAffinity(chanceRow, ref ef.chanceAffinity);
+                string durationRow = EffectScaling.DurationRingRow(ef);
+                if (durationRow != null) DrawAffinity(durationRow, ref ef.durationAffinity);
                 DrawStacking(ef);
-                if (ef.kind == SkillEffectKind.Damage) DrawAffinity("boosts HITS COUNT", ref ef.hitCountAffinity);
+                string hitsRow = EffectScaling.HitsRingRow(ef);
+                if (hitsRow != null) DrawAffinity(hitsRow, ref ef.hitCountAffinity);
                 EditorGUI.indentLevel--;
             }
             EditorGUILayout.EndVertical();
@@ -1998,7 +2018,7 @@ public class SkillComposerWindow : EditorWindow
     // effects rather than shown as dead fields. Stacks-per-apply IS the "charges" knob: 3 = one cast hands out 3.
     static void DrawStacking(SkillEffect ef)
     {
-        if (!HasDurationChannel(ef)) { ef.stacking = false; return; }   // an instant effect can't be a stacking condition
+        if (!EffectScaling.HasDuration(ef.kind)) { ef.stacking = false; return; }   // an instant effect can't be a stacking condition
 
         ef.stacking = EditorGUILayout.Toggle(new GUIContent("stacking",
             "OFF = one instance; re-applying replaces it (newest wins). ON = each application ADDS stacks, each with " +
@@ -2073,33 +2093,8 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
-    // The label for an effect's main affinity channel — names exactly what it boosts. null = it scales nothing (a pure
-    // stun has no output number), so the channel is hidden.
-    static string AffinityOutputLabel(SkillEffect e)
-    {
-        switch (e.kind)
-        {
-            case SkillEffectKind.Damage:        return "boosts DAMAGE";
-            case SkillEffectKind.Execute:       return "boosts EXECUTE DAMAGE";
-            case SkillEffectKind.Heal:          return "boosts HEAL AMOUNT (sustain: HP/MP/Def)";
-            case SkillEffectKind.Shield:        return "boosts BARRIER HP (sustain: HP/Def/MP)";
-            // A sub-stat change's amount is FLAT — no affinity channel (round-7 rule); only its DURATION scales
-            // (off sustain). One rule for every sub-stat, so none of them can quietly become affinity-scaled.
-            case SkillEffectKind.SubStatBuff:
-            case SkillEffectKind.SubStatDebuff: return null;
-            case SkillEffectKind.Status:
-                // The odds live in their own channel now, so this one always names the ailment's own number.
-                switch (e.ailment)
-                {
-                    case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "boosts DAMAGE / TICK";
-                    default:            return null;   // stun / freeze / silence: binary, nothing to scale
-                }
-            default: return null;   // Taunt / Teleport / Cleanse have no scalable output
-        }
-    }
-
     /// <summary>WHAT this effect's main number IS, named the way its own row names it — the label for the row that
-    /// lets the cast's pile lift it. Deliberately NOT <see cref="AffinityOutputLabel"/>: that one answers a different
+    /// lets the cast's pile lift it. Deliberately NOT <see cref="EffectScaling.OutputRingRow"/>: that one answers a different
     /// question ("which numbers may your BUILD lift"), and several kinds are flat against the ring on purpose while
     /// still being fair game for what a cast earned this fight. Null = this kind has no output number at all.</summary>
     static readonly string[] CountOnlyRead = { "Count" };
@@ -2192,26 +2187,6 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
-    // Which effects have a duration worth scaling (the second affinity channel).
-    static bool HasDurationChannel(SkillEffect e)
-    {
-        switch (e.kind)
-        {
-            case SkillEffectKind.Status:
-            case SkillEffectKind.SubStatBuff:
-            case SkillEffectKind.SubStatDebuff:
-            case SkillEffectKind.Parry:
-            case SkillEffectKind.Brace:
-            case SkillEffectKind.BoostOutgoingDamage:
-            case SkillEffectKind.ReduceOutgoingDamage:
-            case SkillEffectKind.ImmuneToDisables:
-            case SkillEffectKind.Shield:
-            case SkillEffectKind.Taunt:
-                return true;
-            default:
-                return false;
-        }
-    }
 
     // One weighted stat-list (an effect's affinity channel): rows of (stat, lock, %-slider) + add/remove. Affinity is a
     // RATIO ("which stats scale this, in what mix") — the runtime normalizes by the sum, so only proportions matter.
@@ -2219,6 +2194,26 @@ public class SkillComposerWindow : EditorWindow
     // one stat's slider pulls the budget out of the OTHER stats proportionally, so the total can never be a stale/wrong
     // number. LOCK a stat to freeze it: it holds its value while you drag the others, and only the remaining unlocked
     // stats absorb the change (a dragged stat is clamped to the budget the locks leave free). The % is a read-only label.
+    // WHAT PRACTICE DOES TO THIS NUMBER, stated where the ring rows are — so nothing lifts an effect without the
+    // composer saying so. Worded from the live constants, and from which mastery the skill rides: an active has its
+    // own Skill Mastery; a passive cannot be pressed, so it rides the weapon's.
+    void DrawPracticeLine(SkillEffect ef)
+    {
+        if (!EffectScaling.Boostable(ef)) return;
+        bool passive = sel != null && sel.IsPassive;
+        float perLevel = passive ? MasteryMath.WeaponPercentPerLevel : MasteryMath.SkillPercentPerLevel;
+        string line = (passive ? "raised by Weapon Mastery" : "raised by Skill Mastery") + ": +"
+                      + (perLevel * 100f).ToString("0.#") + "% a level, up to +"
+                      + (MasteryMath.MaxSkillLift * 100f).ToString("0") + "%";
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Space(8);
+        var prev = GUI.color;
+        GUI.color = new Color(0.6f, 0.9f, 0.6f);
+        EditorGUILayout.LabelField(line, EditorStyles.miniLabel, GUILayout.MinWidth(0f));
+        GUI.color = prev;
+        EditorGUILayout.EndHorizontal();
+    }
+
     static void DrawAffinity(string label, ref List<StatWeight> list)
     {
         if (list == null) list = new List<StatWeight>();

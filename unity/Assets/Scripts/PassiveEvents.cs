@@ -120,7 +120,7 @@ public static class PassiveEvents
             // OnSkillCastComplete is parameterized inside EntryFor: only an entry bound to THIS skill id matches.
             var entry = def.EntryFor(trigger, skillId);
             if (entry == null) continue;
-            // THE OWNERSHIP GATE: a passive only RUNS when its unit says it is on — a person ticked it on and is
+            // THE OWNERSHIP GATE: a passive only RUNS when its unit says it is on — a person has learned it and is
             // holding the weapon it belongs to; a creature's list is what its own mastery opened, so all of it is
             // on. Asked of THIS unit, not of whoever happens to be at a keyboard.
             if (!actor.PassiveIsOn(def)) { Skipped(actor, def, trigger, "not switched on"); continue; }

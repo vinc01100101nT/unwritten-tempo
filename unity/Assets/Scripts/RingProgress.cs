@@ -26,7 +26,7 @@ public sealed class RingProgress
 
     /// <summary>XP needed to reach the next ring level — a slightly slower curve than the character's,
     /// so the ring is a deliberate, felt second track rather than a mirror of the level bar.</summary>
-    public int XPToNext => 20 + Level * 12;
+    public int XPToNext => UnitStatMath.RingXpToNextFrom(Level);
 
     /// <summary>Fired on any XP or level change — drives the K-panel ring readout (level + XP bar).</summary>
     public event Action OnChanged;

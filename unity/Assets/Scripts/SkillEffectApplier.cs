@@ -592,7 +592,7 @@ public static class SkillEffectApplier
     // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula) — it passes the local
     // player, which is exactly whose tooltip it is.
     public static int EffectiveHits(SkillEffect e, ICombatUnit caster = null, StackVars vars = default)
-        => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount.ResolveInt(vars)) * AffinityMult(e.hitCountAffinity, caster)));
+        => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount.ResolveInt(vars)) * RingHits(e, caster)));
 
     /// <summary>Does this strike belong to a run that draws ONE RISING YELLOW TOTAL instead of a number per beat?
     /// Two things have always drawn one: a skill that asks to show a single total across its repeats, and a strike
@@ -713,7 +713,7 @@ public static class SkillEffectApplier
         float odds = e.chance.Resolve(vars);
         if (odds <= 0f) return false;
         if (odds >= 1f) return true;
-        return CombatRng.Chance(Mathf.Clamp01(odds * AffinityMult(e.chanceAffinity, caster)));
+        return CombatRng.Chance(Mathf.Clamp01(odds * RingChance(e, caster)));
     }
 
     // ---- mob ----------------------------------------------------------------
@@ -941,11 +941,12 @@ public static class SkillEffectApplier
     // DURATION, the stacks it adds are its OUTPUT. Routed here so a modifier scales off the ring and off the cast's
     // pile exactly like everything else, instead of being the one kind whose numbers are frozen.
     static float ScaledModifierSeconds(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
-        Mathf.Max(0f, e.modifierSeconds.Resolve(vars, AffinityMult(e.durationAffinity, caster)));
-    // HOW MANY stacks a modifier hands over is a plain size, so the pile sizes it like every other output — that is
-    // Perfect Form: a run of hits read as a count, times a third, floored, so three in a row adds one and six adds two.
+        Mathf.Max(0f, e.modifierSeconds.Resolve(vars, RingDuration(e, caster)));
+    // HOW MANY stacks a modifier hands over is its main number, so it is sized like every other output — by the pile
+    // (Perfect Form: a run of hits read as a count, times a third, floored, so three in a row adds one and six adds
+    // two), by the ring, and by THIS skill's own practice.
     static int ScaledModifierStacks(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
-        e.modifierStacks.ResolveInt(vars, AffinityMult(e.affinity, caster));
+        e.modifierStacks.ResolveInt(vars, OutputMult(e, caster));
 
     // The pile-only form, for the numbers no multiplier may touch. Just ONE kind of number is left here: a shove's
     // SPEED, which is movement rather than power — a rare weapon must not throw people further. The stat buffs and
@@ -1016,14 +1017,31 @@ public static class SkillEffectApplier
     // An effect's OUTPUT: the authored base value met by the pile through the one shared formula, then scaled by ring
     // investment. The author's number is never ignored and never replaced — it is the base the pile builds on.
     static float ScaledMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
-        e.magnitude.Resolve(vars, AffinityMult(e.affinity, caster));
+        e.magnitude.Resolve(vars, RingOutput(e, caster));
 
     // An effect's own OUTPUT multiplier: what the ring's affinity earns, PLUS what the caster's own practice with
     // this skill is worth. Added, never multiplied — so mastery is worth the same +30 POINTS to a new character as
     // to a maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at
     // a ring term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
-    static float OutputMult(SkillEffect e, ICombatUnit caster) =>
-        AffinityMult(e.affinity, caster) + masteryLift;
+    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift);
+
+    /// <summary>THE multiplier on an effect's main number: the ring's term where <see cref="EffectScaling"/> gives it
+    /// a ring row, plus the practice lift where it says practice raises it — ADDED, never multiplied. Public so the
+    /// tooltip draws the same number the fight lands, from the same rule, with its own lift passed in.</summary>
+    public static float OutputScale(SkillEffect e, ICombatUnit caster, float practiceLift) =>
+        RingOutput(e, caster) + (EffectScaling.Boostable(e) ? practiceLift : 0f);
+
+    // THE RING'S TERM ON EACH NUMBER, asked of the one rule: no row in the composer means the ring does not touch it,
+    // here or anywhere. Each is ×1 when the rule says no, which is what an empty list already gave — so routing
+    // through the rule moved no number (checked against every saved skill on 2026-09-21).
+    static float RingOutput(SkillEffect e, ICombatUnit caster) =>
+        EffectScaling.OutputRingRow(e) != null ? AffinityMult(e.affinity, caster) : 1f;
+    static float RingChance(SkillEffect e, ICombatUnit caster) =>
+        EffectScaling.ChanceRingRow(e) != null ? AffinityMult(e.chanceAffinity, caster) : 1f;
+    static float RingDuration(SkillEffect e, ICombatUnit caster) =>
+        EffectScaling.DurationRingRow(e) != null ? AffinityMult(e.durationAffinity, caster) : 1f;
+    static float RingHits(SkillEffect e, ICombatUnit caster) =>
+        EffectScaling.HitsRingRow(e) != null ? AffinityMult(e.hitCountAffinity, caster) : 1f;
 
     // The practice-lifted form of ScaledMagnitude, for every number that IS output: an ailment's damage per tick, how
     // far a sub-stat buff or debuff moves, and what one outgoing-damage charge is worth.
@@ -1032,7 +1050,7 @@ public static class SkillEffectApplier
     static float OutputMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, OutputMult(e, caster));
     static float ScaledSeconds(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
-        e.seconds.Resolve(vars, AffinityMult(e.durationAffinity, caster));
+        e.seconds.Resolve(vars, RingDuration(e, caster));
 
     /// <summary>How many stacks this apply grants. Normally the authored number; when the effect is driven by attack
     /// speed it is instead HOW MANY TIMES THE CASTER WOULD SWING inside this effect's own window — the window it is

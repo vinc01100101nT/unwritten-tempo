@@ -28,8 +28,12 @@ public struct CraftStationOffer
     /// <summary>What that Salt is called, for the window to name. Empty when none is being used.</summary>
     public string saltName;
 
-    /// <summary>False when this grade cannot be quenched at all (it is already the best there is).</summary>
+    /// <summary>True when the piece may be quenched RIGHT NOW — below A, and folded to its grade's cap.</summary>
     public bool canQuench;
+    /// <summary>True when the piece is already A, which is the top of the ladder and never quenched. Separate from
+    /// <see cref="canQuench"/> so the window can tell "not folded far enough yet" from "there is nothing above
+    /// this" — two refusals that read nothing alike.</summary>
+    public bool atTheTop;
     /// <summary>False when the piece is already at its grade's fold cap — the point at which only a quench moves it on.</summary>
     public bool canFold;
 

@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 25
   needsSkillId: skill.sword.parry
   published: 1
+  trademarkName: Suki
   description: "Find the weakness.\nA parry has a 50% chance to charge your next
     attack with +200% damage, within 5s \u2014 spent whether it hits or misses."
   archetype: 1

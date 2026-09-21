@@ -17,7 +17,7 @@
   },
   {
    "type": "paragraph",
-   "text": "Every Sword rolls its kit from this pool: **1 ultimate + a few actives + a few passives**."
+   "text": "You learn these by practising the sword: each opens at the **Sword Mastery** level it names, and some need another skill first. A forged sword is also named for one of them — its **trademark**, shown on each card below — and raises every number that skill puts out while you hold it (see *Weapons & Equipment*)."
   },
   {
    "type": "heading",
@@ -28,7 +28,7 @@
    "type": "skillTable",
    "source": "Sword",
    "group": "ultimate",
-   "subtitle": "One per Sword. 40 MP, and a long cooldown rather than a charge meter."
+   "subtitle": "Three, opening at Sword Mastery 30, 45 and 60. 40 MP, and a long cooldown rather than a charge meter."
   },
   {
    "type": "heading",

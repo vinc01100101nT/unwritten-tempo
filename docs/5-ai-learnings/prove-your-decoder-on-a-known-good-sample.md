@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-06
+last-updated: 2026-09-21
 tags:
   - ai-learnings
 ---
@@ -60,6 +60,23 @@ This is the sibling of the rule that an empty search result is not proof of abse
 search can see a known-present case*. This one says *prove your decoder can read a known-good file*, and *prove
 your test subject is alive enough to be acted on*. Same failure, three directions: the instrument blind, the
 instrument lying, or the instrument in a state that guarantees the answer.
+
+### The same failure, 2026-09-21: an enum read by counting, with a comment in the middle
+
+To audit which sword skills a weapon bonus could lift, I turned each saved skill's effect NUMBERS into names by
+counting the members of the enum in its source file. A comment block inside the enum, part-way down, was split
+by my parser into two fake members — so **every number from 14 up came out one too high**. Parry (12) decoded
+correctly, which made the whole table look trustworthy.
+
+It cost two rounds of wrong design advice. I told the user their pick **Opening** could never be boosted (I read
+it as "adds stacks"; it is a +200% damage boost) and replaced it; I included **Unwavering** (I read it as damage
+reduction; it is only disable immunity); I excluded **Pressure** (I read it as disable immunity; it cuts HP
+regen). The user caught none of those — they caught a *fourth* problem, and re-reading for that exposed the rest.
+
+**The known-good sample was sitting in the same file.** Every skill has a written description. "A parry charges
+your next attack with **+200% damage**" decoded as *AddStacks* is a contradiction you can see in one line. One
+cross-check of a decoded value against the thing's own description, before building a table on it, would have
+caught all three.
 
 ## How to apply
 

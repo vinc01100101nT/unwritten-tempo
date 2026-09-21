@@ -449,7 +449,7 @@ public static class GmCommands
         if (weapon == WeaponType.None) { c.Reply("Hold a weapon, or name one."); return; }
         if (level < 0) { c.Reply("mastery [weapon] <n>"); return; }
 
-        c.Ch.Mastery.SetPractice(weapon, MasteryMath.WeaponPointsFor(level));
+        c.Ch.Mastery.SetPractice(weapon, MasteryMath.WeaponXpFor(level));
         int learned = c.Ch.Mastery.LearnWhatIsOpen();
         c.Ch.RefreshUsableSkills();
         c.Reply($"{weapon} mastery {c.Ch.Mastery.EarnedLevel(weapon)} — {learned} new skill(s) learned, " +

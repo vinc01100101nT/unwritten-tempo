@@ -209,6 +209,7 @@ public class ItemTooltip : MonoBehaviour
         AppendHeader(sb, def);
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
+        AppendTrademark(sb, inst);
 
         int slots = def.cardSlots;
         if (slots > 0)
@@ -234,14 +235,39 @@ public class ItemTooltip : MonoBehaviour
 
     static readonly Color PlainTitle = new Color(0.91f, 0.91f, 0.91f);
 
-    /// <summary>How a copy is named on screen: its grade, then its folds, then the piece — "B +12 Sword". A piece
-    /// that has never been quenched or folded is just its name.</summary>
+    /// <summary>How a copy is named on screen. A weapon with a trademark goes by the trademark's name: its folds,
+    /// the name, then its grade — "+15 Hadori [C]". Anything else: its grade, then its folds, then the piece —
+    /// "B +12 Sword".</summary>
     public static string CopyTitle(EquipmentInstance inst)
     {
         if (inst == null || inst.def == null) return "";
         string grade = inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString();
+        var trademark = Trademarks.SkillOf(inst);
+        if (trademark != null && !string.IsNullOrEmpty(trademark.trademarkName))
+            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.trademarkName + " [" + grade + "]";
         string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
         return grade + folds + " " + inst.def.displayName;
+    }
+
+    // THIS COPY's trademark: the skill it empowers, then one line per effect of that skill the weapon raises — read
+    // off the skill as it is now, so an edited skill is described as edited. The percentage is the finished lift the
+    // server wrote on the copy.
+    static void AppendTrademark(StringBuilder sb, EquipmentInstance inst)
+    {
+        var skill = Trademarks.SkillOf(inst);
+        if (skill == null) return;
+        sb.Append("\n\n<color=#B9B9B9>Trademark Skill: </color>").Append(skill.displayName);
+        string pct = "+" + Mathf.RoundToInt(inst.trademarkLift * 100f) + "% ";
+        for (int b = 0; b < skill.bindings.Count; b++)
+        {
+            var fx = skill.bindings[b]?.effects;
+            if (fx == null) continue;
+            for (int i = 0; i < fx.Count; i++)
+            {
+                string word = SkillTooltip.MainNumberWord(fx[i]);
+                if (word != null) sb.Append('\n').Append(pct).Append(word);
+            }
+        }
     }
 
     // A weapon says which of the two physical attacks it swings with; nothing else about it is spelled out.

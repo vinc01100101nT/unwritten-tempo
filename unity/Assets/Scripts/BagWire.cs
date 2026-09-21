@@ -45,14 +45,13 @@ public struct BagWire
 
     // ---- and the BAR the server just rewrote ----------------------------------------------------------
     //
-    // Changing weapons replaces somebody's whole bar and clears the passives they had ticked, and the server is
-    // where that is decided. It used to be decided there and nowhere else: the new weapon appeared on the body
+    // Changing weapons replaces somebody's whole bar, and the server is where that is decided. It used to be decided there and nowhere else: the new weapon appeared on the body
     // while the keys kept the old weapon's skills, so pressing one asked for a skill the server no longer agreed
     // was theirs. Sending WHAT THE SERVER DECIDED, rather than having the other machine work the same rule out a
     // second time, is what keeps one answer to "what is on my bar".
     //
-    // BOTH ARE NULL ON AN ORDINARY BAG CHANGE — picking something up, drinking a potion, tidying the bag — and
-    // are filled in only by a push that follows a weapon going on or coming off. That is deliberate: a bar sent
+    // IT IS NULL ON AN ORDINARY BAG CHANGE — picking something up, drinking a potion, tidying the bag — and
+    // is filled in only by a push that follows a weapon going on or coming off. That is deliberate: a bar sent
     // with every bag change would undo an arrangement the player made a moment earlier, if the two crossed in
     // flight. A null array costs one byte and arrives as null, so "the server did not touch your bar" and "your
     // bar is empty" cannot be mistaken for each other.
@@ -60,7 +59,6 @@ public struct BagWire
     // Same arrays as the save, like everything above.
 
     public string[] hotbarBindings;
-    public string[] activePassives;
 
     /// <summary>Read a character's belongings off it, ready to send. Pass <paramref name="alsoTheBar"/> when the
     /// server has just rewritten this person's hotbar — see the note above; on every other change it is left out
@@ -76,7 +74,6 @@ public struct BagWire
         if (alsoTheBar)
         {
             wire.hotbarBindings = c.Hotbar.Capture();
-            wire.activePassives = c.PassiveSkills.Capture();
         }
 
         var bag = c.Bag;
@@ -154,7 +151,6 @@ public struct BagWire
         if (hotbarBindings != null)
         {
             c.Hotbar.Restore(hotbarBindings);
-            c.PassiveSkills.Restore(activePassives);
         }
 
         // AND ON EVERY BAG THAT ARRIVES, not only one that brought a bar with it.

@@ -12,3 +12,4 @@
 - [Chat crosses the wire](../chat-crosses-the-wire.md) — a said line and a skill call are sent to the server and echoed to everyone who can see the speaker; nothing is drawn at the keyboard that typed it.
 - [Minimap runs a live second camera](../minimap-runs-a-live-second-camera.md) — no map is baked, so every map renders the world twice per client; capped at 20 Hz, and the user ruled out baking — do not offer it.
 - [Bag is a TEXT LIST, not an icon grid](../bag-is-a-text-list.md) — `InventoryList.cs`; each row carries an `ItemSlot`+`SlotDragHandler` so hover/preview/click/both drags work. Sorting is a LENS; the store owns the order. Dropping goes through `InventoryStore.Drop`.
+- [UI Shell rebuild bloated the scene](../ui-shell-rebuild-bloated-the-scene.md) — Build UI Shell + save used to embed a whole TMP font (96k lines) in `Systems.unity`, because runtime-made font assets can only be held as a scene override; the builder now reverts the instance.

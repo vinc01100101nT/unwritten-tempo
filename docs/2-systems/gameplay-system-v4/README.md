@@ -1,12 +1,12 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
 last-updated: 2026-09-21
 tags:
   - systems-combat-design
 ---
 
-# Gameplay System — V4 (Forging, Mastery & Ink)
+# Gameplay System — V4 (Forging, Mastery, Trademarks & Ink)
 
 > **Never append. Always update in place.** This page states only what has been AGREED. Anything still being
 > decided lives in **Still open** at the bottom and nowhere else. When a decision lands, rewrite the passage it
@@ -14,7 +14,8 @@ tags:
 
 **What V4 is.** V3 made the weapon the source of a character's skills: a dropped weapon rolled a random kit, and
 its rarity lifted how hard that kit hit. V4 moves progression into the character's own hands. **Gear is made,
-not dropped. Skills are learned, not rolled. Power over skills comes from practice.**
+not dropped. Skills are learned, not rolled. Power over skills comes from practice, and from the
+trademark of the forged weapon in hand.**
 
 **How it relates to V3.** This is now what the code does. [V3](../active-skill-system-v3/README.md) still
 describes the channels, effects, triggers and the ring's curve, which V4 keeps; where the two disagree — rolled
@@ -37,7 +38,12 @@ passages on those points are dead. **Not yet play-tested.**
 ## 2. Forge, Fold, Quench
 
 **Forge (make it).** Choose a design, pay base materials and gold. A **Raw** piece is born: **+0, no quality**.
-Nothing is rolled at forging.
+A weapon rolls ONE thing at forging — its **trademark** (§6) — and nothing else about any piece is rolled.
+
+**What a piece is called.** A weapon with a trademark goes by the trademark's name: its folds, the name, then its
+grade — **+15 Ranbu [C]**. Any other piece: its grade, its folds, then the item — **B +12 Sword**. That one title
+is used everywhere a piece is named: the bag list (which sorts and searches by it), its card, the station window
+and the chat replies.
 
 **Fold (raise it).** Each fold costs materials and gold and raises the piece by one: **a fold IS the existing
 refine (+N)**. A sword folded twelve times is a +12 sword. Folding is deterministic work with no luck.
@@ -65,6 +71,8 @@ world: an A-grade piece is folded only with what the strongest creatures drop. A
 - **Every quench consumes all the folds**, success or not: the piece is **+0** afterwards. Folding is what a
   quench spends.
 - **F is the floor.** A failed F stays F. Raw is left once and never returned to.
+- **A piece must be at its grade's fold cap to be quenched at all** — the cap is the gate, and the folds are what
+  the quench spends. Enforced in the code from 2026-09-21; before that any piece could be quenched at +0.
 - **A quench costs a larger amount of the piece's current band material, plus gold**, and optionally **one Salt**.
 - **Salt is a one-use booster**: it shifts that quench's odds toward "up" and is consumed
   either way. It never guarantees success, never removes the "down" outcome, and never adds power. It is **one
@@ -92,9 +100,9 @@ masteries (§5, §7), and it sets **how many stat slots** the piece has (§3). A
 **No Potential.** The folds are the budget, and they refill through work.
 
 **Recycle (take it apart).** At the station of its craft, any piece can be recycled: it is destroyed, and
-**half** of what it provably consumed comes back — the forge bill, one successful quench per rung it climbed
-(each priced at the grade it was made from), the folds standing on it now (at its own band), and the Inks whose
-stats are written on it. Nothing records a failed quench or the folds it spent, so those come back as nothing;
+**half** of what it provably consumed comes back — the forge bill; for each rung it climbed, that grade's full
+fold cap and one quench (priced at the grade it was made from, which the gate above makes provable); the folds
+standing on it now (at its own band); and the Inks whose stats are written on it. Nothing records a failed quench or the folds it spent, so those come back as nothing;
 Salt is never returned. Each material is halved and rounded down on its own, so a single unit never comes back
 whole. Decided 2026-09-21.
 
@@ -182,36 +190,59 @@ the endgame.
 
 ### How mastery is earned
 
-1. **Each creature is worth 1 point of practice in total**, split by the share of its health a character removed
-   with that weapon type. A solo kill gives 1; doing half the damage gives 0.5. The creature's level never makes
-   this bigger.
-2. **Scaled by how challenging the fight was**, comparing the creature's level to the **character's** level:
-   close to nothing when the creature is far below, full around the character's level, a little more when it is
-   above, **with a hard ceiling** so no single kill is ever a jackpot.
-3. **Scaled by the weapon's quality**, faster for better weapons.
-4. **Each mastery level needs more points than the last.**
-
-What this rules out: a high-level character picking up a new weapon type learns it at the same pace as a new
-player, never by a jump from one strong kill. A creature that cannot die (a training dummy) gives nothing, since
-no share of its health is ever removed.
+**Exactly the way your level and your ring are earned.** Every point of experience a kill pays you also goes to
+the mastery of the weapon in your hands — the same kill, the same number, paid to whoever the experience is paid
+to. Two things adjust it, both already above: the weapon's **grade sets how fast it trains** (the speed column in
+§9), and **nothing is earned while the grade's cap is reached**. Weapon mastery levels on **the ring's curve**
+(§9). A creature that cannot die (a training dummy) pays no experience, so it teaches nothing.
 
 ## 6. Skills leave the weapon
 
 - **A weapon no longer carries skills.** There is no rolled kit.
 - **Every skill is tagged with the weapon type it requires.** A character learns skills into their own **character
   skill window** and can use a learned skill only while holding that weapon type.
+- **A learned passive works on its own.** Nothing switches it on and there is no limit on how many: the moment its
+  weapon's mastery learns it, it fires on its trigger while a weapon of its type is in hand. The row above the
+  hotbar shows every passive live right now.
+
+### A forged weapon's trademark
+
+A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names & Trademarks](weapon-names-and-trademarks.md).
+
+- **Rolled once, at the forge, and never changed.** Folds, quenches and a failed quench leave it alone. A weapon
+  handed out any other way (a GM grant, a creature's gear) has none.
+- **Which skills can come up:** every **published** skill of the weapon's type with a **main number** (§7) on
+  any of its effects — decided from the skill's own effects every time, so a skill that gains a main number joins
+  the roll, and one that loses its last leaves it. For the sword that is 18 skills; Parry, Brace, Challenge and
+  Unwavering have no main number. **Each ultimate is 5%; the ordinary skills share the rest evenly.**
+- **Its name lives on the skill** — the **trademark name** field in the Skill Composer, shown only while the
+  skill can be rolled. The skill-data check fails on a rollable skill with no name.
+- **What it does:** while the weapon is held, **every main number of that skill** rises by the grade's percentage
+  (§9) — added to the practice lift (§7), never multiplied onto it. Creatures follow the same rule.
+- **What the cards say.** The weapon's card: "Trademark Skill: Blade Dance", then one line per raised effect
+  ("+20% damage", "+20% damage buff"). The skill's card: each effect's base number, then "Trademark skill bonus
+  damage: +20%" and "Skill mastery: +12%" (a passive: "Weapon mastery") on their own lines, each only when it is
+  above zero.
 
 ## 7. Skill Mastery
 
 **One mastery per skill** (Lunge mastery, Lock Blades mastery, …), honed by using that skill often. Using Lunge
 with a sword earns **Sword Mastery and Lunge mastery** together.
 
-- **It powers the skill.** It takes over the job rarity used to have: lifting that skill's output channels, **up
-  to +30%** at its highest. Like rarity's lift, it is added to the ring's term, never multiplied onto it.
+- **It powers the skill.** It takes over the job rarity used to have: lifting **every main number on every
+  effect** of that skill, **up to +30%** at its highest. It is added to the ring's term, never multiplied onto it.
+- **Main numbers, and only main numbers — no exception.** A main number is: a strike's or an execute's damage, a
+  heal, a shield, an ailment's damage per tick (Poison, Bleed, Burn), the size of a sub-stat buff or debuff
+  (drawbacks included — Overclock's double damage taken grows too), an outgoing-damage boost or cut, and the
+  stacks a skill adds to another skill's pile. A skill with several (Blade Dance's strike AND its damage buff)
+  has all of them raised. Chance, duration, number of hits and seconds added are raised by the ring alone. The
+  weapon trademark (§6) raises exactly the same numbers.
 - **It is earned per use, regardless of target** — one completed cast is one use, whether it hit a creature, a
   friend, or nothing. Mana and cooldown are the throttle.
-- **Only actives have it.** A passive cannot be used on purpose, so it earns no skill mastery; a passive's output
-  lift comes from **Weapon Mastery** instead (§9, so a passive is never left without the lift an active gets).
+- **Only actives have it.** A passive cannot be used on purpose, so it earns no skill mastery; a passive's lift
+  comes from **Weapon Mastery** instead (§9, so a passive is never left without the lift an active gets) — but
+  only a passive that belongs to the weapon in hand. A skill that belongs to no weapon, such as the one a potion
+  runs, gets no Weapon Mastery lift.
 - **It is permanent**, like Weapon Mastery.
 - **The equipped weapon's quality caps it and sets how fast it grows**, exactly as for Weapon Mastery, and while
   capped it earns nothing.
@@ -267,13 +298,20 @@ move once it is played. Change it here, in place, when it does.
 
 ### Mastery
 
-- **Weapon Mastery:** level N costs **N practice points** (level 70 = 2,485 points at par). Each level adds
-  **+0.5%** to each of the weapon's three stats (+35% each at 70).
-- **Challenge scale** (creature level minus character level, Δ): Δ ≤ −10 → **0**; −10 < Δ < 0 → rises straight
-  from 0 to 1; 0 ≤ Δ ≤ 5 → **1**; Δ > 5 → 1 + 0.1 per level above 5, **capped at 1.5**.
+- **Weapon Mastery:** earned from experience (§5) on the ring's curve — level N to N+1 costs **20 + 12 × N**
+  experience (level 70 = 30,380 at 1× speed), times the grade's speed. Each level adds **+0.5%** to each of the
+  weapon's three stats (+35% each at 70).
 - **Skill Mastery:** level N costs **5 × N uses** (level 30 = 2,325 casts at par), each level adds **+1%** to the
   skill's output (+30% at 30). The weapon's quality speed column applies to uses too.
-- **A passive's output lift** = Weapon Mastery level × 0.5%, capped at +30%.
+- **A passive's output lift** = Weapon Mastery level × 0.5%, capped at +30% — only for a passive that belongs to the
+  weapon in hand. A skill that belongs to no weapon (a potion's, for one) gets no Weapon Mastery lift.
+
+### Trademarks
+
+- **Lift by the weapon's grade:** Raw **+5%** · F **+7%** · E **+10%** · D **+12%** · C **+15%** · B **+18%** ·
+  A **+20%**. The server writes the finished lift on the copy; a player's machine only shows it.
+- **Roll weights:** each ultimate **5%**; the ordinary skills share the remaining 85% evenly (**5.7%** each for
+  the sword's fifteen).
 
 ### Ink values (flat, per tier: Watery / Thin / Faint / Clear / Sharp)
 
@@ -329,7 +367,10 @@ tables when their pools are authored, by the same rule.
 - **Which creatures drop which materials** — deferred; until then materials come from the `/item` command.
 - **Card sockets** — deferred.
 - **Unlock tables for the other eleven weapons** — written when each pool is authored. Only the Sword's 22 skills
-  carry a mastery level today.
+  carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
+  until their pools exist.
+- **Armour trademarks** — armour has no skills, so it has no trademark and keeps its plain title. Whether armour
+  rolls something of its own is a separate decision, not made.
 - **Which townspeople are stations** — no smith, loom or tannery is authored in the town scene yet; `/station`
   makes the nearest villager one for a play-test.
 - **Creature masteries are authored as the creature's LEVEL** (a level-20 creature has Weapon Mastery 20), so a
@@ -354,6 +395,7 @@ tables when their pools are authored, by the same rule.
 ## Related
 
 - [Implementation Plan](implementation-plan.md) — the six build slices, every file each touches, and the open build questions.
+- [Weapon Names & Trademarks](weapon-names-and-trademarks.md) — the trademark design: the eighteen sword names, the roll, and how it is built.
 - [Crafting Tables](crafting-tables.md) — the numbers only: bands per station, forge bills, fold and quench costs and odds, Salt, Ink values, mastery caps by grade.
 
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the design as it runs today.

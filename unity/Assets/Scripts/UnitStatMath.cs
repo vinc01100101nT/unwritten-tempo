@@ -126,6 +126,10 @@ public static class UnitStatMath
     /// disagree about what a level costs.</summary>
     public static int XpToNextFrom(int level) => 5 + 5 * Mathf.Max(1, level);
 
+    /// <summary>Experience needed to climb from ring level <paramref name="level"/> to the next: <c>20 + 12L</c> — a
+    /// slightly slower curve than the character's. Weapon mastery levels on this same curve (<see cref="MasteryMath"/>).</summary>
+    public static int RingXpToNextFrom(int level) => 20 + level * 12;
+
     /// <summary>The TOTAL experience a character that legitimately climbed to <paramref name="level"/> was given
     /// on the way — every rung from 1 up to it, and none of the level they are standing in. Add the experience
     /// held inside the current level to get a lifetime figure.</summary>

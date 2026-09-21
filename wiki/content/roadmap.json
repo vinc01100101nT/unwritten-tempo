@@ -12,7 +12,7 @@
           "state": "planned",
           "when": "Not scheduled",
           "title": "Ideas for later",
-          "text": "Crafting and recycling, class advancement, trading, parties, guilds, an auction house, and player-versus-player."
+          "text": "Class advancement, trading, parties, guilds, an auction house, and player-versus-player."
         },
         {
           "state": "planned",
@@ -78,7 +78,7 @@
           "state": "planned",
           "when": "Planned",
           "title": "Killing things pays you",
-          "text": "Monsters drop gear. Pick up what falls, put it on, and watch your stats change."
+          "text": "Monsters drop the materials you forge with, plus consumables and coin. Pick up what falls and turn it into gear."
         },
         {
           "state": "planned",

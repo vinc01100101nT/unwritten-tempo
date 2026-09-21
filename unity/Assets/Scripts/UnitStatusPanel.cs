@@ -399,21 +399,11 @@ public class UnitStatusPanel : MonoBehaviour
                 // The cell itself is the hover target, and it opens the SAME card the player's own status bar uses —
                 // one description, one place it lives, whoever the state is sitting on.
                 frame.raycastTarget = true;
-                var trig = frame.gameObject.AddComponent<EventTrigger>();
-                AddTrigger(trig, EventTriggerType.PointerEnter,
-                           () => StateInfoCard.Show(canvas, cell.rt, cell.state, StateInfoCard.Side.Below));
-                AddTrigger(trig, EventTriggerType.PointerExit,
-                           () => StateInfoCard.HideIfShowing(cell.state));
+                HoverRelay.Set(frame.gameObject,
+                               () => StateInfoCard.Show(canvas, cell.rt, cell.state, StateInfoCard.Side.Below),
+                               () => StateInfoCard.HideIfShowing(cell.state));
             }
             return cell;
-        }
-
-        static void AddTrigger(EventTrigger trig,
-                               EventTriggerType type, System.Action fn)
-        {
-            var entry = new EventTrigger.Entry { eventID = type };
-            entry.callback.AddListener(_ => fn());
-            trig.triggers.Add(entry);
         }
 
         static void Inset(RectTransform rt, float px)

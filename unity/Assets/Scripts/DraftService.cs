@@ -27,11 +27,11 @@ public static class DraftService
 
     /// <summary>Build the draft the player should see right now.</summary>
     /// <param name="passives">The current rank state (its <c>Leader</c> drives the Trio).</param>
-    /// <param name="rng">Optional RNG for the wildcard; defaults to a shared instance.
-    /// (Wildcard is live-random in the MVP — seeded determinism is out of scope, doc §10.)</param>
+    /// <param name="rng">Only for a caller that owns the walk (the editor's simulated walk): rolls a fresh wildcard
+    /// first. Everyone else passes nothing and the draft shows the wildcard the server rolled and sent.</param>
     public static Draft BuildDraft(PassiveRanks passives, Random rng = null)
     {
-        rng = rng ?? shared;
+        if (rng != null) passives.RollWildcard(rng);
 
         // Level-1 opening: a free choice of any stat, no wildcard. Whatever they pick
         // becomes the first leader.
@@ -52,15 +52,18 @@ public static class DraftService
             new Option { stat = left },
             new Option { stat = leader, isLeader = true },
             new Option { stat = right },
-            new Option { stat = PickWildcard(leader, left, right, rng), isWildcard = true },
         };
+        if (passives.HasWildcard) opts.Add(new Option { stat = passives.Wildcard, isWildcard = true });
         return new Draft { isOpening = false, options = opts };
     }
 
-    // Uniform over the 7 stats outside the Trio (doc §11 default — distance-weighting
-    // is a possible later tuning dial).
-    static StatId PickWildcard(StatId leader, StatId left, StatId right, Random rng)
+    /// <summary>SERVER: roll the wildcard — uniform over the 7 stats outside the Trio (doc §11 default —
+    /// distance-weighting is a possible later tuning dial).</summary>
+    public static StatId RollWildcard(StatId leader, Random rng)
     {
+        rng = rng ?? shared;
+        var left = SkillRing.LeftOf(leader);
+        var right = SkillRing.RightOf(leader);
         var pool = new List<StatId>(SkillRing.Count - 3);
         foreach (var stat in SkillRing.Ring)
             if (stat != leader && stat != left && stat != right)

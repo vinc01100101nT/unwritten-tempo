@@ -218,7 +218,7 @@ public partial class Player3DController : MonoBehaviour
         // The active-skill pool is now DATA: every composed SkillDef (Skill Composer output, under
         // Resources/Skills) gets a SkillRunner on the player. The legacy hand-written Player3D* skill classes
         // were retired — one runner interprets any skill. Which skills are BOUND to the hotbar comes from the
-        // equipped weapon (Item.grantedSkillIds) / the Grimoire, via HotbarBindings — not a class gate.
+        // skills learned by mastery, dragged on from the Skills window (K), via HotbarBindings — not a class gate.
         EnsureComposedSkills();
         // Press-to-talk (F) with ambient townsfolk. Same idempotent self-attach pattern — every player gets it.
         if (GetComponent<PlayerInteractor>() == null) gameObject.AddComponent<PlayerInteractor>();
@@ -343,13 +343,18 @@ public partial class Player3DController : MonoBehaviour
         // active hop/dash overrides movement, and a freshly-pressed one starts THIS frame (no 1-frame lag).
         if (TickTraversalAbilities()) return;
 
-        ReadInput();
+        // TAUNTED: the only thing this body does is walk to the taunter and swing at it. Clicks, WASD and T are not
+        // read at all, so nothing the player presses can turn it elsewhere until the lock lifts.
+        bool taunted = Taunted;
+        if (taunted) HoldOnTaunter();
+        else ReadInput();
 
         // WASD: direct, camera-relative movement. When any direction is held it OVERRIDES the
         // click-to-move / attack / auto order (cancelling it once) so the two schemes don't fight.
-        Vector3 wasd = ReadWasd();
+        Vector3 wasd = taunted ? Vector3.zero : ReadWasd();
         Vector3 move;
-        if (PlayerInteractor.Talking)
+        if (taunted) move = Tick();
+        else if (PlayerInteractor.Talking)
         {
             // Frozen in a townsfolk conversation (F-interact): hold position (gravity still applies below) and let
             // PlayerInteractor own the facing toward the NPC. Any WASD press ends the chat via PlayerInteractor.
@@ -788,14 +793,23 @@ public partial class Player3DController : MonoBehaviour
         }
     }
 
-    /// <summary>Remember who taunted this player and engage them at once — the auto-pilot can't retarget away while the
-    /// lock holds. The player's twin of <c>MonsterAI3D.LockOnTaunter</c>, so a taunt authored on a skill behaves the
-    /// same whoever it lands on. The window itself was already stamped by <see cref="Character.ForceAggro"/>.</summary>
-    public void Taunt(Health source, float seconds)
+    /// <summary>Remember who taunted this player and engage them at once. While the lock holds, the ONLY thing this
+    /// body does is walk to the taunter and swing at it — no walking elsewhere, no other target, no jump or dash (see
+    /// <see cref="HoldOnTaunter"/>); the skill door refuses every skill on the same window. The player's twin of
+    /// <c>MonsterAI3D.LockOnTaunter</c>. The window itself was already stamped by <see cref="Character.ForceAggro"/>.</summary>
+    public void Taunt(Health source)
     {
-        if (source == null || seconds <= 0f) return;
+        if (source == null) return;
         tauntSource = source;
         BeginAttack(source, false);   // false = don't resume attack-move after the kill; the taunt decided this target
+    }
+
+    /// <summary>Per frame while <see cref="Taunted"/>: keep the order on the taunter. The auto-pilot already obeys the
+    /// lock in <see cref="AutoStep"/>, so it is left running; every other order is turned back onto the taunter.</summary>
+    void HoldOnTaunter()
+    {
+        if (order == Order.AutoPilot) return;
+        if (order != Order.Attack || attackTarget != tauntSource) BeginAttack(tauntSource, false);
     }
 
     /// <summary>Shove this player away from <paramref name="worldFrom"/> — the twin of a mob's knockback, so a

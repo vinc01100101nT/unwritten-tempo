@@ -599,3 +599,137 @@ public class SkillEffect
     public static bool NeedsPoint(SkillEffectKind k) =>
         k == SkillEffectKind.Dash || k == SkillEffectKind.Teleport;
 }
+
+/// <summary>
+/// THE ONE ANSWER to "what can raise this effect's numbers" — which of your ring stats scale each of its numbers, and
+/// whether Skill Mastery raises its main one. Read by the fight (<see cref="SkillEffectApplier"/>), by the skill
+/// tooltip, and by the Skill Composer's "boosts …" rows, so what an author sees and what a fight does can never
+/// differ again.
+///
+/// <para><b>Why it exists (2026-09-21).</b> The composer kept its own list and offered no ring row for the main
+/// number of a sub-stat buff, a sub-stat debuff or an outgoing-damage boost or cut, while the fight raised all four
+/// by Skill Mastery. The user's rule since: ONE list of what can be boosted (<see cref="Boostable"/>), and every
+/// boostable number is offered as a boost option. Every "boosts" row, the practice line, and every scaling in the
+/// fight ask the functions below; nothing else keeps a list.</para>
+///
+/// <para>Each ring function returns the ROW'S LABEL, or null when that number is not scaled by the ring at all. A
+/// null row is both "the composer draws nothing" and "the fight multiplies by 1" — one answer, two readers.</para>
+/// </summary>
+public static class EffectScaling
+{
+    /// <summary>THE list of effects that have a MAIN number — boosted by your ring (its "boosts …" row) and by practice
+    /// (the green "raised by … Mastery" line), every one of them, no exception. The user's rule (2026-09-21): a main
+    /// number is a main number, a modifier's stacks added included. A stun, freeze or silence has no number; a parry,
+    /// a brace, a taunt and a movement verb have none either.</summary>
+    public static bool Boostable(SkillEffect e)
+    {
+        if (e == null) return false;
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:
+            case SkillEffectKind.Execute:
+            case SkillEffectKind.Heal:
+            case SkillEffectKind.Shield:
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff:
+            case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.ReduceOutgoingDamage:
+            case SkillEffectKind.AddStacks:
+                return true;
+            case SkillEffectKind.Status:
+                return StatusController.IsDot(e.ailment);
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>True when ANY effect of <paramref name="def"/> has a main number — the whole test for whether a skill
+    /// can be a weapon's trademark. Read from the skill's live effects every time, so it follows every edit.</summary>
+    public static bool HasMainNumber(SkillDef def)
+    {
+        if (def == null || def.bindings == null) return false;
+        for (int b = 0; b < def.bindings.Count; b++)
+        {
+            var fx = def.bindings[b]?.effects;
+            if (fx == null) continue;
+            for (int i = 0; i < fx.Count; i++)
+                if (Boostable(fx[i])) return true;
+        }
+        return false;
+    }
+
+    /// <summary>The composer row that lets your ring boost this effect's MAIN number, or null when it has none —
+    /// named for the number itself, in the words the composer already uses for that field.</summary>
+    public static string OutputRingRow(SkillEffect e) => Boostable(e) ? "boosts " + OutputName(e) : null;
+
+    static string OutputName(SkillEffect e)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:               return "DAMAGE";
+            case SkillEffectKind.Execute:              return "EXECUTE DAMAGE";
+            case SkillEffectKind.Heal:                 return "HEAL AMOUNT (sustain: HP/MP/Def)";
+            case SkillEffectKind.Shield:               return "BARRIER HP (sustain: HP/Def/MP)";
+            case SkillEffectKind.Status:               return "DAMAGE / TICK";
+            case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
+            case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
+            case SkillEffectKind.AddStacks:            return "STACKS ADDED";
+            // A sub-stat change is named for the STAT it moves — "boosts ATTACK SPEED", not "boosts BUFF".
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff:        return Spaced(e.subStat.ToString()).ToUpperInvariant();
+            default:                                   return "OUTPUT";
+        }
+    }
+
+    // "AttackSpeed" → "Attack Speed". A few lines rather than the editor's own helper, because this rule is read by
+    // the game as well as the editor and the editor's helper does not exist in a built game.
+    static string Spaced(string name)
+    {
+        var sb = new System.Text.StringBuilder(name.Length + 4);
+        for (int i = 0; i < name.Length; i++)
+        {
+            if (i > 0 && char.IsUpper(name[i]) && !char.IsUpper(name[i - 1])) sb.Append(' ');
+            sb.Append(name[i]);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>The composer row that lets your ring raise this effect's odds, or null. Only an effect that asks a
+    /// chance, and asks one below certain, has odds to improve.</summary>
+    public static string ChanceRingRow(SkillEffect e)
+        => e != null && SkillEffect.RollsChance(e.kind) && e.chance.value < 1f ? "boosts CHANCE" : null;
+
+    /// <summary>The composer row that lets your ring lengthen this effect, or null when it has no length to scale.</summary>
+    public static string DurationRingRow(SkillEffect e)
+    {
+        if (e == null) return null;
+        if (e.kind == SkillEffectKind.ExtendDuration) return "boosts SECONDS ADDED";
+        return HasDuration(e.kind) ? "boosts DURATION" : null;
+    }
+
+    /// <summary>The composer row that lets your ring add hits, or null. Only a strike has a number of hits.</summary>
+    public static string HitsRingRow(SkillEffect e)
+        => e != null && e.kind == SkillEffectKind.Damage ? "boosts HITS COUNT" : null;
+
+    /// <summary>True when this kind lasts for a while — the kinds whose seconds mean anything, and the only ones that
+    /// can be a stacking condition.</summary>
+    public static bool HasDuration(SkillEffectKind k)
+    {
+        switch (k)
+        {
+            case SkillEffectKind.Status:
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff:
+            case SkillEffectKind.Parry:
+            case SkillEffectKind.Brace:
+            case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.ReduceOutgoingDamage:
+            case SkillEffectKind.ImmuneToDisables:
+            case SkillEffectKind.Shield:
+            case SkillEffectKind.Taunt:
+                return true;
+            default:
+                return false;
+        }
+    }
+}

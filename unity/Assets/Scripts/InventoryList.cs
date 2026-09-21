@@ -25,7 +25,7 @@ using UnityEngine.UI;
 public class InventoryList
 {
     // ---- the columns, and what each one sorts by ----
-    public enum SortKey { Stored, Name, Grade, Held }
+    public enum SortKey { Stored, Name, Held }
 
     struct Column
     {
@@ -43,7 +43,6 @@ public class InventoryList
     static readonly Column[] Columns =
     {
         new Column { key = SortKey.Name,   label = "Name",    width = 0f,   textSize = 14f, align = TextAlignmentOptions.Left },
-        new Column { key = SortKey.Grade,  label = "Grade",   width = 76f,  textSize = 12f, align = TextAlignmentOptions.Right },
         new Column { key = SortKey.Held,   label = "Held",    width = 48f,  textSize = 11f, align = TextAlignmentOptions.Right },
     };
 
@@ -304,10 +303,8 @@ public class InventoryList
         Refresh();
     }
 
-    // A piece with no copy behind it — a stack of potions — has no grade at all, and sorts below Raw.
-    static int GradeRank(BagEntry e) => e != null && e.instance != null ? (int)e.instance.quality : -1;
-
-    // "B +12", "Raw", or nothing at all for something that was never forged.
+    // "B +12", "Raw", or nothing at all for something that was never forged. No column shows this any more — it
+    // is what the search box matches on, so typing "raw" still finds every unquenched piece.
     static string GradeText(BagEntry e)
     {
         if (e == null || e.instance == null) return "";
@@ -323,7 +320,6 @@ public class InventoryList
         switch (sortKey)
         {
             case SortKey.Name:   c = string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase); break;
-            case SortKey.Grade:  c = GradeRank(a).CompareTo(GradeRank(b)); break;
             case SortKey.Held:   c = a.count.CompareTo(b.count); break;
             default:             return 0;
         }
@@ -332,7 +328,13 @@ public class InventoryList
         return string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase);
     }
 
-    static string NameOf(BagEntry e) => e != null && e.def != null ? e.def.displayName : "";
+    // What a row is called: a copy by its full title ("+15 Ranbu [C]", "B +12 Sword"), anything else by its item
+    // name. The one name the list shows, sorts by and searches.
+    static string NameOf(BagEntry e)
+    {
+        if (e == null || e.def == null) return "";
+        return e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName;
+    }
 
     // ---- searching: case-insensitive, and it reaches a piece's grade ----
 
@@ -341,6 +343,7 @@ public class InventoryList
         if (query.Length == 0) return true;
         if (e == null || e.def == null) return false;
         if (e.def.displayName != null && e.def.displayName.ToLowerInvariant().Contains(query)) return true;
+        if (NameOf(e).ToLowerInvariant().Contains(query)) return true;
         if (EquipSlots.Label(e.def.slot).ToLowerInvariant().Contains(query)) return true;
         if (GradeText(e).ToLowerInvariant().Contains(query)) return true;
         if (e.def.weaponType != WeaponType.None && e.def.weaponType.ToString().ToLowerInvariant().Contains(query)) return true;
@@ -410,15 +413,12 @@ public class InventoryList
 
     void Fill(Row row, BagEntry e)
     {
-        var def = e.def;
-        var inst = e.instance;
-        string name = def != null ? def.displayName : "";
+        string name = NameOf(e);
         // What you are wearing is listed with what you carry, so it has to say which it is.
         if (e.worn) name += WornTag;
 
         Set(row, 0, name, UiKit.TextMain);
-        Set(row, 1, GradeText(e), UiKit.TextDim);
-        Set(row, 2, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
+        Set(row, 1, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
     }
 
     static void Set(Row row, int i, string text, Color c)

@@ -153,8 +153,17 @@ public class Health : MonoBehaviour, ICombatUnit
         var s = StatBlock;
         if (s == null) return 0f;
         var def = SkillCatalog.Get(skillId);
-        if (def != null && def.weaponType != WeaponType.None && def.weaponType != HeldWeapon) return 0f;
-        return MasteryMath.PassiveLift(s.UsableMastery);
+        float mastery = def != null && def.RidesWeaponMastery(HeldWeapon) ? MasteryMath.PassiveLift(s.UsableMastery) : 0f;
+        return mastery + TrademarkLift(skillId);
+    }
+
+    /// <summary>What the weapon this creature holds adds to <paramref name="skillId"/> through its trademark — the
+    /// same rule a player's weapon follows, so a creature carrying a trademark weapon is dangerous the same way.</summary>
+    public float TrademarkLift(string skillId)
+    {
+        var b = Brain;
+        var gear = b != null ? b.Equipment : null;
+        return Trademarks.LiftOn(gear != null ? gear.Get(EquipSlotType.Weapon) : null, skillId);
     }
 
     public float SwingTime { get { var b = Brain; return b != null ? b.SwingTime : 0f; } }
@@ -190,7 +199,7 @@ public class Health : MonoBehaviour, ICombatUnit
     public void ForceAggro(ICombatUnit source, float seconds)
     {
         if (seconds <= 0f) return;
-        States.BeginTaunt(seconds);   // the WINDOW — shared with the player side, read by the skill door
+        States.BeginTaunt(seconds, source);   // the WINDOW — shared with the player side, read by the skill door
         // …and the brain's own half: engage now rather than waiting to be provoked, reading that same window.
         var b = Brain; if (b != null) b.LockOnTaunter(States);
     }
@@ -228,77 +237,6 @@ public class Health : MonoBehaviour, ICombatUnit
             var b = Brain;
             var gear = b != null ? b.Equipment : null;
             return gear != null ? gear.WeaponType : WeaponType.None;
-        }
-    }
-
-    // WHO HAS BEEN HITTING THIS CREATURE, AND WITH WHAT. A fixed set of places, filled at the damage door and
-    // read once when it dies: practice is paid by the share of its health each weapon took off it. Four places
-    // because a party of four is the shape this game expects; a fifth attacker simply earns nothing, which is
-    // better than an allocation on every hit of every fight.
-/// <summary>How many separate fighters (and weapons) one creature remembers being hurt by.</summary>
-    public const int PracticePlaces = 4;
-    readonly ICombatUnit[] practiceWho = new ICombatUnit[PracticePlaces];
-    readonly WeaponType[] practiceWith = new WeaponType[PracticePlaces];
-    readonly int[] practiceDamage = new int[PracticePlaces];
-    // THE GRADE THAT WAS IN HAND, not the one in hand when it finally died — what prices and caps the practice.
-    // The best seen for that weapon: swapping a better blade in for one blow should not price the whole fight,
-    // and swapping a worse one in should not rob the work already done.
-    readonly Quality[] practiceGrade = new Quality[PracticePlaces];
-
-    /// <summary>Write down that <paramref name="attacker"/> took <paramref name="dealt"/> off this creature with
-    /// <paramref name="weapon"/> in hand. Zero-alloc: a fixed set of places, matched by reference.</summary>
-    public void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt)
-    {
-        if (attacker == null || dealt <= 0) return;
-        var grade = attacker.HeldQuality;
-        for (int i = 0; i < PracticePlaces; i++)
-        {
-            if (ReferenceEquals(practiceWho[i], attacker) && practiceWith[i] == weapon)
-            {
-                practiceDamage[i] += dealt;
-                if (grade > practiceGrade[i]) practiceGrade[i] = grade;
-                return;
-            }
-        }
-        for (int i = 0; i < PracticePlaces; i++)
-        {
-            if (practiceWho[i] != null) continue;
-            practiceWho[i] = attacker;
-            practiceWith[i] = weapon;
-            practiceDamage[i] = dealt;
-            practiceGrade[i] = grade;
-            return;
-        }
-    }
-
-    /// <summary>What ONE unit took off this creature with ONE weapon, for the kill's practice. 0 when they did
-    /// none of it.</summary>
-    public int DamageFrom(ICombatUnit who, WeaponType weapon)
-    {
-        for (int i = 0; i < PracticePlaces; i++)
-            if (ReferenceEquals(practiceWho[i], who) && practiceWith[i] == weapon) return practiceDamage[i];
-        return 0;
-    }
-
-    /// <summary>One of the places, for whoever pays the practice out. False when that place is empty.</summary>
-    public bool PracticeAt(int i, out ICombatUnit who, out WeaponType weapon, out int dealt, out Quality grade)
-    {
-        who = null; weapon = WeaponType.None; dealt = 0; grade = Quality.Raw;
-        if (i < 0 || i >= PracticePlaces || practiceWho[i] == null) return false;
-        who = practiceWho[i]; weapon = practiceWith[i]; dealt = practiceDamage[i]; grade = practiceGrade[i];
-        return true;
-    }
-
-    /// <summary>Forget who hurt it — a fresh life starts a fresh fight. Called wherever a creature is revived or
-    /// taken back into the pool, the one place a life ends.</summary>
-    public void ForgetPractice()
-    {
-        for (int i = 0; i < PracticePlaces; i++)
-        {
-            practiceWho[i] = null;
-            practiceWith[i] = WeaponType.None;
-            practiceDamage[i] = 0;
-            practiceGrade[i] = Quality.Raw;
         }
     }
 

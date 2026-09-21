@@ -308,7 +308,7 @@ public class Character : MonoBehaviour, ICombatUnit
         return Mastery.HasLearned(skillId) && HeldWeaponType == def.weaponType;
     }
 
-    /// <summary>MAY THIS SKILL GO ON THE BAR, or be ticked on as a passive. The same question as
+    /// <summary>MAY THIS SKILL GO ON THE BAR. The same question as
     /// <see cref="MayUse"/> WITHOUT the weapon in hand, because a bar is arranged for a weapon you are about to
     /// hold as often as for the one you hold now — what stops it firing is the cast's own test.</summary>
     public bool MayBind(string skillId)
@@ -320,7 +320,7 @@ public class Character : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>Blank, in place, every id in <paramref name="ids"/> this character may not bind
-    /// (<see cref="MayBind"/>). The one rule a bar and a ticked passive list are held to wherever they arrive
+    /// (<see cref="MayBind"/>). The one rule a bar is held to wherever it arrives
     /// from — a bind command, or a save arranged under an older rule.</summary>
     public void KeepOnlyBindable(string[] ids)
     {
@@ -353,18 +353,28 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Reads the same choke as every effective-stat getter.</summary>
     public float RingBonus(StatId stat) => PassivePercent(stat);
 
-    /// <summary>The lift this character's own practice puts on <paramref name="skillId"/>'s OUTPUT, added to the
-    /// ring's term. An ACTIVE rides its own skill mastery; a PASSIVE cannot be pressed, so it earns none of its
-    /// own and rides the weapon's mastery instead. Both stop at +30%.
+    /// <summary>Everything lifting <paramref name="skillId"/>'s main numbers, added to the ring's term: this
+    /// character's practice with it, plus the trademark of the weapon in hand when that weapon empowers it.
     ///
     /// <para>Resolved ONCE per cast by the applier, never per hit.</para></summary>
-    public float SkillOutputLift(string skillId)
+    public float SkillOutputLift(string skillId) => MasteryLift(skillId) + TrademarkLift(skillId);
+
+    /// <summary>The lift this character's own practice puts on <paramref name="skillId"/>'s main numbers. An ACTIVE
+    /// rides its own skill mastery; a PASSIVE cannot be pressed, so it earns none of its own and rides the weapon's
+    /// mastery instead — but only a passive that belongs to the weapon in hand, so a potion gets nothing. Both stop
+    /// at +30%.</summary>
+    public float MasteryLift(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return 0f;
         var def = SkillCatalog.Get(skillId);
-        if (def != null && def.IsPassive) return MasteryMath.PassiveLift(WeaponMasteryLevel);
+        if (def != null && def.IsPassive)
+            return def.RidesWeaponMastery(HeldWeaponType) ? MasteryMath.PassiveLift(WeaponMasteryLevel) : 0f;
         return MasteryMath.SkillLift(Mastery.UsableSkillLevel(skillId, HeldQuality));
     }
+
+    /// <summary>What the weapon in hand's trademark adds to <paramref name="skillId"/>'s main numbers — the finished
+    /// lift the server wrote on that copy, and 0 unless that weapon's trademark IS this skill.</summary>
+    public float TrademarkLift(string skillId) => Trademarks.LiftOn(GetEquippedInstance(EquipSlotType.Weapon), skillId);
 
     /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
     /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
@@ -389,8 +399,8 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
-    /// <summary>Which PASSIVE skills are live — the ones ticked on in the Grimoire (J), of those learned.
-    /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it. Persisted.
+    /// <summary>Which PASSIVE skills are live — every one learned, while its weapon is in hand.
+    /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it.
     /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
     public PassiveLoadout PassiveSkills => passiveSkills ??= new PassiveLoadout(this);
     PassiveLoadout passiveSkills;
@@ -627,11 +637,23 @@ public class Character : MonoBehaviour, ICombatUnit
     public void ForceAggro(ICombatUnit source, float seconds)
     {
         if (seconds <= 0f) return;
-        States.BeginTaunt(seconds);   // the WINDOW — the same one the mob side stamps, and the one the skill door reads
+        States.BeginTaunt(seconds, source);   // the WINDOW — the same one the mob side stamps, and the one the skill door reads
         // The player engages a MOB, so the taunter has to be one. A mob-vs-mob aggro lock needs the mob brain to hold
         // an arbitrary chase target (it tracks the player today) — that is the mob-vs-mob combat step, not this one.
+        if (!(source is Health mob)) return;
+        // A CHARACTER THE SERVER HOLDS HAS NO LEGS OF ITS OWN — the same reason a dash is forwarded (TeleportTo). The
+        // lock is walking and swinging, which the owner's machine does, so it is told WHO; how long is the window
+        // above, which reaches that machine with the rest of its states.
+        if (GameNetwork.TellOwnerTaunted(this, mob)) return;
+        LockOntoTaunter(mob);
+    }
+
+    /// <summary>The owner's half of a taunt: point this person's body at <paramref name="taunter"/>. The window it
+    /// lasts for is the state store's, never a number kept here.</summary>
+    public void LockOntoTaunter(Health taunter)
+    {
         var r = Rig();
-        if (r != null && source is Health mob) r.Taunt(mob, seconds);
+        if (r != null) r.Taunt(taunter);
     }
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
@@ -1070,10 +1092,6 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The weapon in this character's hands — what a mastery is earned in.</summary>
     public WeaponType HeldWeapon => HeldWeaponType;
 
-    /// <summary>Nothing is recorded on a PERSON: practice is paid for killing creatures, and a character is not
-    /// one. The door still calls this on whoever was hurt, so it answers rather than being special-cased there.</summary>
-    public void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt) { }
-
     /// <summary>TRUE on a copy of a character the SERVER owns — the one on this player's own screen while a server
     /// holds the real one. It shows every blow (the number, the flash, the stagger) but its health is told to it
     /// rather than worked out, so two machines can never disagree about how hurt somebody is.</summary>
@@ -1143,8 +1161,8 @@ public class Character : MonoBehaviour, ICombatUnit
     public UnitSkills Skills => skills ??= new UnitSkills(this);
     UnitSkills skills;
 
-    /// <summary>A person's list holds everything they can use — their bar, their ticked passives, their bag — so a
-    /// passive in it runs only when their loadout says it is switched on.</summary>
+    /// <summary>A person's list holds everything they can use — their bar, their learned passives, their bag — so a
+    /// passive in it runs only when their loadout says it is live.</summary>
     public bool PassiveIsOn(SkillDef def) => PassiveSkills.IsActive(def);
 
     // The object a skill component gets attached to when one is finally needed. A character and the body it drives
@@ -1155,20 +1173,20 @@ public class Character : MonoBehaviour, ICombatUnit
     public bool HasSkills => Skills.HasSkills;
 
     /// <summary>Rebuild what this character carries from what it can use RIGHT NOW. Anything that changes the
-    /// answer calls this: a weapon changing, a skill being put on the bar, a passive being ticked.
+    /// answer calls this: a weapon changing, a skill being put on the bar, a passive being learned.
     ///
     /// <para>Without it, a skill dropped onto the bar is recorded in the bar and has no component behind it, so
     /// the slot draws empty and the skill cannot be cast — which looks exactly like the drop having failed.</para></summary>
     /// <summary>Rebuild what this character can use, and the positions behind it.
     ///
     /// <para><b>THE RULE, and it binds every caller: change any of the THREE sources below and call this in the same
-    /// breath.</b> The three are the hotbar (its slots and its ult), the ticked passives, and the consumables in the
+    /// breath.</b> The three are the hotbar (its slots and its ult), the learned passives, and the consumables in the
     /// bag — see <see cref="UsableSkills"/>. A weapon grants nothing: what it changes is which of them may FIRE. A skill has nothing to run it until this has
     /// run, so a source changed without it leaves the character agreeing the skill is theirs and holding nothing to
     /// cast it with: the press is refused and, before it said so, refused in total silence.</para>
     ///
     /// <para>This was a real bug on the SERVER for every one of them: only a weapon swap and the moment somebody
-    /// joined ever rebuilt, so a skill dragged onto the bar from the Grimoire, a passive ticked on, and a potion
+    /// joined ever rebuilt, so a skill dragged onto the bar from the Skills window, a passive learned, and a potion
     /// picked up all did nothing until the next sign-in. The player's own machine had always rebuilt on the same
     /// changes, which is why it looked like it should work right up until it was pressed.</para></summary>
     public void RefreshUsableSkills()
@@ -1176,8 +1194,8 @@ public class Character : MonoBehaviour, ICombatUnit
         if (skillHost != null) BindSkills(skillHost, UsableSkills());
     }
 
-    /// <summary>THE skills this character can actually use — everything on their bar, everything their weapon
-    /// grants them, everything they ticked on, and whatever the consumables in their bag run. Nothing else.
+    /// <summary>THE skills this character can actually use — everything on their bar, every passive they
+    /// have learned, and whatever the consumables in their bag run. Nothing else.
     ///
     /// <para>A player used to be handed the WHOLE authored catalog, so every person the server held carried a
     /// position for every skill in the game whether or not they could ever cast it. What they can use comes from
@@ -1198,10 +1216,8 @@ public class Character : MonoBehaviour, ICombatUnit
         }
         if (!string.IsNullOrEmpty(Hotbar.Ult)) usableIds.Add(Hotbar.Ult);
 
-        var ticked = PassiveSkills.Capture();
-        if (ticked != null)
-            for (int i = 0; i < ticked.Length; i++)
-                if (!string.IsNullOrEmpty(ticked[i])) usableIds.Add(ticked[i]);
+        // EVERY LEARNED PASSIVE — a passive is live the moment it is learned (PassiveLoadout).
+        PassiveSkills.CollectLearned(usableIds);
 
         for (int i = 0; i < bag.Count; i++)
         {
@@ -1677,6 +1693,13 @@ public class Character : MonoBehaviour, ICombatUnit
         // The SAME kills feed both tracks: the character (flat stats) and the ring (its own level → passive
         // draft points). The ring is part of the character, so nothing gates this.
         ringLevelsGained = Ring.AddXP(amount);
+        // AND THE WEAPON IN HAND'S MASTERY, from the same experience — at the speed its grade trains, stopped at
+        // what its grade allows. A level reached opens whatever skills it unlocks.
+        if (Mastery.AddXP(HeldWeaponType, MasteryMath.WeaponXpFromKill(amount, HeldQuality), HeldQuality) > 0)
+        {
+            Mastery.LearnWhatIsOpen();
+            RefreshUsableSkills();
+        }
 
         int gained = 0;
         XP += amount;
@@ -1874,7 +1897,6 @@ public class Character : MonoBehaviour, ICombatUnit
         Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Gold;
         d.hotbarBindings = Hotbar.Capture();
-        d.activePassives = PassiveSkills.Capture();
         Mastery.Capture(out d.masteryWeapons, out d.masteryPoints,
                         out d.masterySkillIds, out d.masterySkillUses, out d.learnedSkillIds);
         CaptureEquipment(d);
@@ -2093,9 +2115,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // four skills on the bar that nobody had to learn — kept those keys on screen while the server refused
         // every press of them, and said nothing. The same test a bind command passes.
         KeepOnlyBindable(d.hotbarBindings);
-        KeepOnlyBindable(d.activePassives);
         Hotbar.Restore(d.hotbarBindings);
-        PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save
         RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
 

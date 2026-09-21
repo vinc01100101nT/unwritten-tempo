@@ -32,7 +32,28 @@ public static class CraftingMath
     static readonly int[] SkillCaps     = { 4, 8, 12, 16, 20, 25, 30 };
     static readonly float[] Speeds      = { 0.5f, 0.75f, 1f, 1.1f, 1.2f, 1.35f, 1.5f };
 
+    static readonly float[] TrademarkLifts = { 0.05f, 0.07f, 0.10f, 0.12f, 0.15f, 0.18f, 0.20f };
+
     static int Index(Quality q) => Mathf.Clamp((int)q, 0, FoldCaps.Length - 1);
+
+    // ---- the trademark ------------------------------------------------------------------------------------
+    /// <summary>What a weapon's trademark adds to every main number of its skill, by the weapon's grade — +5% at
+    /// Raw to +20% at A. Added to the skill's practice lift, never multiplied onto it.</summary>
+    public static float TrademarkLift(Quality q) => TrademarkLifts[Index(q)];
+
+    /// <summary>Each ULTIMATE's chance, in percent, of being the trademark a forge rolls. The ordinary skills share
+    /// whatever the ultimates leave.</summary>
+    public const int UltimateTrademarkPercent = 5;
+
+    /// <summary>One candidate's weight in the forge's trademark roll, out of a total of 100 × <paramref name="ordinaries"/>:
+    /// an ultimate is worth <see cref="UltimateTrademarkPercent"/>%, an ordinary skill an even share of the rest.
+    /// Whole numbers, so the roll is one integer draw. With no ordinary skill, or ultimates that would eat the whole
+    /// roll, every candidate weighs the same.</summary>
+    public static int TrademarkWeight(bool ultimate, int ordinaries, int ultimates)
+    {
+        if (ordinaries <= 0 || ultimates * UltimateTrademarkPercent >= 100) return 1;
+        return ultimate ? UltimateTrademarkPercent * ordinaries : 100 - UltimateTrademarkPercent * ultimates;
+    }
 
     /// <summary>The most folds this grade allows — and, because a piece cannot be folded past its grade, also
     /// the point at which the only way further is a quench.</summary>
@@ -120,8 +141,13 @@ public static class CraftingMath
     /// <summary>The most "up" a quench can ever be, however much Salt goes in. A quench is never a certainty.</summary>
     public const int MaxUpPct = 95;
 
-    /// <summary>True when a piece of this grade can be quenched at all. A is the top of the ladder.</summary>
+    /// <summary>True when a piece of this grade could ever be quenched. A is the top of the ladder.</summary>
     public static bool CanQuench(Quality q) => q < Best;
+
+    /// <summary>True when a piece may be quenched RIGHT NOW: its grade is below A, and it has been folded to that
+    /// grade's cap. THE FOLD CAP IS THE QUENCH GATE (V4 §2) — the folds are what a quench spends, so a piece that
+    /// has not done the work cannot buy the roll.</summary>
+    public static bool ReadyToQuench(Quality q, int folds) => CanQuench(q) && folds >= FoldCap(q);
 
     /// <summary>The three chances of one quench, in whole percent, summing to 100: up a grade, unchanged, down a
     /// grade. <paramref name="saltTier"/> shifts points into "up", taken from "same" first and then from "down",
@@ -245,9 +271,10 @@ public static class CraftingMath
 
     /// <summary>What a piece of grade <paramref name="q"/> at <paramref name="folds"/> folds provably consumed,
     /// counted from what SUCCEEDED — nothing records the quenches that failed or the folds they spent, so those
-    /// are not counted. Counted: the forge bill (band 1), one successful quench per rung climbed (each at the
-    /// grade it was made from), and the folds standing on the piece now (at its own band). Written as units per
-    /// band into <paramref name="unitsPerBand"/> (places 1..7; place 0 unused) and gold, all already halved.</summary>
+    /// are not counted. Counted: the forge bill (band 1); for every rung climbed, one successful quench AND the
+    /// full set of folds that grade's gate required before it (<see cref="ReadyToQuench"/>), each at the grade it
+    /// was made from; and the folds standing on the piece now, at its own band. Written as units per band into
+    /// <paramref name="unitsPerBand"/> (places 1..7; place 0 unused) and gold, all already halved.</summary>
     public static void RecycleYield(Quality q, int folds, int forgeUnits, int forgeGold, int[] unitsPerBand, out int gold)
     {
         System.Array.Clear(unitsPerBand, 0, unitsPerBand.Length);
@@ -256,8 +283,10 @@ public static class CraftingMath
         for (int g = (int)Quality.Raw; g < (int)q; g++)
         {
             var from = (Quality)g;
-            unitsPerBand[Band(from)] += QuenchMaterialCost;
-            spentGold += QuenchGoldCost(from);
+            // THE FOLDS THAT RUNG COST, not only the quench: the gate means a piece cannot have climbed without
+            // first folding to that grade's cap, so those folds are as provable as the quench itself.
+            unitsPerBand[Band(from)] += FoldCap(from) * FoldMaterialCost + QuenchMaterialCost;
+            spentGold += FoldCap(from) * FoldGoldCost(from) + QuenchGoldCost(from);
         }
         unitsPerBand[Band(q)] += Mathf.Max(0, folds) * FoldMaterialCost;
         spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);

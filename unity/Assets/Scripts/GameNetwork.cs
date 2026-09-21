@@ -1433,6 +1433,20 @@ public class GameNetwork : NetworkManager
         return true;
     }
 
+    /// <summary>SERVER ONLY: tell the machine that owns <paramref name="who"/>'s legs that a taunt has locked them onto
+    /// <paramref name="taunter"/>. False when there is no such machine to tell (no world, or nobody playing them).</summary>
+    public static bool TellOwnerTaunted(Character who, Health taunter)
+    {
+        if (!NetworkServer.active || who == null || taunter == null) return false;
+        var identity = IdentityOfFighter(who);
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell == null || identity.connectionToClient == null) return false;
+        var taunterIdentity = IdentityOfCaster(taunter);
+        if (taunterIdentity == null) return false;
+        shell.TauntOnOwnersMachine(identity.connectionToClient, taunterIdentity.netId);
+        return true;
+    }
+
     // A watching machine's half: draw the blow exactly as the server drew it, through the SAME function the server's
     // own intake draws with — so the picture is written once, and nothing about the blow is worked out here.
     /// <summary>How many blows this machine has been told about, and how many it could not find a victim for.

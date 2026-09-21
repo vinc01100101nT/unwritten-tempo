@@ -18,6 +18,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 - [The game is ALWAYS ONLINE](the-game-is-always-online.md) — no offline/single-machine mode exists; never build, fix or offer a "no server" path. The dead no-server branches still in the code are not evidence it is supported.
 - [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.
+- [Copy the existing mechanism](copy-the-existing-mechanism.md) — a new track (mastery, an XP bar) is earned and shown exactly like XP/ring already are; never a bespoke formula or special case.
 - [Scaling fixes are NEVER deferred](scaling-fixes-are-never-deferred.md) — "you don't have many players yet" is an invalid reason, always; anything whose cost multiplies by player count gets fixed the day it is found.
 - [DIRECTION: RO-style 2.5D](direction-2p5d-pivot.md) — PLAYER+NPC live-3D, MOBS billboard; player LIVE-3D 2026-07-04.
 

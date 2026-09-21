@@ -86,9 +86,8 @@ public static class UIShellBuilder
         SetupEventSystem(root);
         BuildHud(root);
         // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
-        //   Skills (K)→SkillDraftPanel · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
-        //   Inventory (B)/Character (C)→ProgressionWindows. PanelToggle is retired.
-        BuildSkillsPanel(root);
+        //   Skills (K)→SkillsWindow · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
+        //   Inventory (B)/Character (C, the Ring of Progression included)→ProgressionWindows. PanelToggle is retired.
         BuildCustomizePanel(root);
         BuildCalendarPanel(root);
         // The Inventory and Character windows are built by ProgressionWindows (added below), and stat-point
@@ -100,8 +99,8 @@ public static class UIShellBuilder
 
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
         canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
-        canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
-        canvasGO.AddComponent<SkillBookPanel>();           // Grimoire (J): browse all composed skills + bind to the hotbar
+        canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Character (C) window
+        canvasGO.AddComponent<SkillsWindow>();             // Skills (K): the skills you have learned, by weapon, on a mastery line
         canvasGO.AddComponent<CraftStationPanel>();        // the smith / loom / tannery window, opened by reaching one
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
@@ -273,16 +272,6 @@ public static class UIShellBuilder
 
 
     // ---- Panels ---------------------------------------------------------------
-
-    static GameObject BuildSkillsPanel(Transform canvas)
-    {
-        var content = NewPanel(canvas, "SkillsPanel", new Vector2(0.30f, 0.22f), new Vector2(0.70f, 0.78f), "Skills");
-        var text = NewText("Placeholder", content,
-            "Your drafted skills will live here.\nThe level-up draft + skill tree (Phase G).",
-            16, FontStyle.Normal, TextAnchor.MiddleCenter, true);
-        Fill(text.rectTransform, new Vector2(16, 16), new Vector2(-16, -16));
-        return content.parent.gameObject;
-    }
 
     // Centre-wide panel — leaves room for the left preview + right swatch palette.
     // CharacterWardrobePanel populates the Content area at runtime.

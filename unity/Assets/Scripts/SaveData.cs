@@ -18,7 +18,9 @@ public class SaveData
 {
     // v11: a copy's rolled armour numbers ride the save (equipRolls / bagRolls). Older saves carry none, which loads
     // every piece as never rolled — nothing to migrate.
-    public const int CurrentVersion = 13;
+    // v14: a forged weapon's trademark rides the same roll text. Older saves carry none, which loads every weapon
+    // with no trademark — nothing to migrate.
+    public const int CurrentVersion = 14;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -65,9 +67,6 @@ public class SaveData
     public string[] hotbarBindings;
 
 
-    // Passive skills ticked ON in the Grimoire (v7+) — the player's own choices only; a passive that's live because
-    // the equipped weapon rolled it is NOT stored here (that answer comes from the weapon). Null on an older save.
-    public string[] activePassives;
 
     // Mastery (v13+): what this character has practised, and what that has opened. Parallel arrays, because a
     // dictionary does not serialize. Null on an older save → nothing practised and nothing learned, which is

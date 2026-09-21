@@ -1,6 +1,6 @@
 ---
 name: legacy-skills-retired-composed-pool
-description: 2026-07-02 legacy Player3D* skill classes RETIRED from the pipeline; skill pool is now data-driven composed SkillDefs only (+ new Grimoire J window)
+description: 2026-07-02 legacy Player3D* skill classes RETIRED from the pipeline; skill pool is now data-driven composed SkillDefs only (the Grimoire J window it added was deleted 2026-09-21)
 metadata: 
   node_type: memory
   type: project

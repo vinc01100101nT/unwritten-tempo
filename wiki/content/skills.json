@@ -8,37 +8,41 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "Your weapon grants your skills"
+      "text": "Practice grants your skills"
     },
     {
       "type": "paragraph",
-      "text": "In Unwritten, **your equipped weapon carries its own kit of active skills.** Equip a sword and your hotbar fills with that sword's abilities; swap to a bow and the bar becomes the bow's kit. There are no classes in Unwritten — your weapon is what defines your abilities, and changing weapons is how you change your loadout. A weapon's kit isn't arbitrary: it is what its **Unwritten** — the person the weapon is the last trace of — could do. See *The World of Unwritten*."
+      "text": "In Unwritten, **you learn your skills by fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: every point of experience a kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. Each level it reaches opens another of the sword's skills to you, for good — the Skills window (**K**) shows how much experience the next level needs. There are no classes — the weapons you have practised are what define you, and what you are holding decides which of the skills you know you may use right now."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Every weapon rolls its own kit"
+      "text": "Every weapon type has its own pool"
     },
     {
       "type": "paragraph",
-      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills (how many depends on the weapon; the pool is only as large as the weapon's identity naturally supports). You do not find them: every skill names the **mastery level** in its weapon at which you learn it, and some name a skill you must know first. Practise a sword and its pool opens to you, one skill at a time, in the order the weapon teaches them."
+      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills. You do not find them and no weapon carries them: every skill names the **mastery level** in its weapon at which you learn it, and some name a skill you must know first. Practise a sword and its pool opens to you, one skill at a time, in the order the weapon teaches them."
     },
     {
       "type": "paragraph",
-      "text": "**Your ultimate points at your build.** Each weapon's three ultimates each steer toward a different playstyle — and which Ring stats to invest in — so the ultimate you roll is a hint at how to build that weapon."
+      "text": "**Your ultimates point at your build.** Each weapon's three ultimates steer toward a different playstyle — and toward which Ring stats to invest in — and they sit deep enough in the mastery that reaching one is a statement about how you have been fighting."
     },
     {
       "type": "paragraph",
-      "text": "So two of the same weapon can play very differently, and chasing the weapon (and the ultimate) *you* want is part of the hunt. That isn't randomness for its own sake: a dropped weapon remembers its wielder in fragments, and the skills it carries are **which memories surfaced this time**. Every skill in a weapon's pool reinforces that weapon's identity — so whatever you roll, it still plays like that weapon."
+      "text": "So two people holding the same sword need not play alike at all: they have the skills they each practised for. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Skills don't level — your Ring powers them"
+      "text": "Skills level with use — your Ring and your weapon power them"
     },
     {
       "type": "paragraph",
-      "text": "A skill's raw strength doesn't come from ranking the skill up. Instead, **your Ring stats scale it** (see *Stats & the Ring*). The same skill is stronger in the hands of someone who invested the right stats. This is what keeps roles honest: a heal only pays off if you invested MP; a damage skill only hits hard if you invested Attack or Magic Attack."
+      "text": "Three things make a skill strong. **Your Ring stats scale it** (see *Stats & the Ring*) — a heal only pays off if you invested MP, a damage skill only hits hard if you invested Attack or Magic Attack. **Each active skill has its own mastery**, honed by pressing it: every level adds **+1%**, up to **+30%**. A passive cannot be pressed, so it rides your **Weapon Mastery** instead, at half a percent a level to the same ceiling — but only a passive of the weapon in your hands; a potion gets none. The weapon in your hands caps both, and a better weapon trains them faster. And **a forged weapon's trademark** raises one skill of its type by **+5%** to **+20%**, by its grade (see *Weapons*)."
+    },
+    {
+      "type": "paragraph",
+      "text": "Mastery and a trademark raise a skill's **main numbers** — every one of them, on every effect: the damage it deals, the heal, the shield, the damage an ailment ticks for, how big a buff or debuff is, and how many stacks it adds. A skill with a strike and a damage buff has both raised. They never raise a chance, a duration or the number of hits — only your Ring moves those. A skill's card shows each effect's base number, with the trademark bonus and the mastery bonus each on its own line underneath."
     },
     {
       "type": "heading",
@@ -67,7 +71,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it waits for a specific moment in the fight and fires on its own. The moment it waits for is part of the skill:"
+      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it works on its own from the moment you learn it, as long as its weapon is in your hands: it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
     },
     {
       "type": "list",

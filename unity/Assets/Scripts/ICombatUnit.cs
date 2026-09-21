@@ -183,11 +183,6 @@ public interface ICombatUnit : IDamageable
     /// empty hands, which is the lowest there is.</summary>
     Quality HeldQuality { get; }
 
-    /// <summary>WRITE DOWN, ON THIS UNIT, that <paramref name="attacker"/> took <paramref name="dealt"/> health
-    /// off it with <paramref name="weapon"/> in hand — so a kill can pay practice by the share of the fight each
-    /// weapon really did. Called at the damage door, on the unit being hurt.</summary>
-    void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt);
-
     /// <summary>Seconds between this unit's swings at its current attack speed.</summary>
     float SwingTime { get; }
 

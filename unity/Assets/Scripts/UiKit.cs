@@ -176,7 +176,7 @@ public static class UiKit
 
     /// <summary>Turn a window's fixed "Content" node into a clipped vertical scroll (wheel and drag) and return the
     /// inner node to build rows into. Idempotent: a second call returns the same inner node. THE one scroll
-    /// column every list window uses — the Grimoire and the station window alike — so a long list can never run
+    /// column every list window uses — the Skills window and the station window alike — so a long list can never run
     /// off the bottom of one window and not another.</summary>
     public static RectTransform ScrollColumn(RectTransform viewport)
     {

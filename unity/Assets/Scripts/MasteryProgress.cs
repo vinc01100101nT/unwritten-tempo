@@ -20,7 +20,7 @@ public sealed class MasteryProgress
 
     // ---- weapon mastery -----------------------------------------------------------------------------------
 
-    /// <summary>Practice earned with <paramref name="weapon"/>, whatever is in hand now.</summary>
+    /// <summary>Mastery experience earned with <paramref name="weapon"/>, whatever is in hand now.</summary>
     public float PointsWith(WeaponType weapon)
         => weapon != WeaponType.None && weaponPoints.TryGetValue(weapon, out float p) ? p : 0f;
 
@@ -37,19 +37,86 @@ public sealed class MasteryProgress
     public bool CappedOut(WeaponType weapon, Quality heldQuality)
         => EarnedLevel(weapon) >= CraftingMath.WeaponMasteryCap(heldQuality);
 
-    /// <summary>Add practice with a weapon. Refused once capped by what is in hand. Returns the levels gained.</summary>
-    public int AddPractice(WeaponType weapon, float points, Quality heldQuality)
+    /// <summary>Add experience to a weapon's mastery. Refused once capped by what is in hand. Returns the levels
+    /// gained.</summary>
+    public int AddXP(WeaponType weapon, float xp, Quality heldQuality)
     {
-        if (weapon == WeaponType.None || points <= 0f) return 0;
+        if (weapon == WeaponType.None || xp <= 0f) return 0;
         if (CappedOut(weapon, heldQuality)) return 0;
 
         int before = EarnedLevel(weapon);
-        float now = PointsWith(weapon) + points;
-        // Never past the cap's own total, so a single huge fight cannot vault a poor weapon's limit.
-        float ceiling = MasteryMath.WeaponPointsFor(CraftingMath.WeaponMasteryCap(heldQuality));
+        float now = PointsWith(weapon) + xp;   // server-math: only Character.AddXP calls this, and only on the server
+        // Never past the cap's own total, so a single huge kill cannot vault a poor weapon's limit.
+        float ceiling = MasteryMath.WeaponXpFor(CraftingMath.WeaponMasteryCap(heldQuality));
         weaponPoints[weapon] = Mathf.Min(now, ceiling);
         OnChanged?.Invoke();
         return EarnedLevel(weapon) - before;
+    }
+
+    // ---- the level as the server sent it ------------------------------------------------------------------
+    // A player's machine never works a level out of practice (CLAUDE.md, RULE NOCLIENTMATH): the server sends each
+    // weapon's earned level beside its points, and a window draws that number as it arrived.
+    readonly Dictionary<WeaponType, int> sentLevels = new Dictionary<WeaponType, int>();
+
+    /// <summary>SERVER: the earned level of each weapon in <paramref name="weapons"/>, in the same order, to send.</summary>
+    public int[] EarnedLevels(int[] weapons)
+    {
+        var levels = new int[weapons != null ? weapons.Length : 0];
+        for (int i = 0; i < levels.Length; i++) levels[i] = EarnedLevel((WeaponType)weapons[i]);
+        return levels;
+    }
+
+    /// <summary>PLAYER'S MACHINE: keep the levels the server sent, replacing the last set.</summary>
+    public void TakeSentLevels(int[] weapons, int[] levels)
+    {
+        sentLevels.Clear();
+        if (weapons != null && levels != null)
+            for (int i = 0; i < weapons.Length && i < levels.Length; i++) sentLevels[(WeaponType)weapons[i]] = levels[i];
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>The weapon mastery level the server last sent for <paramref name="weapon"/> — 0 before any arrives.</summary>
+    public int SentLevel(WeaponType weapon) => sentLevels.TryGetValue(weapon, out int l) ? l : 0;
+
+    // ---- the practice toward the next level, as the server sent it ---------------------------------------
+    readonly Dictionary<WeaponType, (float into, float size, bool capped)> sentProgress =
+        new Dictionary<WeaponType, (float, float, bool)>();
+
+    /// <summary>SERVER: for every weapon practised, and the one in hand even if it never was, how far its practice is
+    /// into the current level, how many points that level takes, and whether the weapon in hand's grade has stopped
+    /// it — finished numbers for a window to draw.</summary>
+    public void CaptureProgress(WeaponType held, Quality heldQuality,
+                                out int[] weapons, out float[] into, out float[] size, out bool[] capped)
+    {
+        int n = weaponPoints.Count + (held != WeaponType.None && !weaponPoints.ContainsKey(held) ? 1 : 0);
+        weapons = new int[n]; into = new float[n]; size = new float[n]; capped = new bool[n];
+        int at = 0;
+        foreach (var kv in weaponPoints) weapons[at++] = (int)kv.Key;
+        if (at < n) weapons[at] = (int)held;
+        for (int i = 0; i < n; i++)
+        {
+            var w = (WeaponType)weapons[i];
+            MasteryMath.WeaponProgress(PointsWith(w), out into[i], out size[i]);
+            capped[i] = w == held && CappedOut(w, heldQuality);
+        }
+    }
+
+    /// <summary>PLAYER'S MACHINE: keep the progress the server sent, replacing the last set.</summary>
+    public void TakeSentProgress(int[] weapons, float[] into, float[] size, bool[] capped)
+    {
+        sentProgress.Clear();
+        if (weapons != null && into != null && size != null && capped != null)
+            for (int i = 0; i < weapons.Length && i < into.Length && i < size.Length && i < capped.Length; i++)
+                sentProgress[(WeaponType)weapons[i]] = (into[i], size[i], capped[i]);
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>The progress the server last sent for <paramref name="weapon"/>; false before any arrives.</summary>
+    public bool SentProgress(WeaponType weapon, out float into, out float size, out bool capped)
+    {
+        if (sentProgress.TryGetValue(weapon, out var p)) { into = p.into; size = p.size; capped = p.capped; return true; }
+        into = size = 0f; capped = false;
+        return false;
     }
 
     /// <summary>Set the practice in one weapon outright, ignoring every cap — the testing door (<c>/mastery</c>),
@@ -114,7 +181,7 @@ public sealed class MasteryProgress
                 if (def == null || string.IsNullOrEmpty(def.id) || learned.Contains(def.id)) continue;
                 if (def.weaponType == WeaponType.None) continue;
                 // AN UNWRITTEN LEVEL IS LEVEL ONE — the same reading the skill's own tooltip, the creature's
-                // list and the Grimoire give it, so a pool authored without one is not learned by everybody.
+                // list and the Skills window give it, so a pool authored without one is not learned by everybody.
                 if (EarnedLevel(def.weaponType) < Mathf.Max(1, def.masteryLevel)) continue;
                 if (!string.IsNullOrEmpty(def.needsSkillId) && !learned.Contains(def.needsSkillId)) continue;
                 learned.Add(def.id);

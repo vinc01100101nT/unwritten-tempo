@@ -53,6 +53,7 @@ public class ProgressionWindows : MonoBehaviour
         active = this;
         canvas = GetComponentInParent<Canvas>() != null ? GetComponentInParent<Canvas>().transform : transform;
         ResetDockedWindowPositionsOnce();   // must run BEFORE the windows build (WindowFrame loads its saved pos on enable)
+        ResetCharacterPositionOnce();
         EnsureTooltip();
         BuildInventory();
         BuildCharacter();
@@ -83,13 +84,22 @@ public class ProgressionWindows : MonoBehaviour
         PlayerPrefs.SetInt("pw_dock_v2", 1);
     }
 
+    // The Character window more than doubled in width when the ring moved into it, so a position saved for the old
+    // narrow window can leave half of it off screen. Clear it once; drags after that persist normally.
+    static void ResetCharacterPositionOnce()
+    {
+        if (PlayerPrefs.HasKey("pw_char_ring_v1")) return;
+        PlayerPrefs.DeleteKey("win_Character_x"); PlayerPrefs.DeleteKey("win_Character_y");
+        PlayerPrefs.SetInt("pw_char_ring_v1", 1);
+    }
+
     void OnGold(int _) => RefreshInventoryFooter();
 
     void Update()
     {
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
-        //   B = Bag (what you carry AND what you wear, one list) · C = Character (K = Skills, owned by
-        //   SkillDraftPanel). V is the Sprint key (Player3DController).
+        //   B = Bag (what you carry AND what you wear, one list) · C = Character, the Ring of Progression included
+        //   (K = Skills, owned by SkillsWindow). V is the Sprint key (Player3DController).
         if (Hotkeys.Down(KeyCode.B))
         {
             bool open = UiAnim.Toggle(invRoot);
@@ -308,22 +318,49 @@ public class ProgressionWindows : MonoBehaviour
 
     // ---- Character window -----------------------------------------------------
 
+    const float StatColumnW = 332f, ColumnGap = 20f, RingColumnW = 480f;
+
+    /// <summary>The Character window's right-hand column, where <see cref="SkillDraftPanel"/> draws the Ring of
+    /// Progression. Null until the window is built.</summary>
+    public static RectTransform RingColumn { get; private set; }
+
+    /// <summary>The Character window itself (C), so the ring can tell when it is on screen.</summary>
+    public static GameObject CharacterRoot { get; private set; }
+
     void BuildCharacter()
     {
         // Taller than the old 500: the derived block now lists every stat (offence, defence, speed, sustain, resources)
         // instead of five summary lines, and a fixed-height window would clip the tail silently.
-        var content = UiKit.Window(canvas, "Character", new Vector2(360, 660), new Vector2(0, 0), out charRoot);
+        // Two columns: the stat sheet on the left, the Ring of Progression on the right (SkillDraftPanel builds
+        // into RingColumn). The ring's widest row is its trio band, ~462 wide, so the right column is sized for it.
+        var content = UiKit.Window(canvas, "Character", new Vector2(StatColumnW + ColumnGap + RingColumnW + 28, 660),
+                                   new Vector2(0, 0), out charRoot);
+        CharacterRoot = charRoot;
 
         // Ornament Kit v1: a portrait/name backplate behind the identity block (placeholder — a portrait
         // sprite drops into it later). Decorative, sits behind the stat column so it never disturbs layout.
         var plate = Ornament.Backplate(content, new Vector2(-4, 56));
         var prt = plate.rectTransform;
-        prt.anchorMin = new Vector2(0, 1); prt.anchorMax = new Vector2(1, 1); prt.pivot = new Vector2(0.5f, 1);
-        prt.sizeDelta = new Vector2(-4, 56); prt.anchoredPosition = new Vector2(0, 0);
+        prt.anchorMin = new Vector2(0, 1); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 1);
+        prt.sizeDelta = new Vector2(StatColumnW - 4, 56); prt.anchoredPosition = new Vector2(2, 0);
 
         var col = UiKit.Img("Col", content, new Color(0, 0, 0, 0));
         col.raycastTarget = false;
-        UiKit.Fill(col.rectTransform, Vector2.zero, Vector2.zero);
+        var colRt = col.rectTransform;
+        colRt.anchorMin = new Vector2(0, 0); colRt.anchorMax = new Vector2(0, 1); colRt.pivot = new Vector2(0, 0.5f);
+        colRt.sizeDelta = new Vector2(StatColumnW, 0); colRt.anchoredPosition = Vector2.zero;
+
+        var split = UiKit.Img("ColumnDivider", content, new Color(1, 1, 1, 0.12f));
+        split.raycastTarget = false;
+        var splitRt = split.rectTransform;
+        splitRt.anchorMin = new Vector2(0, 0); splitRt.anchorMax = new Vector2(0, 1); splitRt.pivot = new Vector2(0.5f, 0.5f);
+        splitRt.sizeDelta = new Vector2(2, 0); splitRt.anchoredPosition = new Vector2(StatColumnW + ColumnGap * 0.5f, 0);
+
+        var ring = UiKit.Img("RingColumn", content, new Color(0, 0, 0, 0));
+        var ringRt = ring.rectTransform;
+        ringRt.anchorMin = new Vector2(0, 0); ringRt.anchorMax = new Vector2(1, 1);
+        ringRt.offsetMin = new Vector2(StatColumnW + ColumnGap, 0); ringRt.offsetMax = Vector2.zero;
+        RingColumn = ringRt;
         var vlg = col.gameObject.AddComponent<VerticalLayoutGroup>();
         vlg.spacing = 6;
         vlg.childControlWidth = vlg.childControlHeight = true;

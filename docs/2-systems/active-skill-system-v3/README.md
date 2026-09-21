@@ -80,7 +80,8 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | shove_speed | Knockback / Pull speed | u/s | no (raw) | no — movement, not power |
 | charges | How many uses a charge pile holds (Parry, Brace, the two outgoing-damage piles) | int | no (`stacksPerApply`, or derived from swing rate) | no |
 | cleanse_count | How many ailments one Cleanse removes | int | no (raw) | no — a whole number no fraction can move |
-| modifier_seconds / modifier_stacks | What ExtendDuration / AddStacks hand another skill's pile | sec / int | yes (duration list / affinity list) | no — the other skill takes its own lift |
+| modifier_seconds | What ExtendDuration hands another skill's pile | sec | yes (duration list) | no — a duration |
+| modifier_stacks | What AddStacks hands another skill's pile | int | yes (affinity list) | yes — it is this skill's main number |
 | execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw | base roll scales; this is raw |
 | proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | yes (own affinity list) | no — clamped to 100%, so a lift saturates then does nothing |
 | duration | Effect window length | sec | yes (own affinity list) | **NEVER** — practice must not hold a longer stun |
@@ -189,7 +190,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
 
 - **OnCast** — a normal active the player presses (default). Takes a hotbar slot; uses the cost / cadence / aim of §Tier B.
-- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, but it does show: a read-only row of four smaller squares above the bar lists the passives running, weapon-granted first and then the ones ticked on. A player may tick on at most four of their own (2026-09-05), and swapping a weapon clears those so the new weapon's have room.
+- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, and nothing switches it on: a passive is live the moment its weapon's mastery learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 

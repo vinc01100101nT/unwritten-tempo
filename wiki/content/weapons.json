@@ -3,16 +3,16 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*Gear that shapes your kit, your defense, and your look.*"
+      "text": "*Gear that shapes your skills, your defense, and your look.*"
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Weapons decide your skills"
+      "text": "Weapons decide which skills you may use"
     },
     {
       "type": "paragraph",
-      "text": "Your weapon is more than a stat stick — it **grants the active skills** on your hotbar (see *Skills*). Every weapon is a real 3D object your character holds, and swapping weapons swaps your whole kit."
+      "text": "Your weapon is more than a stat stick — its **type** decides which of the skills you have learned you may use right now (see *Skills*), and a forged weapon raises one of those skills through its **trademark** (below). Every weapon is a real 3D object your character holds."
     },
     {
       "type": "heading",
@@ -130,7 +130,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each weapon type has a deep pool of skills, and **every weapon that drops rolls its own kit** from that pool — which skills surface is pure chance, so no two of the same weapon play exactly alike. You can then shape it further at the forge. See *Skills* for how kits roll, and *Crafting & Recycling* for reforging, refining, transmog, and turning unwanted weapons into Essence."
+      "text": "Each weapon type has a deep pool of skills, but **a weapon carries none of them**. You learn a skill by practising that kind of weapon, and it is yours for good — what you hold only decides which of the ones you know you may use right now. See *Skills* for how they are learned."
     },
     {
       "type": "heading",
@@ -144,33 +144,32 @@
     {
       "type": "list",
       "items": [
-        "**Head**, **Armor**, **Garment** and **Shield**",
-        "Your **Ring** — the vessel of your growth (see *Stats & the Ring*)"
+        "**Head**, **Armor**, **Garment** and **Shield**"
       ]
     },
     {
       "type": "paragraph",
-      "text": "Each piece adds stats and defense; some carry set flavor or elemental properties."
+      "text": "There is no ring slot: your **Ring** is part of you, not something you wear (see *Stats & the Ring*)."
+    },
+    {
+      "type": "paragraph",
+      "text": "Each piece adds what its **folds** and its **quality** make it worth — attack on a weapon, defence on armour — plus any stats written onto it with **Ink** (see *Crafting & Recycling*)."
     },
     {
       "type": "heading",
-      "level": 2,
-      "text": "Refinement (+N)"
+      "text": "Folds (+N)"
     },
     {
       "type": "paragraph",
-      "text": "Gear can be **refined** to higher plus-levels:"
-    },
-    {
-      "type": "list",
-      "items": [
-        "A **weapon** gains **+3 Attack per refine level**.",
-        "**Every** piece of gear gains **+1 Defense per refine level**."
-      ]
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds one to what the piece is worth: **attack** on a weapon, **defence** on armour and a shield, **magic defence** on a garment, and one of each per two folds on a head piece. A staff gains magic attack instead of attack."
     },
     {
       "type": "paragraph",
-      "text": "So a +10 weapon is +30 Attack over its base, and any +10 piece is +10 Defense."
+      "text": "That fold total is then **lifted by the grade** — nothing at Raw and F, rising to **+30% at A**. So an A-grade piece at its full thirty-five folds carries 46 attack, where the same thirty-five folds on an E-grade piece carry 37."
+    },
+    {
+      "type": "paragraph",
+      "text": "**A quench spends every fold**, whichever way it goes. Folds are not lost work: half of what a finished piece cost comes back if you recycle it (see *Crafting & Recycling*)."
     },
     {
       "type": "heading",
@@ -183,7 +182,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Quality decides four things.** How far a piece can be **folded**, which is what its attack or defence is made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; and how far your **mastery** with it can go. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
+      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack or defence is made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
     },
     {
       "type": "table",
@@ -257,11 +256,11 @@
     },
     {
       "type": "paragraph",
-      "text": "So two people holding the same sword do not have the same skills: they have the skills they each practised for."
+      "text": "**A forged weapon has a trademark.** At the forge it rolls one skill of its type and is named for it — a sword that empowers Blade Dance is a **Ranbu**, and folded to +15 at grade C it reads **+15 Ranbu [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: each ultimate one time in twenty, the others sharing the rest evenly. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Ranbu raises Blade Dance's strike and its damage buff alike. Hover the weapon to see which skill and which numbers; hover the skill to see the bonus on its own line."
     },
     {
       "type": "paragraph",
-      "text": "So **seven skills is typical**, and about **one weapon in sixteen** drops with the full nine. Only the **Sword**'s skill pool is finished today — every other weapon type currently drops with no skills at all until its pool is written."
+      "text": "So two people holding the same sword do not have the same skills: they have the skills they each practised for."
     },
     {
       "type": "heading",
@@ -275,7 +274,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the 12-weapon roster and each weapon's one-line identity are locked in design; every weapon's exact skill pool and stats are being authored. Slots and the refinement rule are set.*"
+        "*Status: the 12-weapon roster and each weapon's one-line identity are locked in design. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"
       ]
     }
   ]

@@ -19,10 +19,12 @@ MonoBehaviour:
   masteryLevel: 7
   needsSkillId: skill.sword.lunge
   published: 1
+  trademarkName: Tsubazeriai
   description: 'No escape.
 
-    Casting Lunge arms 5 charges, each +5% Attack Speed
-    for 5s. Every hit you land spends one to lunge at the target again.'
+    Casting Lunge arms 5 charges, each +2 basic attack
+    range for 5s. Every basic attack you start spends one to lunge at the target
+    again.'
   archetype: 0
   family: 0
   shape: 0

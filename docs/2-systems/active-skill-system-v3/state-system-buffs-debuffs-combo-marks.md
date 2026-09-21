@@ -194,7 +194,7 @@ show their count.
 - **Momentum → Deathblow** (stacks): basic attacks add one stack each with their own timers and FIFO expiry, each a fixed
   attack bonus; Deathblow reads the live total, then consumes all. Exercises independent per-stack timers, sum-of-stacks, and
   consume-all after compute.
-- **Lunge → Lock Blades** (charges): casting Lunge grants charges; each landed hit triggers an auto-lunge and spends one.
+- **Lunge → Lock Blades** (charges): casting Lunge grants charges; each basic attack you start triggers an auto-lunge and spends one.
   Exercises stacks-granted-at-once, the trigger gate, consume-per-use, and the no-self-feeding brake.
 - **Parry, Brace and Retribution** exercise the charge piles and the two-state debt rule; **Blade Dance** exercises
   attack-speed-earned stacks; **Encore** exercises duration extension without stamping itself on the damage.

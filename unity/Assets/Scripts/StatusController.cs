@@ -130,7 +130,7 @@ public class StatusController : MonoBehaviour
     }
 
     bool Active(Ailment a) { var st = states; return st != null && st.Has((StateId)(int)a); }   // Ailment i ↔ StateId i (matching enum order)
-    static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
+    public static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
 
     // ---- the flags the rest of the game reads (player side) -------------------
     /// <summary>HARD crowd-control — frozen or stunned. This is the flag that INTERRUPTS a cast in progress, so it must
@@ -412,6 +412,7 @@ public class StatusController : MonoBehaviour
             TickRegen();
             TickMana();
             TickBrace();
+            states.EndTauntIfTaunterGone();
         }
 
         // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for

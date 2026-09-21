@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Builds the rich-text body of a skill's hover card from its <see cref="SkillDef"/> — title, tag/category/tier chips,
 /// cost line, description, and a human-readable line per effect with its VARIABLE NUMBERS highlighted. Pure function
-/// (no UI dependency), so the hotbar, grimoire, or any hover can share one description. A Damage effect shows its
+/// (no UI dependency), so the hotbar, the Skills window, or any hover can share one description. A Damage effect shows its
 /// authored multiplier and no damage estimate.
 /// </summary>
 public static class SkillTooltip
@@ -89,7 +89,7 @@ public static class SkillTooltip
     }
 
     /// <summary>Plain-language "what makes this run", read off the skill's authored triggers. Shared by every surface
-    /// that lists them (the Grimoire rows, the weapon skill-details panel) so they can never word it differently.
+    /// that lists them (the Skills window rows, the weapon skill-details panel) so they can never word it differently.
     ///
     /// <para>A skill can carry several triggers, so this joins every NON-OnCast one. OnCast is skipped: "you press it"
     /// is what a hotbar slot already says, so listing it would only be noise on a skill that has both.</para></summary>
@@ -220,42 +220,70 @@ public static class SkillTooltip
     static readonly System.Collections.Generic.List<string> effectLines = new System.Collections.Generic.List<string>(8);
 
     /// <summary>Every effect line this skill would show, in order — the same lines the hover card bullets. Returns a
-    /// SHARED list: read it or copy it before the next call. Assumes the dialect is already set by the caller.</summary>
+    /// SHARED list: read it or copy it before the next call. Assumes the dialect is already set by the caller.
+    ///
+    /// <para>Each line states the effect's BASE number. What the character's weapon trademark and practice add on
+    /// top is said underneath, one line each, on every effect that has a main number — the same effects the fight
+    /// raises (<see cref="EffectScaling.Boostable"/>), so the card and the fight cannot disagree about which.</para></summary>
     public static System.Collections.Generic.List<string> EffectLines(SkillDef def)
     {
         effectLines.Clear();
         if (def == null || def.bindings == null) return effectLines;
-        // The amounts below have to agree with what the cast will really produce, and this character's practice is
-        // part of that. Held for the whole listing the same way the dialect is, because it is one value for one skill
-        // — and restored after, so a line described with no skill in hand cannot inherit the last one's lift.
-        float prevLift = describeLift;
-        describeLift = Character.Instance != null ? Character.Instance.SkillOutputLift(def.id) : 0f;
-        try
+        var ch = Character.Instance;
+        float trademark = ch != null ? ch.TrademarkLift(def.id) : 0f;
+        float mastery = ch != null ? ch.MasteryLift(def.id) : 0f;
+        string masteryLabel = def.IsPassive ? "Weapon mastery" : "Skill mastery";
+        for (int i = 0; i < def.bindings.Count; i++)
         {
-            for (int i = 0; i < def.bindings.Count; i++)
+            var b = def.bindings[i];
+            if (b == null || b.effects == null) continue;
+            for (int k = 0; k < b.effects.Count; k++)
             {
-                var b = def.bindings[i];
-                if (b == null || b.effects == null) continue;
-                for (int k = 0; k < b.effects.Count; k++)
+                var e = b.effects[k];
+                string line = DescribeEffect(e);
+                if (string.IsNullOrEmpty(line)) continue;
+                if (EffectScaling.Boostable(e))
                 {
-                    string line = DescribeEffect(b.effects[k]);
-                    if (!string.IsNullOrEmpty(line)) effectLines.Add(line);
+                    if (trademark > 0f)
+                        line += "\n   Trademark skill bonus " + MainNumberWord(e) + ": +" + Pct(trademark);
+                    if (mastery > 0f)
+                        line += "\n   " + masteryLabel + ": +" + Pct(mastery);
                 }
+                effectLines.Add(line);
             }
         }
-        finally { describeLift = prevLift; }
         return effectLines;
     }
 
-    // The practice lift of the skill currently being described, or 0 when it is being described without one (the
-    // buff tray's "what it does" line asks about a single effect, with no skill behind it).
-    static float describeLift;
+    /// <summary>The main number of <paramref name="e"/> in a player's words — "damage", "damage buff", "bleed
+    /// damage" — for the lines that say what raises it. Null for an effect with no main number.</summary>
+    public static string MainNumberWord(SkillEffect e)
+    {
+        if (!EffectScaling.Boostable(e)) return null;
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:               return "damage";
+            case SkillEffectKind.Execute:              return "execute damage";
+            case SkillEffectKind.Heal:                 return "heal";
+            case SkillEffectKind.Shield:               return "shield";
+            case SkillEffectKind.Status:               return e.ailment.ToString().ToLowerInvariant() + " damage";
+            case SkillEffectKind.SubStatBuff:          return SubStatName(e.subStat) + " buff";
+            case SkillEffectKind.SubStatDebuff:        return SubStatName(e.subStat) + " debuff";
+            case SkillEffectKind.BoostOutgoingDamage:  return "damage bonus";
+            case SkillEffectKind.ReduceOutgoingDamage: return "damage cut";
+            case SkillEffectKind.AddStacks:
+            {
+                var of = SkillCatalog.Get(e.modifierSkillId);
+                return of != null ? "stacks added to " + of.displayName : "stacks added";
+            }
+            default:                                   return null;
+        }
+    }
 
-    // What a live cast really produces from an authored OUTPUT number: the ring's affinity term plus this
-    // character's practice, added exactly as the applier adds them. Every line that shows such a number goes through here —
-    // a card showing the raw authored figure promises one number while the fight deals another, and the two only
-    // disagree by more as a player invests.
-    static float LiveMult(SkillEffect e) => SkillEffectApplier.AffinityMult(e.affinity, Character.Instance) + describeLift;
+    // What a live cast produces from an authored OUTPUT number BEFORE practice and trademark: the ring's affinity
+    // term, from the fight's own multiplier with no lift passed in — never a copy of its formula. The lifts are
+    // said on their own lines (EffectLines), so the base number here stays the base.
+    static float LiveMult(SkillEffect e) => SkillEffectApplier.OutputScale(e, Character.Instance, 0f);
 
     /// <summary>Every effect line in a chosen dialect. Copies into <paramref name="into"/> so the caller owns the
     /// result (the no-alloc list above is only safe until the next call).</summary>

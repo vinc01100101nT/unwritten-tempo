@@ -68,9 +68,9 @@
       "type": "list",
       "items": [
         "**Combat Mechanics** — damage types, elements, and matchups",
-        "**Weapons & Equipment** — gear, weapon types, and refinement",
+        "**Weapons & Equipment** — gear, weapon types, folds, the quality ladder and trademarks",
         "**The Sword** — the first fully-authored weapon's skill list",
-        "**Crafting & Recycling** — reshape a weapon's skills, refine, and recycle",
+        "**Crafting & Recycling** — forge, fold, quench, write stats with Ink, and recycle",
         "**Cards** — monster-matchup specialization *(planned feature)*"
       ]
     },

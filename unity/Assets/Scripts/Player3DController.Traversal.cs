@@ -70,6 +70,9 @@ public partial class Player3DController
 
         // Same input guards as ReadInput so a skill-aim click doesn't also hop/dash.
         if (GroundTargeter.Active || UnitTargeter.Active) return false;
+        // A taunt allows no hop and no dash: the only thing a taunted body starts is its swing at the taunter.
+        // One already in the air above still finishes.
+        if (Taunted) return false;
 
         if (KeyDash() && Time.time >= eDashReadyAt)
         {

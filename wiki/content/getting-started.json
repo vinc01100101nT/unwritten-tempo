@@ -25,7 +25,7 @@
       "items": [
         "**Fight monsters** — each one is a blank page. Defeating it writes a line onto it.",
         "**Level up** — every level lets you draft a point of growth on your **Ring** (see *Stats & the Ring*).",
-        "**Equip a weapon** — your weapon decides which **skills** you can use. Swap weapons to swap your kit.",
+        "**Practise a weapon** — fighting with a kind of weapon teaches you its **skills**, and the weapon type in your hands decides which of them you may use.",
         "**Grow into a role** — where you invest your ring points quietly commits you to a role (a bruiser, a mage, a healer…).",
         "**Get your color** — as you progress, identity leaks into your husk for the first time."
       ]
@@ -39,7 +39,7 @@
       "type": "list",
       "items": [
         "**Your Ring** — your stat growth and the heart of your build. See **Stats & the Ring**.",
-        "**Your weapon** — grants your active skills. See **Skills** and **Weapons & Equipment**.",
+        "**Your weapons** — the skills you learned by practising them, how far your mastery goes, and the **trademark** of the forged weapon you hold. See **Skills** and **Weapons & Equipment**.",
         "**Your gear & cards** — armor and (planned) cards that specialize you. See **Weapons & Equipment** and **Cards**."
       ]
     },

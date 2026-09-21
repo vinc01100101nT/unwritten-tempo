@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 65
   needsSkillId: skill.sword.blade_dance
   published: 1
+  trademarkName: Futatabi
   description: 'The dance goes on.
 
     A kill during Blade Dance adds 7 more dance

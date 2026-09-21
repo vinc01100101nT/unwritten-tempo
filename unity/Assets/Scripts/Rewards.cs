@@ -48,47 +48,6 @@ public static class Rewards
         GameNetwork.TellOwnerTheyEarned(character, xp, 0, levelsGained, ringLevelsGained);
     }
 
-    /// <summary>Pay PRACTICE for a kill — the other half of what a death is worth, and the only way a weapon
-    /// mastery grows. Paid to everyone who took health off the creature, by the SHARE each of them took with each
-    /// weapon they held, so a party splits one creature's worth between them and nobody is paid twice for the
-    /// same blow.
-    ///
-    /// <para>The creature's LEVEL never makes this bigger: it decides how challenging the fight was, which is a
-    /// multiplier held between nothing and one and a half. A creature ten levels below the fighter teaches
-    /// nothing, and one that cannot die is never here at all.</para></summary>
-    public static void PayPractice(Health victim)
-    {
-        if (victim == null) return;
-        int pool = Mathf.Max(1, victim.maxHealth);
-
-        for (int i = 0; i < Health.PracticePlaces; i++)
-        {
-            if (!victim.PracticeAt(i, out var who, out var weapon, out int dealt, out var grade)) continue;
-            if (PlayerUnits.Gone(who) || weapon == WeaponType.None) continue;
-            var character = who as Character;
-            if (character == null) continue;
-
-            // PRICED AND CAPPED BY THE BLADE THAT DID THE WORK, not by whatever is in hand at the moment it
-            // fell — swapping a fine sword in for the killing blow buys none of the fight that came before it.
-            float points = MasteryMath.PracticeFromKill(dealt, pool, victim.Level, character.Level, grade);
-            if (points <= 0f) continue;
-
-            GameNetwork.SaveSoonFor(character);
-            int before = character.Mastery.EarnedLevel(weapon);
-            character.Mastery.AddPractice(weapon, points, grade);
-            int after = character.Mastery.EarnedLevel(weapon);
-            if (after > before) character.Mastery.LearnWhatIsOpen();
-
-            if (GameLog.On(LogCat.Loot))
-                GameLog.Info(LogCat.Loot, string.Concat(new[]
-                {
-                    SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " practised ", weapon.ToString(),
-                    " ", points.ToString("0.##"), " (level ", after.ToString(), ") from ",
-                    SpawnIds.Label(victim),
-                }));
-        }
-    }
-
     /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the
     /// last unit to land a blow that cost it health, which is the simplest thing a player can predict from what
     /// they can see and costs nothing to track: the damage door already writes it down.

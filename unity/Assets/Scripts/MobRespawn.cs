@@ -126,8 +126,6 @@ public class MobRespawn : MonoBehaviour
         if (health != null)
         {
             health.RollExtraSkillsForNewLife();
-            // A FRESH LIFE IS A FRESH FIGHT: whoever wore the last one down has no claim on this one's practice.
-            health.ForgetPractice();
         }
         var block = mob.GetComponent<UnitStatBlock>();
         if (block != null) { block.ResetToSpawnLevel(); if (gear != null) block.Rederive(healToFull: true); }
