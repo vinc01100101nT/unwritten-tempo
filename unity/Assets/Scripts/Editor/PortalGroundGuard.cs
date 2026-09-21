@@ -11,7 +11,8 @@ using UnityEngine.SceneManagement;
 /// manual steps: you just press Ctrl+S like always, and any stray portal is quietly put back on the floor.
 ///
 /// It only moves a portal that is actually off the ground (tolerance 1mm), and only along Y, so a correctly
-/// placed portal is never touched. Runs per saving scene, ignores prop/trigger colliders (Ground mask only).
+/// placed portal is never touched. Runs per saving scene, ignores prop/trigger colliders (Ground mask only),
+/// never on the save Unity makes on its own before Play, and every snap is on the undo stack.
 /// </summary>
 [InitializeOnLoad]
 static class PortalGroundGuard
@@ -24,6 +25,10 @@ static class PortalGroundGuard
 
     static void OnSceneSaving(Scene scene, string path)
     {
+        // Unity also saves before Play; a snap then would move a portal on a press the user never meant as an
+        // edit. Only a deliberate save may move one.
+        if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
+
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0) return;                        // no Ground layer → nothing to snap to
         int mask = 1 << groundLayer;
@@ -38,6 +43,8 @@ static class PortalGroundGuard
             if (!Physics.Raycast(from, Vector3.down, out var hit, 200f, mask, QueryTriggerInteraction.Ignore))
                 continue;                                   // no ground beneath it → leave it alone
             if (Mathf.Abs(t.position.y - hit.point.y) <= 0.001f) continue;   // already grounded
+            Undo.RecordObject(t, "Ground-snap portal");
+            // editor-write-ok: fires only on the user's own Ctrl+S (Play's auto-save is refused above) and sits on the undo stack
             t.position = new Vector3(t.position.x, hit.point.y, t.position.z);
             snapped++;
         }

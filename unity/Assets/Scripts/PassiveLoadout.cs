@@ -43,31 +43,24 @@ public class PassiveLoadout
     /// <summary>Fired whenever the checked set changes — the Grimoire redraws off this.</summary>
     public event Action OnChanged;
 
-    /// <summary>True if the player ticked this passive on themselves (ignores the weapon kit).</summary>
+    /// <summary>True if the player ticked this passive on themselves.</summary>
     public bool IsChecked(string id) => !string.IsNullOrEmpty(id) && checkedIds.Contains(id);
 
-    /// <summary>True if the equipped WEAPON rolled this skill — such a passive is live and can't be unticked.</summary>
-    public bool GrantedByWeapon(string id)
+    /// <summary>THE gate: may this passive run right now? Ticked on, AND the weapon it belongs to in hand — the
+    /// same rule an active plays by, so swapping to a bow silences the sword's passives without clearing what the
+    /// player chose. Non-passives always pass: an active is gated by the hotbar and by the cast, not by this.</summary>
+    public bool IsActive(SkillDef def)
     {
-        if (string.IsNullOrEmpty(id)) return false;
-        var weapon = owner != null ? owner.GetEquippedInstance(EquipSlotType.Weapon) : null;
-        var kit = weapon != null ? weapon.skillIds : null;
-        if (kit == null) return false;
-        for (int i = 0; i < kit.Count; i++) if (kit[i] == id) return true;
-        return false;
+        if (def == null) return false;
+        if (!def.IsPassive) return true;
+        if (!IsChecked(def.id)) return false;
+        return owner == null || owner.MayUse(def.id);
     }
 
-    /// <summary>THE gate: may this passive run right now? Non-passives always pass — an active is gated by the
-    /// hotbar, not by this.</summary>
-    public bool IsActive(SkillDef def)
-        => def != null && (!def.IsPassive || IsChecked(def.id) || GrantedByWeapon(def.id));
-
-    /// <summary>Tick a passive on or off. A weapon-granted one is refused (it's live because of the weapon, and
-    /// letting it also be checked would fork "why is this on" into two answers). Returns true if anything changed.</summary>
+    /// <summary>Tick a passive on or off. Returns true if anything changed.</summary>
     public bool Set(string id, bool on)
     {
         if (string.IsNullOrEmpty(id)) return false;
-        if (on && GrantedByWeapon(id)) return false;
         // FULL IS A REFUSAL, NOT A SWAP. Deciding which of the four to drop is the player's, and quietly picking
         // one for them would take a passive off their bar that they never chose to remove.
         if (on && !IsChecked(id) && Full) return false;
@@ -78,31 +71,13 @@ public class PassiveLoadout
 
     public bool Toggle(string id) => Set(id, !IsChecked(id));
 
-    /// <summary>Untick everything the player chose. Called when a weapon changes: the new weapon brings its own
-    /// passives and they need the slots, and a player cannot be asked to guess which of their four to give up
-    /// before they have seen what they just equipped. Returns true if anything was on.</summary>
-    public bool ClearChecked()
-    {
-        if (checkedIds.Count == 0) return false;
-        checkedIds.Clear();
-        OnChanged?.Invoke();
-        return true;
-    }
-
-    /// <summary>Every passive live on this character right now, weapon-granted first and then the ticked ones —
-    /// the exact list the row of passive slots draws, in the order it draws them.</summary>
-    public void CollectActive(EquipmentInstance weapon, System.Collections.Generic.List<string> into)
+    /// <summary>Every passive this character has ticked on — the exact list the row of passive slots draws, in
+    /// the order it draws them. A weapon grants none of them any more: a passive is learned and ticked, and the
+    /// weapon in hand only decides whether it fires (see <see cref="IsActive"/>).</summary>
+    public void CollectActive(System.Collections.Generic.List<string> into)
     {
         if (into == null) return;
         into.Clear();
-
-        var kit = weapon != null ? weapon.skillIds : null;
-        if (kit != null)
-            for (int i = 0; i < kit.Count; i++)
-            {
-                var def = SkillCatalog.Get(kit[i]);
-                if (def != null && def.IsPassive && !into.Contains(kit[i])) into.Add(kit[i]);
-            }
 
         foreach (var id in checkedIds)
         {

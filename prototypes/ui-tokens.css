@@ -29,23 +29,6 @@
   --text-dim: #a79e88;
   --text-main: #e7e3d5;
 
-  /* the five tiers: border, text, glow */
-  --rarity-common-border: #4b5563;
-  --rarity-common-text: #cbd2e0;
-  --rarity-common-glow: rgba(0, 0, 0, 0.0);
-  --rarity-uncommon-border: #46d17f;
-  --rarity-uncommon-text: #a8f0c5;
-  --rarity-uncommon-glow: rgba(70, 209, 127, 0.28);
-  --rarity-rare-border: #4f8cff;
-  --rarity-rare-text: #bcd4ff;
-  --rarity-rare-glow: rgba(79, 140, 255, 0.3);
-  --rarity-epic-border: #a855f7;
-  --rarity-epic-text: #e6c6ff;
-  --rarity-epic-glow: rgba(168, 85, 247, 0.34);
-  --rarity-legendary-border: #f5b942;
-  --rarity-legendary-text: #f1e7d0;
-  --rarity-legendary-glow: rgba(245, 185, 66, 0.4);
-
   /* the game's own three faces */
   --font-title: "Cinzel";
   --font-ui: "Inter";

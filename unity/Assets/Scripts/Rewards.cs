@@ -34,7 +34,7 @@ public static class Rewards
         var character = killer as Character;
         if (character == null) return;
 
-        character.AddXP(xp);
+        int levelsGained = character.AddXP(xp, out int ringLevelsGained);
         // "field_15 Alpha #1 (id) earned 40 experience from Snake #3" — beside the loot line, so what a kill paid is
         // all in the log and nothing about it needs a recorder.
         if (GameLog.On(LogCat.Loot))
@@ -45,7 +45,48 @@ public static class Rewards
             }));
         // On a server the character being paid is not the one on that player's screen, so their machine has to be
         // told or the kill quietly earns them nothing. Does nothing anywhere else.
-        GameNetwork.TellOwnerTheyEarned(character, xp);
+        GameNetwork.TellOwnerTheyEarned(character, xp, 0, levelsGained, ringLevelsGained);
+    }
+
+    /// <summary>Pay PRACTICE for a kill — the other half of what a death is worth, and the only way a weapon
+    /// mastery grows. Paid to everyone who took health off the creature, by the SHARE each of them took with each
+    /// weapon they held, so a party splits one creature's worth between them and nobody is paid twice for the
+    /// same blow.
+    ///
+    /// <para>The creature's LEVEL never makes this bigger: it decides how challenging the fight was, which is a
+    /// multiplier held between nothing and one and a half. A creature ten levels below the fighter teaches
+    /// nothing, and one that cannot die is never here at all.</para></summary>
+    public static void PayPractice(Health victim)
+    {
+        if (victim == null) return;
+        int pool = Mathf.Max(1, victim.maxHealth);
+
+        for (int i = 0; i < Health.PracticePlaces; i++)
+        {
+            if (!victim.PracticeAt(i, out var who, out var weapon, out int dealt, out var grade)) continue;
+            if (PlayerUnits.Gone(who) || weapon == WeaponType.None) continue;
+            var character = who as Character;
+            if (character == null) continue;
+
+            // PRICED AND CAPPED BY THE BLADE THAT DID THE WORK, not by whatever is in hand at the moment it
+            // fell — swapping a fine sword in for the killing blow buys none of the fight that came before it.
+            float points = MasteryMath.PracticeFromKill(dealt, pool, victim.Level, character.Level, grade);
+            if (points <= 0f) continue;
+
+            GameNetwork.SaveSoonFor(character);
+            int before = character.Mastery.EarnedLevel(weapon);
+            character.Mastery.AddPractice(weapon, points, grade);
+            int after = character.Mastery.EarnedLevel(weapon);
+            if (after > before) character.Mastery.LearnWhatIsOpen();
+
+            if (GameLog.On(LogCat.Loot))
+                GameLog.Info(LogCat.Loot, string.Concat(new[]
+                {
+                    SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " practised ", weapon.ToString(),
+                    " ", points.ToString("0.##"), " (level ", after.ToString(), ") from ",
+                    SpawnIds.Label(victim),
+                }));
+        }
     }
 
     /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the
@@ -58,15 +99,14 @@ public static class Rewards
     public static ICombatUnit WhoEarned(Health victim) => victim != null ? victim.LastAttacker : null;
 
     /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: <paramref name="gold"/> Zeny straight
-    /// into their purse, and every item in <paramref name="items"/> and <paramref name="worn"/> onto the ground where
+    /// into their purse, and every item in <paramref name="items"/> onto the ground where
     /// <paramref name="victim"/> fell — kept for <paramref name="winner"/> for <see cref="GroundDrop.KillerOnlySeconds"/>,
     /// then anybody's, and gone after <see cref="GroundDrop.KillDropLifetimeSeconds"/>.
     ///
     /// <para>ONE CALL PER KILL, not one per thing dropped: on a server the purse is handed to its owner and written down
     /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>
-    /// <param name="items">Item DEFINITIONS the kill gives up — any equipment among them is rolled as a fresh copy as it lands.</param>
-    /// <param name="worn">Finished COPIES the kill gives up — the pieces the creature wore, put down exactly as they are.</param>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, List<EquipmentInstance> worn, int gold, Health victim)
+    /// <param name="items">Item DEFINITIONS the kill gives up — any equipment among them lands as a fresh Raw copy.</param>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, int gold, Health victim)
     {
         if (PlayerUnits.Gone(winner)) return;
 
@@ -84,13 +124,9 @@ public static class Rewards
                 {
                     var def = items[i];
                     if (def == null) continue;
-                    var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateRolled(def) : null;
+                    var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateFresh(def) : null;
                     if (DropForKiller(at, map, def, copy, character)) dropped++;
                 }
-            if (worn != null)
-                for (int i = 0; i < worn.Count; i++)
-                    if (worn[i] != null && worn[i].def != null && DropForKiller(at, map, worn[i].def, worn[i], character))
-                        dropped++;
         }
 
         if (gold > 0)
@@ -103,13 +139,13 @@ public static class Rewards
 
         // A KILL THAT PAID NOTHING SAYS SO too — without it "paid nothing" and "the payout never ran" are both silence,
         // and only the second is a bug.
-        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, worn, gold, dropped, victim));
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold, dropped, victim));
     }
 
     // ONE THING DOWN ON THE GROUND for the killer, next to where the creature fell, and every player near enough told.
     static bool DropForKiller(Vector3 at, string map, Item def, EquipmentInstance copy, Character killer)
     {
-        var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, 1, copy, def.rarity, 0, map, 0);
+        var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, 1, copy, Quality.Raw, 0, map, 0);
         if (drop == null) return false;
         drop.ReserveFor(killer, GroundDrop.KillerOnlySeconds, GroundDrop.KillDropLifetimeSeconds);
         GameNetwork.PublishDrop(drop);
@@ -119,7 +155,7 @@ public static class Rewards
     /// <summary>What a kill paid, as one line: who got it, how much Zeny, every item put down for them by name, and which
     /// unit it came from — "field_15 Alpha #1 (id) earned 6 Zeny and dropped Jellopy for them from Snake #3", or "earned
     /// nothing from Snake #3". Builds a string, so it is only ever called behind <see cref="GameLog.On"/>.</summary>
-    static string Describe(Character who, List<Item> items, List<EquipmentInstance> worn, int gold, int dropped, Health victim)
+    static string Describe(Character who, List<Item> items, int gold, int dropped, Health victim)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append(SpawnIds.MapOf(who)).Append(' ').Append(SpawnIds.Label(who))
@@ -137,14 +173,6 @@ public static class Rewards
                     if (items[i] == null) continue;
                     if (!first) sb.Append(", ");
                     sb.Append(items[i].displayName);
-                    first = false;
-                }
-            if (worn != null)
-                for (int i = 0; i < worn.Count; i++)
-                {
-                    if (worn[i] == null || worn[i].def == null) continue;
-                    if (!first) sb.Append(", ");
-                    sb.Append(worn[i].def.displayName);
                     first = false;
                 }
             sb.Append(" for them");

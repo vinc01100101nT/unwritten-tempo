@@ -7,7 +7,7 @@ using UnityEngine;
 /// The spreadsheet view of the item catalog — one row per <see cref="Item"/>, the balance-relevant fields editable
 /// inline (Undo-able, saved on demand). The item sibling of <see cref="MobTableWindow"/>.
 ///
-/// <para><b>ONE table, opened once per bucket.</b> Weapons, Armor, Rings, Consumables, Materials, Quest Items and Misc
+/// <para><b>ONE table, opened once per bucket.</b> Weapons, Armor, Consumables, Materials, Quest Items and Misc
 /// are the same window filtered to one <see cref="ItemType"/>, each showing only the columns that bucket actually has —
 /// a weapon shows ATK and reach, a consumable shows the skill it runs, and neither wastes a column on the other's
 /// blanks. Six near-identical windows would rot the moment one got a fix the others didn't, so there is exactly one
@@ -25,8 +25,7 @@ public class ItemTableWindow : EditorWindow
     // ---- The buckets -----------------------------------------------------------------------------------------
     // Adding a table later is this list plus a menu entry — never another copy of the window.
 
-    enum ColId { Icon, Id, Name, Type, Kind, Elem, Rarity, Atk, Def, MAtk, MDef, HP, MP, Reach, Sockets, Weight, Zeny, UseSkill, Select,
-                 DefRange, MDefRange, StatCount, StatValue }
+    enum ColId { Icon, Id, Name, Type, Kind, Elem, Reach, Sockets, Weight, Zeny, UseSkill, Select, Material }
 
     struct Col
     {
@@ -42,23 +41,13 @@ public class ItemTableWindow : EditorWindow
         new Col(ColId.Type,    "type",    "type",   92),
         new Col(ColId.Kind,    "kind",    null,     104),
         new Col(ColId.Elem,    "elem",    "elem",   78),
-        new Col(ColId.Rarity,  "rarity",  "rarity", 84),
-        new Col(ColId.Atk,     "ATK",     "atk",    46),
-        new Col(ColId.Def,     "DEF",     "def",    46),
-        new Col(ColId.MAtk,    "MATK",    null,     50),
-        new Col(ColId.MDef,    "MDEF",    null,     50),
-        new Col(ColId.HP,      "HP",      null,     46),
-        new Col(ColId.MP,      "MP",      null,     46),
+        new Col(ColId.Material,"material","material", 150),
         new Col(ColId.Reach,   "reach",   null,     52),
         new Col(ColId.Sockets, "◇",       null,     32),
         new Col(ColId.Weight,  "wt",      null,     38),
         new Col(ColId.Zeny,    "zeny",    "zeny",   52),
         new Col(ColId.UseSkill,"runs skill", null,  200),
         // A piece of armour rolls inside RANGES per copy, so its table shows the ranges — not a single number.
-        new Col(ColId.DefRange,  "DEF min–max",   null, 96),
-        new Col(ColId.MDefRange, "M.DEF min–max", null, 96),
-        new Col(ColId.StatCount, "stats min–max", null, 96),
-        new Col(ColId.StatValue, "stat value min–max", null, 116),
         new Col(ColId.Select,  "",        null,     28),
     };
 
@@ -68,25 +57,22 @@ public class ItemTableWindow : EditorWindow
         switch (t)
         {
             case ItemType.Weapon:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem, ColId.Rarity,
-                               ColId.Atk, ColId.MAtk, ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
-            case ItemType.Armor:
-                // Rarity is ROLLED per copy for Head/Armor/Garment/Shield, so the authored one is not shown here.
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem,
-                               ColId.DefRange, ColId.MDefRange, ColId.StatCount, ColId.StatValue,
+                               ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Armor:
+                // A piece of armour has no numbers of its own: what it is worth comes from its folds and its
+                // grade, decided when a player makes it.
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem,
                                ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
-            case ItemType.Ring:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity,
-                               ColId.HP, ColId.MP, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
             case ItemType.Consumable:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity, ColId.UseSkill,
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.UseSkill,
                                ColId.Weight, ColId.Zeny, ColId.Select };
             case ItemType.Material:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity, ColId.Weight, ColId.Zeny, ColId.Select };
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Zeny, ColId.Select };
             case ItemType.Quest:
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Select };
             default:   // Misc — the catch-all, so it shows the coarse Type to explain why a row landed here
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Type, ColId.Rarity, ColId.Weight, ColId.Zeny, ColId.Select };
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Type, ColId.Weight, ColId.Zeny, ColId.Select };
         }
     }
 
@@ -95,7 +81,6 @@ public class ItemTableWindow : EditorWindow
     const string Root = "Tools/unwritten/Catalogs/Items/";
     [MenuItem(Root + "Weapons")]     static void OpenWeapons()     => Open(ItemType.Weapon);
     [MenuItem(Root + "Armor")]       static void OpenArmor()       => Open(ItemType.Armor);
-    [MenuItem(Root + "Rings")]       static void OpenRings()       => Open(ItemType.Ring);
     [MenuItem(Root + "Consumables")] static void OpenConsumables() => Open(ItemType.Consumable);
     [MenuItem(Root + "Materials")]   static void OpenMaterials()   => Open(ItemType.Material);
     [MenuItem(Root + "Quest Items")] static void OpenQuest()       => Open(ItemType.Quest);
@@ -165,10 +150,8 @@ public class ItemTableWindow : EditorWindow
         {
             "name"   => (a, b) => string.Compare(a.displayName, b.displayName, System.StringComparison.OrdinalIgnoreCase),
             "type"   => (a, b) => ItemTypes.Of(a).CompareTo(ItemTypes.Of(b)),
-            "atk"    => (a, b) => a.bonusAttack.CompareTo(b.bonusAttack),
-            "def"    => (a, b) => a.bonusDefense.CompareTo(b.bonusDefense),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
-            "rarity" => (a, b) => a.rarity.CompareTo(b.rarity),
+            "material" => (a, b) => ((int)a.materialKind * 100 + a.materialStep).CompareTo((int)b.materialKind * 100 + b.materialStep),
             "zeny"   => (a, b) => a.zeny.CompareTo(b.zeny),
             _        => (a, b) => string.Compare(a.id, b.id, System.StringComparison.OrdinalIgnoreCase),
         };
@@ -282,22 +265,20 @@ public class ItemTableWindow : EditorWindow
                     break;
 
                 case ColId.Elem:    it.element = (Element)EditorGUI.EnumPopup(Field(), it.element); break;
-                case ColId.Rarity:  it.rarity = (Rarity)EditorGUI.EnumPopup(Field(), it.rarity); break;
-                case ColId.Atk:     it.bonusAttack = EditorGUI.IntField(Field(), it.bonusAttack); break;
-                case ColId.Def:     it.bonusDefense = EditorGUI.IntField(Field(), it.bonusDefense); break;
-                case ColId.MAtk:    it.bonusMAtk = EditorGUI.IntField(Field(), it.bonusMAtk); break;
-                case ColId.MDef:    it.bonusMDef = EditorGUI.IntField(Field(), it.bonusMDef); break;
-                case ColId.HP:      it.bonusHP = EditorGUI.IntField(Field(), it.bonusHP); break;
-                case ColId.MP:      it.bonusMP = EditorGUI.IntField(Field(), it.bonusMP); break;
+                case ColId.Material:
+                    var half = Field(); half.width *= 0.55f;
+                    it.materialKind = (MaterialKind)EditorGUI.EnumPopup(half, it.materialKind);
+                    if (it.materialKind != MaterialKind.None)
+                    {
+                        var rest = half; rest.x += half.width + 2f; rest.width = half.width * 0.7f;
+                        it.materialStep = EditorGUI.IntField(rest, it.materialStep);
+                    }
+                    break;
                 case ColId.Reach:   it.attackRange = EditorGUI.FloatField(Field(), it.attackRange); break;
                 case ColId.Sockets: it.cardSlots = EditorGUI.IntField(Field(), it.cardSlots); break;
                 case ColId.Weight:  it.weight = EditorGUI.IntField(Field(), it.weight); break;
                 case ColId.Zeny:    it.zeny = EditorGUI.IntField(Field(), it.zeny); break;
                 case ColId.UseSkill: DrawUseSkill(Field(), it); break;
-                case ColId.DefRange:  DrawRange(Field(), ref it.defenseMin, ref it.defenseMax); break;
-                case ColId.MDefRange: DrawRange(Field(), ref it.magicDefenseMin, ref it.magicDefenseMax); break;
-                case ColId.StatCount: DrawRange(Field(), ref it.mainStatCountMin, ref it.mainStatCountMax); break;
-                case ColId.StatValue: DrawRange(Field(), ref it.mainStatValueMin, ref it.mainStatValueMax); break;
 
                 case ColId.Select:
                     if (GUI.Button(Field(), "◎")) { Selection.activeObject = it; EditorGUIUtility.PingObject(it); }

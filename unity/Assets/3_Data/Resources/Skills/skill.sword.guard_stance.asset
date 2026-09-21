@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Guard Stance
   symbol: Gs
   weaponType: 1
+  masteryLevel: 5
+  needsSkillId: 
   published: 1
   description: 'Weather it.
 

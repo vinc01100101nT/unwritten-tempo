@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Blade Dance
   symbol: Bd
   weaponType: 1
+  masteryLevel: 60
+  needsSkillId: skill.sword.overclock
   published: 1
   description: 'Become the storm.
 

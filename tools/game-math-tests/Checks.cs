@@ -34,7 +34,8 @@ static class Checks
     const string CombatF  = "unity/Assets/Scripts/Combat.cs";
     const string ElementF = "unity/Assets/Scripts/Element.cs";
     const string RingF    = "unity/Assets/Scripts/SkillRing.cs";
-    const string RarityF  = "unity/Assets/Scripts/Rarity.cs";
+    const string CraftF   = "unity/Assets/Scripts/CraftingMath.cs";
+    const string MasteryF = "unity/Assets/Scripts/MasteryMath.cs";
     const string StatesF  = "unity/Assets/Scripts/UnitStates.cs";
     const string StatusF  = "unity/Assets/Scripts/StatusController.cs";
 
@@ -230,40 +231,221 @@ static class Checks
         }
     }
 
-    // ---- what a rarity is worth -----------------------------------------------------------------------
-    static void RarityLadder()
+    // ---- what a quality grade is worth ------------------------------------------------------------------
+    // The ladder rarity used to be. Every rung has to be worth more than the one below it, in each of the five
+    // things a grade decides, or a quench can take a piece backwards while reading as a promotion.
+    static void QualityLadder()
     {
-        var tiers = (Rarity[])Enum.GetValues(typeof(Rarity));
-        That(Math.Abs(Rarities.OutputLift(tiers[0])) < 0.0001f, RarityF,
-             "the lowest rarity should add nothing");
-        float previousStep = -1f, previous = 0f;
-        for (int i = 1; i < tiers.Length; i++)
+        var grades = (Quality[])Enum.GetValues(typeof(Quality));
+        That(grades.Length > 1, CraftF, "there is only one quality grade");
+
+        for (int i = 1; i < grades.Length; i++)
         {
-            float lift = Rarities.OutputLift(tiers[i]);
-            float step = lift - previous;
-            That(step > 0f, RarityF, tiers[i] + " is worth no more than " + tiers[i - 1]);
-            That(step >= previousStep, RarityF,
-                 "the rarity ladder stops accelerating at " + tiers[i] + " — its step is smaller than the last");
-            previousStep = step; previous = lift;
+            var lower = grades[i - 1];
+            var upper = grades[i];
+            That(CraftingMath.FoldCap(upper) > CraftingMath.FoldCap(lower), CraftF,
+                 upper + " allows no more folds than " + lower);
+            That(CraftingMath.QualityLift(upper) >= CraftingMath.QualityLift(lower), CraftF,
+                 upper + " lifts a fold total less than " + lower);
+            That(CraftingMath.InkSlots(upper) >= CraftingMath.InkSlots(lower), CraftF,
+                 upper + " holds fewer written stats than " + lower);
+            That(CraftingMath.WeaponMasteryCap(upper) > CraftingMath.WeaponMasteryCap(lower), CraftF,
+                 upper + " caps weapon mastery no higher than " + lower);
+            That(CraftingMath.SkillMasteryCap(upper) > CraftingMath.SkillMasteryCap(lower), CraftF,
+                 upper + " caps skill mastery no higher than " + lower);
+            That(CraftingMath.TrainingSpeed(upper) > CraftingMath.TrainingSpeed(lower), CraftF,
+                 upper + " trains no faster than " + lower);
+            That(CraftingMath.Band(upper) == CraftingMath.Band(lower) + 1, CraftF,
+                 upper + " does not fold with the band above " + lower + "'s");
         }
 
-        // What a rolled main stat gains per tier is a PROMISED number, so it is written out rather than read back.
-        int[] promised = { 0, 1, 2, 3, 5 };
-        That(tiers.Length == promised.Length, RarityF,
-             "there are " + tiers.Length + " rarity tiers but " + promised.Length + " promised main-stat extras");
-        for (int i = 0; i < tiers.Length && i < promised.Length; i++)
-            That(Rarities.StatExtra(tiers[i]) == promised[i], RarityF,
-                 tiers[i] + " no longer adds +" + promised[i] + " to a rolled main stat: " + Rarities.StatExtra(tiers[i]));
+        // A fold is never worth less than the folds themselves, and no folds is worth nothing.
+        foreach (var grade in grades)
+            for (int folds = 0; folds <= CraftingMath.FoldCap(grade); folds++)
+            {
+                CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, folds, grade,
+                                          out int atk, out _, out _, out _);
+                That(atk >= folds, CraftF, grade + " +" + folds + " is worth " + atk + " attack, below its own folds");
+                if (folds == 0) That(atk == 0, CraftF, "an unfolded " + grade + " piece is worth " + atk);
+            }
 
-        // A gear number lifted by rarity: nothing at the lowest tier, never below itself, and zero stays zero.
-        foreach (var tier in tiers)
+        // Every armour place gains one of the two defences, and a weapon gains one of the two attacks.
+        CraftingMath.PieceNumbers(EquipSlotType.Garment, WeaponType.None, 10, Quality.A, out _, out _, out int gDef, out int gMDef);
+        That(gDef == 0 && gMDef > 0, CraftF, "a garment's folds no longer go to magic defence alone");
+        CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, 10, Quality.A, out int sAtk, out int sMAtk, out _, out _);
+        That(sAtk == 0 && sMAtk > 0, CraftF, "a caster's weapon no longer folds into magic attack");
+    }
+
+    // ---- a quench's odds, with and without Salt ---------------------------------------------------------
+    // Pinned because all three outcomes are invisible: a set that does not add to a hundred, or a Salt that
+    // makes a quench certain, reads exactly like one that does not.
+    static void QuenchOdds()
+    {
+        foreach (Quality grade in Enum.GetValues(typeof(Quality)))
+            for (int salt = 0; salt <= 3; salt++)
+            {
+                CraftingMath.QuenchOdds(grade, salt, out int up, out int same, out int down);
+                That(up + same + down == 100, CraftF,
+                     grade + " with salt " + salt + " has odds summing to " + (up + same + down));
+                That(up >= 0 && same >= 0 && down >= 0, CraftF, grade + " with salt " + salt + " has a negative chance");
+                That(up <= CraftingMath.MaxUpPct, CraftF,
+                     grade + " with salt " + salt + " can go up " + up + "% — a quench is never a certainty");
+
+                CraftingMath.QuenchOdds(grade, 0, out _, out _, out int plainDown);
+                if (plainDown > 0)
+                    That(down >= CraftingMath.DownFloorPct, CraftF,
+                         grade + " with salt " + salt + " can fall only " + down + "%, below the floor");
+
+                if (salt > 0)
+                {
+                    CraftingMath.QuenchOdds(grade, salt - 1, out int lessUp, out _, out _);
+                    That(up >= lessUp, CraftF, "salt " + salt + " helps " + grade + " less than salt " + (salt - 1));
+                }
+            }
+
+        // A quench moves ONE rung, never two, and never below F once F has been reached.
+        foreach (Quality grade in Enum.GetValues(typeof(Quality)))
         {
-            That(Rarities.Lifted(0, tier) == 0, RarityF, "a zero gear number lifted by " + tier + " is no longer zero");
-            for (int flat = 1; flat <= 500; flat += 7)
-                That(Rarities.Lifted(flat, tier) >= flat, RarityF, tier + " lifted " + flat + " below itself");
+            if (!CraftingMath.CanQuench(grade)) continue;
+            for (int roll = 0; roll < 100; roll++)
+            {
+                var landed = CraftingMath.QuenchResult(grade, 0, roll);
+                int step = (int)landed - (int)grade;
+                That(step >= -1 && step <= 1, CraftF, grade + " quenched to " + landed + " — more than one rung");
+                // F is the FLOOR once it has been reached. A Raw piece that fails simply stays Raw: it is the
+                // state a forge hands over, not a rung anything falls back to.
+                var floor = grade < Quality.F ? grade : Quality.F;
+                That(landed >= floor, CraftF, grade + " quenched below " + floor + ", to " + landed);
+            }
         }
-        for (int flat = 0; flat <= 500; flat += 7)
-            That(Rarities.Lifted(flat, tiers[0]) == flat, RarityF, "the lowest rarity changes a gear number of " + flat);
+        That(!CraftingMath.CanQuench(CraftingMath.Best), CraftF, "the best grade can still be quenched");
+    }
+
+    // ---- what one Ink writes ----------------------------------------------------------------------------
+    // Pinned because the roll is a weighted walk: a stat that cannot come up, or one that comes up twice as
+    // often as its weight, is silent — the piece simply ends up with a different stat than it should have.
+    static void InkRoll()
+    {
+        // Every tier is worth more than the one below, for every stat.
+        foreach (var stat in CraftingMath.All)
+            for (int tier = 2; tier <= 5; tier++)
+                That(CraftingMath.InkValue(stat, tier) > CraftingMath.InkValue(stat, tier - 1), CraftF,
+                     stat + " at tier " + tier + " is worth no more than at " + (tier - 1));
+
+        // THE PRIMARY PREMIUM: a primary is worth clearly more than the Attack line it is priced against.
+        for (int tier = 1; tier <= 5; tier++)
+        {
+            float attack = CraftingMath.InkValue(InkStat.Attack, tier);
+            foreach (var stat in CraftingMath.All)
+                if (CraftingMath.IsPrimary(stat))
+                    That(CraftingMath.InkValue(stat, tier) > attack, CraftF,
+                         stat + " at tier " + tier + " is worth no more than the same tier's Attack");
+        }
+
+        // Every stat is reachable on a fresh roll, exactly once each, and the whole table is covered.
+        var seen = new HashSet<InkStat>();
+        var none = new List<InkStat>();
+        int total = CraftingMath.RemainingInkWeight(none);
+        for (int roll = 0; roll < total; roll++)
+        {
+            That(CraftingMath.RollInkStat(roll, none, out var got), CraftF, "roll " + roll + " wrote nothing");
+            seen.Add(got);
+        }
+        That(seen.Count == CraftingMath.All.Length, CraftF,
+             "only " + seen.Count + " of " + CraftingMath.All.Length + " stats can be rolled");
+
+        // And with stats already written, the rest share the whole remaining weight between them — no stat
+        // starved, none doubled by a roll that wrapped.
+        var already = new List<InkStat> { InkStat.Attack, InkStat.Defense, InkStat.STR };
+        int left = CraftingMath.RemainingInkWeight(already);
+        var counts = new Dictionary<InkStat, int>();
+        for (int roll = 0; roll < left; roll++)
+        {
+            That(CraftingMath.RollInkStat(roll, already, out var got), CraftF, "roll " + roll + " wrote nothing");
+            That(!already.Contains(got), CraftF, got + " was rolled again though it is already written");
+            counts[got] = counts.TryGetValue(got, out int c) ? c + 1 : 1;
+        }
+        int tally = 0;
+        foreach (var kv in counts) tally += kv.Value;
+        That(tally == left, CraftF, "the re-spread covers " + tally + " of " + left);
+        foreach (var kv in counts)
+        {
+            int wanted = CraftingMath.IsPrimary(kv.Key) ? 20 : 80;
+            That(kv.Value == wanted, CraftF,
+                 kv.Key + " takes " + kv.Value + " of the table where its weight is " + wanted);
+        }
+
+        // A piece carrying everything cannot be written on.
+        var everything = new List<InkStat>(CraftingMath.All);
+        That(CraftingMath.RemainingInkWeight(everything) == 0, CraftF, "a full piece still has weight to roll");
+        That(!CraftingMath.RollInkStat(0, everything, out _), CraftF, "a full piece was written on anyway");
+    }
+
+    // ---- what practice is worth -------------------------------------------------------------------------
+    // Pinned because every one of these is a silent wrongness: a level that costs the wrong number of kills,
+    // a creature far below you that still teaches, or a lift that runs past the ceiling it promised.
+    static void MasteryCurve()
+    {
+        // The level a pile of practice buys is exactly the level whose cost it has met, and never more.
+        for (int level = 0; level <= 120; level++)
+        {
+            float cost = MasteryMath.WeaponPointsFor(level);
+            That(MasteryMath.WeaponLevelFrom(cost) == level, MasteryF,
+                 "level " + level + " costs " + cost + " points, which reads back as level " + MasteryMath.WeaponLevelFrom(cost));
+            if (level > 0)
+                That(MasteryMath.WeaponLevelFrom(cost - 0.001f) == level - 1, MasteryF,
+                     "a hair under level " + level + "'s cost is not level " + (level - 1));
+        }
+        for (int level = 0; level <= 60; level++)
+            That(MasteryMath.SkillLevelFrom(MasteryMath.SkillUsesFor(level)) == level, MasteryF,
+                 "skill level " + level + " does not read back from its own cost in uses");
+
+        // THE PROMISED FIGURES: 2,485 points to weapon 70 and 2,325 uses to skill 30.
+        That(Math.Abs(MasteryMath.WeaponPointsFor(70) - 2485f) < 0.01f, MasteryF,
+             "weapon mastery 70 no longer costs 2,485 points: " + MasteryMath.WeaponPointsFor(70));
+        That(Math.Abs(MasteryMath.SkillUsesFor(30) - 2325f) < 0.01f, MasteryF,
+             "skill mastery 30 no longer costs 2,325 uses: " + MasteryMath.SkillUsesFor(30));
+
+        // Neither lift ever passes the ceiling, and both rise with the level.
+        float lastSkill = -1f, lastPassive = -1f;
+        for (int level = 0; level <= 200; level++)
+        {
+            float skill = MasteryMath.SkillLift(level);
+            float passive = MasteryMath.PassiveLift(level);
+            That(skill <= MasteryMath.MaxSkillLift + 0.0001f, MasteryF, "skill mastery " + level + " lifts " + skill);
+            That(passive <= MasteryMath.MaxSkillLift + 0.0001f, MasteryF, "a passive at mastery " + level + " lifts " + passive);
+            That(skill >= lastSkill, MasteryF, "the skill lift falls at level " + level);
+            That(passive >= lastPassive, MasteryF, "the passive lift falls at level " + level);
+            lastSkill = skill; lastPassive = passive;
+        }
+
+        // The challenge scale: nothing far below, a full point at your own level, and a hard ceiling above.
+        That(MasteryMath.Challenge(30, 40) == 0f, MasteryF, "a creature ten levels below still teaches");
+        That(MasteryMath.Challenge(29, 40) == 0f, MasteryF, "a creature eleven levels below still teaches");
+        That(Math.Abs(MasteryMath.Challenge(40, 40) - 1f) < 0.0001f, MasteryF, "an even fight is not worth one point");
+        That(Math.Abs(MasteryMath.Challenge(45, 40) - 1f) < 0.0001f, MasteryF, "five levels above is not still an even fight");
+        float last = -1f;
+        for (int victim = 25; victim <= 120; victim++)
+        {
+            float c = MasteryMath.Challenge(victim, 40);
+            That(c >= last, MasteryF, "the challenge scale falls at a victim level of " + victim);
+            That(c <= MasteryMath.MostPerKill + 0.0001f, MasteryF, "a level-" + victim + " kill is worth " + c);
+            last = c;
+        }
+
+        // A kill pays by the SHARE taken, and a creature is worth the same whatever its health pool.
+        That(Math.Abs(MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.E) - 1f) < 0.0001f, MasteryF,
+             "a whole creature taken down alone is not worth one point");
+        That(Math.Abs(MasteryMath.PracticeFromKill(50, 100, 40, 40, Quality.E) - 0.5f) < 0.0001f, MasteryF,
+             "half a creature is not worth half a point");
+        That(Math.Abs(MasteryMath.PracticeFromKill(9900, 10000, 40, 40, Quality.E)
+                    - MasteryMath.PracticeFromKill(99, 100, 40, 40, Quality.E)) < 0.0001f, MasteryF,
+             "a creature with a bigger health pool pays more for the same share");
+        That(MasteryMath.PracticeFromKill(100, 100, 20, 40, Quality.A) == 0f, MasteryF,
+             "a creature far below still pays, whatever the weapon");
+        That(MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.A)
+             > MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.Raw), MasteryF,
+             "a fine weapon trains no faster than a raw one");
     }
 
     // ---- a buff's number is a bonus, stacking or not --------------------------------------------------
@@ -318,7 +500,10 @@ static class Checks
         StatJumps();
         ElementChart();
         Ring();
-        RarityLadder();
+        QualityLadder();
+        QuenchOdds();
+        InkRoll();
+        MasteryCurve();
         BuffBonus();
         RegenPerSecond();
 

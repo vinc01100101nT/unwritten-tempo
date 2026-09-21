@@ -3,8 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// One thing lying on the ground, as every player sees it. The SERVER owns the real drop — which particular
-/// sword it is, with its upgrade level and its cards — and this is the thin thing that crosses the wire: the
-/// item's id, how many, its rarity, its refine, which map it lies in and where inside that map. Every watching
+/// sword it is, with its folds, its grade and its cards — and this is the thin thing that crosses the wire: the
+/// item's id, how many, its grade, its folds, which map it lies in and where inside that map. Every watching
 /// machine builds its own <see cref="GroundDrop"/> from those, exactly the way <see cref="NetMob"/> builds a
 /// body for a creature and <see cref="NetNpc"/> builds one for a townsperson.
 ///
@@ -20,7 +20,7 @@ public class NetGroundDrop : NetworkBehaviour
 {
     [SyncVar] string itemId = "";
     [SyncVar] int count = 1;
-    [SyncVar] int rarityIndex;
+    [SyncVar] int qualityIndex;
     [SyncVar] int upgrade;
 
     /// <summary>Which map it lies in. A server holds several at once and parks them apart, so without this every
@@ -42,7 +42,7 @@ public class NetGroundDrop : NetworkBehaviour
         ServerDrop = drop;
         itemId = drop.def != null ? drop.def.id : "";
         count = drop.count;
-        rarityIndex = (int)drop.rarity;
+        qualityIndex = (int)drop.quality;
         upgrade = drop.upgrade;
         mapName = drop.mapName;
         inMap = MapManager.InMap(drop.transform.position, drop.mapName);
@@ -97,7 +97,7 @@ public class NetGroundDrop : NetworkBehaviour
         }
 
         view = GroundDrop.Place(MapManager.InWorld(inMap, mapName), def, count, null,
-                                (Rarity)rarityIndex, upgrade, mapName, netId);
+                                (Quality)qualityIndex, upgrade, mapName, netId);
         // DECIDED IN THE SAME BREATH AS IT IS BUILT, not on the next frame. Waiting left a drop in somebody
         // else's map lit up and reachable for a frame, in a place this machine parks that map and the player
         // is not.

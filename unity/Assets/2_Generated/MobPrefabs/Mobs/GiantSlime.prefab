@@ -257,8 +257,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c8dd4dbdac794c368d4f75e4937aa66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
+  inputs:
+    level: 38
+    str: 26
+    agi: 12
+    vit: 32
+    intel: 12
+    dex: 20
+    luk: 12
+    baseMaxHP: 20
+    hpPerLevel: 6
+    baseAttack: 4
+    attackPerLevel: 1
+    baseDefense: 1
+    defensePerLevel: 1
+    baseMaxMP: 10
+    mpPerLevel: 3
+    baseMagicAttack: 3
+    magicAttackPerLevel: 1
+    baseMagicDefense: 1
+    magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
+  weaponMasteryLevel: 0
 --- !u!114 &2540954225837613378
 MonoBehaviour:
   m_ObjectHideFlags: 0

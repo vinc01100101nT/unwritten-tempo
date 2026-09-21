@@ -43,26 +43,10 @@ public class LootDropper : MonoBehaviour
     [Tooltip("Each entry is rolled independently. Multiple items can drop from one kill.")]
     public ItemDropEntry[] lootTable = System.Array.Empty<ItemDropEntry>();
 
-    /// <summary>Chance a worn RING drops — deliberately its own number, and vanishingly small (0.001% = 1 in 100,000).
-    /// A ring is the percentage passive layer, i.e. the single most valuable thing a unit can carry, so it's the
-    /// MVP-card-tier prize rather than ordinary gear. Not a serialized field: this is a game-wide rule, not per-mob
-    /// tuning, so there's one place it can ever be changed.</summary>
-    public const float RingDropChance = 0.00001f;
+    // NOTHING WORN IS EVER GIVEN UP. Gear is made, not taken off a corpse: a creature drops materials, consumables
+    // and gold, and its own gear dies with it. The worn roll that used to live here is gone for that reason.
 
-    // The chance a worn piece other than a ring is given up, by the copy's rarity: Common, Uncommon, Rare, Epic,
-    // Legendary. A game-wide rule for the same reason the ring's is — a creature's worn set IS its gear drop table, so
-    // the rarer the piece it wears, the rarer the piece it gives up.
-    static readonly float[] WornDropChances = { 0.20f, 0.12f, 0.06f, 0.03f, 0.01f };
-
-    /// <summary>The chance <paramref name="worn"/> is given up when its wearer dies. THE one answer — the roll below and
-    /// the line on a creature's health bar both read it, so what the bar promises is what the roll does.</summary>
-    public static float WornDropChance(EquipmentInstance worn)
-    {
-        if (worn == null || worn.def == null) return 0f;
-        return worn.def.slot == EquipSlotType.Ring ? RingDropChance : WornDropChances[(int)worn.Rarity];
-    }
-
-    /// <summary>A chance written the way it is shown: 0.2 → "20%", 0.015 → "1.5%", 0.00001 → "0.001%".</summary>
+    /// <summary>A chance written the way it is shown: 0.2 → "20%", 0.015 → "1.5%".</summary>
     public static string ChanceText(float chance) =>
         (chance * 100f).ToString("0.###", CultureInfo.InvariantCulture) + "%";
 
@@ -82,10 +66,6 @@ public class LootDropper : MonoBehaviour
     // because death is not a hot path but it does happen per kill, and there is never a second one being filled at the
     // same time.
     static readonly List<Item> won = new List<Item>(8);
-    // WORN pieces given up are handed over as the very copies the creature wore — their rolled numbers, their kit —
-    // never re-rolled on the way to the ground. Gathered beside the table's items so one kill is still one payment.
-    static readonly List<EquipmentInstance> wonWorn = new List<EquipmentInstance>(4);
-    static readonly List<EquipmentInstance> wornScratch = new List<EquipmentInstance>(8);
 
     void GiveLoot()
     {
@@ -95,7 +75,6 @@ public class LootDropper : MonoBehaviour
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
 
         won.Clear();
-        wonWorn.Clear();
         int gold = 0;
 
         if (Random.value <= goldDropChance)
@@ -118,28 +97,7 @@ public class LootDropper : MonoBehaviour
             if (extra != null) won.Add(extra);
         }
 
-        RollWornGear();
-
-        Rewards.PayLoot(winner, won, wonWorn, gold, health);
+        Rewards.PayLoot(winner, won, gold, health);
         won.Clear();
-        wonWorn.Clear();
-    }
-
-    // A unit gives up what it WEARS: the equipment that made it dangerous is the equipment you take off its corpse —
-    // the exact copy, roll and all. Whether each piece drops is rolled independently, on its rarity's chance.
-    void RollWornGear()
-    {
-        var gear = GetComponent<UnitEquipment>();
-        if (gear == null || gear.Count == 0) return;
-
-        gear.CopyWornInto(wornScratch);
-        for (int i = 0; i < wornScratch.Count; i++)
-        {
-            var inst = wornScratch[i];
-            if (inst?.def == null) continue;
-            float chance = WornDropChance(inst);
-            if (chance > 0f && Random.value <= chance) wonWorn.Add(inst);
-        }
-        wornScratch.Clear();
     }
 }

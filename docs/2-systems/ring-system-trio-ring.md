@@ -12,7 +12,7 @@ tags:
 
 ## What the Ring is
 
-The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). It is a separate layer from your equipped weapon: the **weapon grants your skills**, and **the Ring is the larger half of what scales their power** — the weapon's RARITY adds a second, smaller lift on top (+0% Common up to +30% Legendary, added to the ring's term, never multiplied). The ring reaches every channel; on a skill, rarity reaches only its output, never a duration (it also lifts the weapon's own attack and a rolled piece of armour's defence, which are gear numbers, not skill channels). See the Channels Catalog for the split.
+The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). Since [V4](gameplay-system-v4/README.md) it is **part of the character, not an item**: there is no ring to wear and no ring slot, and what it has earned always counts. **The Ring is the larger half of what scales a skill's power**; a character's own **practice** adds a second, smaller lift on top (up to +30%, added to the ring's term, never multiplied) — Skill Mastery on an active, Weapon Mastery on a passive. The ring reaches every channel; practice reaches only a skill's output, never a duration. See the Channels Catalog for the split.
 
 ## The ten Ring stats — BUILT
 
@@ -77,7 +77,7 @@ A separate design direction once explored making the Ring a **tradeable in-world
 
 *The ten stats and their ring order above were re-read off `SkillRing.Ring` on 2026-08-30 and match exactly.*
 
-**One thing this page predates: mobs wear rings too.** A mob authors a ring ITEM plus invested ranks, and they resolve through this same soft-cap curve — no mob-side copy of the maths, and the ring drops because it is the thing being worn. See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
+**Creatures have rings too.** A creature authors invested ranks, and they resolve through this same soft-cap curve — no creature-side copy of the maths. Nothing is worn to switch them on, and nothing drops. See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
 
 ---
 
@@ -86,6 +86,7 @@ A separate design direction once explored making the Ring a **tradeable in-world
 - [Active Skill System — V3](active-skill-system-v3/README.md) — the design doc that makes the Ring scaling-only and locks roles through it.
 - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md) — which ring stat each channel scales off, by default.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — mobs on the same ring curve, and the sub-stats the ring lifts.
+- [Gameplay System — V4](gameplay-system-v4/README.md) — what made the ring part of the character, and the practice that now lifts a skill's output.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](pre-renewal-ro-port.md) — the flat stat layer this percentage layer sits on top of.
 - [HUD/UI System — Design & Relay](hud-ui-system.md) — the draft panel and character sheet that show it.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the tradeable-ring lore direction, still uncommitted.

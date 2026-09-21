@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
 /// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield) doesn't shift any
 /// serialized scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/
-/// Shield/Ring; Boots is legacy (kept for old data, not shown); the three Costume* slots are reserved for a future
+/// Shield; Boots is legacy (kept for old data, not shown); the three Costume* slots are reserved for a future
 /// cosmetic layer (also not shown in v1).
 ///
 /// <para>6 and 7 were the two accessory places, removed because the ring already fills that role. Never give those
@@ -20,8 +20,18 @@ public enum EquipSlotType
     CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
     CostumeBody = 10,
     CostumeBack = 11,
-    Ring = 12,        // the Ring of Progression vessel — holds the passive draft + active-skill ownership
+    // 12 was the Ring of Progression vessel. The ring is part of the character now, not a worn item, so no
+    // slot holds it. Never give 12 to a new slot: an old save still naming it would silently land in it.
 }
+
+/// <summary>What KIND of crafting material an item is, and so what it can be used for. <see cref="MaterialKind.None"/>
+/// is every item that is not a crafting material at all — the zero value, so the seventeen items authored before
+/// crafting existed read correctly without being touched.
+///
+/// <para>The three crafts are the material a piece is made of: metal is forged, cloth is woven, leather is tanned.
+/// <see cref="MaterialKind.Ink"/> writes a stat onto a piece and <see cref="MaterialKind.Salt"/> boosts a quench;
+/// both are shared by all three crafts.</para></summary>
+public enum MaterialKind { None = 0, Metal = 1, Cloth = 2, Leather = 3, Ink = 4, Salt = 5 }
 
 /// <summary>The words a slot goes by on screen. A text inventory has to name the slot, because with no icon the
 /// slot is the only thing telling a helm from a sword at a glance.
@@ -43,7 +53,6 @@ public static class EquipSlots
             case EquipSlotType.CostumeHead: return "Costume Head";
             case EquipSlotType.CostumeBody: return "Costume Body";
             case EquipSlotType.CostumeBack: return "Costume Back";
-            case EquipSlotType.Ring:        return "Ring";
             default:                        return "";
         }
     }
@@ -62,7 +71,6 @@ public static class EquipSlots
             case EquipSlotType.CostumeHead: return 6;
             case EquipSlotType.CostumeBody: return 7;
             case EquipSlotType.CostumeBack: return 8;
-            case EquipSlotType.Ring:        return 9;
             default:                        return 99;
         }
     }
@@ -113,8 +121,6 @@ public class Item : ScriptableObject
     public Element element = Element.Neutral;
 
     [Header("Identity (HUD relay spec)")]
-    [Tooltip("Drives the slot BORDER color only (rarity is one independent visual channel).")]
-    public Rarity rarity = Rarity.Common;
     [Tooltip("Which inventory tab this falls under. Equip = has a real slot.")]
     public ItemCategory category = ItemCategory.Etc;
     [Tooltip("Number of card sockets (◇ pips). 0 = no sockets. Only meaningful for equipment.")]
@@ -124,50 +130,32 @@ public class Item : ScriptableObject
     [Tooltip("Sell value in zeny.")]
     public int zeny;
 
-    [Header("Equipment bonuses (applied while equipped)")]
-    public int bonusHP;
-    public int bonusAttack;
-    public int bonusDefense;
+    // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds
+    // and its quality, worked out by the server when it is forged, folded or quenched, plus whatever Ink has
+    // written on it — all of it on the COPY (EquipmentInstance), never on the shared design. The flat bonus fields
+    // and the armour roll ranges that used to sit here are gone for that reason; do not add either back.
 
-    [Header("Magic bonuses (applied while equipped)")]
-    public int bonusMP;
-    public int bonusMAtk;
-    public int bonusMDef;
+    [Header("Crafting")]
+    [Tooltip("What this PIECE is made of, which decides where it is made and which material band it folds with: " +
+             "Metal at a smith, Cloth at a loom, Leather at a tannery. None = not something anyone crafts " +
+             "(a consumable, a material, or a piece nobody has given a craft to yet).")]
+    public MaterialKind madeOf = MaterialKind.None;
+    [Tooltip("What it costs to FORGE one, in units of its craft's band-1 material, plus gold. 0 units = nobody " +
+             "can forge this piece.")]
+    public int forgeMaterialCost;
+    [Tooltip("Gold one forge of this piece costs.")]
+    public int forgeGoldCost;
 
-    [Header("Primary-stat bonuses (applied while equipped)")]
-    public int bonusStr;
-    public int bonusAgi;
-    public int bonusVit;
-    public int bonusInt;
-    public int bonusDex;
-    public int bonusLuk;
-
-    [Header("Derived bonuses")]
-    [Tooltip("Added to crit CHANCE, in whole percent (e.g. 5 = +5%).")]
-    public int bonusCritPercent;
-    [Tooltip("Added to attack SPEED, in whole percent (e.g. 4 = +4%). May be negative.")]
-    public int bonusAspdPercent;
-
-    // A Head, Armor, Garment or Shield copy ROLLS its numbers inside these ranges when it enters the world (ArmourRoll),
-    // and a rolled copy adds only what it rolled — the flat bonus fields above are not read for it. Rarity is added on
-    // top when the copy's bonuses are summed (Rarities.Lifted / StatExtra), never baked into the roll.
-    [Header("Rolled armour (Head, Armor, Garment, Shield) — each copy rolls inside these")]
-    [Tooltip("Lowest defence a copy can roll. Armor's main job; Head and Shield carry some too.")]
-    public int defenseMin;
-    [Tooltip("Highest defence a copy can roll (both ends included). Below the minimum = always the minimum.")]
-    public int defenseMax;
-    [Tooltip("Lowest magic defence a copy can roll. Garment's main job; Head carries some too.")]
-    public int magicDefenseMin;
-    [Tooltip("Highest magic defence a copy can roll (both ends included). Below the minimum = always the minimum.")]
-    public int magicDefenseMax;
-    [Tooltip("Fewest main stats (STR, AGI, VIT, INT, DEX, LUK) a copy carries. Which ones is random, never the same twice.")]
-    public int mainStatCountMin;
-    [Tooltip("Most main stats a copy carries (at most 6).")]
-    public int mainStatCountMax;
-    [Tooltip("Lowest value each rolled main stat can have, before rarity's flat extra.")]
-    public int mainStatValueMin;
-    [Tooltip("Highest value each rolled main stat can have, before rarity's flat extra.")]
-    public int mainStatValueMax;
+    [Header("Crafting material")]
+    [Tooltip("What kind of crafting material this is. None = not a material at all (every non-material item).")]
+    public MaterialKind materialKind = MaterialKind.None;
+    [Tooltip("Which step of its kind this is. A Metal/Cloth/Leather material: the BAND, 1 (Raw) to 7 (A) — a piece " +
+             "folds only with the band of its own quality. An Ink: its tier, 1 (Watery) to 5 (Sharp). A Salt: its " +
+             "tier, 1 (Coarse) to 3 (Pure). Ignored when Material Kind is None; 0 there means nothing was chosen.")]
+    public int materialStep;
+    [Tooltip("The material ten of this one merge into — the next tier up. Only Ink and Salt merge; a band material " +
+             "leaves this empty, and so does the top tier of Ink and Salt.")]
+    public Item mergesInto;
 
     [Header("Consumable")]
     // ONE way to say what a consumable does: it runs a skill. The old `healAmount` int was deleted with this change —

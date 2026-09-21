@@ -1,19 +1,30 @@
-# hook-analytics — PERFORMANCE.md read gate
+# hook-analytics — the read-first gate
 
-A `PreToolUse` hook that **blocks edits to runtime C# until `PERFORMANCE.md` has been
-read in the current session**, and logs every gate decision so we can visualize how
-often the hook actually had to intervene.
+A `PreToolUse` hook that **blocks an edit until the rulebook for that kind of file has been read in the current
+session**, and logs every gate decision so we can visualize how often the hook actually had to intervene.
+
+Three rulebooks, one gate (the `GATES` table in `perf_gate.py`; the file keeps its original name):
+
+| Editing… | Must have read |
+| --- | --- |
+| runtime C# under `unity/Assets/Scripts` (not `Editor/`) | `unity/Assets/Scripts/PERFORMANCE.md` |
+| a texture/model/audio `.meta`, a `.prefab`, a project or pipeline `.asset`, `Packages/manifest.json` | `unity/Assets/ASSETS.md` |
+| `accounts/src`, `accounts/sql`, `charserver/` | `SERVER.md` (repo root) |
+
+The second and third were added on 2026-09-20, after an audit found that half its findings broke rules that
+were already written down and never injected. `prove-read-first-gate.py` feeds the gate fake edits for each
+class and demands: refused unread, allowed read, untouched otherwise.
 
 ## Pieces
 
 - **`perf_gate.py`** — the hook. Claude Code pipes it the hook payload on stdin
   (`session_id`, `tool_input.file_path`, `transcript_path`, …). It:
-  1. Allows silently unless the edit targets `unity/Assets/Scripts/**/*.cs`
-     (excluding `Editor/` — that's not a runtime hot path).
-  2. Greps the session `transcript_path` for a sentinel phrase from inside
-     `PERFORMANCE.md`. Present → the doc was genuinely read this session → **allow**.
+  1. Allows silently unless the edit targets a file one of the three rulebooks governs.
+  2. Greps the session `transcript_path` for a sentinel phrase from inside that rulebook.
+     Present → the doc was genuinely read this session → **allow**.
      Absent → **deny** with a "read it first" reason.
   3. Appends one JSON line to `hook-analytics.jsonl` either way.
+- **`prove-read-first-gate.py`** — the proof that the gate still refuses and still allows, per class.
 - **`hook-analytics.jsonl`** — append-only log. One line per gated edit:
   `{ts, session_id, file, outcome: "blocked"|"passed", doc}`.
 - **`dashboard.html`** — open in a browser. Shows forced-vs-passed counts, forced-rate,
@@ -25,9 +36,9 @@ When the gate denies, its reason text ("read PERFORMANCE.md") lands in the trans
 A naive grep for `PERFORMANCE.md` would then match the gate's *own* message on retry and
 wave an unread edit through. So the gate greps for a phrase that only exists in the doc's
 **body** — it enters the transcript only via a real Read.
-That phrase is DERIVED at run time (the longest prose line in `PERFORMANCE.md` that does not
-also appear in the sibling `CLAUDE.md`, which the harness injects on its own), so editing
-`PERFORMANCE.md` needs no follow-up here — there is no constant to keep in sync. It was a
+That phrase is DERIVED at run time (the longest prose line in the rulebook — never a line inside a code
+fence — that does not also appear in the `CLAUDE.md` the harness injects on its own), so editing a rulebook
+needs no follow-up here — there is no constant to keep in sync. It was a
 hardcoded string once, which meant reading the gate's own source poisoned the transcript and
 disabled the gate for the rest of the session; deriving it is what fixed that. Either way it
 fails *safe* — the gate over-blocks; it never lets an unread edit through.

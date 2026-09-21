@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Momentum
   symbol: Mo
   weaponType: 1
+  masteryLevel: 3
+  needsSkillId: 
   published: 1
   description: 'Every hit adds up.
 

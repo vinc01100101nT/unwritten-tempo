@@ -26,7 +26,7 @@ public class UnitEquipment : MonoBehaviour
     bool spawned;   // startingGear consumed? Lazy rather than Awake-driven so component order can't matter.
 
     // Equip the authored starting gear exactly once, on whichever access comes first. Doing this lazily (instead of in
-    // Awake) means UnitStatBlock can read Bonuses/RingEquipped during ITS Awake without depending on which component
+    // Awake) means UnitStatBlock can read Bonuses during ITS Awake without depending on which component
     // Unity happened to wake first.
     void EnsureSpawnedGear()
     {
@@ -35,9 +35,8 @@ public class UnitEquipment : MonoBehaviour
         SeatStartingGear();
     }
 
-    // Every starting piece as a FRESH ROLLED copy — the same door a drop or a grant comes through, so a creature's
-    // armour rolls its numbers and its weapon rolls its kit exactly as a player's would. The Ring keeps its authored
-    // rarity, as it does everywhere.
+    // Every starting piece as a FRESH copy — Raw and unfolded, the same thing a forge hands over before any work
+    // has gone into it, and the same door a grant comes through.
     void SeatStartingGear()
     {
         equipped.Clear();
@@ -50,7 +49,7 @@ public class UnitEquipment : MonoBehaviour
                 // it needs to draw what is held; the rolled copies live on the server's creature.
                 equipped[item.slot] = GameNetwork.TheWorldIsElsewhere
                     ? new EquipmentInstance(item)
-                    : EquipmentInstance.CreateRolled(item);
+                    : EquipmentInstance.CreateFresh(item);
             }
         // AND WHATEVER IT PICKS UP AT RANDOM for the places nothing was authored for — a creature on the machine that
         // owns the world only. A watching machine is told what it wears (NetMob), and a player never gets any.
@@ -95,9 +94,6 @@ public class UnitEquipment : MonoBehaviour
             return cached;
         }
     }
-
-    /// <summary>True while a ring occupies the ring slot — the gate for the percentage passive layer.</summary>
-    public bool RingEquipped => Get(EquipSlotType.Ring) != null;
 
     /// <summary>How many pieces are worn (what a drop roll iterates).</summary>
     public int Count { get { EnsureSpawnedGear(); return equipped.Count; } }

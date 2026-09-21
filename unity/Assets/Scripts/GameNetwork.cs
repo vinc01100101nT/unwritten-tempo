@@ -163,6 +163,15 @@ public class GameNetwork : NetworkManager
         identity.GetComponent<NetNpc>()?.ServerTalkTo(speaker);
     }
 
+    /// <summary>Server-only: tell every machine what a townsperson WORKS AT, so the copy each of them presses F on
+    /// opens the right thing. Silent with no world, where the only body is this machine's own.</summary>
+    public static void TellEverybodyTheyWorkAt(GameObject npcBody, int station)
+    {
+        if (!NetworkServer.active) return;
+        var shell = NetNpc.ShellForServerNpc(npcBody);
+        if (shell != null) shell.stationKind = station;
+    }
+
     /// <summary>Ask the server to start, or stop, a conversation with the townsperson whose body is
     /// <paramref name="npcBody"/>. Called on the machine of the person pressing F; silent with no world, where the
     /// townsperson is this machine's own and stops on its own.</summary>
@@ -617,6 +626,14 @@ public class GameNetwork : NetworkManager
         /// <summary>Experience for the RING alone, whether or not it is worn — only a GM's <c>/ringxp</c> sends it.
         /// A kill's experience reaches the ring through <see cref="amount"/>, by the ring's own rule.</summary>
         public int ringOnlyAmount;
+
+        // THE FINISHED ANSWER, as the server's copy of the character now stands. The owner's machine copies these
+        // onto the screen; it used to run the level-up loop itself from the two amounts above, which is the
+        // player's machine deciding a level, a stat point and a full heal. The two "gained" counts say how many
+        // times to play the level-up moment — a count to replay, never a number to work out.
+        public int level, xp, statPoints, levelsGained;
+        public long lifetimeXp;
+        public int ringLevel, ringXp, ringBankedPoints, ringLevelsGained;
     }
 
     /// <summary>A PERSON CASTING A SKILL — the whole of it, named rather than resolved. Which skill, what they
@@ -951,9 +968,11 @@ public class GameNetwork : NetworkManager
 
     static void OnXpEarned(XpEarned msg)
     {
-        if (Character.Instance == null) return;
-        if (msg.amount > 0) Character.Instance.AddXP(msg.amount);
-        if (msg.ringOnlyAmount > 0) Character.Instance.AddRingXP(msg.ringOnlyAmount);
+        // A machine that IS the server already ran the level-up on this very character; only a machine whose
+        // world is elsewhere has anything to take.
+        if (Character.Instance == null || !TheWorldIsElsewhere) return;
+        Character.Instance.TakeXpFromServer(msg.level, msg.xp, msg.lifetimeXp, msg.statPoints, msg.levelsGained,
+                                            msg.ringLevel, msg.ringXp, msg.ringBankedPoints, msg.ringLevelsGained);
     }
 
     void OnReviveRequest(NetworkConnectionToClient conn, ReviveRequest msg)
@@ -1263,15 +1282,32 @@ public class GameNetwork : NetworkManager
         });
     }
 
-    /// <summary>Tell the person a reward belongs to that they earned it. Silent off a server, and silent for a
-    /// character that is not somebody's — so the single-machine game is untouched.</summary>
-    public static void TellOwnerTheyEarned(Character who, int xp, int ringOnlyXp = 0)
+    /// <summary>Tell the person a reward belongs to that they earned it — and what their character now IS, so
+    /// their machine copies the answer rather than working it out. Called AFTER the server has paid the
+    /// character (<see cref="Character.AddXP(int, out int)"/>), with the level counts that call returned. Silent
+    /// off a server, and silent for a character that is not somebody's. The sheet those numbers produce (max
+    /// HP among them) follows on the very next beat through the same door a GM's change uses.</summary>
+    public static void TellOwnerTheyEarned(Character who, int xp, int ringOnlyXp, int levelsGained, int ringLevelsGained)
     {
         if (!NetworkServer.active || who == null || (xp <= 0 && ringOnlyXp <= 0)) return;
 
         var identity = IdentityOfFighter(who);
         if (identity == null || identity.connectionToClient == null) return;
-        identity.connectionToClient.Send(new XpEarned { amount = Mathf.Max(0, xp), ringOnlyAmount = Mathf.Max(0, ringOnlyXp) });
+        identity.connectionToClient.Send(new XpEarned
+        {
+            amount = Mathf.Max(0, xp),
+            ringOnlyAmount = Mathf.Max(0, ringOnlyXp),
+            level = who.Level,
+            xp = who.XP,
+            lifetimeXp = who.LifetimeXp,
+            statPoints = who.StatPoints,
+            levelsGained = Mathf.Max(0, levelsGained),
+            ringLevel = who.Ring.Level,
+            ringXp = who.Ring.XP,
+            ringBankedPoints = who.Ring.Passives.BankedPoints,
+            ringLevelsGained = Mathf.Max(0, ringLevelsGained),
+        });
+        identity.GetComponent<NetPlayer>()?.PushStatsToOwner();
     }
 
     /// <summary>Server-only: hand <paramref name="who"/>'s own machine the bag as it now stands, and write the
@@ -1352,16 +1388,27 @@ public class GameNetwork : NetworkManager
         return fighter.transform.GetComponentInParent<NetworkIdentity>();
     }
 
+    /// <summary>Server-only: mark a character as worth writing down soon — what every other change to them does,
+    /// and what practice must do too or a crash costs everything learned since the last kill's loot. Silent with
+    /// no world and for anybody nobody is playing.</summary>
+    public static void SaveSoonFor(Character who)
+    {
+        if (!NetworkServer.active || who == null) return;
+        var identity = IdentityOfFighter(who);
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell != null) shell.SaveSoon();
+    }
+
     /// <summary>Server-only: tell whoever is playing <paramref name="who"/> that something just arrived in their
     /// bag. True when it was sent — false when there is no world, or nobody is playing that character here, which
     /// is the caller's signal to say it on this machine instead.</summary>
-    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int rarity, int upgrade)
+    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int folds)
     {
         if (!NetworkServer.active || who == null || string.IsNullOrEmpty(itemId)) return false;
         var identity = IdentityOfFighter(who);
         var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
         if (shell == null || identity.connectionToClient == null) return false;
-        shell.TellOwnerTheyGot(itemId, count, rarity, upgrade);
+        shell.TellOwnerTheyGot(itemId, count, folds);
         return true;
     }
 
@@ -1832,7 +1879,15 @@ public class GameNetwork : NetworkManager
 
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return; }
-        if (!Owns(caster, msg.skillId)) { WarnNotTheirSkill(conn.connectionId, msg.skillId); return; }
+        if (!Owns(caster, msg.skillId))
+        {
+            WarnNotTheirSkill(conn.connectionId, msg.skillId);
+            // AND THE PLAYER IS TOLD, in their own chat, because from their side a refused press looks exactly like
+            // a broken key: their screen animated, and nothing happened.
+            ShellFor(conn)?.TellOwner(caster.WhyNotUsable(msg.skillId)
+                                      ?? "That skill is not on the bar this server holds for you.");
+            return;
+        }
 
         var runner = PlayerFighter.RunnerFor(caster, msg.skillId);
         if (runner == null)
@@ -2262,10 +2317,10 @@ public class GameNetwork : NetworkManager
         // other skill that person cast for the rest of their session — so a log with one line in it looked like
         // one broken skill when it was all of them.
         if (!warnedNotTheirSkill.Add(connectionId + "|" + skillId)) return;
-        GameLog.Warn(LogCat.Server, "connection " + connectionId + " cast '" + skillId + "', which is neither bound on "
-                         + "the hotbar this server holds for them nor on their equipped weapon, so the strike was "
-                         + "refused. Either their character's progress never loaded (they are standing here at "
-                         + "starting numbers, holding nothing), or the skill was never theirs.");
+        GameLog.Warn(LogCat.Server, "connection " + connectionId + " cast '" + skillId + "', which is not on the "
+                         + "hotbar this server holds for them, or is not learned, or belongs to a weapon they are not "
+                         + "holding, so the strike was refused. Either their character's progress never loaded (they "
+                         + "are standing here at starting numbers, holding nothing), or the skill was never theirs.");
     }
 
     // IS THIS SKILL EVEN THEIRS? Without asking, the server would roll ANY skill in the catalog for anybody who
@@ -2274,9 +2329,9 @@ public class GameNetwork : NetworkManager
     // THE QUESTION IS "DOES THIS CHARACTER HAVE IT TO HAND", AND IT HAS TWO ANSWERS, because a skill reaches a
     // character two different ways:
     //   - it is BOUND — sitting in one of the numbered slots or the ultimate slot. This is how an active is cast.
-    //   - it is ON THE EQUIPPED WEAPON — how a passive arrives, since a passive takes no slot at all.
-    // Either one is enough. Both are read off the character the SERVER holds, restored from saved progress the
-    // account service handed it, so neither is a client's word about itself.
+    //   - it is LEARNED, and the weapon it belongs to is in their hand (Character.MayUse).
+    // Both are read off the character the SERVER holds, restored from saved progress the character server handed
+    // it, so neither is a client's word about itself.
     //
     // ASKING ONLY THE WEAPON WAS WRONG AND BROKE THE GAME (2026-08-30). A character can carry bound skills with
     // nothing equipped — a real one did, with three on the bar and an empty gear list — so every skill they cast
@@ -2293,13 +2348,10 @@ public class GameNetwork : NetworkManager
     {
         if (caster == null || string.IsNullOrEmpty(skillId)) return false;
 
-        if (caster.Hotbar != null && (caster.Hotbar.IsBound(skillId) || caster.Hotbar.Ult == skillId)) return true;
-
-        var weapon = caster.GetEquippedInstance(EquipSlotType.Weapon);
-        var kit = weapon != null ? weapon.skillIds : null;
-        if (kit == null) return false;
-        for (int i = 0; i < kit.Count; i++) if (kit[i] == skillId) return true;
-        return false;
+        // ON THEIR BAR, LEARNED, AND THE RIGHT WEAPON IN HAND — all three, on the server, whatever a window said.
+        bool onTheirBar = caster.Hotbar != null && (caster.Hotbar.IsBound(skillId) || caster.Hotbar.Ult == skillId);
+        if (!onTheirBar) return false;
+        return caster.MayUse(skillId);
     }
 
     // ---- commands a player asks the world to carry out ---------------------------------------------------

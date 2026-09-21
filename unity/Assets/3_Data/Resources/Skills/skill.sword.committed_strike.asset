@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Committed Strike
   symbol: Cs
   weaponType: 1
+  masteryLevel: 27
+  needsSkillId: 
   published: 1
   description: 'Wind up and commit.
 

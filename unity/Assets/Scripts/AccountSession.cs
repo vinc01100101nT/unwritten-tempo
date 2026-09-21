@@ -32,10 +32,9 @@ public static class AccountSession
     /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,
     /// as opposed to signing in, which stays with the account service above.
     ///
-    /// <para><b>Empty means "the same place as everything else"</b>, which is how this has always worked and is
-    /// still the default. Set CHAR_SERVER_URL to move characters onto their own server; leave it unset and not
-    /// one request changes address. That is the whole migration: a setting, not a rebuild, and it can be put
-    /// back just as fast if the new server misbehaves.</para>
+    /// <para><b>Empty is not a working setting any more.</b> The account service no longer answers for
+    /// characters at all — the routes that once did were the one door through which a player could write their
+    /// own save, and were removed on 2026-09-20 — so a request sent there for a character is refused, not served.</para>
     ///
     /// <para><b>Empty also means nobody can enter the world</b>, because the character server is the only thing
     /// that hands out an entry ticket and says which machine holds the map. A copy handed to a player therefore

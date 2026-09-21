@@ -230,7 +230,9 @@
           "title": "Roadmap",
           "file": "roadmap.json",
           "sourceDocs": [
-            "docs/1-planning/action-plan.md",
+            "docs/1-planning/action-plan/on-going.md",
+            "docs/1-planning/action-plan/not-started.md",
+            "docs/1-planning/action-plan/done.md",
             "docs/1-planning/roadmap-to-launch.md"
           ]
         }

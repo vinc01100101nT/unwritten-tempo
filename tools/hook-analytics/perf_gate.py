@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
-"""PreToolUse gate: block edits to runtime C# until PERFORMANCE.md has been read
-this session, and log every gate decision to hook-analytics.jsonl for the dashboard.
+"""PreToolUse gate: block an edit until the rulebook for that KIND of file has been read this session, and log
+every gate decision to hook-analytics.jsonl for the dashboard.
+
+Three rulebooks, one gate (the table is GATES below):
+  · runtime C# under Assets/Scripts             -> unity/Assets/Scripts/PERFORMANCE.md
+  · a texture/model/audio import setting, a prefab, a project setting, the package manifest
+                                                 -> unity/Assets/ASSETS.md
+  · the sign-in service, the character server, a migration
+                                                 -> SERVER.md (repo root)
+The second and third were added on 2026-09-20 after an audit found that half its findings broke a rule that was
+already written down and never injected: a written rule is a wish, an injected one is read.
 
 Invoked by Claude Code with the hook payload (session_id, tool_name, tool_input,
 transcript_path, ...) on stdin. See tools/hook-analytics/README.md.
@@ -58,6 +67,43 @@ def is_runtime_cs(path: str) -> bool:
     return "/" not in p
 
 
+TEXTURE_OR_MODEL = (".png", ".tga", ".jpg", ".jpeg", ".psd", ".tif", ".tiff", ".exr", ".fbx", ".glb", ".gltf",
+                    ".obj", ".wav", ".mp3", ".ogg")
+
+
+def is_asset_file(path: str) -> bool:
+    """A saved setting the ASSETS rulebook governs: an importer's .meta for art/models/audio, a prefab, a
+    project or pipeline setting, the package manifest."""
+    p = path.replace("\\", "/").lower()
+    if p.endswith(".meta"):
+        base = p[:-5]
+        return "/assets/" in p and base.endswith(TEXTURE_OR_MODEL)
+    if p.endswith(".prefab"):
+        return "/assets/" in p
+    if p.endswith("/packages/manifest.json"):
+        return True
+    if p.endswith(".asset"):
+        return "/projectsettings/" in p or "/assets/settings/" in p
+    return False
+
+
+def is_server_file(path: str) -> bool:
+    p = path.replace("\\", "/").lower()
+    if "/node_modules/" in p or "/bin/" in p or "/obj/" in p:
+        return False
+    if "/accounts/src/" in p and p.endswith(".ts"):
+        return True
+    if "/accounts/sql/" in p and p.endswith(".sql"):
+        return True
+    if "/charserver/" in p and (p.endswith(".cs") or p.endswith(".sh")):
+        return True
+    return False
+
+
+def repo_root() -> str:
+    return os.path.dirname(os.path.dirname(HERE))
+
+
 def scripts_root(file_path: str) -> str:
     """The '.../Assets/Scripts/' prefix of the edited file, in its real casing —
     so PERFORMANCE.md and CLAUDE.md can be located as siblings of any gated file,
@@ -106,8 +152,12 @@ def derive_sentinel(perf_md_path: str, claude_md_path: str) -> str:
         return ""
     exclusion = normalize(read_text(claude_md_path))
     best = ""
+    fenced = False
     for raw in perf.splitlines():
-        if not is_prose(raw):
+        if raw.strip().startswith("```"):
+            fenced = not fenced          # a command inside a code block is not a sentence anyone reads
+            continue
+        if fenced or not is_prose(raw):
             continue
         n = normalize(raw)
         if n in exclusion:
@@ -123,13 +173,13 @@ def transcript_has(sentinel: str, transcript_path: str) -> bool:
     return fingerprint(sentinel) in fingerprint(read_text(transcript_path))
 
 
-def log(session_id: str, file_path: str, outcome: str) -> None:
+def log(session_id: str, file_path: str, outcome: str, doc: str = "PERFORMANCE.md") -> None:
     rec = {
         "ts": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
         "session_id": session_id,
         "file": file_path,
         "outcome": outcome,  # "blocked" | "passed"
-        "doc": "PERFORMANCE.md",
+        "doc": doc,
     }
     try:
         with open(LOG, "a", encoding="utf-8") as f:
@@ -176,26 +226,37 @@ def main():
     written = tool_writes.files_written(data.get("tool_name") or "",
                                         data.get("tool_input") or {},
                                         data.get("cwd") or "")
-    gated = [f for f in written if is_runtime_cs(f)]
-    if not gated:
-        allow()  # nothing of the game's runtime C# → silent, no log
-        return
-    file_path = gated[0]
-
+    repo = repo_root()
+    # (matcher, rulebook path, the auto-injected file whose lines must not count as "read", the refusal, log name)
+    GATES = [
+        (is_runtime_cs, None, None,
+         "Performance is a hard constraint here. Read unity/Assets/Scripts/PERFORMANCE.md before editing "
+         "runtime C#, then retry this edit.", "PERFORMANCE.md"),
+        (is_asset_file, os.path.join(repo, "unity", "Assets", "ASSETS.md"), os.path.join(repo, "CLAUDE.md"),
+         "An import setting, prefab, project setting or package is a number that fails silently. Read "
+         "unity/Assets/ASSETS.md before editing it, then retry this edit.", "ASSETS.md"),
+        (is_server_file, os.path.join(repo, "SERVER.md"), os.path.join(repo, "CLAUDE.md"),
+         "The two services have rules that failed silently once already. Read SERVER.md (repo root) before "
+         "editing accounts/, charserver/ or a migration, then retry this edit.", "SERVER.md"),
+    ]
     session_id = data.get("session_id") or ""
-    root = scripts_root(file_path)
-    sentinel = derive_sentinel(root + "PERFORMANCE.md", root + "CLAUDE.md")
-
-    if transcript_has(sentinel, data.get("transcript_path") or ""):
-        log(session_id, file_path, "passed")
-        allow()
-    else:
-        log(session_id, file_path, "blocked")
-        deny(
-            "Performance is a hard constraint here. Read "
-            "unity/Assets/Scripts/PERFORMANCE.md before editing runtime C#, "
-            "then retry this edit."
-        )
+    transcript = data.get("transcript_path") or ""
+    for matcher, doc, exclusion, refusal, doc_name in GATES:
+        gated = [f for f in written if matcher(f)]
+        if not gated:
+            continue
+        file_path = gated[0]
+        if doc is None:                                    # the runtime-C# rulebook sits beside the scripts
+            root = scripts_root(file_path)
+            doc, exclusion = root + "PERFORMANCE.md", root + "CLAUDE.md"
+        sentinel = derive_sentinel(doc, exclusion)
+        if transcript_has(sentinel, transcript):
+            log(session_id, file_path, "passed", doc_name)
+            continue
+        log(session_id, file_path, "blocked", doc_name)
+        deny(refusal)
+        return
+    allow()
 
 
 if __name__ == "__main__":

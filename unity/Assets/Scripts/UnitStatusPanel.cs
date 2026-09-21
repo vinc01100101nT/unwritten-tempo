@@ -97,7 +97,7 @@ public class UnitStatusPanel : MonoBehaviour
         readonly List<Cell> cells = new List<Cell>(MaxIcons);
         readonly List<UnitStates.State> shown = new List<UnitStates.State>(MaxIcons);
 
-        // WHAT THE UNIT WEARS: one row per piece, its name in its rarity's colour and the chance it is given up, exactly
+        // WHAT THE UNIT WEARS: one row per piece, its grade and folds then its name, exactly
         // as the server wrote them (NetMob.WornText). Rebuilt only when that text changes.
         readonly List<TMP_Text> gearRows = new List<TMP_Text>(MaxGearRows);
         readonly List<WornList.Entry> gearEntries = new List<WornList.Entry>(MaxGearRows);
@@ -239,8 +239,10 @@ public class UnitStatusPanel : MonoBehaviour
                 if (!on) continue;
                 var e = gearEntries[i];
                 // perf-ok: runs only when the server's worn text changes, never per frame
-                row.text = e.def.displayName + "  " + e.chance;
-                row.color = Rarities.Text(e.rarity);
+                row.text = (e.quality == Quality.Raw ? "Raw" : e.quality.ToString())
+                           + (e.folds > 0 ? " +" + e.folds : "") + "  " + e.def.displayName;
+                // Rows are pooled and reused, so the colour is set every time or a row keeps the last one's.
+                row.color = UiKit.TextMain;
             }
             Layout();
         }

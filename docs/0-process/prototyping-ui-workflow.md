@@ -23,8 +23,9 @@ file that took seconds to change, instead of in a Unity window that takes minute
 does not own and a colour palette invented from scratch, and had to be restyled afterwards.
 
 Run `tools/ui-tokens.py`. It reads the game's own code and writes `prototypes/ui-tokens.css` — the shared
-palette, all five rarity tiers, and the game's three real font files loaded from where the game keeps them. The
-page links that file and uses `var(--gold)`, `var(--rarity-rare-text)`, `var(--font-ui)`. **A hand-typed hex in a
+palette and the game's three real font files, loaded from where the game keeps them. The page links that file
+and uses `var(--gold)`, `var(--text-main)`, `var(--font-ui)`. (It used to carry five rarity tiers as well; V4
+removed rarity from the game on 2026-09-20 and nothing is coloured by a tier any more.) **A hand-typed hex in a
 mock page is a bug**, because the same value then lives in the code, in the token doc and in the page, and copies
 drift.
 

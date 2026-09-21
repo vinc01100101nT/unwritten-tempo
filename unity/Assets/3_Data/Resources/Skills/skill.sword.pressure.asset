@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Pressure
   symbol: Pr
   weaponType: 1
+  masteryLevel: 33
+  needsSkillId: 
   published: 1
   description: 'Never let them recover.
 

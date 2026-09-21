@@ -17,9 +17,8 @@ public static class ExtraSkillRoll
     static readonly List<SkillDef> pool = new List<SkillDef>(64);
 
     /// <summary>Replace <paramref name="into"/> with up to <see cref="Slots"/> skill ids drawn at random from every
-    /// published skill. Never a skill <paramref name="weaponKit"/> already carries — that would be a slot holding
-    /// nothing new — and never the same skill twice. Rolls short when the pool is smaller than the slots.</summary>
-    public static void Roll(List<string> weaponKit, List<string> into)
+    /// published skill, never the same skill twice. Rolls short when the pool is smaller than the slots.</summary>
+    public static void Roll(List<string> into)
     {
         into.Clear();
         pool.Clear();
@@ -28,7 +27,6 @@ public static class ExtraSkillRoll
         {
             var d = all[i];
             if (d == null || !d.published || string.IsNullOrEmpty(d.id)) continue;
-            if (weaponKit != null && weaponKit.Contains(d.id)) continue;
             pool.Add(d);
         }
         for (int n = 0; n < Slots && pool.Count > 0; n++)

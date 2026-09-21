@@ -28,8 +28,9 @@ public static class AccountClient
     /// out stay with the account service.
     ///
     /// <para>Decided by the path in ONE place rather than at each call site, so a request added later cannot be
-    /// sent to the wrong server by somebody who did not know there were two. While no character server address
-    /// is set both answers are the same, which is what makes turning it on a setting rather than a change.</para></summary>
+    /// sent to the wrong server by somebody who did not know there were two. With no character server address
+    /// set, a character request still goes to the account service — which no longer answers it: that address is
+    /// required, and the settings file says so.</para></summary>
     static string WhereThisGoes(string path)
     {
         var characterServer = AccountSession.CharacterServerUrl;

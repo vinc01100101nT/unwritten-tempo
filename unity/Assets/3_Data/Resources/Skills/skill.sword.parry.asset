@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Parry
   symbol: Pa
   weaponType: 1
+  masteryLevel: 1
+  needsSkillId: 
   published: 1
   description: 'Read the hit and punish it.
 

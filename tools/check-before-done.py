@@ -41,6 +41,12 @@ AUTHORED = os.path.join(REPO, "unity", "Assets", "1_Authored")
 GENERATED = os.path.join(REPO, "unity", "Assets", "2_Generated")
 DATA = os.path.join(REPO, "unity", "Assets", "3_Data")
 SCENES = os.path.join(REPO, "unity", "Assets", "Scenes")
+EDITOR = os.path.join(SCRIPTS, "Editor")
+PROJECT_SETTINGS = os.path.join(REPO, "unity", "ProjectSettings")
+PIPELINE_SETTINGS = os.path.join(REPO, "unity", "Assets", "Settings")
+MANIFEST = os.path.join(REPO, "unity", "Packages", "manifest.json")
+ACCOUNTS = os.path.join(REPO, "accounts")
+CHARSERVER = os.path.join(REPO, "charserver")
 LEARNINGS = os.path.join(REPO, "docs", "5-ai-learnings", "README.md")
 sys.path.insert(0, os.path.join(TOOLS, "hook-analytics"))
 import guard_check   # the one implementation of "is every guard alive"
@@ -124,6 +130,72 @@ GROUPS = {
                     "nothing until this passes:",
         "mine_by_construction": True,
     },
+    # ---- added 2026-09-20, after an audit found half its findings broke rules that were written and never
+    # checked. Each pair below is a checker and the prover that keeps it honest; the rulebooks are
+    # unity/Assets/ASSETS.md, SERVER.md, and CLAUDE.md's NOEDITORWRITES / NOCLIENTMATH.
+    "assets": {
+        "roots": [(AUTHORED, ".meta"), (AUTHORED, ".prefab"), (GENERATED, ".prefab"),
+                  (PROJECT_SETTINGS, ".asset"), (PIPELINE_SETTINGS, ".asset")],
+        "files": [MANIFEST, os.path.join(TOOLS, "packages-in-use.txt")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-asset-rules.py")],
+        "headline": "A saved asset breaks a rule in unity/Assets/ASSETS.md — an import setting, a prefab, a "
+                    "project setting or a package that will cost memory, draws or a silently dropped field:",
+    },
+    "assets-checker": {
+        "files": [os.path.join(TOOLS, "check-asset-rules.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-asset-rules-check.py")],
+        "headline": "The asset-rules checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
+    "editor-writes": {
+        "roots": [(SCRIPTS, ".cs")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-editor-writes.py")],
+        "headline": "Editor code can write a saved file with nobody having clicked (RULE NOEDITORWRITES). Move "
+                    "the write behind a menu item, or say why it is the user's own action:",
+    },
+    "editor-writes-checker": {
+        "files": [os.path.join(TOOLS, "check-editor-writes.py"), os.path.join(TOOLS, "cs_methods.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-editor-writes-check.py")],
+        "headline": "The editor-writes checker no longer sees an unclicked write, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
+    "client-math": {
+        "roots": [(SCRIPTS, ".cs")],
+        "files": [os.path.join(TOOLS, "client-math-baseline.txt")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-client-math.py")],
+        "headline": "A NEW sum on a game number where a player's machine can run it (RULE NOCLIENTMATH). Send "
+                    "the finished value from the server, move the sum into a static math class, or say why:",
+    },
+    "client-math-checker": {
+        "files": [os.path.join(TOOLS, "check-client-math.py"), os.path.join(TOOLS, "cs_methods.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-client-math-check.py")],
+        "headline": "The client-math checker no longer sees a new client-side sum, so its silence proves "
+                    "nothing until this passes:",
+        "mine_by_construction": True,
+    },
+    "server": {
+        "roots": [(os.path.join(ACCOUNTS, "src"), ".ts"), (os.path.join(ACCOUNTS, "sql"), ".sql"),
+                  (CHARSERVER, ".cs"), (CHARSERVER, ".sh")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-server-rules.py")],
+        "headline": "One of the two services breaks a rule in SERVER.md — a defaulted secret, an unbounded pool, "
+                    "a character route on the sign-in service, or an ordered read with no index:",
+    },
+    "server-checker": {
+        "files": [os.path.join(TOOLS, "check-server-rules.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-server-rules-check.py")],
+        "headline": "The server-rules checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
+    "gate-checker": {
+        "files": [os.path.join(TOOLS, "hook-analytics", "perf_gate.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove-read-first-gate.py")],
+        "headline": "The read-first gate no longer refuses an unread rulebook, or refuses what it should not, "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
 }
 
 
@@ -200,7 +272,7 @@ def mine_only(body, touched):
         # happened to report on. A kind missing from this list is never recognised as a
         # file at all, so its fault line is kept unconditionally and every pre-existing
         # one in the project rides along on every turn — the opposite of this filter's job.
-        hit = re.search(r"([\w./\\-]+\.(?:cs|asset|py|mat|prefab|unity|sh|md|json|shader))\s*[(:]", line)
+        hit = re.search(r"([\w./\\-]+\.(?:cs|asset|py|mat|prefab|unity|sh|md|json|shader|meta|ts|sql|txt))\s*[(:]", line)
         if not hit:
             kept.append(line)
             continue

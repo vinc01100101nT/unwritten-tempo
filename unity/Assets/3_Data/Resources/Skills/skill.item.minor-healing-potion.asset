@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.item.minor-healing-potion
   displayName: Minor Healing Potion
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: Restores 30 HP at once.
   archetype: 3

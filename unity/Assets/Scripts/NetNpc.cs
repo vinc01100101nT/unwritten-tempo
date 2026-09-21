@@ -57,6 +57,17 @@ public class NetNpc : NetworkBehaviour
     /// people wearing two different faces.</para></summary>
     [SyncVar] public string modelName = "";
 
+    /// <summary>WHAT THIS PERSON WORKS AT, as the server says — a smith, a loom, a tannery, or nothing. It has to
+    /// cross, because the body a player presses F on is a copy this machine built, and a copy that did not know
+    /// would open a conversation with a smith. Written when the shell is bound and whenever the role changes.</summary>
+    [SyncVar(hook = nameof(OnStationChanged))] public int stationKind;
+
+    void OnStationChanged(int _, int now)
+    {
+        var t = view != null ? view.GetComponent<TownNPC>() : null;
+        if (t != null) t.station = (CraftStation)now;
+    }
+
     /// <summary>WHICH MAP this person lives in, by scene name. The world is several maps at once and they share one
     /// set of coordinates, so somebody in a town and somebody in a field can be a metre apart by the numbers —
     /// without this a watcher would draw the other map's townsfolk standing on nothing in front of them.</summary>
@@ -125,6 +136,7 @@ public class NetNpc : NetworkBehaviour
         modelName = wearing;
         mapName = npc != null ? npc.gameObject.scene.name : "";
         serverBrain = npc != null ? npc.GetComponent<TownNPC>() : null;
+        stationKind = serverBrain != null ? (int)serverBrain.station : 0;
         serverAgent = npc != null ? npc.GetComponent<PathAgent3D>() : null;
         if (npc != null)
         {
@@ -287,8 +299,14 @@ public class NetNpc : NetworkBehaviour
         // its real heading is the same wrong-first-frame the watched players used to have.
         go.transform.rotation = Quaternion.Euler(0f, netYaw, 0f);
 
-        // THIS COPY DOES NOT THINK. What remains is a body that walks where the server says it walks.
-        go.GetComponent<TownNPC>()?.BecomeAWatchedCopy();
+        // THIS COPY DOES NOT THINK. What remains is a body that walks where the server says it walks — but it does
+        // know what the person it copies works at, or pressing F on a smith would open a conversation.
+        var brain = go.GetComponent<TownNPC>();
+        if (brain != null)
+        {
+            brain.BecomeAWatchedCopy();
+            brain.station = (CraftStation)stationKind;
+        }
 
         view = go;
         // Cached once; never looked up per frame.

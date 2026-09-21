@@ -14,6 +14,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - [Apply review fixes, don't gatekeep](apply-review-fixes-dont-gatekeep.md) — fix ALL listed findings or label skips explicitly; silent "not worth it" triage reads as refusal.
 - [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
 - [Just DO it, don't instruct](just-do-it-dont-instruct.md) — if a command can do it, RUN it; never hand over menu paths, keyboard shortcuts, or key symbols. "Where is X" means SHOW me.
+- [Edit big docs by SLICE, never a whole read](edit-big-docs-by-slice-never-whole-read.md) — play-test checklist and any doc over ~300 lines: grep the heading, read ~40 lines, edit that slice (or sed from the shell); a full read only for a full sweep.
 - [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 - [The game is ALWAYS ONLINE](the-game-is-always-online.md) — no offline/single-machine mode exists; never build, fix or offer a "no server" path. The dead no-server branches still in the code are not evidence it is supported.
 - [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.

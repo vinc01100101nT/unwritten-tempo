@@ -25,7 +25,7 @@ using UnityEngine.UI;
 public class InventoryList
 {
     // ---- the columns, and what each one sorts by ----
-    public enum SortKey { Stored, Name, Tier, Held }
+    public enum SortKey { Stored, Name, Grade, Held }
 
     struct Column
     {
@@ -43,7 +43,7 @@ public class InventoryList
     static readonly Column[] Columns =
     {
         new Column { key = SortKey.Name,   label = "Name",    width = 0f,   textSize = 14f, align = TextAlignmentOptions.Left },
-        new Column { key = SortKey.Tier,   label = "Tier",    width = 76f,  textSize = 12f, align = TextAlignmentOptions.Right },
+        new Column { key = SortKey.Grade,  label = "Grade",   width = 76f,  textSize = 12f, align = TextAlignmentOptions.Right },
         new Column { key = SortKey.Held,   label = "Held",    width = 48f,  textSize = 11f, align = TextAlignmentOptions.Right },
     };
 
@@ -82,8 +82,7 @@ public class InventoryList
     string query = "";
     Action onChanged;                // the window's own refresh, raised after an action mutates the bag
 
-    // Rare-blue, the same mark the approved design uses — never a rarity colour, so it cannot be mistaken
-    // for the tier the name is already coloured by.
+    // The same blue mark the approved design uses, on a name that is otherwise drawn plain.
     const string WornTag = "   <size=11><color=#4F8CFF>worn</color></size>";
 
     static readonly Color HeaderIdle = UiKit.TextDim;
@@ -305,9 +304,17 @@ public class InventoryList
         Refresh();
     }
 
-    static int TierRank(BagEntry e) =>
-        e != null && e.instance != null ? (int)e.instance.Rarity
-      : e != null && e.def != null ? (int)e.def.rarity : -1;
+    // A piece with no copy behind it — a stack of potions — has no grade at all, and sorts below Raw.
+    static int GradeRank(BagEntry e) => e != null && e.instance != null ? (int)e.instance.quality : -1;
+
+    // "B +12", "Raw", or nothing at all for something that was never forged.
+    static string GradeText(BagEntry e)
+    {
+        if (e == null || e.instance == null) return "";
+        var inst = e.instance;
+        return (inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString())
+               + (inst.upgrade > 0 ? " +" + inst.upgrade : "");
+    }
 
     int Compare(BagEntry a, BagEntry b)
     {
@@ -316,7 +323,7 @@ public class InventoryList
         switch (sortKey)
         {
             case SortKey.Name:   c = string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase); break;
-            case SortKey.Tier:   c = TierRank(a).CompareTo(TierRank(b)); break;
+            case SortKey.Grade:  c = GradeRank(a).CompareTo(GradeRank(b)); break;
             case SortKey.Held:   c = a.count.CompareTo(b.count); break;
             default:             return 0;
         }
@@ -327,7 +334,7 @@ public class InventoryList
 
     static string NameOf(BagEntry e) => e != null && e.def != null ? e.def.displayName : "";
 
-    // ---- searching: case-insensitive, and it reaches the skills a weapon carries ----
+    // ---- searching: case-insensitive, and it reaches a piece's grade ----
 
     bool Matches(BagEntry e)
     {
@@ -335,16 +342,8 @@ public class InventoryList
         if (e == null || e.def == null) return false;
         if (e.def.displayName != null && e.def.displayName.ToLowerInvariant().Contains(query)) return true;
         if (EquipSlots.Label(e.def.slot).ToLowerInvariant().Contains(query)) return true;
-        var rar = e.instance != null ? e.instance.Rarity : e.def.rarity;
-        if (Rarities.Label(rar).ToLowerInvariant().Contains(query)) return true;
+        if (GradeText(e).ToLowerInvariant().Contains(query)) return true;
         if (e.def.weaponType != WeaponType.None && e.def.weaponType.ToString().ToLowerInvariant().Contains(query)) return true;
-        var ids = e.instance != null ? e.instance.skillIds : null;
-        if (ids != null)
-            for (int i = 0; i < ids.Count; i++)
-            {
-                var d = SkillCatalog.Get(ids[i]);
-                if (d != null && d.displayName != null && d.displayName.ToLowerInvariant().Contains(query)) return true;
-            }
         return false;
     }
 
@@ -413,16 +412,12 @@ public class InventoryList
     {
         var def = e.def;
         var inst = e.instance;
-        var rar = inst != null ? inst.Rarity : (def != null ? def.rarity : Rarity.Common);
-        var tint = Rarities.Text(rar);
-
-        int refine = inst != null ? inst.upgrade : 0;
-        string name = (refine > 0 ? "+" + refine + " " : "") + (def != null ? def.displayName : "");
+        string name = def != null ? def.displayName : "";
         // What you are wearing is listed with what you carry, so it has to say which it is.
         if (e.worn) name += WornTag;
 
-        Set(row, 0, name, tint);
-        Set(row, 1, Rarities.Label(rar), UiKit.TextDim);
+        Set(row, 0, name, UiKit.TextMain);
+        Set(row, 1, GradeText(e), UiKit.TextDim);
         Set(row, 2, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
     }
 

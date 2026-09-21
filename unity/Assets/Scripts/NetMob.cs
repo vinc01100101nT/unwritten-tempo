@@ -468,7 +468,7 @@ public class NetMob : NetworkBehaviour
             for (int i = 0; i < wornEntries.Count; i++)
             {
                 var e = wornEntries[i];
-                viewGear.Equip(e.def.slot, new EquipmentInstance(e.def) { rarity = e.rarity });
+                viewGear.Equip(e.def.slot, new EquipmentInstance(e.def, e.folds) { quality = e.quality });
             }
         }
     }

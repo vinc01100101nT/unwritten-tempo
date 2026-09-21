@@ -456,12 +456,18 @@ public class SkillDef : ScriptableObject
     [Tooltip("Two letters that stand for this skill on a tile, the way Au stands for gold: \"Committed Strike\" " +
              "becomes \"Cs\". Blank = the tile shows the skill's whole name instead.")]
     public string symbol = "";
-    [Tooltip("WHICH weapon's skill pool this belongs to — a dropped weapon rolls its kit only from skills of its " +
-             "own type (Sword rolls Sword skills). Also the middle segment of the id: skill.sword.<name>. " +
-             "None = in no weapon's pool, so it can never be rolled onto a weapon.")]
+    [Tooltip("WHICH weapon this skill belongs to. It is learned by mastering that weapon and may only be used " +
+             "while holding one. Also the middle segment of the id: skill.sword.<name>. None = belongs to no " +
+             "weapon, so nobody can learn it.")]
     public WeaponType weaponType = WeaponType.None;
-    [Tooltip("PUBLISHED = eligible to be rolled onto a dropped weapon of its type. Unpublished skills are still " +
-             "fully usable in the Grimoire (J) and the hotbar for testing — publishing only opens the loot roll.")]
+    [Tooltip("The mastery level in that weapon at which this skill is learned. 1 = known as soon as the first " +
+             "level is reached. 0 means the same as 1.")]
+    public int masteryLevel = 1;
+    [Tooltip("A skill that must be learned FIRST, by id — so a skill that rides another can never be held " +
+             "without it (Lock Blades needs Lunge). Empty = nothing comes first.")]
+    public string needsSkillId = "";
+    [Tooltip("PUBLISHED = part of the game. Unpublished skills are still fully usable in the Grimoire (J) and " +
+             "the hotbar for testing.")]
     public bool published = false;
 
     [Header("Codex (hover tooltip)")]

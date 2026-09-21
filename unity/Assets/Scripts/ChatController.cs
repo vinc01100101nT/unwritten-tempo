@@ -62,17 +62,26 @@ public class ChatController : MonoBehaviour
     /// a command, a thing picked up off the floor, and anything that is written later. It reads the same wherever
     /// it came from, because WHERE it came from is not what a player needs to be told; WHAT they now have is.
     ///
-    /// <para>Built here rather than by each caller so there is one sentence, one word order and one colour. The
-    /// name carries its rarity colour, exactly as it does in the bag list and on the floor.</para></summary>
-    public static void ItemArrived(Item def, int count, Rarity rarity, int upgrade)
+    /// <para>Built here rather than by each caller so there is one sentence and one word order.</para></summary>
+    public static void ItemArrived(Item def, int count, int upgrade)
     {
         if (instance == null || def == null || count <= 0) return;
 
         string name = upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName;
         if (count > 1) name += " ×" + count;
-        instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  "
-                         + $"<color=#{ColorUtility.ToHtmlStringRGB(Rarities.Text(rarity))}>{Sanitize(name)}</color>");
+        instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  {Sanitize(name)}");
     }
+
+    /// <summary>THE GAME telling the person at this keyboard something in a sentence — why the server refused a
+    /// press, for one. Dim, like an arrival, because it is the game speaking and not a person.</summary>
+    public static void GameSaid(string line, bool ok = true)
+    {
+        if (instance == null || string.IsNullOrEmpty(line)) return;
+        instance.AddLine($"<color=#{(ok ? ObtainedHex : BadHex)}>{Sanitize(line)}</color>");
+    }
+
+    static string badHex;
+    static string BadHex => badHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Bad);
 
     // The dim tint the word in front of an arrival is written in, taken from the palette rather than typed here.
     static string obtainedHex;

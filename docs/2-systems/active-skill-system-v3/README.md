@@ -23,7 +23,7 @@ tags:
 > - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier and no mob-only multiplier — so an effect never has to ask what kind of thing it hit. See the companion *Unified Unit Stats*.
 > - **Later:** ring behavioral *voices* → v-next; **Cards** (enemy matchup) → v3-content, with mob categories.
 
-***This doc is the single source of truth for the skill / weapon / ring / card design.*** *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
+***This doc owns the CHANNELS, the EFFECTS, the TRIGGERS and the role-lock — and those are still what the game runs.*** *[V4](../gameplay-system-v4/README.md), built 2026-09-20, replaced its rolled weapon kits, rarity, equipment drops, the worn ring item and "skills don't level"; every passage on those points below has been rewritten to what the code now does, and V4 is where the detail lives.* *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
 
 ## Why V3 (the redundancy we found)
 
@@ -68,7 +68,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 **Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the RARITY of the weapon that granted the skill. Both columns below were read off the applier on 2026-09-09.
 
-| Channel | Meaning | Unit | Ring-scales? | Rarity-scales? |
+| Channel | Meaning | Unit | Ring-scales? | Practice-scales? |
 | --- | --- | --- | --- | --- |
 | damage | Direct damage — base power × ATK/MATK × affinity | mult | yes | yes |
 | hits | Strikes per landing; each is a proc trigger | int | yes (own affinity list) | no |
@@ -83,9 +83,9 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | modifier_seconds / modifier_stacks | What ExtendDuration / AddStacks hand another skill's pile | sec / int | yes (duration list / affinity list) | no — the other skill takes its own lift |
 | execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw | base roll scales; this is raw |
 | proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | yes (own affinity list) | no — clamped to 100%, so a lift saturates then does nothing |
-| duration | Effect window length | sec | yes (own affinity list) | **NEVER** — a Legendary must not hold a longer stun |
+| duration | Effect window length | sec | yes (own affinity list) | **NEVER** — practice must not hold a longer stun |
 
-**The rarity lift, in full:** a weapon adds **+0% Common, +3% Uncommon, +9% Rare, +18% Epic, +30% Legendary** to the ring's affinity term on the channels marked above. It is **added** to that term, never multiplied onto the finished number — multiplying would pay out more the more ring a player had already built, so the same drop would be worth far more to a veteran than to the person who needs it; adding makes a Legendary worth the same +30 points to everyone. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless skill on a Legendary is still ×1.30. The lift applies only when the skill came from the EQUIPPED WEAPON'S rolled kit — a skill ticked on in the Grimoire scales off the ring alone.
+**The practice lift, in full** (V4): a character's own practice adds up to **+30%** to the ring's affinity term on the channels marked above — **Skill Mastery** on an active, at +1% a level to 30, and **Weapon Mastery** on a passive, at +0.5% a level to the same ceiling. It is **added** to that term, never multiplied onto the finished number: multiplying would pay out more the more ring a player had already built, so the same practice would be worth far more to a veteran. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless skill at full practice is still ×1.30. The grade of the weapon in hand caps how far that practice goes — see [V4 §9](../gameplay-system-v4/README.md).
 
 **Retired channels — folded into `sub_stat_magnitude` when the sub-stat collapse landed:** `dmg_reduction` (Guard), `dmg_taken_frac` (Vulnerability), `heal_per_tick` (Regen), `slow_amount`, `accuracy_loss`, `move_mult` (Haste), `leech_frac`, `reflect_frac`, `buff_mult`. Do not reintroduce any of them as its own channel — see the note under the Effects catalog.
 
@@ -108,7 +108,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 ## 2. Effects Catalog — LOCKED (the behaviors, "what happens?")
 
-Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer), not rolled onto a weapon — a skill that knocks back simply *is* a knockback skill. **The weapon contributes no BEHAVIOUR, only a numeric lift from its rarity** (§1), so there is still nothing to "fold": the ring and the rarity both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
+Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and cap how far practice with them goes** (§1), so there is still nothing to "fold": the ring and practice both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
 **This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-08-24). It is the full set — there is no effect a skill can author that is not here.
 
@@ -204,7 +204,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 | System | Single responsibility |
 | --- | --- |
-| Weapon | Grants skills — a rarity-scaled roll from the weapon's skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
+| Weapon | Decides which skills may be learned and used, and caps the practice behind them (see **[Gameplay System V4](../gameplay-system-v4/README.md)**); defines weapon identity |
 | Channels (§1) | The skill's numeric outputs ("how much?") |
 | Effects (§2) | The skill's natural behaviors ("what happens?") |
 | Trigger (§6) | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler) |
@@ -221,6 +221,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 ## Related
 
+- [Gameplay System — V4](../gameplay-system-v4/README.md) — the agreed next design: crafted gear, quality grades, weapon and skill mastery. Not built.
 - [Implementation Notes](implementation-notes.md) — how this design is actually wired today (this doc wins on intent, that one on code).
 - [Unified Unit Stats](unified-unit-stats.md) — the unit half: one stat model, so an effect never asks what it hit.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — what a state IS, and the stacks/charges/gate rules.

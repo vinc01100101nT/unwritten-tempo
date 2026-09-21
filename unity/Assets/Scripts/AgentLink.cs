@@ -1057,7 +1057,7 @@ public class AgentLink : MonoBehaviour
             float d = Flat(here, g.transform.position);
             if (d > SeeOthers) continue;
             line.Append("\n  ").Append(IdFor('g', g)).Append(' ').Append(g.Text);
-            if (g.rarity != Rarity.Common) line.Append(" [").Append(g.rarity).Append(']');
+            if (g.quality != Quality.Raw) line.Append(" [").Append(g.quality).Append(']');
             line.Append(' ').Append(D(d)).Append(' ').Append(Pos(g.transform.position));
             shown++;
         }
@@ -1163,7 +1163,7 @@ public class AgentLink : MonoBehaviour
             if (e.instance != null && e.instance.upgrade > 0) sb.Append('+').Append(e.instance.upgrade).Append(' ');
             sb.Append(e.def.displayName);
             if (e.count > 1) sb.Append(" x").Append(e.count);
-            if (e.instance != null && e.instance.rarity != Rarity.Common) sb.Append(" [").Append(e.instance.rarity).Append(']');
+            if (e.instance != null && e.instance.quality != Quality.Raw) sb.Append(" [").Append(e.instance.quality).Append(']');
             if (e.IsEquip) sb.Append(" (").Append(e.def.slot).Append(')');
             if (e.def.IsUsable) sb.Append(" (usable)");
         }
@@ -1182,7 +1182,7 @@ public class AgentLink : MonoBehaviour
             sb.Append("\n").Append(kv.Key).Append(": ");
             if (kv.Value.upgrade > 0) sb.Append('+').Append(kv.Value.upgrade).Append(' ');
             sb.Append(kv.Value.def.displayName);
-            if (kv.Value.rarity != Rarity.Common) sb.Append(" [").Append(kv.Value.rarity).Append(']');
+            if (kv.Value.quality != Quality.Raw) sb.Append(" [").Append(kv.Value.quality).Append(']');
         }
         return sb.ToString();
     }

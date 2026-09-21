@@ -19,6 +19,10 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
     // Ninja Adventure (and the rest of our packs) are authored at 16 px / tile.
     const int PixelsPerUnit = 16;
 
+    // DELIBERATELY runs on every import, not only the first — unlike the audio and clip postprocessors beside it.
+    // This rule is the single OWNER of these settings: a hand-edited .meta under /Art/ is reverted on the next
+    // import, and that is the point, because it also means a change HERE reaches every existing texture on its
+    // next reimport instead of only new ones. Reimport the folder after editing this file.
     void OnPreprocessTexture()
     {
         string path = assetPath.Replace('\\', '/');
@@ -48,14 +52,20 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
         // sprites. Import them as REPEATING Default textures with mipmaps so a plain material tiles them seamlessly and
         // they don't shimmer at distance. (GroundBlend uses its own inline repeat sampler, so this never affects it —
         // it only fixes materials, like the curb's URP/Lit, that honour the texture's own wrap mode.)
+        //
+        // COMPRESSED, unlike the pixel-art sprites below: these are painted 2048-square photos of ground, and block
+        // compression is invisible on them (the same images already shipped compressed from the prop-texture folder
+        // and nobody could tell). Uncompressed they were 85 MB of a 307 MB build. Compression needs power-of-two
+        // sizes, so the four odd-sized tiles are resampled to the nearest — a repeating ground tile has no pixel
+        // grid to keep.
         if (path.Contains("/GroundTiles/"))
         {
             importer.textureType = TextureImporterType.Default;
             importer.filterMode = FilterMode.Bilinear;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.textureCompression = TextureImporterCompression.Compressed;
             importer.mipmapEnabled = true;
             importer.wrapMode = TextureWrapMode.Repeat;
-            importer.npotScale = TextureImporterNPOTScale.None;        // keep the exact painted pixels (NPOT ok on desktop)
+            importer.npotScale = TextureImporterNPOTScale.ToNearest;
             return;
         }
 

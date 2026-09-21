@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-**Decided 2026-09-13 with the user, all built the same day (unplayed — see `docs/1-planning/play-test-checklist.md`).**
+**Decided 2026-09-13 with the user, all built the same day (unplayed — see `docs/1-planning/play-test-checklist/`).**
 
 - **One headline jump per primary, every 10 points, gear included:** `UnitStatMath.StatJumpBonus(s)` =
   ⌊s/10⌋² + 3×⌊s/10⌋ ("shape C": crossing 10 adds 4, 100 adds 22). STR → melee attack, DEX → ranged attack,
@@ -28,5 +28,5 @@ metadata:
   passes the 99 cap buying stops at, so a +1 is worth chasing at 119.
 - The two accessory places (`EquipSlotType` 6, 7) are gone; never reuse those numbers.
 
-Design record: `docs/1-planning/action-plan.md` MT-3 sub-tasks; formulas table in
+Design record: `docs/1-planning/action-plan/` MT-3 sub-tasks; formulas table in
 `docs/2-systems/active-skill-system-v3/unified-unit-stats.md`; wiki `stats.json`.

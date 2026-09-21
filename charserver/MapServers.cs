@@ -42,6 +42,12 @@ public sealed class MapServers(Config config)
 
     readonly ConcurrentDictionary<string, Registration> byId = new();
 
+    /// <summary>Which map server each character was LAST handed to, by character id. Written when an
+    /// announcement is accepted, so letting a character go asks that one server instead of every server there
+    /// is. An entry is dropped the moment its server says it no longer holds them, or when that server is
+    /// forgotten, so it never names a machine that has gone.</summary>
+    readonly ConcurrentDictionary<string, string> heldBy = new();
+
     // Which map lives where. Rebuilt whenever a registration changes rather than searched each time — this is
     // asked on every entry into the world, and the answer only moves when a map server comes or goes.
     volatile Dictionary<string, Registration> byMap = new(StringComparer.OrdinalIgnoreCase);
@@ -52,7 +58,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v11";
+    public const string CharacterBuild = "unwritten-character-v13";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -125,21 +131,36 @@ public sealed class MapServers(Config config)
         foreach (var id in gone)
         {
             byId.TryRemove(id, out _);
+            foreach (var held in heldBy)
+                if (held.Value == id) heldBy.TryRemove(held.Key, out _);
             Console.WriteLine($"[char] map server '{id}' has said nothing for {TrustedFor.TotalMinutes:0} minutes — forgotten.");
         }
         Rebuild();
     }
 
-    /// <summary>Ask every map server to let go of this character, writing them down first, and wait until they
-    /// have all answered. TRUE when one of them actually had them.
+    /// <summary>Ask the map server holding this character to let go of them, writing them down first, and wait
+    /// for the answer. TRUE when it actually had them.
     ///
-    /// <para>Every one is asked because none of them is written down as holding anybody — so most answer at once
-    /// saying they do not have this person, which is the ordinary case rather than a failure. The one that does
-    /// have them writes them down and waits for that write to land before answering, which is the entire reason
-    /// this exists: reading their row before that hands whoever is taking over a copy up to fifteen seconds old,
-    /// and everything since is never recorded anywhere.</para></summary>
+    /// <para>The server that took them last is written down (<see cref="heldBy"/>), so ordinarily ONE server is
+    /// asked. Every server is asked only when none is written down, or the one written down has since been
+    /// forgotten — the cost of that fan-out is players × map servers, so it is the exception and not the rule.
+    /// The one that has them writes them down and waits for that write to land before answering, which is the
+    /// entire reason this exists: reading their row before that hands whoever is taking over a copy up to fifteen
+    /// seconds old, and everything since is never recorded anywhere.</para></summary>
     public async Task<bool> LetGoOfEverywhereAsync(string characterId, CancellationToken ct = default)
     {
+        if (heldBy.TryGetValue(characterId, out var holderId))
+        {
+            ForgetTheSilent();
+            if (byId.TryGetValue(holderId, out var holder))
+            {
+                bool had = await AskToLetGoAsync(holder, characterId, ct);
+                if (!had) heldBy.TryRemove(characterId, out _);
+                return had;
+            }
+            heldBy.TryRemove(characterId, out _);
+        }
+
         var servers = Alive;
         if (servers.Count == 0) return false;
 
@@ -303,6 +324,7 @@ public sealed class MapServers(Config config)
         try
         {
             var reply = await wire.SendAsync(request, ct);
+            if (reply.IsSuccessStatusCode) heldBy[ticket.CharacterId] = to.Id;
             return reply.IsSuccessStatusCode;
         }
         catch (Exception e)

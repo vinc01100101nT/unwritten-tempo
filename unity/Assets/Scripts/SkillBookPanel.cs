@@ -75,7 +75,7 @@ public class SkillBookPanel : MonoBehaviour
         if (canvas == null) return;
 
         var content = UiKit.Window(canvas.transform, "Grimoire", new Vector2(360, 440), Vector2.zero, out root);
-        scrollContent = EnsureScroll(content);
+        scrollContent = UiKit.ScrollColumn(content);
 
         var vlg = scrollContent.GetComponent<VerticalLayoutGroup>() ?? scrollContent.gameObject.AddComponent<VerticalLayoutGroup>();
         vlg.spacing = 6;
@@ -86,33 +86,6 @@ public class SkillBookPanel : MonoBehaviour
         vlg.childAlignment = TextAnchor.UpperCenter;
 
         built = true;   // starts hidden (UiKit.Window inactivates the root); Rebuild runs on first open
-    }
-
-    // Turn the window's fixed "Content" node into a clipped vertical scroll and return the inner build target.
-    RectTransform EnsureScroll(RectTransform viewport)
-    {
-        var existing = viewport.Find("ScrollContent") as RectTransform;
-        if (existing != null) return existing;
-
-        if (viewport.GetComponent<RectMask2D>() == null) viewport.gameObject.AddComponent<RectMask2D>();
-        var vpImg = viewport.GetComponent<Image>();
-        if (vpImg != null) vpImg.raycastTarget = true;   // a graphic for the wheel to land on
-
-        var scroll = viewport.GetComponent<ScrollRect>() ?? viewport.gameObject.AddComponent<ScrollRect>();
-        scroll.horizontal = false; scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 22f;
-
-        var sc = new GameObject("ScrollContent", typeof(RectTransform));
-        var scrt = (RectTransform)sc.transform;
-        scrt.SetParent(viewport, false);
-        scrt.anchorMin = new Vector2(0, 1); scrt.anchorMax = new Vector2(1, 1); scrt.pivot = new Vector2(0.5f, 1);
-        scrt.offsetMin = scrt.offsetMax = Vector2.zero;
-        sc.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scroll.viewport = viewport;
-        scroll.content = scrt;
-        return scrt;
     }
 
     // ---- (re)build the list -------------------------------------------------
@@ -140,16 +113,44 @@ public class SkillBookPanel : MonoBehaviour
             BuildRow(SkillCatalog.Get(pool[i]));
     }
 
+    // What a skill nobody has learned yet says instead of its cost: the weapon and the mastery level that open
+    // it, and the skill that has to come first. Null once it is known.
+    static string LockedLine(SkillDef def)
+    {
+        var me = Character.Instance;
+        if (me == null || def == null || def.weaponType == WeaponType.None) return null;
+        if (me.Mastery.HasLearned(def.id)) return null;
+
+        int need = Mathf.Max(1, def.masteryLevel);
+        string line = def.weaponType + " mastery " + need;
+        if (!string.IsNullOrEmpty(def.needsSkillId))
+        {
+            var first = SkillCatalog.Get(def.needsSkillId);
+            line += ", after " + (first != null ? first.displayName : def.needsSkillId);
+        }
+        return line;
+    }
+
     void BuildRow(SkillDef def)
     {
         var row = NewImage(scrollContent, RowBg);
         row.raycastTarget = true;
         SetHeight(row.gameObject, 48);
 
-        // A PASSIVE takes no hotbar slot — it runs on its trigger. So its row isn't a bind target at all: it gets a
-        // checkbox that turns the passive on for the player. One the equipped weapon already rolled is shown ticked
-        // and greyed, because the weapon is what makes it live and ticking it again would mean nothing.
+        // NOT LEARNED YET: the row says what would open it and does nothing when clicked. Binding it would put a
+        // key on the bar that the server refuses, which reads as a broken key rather than as a locked skill.
+        var locked = LockedLine(def);
+        if (locked != null)
+        {
+            BuildRowFace(row, def, locked, 8f);
+            row.color = new Color(RowBg.r, RowBg.g, RowBg.b, RowBg.a * 0.5f);
+            return;
+        }
+
+        // A PASSIVE takes no hotbar slot — it runs on its trigger. So its row isn't a bind target at all: it gets
+        // a checkbox that turns the passive on. It still only fires while the weapon it belongs to is in hand.
         if (def.IsPassive) { BuildPassiveRow(row, def); return; }
+
 
         BuildRowFace(row, def, $"<color=#99C7FF>MP {def.manaCost}</color>   ·   CD {def.cooldown:0.#}s", 8f);
 
@@ -205,13 +206,11 @@ public class SkillBookPanel : MonoBehaviour
     void BuildPassiveRow(Image row, SkillDef def)
     {
         var loadout = Character.Instance != null ? Character.Instance.PassiveSkills : null;
-        bool byWeapon = loadout != null && loadout.GrantedByWeapon(def.id);
-        bool on = byWeapon || (loadout != null && loadout.IsChecked(def.id));
+        bool on = loadout != null && loadout.IsChecked(def.id);
 
-        BuildRowFace(row, def, byWeapon ? "Active from your weapon" : SkillTooltip.TriggerLine(def), CheckboxWidth);
+        BuildRowFace(row, def, SkillTooltip.TriggerLine(def), CheckboxWidth);
 
-        var box = MakeCheckbox(row.transform, on, !byWeapon && loadout != null);
-        if (byWeapon) return;   // the weapon owns this one — nothing to toggle
+        var box = MakeCheckbox(row.transform, on, loadout != null);
 
         var id = def.id;
         box.onValueChanged.AddListener(v =>

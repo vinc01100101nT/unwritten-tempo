@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.item.travellers-tea
   displayName: Traveller's Tea
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: Raises movement speed by 20% for 120s.
   archetype: 3

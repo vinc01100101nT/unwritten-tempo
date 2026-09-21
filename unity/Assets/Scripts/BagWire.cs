@@ -20,8 +20,6 @@ public struct BagWire
     public int[] counts;
     public int[] refines;
     public string[] cards;
-    public int[] rarities;
-    public string[] skills;
     public string[] rolls;
 
     /// <summary>Which of these were picked up since the person last looked. Rebuilt on arrival, so without
@@ -38,16 +36,11 @@ public struct BagWire
     // the other, in a single decision, on the server. Sending only half of that left the item gone from the bag
     // and nowhere else — vanished, as far as the person could see — and taking something off showed it in the
     // bag while still drawn on the body: one item in two places.
-    //
-    // The Ring vessel is left out, exactly as the save leaves it out: it is re-worn on its own and is never a
-    // bag item, so carrying it would put a second one in somebody's hands.
 
     public int[] wornSlots;
     public string[] wornItemIds;
     public int[] wornRefines;
     public string[] wornCards;
-    public int[] wornRarities;
-    public string[] wornSkills;
     public string[] wornRolls;
 
     // ---- and the BAR the server just rewrote ----------------------------------------------------------
@@ -78,7 +71,7 @@ public struct BagWire
         if (c == null) { wire.itemIds = new string[0]; return wire; }
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
-                          out wire.wornCards, out wire.wornRarities, out wire.wornSkills, out wire.wornRolls);
+                          out wire.wornCards, out wire.wornRolls);
 
         if (alsoTheBar)
         {
@@ -89,14 +82,12 @@ public struct BagWire
         var bag = c.Bag;
         int n = 0;
         for (int i = 0; i < bag.Count; i++)
-            if (bag[i] != null && bag[i].def != null && bag[i].def.slot != EquipSlotType.Ring) n++;
+            if (bag[i] != null && bag[i].def != null) n++;
 
         wire.itemIds = new string[n];
         wire.counts = new int[n];
         wire.refines = new int[n];
         wire.cards = new string[n];
-        wire.rarities = new int[n];
-        wire.skills = new string[n];
         wire.rolls = new string[n];
         wire.isNew = new bool[n];
 
@@ -105,10 +96,6 @@ public struct BagWire
         {
             var e = bag[i];
             if (e == null || e.def == null) continue;
-            // The Ring vessel is worn automatically and is never a bag item. The save drops it for that reason
-            // and so does this: carried across, it would be shown in the bag AND re-worn, which is one ring
-            // becoming two.
-            if (e.def.slot == EquipSlotType.Ring) continue;
             wire.itemIds[at] = e.def.id;
             wire.counts[at] = Mathf.Max(1, e.count);
             wire.isNew[at] = e.isNew;
@@ -116,16 +103,12 @@ public struct BagWire
             {
                 wire.refines[at] = e.instance.upgrade;
                 wire.cards[at] = ItemCatalog.EncodeCards(e.instance.cards);
-                wire.rarities[at] = (int)e.instance.rarity;
-                wire.skills[at] = e.instance.EncodeSkills();
                 wire.rolls[at] = e.instance.EncodeRoll();
             }
             else
             {
                 wire.refines[at] = 0;
                 wire.cards[at] = "";
-                wire.rarities[at] = (int)e.def.rarity;
-                wire.skills[at] = "";
                 wire.rolls[at] = "";
             }
             at++;
@@ -156,15 +139,13 @@ public struct BagWire
                     entry.count = 1;
                     entry.instance = new EquipmentInstance(def, At(refines, i, 0));
                     ItemCatalog.DecodeCards(At(cards, i, ""), entry.instance.cards);
-                    entry.instance.rarity = (Rarity)At(rarities, i, (int)def.rarity);
-                    entry.instance.DecodeSkills(At(skills, i, ""));
                     entry.instance.DecodeRoll(At(rolls, i, ""));
                 }
                 c.Bag.Add(entry);
             }
         }
 
-        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRarities, wornSkills, wornRolls);
+        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRolls);
         c.SetGold(gold);
 
         // THE BAR LAST, AFTER THE GEAR.

@@ -20,34 +20,17 @@ MonoBehaviour:
   attackRange: 0
   equipModel: {fileID: 0}
   element: 0
-  rarity: 0
   category: 0
   cardSlots: 0
   weight: 60
   zeny: 1200
-  bonusHP: 0
-  bonusAttack: 0
-  bonusDefense: 0
-  bonusMP: 0
-  bonusMAtk: 0
-  bonusMDef: 0
-  bonusStr: 0
-  bonusAgi: 0
-  bonusVit: 0
-  bonusInt: 0
-  bonusDex: 0
-  bonusLuk: 0
-  bonusCritPercent: 0
-  bonusAspdPercent: 0
-  defenseMin: 1
-  defenseMax: 2
-  magicDefenseMin: 0
-  magicDefenseMax: 0
-  mainStatCountMin: 0
-  mainStatCountMax: 1
-  mainStatValueMin: 1
-  mainStatValueMax: 2
   useSkillId: 
+  madeOf: 3
+  forgeMaterialCost: 5
+  forgeGoldCost: 400
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
   attackSfx:
     clips: []
     volume: 1

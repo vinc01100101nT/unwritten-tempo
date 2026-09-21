@@ -101,6 +101,59 @@ number was PROMISED, assert the literal, never the constant: reading the ceiling
 self-referential, so raising the ceiling raises the assertion and it can never fail. That mistake was made here
 on the first draft and the prover caught it — which is what the prover is for.
 
+## check-asset-rules.py · prove-asset-rules-check.py · packages-in-use.txt
+
+Are the saved assets the shape `unity/Assets/ASSETS.md` says they must be?
+
+```bash
+tools/check-asset-rules.py           # every rule; exit 1 on a FAIL; --all also lists the WARN debt
+tools/prove-asset-rules-check.py     # plants 13 faults in a scratch copy and expects each named
+```
+
+Reads texture import settings (compressed, ≤ 2048, not readable), the prop palette (static flags; plants with no
+collider and no shadow casting; no batching on wind-shader foliage), level-of-detail families, the pinned project
+settings (shadow map, GPU skinning, bone weights), the package manifest against `packages-in-use.txt`, and — the
+one that matters most — whether every field a script declares is present in the prefab that bakes it. Built on
+2026-09-20 from an audit that found 85 MB of uncompressed ground tiles, 4,608 solid shadow-casting plants, eight
+unused packages and all 84 creatures loading at level 1 because one struct was not marked serializable.
+
+## check-editor-writes.py · prove-editor-writes-check.py · cs_methods.py
+
+Can editor code write a saved file with nobody having clicked? (RULE NOEDITORWRITES, mechanically.)
+
+```bash
+tools/check-editor-writes.py         # follows every load/import/save-time trigger to the writes it reaches
+tools/prove-editor-writes-check.py   # plants the three real 2026-09-20 shapes and expects each named
+```
+
+A write on such a path passes only with `// editor-write-ok: <why>` beside it — the reason sits with the code, as
+`// perf-ok:` does. `cs_methods.py` is the shared method-and-call reader this and the client-math check use.
+
+## check-client-math.py · prove-client-math-check.py · client-math-baseline.txt
+
+Does runtime code work out a game number on a path the player's machine can run? (RULE NOCLIENTMATH.)
+
+```bash
+tools/check-client-math.py           # exit 1 on a NEW sum; --all also lists the known ones
+tools/prove-client-math-check.py     # plants the level-up, a tooltip and a gold roll; expects each named
+```
+
+A sum is fine in a `static class`, behind a server guard or `[Server]`/`[Command]`, or with `// server-math: <why>`.
+Everything else that existed on 2026-09-20 is listed in `client-math-baseline.txt` — 54 known sums, debt that can
+only shrink: fix one, delete its line; never add a line.
+
+## check-server-rules.py · prove-server-rules-check.py
+
+Do the two services still keep the rules in `SERVER.md`?
+
+```bash
+tools/check-server-rules.py          # exit 1 on a FAIL; --all also lists unapplied migrations
+tools/prove-server-rules-check.py    # plants 8 faults in a scratch copy and expects each named
+```
+
+No secret with a literal default, both pools bounded, the rate limiter registered, no character route on the
+sign-in service, and every `order by` naming the index a migration creates.
+
 ## check-asset-wiring.py · prove-asset-wiring-check.py · unity_assets.py
 
 Does everything the game loads still point at something that exists?

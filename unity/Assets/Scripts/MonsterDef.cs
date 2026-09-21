@@ -57,14 +57,21 @@ public class MonsterDef : ScriptableObject
     [Range(1, UnitStatMath.MaxStatValue)] public int luk = 1;
 
     [Header("Equipment — the SAME items the player wears")]
-    [Tooltip("Gear this mob spawns wearing, one piece per slot (the slot comes from the Item itself). A ring here is " +
-             "what switches on the rank percentages below — the same gate the player has. Each worn piece can drop.")]
+    [Tooltip("Gear this creature spawns wearing, one piece per slot (the slot comes from the Item itself). Every " +
+             "piece is Raw and unfolded, the same as one straight out of a forge, and none of it drops: a creature " +
+             "gives up materials, consumables and gold, never what it is wearing.")]
     public Item[] startingGear = System.Array.Empty<Item>();
-    [Tooltip("Which stats this mob's ring has invested in. Parallel to Ring Rank Values.")]
+    [Tooltip("Which stats this creature's ring has invested in. Parallel to Ring Rank Values. The ring is part of "+
+             "the creature, so these always count — nothing has to be worn.")]
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
     [Tooltip("Ranks invested in each stat above. Converted to a % through the SAME soft-cap curve the player's ring " +
              "uses (SkillRing.Percent), so a mob's ring is worth exactly what a player's ring of equal ranks is worth.")]
     public int[] ringRankValues = System.Array.Empty<int>();
+
+    [Tooltip("How practised this creature is with the weapon it holds — the same Weapon Mastery a player earns, " +
+             "authored rather than trained. It raises that weapon's three stats by 0.5% a level and lifts what " +
+             "its passives do. 0 = never picked the thing up.")]
+    public int weaponMasteryLevel;
 
     [Header("Survivability (armour-sourced; not derived from primaries)")]
     [Tooltip("Pre-renewal HARD DEF % (applied first; a crit ignores it). Comes from armour, so it stays authored.")]
@@ -113,20 +120,6 @@ public class MonsterDef : ScriptableObject
     public string[] itemDropNames = System.Array.Empty<string>();
     [Tooltip("Drop chance (0–1) parallel to Item Drop Names.")]
     public float[] itemDropChances = System.Array.Empty<float>();
-
-    /// <summary>The ring this mob wears, if any — simply the worn piece whose slot is Ring. There is no separate
-    /// "ring" field: a ring IS equipment, so it lives in <see cref="startingGear"/> like everything else and can't
-    /// drift out of sync with what the mob is actually wearing.</summary>
-    public Item Ring
-    {
-        get
-        {
-            if (startingGear == null) return null;
-            for (int i = 0; i < startingGear.Length; i++)
-                if (startingGear[i] != null && startingGear[i].slot == EquipSlotType.Ring) return startingGear[i];
-            return null;
-        }
-    }
 
     /// <summary>This mob's stat inputs — level, primaries and the shared base/growth curve. The ONE thing its combat
     /// numbers are computed from, and the same struct the player fills.</summary>

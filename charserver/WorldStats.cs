@@ -29,8 +29,8 @@ public sealed class WorldStats(Db db, MapServers maps, Config config)
     /// minute, which is what somebody watching their own name wants.</para>
     ///
     /// <para>The cost is the database read below, taken 12 times a minute instead of twice, whatever the number
-    /// of readers. It reads every character row — there is no index for this ordering — so if the character
-    /// count ever grows into the tens of thousands, this window is the first thing to lengthen again.</para></summary>
+    /// of readers. Migration 006 holds the rows in exactly this ordering, so the read is the first twenty index
+    /// entries rather than every character row — the query and that index must change together.</para></summary>
     public static readonly TimeSpan FreshFor = TimeSpan.FromSeconds(5);
 
     readonly SemaphoreSlim oneBuilderAtATime = new(1, 1);
@@ -130,7 +130,7 @@ public sealed class WorldStats(Db db, MapServers maps, Config config)
               from character
              where deleted_at is null
                and progress ? 'level'
-             order by lifetime desc nulls last, level desc, name asc
+             order by lifetime desc nulls last, level desc, name asc /* index: character_leaderboard */
              limit $1
             """;
 

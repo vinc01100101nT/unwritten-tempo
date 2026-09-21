@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.staff.meteor
   displayName: Meteor
   weaponType: 8
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: 'The sky falls.
 

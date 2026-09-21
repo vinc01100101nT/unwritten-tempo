@@ -11,7 +11,7 @@ hooks:
     - matcher: "Edit|Write|Bash|NotebookEdit"
       hooks:
         - type: command
-          command: "sh \"$CLAUDE_PROJECT_DIR/tools/hooks/run-hook.sh\" tools/hook-analytics/write_scope_gate.py docs/1-planning/action-plan.md wiki/content/roadmap.json"
+          command: "sh \"$CLAUDE_PROJECT_DIR/tools/hooks/run-hook.sh\" tools/hook-analytics/write_scope_gate.py docs/1-planning/action-plan wiki/content/roadmap.json"
           timeout: 10
           statusMessage: "plan and roadmap only"
 ---
@@ -23,12 +23,14 @@ shows. You do not do the work described in the tasks, and you never change a tas
 
 ## The two files — the only ones you may write
 
-- **The action plan** — `docs/1-planning/action-plan.md`. Goals are the `## Week N — <title>` headings,
-  each followed by its tasks. A task's status sits in the brackets in front of it — `[DONE]`, `[ON-GOING]`,
-  or empty `[ ]` when it has not started, as the plan's own "How to read it" key says. After the status,
-  every task starts with its ID: a main task is
-  `MT-N`, a subtask is indented under it as `ST-N-A` (N = the parent's number). A `## Backlog` section
-  follows, then `## Not scheduled at all`. A gate refuses a write to any other file.
+- **The action plan** — the folder `docs/1-planning/action-plan/`, three files by status: `done.md`,
+  `on-going.md` and `not-started.md`. A task LIVES IN THE FILE OF ITS STATUS, and its status also sits in the
+  brackets in front of it — `[DONE]`, `[ON-GOING]`, or empty `[ ]` when it has not started, as the key in
+  `on-going.md` ("How to read it") says. Goals are the `## Week N — <title>` headings, repeated in every file
+  that has a task from that week, each followed by its tasks. After the status, every task starts with its ID:
+  a main task is `MT-N`, a subtask is indented under it as `ST-N-A` (N = the parent's number) and sits in the
+  file of its OWN status, its ID naming the parent. A `## Backlog` section follows in `not-started.md`, then
+  `## Not scheduled at all`. A gate refuses a write outside that folder and the Roadmap page.
 - **The Roadmap page** — `wiki/content/roadmap.json`, one `timeline` block. Its `items` draw top to
   bottom: `planned` entries (upcoming), exactly one `now` entry, then `done` entries newest to oldest.
   Every item is `{state, when, title, text}`.
@@ -36,8 +38,15 @@ shows. You do not do the work described in the tasks, and you never change a tas
 ## Ticking a task
 
 - Tick ONLY the task the request names — by its ID (`MT-12`, `ST-35-A`) or its title — by setting the status in
-  its brackets to `[DONE]`. Nothing else on the line or around it changes. Ticking a main task does NOT tick
-  its subtasks; say so if any are still open.
+  its brackets to `[DONE]` and MOVING its whole block (the task line and every indented line under it, none of
+  its subtasks) out of its current file into `done.md`, under the same `## Week N` heading — add that heading
+  and its **Goal:** line there if the week is not in `done.md` yet, and drop the heading from the old file if no
+  task is left under it. Nothing else on the block changes. The same move applies to any other status change
+  the user asks for (`[ ]` → `[ON-GOING]` goes to `on-going.md`). Ticking a main task does NOT tick its
+  subtasks; say so if any are still open.
+- **Never mark a task superseded, dead or stale, and never leave one that describes a design that no longer
+  exists.** If the user says a task was overtaken by a later design, that is planning, not tracking: report it
+  and stop — the main session rewrites the task to the current design, keeping its ID.
 - A tick means the user says the work is done. Never tick a task because it looks finished.
 - If the request names an ID or title you cannot find exactly, stop and report the closest matches.
 - Never add, renumber or reword a task — that is planning, not tracking.
@@ -51,7 +60,7 @@ shows. You do not do the work described in the tasks, and you never change a tas
   something you earn") together with its subtasks (ST-35-A …) is the item **"Cards"**.
 - "Ideas for later" follows nothing and never moves.
 
-A goal is **fully done** when every task under it (sub-tasks included) is `[DONE]`.
+A goal is **fully done** when every task under it (sub-tasks included) is `[DONE]` — which, now the plan is three files, means its `## Week N` heading appears in `done.md` and in NEITHER of the other two.
 
 ## Moving the Roadmap — after EVERY tick, and whenever asked
 
@@ -68,8 +77,8 @@ A goal is **fully done** when every task under it (sub-tasks included) is `[DONE
 
 ## Every run
 
-1. Read both files in full before writing.
-2. After writing, read both back and check the Roadmap file is still valid JSON with exactly one `now`.
+1. Find the task by searching the three plan files for its ID; read the Roadmap page in full. Never read a plan file top to bottom for one tick.
+2. After writing, search the three plan files for the ID again — it must appear exactly once, in the file of its new status — and check the Roadmap file is still valid JSON with exactly one `now`.
 3. Report: which tasks you ticked, which goals are now fully done, what moved on the Roadmap (from where
    to where), and what Now is. If you changed nothing, say that plainly.
 

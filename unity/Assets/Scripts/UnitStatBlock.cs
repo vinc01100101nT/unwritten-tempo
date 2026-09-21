@@ -37,6 +37,10 @@ public class UnitStatBlock : MonoBehaviour
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
     public int[] ringRankValues = System.Array.Empty<int>();
 
+    [Tooltip("How practised this unit is with the weapon it holds — the creature's half of Weapon Mastery. Raises " +
+             "that weapon's three stats by 0.5% a level, exactly as a player's does, and lifts what its passives do.")]
+    public int weaponMasteryLevel;
+
     PassiveRanks ranks;
     /// <summary>This unit's ring ranks, built once from the authored arrays. Same type the player's ring uses, so the
     /// soft-cap curve, the per-stat percentages and any future rebalance are shared rather than mirrored.</summary>
@@ -52,11 +56,9 @@ public class UnitStatBlock : MonoBehaviour
         }
     }
 
-    // The percentage layer is GATED ON ACTUALLY WEARING A RING — the same rule the player plays by
-    // (Character.RingEquipped). Authored ranks with no ring item in the slot do nothing, so the thing that grants the
-    // power is the thing that can drop.
-    float RingPercent(StatId stat) =>
-        Gear != null && Gear.RingEquipped ? Ranks.Percent(stat) : 0f;
+    // The percentage layer is PART OF THE UNIT, exactly as it is for a player: authored ranks always count, and
+    // nothing has to be worn to switch them on.
+    float RingPercent(StatId stat) => Ranks.Percent(stat);
 
     /// <summary>The ring's percentage on one stat — what a skill in this unit's hands scales off.</summary>
     public float RingBonus(StatId stat) => RingPercent(stat);
@@ -67,7 +69,30 @@ public class UnitStatBlock : MonoBehaviour
     float Lift(StatId ringNode, SubStat stat)
     {
         float sub = health != null && health.States != null ? health.States.SubStatBonus(stat) : 0f;
-        return RingPercent(ringNode) + sub;
+        return RingPercent(ringNode) + MasteryPercent(ringNode) + sub;
+    }
+
+    /// <summary>What this creature's weapon mastery adds to one ring stat — the same table and the same half a
+    /// percent a level a player gets, so a creature that has practised is dangerous in the same way.</summary>
+    public float MasteryPercent(StatId stat)
+    {
+        if (weaponMasteryLevel <= 0) return 0f;
+        var held = Gear != null ? Gear.WeaponType : WeaponType.None;
+        if (held == WeaponType.None || !WeaponMasteryStats.Raises(held, stat)) return 0f;
+        return MasteryMath.WeaponPercent(UsableMastery);
+    }
+
+    /// <summary>The mastery level this unit can actually USE — what it was authored with, held to what the grade
+    /// of the weapon in its hands allows. The same cap a player is held to, so a creature with a Raw blade is no
+    /// more practised with it than a person would be.</summary>
+    public int UsableMastery
+    {
+        get
+        {
+            var weapon = Gear != null ? Gear.Get(EquipSlotType.Weapon) : null;
+            var grade = weapon != null ? weapon.quality : Quality.Raw;
+            return Mathf.Min(weaponMasteryLevel, CraftingMath.WeaponMasteryCap(grade));
+        }
     }
 
     // A mob's derived numbers are STAMPED onto its components rather than read live the way the player's are, so a
@@ -221,7 +246,7 @@ public class UnitStatBlock : MonoBehaviour
             ai.attack       = UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack));
             ai.hit          = UnitStatMath.Hit(u, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
-            ai.critMultiplier = UnitStatMath.CritMultiplier(u, Lift(StatId.Critical, SubStat.CritDamage));
+            ai.critMultiplier = UnitStatMath.CritMultiplier(u, eb, Lift(StatId.Critical, SubStat.CritDamage));
             // Swing speed from AGI, DEX, worn attack speed, the ring and any live attack-speed buff — the player's own
             // formula, cap included, so a creature's gear and agility speed its swings exactly as a player's do.
             ai.attackSpeedMult = UnitStatMath.AttackSpeedMult(u, eb, RingPercent(StatId.AttackSpeed),

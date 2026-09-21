@@ -24,10 +24,10 @@ SCRIPTS = os.path.join(ROOT, "unity", "Assets", "Scripts")
 OUT_DIR = os.path.join(ROOT, "prototypes")
 FONT_DIR_REL = "../unity/Assets/3_Data/Resources/Fonts"
 
-# The shared palette and the rarity table live in these two, and they are the only files whose
-# colours belong to the whole interface rather than to one screen.
+# The shared palette lives here, and it is the only file whose colours belong to the whole interface rather
+# than to one screen. (There used to be a second: the rarity table. V4 removed rarity from the game on
+# 2026-09-20 — nothing is coloured by a tier any more — so the table and its variables are gone with it.)
 SHARED = "UiKit.cs"
-RARITY = "Rarity.cs"
 
 # The game's three faces, as the game loads them.
 FONTS = [
@@ -120,34 +120,14 @@ def named_colours(src):
     return out
 
 
-def rarity_table(src):
-    """The five tiers, each with the three colour channels the game gives it."""
-    out = {}
-    for m in re.finditer(
-        r'new Style\(\s*"(\w+)"\s*,\s*Rgb\(([^)]*)\)\s*,\s*Rgb\(([^)]*)\)\s*,\s*Rgb\(([^)]*)\)',
-        src,
-    ):
-        tier = m.group(1)
-        chans = {}
-        for key, raw in (("border", m.group(2)), ("text", m.group(3)), ("glow", m.group(4))):
-            parts = [p.strip().rstrip("f") for p in raw.split(",")]
-            r, g, b = (int(float(p)) for p in parts[:3])
-            a = float(parts[3]) if len(parts) > 3 else 1.0
-            chans[key] = {"hex": hexof(r, g, b), "alpha": round(a, 3)}
-        out[tier] = chans
-    return out
-
-
 def kebab(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()
 
 
 def main():
     shared_src = open(os.path.join(SCRIPTS, SHARED), encoding="utf-8").read()
-    rarity_src = open(os.path.join(SCRIPTS, RARITY), encoding="utf-8").read()
 
     palette = named_colours(shared_src)
-    rarity = rarity_table(rarity_src)
 
     # Every other screen's own colours, so a checker can say WHICH screen a borrowed colour came from.
     screens = {}
@@ -155,7 +135,7 @@ def main():
         if os.sep + "Editor" in dirpath:
             continue
         for fn in filenames:
-            if not fn.endswith(".cs") or fn in (SHARED, RARITY):
+            if not fn.endswith(".cs") or fn == SHARED:
                 continue
             src = open(os.path.join(dirpath, fn), encoding="utf-8", errors="replace").read()
             found = colours_in(src)
@@ -169,14 +149,14 @@ def main():
     screens_out = {n: {h: sorted(a) for h, a in sorted(c.items())} for n, c in sorted(screens.items())}
 
     shared_hexes = sorted({v["hex"] for v in palette.values()})
-    rarity_hexes = sorted({c["hex"] for t in rarity.values() for c in t.values()})
+    rarity_hexes = []
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
     data = {
         "generated_by": "tools/ui-tokens.py — do not hand-edit; re-run it instead",
         "palette": palette,
-        "rarity": rarity,
+        "rarity": {},
         "shared_hexes": shared_hexes,
         "rarity_hexes": rarity_hexes,
         "fonts": [{"var": v, "family": fam, "file": f} for v, fam, f in FONTS],
@@ -212,17 +192,6 @@ def main():
             r, g, b = (int(c["hex"][i:i + 2], 16) for i in (1, 3, 5))
             lines.append("  --%s: rgba(%d, %d, %d, %s);" % (kebab(name), r, g, b, c["alpha"]))
     lines.append("")
-    lines.append("  /* the five tiers: border, text, glow */")
-    for tier in rarity:
-        for chan in ("border", "text", "glow"):
-            c = rarity[tier][chan]
-            key = "--rarity-%s-%s" % (tier.lower(), chan)
-            if c["alpha"] >= 1.0:
-                lines.append("  %s: %s;" % (key, c["hex"].lower()))
-            else:
-                r, g, b = (int(c["hex"][i:i + 2], 16) for i in (1, 3, 5))
-                lines.append("  %s: rgba(%d, %d, %d, %s);" % (key, r, g, b, c["alpha"]))
-    lines.append("")
     lines.append("  /* the game's own three faces */")
     for v, fam, f in FONTS:
         lines.append('  --font-%s: "%s";' % (v, fam))
@@ -234,8 +203,8 @@ def main():
 
     print("wrote %s" % os.path.relpath(css_path, ROOT))
     print("wrote %s" % os.path.relpath(json_path, ROOT))
-    print("  %d shared colours, %d rarity colours, %d fonts, %d screens with colours of their own"
-          % (len(shared_hexes), len(rarity_hexes), len(FONTS), len(screens_out)))
+    print("  %d shared colours, %d fonts, %d screens with colours of their own"
+          % (len(shared_hexes), len(FONTS), len(screens_out)))
     return 0
 
 

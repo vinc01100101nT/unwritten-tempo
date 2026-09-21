@@ -6,8 +6,7 @@
 # file or directory" while the file is sitting right there. That cost two rounds. This is the same work with
 # nothing to mistype.
 #
-# USAGE:  charserver/run.sh                 # uses SERVER_SECRET from your environment, or a local default
-#         SERVER_SECRET=... charserver/run.sh
+# USAGE:  charserver/run.sh                 # SERVER_SECRET comes from accounts/.env (or your environment)
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -25,14 +24,14 @@ set -a
 set +a
 
 # The two servers recognise each other by this. It is NOT a player's sign-in token and never interchangeable
-# with one. Set it yourself for anything that leaves this machine.
-: "${SERVER_SECRET:=change-me}"
-export SERVER_SECRET
-
-if [ "$SERVER_SECRET" = "change-me" ]; then
-  echo "note: using the default SERVER_SECRET. The game server must be started with the same value:" >&2
-  echo "      SERVER_SECRET=change-me" >&2
+# with one. There is deliberately NO default: a guessable value here is a door that writes any save to any
+# character, and the server once ran with the literal "change-me" for weeks. Put it in accounts/.env.
+if [ -z "${SERVER_SECRET:-}" ] || [ "$SERVER_SECRET" = "change-me" ]; then
+  echo "SERVER_SECRET is not set (or is still 'change-me'). Add a real one to $ENV_FILE:" >&2
+  echo "      SERVER_SECRET=\$(openssl rand -base64 32)" >&2
+  exit 2
 fi
+export SERVER_SECRET
 
 cd "$HERE"
 exec dotnet run "$@"

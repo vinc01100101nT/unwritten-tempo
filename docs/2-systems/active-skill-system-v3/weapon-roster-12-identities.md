@@ -76,7 +76,7 @@ Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Ma
 
 ## 6. Authoring plan & open items
 
-- **Grid = 12 weapons, each with its own skill POOL** — the pool holds 3 ultimates + however many normals that weapon's identity naturally supports (pool size is **not fixed** — a weapon can have as few or as many normals as make sense; author the ones that reinforce §1, no filler to hit a quota). A dropped weapon grants a kit drawn from that pool: **3–4 actives, 3–4 passives, and a 25% chance of an ultimate — the same at every rarity.** Rarity changes only how hard that kit hits, never what is in it. This resolves V3's "loot surprise source" open item — the surprise IS the rolled kit.
+- **Grid = 12 weapons, each with its own skill POOL** — the pool holds 3 ultimates + however many normals that weapon's identity naturally supports (pool size is **not fixed** — a weapon can have as few or as many normals as make sense; author the ones that reinforce §1, no filler to hit a quota). **Since [V4](../gameplay-system-v4/README.md), a weapon carries no skills at all:** every skill in a pool names the **mastery level** in that weapon at which a character learns it, and the skill that must come before it. A learned skill may only be used while holding that weapon.
 - **Scaling role-lock is load-bearing** (Heal→MP, Damage→Atk/MAtk) — self-check affinity weights on every skill.
 - **Universal-but-specialized rule (authoring heuristic, from the Sword pass)** — *every ult should have at least one normal that **specializes** in it while still benefiting the other two ults*, building a shared spine so ult-builds aren't siloed. The specialization must be **asymmetric** (one ult gains most, or it's filler); cap at **\~1 per ult**; keep the other normals **sharply single-purpose**; and **not every normal must be build-optimal** (deliberate "trash-ish" slots are fine — players discover their build). It's a **heuristic, not a law** — don't force the resource→specialist→ult shape onto weapons whose identity resists it. See the **Sword — Skill Roster** doc for the worked example.
 - **Sword is authored** — see **Sword — Skill Roster**. The other 11 pools start fresh; author each straight from its one-sentence identity (§1) + the channels/effects/scaling rules in the V3 docs.
@@ -89,6 +89,6 @@ Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Ma
 - [Sword — Skill Roster](sword-skill-roster.md) — the one identity taken all the way to a composed pool.
 - [Active Skill System — V3](README.md) — the channels, effects and scaling every pool is built from.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands to author the other eleven pools within.
-- [Weapon Crafting & Economy](weapon-crafting-economy.md) — the rarity table a kit is rolled against, and what rarity does to a skill's power.
+- [Gameplay System — V4](../gameplay-system-v4/README.md) — how a weapon is forged, and how its skills are learned.
 - [The Three-Brain Design Process](../../0-process/design-process.md) — the flow to run each remaining pool through.
 - [GPT Concept Prompts — Paste-Me](../../4-art/gpt-concept-prompts.md) — the Part 2 prompts that give these twelve a look.

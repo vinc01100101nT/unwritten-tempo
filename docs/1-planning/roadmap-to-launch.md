@@ -8,7 +8,7 @@ tags:
 
 # unwritten — Roadmap to Launch
 
-How far the game is from being something a stranger can buy and finish. **This document is the picture. [Action Plan](action-plan.md) is the list of what to do next** — it has the checkboxes, the done-checks and the order. Neither repeats the other.
+How far the game is from being something a stranger can buy and finish. **This document is the picture. [Action Plan](action-plan/on-going.md) is the list of what to do next** — it has the checkboxes, the done-checks and the order. Neither repeats the other.
 
 **Every number on this page was counted on 2026-09-12 by reading the game's own files, its database, or its builds.** Nothing here is an estimate. Where something cannot be counted, it says so.
 
@@ -49,7 +49,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 ## What is half-built — measured, each one
 
-**Loot is a machine running on random stand-ins.** All 86 creatures have an empty drop list. Since 2026-09-15 every creature puts on random pieces from the six equipment items as it spawns — rarer pieces less often — and gives each up on a chance that falls with its rarity, from 20% for Common to 1% for Legendary; each kill also has a 30% chance of one random item that isn't equipment. It all lands on the ground, held for the killer for 10 seconds. Nothing about which creature carries what is authored yet. Refine levels, card sockets, per-copy rarity and rolled skill kits are all built and all persist, and pay out nothing. A worn ring is deliberately near-impossible to get: 1 in 100,000.
+**Loot is a machine running on random stand-ins.** All 86 creatures have an empty drop list. Since [V4](../2-systems/gameplay-system-v4/README.md) landed on 2026-09-20 a creature gives up **no gear at all** — materials, consumables and gold only — and every kill has a 30% chance of one random item that is not equipment. It lands on the ground, held for the killer for 10 seconds. Nothing about which creature carries what is authored yet, so the 29 crafting materials reach a player through `/item` and nothing else. A creature still dresses itself at random from the six equipment designs, as Raw, unfolded copies, because what it holds is what its mastery works with.
 
 **Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 
@@ -107,7 +107,7 @@ One play-test has been open since 3 September, covering eleven server and skill 
 
 ## Related
 
-- [Action Plan](action-plan.md) — the trackable list of what to do next, phase by phase.
+- [Action Plan](action-plan/on-going.md) — the trackable list of what to do next, phase by phase, in three files by status.
 - [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — what the finished combat actually is.
 - [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.

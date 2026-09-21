@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Composure
   symbol: Cp
   weaponType: 1
+  masteryLevel: 11
+  needsSkillId: skill.sword.parry
   published: 1
   description: 'A read pays for the next one.
 

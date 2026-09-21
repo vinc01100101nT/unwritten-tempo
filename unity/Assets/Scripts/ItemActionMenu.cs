@@ -14,10 +14,10 @@ using UnityEngine.UI;
 /// <see cref="InventoryStore"/>, which is already server-authoritative. Nothing here reimplements an action.</para>
 ///
 /// <para><b>Drop puts a thing on the FLOOR — it never destroys it.</b> What leaves the bag lands at your feet as
-/// a sparkle in its rarity colour; hold Alt to read its name, and anybody standing there can pick it up with F
+/// a sparkle; hold Alt to read its name, and anybody standing there can pick it up with F
 /// (see <see cref="GroundDrop"/>). A stack of more than one asks HOW MANY first, because that is the one bag
 /// action a second click cannot undo. Three things are refused outright and say why: a piece you are WEARING
-/// (take it off first), a QUEST item, and the Ring.</para>
+/// (take it off first) and a QUEST item.</para>
 ///
 /// <para><b>An action the design describes but nobody built is shown DISABLED, tagged "planned".</b> Reforge,
 /// Add skill, Transmog and Recycle live in the crafting design and in no source file. Hiding them would make the
@@ -196,10 +196,7 @@ public class ItemActionMenu
             }
 
             entries.Add(new Entry { separator = true });
-            // The Ring is the progression vessel, not gear: it is never recycled and never thrown away.
-            entries.Add(def.slot == EquipSlotType.Ring
-                ? new Entry { label = "Recycle", note = "the Ring" }
-                : new Entry { label = "Recycle → Essence", note = "planned" });
+            entries.Add(new Entry { label = "Recycle → Essence", note = "planned" });
             entries.Add(DropRow(e));
         }
         else if (def.IsUsable)
@@ -210,8 +207,27 @@ public class ItemActionMenu
         }
         else
         {
+            var merge = MergeRow(e);
+            if (merge != null) { entries.Add(merge); entries.Add(new Entry { separator = true }); }
             entries.Add(DropRow(e));
         }
+    }
+
+    /// <summary>The Merge row, offered only on a material whose tiers merge (Ink and Salt) — ten become one of
+    /// the next tier up. Below ten the row says how many are needed rather than simply being absent, so a player
+    /// holding three can see what three are for. Null on anything that does not merge at all.</summary>
+    Entry MergeRow(BagEntry e)
+    {
+        var def = e.def;
+        if (def == null || !CraftingMath.Merges(def.materialKind) || def.mergesInto == null) return null;
+        int need = CraftingMath.MergeCount;
+        if (e.count < need)
+            return new Entry { label = "Merge", note = need + " needed" };
+        return new Entry
+        {
+            label = "Merge " + need + " → " + def.mergesInto.displayName,
+            run = InventoryStore.Instance != null ? () => InventoryStore.Instance.Merge(e) : (Action)null,
+        };
     }
 
     /// <summary>The Drop row, built in ONE place however the thing got into the bag. Every kind of item offers
@@ -219,10 +235,9 @@ public class ItemActionMenu
     /// for one of them to disagree with the server — which answers the same three refusals for real.</summary>
     Entry DropRow(BagEntry e)
     {
-        // A QUEST item is not yours to put down, and the Ring never leaves you. Both are refused by the server
-        // too; these rows say WHY rather than simply being dead.
+        // A QUEST item is not yours to put down — refused by the server too; this row says WHY rather than
+        // simply being dead.
         if (e.def.category == ItemCategory.Quest) return new Entry { label = "Drop", note = "quest item" };
-        if (e.def.slot == EquipSlotType.Ring) return new Entry { label = "Drop", note = "the Ring" };
         // A worn piece is on your body, not in your bag — there is no bag position to name, so it cannot be
         // asked for. Unequip is directly above.
         if (e.worn) return new Entry { label = "Drop", note = "worn" };
@@ -241,10 +256,8 @@ public class ItemActionMenu
             if (spawned[i] != null) UnityEngine.Object.Destroy(spawned[i]);
         spawned.Clear();
 
-        var rar = e.instance != null ? e.instance.Rarity : e.def.rarity;
-        int refine = e.instance != null ? e.instance.upgrade : 0;
-        title.text = (refine > 0 ? "+" + refine + " " : "") + e.def.displayName;
-        title.color = Rarities.Text(rar);
+        title.text = e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName;
+        title.color = UiKit.TextMain;
 
         for (int i = 0; i < entries.Count; i++)
         {

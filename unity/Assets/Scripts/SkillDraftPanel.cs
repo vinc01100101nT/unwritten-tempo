@@ -74,7 +74,7 @@ public class SkillDraftPanel : MonoBehaviour
 
         // The panel can hold more than its height (ring header + draft + the 10-row walk + the skills grid),
         // so the build target is a SCROLLING child clipped to the panel — never spilling past the frame.
-        content = EnsureScroll(viewport);
+        content = UiKit.ScrollColumn(viewport);
 
         var vlg = content.GetComponent<VerticalLayoutGroup>();
         if (vlg == null) vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -86,7 +86,7 @@ public class SkillDraftPanel : MonoBehaviour
         vlg.childAlignment = TextAnchor.UpperCenter;
 
         Character.Instance.Passives.OnChanged += Render;
-        Character.Instance.OnStatsChanged += OnStatsChanged;   // equipping/unequipping the ring flips RingEquipped
+        Character.Instance.OnStatsChanged += OnStatsChanged;
         Character.Instance.Ring.OnChanged += OnRingChanged;
         Character.Instance.Ring.OnLeveledUp += ShowRingLevelToast;
         bound = true;
@@ -100,34 +100,6 @@ public class SkillDraftPanel : MonoBehaviour
     // The ring being equipped/unequipped arrives as a stat change (SetEquipped fires OnStatsChanged). Re-render
     // while open so the panel flips between its active and "ring unequipped" states immediately.
     void OnStatsChanged() { if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Render(); }
-
-    // Turn the panel's fixed-size "Content" node into a vertical ScrollRect viewport (mask + scroll) and
-    // return the inner scrolling content (the build target). Idempotent — reuses the child on a rebind.
-    RectTransform EnsureScroll(RectTransform viewport)
-    {
-        var existing = viewport.Find("ScrollContent") as RectTransform;
-        if (existing != null) return existing;
-
-        if (viewport.GetComponent<RectMask2D>() == null) viewport.gameObject.AddComponent<RectMask2D>();
-        var vpImg = viewport.GetComponent<Image>();
-        if (vpImg != null) vpImg.raycastTarget = true;   // a graphic for the wheel/drag to land on
-
-        var scroll = viewport.GetComponent<ScrollRect>() ?? viewport.gameObject.AddComponent<ScrollRect>();
-        scroll.horizontal = false; scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 22f;
-
-        var sc = new GameObject("ScrollContent", typeof(RectTransform));
-        var scrt = (RectTransform)sc.transform;
-        scrt.SetParent(viewport, false);
-        scrt.anchorMin = new Vector2(0, 1); scrt.anchorMax = new Vector2(1, 1); scrt.pivot = new Vector2(0.5f, 1);
-        scrt.offsetMin = scrt.offsetMax = Vector2.zero;   // full width, top-anchored; height grows downward
-        sc.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scroll.viewport = viewport;
-        scroll.content = scrt;
-        return scrt;
-    }
 
     // The panel the shell builder created is named "SkillsPanel" with a "Content" child;
     // it starts inactive (PanelToggle shows it on K), so search includes inactive objects.
@@ -166,28 +138,12 @@ public class SkillDraftPanel : MonoBehaviour
     {
         var c = Character.Instance;
         var p = c.Passives;
-        bool equipped = c.RingEquipped;
 
-        if (equipped && p.BankedPoints > 0) { if (pending == null) pending = DraftService.BuildDraft(p); }
+        if (p.BankedPoints > 0) { if (pending == null) pending = DraftService.BuildDraft(p); }
         else pending = null;
 
         for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
         headerText = null; cardViewport = null; cardSet = null; wildcardRow = null; ringContainer = null;
-
-        if (!equipped)
-        {
-            // The whole progression lives ON the ring item. With no ring worn there is nothing to show here —
-            // not the level, not the XP, not the walk — just the prompt to put a ring on.
-            var warn = NewText(content, "No ring equipped.", 18, FontStyle.Bold, TextAnchor.MiddleCenter);
-            warn.color = new Color(1f, 0.7f, 0.5f);
-            SetHeight(warn.gameObject, 40);
-            var hint = NewText(content,
-                "Equip a Ring of Progression (V) to view its level, spend ring points, and use active skills.",
-                14, FontStyle.Normal, TextAnchor.MiddleCenter);
-            hint.color = new Color(1f, 1f, 1f, 0.75f);
-            SetHeight(hint.gameObject, 60);
-            return;
-        }
 
         BuildRingHeader(c);   // ◈ ring level + XP bar + "N points to next skill" — the ring's own progression
 

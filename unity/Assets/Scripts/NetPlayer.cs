@@ -429,7 +429,7 @@ public class NetPlayer : NetworkBehaviour
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); PushMySheet(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
         if (isClient) FollowTheServer();
     }
@@ -1160,6 +1160,10 @@ public class NetPlayer : NetworkBehaviour
         if (Leaving) return;
         var c = ServerCharacter;
         if (c == null || bindings == null || bindings.Length > 64) return;
+        // NOTHING THEY MAY NOT USE. A bar is the player's to arrange, but what may go on it is the server's
+        // answer — and it is the SAME question a cast asks (Character.MayUse), so a skill that belongs to no
+        // weapon, which nobody learns, can still be bound and still fires.
+        c.KeepOnlyBindable(bindings);
         c.Hotbar.Restore(bindings);
         // AND THE SKILLS BEHIND THE NEW BAR. What a character can use is built from four places — the bar, their
         // ticked passives, their weapon and their bag — and a skill only gets something to run it when that list is
@@ -1176,6 +1180,7 @@ public class NetPlayer : NetworkBehaviour
         if (Leaving) return;
         var c = ServerCharacter;
         if (c == null || chosen == null || chosen.Length > 64) return;
+        c.KeepOnlyBindable(chosen);
         c.PassiveSkills.Restore(chosen);
         c.RefreshUsableSkills();   // same rule as the bar above: what they can use changed, so the list is rebuilt
         SaveSoon();
@@ -1218,6 +1223,52 @@ public class NetPlayer : NetworkBehaviour
         TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar));
     }
 
+    // ---- what they have practised ------------------------------------------------------------------------
+    //
+    // A player's machine works out no mastery of its own: it is told what was earned, what is usable with the
+    // weapon in hand, and which skills are known. Checked on the same beat as the sheet, and sent only when it
+    // moved — a level is thousands of kills wide, so it moves rarely.
+    float sentPracticeTotal = -1f;
+    int sentLearnedCount = -1;
+
+    void PushMyMastery()
+    {
+        if (connectionToClient == null) return;
+        if (ServerCombatUnit is not Character person || person == null) return;
+
+        person.Mastery.Capture(out var weapons, out var points, out var skillIds, out var uses, out var known);
+        float total = 0f;
+        for (int i = 0; points != null && i < points.Length; i++) total += points[i];
+        for (int i = 0; uses != null && i < uses.Length; i++) total += uses[i];
+        if (Mathf.Approximately(total, sentPracticeTotal) && known.Length == sentLearnedCount) return;
+
+        sentPracticeTotal = total;
+        sentLearnedCount = known.Length;
+        TargetMastery(connectionToClient, weapons, points, skillIds, uses, known);
+    }
+
+    [TargetRpc]
+    void TargetMastery(NetworkConnectionToClient target, int[] weapons, float[] points,
+                       string[] skillIds, float[] uses, string[] known)
+    {
+        var me = Character.Instance;
+        if (me == null) { masteryWaitingForACharacter = new object[] { weapons, points, skillIds, uses, known }; return; }
+        me.Mastery.Restore(weapons, points, skillIds, uses, known);
+        me.RefreshUsableSkills();
+    }
+
+    // The same parking the sheet and the bag do: what arrives before this machine has built its character.
+    object[] masteryWaitingForACharacter;
+
+    void GiveWaitingMasteryToTheCharacter()
+    {
+        if (masteryWaitingForACharacter == null || Character.Instance == null) return;
+        var p = masteryWaitingForACharacter;
+        masteryWaitingForACharacter = null;
+        Character.Instance.Mastery.Restore((int[])p[0], (float[])p[1], (string[])p[2], (float[])p[3], (string[])p[4]);
+        Character.Instance.RefreshUsableSkills();
+    }
+
     // WHAT ARRIVED BEFORE THERE WAS ANYBODY TO GIVE IT TO. The bag can land before this machine has built its
     // character, and dropping it left the person with nothing until something else happened to change it —
     // with no way to ask again.
@@ -1227,6 +1278,7 @@ public class NetPlayer : NetworkBehaviour
     void TargetBagChanged(NetworkConnectionToClient target, BagWire bag)
     {
         var me = Character.Instance;
+        GiveWaitingMasteryToTheCharacter();
         if (me == null) { bagWaitingForACharacter = bag; return; }
         bag.Onto(me);
         // The window redraws from what just arrived. NOT marked as needing saving: this IS what the server has,
@@ -1238,21 +1290,32 @@ public class NetPlayer : NetworkBehaviour
     /// say so. Called from the ONE place a thing enters any bag, never from whatever caused it — a kill, a
     /// command, a thing picked up and anything written later all reach the player through this one line.
     ///
-    /// <para>The ITEM'S NAME is not sent: what crosses is its id and the three numbers that decide how the line
+    /// <para>The ITEM'S NAME is not sent: what crosses is its id and the two numbers that decide how the line
     /// reads, and the other machine looks the rest up in the catalog it already has — the same way it builds the
     /// words for a thing lying on the ground.</para></summary>
-    public void TellOwnerTheyGot(string itemId, int count, int rarity, int upgrade)
+    public void TellOwnerTheyGot(string itemId, int count, int folds)
     {
         if (!isServer || connectionToClient == null) return;
-        TargetGotItem(connectionToClient, itemId, count, rarity, upgrade);
+        TargetGotItem(connectionToClient, itemId, count, folds);
+    }
+
+    /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log — why a press
+    /// was refused, and anything else they would otherwise only find in the server's log.</summary>
+    public void TellOwner(string line)
+    {
+        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
+        TargetTold(connectionToClient, line);
     }
 
     [TargetRpc]
-    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int rarity, int upgrade)
+    void TargetTold(NetworkConnectionToClient target, string line) => ChatController.GameSaid(line);
+
+    [TargetRpc]
+    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds)
     {
         var def = ItemCatalog.Resolve(itemId);
         if (def == null) return;
-        ChatController.ItemArrived(def, count, (Rarity)rarity, upgrade);
+        ChatController.ItemArrived(def, count, folds);
     }
 
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
@@ -1322,6 +1385,433 @@ public class NetPlayer : NetworkBehaviour
         SaveSoon();
     }
 
+    /// <summary>Ten of one Ink or Salt become one of the next tier up. Deterministic — nothing is rolled and
+    /// nothing can fail — so the only answers are "done" and "not enough", and the bag that comes back says
+    /// which. The stack is named by position AND id, like every other bag command, so a bag that moved under
+    /// the asker cannot merge the wrong pile.</summary>
+    [Command]
+    void CmdMergeMaterial(int index, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var e = c.Bag[index];
+        if (e == null || e.def == null) return;
+        if (!CraftingMath.Merges(e.def.materialKind) || e.def.mergesInto == null)
+        { Refused(e.def.displayName + " does not merge."); return; }
+        if (e.count < CraftingMath.MergeCount)
+        { Refused("Merging needs " + CraftingMath.MergeCount + " " + e.def.displayName + " — you have " + e.count + "."); return; }
+
+        var into = e.def.mergesInto;
+        e.count -= CraftingMath.MergeCount;
+        if (e.count <= 0) c.Bag.RemoveAt(index);
+        c.TakeIntoBag(into, 1);
+        PushBagToOwner();
+        Done("Merged " + CraftingMath.MergeCount + " " + e.def.displayName + " into 1 " + into.displayName + ".");
+        SaveSoon();
+    }
+
+    // ---- what the player is told about every craft, success and refusal alike --------------------------
+    //
+    // EVERY OUTCOME IS SAID IN ONE SENTENCE, to the chat and to the station window, because from the player's
+    // side a refused press and a broken button look the same (2026-09-21: a forge short of Copper did nothing
+    // and said nothing). The reason carries its numbers — what was needed and what they have.
+
+    void Refused(string why) => TellOwnerAboutCraft(why, false, false);
+    void Done(string what, bool pieceGone = false) => TellOwnerAboutCraft(what, true, pieceGone);
+
+    void TellOwnerAboutCraft(string line, bool ok, bool pieceGone)
+    {
+        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
+        TargetCraftResult(connectionToClient, line, ok, pieceGone);
+    }
+
+    // `pieceGone` says the piece the window had picked no longer exists (it was recycled), so the window lets go
+    // of it rather than pointing at whatever slid into its place.
+    [TargetRpc]
+    void TargetCraftResult(NetworkConnectionToClient target, string line, bool ok, bool pieceGone)
+    {
+        ChatController.GameSaid(line, ok);
+        CraftStationPanel.ShowResult(line, ok, pieceGone);
+    }
+
+    // "You are not at a smith." — the station a piece needs, named, when the asker is not standing at one.
+    static string NotAtStation(Item item)
+        => "You are not at a " + CraftStations.Label(CraftStations.For(item)).ToLowerInvariant() + ".";
+
+    // ---- the craft stations: forge, fold, quench, ink ----------------------------------------------------
+    //
+    // EVERY ONE OF THESE HAPPENS HERE, on the server, and nowhere else. A station window asks; it never decides,
+    // never rolls and never works out a cost — it draws the offer below and sends a press. The asker must be
+    // standing at a station of the piece's own craft, which is checked here rather than trusted from the window.
+
+    // How close a player must be to a townsperson to work at their station. The same reach the conversation uses,
+    // with the same slack, because a person's position arrives ten times a second and is always slightly behind.
+    const float StationReach = 3.5f;
+
+    // THE NEAREST STATION, not the nearest person. A villager standing a hand's width closer than the smith
+    // would otherwise refuse every press, silently, with the window still open.
+    CraftStation StationInReach(CraftStation wanted)
+    {
+        if (wanted == CraftStation.None) return CraftStation.None;
+        return TownNPC.NearestStation(transform.position, StationReach + ReachSlack, wanted) != null
+               ? wanted : CraftStation.None;
+    }
+
+    // True when this asker is standing at a station that works on `item`.
+    bool AtTheRightStation(Item item)
+    {
+        var needed = CraftStations.For(item);
+        return needed != CraftStation.None && StationInReach(needed) == needed;
+    }
+
+    /// <summary>Forge a fresh piece: pay its base materials and gold, take a Raw, unfolded copy. Refused unless
+    /// the asker is standing at the station that makes that piece and has what it costs.</summary>
+    [Command]
+    void CmdForge(string itemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        var def = ItemCatalog.Resolve(itemId);
+        if (def == null || def.forgeMaterialCost <= 0) { Refused("Nothing here can forge that."); return; }
+        if (!AtTheRightStation(def)) { Refused(NotAtStation(def)); return; }
+
+        var band1 = MaterialCatalog.Band(def.madeOf, 1);
+        if (band1 == null) { Refused("No band-1 material is authored for " + def.displayName + "."); return; }
+        if (!Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
+
+        var made = EquipmentInstance.CreateFresh(def);
+        c.TakeIntoBag(made);
+        Done("Forged a " + ItemTooltip.CopyTitle(made) + " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + ".");
+        // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an
+        // offer arrives, so a forge that sent none left the sword in the bag and off the screen until reopened.
+        AfterWorkingOnGear(c, made);
+    }
+
+    /// <summary>Fold a piece once: it rises by one, and its own numbers are worked out again. Refused at the
+    /// grade's fold cap — past there the only way on is a quench.</summary>
+    [Command]
+    void CmdFold(int index, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var inst = c.Bag[index].instance;
+        if (inst == null || inst.def == null) return;
+        if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+        if (inst.upgrade >= CraftingMath.FoldCap(inst.quality))
+        { Refused(ItemTooltip.CopyTitle(inst) + " is folded as far as " + GradeWord(inst.quality) + " allows (+" + CraftingMath.FoldCap(inst.quality) + "). Quench it to go further."); return; }
+
+        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
+        if (band == null) { Refused("No band-" + CraftingMath.Band(inst.quality) + " material is authored for this craft."); return; }
+        int gold = CraftingMath.FoldGoldCost(inst.quality);
+        if (!Spend(c, band, CraftingMath.FoldMaterialCost, gold)) return;
+
+        inst.upgrade++;
+        inst.Recompute();
+        Done("Folded to " + ItemTooltip.CopyTitle(inst) + " for " + Paid(band, CraftingMath.FoldMaterialCost, gold) + ".");
+        AfterWorkingOnGear(c, inst);
+    }
+
+    /// <summary>Quench a piece: its grade goes up one, stays, or goes down one, and every fold it had is spent
+    /// either way. A Salt named by bag position shifts the odds toward "up" and is consumed with it.</summary>
+    [Command]
+    void CmdQuench(int index, string expectedItemId, int saltIndex)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var inst = c.Bag[index].instance;
+        if (inst == null || inst.def == null) return;
+        if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+        if (!CraftingMath.CanQuench(inst.quality))
+        { Refused(ItemTooltip.CopyTitle(inst) + " is already " + GradeWord(CraftingMath.Best) + " — the best grade there is."); return; }
+
+        // The Salt, if the player chose one: it is spent whatever the quench does.
+        var salt = SaltAt(c, saltIndex);
+        int saltTier = salt != null ? salt.def.materialStep : 0;
+        string saltName = salt != null ? salt.def.displayName : null;
+
+        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
+        if (band == null) { Refused("No band-" + CraftingMath.Band(inst.quality) + " material is authored for this craft."); return; }
+        int gold = CraftingMath.QuenchGoldCost(inst.quality);
+        if (!Spend(c, band, CraftingMath.QuenchMaterialCost, gold)) return;
+        if (salt != null) TakeOne(c, salt);
+
+        var before = inst.quality;
+        string was = ItemTooltip.CopyTitle(inst);
+        inst.quality = CraftingMath.QuenchResult(before, saltTier, CombatRng.Range(0, 100));
+        // EVERY FOLD IS SPENT, whichever way it went: a quench reworks the whole piece.
+        inst.upgrade = 0;
+        // A grade that fell takes the last stat written on the piece with it.
+        string lost = null;
+        if (inst.quality < before && inst.inkStats != null && inst.inkStats.Count > 0)
+            lost = ItemTooltip.InkStatLabel(inst.inkStats[inst.inkStats.Count - 1]);
+        if (inst.quality < before) inst.DropLastInk();
+        inst.TrimInkToSlots();
+        inst.Recompute();
+
+        string went = inst.quality > before ? "went UP to " : inst.quality < before ? "went DOWN to " : "stayed, now ";
+        Done("Quenched " + was + " for " + Paid(band, CraftingMath.QuenchMaterialCost, gold)
+             + (saltName != null ? " and 1 " + saltName : "") + ": it " + went + ItemTooltip.CopyTitle(inst)
+             + (lost != null ? ", and lost its " + lost + " stat" : "") + ".");
+        AfterWorkingOnGear(c, inst);
+    }
+
+    /// <summary>Write one stat onto a piece with an Ink, at the slot the player picked. The stat is rolled here,
+    /// from the eighteen, and the Ink is spent whatever it rolls.</summary>
+    [Command]
+    void CmdInk(int index, string expectedItemId, int inkIndex, int slot)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var inst = c.Bag[index].instance;
+        if (inst == null || inst.def == null) return;
+        if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+        if (inst.InkSlots <= 0)
+        { Refused(ItemTooltip.CopyTitle(inst) + " has no stat slot — a " + GradeWord(inst.quality) + " piece takes no Ink. Quench it first."); return; }
+        if (slot < 0 || slot >= inst.InkSlots)
+        { Refused(ItemTooltip.CopyTitle(inst) + " has " + inst.InkSlots + " stat slot(s); there is no slot " + (slot + 1) + "."); return; }
+        if (inkIndex < 0 || inkIndex >= c.Bag.Count) { Refused("No Ink at that bag position."); return; }
+
+        var ink = c.Bag[inkIndex];
+        if (ink == null || ink.def == null || ink.def.materialKind != MaterialKind.Ink)
+        { Refused("That is not an Ink."); return; }
+
+        // Which stat: rolled from what is not already on the piece. A piece carrying all eighteen cannot be inked.
+        inkScratch.Clear();
+        if (inst.inkStats != null)
+            for (int i = 0; i < inst.inkStats.Count; i++)
+                if (i != slot) inkScratch.Add(inst.inkStats[i]);
+        int weight = CraftingMath.RemainingInkWeight(inkScratch);
+        if (weight <= 0) { Refused(ItemTooltip.CopyTitle(inst) + " already carries every stat there is."); return; }
+        if (!CraftingMath.RollInkStat(CombatRng.Range(0, weight), inkScratch, out var stat)) return;
+
+        string inkName = ink.def.displayName;
+        string replaced = inst.inkStats != null && slot < inst.inkStats.Count ? ItemTooltip.InkStatLabel(inst.inkStats[slot]) : null;
+        float value = CraftingMath.InkValue(stat, ink.def.materialStep);
+        TakeOne(c, ink);
+        inst.WriteInk(slot, stat, value);
+        Done("Wrote +" + value.ToString("0.##") + (IsPercentStat(stat) ? "% " : " ") + ItemTooltip.InkStatLabel(stat)
+             + " on " + ItemTooltip.CopyTitle(inst) + " (slot " + (slot + 1) + ") with 1 " + inkName
+             + (replaced != null ? ", replacing " + replaced : "") + ".");
+        AfterWorkingOnGear(c, inst);
+    }
+
+    /// <summary>Recycle a piece: it is destroyed, and half of what it provably consumed comes back — the forge
+    /// bill, one quench per rung it climbed, the folds standing on it, and the Inks written on it. Failed quenches
+    /// and the folds they spent are not recorded anywhere, so they come back as nothing.</summary>
+    [Command]
+    void CmdRecycle(int index, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var inst = c.Bag[index].instance;
+        if (inst == null || inst.def == null) return;
+        if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+
+        string was = ItemTooltip.CopyTitle(inst);
+        var craft = inst.def.madeOf;
+        CraftingMath.RecycleYield(inst.quality, inst.upgrade, inst.def.forgeMaterialCost, inst.def.forgeGoldCost,
+                                  recycleBands, out int gold);
+        CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+
+        // THE PIECE GOES FIRST, so what comes back can never stack beside the thing it came out of.
+        c.Bag.RemoveAt(index);
+
+        var got = new System.Text.StringBuilder();
+        for (int b = 1; b < recycleBands.Length; b++)
+        {
+            if (recycleBands[b] <= 0) continue;
+            var material = MaterialCatalog.Band(craft, b);
+            if (material == null) continue;
+            c.TakeIntoBag(material, recycleBands[b]);
+            Join(got, recycleBands[b] + " " + material.displayName);
+        }
+        for (int t = 1; t < recycleTiers.Length; t++)
+        {
+            if (recycleTiers[t] <= 0) continue;
+            var ink = MaterialCatalog.Ink(t);
+            if (ink == null) continue;
+            c.TakeIntoBag(ink, recycleTiers[t]);
+            Join(got, recycleTiers[t] + " " + ink.displayName);
+        }
+        if (gold > 0) { c.AddGold(gold); Join(got, gold + " gold"); }
+
+        // THE BAG BEFORE THE SENTENCE: the window redraws on the sentence, and must redraw the bag as it now is.
+        PushBagToOwner();
+        Done("Recycled " + was + ": got back " + (got.Length > 0 ? got.ToString() : "nothing") + ".", pieceGone: true);
+        SaveSoon();
+    }
+
+    // Reused across recycles; a craft is a cold path but there is no reason to allocate in it.
+    static readonly int[] recycleBands = new int[8];
+    static readonly int[] recycleTiers = new int[6];
+
+    static void Join(System.Text.StringBuilder sb, string part)
+    {
+        if (sb.Length > 0) sb.Append(", ");
+        sb.Append(part);
+    }
+
+    // The Salt at a bag position, or null when that position holds anything else — including when the player
+    // chose no Salt at all, which is −1.
+    static BagEntry SaltAt(Character c, int index)
+    {
+        if (c == null || index < 0 || index >= c.Bag.Count) return null;
+        var e = c.Bag[index];
+        return e != null && e.def != null && e.def.materialKind == MaterialKind.Salt ? e : null;
+    }
+
+    // Reused so a craft hands the GC nothing; a craft is a cold path, but there is no reason to allocate in it.
+    static readonly System.Collections.Generic.List<InkStat> inkScratch = new System.Collections.Generic.List<InkStat>(6);
+
+    // Spend `units` of `material` and `gold` from this character, or nothing at all. All-or-nothing on purpose:
+    // a craft that took the metal and then found the purse short would leave the player worse off for pressing.
+    bool Spend(Character c, Item material, int units, int gold)
+    {
+        if (units > 0)
+        {
+            int held = 0;
+            for (int i = 0; i < c.Bag.Count; i++)
+                if (c.Bag[i] != null && c.Bag[i].def == material) held += Mathf.Max(1, c.Bag[i].count);
+            if (held < units)
+            { Refused("Needs " + units + " " + material.displayName + " — you have " + held + "."); return false; }
+        }
+        if (gold > 0 && c.Gold < gold)
+        { Refused("Needs " + gold + " gold — you have " + c.Gold + "."); return false; }
+
+        int left = units;
+        for (int i = c.Bag.Count - 1; i >= 0 && left > 0; i--)
+        {
+            var e = c.Bag[i];
+            if (e == null || e.def != material) continue;
+            int take = Mathf.Min(left, Mathf.Max(1, e.count));
+            e.count -= take;
+            left -= take;
+            if (e.count <= 0) c.Bag.RemoveAt(i);
+        }
+        if (gold > 0) c.AddGold(-gold);
+        return true;
+    }
+
+    // "8 Copper and 800 gold" — what a craft cost, for the sentence that reports it.
+    static string Paid(Item material, int units, int gold)
+    {
+        string m = units > 0 && material != null ? units + " " + material.displayName : null;
+        string g = gold > 0 ? gold + " gold" : null;
+        return m != null && g != null ? m + " and " + g : m ?? g ?? "nothing";
+    }
+
+    static string GradeWord(Quality q) => q == Quality.Raw ? "Raw" : q.ToString();
+
+    // The stats an Ink writes as a percentage — the same four the tooltip draws with a % sign.
+    static bool IsPercentStat(InkStat s)
+        => s == InkStat.CritChance || s == InkStat.CritDamage || s == InkStat.AttackSpeed || s == InkStat.CastSpeed;
+
+    static void TakeOne(Character c, BagEntry e)
+    {
+        e.count--;
+        if (e.count <= 0) c.Bag.Remove(e);
+    }
+
+    // Every craft ends the same way: the bag goes back to its owner, the new offer for that piece goes with it,
+    // and the character is written down.
+    //
+    // THE PIECE IS NAMED BY IDENTITY, NOT BY POSITION. Paying for the work empties material stacks out of the bag,
+    // so the piece that was at position 6 when the press arrived can be at position 4 by the time it is done —
+    // and an offer sent for position 6 would describe whatever moved into it.
+    void AfterWorkingOnGear(Character c, EquipmentInstance worked, int saltIndex = -1)
+    {
+        PushBagToOwner();
+        SendOffer(c, IndexOf(c, worked), saltIndex);
+        SaveSoon();
+    }
+
+    static int IndexOf(Character c, EquipmentInstance inst)
+    {
+        for (int i = 0; i < c.Bag.Count; i++)
+            if (c.Bag[i] != null && ReferenceEquals(c.Bag[i].instance, inst)) return i;
+        return -1;
+    }
+
+    /// <summary>What a piece would cost to work on, and what a quench of it would do with the Salt the player has
+    /// chosen. Asked when the window opens, when a different piece is picked, and when the Salt changes.</summary>
+    [Command]
+    void CmdAskOffer(int index, int saltIndex)
+    {
+        if (Leaving) return;
+        SendOffer(ServerCharacter, index, saltIndex);
+    }
+
+    void SendOffer(Character c, int index, int saltIndex = -1)
+    {
+        if (c == null || connectionToClient == null) return;
+        if (index < 0 || index >= c.Bag.Count) return;
+        var inst = c.Bag[index].instance;
+        if (inst == null || inst.def == null) return;
+
+        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
+
+        // THE ODDS INCLUDE THE SALT THE PLAYER PICKED, because those are the odds the press will roll. A Salt
+        // named by a position that is not one is simply no Salt.
+        var salt = SaltAt(c, saltIndex);
+        int saltTier = salt != null ? salt.def.materialStep : 0;
+        CraftingMath.QuenchOdds(inst.quality, saltTier, out int up, out int same, out int down);
+
+        // WHAT RECYCLING WOULD GIVE BACK, as finished item ids and counts — the window only names them.
+        CraftingMath.RecycleYield(inst.quality, inst.upgrade, inst.def.forgeMaterialCost, inst.def.forgeGoldCost,
+                                  recycleBands, out int recycleGold);
+        CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+        var ids = new System.Collections.Generic.List<string>();
+        var counts = new System.Collections.Generic.List<int>();
+        for (int b = 1; b < recycleBands.Length; b++)
+        {
+            var material = recycleBands[b] > 0 ? MaterialCatalog.Band(inst.def.madeOf, b) : null;
+            if (material != null) { ids.Add(material.id); counts.Add(recycleBands[b]); }
+        }
+        for (int t = 1; t < recycleTiers.Length; t++)
+        {
+            var ink = recycleTiers[t] > 0 ? MaterialCatalog.Ink(t) : null;
+            if (ink != null) { ids.Add(ink.id); counts.Add(recycleTiers[t]); }
+        }
+
+        TargetOffer(connectionToClient, new CraftStationOffer
+        {
+            recycleIds = ids.ToArray(),
+            recycleCounts = counts.ToArray(),
+            recycleGold = recycleGold,
+            bagIndex = index,
+            quality = (int)inst.quality,
+            folds = inst.upgrade,
+            foldCap = CraftingMath.FoldCap(inst.quality),
+            inkSlots = inst.InkSlots,
+            foldMaterialId = band != null ? band.id : "",
+            foldMaterialCost = CraftingMath.FoldMaterialCost,
+            foldGoldCost = CraftingMath.FoldGoldCost(inst.quality),
+            quenchMaterialCost = CraftingMath.QuenchMaterialCost,
+            quenchGoldCost = CraftingMath.QuenchGoldCost(inst.quality),
+            up = up, same = same, down = down,
+            saltTier = saltTier,
+            saltName = salt != null ? salt.def.displayName : "",
+            canQuench = CraftingMath.CanQuench(inst.quality),
+            canFold = inst.upgrade < CraftingMath.FoldCap(inst.quality),
+        });
+    }
+
+    [TargetRpc]
+    void TargetOffer(NetworkConnectionToClient target, CraftStationOffer offer) => CraftStationPanel.TakeOffer(offer);
+
+    public void AskToForge(string itemId) => CmdForge(itemId);
+    public void AskToFold(int index, string itemId) => CmdFold(index, itemId);
+    public void AskToQuench(int index, string itemId, int saltIndex) => CmdQuench(index, itemId, saltIndex);
+    public void AskToInk(int index, string itemId, int inkIndex, int slot) => CmdInk(index, itemId, inkIndex, slot);
+    public void AskForOffer(int index, int saltIndex) => CmdAskOffer(index, saltIndex);
+    public void AskToRecycle(int index, string itemId) => CmdRecycle(index, itemId);
+
     [Command]
     void CmdReorderBag(int from, int to, string expectedItemId)
     {
@@ -1350,10 +1840,9 @@ public class NetPlayer : NetworkBehaviour
         if (!StillTheSameStack(c, index, expectedItemId)) return;
         var e = c.Bag[index];
 
-        // THE TWO THINGS THAT ARE NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
+        // THE ONE THING THAT IS NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
         // A screen can be got round; this is the answer that counts.
         if (e.def.category == ItemCategory.Quest) return;
-        if (e.def.slot == EquipSlotType.Ring) return;
 
         int take = e.IsEquip ? 1 : Mathf.Clamp(howMany, 1, e.count);
         if (take <= 0) return;
@@ -1361,7 +1850,7 @@ public class NetPlayer : NetworkBehaviour
         // AT YOUR FEET, or the nearest clear spot to them — two things in one place read as one thing, and the
         // one underneath cannot be seen or pointed at.
         var where = GroundDrop.FreeSpotNear(MapManager.InWorld(netPosition, mapName), mapName);
-        var drop = GroundDrop.Place(where, e.def, take, e.instance, e.def.rarity, 0, mapName, 0);
+        var drop = GroundDrop.Place(where, e.def, take, e.instance, Quality.Raw, 0, mapName, 0);
         if (drop == null) return;
 
         // OUT OF THE BAG ONLY ONCE IT IS ON THE FLOOR. Taking it out first and failing to place it would be an
@@ -1417,6 +1906,7 @@ public class NetPlayer : NetworkBehaviour
     public void AskToReorder(int from, int to, string itemId) => CmdReorderBag(from, to, itemId);
     public void AskToDrop(int index, string itemId, int howMany) => CmdDropFromBag(index, itemId, howMany);
     public void AskToPickUp(uint dropNetId) => CmdPickUpDrop(dropNetId);
+    public void AskToMerge(int index, string itemId) => CmdMergeMaterial(index, itemId);
 
     [Command]
     void CmdReportMap(string map)
@@ -1935,7 +2425,7 @@ public class NetPlayer : NetworkBehaviour
         for (int i = 0; i < wornEntries.Count; i++)
         {
             var e = wornEntries[i];
-            bodyGear.Equip(e.def.slot, new EquipmentInstance(e.def) { rarity = e.rarity });
+            bodyGear.Equip(e.def.slot, new EquipmentInstance(e.def, e.folds) { quality = e.quality });
         }
     }
 

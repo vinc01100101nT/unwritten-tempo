@@ -4,6 +4,11 @@
 set -e
 LOGIN=http://127.0.0.1:8080
 CHAR=http://127.0.0.1:8081
+# A save is written only through the server-to-server door, with the secret both servers share. Read from the
+# same file charserver/run.sh reads it from, so the test can never disagree with the server it is testing.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+SECRET="${SERVER_SECRET:-$(grep '^SERVER_SECRET=' "$HERE/../accounts/.env" | cut -d= -f2-)}"
+[ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in accounts/.env"; exit 1; }
 EMAIL="e2e-$(date +%s)-$$@example.com"
 NAME="E2E$(date +%s | tail -c 6)"
 fail() { echo "FAIL: $1"; exit 1; }
@@ -57,9 +62,13 @@ LIST=$(curl -s "$CHAR/characters" -H "authorization: Bearer $TOK")
 echo "$LIST" | grep -q "$NAME" || fail "list: $LIST"
 ok "listed"
 
-echo "9. write a real save, read it back byte-for-byte"
+echo "9. a PLAYER cannot write a save; the world's server can, and the player reads it back byte-for-byte"
 SAVE='{"version":9,"level":42,"xp":1234,"gold":777,"bagItemIds":["potion_red"],"bagCounts":[3],"modelName":"'"$MODEL"'"}'
-curl -s -X PUT "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" \
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" \
+  -H 'content-type: application/json' -d "{\"progress\":$SAVE}")
+[ "$CODE" = "405" ] || fail "a player's own save write got $CODE (expected 405 — no player-side write exists)"
+ok "player-side save write refused ($CODE)"
+curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
   -H 'content-type: application/json' -d "{\"progress\":$SAVE}" >/dev/null
 BACK=$(curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK")
 echo "$BACK" | python3 -c '
@@ -73,14 +82,14 @@ assert d["level"]==42, d
 assert d["isGm"] is False, d
 print("  ok  save round-tripped: level",p["level"],"gold",p["gold"],"bag",p["bagItemIds"])'
 
-echo "10. a save with no version is refused"
-CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/characters/$CID/progress" \
-  -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"progress":{"level":99}}')
+echo "10. a save with no version is refused, even from the server door"
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$CID/progress" \
+  -H "x-server-secret: $SECRET" -H 'content-type: application/json' -d '{"progress":{"level":99}}')
 [ "$CODE" = "400" ] || fail "expected 400 for an unversioned save, got $CODE"
 ok "unversioned save refused ($CODE)"
 
 echo "11. a save that names no body keeps the look already stored"
-curl -s -X PUT "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" \
+curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
   -H 'content-type: application/json' -d '{"progress":{"version":9,"level":43}}' >/dev/null
 curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | python3 -c '
 import sys,json
@@ -127,9 +136,9 @@ assert d["dyeSources"]==["#aabbcc"], d["dyeSources"]
 assert d["dyeTargets"]==["#ddeeff"], d["dyeTargets"]
 print("  ok  colours trimmed, not refused")'
 
-echo "17. a very large version is accepted, as the login service accepts it"
-CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/characters/$CID/progress" \
-  -H "authorization: Bearer $TOK" -H 'content-type: application/json' \
+echo "17. a very large version is accepted through the server door"
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$CID/progress" \
+  -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
   -d '{"progress":{"version":3000000000,"level":3000000000}}')
 [ "$CODE" = "200" ] || fail "a version above two billion was refused ($CODE)"
 curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | python3 -c '
@@ -148,7 +157,7 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' "$CHAR/characters/%7B$CID%7D/progr
 ok "only the plain dashed id is an id"
 
 echo "19. a broken body from a stranger says so plainly, and leaks nothing"
-BODY=$(curl -s -X PUT "$CHAR/characters/$CID/progress" -H 'content-type: application/json' -d '{oops')
+BODY=$(curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H 'content-type: application/json' -d '{oops')
 echo "$BODY" | grep -qi "exception\|   at \|System\." && fail "a stack trace was sent to an anonymous caller: $BODY"
 ok "no stack trace in a refusal"
 

@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.item.minor-mana-draught
   displayName: Minor Mana Draught
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: Restores 4 MP per second for 5s.
   archetype: 3

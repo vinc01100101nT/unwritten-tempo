@@ -20,26 +20,16 @@ MonoBehaviour:
   attackRange: 5
   equipModel: {fileID: 1198998981114754527, guid: d0c32318984847e428ac1bce4ea19377, type: 3}
   element: 0
-  rarity: 0
   category: 0
   cardSlots: 2
   weight: 60
   zeny: 5000
-  bonusHP: 0
-  bonusAttack: 3
-  bonusDefense: 0
-  bonusMP: 0
-  bonusMAtk: 0
-  bonusMDef: 0
-  bonusStr: 0
-  bonusAgi: 0
-  bonusVit: 0
-  bonusInt: 0
-  bonusDex: 0
-  bonusLuk: 0
-  bonusCritPercent: 0
-  bonusAspdPercent: 0
-  healAmount: 0
+  madeOf: 1
+  forgeMaterialCost: 8
+  forgeGoldCost: 800
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
   attackSfx:
     clips:
     - {fileID: 8300000, guid: 2c07351db97c3db46bdbbcac4cb54e86, type: 3}
@@ -56,4 +46,4 @@ MonoBehaviour:
     volume: 1
     pitch: {x: 0.95, y: 1.05}
   blockChance: 0
-  description: Keeps its distance. What it can DO is decided when it drops.
+  description: Keeps its distance. What it becomes is decided at the anvil.

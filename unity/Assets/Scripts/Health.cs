@@ -145,11 +145,16 @@ public class Health : MonoBehaviour, ICombatUnit
 
     public float RingBonus(StatId stat) { var s = StatBlock; return s != null ? s.RingBonus(stat) : 0f; }
 
-    public float SkillRarityLift(string skillId)
+    /// <summary>What this creature's own practice adds to a skill's output. A creature presses nothing on purpose,
+    /// so every skill it runs rides its WEAPON mastery — the same rule a player's passives follow, held to the same
+    /// cap by the grade of what it is holding, and only for a skill that weapon actually owns.</summary>
+    public float SkillOutputLift(string skillId)
     {
-        var b = Brain;
-        var gear = b != null ? b.Equipment : null;
-        return Rarities.LiftFor(gear != null ? gear.Get(EquipSlotType.Weapon) : null, skillId);
+        var s = StatBlock;
+        if (s == null) return 0f;
+        var def = SkillCatalog.Get(skillId);
+        if (def != null && def.weaponType != WeaponType.None && def.weaponType != HeldWeapon) return 0f;
+        return MasteryMath.PassiveLift(s.UsableMastery);
     }
 
     public float SwingTime { get { var b = Brain; return b != null ? b.SwingTime : 0f; } }
@@ -199,13 +204,112 @@ public class Health : MonoBehaviour, ICombatUnit
     public ICombatUnit LastAttacker { get; private set; }
     public void NoteAttacker(ICombatUnit attacker) => LastAttacker = attacker;
 
+    /// <summary>This creature's level — what decides how challenging a fight with it was.</summary>
+    public int Level { get { var s = StatBlock; return s != null ? s.Level : 1; } }
+
+    /// <summary>The grade of what this creature is holding — every piece a creature wears is Raw today, and it
+    /// caps what its mastery is worth exactly as a player's weapon caps theirs.</summary>
+    public Quality HeldQuality
+    {
+        get
+        {
+            var b = Brain;
+            var gear = b != null ? b.Equipment : null;
+            var weapon = gear != null ? gear.Get(EquipSlotType.Weapon) : null;
+            return weapon != null ? weapon.quality : Quality.Raw;
+        }
+    }
+
+    /// <summary>What this creature is holding.</summary>
+    public WeaponType HeldWeapon
+    {
+        get
+        {
+            var b = Brain;
+            var gear = b != null ? b.Equipment : null;
+            return gear != null ? gear.WeaponType : WeaponType.None;
+        }
+    }
+
+    // WHO HAS BEEN HITTING THIS CREATURE, AND WITH WHAT. A fixed set of places, filled at the damage door and
+    // read once when it dies: practice is paid by the share of its health each weapon took off it. Four places
+    // because a party of four is the shape this game expects; a fifth attacker simply earns nothing, which is
+    // better than an allocation on every hit of every fight.
+/// <summary>How many separate fighters (and weapons) one creature remembers being hurt by.</summary>
+    public const int PracticePlaces = 4;
+    readonly ICombatUnit[] practiceWho = new ICombatUnit[PracticePlaces];
+    readonly WeaponType[] practiceWith = new WeaponType[PracticePlaces];
+    readonly int[] practiceDamage = new int[PracticePlaces];
+    // THE GRADE THAT WAS IN HAND, not the one in hand when it finally died — what prices and caps the practice.
+    // The best seen for that weapon: swapping a better blade in for one blow should not price the whole fight,
+    // and swapping a worse one in should not rob the work already done.
+    readonly Quality[] practiceGrade = new Quality[PracticePlaces];
+
+    /// <summary>Write down that <paramref name="attacker"/> took <paramref name="dealt"/> off this creature with
+    /// <paramref name="weapon"/> in hand. Zero-alloc: a fixed set of places, matched by reference.</summary>
+    public void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt)
+    {
+        if (attacker == null || dealt <= 0) return;
+        var grade = attacker.HeldQuality;
+        for (int i = 0; i < PracticePlaces; i++)
+        {
+            if (ReferenceEquals(practiceWho[i], attacker) && practiceWith[i] == weapon)
+            {
+                practiceDamage[i] += dealt;
+                if (grade > practiceGrade[i]) practiceGrade[i] = grade;
+                return;
+            }
+        }
+        for (int i = 0; i < PracticePlaces; i++)
+        {
+            if (practiceWho[i] != null) continue;
+            practiceWho[i] = attacker;
+            practiceWith[i] = weapon;
+            practiceDamage[i] = dealt;
+            practiceGrade[i] = grade;
+            return;
+        }
+    }
+
+    /// <summary>What ONE unit took off this creature with ONE weapon, for the kill's practice. 0 when they did
+    /// none of it.</summary>
+    public int DamageFrom(ICombatUnit who, WeaponType weapon)
+    {
+        for (int i = 0; i < PracticePlaces; i++)
+            if (ReferenceEquals(practiceWho[i], who) && practiceWith[i] == weapon) return practiceDamage[i];
+        return 0;
+    }
+
+    /// <summary>One of the places, for whoever pays the practice out. False when that place is empty.</summary>
+    public bool PracticeAt(int i, out ICombatUnit who, out WeaponType weapon, out int dealt, out Quality grade)
+    {
+        who = null; weapon = WeaponType.None; dealt = 0; grade = Quality.Raw;
+        if (i < 0 || i >= PracticePlaces || practiceWho[i] == null) return false;
+        who = practiceWho[i]; weapon = practiceWith[i]; dealt = practiceDamage[i]; grade = practiceGrade[i];
+        return true;
+    }
+
+    /// <summary>Forget who hurt it — a fresh life starts a fresh fight. Called wherever a creature is revived or
+    /// taken back into the pool, the one place a life ends.</summary>
+    public void ForgetPractice()
+    {
+        for (int i = 0; i < PracticePlaces; i++)
+        {
+            practiceWho[i] = null;
+            practiceWith[i] = WeaponType.None;
+            practiceDamage[i] = 0;
+            practiceGrade[i] = Quality.Raw;
+        }
+    }
+
     // Same shape and same reason as the store above: looked up once, then held.
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
-    /// <summary>The skills this creature casts — the kit its held weapon rolled, plus its extra skills (see
-    /// <see cref="ExtraSkillIds"/>). Rebuilt the moment either changes, which is every new life (both are re-rolled
-    /// then). Null on a watched copy, which decides nothing, and on anything that is not a creature the server thinks
+    /// <summary>The skills this creature casts — everything its WEAPON MASTERY has opened for the weapon in its
+    /// hands, plus its extra skills (see <see cref="ExtraSkillIds"/>). The same rule a player follows: a skill
+    /// belongs to a weapon and is known once that weapon is practised to its level. Rebuilt the moment either
+    /// changes, which is every new life. Null on a watched copy, which decides nothing, and on anything that is not a creature the server thinks
     /// for.</summary>
     public UnitSkills Skills
     {
@@ -262,10 +366,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         else
         {
-            var brainNow = Brain;
-            var gear = brainNow != null ? brainNow.Equipment : null;
-            var weapon = gear != null ? gear.Get(EquipSlotType.Weapon) : null;
-            ExtraSkillRoll.Roll(weapon != null ? weapon.skillIds : null, extraSkillIds);
+            ExtraSkillRoll.Roll(extraSkillIds);
         }
         extraVersion++;
     }
@@ -281,22 +382,24 @@ public class Health : MonoBehaviour, ICombatUnit
     // Reused: filled only when what the creature wears changes.
     static readonly System.Collections.Generic.List<SkillDef> kitScratch = new System.Collections.Generic.List<SkillDef>(9);
 
-    // The held weapon's rolled kit plus the extra skills, IN THE CATALOG'S ORDER — a skill's position is its identity
-    // to the passive brake, so the list must not depend on the order either was rolled in. The same rule a person's
-    // list keeps. A skill in both appears once.
-    static System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear, List<string> extra)
+    // What its held weapon's mastery has opened, plus its extra skills, IN THE CATALOG'S ORDER — a skill's
+    // position is its identity to the passive brake, so the list must not depend on where each came from. The same
+    // rule a person's list keeps, and the same unlock table: a creature practised to level 30 with a sword knows
+    // every sword skill up to 30, and one that has never picked a sword up knows none of them.
+    System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear, List<string> extra)
     {
         kitScratch.Clear();
-        var weapon = gear.Get(EquipSlotType.Weapon);
-        var kit = weapon != null ? weapon.skillIds : null;
-        bool hasKit = kit != null && kit.Count > 0;
-        if (!hasKit && extra.Count == 0) return kitScratch;
+        var held = gear != null ? gear.WeaponType : WeaponType.None;
+        var block = StatBlock;
+        int mastery = block != null ? block.UsableMastery : 0;
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
         {
             var def = all[i];
             if (def == null || string.IsNullOrEmpty(def.id)) continue;
-            if ((hasKit && kit.Contains(def.id)) || extra.Contains(def.id)) kitScratch.Add(def);
+            bool byMastery = held != WeaponType.None && def.weaponType == held
+                             && Mathf.Max(1, def.masteryLevel) <= mastery;
+            if (byMastery || extra.Contains(def.id)) kitScratch.Add(def);
         }
         return kitScratch;
     }

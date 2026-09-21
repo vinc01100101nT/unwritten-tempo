@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-13
+last-updated: 2026-09-20
 tags:
   - ai-learnings
 ---
@@ -37,6 +37,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | About to run a build or regenerate script you have not read | [A Rebuild May Delete the Old Output First](a-rebuild-may-delete-the-old-output-first.md) — many delete the current output before building; a failed rebuild then leaves less than you started with. |
 | Briefing a long helper run, or one was stopped and you need its status | [Long Agent Runs: Report Per Step, and Ask Them](long-agent-runs-report-per-step.md) — a run that saves its report for the end hands back nothing when killed; and ask it, never read its transcript. |
 | Something worked before your change and breaks after it, and reading has not told you why | [Bisect by Removing Your Own Change](bisect-by-removing-your-own-change.md) — check what ELSE moved first, then set your change aside, rebuild, run. One control beats three theories. |
+| An audit or a bug shows code breaking a rule that is ALREADY written down, and you are about to write the rule again | [A Written Rule That Was Broken Anyway Needs a Check, Not a Second Document](a-written-rule-that-was-broken-needs-a-check.md) — turn it into a checker, a prover for the checker, and a gate on the rulebook; prose bought nothing measurable, the checks held. |
 | You have rebuilt the same thing two or three times and the session is crawling | [Build Last, Build Once](build-last-build-once.md) — finish the whole change first, then one build; know its two self-inflicted failures before you start it. |
 | Replacing how something LOOKS, and about to re-implement its hover, clicks and drag too | [Reuse the Widget's Behaviour, Replace Only Its Look](reuse-the-behaviour-replace-the-look.md) — if the interaction component drives itself from DATA, attach it to the new presentation unchanged and write only the renderer. Its null-guarded visual fields are the permission. |
 | A parser, probe, or hand-built test object you just made says the thing is corrupt, empty or does nothing | [Prove Your Decoder on a Known-Good Sample](prove-your-decoder-on-a-known-good-sample.md) — run it on something known GOOD first; if that looks broken too, your instrument is the broken thing. A stand-in object can be dead, unregistered or torn down — make it SUCCEED once before trusting a failure. |

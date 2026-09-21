@@ -1,50 +1,241 @@
 {
   "title": "Roadmap",
   "blocks": [
-    { "type": "lede", "text": "Everything built so far and everything coming next, on one line. What is coming sits at the top; scroll down to go back in time." },
+    {
+      "type": "lede",
+      "text": "Everything built so far and everything coming next, on one line. What is coming sits at the top; scroll down to go back in time."
+    },
     {
       "type": "timeline",
       "items": [
-        { "state": "planned", "when": "Not scheduled", "title": "Ideas for later", "text": "Crafting and recycling, class advancement, trading, parties, guilds, an auction house, and player-versus-player." },
-        { "state": "planned", "when": "Further out", "title": "Cards", "text": "Earned from the monsters they are tied to." },
-        { "state": "planned", "when": "Further out", "title": "More weapons", "text": "The sword is the first with a full set of skills; the bow is next." },
-        { "state": "planned", "when": "Planned", "title": "It is a thing you can hand somebody", "text": "Install the game and play it like any other." },
-        { "state": "planned", "when": "Planned", "title": "A stranger can start it", "text": "A title screen, and a start that shows a new player what to do." },
-        { "state": "planned", "when": "Planned", "title": "Gold has a use", "text": "A shop: sell what you find, and buy what you need." },
-        { "state": "planned", "when": "Planned", "title": "A quest can be finished", "text": "Go where you were sent, come back, and get paid." },
-        { "state": "planned", "when": "Planned", "title": "A quest can be given", "text": "Townsfolk ask you for help, and the game remembers what you agreed to." },
-        { "state": "planned", "when": "Planned", "title": "The world has people", "text": "Townsfolk with their own names and their own things to say." },
-        { "state": "planned", "when": "Planned", "title": "Dungeons have a destination", "text": "Every dungeon ends in a boss, with a reward worth the walk." },
-        { "state": "planned", "when": "Planned", "title": "The world opens", "text": "Walk from the first town to every map in the world." },
-        { "state": "planned", "when": "Planned", "title": "Killing things pays you", "text": "Monsters drop gear. Pick up what falls, put it on, and watch your stats change." },
-        { "state": "planned", "when": "Planned", "title": "A full wardrobe exists", "text": "Find gear for every part of your body, with better versions to hunt later." },
-
-        { "state": "now", "when": "Now", "title": "Checking the foundations", "text": "Making sure everything already in the game works as it should, before the milestones above begin." },
-
-        { "state": "done", "when": "17 Sep 2026", "title": "GMCP — an AI can play", "text": "An AI can now **play the game as a real player**, with no window: it reads the screen as text and gives the same orders a click gives. Three players — one person and two AIs — met in town and talked in chat." },
-        { "state": "done", "when": "12 Sep 2026", "title": "Boss looks", "text": "Every **boss** has its own look." },
-        { "state": "done", "when": "10 Sep 2026", "title": "Dropped things stay put", "text": "Things you drop **stay on the ground**, and townsfolk are shared by everyone online." },
-        { "state": "done", "when": "7 Sep 2026", "title": "Walk into range", "text": "Cast a skill from too far away and you **walk into range** first." },
-        { "state": "done", "when": "5 Sep 2026", "title": "Several servers", "text": "The world runs across **several servers**, and one account can only be signed in once." },
-        { "state": "done", "when": "2 Sep 2026", "title": "Skills online", "text": "Every **skill** is decided by the online world, not by your own computer." },
-        { "state": "done", "when": "27–31 Aug 2026", "title": "Monsters and fights online", "text": "The online world takes charge of **monsters and fights**." },
-        { "state": "done", "when": "26 Aug 2026", "title": "Sign in, and consumables", "text": "**Sign in**: your character now lives online, and two players in the same town can see each other move. **11 consumable items** arrive, each with its own effect." },
-        { "state": "done", "when": "24 Aug 2026", "title": "The Sword is complete", "text": "**22 skills** for the sword." },
-        { "state": "done", "when": "20 Aug 2026", "title": "Flinch and footing", "text": "A big enough blow **staggers** whoever takes it." },
-        { "state": "done", "when": "13 Aug 2026", "title": "Same rules for everyone", "text": "Monsters hit you by **the same rules** you hit them: critical first, then whether it lands, then the damage." },
-        { "state": "done", "when": "11 Aug 2026", "title": "Shared stats and Parry", "text": "Monsters and players are built from **the same stats**. **Parry** arrives." },
-        { "state": "done", "when": "7 Aug 2026", "title": "Character sheet", "text": "The full **character sheet**." },
-        { "state": "done", "when": "27 Jul 2026", "title": "This wiki", "text": "This **wiki** opens." },
-        { "state": "done", "when": "21 Jul 2026", "title": "Townsfolk you can talk to", "text": "Talk to townsfolk in a **dialogue box**." },
-        { "state": "done", "when": "13 Jul 2026", "title": "Character colours", "text": "Choose how your **outfit** looks." },
-        { "state": "done", "when": "4 Jul 2026", "title": "Fully 3D characters", "text": "Your character becomes a **fully 3D figure**." },
-        { "state": "done", "when": "3 Jul 2026", "title": "Music and ambience", "text": "Every map gets its own **music and ambient sound**." },
-        { "state": "done", "when": "23 Jun 2026", "title": "World map", "text": "The **world map**." },
-        { "state": "done", "when": "22 Jun 2026", "title": "Doorways and calendar", "text": "**Doorways** between maps, and a **calendar** that decides the weather." },
-        { "state": "done", "when": "21 Jun 2026", "title": "Weather", "text": "**Rain** that leaves the ground wet and reflective, and **snow**." },
-        { "state": "done", "when": "17 Jun 2026", "title": "Day and night", "text": "The sun sets and rises." },
-        { "state": "done", "when": "16 Jun 2026", "title": "The 2.5D look", "text": "A 3D town, a follow camera, **click to move**, monsters that wander and chase you, and **click-to-attack** combat." },
-        { "state": "done", "when": "12 Jun 2026", "title": "The beginning", "text": "Work on Unwritten begins." }
+        {
+          "state": "planned",
+          "when": "Not scheduled",
+          "title": "Ideas for later",
+          "text": "Crafting and recycling, class advancement, trading, parties, guilds, an auction house, and player-versus-player."
+        },
+        {
+          "state": "planned",
+          "when": "Further out",
+          "title": "Cards",
+          "text": "Earned from the monsters they are tied to."
+        },
+        {
+          "state": "planned",
+          "when": "Further out",
+          "title": "More weapons",
+          "text": "The sword is the first with a full set of skills; the bow is next."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "It is a thing you can hand somebody",
+          "text": "Install the game and play it like any other."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "A stranger can start it",
+          "text": "A title screen, and a start that shows a new player what to do."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "Gold has a use",
+          "text": "A shop: sell what you find, and buy what you need."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "A quest can be finished",
+          "text": "Go where you were sent, come back, and get paid."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "A quest can be given",
+          "text": "Townsfolk ask you for help, and the game remembers what you agreed to."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "The world has people",
+          "text": "Townsfolk with their own names and their own things to say."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "Dungeons have a destination",
+          "text": "Every dungeon ends in a boss, with a reward worth the walk."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "The world opens",
+          "text": "Walk from the first town to every map in the world."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "Killing things pays you",
+          "text": "Monsters drop gear. Pick up what falls, put it on, and watch your stats change."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
+          "title": "A full wardrobe exists",
+          "text": "Make gear for every part of your body — forge it, fold it, and quench it for a better grade."
+        },
+        {
+          "state": "now",
+          "when": "Now",
+          "title": "Checking the foundations",
+          "text": "Making sure everything already in the game works as it should, before the milestones above begin."
+        },
+        {
+          "state": "done",
+          "when": "17 Sep 2026",
+          "title": "GMCP — an AI can play",
+          "text": "An AI can now **play the game as a real player**, with no window: it reads the screen as text and gives the same orders a click gives. Three players — one person and two AIs — met in town and talked in chat."
+        },
+        {
+          "state": "done",
+          "when": "12 Sep 2026",
+          "title": "Boss looks",
+          "text": "Every **boss** has its own look."
+        },
+        {
+          "state": "done",
+          "when": "10 Sep 2026",
+          "title": "Dropped things stay put",
+          "text": "Things you drop **stay on the ground**, and townsfolk are shared by everyone online."
+        },
+        {
+          "state": "done",
+          "when": "7 Sep 2026",
+          "title": "Walk into range",
+          "text": "Cast a skill from too far away and you **walk into range** first."
+        },
+        {
+          "state": "done",
+          "when": "5 Sep 2026",
+          "title": "Several servers",
+          "text": "The world runs across **several servers**, and one account can only be signed in once."
+        },
+        {
+          "state": "done",
+          "when": "2 Sep 2026",
+          "title": "Skills online",
+          "text": "Every **skill** is decided by the online world, not by your own computer."
+        },
+        {
+          "state": "done",
+          "when": "27–31 Aug 2026",
+          "title": "Monsters and fights online",
+          "text": "The online world takes charge of **monsters and fights**."
+        },
+        {
+          "state": "done",
+          "when": "26 Aug 2026",
+          "title": "Sign in, and consumables",
+          "text": "**Sign in**: your character now lives online, and two players in the same town can see each other move. **11 consumable items** arrive, each with its own effect."
+        },
+        {
+          "state": "done",
+          "when": "24 Aug 2026",
+          "title": "The Sword is complete",
+          "text": "**22 skills** for the sword."
+        },
+        {
+          "state": "done",
+          "when": "20 Aug 2026",
+          "title": "Flinch and footing",
+          "text": "A big enough blow **staggers** whoever takes it."
+        },
+        {
+          "state": "done",
+          "when": "13 Aug 2026",
+          "title": "Same rules for everyone",
+          "text": "Monsters hit you by **the same rules** you hit them: critical first, then whether it lands, then the damage."
+        },
+        {
+          "state": "done",
+          "when": "11 Aug 2026",
+          "title": "Shared stats and Parry",
+          "text": "Monsters and players are built from **the same stats**. **Parry** arrives."
+        },
+        {
+          "state": "done",
+          "when": "7 Aug 2026",
+          "title": "Character sheet",
+          "text": "The full **character sheet**."
+        },
+        {
+          "state": "done",
+          "when": "27 Jul 2026",
+          "title": "This wiki",
+          "text": "This **wiki** opens."
+        },
+        {
+          "state": "done",
+          "when": "21 Jul 2026",
+          "title": "Townsfolk you can talk to",
+          "text": "Talk to townsfolk in a **dialogue box**."
+        },
+        {
+          "state": "done",
+          "when": "13 Jul 2026",
+          "title": "Character colours",
+          "text": "Choose how your **outfit** looks."
+        },
+        {
+          "state": "done",
+          "when": "4 Jul 2026",
+          "title": "Fully 3D characters",
+          "text": "Your character becomes a **fully 3D figure**."
+        },
+        {
+          "state": "done",
+          "when": "3 Jul 2026",
+          "title": "Music and ambience",
+          "text": "Every map gets its own **music and ambient sound**."
+        },
+        {
+          "state": "done",
+          "when": "23 Jun 2026",
+          "title": "World map",
+          "text": "The **world map**."
+        },
+        {
+          "state": "done",
+          "when": "22 Jun 2026",
+          "title": "Doorways and calendar",
+          "text": "**Doorways** between maps, and a **calendar** that decides the weather."
+        },
+        {
+          "state": "done",
+          "when": "21 Jun 2026",
+          "title": "Weather",
+          "text": "**Rain** that leaves the ground wet and reflective, and **snow**."
+        },
+        {
+          "state": "done",
+          "when": "17 Jun 2026",
+          "title": "Day and night",
+          "text": "The sun sets and rises."
+        },
+        {
+          "state": "done",
+          "when": "16 Jun 2026",
+          "title": "The 2.5D look",
+          "text": "A 3D town, a follow camera, **click to move**, monsters that wander and chase you, and **click-to-attack** combat."
+        },
+        {
+          "state": "done",
+          "when": "12 Jun 2026",
+          "title": "The beginning",
+          "text": "Work on Unwritten begins."
+        }
       ]
     }
   ]

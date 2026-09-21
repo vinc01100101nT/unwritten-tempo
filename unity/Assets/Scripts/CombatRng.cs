@@ -9,7 +9,7 @@ using UnityEngine;
 /// die becomes reproducible and server-owned, with zero call-site churn.
 ///
 /// <para><b>Scope:</b> rolls that DECIDE a result the server would have to own route here — every combat die,
-/// plus the loot rolls that decide what a drop IS (<see cref="WeaponSkillRoll"/>'s rarity + kit). Movement/wander,
+/// the loot rolls that decide what a drop IS, and every craft: a quench's grade and an Ink's stat. Movement/wander,
 /// <c>insideUnitCircle</c>, and cosmetic/VFX randomness stay on <see cref="UnityEngine.Random"/> —
 /// they don't need to agree across the wire.</para>
 /// </summary>

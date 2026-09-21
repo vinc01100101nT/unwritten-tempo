@@ -51,7 +51,7 @@ public class ItemTooltip : MonoBehaviour
     /// <summary>Show the tooltip for an item (no-op if suppressed or the UI isn't up yet).</summary>
     public static void ShowFor(Item item) { if (!Suppressed && Instance != null) Instance.Show(item); }
 
-    /// <summary>Show the tooltip for an equipment instance (renders +N, cards, rarity).</summary>
+    /// <summary>Show the tooltip for an equipment instance (renders its grade, folds, written stats, cards).</summary>
     public static void ShowFor(EquipmentInstance inst) { if (!Suppressed && Instance != null) Instance.Show(inst); }
 
     /// <summary>Show an equip with a live "equip → stat delta" preview vs what's in
@@ -64,17 +64,13 @@ public class ItemTooltip : MonoBehaviour
     {
         if (Instance == null) return;
         Instance.group.alpha = 0f;
-        Instance.hovered = null;
-        // NOT details.Hide() — leaving the slot may mean the cursor is on its way to the panel's scrollbar.
-        // UpdateSkillDetails owns that decision (one place), and closes it once the pointer is off both.
     }
 
     void Show(Item item)
     {
-        hovered = null;                    // a bare def has no rolled kit — nothing to detail
         if (item == null) { group.alpha = 0f; return; }
         titleText.text = item.displayName;
-        titleText.color = Rarities.Text(item.rarity);
+        titleText.color = PlainTitle;
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         group.alpha = 1f;
@@ -83,25 +79,23 @@ public class ItemTooltip : MonoBehaviour
 
     void Show(EquipmentInstance inst)
     {
-        hovered = inst;
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var def = inst.def;
-        titleText.text = (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + def.displayName;
-        titleText.color = Rarities.Text(inst.Rarity);
+        titleText.text = CopyTitle(inst);
+        titleText.color = PlainTitle;
         bodyText.text = DescribeInstance(inst);
-        ShowSkillIcons(inst.skillIds);
+        ShowSkillIcons(null);
         group.alpha = 1f;
         Follow();
     }
 
     void ShowPreview(EquipmentInstance inst, EquipSlotType previewSlot)
     {
-        hovered = inst;
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var c = Character.Instance;
         var def = inst.def;
-        titleText.text = (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + def.displayName;
-        titleText.color = Rarities.Text(inst.Rarity);
+        titleText.text = CopyTitle(inst);
+        titleText.color = PlainTitle;
 
         var sb = new StringBuilder();
         sb.Append(DescribeInstance(inst));
@@ -109,10 +103,8 @@ public class ItemTooltip : MonoBehaviour
         {
             var equipped = c.GetEquippedInstance(previewSlot);
             if (equipped != null && equipped.def != null && equipped != inst)
-                sb.Append("\n\n<color=#B9B9B9>Replaces </color><color=#")
-                  .Append(ColorUtility.ToHtmlStringRGB(Rarities.Text(equipped.Rarity))).Append('>')
-                  .Append(equipped.upgrade > 0 ? "+" + equipped.upgrade + " " : "")
-                  .Append(equipped.def.displayName).Append("</color>");
+                sb.Append("\n\n<color=#B9B9B9>Replaces </color><color=#D8D8D8>")
+                  .Append(CopyTitle(equipped)).Append("</color>");
 
             var before = c.CurrentDerived;
             var after  = c.DeriveWith(previewSlot, inst);
@@ -128,7 +120,7 @@ public class ItemTooltip : MonoBehaviour
             AppendDeltaPct(sb, "CRIT", before.critChance, after.critChance);
         }
         bodyText.text = sb.ToString();
-        ShowSkillIcons(inst.skillIds);
+        ShowSkillIcons(null);
         group.alpha = 1f;
         Follow();
     }
@@ -167,49 +159,9 @@ public class ItemTooltip : MonoBehaviour
         return skillIcons[i];
     }
 
-    // ---- "hold Alt for skill details" ---------------------------------------------------------------------
-    // Alt, not Shift: Shift is the WALK key (Player3DController.HeldShift), so reading a tooltip would change how
-    // the character moves. Alt is already treated as a modifier (it suppresses dash) and is the genre convention.
-    EquipmentInstance hovered;                  // the copy under the cursor right now (null = not hovering equipment)
-    WeaponSkillDetailsPanel details;            // built on first use, so no scene re-bake is needed to get it
-
-    static bool AltPressed() => Hotkeys.Down(KeyCode.LeftAlt) || Hotkeys.Down(KeyCode.RightAlt);
-
-    /// <summary>True when the hovered item has skills worth a details panel — also what gates the hint line.</summary>
-    static bool HasKit(EquipmentInstance inst) => inst != null && inst.skillIds != null && inst.skillIds.Count > 0;
-
     void Update()
     {
         if (group.alpha > 0f) Follow();
-        UpdateSkillDetails();
-    }
-
-    // Alt PINS the window open; it is NOT held. Closing must never depend on the hover: the moment you leave the
-    // item slot the cursor is in dead space between the tooltip and the panel, so a hover-lifetime window would shut
-    // before you could reach its own scrollbar — the controls would be permanently out of reach. Open by Alt over a
-    // weapon, close by Alt again or the X.
-    void UpdateSkillDetails()
-    {
-        // ESCAPE always closes it, and it is checked FIRST. Hotkeys.CancelDown is deliberately not typing-guarded,
-        // unlike Hotkeys.Down — so if a text field holds focus (very easy: you just typed /weapon in chat, and chat
-        // keeps focus), Alt is swallowed and Escape is the only key that still gets through. Without this the window
-        // could become genuinely un-closable by keyboard.
-        if (details != null && details.IsOpen && Hotkeys.CancelDown()) { details.Hide(); Hotkeys.MarkCancelHandled(); return; }
-
-        if (!AltPressed()) return;
-
-        // Alt over a DIFFERENT weapon swaps what's on display; Alt with nothing new under the cursor closes it.
-        if (details != null && details.IsOpen && (!HasKit(hovered) || details.Showing == hovered))
-        { details.Hide(); return; }
-        if (!HasKit(hovered)) return;                                        // nothing under the cursor to detail
-
-        if (details == null)
-        {
-            if (canvas == null) return;
-            details = new WeaponSkillDetailsPanel(canvas);
-        }
-        details.Show(hovered);
-        details.PlaceBeside(panel);
     }
 
     void Follow()
@@ -227,10 +179,8 @@ public class ItemTooltip : MonoBehaviour
     static string Describe(Item item)
     {
         var sb = new StringBuilder();
-        AppendHeader(sb, item, item.rarity);
+        AppendHeader(sb, item);
         AppendAttackKind(sb, item);
-        if (ArmourRoll.IsRolledSlot(item.slot)) AppendRollRanges(sb, item);
-        else AppendItemStats(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item);
         return sb.ToString();
@@ -256,12 +206,9 @@ public class ItemTooltip : MonoBehaviour
     {
         var sb = new StringBuilder();
         var def = inst.def;
-        AppendHeader(sb, def, inst.Rarity);
+        AppendHeader(sb, def);
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
-        AppendRolledSkills(sb, inst.skillIds);
-        if (inst.upgrade > 0)
-            sb.Append("\n<color=#F5B942>Enhancement +").Append(inst.upgrade).Append("</color>");
 
         int slots = def.cardSlots;
         if (slots > 0)
@@ -276,15 +223,25 @@ public class ItemTooltip : MonoBehaviour
         return sb.ToString();
     }
 
-    // Rarity-colored "<Rarity> · <Slot/Category>" line. The rarity is passed in because a COPY carries its own
-    // (rolled at the drop) — the def's rarity is only the fallback for something with no instance behind it.
-    static void AppendHeader(StringBuilder sb, Item item, Rarity rarity)
+    // "<Slot/Category>" line. Nothing here is coloured by a tier: a crafted piece says what it is and what it
+    // has been through, and there is no rarity in the game to colour it by.
+    static void AppendHeader(StringBuilder sb, Item item)
     {
         string category = item.slot != EquipSlotType.None ? Spaced(item.slot.ToString())
                         : item.IsUsable ? "Consumable" : item.category.ToString();
-        sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(Rarities.Border(rarity)))
-          .Append('>').Append(Rarities.Label(rarity)).Append("</color>")
-          .Append(" <color=#B9B9B9>· ").Append(category).Append("</color>");
+        sb.Append("<color=#B9B9B9>").Append(category).Append("</color>");
+    }
+
+    static readonly Color PlainTitle = new Color(0.91f, 0.91f, 0.91f);
+
+    /// <summary>How a copy is named on screen: its grade, then its folds, then the piece — "B +12 Sword". A piece
+    /// that has never been quenched or folded is just its name.</summary>
+    public static string CopyTitle(EquipmentInstance inst)
+    {
+        if (inst == null || inst.def == null) return "";
+        string grade = inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString();
+        string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
+        return grade + folds + " " + inst.def.displayName;
     }
 
     // A weapon says which of the two physical attacks it swings with; nothing else about it is spelled out.
@@ -294,8 +251,8 @@ public class ItemTooltip : MonoBehaviour
         sb.Append('\n').Append(WeaponTypes.IsRanged(item.weaponType) ? "RANGED attack" : "MELEE attack");
     }
 
-    // THIS COPY's own numbers — what it really adds, read from the same sum the stat sheet uses, so the card and the
-    // sheet can never disagree. Rarity is already inside them. Refine and cards have their own lines below.
+    // THIS COPY's own numbers — what it really adds, read from the same sum the stat sheet uses, so the card and
+    // the sheet can never disagree. Its grade and folds are already inside them; cards have their own lines below.
     static void AppendCopyStats(StringBuilder sb, EquipmentInstance inst)
     {
         var eb = default(EquipBonuses);
@@ -312,61 +269,51 @@ public class ItemTooltip : MonoBehaviour
         AppendStat(sb, "INT", eb.intel);
         AppendStat(sb, "DEX", eb.dex);
         AppendStat(sb, "LUK", eb.luk);
+        AppendStat(sb, "ACC", eb.accuracy);
+        AppendStat(sb, "EVA", eb.evasion);
         AppendStat(sb, "CRIT", eb.critPercent, "%");
+        AppendStat(sb, "CRIT DMG", eb.critDamagePercent, "%");
         AppendStat(sb, "ASPD", eb.aspdPercent, "%");
+        AppendStat(sb, "CAST SPEED", eb.castSpeedPercent, "%");
+        AppendInkSlots(sb, inst);
     }
 
-    // A bare armour DEFINITION has no numbers of its own — only the ranges its copies roll inside.
-    static void AppendRollRanges(StringBuilder sb, Item item)
+    /// <summary>The label a written stat goes by on screen — the SAME word the stat line above uses for it, so the
+    /// station window's slot buttons and the item card can never call one stat two things.</summary>
+    public static string InkStatLabel(InkStat stat)
     {
-        AppendRange(sb, "DEF", item.defenseMin, item.defenseMax);
-        AppendRange(sb, "M.DEF", item.magicDefenseMin, item.magicDefenseMax);
-        if (item.mainStatCountMax > 0)
-            sb.Append("\n<color=#C9C9C9>Main stats</color>  ").Append(Mathf.Max(0, item.mainStatCountMin)).Append('–')
-              .Append(item.mainStatCountMax).Append(" × ").Append(item.mainStatValueMin).Append('–').Append(item.mainStatValueMax);
-    }
-
-    static void AppendRange(StringBuilder sb, string label, int min, int max)
-    {
-        if (max <= 0 && min <= 0) return;
-        sb.Append("\n<color=#C9C9C9>").Append(label).Append("</color>  ").Append(min);
-        if (max > min) sb.Append('–').Append(max);
-    }
-
-    static void AppendItemStats(StringBuilder sb, Item item)
-    {
-        AppendStat(sb, "ATK", item.bonusAttack);
-        AppendStat(sb, "DEF", item.bonusDefense);
-        AppendStat(sb, "M.ATK", item.bonusMAtk);
-        AppendStat(sb, "M.DEF", item.bonusMDef);
-        AppendStat(sb, "Max HP", item.bonusHP);
-        AppendStat(sb, "Max MP", item.bonusMP);
-        AppendStat(sb, "STR", item.bonusStr);
-        AppendStat(sb, "AGI", item.bonusAgi);
-        AppendStat(sb, "VIT", item.bonusVit);
-        AppendStat(sb, "INT", item.bonusInt);
-        AppendStat(sb, "DEX", item.bonusDex);
-        AppendStat(sb, "LUK", item.bonusLuk);
-        AppendStat(sb, "CRIT", item.bonusCritPercent, "%");
-        AppendStat(sb, "ASPD", item.bonusAspdPercent, "%");
-    }
-
-    // "Grants skills" block — THIS copy's rolled kit. Passives are marked, since they never take a hotbar slot:
-    // they run on their trigger the moment the weapon is worn.
-    static void AppendRolledSkills(StringBuilder sb, List<string> ids)
-    {
-        if (ids == null || ids.Count == 0) return;
-        sb.Append("\n<color=#B9B9B9>Grants skills</color>");
-        for (int i = 0; i < ids.Count; i++)
+        switch (stat)
         {
-            var def = SkillCatalog.Get(ids[i]);
-            sb.Append("\n  <color=#8FB7E0>◈ ").Append(def != null ? def.displayName : ids[i]);
-            if (def != null && def.IsUltimate) sb.Append(" <color=#F5B942>(ultimate)</color>");
-            else if (def != null && def.IsPassive) sb.Append(" <color=#9FD8A8>(passive)</color>");
-            sb.Append("</color>");
+            case InkStat.Attack:       return "ATK";
+            case InkStat.Defense:      return "DEF";
+            case InkStat.MagicAttack:  return "M.ATK";
+            case InkStat.MagicDefense: return "M.DEF";
+            case InkStat.HP:           return "Max HP";
+            case InkStat.MP:           return "Max MP";
+            case InkStat.STR:          return "STR";
+            case InkStat.AGI:          return "AGI";
+            case InkStat.VIT:          return "VIT";
+            case InkStat.INT:          return "INT";
+            case InkStat.DEX:          return "DEX";
+            case InkStat.LUK:          return "LUK";
+            case InkStat.Accuracy:     return "ACC";
+            case InkStat.Evasion:      return "EVA";
+            case InkStat.CritChance:   return "CRIT";
+            case InkStat.CritDamage:   return "CRIT DMG";
+            case InkStat.AttackSpeed:  return "ASPD";
+            case InkStat.CastSpeed:    return "CAST SPEED";
+            default:                   return stat.ToString();
         }
-        // The kit is the weapon's identity, so say out loud that the full text is one key away.
-        sb.Append("\n<color=#8A8F99><i>Press Alt for skill details</i></color>");
+    }
+
+    // How many stats this copy's grade lets it carry, and how many are written — so an empty slot reads as room
+    // rather than as nothing.
+    static void AppendInkSlots(StringBuilder sb, EquipmentInstance inst)
+    {
+        int slots = inst.InkSlots;
+        if (slots <= 0) return;
+        int used = inst.inkStats != null ? inst.inkStats.Count : 0;
+        sb.Append("\n<color=#B9B9B9>Written ").Append(used).Append('/').Append(slots).Append("</color>");
     }
 
     static void AppendFooter(StringBuilder sb, Item item)
@@ -385,6 +332,13 @@ public class ItemTooltip : MonoBehaviour
         if (v == 0) return;
         sb.Append(v > 0 ? "\n<color=#7FD17F>+" : "\n<color=#E08A8A>")
           .Append(v).Append(suffix).Append(' ').Append(label).Append("</color>");
+    }
+
+    static void AppendStat(StringBuilder sb, string label, float v, string suffix = "")
+    {
+        if (Mathf.Approximately(v, 0f)) return;
+        sb.Append(v > 0f ? "\n<color=#7FD17F>+" : "\n<color=#E08A8A>")
+          .Append(v.ToString("0.##")).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 
     // Green/red "LABEL  before → after (+delta)" preview rows. Unchanged rows are skipped.

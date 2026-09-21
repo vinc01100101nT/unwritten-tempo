@@ -258,61 +258,138 @@ public class Character : MonoBehaviour, ICombatUnit
     // `equipBonuses`, so overriding it here makes the whole snapshot reflect the preview without mutating any gear.
     EquipBonuses? previewBonuses;
     WeaponType? previewWeaponType;
+    Quality? previewQuality;
 
     /// <summary>Equipment's stat contribution. Cached inside <see cref="UnitEquipment"/> (recomputed only when gear
     /// changes), so the hot combat getters don't re-sum the worn set per hit.</summary>
     EquipBonuses equipBonuses => previewBonuses ?? Gear.Bonuses;
 
-    /// <summary>The Ring of Progression — the VESSEL that carries the player's life's-work: its own
-    /// level/XP plus the Trio-Ring passive draft (<see cref="RingProgress.Passives"/>) and the active-skill
-    /// ownership (<see cref="RingProgress.Skills"/>). Levels in parallel with the character (same kills feed
-    /// both — see <see cref="AddXP"/>). Its effect is GATED by <see cref="RingEquipped"/>: take the ring off
-    /// and the passive % stops applying and actives can't fire ("diminished, not erased").</summary>
+    /// <summary>The Ring of Progression — PART OF THE CHARACTER, never an item: its own level/XP plus the
+    /// Trio-Ring passive draft (<see cref="RingProgress.Passives"/>). Levels in parallel with the character
+    /// (the same kills feed both — see <see cref="AddXP"/>), and what it has earned always counts.</summary>
     public RingProgress Ring { get; } = new RingProgress();
 
-    /// <summary>The Phase G passive skill layer (Trio-Ring draft), living on the ring vessel. Its
-    /// <see cref="PassiveRanks.Percent"/> is the % multiplier folded into the effective-stat getters below
-    /// — but ONLY while <see cref="RingEquipped"/> (see <see cref="PassivePercent"/>).</summary>
+    /// <summary>The Phase G passive skill layer (Trio-Ring draft). Its <see cref="PassiveRanks.Percent"/> is the
+    /// % multiplier folded into the effective-stat getters below (see <see cref="PassivePercent"/>).</summary>
     public PassiveRanks Passives => Ring.Passives;
 
-    /// <summary>True while a ring item occupies the <see cref="EquipSlotType.Ring"/> slot. The gate for the
-    /// ring's passive % bonuses (suppressed when no ring is worn). Active skills are NOT gated by the ring —
-    /// they come from the equipped weapon now.</summary>
-    public bool RingEquipped => GetEquipped(EquipSlotType.Ring) != null;
+    /// <summary>WHAT THIS CHARACTER HAS PRACTISED — a mastery per weapon type and per skill, and the skills those
+    /// have opened. Part of the character, like the ring, and permanent; the weapon in hand only caps what may be
+    /// used and earned.</summary>
+    public MasteryProgress Mastery { get; } = new MasteryProgress();
 
-    /// <summary>The passive % multiplier for a stat — but only while a ring is equipped (0 otherwise).
-    /// Every effective-stat getter folds passives in through HERE so unequipping the ring truly diminishes.</summary>
-    float PassivePercent(StatId stat) => RingEquipped ? Ring.Passives.Percent(stat) : 0f;
+    /// <summary>The grade of the weapon in hand — what caps both masteries. Raw when nothing is held, which is
+    /// the lowest cap there is.</summary>
+    public Quality HeldQuality
+    {
+        get
+        {
+            // While DeriveWith previews a different weapon, that weapon's grade — or the preview would cap the
+            // mastery by the blade you are wearing and understate what the one you are hovering is worth.
+            if (previewQuality.HasValue) return previewQuality.Value;
+            var w = GetEquippedInstance(EquipSlotType.Weapon);
+            return w != null ? w.quality : Quality.Raw;
+        }
+    }
 
-    /// <summary>The gated ring % invested in <paramref name="stat"/> (0 when no ring is worn) — the single value
-    /// skill AFFINITY scales off, so an effect's ring-investment bonus diminishes with the ring exactly like the
-    /// passive layer does. Reads the same choke as every effective-stat getter.</summary>
+    /// <summary>The weapon mastery level in use right now: what was earned with the weapon in hand, held to what
+    /// that weapon's grade allows.</summary>
+    public int WeaponMasteryLevel => Mastery.UsableLevel(HeldWeaponType, HeldQuality);
+
+    /// <summary>MAY THIS CHARACTER RUN THIS SKILL — the one question, asked by the server before any cast and by
+    /// every window that offers one. A skill must be LEARNED, and the weapon it belongs to must be in hand. A
+    /// skill that belongs to no weapon (what a consumable runs) is nobody's to learn and always passes.</summary>
+    public bool MayUse(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return false;
+        var def = SkillCatalog.Get(skillId);
+        if (def == null) return false;
+        if (def.weaponType == WeaponType.None) return true;
+        return Mastery.HasLearned(skillId) && HeldWeaponType == def.weaponType;
+    }
+
+    /// <summary>MAY THIS SKILL GO ON THE BAR, or be ticked on as a passive. The same question as
+    /// <see cref="MayUse"/> WITHOUT the weapon in hand, because a bar is arranged for a weapon you are about to
+    /// hold as often as for the one you hold now — what stops it firing is the cast's own test.</summary>
+    public bool MayBind(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return false;
+        var def = SkillCatalog.Get(skillId);
+        if (def == null) return false;
+        return def.weaponType == WeaponType.None || Mastery.HasLearned(skillId);
+    }
+
+    /// <summary>Blank, in place, every id in <paramref name="ids"/> this character may not bind
+    /// (<see cref="MayBind"/>). The one rule a bar and a ticked passive list are held to wherever they arrive
+    /// from — a bind command, or a save arranged under an older rule.</summary>
+    public void KeepOnlyBindable(string[] ids)
+    {
+        if (ids == null) return;
+        for (int i = 0; i < ids.Length; i++)
+            if (!string.IsNullOrEmpty(ids[i]) && !MayBind(ids[i])) ids[i] = "";
+    }
+
+    /// <summary>Why <paramref name="skillId"/> may not be used right now, as one sentence for the player, or null
+    /// when it may. The same two tests as <see cref="MayUse"/>, asked so a refused press can be explained.</summary>
+    public string WhyNotUsable(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return null;
+        var def = SkillCatalog.Get(skillId);
+        if (def == null || def.weaponType == WeaponType.None) return null;
+        string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
+        if (!Mastery.HasLearned(skillId))
+            return name + " is not learned yet — " + def.weaponType + " Mastery " + Mathf.Max(1, def.masteryLevel)
+                   + " opens it (yours is " + Mastery.EarnedLevel(def.weaponType) + ").";
+        if (HeldWeaponType != def.weaponType)
+            return name + " needs a " + def.weaponType + " in hand.";
+        return null;
+    }
+
+    /// <summary>The passive % multiplier for a stat. The ring is part of the character, not an item, so what it
+    /// has earned always counts — every effective-stat getter folds passives in through HERE.</summary>
+    float PassivePercent(StatId stat) => Ring.Passives.Percent(stat);
+
+    /// <summary>The ring % invested in <paramref name="stat"/> — the single value skill AFFINITY scales off.
+    /// Reads the same choke as every effective-stat getter.</summary>
     public float RingBonus(StatId stat) => PassivePercent(stat);
 
-    /// <summary>The rarity lift this character's gear puts on <paramref name="skillId"/>'s OUTPUT — the equipped
-    /// weapon's ladder value (<see cref="Rarities.OutputLift"/>) when that weapon is what granted the skill, and 0
-    /// otherwise. A skill ticked on in the Grimoire has no weapon behind it, so it scales off the ring alone; the
-    /// kit is the test rather than "is a weapon worn", so a Grimoire skill can never borrow the lift of whatever
-    /// happens to be in hand.
+    /// <summary>The lift this character's own practice puts on <paramref name="skillId"/>'s OUTPUT, added to the
+    /// ring's term. An ACTIVE rides its own skill mastery; a PASSIVE cannot be pressed, so it earns none of its
+    /// own and rides the weapon's mastery instead. Both stop at +30%.
     ///
-    /// <para>Resolved ONCE per cast by the applier, never per hit — the loop below compares skill ids, which has no
-    /// business running inside the per-hit path.</para></summary>
-    public float SkillRarityLift(string skillId) => Rarities.LiftFor(GetEquippedInstance(EquipSlotType.Weapon), skillId);
+    /// <para>Resolved ONCE per cast by the applier, never per hit.</para></summary>
+    public float SkillOutputLift(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return 0f;
+        var def = SkillCatalog.Get(skillId);
+        if (def != null && def.IsPassive) return MasteryMath.PassiveLift(WeaponMasteryLevel);
+        return MasteryMath.SkillLift(Mastery.UsableSkillLevel(skillId, HeldQuality));
+    }
 
     /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
     /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
     /// the character without their windows rather than a moment frozen mid-fight.</summary>
     float SubBonus(SubStat stat) => ignoreStates ? 0f : States.SubStatBonus(stat);
 
-    /// <summary>The whole percentage lift on one stat: ring investment plus any live sub-stat window. The single
-    /// place the two are added, so no formula has to know that states exist and none can be forgotten.</summary>
-    float Lift(StatId ringNode, SubStat stat) => PassivePercent(ringNode) + SubBonus(stat);
+    /// <summary>The whole percentage lift on one stat: ring investment, weapon mastery, and any live sub-stat
+    /// window. The single place the three are added, so no formula has to know they exist and none can be
+    /// forgotten. Mastery is ADDED to the ring's term, never multiplied onto it.</summary>
+    float Lift(StatId ringNode, SubStat stat) => PassivePercent(ringNode) + MasteryPercent(ringNode) + SubBonus(stat);
+
+    /// <summary>What the weapon in hand's mastery adds to one ring stat — 0 unless that weapon's own three stats
+    /// include it. Reads a fixed table and a derived level, so it is a lookup, not a search.</summary>
+    float MasteryPercent(StatId stat)
+    {
+        var held = HeldWeaponType;
+        if (held == WeaponType.None || !WeaponMasteryStats.Raises(held, stat)) return 0f;
+        return MasteryMath.WeaponPercent(Mastery.UsableLevel(held, HeldQuality));
+    }
 
     /// <summary>The hotbar layout — which unlocked skill is bound to each of the nine slots (keys 1–9).
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
-    /// <summary>Which PASSIVE skills are live — ticked on in the Grimoire (J) or rolled onto the equipped weapon.
+    /// <summary>Which PASSIVE skills are live — the ones ticked on in the Grimoire (J), of those learned.
     /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it. Persisted.
     /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
     public PassiveLoadout PassiveSkills => passiveSkills ??= new PassiveLoadout(this);
@@ -561,7 +638,7 @@ public class Character : MonoBehaviour, ICombatUnit
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
-    public float CritMultiplier  => Told ? toldCurrent.critMult : UnitStatMath.CritMultiplier(Inputs, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % on top
+    public float CritMultiplier  => Told ? toldCurrent.critMult : UnitStatMath.CritMultiplier(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % + what Ink wrote
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
     public float CritChance01    => Told ? toldCurrent.critChance : UnitStatMath.CritChance01(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritChance));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
@@ -672,10 +749,13 @@ public class Character : MonoBehaviour, ICombatUnit
         // never touched; only this snapshot sees the swap.
         previewBonuses = Gear.BonusesWith(slot, hypothetical);
         if (slot == EquipSlotType.Weapon)
+        {
             previewWeaponType = hypothetical != null && hypothetical.def != null ? hypothetical.def.weaponType : WeaponType.None;
+            previewQuality = hypothetical != null ? hypothetical.quality : Quality.Raw;
+        }
         computeHere = true;
         try { return SnapshotNow(); }
-        finally { previewBonuses = null; previewWeaponType = null; computeHere = false; }
+        finally { previewBonuses = null; previewWeaponType = null; previewQuality = null; computeHere = false; }
     }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
@@ -848,36 +928,8 @@ public class Character : MonoBehaviour, ICombatUnit
         };
 
         StatPoints = startingStatPoints;
-        EnsureRingEquipped();        // start wearing your ring so the passive/active layer is live by default
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
-    }
-
-    /// <summary>Put a ring on if the <see cref="EquipSlotType.Ring"/> slot is empty — so a fresh (or loaded)
-    /// session always boots with the vessel worn. Prefers an authored Ring item from Resources/Items; falls
-    /// back to a runtime-built default so the feature works even before the asset is created.</summary>
-    public void EnsureRingEquipped()
-    {
-        if (GetEquipped(EquipSlotType.Ring) != null) return;
-        var def = LoadRingDef();
-        if (def != null) SetEquipped(EquipSlotType.Ring, new EquipmentInstance(def));
-    }
-
-    static Item LoadRingDef()
-    {
-        var all = Resources.LoadAll<Item>("Items");
-        for (int i = 0; i < all.Length; i++)
-            if (all[i] != null && all[i].slot == EquipSlotType.Ring) return all[i];
-
-        // Runtime fallback (no authored asset yet): a plain vessel so the slot can be filled.
-        var ring = ScriptableObject.CreateInstance<Item>();
-        ring.id = "item.ring-of-beginnings";
-        ring.displayName = "Ring of Beginnings";
-        ring.slot = EquipSlotType.Ring;
-        ring.category = ItemCategory.Equip;
-        ring.rarity = Rarity.Rare;
-        ring.description = "Your life's-work vessel. Its power grows as you walk the ring.";
-        return ring;
     }
 
     // Tuning the `level` field in the inspector (at runtime) recomputes every derived stat — MaxHP,
@@ -973,14 +1025,6 @@ public class Character : MonoBehaviour, ICombatUnit
         // granted skills. Only fires on a real equip action, not on load (RestoreEquipment writes the dict directly).
         if (slot == EquipSlotType.Weapon)
         {
-            // THE TICKED PASSIVES GO WITH THE OLD WEAPON. There are four passive slots and the new weapon
-            // brings its own to fill them, so the player's own choices are cleared rather than fighting the
-            // weapon for room. They pick again, knowing what they are now holding.
-            PassiveSkills.ClearChecked();
-
-            var kit = (instance != null && instance.def != null) ? instance.skillIds : null;
-            if (Hotbar.SetWeaponKit(kit)) HotbarPanel.RebuildRequested?.Invoke();
-
             // AND THE SKILLS THEMSELVES, not just the bar. A character carries only what it can use, so changing
             // weapons changes the list — without this a player would keep the old weapon's skills and have none
             // of the new one's, and the bar would show slots nothing answered.
@@ -1022,6 +1066,13 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Who last cost this unit health — see <see cref="ICombatUnit.LastAttacker"/>.</summary>
     public ICombatUnit LastAttacker { get; private set; }
     public void NoteAttacker(ICombatUnit attacker) => LastAttacker = attacker;
+
+    /// <summary>The weapon in this character's hands — what a mastery is earned in.</summary>
+    public WeaponType HeldWeapon => HeldWeaponType;
+
+    /// <summary>Nothing is recorded on a PERSON: practice is paid for killing creatures, and a character is not
+    /// one. The door still calls this on whoever was hurt, so it answers rather than being special-cased there.</summary>
+    public void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt) { }
 
     /// <summary>TRUE on a copy of a character the SERVER owns — the one on this player's own screen while a server
     /// holds the real one. It shows every blow (the number, the flash, the stagger) but its health is told to it
@@ -1110,9 +1161,9 @@ public class Character : MonoBehaviour, ICombatUnit
     /// the slot draws empty and the skill cannot be cast — which looks exactly like the drop having failed.</para></summary>
     /// <summary>Rebuild what this character can use, and the positions behind it.
     ///
-    /// <para><b>THE RULE, and it binds every caller: change any of the FOUR sources below and call this in the same
-    /// breath.</b> The four are the hotbar (its slots and its ult), the ticked passives, the equipped weapon's kit,
-    /// and the consumables in the bag — see <see cref="UsableSkills"/>. A skill has nothing to run it until this has
+    /// <para><b>THE RULE, and it binds every caller: change any of the THREE sources below and call this in the same
+    /// breath.</b> The three are the hotbar (its slots and its ult), the ticked passives, and the consumables in the
+    /// bag — see <see cref="UsableSkills"/>. A weapon grants nothing: what it changes is which of them may FIRE. A skill has nothing to run it until this has
     /// run, so a source changed without it leaves the character agreeing the skill is theirs and holding nothing to
     /// cast it with: the press is refused and, before it said so, refused in total silence.</para>
     ///
@@ -1146,12 +1197,6 @@ public class Character : MonoBehaviour, ICombatUnit
             if (!string.IsNullOrEmpty(id)) usableIds.Add(id);
         }
         if (!string.IsNullOrEmpty(Hotbar.Ult)) usableIds.Add(Hotbar.Ult);
-
-        var weapon = GetEquippedInstance(EquipSlotType.Weapon);
-        var kit = weapon != null ? weapon.skillIds : null;
-        if (kit != null)
-            for (int i = 0; i < kit.Count; i++)
-                if (!string.IsNullOrEmpty(kit[i])) usableIds.Add(kit[i]);
 
         var ticked = PassiveSkills.Capture();
         if (ticked != null)
@@ -1615,35 +1660,73 @@ public class Character : MonoBehaviour, ICombatUnit
         if (Instance == this) Instance = null;
     }
 
-    public void AddXP(int amount)
+    /// <summary>SERVER-SIDE ONLY. Pay experience and run the level-up. Returns how many character levels that
+    /// gained, and says through <paramref name="ringLevelsGained"/> how many ring levels — the server hands both
+    /// counts to the owner's machine with the finished numbers (<see cref="GameNetwork.TellOwnerTheyEarned"/>),
+    /// and that machine takes them through <see cref="TakeXpFromServer"/>. It used to run this same loop itself
+    /// from the raw amount, which is the player's machine deciding a level, a stat point and a full heal.</summary>
+    public int AddXP(int amount) => AddXP(amount, out _);
+
+    public int AddXP(int amount, out int ringLevelsGained)
     {
-        if (amount <= 0) return;
+        ringLevelsGained = 0;
+        // A machine whose world is elsewhere never runs this: it is told the finished answer instead.
+        if (GameNetwork.TheWorldIsElsewhere) return 0;
+        if (amount <= 0) return 0;
 
         // The SAME kills feed both tracks: the character (flat stats) and the ring (its own level → passive
-        // draft points). Ring XP only accrues while the ring is actually worn — you can't level a ring you took off.
-        if (RingEquipped) Ring.AddXP(amount);
+        // draft points). The ring is part of the character, so nothing gates this.
+        ringLevelsGained = Ring.AddXP(amount);
 
+        int gained = 0;
         XP += amount;
         LifetimeXp += amount;
         while (XP >= XPToNext)
         {
             XP -= XPToNext;
             level++;
+            gained++;
             StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
             CurrentHP = MaxHP;                // level-up fully heals
             CurrentMP = MaxMP;                // …and refills mana
-            Sfx.Play(levelUpSfx);        // triumphant sting
-            OnLeveledUp?.Invoke(Level);  // drives the level-up toast
-            var lav = Avatar();
-            if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
+            PlayLevelUp(level);
         }
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
+        return gained;
     }
 
-    /// <summary>Dev/testing: feed the ring XP directly (the <c>/ringxp</c> command), regardless of whether
-    /// it's currently worn — so the ring track can be exercised without grinding.</summary>
-    public void AddRingXP(int amount) => Ring.AddXP(amount);
+    /// <summary>Take the server's finished answer after it paid this character: level, experience, points and
+    /// the ring as they now stand, plus how many levels each track gained so the moment plays the right number
+    /// of times. HP and MP are not here — the server's health report carries the level-up's full heal within a
+    /// tenth of a second, through the door every other health change uses.</summary>
+    public void TakeXpFromServer(int newLevel, int xp, long lifetimeXp, int statPoints, int levelsGained,
+                                 int ringLevel, int ringXp, int ringBankedPoints, int ringLevelsGained)
+    {
+        Ring.TakeFromServer(ringLevel, ringXp, ringBankedPoints, ringLevelsGained);
+
+        level = Mathf.Max(1, newLevel);
+        XP = Mathf.Max(0, xp);
+        LifetimeXp = System.Math.Max(0, lifetimeXp);
+        StatPoints = Mathf.Max(0, statPoints);
+        for (int reached = level - levelsGained + 1; reached <= level; reached++)
+            if (reached > 1) PlayLevelUp(reached);
+        OnStatsChanged?.Invoke();
+    }
+
+    /// <summary>The moment of reaching <paramref name="reached"/>: the sting, the toast and the burst. Shared by
+    /// the server's loop and the owner's machine so the two can never celebrate differently.</summary>
+    void PlayLevelUp(int reached)
+    {
+        Sfx.Play(levelUpSfx);          // triumphant sting
+        OnLeveledUp?.Invoke(reached);  // drives the level-up toast
+        var lav = Avatar();
+        if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
+    }
+
+    /// <summary>Dev/testing: feed the ring XP directly (the <c>/ringxp</c> command), so the ring track can be
+    /// exercised without grinding. Returns ring levels gained.</summary>
+    public int AddRingXP(int amount) => Ring.AddXP(amount);
 
     // ---- What this character is carrying --------------------------------------------------------------
     //
@@ -1676,7 +1759,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>The only code that may add to <see cref="Bag"/> by hand is code moving a thing you ALREADY OWN — a
     /// piece coming off your body, a whole bag arriving from the server, a save being read. Those are not
     /// arrivals and must not be announced as any; every one of them says so where it does it.</para></summary>
-    public BagEntry TakeIntoBag(Item def, int count, Rarity? rarity = null)
+    public BagEntry TakeIntoBag(Item def, int count)
     {
         if (def == null || count <= 0) return null;
 
@@ -1684,7 +1767,7 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             BagEntry last = null;
             for (int i = 0; i < count; i++)
-                last = TakeIntoBag(EquipmentInstance.CreateRolled(def, rarity));
+                last = TakeIntoBag(EquipmentInstance.CreateFresh(def));
             return last;
         }
 
@@ -1725,14 +1808,13 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         if (def == null || count <= 0) return;
 
-        var tier = inst != null ? inst.Rarity : def.rarity;
-        int refine = inst != null ? inst.upgrade : 0;
-        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, (int)tier, refine)) return;
+        int folds = inst != null ? inst.upgrade : 0;
+        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds)) return;
 
         // A server holds several people and has no chat of its own; one that could not reach the owner above has
         // nobody to tell.
         if (GameServer.IsServer || this != Instance) return;
-        ChatController.ItemArrived(def, count, tier, refine);
+        ChatController.ItemArrived(def, count, folds);
     }
 
     /// <summary>How much money this character has.</summary>
@@ -1793,6 +1875,8 @@ public class Character : MonoBehaviour, ICombatUnit
         d.gold         = Gold;
         d.hotbarBindings = Hotbar.Capture();
         d.activePassives = PassiveSkills.Capture();
+        Mastery.Capture(out d.masteryWeapons, out d.masteryPoints,
+                        out d.masterySkillIds, out d.masterySkillUses, out d.learnedSkillIds);
         CaptureEquipment(d);
         CaptureBag(d);
 
@@ -1818,33 +1902,24 @@ public class Character : MonoBehaviour, ICombatUnit
         var counts = new List<int>();
         var refines = new List<int>();
         var cards = new List<string>();
-        var rarities = new List<int>();
-        var kits = new List<string>();
         var rolls = new List<string>();
         foreach (var e in bag)
         {
             if (e == null || e.def == null) continue;
-            // The Ring vessel is auto-worn on load and is never a real bag item — writing a copy of it here
-            // would restore one INTO the bag and equip a second, which is one ring becoming two.
-            if (e.def.slot == EquipSlotType.Ring) continue;
             ids.Add(e.def.id);
             counts.Add(Mathf.Max(1, e.count));
             if (e.IsEquip && e.instance != null)
             {
                 refines.Add(e.instance.upgrade);
                 cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
-                rarities.Add((int)e.instance.rarity);
-                kits.Add(e.instance.EncodeSkills());
                 rolls.Add(e.instance.EncodeRoll());
             }
-            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); rolls.Add(""); }
+            else { refines.Add(0); cards.Add(""); rolls.Add(""); }
         }
         d.bagItemIds = ids.ToArray();
         d.bagCounts = counts.ToArray();
         d.bagRefines = refines.ToArray();
         d.bagCards = cards.ToArray();
-        d.bagRarities = rarities.ToArray();
-        d.bagSkills = kits.ToArray();
         d.bagRolls = rolls.ToArray();
     }
 
@@ -1870,17 +1945,18 @@ public class Character : MonoBehaviour, ICombatUnit
             var entry = new BagEntry { def = def, count = Mathf.Max(1, count) };
             if (def.slot != EquipSlotType.None)
             {
-                int refine = (d.bagRefines != null && i < d.bagRefines.Length) ? d.bagRefines[i] : 0;
+                // FOLDS, NOT REFINES. A save written before crafting carries +N bought under the old rule, which
+                // would leave a Raw piece folded past what a forge could ever fold it to — so it starts at none.
+                int folds = d.version >= 13 && d.bagRefines != null && i < d.bagRefines.Length ? d.bagRefines[i] : 0;
                 entry.count = 1;
-                entry.instance = new EquipmentInstance(def, refine);
+                entry.instance = new EquipmentInstance(def, folds);
                 if (d.bagCards != null && i < d.bagCards.Length)
                     ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
-                // v7+: the copy's rolled rarity + kit ride the save; a pre-v7 entry keeps the def's rarity and
-                // an empty kit rather than silently re-rolling into something the player never earned.
-                if (d.bagRarities != null && i < d.bagRarities.Length) entry.instance.rarity = (Rarity)d.bagRarities[i];
-                if (d.bagSkills != null && i < d.bagSkills.Length) entry.instance.DecodeSkills(d.bagSkills[i]);
-                // v11+: the copy's rolled armour numbers. Missing on an older save, which leaves the piece unrolled.
+                // v12+: the copy's grade and the stats written on it. A save older than that carries the old
+                // rolled-armour text, which does not read as a grade — so the piece loads Raw with nothing
+                // written, which is what a piece that has never been forged is.
                 if (d.bagRolls != null && i < d.bagRolls.Length) entry.instance.DecodeRoll(d.bagRolls[i]);
+                else entry.instance.Recompute();
             }
             bag.Add(entry);
         }
@@ -1894,53 +1970,41 @@ public class Character : MonoBehaviour, ICombatUnit
         foreach (var def in Resources.LoadAll<Item>("Items"))
         {
             if (def == null) continue;
-            // The Ring of Progression vessel is auto-equipped (one per player); don't also seed a duplicate
-            // into the bag. It still returns to the bag normally if you take it off.
-            if (def.slot == EquipSlotType.Ring) continue;
-            // WEAPONS are never seeded: a weapon's identity is its ROLLED kit, so it may only enter the world
-            // through a roll (a drop, or /weapon). A hand-placed starter weapon would have no kit at all.
-            if (def.slot == EquipSlotType.Weapon) continue;
-            // ARMOUR is never seeded either, for the same reason: each copy's numbers are rolled as it enters the
-            // world, and a hand-placed starter piece would carry no roll at all.
-            if (ArmourRoll.IsRolledSlot(def.slot)) continue;
-            if (def.slot != EquipSlotType.None)
-            {
-                // Seeded gear arrives unrefined. Rarity used to set a starting +N here; it no longer touches
-                // anything but the output lift, so refine is its own channel and starts where every other
-                // piece's does.
-                bag.Add(new BagEntry { def = def, count = 1, instance = new EquipmentInstance(def) });
-            }
-            else
-                bag.Add(new BagEntry { def = def, count = def.IsUsable ? 5 : 1 });
+            // NOTHING WEARABLE IS SEEDED. Gear is made, never handed out: a character's first weapon and first
+            // armour are forged at a station, so a starter piece would be a second way to come by one.
+            if (def.slot != EquipSlotType.None) continue;
+            // AND NO MATERIAL EITHER. Materials are earned from creatures, band by band; the moment they became
+            // items this line handed every new character one of each, Adamant and Sharp Ink included.
+            if (def.materialKind != MaterialKind.None) continue;
+            bag.Add(new BagEntry { def = def, count = def.IsUsable ? 5 : 1 });
         }
     }
 
-    // Every occupied slot EXCEPT the Ring vessel (auto-worn on load by EnsureRingEquipped, and never a
-    // normal bag item). Allocates a few small lists — fine, this runs only on save, not a hot path.
+    // Allocates a few small lists — fine, this runs only on save, not a hot path.
     /// <summary>What this character is WEARING, in the same arrays the save uses. Public so the wire can carry
     /// it beside the bag — equipping moves an item between the two in one decision, and sending only one half
-    /// leaves the item apparently nowhere. The Ring vessel is excluded, as it is from the save.</summary>
+    /// leaves the item apparently nowhere.</summary>
     public void CaptureWornInto(out int[] slots, out string[] ids, out int[] refines,
-                                out string[] cards, out int[] rarities, out string[] kits, out string[] rolls)
+                                out string[] cards, out string[] rolls)
     {
         var d = new SaveData();
         CaptureEquipment(d);
         slots = d.equipSlots; ids = d.equipItemIds; refines = d.equipRefines;
-        cards = d.equipCards; rarities = d.equipRarities; kits = d.equipSkills; rolls = d.equipRolls;
+        cards = d.equipCards; rolls = d.equipRolls;
     }
 
-    /// <summary>Wear exactly this, replacing whatever was worn. The Ring is put back on afterwards because it
-    /// is never in what arrives.</summary>
-    public void RestoreWornFrom(int[] slots, string[] ids, int[] refines,
-                                string[] cards, int[] rarities, string[] kits, string[] rolls)
+    /// <summary>Wear exactly this, replacing whatever was worn.</summary>
+    public void RestoreWornFrom(int[] slots, string[] ids, int[] refines, string[] cards, string[] rolls)
     {
         if (slots == null || ids == null) return;
+        // STAMPED CURRENT, because the restore reads the fold count only from a save of the current shape — and
+        // this is the wire, which is always current. Left at zero, every worn piece arrived on the screen as +0.
         RestoreEquipment(new SaveData
         {
+            version = SaveData.CurrentVersion,
             equipSlots = slots, equipItemIds = ids, equipRefines = refines,
-            equipCards = cards, equipRarities = rarities, equipSkills = kits, equipRolls = rolls,
+            equipCards = cards, equipRolls = rolls,
         });
-        EnsureRingEquipped();
     }
 
     void CaptureEquipment(SaveData d)
@@ -1949,31 +2013,24 @@ public class Character : MonoBehaviour, ICombatUnit
         var ids = new List<string>();
         var refines = new List<int>();
         var cards = new List<string>();
-        var rarities = new List<int>();
-        var kits = new List<string>();
         var rolls = new List<string>();
         foreach (var kv in Gear.Worn)
         {
-            if (kv.Key == EquipSlotType.Ring) continue;
             var inst = kv.Value;
             slots.Add((int)kv.Key);
             ids.Add(inst.def.id);
             refines.Add(inst.upgrade);
             cards.Add(ItemCatalog.EncodeCards(inst.cards));
-            rarities.Add((int)inst.rarity);
-            kits.Add(inst.EncodeSkills());
             rolls.Add(inst.EncodeRoll());
         }
         d.equipSlots   = slots.ToArray();
         d.equipItemIds = ids.ToArray();
         d.equipRefines = refines.ToArray();
         d.equipCards   = cards.ToArray();
-        d.equipRarities = rarities.ToArray();
-        d.equipSkills   = kits.ToArray();
         d.equipRolls    = rolls.ToArray();
     }
 
-    // Rebuild the equip dictionary from the saved arrays (Ring excluded — EnsureRingEquipped re-wears it).
+    // Rebuild the equip dictionary from the saved arrays.
     // Unknown item/card ids are dropped so a removed asset can't break a load.
     void RestoreEquipment(SaveData d)
     {
@@ -1983,19 +2040,17 @@ public class Character : MonoBehaviour, ICombatUnit
             for (int i = 0; i < d.equipSlots.Length && i < d.equipItemIds.Length; i++)
             {
                 var slot = (EquipSlotType)d.equipSlots[i];
-                if (slot == EquipSlotType.Ring) continue;
                 var def = ItemCatalog.Resolve(d.equipItemIds[i]);
                 if (def == null) continue;
-                int refine = (d.equipRefines != null && i < d.equipRefines.Length) ? d.equipRefines[i] : 0;
-                var inst = new EquipmentInstance(def, refine);
+                // The same rule the bag follows: a pre-crafting refine is not a fold.
+                int folds = d.version >= 13 && d.equipRefines != null && i < d.equipRefines.Length ? d.equipRefines[i] : 0;
+                var inst = new EquipmentInstance(def, folds);
                 if (d.equipCards != null && i < d.equipCards.Length)
                     ItemCatalog.DecodeCards(d.equipCards[i], inst.cards);
-                // v7+: the copy's own rolled rarity + kit. A pre-v7 save has neither, so the piece keeps the def's
-                // rarity and an empty kit — it re-rolls nothing, it simply has no rolled identity yet.
-                if (d.equipRarities != null && i < d.equipRarities.Length) inst.rarity = (Rarity)d.equipRarities[i];
-                if (d.equipSkills != null && i < d.equipSkills.Length) inst.DecodeSkills(d.equipSkills[i]);
-                // v11+: the copy's rolled armour numbers. Missing on an older save, which leaves the piece unrolled.
+                // v12+: the copy's grade and written stats. A save older than that carries the old rolled-armour
+                // text, which does not read as a grade, so the piece loads Raw with nothing written on it.
                 if (d.equipRolls != null && i < d.equipRolls.Length) inst.DecodeRoll(d.equipRolls[i]);
+                else inst.Recompute();
                 Gear.Equip(slot, inst);
             }
         }
@@ -2027,11 +2082,22 @@ public class Character : MonoBehaviour, ICombatUnit
         Ring.Restore(d.ringLevel > 0 ? d.ringLevel : Passives.TotalRanks() + Passives.BankedPoints, d.ringXp);
         SetGold(d.gold);
         AnnounceGold();              // even if the figure did not move — see AnnounceGold
+        // MASTERY BEFORE THE BAR. Nothing here re-checks the bar against what was learned — a save's bar was
+        // already checked when it was arranged — but what the character can USE is built from both, and reading
+        // them in this order is what makes the first rebuild right.
+        Mastery.Restore(d.masteryWeapons, d.masteryPoints, d.masterySkillIds, d.masterySkillUses, d.learnedSkillIds);
+        // AND WHAT THE MASTERY NOW OPENS. A skill added to the game since this character last played, or one whose
+        // level was retuned below where they already stand, is learned here rather than being unreachable.
+        Mastery.LearnWhatIsOpen();
+        // AND THE BAR IS HELD TO WHAT WAS LEARNED. A save arranged under an older rule — the weapon kit, which put
+        // four skills on the bar that nobody had to learn — kept those keys on screen while the server refused
+        // every press of them, and said nothing. The same test a bind command passes.
+        KeepOnlyBindable(d.hotbarBindings);
+        KeepOnlyBindable(d.activePassives);
         Hotbar.Restore(d.hotbarBindings);
         PassiveSkills.Restore(d.activePassives);
-        RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
+        RestoreEquipment(d);         // v6+: rebuild worn gear from the save
         RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
-        EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
 
         // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave
         // whatever the character already wears rather than stripping it to nothing.

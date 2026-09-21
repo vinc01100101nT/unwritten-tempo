@@ -271,7 +271,7 @@ public class HotbarPanel : MonoBehaviour
         if (passiveCells.Count == 0 || Character.Instance == null) return;
 
         var me = Character.Instance;
-        me.PassiveSkills.CollectActive(me.GetEquippedInstance(EquipSlotType.Weapon), activePassives);
+        me.PassiveSkills.CollectActive(activePassives);
 
         for (int i = 0; i < passiveCells.Count; i++)
         {

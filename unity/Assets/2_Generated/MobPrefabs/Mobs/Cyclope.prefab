@@ -227,12 +227,6 @@ MonoBehaviour:
   xpToFirstLevel: 20
   preferredRange: 0
   fleeHpFraction: 0
-  projectileSheet: {fileID: 0}
-  projFrameSize: 16
-  projFrames: 4
-  projFps: 16
-  projSpeed: 9
-  projScale: 1.1
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
@@ -262,8 +256,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c8dd4dbdac794c368d4f75e4937aa66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
+  inputs:
+    level: 5
+    str: 8
+    agi: 6
+    vit: 8
+    intel: 4
+    dex: 6
+    luk: 4
+    baseMaxHP: 20
+    hpPerLevel: 6
+    baseAttack: 4
+    attackPerLevel: 1
+    baseDefense: 1
+    defensePerLevel: 1
+    baseMaxMP: 10
+    mpPerLevel: 3
+    baseMagicAttack: 3
+    magicAttackPerLevel: 1
+    baseMagicDefense: 1
+    magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
+  weaponMasteryLevel: 0
 --- !u!114 &5525882806263137161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -280,6 +295,15 @@ MonoBehaviour:
   cell: 16
   walkFrames: 4
   framesPerSecond: 6
+  idleStrip:
+    sheet: {fileID: 0}
+    frames: 0
+    footPx: 0
+  walkStrip:
+    sheet: {fileID: 0}
+    frames: 0
+    footPx: 0
+  stripPixelsPerUnit: 0
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5

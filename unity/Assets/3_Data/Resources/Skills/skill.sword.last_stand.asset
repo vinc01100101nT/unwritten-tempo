@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Last Stand
   symbol: Ls
   weaponType: 1
+  masteryLevel: 40
+  needsSkillId: skill.sword.brace
   published: 1
   description: 'Cornered, you hold the line.
 

@@ -64,7 +64,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     }
 
     /// <summary>Hovering a filled row shows the item's tooltip (instance-aware, so equipment shows its +N /
-    /// cards / rarity).</summary>
+    /// cards / grade).</summary>
     public void OnPointerEnter(PointerEventData e)
     {
         if (instance != null)

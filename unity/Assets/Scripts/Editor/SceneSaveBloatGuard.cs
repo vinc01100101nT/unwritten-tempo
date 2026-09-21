@@ -32,6 +32,7 @@ public static class SceneSaveBloatGuard
         {
             if (!IsRuntimeJunk(root)) continue;
             stripped.Append($"\n   • {root.name} (flags={root.hideFlags})");
+            // editor-write-ok: on the user's own save, and removes only runtime clones that were never meant to be saved
             Object.DestroyImmediate(root);
             count++;
         }

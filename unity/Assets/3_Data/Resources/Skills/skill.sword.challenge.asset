@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Challenge
   symbol: Ch
   weaponType: 1
+  masteryLevel: 13
+  needsSkillId: 
   published: 1
   description: 'Force one enemy to fight you.
 

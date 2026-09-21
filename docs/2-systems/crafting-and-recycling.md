@@ -8,49 +8,26 @@ tags:
 
 # Crafting & Recycling
 
-*Turn the weapons you find into the weapon you want.*
+*Gear is made, never found.*
 
-## Every drop is a starting point
+> **Superseded.** Everything this page used to describe — a weapon arriving with a rolled set of skills, a
+> Potential budget, Reforge, Add, Weapon Essence and Transmog — belonged to the rarity-and-kits design that
+> [Gameplay System V4](gameplay-system-v4/README.md) replaced on 2026-09-20. The forging loop that took its place
+> is written there, and this page is kept only so a link to it does not lead nowhere.
 
-A weapon you find is rarely finished. Every weapon rolls the same kind of kit whatever its rarity — **3 or 4 actives, 3 or 4 passives, and a 1-in-4 chance of an Ultimate** — so a common weapon can arrive as complete as a legendary one. What its rarity buys is how hard all of it hits (and how much attack the weapon itself carries), and more **Potential** to craft with.
+## What replaced it, in one paragraph
 
-## Potential — a weapon's crafting budget
-
-Every weapon has a **Potential** score — its personal, one-time crafting budget. You spend Potential to change its skills (**Add** and **Reforge**). Potential does **not** refill: once a weapon's Potential is gone, its skills are locked in for good — though you can still use, refine, and re-skin that weapon forever. A weapon with lots of Potential is simply a better canvas to invest in.
-
-## Shaping your skills
-
-- **Add** — fill an empty skill slot with a random skill from that weapon's pool.
-- **Reforge** — re-roll a weapon's normal skills, locking the ones you want to keep.
-- Your **Ultimate points at your build** (see *Skills*), so which one you get is the thing worth chasing. A drop is the fast way to one; forging it in is the slow way, and both are open to you.
-
-## Refining (+N)
-
-Separately, you can **refine** a weapon to raise its Attack (and any gear's Defense). Refining doesn't cost Potential — just materials.
-
-## Weapon Essence & recycling — nothing is wasted
-
-The weapons you don't want aren't trash:
-
-- **Recycle** them into **Weapon Essence** — a powder that fuels every kind of weapon crafting. Better weapons recycle into more Essence.
-- Or keep one for its **look**: **Transmog** lets you wear any same-type weapon's appearance on your own (a Sword's look on a Sword), without changing its skills or stats.
-
-## What everything costs
-
-- **Add / Reforge** — Potential + Weapon Essence + Gold.
-- **Refine** — Weapon Essence + a Refinement Stone + Gold.
-- **Transmog** — Weapon Essence + Gold.
-
-> *Status: the crafting loop above is designed; exact costs, drop rates, and Potential values are still being tuned.*
+Creatures drop materials, never equipment. You **forge** a piece at a station in town, **fold** it with the
+material band of its own grade to make it worth more, and **quench** it to move its grade one rung along the
+F-to-A ladder — which spends every fold, whichever way the quench goes. **Ink** writes a stat onto it, one roll
+of one stat, and better Ink writes a bigger number. **Salt** shifts a quench's odds and is spent either way.
+Skills are not on the weapon at all: you learn them by practising a weapon, and the grade of what you hold caps
+how far that practice can go.
 
 ---
 
 ## Related
 
-- [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md) — the systems-side design this player-facing page is the readable half of. **The rarity ladder, the per-copy rolled rarity, the rolled kit and the output lift are live; the crafting loop itself is not.**
-- [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — the pools an Add or a Reforge draws from.
-- [Active Skill System — V3](active-skill-system-v3/README.md) — why a weapon grants skills and the Ring grants power.
-- [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the commitment crafting deliberately cannot shortcut.
-- [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — where materials come from: mobs drop what they wear.
-- [Story & Setting (Canon)](../3-world/story-setting-canon.md) — a drop as a fragment of memory, which is how this flavour should be written.
-- [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — M3, the milestone this loop is waiting on.
+- [Gameplay System — V4](gameplay-system-v4/README.md) — the forging loop, the grades, Ink, Salt and mastery.
+- [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — what each weapon is for.
+- [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the growth the ring owns.

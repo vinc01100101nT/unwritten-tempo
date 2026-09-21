@@ -225,11 +225,11 @@ public static class SkillTooltip
     {
         effectLines.Clear();
         if (def == null || def.bindings == null) return effectLines;
-        // The amounts below have to agree with what the cast will really produce, and the weapon's rarity is part of
-        // that now. Held for the whole listing the same way the dialect is, because it is one value for one skill — and
-        // restored after, so a line described with no skill in hand can't inherit the last weapon's rarity.
+        // The amounts below have to agree with what the cast will really produce, and this character's practice is
+        // part of that. Held for the whole listing the same way the dialect is, because it is one value for one skill
+        // — and restored after, so a line described with no skill in hand cannot inherit the last one's lift.
         float prevLift = describeLift;
-        describeLift = Character.Instance != null ? Character.Instance.SkillRarityLift(def.id) : 0f;
+        describeLift = Character.Instance != null ? Character.Instance.SkillOutputLift(def.id) : 0f;
         try
         {
             for (int i = 0; i < def.bindings.Count; i++)
@@ -247,12 +247,12 @@ public static class SkillTooltip
         return effectLines;
     }
 
-    // The rarity lift of the skill currently being described, or 0 when it is being described without one (the buff
-    // tray's "what it does" line asks about a single effect, with no skill and no weapon behind it).
+    // The practice lift of the skill currently being described, or 0 when it is being described without one (the
+    // buff tray's "what it does" line asks about a single effect, with no skill behind it).
     static float describeLift;
 
-    // What a live cast really produces from an authored OUTPUT number: the ring's affinity term plus the weapon's
-    // rarity lift, added exactly as the applier adds them. Every line that shows such a number goes through here —
+    // What a live cast really produces from an authored OUTPUT number: the ring's affinity term plus this
+    // character's practice, added exactly as the applier adds them. Every line that shows such a number goes through here —
     // a card showing the raw authored figure promises one number while the fight deals another, and the two only
     // disagree by more as a player invests.
     static float LiveMult(SkillEffect e) => SkillEffectApplier.AffinityMult(e.affinity, Character.Instance) + describeLift;

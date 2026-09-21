@@ -102,6 +102,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
         canvasGO.AddComponent<SkillBookPanel>();           // Grimoire (J): browse all composed skills + bind to the hotbar
+        canvasGO.AddComponent<CraftStationPanel>();        // the smith / loom / tannery window, opened by reaching one
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
@@ -132,6 +133,13 @@ public static class UIShellBuilder
         // Save as a Resources prefab so the UI auto-spawns in any scene and persists.
         EnsureFolder("Assets/3_Data/Resources");
         PrefabUtility.SaveAsPrefabAssetAndConnect(canvasGO, ResourcePrefabPath, InteractionMode.AutomatedAction);
+        // AND THE SCENE'S COPY IS MADE IDENTICAL TO THE PREFAB. The text built above points at font assets UiKit
+        // makes in memory, which a prefab cannot hold (it saves them as nothing) but a scene CAN — as an override
+        // on this instance, dragging the whole font, atlas and glyph table into the scene file. Measured
+        // 2026-09-21: 96,000 lines added to Systems.unity by one save. Reverting the overrides leaves the
+        // instance pointing at exactly what the prefab holds, and nothing else to serialize.
+        // editor-write-ok: on the user's own Build UI Shell click, on the object that click just created
+        PrefabUtility.RevertPrefabInstance(canvasGO, InteractionMode.AutomatedAction);
 
         EditorSceneManager.MarkSceneDirty(canvasGO.scene);
         Selection.activeGameObject = canvasGO;

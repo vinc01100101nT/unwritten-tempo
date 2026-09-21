@@ -2,20 +2,21 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Keeps every effect's measured length in the effect table CURRENT, by itself.
+/// Keeps every effect's measured length in the effect table CURRENT — measuring by itself, writing only on a click.
 ///
 /// <para><b>Why anything has to.</b> A skill's gameplay beats are timed by the effect it plays — a beat authored
 /// to land "at the end" lands when that burst finishes. That length was only ever knowable by building the
 /// particle prefab and reading it, which a server never does: it draws nothing. So the number is measured here,
 /// at author time, and written into the table the server already loads.</para>
 ///
-/// <para><b>Nobody has to remember it.</b> It runs when the editor loads and again whenever a prefab the table
-/// points at is imported, moved or deleted — so an effect that is retimed, and an effect that is composed
-/// tomorrow, are both measured without anyone pressing anything. Composing a skill is untouched: the length
-/// belongs to the EFFECT, so every skill that names one already has it.</para>
+/// <para><b>Nobody has to remember to look.</b> It measures when the editor loads and again whenever an effect
+/// prefab or the table is imported, moved or deleted, and says out loud when a number has moved. <b>It never
+/// writes on its own:</b> nothing may change a saved asset while the user did nothing (the project's
+/// scene-dirtying rule), so the write is the menu item below — one click, after the warning names what drifted.
+/// Composing a skill is untouched: the length belongs to the EFFECT, so every skill that names one already has it.</para>
 ///
-/// <para>Idempotent and quiet: it writes only when a number actually moved, so a project where nothing changed
-/// costs one pass and dirties nothing. Not a quick fix — this is standing maintenance, like the material fixer.</para>
+/// <para>Idempotent and quiet: a project where nothing changed costs one pass and prints nothing. Not a quick fix —
+/// this is standing maintenance, like the material fixer.</para>
 /// </summary>
 public static class EffectTimingBaker
 {
@@ -23,16 +24,23 @@ public static class EffectTimingBaker
     // smaller is not a change worth dirtying an asset for.
     const float Epsilon = 0.0005f;
 
+    const string MenuPath = "Tools/unwritten/Art/Re-measure Effect Timings";
+
     [InitializeOnLoadMethod]
     static void SweepWhenTheEditorLoads()
     {
         // Deferred by one editor tick: at load time the asset database may still be importing, and a table read
         // during that window comes back with prefabs that are not resolved yet.
-        EditorApplication.delayCall += () => Bake(silent: true);
+        EditorApplication.delayCall += () => Sweep(write: false, silent: true);
     }
 
-    /// <summary>Measure every entry and write back what changed. Returns how many entries were rewritten.</summary>
-    public static int Bake(bool silent)
+    /// <summary>The one place the table is WRITTEN. The automatic sweeps only warn.</summary>
+    [MenuItem(MenuPath, priority = 460)]
+    static void ReMeasureAndWrite() => Sweep(write: true, silent: false);
+
+    /// <summary>Measure every entry. With <paramref name="write"/> the changed numbers are saved into the table;
+    /// without it they are only counted and named, and the count is what this returns either way.</summary>
+    public static int Sweep(bool write, bool silent)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return 0;
 
@@ -51,23 +59,29 @@ public static class EffectTimingBaker
                 && Mathf.Abs(e.measuredFadeSeconds - m.fadeSeconds) < Epsilon
                 && e.measuredLoops == m.loops) continue;
 
+            changed++;
+            if (!write) continue;
             e.measuredPlaySeconds = m.playSeconds;
             e.measuredFadeSeconds = m.fadeSeconds;
             e.measuredLoops = m.loops;
-            changed++;
         }
 
-        if (changed > 0)
+        if (write && changed > 0)
         {
+            // editor-write-ok: reached only with write:true, which the menu item alone passes; every automatic sweep passes false
             EditorUtility.SetDirty(lib);
+            // editor-write-ok: same — the automatic sweeps never get here
             AssetDatabase.SaveAssetIfDirty(lib);
         }
 
         // SAID OUT LOUD when something moved, because a retimed effect silently retimes a skill's beats, and the
         // person who nudged a particle duration has no reason to connect the two.
-        if (!silent || changed > 0)
-            Debug.Log("[effects] measured " + lib.effects.Count + " effects: " + changed + " updated"
-                      + (unresolved > 0 ? ", " + unresolved + " with no prefab (skipped)" : "") + ".");
+        string tail = unresolved > 0 ? ", " + unresolved + " with no prefab (skipped)" : "";
+        if (!write && changed > 0)
+            Debug.LogWarning("[effects] " + changed + " of " + lib.effects.Count + " effect timings have drifted from "
+                             + "the table" + tail + " — " + MenuPath.Replace("/", " \u25B8 ") + " writes them.");
+        else if (!silent)
+            Debug.Log("[effects] measured " + lib.effects.Count + " effects: " + changed + " updated" + tail + ".");
         return changed;
     }
 
@@ -97,8 +111,12 @@ public static class EffectTimingBaker
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             if (!Interesting(imported) && !Interesting(deleted) && !Interesting(moved)) return;
-            EditorApplication.delayCall += () => Bake(silent: true);
+            EditorApplication.delayCall += () => Sweep(write: false, silent: true);
         }
+
+        // Only the effect prefabs and the table itself. Before this filter, importing ANY prefab or data asset
+        // anywhere in the project re-measured all hundred-odd effects.
+        const string EffectFolder = "Assets/1_Authored/Prefabs/VFX/";
 
         static bool Interesting(string[] paths)
         {
@@ -107,8 +125,10 @@ public static class EffectTimingBaker
             {
                 var path = paths[i];
                 if (path == null) continue;
-                if (path.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase)) return true;
-                if (path.EndsWith(".asset", System.StringComparison.OrdinalIgnoreCase)) return true;
+                bool prefab = path.EndsWith(".prefab", System.StringComparison.OrdinalIgnoreCase);
+                bool table = path.EndsWith("EffectLibrary.asset", System.StringComparison.OrdinalIgnoreCase);
+                if (table) return true;
+                if (prefab && path.StartsWith(EffectFolder, System.StringComparison.OrdinalIgnoreCase)) return true;
             }
             return false;
         }

@@ -59,10 +59,10 @@ curl -s http://localhost:8080/health
 ```
 
 Starts the character server. Leave that terminal open too. It reads the SAME settings the sign-in service
-reads, which is why the line begins by loading them.
+reads — including `SERVER_SECRET` — so nothing is typed on the line.
 
 ```
-SERVER_SECRET=change-me charserver/run.sh
+charserver/run.sh
 ```
 
 Proves the character server is up **and** can reach the database. Want `{"ok":true,...}`.
@@ -76,7 +76,7 @@ Runs the game server. Run it from the top of this project. The settings are not 
 
 ```
 mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null
-CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET=change-me MAP_SERVER_ADDRESS=127.0.0.1 \
+CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET="$(grep '^SERVER_SECRET=' accounts/.env | cut -d= -f2-)" MAP_SERVER_ADDRESS=127.0.0.1 \
   builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 \
   | tee logs/server.log
 ```
@@ -270,7 +270,7 @@ of the folder you are in, so it reports *no such file or directory* while the fi
 caught us twice on 2026-09-02. The script is the same work with nothing to mistype.
 
 ```
-SERVER_SECRET=change-me charserver/run.sh
+charserver/run.sh
 ```
 
 Leave that terminal open. In another:
@@ -286,8 +286,9 @@ It listens on **port 8081**.
 
 **`SERVER_SECRET` is how the two servers recognise each other.** It is NOT a player's sign-in token and the two
 are never interchangeable: a person signing in must not be able to register a game server or read somebody
-else's character, and a game server does not sign in. Set the same value on both, and change it from
-`change-me` before this leaves your machine.
+else's character, and a game server does not sign in. It lives in `accounts/.env` (gitignored) and nowhere
+else: `charserver/run.sh` loads it from there and refuses to start without it, and the map server command
+above reads the same line so the two can never disagree. Generate one with `openssl rand -base64 32`.
 
 If it refuses to start it says why in one line and quits, rather than listening and failing on the first
 player. The two reasons it refuses: the port is already taken (another one is running — that is the common
@@ -342,7 +343,7 @@ It tells you if Unity is not running, and it fails loudly if nothing came out. W
 
 ```
 mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null
-CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET=change-me MAP_SERVER_ADDRESS=127.0.0.1 \
+CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET="$(grep '^SERVER_SECRET=' accounts/.env | cut -d= -f2-)" MAP_SERVER_ADDRESS=127.0.0.1 \
   builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 \
   | tee logs/server.log
 ```
@@ -462,7 +463,7 @@ and the character server must be started with that address in `WIKI_ORIGINS`. Se
 rather than adding to it, so list every address that needs to read it, separated by commas:
 
 ```
-WIKI_ORIGINS=http://wiki.example.com SERVER_SECRET=change-me charserver/run.sh
+WIKI_ORIGINS=http://wiki.example.com charserver/run.sh
 ```
 
 **That refusal is SILENT** — the page simply says it cannot reach the character server, and the browser writes

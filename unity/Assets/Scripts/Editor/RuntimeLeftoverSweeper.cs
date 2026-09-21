@@ -50,6 +50,7 @@ public static class RuntimeLeftoverSweeper
             if (EditorUtility.IsPersistent(go)) continue;                          // asset/prefab on disk, not a live object
             if ((go.hideFlags & HideFlags.DontSaveInEditor) == 0) continue;        // savable = real scene content, leave it
             if ((go.hideFlags & HideFlags.HideInHierarchy) != 0) continue;         // hidden preview owned by an editor window
+            // editor-write-ok: destroys only DontSaveInEditor objects leaked by Play — never a byte that could be saved
             Object.DestroyImmediate(go);
             swept++;
         }

@@ -4,7 +4,7 @@
 ///
 /// <para>Every item lands in exactly one bucket and no item lands in none — <see cref="ItemType.Misc"/> is the
 /// catch-all, which is what keeps an item from becoming invisible in every table at once.</para></summary>
-public enum ItemType { Weapon, Armor, Ring, Consumable, Material, Quest, Misc }
+public enum ItemType { Weapon, Armor, Consumable, Material, Quest, Misc }
 
 /// <summary>Two-way bridge between the coarse <see cref="ItemType"/> and the fine-grained slot/category that actually
 /// own an item's classification. <see cref="Of"/> reads the bucket; <see cref="Apply"/> writes a bucket back onto the
@@ -17,7 +17,6 @@ public static class ItemTypes
         if (it == null) return ItemType.Misc;
         // Slot decides first: anything wearable is gear, whatever its tab says.
         if (it.slot == EquipSlotType.Weapon) return ItemType.Weapon;
-        if (it.slot == EquipSlotType.Ring)   return ItemType.Ring;    // its own bucket — the progression vessel, not armor
         if (it.slot != EquipSlotType.None)   return ItemType.Armor;   // any other equip slot = worn gear
         // Bag-only items are sorted by their tab.
         switch (it.category)
@@ -38,7 +37,6 @@ public static class ItemTypes
         {
             case ItemType.Weapon:     it.slot = EquipSlotType.Weapon; it.category = ItemCategory.Equip;   break;
             case ItemType.Armor:      it.slot = EquipSlotType.Armor;  it.category = ItemCategory.Equip;   break;
-            case ItemType.Ring:       it.slot = EquipSlotType.Ring;   it.category = ItemCategory.Equip;   break;
             case ItemType.Consumable: it.slot = EquipSlotType.None;   it.category = ItemCategory.Use;     break;
             case ItemType.Material:   it.slot = EquipSlotType.None;   it.category = ItemCategory.Material; break;
             case ItemType.Quest:      it.slot = EquipSlotType.None;   it.category = ItemCategory.Quest;   break;

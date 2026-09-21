@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Deathblow
   symbol: Db
   weaponType: 1
+  masteryLevel: 30
+  needsSkillId: skill.sword.momentum
   published: 1
   description: 'Everything, in one swing.
 

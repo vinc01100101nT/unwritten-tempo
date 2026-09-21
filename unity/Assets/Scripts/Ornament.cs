@@ -5,7 +5,7 @@ using UnityEngine.UI;
 /// Ornament Kit v1.1 — the "Unwritten" branding layer over the UiKit windows.
 /// Art direction (GPT⇄Claude relay, 2026-06-25): <b>ink + gold, explorer's journal / grimoire margin</b>
 /// — NOT royal filigree. Guardrails, enforced here:
-///   • monochrome GOLD only (never competes with rarity colors),
+///   • monochrome GOLD only (never competes with the art it frames),
 ///   • 1–2 px visual weight max (must never out-weigh item borders / loot stays the focal point),
 ///   • asymmetric, "hand-authored" feel (corners pinwheel; they are not a mirrored picture frame),
 ///   • restraint — if you strip the item icons, the bare ornament should read as an unfinished journal page.

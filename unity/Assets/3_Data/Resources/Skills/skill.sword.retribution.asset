@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Retribution
   symbol: Rt
   weaponType: 1
+  masteryLevel: 45
+  needsSkillId: skill.sword.brace
   published: 1
   description: 'Answer all of it at once.
 

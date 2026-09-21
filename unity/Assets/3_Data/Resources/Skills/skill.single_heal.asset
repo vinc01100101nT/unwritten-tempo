@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.single_heal
   displayName: Heal
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: 
   archetype: 0

@@ -332,6 +332,7 @@ public static class RigBuilder25D
         block.inputs = arc.stats.level > 0 ? arc.stats : UnitStatInputs.Default(1);
         block.ringRankStats  = arc.ringRankStats  ?? System.Array.Empty<StatId>();
         block.ringRankValues = arc.ringRankValues ?? System.Array.Empty<int>();
+        block.weaponMasteryLevel = arc.weaponMasteryLevel;
 
         ai.attackElement          = arc.attackElement;       // outgoing PROPERTY (checked vs player's armor)
         ai.onHitAilment           = arc.onHitAilment;        // status inflicted on a landed hit (chance 0 = none)

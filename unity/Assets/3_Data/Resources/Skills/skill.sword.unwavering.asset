@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Unwavering
   symbol: Un
   weaponType: 1
+  masteryLevel: 21
+  needsSkillId: skill.sword.guard_stance
   published: 1
   description: "Stand your ground.\nAfter casting Guard Stance, nothing stops you
     for 6s \u2014 no flinch, stun, freeze, silence, knockback or pull."

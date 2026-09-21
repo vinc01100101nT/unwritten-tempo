@@ -337,7 +337,13 @@ public class MonsterAI3D : MonoBehaviour
         // several people can be swinging at the same creature. It used to pay the one player at this keyboard,
         // which on a server is nobody at all.
         if (Health != null)
-            Health.onDeath.AddListener(() => Rewards.PayForKill(Rewards.WhoEarned(Health), xpReward, Health));
+            Health.onDeath.AddListener(() =>
+            {
+                Rewards.PayForKill(Rewards.WhoEarned(Health), xpReward, Health);
+                // AND THE PRACTICE, which is paid to everyone who did some of the work rather than to the one
+                // who landed the last blow. Both halves of what a death is worth leave through Rewards.
+                Rewards.PayPractice(Health);
+            });
 
         nextWander = Time.time + Random.value;
     }

@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Disarm
   symbol: Ds
   weaponType: 1
+  masteryLevel: 19
+  needsSkillId: 
   published: 1
   description: 'Blunt their swing.
 

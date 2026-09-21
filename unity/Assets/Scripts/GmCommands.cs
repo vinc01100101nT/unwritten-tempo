@@ -39,6 +39,31 @@ public static class GmCommands
         if (!string.IsNullOrWhiteSpace(key)) byName[key.TrimStart('/')] = cmd;
     }
 
+    /// <summary>The words of a "/name arg arg" line, the leading slash dropped. A run of words inside double
+    /// quotes is ONE word — so `/item "watery ink" 10` names the item, not the word `"watery`. Three callers split
+    /// a line; this is the one place they agree on what a word is. Allocates, on a typed line, which is fine.</summary>
+    static string[] Tokenize(string line)
+    {
+        var words = new List<string>();
+        var word = new StringBuilder();
+        bool quoted = false, any = false;
+        string body = line.Trim().Substring(1);
+        for (int i = 0; i < body.Length; i++)
+        {
+            char ch = body[i];
+            if (ch == '"') { quoted = !quoted; any = true; continue; }
+            if (!quoted && (ch == ' ' || ch == '\t'))
+            {
+                if (any) { words.Add(word.ToString()); word.Clear(); any = false; }
+                continue;
+            }
+            word.Append(ch);
+            any = true;
+        }
+        if (any) words.Add(word.ToString());
+        return words.ToArray();
+    }
+
     /// <summary>Parse a "/name arg arg" line and run the matching command, sending any output to
     /// <paramref name="reply"/> (the chat log). Unknown names and handler exceptions reply an error rather
     /// than throwing, so a bad command can never take the chat down.</summary>
@@ -47,7 +72,7 @@ public static class GmCommands
         EnsureBootstrap();
         if (!IsCommand(line)) return;
 
-        var tokens = line.Trim().Substring(1).Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = Tokenize(line);
         if (tokens.Length == 0) { reply?.Invoke("Type a command after '/'. Try /help."); return; }
 
         var name = tokens[0];
@@ -97,7 +122,7 @@ public static class GmCommands
         EnsureBootstrap();
         if (!IsCommand(line)) return;
 
-        var tokens = line.Trim().Substring(1).Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = Tokenize(line);
         if (tokens.Length == 0) return;
 
         if (!byName.TryGetValue(tokens[0], out var cmd))
@@ -120,7 +145,7 @@ public static class GmCommands
     {
         EnsureBootstrap();
         if (!IsCommand(line)) return false;
-        var tokens = line.Trim().Substring(1).Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        var tokens = Tokenize(line);
         return tokens.Length > 0 && byName.TryGetValue(tokens[0], out var cmd) && cmd.changesTheWorld;
     }
 
@@ -161,10 +186,15 @@ public static class GmCommands
         // went from nothing to nothing, and an added coin vanished the instant the server next spoke.
         Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", CmdGold, false, true, "zeny"));
         Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", CmdItem, false, true, "give"));
-        Register(new GmCommand("weapon", "weapon [type] [rarity]",
-            "Roll a weapon into your bag. Type = sword/bow/… (default: a random weapon base). Rarity = common/uncommon/" +
-            "rare/epic/legendary (default: rolled off the drop table). Its skills are rolled from the published pool " +
-            "of that weapon type.", CmdWeapon, false, true, "drop"));
+        Register(new GmCommand("weapon", "weapon [type]",
+            "Put a Raw, unfolded weapon base in your bag. Type = sword/bow/… (default: a random weapon base). " +
+            "Fold it and quench it at a smith.", CmdWeapon, false, true, "drop"));
+        Register(new GmCommand("mastery", "mastery [weapon] <n>",
+            "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands), and learn " +
+            "whatever that opens. No arguments reports what you have practised.", CmdMastery, false, true));
+        Register(new GmCommand("station", "station <smith|loom|tannery|none>",
+            "Testing: make the nearest townsperson work at a station, so their station window opens on F. Lasts " +
+            "until the world is reloaded.", CmdStation, false, true));
         Register(new GmCommand("clearbag", "clearbag", "Empty the bag (worn gear is left alone).", CmdClearBag, false, true, "clearinv", "clearinventory"));
         Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind, false, true));
 
@@ -235,8 +265,8 @@ public static class GmCommands
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.Reply("Usage: /xp <n>"); return; }
-        c.Ch.AddXP(n);
-        GameNetwork.TellOwnerTheyEarned(c.Ch, n);
+        int levelsGained = c.Ch.AddXP(n, out int ringLevelsGained);
+        GameNetwork.TellOwnerTheyEarned(c.Ch, n, 0, levelsGained, ringLevelsGained);
         GameNetwork.ShellFor(c.Ch)?.SaveSoon();
         c.Reply($"+{n} XP.");
     }
@@ -245,8 +275,8 @@ public static class GmCommands
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.Reply("Usage: /ringxp <n>"); return; }
-        c.Ch.AddRingXP(n);
-        GameNetwork.TellOwnerTheyEarned(c.Ch, 0, n);
+        int ringLevelsGained = c.Ch.AddRingXP(n);
+        GameNetwork.TellOwnerTheyEarned(c.Ch, 0, n, 0, ringLevelsGained);
         GameNetwork.ShellFor(c.Ch)?.SaveSoon();
         c.Reply($"+{n} ring XP.");
     }
@@ -317,20 +347,18 @@ public static class GmCommands
         c.Reply($"Gave {count}× {found.displayName}.");
     }
 
-    // /weapon [type] [rarity] — the testing door for the drop roll. Both args are optional and order-free: whichever
-    // token parses as a weapon type is the base, whichever parses as a rarity forces the roll.
+    // /weapon [type] — the testing door for a forged base. One argument, optional: whichever weapon type is asked
+    // for. What comes back is a Raw, unfolded base, exactly what a forge hands over.
     static void CmdWeapon(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
 
         WeaponType? type = null;
-        Rarity? rarity = null;
         for (int i = 0; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (Enum.TryParse<WeaponType>(a, true, out var t) && t != WeaponType.None) { type = t; continue; }
-            if (Enum.TryParse<Rarity>(a, true, out var r)) { rarity = r; continue; }
-            c.Reply($"Don't know '{a}' — expected a weapon type (sword, bow, …) or a rarity (common … legendary).");
+            c.Reply($"Don't know '{a}' — expected a weapon type (sword, bow, ...).");
             return;
         }
 
@@ -349,30 +377,83 @@ public static class GmCommands
             return;
         }
 
-        var inst = EquipmentInstance.CreateRolled(pick, rarity);
+        var inst = EquipmentInstance.CreateFresh(pick);
         c.Ch.TakeIntoBag(inst);
         AfterChangingTheirBag(c.Ch);
         if (inst == null) { c.Reply("Couldn't create the weapon."); return; }
+        c.Reply($"Raw {pick.displayName} — fold it and quench it at a smith.");
+    }
 
-        WeaponSkillRoll.PoolCounts(pick.weaponType, out int ults, out int acts, out int pass);
-        var sb = new StringBuilder();
-        sb.Append(Rarities.Label(inst.rarity)).Append(' ').Append(pick.displayName);
-        if (inst.skillIds.Count == 0)
-            sb.Append(" — rolled NO skills (published pool for ").Append(pick.weaponType)
-              .Append(": ").Append(ults).Append(" ult / ").Append(acts).Append(" active / ").Append(pass)
-              .Append(" passive). Tick 'published' in the Skill Composer.");
-        else
+    // Testing door for the stations, until townspeople are authored as smiths, weavers and tanners in the town
+    // scene. Sets the role on the SERVER's copy of the nearest townsperson, and it is not written down anywhere.
+    static void CmdStation(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        if (c.ArgCount < 1) { c.Reply("station <smith|loom|tannery|none>"); return; }
+        if (!Enum.TryParse<CraftStation>(c.Arg(0), true, out var which))
         {
-            sb.Append(" —");
-            for (int i = 0; i < inst.skillIds.Count; i++)
-            {
-                var d = SkillCatalog.Get(inst.skillIds[i]);
-                sb.Append(i == 0 ? " " : ", ").Append(d != null ? d.displayName : inst.skillIds[i]);
-                if (d != null && d.IsUltimate) sb.Append(" (ult)");
-                else if (d != null && d.IsPassive) sb.Append(" (passive)");
-            }
+            c.Reply($"Don't know '{c.Arg(0)}' — expected smith, loom, tannery or none.");
+            return;
         }
-        c.Reply(sb.ToString());
+
+        var body = c.Ch.Body;
+        var npc = body != null ? TownNPC.Nearest(body.position, 8f) : null;
+        if (npc == null) { c.Reply("Nobody close enough. Stand next to a townsperson."); return; }
+        npc.station = which;
+        // AND EVERY MACHINE WATCHING THEM. The body a player presses F on is their own copy, so a role written
+        // only here would open a conversation with a smith.
+        GameNetwork.TellEverybodyTheyWorkAt(npc.gameObject, (int)which);
+        c.Reply(which == CraftStation.None
+            ? "That one is an ordinary villager again."
+            : $"That one works at the {CraftStations.Label(which)} now. Press F on them.");
+    }
+
+    // Testing door for the mastery tracks: a level is thousands of kills wide, and a play-test cannot fight
+    // them. Sets the practice to exactly what that level costs and learns whatever it opens.
+    static void CmdMastery(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+
+        var held = c.Ch.HeldWeapon;
+        if (c.ArgCount == 0)
+        {
+            var sb = new StringBuilder("Practised: ");
+            bool any = false;
+            foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
+            {
+                if (w == WeaponType.None) continue;
+                int lvl = c.Ch.Mastery.EarnedLevel(w);
+                if (lvl <= 0) continue;
+                if (any) sb.Append(", ");
+                sb.Append(w).Append(' ').Append(lvl);
+                any = true;
+            }
+            if (!any) sb.Append("nothing yet");
+            sb.Append(". Holding ").Append(held == WeaponType.None ? "nothing" : held.ToString())
+              .Append(" (usable ").Append(c.Ch.WeaponMasteryLevel).Append("), ")
+              .Append(c.Ch.Mastery.LearnedCount).Append(" skills learned.");
+            c.Reply(sb.ToString());
+            return;
+        }
+
+        var weapon = held;
+        int level = -1;
+        for (int i = 0; i < c.ArgCount; i++)
+        {
+            var a = c.Arg(i);
+            if (Enum.TryParse<WeaponType>(a, true, out var w) && w != WeaponType.None) { weapon = w; continue; }
+            if (int.TryParse(a, out int n)) { level = n; continue; }
+            c.Reply($"Don't know '{a}' — expected a weapon type or a level.");
+            return;
+        }
+        if (weapon == WeaponType.None) { c.Reply("Hold a weapon, or name one."); return; }
+        if (level < 0) { c.Reply("mastery [weapon] <n>"); return; }
+
+        c.Ch.Mastery.SetPractice(weapon, MasteryMath.WeaponPointsFor(level));
+        int learned = c.Ch.Mastery.LearnWhatIsOpen();
+        c.Ch.RefreshUsableSkills();
+        c.Reply($"{weapon} mastery {c.Ch.Mastery.EarnedLevel(weapon)} — {learned} new skill(s) learned, " +
+                $"{c.Ch.WeaponMasteryLevel} usable with what you are holding.");
     }
 
     static void CmdClearBag(GmContext c)

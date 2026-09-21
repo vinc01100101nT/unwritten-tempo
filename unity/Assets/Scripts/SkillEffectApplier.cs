@@ -38,10 +38,10 @@ public static class SkillEffectApplier
     /// (an AoE scan, or the cast's designated unit for Single). Zero-alloc: a squared-distance sweep over the small
     /// Active list, no physics / Find / GetComponent.
     /// <paramref name="caster"/> is the unit using the skill, whose own numbers scale every roll.</summary>
-    // The rarity lift of the weapon that granted the cast currently applying, as a fraction (see
+    // The practice lift the caster puts on the cast currently applying, as a fraction (see
     // Rarities.OutputLift). Held here rather than passed through every signature because it is one value for a whole
     // burst — the same reason PassiveEvents and RepeatsDamageTotal hold theirs this way.
-    static float rarityLift;
+    static float masteryLift;
 
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
@@ -54,18 +54,18 @@ public static class SkillEffectApplier
         var ch = caster;
         if (ch == null) return;
 
-        // Which weapon's rarity is paying for this cast, resolved ONCE for the whole burst — it compares skill ids, so
-        // it has no business running per hit. Restored on the way out because a passive can cast INSIDE this burst
-        // (OnDamageDealt / OnKill fire synchronously below): without the restore, the inner cast's weapon would go on
-        // paying for the outer cast's remaining hits.
-        float prevLift = rarityLift;
-        rarityLift = ch != null ? ch.SkillRarityLift(srcId) : 0f;
+        // What the caster's own practice is paying for this cast, resolved ONCE for the whole burst — looking it up
+        // has no business running per hit. Restored on the way out because a passive can cast INSIDE this burst
+        // (OnDamageDealt / OnKill fire synchronously below): without the restore, the inner cast's practice would go
+        // on paying for the outer cast's remaining hits.
+        float prevLift = masteryLift;
+        masteryLift = ch != null ? ch.SkillOutputLift(srcId) : 0f;
         try
         {
             ApplyBurstTargets(point, radius, scope, targets, effects, singleTarget,
                               srcSymbol, srcName, srcId, aimPoint, ch, vars);
         }
-        finally { rarityLift = prevLift; }
+        finally { masteryLift = prevLift; }
     }
 
     // The body of a burst, split out ONLY so the lift above is restored on every exit — this method has several.
@@ -465,7 +465,7 @@ public static class SkillEffectApplier
                 break;
             // EVERY timed sub-stat change, buff and debuff alike, lands here — move speed, both regens, leech,
             // reflect, evasion, the lot. The amount is OUTPUT, so it takes both scalings: ring investment and the
-            // rarity of the weapon that granted the cast. A debuff is authored as a POSITIVE amount and negated
+            // caster's practice with this skill. A debuff is authored as a POSITIVE amount and negated
             // here, so nobody has to type a minus sign to make something worse.
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:
@@ -491,7 +491,7 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.BoostOutgoingDamage:
                 // Charges ride the apply context like Parry's; each carries the authored bonus, scaled by ring and by
-                // rarity for the same reason a stat buff's is — what one charge is worth is this effect's OUTPUT.
+                // practice for the same reason a stat buff's is — what one charge is worth is this effect's OUTPUT.
                 if (Fires(e, hit, caster, vars)) states.BeginOutgoingBoost(seconds, OutputMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.ImmuneToDisables:
@@ -961,7 +961,7 @@ public static class SkillEffectApplier
     static float StackedShoveSeconds(SkillEffect e, in StackVars vars) =>
         Mathf.Max(0.01f, e.shoveSeconds.Resolve(vars));
 
-    // The flat-amount sibling of OutputMagnitude (a heal's HP, a shield's pool) — same scalings, ring and rarity both.
+    // The flat-amount sibling of OutputMagnitude (a heal's HP, a shield's pool) — same scalings, ring and practice both.
     // A cleanse's count does NOT come through here: it is a whole number of ailments removed, so it reads the pile
     // alone (StackedAmount) and no multiplier can move it by less than a whole one.
     static int ScaledAmount(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
@@ -1018,17 +1018,17 @@ public static class SkillEffectApplier
     static float ScaledMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, AffinityMult(e.affinity, caster));
 
-    // An effect's own OUTPUT multiplier: what the ring's affinity earns, PLUS the rarity of the weapon that granted
-    // this cast. Added, never multiplied — so a Legendary is worth the same +30 POINTS to a new character as to a
-    // maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at a ring
-    // term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
+    // An effect's own OUTPUT multiplier: what the ring's affinity earns, PLUS what the caster's own practice with
+    // this skill is worth. Added, never multiplied — so mastery is worth the same +30 POINTS to a new character as
+    // to a maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at
+    // a ring term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
     static float OutputMult(SkillEffect e, ICombatUnit caster) =>
-        AffinityMult(e.affinity, caster) + rarityLift;
+        AffinityMult(e.affinity, caster) + masteryLift;
 
-    // The rarity-lifted form of ScaledMagnitude, for every number that IS output: an ailment's damage per tick, how
+    // The practice-lifted form of ScaledMagnitude, for every number that IS output: an ailment's damage per tick, how
     // far a sub-stat buff or debuff moves, and what one outgoing-damage charge is worth.
     // Deliberately a separate function: ScaledMagnitude also reads ANOTHER skill's authored charge when a modifier
-    // feeds its pile, and a weapon's rarity must never travel into a second skill's numbers.
+    // feeds its pile, and one skill's practice must never travel into a second skill's numbers.
     static float OutputMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, OutputMult(e, caster));
     static float ScaledSeconds(SkillEffect e, ICombatUnit caster, in StackVars vars) =>

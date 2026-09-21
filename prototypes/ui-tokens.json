@@ -34,78 +34,7 @@
       "alpha": 1.0
     }
   },
-  "rarity": {
-    "Common": {
-      "border": {
-        "hex": "#4B5563",
-        "alpha": 1.0
-      },
-      "text": {
-        "hex": "#CBD2E0",
-        "alpha": 1.0
-      },
-      "glow": {
-        "hex": "#000000",
-        "alpha": 0.0
-      }
-    },
-    "Uncommon": {
-      "border": {
-        "hex": "#46D17F",
-        "alpha": 1.0
-      },
-      "text": {
-        "hex": "#A8F0C5",
-        "alpha": 1.0
-      },
-      "glow": {
-        "hex": "#46D17F",
-        "alpha": 0.28
-      }
-    },
-    "Rare": {
-      "border": {
-        "hex": "#4F8CFF",
-        "alpha": 1.0
-      },
-      "text": {
-        "hex": "#BCD4FF",
-        "alpha": 1.0
-      },
-      "glow": {
-        "hex": "#4F8CFF",
-        "alpha": 0.3
-      }
-    },
-    "Epic": {
-      "border": {
-        "hex": "#A855F7",
-        "alpha": 1.0
-      },
-      "text": {
-        "hex": "#E6C6FF",
-        "alpha": 1.0
-      },
-      "glow": {
-        "hex": "#A855F7",
-        "alpha": 0.34
-      }
-    },
-    "Legendary": {
-      "border": {
-        "hex": "#F5B942",
-        "alpha": 1.0
-      },
-      "text": {
-        "hex": "#F1E7D0",
-        "alpha": 1.0
-      },
-      "glow": {
-        "hex": "#F5B942",
-        "alpha": 0.4
-      }
-    }
-  },
+  "rarity": {},
   "shared_hexes": [
     "#121317",
     "#15161A",
@@ -116,19 +45,7 @@
     "#C8A862",
     "#E7E3D5"
   ],
-  "rarity_hexes": [
-    "#000000",
-    "#46D17F",
-    "#4B5563",
-    "#4F8CFF",
-    "#A855F7",
-    "#A8F0C5",
-    "#BCD4FF",
-    "#CBD2E0",
-    "#E6C6FF",
-    "#F1E7D0",
-    "#F5B942"
-  ],
+  "rarity_hexes": [],
   "fonts": [
     {
       "var": "title",
@@ -152,7 +69,12 @@
         0.5
       ]
     },
-    "Auto Combat Indicator": {
+    "Arrow": {
+      "#FFF0B8": [
+        0.95
+      ]
+    },
+    "AutoPilotIndicator": {
       "#FF8066": [
         1.0
       ]
@@ -324,6 +246,11 @@
         1.0
       ]
     },
+    "CraftStationPanel": {
+      "#A79E88": [
+        1.0
+      ]
+    },
     "DayNightLight": {
       "#0A0D1A": [
         1.0
@@ -376,17 +303,6 @@
         1.0
       ],
       "#D9D1CC": [
-        1.0
-      ]
-    },
-    "DevSettings": {
-      "#4CB2FF": [
-        1.0
-      ],
-      "#B2FFB2": [
-        1.0
-      ],
-      "#D9F2FF": [
         1.0
       ]
     },
@@ -443,6 +359,14 @@
         1.0
       ]
     },
+    "GroundDrop": {
+      "#D9D19E": [
+        1.0
+      ],
+      "#E8E8E8": [
+        1.0
+      ]
+    },
     "HandDrawnFX": {
       "#14120F": [
         1.0
@@ -485,6 +409,26 @@
         1.0
       ],
       "#FFD973": [
+        1.0
+      ]
+    },
+    "HoverPlate": {
+      "#0F0D12": [
+        0.85
+      ],
+      "#598CF2": [
+        1.0
+      ],
+      "#66D94C": [
+        1.0
+      ],
+      "#E03333": [
+        1.0
+      ],
+      "#F2CC33": [
+        1.0
+      ],
+      "#FFDE73": [
         1.0
       ]
     },
@@ -532,12 +476,6 @@
       "#8A8F99": [
         1.0
       ],
-      "#8FB7E0": [
-        1.0
-      ],
-      "#9FD8A8": [
-        1.0
-      ],
       "#B9B9B9": [
         1.0
       ],
@@ -553,7 +491,7 @@
       "#E08A8A": [
         1.0
       ],
-      "#F5B942": [
+      "#E8E8E8": [
         1.0
       ]
     },
@@ -737,9 +675,6 @@
         1.0
       ],
       "#D98CFF": [
-        1.0
-      ],
-      "#FFB280": [
         1.0
       ],
       "#FFDB80": [

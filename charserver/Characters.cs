@@ -85,7 +85,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     {
         await using var conn = await db.ConnectAsync();
         await using var cmd = new NpgsqlCommand(
-            $"select {Columns} from character where account_id = $1 and deleted_at is null order by created_at", conn);
+            $"select {Columns} from character where account_id = $1 and deleted_at is null order by created_at /* index: character_by_account */", conn);
         cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
 
         var list = new List<object>();

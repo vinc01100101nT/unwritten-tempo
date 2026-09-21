@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.heal_circle
   displayName: Sanctuary
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: 'Ground that mends.
 

@@ -15,6 +15,8 @@ MonoBehaviour:
   id: skill.blink_step
   displayName: Blink Step
   weaponType: 0
+  masteryLevel: 1
+  needsSkillId: 
   published: 0
   description: 'Step through the gap.
 

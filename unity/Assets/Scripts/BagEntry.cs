@@ -1,6 +1,6 @@
 /// <summary>
 /// One stack in a character's bag: an item, how many of it, and — for anything wearable — the particular copy
-/// that is being carried, with its own upgrade level, cards, rarity and rolled kit.
+/// that is being carried, with its own folds, grade, written stats and cards.
 ///
 /// <para><b>Why this is its own type rather than something the bag window owns.</b> It used to live inside
 /// <see cref="InventoryStore"/>, which is a component on the inventory window's canvas — so the only home a

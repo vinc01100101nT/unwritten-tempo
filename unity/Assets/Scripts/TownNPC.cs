@@ -44,6 +44,12 @@ public class TownNPC : MonoBehaviour
     /// which is the one thing that can turn a body on a machine with no screen.</summary>
     public Transform TalkTarget => talkTarget;
 
+    [Header("Craft station")]
+    [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith forges metal, " +
+             "a loom weaves cloth, a tannery tans leather — pressing F on one opens their station instead of a " +
+             "conversation, and a piece may only be worked on at a station of its own craft.")]
+    public CraftStation station = CraftStation.None;
+
     [Header("Wander")]
     [Tooltip("Seconds to linger at a spot before strolling to the next one.")]
     public float pauseMin = 1.5f, pauseMax = 5f;
@@ -124,6 +130,23 @@ public class TownNPC : MonoBehaviour
         {
             var n = Active[i];
             if (n == null) continue;
+            float d = (n.transform.position - pos).sqrMagnitude;
+            if (d <= bestSq) { bestSq = d; best = n; }
+        }
+        return best;
+    }
+
+    /// <summary>The nearest townsperson who works at <paramref name="wanted"/>, or null. Separate from
+    /// <see cref="Nearest"/> because a craft asks a different question: not "who is closest" but "is the station I
+    /// need within reach" — and an ordinary villager standing closer must not answer it.</summary>
+    public static TownNPC NearestStation(Vector3 pos, float maxDist, CraftStation wanted)
+    {
+        TownNPC best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Active.Count; i++)
+        {
+            var n = Active[i];
+            if (n == null || n.station != wanted) continue;
             float d = (n.transform.position - pos).sqrMagnitude;
             if (d <= bestSq) { bestSq = d; best = n; }
         }

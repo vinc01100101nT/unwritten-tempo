@@ -163,9 +163,11 @@ Concept art is decoupled from code, but only some of these are wieldable **today
 - **Scythe · Focus-orb · Grimoire/Tome** → need a **new `WeaponType` + a new attack-animation bucket** before they can be equipped and swung. Fine to generate the concept + mesh ahead of that — just know it's not hand-ready until the type + swing clip exist.
 - **Knuckle** (fists) usually needs no held mesh — skip, or generate simple knuckle-guards.
 
-## Rarity / variants
+## Quality / variants
 
-Recolor + escalate one hero mesh per type across tiers (the existing **Iron Sword → Bow Epic** pattern): Basic = plain steel + wood; higher tiers add brighter metal, gem inlay, and a soft emissive glow. Keep the silhouette identical so the same grip tuning carries across the tier.
+Recolor + escalate one hero mesh per type across grades (the existing **Iron Sword → Bow** pattern): a Raw or
+F-grade piece is plain steel and wood; the grades above it add brighter metal, inlay, and a soft emissive glow.
+Keep the silhouette identical so the same grip tuning carries across every grade of that weapon.
 
 ### Weapons pipeline note
 

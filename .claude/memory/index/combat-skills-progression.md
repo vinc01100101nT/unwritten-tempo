@@ -68,3 +68,5 @@
 - [One arrow for every bow](../one-arrow-for-every-bow.md) — no arrow art existed; `Arrow` (speed 14, drawn line via `Projectile3D.SpawnLine`) is now the single look, the server times the flight and `ArrowLoosed` tells every machine to draw it. Six dead knobs removed from `Player3DAttacker` and `MonsterAI3D`.
 - [Auto-pilot AI is the term](../auto-pilot-ai-is-the-term.md) — the user's word for a creature's fighting AND the player's T; ultimate first then a random ready active, never saving mana; a creature's cast is judged by the skill's own range, not by biting reach.
 
+- [V4 gameplay design plan](../gear-level-progression-plan.md) — AGREED, NOT BUILT (2026-09-20): forging/folds/quench ladder, Ink stats, masteries; the V4 doc is the record, build nothing until its open list is settled.
+- [Mob stats dropped by an unserializable struct](../mob-stats-dropped-by-unserializable-struct.md) — every creature loaded at level 1 with all primaries 1: the baked stat block struct lacked [System.Serializable]; fix = the marker + re-bake all 84.

@@ -75,6 +75,9 @@ public static class CombatAuthority
         lastNoDamage = NoDamageReason.None;
         int dealt = target.ApplyDamage(info);
         if (hurt != null && dealt <= 0) hurt.NoteAttacker(priorAttacker);
+        // WHO TOOK HOW MUCH OFF IT, AND WITH WHAT — the share a kill's practice is paid by.
+        if (hurt != null && dealt > 0 && info.attacker != null)
+            hurt.NoteDamageFor(info.attacker, info.attacker.HeldWeapon, dealt);
 
         // WHAT A BLOW ACTUALLY DID, written where the answer is real. A player's own machine reads zero for every
         // blow it throws — that is by design a few lines up — so three separate play-tests read that zero and
@@ -249,6 +252,8 @@ public static class CombatAuthority
 
         int dealt = target.ApplyTrueDamage(amount, color);
         if (credited != null && dealt <= 0) credited.NoteAttacker(priorAttacker);
+        if (credited != null && dealt > 0 && attacker != null)
+            credited.NoteDamageFor(attacker, attacker.HeldWeapon, dealt);
 
         // "field_15 Snake #3 took 4 from Poison by Alpha #1 [HP 40/60]" — damage that is not a blow still writes a line,
         // or a bar drops in the log with nothing to explain it.

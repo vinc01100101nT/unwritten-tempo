@@ -12,21 +12,31 @@ const credentials = z.object({
 const refreshBody = z.object({ refreshToken: z.string().min(10) });
 
 // Checking a password is deliberately slow — that is what makes a stolen hash expensive to crack. It also
-// means a handful of requests can pin a CPU, so the same address only gets a few tries before it has to wait.
-// Held in memory on purpose: it is a speed bump, not a security boundary, and it costs nothing to lose on a
-// restart. If this service is ever run as more than one process, each keeps its own count.
+// means a handful of requests can pin a CPU, so the same address only gets a few tries AT ONE ACCOUNT before it
+// has to wait. Keyed by address and email together: keyed by email alone, five wrong guesses from anywhere
+// locked the real owner out for a minute, repeatable forever. Held in memory on purpose: it is a speed bump,
+// not a security boundary, and it costs nothing to lose on a restart. If this service is ever run as more than
+// one process, each keeps its own count. The per-address ceiling on the route itself is the other half.
 const MAX_FAILURES = 5;
 const LOCKOUT_MS = 60_000;
 
+// The two routes that run the slow hash. Ten a minute from one address is more than a person mistyping, and
+// well under what pins the process.
+const PASSWORD_ROUTE_LIMIT = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } };
+
 const failures = new Map<string, { count: number; until: number }>();
 
-function lockedOut(email: string): boolean {
-  const seen = failures.get(email.toLowerCase());
+function failureKey(ip: string, email: string): string {
+  return ip + "|" + email.toLowerCase();
+}
+
+function lockedOut(ip: string, email: string): boolean {
+  const seen = failures.get(failureKey(ip, email));
   return seen !== undefined && seen.until > Date.now();
 }
 
-function noteFailure(email: string): void {
-  const key = email.toLowerCase();
+function noteFailure(ip: string, email: string): void {
+  const key = failureKey(ip, email);
   const now = Date.now();
   const seen = failures.get(key);
   const count = seen && seen.until > now - LOCKOUT_MS ? seen.count + 1 : 1;
@@ -39,8 +49,8 @@ function noteFailure(email: string): void {
   }
 }
 
-function forgetFailures(email: string): void {
-  failures.delete(email.toLowerCase());
+function forgetFailures(ip: string, email: string): void {
+  failures.delete(failureKey(ip, email));
 }
 
 interface AccountRow {
@@ -50,7 +60,7 @@ interface AccountRow {
 
 export async function accountRoutes(app: FastifyInstance): Promise<void> {
   // Register.
-  app.post("/accounts", async (request, reply) => {
+  app.post("/accounts", PASSWORD_ROUTE_LIMIT, async (request, reply) => {
     const parsed = credentials.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "invalid email or password" });
 
@@ -70,12 +80,12 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // Log in.
-  app.post("/sessions", async (request, reply) => {
+  app.post("/sessions", PASSWORD_ROUTE_LIMIT, async (request, reply) => {
     const parsed = credentials.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: "invalid email or password" });
 
     const { email, password } = parsed.data;
-    if (lockedOut(email)) {
+    if (lockedOut(request.ip, email)) {
       return reply.code(429).send({ error: "too many attempts — wait a minute and try again" });
     }
 
@@ -91,11 +101,11 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       : await verifyPassword(password, "scrypt$32768$8$1$00$00");
 
     if (!account || !ok) {
-      noteFailure(email);
+      noteFailure(request.ip, email);
       return reply.code(401).send({ error: "wrong email or password" });
     }
 
-    forgetFailures(email);
+    forgetFailures(request.ip, email);
     return reply.send(await startSession(account.id));
   });
 

@@ -38,6 +38,13 @@ public sealed class Db
             Host = uri.Host,
             Port = uri.IsDefaultPort ? 5432 : uri.Port,
             Database = uri.AbsolutePath.TrimStart('/'),
+            // BOUNDED ON PURPOSE: with no command timeout a query that hangs holds its pooled connection for
+            // good, and enough of those wedge every door on this server (the pool is 100 by default). Five
+            // seconds is a ceiling no read here comes near. Auto-prepare: the same handful of statements run
+            // all day, and re-planning the leaderboard read cost more than running it (2.5 ms against 1.5).
+            CommandTimeout = 5,
+            MaxAutoPrepare = 25,
+            AutoPrepareMinUsages = 2,
         };
         if (userInfo.Length > 0 && userInfo[0].Length > 0) b.Username = Uri.UnescapeDataString(userInfo[0]);
         if (userInfo.Length > 1 && userInfo[1].Length > 0) b.Password = Uri.UnescapeDataString(userInfo[1]);

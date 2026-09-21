@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""Prove tools/check-asset-rules.py still SEES every fault it exists for — and is quiet about a sound project.
+
+WHY THIS EXISTS: a checker that has gone blind prints exactly what a clean project prints. Both are silence,
+and only one of them is good news. This builds a small COPY of the real project in a scratch folder (nothing
+in the repo is ever touched), plants one known fault at a time into that copy, confirms the checker names the
+file, then confirms the untouched copy passes. The baked-component case is the one that matters most: it
+re-creates the exact shape that had every creature loading at level 1 — a component whose field is missing
+from the saved prefab — and demands the checker say so.
+
+USAGE:   tools/prove-asset-rules-check.py
+EXIT:    0 = every planted fault caught and the sound copy is quiet, 1 = blind or crying wolf.
+"""
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+CHECK = os.path.join(HERE, "check-asset-rules.py")
+RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
+
+# The smallest slice of the real project that exercises every rule. Paths are relative to the repo.
+FIXTURE = [
+    "unity/Assets/Settings/UniversalRP.asset",
+    "unity/ProjectSettings/ProjectSettings.asset",
+    "unity/ProjectSettings/QualitySettings.asset",
+    "unity/Packages/manifest.json",
+    "tools/packages-in-use.txt",
+    "unity/Assets/Shaders/FoliageWind.shader.meta",
+    "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat",
+    "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat.meta",
+    "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+    "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
+    "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
+    "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD1.prefab",
+    "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Rock1.prefab",
+    "unity/Assets/Scripts/UnitStatBlock.cs",
+    "unity/Assets/Scripts/UnitStatBlock.cs.meta",
+    "unity/Assets/2_Generated/MobPrefabs/Mobs/TenguRed.prefab",
+]
+
+
+def build_copy(root):
+    for relp in FIXTURE:
+        src = os.path.join(REPO, relp)
+        if not os.path.isfile(src):
+            print(RED + "fixture file missing from the real project: " + relp + OFF)
+            sys.exit(1)
+        dst = os.path.join(root, relp)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(src, dst)
+
+
+def run(root):
+    done = subprocess.run([sys.executable, CHECK, "--root", root], capture_output=True, text=True)
+    return done.returncode, done.stdout
+
+
+def edit(root, relp, fn):
+    p = os.path.join(root, relp)
+    with open(p, encoding="utf-8") as f:
+        text = f.read()
+    new = fn(text)
+    assert new != text, "the plant changed nothing in " + relp
+    with open(p, "w", encoding="utf-8") as f:
+        f.write(new)
+
+
+def main():
+    failures = 0
+    base = tempfile.mkdtemp(prefix="asset-rules-prove-")
+    try:
+        build_copy(base)
+        code, out = run(base)
+        if code != 0:
+            print(RED + "the sound copy is NOT quiet — the checker cries wolf:\n" + out + OFF)
+            return 1
+        print(GRN + "sound copy: quiet" + OFF)
+
+        cases = [
+            ("uncompressed texture",
+             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
+            ("oversized texture",
+             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )2048", r"\g<1>4096", t, 1)),
+            ("readable texture",
+             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             lambda t: t.replace("  isReadable: 0\n", "  isReadable: 1\n", 1)),
+            ("plant casting shadows",
+             "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
+             lambda t: t.replace("  m_CastShadows: 0\n", "  m_CastShadows: 1\n", 1)),
+            ("plant with a collider",
+             "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
+             lambda t: t + "--- !u!64 &999\nMeshCollider:\n  m_GameObject: {fileID: 0}\n"),
+            ("prop with no static flags",
+             "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Rock1.prefab",
+             lambda t: t.replace("  m_StaticEditorFlags: 22\n", "  m_StaticEditorFlags: 0\n", 1)),
+            ("batching-static foliage",
+             "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
+             lambda t: t.replace("  m_StaticEditorFlags: 16\n", "  m_StaticEditorFlags: 22\n", 1)),
+            ("LOD group missing a level that exists beside it",
+             "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
+             lambda t: t + "--- !u!205 &998\nLODGroup:\n  m_GameObject: {fileID: 0}\n"),
+            ("shadow map above the pin",
+             "unity/Assets/Settings/UniversalRP.asset",
+             lambda t: t.replace("  m_MainLightShadowmapResolution: 1024\n", "  m_MainLightShadowmapResolution: 4096\n", 1)),
+            ("GPU skinning off",
+             "unity/ProjectSettings/ProjectSettings.asset",
+             lambda t: t.replace("  gpuSkinning: 1\n", "  gpuSkinning: 0\n", 1)),
+            ("unlimited skin weights",
+             "unity/ProjectSettings/QualitySettings.asset",
+             lambda t: t.replace("    skinWeights: 4\n", "    skinWeights: 255\n", 1)),
+            ("unclaimed package",
+             "unity/Packages/manifest.json",
+             lambda t: t.replace('"dependencies": {', '"dependencies": {\n    "com.example.nobody-uses-this": "1.0.0",', 1)),
+            ("baked component missing a declared field (the level-1 creatures)",
+             "unity/Assets/2_Generated/MobPrefabs/Mobs/TenguRed.prefab",
+             lambda t: re.sub(r"^  inputs:\n(?:    .*\n)+", "", t, count=1, flags=re.M)),
+        ]
+        for name, relp, fn in cases:
+            root = tempfile.mkdtemp(prefix="asset-rules-case-")
+            try:
+                shutil.copytree(base, root, dirs_exist_ok=True)
+                edit(root, relp, fn)
+                code, out = run(root)
+                named = code == 1 and os.path.basename(relp) in out
+                print((GRN + "caught  " if named else RED + "MISSED  ") + name + OFF)
+                if not named:
+                    failures += 1
+                    print(out)
+            finally:
+                shutil.rmtree(root, ignore_errors=True)
+
+        # The one rule that must only WARN: an unwired family is debt, not a red turn.
+        code, out = run(base)
+        lod_quiet = code == 0
+        print((GRN + "quiet   " if lod_quiet else RED + "WRONG   ") + "an unwired LOD family warns without failing" + OFF)
+        if not lod_quiet:
+            failures += 1
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+    total = 13 + 2
+    if failures:
+        print(RED + "%d of %d case(s) failed — the asset-rules checker is blind somewhere." % (failures, total) + OFF)
+        return 1
+    print(GRN + "All %d cases right: the asset-rules checker sees every planted fault and is quiet on a sound copy." % total + OFF)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

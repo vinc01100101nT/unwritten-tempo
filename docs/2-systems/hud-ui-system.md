@@ -16,10 +16,10 @@ Tracking issue: **VIN-22**.
 
 - **Camera** — RO-style 2.5D: true 3D world with billboard sprites, ¾ overhead/isometric-ish framing via a shared `CameraRig`. HUD assumes a fixed overhead view + feet-Y depth sorting. (Ragnarok bucket, not FFXIV/Albion.)
 - **Combat** — RO-style hybrid: click-to-move + click/point target, skills fired from the hotbar by key or click. Already have multi-hit bursts, status (stun/DoT), 10 elements, leech/reflect. No action-cam reticle.
-- **Skill count** — small per-class kit (classes = an active-skill identity layer on universal stats/passives). Skills come from the *weapon*, not a class, and a weapon grants a rolled kit out of a pool — the Sword pool alone is 22 composed skills. **The bar is sized to what a weapon can actually grant: four numbered slots plus the ultimate**, which is the most any weapon rolls (2026-09-05; it was nine, and five of those could never be filled). Above them sits a read-only row of four smaller squares showing the passives that are running. See [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
-- **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + equipment rarity, card slots and enhancement (+7 etc), all three of which are live: a weapon copy rolls and saves its own rarity, sockets are authored per item and can be filled, and refine levels persist.
+- **Skill count** — skills belong to a *weapon*, not a class, and are LEARNED by practising it: each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
+- **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + what a crafted piece carries: its **quality grade**, its **folds**, the stats **Ink** has written on it, and its card sockets. All of it is live and all of it persists.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
-  - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). *It used to name Bash / Charge / Caster as what it was wired to — those hand-written skills are gone; the bar is now filled from the equipped weapon's rolled kit.*
+  - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). *It used to name Bash / Charge / Caster as what it was wired to — those hand-written skills are gone; the bar is arranged by the player from what they have learned.*
   - `StatPanel` (RO stat allocation)
   - pooled `DamagePopup`, `SpriteSheetCache`
   - skill icons from a Ninja Adventure UI set; shell baked via the **Build UI Shell** editor command
@@ -35,7 +35,7 @@ Tracking issue: **VIN-22**.
 
 ## Status
 
-Visual spec LOCKED (v2). Hover and selection are tinted cyan, never a rarity colour. Portrait = billboard front-facing frame (no separate portrait-art pipeline). The token sheet is below, and every value in it was read off the code.
+Visual spec LOCKED (v2). Hover and selection are tinted cyan. Portrait = billboard front-facing frame (no separate portrait-art pipeline). The token sheet is below, and every value in it was read off the code.
 
 **The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map, a settings window and a wardrobe panel all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
@@ -75,22 +75,14 @@ real authored colour but it belongs to the **sign-in screen** (its camera backgr
 **The window border is GOLD, at full alpha.** There is no brown border and no gold gradient anywhere in the
 project — not in a script, a scene, a prefab or a material. Do not add either: a border is one flat gold.
 
-### Rarity — the load-bearing colour system
+### Item colour — retired
 
-Five tiers, each owning three colours, and it is the **only** thing that colours an item's name.
-Selection and hover are cyan precisely so they can never be mistaken for a tier.
+**Nothing colours an item by a tier any more.** [V4](gameplay-system-v4/README.md) removed rarity from the game
+on 2026-09-20: an item's name, its bag row, its card and a drop's sparkle are all drawn in the ordinary text
+colour, and what a piece is worth is written in words — its **grade and its folds**, "B +12". The five-tier
+palette that used to live here (Common grey through Legendary gold) is gone from the code with it.
 
-| Tier | Border | Name text | Glow | Glow alpha |
-| --- | --- | --- | --- | --- |
-| Common | `#4B5563` | `#CBD2E0` | — | 0 |
-| Uncommon | `#46D17F` | `#A8F0C5` | `#46D17F` | 0.28 |
-| Rare | `#4F8CFF` | `#BCD4FF` | `#4F8CFF` | 0.30 |
-| Epic | `#A855F7` | `#E6C6FF` | `#A855F7` | 0.34 |
-| Legendary | `#F5B942` | `#F1E7D0` | `#F5B942` | 0.40 |
-
-Legendary's name is warm ivory rather than its gold border, so the name never merges with the label carrying
-the gold. The border colour marks the rarity word in the item tooltip and tints a dropped item's sparkle on the
-ground. The glow colour is defined for every tier, but nothing in the game draws it.
+Selection and hover are still cyan, and the window border is still one flat gold.
 
 ### Fonts
 
@@ -122,7 +114,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 ## Asset sourcing (settled with GPT)
 
 - **Flourishes** — GPT authors a custom "unwritten" ornament kit (corner filigree, dividers, portrait backplate) as transparent gold-only PNGs, separable pieces (not baked mockups). Claude implements them as a **decorative overlay layer** (Panel → Border → Background → Flourish Overlay) so future re-skins stay possible. Kit delivered later; build structural UI first, drop overlays in when they land.
-- **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for named Legendaries / boss drops / quest artifacts / class relics. Rule: Common→Epic = pack, Legendary = custom.
+- **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for boss drops, quest artifacts and named relics.
 - **Stat icons** — reuse the approved brand-sheet family (Might/Magic/Finesse) for BOTH base (STR/AGI/VIT/INT/DEX/LUK) and derived (ATK/MATK/DEF/MDEF/CRIT/ASPD/HIT/FLEE). One icon language, no second set.
 - **Built in uGUI, no art files** — flat panel fills, gold borders, cyan hover and selection tints, tabs, stat-row strips, dividers. **Fonts** Cinzel + Inter + PixelFont = open-license, imported as TMP assets (see the token sheet above; there are three, and PixelFont is the combat numbers alone).
 

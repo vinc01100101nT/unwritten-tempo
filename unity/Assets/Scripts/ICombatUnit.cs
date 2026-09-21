@@ -166,12 +166,27 @@ public interface ICombatUnit : IDamageable
     // Asked of the unit, never of the player at this keyboard, so a skill in a creature's hands scales off the
     // creature exactly as one in a player's hands scales off the player.
 
-    /// <summary>The percentage this unit's worn ring adds to <paramref name="stat"/> (0.32 = +32%), 0 with no ring.</summary>
+    /// <summary>The percentage this unit's ring adds to <paramref name="stat"/> (0.32 = +32%).</summary>
     float RingBonus(StatId stat);
 
-    /// <summary>What the rarity of the weapon in hand adds to <paramref name="skillId"/>'s output — 0 unless that
-    /// weapon's own rolled kit granted the skill.</summary>
-    float SkillRarityLift(string skillId);
+    /// <summary>What this unit's own practice adds to <paramref name="skillId"/>'s output, on top of the ring's
+    /// term — Skill Mastery's job.</summary>
+    float SkillOutputLift(string skillId);
+
+    /// <summary>This unit's own level — what decides how challenging a fight with it was.</summary>
+    int Level { get; }
+
+    /// <summary>The weapon type in this unit's hands, or <see cref="WeaponType.None"/> when they are empty.</summary>
+    WeaponType HeldWeapon { get; }
+
+    /// <summary>The GRADE of the weapon in this unit's hands — what caps and prices practice with it. Raw with
+    /// empty hands, which is the lowest there is.</summary>
+    Quality HeldQuality { get; }
+
+    /// <summary>WRITE DOWN, ON THIS UNIT, that <paramref name="attacker"/> took <paramref name="dealt"/> health
+    /// off it with <paramref name="weapon"/> in hand — so a kill can pay practice by the share of the fight each
+    /// weapon really did. Called at the damage door, on the unit being hurt.</summary>
+    void NoteDamageFor(ICombatUnit attacker, WeaponType weapon, int dealt);
 
     /// <summary>Seconds between this unit's swings at its current attack speed.</summary>
     float SwingTime { get; }

@@ -20,8 +20,8 @@ The folders match the sections below, so the file tree and this index say the sa
 ## Planning & production
 
 - [Roadmap to Launch](1-planning/roadmap-to-launch.md) — how far from a shippable game, every figure counted rather than estimated: what is built, what is half-built, what is missing.
-- [Action Plan](1-planning/action-plan.md) — the single trackable list of what to do next, phase by phase, with a done-check on every item.
-- [Play-Test Checklist](1-planning/play-test-checklist.md) — everything built but never watched working, in two lists — the checks settled without Play mode, and the checks in Play mode with what to rebuild and restart first — each saying what to do, what should happen, and what counts as a failure.
+- [Action Plan](1-planning/action-plan/on-going.md) — the trackable list of what to do next, phase by phase, in three files by status: [on-going](1-planning/action-plan/on-going.md) (which also holds the key), [not started](1-planning/action-plan/not-started.md) and [done](1-planning/action-plan/done.md), with a done-check on every item.
+- [Play-Test Checklist](1-planning/play-test-checklist/not-done-yet.md) — a folder of four files by verdict: [not done yet](1-planning/play-test-checklist/not-done-yet.md) (also holds the batch list and what to rebuild and restart first), [on-going](1-planning/play-test-checklist/on-going.md), [failed](1-planning/play-test-checklist/failed.md) and [passed](1-planning/play-test-checklist/passed.md) — each step saying what to do, what should happen, and what counts as a failure.
 - [Dev Contribution Log](1-planning/dev-contribution-log.md) — gamified record of the dev's design/diagnosis contributions.
 - [Performance Checkup — My Routine](1-planning/performance-checkup-routine.md) — the recurring `/perf-checkup` routine.
 - [Where the Game Is Hosted](1-planning/where-the-game-is-hosted.md) — which machine to rent and why: the Manila latency numbers that rule Europe out, what Singapore costs across five providers, and what has to be true on that machine before anyone can play on it.
@@ -40,6 +40,9 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Unified Unit Stats](2-systems/active-skill-system-v3/unified-unit-stats.md) — players and mobs 1:1: one stat model, shared formulas + point budget; mobs wear gear/rings and drop what they wear. No tier, no multiplier.
     - […Implementation Notes](2-systems/active-skill-system-v3/unified-unit-stats-implementation-notes.md) — code-facing companion.
   - [Sword — Skill Roster](2-systems/active-skill-system-v3/sword-skill-roster.md) — first fully-authored weapon (3 ults + 10 actives + 9 passives; incl. the universal-but-specialized authoring rule).
+- [Gameplay System — V4](2-systems/gameplay-system-v4/README.md) — BUILT 2026-09-20, not play-tested: gear is forged, folded and quenched (F–A quality, no rarity), stats written on with Ink, weapon and skill mastery that unlock and power skills, the ring as part of the character.
+  - [Implementation Plan](2-systems/gameplay-system-v4/implementation-plan.md) — the six build slices, all landed.
+  - [Crafting Tables](2-systems/gameplay-system-v4/crafting-tables.md) — every station's bands, what each design costs to forge, fold and quench costs and odds per grade, Salt, every Ink value, mastery caps by grade.
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.

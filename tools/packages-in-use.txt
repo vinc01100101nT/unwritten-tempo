@@ -1,0 +1,28 @@
+# Every package in unity/Packages/manifest.json, and what in this project uses it — one line each.
+#
+# WHY THIS EXISTS: a package nobody uses still ships its code into every build and slows every editor load,
+# and nothing tells you. On 2026-09-20 eight such packages were found installed with zero references — one of
+# them, an AI inference engine, was 10 MB of the client. tools/check-asset-rules.py refuses a package that is
+# installed but not claimed here, so adding one means saying, in one line, what needs it. A claim that is no
+# longer true is a package to remove, not a line to keep.
+#
+# Format: <package name> <what uses it, measured>    (the built-in com.unity.modules.* need no line)
+
+com.unity.render-pipelines.universal   the render pipeline itself (Settings/UniversalRP.asset, every shader)
+com.unity.ugui                         every screen-space HUD and window (Canvas, Image, Text)
+com.unity.inputsystem                  9 runtime scripts (Hotkeys and the touch driver)
+com.unity.addressables                 CharacterModels.cs and AddressablePrefabs.cs — 138 entries across Characters and Mobs
+com.unity.cloud.gltfast                Editor/GlbPropImporter.cs and Editor/GlbPropPipeline.cs — the GLB prop bake
+com.whinarn.unitymeshsimplifier        Editor/MeshDecimateWindow.cs — the LOD decimator
+com.unity.dedicated-server             the headless game-server build target (tools/build-game.sh server)
+com.unity.2d.sprite                    the Sprite importer and sprite types behind every billboard mob sheet
+com.unity.2d.tilemap                   YDepthSorter.cs, DepthSortRuntime.cs, MapManager.cs reference Tilemap types
+com.unity.2d.tilemap.extras            installed alongside the tilemap package; no direct reference measured 2026-09-20
+com.unity.2d.tooling                   the 2D package group's tooling; no direct reference measured 2026-09-20
+com.unity.pipeline                     the in-editor half of the live editor link (unity CLI / unity-editor-mcp)
+com.unity.test-framework               the editor's test runner; required by com.unity.pipeline
+com.unity.ide.rider                    IDE integration (editor-only, ships nothing)
+com.unity.ide.visualstudio             IDE integration (editor-only, ships nothing)
+com.unity.collab-proxy                 Unity's version-control window (editor-only, ships nothing)
+com.unity.multiplayer.center           Unity's multiplayer setup window (editor-only); no reference measured 2026-09-20
+com.coplaydev.unity-mcp                the OLD HTTP bridge, retired 2026-08-20 per the live-editor skill — still installed; a candidate for removal

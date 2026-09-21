@@ -10,10 +10,8 @@ using System;
 /// character (the same kills feed both — see <see cref="Character.AddXP"/>). Every RING level-up
 /// banks one passive draft point (the grant moved OFF character level).
 ///
-/// A plain C# class (not a MonoBehaviour): <see cref="Character"/> owns one as <c>Character.Ring</c>.
-/// Its effect on the character is GATED by whether a ring item is equipped (<see cref="Character.RingEquipped"/>):
-/// unequip = "diminished, not erased" — the passive % stops applying and actives can't fire, but the
-/// walk + level/XP are kept.
+/// A plain C# class (not a MonoBehaviour): <see cref="Character"/> owns one as <c>Character.Ring</c>. It is PART
+/// OF THE CHARACTER, never an item, so what it has earned always counts.
 /// </summary>
 public sealed class RingProgress
 {
@@ -36,18 +34,36 @@ public sealed class RingProgress
     /// <summary>Fired when the ring reaches a new level (passes the new level) — drives the ring level toast.</summary>
     public event Action<int> OnLeveledUp;
 
-    /// <summary>Feed the ring <paramref name="amount"/> XP; each level gained banks one passive draft point.</summary>
-    public void AddXP(int amount)
+    /// <summary>Feed the ring <paramref name="amount"/> XP; each level gained banks one passive draft point.
+    /// Returns how many ring levels that gained, so the server can tell the owner's machine how many to
+    /// celebrate. Server-side only: a player's machine takes the finished answer through
+    /// <see cref="TakeFromServer"/>.</summary>
+    public int AddXP(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0) return 0;
+        int gained = 0;
         XP += amount;
         while (XP >= XPToNext)
         {
             XP -= XPToNext;
             Level++;
+            gained++;
             Passives.AddPoint();          // a ring level = one new Trio-Ring point to spend
             OnLeveledUp?.Invoke(Level);
         }
+        OnChanged?.Invoke();
+        return gained;
+    }
+
+    /// <summary>Take the server's word for the ring's level, XP and banked points after it paid this ring, and
+    /// fire the level toast once per level it says was gained. This machine works out none of it.</summary>
+    public void TakeFromServer(int level, int xp, int bankedPoints, int levelsGained)
+    {
+        Level = Math.Max(1, level);
+        XP = Math.Max(0, xp);
+        Passives.SetBankedPoints(bankedPoints);
+        for (int reached = Level - levelsGained + 1; reached <= Level; reached++)
+            if (reached > 1) OnLeveledUp?.Invoke(reached);
         OnChanged?.Invoke();
     }
 

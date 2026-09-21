@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using System.Globalization;
+using UnityEngine;
 using System.Text;
 
 /// <summary>
-/// WHAT A CREATURE IS WEARING, as one piece of text that crosses the wire: each worn piece's item id, its rarity, and
-/// the chance it is given up on death, already written the way it is shown. The SERVER writes it; every watching
-/// machine reads it back and works nothing out — the chance arrives finished.
+/// WHAT A CREATURE IS WEARING, as one piece of text that crosses the wire: each worn piece's item id, its grade,
+/// and how many times it has been folded. The SERVER writes it; every watching machine reads it back and works
+/// nothing out.
 /// </summary>
 public static class WornList
 {
@@ -13,8 +14,8 @@ public static class WornList
     public struct Entry
     {
         public Item def;
-        public Rarity rarity;
-        public string chance;
+        public Quality quality;
+        public int folds;
     }
 
     const char PieceGap = '\n';
@@ -42,8 +43,8 @@ public static class WornList
             var inst = scratch[i];
             if (sb.Length > 0) sb.Append(PieceGap);
             sb.Append(inst.def.id).Append(FieldGap)
-              .Append(((int)inst.Rarity).ToString(CultureInfo.InvariantCulture)).Append(FieldGap)
-              .Append(LootDropper.ChanceText(LootDropper.WornDropChance(inst)));
+              .Append(((int)inst.quality).ToString(CultureInfo.InvariantCulture)).Append(FieldGap)
+              .Append(inst.upgrade.ToString(CultureInfo.InvariantCulture));
         }
         scratch.Clear();
         return sb.ToString();
@@ -63,9 +64,10 @@ public static class WornList
             if (fields.Length != 3) continue;
             var def = ItemCatalog.Resolve(fields[0]);
             if (def == null) continue;
-            if (!int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int r)) continue;
-            if (r < 0 || r > (int)Rarity.Legendary) continue;
-            result.Add(new Entry { def = def, rarity = (Rarity)r, chance = fields[2] });
+            if (!int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int q)) continue;
+            if (q < (int)Quality.Raw || q > (int)Quality.A) continue;
+            int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int folds);
+            result.Add(new Entry { def = def, quality = (Quality)q, folds = Mathf.Max(0, folds) });
         }
     }
 }

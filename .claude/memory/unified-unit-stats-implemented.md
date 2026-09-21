@@ -15,7 +15,7 @@ Mobs and players are **1:1**. Same stats, same formulas, same stat-point economy
 - `UnitEquipment.cs` — the worn set for EVERY unit. `Character` has NO equip dictionary of its own: it lazily attaches one (`Character.Gear`) and routes get/equip/save/load through it. The equip preview uses `Gear.BonusesWith(slot, hypo)` + a `previewBonuses` override instead of mutating a cached field.
 - `UnitMitigation.cs` — Guard cut + Shield absorb for mobs; `Health.ApplyLeech` fires a mob's Reflect + ManaLeech.
 - `LootDropper.DropWornGear` — a unit drops what it WEARS (`wornDropChance` per piece); the loot table now only carries materials/gold.
-- The roster reset RAN 2026-08-10: 86 mobs, levels 3–46, every one exactly on budget (verified by parsing the assets). Its one-shot tool (`Editor/MobStatMigration.cs`) was deleted afterwards — a future bulk reset means re-writing it from `UnitStatMath.Allocate`.
+- The roster reset RAN 2026-08-10: 86 mobs, the ones authored so far spanning levels 3–46 (NOT a max level — the level cap is undecided: 99, 100 or 150 are all possible), every one exactly on budget (verified by parsing the assets). Its one-shot tool (`Editor/MobStatMigration.cs`) was deleted afterwards — a future bulk reset means re-writing it from `UnitStatMath.Allocate`.
 
 **Deleted, do not reintroduce:** `MonsterDef.tier` (difficulty is LEVEL; spawn bands are level bands in `MonsterCatalog`/`MapRecipe`/`FieldMobSpawner`), `MonsterAI3D.perLevelGrowth` (the flat 1.15×), and the hand-authored `maxHealth/attack/defense/magicDefense/hit/flee/damageSpread` on `MonsterDef` (all derived now). There is **no global mob multiplier** — that was considered and deliberately rejected in favour of authored difficulty.
 

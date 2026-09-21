@@ -18,7 +18,7 @@ public class SaveData
 {
     // v11: a copy's rolled armour numbers ride the save (equipRolls / bagRolls). Older saves carry none, which loads
     // every piece as never rolled — nothing to migrate.
-    public const int CurrentVersion = 11;
+    public const int CurrentVersion = 13;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -69,16 +69,25 @@ public class SaveData
     // the equipped weapon rolled it is NOT stored here (that answer comes from the weapon). Null on an older save.
     public string[] activePassives;
 
-    // Equipped gear (v6+): parallel arrays, one entry per occupied slot EXCEPT the Ring vessel (auto-worn on
-    // load by EnsureRingEquipped). Owned by Character. Null on a pre-v6 save → nothing equipped, ring re-worn.
+    // Mastery (v13+): what this character has practised, and what that has opened. Parallel arrays, because a
+    // dictionary does not serialize. Null on an older save → nothing practised and nothing learned, which is
+    // exactly where a character who has never trained stands.
+    public int[]    masteryWeapons;    // (int)WeaponType
+    public float[]  masteryPoints;     // practice points, parallel to masteryWeapons
+    public string[] masterySkillIds;   // SkillDef.id
+    public float[]  masterySkillUses;  // uses, parallel to masterySkillIds
+    public string[] learnedSkillIds;   // every skill this character knows
+
+    // Equipped gear (v6+): parallel arrays, one entry per occupied slot. Owned by Character. Null on a pre-v6
+    // save → nothing equipped.
     public int[]    equipSlots;     // (int)EquipSlotType
     public string[] equipItemIds;   // Item.id, resolved via ItemCatalog
     public int[]    equipRefines;   // +N enhancement
     public string[] equipCards;     // comma-joined card asset names ("" = none)
-    // v7+: what makes each COPY unique now that a weapon rolls its own identity at the drop.
-    public int[]    equipRarities;  // (int)Rarity rolled for this copy; null/short on a pre-v7 save → the def's rarity
-    public string[] equipSkills;    // '|'-joined rolled SkillDef ids ("" = none)
-    public string[] equipRolls;     // v11+: the copy's rolled armour numbers (EquipmentInstance.EncodeRoll; "" = never rolled)
+    // v12+: what makes each COPY unique — its grade and the stats Ink has written on it
+    // (EquipmentInstance.EncodeRoll). A pre-v12 save has the old rolled-armour text here, which does not read as a
+    // grade, so every piece on it loads Raw with nothing written — see RestoreEquipment.
+    public string[] equipRolls;
 
     // Bag (v6+): parallel arrays, one entry per stack. Owned by the CHARACTER, alongside its worn gear, and
     // written and read by Character itself. NULL means the save predates bags being stored at all, and that
@@ -89,9 +98,7 @@ public class SaveData
     public int[]    bagCounts;
     public int[]    bagRefines;
     public string[] bagCards;
-    public int[]    bagRarities;    // v7+: per-copy rolled rarity (see equipRarities)
-    public string[] bagSkills;      // v7+: per-copy rolled kit (see equipSkills)
-    public string[] bagRolls;       // v11+: per-copy rolled armour numbers (see equipRolls)
+    public string[] bagRolls;       // v12+: per-copy grade + written stats (see equipRolls)
 
     // Appearance (v8+). A player changes their body and their colours in the game, exactly as they change
     // everything else here, so this is where it lives. It used to sit in its own columns beside the save on

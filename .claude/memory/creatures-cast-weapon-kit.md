@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-**Built 2026-09-16 at the user's request (unplayed — `docs/1-planning/play-test-checklist.md` section 9).**
+**Built 2026-09-16 at the user's request (unplayed — `docs/1-planning/play-test-checklist/` section 9).**
 
 - **One skill list for every caster:** `UnitSkills` (extracted from `Character`) holds defs, lazily-built runners and the
   trigger index. `ICombatUnit.Skills` replaced `SkillRunners`; `ICombatUnit.PassiveIsOn` is the ownership gate

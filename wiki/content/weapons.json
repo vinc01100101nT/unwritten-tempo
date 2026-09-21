@@ -175,90 +175,89 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "Rarity"
+      "text": "Quality"
     },
     {
       "type": "paragraph",
-      "text": "Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — rolled for each copy as it drops, and shown by its border color. On a weapon, rarity makes its skills and its own attack hit harder. On a piece of armour, it raises the piece's defence or magic defence by the same ladder and adds a flat extra to every main stat the piece rolled. Rarity does **not** decide which skills a weapon carries, how many of them, or whether it gets an ultimate: every weapon rolls the same kind of kit whatever its tier."
+      "text": "Every piece you make carries a **quality grade**. A freshly forged piece is **Raw**; above that the ladder runs **F, E, D, C, B, A**, and A is the best there is. Quality is decided by the **quench** — the one moment of luck in a whole piece's making — and it moves one rung at a time, up or down, never in a jump."
     },
     {
       "type": "paragraph",
-      "text": "**And a rarer weapon hits harder.** Every skill it grants is lifted by its tier — **+3** on an Uncommon, **+9** Rare, **+18** Epic, **+30** Legendary. Those are points added to how much your Ring already multiplies that skill, so early on a Legendary is about a third more damage, and as your Ring grows the same 30 points become a smaller slice of a bigger number. Either way a Legendary is worth the same to you as to anyone else. It lifts damage, healing, shield size, damage-over-time, how far a buff or debuff moves your stats, and what one Opening-style charge is worth. It never makes a stun, a freeze or any other timer last longer, and it never changes how often something procs. Two swords with the same skills are not the same sword."
+      "text": "**Quality decides four things.** How far a piece can be **folded**, which is what its attack or defence is made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; and how far your **mastery** with it can go. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
     },
     {
       "type": "table",
       "headers": [
-        "Rarity",
-        "How often it drops",
-        "Skills, attack and defence lifted by",
-        "Extra on each rolled main stat"
+        "Quality",
+        "Folds it allows",
+        "Lift on the fold total",
+        "Stats it can carry",
+        "Weapon mastery it allows"
       ],
       "rows": [
         [
-          "**Common**",
-          "45%",
+          "**Raw**",
+          "+5",
           "—",
-          "—"
+          "—",
+          "10"
         ],
         [
-          "**Uncommon**",
-          "30%",
-          "+3%",
-          "+1"
+          "**F**",
+          "+10",
+          "—",
+          "1",
+          "20"
         ],
         [
-          "**Rare**",
-          "15%",
-          "+9%",
-          "+2"
+          "**E**",
+          "+15",
+          "+5%",
+          "2",
+          "30"
         ],
         [
-          "**Epic**",
-          "5%",
-          "+18%",
-          "+3"
+          "**D**",
+          "+20",
+          "+10%",
+          "3",
+          "40"
         ],
         [
-          "**Legendary**",
-          "5%",
+          "**C**",
+          "+25",
+          "+15%",
+          "4",
+          "50"
+        ],
+        [
+          "**B**",
+          "+30",
+          "+22%",
+          "5",
+          "60"
+        ],
+        [
+          "**A**",
+          "+35",
           "+30%",
-          "+5"
+          "6",
+          "70"
         ]
       ]
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "How many skills a weapon rolls"
+      "text": "Where a weapon's skills come from"
     },
     {
       "type": "paragraph",
-      "text": "Every weapon rolls the same way, whatever its rarity: **3 or 4 actives**, **3 or 4 passives**, and a **1-in-4 chance** of an **Ultimate** on top. The two halves are rolled separately, so 3 actives with 4 passives is just as likely as 4 and 4."
+      "text": "**A weapon carries no skills.** You learn them yourself, by fighting with that kind of weapon: every skill names the **mastery level** at which it opens, and some name a skill you must know first. What you have learned is yours for good — the weapon in your hands only decides which of them you may use, and how much further you can still learn."
     },
     {
-      "type": "table",
-      "headers": [
-        "Skills on the weapon",
-        "Chance"
-      ],
-      "rows": [
-        [
-          "6",
-          "18.75%"
-        ],
-        [
-          "7",
-          "43.75%"
-        ],
-        [
-          "8",
-          "31.25%"
-        ],
-        [
-          "9 — a full kit with its Ultimate",
-          "6.25%"
-        ]
-      ]
+      "type": "paragraph",
+      "text": "So two people holding the same sword do not have the same skills: they have the skills they each practised for."
     },
     {
       "type": "paragraph",

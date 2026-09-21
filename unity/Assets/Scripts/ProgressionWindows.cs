@@ -17,7 +17,7 @@ public class ProgressionWindows : MonoBehaviour
     // The order worn pieces are listed in — a body read top to bottom, not the alphabet.
     static readonly EquipSlotType[] WornOrder =
         { EquipSlotType.Head, EquipSlotType.Armor, EquipSlotType.Garment, EquipSlotType.Weapon,
-          EquipSlotType.Shield, EquipSlotType.Ring };
+          EquipSlotType.Shield };
 
 
     Transform canvas;

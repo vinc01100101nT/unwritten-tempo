@@ -29,6 +29,7 @@ MonoBehaviour:
   intel: 12
   dex: 19
   luk: 11
+  weaponMasteryLevel: 36
   hardDefPercent: 5
   hardMagicDefPercent: 0
   attackType: 0

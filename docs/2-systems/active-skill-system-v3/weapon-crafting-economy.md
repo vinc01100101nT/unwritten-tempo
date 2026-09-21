@@ -1,5 +1,5 @@
 ---
-status: "MOSTLY DESIGN — the rarity output lift is built; the crafting economy is not"
+status: "SUPERSEDED BY V4 (agreed, not built) — the rarity output lift is built; the crafting economy is not"
 owner: vince
 last-updated: 2026-09-10
 tags:
@@ -10,6 +10,8 @@ tags:
 
 How players go from a random drop to a deliberate build. Companion to **Weapon Roster — 12 Identities** and **Active Skill System — V3**. Design converged 2026-07-28; numbers below are illustrative and still to be tuned.
 
+> **Superseded in intent by [V4](../gameplay-system-v4/README.md)**, which removes rolled kits and rarity and makes gear crafted from materials. This page still records the rarity lift the code runs today.
+>
 > **Status: MOSTLY DESIGN.** Re-verified 2026-09-10: *Potential*, *Essence*, *Reforge* and *Transmog* appear in **zero** source files, and there is still no way to forge anything. What IS built: the five-tier rarity ladder driving item presentation, the refine level equipment carries and saves, the per-copy rolled rarity and rolled skill kit, and — since 2026-09-09 — the **rarity output lift**, which is live and scaling real damage. Everything else on this page is unbuilt.
 >
 > ⚠️ **The game has a "wardrobe", and it is NOT this one.** The in-game wardrobe recolours the character's clothing per part and saves the dye with the character. It has nothing to do with Transmog's appearance-collection below — same word, different feature. Don't read one as evidence of the other.

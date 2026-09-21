@@ -6,8 +6,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// ONE THING LYING ON THE GROUND. You see it as a SPARKLE at the spot, tinted the item's rarity colour, and you
-/// read WHAT it is by holding <b>Alt</b> — which puts its name on a small dark plate above it, in the same rarity
+/// ONE THING LYING ON THE GROUND. You see it as a SPARKLE at the spot, and you
+/// read WHAT it is by holding <b>Alt</b> — which puts its name on a small dark plate above it, in the same
 /// colour the bag list writes that name in. There is still no icon and no model: the name is the only description
 /// of the item anywhere in this game, on the floor exactly as in the bag.
 ///
@@ -39,14 +39,14 @@ public class GroundDrop : MonoBehaviour
     /// <summary>How many. Always 1 for anything wearable, exactly as a bag stack is.</summary>
     public int count = 1;
 
-    /// <summary>The particular copy, with its upgrade level, cards and rolled kit. THE SERVER'S ONLY — null on
+    /// <summary>The particular copy, with its folds, grade, written stats and cards. THE SERVER'S ONLY — null on
     /// every watching machine.</summary>
     public EquipmentInstance instance;
 
-    /// <summary>The colour the name is written in, and what a watcher is told instead of the copy above.</summary>
-    public Rarity rarity = Rarity.Common;
+    /// <summary>The grade in front of the name, and what a watcher is told instead of the copy above.</summary>
+    public Quality quality = Quality.Raw;
 
-    /// <summary>The +N in front of the name. Sent as its own number for the same reason the rarity is.</summary>
+    /// <summary>The +N in front of the name. Sent as its own number for the same reason the grade is.</summary>
     public int upgrade;
 
     /// <summary>Which map it lies in. A server holds several at once and keeps them apart, so a drop that never
@@ -212,10 +212,10 @@ public class GroundDrop : MonoBehaviour
         return at;
     }
 
-    /// <summary>Put a thing on the ground at <paramref name="worldPos"/> and hand it back. A server and an
-    /// offline game pass the copy; a watching machine passes null and gives the rarity and upgrade instead.</summary>
+    /// <summary>Put a thing on the ground at <paramref name="worldPos"/> and hand it back. A server passes the
+    /// copy; a watching machine passes null and gives the grade and the folds instead.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
-                                   Rarity rarity, int upgrade, string mapName, uint netId)
+                                   Quality quality, int upgrade, string mapName, uint netId)
     {
         if (def == null || count <= 0) return null;
 
@@ -235,7 +235,7 @@ public class GroundDrop : MonoBehaviour
         drop.def = def;
         drop.count = count;
         drop.instance = instance;
-        drop.rarity = instance != null ? instance.Rarity : rarity;
+        drop.quality = instance != null ? instance.quality : quality;
         drop.upgrade = instance != null ? instance.upgrade : upgrade;
         drop.mapName = mapName;
         drop.netId = netId;
@@ -293,7 +293,7 @@ public class GroundDrop : MonoBehaviour
 
     // ---- the words on the floor --------------------------------------------------------------------------
 
-    /// <summary>The sparkle that marks the spot. ONE registered effect, tinted per rarity, played through the
+    /// <summary>The sparkle that marks the spot. ONE registered effect, played through the
     /// game's own effect system — so it is pooled, it is stopped the same way every other attached effect is, and
     /// a server (which draws nothing) skips it without this having to ask.</summary>
     const string SparkleEffect = "loot.drop";
@@ -371,7 +371,7 @@ public class GroundDrop : MonoBehaviour
         label.font = UiKit.PixelFont;
         // ONE shared outlined material across every drop, so a floor covered in them is still one draw call.
         label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.3f);
-        label.color = Rarities.Text(rarity);
+        label.color = NameColor;
         label.raycastTarget = false;
 
         plate.position = transform.position + Vector3.up * LabelHeight;
@@ -387,15 +387,17 @@ public class GroundDrop : MonoBehaviour
         plate.gameObject.SetActive(false);
     }
 
-    /// <summary>Light the spot up in the item's rarity colour. Through the game's own effect system, so it is
-    /// pooled like every other effect and a headless server plays nothing.</summary>
+    // The one colour a dropped name and its sparkle are drawn in. There are no tiers to colour a drop by any more:
+    // what a piece is worth is its grade and its folds, which are words on the label, not a hue.
+    static readonly Color NameColor = new Color(0.91f, 0.91f, 0.91f);
+    static readonly Color SparkleColor = new Color(0.85f, 0.82f, 0.62f);
+
+    /// <summary>Light the spot up. Through the game's own effect system, so it is pooled like every other effect
+    /// and a headless server plays nothing.</summary>
     void StartSparkle()
     {
         if (sparkle != null) return;
-        // The BORDER colour, which is what this game means by "the rarity signal" — the same channel a slot's edge
-        // and a tooltip's header carry. Never the name's colour, which is deliberately paler so it stays readable
-        // as text and would wash out as a light.
-        sparkle = Vfx.Attach(SparkleEffect, transform, tint: Rarities.Border(rarity));
+        sparkle = Vfx.Attach(SparkleEffect, transform, tint: SparkleColor);
     }
 
     void StopSparkle()

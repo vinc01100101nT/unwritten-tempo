@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Onslaught
   symbol: On
   weaponType: 1
+  masteryLevel: 23
+  needsSkillId: 
   published: 1
   description: "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them
     as real basic attacks, two per swing \u2014 so every blow feeds Momentum."

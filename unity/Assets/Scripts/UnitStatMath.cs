@@ -2,7 +2,9 @@ using UnityEngine;
 
 /// <summary>Everything a unit's derived stats are computed FROM: its level, its six EFFECTIVE primaries (allocated
 /// points + equipment bonuses already folded in), and its base/per-level growth curve. A plain struct so passing it
-/// around costs nothing.</summary>
+/// around costs nothing. Serializable because <see cref="UnitStatBlock.inputs"/> is BAKED into every mob prefab:
+/// without this marker Unity silently dropped the block on save and every creature loaded at level 1.</summary>
+[System.Serializable]
 public struct UnitStatInputs
 {
     public int level;
@@ -287,8 +289,9 @@ public static class UnitStatMath
     public static float CritChance01(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Mathf.Min(0.95f, u.luk * CritPerLuk + ringPct + eb.critPercent / 100f);
 
-    public static float CritMultiplier(in UnitStatInputs u, float ringPct) =>
-        BaseCritMultiplier + u.luk * CritDamagePerLuk + StatJumpBonus(u.luk) / 100f + ringPct;
+    public static float CritMultiplier(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+        BaseCritMultiplier + u.luk * CritDamagePerLuk + StatJumpBonus(u.luk) / 100f
+        + ringPct + eb.critDamagePercent / 100f;
 
     // ---- natural regeneration ------------------------------------------------------------------------------------
     // Both pools regenerate on their own, from the primary that grows them. Reported as a RATE PER SECOND so the

@@ -87,14 +87,12 @@ public class InventoryStore : MonoBehaviour
         Notify();
     }
 
-    /// <summary>Add ONE rolled copy of a piece of equipment to this machine's own bag and hand it back, so the
-    /// caller can report what fate gave it (rarity + kit). <paramref name="rarity"/> forces the drop's rarity;
-    /// null rolls it off the drop table. The roll itself happens in <see cref="Character.TakeIntoBag"/>, so
-    /// nothing can enter a bag having skipped it.</summary>
-    public EquipmentInstance GiveEquipment(Item def, Rarity? rarity = null)
+    /// <summary>Add ONE fresh copy of a piece of equipment to this machine's own bag and hand it back — Raw,
+    /// unfolded, nothing written on it, which is what a piece that has not been to a forge is.</summary>
+    public EquipmentInstance GiveEquipment(Item def)
     {
         if (def == null || def.slot == EquipSlotType.None || Character.Instance == null) return null;
-        var entry = Character.Instance.TakeIntoBag(def, 1, rarity);
+        var entry = Character.Instance.TakeIntoBag(def, 1);
         Notify();
         return entry != null ? entry.instance : null;
     }
@@ -137,6 +135,15 @@ public class InventoryStore : MonoBehaviour
         Notify();
     }
 
+    /// <summary>Merge ten of a tiered material into one of the next tier up. The server does the whole of it —
+    /// this only names which pile.</summary>
+    public void Merge(BagEntry e)
+    {
+        if (e == null || e.def == null) return;
+        var me = GameNetwork.MyPlayer;
+        if (me != null) me.AskToMerge(Entries.IndexOf(e), e.def.id);
+    }
+
     public void Unequip(EquipSlotType slot)
     {
         if (Character.Instance == null) return;
@@ -153,15 +160,15 @@ public class InventoryStore : MonoBehaviour
 
     /// <summary>Put <paramref name="count"/> of an entry DOWN, on the ground at the character's feet, where it
     /// stays until somebody picks it up. Nothing is destroyed: what leaves the bag lands on the floor as a sparkle
-    /// in its rarity colour, named to anybody holding Alt (see <see cref="GroundDrop"/>).
+    /// as a sparkle, named to anybody holding Alt (see <see cref="GroundDrop"/>).
     ///
     /// <para>A wearable always goes down one at a time, because each copy is its own stack. A worn piece cannot
-    /// be dropped at all — take it off first — and neither can a quest item or the Ring.</para></summary>
+    /// be dropped at all — take it off first — and neither can a quest item.</para></summary>
     public void Drop(BagEntry e, int count)
     {
         if (e == null || e.def == null || count <= 0 || Character.Instance == null) return;
         if (e.worn) return;
-        if (e.def.category == ItemCategory.Quest || e.def.slot == EquipSlotType.Ring) return;
+        if (e.def.category == ItemCategory.Quest) return;
 
         var me = GameNetwork.MyPlayer;
         if (me != null) { me.AskToDrop(Entries.IndexOf(e), e.def.id, count); return; }
@@ -170,7 +177,7 @@ public class InventoryStore : MonoBehaviour
         var body = Character.Instance.Body;
         // The same "nearest clear spot" the server picks, so a game with no world scatters exactly as a world does.
         var where = GroundDrop.FreeSpotNear(body != null ? body.position : Vector3.zero, MapManager.CurrentMap);
-        var drop = GroundDrop.Place(where, e.def, take, e.instance, e.def.rarity, 0, MapManager.CurrentMap, 0);
+        var drop = GroundDrop.Place(where, e.def, take, e.instance, Quality.Raw, 0, MapManager.CurrentMap, 0);
         if (drop == null) return;
 
         // OUT OF THE BAG ONLY ONCE IT IS ON THE FLOOR, so a placement that fails cannot leave an item in neither

@@ -42,10 +42,14 @@ public class PlayerInteractor : MonoBehaviour
             if (cancelled || partner == null)
             {
                 if (cancelled) Hotkeys.MarkCancelHandled();
-                if (DialogBox.Instance != null) DialogBox.Instance.Close();   // fires onClosed → EndTalk
+                if (atStation) { CraftStationPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
+                else if (DialogBox.Instance != null) DialogBox.Instance.Close();   // fires onClosed → EndTalk
                 else EndTalk();
                 return;
             }
+            // THE WINDOW'S OWN X closes a station the same way Esc does: the window is gone, so the interaction
+            // ends — camera back, townsperson released.
+            if (atStation && !CraftStationPanel.IsOpen) { EndTalk(); return; }
 
             // Keep both turned to each other and the camera framed on the side (they're frozen, but track anyway).
             player.FaceWorldPoint(partner.transform.position);
@@ -93,18 +97,32 @@ public class PlayerInteractor : MonoBehaviour
     public void StartTalk(TownNPC npc)
     {
         if (npc == null || Talking) return;
+
         partner = npc;
         Talking = true;
+        atStation = npc.station != CraftStation.None;
         // THE TOWNSPERSON IS THE SERVER'S TO STOP, not this machine's. The body in front of you is a copy of
         // somebody the world owns, so asking here is what makes them halt and turn on EVERY screen — including the
         // screens of the other people standing in the square, who would otherwise watch them stroll away mid-chat.
         GameNetwork.TellServerTalkingTo(npc.gameObject, true);
         player.FaceWorldPoint(npc.transform.position);
         FrameCamera();
+
+        // EVERY INTERACTION GETS THE CLOSE-UP — a conversation and a station alike (the user's rule, 2026-09-21:
+        // "any kind of interaction, no exception"). The one difference: a station's window lives on the HUD, so
+        // the HUD stays up for it, where a conversation hides it for a clean two-shot.
+        if (atStation)
+        {
+            CraftStationPanel.OpenFor(npc.station);
+            return;
+        }
         HideHud(true);
         // The box drives NEXT/CLOSE + Right-Arrow itself; when it closes it calls EndTalk to unwind the cinematic.
         DialogBox.Open(npc.SpeakerName, npc.DialogueLines(), EndTalk);
     }
+
+    // True while the interaction in progress is a station rather than a conversation.
+    bool atStation;
 
     // Invoked as the DialogBox's onClosed (natural CLOSE / past-last-line) AND on Esc/despawn via DialogBox.Close.
     // Idempotent: unwinds the cinematic once.
@@ -114,6 +132,7 @@ public class PlayerInteractor : MonoBehaviour
         Talking = false;
         if (partner != null) GameNetwork.TellServerTalkingTo(partner.gameObject, false);
         partner = null;
+        atStation = false;
         if (CameraFollow3D.Main != null) CameraFollow3D.Main.ExitCinematic();
         HideHud(false);
     }

@@ -74,7 +74,7 @@ This is what removes the need for a throttle. A mob is dangerous because it is a
 
 ### Mobs wear rings too
 
-A mob authors a ring ITEM plus that ring's invested ranks. Wearing the item is what switches the percentage layer on — the same gate the player has (`Character.RingEquipped`), so authored ranks with an empty ring slot do nothing. That matters because it makes the thing that grants the power the same thing that can drop.
+A creature authors its ring's invested ranks. Since V4 the ring is PART OF THE UNIT — there is no ring item and no ring slot, for a creature or for a player — so authored ranks always count.
 
 The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's own curve: 10 ranks = +16%, 20 = +26.7%, 40 = +40%, asymptotic to +80%. No mob-side copy of the maths.
 
@@ -82,11 +82,11 @@ The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's o
 
 ### Mobs drop what they wear
 
-A mob's **equipped set is its gear drop table**: each worn piece rolls independently to drop, and because it's real equipment, the player can equip what drops. The chance falls with the copy's rarity — Common 20%, Uncommon 12%, Rare 6%, Epic 3%, Legendary 1% — one game-wide table in `LootDropper.WornDropChance`, which the hover and target panel also shows beside each piece. The loot table stays, but only for **materials and gold** — things the mob isn't wearing — and each kill also has a 30% chance of one random item that isn't equipment. Everything a kill gives up except gold lands on the ground where the mob fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)).
+**A creature gives up NOTHING it wears.** Since V4 gear is made, not taken off a corpse: a kill pays materials, consumables and gold, and the creature's own gear dies with it. Its loot table carries those; each kill also has a 30% chance of one random item that is not equipment. Everything except gold lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
 
 ### Mobs put on random gear as they come to life
 
-Until drop tables are authored, every place a player can wear a piece — weapon, head, armour, garment, shield — is offered one random item that fits it each time a mob spawns or respawns, rolled as a real copy. The mob keeps it on a chance that falls with the copy's rarity: Common 40%, Uncommon 30%, Rare 20%, Epic 10%, Legendary 5% (`CreatureWardrobe`). Authored starting gear is kept, and a place it fills is never offered anything. The server rolls it; a watching machine is told what each mob wears.
+Until drop tables are authored, every place a player can wear a piece — weapon, head, armour, garment, shield — is offered one random item that fits it each time a creature spawns or respawns, as a **Raw, unfolded** copy. The creature keeps it on one flat chance, 40% (`CreatureWardrobe`). Authored starting gear is kept, and a place it fills is never offered anything. The server decides it; a watching machine is told what each creature wears.
 
 Single source of truth: the thing it wears is the thing it drops, so a mob can never advertise gear it doesn't actually carry.
 

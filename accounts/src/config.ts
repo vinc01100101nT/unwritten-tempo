@@ -34,7 +34,6 @@ export const config = {
   refreshTokenDays: optionalInt("REFRESH_TOKEN_DAYS", 30),
 
   // A save document larger than this is a bug or an attack, not a character.
-  maxProgressBytes: optionalInt("MAX_PROGRESS_BYTES", 256 * 1024),
 };
 
 export type Config = typeof config;

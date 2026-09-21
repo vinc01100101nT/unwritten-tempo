@@ -108,6 +108,7 @@ public static class UiKit
     public static readonly Color CyanGlow  = new Color(0.30f, 0.85f, 1f, 0.22f);
     public static readonly Color TextMain  = new Color(0.906f, 0.890f, 0.835f);        // #E7E3D5
     public static readonly Color TextDim   = new Color(0.655f, 0.620f, 0.533f);        // #A79E88
+    public static readonly Color Bad       = new Color(0.878f, 0.541f, 0.541f);        // #E08A8A — the tooltip's red for a stat that went down; also a refusal
 
     /// <summary>
     /// Single source of truth for HUD text crispness. Legacy uGUI <see cref="Text"/> rasterizes its glyph
@@ -171,6 +172,36 @@ public static class UiKit
         border.gameObject.AddComponent<UiButtonFx>();
         if (onClick != null) btn.onClick.AddListener(() => onClick());
         return btn;
+    }
+
+    /// <summary>Turn a window's fixed "Content" node into a clipped vertical scroll (wheel and drag) and return the
+    /// inner node to build rows into. Idempotent: a second call returns the same inner node. THE one scroll
+    /// column every list window uses — the Grimoire and the station window alike — so a long list can never run
+    /// off the bottom of one window and not another.</summary>
+    public static RectTransform ScrollColumn(RectTransform viewport)
+    {
+        var existing = viewport.Find("ScrollContent") as RectTransform;
+        if (existing != null) return existing;
+
+        if (viewport.GetComponent<RectMask2D>() == null) viewport.gameObject.AddComponent<RectMask2D>();
+        var vpImg = viewport.GetComponent<Image>();
+        if (vpImg != null) vpImg.raycastTarget = true;   // a graphic for the wheel to land on
+
+        var scroll = viewport.GetComponent<ScrollRect>() ?? viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.horizontal = false; scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 22f;
+
+        var sc = new GameObject("ScrollContent", typeof(RectTransform));
+        var scrt = (RectTransform)sc.transform;
+        scrt.SetParent(viewport, false);
+        scrt.anchorMin = new Vector2(0, 1); scrt.anchorMax = new Vector2(1, 1); scrt.pivot = new Vector2(0.5f, 1);
+        scrt.offsetMin = scrt.offsetMax = Vector2.zero;
+        sc.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.viewport = viewport;
+        scroll.content = scrt;
+        return scrt;
     }
 
     /// <summary>A 20×20 tick box, anchored to the RIGHT edge of <paramref name="parent"/> — the shared

@@ -80,7 +80,7 @@ public class XpBarHUD : MonoBehaviour
         if (ch != null) return;
         ch = Character.Instance;
         if (ch == null) return;
-        ch.OnStatsChanged += Refresh;     // character XP fires this at the end of every AddXP
+        ch.OnStatsChanged += Refresh;     // fired when the server's finished XP/level answer is taken
         ch.Ring.OnChanged += Refresh;     // ring XP/level
     }
 

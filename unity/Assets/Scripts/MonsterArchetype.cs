@@ -31,6 +31,9 @@ public struct MonsterArchetype
     public StatId[] ringRankStats;
     public int[] ringRankValues;
 
+    // How practised it is with what it holds — the creature's half of Weapon Mastery, authored rather than trained.
+    public int weaponMasteryLevel;
+
     // ARMOUR-sourced survivability, still authored: pre-renewal HARD DEF (% reduction, applied first — a crit
     // ignores it). Everything else defensive (maxHealth / defense / magicDefense / flee / luk) is DERIVED from
     // `stats` by UnitStatBlock on the spawned mob, so it isn't carried here — one owner, no snapshot to drift.

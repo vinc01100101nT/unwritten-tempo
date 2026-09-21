@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Flow
   symbol: Fl
   weaponType: 1
+  masteryLevel: 17
+  needsSkillId: skill.sword.momentum
   published: 1
   description: 'Stay on one foe.
 

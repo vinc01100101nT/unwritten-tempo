@@ -341,21 +341,19 @@ public class MobTableWindow : EditorWindow
             pieceScratch.def = item;
             pieceScratch.upgrade = 0;
             pieceScratch.cards.Clear();
-            pieceScratch.rarity = item.rarity;
-            // The real copy is rolled only when the creature spawns, so the table shows the MIDDLE of a piece of
-            // armour's ranges; anything else is as authored. Reset per piece, or a roll would leak between rows.
-            if (ArmourRoll.IsRolledSlot(item.slot)) ArmourRoll.FillMidpoints(pieceScratch);
-            else pieceScratch.rolled = false;
+            // A creature wears what it was given as a RAW, unfolded copy — the same thing a forge would hand over
+            // before any work went into it — so a piece adds nothing of its own here.
+            pieceScratch.quality = Quality.Raw;
+            pieceScratch.Recompute();
             pieceScratch.AccumulateInto(ref gear);
         }
         pieceScratch.def = null;
         var weapon = wornScratch[(int)EquipSlotType.Weapon];
         var held = weapon != null ? weapon.weaponType : WeaponType.None;
 
-        bool ringWorn = wornScratch[(int)EquipSlotType.Ring] != null && def.ringRankStats != null
-                        && def.ringRankValues != null && def.ringRankStats.Length > 0;
-        if (ringWorn) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
-        float Ring(StatId stat) => ringWorn ? ringScratch.Percent(stat) : 0f;
+        bool hasRanks = def.ringRankStats != null && def.ringRankValues != null && def.ringRankStats.Length > 0;
+        if (hasRanks) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
+        float Ring(StatId stat) => hasRanks ? ringScratch.Percent(stat) : 0f;
 
         var u = def.StatInputs.WithGear(gear);
         switch (which)
@@ -376,17 +374,16 @@ public class MobTableWindow : EditorWindow
     }
 
     static GUIStyle gearStyle;
-    // At-a-glance: how many pieces worn, and the ring's total ranks when one is on. Editing happens in the expander.
+    // At-a-glance: how many pieces worn, and the ring's total ranks. Editing happens in the expander.
     static void DrawGearSummary(Rect r, MonsterDef def)
     {
         int worn = GearCount(def);
-        var ring = def.Ring;
         int ranks = 0;
         if (def.ringRankValues != null) for (int i = 0; i < def.ringRankValues.Length; i++) ranks += Mathf.Max(0, def.ringRankValues[i]);
 
         gearStyle ??= new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleLeft };
         gearStyle.normal.textColor = worn > 0 ? new Color(0.75f, 0.7f, 1f) : new Color(0.45f, 0.45f, 0.45f);
-        string label = worn == 0 ? "—" : ring != null ? $"{worn} worn · ring +{ranks}" : $"{worn} worn";
+        string label = worn == 0 && ranks == 0 ? "—" : ranks > 0 ? $"{worn} worn · ring +{ranks}" : $"{worn} worn";
         GUI.Label(VCenter(r, 18), label, gearStyle);
     }
 
@@ -395,7 +392,7 @@ public class MobTableWindow : EditorWindow
     static readonly EquipSlotType[] GearSlots =
     {
         EquipSlotType.Weapon, EquipSlotType.Shield, EquipSlotType.Head, EquipSlotType.Armor,
-        EquipSlotType.Garment, EquipSlotType.Boots, EquipSlotType.Ring,
+        EquipSlotType.Garment, EquipSlotType.Boots,
     };
 
     /// <summary>The per-mob detail editor: what it WEARS (one object field per slot) and, when a ring is worn, that
@@ -425,18 +422,16 @@ public class MobTableWindow : EditorWindow
             EditorGUILayout.LabelField(slot.ToString(), EditorStyles.miniLabel, GUILayout.Width(74));
             var picked = (Item)EditorGUILayout.ObjectField(cur, typeof(Item), false, GUILayout.Width(150));
             // Only accept an item that actually belongs in this slot — otherwise the "worn set" would lie about
-            // where a piece sits, and the ring gate (slot == Ring) would stop meaning anything.
+            // where a piece sits.
             if (picked != null && picked.slot != slot) picked = cur;
             if (picked != null) worn[slot] = picked; else worn.Remove(slot);
             GUILayout.Space(8);
             if (i % perRow == perRow - 1 || i == GearSlots.Length - 1) EditorGUILayout.EndHorizontal();
         }
 
-        // --- ring ranks, only when a ring is actually worn (the gate) ---
-        bool hasRing = worn.ContainsKey(EquipSlotType.Ring);
+        // --- ring ranks: part of the creature, so they always count ---
         var stats = new List<StatId>();
         var vals  = new List<int>();
-        if (hasRing)
         {
             GUILayout.Space(4);
             EditorGUILayout.LabelField("   ring ranks  (same soft-cap curve as the player's ring)", EditorStyles.miniBoldLabel);
@@ -454,12 +449,6 @@ public class MobTableWindow : EditorWindow
                 if (next > 0) { stats.Add(st); vals.Add(next); }
             }
         }
-        else
-        {
-            GUILayout.Space(2);
-            EditorGUILayout.LabelField("   no ring worn — rank percentages are off (same gate the player has)",
-                                       EditorStyles.miniLabel);
-        }
 
         if (EditorGUI.EndChangeCheck())
         {
@@ -467,9 +456,8 @@ public class MobTableWindow : EditorWindow
             var gear = new List<Item>();
             foreach (var kv in worn) if (kv.Value != null) gear.Add(kv.Value);
             def.startingGear = gear.ToArray();
-            // Ranks are only meaningful with a ring on; dropping the ring drops them rather than leaving dead data.
-            def.ringRankStats  = hasRing ? stats.ToArray() : System.Array.Empty<StatId>();
-            def.ringRankValues = hasRing ? vals.ToArray()  : System.Array.Empty<int>();
+            def.ringRankStats  = stats.ToArray();
+            def.ringRankValues = vals.ToArray();
             EditorUtility.SetDirty(def);
         }
 

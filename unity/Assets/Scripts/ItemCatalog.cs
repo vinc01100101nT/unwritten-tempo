@@ -38,6 +38,18 @@ public static class ItemCatalog
         }
     }
 
+    /// <summary>EVERY item the game has, in no particular order — what a station reads to list what it can make.
+    /// Built once and kept, like the pools above.</summary>
+    public static IReadOnlyList<Item> All
+    {
+        get
+        {
+            if (all == null) all = new List<Item>(Resources.LoadAll<Item>("Items"));
+            return all;
+        }
+    }
+    static List<Item> all;
+
     /// <summary>A random item worn in <paramref name="slot"/>, or null when no such item exists.</summary>
     public static Item RandomFor(EquipSlotType slot)
     {

@@ -48,7 +48,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v11";
+    public const string CharacterBuild = "unwritten-character-v13";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -162,7 +162,16 @@ public class MapServerLink : MonoBehaviour
         {
             HttpListenerContext ctx;
             try { ctx = listener.GetContext(); }
-            catch { return; }   // stopped, or the listener has gone
+            catch (Exception e)
+            {
+                // Only a stop ends this loop. Anything else used to end it too, silently — and from then on
+                // nobody could arrive at this map server until it was restarted, with no line saying why.
+                if (stopping || listener == null || !listener.IsListening) return;
+                GameLog.Warn(LogCat.Map, "the arrival door hiccupped and stays open — " + e.Message);
+                // A door that throws on every call would otherwise spin flat out and flood the log.
+                System.Threading.Thread.Sleep(1000);
+                continue;
+            }
 
             try { Answer(ctx); }
             catch (Exception e) { GameLog.Warn(LogCat.Map, "an arrival went wrong — " + e.Message); }

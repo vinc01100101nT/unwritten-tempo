@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Offbeat
   symbol: Ob
   weaponType: 1
+  masteryLevel: 15
+  needsSkillId: 
   published: 1
   description: 'Break their rhythm.
 
