@@ -11,4 +11,4 @@ metadata:
 
 **Fix:** `[System.Serializable]` on the struct (2026-09-20), then **re-bake every creature** — Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs. Adding the marker alone changes nothing: the prefabs on disk still lack the entry until they are written again.
 
-**How to apply / gotchas:** any struct that a baker writes into a prefab or asset field needs the marker, and the proof is to grep the saved file for the field name — a component whose OTHER fields are written while one is missing is this exact bug. The baked values' presence is now checked by play-test checklist batch 20, without-play step 3. Related: [[find-or-create-hides-duplicates]] (same "silent success" family).
+**How to apply / gotchas:** any struct that a baker writes into a prefab or asset field needs the marker, and the proof is to grep the saved file for the field name — a component whose OTHER fields are written while one is missing is this exact bug. Related: [[find-or-create-hides-duplicates]] (same "silent success" family).

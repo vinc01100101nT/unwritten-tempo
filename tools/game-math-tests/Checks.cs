@@ -386,25 +386,40 @@ static class Checks
     // a creature far below you that still teaches, or a lift that runs past the ceiling it promised.
     static void MasteryCurve()
     {
-        // The level a pile of practice buys is exactly the level whose cost it has met, and never more.
+        // The level a pile of experience buys is exactly the level whose cost it has met, and never more.
+        // The nudge below is a WHOLE point, not a fraction: the smallest step on this curve is 20, and at the
+        // sizes it reaches (30,380 by level 70) a thousandth is smaller than the gap between two neighbouring
+        // floats and would vanish entirely, leaving the test passing without having tested anything.
         for (int level = 0; level <= 120; level++)
         {
-            float cost = MasteryMath.WeaponPointsFor(level);
+            float cost = MasteryMath.WeaponXpFor(level);
             That(MasteryMath.WeaponLevelFrom(cost) == level, MasteryF,
-                 "level " + level + " costs " + cost + " points, which reads back as level " + MasteryMath.WeaponLevelFrom(cost));
+                 "level " + level + " costs " + cost + " experience, which reads back as level " + MasteryMath.WeaponLevelFrom(cost));
             if (level > 0)
-                That(MasteryMath.WeaponLevelFrom(cost - 0.001f) == level - 1, MasteryF,
-                     "a hair under level " + level + "'s cost is not level " + (level - 1));
+                That(MasteryMath.WeaponLevelFrom(cost - 1f) == level - 1, MasteryF,
+                     "a point under level " + level + "'s cost is not level " + (level - 1));
         }
         for (int level = 0; level <= 60; level++)
             That(MasteryMath.SkillLevelFrom(MasteryMath.SkillUsesFor(level)) == level, MasteryF,
                  "skill level " + level + " does not read back from its own cost in uses");
 
-        // THE PROMISED FIGURES: 2,485 points to weapon 70 and 2,325 uses to skill 30.
-        That(Math.Abs(MasteryMath.WeaponPointsFor(70) - 2485f) < 0.01f, MasteryF,
-             "weapon mastery 70 no longer costs 2,485 points: " + MasteryMath.WeaponPointsFor(70));
+        // WEAPON MASTERY RIDES THE RING'S CURVE — the design says that in one sentence, and the only thing that
+        // keeps it true is the step from N to N+1 BEING the ring's own step. Checked against the ring rather than
+        // against a copied formula, so the two cannot quietly drift apart.
+        for (int level = 0; level <= 120; level++)
+            That(Math.Abs((MasteryMath.WeaponXpFor(level + 1) - MasteryMath.WeaponXpFor(level))
+                          - UnitStatMath.RingXpToNextFrom(level)) < 0.01f, MasteryF,
+                 "weapon mastery " + level + " to " + (level + 1) + " no longer costs the ring's own step");
+
+        // THE PROMISED FIGURES: 30,380 experience to weapon 70 and 2,325 uses to skill 30.
+        That(Math.Abs(MasteryMath.WeaponXpFor(70) - 30380f) < 0.01f, MasteryF,
+             "weapon mastery 70 no longer costs 30,380 experience: " + MasteryMath.WeaponXpFor(70));
         That(Math.Abs(MasteryMath.SkillUsesFor(30) - 2325f) < 0.01f, MasteryF,
              "skill mastery 30 no longer costs 2,325 uses: " + MasteryMath.SkillUsesFor(30));
+
+        // AND WHAT THOSE LEVELS ARE WORTH: half a percent a level on each of the weapon's three stats, so 35% at 70.
+        That(Math.Abs(MasteryMath.WeaponPercent(70) - 0.35f) < 0.0001f, MasteryF,
+             "weapon mastery 70 no longer adds 35% to each of its stats: " + MasteryMath.WeaponPercent(70));
 
         // Neither lift ever passes the ceiling, and both rise with the level.
         float lastSkill = -1f, lastPassive = -1f;
@@ -419,33 +434,23 @@ static class Checks
             lastSkill = skill; lastPassive = passive;
         }
 
-        // The challenge scale: nothing far below, a full point at your own level, and a hard ceiling above.
-        That(MasteryMath.Challenge(30, 40) == 0f, MasteryF, "a creature ten levels below still teaches");
-        That(MasteryMath.Challenge(29, 40) == 0f, MasteryF, "a creature eleven levels below still teaches");
-        That(Math.Abs(MasteryMath.Challenge(40, 40) - 1f) < 0.0001f, MasteryF, "an even fight is not worth one point");
-        That(Math.Abs(MasteryMath.Challenge(45, 40) - 1f) < 0.0001f, MasteryF, "five levels above is not still an even fight");
-        float last = -1f;
-        for (int victim = 25; victim <= 120; victim++)
-        {
-            float c = MasteryMath.Challenge(victim, 40);
-            That(c >= last, MasteryF, "the challenge scale falls at a victim level of " + victim);
-            That(c <= MasteryMath.MostPerKill + 0.0001f, MasteryF, "a level-" + victim + " kill is worth " + c);
-            last = c;
-        }
-
-        // A kill pays by the SHARE taken, and a creature is worth the same whatever its health pool.
-        That(Math.Abs(MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.E) - 1f) < 0.0001f, MasteryF,
-             "a whole creature taken down alone is not worth one point");
-        That(Math.Abs(MasteryMath.PracticeFromKill(50, 100, 40, 40, Quality.E) - 0.5f) < 0.0001f, MasteryF,
-             "half a creature is not worth half a point");
-        That(Math.Abs(MasteryMath.PracticeFromKill(9900, 10000, 40, 40, Quality.E)
-                    - MasteryMath.PracticeFromKill(99, 100, 40, 40, Quality.E)) < 0.0001f, MasteryF,
-             "a creature with a bigger health pool pays more for the same share");
-        That(MasteryMath.PracticeFromKill(100, 100, 20, 40, Quality.A) == 0f, MasteryF,
-             "a creature far below still pays, whatever the weapon");
-        That(MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.A)
-             > MasteryMath.PracticeFromKill(100, 100, 40, 40, Quality.Raw), MasteryF,
+        // A KILL PAYS THE WEAPON EXACTLY WHAT IT PAID YOU, at the speed the grade in hand trains — E is par, so a
+        // kill worth 100 pays 100. A kill worth nothing teaches nothing, which is what makes a training dummy
+        // (it pays no experience because it never dies) a dead end for mastery rather than a free ride.
+        That(Math.Abs(MasteryMath.WeaponXpFromKill(100, Quality.E) - 100f) < 0.0001f, MasteryF,
+             "a kill worth 100 experience does not pay a par weapon 100 toward its mastery");
+        That(MasteryMath.WeaponXpFromKill(0, Quality.A) == 0f, MasteryF,
+             "a kill worth no experience still teaches");
+        That(MasteryMath.WeaponXpFromKill(-50, Quality.A) == 0f, MasteryF,
+             "a kill worth less than nothing still teaches");
+        That(MasteryMath.WeaponXpFromKill(100, Quality.A) > MasteryMath.WeaponXpFromKill(100, Quality.Raw), MasteryF,
              "a fine weapon trains no faster than a raw one");
+
+        // ONE COMPLETED PRESS IS ONE USE, at that same grade speed — so par is exactly one, whatever it was aimed at.
+        That(Math.Abs(MasteryMath.PracticeFromUse(Quality.E) - 1f) < 0.0001f, MasteryF,
+             "one press of a skill with a par weapon is not worth one use");
+        That(MasteryMath.PracticeFromUse(Quality.A) > MasteryMath.PracticeFromUse(Quality.Raw), MasteryF,
+             "a fine weapon hones a skill no faster than a raw one");
     }
 
     // ---- a buff's number is a bonus, stacking or not --------------------------------------------------

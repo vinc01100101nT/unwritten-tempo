@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-**Built 2026-09-13 to the user's decisions (unplayed — `docs/1-planning/play-test-checklist/`).**
+**Built 2026-09-13 to the user's decisions (unplayed).**
 
 - **What rolls, and when:** `EquipmentInstance.CreateRolled` — the one door for anything entering the world — rolls
   rarity (the weapon odds 45/30/15/5/5) for weapons AND for the four armour places, then `ArmourRoll.Roll`: DEF and

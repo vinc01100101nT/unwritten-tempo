@@ -196,7 +196,7 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 ### Docs and wiki that state the old rules (RULE NOSTALE — rewrite in place in the slice that changes each)
 
-docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = grants skills"), implementation-notes.md (:25-28 kit, :233-235 "skills don't level"), unified-unit-stats(-implementation-notes).md, weapon-crafting-economy.md and crafting-and-recycling.md (both replaced), ring-system-trio-ring.md:15, hud-ui-system.md, pre-renewal-ro-port.md, roadmap/action-plan/play-test-checklist, docs/README.md; wiki/content/weapons.json, cards.json, skills.json, crafting.json (grep hits for rarity words). Not read in full; listed from `grep -rli "legendary\|rarity"`.
+docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = grants skills"), implementation-notes.md (:25-28 kit, :233-235 "skills don't level"), unified-unit-stats(-implementation-notes).md, weapon-crafting-economy.md and crafting-and-recycling.md (both replaced), ring-system-trio-ring.md:15, hud-ui-system.md, pre-renewal-ro-port.md, roadmap/action-plan, docs/README.md; wiki/content/weapons.json, cards.json, skills.json, crafting.json (grep hits for rarity words). Not read in full; listed from `grep -rli "legendary\|rarity"`.
 
 ## Part 3 — What could break
 

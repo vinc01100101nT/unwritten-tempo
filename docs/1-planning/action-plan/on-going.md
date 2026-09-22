@@ -84,9 +84,9 @@ longer found and no longer rolled: you forge it, fold it and quench it, and what
 folds and its quality grade rather than from which design it is. `MT-39` is that work.
 
 - [ON-GOING] `MT-39` **`[E]` Gameplay System V4 — forging, quality, Ink and mastery.** Built 2026-09-20 across six
-  slices; **not play-tested**. Batch 21 of the [play-test checklist](../play-test-checklist/not-done-yet.md) is what would prove
+  slices; **not play-tested**. A play-test session is what would prove
   it. — **built; a play-test session remains**
-  *Done when:* every step of batch 21 reads passed or failed with none unrun.
+  *Done when:* it has been played through and every part of it works.
 
   - [ON-GOING] `ST-39-A` **`[E]` The Ring becomes part of the character.** No ring item, no ring slot; what it earned
     always counts. Nothing wearable is handed out at the start any more.

@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-**Built 2026-09-15 at the user's request (unplayed — `docs/1-planning/play-test-checklist/` section 7).** Reverses the
+**Built 2026-09-15 at the user's request (unplayed).** Reverses the
 earlier "a kill never leaves anything lying in the world" design.
 
 - **Where loot goes:** `Rewards.PayLoot` — gold → `AddGold`; every item (loot table, the 30% `LootDropper.RandomItemChance`
