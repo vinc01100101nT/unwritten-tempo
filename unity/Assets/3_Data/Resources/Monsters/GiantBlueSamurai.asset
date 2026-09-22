@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantbluesamurai
   displayName: GiantBlueSamurai
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 1
   sheet: GiantBlueSamurai
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.3
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 22
-  str: 17
-  agi: 8
-  vit: 21
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 22
+  level: 33
+  str: 23
+  agi: 13
+  vit: 26
+  intel: 11
+  dex: 18
+  luk: 11
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 33
   hardDefPercent: 26
   hardMagicDefPercent: 16
-  attackType: 0
   xpReward: 400
   touchRange: 0.9
   touchInterval: 1

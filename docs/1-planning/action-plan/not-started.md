@@ -35,28 +35,15 @@ folds and its quality grade rather than from which design it is. `MT-39` is that
 - [ ] `MT-10` **`[E]` Check the whole item set at once.** — **0.5 days**
   *Done when:* `tools/check-asset-wiring.py` and `tools/check-unity-code.sh` both run clean, and the editor console is read in full and reported.
 
-- [ ] `MT-11` **`[D]` Decide which creatures drop which material band.** Seven bands per craft, and a band is
-  what a piece of that grade folds with — so the band a creature drops is what decides how far a player standing
-  in front of it can fold. *Recommendation: tie it to the creature's level band rather than naming creatures one
-  by one — it survives adding creatures later.* — **0.5 days**
-
 ---
 
 ## Week 4 — Killing things pays you
 
 **Goal:** the phase that turns two months of finished combat into a game. You kill something, gear falls out, you put it on, your character sheet changes.
 
-Today every creature dresses itself at random as it spawns but **gives up none of it** — since V4, gear is made,
-not taken off a corpse. A kill pays materials, consumables and gold, plus a 30% chance of one random item that is
-not equipment, and all 86 still have an empty drop list, so the 29 materials reach a player only through `/item`.
-
-- [ ] `MT-12` **`[A]` Author the drop tables.** A drop list on each of the 86 creatures: which **materials**, at
-  what chance, matched to the band its level should be handing out (`MT-11`). Rare Salt and the better Inks drop
-  from creatures of every level — only the bands are level-gated. — **3–4 days**
-  *Done when:* every creature has at least one thing it can give, and the wiring sweep reports no unresolved names.
-
-- [ ] `MT-13` **`[E]` Rebuild the creatures so the drop lists reach the game.** Loot is attached when a creature's prefab is baked, not when the game runs, so editing a drop list changes nothing until this is run: **Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs**. — **0.5 days**
-  *Done when:* killing the same creature about twenty times lands at least one item in your bag.
+Every creature dresses itself as it spawns but **gives up none of it** — since V4, gear is made, not taken off a
+corpse. Since 2026-09-22 a kill pays the creature's own level's band of metal, cloth and leather, a chance of an Ink
+or a Salt (much more from elites, more again from shadows), a 30% chance of one random consumable, and gold.
 
 - [ ] `MT-14` **`[E]` Play-test the loop and judge the rates.** The first session where the numbers from Week 2's decision meet a real fight. — **1 day**
   *Done when:* you have played an hour, and either kept the drop rates or written down the new ones and applied them.
@@ -76,18 +63,19 @@ not equipment, and all 86 still have an empty drop list, so the 29 materials rea
 
 ## Week 6 — Dungeons have a destination
 
-**Goal:** every dungeon has a boss at the end of it, worth the walk.
+**Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
-Twenty bosses are defined and none is placed anywhere. All 34 creature spawn points are set to pick any ordinary creature.
+18 elites and 12 shadows are defined ([Mob Roster](../../3-world/mob-roster.md)). Where every creature lives is the
+world spawn list, one row per spawn area, which the server reads as it loads each map; today only one elite and one
+shadow have a row, in `field_0`, for testing. Placing the rest waits on the world shape (`MT-16`).
 
-- [ ] `MT-17` **`[E]` Give each dungeon a second spawn point.** Each dungeon has exactly one, so using it for the boss leaves that dungeon with no ordinary creatures. — **1 day**
-  *Done when:* every dungeon has one spawn point for its ordinary creatures and one for its boss.
+- [ ] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
+  the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
+  *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
 
-- [ ] `MT-18` **`[A]` Place a named boss in each of the 14 dungeons.** **The two shortcuts do not do what their names suggest:** asking for "a boss" gives a different random one on every respawn, and the one-click placement tool always places the first boss in the list, so running it 14 times puts the same creature in all 14. Naming the creature is the only way to get a fixed one. — **2 days**
-  *Done when:* every dungeon has one named boss in a fixed place, plus its ordinary creatures, and the same boss is there again after you leave and come back.
-
-- [ ] `MT-19` **`[A]` Make a boss worth the walk.** Bosses already pay 500 to 2000 gold against an ordinary creature's 6 to 24. They need gear to match. — **1–2 days**
-  *Done when:* killing a boss reliably produces something an ordinary creature never gives.
+- [ ] `MT-18` **`[A]` Put the twelve shadows on the end-game maps.** One row each, naming the shadow, once the
+  end-game maps exist. — **2 days**
+  *Done when:* every shadow stands in its fixed place on an end-game map, and the same one is there again after you leave and come back.
 
 ---
 

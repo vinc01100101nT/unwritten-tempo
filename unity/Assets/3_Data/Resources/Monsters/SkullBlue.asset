@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.skullblue
   displayName: SkullBlue
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 1
   sheet: SkullBlue
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.0600001
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 12
-  str: 12
-  agi: 8
-  vit: 12
-  intel: 5
-  dex: 8
-  luk: 5
-  weaponMasteryLevel: 12
+  level: 43
+  str: 30
+  agi: 22
+  vit: 29
+  intel: 14
+  dex: 22
+  luk: 14
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 43
   hardDefPercent: 10
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 20
   touchRange: 0.9
   touchInterval: 1

@@ -56,7 +56,8 @@ The folders match the sections below, so the file tree and this index say the sa
 ## World & content
 
 - [World Creator — Spec](3-world/world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
-- [Biome Mob Families — Tiered Spawning](3-world/biome-mob-families.md) — biome × tier mob data + generator wiring.
+- [Mob Roster — Normal, Elite, Shadow](3-world/mob-roster.md) — the three kinds of creature: levels, skill slots, gear, summoning, respawn and drops (design, not built).
+- [Biome Mob Families — Spawning by Biome and Level](3-world/biome-mob-families.md) — biome × level mob data + generator wiring.
 - [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Twelve Unwritten (one per weapon).
 
 ## Art & animation pipeline

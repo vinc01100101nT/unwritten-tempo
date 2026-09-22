@@ -1570,6 +1570,9 @@ public class SkillComposerWindow : EditorWindow
     void DrawEffectKindTop(SkillEffect ef, bool casterSide)
     {
         EnsureKindLabels();
+        // A SUMMON is not one of the four groups and is not offered here — it belongs to the one summon skill every
+        // summoner carries. Shown as what it is, and never changed by opening the skill.
+        if (ef.kind == SkillEffectKind.Summon) { EditorGUILayout.LabelField("Summon"); return; }
         var group = GroupOf(ef.kind);
         var next = (EffectGroup)EditorGUILayout.Popup((int)group, GroupLabels);
         if (next == group) return;
@@ -1585,6 +1588,7 @@ public class SkillComposerWindow : EditorWindow
     void DrawEffectStateBranch(SkillEffect ef, bool casterSide)
     {
         EnsureKindLabels();
+        if (ef.kind == SkillEffectKind.Summon) return;   // nothing to pick under it — see DrawEffectKindTop
         var group = GroupOf(ef.kind);
 
         if (group == EffectGroup.Health || group == EffectGroup.Movement)
@@ -2089,6 +2093,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Shield:        return "Raises a barrier that soaks a set amount of incoming damage before it breaks.";
             case SkillEffectKind.ExtendDuration: return "Gives another skill's running pile more time — every stack of it lasts longer.";
             case SkillEffectKind.AddStacks:     return "Adds stacks to another skill's running pile. The only way one skill can feed another's charges.";
+            case SkillEffectKind.Summon:        return "Tops the caster's summons back up to its kind's maximum — an elite calls normals, a shadow calls elites. Who and how many is the caster's, not this effect's.";
             default:                            return "";
         }
     }

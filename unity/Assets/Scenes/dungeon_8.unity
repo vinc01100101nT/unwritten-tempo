@@ -10802,61 +10802,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 442924994640320287, guid: 9ab3ecbb7f92dd144b2cf0be37af4e42, type: 3}
   m_PrefabInstance: {fileID: 2060616081}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &2061573899
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2061573901}
-  - component: {fileID: 2061573900}
-  m_Layer: 0
-  m_Name: Mobs
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2061573900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2061573899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac9b1c6e0967a0c48b312b6b4f843f24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FieldMobSpawner
-  population: 56
-  radius: 25.291536
-  respawnDelay: 5
-  respawnJitter: 3
-  fixedMobId: 
-  biome: 3
-  minLevel: 1
-  maxLevel: 99
-  includeCommons: 1
-  playerClearRadius: 6
-  shadowFraction: 0
---- !u!4 &2061573901
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2061573899}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2064266680
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11399,4 +11344,3 @@ SceneRoots:
   - {fileID: 593531396}
   - {fileID: 986452039}
   - {fileID: 1005865008}
-  - {fileID: 2061573901}

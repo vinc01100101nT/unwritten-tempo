@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantfrog
   displayName: GiantFrog
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 3
   sheet: GiantFrog
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.3
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 38
-  str: 26
-  agi: 12
-  vit: 32
-  intel: 12
-  dex: 20
-  luk: 12
-  weaponMasteryLevel: 38
+  level: 66
+  str: 42
+  agi: 25
+  vit: 48
+  intel: 25
+  dex: 36
+  luk: 25
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 66
   hardDefPercent: 26
   hardMagicDefPercent: 16
-  attackType: 0
   xpReward: 400
   touchRange: 0.9
   touchInterval: 1

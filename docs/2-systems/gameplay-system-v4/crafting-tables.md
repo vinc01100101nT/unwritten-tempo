@@ -27,7 +27,8 @@ of the piece's CURRENT grade. A design is always forged from band 1.
 | 6 | B | Mithril | Silk | Shagreen |
 | 7 | A | Adamant | Brocade | Wyrmhide |
 
-Band materials never merge into each other. They come from creatures only.
+Band materials never merge into each other. They come from creatures only — each creature drops the band its level
+falls in (see [Mob Roster](../../3-world/mob-roster.md)).
 
 ## 2. Forge — what each design costs
 

@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.heartred
   displayName: HeartRed
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 4
   sheet: HeartRed
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 19
-  luk: 11
-  weaponMasteryLevel: 36
+  level: 88
+  str: 56
+  agi: 47
+  vit: 56
+  intel: 35
+  dex: 47
+  luk: 33
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 88
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 5
   touchRange: 0.9
   touchInterval: 1

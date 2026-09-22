@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21; not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-22
 tags:
   - systems-combat-design
 ---
@@ -135,6 +135,11 @@ whole. Decided 2026-09-21.
   the weapon it requires, as today (red for sword skills, and so on).
 - **Rare materials are the surprise drop**, and they drop from creatures **of every level**. Only the base
   forging, weaving and tanning materials are level-gated.
+- **Which band a creature drops is its level's answer** (decided 2026-09-22): the seven bands split creature levels
+  1–99 evenly — 1–14 Raw, 15–28 F, 29–42 E, 43–56 D, 57–70 C, 71–84 B, 85–99 A — and a shadow (105–160) drops band
+  A. A creature drops its band's metal, cloth and leather, and a chance of an Ink or a Salt; how much, and which
+  tiers, is its kind's answer (normal, elite, shadow). The table is in [Mob Roster](../../3-world/mob-roster.md).
+  Every kill also has a 30% chance of one random consumable; materials are never in that roll.
 - **Tiered materials merge upward, deterministically**: a fixed number of one tier (e.g. ten) always becomes one
   of the next tier, no failure. This applies to **Ink** and to **Salt**, so surplus low tiers
   are never trash and the top tier is reachable by work as well as by luck. The merge ratio is the dial that
@@ -364,7 +369,6 @@ tables when their pools are authored, by the same rule.
 
 ## Still open
 
-- **Which creatures drop which materials** — deferred; until then materials come from the `/item` command.
 - **Card sockets** — deferred.
 - **Unlock tables for the other eleven weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
@@ -374,9 +378,10 @@ tables when their pools are authored, by the same rule.
 - **Which townspeople are stations** — no smith, loom or tannery is authored in the town scene yet; `/station`
   makes the nearest villager one for a play-test.
 - **Creature masteries are authored as the creature's LEVEL** (a level-20 creature has Weapon Mastery 20), so a
-  creature knows every skill of the weapon it holds up to that level and takes that lift. Every piece a creature
-  wears is Raw, which caps that mastery at 10 exactly as it caps a player's. **This is a first guess and is
-  expected to need balancing** — a high-level creature that rolls a sword now knows its ultimates.
+  creature knows every skill of the weapon it holds up to what its weapon's grade allows, and takes that lift. A
+  normal or an elite wears Raw pieces, which cap that mastery at 10 exactly as they cap a player's — so the most it
+  knows with a sword is the six skills a Raw sword reaches. A shadow's A-grade weapon allows 70, so the Sword shadow
+  knows every sword skill, the ultimates included. **This is a first guess and is expected to need balancing.**
 
 ## What V4 replaced in V3
 

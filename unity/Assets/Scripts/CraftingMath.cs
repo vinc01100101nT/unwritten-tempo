@@ -191,6 +191,9 @@ public static class CraftingMath
     static readonly float[] Speed     = { 1, 2, 3, 4, 5 };        // Attack Speed, Cast Speed
     static readonly float[] Primary   = { 3, 6, 9, 12, 15 };      // the premium: 1.5× the Attack line
 
+    /// <summary>The strongest Ink's tier — Sharp.</summary>
+    public const int TopInkTier = 5;
+
     /// <summary>What one Ink of <paramref name="tier"/> (1..5) writes for <paramref name="stat"/>. A percentage
     /// stat comes back as whole percent.</summary>
     public static float InkValue(InkStat stat, int tier)

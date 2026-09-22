@@ -80,6 +80,20 @@ public class MobNameplate : MonoBehaviour
         feetOffset = -gap;
     }
 
+    // THE PLATE GOES WHEREVER THE MOB GOES. The widget hangs under the shared canvas, not under the mob, so a mob
+    // that is switched OFF rather than destroyed — banked by its spawner's pool, handed back by the watching side's
+    // body bank, or put away with a map nobody is standing in — takes this component's LateUpdate with it and can
+    // never hide its own plate again: the bar is stranded in mid-air, at the spot the mob vanished from, for the
+    // rest of the session. Hidden here instead, which is the ONE moment every one of those paths passes through.
+    // LateUpdate shows it again by itself the moment the mob comes back.
+    void OnDisable()
+    {
+        if (root != null && shown) { shown = false; root.gameObject.SetActive(false); }
+        // A BANKED BODY IS REUSED FOR ANOTHER CREATURE, and the fill is only rewritten when Current CHANGES — so a
+        // body handed back at the same number the last creature left would keep drawing that creature's wound.
+        lastShownHP = int.MinValue;
+    }
+
     void OnDestroy()
     {
         if (states != null) states.OnChanged -= OnStatesChanged;

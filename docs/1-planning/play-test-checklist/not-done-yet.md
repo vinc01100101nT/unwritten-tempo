@@ -1,7 +1,7 @@
 ---
 status: open
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-22
 tags:
   - planning-production
 ---
@@ -10,7 +10,7 @@ tags:
 
 Steps nobody has run. This file also holds the batch list and the rebuild-and-restart header the other three link to. Every step keeps the section and number it had in the single checklist, so a step referred to elsewhere as "step 2 of section 10" is still that step, and a step moves between these files as its verdict changes. The four files are [passed](passed.md), [failed](failed.md), [on-going](on-going.md) and [not done yet](not-done-yet.md).
 
-Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from twenty-two batches:
+Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from twenty-seven batches:
 
 1. **The bag's columns** (2026-09-14).
 2. **Your machine works out no game number** (2026-09-14) — the server sends every number and your screen only draws it.
@@ -37,6 +37,12 @@ Everything built but never watched working, in two lists: the checks that can be
 22. **Weapon trademarks** (2026-09-21) — a forged weapon rolls one TRADEMARK skill of its weapon type and is named for it ("+15 Hadori [C]"). The weapon raises every main number of that skill by a percentage set by its grade (+5% at Raw to +20% at A). The weapon's card lists the skill and one line per raised effect; the skill's card shows each effect's base number with the trademark bonus and the mastery bonus on their own lines. [Weapon Names & Trademarks](../../2-systems/gameplay-system-v4/weapon-names-and-trademarks.md).
 
 23. **The Ring moves into the Character window; the Skills window (K); ring picks decided by the server** (2026-09-21) — the ring now sits on the right of the Character window (C); K opens a new Skills window listing each weapon's skills on one mastery line; and a ring pick is now ASKED of the server, which checks it, spends the point, saves it and sends the walk back — before this the pick happened only on your screen, so the server never raised a stat and your next sign-in put every point back.
+
+24. **Chat bubbles and item names on the floor keep one size at every zoom** (2026-09-21) — both are now drawn flat on the screen over the head or item they belong to, and underneath every window. The floor names keep the size they had at the zoom the game starts at; the bubble text is half as big again as it was. Damage numbers, health bars, creature names and buff icons still grow and shrink with zoom. The name on the plate over whoever you point at, and an item's name on the floor, are now both bold Inter with a thicker black edge; the floor names were the pixel font before.
+
+25. **Scroll sensitivity** (2026-09-21) — a *Scroll sensitivity* slider on the Gameplay page of Settings, from 0.25× to 3× (1× is how scrolling felt before). It sets how far one scroll moves every scrolling list in a window, the character preview's zoom, and the camera zoom. The camera now zooms by how far you actually scrolled, capped at one wheel notch per frame, so a two-finger trackpad swipe zooms in proportion to the swipe instead of one full notch every frame it reports movement. A phone's pinch is unchanged. Nothing needs rebuilding or restarting for this batch.
+26. **Creature kinds, summoning, level-based drops and the world spawn list** (2026-09-22) — every creature is a normal, an elite or a shadow; normals and elites are re-levelled onto 1–99 and twelve named shadows stand at 105–160; elites summon normals and shadows summon elites; every creature drops its own level's grade of materials; and where creatures live is one list the server reads as it loads each map, instead of a spawn point saved in each map. [Mob Roster](../../3-world/mob-roster.md).
+27. **Creature levels beside their names, coloured map dots and your coordinates** (2026-09-22) — the plate you get by pointing at a creature and the bar at the top when you lock onto one both show the creature's current level after its name ("Poring Lv 12"); on the minimap an elite is a purple dot, a shadow an orange dot, every other person a white dot and an ordinary creature stays red; and a strip along the bottom of the minimap shows where you stand as three whole numbers.
 
 ---
 
@@ -88,7 +94,11 @@ GM commands are typed into chat and need a GM account — see [Starting the Netw
 2. **Game server process — RESTART** after the rebuild. Stop it with `pkill -f 'unwritten-server.app/unwritten'`, check `lsof -nP -iUDP:7777` prints nothing, then start it with the command under *The game server ▸ Running it* in [Starting the Network](../../2-systems/networking/starting-the-network.md) — **that command now reads `SERVER_SECRET` out of `accounts/.env`; a server started with the old word "change-me" is refused by the character server.**
 3. **Character server — RESTART.** Batch 20 changed its code (it now remembers which map server holds each character) and it now REFUSES to start unless `SERVER_SECRET` is set in `accounts/.env` — it is, and `charserver/run.sh` reads it from there; a value typed on the command line is no longer needed. Batch 22 moved the one string both servers must agree on to `unwritten-character-v14`, so restart it together with the rebuilt game server.
 4. **Account service — RESTART.** Batch 20 removed its character routes (the player-writable save door), added the per-address limit on sign-ups and sign-ins (a new dependency was installed) and rekeyed the wrong-password lockout. Also run `npm run migrate` in `accounts/` if it has not run since 2026-09-20 — it adds the leaderboard index (already applied on this machine).
-5. **The game you play — REBUILD** if you play the built game. Batch 20 changed the experience message (see 1), turned on GPU skinning, shrank the shadow map and removed eight packages — Unity resolves the package change and rewrites its own `packages-lock.json` the first time the editor regains focus; that is expected. **Batch 17 changed the MAPS, which live in both builds — so the game server must be rebuilt and restarted for it too, not just this one.**: `tools/build-game.sh client`. Batch 16 is entirely inside the windowless client (already rebuilt on 2026-09-18 12:30, nothing on the server side changed shape). Batches 1 and 2 changed what your own screen draws, batch 6 adds items your screen must know to draw them, batch 7 changed the message that describes a creature, batch 8 changed the message that carries your character sheet, batch 9 changed how your screen draws a creature's cast, and batch 10 adds the message that says an arrow was fired, the value that says what a person is wearing, and two new pieces on the message that carries a blow to YOU — an old game and a new server cannot read each other's creatures, sheets, arrows or blows on a person, and an old game draws no arrow, no weapon in anybody else's hand and no rising total over you. Batch 11 changed only what your screen draws, so it needs this rebuild and nothing on the server side. Batch 13 changes nothing your screen draws — only the `/help` line for `/summon`. Batch 14 changes how your screen draws a boss and the saved boss creatures it loads. Playing from the editor needs nothing extra: the game reads the character server's address from its own settings file.
+5. **The game you play — REBUILD** if you play the built game. Batch 20 changed the experience message (see 1), turned on GPU skinning, shrank the shadow map and removed eight packages — Unity resolves the package change and rewrites its own `packages-lock.json` the first time the editor regains focus; that is expected. **Batch 17 changed the MAPS, which live in both builds — so the game server must be rebuilt and restarted for it too, not just this one.**: `tools/build-game.sh client`. Batch 16 is entirely inside the windowless client (already rebuilt on 2026-09-18 12:30, nothing on the server side changed shape). Batches 1 and 2 changed what your own screen draws, batch 6 adds items your screen must know to draw them, batch 7 changed the message that describes a creature, batch 8 changed the message that carries your character sheet, batch 9 changed how your screen draws a creature's cast, and batch 10 adds the message that says an arrow was fired, the value that says what a person is wearing, and two new pieces on the message that carries a blow to YOU — an old game and a new server cannot read each other's creatures, sheets, arrows or blows on a person, and an old game draws no arrow, no weapon in anybody else's hand and no rising total over you. Batch 11 changed only what your screen draws, so it needs this rebuild and nothing on the server side. Batch 13 changes nothing your screen draws — only the `/help` line for `/summon`. Batch 14 changes how your screen draws a boss and the saved boss creatures it loads. Batch 24 changes only what your screen draws, so it needs this rebuild and nothing on the server side. Playing from the editor needs nothing extra: the game reads the character server's address from its own settings file.
+
+**Batch 26:** game server build — **REBUILD** (new game code, new creature data, and the re-baked creatures, which are already baked); game server process — **RESTART** after it; character server — **no** (nothing it runs changed, and the build string is still `unwritten-character-v14`); account service — **no**. Rebuild the game you play too if you play the built game: `/where` and the summon kind names are new.
+
+**Batch 27:** game server build — **REBUILD** (the server now sends every creature's level and its kind, which it did not send before); game server process — **RESTART** after it; character server — **no**; account service — **no**. Rebuild the game you play too if you play the built game — an old game cannot read the new creature message, so it would show no level and no coloured dots.
 
 **Never refresh the editor while a play session is running** — its automatic refresh is switched off, so an edit waits for a refresh, and a refresh mid-play reloads the game's code and ends the session.
 
@@ -604,3 +614,146 @@ Needs the rebuilt game server (the pick is a new request, and your mastery now a
     *Should:* each list that is longer than its window scrolls and the camera never zooms while the cursor is on any
     of them; over open ground the wheel zooms as before. Hovering a hotbar skill and a buff icon still shows its card.
     *FAIL:* a zoom over any window, no zoom over the ground, or a hover card that no longer appears.
+
+### 24. Chat bubbles and item names on the floor keep one size at every zoom
+
+1. Stand next to a townsperson who is talking (or type a line in chat), then turn the mouse wheel all the way out and all the way in.
+   *Should:* the white bubble stays the same size on screen the whole time and stays over the speaker's head.
+   *FAIL:* the bubble grows or shrinks with the zoom, or drifts off the head.
+   The same goes for the skill name a creature or player calls out in a bubble when casting (Lunge, Onslaught) — it is the same bubble.
+2. Drop an item, hold **Alt**, and zoom all the way out and all the way in.
+   *Should:* the item's name stays the same size on screen and over the item; hovering it still lights its background, and a left click still walks you to it and picks it up.
+   *FAIL:* the name changes size, hovering does nothing, or a click walks you to the spot under the name without picking it up.
+3. With a bubble or a floor name on screen, open the bag (**B**) over it.
+   *Should:* the bag covers the bubble or name.
+   *FAIL:* the bubble or name is drawn on top of the bag.
+4. Right-drag to tilt the camera close to the ground so a speaker is behind you.
+   *Should:* no bubble shows up mirrored somewhere else on screen.
+   *FAIL:* a bubble or name appears on screen for something behind the camera.
+5. Look at a bubble's text at the starting zoom.
+   *Should:* the words are half as big again as they were before this change, and the white bubble grows to fit them.
+   *FAIL:* the words are the old size, or they spill out of the bubble.
+6. Point the cursor at a creature and at another player.
+   *Should:* the name on the plate over them is bold, with a clear black edge around every letter.
+   *FAIL:* the name is thin, or has no visible edge. The small numbers on the buff icons in the same plate keep their old thin edge.
+   *Status:* 2026-09-21 — the first try did not look bold: the game's font file has only the regular weight, so bold is drawn by thickening the letters, and the default amount was too slight to see. The name now gets double that amount. Not yet looked at again.
+
+### 25. Scroll sensitivity
+
+1. Open **Esc ▸ Settings ▸ Gameplay**.
+   *Should:* a **Scroll sensitivity** slider sits under the two quick-cast boxes, with its handle about a quarter of the way along (1×).
+   *FAIL:* no slider, or the handle starts at either end.
+2. With the slider untouched, turn the mouse wheel one notch at a time over open ground, then over the bag (**B**).
+   *Should:* the camera and the bag's list move exactly as far per notch as they did before this change.
+   *FAIL:* either moves further or less than before.
+3. Drag the slider all the way right, close Settings, and repeat step 2.
+   *Should:* each notch zooms the camera about three times as far, and moves the bag's list about three times as far.
+   *FAIL:* no difference from step 2.
+4. Drag the slider all the way left and repeat step 2.
+   *Should:* each notch moves about a quarter as far as in step 2.
+   *FAIL:* no difference, or scrolling stops entirely.
+5. Set the slider back to about a quarter of the way along (1×), then on a laptop trackpad do one short two-finger swipe over open ground, then one long swipe.
+   *Should:* the short swipe zooms a little and the long one zooms more; neither throws the camera all the way in or out.
+   *FAIL:* a short swipe jumps to the closest or farthest zoom.
+6. Sign out, sign back in and open **Settings ▸ Gameplay**.
+   *Should:* the slider is where you left it.
+   *FAIL:* it is back at 1×.
+7. Drop an item and hold **Alt**.
+   *Should:* the item's name is in the same bold, black-edged plain font as the name over a creature you point at, not the pixel font, and every letter can be read at the starting zoom.
+   *FAIL:* the name is still in the pixel font, or its letters run together.
+
+### 26. Creature kinds, summoning, level-based drops and the world spawn list
+
+Every step is in **field_0** unless it says otherwise. `/tp field_0` takes you there.
+
+1. Arrive in **field_0**, then type `/where`.
+   *Should:* chat prints `field_0 — x …, y …, z …` with three numbers.
+   *FAIL:* "Unknown command", or no numbers.
+2. Look around **field_0** after the server has just started.
+   *Should:* ordinary creatures are spread across the map as before, plus the elite **Giant Red Samurai** (level 55, its name shown over it) and the shadow **Tsubame** (level 160, a 3D character holding a sword, its name shown over it) near the middle.
+   *FAIL:* no creatures, or either named one is missing, or Tsubame is a flat picture.
+3. Go to any town, e.g. `/tp town_5`.
+   *Should:* no creatures at all in the town.
+   *FAIL:* creatures in a town.
+4. Walk up to Giant Red Samurai until it fights you, and watch for 30 seconds.
+   *Should:* within a few seconds it calls ten creatures around itself — about five of one kind, three of another and two of a third, all level 52 to 55 — and they attack you with it. Kill three of them: after at most 20 seconds it calls three more, and never has more than ten out.
+   *FAIL:* it never calls anything, calls more than ten, or keeps calling while ten are out.
+5. Walk 15 steps away from Giant Red Samurai while its summons chase you.
+   *Should:* a summon that gets further than about 8 steps from the elite stops chasing and walks back to it.
+   *FAIL:* summons follow you across the map.
+6. Kill one summon and watch chat and the ground.
+   *Should:* no experience line for it and nothing drops.
+   *FAIL:* experience or loot from a summon.
+7. Kill Giant Red Samurai while summons are still standing.
+   *Should:* every summon still standing vanishes at once; the elite drops a pile of 5 to 10 of Steel, Wool and/or Leather (its grade is D), sometimes an Ink or a Salt.
+   *FAIL:* summons stay, or it drops a different grade of material.
+8. Wait near where Giant Red Samurai died for ten minutes.
+   *Should:* it does not come back (it returns 30 minutes to 3 hours later).
+   *FAIL:* it is back within ten minutes.
+9. Kill ten ordinary creatures in **field_0** — its Desert creatures are levels 46 to 63, and the six creatures that belong to no biome (levels 1 to 9) wander in too. Point at each one first to read its level.
+   *Should:* each drops only its own grade: Copper, Burlap, Rawhide at levels 1–9; Steel, Wool, Leather at 46–56; Silver, Cotton, Cordovan at 57–63. Now and then a potion or a food, and rarely a Watery or Thin Ink or a Coarse Salt.
+   *FAIL:* any other grade of metal, cloth or leather.
+10. Walk up to Tsubame until it fights you. Stay alive with `/invuln`.
+    *Should:* it calls five Tengu Red (level 99) around itself, uses sword skills including its ultimates (Deathblow, Retribution, Blade Dance) over a minute of fighting, and hover-pointing at it shows its sword as an **A +35** piece with a trademark name, like "+35 Kamae [A]".
+    *FAIL:* it calls anything else, never uses a sword skill, or its sword shows as Raw.
+11. Kill one of Tsubame's Tengu Red.
+    *Should:* the Tengu Red never calls creatures of its own.
+    *FAIL:* a summoned elite summons.
+12. Type `/summon 1 shadow`, then `/summon 1 elite`, then `/summon 1 mob.shadow.varro`.
+    *Should:* each summons one creature of that kind (the Varro one by name, a 3D character with no weapon).
+    *FAIL:* an error, or a flat shadow.
+13. Restart the game server, sign back in and go to **field_0**.
+    *Should:* Giant Red Samurai and Tsubame are both there again straight away, even if you killed them before the restart.
+    *FAIL:* either is missing.
+
+### 27. Creature levels beside their names, coloured map dots and your coordinates
+
+1. Point the cursor at any creature in **field_0**.
+   *Should:* the floating plate over it reads its name then its level, e.g. "Poring Lv 12", and the level matches that creature.
+   *FAIL:* no level, "Lv 0", or a level that does not match the creature.
+2. Left-click that creature to lock onto it and read the bar at the top of the screen.
+   *Should:* the same name and level, e.g. "Poring Lv 12".
+   *FAIL:* the name with no level, or a different level from the plate.
+3. Type `/summon 1 elite 50`, then point at the creature it summons.
+   *Should:* the plate reads that creature's name and "Lv 50".
+   *FAIL:* any other level.
+4. Point at another player while one is standing near you.
+   *Should:* their plate shows their name with no level after it.
+   *FAIL:* a level or "Lv 0" beside a person's name.
+5. With that summoned elite alive and near you, look at the minimap in the top right.
+   *Should:* the elite is a purple dot; ordinary creatures are red dots; your own marker is the green arrow.
+   *FAIL:* the elite drawn red, or every dot one colour.
+6. Type `/summon 1 shadow` and look at the minimap.
+   *Should:* the shadow is an orange dot.
+   *FAIL:* it is red or purple.
+7. Have a second player stand beside you in the same map and look at the minimap.
+   *Should:* they are a white dot that moves as they move; it goes when they walk further away than the map shows, and when they leave the map.
+   *FAIL:* no white dot, or a dot left behind after they leave.
+8. Read the strip along the bottom of the minimap, then walk ten steps.
+   *Should:* it reads "X <number>  Y <number>  Z <number>", and the X and Z numbers change as you walk.
+   *FAIL:* no strip, empty text, or numbers that never change.
+9. Press **M** to hide the minimap, then **M** again.
+   *Should:* the coordinates strip hides and comes back with the map.
+   *FAIL:* the strip stays on screen with the map hidden.
+
+### 28. Health bars go away with the creature they belong to
+
+1. Find a creature, hit it once so its green health bar appears under its feet, then walk away from it
+   until it is well off screen. Walk back.
+   *Should:* while it is gone there is no bar floating where it was; when you come back the creature and its
+   bar are both there.
+   *FAIL:* a bar left hanging in mid-air with no creature under it.
+2. Hit a creature once so its bar shows, then kill it.
+   *Should:* the bar goes the moment the creature dies, and nothing is left at the spot.
+   *FAIL:* a bar stays where the corpse was.
+3. Hit two or three different creatures so several bars are showing at once, then disconnect from the
+   server (close the game window, or let the server stop).
+   *Should:* on reconnecting, no bars are left standing anywhere in the world.
+   *FAIL:* one bar per creature you had hit, frozen where they stood.
+4. Hit a creature so its bar shows, walk far enough away that it is dismissed, then come back and look at a
+   DIFFERENT creature of the same kind that appears near you.
+   *Should:* its bar reads its own health — full and hidden if it is unhurt.
+   *FAIL:* a fresh creature wearing the wound of the one before it.
+5. Walk through a portal into another map while a creature's bar is showing behind you.
+   *Should:* nothing is left floating in the new map.
+   *FAIL:* a bar arrives with you.

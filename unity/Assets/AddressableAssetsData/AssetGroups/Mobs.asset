@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19307675a5443448ba03d7027658ccaf
+    m_Address: Mobs/Shadow_Ines
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 209b509f0b632df429662497ee394ef1
     m_Address: Mobs/KappaRed
     m_ReadOnly: 0
@@ -67,6 +72,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2542900c5622f3943a9c4ffab7acc162
     m_Address: Mobs/GiantRacoonGold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25781af2664b54f55a1da266b762dfbf
+    m_Address: Mobs/Shadow_Azar
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -230,8 +240,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 841cf47b10b8c44d68599073bab6fd8e
+    m_Address: Mobs/Shadow_Brandr
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 84926e0d54894cb4db204af75088493c
     m_Address: Mobs/TenguBlue
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8618411ccf372449c80ae07144559c23
+    m_Address: Mobs/Shadow_Radomir
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -245,8 +265,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d1325d8b3d394b4d97a7b745b3041d6
+    m_Address: Mobs/Shadow_Ulrich
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 926446e0cfe8417429a4b9a52ffa87a3
     m_Address: Mobs/SpiderYellow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9411ec2b7613b4e9fb83cc7c78e8b79b
+    m_Address: Mobs/Shadow_Kallias
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -280,6 +310,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a08c2fb8b2ff347e1bf051deccc2ade3
+    m_Address: Mobs/Shadow_Brigid
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a0d65aff54b7cf64a93f84aa9255ea5c
     m_Address: Mobs/Mole
     m_ReadOnly: 0
@@ -297,6 +332,21 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1f0d564492fdd547a642360faab1d7a
     m_Address: Mobs/LanternGreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a302ae98dfbed487db414be0e61958bc
+    m_Address: Mobs/Shadow_Tsubame
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a485f67ae5023444bb5c801672b86b1b
+    m_Address: Mobs/Shadow_Varro
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4a64b4f3a7a649a58c2dc93e4221355
+    m_Address: Mobs/Shadow_Temulun
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -320,8 +370,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa30889277ebf451b82e516949e676e9
+    m_Address: Mobs/Shadow_Fiora
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aa80508352284b946964187ebd829cdc
     m_Address: Mobs/Lizard
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3c0f160a70364f84bc7859d1db665c3
+    m_Address: Mobs/Shadow_Morwenna
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

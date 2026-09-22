@@ -49,7 +49,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 ## What is half-built — measured, each one
 
-**Loot is a machine running on random stand-ins.** All 86 creatures have an empty drop list. Since [V4](../2-systems/gameplay-system-v4/README.md) landed on 2026-09-20 a creature gives up **no gear at all** — materials, consumables and gold only — and every kill has a 30% chance of one random item that is not equipment. It lands on the ground, held for the killer for 10 seconds. Nothing about which creature carries what is authored yet, so the 29 crafting materials reach a player through `/item` and nothing else. A creature still dresses itself at random from the six equipment designs, as Raw, unfolded copies, because what it holds is what its mastery works with.
+**Loot follows the creature's kind and level.** Since [V4](../2-systems/gameplay-system-v4/README.md) a creature gives up **no gear at all** — materials, consumables and gold only. Since 2026-09-22 ([Mob Roster](../3-world/mob-roster.md)) every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable. It lands on the ground, held for the killer for 10 seconds. A normal or an elite still dresses itself at random from the six equipment designs, as Raw, unfolded copies; a shadow wears its own pieces at grade A.
 
 **Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 
@@ -112,11 +112,11 @@ One play-test has been open since 3 September, covering eleven server and skill 
 - [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — designed, no code.
-- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 86 creatures are comparable to a player.
+- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 96 creatures are comparable to a player.
 - [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the online half is, and its deliberate limits.
 - [Starting the Network](../2-systems/networking/starting-the-network.md) — how to stand the multiplayer half up.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the 41 maps.
-- [Biome Mob Families — Tiered Spawning](../3-world/biome-mob-families.md) — how maps get populated.
+- [Biome Mob Families — Spawning by Biome and Level](../3-world/biome-mob-families.md) and [Mob Roster](../3-world/mob-roster.md) — how maps get populated.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the reasons the world still needs put into it.
 - [Where the Game Is Hosted](where-the-game-is-hosted.md) — the machine, the latency numbers, and the cost.
 - [Performance Checkup — My Routine](performance-checkup-routine.md) — the recurring measurement habit.

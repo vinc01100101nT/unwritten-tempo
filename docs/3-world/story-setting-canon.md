@@ -73,7 +73,7 @@ Twelve people fought the thing that silenced the scribe. Because they acted **af
 
 - [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the twelve identity sentences these epithets are the flavour half of.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the growth engine the tradeable-ring lore hangs off (recorded there as proposed, not committed).
-- [Biome Mob Families — Tiered Spawning](biome-mob-families.md) — the 86 blank pages, as data.
+- [Biome Mob Families — Spawning by Biome and Level](biome-mob-families.md) — the blank pages, as data.
 - [World Creator — Spec](world-creator-spec.md) — the world these beats have to be placed in.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — "a dropped weapon remembers its wielder in fragments", as a system.
 - [Mixamo Animation Integration — Workflow](../4-art/mixamo-animation-workflow.md) — the charcoal-body rig the fiction is built on.

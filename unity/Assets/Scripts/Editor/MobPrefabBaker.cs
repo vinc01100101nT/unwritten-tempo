@@ -9,8 +9,8 @@ using UnityEngine;
 /// Bakes every <see cref="MonsterDef"/> in the catalog into a prefab and marks it ADDRESSABLE so the game
 /// can summon mobs from data during Play — the builder (<see cref="RigBuilder25D"/>) is editor-only and
 /// can't run in a build. Each prefab is built the normal way, <c>RigBuilder25D.BuildMonster(def.ToArchetype())</c>,
-/// plus a <see cref="BossBanner"/> for boss defs (mirroring how <c>RegionBuilder</c> stamps a field boss), so
-/// a summoned mob is identical to a map-baked one. <see cref="MobSpawner"/> loads them by address.
+/// plus a <see cref="BossBanner"/> for elites and shadows, which carry their name and an always-visible bar.
+/// <see cref="MobSpawner"/> loads them by address.
 ///
 /// Output: <c>Assets/2_Generated/MobPrefabs/Mobs/&lt;def name&gt;.prefab</c> (NOT under Resources — Addressables
 /// bundles them), each entered in the <b>Mobs</b> Addressable group under address <c>Mobs/&lt;def name&gt;</c>.
@@ -27,16 +27,22 @@ public static class MobPrefabBaker
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Bake Mob Prefabs", "Exit Play mode first, then re-run.", "OK"); return; }
+        string result = BakeAllCore();
+        EditorUtility.DisplayDialog("Bake Mob Prefabs", result, "OK");
+    }
 
+    /// <summary>The bake itself, with no dialog — safe to run through the live editor link. Returns what happened, in
+    /// the words the menu's dialog shows.</summary>
+    public static string BakeAllCore()
+    {
         MonsterCatalog.Reload();
         var defs = MonsterCatalog.All;
-        if (defs == null || defs.Count == 0)
-        { EditorUtility.DisplayDialog("Bake Mob Prefabs", "No MonsterDef assets found under Resources/Monsters.", "OK"); return; }
+        if (defs == null || defs.Count == 0) return "No MonsterDef assets found under Resources/Monsters.";
 
         var settings = AddressableAssetSettingsDefaultObject.Settings
                        ?? AddressableAssetSettingsDefaultObject.GetSettings(true);   // creates default settings on first use
         if (settings == null)
-        { EditorUtility.DisplayDialog("Bake Mob Prefabs", "Couldn't create Addressable settings. Open Window ▸ Asset Management ▸ Addressables ▸ Groups once, then re-run.", "OK"); return; }
+            return "Couldn't create Addressable settings. Open Window ▸ Asset Management ▸ Addressables ▸ Groups once, then re-run.";
 
         var group = settings.FindGroup(GroupName)
                     ?? settings.CreateGroup(GroupName, false, false, true, null,
@@ -55,7 +61,8 @@ public static class MobPrefabBaker
                 EditorUtility.DisplayProgressBar("Bake Mob Prefabs", def.name, (float)i / defs.Count);
 
                 var go = RigBuilder25D.BuildMonster(def.ToArchetype(), Vector3.zero);
-                if (def.isBoss)
+                // An elite or a shadow carries its name and an always-visible bar, as the old bosses did.
+                if (def.kind != CreatureKind.Normal)
                     go.AddComponent<BossBanner>().bossName = string.IsNullOrEmpty(def.displayName) ? def.name : def.displayName;
 
                 // Repoint the billboard renderer at the saved .mat asset so the prefab keeps a real material
@@ -79,9 +86,8 @@ public static class MobPrefabBaker
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log($"[unwritten] Baked {baked} mob prefab(s) → {OutDir} (Addressable group '{GroupName}')");
-        EditorUtility.DisplayDialog("Bake Mob Prefabs",
-            $"Baked {baked} mob prefab(s) into the '{GroupName}' Addressable group (address Mobs/<name>).\n\n" +
-            "Summon them in Play with /summon <count> <normal|boss>.", "OK");
+        return $"Baked {baked} mob prefab(s) into the '{GroupName}' Addressable group (address Mobs/<name>).\n\n" +
+               "Summon them in Play with /summon <count> <normal|elite|shadow|creature>.";
     }
 
     const string MatPath = "Assets/2_Generated/MobPrefabs/BillboardMob.mat";

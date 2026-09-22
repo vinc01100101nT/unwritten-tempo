@@ -106,7 +106,7 @@ public class MobTableWindow : EditorWindow
         new Col("id",    "id",     150),
         new Col("name",  "name",   120),
         new Col("biome", "biome",  90),
-        new Col("B",     null,     26),   // isBoss
+        new Col("kind",  null,     64),
         // The AUTHORED stat block — a mob is a level and six primaries, exactly like the player.
         new Col("LVL",   "lvl",    38),
         new Col("STR",   null,     38),
@@ -239,7 +239,7 @@ public class MobTableWindow : EditorWindow
         string name  = EditorGUI.TextField(VCenter(Next(), 18), def.displayName);
         // Biome.None = biome-agnostic (spawns in any biome); it's just another choice in the dropdown.
         var biome    = (Biome)EditorGUI.EnumPopup(VCenter(Next(), 18), def.biome);
-        bool boss    = EditorGUI.Toggle(VCenter(Next(), 18), def.isBoss);
+        var kind     = (CreatureKind)EditorGUI.EnumPopup(VCenter(Next(), 18), def.kind);
         int lvl      = EditorGUI.IntField(VCenter(Next(), 18), def.level);
         int str      = EditorGUI.IntField(VCenter(Next(), 18), def.str);
         int agi      = EditorGUI.IntField(VCenter(Next(), 18), def.agi);
@@ -264,7 +264,7 @@ public class MobTableWindow : EditorWindow
         {
             Undo.RecordObject(def, "Edit Mob");
             def.id = id; def.displayName = name; def.biome = biome;
-            def.isBoss = boss;
+            def.kind = kind;
             def.level = Mathf.Max(1, lvl);
             // Budget guard: an entry the level can't afford SNAPS to the highest value that fits, rather than being
             // stored as an over-budget spread. Each stat is checked against what's left once the other five are paid

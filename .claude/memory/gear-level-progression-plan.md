@@ -1,6 +1,6 @@
 ---
 name: gear-level-progression-plan
-description: V4 gameplay design (forging, folds=refine, quench ladder, Ink stats, masteries) is AGREED but NOT BUILT — the V4 doc is the record; no build contract until the user says the open list is settled
+description: V4 gameplay design (forging, folds=refine, quench ladder, Ink stats, masteries) — BUILT 2026-09-20, not play-tested; the V4 doc is the record
 metadata:
   type: project
 ---

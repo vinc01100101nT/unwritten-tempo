@@ -185,8 +185,15 @@ public enum SkillEffectKind
     /// be readable off the effect. A row that says "Sub Stat Debuff · Evasion · 0.3" says what it does; a buff row
     /// with a hidden minus in a number field does not.</para>
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
     SubStatDebuff,
+
+    /// <summary>Tops the caster's summons back up to its kind's maximum — an elite's normals, a shadow's elites (see
+    /// <see cref="CreatureSummons"/>). Which creatures and how many belong to the caster, never to the effect, so the
+    /// effect carries no numbers at all. Used by the one summon skill every summoner carries.
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    Summon,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -577,7 +584,7 @@ public class SkillEffect
     /// sometimes doesn't happen, or a cooldown cut that sometimes isn't cut, is a bug wearing a feature's clothes.</para></summary>
     public static bool RollsChance(SkillEffectKind k) =>
         k != SkillEffectKind.Damage && k != SkillEffectKind.Heal && !IsModifier(k) && !NeedsPoint(k) &&
-        k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull;
+        k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull && k != SkillEffectKind.Summon;
 
     // IsSelfVerb — the list of kinds that were "traditionally self" — is GONE (2026-08-24). It existed only to resolve
     // EffectSide.Auto, and Auto is gone: every effect names its own side now, so a kind no longer has a side at all.

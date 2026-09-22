@@ -62,8 +62,10 @@ while it compiles scripts, imports assets, loads a scene, or builds a player. Th
 CALLER, and they are short:
 
 - **30 seconds** for any `unity cmd …` — the CLI's `--timeout`, which is in SECONDS and defaults to 30.
-- **5 seconds** for `eval` / `eval_file` — those carry their OWN `--timeout`, in MILLISECONDS, default 5000,
-  and it overrides the CLI one.
+- **5 seconds** for `eval` / `eval_file`. Both list a `--timeout` of their own, in MILLISECONDS, default 5000 —
+  but **measured 2026-09-22: `--timeout 600000` on both still ended at 5000ms**, three times (a 34-scene edit and two
+  96-prefab bakes). Whatever the flag does, it did not lengthen the wait. Every one of those runs finished its work
+  anyway.
 
 When a budget runs out the editor prints a red `Failed to handle /api/exec request: Main thread operation timed
 out after Nms`. **It does not mean the work was undone:** a command still sitting in the queue is cancelled, but
@@ -80,12 +82,13 @@ The in-editor half has a busy gate of its own, but it only covers the first seco
 mid-session compile, asset import or player build is NOT rejected for you — the command queues, waits, and then
 times out.
 
-**And give a slow call a budget bigger than the work:**
+**And for a slow call, plan on the caller giving up — then wait and read what it did:**
 
 ```bash
-unity cmd eval --code '…' --timeout 120000   # eval/eval_file only, MILLISECONDS
-unity cmd <other-command> --timeout 300      # everything else, SECONDS
-unity cmd <slow-command> --detach            # returns a job id at once, then poll for the result
+unity cmd <other-command> --timeout 300      # everything but eval/eval_file, SECONDS — this one works
+unity cmd <slow-command> --detach            # returns a job id at once, then poll for the result (not yet tried on eval)
+# after an eval that timed out: wait for the editor, then measure the result (files on disk, a read-only eval)
+until unity cmd editor_status --json | grep -q '"status": "ready"'; do sleep 3; done
 ```
 
 ## Proven vs unproven — say which

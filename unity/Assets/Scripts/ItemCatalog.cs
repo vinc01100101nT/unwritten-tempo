@@ -30,7 +30,7 @@ public static class ItemCatalog
             if (it.slot == EquipSlotType.None)
             {
                 // A quest item is never put down, so it is never handed out at random either.
-                if (it.category != ItemCategory.Quest) unworn.Add(it);
+                if (it.category != ItemCategory.Quest && it.materialKind == MaterialKind.None) unworn.Add(it);
                 continue;
             }
             if (!wornBySlot.TryGetValue(it.slot, out var list)) wornBySlot[it.slot] = list = new List<Item>();
@@ -57,8 +57,10 @@ public static class ItemCatalog
         return wornBySlot.TryGetValue(slot, out var list) && list.Count > 0 ? list[CombatRng.Range(0, list.Count)] : null;
     }
 
-    /// <summary>A random item that is not worn — a potion, a food, a material — and never a quest item. Null when none exists.</summary>
-    public static Item RandomUnworn()
+    /// <summary>A random item that is neither worn nor a material — a potion, a food — and never a quest item. Null when
+    /// none exists. Materials are left out on purpose: which grade a creature drops is its level's answer
+    /// (<see cref="CreatureLoot"/>), and a random one would hand a level-3 creature's killer the top grade.</summary>
+    public static Item RandomConsumable()
     {
         EnsurePools();
         return unworn.Count > 0 ? unworn[CombatRng.Range(0, unworn.Count)] : null;

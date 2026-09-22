@@ -4,10 +4,11 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Pooled world-space WHITE speech bubble for ambient NPC chatter (<see cref="TownNPC"/> barks). A rounded white
-/// panel with dark text inside, billboarded upright toward the camera and faded out over its lifetime.
+/// Pooled WHITE speech bubble for ambient NPC chatter (<see cref="TownNPC"/> barks) and player chat. A rounded white
+/// panel with dark text inside, riding the speaker's head and faded out over its lifetime. Drawn flat on the
+/// screen through <see cref="OverheadScreenLayer"/>, so it stays the same size at every zoom.
 ///
-/// Mirrors <see cref="DamagePopup"/>'s zero-allocation story (one shared world-space <see cref="Canvas"/>, a
+/// Mirrors <see cref="DamagePopup"/>'s zero-allocation story (one shared <see cref="Canvas"/>, a
 /// <see cref="Stack{T}"/> pool, a cached camera transform) so a town full of barks costs nothing per frame —
 /// see PERFORMANCE.md. The only one-time costs are the shared Canvas and a procedurally-generated rounded-rect
 /// sprite (built once, cached). Call <see cref="Show"/>.
@@ -15,18 +16,19 @@ using TMPro;
 [DisallowMultipleComponent]
 public class SpeechBubble : MonoBehaviour
 {
-    // World units per UI unit. Smaller than DamagePopup's numbers — barks should be subtle, not shouty.
+    // World units per UI unit the bubble was drawn at in the world. Smaller than DamagePopup's numbers — barks should
+    // be subtle, not shouty. It now only sets the bubble's fixed on-screen size (see OverheadScreenLayer.ScaleFor).
     const float BaseScale = 0.0018f;
-    const int FontSize = 30;
+    const int FontSize = 45;
     const float PadX = 14f, PadY = 7f;   // text inset inside the bubble (UI units)
 
     // ---- shared pool ----
     static Transform host;
+    static Canvas hostCanvas;
     static readonly Stack<SpeechBubble> pool = new Stack<SpeechBubble>();
     // One bubble per character: the live bubble each owner currently has, so a new line REPLACES it instead of
     // stacking a second bubble over the same head. Keyed by the follow transform (a character's feet-seated visual).
     static readonly Dictionary<Transform, SpeechBubble> active = new Dictionary<Transform, SpeechBubble>();
-    static Transform camT;
     static Sprite bubbleSprite, tailSprite;
 
     Image bg, tail;
@@ -75,14 +77,9 @@ public class SpeechBubble : MonoBehaviour
         if (host != null) return;
         pool.Clear();
         active.Clear();   // a scene unload destroyed the old bubbles with the host; drop their stale registry entries
-        var go = new GameObject("SpeechBubbleSystem") { hideFlags = HideFlags.DontSaveInEditor };
-        go.layer = LayerMask.NameToLayer("TransparentFX");   // out of the planar-reflection camera
-        var canvas = go.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = DepthSortRuntime.FxPopup;       // FX band: above entities + overhead
-        go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        go.transform.localScale = Vector3.one;
-        host = go.transform;
+        // No raycaster: a bubble is never something the cursor can hit.
+        hostCanvas = OverheadScreenLayer.CreateCanvas("SpeechBubbleSystem", clickable: false);
+        host = hostCanvas.transform;
     }
 
 
@@ -139,8 +136,7 @@ public class SpeechBubble : MonoBehaviour
         followYOffset = yOffset;
         lastFollowPos = owner.position + Vector3.up * yOffset;
         SetAlpha(1f);
-        transform.position = lastFollowPos;
-        transform.localScale = Vector3.one * BaseScale;
+        Place();
         gameObject.SetActive(true);
     }
 
@@ -149,14 +145,7 @@ public class SpeechBubble : MonoBehaviour
         // Ride the owner's head (so the bubble tracks the unit as it walks). If the owner was destroyed
         // mid-bark, hold the last known spot and just finish fading.
         if (follow != null) lastFollowPos = follow.position + Vector3.up * followYOffset;
-        transform.position = lastFollowPos;
-
-        if (camT == null) { var c = CameraRig.Cam; if (c != null) camT = c.transform; }
-        if (camT != null)
-        {
-            Vector3 dir = transform.position - camT.position; dir.y = 0f;   // upright billboard (RO-style)
-            if (dir.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
-        }
+        Place();
 
         age += Time.deltaTime;
         // Hold opaque most of its life, fade in the last third so it doesn't pop out.
@@ -164,6 +153,14 @@ public class SpeechBubble : MonoBehaviour
         SetAlpha(Mathf.Clamp01((1f - t) / 0.34f));
 
         if (age >= lifetime) Recycle();
+    }
+
+    // Onto the screen over the head, at the fixed on-screen size. Hidden (scale 0) until a camera exists.
+    void Place()
+    {
+        var cam = CameraRig.Cam;
+        if (cam == null) { transform.localScale = Vector3.zero; return; }
+        OverheadScreenLayer.Place(rt, lastFollowPos, cam, OverheadScreenLayer.ScaleFor(hostCanvas, BaseScale));
     }
 
     void SetAlpha(float a)

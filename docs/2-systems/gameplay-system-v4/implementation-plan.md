@@ -128,7 +128,7 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 **Deletes:** nothing. **Saved data upgrade:** none (items are `id + count` in the bag, SaveData.cs:88-89).
 
-**Touches but does not alter:** the `/item` command's name matching; the bag's stacking rule for non-equipment (Character.cs:1729-1731); `ItemCatalog.RandomUnworn` will now hand out materials at 30% per kill (LootDropper.cs:69-71, 114-119) — until drop tables are authored, the random-item roll will scatter band materials and Ink/Salt of every tier with equal weight (open question 6).
+**Touches but does not alter:** the `/item` command's name matching; the bag's stacking rule for non-equipment (Character.cs:1729-1731); the 30%-per-kill random-item roll (now `ItemCatalog.RandomConsumable`, consumables only since 2026-09-22 — see open question 6).
 
 **Rebuild:** game server yes (new command); char server no.
 
@@ -227,7 +227,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 3. **Ink Critical is 0.6%–3% but `EquipBonuses.critPercent` is a whole-percent int** (EquipmentInstance.cs:226; UnitStatMath.cs:290 divides by 100). *Recommend:* widen `critPercent` to a float (same name, same unit), and add three new `EquipBonuses` fields — accuracy, evasion, castSpeedPercent — with `Hit`, `Flee`, `CastTimeMult` taking `EquipBonuses`.
 4. **What a "design" is.** *Recommend:* a base-cost list on the `Item` itself (which band-1 material, how many, how much gold), so the existing gear items are the designs; empty list = not forgeable.
 5. **Whether `EquipSlotType.Ring = 12` is deleted or left unread.** Its integer is pinned (Item.cs:4-10) and no asset holds it. *Recommend:* delete the member and the `ItemType.Ring` bucket.
-6. **Materials in the random-item roll.** Adding 29 materials to `Resources/Items` makes `ItemCatalog.RandomUnworn` (ItemCatalog.cs:48-53) hand out Pure Salt and Sharp Ink as often as Copper, at 30% per kill, until drop tables exist. *Recommend:* accept it for the GM-command phase and say so in the checklist; do not invent weights.
+6. **Materials in the random-item roll.** Settled 2026-09-22: the 30%-per-kill roll (`ItemCatalog.RandomConsumable`) hands out consumables only, and materials come from the creature's level and kind (`CreatureLoot`, [Mob Roster](../../3-world/mob-roster.md)).
 7. **Creature random wardrobe keyed by rarity** (CreatureWardrobe.cs:20-24). *Recommend:* one flat wear chance per place — the number is the user's; creatures wear Raw +0 copies.
 8. **Starter gear.** Today weapons and armour are never seeded (Character.cs:1938-1943). *Recommend:* seed nothing wearable — V4 says gear is made — and let the first sword be forged.
 9. **Existing copies on old saves.** *Recommend:* every pre-V4 copy loads as Raw, folds 0, no Ink — not keeping `upgrade` as folds, because those refines were bought under the +3 attack rule.

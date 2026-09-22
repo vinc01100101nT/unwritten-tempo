@@ -29,6 +29,9 @@ public static class Rewards
         // A creature can outlive the person who mortally wounded it — its death fade takes a moment, and they can
         // disconnect inside it. That leaves a reference that passes a plain null check and throws when read.
         if (PlayerUnits.Gone(killer) || xp <= 0) return;
+        // A SUMMON PAYS NOTHING: it exists to get in the way, and a summoner that kept calling paid ones would be a
+        // fountain of experience nobody had to fight the summoner for.
+        if (victim != null && victim.IsSummoned) return;
 
         // Only a CHARACTER has a progression to pay into; a creature killing a creature earns nothing today.
         var character = killer as Character;
@@ -83,8 +86,16 @@ public static class Rewards
                 {
                     var def = items[i];
                     if (def == null) continue;
+                    // SEVERAL OF ONE THING GO DOWN AS ONE PILE — an elite's ten Iron is one drop of ten, not ten drops. A
+                    // worn piece is always one of its own.
+                    int count = 1;
+                    if (def.slot == EquipSlotType.None)
+                    {
+                        if (IndexOf(items, def) < i) continue;   // already put down with the first of its kind
+                        count = CountOf(items, def);
+                    }
                     var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateFresh(def) : null;
-                    if (DropForKiller(at, map, def, copy, character)) dropped++;
+                    if (DropForKiller(at, map, def, count, copy, character)) dropped++;
                 }
         }
 
@@ -102,13 +113,26 @@ public static class Rewards
     }
 
     // ONE THING DOWN ON THE GROUND for the killer, next to where the creature fell, and every player near enough told.
-    static bool DropForKiller(Vector3 at, string map, Item def, EquipmentInstance copy, Character killer)
+    static bool DropForKiller(Vector3 at, string map, Item def, int count, EquipmentInstance copy, Character killer)
     {
-        var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, 1, copy, Quality.Raw, 0, map, 0);
+        var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, count, copy, Quality.Raw, 0, map, 0);
         if (drop == null) return false;
         drop.ReserveFor(killer, GroundDrop.KillerOnlySeconds, GroundDrop.KillDropLifetimeSeconds);
         GameNetwork.PublishDrop(drop);
         return true;
+    }
+
+    static int IndexOf(List<Item> items, Item def)
+    {
+        for (int i = 0; i < items.Count; i++) if (items[i] == def) return i;
+        return -1;
+    }
+
+    static int CountOf(List<Item> items, Item def)
+    {
+        int n = 0;
+        for (int i = 0; i < items.Count; i++) if (items[i] == def) n++;
+        return n;
     }
 
     /// <summary>What a kill paid, as one line: who got it, how much Zeny, every item put down for them by name, and which
@@ -129,9 +153,17 @@ public static class Rewards
             if (items != null)
                 for (int i = 0; i < items.Count; i++)
                 {
-                    if (items[i] == null) continue;
+                    var def = items[i];
+                    if (def == null) continue;
+                    int count = 1;
+                    if (def.slot == EquipSlotType.None)
+                    {
+                        if (IndexOf(items, def) < i) continue;
+                        count = CountOf(items, def);
+                    }
                     if (!first) sb.Append(", ");
-                    sb.Append(items[i].displayName);
+                    sb.Append(def.displayName);
+                    if (count > 1) sb.Append(" ×").Append(count);
                     first = false;
                 }
             sb.Append(" for them");

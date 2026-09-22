@@ -27,7 +27,7 @@ public enum SwayMode { Auto, On, Off }
 public enum PathTile { Road, Soil, Stones, Rock }
 
 /// <summary>Theme preset for a map. Drives the ground's base + patch textures, an albedo tint, and (later) ambience —
-/// purely a ground/look layer; props &amp; mobs are still authored per recipe. <c>Grassland</c> reproduces the original
+/// purely a ground/look layer; props are still authored per recipe. <c>Grassland</c> reproduces the original
 /// look exactly (grass base, soil patches, no tint). The others recombine the existing <c>ground_*</c> textures with a
 /// colour multiply as placeholders until dedicated snow/sand/ash ground textures are authored (same code path then).</summary>
 // NOTE: Unity serializes enums by integer position, so existing assets store the index, not the name.
@@ -93,41 +93,13 @@ public class RecipePropGroup
     public bool CanopyOnly => sway == SwayMode.Auto && solid;
 }
 
-[System.Serializable]
-public class RecipeMobGroup
-{
-    public string label = "Mobs";
-    [Tooltip("Mob id or name from MonsterCatalog (e.g. 'mob.slime' or 'Slime'), or 'Boss'. " +
-             "Empty = weighted mix of this MAP's biome mobs within the LEVEL band below.")]
-    public string archetypeName = "";
-
-    [Tooltip("When Archetype Name is empty: lowest mob LEVEL to draw from the map's biome. Difficulty is level.")]
-    public int minLevel = 1;
-    [Tooltip("When Archetype Name is empty: highest mob LEVEL to draw. Set both the same for a single-level zone.")]
-    public int maxLevel = 99;
-    [Tooltip("When Archetype Name is empty: also include biome-agnostic 'common' filler mobs in the mix.")]
-    public bool includeCommons = true;
-    public AmountMode amountMode = AmountMode.Density;
-    [Tooltip("Density mode: mobs per square world-unit (try ~0.02–0.04).")]
-    public float density = 0.02f;
-    public int count = 12;
-    public float minSpacing = 1.8f;
-    [Tooltip("Keep mobs this far from the player spawn so you don't arrive in a swarm.")]
-    public float clearFromSpawn = 8f;
-
-    [Header("Runtime spawner (RO-style respawn)")]
-    [Tooltip("Base seconds after a mob dies before its replacement appears (the map runs a pooled FieldMobSpawner).")]
-    public float respawnDelay = 5f;
-    [Tooltip("Extra 0..this random seconds per respawn so a pack doesn't pop back in lockstep.")]
-    public float respawnJitter = 3f;
-}
-
 /// <summary>
 /// The ONE content-driven world-generator recipe for <i>unwritten</i>. Author it in the Inspector
 /// (Assets ▸ Create ▸ unwritten ▸ Map Recipe) and bake it with <c>RecipeGenerator</c> (the Generate button).
-/// There is no "town generator" vs "field generator": a map is simply whatever ground + prop groups + mobs you
+/// There is no "town generator" vs "field generator": a map is simply whatever ground + prop groups you
 /// put in the recipe, so the same generator yields a town (Houses in StreetRows + a tavern), a wild field
-/// (scattered trees + mobs), a dungeon (your dungeon prefabs), or anything else — purely from content.
+/// (scattered trees), a dungeon (your dungeon prefabs), or anything else — purely from content. Its creatures are
+/// not part of the map: they come from the world spawn list (WorldSpawns) when the server loads it.
 ///
 /// All maps use the single blended grass→dirt ground (no tile seams). Determinism: <see cref="seed"/> drives
 /// every random choice, so the same recipe + seed bakes the same map; tick <see cref="randomizeSeed"/> to roll a
@@ -174,6 +146,5 @@ public class MapRecipe : ScriptableObject
 
     [Header("Content")]
     public List<RecipePropGroup> propGroups = new List<RecipePropGroup>();
-    public List<RecipeMobGroup> mobGroups = new List<RecipeMobGroup>();
 
 }

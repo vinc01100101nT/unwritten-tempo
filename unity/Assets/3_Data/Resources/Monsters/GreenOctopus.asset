@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.greenoctopus
   displayName: GreenOctopus
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 1
   sheet: GreenOctopus
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 12
-  str: 12
-  agi: 8
-  vit: 12
-  intel: 5
-  dex: 8
-  luk: 5
-  weaponMasteryLevel: 12
+  level: 34
+  str: 24
+  agi: 17
+  vit: 23
+  intel: 12
+  dex: 17
+  luk: 12
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 34
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 5
   touchRange: 0.9
   touchInterval: 1

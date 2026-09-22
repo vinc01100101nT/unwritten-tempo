@@ -41,7 +41,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **Primaries are a budget, not free numbers.** `PointsEarnedByLevel(L)` = 48 + Σ`⌊L/5⌋+3`; `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly what a player who reached L could have bought — that, not a multiplier, is what keeps the sides comparable. `Allocate` spends a whole budget across a weighted spread (verified on-budget L1→L99; 0–4 points can remain unspendable when the next point costs more than what's left).
 
-**There is no tier and no throttle.** Difficulty is level. The spawn band is a **level** band (`MonsterCatalog.Eligible`, `MapRecipe.minLevel/maxLevel`, `FieldMobSpawner`, `RecipeGenerator`). `MonsterDef.tier` is gone. Deliberately no global dial — retuning means editing a mob's level, spread or gear.
+**There is no tier and no throttle.** Difficulty is level. The spawn band is a **level** band (`MonsterCatalog.Eligible`, a world spawn list row's `minLevel/maxLevel`, `FieldMobSpawner`). `MonsterDef.tier` is gone. Deliberately no global dial — retuning means editing a mob's level, spread or gear.
 
 **A ring IS equipment.** There is no separate `ring` field: the ring is the piece of `startingGear` whose `slot == Ring` (`MonsterDef.Ring` derives it). The percentage layer is **gated on wearing it**, same rule as `Character.RingEquipped`, so the thing that grants the power is the thing that can drop. Ranks resolve through `PassiveRanks` → `SkillRing.Percent` — the player's own soft-cap curve (+80% asymptote, k=40), no mob-side copy.
 
@@ -74,7 +74,7 @@ Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor to
 
 ## Still open
 
-- ~~Reset the roster~~ **DONE** — 86 mobs across levels **3–46**, every one exactly on its point budget (verified by parsing the assets: 0 over-budget, 0 left at level 1). The one-shot migration tool has been deleted; a future bulk reset would mean re-writing it from `UnitStatMath.Allocate`.
+- ~~Reset the roster~~ **DONE** — every creature exactly on its point budget. Re-levelled on 2026-09-22 onto the [Mob Roster](../../3-world/mob-roster.md) ladder (normals 1–99, elites 6–99, shadows 105–160) by re-spending each one's budget through `UnitStatMath.Allocate` in its existing proportions.
 - Only six equipment items exist — two weapons (`item.sword`, `item.bow`) and four armour pieces (`item.leather-cap`, `item.padded-vest`, `item.travellers-cloak`, `item.wooden-buckler`) — so the random gear a mob puts on draws from a very small pool. Content, not code.
 - Roster re-tuning by playing it — the numbers are consistent now, not necessarily *fun* yet.
 - Nothing has been run in Play mode.
@@ -86,6 +86,6 @@ Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor to
 - [Unified Unit Stats](unified-unit-stats.md) — the design intent this tracks.
 - [Implementation Notes](implementation-notes.md) — the skill-side sibling.
 - [Active Skill System — V3](README.md) — the design this is the unit half of.
-- [Biome Mob Families — Tiered Spawning](../../3-world/biome-mob-families.md) — where the 86 mobs came from.
+- [Biome Mob Families — Spawning by Biome and Level](../../3-world/biome-mob-families.md) — where the creatures came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the curve a mob's ring ranks resolve through.
 - [Networking — Implementation Notes](../networking/implementation-notes.md) — server-owned creatures, built from these blocks.

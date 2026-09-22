@@ -226,6 +226,7 @@ public static class FrontScreen
             events.AddComponent<StandaloneInputModule>();
             Object.DontDestroyOnLoad(events);
         }
+        ScaledScrollInput.Attach();
 
         // A camera of its own. The world's cameras are switched off until a character enters, and a screen with
         // no camera at all makes Unity paint "No cameras rendering" across the view. This one draws nothing —

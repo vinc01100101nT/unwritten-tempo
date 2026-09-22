@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.lizard2
   displayName: Lizard2
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 2
   sheet: Lizard2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.0600001
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 20
-  str: 15
-  agi: 12
-  vit: 15
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 20
+  level: 55
+  str: 35
+  agi: 30
+  vit: 34
+  intel: 20
+  dex: 30
+  luk: 20
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 55
   hardDefPercent: 10
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 20
   touchRange: 0.9
   touchInterval: 1

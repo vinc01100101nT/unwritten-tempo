@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.squidgreen
   displayName: SquidGreen
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 1
   sheet: SquidGreen
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.6
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 22
-  str: 17
-  agi: 8
-  vit: 21
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 22
+  level: 44
+  str: 29
+  agi: 17
+  vit: 34
+  intel: 15
+  dex: 23
+  luk: 15
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 44
   hardDefPercent: 32
   hardMagicDefPercent: 20
-  attackType: 0
   xpReward: 800
   touchRange: 0.9
   touchInterval: 1

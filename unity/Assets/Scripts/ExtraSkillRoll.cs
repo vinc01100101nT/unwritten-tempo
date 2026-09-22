@@ -10,15 +10,12 @@ using System.Collections.Generic;
 /// </summary>
 public static class ExtraSkillRoll
 {
-    /// <summary>How many extra skill slots every creature has. One for now (decided 2026-09-17, subject to change).</summary>
-    public const int Slots = 1;
-
     // Reused across rolls; a roll is once per creature life, but there is no reason to hand the GC a list per death.
     static readonly List<SkillDef> pool = new List<SkillDef>(64);
 
-    /// <summary>Replace <paramref name="into"/> with up to <see cref="Slots"/> skill ids drawn at random from every
+    /// <summary>Replace <paramref name="into"/> with up to <paramref name="slots"/> skill ids drawn at random from every
     /// published skill, never the same skill twice. Rolls short when the pool is smaller than the slots.</summary>
-    public static void Roll(List<string> into)
+    public static void Roll(List<string> into, int slots)
     {
         into.Clear();
         pool.Clear();
@@ -29,7 +26,7 @@ public static class ExtraSkillRoll
             if (d == null || !d.published || string.IsNullOrEmpty(d.id)) continue;
             pool.Add(d);
         }
-        for (int n = 0; n < Slots && pool.Count > 0; n++)
+        for (int n = 0; n < slots && pool.Count > 0; n++)
         {
             int pick = CombatRng.Range(0, pool.Count);
             into.Add(pool[pick].id);

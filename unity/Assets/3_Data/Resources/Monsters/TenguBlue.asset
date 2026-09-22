@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.tengublue
   displayName: TenguBlue
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 3
   sheet: TenguBlue
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.6
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 38
-  str: 26
-  agi: 12
-  vit: 32
-  intel: 12
-  dex: 20
-  luk: 12
-  weaponMasteryLevel: 38
+  level: 77
+  str: 50
+  agi: 30
+  vit: 56
+  intel: 29
+  dex: 42
+  luk: 29
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 77
   hardDefPercent: 32
   hardMagicDefPercent: 20
-  attackType: 0
   xpReward: 800
   touchRange: 0.9
   touchInterval: 1

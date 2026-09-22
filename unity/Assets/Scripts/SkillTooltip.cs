@@ -357,6 +357,7 @@ public static class SkillTooltip
             case SkillEffectKind.SubStatBuff:   return SubStatLine(e, worse: false);
             case SkillEffectKind.SubStatDebuff: return SubStatLine(e, worse: true);
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount.value).ToString()) + " debuff(s)";
+            case SkillEffectKind.Summon:        return "Calls up its summons";
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
             case SkillEffectKind.Shield:        return "Absorbs " + Hl(Mathf.RoundToInt(e.amount.value * LiveMult(e)).ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");

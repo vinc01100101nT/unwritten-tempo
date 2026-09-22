@@ -47,8 +47,8 @@ public class UnitEquipment : MonoBehaviour
                 if (item == null || item.slot == EquipSlotType.None) continue;
                 // A WATCHING MACHINE ROLLS NOTHING. Its copy of a creature wears the plain authored pieces, which is all
                 // it needs to draw what is held; the rolled copies live on the server's creature.
-                equipped[item.slot] = GameNetwork.TheWorldIsElsewhere
-                    ? new EquipmentInstance(item)
+                equipped[item.slot] = GameNetwork.TheWorldIsElsewhere ? new EquipmentInstance(item)
+                    : WearsBestGear ? EquipmentInstance.CreateAtBest(item)
                     : EquipmentInstance.CreateFresh(item);
             }
         // AND WHATEVER IT PICKS UP AT RANDOM for the places nothing was authored for — a creature on the machine that
@@ -67,7 +67,21 @@ public class UnitEquipment : MonoBehaviour
     // give anything up. Asked only when gear is seated, never per frame.
     bool WearsRandomGear =>
         Application.isPlaying && !GameNetwork.TheWorldIsElsewhere &&
-        GetComponent<MonsterAI3D>() != null && GetComponent<TrainingDummy>() == null;
+        GetComponent<MonsterAI3D>() != null && GetComponent<TrainingDummy>() == null &&
+        CreatureKinds.WearsRandomGear(Kind);
+
+    // A creature whose kind wears its pieces at the best a forge makes them (a shadow). Asked only when gear is seated.
+    bool WearsBestGear => Application.isPlaying && CreatureKinds.WearsBestGear(Kind);
+
+    // This unit's creature kind, or Normal for anything that is not a creature. Once per seating, never per frame.
+    CreatureKind Kind
+    {
+        get
+        {
+            var h = GetComponent<Health>();   // perf-ok: once per gear seating
+            return h != null ? h.kind : CreatureKind.Normal;
+        }
+    }
 
     int version;
 

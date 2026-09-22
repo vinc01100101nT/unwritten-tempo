@@ -6,8 +6,8 @@ using System.Collections.Generic;
 /// through the one door everything enters the world by, and the creature keeps it on a chance that falls with the
 /// copy is Raw and unfolded.
 ///
-/// <para><b>A stand-in for authored drop lists.</b> What a creature wears is what it can give up, so a random wardrobe
-/// is random loot that still obeys that rule.</para>
+/// <para>Only kinds that pick up random pieces use this (<see cref="CreatureKinds.WearsRandomGear"/>) — a shadow wears
+/// exactly its own. Nothing a creature wears is ever dropped: gear is made, not taken off a corpse.</para>
 ///
 /// <para>Dice and numbers only — no component — so the rule can be checked by calling it.</para>
 /// </summary>

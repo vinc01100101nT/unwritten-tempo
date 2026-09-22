@@ -26,6 +26,10 @@ public static class UnitLabel
         return Tidy(unit.name);
     }
 
+    /// <summary>The name with the level beside it — "Poring Lv 12" — or the bare name when there is no level. The
+    /// level is the server's (<see cref="NetMob.Level"/>); a readout re-asks this only when that number changes.</summary>
+    public static string WithLevel(string name, int level) => level > 0 ? name + " Lv " + level : name;
+
     // The object names the game builds bodies under, turned back into the name a person would recognise. A watched
     // person's body is "Player_<their name>" and a creature's is "Monster_<its name>", sometimes with Unity's own
     // clone suffix on the end.

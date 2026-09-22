@@ -103,6 +103,9 @@ public class UnitStatusPanel : MonoBehaviour
         readonly List<WornList.Entry> gearEntries = new List<WornList.Entry>(MaxGearRows);
         NetMob shell;
         string shownWorn;
+        // The name without its level, and the level drawn beside it — rewritten only when the server's level changes.
+        string baseName;
+        int lastLevel;
 
         Health tracked;
         UnitStates subscribed;
@@ -176,6 +179,11 @@ public class UnitStatusPanel : MonoBehaviour
             RefreshStates();
             // A new life wears new gear on the same body, so the list is re-read whenever the server's text changes.
             if (shell != null && !ReferenceEquals(shell.WornText, shownWorn)) RebuildGear();
+            if (shell != null && shell.Level != lastLevel)
+            {
+                lastLevel = shell.Level;
+                nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
+            }
         }
 
         public void Unbind() => Bind(null);
@@ -199,9 +207,11 @@ public class UnitStatusPanel : MonoBehaviour
             if (subscribed != null) subscribed.OnChanged += MarkStatesDirty;
 
             var plate = h.GetComponent<MobNameplate>();
-            nameLabel.text = plate != null && !string.IsNullOrEmpty(plate.displayName)
+            baseName = plate != null && !string.IsNullOrEmpty(plate.displayName)
                 ? plate.displayName
                 : (h.name.StartsWith("Monster_") ? h.name.Substring("Monster_".Length) : h.name);
+            lastLevel = shell != null ? shell.Level : 0;
+            nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
             Element el = h.element;
             if (el == Element.Neutral)

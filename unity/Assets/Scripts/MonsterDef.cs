@@ -18,8 +18,10 @@ public class MonsterDef : ScriptableObject
     public string id = "mob.new";
     [Tooltip("In-game name shown on the nameplate (the display name; can be renamed freely without breaking references).")]
     public string displayName = "Monster";
-    [Tooltip("A field boss / MVP: excluded from the weighted field spawn; placed deliberately (Spawn Field Boss).")]
-    public bool isBoss = false;
+    [Tooltip("Normal fills the field and is drawn into a map's mix. Elite and Shadow are never drawn into a mix — a " +
+             "row of the world spawn list names them. The kind sets extra skill slots, summoning, gear, respawn and drops " +
+             "(see CreatureKinds); strength still comes from level and stats alone.")]
+    public CreatureKind kind = CreatureKind.Normal;
     [Tooltip("Body size for the DEFERRED weapon-vs-size matchup (WeaponSizes). Unused by combat in the slice; " +
              "Medium reproduces RO's neutral '100% everywhere' baseline, so leaving it default is safe.")]
     public MobSize size = MobSize.Medium;
@@ -149,6 +151,7 @@ public class MonsterDef : ScriptableObject
             startingGear = startingGear,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
+            weaponMasteryLevel = weaponMasteryLevel,
             name = string.IsNullOrEmpty(displayName) ? name : displayName,
             sheet = sheet,
             weight = weight,

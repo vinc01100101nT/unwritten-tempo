@@ -116,6 +116,34 @@ folds and its quality grade rather than from which design it is. `MT-39` is that
 
 ---
 
+## Week 4 — Killing things pays you
+
+**Goal:** the phase that turns two months of finished combat into a game. You kill something, gear falls out, you put it on, your character sheet changes.
+
+- [ON-GOING] `MT-12` **`[A]` Creatures drop their band.** Built 2026-09-22 as ONE rule rather than 96 hand-written lists:
+  a creature's level picks its band and its kind picks the amounts and the Ink and Salt tiers (`MT-11`), so a new
+  creature drops the right thing the day it is made. A creature's own drop list still exists for anything special to
+  it. — **3–4 days**
+  *Done when:* play-test batch 26, step 9 passes — each creature drops only its own band.
+
+- [ON-GOING] `MT-13` **`[E]` Rebuild the creatures so their data reaches the game.** A creature's level, stats, gear and
+  mastery are copied into its prefab when it is baked (**Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs**); the
+  band it drops is worked out when it dies and needs no bake. Baked 2026-09-22 after the re-level, all 96. — **0.5 days**
+  *Done when:* killing the same creature about twenty times lands at least one item in your bag.
+
+---
+
+## Week 6 — Dungeons have a destination
+
+**Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
+
+- [ON-GOING] `MT-19` **`[A]` Make an elite and a shadow worth the walk.** Built 2026-09-22 as drops: an elite drops 5 to 10
+  of each of its band's materials and the rarer Inks and Salts, a shadow the same at higher chances, and elites pay
+  250 to 2000 gold against an ordinary creature's 2 to 24. — **1–2 days**
+  *Done when:* killing an elite reliably produces something an ordinary creature never gives.
+
+---
+
 ## Related
 
 - [Roadmap to Launch](../roadmap-to-launch.md) — the counted picture of how far the game is from shippable.

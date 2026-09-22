@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantredsamurai
   displayName: GiantRedSamurai
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 2
   sheet: GiantRedSamurai
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.45
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 30
-  str: 21
-  agi: 10
-  vit: 26
-  intel: 10
-  dex: 16
-  luk: 10
-  weaponMasteryLevel: 30
+  level: 55
+  str: 35
+  agi: 21
+  vit: 40
+  intel: 21
+  dex: 30
+  luk: 21
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 55
   hardDefPercent: 29
   hardMagicDefPercent: 18
-  attackType: 0
   xpReward: 600
   touchRange: 0.9
   touchInterval: 1

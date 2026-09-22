@@ -14,29 +14,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.axolot
   displayName: Axolot
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 0
   sheet: Axolot
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 5
-  str: 8
-  agi: 6
-  vit: 8
-  intel: 4
-  dex: 6
-  luk: 4
+  level: 10
+  str: 10
+  agi: 8
+  vit: 10
+  intel: 6
+  dex: 8
+  luk: 5
   startingGear:
   - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 5
+  weaponMasteryLevel: 10
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 5
   touchRange: 0.9
   touchInterval: 1

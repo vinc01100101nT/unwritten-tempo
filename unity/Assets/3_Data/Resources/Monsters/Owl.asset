@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.owl
   displayName: Owl
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 3
   sheet: Owl
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 28
-  str: 21
-  agi: 15
-  vit: 20
-  intel: 9
-  dex: 15
-  luk: 9
-  weaponMasteryLevel: 28
+  level: 76
+  str: 50
+  agi: 40
+  vit: 49
+  intel: 28
+  dex: 40
+  luk: 28
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 76
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 5
   touchRange: 0.9
   touchInterval: 1

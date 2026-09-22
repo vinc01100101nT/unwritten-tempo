@@ -19,6 +19,9 @@ MonoBehaviour:
   sizeX: 60
   sizeZ: 60
   dirtAmount: 0.18
+  biome: 0
+  groundTint: {r: 1, g: 1, b: 1, a: 1}
+  groundStyle: 0
   pathStyle: 0
   pathTile: 0
   pathCount: 5
@@ -122,5 +125,3 @@ MonoBehaviour:
     randomYaw: 1
     rowOffset: 4
     sway: 0
-  mobGroups: []
-  forestAmbience: 1

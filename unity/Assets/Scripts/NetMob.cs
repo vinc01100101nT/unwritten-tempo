@@ -75,6 +75,18 @@ public class NetMob : NetworkBehaviour
     /// and every watcher rebuilt the creature from its kind alone, which is always the sprite.</summary>
     [SyncVar] public bool isShadow;
 
+    /// <summary>WHICH KIND OF CREATURE this is, read off the real creature by the server. PRIVATE for the same reason
+    /// the map name is: the wire carries it, the saved prefab does not.</summary>
+    [SyncVar] CreatureKind netKind;
+
+    /// <summary>The creature's CURRENT level as the server holds it — re-sent on every push, because a creature
+    /// levels up mid-fight and a summon can be re-statted to any level, so its creature data's level is not the
+    /// answer.</summary>
+    [SyncVar] int netLevel;
+
+    public CreatureKind Kind => netKind;
+    public int Level => netLevel;
+
     /// <summary>WHICH BODY a live-3D creature wears, chosen once by this server before the creature is announced.
     /// Empty on a flat sprite creature, which wears none.
     ///
@@ -214,7 +226,8 @@ public class NetMob : NetworkBehaviour
         serverAgent = mob != null ? mob.GetComponent<PathAgent3D>() : null;
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
         serverBlock = mob != null ? mob.GetComponent<UnitStatBlock>() : null;
-        if (serverBlock != null) { netMaxMana = serverBlock.MaxMP; netMana = serverBlock.CurrentMP; }
+        if (serverBlock != null) { netMaxMana = serverBlock.MaxMP; netMana = serverBlock.CurrentMP; netLevel = serverBlock.Level; }
+        if (serverHealth != null) netKind = serverHealth.kind;
         serverGear = mob != null ? mob.GetComponent<UnitEquipment>() : null;
         // AND WHAT IT WEARS, so the very first message about this creature already says so.
         PublishWorn();
@@ -293,6 +306,7 @@ public class NetMob : NetworkBehaviour
         {
             netMana = serverBlock.CurrentMP;
             netMaxMana = serverBlock.MaxMP;
+            netLevel = serverBlock.Level;
         }
     }
 

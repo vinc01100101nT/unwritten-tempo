@@ -447,6 +447,14 @@ public static class SkillEffectApplier
             case SkillEffectKind.Status:
                 if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, OutputMagnitude(e, caster, vars), caster);
                 break;
+            // THE CASTER'S SUMMONS, topped back up. Who and how many is the caster's own answer, so this only asks.
+            case SkillEffectKind.Summon:
+                if (hit == 0 && body != null)
+                {
+                    var summons = body.GetComponent<CreatureSummons>();   // perf-ok: once per summon cast
+                    if (summons != null) summons.SummonNow();
+                }
+                break;
             case SkillEffectKind.Cleanse:
                 if (body != null && Fires(e, hit, caster, vars))
                 {

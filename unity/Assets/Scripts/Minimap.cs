@@ -44,6 +44,10 @@ public class Minimap : MonoBehaviour
     [Header("Blip colours")]
     public Color playerColor = new Color(0.35f, 1f, 0.45f, 1f);
     public Color mobColor    = new Color(1f, 0.30f, 0.30f, 1f);
+    public Color eliteColor  = new Color(0.70f, 0.35f, 1f, 1f);
+    public Color shadowColor = new Color(1f, 0.60f, 0.15f, 1f);
+    [Tooltip("Every other person in your map.")]
+    public Color otherPlayerColor = Color.white;
     public Color portalColor = new Color(0.45f, 0.75f, 1f, 1f);
     public float blipSize    = 7f;
     [Tooltip("Portal blips are drawn this much bigger than unit blips (and clamped to the map edge when off-screen).")]
@@ -60,6 +64,10 @@ public class Minimap : MonoBehaviour
     readonly List<Image> pool = new List<Image>();
     Sprite dotSprite;
     Sprite arrowSprite;            // player blip: a triangle that points where the player faces
+
+    // Where you stand, written along the map's bottom edge — rewritten only when a whole number changes.
+    TMPro.TextMeshProUGUI coordLabel;
+    int lastX = int.MinValue, lastY = int.MinValue, lastZ = int.MinValue;
 
     void Start()
     {
@@ -80,6 +88,40 @@ public class Minimap : MonoBehaviour
         var tex = Texture2D.whiteTexture;   // shared 1px sprite for all blips
         dotSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         arrowSprite = BuildArrowSprite();   // the player marker — rotated to its facing each frame
+        BuildCoordLabel();
+    }
+
+    // Built here while the game runs, never saved into the scene: a strip along the bottom of the map view.
+    void BuildCoordLabel()
+    {
+        var strip = new GameObject("Coords", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
+        strip.transform.SetParent(Panel.transform, false);
+        var bg = strip.GetComponent<Image>();
+        bg.color = UiKit.PanelFill;
+        bg.raycastTarget = false;
+        var srt = bg.rectTransform;
+        var vrt = view.rectTransform;
+        srt.anchorMin = vrt.anchorMin;
+        srt.anchorMax = new Vector2(vrt.anchorMax.x, vrt.anchorMin.y);
+        srt.pivot = new Vector2(0.5f, 0f);
+        srt.offsetMin = vrt.offsetMin;
+        srt.offsetMax = new Vector2(vrt.offsetMax.x, vrt.offsetMin.y + 14f);
+
+        coordLabel = UiKit.Label("Text", strip.transform, "", 10, FontStyle.Normal, TextAnchor.MiddleCenter);
+        coordLabel.raycastTarget = false;
+        var trt = coordLabel.rectTransform;
+        trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
+        trt.offsetMin = trt.offsetMax = Vector2.zero;
+    }
+
+    void RefreshCoords()
+    {
+        // YOUR OWN position, which your machine moves (the one thing it may) — shown, never sent anywhere.
+        Vector3 p = player.position;
+        int x = Mathf.RoundToInt(p.x), y = Mathf.RoundToInt(p.y), z = Mathf.RoundToInt(p.z);
+        if (x == lastX && y == lastY && z == lastZ) return;
+        lastX = x; lastY = y; lastZ = z;
+        coordLabel.text = "X " + x + "  Y " + y + "  Z " + z;
     }
 
     // A small upward-pointing triangle (apex at top) baked once. The player blip uses this and we spin its
@@ -135,6 +177,7 @@ public class Minimap : MonoBehaviour
         else                                     RenderLive();
 
         PlaceBlips();
+        if (coordLabel != null) RefreshCoords();
     }
 
     // ---- backdrop: baked image (pan/zoom a UV window around the player) --------
@@ -235,8 +278,28 @@ public class Minimap : MonoBehaviour
             if (dx * dx + dz * dz > r2) continue;            // outside the shown area
             if (!Project(dx, dz, half, out Vector2 sp)) continue;
 
+            // Coloured by its kind as the server sent it; a body with no shell yet reads as an ordinary creature.
+            var shell = NetMob.ShellForView(m.gameObject);
+            var kind = shell != null ? shell.Kind : CreatureKind.Normal;
             var b = Blip(used++);
-            b.color = mobColor;
+            b.color = kind == CreatureKind.Shadow ? shadowColor : kind == CreatureKind.Elite ? eliteColor : mobColor;
+            b.rectTransform.sizeDelta = new Vector2(blipSize, blipSize);
+            b.rectTransform.anchoredPosition = sp;
+        }
+
+        // Every other person this machine is drawing — only ever the ones in your map.
+        var folk = NetPlayer.WatchedBodies;
+        for (int i = 0; i < folk.Count; i++)
+        {
+            var h = folk[i];
+            if (h == null || h.IsDead) continue;
+            Vector3 op = h.transform.position;
+            float dx = op.x - c.x, dz = op.z - c.z;
+            if (dx * dx + dz * dz > r2) continue;
+            if (!Project(dx, dz, half, out Vector2 sp)) continue;
+
+            var b = Blip(used++);
+            b.color = otherPlayerColor;
             b.rectTransform.sizeDelta = new Vector2(blipSize, blipSize);
             b.rectTransform.anchoredPosition = sp;
         }

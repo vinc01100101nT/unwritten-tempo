@@ -74,6 +74,11 @@ public class HoverPlate : MonoBehaviour
     int lastMP = int.MinValue;
     int lastMaxMP = int.MinValue;
 
+    // A creature's name carries its level, which the server re-sends when it changes; null for anyone else.
+    NetMob shell;
+    string baseName;
+    int lastLevel;
+
     // Measured once per bound unit: how wide this body is, in this plate's pixels.
     float barW = MinBarW;
     bool hasMana;
@@ -120,6 +125,12 @@ public class HoverPlate : MonoBehaviour
 
         RefreshNumbers();
 
+        if (shell != null && shell.Level != lastLevel)
+        {
+            lastLevel = shell.Level;
+            nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
+        }
+
         if (subscribed != null)
         {
             subscribed.Prune();
@@ -133,6 +144,7 @@ public class HoverPlate : MonoBehaviour
     {
         Unsubscribe();
         tracked = unit;
+        shell = null;
 
         // TELL THE SERVER WHAT WE ARE LOOKING AT, or ask it to stop. This is what keeps the icons true while the
         // cursor rests: the answer arrives again every time something on that unit changes.
@@ -150,7 +162,11 @@ public class HoverPlate : MonoBehaviour
         float bodyWidth = 2f * UnitAnchor.HalfWidth(unit.transform);
         barW = Mathf.Max(MinBarW, bodyWidth / WorldScale);
 
-        nameLabel.text = UnitLabel.Of(unit);
+        // Found once per bind — a dictionary probe, never per frame.
+        shell = NetMob.ShellForView(unit.gameObject) ?? NetMob.ShellForServerMob(unit.gameObject);
+        baseName = UnitLabel.Of(unit);
+        lastLevel = shell != null ? shell.Level : 0;
+        nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
         // A unit with no mana pool gets no mana bar, rather than an empty one that looks broken.
         hasMana = unit.MaxMP > 0;
@@ -310,6 +326,8 @@ public class HoverPlate : MonoBehaviour
 
         nameLabel = NewText("Name", root, 11);
         nameLabel.alignment = TextAlignmentOptions.Center;
+        nameLabel.fontStyle = FontStyles.Bold;
+        nameLabel.fontSharedMaterial = UiKit.WorldNameMaterial();
 
         var hpTrack = NewImage("HpTrack", root, TrackBg);
         hpFill = NewBarFill("HpFill", hpTrack.rectTransform, HpColor(1f));

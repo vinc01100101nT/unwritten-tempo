@@ -257,8 +257,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 3
-    str: 8
+    level: 4
+    str: 9
     agi: 6
     vit: 8
     intel: 3
@@ -278,7 +278,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 0
+  weaponMasteryLevel: 4
 --- !u!114 &9122099887092942231
 MonoBehaviour:
   m_ObjectHideFlags: 0

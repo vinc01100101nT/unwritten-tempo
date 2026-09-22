@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.spirit
   displayName: Spirit
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 5
   sheet: Spirit
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.8
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 3
-  str: 8
+  level: 4
+  str: 9
   agi: 6
   vit: 8
   intel: 3
   dex: 5
   luk: 3
-  weaponMasteryLevel: 3
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 4
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 5
   touchRange: 0.9
   touchInterval: 1

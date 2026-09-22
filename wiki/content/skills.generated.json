@@ -431,6 +431,28 @@
       ]
     },
     {
+      "id": "skill.summon",
+      "name": "Summon",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": false,
+      "published": false,
+      "cost": "MP **0**  CD **20s**  Instant",
+      "manaCost": 0,
+      "cooldown": 20,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "",
+      "description": "Calls up this creature's summons, up to as many as its kind keeps out at once.",
+      "trademark": "",
+      "effects": [
+        "Calls up its summons"
+      ]
+    },
+    {
       "id": "skill.sword.blade_dance",
       "name": "Blade Dance",
       "symbol": "Bd",

@@ -54,6 +54,7 @@ before any game code runs, has no time and no category.
 | Category | Shape |
 | --- | --- |
 | `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (townsfolk carry their model name in the brackets) |
+| `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read this map's rows from the world spawn list as it loaded it |
 | `spawn` | `<map> <name> #<n> came back` — a creature that died is alive again, same body, same number |
 | `spawn` | `<map> <name> #<n> (<player id>) entered` — a player is now in this map |
 | `spawn` | `<map> <name> #<n> got up [HP <now>/<max>]` — a player who died is standing again, same number |
@@ -68,7 +69,7 @@ before any game code runs, has no time and no category.
 | `passive` | `<map> <unit> fired <skill id> on <trigger> at <target>, <distance> units away` |
 | `passive` | `<map> <unit> skipped <skill id> on <trigger> — <reason>` — `not switched on`, `target <d> units away, cast range <r>`, `already part of this chain`, `its required state is not met` |
 | `cast` | `<map> <unit> casts <skill>` · `<map> <unit> could not cast <skill> — <reason>` · `<map> <unit> weighed its skills: <skill> <ready or reason>; … — picked <skill>` or `— none ready, swinging` (a creature, every active and ultimate its weapon gave it — written when it picks a skill, and a `none ready` line only when the reasons changed since its last one, never once per swing) |
-| `loot` | `<map> <unit> (<player id>) earned <gold> Zeny and dropped <items> for them from <unit>` — the Zeny went into their purse, the items onto the ground, held for them; either half is left out when there is none, and `earned nothing from <unit>` when both are; every kill a player earns writes one |
+| `loot` | `<map> <unit> (<player id>) earned <gold> Zeny and dropped <items> for them from <unit>` — the Zeny went into their purse, the items onto the ground, held for them; several of one item are one pile, written `Iron ×7`; either half is left out when there is none, and `earned nothing from <unit>` when both are; every kill a player earns writes one, except a summoned creature's, which pays nothing and writes nothing |
 | `loot` | `<map> <unit> (<player id>) earned <amount> experience from <unit>` — the kill's experience, on its own line |
 | `server` | `<map> <unit> invincibility on` / `off` — written every time `/invuln` is run |
 | `server` | `<name> (<player id>) entered the world — <n> player(s) here` · `player left — connection <n> — <name> (<player id>)` · `reviving <name> (<player id>), who was dead.` |

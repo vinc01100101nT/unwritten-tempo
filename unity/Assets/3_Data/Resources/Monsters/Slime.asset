@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.slime
   displayName: Slime
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 2
   sheet: Slime
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.0600001
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 20
-  str: 15
-  agi: 12
-  vit: 15
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 20
+  level: 61
+  str: 39
+  agi: 33
+  vit: 38
+  intel: 22
+  dex: 33
+  luk: 22
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 61
   hardDefPercent: 10
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 20
   touchRange: 0.9
   touchInterval: 1

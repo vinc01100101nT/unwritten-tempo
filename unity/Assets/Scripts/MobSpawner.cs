@@ -37,14 +37,34 @@ public static class MobSpawner
         if (def == null) { onSpawned?.Invoke(null); return; }
 
         AddressablePrefabs.Load(AddressPrefix + def.name,
-                                prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map) : null));
+                                prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
     }
 
-    static GameObject Clone(GameObject prefab, Vector3 foot, Scene map)
+    static GameObject Clone(GameObject prefab, Vector3 foot, Scene map, MonsterDef def)
     {
         var go = UnityEngine.Object.Instantiate(prefab, foot, Quaternion.identity);
         go.hideFlags = HideFlags.DontSaveInEditor;   // a Play-only clone must never be baked into a saved scene
         MapManager.PutInMap(go, map);
+        // ITS KIND, from its data, before anything on it asks — its skills, its gear and its loot all read this.
+        var health = go.GetComponent<Health>();   // perf-ok: once per creature made
+        if (health != null) health.kind = def.kind;
+        // Its gear was already put on while it was being built — before its kind was known. A kind whose gear differs
+        // from the ordinary rule (a shadow: exactly its own pieces, at the best a forge makes) puts it on again.
+        // Only on the machine that owns the world — a watching copy is told what the creature wears.
+        if (GameServer.IsServer && (!CreatureKinds.WearsRandomGear(def.kind) || CreatureKinds.WearsBestGear(def.kind)))
+        {
+            var gear = go.GetComponent<UnitEquipment>();   // perf-ok: once per creature made
+            if (gear != null) gear.ReseatForNewLife();
+            var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
+            if (block != null) block.Rederive(healToFull: true);
+        }
+        // A SHADOW IS A 3D CHARACTER, decided by its kind, here — the one door every creature is made through — so no
+        // caller can make one flat. Before it is announced, because what crosses the wire is read off the creature at
+        // the moment it is published. It keeps the body for life, through every pooled respawn.
+        if (CreatureKinds.Is3D(def.kind)) go.AddComponent<MobShadow3DVisual>();   // perf-ok: once per creature made
+        // AND A KIND THAT SUMMONS gets the list its summons are kept in, knowing which creature it is so it can work out
+        // whom it calls. Server only: a watching copy summons nothing, it is told about each summon.
+        if (GameServer.IsServer && CreatureKinds.Summons(def.kind)) go.AddComponent<CreatureSummons>().def = def;   // perf-ok: once per creature made
         return go;
     }
 }

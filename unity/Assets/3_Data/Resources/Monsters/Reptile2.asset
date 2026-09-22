@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.reptile2
   displayName: Reptile2
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 4
   sheet: Reptile2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.99
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 19
-  luk: 11
-  weaponMasteryLevel: 36
+  level: 96
+  str: 61
+  agi: 52
+  vit: 61
+  intel: 38
+  dex: 52
+  luk: 36
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 96
   hardDefPercent: 5
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 10
   touchRange: 0.9
   touchInterval: 1

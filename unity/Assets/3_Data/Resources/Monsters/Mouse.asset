@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.mouse
   displayName: Mouse
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 2
   sheet: Mouse
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.13
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 20
-  str: 15
-  agi: 12
-  vit: 15
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 20
+  level: 57
+  str: 36
+  agi: 31
+  vit: 36
+  intel: 21
+  dex: 31
+  luk: 20
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 57
   hardDefPercent: 15
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 40
   touchRange: 0.9
   touchInterval: 1

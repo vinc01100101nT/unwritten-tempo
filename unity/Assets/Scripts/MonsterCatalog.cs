@@ -51,46 +51,33 @@ public static class MonsterCatalog
         return null;
     }
 
-    /// <summary>The first boss-flagged mob (field MVP), or null if none.</summary>
-    public static MonsterDef Boss
-    {
-        get
-        {
-            EnsureLoaded();
-            foreach (var m in _all) if (m != null && m.isBoss) return m;
-            return null;
-        }
-    }
-
-    /// <summary>A RANDOM boss-flagged mob (uniform among all bosses), or null if the catalog has none.
-    /// Unlike <see cref="Boss"/> (always the first) this varies the pick, so /summon boss isn't always the
-    /// same MVP.</summary>
-    public static MonsterDef RandomBoss()
+    /// <summary>A RANDOM creature of <paramref name="kind"/> (uniform among them), or null if the catalog has none.</summary>
+    public static MonsterDef RandomOfKind(CreatureKind kind)
     {
         EnsureLoaded();
         int total = 0;
-        foreach (var m in _all) if (m != null && m.isBoss) total++;
+        foreach (var m in _all) if (m != null && m.kind == kind) total++;
         if (total == 0) return null;
 
         int roll = Random.Range(0, total);
         foreach (var m in _all)
-            if (m != null && m.isBoss && roll-- == 0) return m;
+            if (m != null && m.kind == kind && roll-- == 0) return m;
         return null;
     }
 
-    /// <summary>Pick a field-spawnable mob (non-boss, weight &gt; 0) weighted by <see cref="MonsterDef.weight"/>,
+    /// <summary>Pick a field-spawnable mob (a Normal, weight &gt; 0) weighted by <see cref="MonsterDef.weight"/>,
     /// or null if none are loaded.</summary>
     public static MonsterDef WeightedPick()
     {
         EnsureLoaded();
         int total = 0;
-        foreach (var m in _all) if (m != null && !m.isBoss) total += Mathf.Max(0, m.weight);
+        foreach (var m in _all) if (m != null && m.kind == CreatureKind.Normal) total += Mathf.Max(0, m.weight);
         if (total <= 0) return null;
 
         int roll = Random.Range(0, total);
         foreach (var m in _all)
         {
-            if (m == null || m.isBoss) continue;
+            if (m == null || m.kind != CreatureKind.Normal) continue;
             roll -= Mathf.Max(0, m.weight);
             if (roll < 0) return m;
         }
@@ -99,16 +86,16 @@ public static class MonsterCatalog
 
     /// <summary>Is this mob a field-spawnable candidate for a given biome + LEVEL band? Difficulty is level —
     /// there is no separate tier. Biome-agnostic commons (<see cref="Biome.None"/>) match any biome (when
-    /// <paramref name="includeCommons"/>); everyone else must match <paramref name="biome"/> exactly. Bosses and
-    /// zero-weight mobs are never field candidates.</summary>
+    /// <paramref name="includeCommons"/>); everyone else must match <paramref name="biome"/> exactly. Only Normals are
+    /// ever drawn into a mix: an elite or a shadow is placed by naming it.</summary>
     static bool Eligible(MonsterDef m, Biome biome, int minLevel, int maxLevel, bool includeCommons)
     {
-        if (m == null || m.isBoss || m.weight <= 0) return false;
+        if (m == null || m.kind != CreatureKind.Normal || m.weight <= 0) return false;
         if (m.level < minLevel || m.level > maxLevel) return false;
         return m.biome == Biome.None ? includeCommons : m.biome == biome;
     }
 
-    /// <summary>Weighted pick among the non-boss mobs that match <paramref name="biome"/> within the
+    /// <summary>Weighted pick among the Normals that match <paramref name="biome"/> within the
     /// [<paramref name="minLevel"/>, <paramref name="maxLevel"/>] band (commons included when asked). This is
     /// what the map generator uses to populate a biome's maps. Falls back to the unfiltered
     /// <see cref="WeightedPick()"/> when nothing matches, so a map never spawns empty.</summary>

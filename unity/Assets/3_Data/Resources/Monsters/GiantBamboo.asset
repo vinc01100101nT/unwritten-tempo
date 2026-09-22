@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantbamboo
   displayName: GiantBamboo
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 4
   sheet: GiantBamboo
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.15
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 46
-  str: 31
-  agi: 15
-  vit: 38
-  intel: 15
-  dex: 24
-  luk: 14
-  weaponMasteryLevel: 46
+  level: 83
+  str: 53
+  agi: 33
+  vit: 60
+  intel: 33
+  dex: 45
+  luk: 31
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 83
   hardDefPercent: 23
   hardMagicDefPercent: 14
-  attackType: 0
   xpReward: 200
   touchRange: 0.9
   touchInterval: 1

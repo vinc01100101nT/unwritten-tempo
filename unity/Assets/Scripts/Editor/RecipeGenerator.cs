@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// The ONE world generator for <i>unwritten</i>. Bakes a <see cref="MapRecipe"/> data asset into a playable
-/// scene — ground + prop groups + mobs + spawn + ambience — entirely from the recipe's content, so a town, a
+/// scene — ground + prop groups + spawn + ambience — entirely from the recipe's content, so a town, a
 /// wild field and a dungeon are all just different recipes (no per-kind generators).
 ///
 /// It is a thin orchestrator over the existing, battle-tested building blocks:
@@ -86,24 +86,24 @@ public static class RecipeGenerator
     /// <summary>Bake <paramref name="r"/> into Assets/Scenes/&lt;mapName&gt;.unity. Returns success + the scene
     /// path and how much was placed. Leaves the new map open &amp; active. <see cref="WorldCreator"/> is the only
     /// caller — it clones a template recipe per map cell and bakes each via the exit-aware overload below.</summary>
-    public static (bool ok, string path, int props, int mobs) Generate(MapRecipe r)
+    public static (bool ok, string path, int props) Generate(MapRecipe r)
         => Generate(r, null);
 
     /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's warp doorway
     /// positions in world-XZ, passed by the World Creator) routes the paths to terminate at each doorway — so warp
     /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.</summary>
-    public static (bool ok, string path, int props, int mobs) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ)
+    public static (bool ok, string path, int props) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Generate Map", "Exit Play mode first, then re-run.", "OK"); return (false, null, 0, 0); }
-        if (r == null) return (false, null, 0, 0);
+        { EditorUtility.DisplayDialog("Generate Map", "Exit Play mode first, then re-run.", "OK"); return (false, null, 0); }
+        if (r == null) return (false, null, 0);
 
         string safe = Sanitize(string.IsNullOrWhiteSpace(r.mapName) ? "NewMap" : r.mapName);
         string path = $"{ScenesDir}/{safe}.unity";
 
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
-        { EditorUtility.DisplayDialog("Generate Map", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return (false, null, 0, 0); }
+        { EditorUtility.DisplayDialog("Generate Map", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return (false, null, 0); }
         int mask = 1 << groundLayer;
 
         int seed = r.randomizeSeed ? (int)(System.DateTime.Now.Ticks & 0x7fffffff) : r.seed;
@@ -143,7 +143,7 @@ public static class RecipeGenerator
                 + "(and, for the blended style, the 'Unwritten/GroundBlend' shader).\n\n"
                 + "Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
             EditorSceneManager.CloseScene(scene, true);
-            return (false, null, 0, 0);
+            return (false, null, 0);
         }
         Physics.SyncTransforms();   // make the floor queryable for drop rays
 
@@ -161,20 +161,8 @@ public static class RecipeGenerator
                 props += PlaceGroup(g, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers);
             }
 
-        // ── MOBS (runtime pooled spawners, RO-style — replaces baked-in mobs) ────────────────────────────
-        // Each recipe mob group becomes a FieldMobSpawner that keeps its population alive and respawns from an
-        // object pool (Addressable mobs). Nothing is baked into the scene, so the map file stays light and mobs
-        // are data-driven at Play. Needs Bake Mob Prefabs run so the spawners have Addressable mobs to draw.
-        var mobsRoot = new GameObject("Mobs");
-        SceneManager.MoveGameObjectToScene(mobsRoot, scene);
-        Vector3 spawnPos = WorldBuildUtil.SurfacePoint(center, mask);
-        int mobs = 0;
-        if (r.mobGroups != null)
-            foreach (var m in r.mobGroups)
-            {
-                if (m == null) continue;
-                mobs += PlaceMobSpawner(m, mobsRoot.transform, center, r.sizeX, r.sizeZ, r.biome);
-            }
+        // NO CREATURES ARE PUT IN THE MAP. Where creatures live is the world spawn list (WorldSpawns), read by the server
+        // as it loads each map — so nothing about creatures is ever saved inside a scene.
 
         // NO ARRIVAL POINT IS PLANTED HERE. One used to go at the map's centre, where this also puts the plaza and
         // its props, so arriving there put a player inside a building. The World Creator makes one beside each
@@ -192,8 +180,8 @@ public static class RecipeGenerator
         // ── SIDECAR: write the painter-editable map.json next to the scene (round-trip into the Map Painter) ──
         WriteSidecar(safe, r, center, seed, paths);
 
-        Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props, {mobs} mobs.");
-        return (true, path, props, mobs);
+        Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props.");
+        return (true, path, props);
     }
 
     // Retrofit: make the foliage in the CURRENTLY-OPEN scene sway, without re-baking it from a recipe. Handy for
@@ -777,31 +765,6 @@ public static class RecipeGenerator
         return go;
     }
 
-    // ── MOB PLACEMENT (runtime pooled spawner) ─────────────────────────────────────────────────────────────
-    /// <summary>Place a configured <see cref="FieldMobSpawner"/> for one recipe mob group at the map centre,
-    /// covering the whole plot. Returns the intended population (for the generate report). This is how a freshly
-    /// generated map gets its runtime mobs; existing maps are converted scene-side by <c>MobSpawnerMigration</c>.</summary>
-    public static int PlaceMobSpawner(RecipeMobGroup m, Transform parent, Vector3 center, float sizeX, float sizeZ, Biome biome)
-    {
-        int pop = m.amountMode == AmountMode.Count ? m.count : Mathf.Max(0, Mathf.RoundToInt(sizeX * sizeZ * m.density));
-
-        var go = new GameObject((string.IsNullOrEmpty(m.label) ? "Mobs" : m.label) + " Spawner");
-        go.transform.SetParent(parent, true);
-        go.transform.position = center;
-
-        var s = go.AddComponent<FieldMobSpawner>();
-        s.population        = pop;
-        s.radius            = 0.5f * Mathf.Max(sizeX, sizeZ);   // circle that reaches the plot edges; off-map probes just retry
-        s.biome             = biome;
-        s.minLevel          = m.minLevel;
-        s.maxLevel          = m.maxLevel;
-        s.includeCommons    = m.includeCommons;
-        s.fixedMobId        = m.archetypeName;                  // empty = weighted biome mix; a mob id or "Boss" = fixed
-        s.playerClearRadius = m.clearFromSpawn;
-        s.respawnDelay      = m.respawnDelay;
-        s.respawnJitter     = m.respawnJitter;
-        return pop;
-    }
 
 
     // ── SIDECAR (painter-editable map.json) ────────────────────────────────────────────────────────────────

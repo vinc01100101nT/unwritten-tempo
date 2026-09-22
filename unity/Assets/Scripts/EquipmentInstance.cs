@@ -65,6 +65,37 @@ public class EquipmentInstance
     /// spawns wearing — so no caller can hand out a copy in a state a forge could not have produced.</summary>
     public static EquipmentInstance CreateFresh(Item def) => new EquipmentInstance(def);
 
+    // Reused: the stats already written while one piece is being filled in. A piece is filled once per creature life.
+    static readonly List<InkStat> inkScratch = new List<InkStat>(6);
+
+    /// <summary>A copy of <paramref name="def"/> at THE BEST A FORGE CAN MAKE IT: the top grade, folded to that grade's
+    /// cap, every stat slot written with the strongest Ink — each stat rolled exactly as a station rolls one — and, on a
+    /// weapon, a trademark rolled exactly as the forge rolls one. Nothing here could not come out of a station, so
+    /// <see cref="CreateFresh"/>'s promise holds. What a shadow wears. Server only: every roll goes through CombatRng.</summary>
+    public static EquipmentInstance CreateAtBest(Item def)
+    {
+        var made = CreateFresh(def);
+        if (def == null) return made;
+        made.quality = CraftingMath.Best;
+        made.upgrade = CraftingMath.FoldCap(made.quality);
+        inkScratch.Clear();
+        for (int slot = 0; slot < made.InkSlots; slot++)
+        {
+            int weight = CraftingMath.RemainingInkWeight(inkScratch);
+            if (weight <= 0 || !CraftingMath.RollInkStat(CombatRng.Range(0, weight), inkScratch, out var stat)) break;
+            made.WriteInk(slot, stat, CraftingMath.InkValue(stat, CraftingMath.TopInkTier));
+            inkScratch.Add(stat);
+        }
+        inkScratch.Clear();
+        if (def.slot == EquipSlotType.Weapon)
+        {
+            int total = Trademarks.RollTotal(def.weaponType);
+            if (total > 0) made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, total));
+        }
+        made.Recompute();
+        return made;
+    }
+
     /// <summary>Work out what this copy's folds and quality are worth and write the answer onto it. THE SERVER
     /// calls this after forging, folding or quenching, and a player's machine never does: the finished numbers
     /// cross in the same text the grade does, and that side only copies them in.</summary>

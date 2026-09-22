@@ -61,15 +61,3 @@ MonoBehaviour:
     randomYaw: 1
     rowOffset: 4
     sway: 2
-  mobGroups:
-  - label: Dungeon mobs
-    archetypeName: 
-    minTier: 2
-    maxTier: 4
-    includeCommons: 0
-    amountMode: 0
-    density: 0.035
-    count: 12
-    minSpacing: 2
-    clearFromSpawn: 6
-  forestAmbience: 0

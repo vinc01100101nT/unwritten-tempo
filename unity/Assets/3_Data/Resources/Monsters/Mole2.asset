@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.mole2
   displayName: Mole2
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 4
   sheet: Mole2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.0600001
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 19
-  luk: 11
-  weaponMasteryLevel: 36
+  level: 91
+  str: 58
+  agi: 49
+  vit: 58
+  intel: 36
+  dex: 49
+  luk: 34
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 91
   hardDefPercent: 10
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 20
   touchRange: 0.9
   touchInterval: 1

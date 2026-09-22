@@ -31,6 +31,14 @@ public static class MaterialCatalog
         return bands.TryGetValue(MaterialKind.Ink, out var row) ? row[tier] : null;
     }
 
+    /// <summary>The Salt of <paramref name="tier"/> (1 Coarse .. 3 Pure), or null when nobody has authored one.</summary>
+    public static Item Salt(int tier)
+    {
+        Build();
+        if (tier < 1 || tier >= Bands) return null;
+        return bands.TryGetValue(MaterialKind.Salt, out var row) ? row[tier] : null;
+    }
+
     /// <summary>Forget what was found, so a newly authored material is picked up. The editor calls this; the game
     /// never needs to.</summary>
     public static void Forget() { built = false; bands.Clear(); }
@@ -43,10 +51,8 @@ public static class MaterialCatalog
         foreach (var it in Resources.LoadAll<Item>("Items"))
         {
             if (it == null) continue;
-            // The three band ladders, and Ink's tier ladder beside them (Salt is never handed back, so it is not
-            // filed). Ink's five tiers sit in the same eight-place row, which is why the ceiling is shared.
-            if (it.materialKind != MaterialKind.Metal && it.materialKind != MaterialKind.Cloth
-                && it.materialKind != MaterialKind.Leather && it.materialKind != MaterialKind.Ink) continue;
+            // The three band ladders, and Ink's and Salt's tier ladders beside them, all in the same eight-place row.
+            if (it.materialKind == MaterialKind.None) continue;
             if (it.materialStep < 1 || it.materialStep >= Bands) continue;
             if (!bands.TryGetValue(it.materialKind, out var row)) bands[it.materialKind] = row = new Item[Bands];
             row[it.materialStep] = it;

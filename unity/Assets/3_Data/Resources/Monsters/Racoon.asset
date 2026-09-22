@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.racoon
   displayName: Racoon
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 1
   sheet: Racoon
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.99
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 12
-  str: 12
-  agi: 8
-  vit: 12
-  intel: 5
-  dex: 8
-  luk: 5
-  weaponMasteryLevel: 12
+  level: 42
+  str: 29
+  agi: 21
+  vit: 29
+  intel: 15
+  dex: 21
+  luk: 14
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 42
   hardDefPercent: 5
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 10
   touchRange: 0.9
   touchInterval: 1

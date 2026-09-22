@@ -12,7 +12,7 @@ tags:
 
 **Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.RollWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
 
-**Not done:** nothing in the model, and the roster reset has been run (86 mobs, levels 3–46, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
+**Not done:** nothing in the model, and the roster reset has been run (96 creatures, levels 1–160, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
 
 ### The stat-point budget (added 2026-08-10)
 
@@ -216,6 +216,6 @@ This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — where these formulas came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the percentage curve mobs share with the player.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the sub-stat piles the table above is read through.
-- [Biome Mob Families — Tiered Spawning](../../3-world/biome-mob-families.md) — the 86 mobs this model was reset onto, and the tier it deleted.
+- [Biome Mob Families — Spawning by Biome and Level](../../3-world/biome-mob-families.md) — the creatures this model was reset onto.
 - [Crafting & Recycling](../crafting-and-recycling.md) — the materials a mob drops that it isn't wearing.
 - [Networking — Implementation Notes](../networking/implementation-notes.md) — the per-connection fighter the server builds from this block.

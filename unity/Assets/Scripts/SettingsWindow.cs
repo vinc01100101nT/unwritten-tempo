@@ -61,6 +61,12 @@ public class SettingsWindow : MonoBehaviour
                                          GameSettings.QuickCastGroundTarget);
         quickGround.onValueChanged.AddListener(v => GameSettings.QuickCastGroundTarget = v);
 
+        var scrollSens = UiKit.MakeSlider(Row(gameplay, "Scroll sensitivity"), 0f);
+        scrollSens.minValue = GameSettings.ScrollSensitivityMin;
+        scrollSens.maxValue = GameSettings.ScrollSensitivityMax;
+        scrollSens.value = GameSettings.ScrollSensitivity;
+        scrollSens.onValueChanged.AddListener(v => GameSettings.ScrollSensitivity = v);
+
         var master = UiKit.MakeSlider(Row(sound, "Master volume"), GameSettings.MasterVolume);
         master.onValueChanged.AddListener(v => GameSettings.MasterVolume = v);
 

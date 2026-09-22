@@ -45,6 +45,24 @@ public class Health : MonoBehaviour, ICombatUnit
     [Tooltip("Invoked once, just before the GameObject is removed.")]
     public UnityEngine.Events.UnityEvent onDeath;
 
+    /// <summary>Which kind of creature this is — copied from its creature data by <see cref="MobSpawner"/>, the one door
+    /// every creature is made through, so it can never disagree with that data. Sets its extra skill slots, whether it
+    /// summons, what it wears and what it drops (<see cref="CreatureKinds"/>).</summary>
+    [System.NonSerialized] public CreatureKind kind = CreatureKind.Normal;
+
+    /// <summary>Called up by another creature's summon skill, for this life. A summoned creature never summons, pays no
+    /// experience and drops nothing, and it goes when its summoner goes (see <see cref="SummonedCreature"/>).</summary>
+    public bool IsSummoned => summonedBy != null;
+    [System.NonSerialized] SummonedCreature summonedBy;
+
+    /// <summary>Mark this creature as <paramref name="by"/>'s summon for this life. Its skills are rebuilt, because a
+    /// summoned creature carries no summon skill of its own.</summary>
+    public void SetSummonedBy(SummonedCreature by)
+    {
+        summonedBy = by;
+        extraVersion++;
+    }
+
     public int Current { get; private set; }
     public bool IsDead => Current <= 0;
 
@@ -277,10 +295,10 @@ public class Health : MonoBehaviour, ICombatUnit
     UnitSkills skills;
     int skillsBuiltFor = -1;
 
-    /// <summary>This creature's EXTRA skills — slots of their own, apart from its weapon's kit, <see
-    /// cref="ExtraSkillRoll.Slots"/> of them. Empty on a watched copy, which rolls nothing.</summary>
+    /// <summary>This creature's EXTRA skills — slots of their own, apart from its weapon's kit, as many as its kind has
+    /// (<see cref="CreatureKinds.ExtraSkillSlots"/>). Empty on a watched copy, which rolls nothing.</summary>
     public IReadOnlyList<string> ExtraSkillIds => extraSkillIds;
-    readonly List<string> extraSkillIds = new List<string>(ExtraSkillRoll.Slots);
+    readonly List<string> extraSkillIds = new List<string>(CreatureKinds.MostExtraSkillSlots);
     // A skill somebody named for this creature (a summon). Kept through every later life instead of a random roll.
     string pinnedExtraSkillId;
     bool extraRolled;
@@ -304,7 +322,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         else
         {
-            ExtraSkillRoll.Roll(extraSkillIds);
+            ExtraSkillRoll.Roll(extraSkillIds, CreatureKinds.ExtraSkillSlots(kind));
         }
         extraVersion++;
     }
@@ -337,7 +355,10 @@ public class Health : MonoBehaviour, ICombatUnit
             if (def == null || string.IsNullOrEmpty(def.id)) continue;
             bool byMastery = held != WeaponType.None && def.weaponType == held
                              && Mathf.Max(1, def.masteryLevel) <= mastery;
-            if (byMastery || extra.Contains(def.id)) kitScratch.Add(def);
+            // THE SUMMON SKILL, in a slot of its own on top of the extra ones — for a kind that summons, and never for a
+            // creature that was itself summoned.
+            bool summon = def.id == CreatureKinds.SummonSkillId && CreatureKinds.Summons(kind) && !IsSummoned;
+            if (byMastery || summon || extra.Contains(def.id)) kitScratch.Add(def);
         }
         return kitScratch;
     }
@@ -783,10 +804,12 @@ public class Health : MonoBehaviour, ICombatUnit
         // immediately.
         // A pooled mob (owned by a FieldMobSpawner) returns to its pool instead of self-recycling in place
         // (MobRespawn) or being destroyed. Checked first so a spawner-owned mob always takes the pool path.
+        // A SUMMON goes back to its summoner, first of all — it never respawns by itself.
         var pooled = GetComponent<PooledMob>();   // perf-ok: once, at the moment a unit dies
         var respawn = GetComponent<MobRespawn>();   // perf-ok: once, at the moment a unit dies
         System.Action done;
-        if (pooled != null) done = pooled.OnFadedOut;
+        if (summonedBy != null) done = summonedBy.OnFadedOut;
+        else if (pooled != null) done = pooled.OnFadedOut;
         else if (respawn != null) done = respawn.OnFadedOut;
         else done = () => Destroy(gameObject);
         var fx = GetComponent<DeathDissolve>();   // perf-ok: once, at the moment a unit dies

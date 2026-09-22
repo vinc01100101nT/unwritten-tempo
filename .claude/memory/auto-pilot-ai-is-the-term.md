@@ -6,7 +6,8 @@ one name. "Auto-combat" is retired; the on-screen tag reads **AUTO-PILOT — pre
 (`AutoPilotIndicator`, `Player3DController.Order.AutoPilot`).
 
 **How it picks a skill, decided by the user in the same breath:** the ULTIMATE first whenever that is off cooldown
-and affordable, then one of the ready ordinary actives at random. It never saves mana for a bigger skill and never
+and affordable, then one of the ready ordinary actives at random. Since 2026-09-22 a creature that summons casts its
+SUMMON before either, whenever it is ready and not everything it may have out is out (see [[creature-kinds-and-world-spawns]]). It never saves mana for a bigger skill and never
 reaches for the most expensive one it can pay for. Measured 2026-09-16: a level 3–5 creature holds 17–23 MP, so no
 40-MP ultimate is affordable below about level 11 — seeing only cheap skills on a low creature is correct.
 

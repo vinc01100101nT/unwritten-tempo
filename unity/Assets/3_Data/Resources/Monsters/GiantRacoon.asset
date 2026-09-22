@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantracoon
   displayName: GiantRacoon
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 0
   sheet: GiantRacoon
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.45
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 15
-  str: 13
-  agi: 6
+  level: 17
+  str: 14
+  agi: 7
   vit: 16
-  intel: 5
-  dex: 10
-  luk: 5
-  weaponMasteryLevel: 15
+  intel: 6
+  dex: 11
+  luk: 6
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 17
   hardDefPercent: 29
   hardMagicDefPercent: 18
-  attackType: 0
   xpReward: 600
   touchRange: 0.9
   touchInterval: 1

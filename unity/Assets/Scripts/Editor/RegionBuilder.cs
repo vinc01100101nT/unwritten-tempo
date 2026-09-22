@@ -14,7 +14,6 @@ using UnityEngine.SceneManagement;
 /// <see cref="MakePortal"/>/<see cref="EnsurePortal"/> — a <see cref="Portal3D"/> + arrival <see cref="SpawnPoint"/>,
 /// with the warp ring colour auto-chosen from the destination map (town=yellow, field=green …).</item>
 /// <item><b>Authoring:</b> Fit Portal Triggers, Drop Selected to Ground.</item>
-/// <item><b>Content:</b> Spawn Field Boss (hand-place a unique boss into the open map).</item>
 /// </list>
 /// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival): a portal stores the target
 /// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; <see cref="WorldCreator"/> keys each warp's
@@ -22,7 +21,6 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class RegionBuilder
 {
-    const string TownScene = "Town";   // used by Spawn Field Boss to refuse spawning in the safe hub
 
     [MenuItem("Tools/unwritten/World/Fit Portal Triggers (active scene)", priority = 235)]
     static void FitPortalTriggersMenu()
@@ -123,52 +121,6 @@ public static class RegionBuilder
         // Exact 1:1 fit (no padding) — portal scale is 1 so world size maps straight to local box size.
         box.center = portal.InverseTransformPoint(wb.center);
         box.size = wb.size;
-    }
-
-    // ── 3) FIELD BOSS ──────────────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/Mobs & NPCs/Spawn Field Boss (open field map)", priority = 320)]
-    static void SpawnFieldBoss()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Spawn Field Boss", "Exit Play mode first, then re-run.", "OK"); return; }
-
-        var scene = SceneManager.GetActiveScene();
-        if (scene.name == TownScene)
-        { EditorUtility.DisplayDialog("Spawn Field Boss", "The active scene is Town (a safe hub). Open the FIELD map first.", "OK"); return; }
-
-        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
-        int groundMask = groundLayer >= 0 ? 1 << groundLayer : ~0;
-        Physics.SyncTransforms();
-
-        // Drop the boss in an open spot away from where anyone arrives, so you walk into it rather than onto it.
-        // The map's own arrival points are beside its doors, so the centre is the spot to keep clear of.
-        Vector3 pos = WorldBuildUtil.SurfacePoint(new Vector3(6f, 0f, 10f), groundMask);
-
-        // Prefer the data-driven boss (MonsterCatalog), fall back to the legacy MobRoster seed if no assets yet.
-        var bossDef = MonsterCatalog.Boss;
-        MonsterArchetype bossArc = bossDef != null ? bossDef.ToArchetype() : MobRoster.Boss;
-
-        var boss = RigBuilder25D.BuildMonster(bossArc, pos);
-        SceneManager.MoveGameObjectToScene(boss, scene);
-
-        var banner = boss.AddComponent<BossBanner>();
-        banner.bossName = bossArc.name;
-
-        // Make it a slow-respawning event, not trash: long delay + wide home so it roams.
-        var respawn = boss.GetComponent<MobRespawn>();
-        if (respawn != null) { respawn.respawnDelay = 120f; respawn.homeRadius = 10f; }
-
-        Selection.activeGameObject = boss;
-        EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene);
-        EditorUtility.DisplayDialog("Field Boss — spawned",
-            // HP is DERIVED from the stat block, not carried on the archetype — compute it the same way the spawned
-            // mob will, so the dialog can't quote a number the mob won't actually have.
-            $"Spawned '{bossArc.name}' in '{scene.name}' (Lv{bossArc.stats.level}, " +
-            $"{UnitStatMath.MaxHP(bossArc.stats, default, 0f)} HP, ×{bossArc.scale} size, " +
-            "name + HP banner). It roams, aggros wide, and respawns 120s after death.\n\n" +
-            "Move it where you want a boss to live. Re-run to add another.", "OK");
-        Debug.Log($"[unwritten] Field boss '{bossArc.name}' spawned in '{scene.name}'.");
     }
 
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────

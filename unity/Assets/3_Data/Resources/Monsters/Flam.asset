@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.flam
   displayName: Flam
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 3
   sheet: Flam
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.13
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 28
-  str: 21
-  agi: 15
-  vit: 20
-  intel: 9
-  dex: 15
-  luk: 9
-  weaponMasteryLevel: 28
+  level: 69
+  str: 45
+  agi: 37
+  vit: 44
+  intel: 25
+  dex: 36
+  luk: 25
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 69
   hardDefPercent: 15
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 40
   touchRange: 0.9
   touchInterval: 1

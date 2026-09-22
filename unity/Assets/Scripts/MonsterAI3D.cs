@@ -266,6 +266,38 @@ public class MonsterAI3D : MonoBehaviour
     /// new spot (<see cref="FieldMobSpawner"/>) so it wanders around where it reappeared, not its first spawn.</summary>
     public void SetHome(Vector3 p) => home = p;
 
+    /// <summary>Follow <paramref name="summoner"/> for this life: wander around it, fight whoever it fights, and never
+    /// stray further than <see cref="CreatureKinds.SummonFollowRange"/> from it — past that, drop the target and walk
+    /// back. Set by <see cref="CreatureSummons"/> when it calls this creature up.</summary>
+    public void Follow(MonsterAI3D summoner) => leader = summoner;
+
+    MonsterAI3D leader;
+    float nextFollowStep;
+
+    // A SUMMON'S TURN, before its own choice of prey. True when it is walking back to its summoner and should do nothing
+    // else this frame. Only steps its route twice a second, so a summon catching up does not re-plan every frame.
+    bool FollowLeader(Vector3 pos)
+    {
+        if (leader == null || !leader.isActiveAndEnabled || leader.Health == null || leader.Health.IsDead) return false;
+        Vector3 at = leader.transform.position;
+        home = at;
+        float range = CreatureKinds.SummonFollowRange;
+        if (PlanarSqr(pos, at) > range * range)
+        {
+            if (Prey != null) SetPrey(null);
+            chasing = false;
+            if (Time.time >= nextFollowStep)
+            {
+                nextFollowStep = Time.time + 0.5f;
+                agent.MoveTo(at);
+            }
+            return true;
+        }
+        var theirs = leader.Prey;
+        if (theirs != null && !theirs.IsDead && Prey != theirs) { SetPrey(theirs); chasing = true; }
+        return false;
+    }
+
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();
@@ -540,6 +572,7 @@ public class MonsterAI3D : MonoBehaviour
         agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * travel;
 
         Vector3 pos = transform.position;
+        if (FollowLeader(pos)) return;
         PickPrey(pos);
         // A dead or departed target is no target: leash off and resume wandering until somebody else turns up.
         bool playerAlive = player != null && Prey != null && !Prey.IsDead;
@@ -709,8 +742,9 @@ public class MonsterAI3D : MonoBehaviour
     /// if any is ready: off cooldown, affordable, not refused by silence, a taunt or a missing pile, and inside that
     /// skill's OWN cast range. False when nothing was cast, so the ordinary swing happens instead.
     ///
-    /// <para><b>The order it picks in</b> (decided by the user, 2026-09-17): the ULTIMATE first whenever it is ready
-    /// and affordable, and otherwise one of the ready ordinary actives at random. It does not save mana for a bigger
+    /// <para><b>The order it picks in</b> (decided by the user, 2026-09-17 and 2026-09-22): the SUMMON first whenever it
+    /// is ready and not everything it may have out is out, then the ULTIMATE whenever it is ready and affordable, and
+    /// otherwise one of the ready ordinary actives at random. It does not save mana for a bigger
     /// skill and it does not reach for the most expensive one it can pay for. Deliberate combinations — a named
     /// sequence of skills the auto-pilot AI plays in order — are a later piece of work and are not this.</para>
     ///
@@ -735,7 +769,7 @@ public class MonsterAI3D : MonoBehaviour
         if (logging) castNote.Clear();
 
         readySkills.Clear();
-        SkillRunner ultimate = null;
+        SkillRunner ultimate = null, summon = null;
         // WHICH reason each skill had, as one number — what "the reasons changed" is measured against. Kinds only.
         int reasons = 17;
         for (int s = 0; s < pressed.Length; s++)
@@ -754,11 +788,14 @@ public class MonsterAI3D : MonoBehaviour
             reasons = reasons * 31 + (int)block;
             if (logging) NoteSkill(def, runner.DescribeBlock(block));
             if (block != SkillRunner.CastBlock.None) continue;
+            // THE SUMMON FIRST, every time it is ready — unless everything this creature may have out is already out.
+            if (def.id == CreatureKinds.SummonSkillId) { if (!SummonsAtMax) summon = runner; continue; }
             if (def.IsUltimate) { if (ultimate == null) ultimate = runner; }
             else readySkills.Add(runner);
         }
 
-        var pick = ultimate != null ? ultimate
+        var pick = summon != null ? summon
+                 : ultimate != null ? ultimate
                  : readySkills.Count > 0 ? readySkills[CombatRng.Range(0, readySkills.Count)] : null;
         readySkills.Clear();
 
@@ -770,6 +807,18 @@ public class MonsterAI3D : MonoBehaviour
         lastNoneReadyReasons = !logging || pick != null ? int.MinValue : reasons;
 
         return pick != null && pick.CastFromRequest(player, player.position, out _);
+    }
+
+    // What this creature has summoned, looked up once. A creature that does not summon never has one, and says so.
+    CreatureSummons summons;
+    bool summonsLooked;
+    bool SummonsAtMax
+    {
+        get
+        {
+            if (!summonsLooked) { summonsLooked = true; summons = GetComponent<CreatureSummons>(); }
+            return summons == null || summons.AtMax;
+        }
     }
 
     // The reasons behind the last "none ready" line this creature wrote. Out-of-reach sits past every CastBlock value.

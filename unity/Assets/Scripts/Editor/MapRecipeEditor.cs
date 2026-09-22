@@ -25,7 +25,7 @@ public class MapRecipeEditor : Editor
                 var res = RecipeGenerator.Generate(recipe);
                 if (res.ok)
                     EditorUtility.DisplayDialog("Generate Map",
-                        $"Baked '{recipe.mapName}'\n→ {res.path}\n\n{res.props} props, {res.mobs} mobs.\n\nPress Play to walk it.", "OK");
+                        $"Baked '{recipe.mapName}'\n→ {res.path}\n\n{res.props} props.\n\nPress Play to walk it.", "OK");
             }
         }
     }

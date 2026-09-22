@@ -31,6 +31,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 
 | You are seeing this | Open this |
 | --- | --- |
+| `git push` fails with `lookup lfs.github.com: no such host`, but `host lfs.github.com` resolves | [Git LFS Push Says "no such host"](git-lfs-push-says-no-such-host.md) — LFS (a Go program) is using Go's own DNS resolver, not the system's; push with `GODEBUG=netdns=cgo git push`. |
 | A play-test says only a couple of options ever get picked, or you are building a "random among ready" chooser over options with different costs | [Replay a Chooser With the Real Costs](replay-a-chooser-with-real-costs.md) — cheap options drain the shared pool and starve the expensive ones; replay the loop offline with the real numbers and count picks before building. |
 | Someone shows you an editor screen and asks "are we aligned — is this what the game does?" | [Before Saying Aligned, Check Both Readers](before-saying-aligned-check-both-readers.md) — the screen and the code often keep separate lists; confirm from both, and fix a disagreement by deleting one list, not syncing it. |
 | A feature you wrote is simply ABSENT at runtime — no error, nothing happens — and the code plainly has it | [The Code Adds It, the Committed Artifact Doesn't](the-code-adds-it-the-committed-artifact-doesnt-have-it.md) — a prefab, bundle or generated file in the repo was built before your line existed; the program loads that, not your source. Date it, then grep it for the thing. |

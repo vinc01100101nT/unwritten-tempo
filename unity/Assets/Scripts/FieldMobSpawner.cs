@@ -24,15 +24,13 @@ public class FieldMobSpawner : MonoBehaviour
     [Tooltip("Spawn/respawn within this radius of the spawner (XZ), snapped to the Ground.")]
     public float radius = 12f;
 
-    [Header("Respawn timing (RO-style)")]
-    [Tooltip("Base seconds after a mob dies before its replacement appears.")]
-    public float respawnDelay = 5f;
-    [Tooltip("Extra 0..this random seconds added per respawn so they don't all pop back in sync.")]
-    public float respawnJitter = 3f;
+    // NO RESPAWN FIELDS HERE. How long a creature stays gone is its KIND's (CreatureKinds.RespawnSeconds) — five
+    // seconds for a normal, hours for an elite or a shadow — so one area can never give an elite a normal's wait.
 
     [Header("Which mobs (drawn from the catalog like a map's biome table)")]
-    [Tooltip("Empty = weighted mix of this biome's mobs in the level band. A specific mob id/name (e.g. 'mob.slime') " +
-             "= always that mob. 'Boss' = a random boss-flagged mob. Mirrors a recipe mob group's Archetype Name.")]
+    [Tooltip("Empty = weighted mix of this biome's normals in the level band. A creature's id or name (e.g. " +
+             "'mob.slime') = always that creature — the way an elite or a shadow is placed. Filled in from the world " +
+             "spawn list (WorldSpawns); nothing is saved in a map.")]
     public string fixedMobId = "";
     public Biome biome = Biome.Grassland;
     public int minLevel = 1;
@@ -43,13 +41,6 @@ public class FieldMobSpawner : MonoBehaviour
     [Tooltip("Never respawn closer than this to the player (no spawning on their head). Authored PER SPAWNER — the " +
              "map recipe writes it (MapRecipe.clearFromSpawn), so a tight courtyard and an open field can differ.")]
     public float playerClearRadius = 6f;
-
-    [Header("Shadows of the Past (live-3D mobs)")]
-    [Range(0f, 1f)]
-    [Tooltip("Fraction of this spawner's mobs that appear as live-3D characters instead of billboard sprites. " +
-             "0 = every mob is a sprite (unchanged). Purely a VISUAL swap — a shadow keeps the same brain, stats, " +
-             "loot and death as any other mob, and copies its body from the live 3D player (no setup needed).")]
-    public float shadowFraction = 0f;
 
     // Per-type pools of hidden, reusable mob objects (keyed by MonsterDef asset name = the Addressable key tail).
     readonly Dictionary<string, Stack<GameObject>> pool = new Dictionary<string, Stack<GameObject>>();
@@ -104,36 +95,35 @@ public class FieldMobSpawner : MonoBehaviour
         }
 
         // Nothing pooled for this type → create a fresh one from data (async; Addressables caches the prefab).
-        bool asShadow = shadowFraction > 0f && Random.value < shadowFraction;
+        // A shadow's 3D body is put on by MobSpawner itself, from the creature's kind, before this ever sees it.
         MobSpawner.Spawn(def, spot, gameObject.scene, go =>
         {
             if (go == null) return;   // no baked/Addressable prefab for this def — slot stays open
             var pm = go.AddComponent<PooledMob>();   // perf-ok: once per mob CREATED; every later life comes from the pool
             pm.owner = this;
             pm.typeKey = key;
+            pm.kind = def.kind;
             go.GetComponent<MonsterAI3D>()?.SetHome(spot);   // perf-ok: once per mob created or pulled from the pool
-            // A shadow is decided ONCE, at creation: the component builds a rigged body in its Start and the mob
-            // then keeps it for life, including through pool reuse. Re-rolling per respawn would Instantiate a rig
-            // per death — exactly the churn the pool exists to avoid — so a pooled mob stays whatever it was born as
-            // and the live mix drifts from this fraction over a long session.
-            //
-            // DECIDED BEFORE IT IS ANNOUNCED. What crosses the wire is read off the creature at the moment it is
-            // published, so adding this afterwards told every watching machine it was an ordinary sprite.
-            if (asShadow) go.AddComponent<MobShadow3DVisual>();   // perf-ok: once per mob created; a pooled mob keeps what it was born as
             // Born on the server → every connected player gets to see it. No-op offline.
             GameNetwork.PublishMob(go, def.id);
         });
     }
 
-    // Which mob to spawn this slot: a fixed mob / boss if configured, else a weighted biome+level pick (RO table).
+    // Which creature fills this slot: the named one if this area names one, else a weighted biome+level pick of normals.
     MonsterDef PickDef()
     {
         if (string.IsNullOrWhiteSpace(fixedMobId))
             return MonsterCatalog.WeightedPick(biome, minLevel, maxLevel, includeCommons);
-        if (string.Equals(fixedMobId, "Boss", System.StringComparison.OrdinalIgnoreCase))
-            return MonsterCatalog.RandomBoss();
-        return MonsterCatalog.Get(fixedMobId);
+        var named = MonsterCatalog.Get(fixedMobId);
+        if (named == null && !warnedUnknown)
+        {
+            warnedUnknown = true;
+            GameLog.Warn(LogCat.Spawn, "'" + gameObject.scene.name + "' names a creature '" + fixedMobId + "' that is not on the roster — that area stays empty.");
+        }
+        return named;
     }
+
+    bool warnedUnknown;
 
     /// <summary>A dead mob (its fade finished) hands itself back here: hide it, bank it in its type pool, and
     /// schedule a replacement so the population holds steady.</summary>
@@ -151,7 +141,7 @@ public class FieldMobSpawner : MonoBehaviour
         if (!pool.TryGetValue(mob.typeKey, out var stack)) { stack = new Stack<GameObject>(); pool[mob.typeKey] = stack; }
         stack.Push(go);
 
-        if (isActiveAndEnabled) StartCoroutine(RespawnAfterDelay());
+        if (isActiveAndEnabled) StartCoroutine(RespawnAfterDelay(mob.kind));
     }
 
     // WHEN EACH BANKED CREATURE IS DUE BACK, on the world's clock, one moment per return owed. The wait below
@@ -173,9 +163,9 @@ public class FieldMobSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator RespawnAfterDelay()
+    IEnumerator RespawnAfterDelay(CreatureKind kind)
     {
-        float delay = respawnDelay + Random.value * Mathf.Max(0f, respawnJitter);
+        float delay = CreatureKinds.RespawnSeconds(kind, Random.value);
         return RespawnAtMoment(WorldClock.UtcNow.AddSeconds(delay));
     }
 

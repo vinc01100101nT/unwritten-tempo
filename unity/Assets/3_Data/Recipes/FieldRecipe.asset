@@ -19,6 +19,9 @@ MonoBehaviour:
   sizeX: 60
   sizeZ: 60
   dirtAmount: 0.18
+  biome: 0
+  groundTint: {r: 1, g: 1, b: 1, a: 1}
+  groundStyle: 0
   pathStyle: 0
   pathTile: 1
   pathCount: 2
@@ -106,12 +109,3 @@ MonoBehaviour:
     randomYaw: 1
     rowOffset: 4
     sway: 0
-  mobGroups:
-  - label: Wildlife
-    archetypeName: 
-    amountMode: 0
-    density: 0.02
-    count: 12
-    minSpacing: 1.8
-    clearFromSpawn: 8
-  forestAmbience: 0

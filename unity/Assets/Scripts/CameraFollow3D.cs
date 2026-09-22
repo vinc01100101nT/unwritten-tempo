@@ -52,7 +52,17 @@ public class CameraFollow3D : MonoBehaviour
     bool anchorValid;
     Transform anchorTarget;
 
-    void Awake() { cam = GetComponent<Camera>(); Main = this; }
+    /// <summary>How far the camera sits from the point it frames at the zoom the game STARTS at, read from this
+    /// camera's saved framing before any scroll. <see cref="OverheadScreenLayer"/> sizes on-screen words against
+    /// it, so they keep the size they had in the world at that zoom.</summary>
+    public static float StartViewDepth { get; private set; }
+
+    void Awake()
+    {
+        cam = GetComponent<Camera>();
+        Main = this;
+        StartViewDepth = new Vector2(distance, height - lookAtHeight).magnitude;
+    }
     void OnDestroy() { if (Main == this) Main = null; }
     void OnEnable() { lastMouse = MousePos(); anchorValid = false; }
 
@@ -182,8 +192,8 @@ public class CameraFollow3D : MonoBehaviour
 
     void HandleInput()
     {
-        int zoom = ScrollDir();
-        if (zoom != 0)
+        float zoom = ScrollAmount();
+        if (zoom != 0f)
         {
             // Dolly straight along the current sightline: scale height with distance so the pitch
             // (height : distance ratio) stays put — pure zoom, no viewing-angle drift. The vertical
@@ -225,7 +235,7 @@ public class CameraFollow3D : MonoBehaviour
     // ---- input helpers -----------------------------------------------------------
     // All three route through PointerInput, the one gate for the mouse (and, on a phone, for the finger that
     // answers in its place). The backend dance and the scroll-sign normalisation live there, not here.
-    static int ScrollDir() => PointerInput.ScrollDir;
+    static float ScrollAmount() => PointerInput.ScrollAmount;
     static Vector2 MousePos() => PointerInput.Position;
     static bool RightHeld() => PointerInput.SecondaryHeld;
 }

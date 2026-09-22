@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantslime
   displayName: GiantSlime
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 3
   sheet: GiantSlime
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.45
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 38
-  str: 26
-  agi: 12
-  vit: 32
-  intel: 12
-  dex: 20
-  luk: 12
-  weaponMasteryLevel: 38
+  level: 72
+  str: 46
+  agi: 28
+  vit: 53
+  intel: 27
+  dex: 39
+  luk: 27
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 72
   hardDefPercent: 29
   hardMagicDefPercent: 18
-  attackType: 0
   xpReward: 600
   touchRange: 0.9
   touchInterval: 1

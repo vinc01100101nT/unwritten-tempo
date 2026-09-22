@@ -65,7 +65,6 @@ public static class BiomeRecipes
         };
 
         r.propGroups = new List<RecipePropGroup>();
-        r.mobGroups  = new List<RecipeMobGroup>();
 
         // Rocks read in every biome; trees/foliage scale with how lush the biome is.
         float treeDensity = b switch
@@ -98,12 +97,6 @@ public static class BiomeRecipes
                 label = "Ground cover", category = PropCategory.Grass, placement = PlacementRule.Scatter,
                 amountMode = AmountMode.Density, density = 0.03f, solid = false, minSpacing = 0.8f,
             });
-
-        r.mobGroups.Add(new RecipeMobGroup
-        {
-            label = "Wildlife", archetypeName = "", amountMode = AmountMode.Density,
-            density = 0.02f, minSpacing = 1.8f, clearFromSpawn = 8f,
-        });
     }
 
     static void EnsureFolder(string path)

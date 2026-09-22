@@ -26,9 +26,10 @@ using UnityEngine.UI;
 /// runtime-only object in this project, and no drop is written to the database: a thing on the floor lives as
 /// long as the process holding that map does.</para>
 ///
-/// <para>PERFORMANCE: every label in the world lives under ONE shared world-space canvas — never one canvas
-/// each — and ONE ticker on that canvas turns them all to face the camera, reading the camera once per frame
-/// rather than once per drop. The same shape <see cref="MobNameplate"/> and <see cref="DamagePopup"/> use.</para>
+/// <para>PERFORMANCE: every label in the world lives under ONE shared canvas — never one canvas each — and ONE
+/// ticker on that canvas puts them all on the screen over their drops, reading the camera once per frame rather
+/// than once per drop. The canvas is drawn flat on the screen through <see cref="OverheadScreenLayer"/>, so a
+/// name stays the same size at every zoom.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class GroundDrop : MonoBehaviour
@@ -314,8 +315,9 @@ public class GroundDrop : MonoBehaviour
     const float LabelHeight = 0.45f;
 
     // Glyphs are rendered into a big atlas and scaled down — a large atlas downscaled stays crisp where a small
-    // one upscaled goes soft. The pair below is the damage number's pair, so floor text and combat text carry
-    // the same weight on screen.
+    // one upscaled goes soft. The pair below is the damage number's pair, so floor text and combat text are the
+    // same size on screen at the starting zoom. BaseScale is the world units per UI unit the name was drawn
+    // at in the world; it now only sets the name's fixed on-screen size (see OverheadScreenLayer.ScaleFor).
     const float BaseScale = 0.0026f;
     const int FontSize = 48;
 
@@ -344,7 +346,8 @@ public class GroundDrop : MonoBehaviour
         // — the same way every window in this game draws its edge.
         var border = UiKit.Img("DropLabel", host, UiKit.Gold);
         plate = border.rectTransform;
-        plate.localScale = Vector3.one * BaseScale;
+        // Nothing until the ticker first puts it on the screen at its real size.
+        plate.localScale = Vector3.zero;
         // The whole plate is the thing you point at, edge included — so the cursor never falls through the one
         // pixel of gold at its rim.
         border.raycastTarget = true;
@@ -366,15 +369,15 @@ public class GroundDrop : MonoBehaviour
         inner.childControlWidth = inner.childControlHeight = true;
         inner.childForceExpandWidth = inner.childForceExpandHeight = true;
 
-        label = UiKit.MakeText("Text", fill.transform, Text, FontSize, FontStyle.Normal,
+        label = UiKit.MakeText("Text", fill.transform, Text, FontSize, FontStyle.Bold,
                                TextAnchor.MiddleCenter, null, false);
-        label.font = UiKit.PixelFont;
-        // ONE shared outlined material across every drop, so a floor covered in them is still one draw call.
-        label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.3f);
+        // The same bold, black-edged Inter as the name over whoever you point at. ONE shared material across every
+        // drop, so a floor covered in them is still one draw call.
+        label.font = UiKit.BodyFont;
+        label.fontSharedMaterial = UiKit.WorldNameMaterial();
         label.color = NameColor;
         label.raycastTarget = false;
 
-        plate.position = transform.position + Vector3.up * LabelHeight;
         // SIZED NOW, while it can be. A box that is switched off does no layout, so one measured only when Alt is
         // first held would appear at the wrong size for a frame and then snap.
         LayoutRebuilder.ForceRebuildLayoutImmediate(plate);
@@ -411,31 +414,15 @@ public class GroundDrop : MonoBehaviour
     {
         if (host != null) return;
 
-        var go = new GameObject("GroundDropSystem") { hideFlags = HideFlags.DontSaveInEditor };
-        // Out of the water reflection, the same band the damage numbers sit in.
-        go.layer = LayerMask.NameToLayer("TransparentFX");
-        hostCanvas = go.AddComponent<Canvas>();
-        hostCanvas.renderMode = RenderMode.WorldSpace;
-        hostCanvas.sortingOrder = DepthSortRuntime.FxPopup;
-        // WHAT MAKES A NAME CLICKABLE. Without this the plates are pictures; with it the cursor can find them,
-        // and the game's own "is the pointer over a window" test starts answering yes over one — which is what
-        // stops a click that takes an item from ALSO telling your legs to walk to that spot.
-        go.AddComponent<GraphicRaycaster>();
-        go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        go.transform.localScale = Vector3.one;
-        go.AddComponent<GroundDropLabels>();
-        host = go.transform;
+        // CLICKABLE: the raycaster is what makes a name clickable. Without it the plates are pictures; with it the
+        // cursor can find them, and the game's own "is the pointer over a window" test starts answering yes over
+        // one — which is what stops a click that takes an item from ALSO telling your legs to walk to that spot.
+        hostCanvas = OverheadScreenLayer.CreateCanvas("GroundDropSystem", clickable: true);
+        hostCanvas.gameObject.AddComponent<GroundDropLabels>();
+        host = hostCanvas.transform;
     }
 
-    // A world-space canvas needs to be told which camera is looking at it before anything can be clicked on it,
-    // and at the moment the canvas is built there may not be one yet — so it is asked for again until there is.
     static Canvas hostCanvas;
-
-    internal static void EnsureEventCamera()
-    {
-        if (hostCanvas == null || hostCanvas.worldCamera != null) return;
-        hostCanvas.worldCamera = CameraRig.Cam;
-    }
 
     /// <summary>Show or hide the words, and with them the reach. A player standing in a different map keeps the
     /// drop but must neither read it nor pick it up — the same rule a creature in another map lives by.</summary>
@@ -468,12 +455,12 @@ public class GroundDrop : MonoBehaviour
     /// <summary>The one per-frame job the floor needs, called by the single ticker below.
     ///
     /// <para>Two halves. First: hold Alt and every name appears, let go and they all vanish — read once here, and
-    /// applied only on the frame it changes. Second: while names ARE up, each one is placed above its drop and
-    /// turned to face the camera, with the camera read a single time for all of them.</para>
+    /// applied only on the frame it changes. Second: while names ARE up, each one is put on the screen over its
+    /// drop at its fixed on-screen size, with the camera and that size read a single time for all of them.</para>
     ///
-    /// <para>The position is written every frame as well as the rotation, and that is deliberate rather than
-    /// wasteful: a drop MOVES when the machine sets its map down somewhere else, which happens whenever maps come
-    /// and go. Words placed once and left would stay where the map used to be.</para></summary>
+    /// <para>The position is written every frame, and that is deliberate rather than wasteful: the camera moves
+    /// whenever the player does, and a drop MOVES when the machine sets its map down somewhere else, which happens
+    /// whenever maps come and go. Words placed once and left would stay where the drop used to be on screen.</para></summary>
     internal static void TickNames()
     {
         bool wanted = Hotkeys.Held(KeyCode.LeftAlt) || Hotkeys.Held(KeyCode.RightAlt);
@@ -489,11 +476,9 @@ public class GroundDrop : MonoBehaviour
         }
         if (!namesWanted) return;
 
-        EnsureEventCamera();
-
         var cam = CameraRig.Cam;
         if (cam == null) return;
-        var facing = cam.transform.rotation;
+        float scale = OverheadScreenLayer.ScaleFor(hostCanvas, BaseScale);
         for (int i = all.Count - 1; i >= 0; i--)
         {
             var d = all[i];
@@ -501,7 +486,7 @@ public class GroundDrop : MonoBehaviour
             if (d.plate == null || !d.readable) continue;
             var at = d.transform.position;
             at.y += LabelHeight;
-            d.plate.SetPositionAndRotation(at, facing);
+            OverheadScreenLayer.Place(d.plate, at, cam, scale);
         }
     }
 }

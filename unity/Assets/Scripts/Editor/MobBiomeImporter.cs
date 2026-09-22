@@ -15,7 +15,7 @@ using UnityEngine;
 /// <list type="bullet">
 /// <item>Mobs: 5 biomes × 4 level bands × <b>3</b> = 60 placed evenly into the cells; any remainder (the 6 of 66)
 ///   become biome-agnostic <b>commons</b> (eligible in every biome's low level band — the universal trash layer).</item>
-/// <item>Bosses: one per (biome, level band) cell in folder order, flagged <see cref="MonsterDef.isBoss"/> — 18 today,
+/// <item>Bosses: one per (biome, level band) cell in folder order, made <see cref="CreatureKind.Elite"/> — 18 today,
 ///   because the two split-part dragon folders have no art a creature can be built from.</item>
 /// </list>
 /// Idempotent: an asset that already exists is left untouched, so hand edits + re-runs are safe.
@@ -113,7 +113,7 @@ public static class MobBiomeImporter
         def.id = "mob." + Kebab(folder);
         def.displayName = folder;
         def.sheet = folder;
-        def.isBoss = isBoss;
+        def.kind = isBoss ? CreatureKind.Elite : CreatureKind.Normal;
         def.biome = biome;
 
         ApplyStats(def, isBoss, band, common, biome);

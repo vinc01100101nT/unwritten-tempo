@@ -65,3 +65,13 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
 - [DONE] `MT-8` **`[D]` How hard gear is to get.** Creatures give up no equipment and there is no rarity, so there is no drop chance to set: how hard a piece is to get is which creatures drop which material band, which is `MT-11`. Decided 2026-09-20 with `MT-39`. — **0.25 days**
 
 ---
+
+## Week 3 — A full wardrobe exists
+
+**Goal:** every place on the body has something you can make, and a reason to keep working on the one you made.
+
+- [DONE] `MT-11` **`[D]` Decide which creatures drop which material band.** Decided 2026-09-22: a creature drops the
+  band its level falls in — the seven bands split levels 1–99 evenly, and a shadow drops the top band — and its kind
+  decides how much and which Inks and Salts. The table is in [Mob Roster](../../3-world/mob-roster.md). — **0.5 days**
+
+---

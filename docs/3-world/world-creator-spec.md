@@ -124,7 +124,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 
 - Load `world.json` (file picker), show a summary (N maps, M warps), validate before building.
 - **Build World** (idempotent):
-  1. For each `map`: assign a seed (use pinned `seed` or roll deterministically from `id`), resolve `type` → a `MapRecipe` template (theme: town = houses/trees/stone paths/grass, no mobs; field = scatter + mobs; dungeon = dungeon props/mobs), compute the map's exit points from its portals, and call the Map Generator with those params → bakes `Assets/Scenes/<id>.unity`.
+  1. For each `map`: assign a seed (use pinned `seed` or roll deterministically from `id`), resolve `type` → a `MapRecipe` template (theme: town = houses/trees/stone paths/grass; field = scatter; dungeon = dungeon props — creatures are never baked in; they come from the world spawn list, see [Mob Roster](mob-roster.md)), compute the map's exit points from its portals, and call the Map Generator with those params → bakes `Assets/Scenes/<id>.unity`.
   2. For each `portal`: place paired `Portal3D` + arrival `SpawnPoint` on both maps at the resolved edge/offset, reusing `RegionBuilder.EnsurePortal/EnsureSpawn` (idempotent) and the destination-colour convention.
   3. `RegisterInBuildSettings` for every scene.
   4. **Validate:** every warp two-way, every map reachable, no dangling spawn id, no door in a wall/off-ground.
@@ -162,7 +162,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 
 ## Related
 
-- [Biome Mob Families — Tiered Spawning](biome-mob-families.md) — how the generator decides which mobs to scatter into a map it builds.
+- [Mob Roster](mob-roster.md) — where creatures live: the world spawn list the server reads as it loads each map. The generator puts no creatures into a map.
 - [Story & Setting (Canon)](story-setting-canon.md) — the fiction the towns and dungeons are meant to carry.
 - [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the 41 maps this produced, and the M2 gap they still have (no quests, no boss placed).
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — the level bands a generated map spawns against.

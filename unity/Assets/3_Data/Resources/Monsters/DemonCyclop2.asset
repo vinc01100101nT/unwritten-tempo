@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.demoncyclop2
   displayName: DemonCyclop2
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 1
   sheet: DemonCyclop2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.15
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 22
-  str: 17
-  agi: 8
-  vit: 21
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 22
+  level: 28
+  str: 20
+  agi: 11
+  vit: 23
+  intel: 10
+  dex: 15
+  luk: 10
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 28
   hardDefPercent: 23
   hardMagicDefPercent: 14
-  attackType: 0
   xpReward: 200
   touchRange: 0.9
   touchInterval: 1

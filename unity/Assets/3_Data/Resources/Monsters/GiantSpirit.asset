@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantspirit
   displayName: GiantSpirit
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 0
   sheet: GiantSpirit
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.6
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 15
-  str: 13
-  agi: 6
-  vit: 16
-  intel: 5
-  dex: 10
-  luk: 5
-  weaponMasteryLevel: 15
+  level: 22
+  str: 16
+  agi: 9
+  vit: 20
+  intel: 8
+  dex: 13
+  luk: 7
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 22
   hardDefPercent: 32
   hardMagicDefPercent: 20
-  attackType: 0
   xpReward: 800
   touchRange: 0.9
   touchInterval: 1

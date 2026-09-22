@@ -50,22 +50,35 @@ public class LootDropper : MonoBehaviour
     public static string ChanceText(float chance) =>
         (chance * 100f).ToString("0.###", CultureInfo.InvariantCulture) + "%";
 
-    /// <summary>The chance a kill also gives up one random item that is not equipment — a stand-in for authored drop
-    /// lists until they exist.</summary>
+    /// <summary>The chance a kill also gives up one random consumable — a potion or a food. Materials are never in this
+    /// roll: they come from the creature's grade (<see cref="CreatureLoot"/>).</summary>
     public const float RandomItemChance = 0.30f;
 
     Health health;
+    UnitStatBlock block;
 
     void Awake()
     {
         health = GetComponent<Health>();
+        block = GetComponent<UnitStatBlock>();
         health.onDeath.AddListener(GiveLoot);
     }
 
     // WHAT THIS DEATH PAID, gathered before any of it is handed over so the whole kill is one payment. One static list
     // because death is not a hot path but it does happen per kill, and there is never a second one being filled at the
     // same time.
-    static readonly List<Item> won = new List<Item>(8);
+    static readonly List<Item> won = new List<Item>(40);
+
+    static Item MaterialFor(in CreatureLoot.Line line, int level)
+    {
+        int step = CreatureLoot.StepFor(line, level);
+        switch (line.kind)
+        {
+            case MaterialKind.Ink:  return MaterialCatalog.Ink(step);
+            case MaterialKind.Salt: return MaterialCatalog.Salt(step);
+            default:                return MaterialCatalog.Band(line.kind, step);
+        }
+    }
 
     void GiveLoot()
     {
@@ -73,6 +86,8 @@ public class LootDropper : MonoBehaviour
         // rolled, and asking again per item could pay two different people out of one death.
         var winner = Rewards.WhoEarned(health);
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
+        // A SUMMON CARRIES NOTHING — see Rewards.PayForKill for why.
+        if (health.IsSummoned) return;
 
         won.Clear();
         int gold = 0;
@@ -90,10 +105,23 @@ public class LootDropper : MonoBehaviour
             if (Random.value <= entry.chance) won.Add(entry.item);
         }
 
-        // AND ONE RANDOM THING THAT IS NOT EQUIPMENT, on its own chance.
+        // ITS GRADE'S MATERIALS, and the chance of an Ink or a Salt — what its kind and level say it carries.
+        int level = block != null ? block.Level : 1;
+        var lines = CreatureLoot.LinesFor(health.kind);
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (!CombatRng.Chance(line.chance)) continue;
+            var item = MaterialFor(line, level);
+            if (item == null) continue;
+            int count = CombatRng.Range(line.min, line.max + 1);
+            for (int n = 0; n < count; n++) won.Add(item);
+        }
+
+        // AND ONE RANDOM CONSUMABLE, on its own chance.
         if (CombatRng.Chance(RandomItemChance))
         {
-            var extra = ItemCatalog.RandomUnworn();
+            var extra = ItemCatalog.RandomConsumable();
             if (extra != null) won.Add(extra);
         }
 

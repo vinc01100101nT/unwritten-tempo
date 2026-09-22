@@ -38,13 +38,13 @@ public static class UiKit
 
     // World-space labels (damage numbers, mob nameplates) float over bare terrain with no backing plate,
     // so they need a dark outline to stay legible. TMP outline is a material property — we cache ONE shared
-    // outlined material per font asset (never a per-object instance) so thousands of pooled damage numbers
-    // still batch into one draw call. Replaces the old per-object legacy Outline/Shadow components.
-    static readonly System.Collections.Generic.Dictionary<TMP_FontAsset, Material> _outlined = new();
+    // outlined material per font asset and outline width (never a per-object instance) so thousands of pooled
+    // damage numbers still batch into one draw call. Replaces the old per-object legacy Outline/Shadow components.
+    static readonly System.Collections.Generic.Dictionary<(TMP_FontAsset, float), Material> _outlined = new();
     public static Material OutlinedMaterial(TMP_FontAsset font, float width = 0.2f)
     {
         if (font == null) return null;
-        if (_outlined.TryGetValue(font, out var m) && m != null) return m;
+        if (_outlined.TryGetValue((font, width), out var m) && m != null) return m;
         m = new Material(font.material);
         m.EnableKeyword("OUTLINE_ON");
         m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
@@ -53,8 +53,26 @@ public static class UiKit
         // stand on instead of being clipped into it (replaces the old per-plate "UI/Default on-top" material).
         if (m.HasProperty("_ZTestMode"))
             m.SetFloat("_ZTestMode", (float)UnityEngine.Rendering.CompareFunction.Always);
-        _outlined[font] = m;
+        _outlined[(font, width)] = m;
         return m;
+    }
+
+    // THE look of a name floating over the world — the name over whoever you point at, and an item's name on the
+    // floor. Inter, drawn bold, with a heavier black edge than other outlined text (0.3, the width the damage
+    // numbers use) so it reads over any ground. The bold is heavier too: the Inter file holds only the regular
+    // weight, so bold is drawn by thickening the letters, and the font's default amount (0.75) is too slight to see
+    // at these sizes. 1.5 is double it, and still fits inside the margin the letters are stored with once the edge
+    // is added. Set the text's style to bold as well, or this thickening is never used.
+    const float WorldNameBoldWeight = 1.5f;
+    static Material _worldName;
+    public static Material WorldNameMaterial()
+    {
+        if (_worldName != null) return _worldName;
+        var outlined = OutlinedMaterial(BodyFont, 0.3f);
+        if (outlined == null) return null;
+        _worldName = new Material(outlined);
+        _worldName.SetFloat(ShaderUtilities.ID_WeightBold, WorldNameBoldWeight);
+        return _worldName;
     }
 
     // Legacy uGUI enums → TMP equivalents, so every call site can keep passing FontStyle/TextAnchor

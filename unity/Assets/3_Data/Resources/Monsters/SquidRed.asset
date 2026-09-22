@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.squidred
   displayName: SquidRed
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 2
   sheet: SquidRed
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.6
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 30
-  str: 21
-  agi: 10
-  vit: 26
-  intel: 10
-  dex: 16
-  luk: 10
-  weaponMasteryLevel: 30
+  level: 61
+  str: 39
+  agi: 23
+  vit: 45
+  intel: 23
+  dex: 32
+  luk: 23
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 61
   hardDefPercent: 32
   hardMagicDefPercent: 20
-  attackType: 0
   xpReward: 800
   touchRange: 0.9
   touchInterval: 1

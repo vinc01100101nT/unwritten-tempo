@@ -105,6 +105,8 @@ public static class MapManager
         SceneManager.SetActiveScene(scene);
         // ITS OWN GROUND FIRST, before anything in it takes a step or anything is built into it.
         ParkAwayFromTheOthers(scene);
+        // AND ITS CREATURES, from the one world list, now that the map is standing where it will stay. Server only.
+        WorldSpawner.Populate(scene);
         // ONE map on a machine somebody plays on, and this is the moment it is decided — every way a map can
         // arrive comes through here, including a map already open at boot that is adopted rather than loaded.
         LetGoOfEveryOtherMap(scene);
@@ -123,7 +125,11 @@ public static class MapManager
     // for the day something does: left behind, the old place would be handed out for a map now standing
     // somewhere else entirely, and every position for it would be wrong by the width of the gap with nothing
     // saying so.
-    static void OnSceneUnloaded(Scene scene) => parked.Remove(scene.name);
+    static void OnSceneUnloaded(Scene scene)
+    {
+        parked.Remove(scene.name);
+        WorldSpawner.Forget(scene);
+    }
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

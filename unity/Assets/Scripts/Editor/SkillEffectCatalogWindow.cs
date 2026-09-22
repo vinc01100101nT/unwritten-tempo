@@ -68,6 +68,7 @@ public class SkillEffectCatalogWindow : EditorWindow
         [SkillEffectKind.SubStatBuff]   = E("self/mobs", "no", "amount (FLAT), duration", "duration only", "UnitStates.ApplySubStat", "subStat picks WHICH sub-stat rises. THE one path for every timed sub-stat change — move speed, both regens, leech, reflect, evasion, all of them."),
         [SkillEffectKind.SubStatDebuff] = E("self/mobs", "no", "amount (FLAT), duration", "duration only", "UnitStates.ApplySubStat", "The mirror of SubStatBuff: same stat list, authored as a positive amount, applied as a drop."),
         [SkillEffectKind.Cleanse]       = E("self", "no", "debuffs_removed (amount)", "—", "StatusController.Cleanse", "Strips up to N active debuffs."),
+        [SkillEffectKind.Summon]        = E("self", "no", "—", "—", "CreatureSummons.SummonNow", "Tops the caster's summons back up to its kind's maximum. Who and how many belong to the caster."),
         [SkillEffectKind.Execute]       = E("mobs", "yes", "execute_scale, proc_chance", "base roll (execute_scale raw)", "CombatAuthority.Apply", "Proc per hit: bonus = roll × power × (target's missing HP). Huge near death."),
         [SkillEffectKind.Dash]          = E("self (point)","no", "dash_speed, ease", "—", "Player3DController.BeginGlideTo", "Visible fast glide to the aimed point; blocked by geometry (unlike Teleport)."),
         [SkillEffectKind.Knockback]     = E("mobs", "no", "shove_speed, duration", "duration only", "MonsterAI3D.Knockback", "Shoves the mob AWAY from the caster (speed = raw magnitude)."),

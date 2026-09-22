@@ -22,11 +22,36 @@ public static class GameSettings
     const string MasterVolumeKey       = "set_volume_master";
     const string SfxVolumeKey          = "set_volume_sfx";
     const string MusicVolumeKey        = "set_volume_music";
+    const string ScrollSensitivityKey  = "set_scroll_sensitivity";
+
+    public const float ScrollSensitivityMin = 0.25f;
+    public const float ScrollSensitivityMax = 3f;
 
     static bool smoothCameraFollowValue;
     static bool smoothCameraFollowLoaded;
     static bool? quickCastSingle, quickCastGround;
-    static float? master, sfx, music;
+    static float? master, sfx, music, scrollSensitivity;
+
+    /// <summary>How far one scroll moves things, as a multiple of one mouse-wheel notch: every scrolling list in
+    /// a window and the character preview (through <see cref="ScaledScrollInput"/>), and the camera zoom
+    /// (through <see cref="PointerInput.ScrollAmount"/>). 1 = one notch moves exactly what it always has.</summary>
+    public static float ScrollSensitivity
+    {
+        get
+        {
+            if (scrollSensitivity == null)
+                scrollSensitivity = Mathf.Clamp(PlayerPrefs.GetFloat(ScrollSensitivityKey, 1f),
+                                                ScrollSensitivityMin, ScrollSensitivityMax);
+            return scrollSensitivity.Value;
+        }
+        set
+        {
+            value = Mathf.Clamp(value, ScrollSensitivityMin, ScrollSensitivityMax);
+            if (scrollSensitivity != null && Mathf.Approximately(scrollSensitivity.Value, value)) return;
+            scrollSensitivity = value;
+            PlayerPrefs.SetFloat(ScrollSensitivityKey, value);
+        }
+    }
 
     /// <summary>Ease the follow-camera toward the player instead of snapping to it. On by default.</summary>
     public static bool SmoothCameraFollow

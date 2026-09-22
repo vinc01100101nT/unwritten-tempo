@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.giantracoongold
   displayName: GiantRacoonGold
-  isBoss: 1
+  kind: 1
   size: 1
   biome: 1
   sheet: GiantRacoonGold
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.45
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 22
-  str: 17
-  agi: 8
-  vit: 21
-  intel: 7
-  dex: 12
-  luk: 7
-  weaponMasteryLevel: 22
+  level: 39
+  str: 26
+  agi: 15
+  vit: 31
+  intel: 13
+  dex: 20
+  luk: 13
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 39
   hardDefPercent: 29
   hardMagicDefPercent: 18
-  attackType: 0
   xpReward: 600
   touchRange: 0.9
   touchInterval: 1

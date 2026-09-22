@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.snake3
   displayName: Snake3
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 3
   sheet: Snake3
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.13
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 28
-  str: 21
-  agi: 15
-  vit: 20
-  intel: 9
-  dex: 15
-  luk: 9
-  weaponMasteryLevel: 28
+  level: 81
+  str: 53
+  agi: 43
+  vit: 52
+  intel: 30
+  dex: 43
+  luk: 30
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 81
   hardDefPercent: 15
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 40
   touchRange: 0.9
   touchInterval: 1

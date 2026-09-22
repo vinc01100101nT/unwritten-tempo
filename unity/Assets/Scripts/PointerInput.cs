@@ -80,11 +80,13 @@ public static class PointerInput
         }
     }
 
-    /// <summary>Zoom intent as +1 / -1 / 0. Only the SIGN, never the magnitude: scroll units differ wildly per
-    /// backend and per mouse driver (the new backend reports ~120 per notch on Windows), so one notch means one
-    /// step everywhere. A phone's pinch is reported in the same units for the same reason. Always 0 while the mouse
-    /// is over the HUD.</summary>
-    public static int ScrollDir
+    /// <summary>Zoom intent this frame, in mouse-wheel notches (+ = away from you), times
+    /// <see cref="GameSettings.ScrollSensitivity"/>. The AMOUNT is kept, not only the sign, so a trackpad's
+    /// two-finger swipe — many small movements over many frames — zooms in proportion to how far it travelled
+    /// instead of one full notch per frame. One frame is capped at one notch, which is also what keeps a backend
+    /// reporting its native Windows range (~120 per notch) from leaping. A phone's pinch stays one step per
+    /// pinch step, unscaled. Always 0 while the mouse is over the HUD.</summary>
+    public static float ScrollAmount
     {
         get
         {
@@ -102,7 +104,7 @@ public static class PointerInput
 #else
             s = Input.mouseScrollDelta.y;
 #endif
-            return s > 0f ? 1 : s < 0f ? -1 : 0;
+            return Mathf.Clamp(s, -1f, 1f) * GameSettings.ScrollSensitivity;
         }
     }
 }

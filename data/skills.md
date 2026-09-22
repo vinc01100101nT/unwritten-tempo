@@ -26,6 +26,7 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Traveller's Tea *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**20%** movement speed for **120s** |
 | — | Mending Tide *(unpublished)* | active | MP **18**  CD **12s**  Cast **0.5s**  Range **6** | pressed | +7.5 HP regen for **6s** · Removes **1** debuff(s) |
 | — | Heal *(unpublished)* | active | MP **5**  CD **0.7s**  Instant | pressed | +**100%** damage per stack for **20.2s** |
+| — | Summon *(unpublished)* | active | MP **0**  CD **20s**  Instant | pressed | Calls up its summons |
 | — | War Banner *(unpublished)* | active | MP **20**  CD **18s**  Cast **0.6s**  Range **6** | pressed | +**130%** damage for **8s** |
 
 ## Sword  —  colour `#FF0F00`

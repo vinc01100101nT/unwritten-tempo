@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.larva
   displayName: Larva
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 4
   sheet: Larva
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.99
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 19
-  luk: 11
-  weaponMasteryLevel: 36
+  level: 90
+  str: 58
+  agi: 48
+  vit: 57
+  intel: 36
+  dex: 48
+  luk: 33
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 90
   hardDefPercent: 5
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 10
   touchRange: 0.9
   touchInterval: 1

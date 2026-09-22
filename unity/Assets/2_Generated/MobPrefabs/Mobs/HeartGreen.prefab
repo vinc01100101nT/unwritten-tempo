@@ -257,13 +257,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 28
-    str: 21
-    agi: 15
-    vit: 20
-    intel: 9
-    dex: 15
-    luk: 9
+    level: 70
+    str: 46
+    agi: 37
+    vit: 45
+    intel: 25
+    dex: 37
+    luk: 25
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -278,7 +278,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 0
+  weaponMasteryLevel: 70
 --- !u!114 &4756804847744831586
 MonoBehaviour:
   m_ObjectHideFlags: 0

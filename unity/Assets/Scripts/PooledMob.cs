@@ -15,6 +15,9 @@ public class PooledMob : MonoBehaviour
     /// only ever reuses into the same-type bucket.</summary>
     public string typeKey;
 
+    /// <summary>What kind of creature it is — how long it stays gone after it dies is the kind's answer.</summary>
+    public CreatureKind kind;
+
     /// <summary>Called by <see cref="Health.Die"/> after the death fade finishes: hand the object back to the
     /// pool. Falls back to hiding itself if its spawner is gone (e.g. scene torn down).</summary>
     public void OnFadedOut()

@@ -207,8 +207,9 @@ public static class GmCommands
                                + "enormous health that never fights back, for measuring what your build actually does. "
                                + "The server owns it, so everybody can see and hit the same one.", CmdDummy,
                                anyoneMayRun: false, changesTheWorld: true));
-        Register(new GmCommand("summon", "summon <count> <normal|boss> [level] [shadow] [skill id]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'shadow' to render them as live-3D characters instead of sprites. Give a skill id to make it every summoned mob's extra skill, for every life, instead of a random one — any skill, published or not.", CmdSummon,
+        Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level] [skill id]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Give a skill id to make it every summoned creature's extra skill, for every life, instead of a random one — any skill, published or not.", CmdSummon,
                                anyoneMayRun: false, changesTheWorld: true));
+        Register(new GmCommand("where", "where", "Print the map you are in and your position in that map's own coordinates — the numbers a spawn area's Center takes in the world spawn list.", CmdWhere, false, false, "pos"));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, false, true, "warp", "goto"));
@@ -609,33 +610,38 @@ public static class GmCommands
     // Spawning is async (Addressables loads the prefab), so we count completions and reply once all land.
     static void CmdSummon(GmContext c)
     {
-        const string usage = "Usage: /summon <count> <normal|boss> [level] [shadow] [skill id]";
+        const string usage = "Usage: /summon <count> <normal|elite|shadow|creature> [level] [skill id]";
         if (!TryAskersMap(c, out var askerMap)) return;
         if (!c.TryInt(0, out var count) || count <= 0) { c.Reply(usage); return; }
         count = Mathf.Clamp(count, 1, 50);
 
+        // A KIND draws at random from that kind; anything else names one creature.
         var type = c.Arg(1);
-        bool wantBoss;
+        CreatureKind? kind = null;
+        MonsterDef named = null;
         switch (type != null ? type.ToLowerInvariant() : null)
         {
-            case "boss": case "mvp": wantBoss = true; break;
-            case "normal": case "mob": wantBoss = false; break;
-            default: c.Reply(usage); return;
+            case null: c.Reply(usage); return;
+            case "normal": case "mob": kind = CreatureKind.Normal; break;
+            case "elite": kind = CreatureKind.Elite; break;
+            case "shadow": kind = CreatureKind.Shadow; break;
+            default:
+                named = MonsterCatalog.Get(type);
+                if (named == null) { c.Reply($"No creature or kind called '{type}'. {usage}"); return; }
+                break;
         }
 
         // Optional trailing modifiers, order-free because each is told apart by its shape:
-        //   a LEVEL    — re-stats the summoned mob at that level (see the re-stat block below);
-        //   'shadow'   — a VISUAL variant, orthogonal to the normal/boss kind, so it rides the one summon path
-        //                rather than forking a second command that would have to be kept in step with this one;
-        //   a SKILL ID — any id in the skill catalog, made the mob's extra skill for every life it lives.
+        //   a LEVEL    — re-stats the summoned creature at that level (see the re-stat block below), up to 160, the
+        //                highest shadow;
+        //   a SKILL ID — any id in the skill catalog, made the creature's extra skill for every life it lives.
+        // A shadow is a 3D character because it is a shadow — MobSpawner decides that from its kind.
         int level = 0;
-        bool asShadow = false;
         string extraSkillId = null;
         for (int i = 2; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
-            if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, 99); continue; }
-            if (a.ToLowerInvariant() == "shadow") { asShadow = true; continue; }
+            if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, 160); continue; }
             if (SkillCatalog.IsKnown(a)) { extraSkillId = a; continue; }
             c.Reply(a.StartsWith("skill.") ? $"No skill with the id '{a}'. {usage}" : usage); return;
         }
@@ -643,12 +649,14 @@ public static class GmCommands
         var defs = new List<MonsterDef>(count);
         for (int i = 0; i < count; i++)
         {
-            var def = wantBoss ? MonsterCatalog.RandomBoss() : MonsterCatalog.WeightedPick();
+            var def = named != null ? named
+                    : kind == CreatureKind.Normal ? MonsterCatalog.WeightedPick()
+                    : MonsterCatalog.RandomOfKind(kind.Value);
             if (def == null) break;
             defs.Add(def);
         }
         if (defs.Count == 0)
-        { c.Reply(wantBoss ? "No boss-flagged mobs in the catalog." : "No summonable mobs in the catalog."); return; }
+        { c.Reply($"No {kind.ToString().ToLowerInvariant()} creatures on the roster."); return; }
 
         var reply = c.reply;   // capture the chat channel; the GmContext is transient but this Action persists
         var p = c.Player;
@@ -676,8 +684,6 @@ public static class GmCommands
                                 UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value));
                     }
                     if (extraSkillId != null) { var health = go.GetComponent<Health>(); if (health != null) health.PinExtraSkill(extraSkillId); }
-                    // Purely the visual: the mob keeps the brain, stats, loot and death it just spawned with.
-                    if (asShadow) go.AddComponent<MobShadow3DVisual>();
                     // Born on the server → every connected player gets to see it. Without this a summoned creature
                     // existed only on the machine that typed the command — the same way a pooled respawn goes
                     // invisible to everyone but the server if its fresh shell is skipped.
@@ -689,13 +695,23 @@ public static class GmCommands
                 if (spawned == 0)
                     reply?.Invoke("Couldn't summon — mob prefabs aren't built yet. Run Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs, then retry.");
                 else
-                    reply?.Invoke($"Summoned {spawned} random {(wantBoss ? "boss" : "normal")} " +
-                                  (asShadow ? "shadow(s)" : "mob(s)") +
+                    reply?.Invoke($"Summoned {spawned} " +
+                                  (named != null ? named.displayName : "random " + kind.ToString().ToLowerInvariant() + " creature(s)") +
                                   (level > 0 ? $" at level {level}" : "") +
                                   (extraSkillId != null ? $" with extra skill {extraSkillId}" : "") +
                                   (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
             });
         }
+    }
+
+    // WHERE YOU ARE, in the numbers the world spawn list is written in: the map's OWN coordinates, which stay the same
+    // wherever a server happens to set that map down. Reads the asker's own machine — nothing changes.
+    static void CmdWhere(GmContext c)
+    {
+        var p = c.Player;
+        if (p == null) { c.Reply("No character in the world."); return; }
+        Vector3 at = MapManager.InMap(p.position, c.MapName);
+        c.Reply($"{c.MapName} — x {at.x:0.#}, y {at.y:0.#}, z {at.z:0.#}");
     }
 
     static void CmdTp(GmContext c)

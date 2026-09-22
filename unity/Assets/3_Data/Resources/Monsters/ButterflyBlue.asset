@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.butterflyblue
   displayName: ButterflyBlue
-  isBoss: 0
+  kind: 0
   size: 1
   biome: 4
   sheet: ButterflyBlue
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.99
-  flash: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 19
-  luk: 11
-  weaponMasteryLevel: 36
+  level: 84
+  str: 54
+  agi: 45
+  vit: 53
+  intel: 33
+  dex: 45
+  luk: 31
+  startingGear: []
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 84
   hardDefPercent: 5
   hardMagicDefPercent: 0
-  attackType: 0
   xpReward: 10
   touchRange: 0.9
   touchInterval: 1
