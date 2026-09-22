@@ -14,43 +14,48 @@ USAGE:   tools/prove-game-math-check.py
 EXIT:    0 = the check sees a moved number, 1 = it is blind, or it cries wolf.
 """
 import os
-import shutil
 import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 CHECK = os.path.join(HERE, "check-game-math.sh")
-SCRIPTS = os.path.join(REPO, "unity", "Assets", "Scripts")
+SCRIPTS_REL = os.path.join("unity", "Assets", "Scripts")
+
+sys.path.insert(0, HERE)
+from prove_mirror import mirror_with_change, discard
 
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
 
 
-def run():
-    done = subprocess.run(["sh", CHECK], cwd=REPO, capture_output=True, text=True)
+def run(root=REPO):
+    """Run the check inside `root` — the real repo, or a throwaway mirror of it."""
+    done = subprocess.run(["sh", os.path.join(root, "tools", "check-game-math.sh")],
+                          cwd=root, capture_output=True, text=True)
     return done.returncode, done.stdout + done.stderr
 
 
 def case(description, filename, old, new, must_name):
-    """Change one number in a real game file, confirm the check catches it, then put it back."""
-    path = os.path.join(SCRIPTS, filename)
-    if not os.path.isfile(path):
+    """Confirm the check catches one moved number.
+
+    THE REAL GAME FILE IS NEVER WRITTEN. The number is moved inside a throwaway mirror of the repo
+    (see prove_mirror), so no crash, kill or timeout can leave the project carrying a planted fault —
+    which is exactly what the old plant-and-restore-in-a-finally version did on 2026-09-22.
+    """
+    rel = os.path.join(SCRIPTS_REL, filename)
+    if not os.path.isfile(os.path.join(REPO, rel)):
         print(RED + " WRONG" + OFF + " " + description + " — no such file: " + filename)
         return 1
-    backup = path + ".prove-backup"
-    shutil.copy2(path, backup)
+
+    root, hits = mirror_with_change(REPO, rel, old, new)
+    if root is None:
+        print(RED + " WRONG" + OFF + " " + description +
+              " — the anchor is in " + filename + " %d times, not once, so this proves nothing" % hits)
+        return 1
     try:
-        with open(path, encoding="utf-8") as f:
-            text = f.read()
-        if text.count(old) != 1:
-            print(RED + " WRONG" + OFF + " " + description +
-                  " — the anchor is not in " + filename + " exactly once, so this proves nothing")
-            return 1
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(text.replace(old, new, 1))
-        code, out = run()
+        code, out = run(root)
     finally:
-        shutil.move(backup, path)
+        discard(root)
 
     after_code, after_out = run()
 
@@ -65,7 +70,7 @@ def case(description, filename, old, new, must_name):
         bad = 1
     elif after_code != 0:
         print(RED + " WRONG" + OFF + " " + description +
-              " — it did NOT go quiet again after the code was put back")
+              " — the real project does not pass the check, so this proves nothing")
         bad = 1
     else:
         print(GRN + "  ok  " + OFF + description)

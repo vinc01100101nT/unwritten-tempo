@@ -14,50 +14,48 @@ USAGE:   tools/prove-asset-wiring-check.py
 EXIT:    0 = the sweep sees what it should, 1 = it is blind, or it cries wolf.
 """
 import os
-import shutil
 import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 SWEEP = os.path.join(HERE, "check-asset-wiring.py")
-MONSTERS = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "Monsters")
+MONSTERS_REL = os.path.join("unity", "Assets", "3_Data", "Resources", "Monsters")
+MONSTERS = os.path.join(REPO, MONSTERS_REL)
+
+sys.path.insert(0, HERE)
+from prove_mirror import mirror_with_change, discard
 
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
 
 
-def run():
-    """(exit code, the lines it printed)."""
-    done = subprocess.run([sys.executable, SWEEP], cwd=REPO, capture_output=True, text=True)
+def run(root=REPO):
+    """(exit code, the lines it printed) — from `root`: the real repo, or a throwaway mirror of it."""
+    done = subprocess.run([sys.executable, os.path.join(root, "tools", "check-asset-wiring.py")],
+                          cwd=root, capture_output=True, text=True)
     return done.returncode, done.stdout
 
 
-def plant(path, old, new):
-    """Swap one string inside a real file, keeping an exact copy to put back. The copy is taken
-    BEFORE the edit and restored in a finally, so an interrupted run cannot leave the project
-    changed."""
-    backup = path + ".prove-backup"
-    shutil.copy2(path, backup)
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
-    assert old in text, "the anchor '%s' is not in %s" % (old, path)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(text.replace(old, new, 1))
-    return backup
+def case(description, rel, old, new, must_name):
+    """Plant one break in a MIRROR of the project, confirm the sweep names it, and confirm the real
+    project's own answer is unchanged.
 
-
-def restore(path, backup):
-    shutil.move(backup, path)
-
-
-def case(description, path, old, new, must_name):
-    """Plant one fault, confirm the sweep names the file, then confirm it goes quiet again."""
+    THE REAL ASSET IS NEVER WRITTEN. It used to be edited in place and put back in a finally, which
+    does not survive a kill — and whose leftover backup could be copied over on the next run, baking
+    the planted break in for good. Nothing outside the temporary mirror is opened for writing now.
+    """
     before_code, before_out = run()
-    backup = plant(path, old, new)
+
+    root, hits = mirror_with_change(REPO, rel, old, new)
+    if root is None:
+        print(RED + " WRONG" + OFF + " " + description +
+              " — the anchor is in %s %d times, not once, so this proves nothing" % (rel, hits))
+        return 1
     try:
-        after_code, after_out = run()
+        after_code, after_out = run(root)
     finally:
-        restore(path, backup)
+        discard(root)
+
     clean_code, clean_out = run()
 
     named = must_name in after_out and must_name not in before_out
@@ -71,7 +69,7 @@ def case(description, path, old, new, must_name):
     if not named:       print("         it never named %s after the break was planted" % must_name)
     if not louder:      print("         it reported no more faults than before the break")
     if after_code != 1: print("         it exited %d, not 1, with a known break in place" % after_code)
-    if not quiet_again: print("         it did NOT return to its previous answer after the file was put back")
+    if not quiet_again: print("         the real project's own answer changed, so this proves nothing")
     return 1
 
 
@@ -82,7 +80,7 @@ def main():
     bad = 0
     # A creature whose art folder name is misspelt by one letter. This is the exact shape of the
     # fault that left every boss wearing another creature's sprite.
-    victim = os.path.join(MONSTERS, "Bear.asset")
+    victim = os.path.join(MONSTERS_REL, "Bear.asset")
     bad += case("a creature naming an art folder that does not exist",
                 victim, "sheet: Bear", "sheet: BearZZ", "Bear.asset")
 
