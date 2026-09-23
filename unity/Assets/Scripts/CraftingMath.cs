@@ -90,40 +90,68 @@ public static class CraftingMath
 
     // ---- what a fold is worth on the piece ----------------------------------------------------------------
     // A weapon gains attack per fold — magic attack instead when it is a caster's weapon, which is the only
-    // place a weapon TYPE changes what a fold means. Armour's place decides which defence it gains, and a Head
-    // gains one of each every second fold.
-    /// <summary>The piece's own attack, magic attack, defence and magic defence at <paramref name="folds"/>
-    /// folds of grade <paramref name="q"/> — the finished numbers, lift included, as the server writes them
-    /// onto the copy. Rounds half UP, deliberately: <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
-    public static void PieceNumbers(EquipSlotType slot, WeaponType weapon, int folds, Quality q,
-                                    out int attack, out int magicAttack, out int defense, out int magicDefense)
+    // place a weapon TYPE changes what a fold means.
+    //
+    // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT A FOLD BUYS, AND ITS SLOT HOW MUCH (decided 2026-09-23): metal buys
+    // defence and health, leather attack speed and evasion, cloth magic defence and mana. Priced with Ink's own
+    // exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point
+    // takes 1% off the hits that land — so a fold is worth the one defence it bought before, split between two stats.
+    const float MetalDefensePerFold = 0.5f, MetalHPPerFold = 4f;
+    const float LeatherAttackSpeedPerFold = 0.25f, LeatherEvasionPerFold = 0.25f;
+    const float ClothMagicDefensePerFold = 0.5f, ClothMPPerFold = 2f;
+
+    /// <summary>The finished numbers one piece's folds and grade grant — what the server writes onto the copy and a
+    /// player's machine only ever adds up. Attack speed is whole percent, one decimal.</summary>
+    [System.Serializable]
+    public struct PieceStats
     {
-        attack = magicAttack = defense = magicDefense = 0;
-        if (folds <= 0) return;
+        public int attack, magicAttack, defense, magicDefense, hp, mp, evasion;
+        public float attackSpeedPercent;
+    }
+
+    /// <summary>How much of its material's fold an armour slot takes: the full amount for body, off-hand and garment,
+    /// half for head and shoes.</summary>
+    public static float SlotShare(EquipSlotType slot) =>
+        slot == EquipSlotType.Head || slot == EquipSlotType.Boots ? 0.5f : 1f;
+
+    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/> — the finished
+    /// numbers, lift included, as the server writes them onto the copy. An armour piece with no material has nothing a
+    /// fold could buy. Rounds half UP, deliberately: <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
+    public static PieceStats PieceNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int folds, Quality q)
+    {
+        var p = default(PieceStats);
+        if (folds <= 0 || slot == EquipSlotType.None) return p;
         float lift = 1f + QualityLift(q);
-        switch (slot)
+        if (slot == EquipSlotType.Weapon)
         {
-            case EquipSlotType.Weapon:
-                if (IsCasterWeapon(weapon)) magicAttack = Lifted(folds, lift);
-                else attack = Lifted(folds, lift);
+            if (IsCasterWeapon(weapon)) p.magicAttack = Lifted(folds, lift);
+            else p.attack = Lifted(folds, lift);
+            return p;
+        }
+        float share = folds * SlotShare(slot);
+        switch (material)
+        {
+            case MaterialKind.Metal:
+                p.defense = LiftedAmount(share * MetalDefensePerFold, lift);
+                p.hp = LiftedAmount(share * MetalHPPerFold, lift);
                 break;
-            case EquipSlotType.Armor:
-            case EquipSlotType.Shield:
-                defense = Lifted(folds, lift);
+            case MaterialKind.Leather:
+                p.attackSpeedPercent = Mathf.Floor(share * LeatherAttackSpeedPerFold * lift * 10f + 0.5f) / 10f;
+                p.evasion = LiftedAmount(share * LeatherEvasionPerFold, lift);
                 break;
-            case EquipSlotType.Garment:
-                magicDefense = Lifted(folds, lift);
-                break;
-            case EquipSlotType.Head:
-                defense = magicDefense = Lifted(folds / 2, lift);
+            case MaterialKind.Cloth:
+                p.magicDefense = LiftedAmount(share * ClothMagicDefensePerFold, lift);
+                p.mp = LiftedAmount(share * ClothMPPerFold, lift);
                 break;
         }
+        return p;
     }
 
     /// <summary>A caster's weapon gains MAGIC attack from a fold rather than attack.</summary>
     public static bool IsCasterWeapon(WeaponType w) => w == WeaponType.Staff;
 
     static int Lifted(int flat, float lift) => Mathf.FloorToInt(flat * lift + 0.5f);
+    static int LiftedAmount(float amount, float lift) => Mathf.FloorToInt(amount * lift + 0.5f);
 
     // ---- the quench ---------------------------------------------------------------------------------------
     // Chance in whole percent that a quench of THIS grade goes up, stays, or goes down. F is the floor: a failed
@@ -244,14 +272,18 @@ public static class CraftingMath
 
     /// <summary>The whole of what one crafted copy adds: the finished numbers its folds and grade are worth, and
     /// every stat written on it. THE one place a piece becomes a total.</summary>
-    public static void AddPiece(int attack, int magicAttack, int defense, int magicDefense,
+    public static void AddPiece(in PieceStats piece,
                                 System.Collections.Generic.List<InkStat> stats,
                                 System.Collections.Generic.List<float> values, ref EquipBonuses eb)
     {
-        eb.atk += attack;
-        eb.matk += magicAttack;
-        eb.def += defense;
-        eb.mdef += magicDefense;
+        eb.atk += piece.attack;
+        eb.matk += piece.magicAttack;
+        eb.def += piece.defense;
+        eb.mdef += piece.magicDefense;
+        eb.hp += piece.hp;
+        eb.mp += piece.mp;
+        eb.evasion += piece.evasion;
+        eb.aspdPercent += piece.attackSpeedPercent;
         if (stats == null || values == null) return;
         int n = Mathf.Min(stats.Count, values.Count);
         for (int i = 0; i < n; i++) AddInk(stats[i], values[i], ref eb);

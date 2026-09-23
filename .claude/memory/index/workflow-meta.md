@@ -1,6 +1,9 @@
 # Workflow / tooling / meta (Tempo, MCP, extractors, logs)
 
 - [Jira tried and LEFT (2026-09-13); tracking is now the action plan + wiki Roadmap](../jira-sprint-board.md) — what the Atlassian MCP cannot do (delete, create project, change type), why the user left, and how the `sprint-manager` now ticks the action plan and moves Roadmap entries.
+- [Spawn every sub-agent on Opus 5.5](../spawn-sub-agents-on-opus-5-5.md) — user standing rule 2026-09-23; agent definitions pin the `opus` alias, which resolved to `claude-opus-5-5` that day — re-check if the alias moves.
+- ["Proceed" with open questions = keep designing](../feedback-proceed-is-not-go-while-questions-open.md) — 2026-09-23: I built on my own picks after "let's proceed with the roster"; user stopped it — bring open questions back up instead.
+- [No two options serving one purpose](../feedback-no-redundant-options.md) — mana leech + mana regen was called redundant; one option per player-facing purpose, widen instead.
 
 - [Grep the BYPASS, not the call](../grep-the-bypass-not-the-call.md) — grepping a shared function's call sites only ever finds the compliant ones; to prove a concern is really centralised, run the INVERSE grep for the raw pattern it replaced and expect zero hits outside author-time code.
 - [In-game chat + GM slash-commands](../chat-and-gm-command-system.md) — `ChatController`+`GmCommands`; add via `Register` in `EnsureBootstrap`.

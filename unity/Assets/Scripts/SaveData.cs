@@ -20,7 +20,9 @@ public class SaveData
     // every piece as never rolled — nothing to migrate.
     // v14: a forged weapon's trademark rides the same roll text. Older saves carry none, which loads every weapon
     // with no trademark — nothing to migrate.
-    public const int CurrentVersion = 14;
+    // v15: the timed effects still running ride the save (timedEffects). Older saves carry none, which loads as
+    // "nothing running" — nothing to migrate.
+    public const int CurrentVersion = 15;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -131,4 +133,27 @@ public class SaveData
     // no upgrading. Never repurpose these arrays to say a skill IS available, or that stops being true.
     public string[] cooldownSkillIds;
     public double[] cooldownDueAt;
+
+    // TIMED EFFECTS STILL RUNNING (v15+): every buff, debuff, charge, barrier and damage-over-time the character carried
+    // when it was written down, each with the SECONDS IT HAD LEFT. Seconds left — not a moment, unlike the cooldowns
+    // above — because a timed effect's clock STOPS while the character is away: it resumes where it stopped on the
+    // next login, or on arrival at a map another server holds. Only death clears them (decided 2026-09-23).
+    // Written and read back only by the server (TimedEffectSave). Null = nothing running.
+    public TimedEffect[] timedEffects;
+
+    /// <summary>One pile of a timed effect, as the save holds it. Its kind is saved BY NAME so a removed state can
+    /// never repoint the record at a different one. Each stack is kept on its own, in parallel arrays.</summary>
+    [Serializable]
+    public class TimedEffect
+    {
+        public string kind;
+        public string sourceSkillId;
+        public bool stacking;
+        public string description;
+        public float secondsRunning;
+        public float secondsToNextTick;
+        public float[] stackSecondsLeft;
+        public float[] stackMagnitude;
+        public int[] stackAmount;
+    }
 }

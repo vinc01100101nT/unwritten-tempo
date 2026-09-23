@@ -371,6 +371,15 @@ public static class SkillTooltip
                     ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
                     : "Your next attack deals " + amount + window;
             }
+            case SkillEffectKind.ElementConverter:
+            {
+                int secs = Mathf.Max(0, Mathf.RoundToInt(e.seconds.value));
+                string clock = Hl((secs / 60) + ":" + (secs % 60).ToString("00"));
+                string element = Hl(Elements.Name(e.element));
+                return e.converts == EquipSlotType.Armor
+                    ? Subject(e, "Your", "Their") + " armor is " + element + " (level " + Elements.ConverterLevel + ") for " + clock
+                    : Subject(e, "Your", "Their") + " weapon strikes as " + element + " for " + clock;
+            }
             case SkillEffectKind.ImmuneToDisables:
                 return "Nothing stops you for " + Hl(e.seconds.value.ToString("0.#") + "s") +
                        " — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts";

@@ -32,17 +32,35 @@ map, and the map generator no longer puts any there.
 | How many | the rest of the roster | 18 | 12, one per weapon type |
 | Levels | spread evenly over **1–99** | **6 to 99**, one every 5.5 levels, rounded | **105 to 160**, one every 5 levels |
 | Extra skill slots | 1 | 2 | 4 |
-| Wears | a weapon and armour | a weapon and armour | a **complete set of the highest-grade gear**, plus ring ranks |
+| Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
+| Element level | **1** | **2** | **3** |
 | Weapon mastery | its level | its level | its level |
 | Summons | nothing | normals | elites |
 | Lives | everywhere in the field | the field | the end-game maps |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
 
+## Gear state
+
+- **Every creature's gear state is authored on its own catalog entry**, as three settings shared by every piece it
+  wears: its **grade** (Raw to A), its **folds** (never past the grade's cap: Raw 5, F 10, E 15, D 20, C 25, B 30,
+  A 35), and its **Ink** (Watery, Thin, Faint, Clear or Sharp). The grade decides how many stats are written on each
+  piece (Raw none, F one, up to A six); the Ink decides what each is worth. They are edited in the Mob Table's
+  equipment panel, and no rule in the code overrides them for any kind.
+- **Which stats are written, and a weapon's trademark, are rolled fresh every life**, exactly as a station rolls them.
+  A weapon gets a trademark only when its grade is above Raw.
+- **A creature wears exactly the pieces authored for it and nothing else.** An empty slot stays empty.
+- **The starting values follow level.** Folds rise evenly with level across each kind's range, and the grade is the
+  lowest one (from that kind's starting grade) whose cap holds those folds; the Ink follows the grade — F Watery,
+  E Thin, D Faint, C Clear, B and A Sharp (Raw writes nothing). So normals run Raw +0 at level 1, F from level
+  37, E from level 70, E +15 at 99; elites run D +0 at level 6, C from level 72, B from level 88, B +30 at 99; every
+  shadow is A +30.
+  Any single creature can be changed after that.
+
 ## Normal
 
-- The creatures that fill the field. One extra skill slot, and a weapon and armour to wear — each body slot has a 40%
-  chance of a random piece, always Raw and unfolded.
+- The creatures that fill the field. One extra skill slot, and whatever pieces are authored for it — from **Raw +0**
+  at level 1 to **E +15** at level 99 (see Gear state).
 - **The 66 normals are spread evenly over levels 1 to 99** in the order they stood before (by old level, then by
   name), so each biome keeps one stretch of the ladder. Each one's stats were re-spent to its new level's full point
   budget in the same proportions it had.
@@ -52,7 +70,8 @@ map, and the map generator no longer puts any there.
 - The stronger creatures of each area. The 18 creatures that were bosses are the 18 elites.
 - **Their levels** are 99 split into 18 equal steps of 5.5, rounded off, starting from the first step rather than
   from 1: **6, 11, 17, 22, 28, 33, 39, 44, 50, 55, 61, 66, 72, 77, 83, 88, 94, 99.**
-- Two extra skill slots, a weapon and armour, and they **summon normals**.
+- Two extra skill slots, whatever pieces are authored for them — from **D +0** at level 6 to **B +30** at level 99
+  (see Gear state) — and they **summon normals**.
 - **They drop much more folding material, and the rarer Inks and Salts** (see Drops).
 
 ## Shadow
@@ -66,20 +85,25 @@ map, and the map generator no longer puts any there.
 - **Each shadow has a real name, in the language of its weapon's best-known fighting tradition.** The sword's
   matches its Japanese weapon names.
 
-  | Level | Weapon | Name | Theme |
-  | --- | --- | --- | --- |
-  | 105 | Shield | **Varro** | Roman shield wall |
-  | 110 | Wand | **Brigid** | Irish, the healer |
-  | 115 | Warhammer | **Radomir** | Slavic mace-bearer |
-  | 120 | Spear | **Kallias** | Greek spearman |
-  | 125 | Axe | **Brandr** | Norse |
-  | 130 | Firearm | **Inés** | Spanish musketeer |
-  | 135 | Scythe | **Morwenna** | Cornish |
-  | 140 | Dagger | **Fiora** | Italian stiletto |
-  | 145 | Staff | **Azar** | Persian, "fire" |
-  | 150 | Greatsword | **Ulrich** | German two-hander |
-  | 155 | Bow | **Temülün** | Mongol horse archer |
-  | 160 | Sword | **Tsubame** | Japanese |
+  | Level | Weapon | Name | Theme | Element |
+  | --- | --- | --- | --- | --- |
+  | 105 | Shield | **Varro** | Roman shield wall | Earth |
+  | 110 | Wand | **Brigid** | Irish, the healer | Water |
+  | 115 | Warhammer | **Radomir** | Slavic mace-bearer | Earth |
+  | 120 | Spear | **Kallias** | Greek spearman | Water |
+  | 125 | Axe | **Brandr** | Norse | Fire |
+  | 130 | Firearm | **Inés** | Spanish musketeer | Fire |
+  | 135 | Scythe | **Morwenna** | Cornish | Wind |
+  | 140 | Dagger | **Fiora** | Italian stiletto | Wind |
+  | 145 | Staff | **Azar** | Persian, "fire" | Fire |
+  | 150 | Greatsword | **Ulrich** | German two-hander | Earth |
+  | 155 | Bow | **Temülün** | Mongol horse archer | Wind |
+  | 160 | Sword | **Tsubame** | Japanese | Water |
+- **Each shadow has one of the four elements a converter can give** — water, earth, fire or wind, three shadows
+  each — so every one of them can be answered with the right converter. At level 3 the answer matters: the element it
+  is weak to lands for double, the one it resists lands for nothing, and its own element heals a fire, water or wind
+  shadow and does nothing to an earth one. It swings
+  with its element too; the weapon it holds has none, and a weapon with no element never overrides a creature's own.
 - **Each shadow summons one elite kind, matched to its place on the ladder.** The top twelve elites, counted
   backwards from 99, pair with the shadows from the top down:
 
@@ -88,13 +112,11 @@ map, and the map generator no longer puts any there.
   | Summons the elite of level | 99 | 94 | 88 | 83 | 77 | 72 | 66 | 61 | 55 | 50 | 44 | 39 |
 
   The six lowest elites (6 to 33) are summoned by no shadow.
-- Four extra skill slots, a complete set of the highest-grade gear, and ring ranks. Normals and elites have no
-  ring ranks.
+- Four extra skill slots, a complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
   shadows can be seen in the game.
-- **Its gear is the best a forge can make:** every piece at grade A, folded to +35, every one of its six stat slots
-  written with Sharp Ink, and a trademark on the weapon — each roll made the way a station makes it. It wears exactly
-  its own pieces and never picks up a random one.
+- **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
+  trademark on the weapon — each roll made the way a station makes it.
 - **Weapon mastery equals its level, capped at 70 by its A-grade weapon**, so the Sword shadow knows every sword skill.
 - **Ring ranks:** 40 in each of the three stats its weapon's mastery raises.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
@@ -130,7 +152,9 @@ its own grade's **metal, cloth and leather**, plus a chance of an Ink or a Salt:
 | Elite | 60%, 5 to 10 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% |
 | Shadow | 100%, 5 to 10 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% |
 
-Every kill also has a 30% chance of one random consumable (a potion or a food). Materials are never in that roll.
+Every kill also has a 30% chance of one random consumable (a potion or a food), and a creature with an element adds its
+own element's two converters to that roll — a fire creature can drop the Flame Elemental Converter or the Flame Armor
+Converter, a Neutral creature never drops one. Materials are never in that roll.
 Several of one material go down as one pile.
 
 ## Server restarts

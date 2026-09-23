@@ -47,16 +47,31 @@ public static class MobSpawner
         MapManager.PutInMap(go, map);
         // ITS KIND, from its data, before anything on it asks — its skills, its gear and its loot all read this.
         var health = go.GetComponent<Health>();   // perf-ok: once per creature made
-        if (health != null) health.kind = def.kind;
-        // Its gear was already put on while it was being built — before its kind was known. A kind whose gear differs
-        // from the ordinary rule (a shadow: exactly its own pieces, at the best a forge makes) puts it on again.
-        // Only on the machine that owns the world — a watching copy is told what the creature wears.
-        if (GameServer.IsServer && (!CreatureKinds.WearsRandomGear(def.kind) || CreatureKinds.WearsBestGear(def.kind)))
+        if (health != null)
+        {
+            health.kind = def.kind;
+            // ITS ELEMENT AND LEVEL, from its data, on every machine — so the server and a watching copy can never
+            // disagree about what a hit on it does. The prefab's baked element is only the baker's copy of this.
+            health.element = def.element;
+            health.elementLevel = def.elementLevel;
+        }
+        // ITS GEAR'S GRADE, FOLDS AND INK come from its catalog entry, which OWNS them; the baked prefab only mirrors
+        // what the baker saw. Its gear was already put on while it was being built, so a mirror that has gone stale —
+        // the table edited without re-baking — is corrected here by putting it on again at the entry's settings.
+        // Only on the machine that owns the world: a watching copy is told what the creature wears, and rolls nothing.
+        if (GameServer.IsServer)
         {
             var gear = go.GetComponent<UnitEquipment>();   // perf-ok: once per creature made
-            if (gear != null) gear.ReseatForNewLife();
-            var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
-            if (block != null) block.Rederive(healToFull: true);
+            if (gear != null && (gear.gearQuality != def.gearQuality || gear.gearFolds != def.gearFolds ||
+                                 gear.gearInkTier != def.gearInkTier))
+            {
+                gear.gearQuality = def.gearQuality;
+                gear.gearFolds = def.gearFolds;
+                gear.gearInkTier = def.gearInkTier;
+                gear.ReseatForNewLife();
+                var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
+                if (block != null) block.Rederive(healToFull: true);
+            }
         }
         // A SHADOW IS A 3D CHARACTER, decided by its kind, here — the one door every creature is made through — so no
         // caller can make one flat. Before it is announced, because what crosses the wire is read off the creature at

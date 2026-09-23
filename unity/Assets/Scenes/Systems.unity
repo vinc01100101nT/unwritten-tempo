@@ -743,7 +743,6 @@ MonoBehaviour:
   baseMagicAttack: 3
   baseMagicDefense: 1
   mpRegenPerSecond: 1.5
-  armorElement: 0
   lifeStealPct: 0
   reflectPct: 0
   hpPerLevel: 6

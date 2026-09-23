@@ -210,6 +210,7 @@ public class ItemTooltip : MonoBehaviour
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
         AppendTrademark(sb, inst);
+        AppendWord(sb, inst);
 
         int slots = def.cardSlots;
         if (slots > 0)
@@ -228,7 +229,9 @@ public class ItemTooltip : MonoBehaviour
     // has been through, and there is no rarity in the game to colour it by.
     static void AppendHeader(StringBuilder sb, Item item)
     {
-        string category = item.slot != EquipSlotType.None ? Spaced(item.slot.ToString())
+        // The slot's name from THE one list of slot words (EquipSlots.Label) — never the enum's own name, which says
+        // "Shield" and "Boots" where a player reads "Off-hand" and "Shoes".
+        string category = item.slot != EquipSlotType.None ? EquipSlots.Label(item.slot)
                         : item.IsUsable ? "Consumable" : item.category.ToString();
         sb.Append("<color=#B9B9B9>").Append(category).Append("</color>");
     }
@@ -245,6 +248,9 @@ public class ItemTooltip : MonoBehaviour
         var trademark = Trademarks.SkillOf(inst);
         if (trademark != null && !string.IsNullOrEmpty(trademark.trademarkName))
             return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.trademarkName + " [" + grade + "]";
+        // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Fleet Iron Sabatons [C]".
+        if (inst.word != ArmourWord.None)
+            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]";
         string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
         return grade + folds + " " + inst.def.displayName;
     }
@@ -268,6 +274,14 @@ public class ItemTooltip : MonoBehaviour
                 if (word != null) sb.Append('\n').Append(pct).Append(word);
             }
         }
+    }
+
+    // THIS COPY's armour word — its name, then the one thing it does, at the finished amount the server wrote.
+    static void AppendWord(StringBuilder sb, EquipmentInstance inst)
+    {
+        if (inst == null || inst.word == ArmourWord.None) return;
+        sb.Append("\n\n<color=#B9B9B9>").Append(inst.word).Append(": </color>")
+          .Append(ArmourWords.Describe(inst.word, inst.wordAmount));
     }
 
     // A weapon says which of the two physical attacks it swings with; nothing else about it is spelled out.
@@ -387,17 +401,5 @@ public class ItemTooltip : MonoBehaviour
         sb.Append("\n<color=#C9C9C9>").Append(label).Append("</color>  ")
           .Append(b).Append("% → ").Append(a).Append("% <color=").Append(color).Append('>')
           .Append(d > 0 ? "+" : "").Append(d).Append("%</color>");
-    }
-
-    // "OffHand" -> "Off Hand"
-    static string Spaced(string s)
-    {
-        var sb = new StringBuilder();
-        for (int i = 0; i < s.Length; i++)
-        {
-            if (i > 0 && char.IsUpper(s[i])) sb.Append(' ');
-            sb.Append(s[i]);
-        }
-        return sb.ToString();
     }
 }

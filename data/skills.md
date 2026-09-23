@@ -14,14 +14,22 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Sanctuary *(unpublished)* | active | MP **10**  CD **4.5s**  Cast **2s**  Range **11** | pressed | Heals **100** HP |
 | — | Hex Field *(unpublished)* | active | MP **16**  CD **10s**  Cast **0.5s**  Range **11** | pressed | Deals **1×** magic damage · Stun for **4s** |
 | — | Antidote *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Removes **3** debuff(s) |
+| — | Flame Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Fire** (level 1) for **5:00** |
+| — | Flame Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Fire** for **5:00** |
+| — | Frost Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Water** (level 1) for **5:00** |
+| — | Frost Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Water** for **5:00** |
 | — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **200** HP |
 | — | Grilled Fish *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** attack for **120s** |
 | — | Hard Bread *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** defense for **120s** |
 | — | Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **80** HP |
+| — | Lightning Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Wind** (level 1) for **5:00** |
+| — | Lightning Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Wind** for **5:00** |
 | — | Lucky Dumpling *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +0.05 crit chance for **120s** |
 | — | Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +8 MP regen for **5s** |
 | — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **30** HP |
 | — | Minor Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +4 MP regen for **5s** |
+| — | Seismic Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Earth** (level 1) for **5:00** |
+| — | Seismic Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Earth** for **5:00** |
 | — | Spiced Broth *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**10%** attack speed for **120s** |
 | — | Traveller's Tea *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**20%** movement speed for **120s** |
 | — | Mending Tide *(unpublished)* | active | MP **18**  CD **12s**  Cast **0.5s**  Range **6** | pressed | +7.5 HP regen for **6s** · Removes **1** debuff(s) |

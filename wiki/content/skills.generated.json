@@ -141,6 +141,94 @@
       ]
     },
     {
+      "id": "skill.item.flame-armor-converter",
+      "name": "Flame Armor Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your armor is Fire (level 1) for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your armor is **Fire** (level 1) for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.flame-elemental-converter",
+      "name": "Flame Elemental Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your weapon strikes as Fire for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your weapon strikes as **Fire** for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.frost-armor-converter",
+      "name": "Frost Armor Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your armor is Water (level 1) for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your armor is **Water** (level 1) for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.frost-elemental-converter",
+      "name": "Frost Elemental Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your weapon strikes as Water for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your weapon strikes as **Water** for **5:00**"
+      ]
+    },
+    {
       "id": "skill.item.greater-healing-potion",
       "name": "Greater Healing Potion",
       "symbol": "",
@@ -229,6 +317,50 @@
       ]
     },
     {
+      "id": "skill.item.lightning-armor-converter",
+      "name": "Lightning Armor Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your armor is Wind (level 1) for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your armor is **Wind** (level 1) for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.lightning-elemental-converter",
+      "name": "Lightning Elemental Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your weapon strikes as Wind for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your weapon strikes as **Wind** for **5:00**"
+      ]
+    },
+    {
       "id": "skill.item.lucky-dumpling",
       "name": "Lucky Dumpling",
       "symbol": "",
@@ -314,6 +446,50 @@
       "trademark": "",
       "effects": [
         "+4 MP regen for **5s**"
+      ]
+    },
+    {
+      "id": "skill.item.seismic-armor-converter",
+      "name": "Seismic Armor Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your armor is Earth (level 1) for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your armor is **Earth** (level 1) for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.seismic-elemental-converter",
+      "name": "Seismic Elemental Converter",
+      "symbol": "",
+      "weapon": "None",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Your weapon strikes as Earth for 5:00.",
+      "trademark": "",
+      "effects": [
+        "Your weapon strikes as **Earth** for **5:00**"
       ]
     },
     {

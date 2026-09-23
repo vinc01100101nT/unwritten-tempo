@@ -46,7 +46,8 @@ The log is `logs/server.log` at the top of the repo; the run before is `logs/ser
 - **`rolled` vs `for`:** rolled is before the target's defences; `for` is what came off its health; `[HP now/max]`
   is its health after.
 - **A zero-damage blow says why** after `— nothing got through:`. `reason not recorded` is a gap in the code —
-  report it.
+  report it. `healed by its element` is not a miss: the target's element turned the blow into health, and a `heal`
+  line beside it says how much.
 - **Silence is information, and the log now says which kind:** `earned nothing from X` means the payout ran and
   rolled nothing; no loot line at all after a player's kill means the payout never ran. `skipped <skill> — <reason>`
   means a passive was turned away; neither `fired` nor `skipped` means the skill does not answer that moment.

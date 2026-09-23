@@ -1451,7 +1451,7 @@ public class SkillComposerWindow : EditorWindow
     static readonly SkillEffectKind[] BuffKinds =
         { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage,
           SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
-          SkillEffectKind.Shield };
+          SkillEffectKind.Shield, SkillEffectKind.ElementConverter };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
     // read as, because that IS the effect — "extend duration of <skill>" says what it does and what it needs, where a
@@ -1828,6 +1828,18 @@ public class SkillComposerWindow : EditorWindow
                         "or misses. Basics, skill strikes, executes and banked damage all count; damage-over-time " +
                         "ticks never do. Set how many charges below (charges per use).", MessageType.None);
                     break;
+                case SkillEffectKind.ElementConverter:
+                    ef.converts = (EquipSlotType)EditorGUILayout.EnumPopup(new GUIContent("converts",
+                        "Weapon = what the holder's ordinary attacks land as. Armor = what the holder is hit as, at level 1."),
+                        ef.converts == EquipSlotType.Armor ? EquipSlotType.Armor : EquipSlotType.Weapon,
+                        slot => (EquipSlotType)slot == EquipSlotType.Weapon || (EquipSlotType)slot == EquipSlotType.Armor, false);
+                    ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
+                        "The element the converted slot takes for the window."), ef.element);
+                    NumberRow("seconds", "How long the conversion lasts.", ref ef.seconds, ef.useStacks);
+                    EditorGUILayout.HelpBox("A second converter on the same slot REPLACES the first — it never stacks. " +
+                        "A weapon converter and an armor converter run side by side. Skills keep their own element; " +
+                        "only ordinary attacks take the weapon's.", MessageType.None);
+                    break;
                 case SkillEffectKind.ImmuneToDisables:
                     NumberRow("seconds", "How long nothing can stop the holder. No other knob — being stopped is yes or no, so there " + "is no amount to set.", ref ef.seconds, ef.useStacks);
                     EditorGUILayout.HelpBox("Turns away, by name: FLINCH (the stagger a landing hit causes), STUN, " +
@@ -2023,6 +2035,8 @@ public class SkillComposerWindow : EditorWindow
     static void DrawStacking(SkillEffect ef)
     {
         if (!EffectScaling.HasDuration(ef.kind)) { ef.stacking = false; return; }   // an instant effect can't be a stacking condition
+        // One element on one slot has no "twice", so the toggle would be a dead knob — see UnitStates.BeginElement.
+        if (ef.kind == SkillEffectKind.ElementConverter) { ef.stacking = false; return; }
 
         ef.stacking = EditorGUILayout.Toggle(new GUIContent("stacking",
             "OFF = one instance; re-applying replaces it (newest wins). ON = each application ADDS stacks, each with " +
@@ -2077,6 +2091,8 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";
             case SkillEffectKind.BoostOutgoingDamage:
                                                 return "Each charge makes ONE outgoing attack hit harder and is spent by it, hit or miss. Every kind of attack counts except damage-over-time ticks.";
+            case SkillEffectKind.ElementConverter:
+                                                return "For a while, the holder's weapon strikes as an element, or their armor is hit as one (level 1). A new one on the same slot replaces the old.";
             case SkillEffectKind.ImmuneToDisables:
                                                 return "Nothing stops the holder for a while: no flinch, stun, freeze, silence, knockback, pull, and hits can't cancel their casts.";
             case SkillEffectKind.ReduceOutgoingDamage:

@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>WHY A BLOW COST ITS TARGET NOTHING. Written by the damage code at the moment it returns zero, and read by the
 /// hit line straight after — so "nothing got through" can say which of these it was.</summary>
-public enum NoDamageReason { None, Missed, AlreadyDead, Immune, Parried, Guarded, Dodged, Invincible, Soaked, Braced }
+public enum NoDamageReason { None, Missed, AlreadyDead, Immune, Parried, Guarded, Dodged, Invincible, Soaked, Braced, HealedByElement }
 
 /// <summary>
 /// The ONE place a resolved combat hit is APPLIED. Every damage source — a player swing (<see cref="Player3DAttacker"/>),
@@ -163,6 +163,7 @@ public static class CombatAuthority
             case NoDamageReason.Invincible:  return "invincible";
             case NoDamageReason.Soaked:      return "soaked by a shield barrier";
             case NoDamageReason.Braced:      return "held back by a brace";
+            case NoDamageReason.HealedByElement: return "healed by its element";
             default:                         return "reason not recorded";
         }
     }

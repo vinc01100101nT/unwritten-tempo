@@ -120,6 +120,9 @@ public static class PlayerFighter
         character.OnLeveledUp += _ => shell.SaveSoon();
         character.OnStatsChanged += shell.SaveSoon;
         character.OnGoldChanged += _ => shell.SaveSoon();
+        // Timed effects ride the save now, so a buff starting or ending is worth writing down too — otherwise a crash
+        // would bring back whatever the last save happened to catch. SaveSoon only marks; the write is still once a beat.
+        character.States.OnChanged += shell.SaveSoon;
         return true;
     }
 

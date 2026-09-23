@@ -144,7 +144,40 @@
     {
       "type": "list",
       "items": [
-        "**Head**, **Armor**, **Garment** and **Shield**"
+        "**Head**, **Body**, **Off-hand**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**"
+      ]
+    },
+    {
+      "type": "table",
+      "headers": ["Slot", "Metal (Smith)", "Leather (Tannery)", "Cloth (Loom)"],
+      "rows": [
+        ["**Head**", "Iron Helm", "Leather Cap", "Padded Hood"],
+        ["**Body**", "Chainmail", "Leather Jerkin", "Padded Vest"],
+        ["**Off-hand**", "Iron Kite Shield", "Leather Buckler", "Padded Shield"],
+        ["**Garment**", "Chain Mantle", "Hide Cloak", "Traveller's Cloak"],
+        ["**Shoes**", "Iron Sabatons", "Leather Boots", "Woven Shoes"]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Every armour piece rolls **one word** when it is forged, from its own slot's words, and wears it in its name — *+15 Fleet Iron Sabatons [C]*. A word does one thing, grows with the piece's grade, and never changes. No word appears on two slots, so you can never wear the same word twice."
+    },
+    {
+      "type": "table",
+      "headers": ["Slot", "Word", "What it does"],
+      "rows": [
+        ["Head", "**Ironblood**", "Fewer critical hits land on you"],
+        ["Head", "**Steadfast**", "Stuns, freezes, silences and ailments on you end sooner"],
+        ["Head", "**Wellspring**", "Mana regenerates faster"],
+        ["Body", "**Bulwark**", "Damage taken is cut"],
+        ["Body", "**Sanguine**", "Damage dealt heals you"],
+        ["Body", "**Fierce**", "All damage dealt is higher"],
+        ["Off-hand", "**Thornclad**", "Damage taken is sent back"],
+        ["Off-hand", "**Guarding**", "Blocks more often"],
+        ["Off-hand", "**Longreach**", "Ordinary attacks reach further"],
+        ["Garment", "**Emberward · Tideward · Stoneward · Galeward**", "Less damage from Fire · Water · Earth · Wind"],
+        ["Shoes", "**Fleet**", "You move faster"],
+        ["Shoes", "**Tireless**", "Sprint drains stamina slower"]
       ]
     },
     {
@@ -153,7 +186,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each piece adds what its **folds** and its **quality** make it worth — attack on a weapon, defence on armour — plus any stats written onto it with **Ink** (see *Crafting & Recycling*)."
+      "text": "Each piece adds what its **folds** and its **quality** make it worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*)."
     },
     {
       "type": "heading",
@@ -161,7 +194,7 @@
     },
     {
       "type": "paragraph",
-      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds one to what the piece is worth: **attack** on a weapon, **defence** on armour and a shield, **magic defence** on a garment, and one of each per two folds on a head piece. A staff gains magic attack instead of attack."
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds to what the piece is worth: **attack** on a weapon (a staff gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour, an off-hand or a garment add."
     },
     {
       "type": "paragraph",
@@ -182,7 +215,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack or defence is made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
+      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack — or its armour's material stats — are made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
     },
     {
       "type": "table",

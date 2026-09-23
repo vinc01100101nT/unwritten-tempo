@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22; not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
-last-updated: 2026-09-22
+last-updated: 2026-09-23
 tags:
   - systems-combat-design
 ---
@@ -32,8 +32,11 @@ passages on those points are dead. **Not yet play-tested.**
 - **Crafting happens at a station in town**: a smith for metal, a loom for cloth, a tannery for leather. Never
   from the bag.
 - **There is no level requirement to wear gear.** Anyone can equip anything.
-- **Weapons and armour scale the same way**: a piece's attack (weapon) or defence (armour) comes from its
-  **folds** and its **quality**, nothing else. There is no Level on gear.
+- **Weapons and armour scale the same way**: what a piece is worth comes from its **folds** and its **quality**,
+  nothing else — attack on a weapon; on armour, what its **material** buys (metal defence and HP, leather attack
+  speed and evasion, cloth magic defence and MP). There is no Level on gear. Armour has five slots — Head, Body,
+  Off-hand, Garment, Shoes — each in all three materials, and every armour piece rolls one **word** from its slot
+  ([Armour Roster, Materials & Words](armour-roster.md)).
 
 ## 2. Forge, Fold, Quench
 
@@ -94,7 +97,7 @@ way further is to quench. *(Example gates, to be tuned:)*
 
 So a B +30 that quenches becomes **A +0** or **C +0**, and the decision to try is the whole game.
 
-**What quality does:** it lifts the piece's attack or defence (as rarity used to), it caps and speeds the
+**What quality does:** it lifts what the piece's folds buy (as rarity used to), and the size of an armour piece's word, it caps and speeds the
 masteries (§5, §7), and it sets **how many stat slots** the piece has (§3). A Raw piece caps mastery **below F**.
 
 **No Potential.** The folds are the budget, and they refill through work.
@@ -277,9 +280,11 @@ move once it is played. Change it here, in place, when it does.
 | B | +30 | +22% | 5 | 60 | 25 | ×1.35 |
 | A | +35 | +30% | 6 | 70 | 30 | ×1.5 |
 
-- **Per fold:** a weapon gains **+1 attack** (or +1 magic attack for a Staff / Wand / Scythe). Armour gains
-  **+1 defence** per fold on Armor and Shield, **+1 magic defence** per fold on Garment, and Head gains **+1 of
-  each per 2 folds**. Quality lifts that fold total by the column above. (The old refine of +3 attack / +1
+- **Per fold:** a weapon gains **+1 attack** (or +1 magic attack for a Staff / Wand / Scythe). An armour piece's
+  **material** decides what a fold buys and its **slot** how much: metal **+0.5 defence and +4 HP**, leather
+  **+0.25% attack speed and +0.25 evasion**, cloth **+0.5 magic defence and +2 MP** on body, off-hand and garment;
+  head and shoes take half. Quality lifts that fold total by the column above. The full table is in
+  [Crafting Tables](crafting-tables.md). (The old refine of +3 attack / +1
   defence per level is replaced by this.)
 - **Fold cost:** 1 unit of the grade's band material + 50 gold × band number. **Quench cost:** 10 units of the
   band + 500 gold × band number, and optionally one Salt.
@@ -373,8 +378,6 @@ tables when their pools are authored, by the same rule.
 - **Unlock tables for the other eleven weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
   until their pools exist.
-- **Armour trademarks** — armour has no skills, so it has no trademark and keeps its plain title. Whether armour
-  rolls something of its own is a separate decision, not made.
 - **Which townspeople are stations** — no smith, loom or tannery is authored in the town scene yet; `/station`
   makes the nearest villager one for a play-test.
 - **Creature masteries are authored as the creature's LEVEL** (a level-20 creature has Weapon Mastery 20), so a
@@ -402,6 +405,9 @@ tables when their pools are authored, by the same rule.
 - [Implementation Plan](implementation-plan.md) — the six build slices, every file each touches, and the open build questions.
 - [Weapon Names & Trademarks](weapon-names-and-trademarks.md) — the trademark design: the eighteen sword names, the roll, and how it is built.
 - [Crafting Tables](crafting-tables.md) — the numbers only: bands per station, forge bills, fold and quench costs and odds, Salt, Ink values, mastery caps by grade.
+- [Elements, Element Levels & Converters](elements-and-converters.md) — creatures attack and defend with an element at level 1–4 on Ragnarok's chart, negative values heal, and eight level-1 converters lend players an element for 5:00.
+- [Armour Roster, Materials & Words](armour-roster.md) — five armour slots in three materials; the material decides what a fold buys, and every armour piece rolls one of its slot's words.
+- [Timed Effects Survive Logout](timed-effects-survive-logout.md) — only death ends a timed effect; logging out and changing server pause it with the time it had left.
 
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the design as it runs today.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the ring's draft and soft cap, which

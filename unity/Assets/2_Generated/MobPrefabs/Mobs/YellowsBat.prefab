@@ -244,6 +244,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
+  gearQuality: 0
+  gearFolds: 1
+  gearInkTier: 1
 --- !u!114 &1930963449700866196
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -18,19 +18,29 @@ public static class ItemCatalog
     // Every item, split once into what is worn in each place and what is not worn at all. Built on first ask and kept.
     static Dictionary<EquipSlotType, List<Item>> wornBySlot;
     static List<Item> unworn;
+    // The element converters, filed under the element each one gives: a creature's roll adds only its own element's.
+    static Dictionary<Element, List<Item>> convertersByElement;
 
     static void EnsurePools()
     {
         if (wornBySlot != null) return;
         wornBySlot = new Dictionary<EquipSlotType, List<Item>>();
         unworn = new List<Item>();
+        convertersByElement = new Dictionary<Element, List<Item>>();
         foreach (var it in Resources.LoadAll<Item>("Items"))
         {
             if (it == null) continue;
             if (it.slot == EquipSlotType.None)
             {
                 // A quest item is never put down, so it is never handed out at random either.
-                if (it.category != ItemCategory.Quest && it.materialKind == MaterialKind.None) unworn.Add(it);
+                if (it.category == ItemCategory.Quest || it.materialKind != MaterialKind.None) continue;
+                if (ConverterElement(it, out var element))
+                {
+                    if (!convertersByElement.TryGetValue(element, out var own))
+                        convertersByElement[element] = own = new List<Item>();
+                    own.Add(it);
+                }
+                else unworn.Add(it);
                 continue;
             }
             if (!wornBySlot.TryGetValue(it.slot, out var list)) wornBySlot[it.slot] = list = new List<Item>();
@@ -57,13 +67,40 @@ public static class ItemCatalog
         return wornBySlot.TryGetValue(slot, out var list) && list.Count > 0 ? list[CombatRng.Range(0, list.Count)] : null;
     }
 
-    /// <summary>A random item that is neither worn nor a material — a potion, a food — and never a quest item. Null when
-    /// none exists. Materials are left out on purpose: which grade a creature drops is its level's answer
-    /// (<see cref="CreatureLoot"/>), and a random one would hand a level-3 creature's killer the top grade.</summary>
-    public static Item RandomConsumable()
+    /// <summary>A random item that is neither worn nor a material — a potion, a food — and never a quest item, plus the
+    /// element converters of <paramref name="creatureElement"/> alone, all equally likely. Null when none exists.
+    /// Materials are left out on purpose: which grade a creature drops is its level's answer (<see cref="CreatureLoot"/>),
+    /// and a random one would hand a level-3 creature's killer the top grade. A converter comes only from a creature of
+    /// its own element, so a Neutral creature never drops one.</summary>
+    public static Item RandomConsumable(Element creatureElement)
     {
         EnsurePools();
-        return unworn.Count > 0 ? unworn[CombatRng.Range(0, unworn.Count)] : null;
+        convertersByElement.TryGetValue(creatureElement, out var own);
+        int ownCount = own != null ? own.Count : 0;
+        int total = unworn.Count + ownCount;
+        if (total == 0) return null;
+        int pick = CombatRng.Range(0, total);
+        return pick < unworn.Count ? unworn[pick] : own[pick - unworn.Count];
+    }
+
+    /// <summary>The element a converter item gives, read off the skill it runs — the effect is the ONE place a
+    /// converter's element lives, so the item carries no second copy of it.</summary>
+    static bool ConverterElement(Item it, out Element element)
+    {
+        element = Element.Neutral;
+        var def = it.IsUsable ? SkillCatalog.Get(it.useSkillId) : null;
+        if (def == null || def.bindings == null) return false;
+        foreach (var binding in def.bindings)
+        {
+            if (binding == null || binding.effects == null) continue;
+            foreach (var e in binding.effects)
+                if (e != null && e.kind == SkillEffectKind.ElementConverter)
+                {
+                    element = e.element;
+                    return true;
+                }
+        }
+        return false;
     }
 
     /// <summary>The shared <see cref="Item"/> definition for a saved id, or null if it no longer exists.</summary>

@@ -28,7 +28,7 @@ public static class MobRoster
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
-            element = Element.Earth, attackElement = Element.Neutral,   // Fireball melts it (Fire→Earth = Weak!)
+            element = Element.Earth,   // Fireball melts it (Fire→Earth = Weak!)
             goldMin = 2, goldMax = 6,
             itemDropNames = new[]{ "Life Potion" }, itemDropChances = new[]{ 0.08f },
         },
@@ -42,7 +42,7 @@ public static class MobRoster
             touchRange = 0.8f, touchInterval = 0.8f,
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
-            element = Element.Wind, attackElement = Element.Neutral,   // Frost (Water→Wind) is Resisted on bats
+            element = Element.Wind,   // Frost (Water→Wind) is Resisted on bats
             goldMin = 1, goldMax = 3,
             itemDropNames = new[]{ "Silver Ring" }, itemDropChances = new[]{ 0.05f },
         },
@@ -56,7 +56,7 @@ public static class MobRoster
             touchRange = 1.0f, touchInterval = 1.4f,
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
-            element = Element.Water, attackElement = Element.Neutral,   // water turtle: Fire is Resisted (use melee/wind)
+            element = Element.Water,   // water turtle: Fire is Resisted (use melee/wind)
             goldMin = 5, goldMax = 14,
             itemDropNames = new[]{ "Wooden Guard", "Leather Vest" }, itemDropChances = new[]{ 0.12f, 0.08f },
         },
@@ -72,7 +72,7 @@ public static class MobRoster
             touchRange = 3.6f, touchInterval = 1.6f,
             moveSpeed = 2.2f, aggroRadius = 7f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 3.2f, fleeHpFraction = 0f,
-            element = Element.Fire, attackElement = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
+            element = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
             onHitAilment = Ailment.Burn, onHitAilmentChance = 0.4f, onHitAilmentSeconds = 4f, onHitAilmentMagnitude = 2f,
             goldMin = 4, goldMax = 10,
             itemDropNames = new[]{ "Fire Scroll" }, itemDropChances = new[]{ 0.20f },
@@ -87,7 +87,7 @@ public static class MobRoster
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 3.2f, aggroRadius = 6f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0.4f,
-            element = Element.Neutral, attackElement = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
+            element = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
             onHitAilment = Ailment.Poison, onHitAilmentChance = 0.35f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 2f,
             goldMin = 3, goldMax = 8,
             itemDropNames = new[]{ "Jade Amulet" }, itemDropChances = new[]{ 0.10f },
@@ -112,7 +112,7 @@ public static class MobRoster
         moveSpeed = 1.7f, aggroRadius = 9f, leashRadius = 22f, stopDistance = 1.1f, wanderRadius = 5f,
         preferredRange = 0f, fleeHpFraction = 0f,
         // Fire dragon: resists Fire, MELTS to Frost (Water→Fire = Weak!), and its bite BURNS you.
-        element = Element.Fire, attackElement = Element.Fire,
+        element = Element.Fire,
         onHitAilment = Ailment.Burn, onHitAilmentChance = 0.5f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 4f,
         goldMin = 500, goldMax = 1000,
         itemDropNames   = new[]{ "Katana", "Iron Sword", "Boots" },

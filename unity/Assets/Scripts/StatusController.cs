@@ -265,6 +265,10 @@ public class StatusController : MonoBehaviour
         // so nothing lingers to resume the moment the window closes. Only the ailments that STOP you are refused —
         // poison still poisons, blind still blinds, slow still slows.
         if (DisablesBlocked && (a == Ailment.Stun || a == Ailment.Freeze || a == Ailment.Silence)) return;
+        // A worn Steadfast shortens every ailment that lands, at the door — so the state, the aura and the mob's own
+        // stun all run the same shorter window.
+        seconds = ArmourWords.CutBy(seconds, states.WornDisableCut);
+        if (seconds <= 0f) return;
         var id = (StateId)(int)a;
         bool wasActive = states.Has(id);
 

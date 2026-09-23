@@ -1579,6 +1579,12 @@ public class NetPlayer : NetworkBehaviour
             made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, Trademarks.RollTotal(def.weaponType)));
             made.Recompute();
         }
+        // AN ARMOUR PIECE'S WORD, the armour's one random thing, rolled on the same terms.
+        else
+        {
+            made.RollWord();
+            made.Recompute();
+        }
         c.TakeIntoBag(made);
         Done("Forged a " + ItemTooltip.CopyTitle(made) + " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + ".");
         // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an

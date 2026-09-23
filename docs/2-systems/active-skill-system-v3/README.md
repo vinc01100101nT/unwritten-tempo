@@ -111,7 +111,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and cap how far practice with them goes** (§1), so there is still nothing to "fold": the ring and practice both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
-**This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-08-24). It is the full set — there is no effect a skill can author that is not here.
+**This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-09-23). It is the full set — there is no effect a skill can author that is not here.
 
 | Effect | Target | Dmg type | Channels | Ring scales | Details |
 | --- | --- | --- | --- | --- | --- |
@@ -135,12 +135,14 @@ Every behavior is a **natural effect authored on the skill** (composed in the Sk
 | **ReduceOutgoingDamage** | self/others | no | magnitude, charges, duration | magnitude, duration | The mirror: one charge makes one outgoing attack land at `1 − magnitude`. Authored as the CUT. Its own pile, so a debuff can never spend a boost |
 | **ImmuneToDisables** | self/others | no | duration | duration | A plain window (not charges) where nothing stops the holder: flinch, stun, freeze, silence, knockback, pull, and a hit cancelling a cast. Does not touch damage or DoT |
 | **SubStatDebuff** | mobs/self | no | sub-stat + magnitude, duration | magnitude, duration | The exact mirror of SubStatBuff, same stat list and pile. Authored as a positive number, applied as a subtraction |
+| Summon | self | no | — | — | Tops the caster's summons back up to its kind's maximum. Who and how many belong to the caster, never to the effect |
+| **ElementConverter** | self/others | no | converts (Weapon/Armor), element, duration | duration | For the window, the holder's ORDINARY ATTACKS land as the element (Weapon), or the holder is HIT AS the element at level 1 (Armor). A new one on the same slot replaces the old — never stacks. Skills keep their own element. What the converter consumables run |
 
 **Collapsed into the two sub-stat effects — they are NOT separate kinds any more:** Haste, Guard, Regen, Buff, Vulnerability, ManaLeech and Reflect. Each is now one row of the sub-stat table plus one lift at that stat's read site. Adding any of them back as its own verb is the DRY violation the collapse removed. **Slow and Blind are likewise not ailments** — slow is the MovementSpeed sub-stat, and accuracy loss is the Accuracy sub-stat.
 
-**Rejected — out of scope for unwritten:** **Summon** (needs the deferred `Limit` cap — uncapped = perf hazard) and **Transform** (a whole rig/stance/stat-swap feature).
+**Rejected — out of scope for unwritten:** **Transform** (a whole rig/stance/stat-swap feature).
 
-**Still PLANNED — not in the catalog yet** (V2 vocabulary with no verb today; add when a skill needs them): **targeting** (Penetrate / Bounce / Homing), **element-convert**, **persistence** (Lingering / Trail).
+**Still PLANNED — not in the catalog yet** (V2 vocabulary with no verb today; add when a skill needs them): **targeting** (Penetrate / Bounce / Homing), **persistence** (Lingering / Trail).
 
 ## 3. Ring = numeric scaling only, and scaling locks roles — LOCKED (behaviors deferred)
 

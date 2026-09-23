@@ -235,7 +235,7 @@ public class UnitStatBlock : MonoBehaviour
         health.maxHealth    = UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP));
         health.defense      = UnitStatMath.Defense(u, eb, Lift(StatId.Def, SubStat.Defense));
         health.magicDefense = UnitStatMath.MagicDefense(u, eb, Lift(StatId.Def, SubStat.MagicDefense));
-        health.flee         = UnitStatMath.Flee(u, Lift(StatId.Evasion, SubStat.Evasion));
+        health.flee         = UnitStatMath.Flee(u, eb, Lift(StatId.Evasion, SubStat.Evasion));
         health.luk          = u.luk;   // pre-renewal crit shield — the attacker reads this off the target
         health.hpRegenPerSecond = UnitStatMath.HPRegenPerSecond(u, health.maxHealth);
 
@@ -244,7 +244,7 @@ public class UnitStatBlock : MonoBehaviour
             ai.level        = inputs.level;
             var held        = Gear != null ? Gear.WeaponType : WeaponType.None;
             ai.attack       = UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack));
-            ai.hit          = UnitStatMath.Hit(u, Lift(StatId.Accuracy, SubStat.Accuracy));
+            ai.hit          = UnitStatMath.Hit(u, eb, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
             ai.critMultiplier = UnitStatMath.CritMultiplier(u, eb, Lift(StatId.Critical, SubStat.CritDamage));
             // Swing speed from AGI, DEX, worn attack speed, the ring and any live attack-speed buff — the player's own

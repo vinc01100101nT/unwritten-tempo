@@ -3,8 +3,8 @@ using UnityEngine;
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
 /// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield) doesn't shift any
 /// serialized scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/
-/// Shield; Boots is legacy (kept for old data, not shown); the three Costume* slots are reserved for a future
-/// cosmetic layer (also not shown in v1).
+/// Shield/Boots — shown to a player as Head, Body, Garment, Weapon, Off-hand and Shoes (see <see cref="EquipSlots"/>);
+/// the three Costume* slots are reserved for a future cosmetic layer (not shown in v1).
 ///
 /// <para>6 and 7 were the two accessory places, removed because the ring already fills that role. Never give those
 /// numbers to a new slot: an old save or asset still holding one would silently land in it.</para></summary>
@@ -14,8 +14,8 @@ public enum EquipSlotType
     Head = 1,
     Armor = 2,        // was Body
     Weapon = 3,
-    Shield = 4,       // was OffHand — still the block source in combat
-    Boots = 5,        // legacy; not a visible slot in the v1 window
+    Shield = 4,       // shown as "Off-hand" — still the block source in combat
+    Boots = 5,        // shown as "Shoes"
     Garment = 8,
     CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
     CostumeBody = 10,
@@ -45,10 +45,10 @@ public static class EquipSlots
         switch (s)
         {
             case EquipSlotType.Head:        return "Head";
-            case EquipSlotType.Armor:       return "Armor";
+            case EquipSlotType.Armor:       return "Body";
             case EquipSlotType.Weapon:      return "Weapon";
-            case EquipSlotType.Shield:      return "Shield";
-            case EquipSlotType.Boots:       return "Boots";
+            case EquipSlotType.Shield:      return "Off-hand";
+            case EquipSlotType.Boots:       return "Shoes";
             case EquipSlotType.Garment:    return "Garment";
             case EquipSlotType.CostumeHead: return "Costume Head";
             case EquipSlotType.CostumeBody: return "Costume Body";

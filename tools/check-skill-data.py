@@ -159,7 +159,7 @@ def parse_state_for_kind(source):
     # The ones that resolve from a sibling field rather than a constant. Fall-through labels share the line that
     # actually assigns, so collect every label stacked above such an assignment, not just the nearest one.
     for labels, _ in re.findall(
-            r"((?:case\s+SkillEffectKind\.\w+\s*:\s*)+)id\s*=\s*(e\.|SubStats\.)", body):
+            r"((?:case\s+SkillEffectKind\.\w+\s*:\s*)+)id\s*=\s*(e\.|SubStats\.|ConverterPile\()", body):
         for kind in re.findall(r"SkillEffectKind\.(\w+)", labels):
             mapping[kind] = "*"
     if "Status" in body and "Status" not in mapping:
@@ -167,6 +167,15 @@ def parse_state_for_kind(source):
     if not mapping:
         die("Read the effect-to-pile function but understood none of its cases.")
     return mapping
+
+
+def parse_converter_piles(source):
+    """(armor_pile, weapon_pile) — the two piles an Element Converter fills, read out of the one C# function that
+    decides between them, so this checker never keeps its own copy of the names."""
+    m = re.search(r"converts\s*==\s*EquipSlotType\.Armor\s*\?\s*StateId\.(\w+)\s*:\s*StateId\.(\w+)", source)
+    if not m:
+        die("Could not read which piles an Element Converter fills (SkillEffect.ConverterPile).")
+    return m.group(1), m.group(2)
 
 
 def parse_pile_for_stat(source):
@@ -387,6 +396,8 @@ def main():
     triggers = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "SkillTrigger")
     weapons = parse_enum(read(os.path.join(SCRIPTS, "WeaponType.cs")), "WeaponType")
     state_for_kind = parse_state_for_kind(effect_src)
+    armor_pile, weapon_pile = parse_converter_piles(effect_src)
+    armor_slot = parse_enum(read(os.path.join(SCRIPTS, "Item.cs")), "EquipSlotType")["Armor"]
     later_piles = parse_later_piles(effect_src)
     main_kinds, main_ailments = parse_main_numbers(effect_src, read(os.path.join(SCRIPTS, "StatusController.cs")))
 
@@ -409,6 +420,8 @@ def main():
         if kind in ("SubStatBuff", "SubStatDebuff"):
             stat = stat_name.get(as_int(effect.get("subStat")), "Damage")
             return pile_for_stat.get(stat)
+        if kind == "ElementConverter":
+            return armor_pile if as_int(effect.get("converts")) == armor_slot else weapon_pile
         return None
 
     # ---- load every skill ------------------------------------------------------------
@@ -665,6 +678,10 @@ def main():
                         problem(s, "edits a pile belonging to a skill that does not exist (%s)." % target)
                         continue
                     mpile = state_name.get(as_int(e.get("modifierStateId")), "?")
+                    if kind == "AddStacks" and mpile in (armor_pile, weapon_pile):
+                        problem(s, "adds stacks to %s's %s, but an element converter never stacks — one element "
+                                   "on one slot has no 'twice'." % (name_of(target), mpile))
+                        continue
                     if mpile not in grants.get(target, {}):
                         problem(s, "edits %s's %s pile, but %s never leaves that pile behind."
                                 % (name_of(target), mpile, name_of(target)))

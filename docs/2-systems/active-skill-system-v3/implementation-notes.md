@@ -53,7 +53,7 @@ it can actually run:
 - **Movement** — Teleport, Dash, Knockback, Pull. Every verb that MOVES a body; who gets moved is the targeting
   question, not this one. Their seconds are **travel time, not an ongoing condition**, which is exactly why they are not
   States and never show an icon (`shoveSeconds` holds a shove's travel time, kept out of `seconds` for that reason).
-- **State ▸ Buffs** — Sub Stat Buff, Boost Outgoing Damage, Parry, Brace, Immune To Disables, Shield.
+- **State ▸ Buffs** — Sub Stat Buff, Boost Outgoing Damage, Parry, Brace, Immune To Disables, Shield, Element Converter.
 - **State ▸ Debuffs** — Sub Stat Debuff, Reduce Outgoing Damage, Taunt, and the **six** ailments (Poison, Bleed, Burn,
   Stun, Freeze, Silence). Ailments map to `kind = Status` + `ailment`; the rest are their own kinds. Choosing "Burn" IS
   the choice, so there is no second ailment dropdown.

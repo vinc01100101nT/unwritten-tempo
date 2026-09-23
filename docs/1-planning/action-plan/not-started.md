@@ -10,38 +10,11 @@ tags:
 
 Tasks whose status is empty `[ ]` — not started. The plan is three files by status — [done](done.md), [on-going](on-going.md), [not-started](not-started.md) — and a task moves between them when its status changes, wording untouched. A subtask sits in the file of its OWN status, indented as it was, and its ID names its parent (`ST-3-K` belongs to `MT-3`). Week goals repeat in every file that has a task from that week. The intro and the **How to read it** key are in [on-going.md](on-going.md).
 
-## Week 2 — Nothing can rot silently
-
-**Goal:** still nothing for a player, but from here on a mistake in the loot data gets caught by a machine instead of by you, six weeks later.
-
-- [ ] `MT-5` **`[E]` Teach the wiring sweep to catch a drop name that matches nothing.** A creature's drop list names its items by typing their names. Rebuilding the creatures prints one warning per missing name, then never mentions it again, and the sweep that checks everything else follows proper links only. **This is not hypothetical:** the older creature roster already asks for nine items that do not exist — Life Potion, Silver Ring, Wooden Guard, Leather Vest, Fire Scroll, Jade Amulet, Katana, Iron Sword and Boots. — **1–1.5 days**
-  *Done when:* misspelling an item in one creature's drop list makes `tools/check-asset-wiring.py` fail and correcting it makes the check pass — and `tools/prove-asset-wiring-check.py` still passes afterwards.
-
----
-
-## Week 3 — A full wardrobe exists
-
-**Goal:** every place on the body has something you can make, and a reason to keep working on the one you made.
-
-**[Gameplay System V4](../../2-systems/gameplay-system-v4/README.md) rewrote this week on 2026-09-20.** Gear is no
-longer found and no longer rolled: you forge it, fold it and quench it, and what a piece is worth comes from its
-folds and its quality grade rather than from which design it is. `MT-39` is that work.
-
-- [ ] `MT-9` **`[A]` Author more designs to forge.** Two more per place, so every place on the body has three
-  things worth making. **Not tiers:** a design is a shape, and what it is worth comes from its folds and its
-  grade. Each needs what it is made of and what a forge charges for one. — **3–4 days**
-  *Done when:* every place on the body has three designs, and each can be forged at the station its material belongs to.
-
-- [ ] `MT-10` **`[E]` Check the whole item set at once.** — **0.5 days**
-  *Done when:* `tools/check-asset-wiring.py` and `tools/check-unity-code.sh` both run clean, and the editor console is read in full and reported.
-
----
-
 ## Week 4 — Killing things pays you
 
-**Goal:** the phase that turns two months of finished combat into a game. You kill something, gear falls out, you put it on, your character sheet changes.
+**Goal:** the phase that turns two months of finished combat into a game. You kill something, it pays materials, consumables and gold, you forge the materials into gear, you put it on, your character sheet changes.
 
-Every creature dresses itself as it spawns but **gives up none of it** — since V4, gear is made, not taken off a
+Every creature wears the pieces authored for it, at its own authored grade, folds and Ink, but **gives up none of it** — since V4, gear is made, not taken off a
 corpse. Since 2026-09-22 a kill pays the creature's own level's band of metal, cloth and leather, a chance of an Ink
 or a Salt (much more from elites, more again from shadows), a 30% chance of one random consumable, and gold.
 
@@ -112,7 +85,7 @@ shadow have a row, in `field_0`, for testing. Placing the rest waits on the worl
 - [ ] `MT-25` **`[A]` Write the first three quests.** Kill some of a thing; fetch some of a thing; go to a place and come back. — **2 days**
   *Done when:* all three can be accepted, completed and turned in, and the rewards arrive in the bag.
 
-- [ ] `MT-26` **`[E]` Play the whole loop end to end.** Town → quest → field or dungeon → boss → loot → back → reward. — **1–2 days**
+- [ ] `MT-26` **`[E]` Play the whole loop end to end.** Town → quest → field or dungeon → elite → loot → back → reward. — **1–2 days**
   *Done when:* you have played that circuit without a game-master command and written down what felt wrong.
 
 - [ ] `MT-27` **`[D]` Decide what a quest pays.** Gold, an item, experience, or all three. *Recommendation: all three, with the item being the only reliable source of one gear piece, so a quest is worth doing once.* — **0.5 days**
@@ -160,21 +133,21 @@ A player build and a server build both exist — 458 MB from 8 September and 227
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
-- [ ] `MT-34` **`[A]` Author the bow's skills.** Twelve weapon families are defined. The sword has 22 and all 22 are published. The staff has one, unpublished. The other ten have none. **Publishing is the trap:** a dropped weapon only ever picks up published skills, so a full set of bow skills left unpublished arrives as an empty weapon and looks like a bug. — **5–8 days**
+- [ ] `MT-34` **`[A]` Author the bow's skills.** Twelve weapon families are defined. The sword has 22, each with the Weapon Mastery level that teaches it. The staff has one. The other ten have none. **The mastery table is the trap:** a skill is learned only when its weapon's mastery reaches the level written against it, so a bow skill with no row in the bow's unlock table can never be learned and looks like a bug. — **5–8 days**
 
-- [ ] `MT-35` **`[E]` Make cards something you earn.** Four cards exist and the socket screen offers all four to anyone with an empty socket, regardless of what they own. Two problems, both real: the four are named Andre, Poring, Whisper and Zipper Bear — Ragnarok creatures, and none of our 86 goes by any of those names, so "drops from the creature it's named after" has nothing to attach to. And a card cannot be carried at all: a drop list can only name an item, the bag can only hold an item, and a card is neither. This is a build across the bag, the saved character and the server — not four data rows. — **5–7 days**
+- [ ] `MT-35` **`[E]` Make cards something you earn.** Four cards exist and the socket screen offers all four to anyone with an empty socket, regardless of what they own. Two problems, both real: the four are named Andre, Poring, Whisper and Zipper Bear — Ragnarok creatures, and none of our 96 goes by any of those names, so "drops from the creature it's named after" has nothing to attach to. And a card cannot be carried at all: a drop list can only name an item, the bag can only hold an item, and a card is neither. This is a build across the bag, the saved character and the server — not four data rows. — **5–7 days**
 
   - [ ] `ST-35-A` **`[D]` First decide:** rename the four cards after creatures we have, or pick which creature each drops from.
 
 - [ ] `MT-36` **`[E]` Settle the four trust gaps.** All four are written down in the networking notes under a heading calling them deliberate limits: a phone can sign in but cannot enter the world; the training dummy takes no damage from a player; whether a player really had the item they used is their machine's word; and a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. Most already carry a reason — what is missing is a decision about whether they stay that way once strangers play together. **The training-dummy one is the odd one out:** the notes say a swing at it is refused, while the tool that places it calls it a normal mob that takes hits. Those disagree and only playing will settle it. — **unestimated until played**
 
-- [ ] `MT-37` **`[E]` Publish the eight orphan skills, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon and no item, and all eight are unpublished — so nothing in the game can grant them. — **1–2 days**
+- [ ] `MT-37` **`[E]` Give the eight orphan skills a weapon, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon — and a skill is learned only through its weapon's mastery, so nothing in the game can teach them. Give each one a weapon's pool and a mastery level, or delete it. — **1–2 days**
 
 ---
 
 ## Not scheduled at all
 
-Named so nobody thinks they were forgotten: crafting and recycling (a full design exists, no code), class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam, and live-service operations — monitoring, anti-cheat and a way to patch a running game. Hosting has been decided and costed; none of the rest is started.
+Named so nobody thinks they were forgotten: class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam, and live-service operations — monitoring, anti-cheat and a way to patch a running game. Hosting has been decided and costed; none of the rest is started.
 
 ---
 

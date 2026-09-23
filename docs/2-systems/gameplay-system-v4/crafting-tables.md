@@ -39,10 +39,24 @@ written on it. These are every design in the game today.
 | --- | --- | --- | --- | --- | --- | --- |
 | Sword | Weapon | Smith | Copper | 8 | 800 | 2 |
 | Bow | Weapon | Smith | Copper | 8 | 800 | 2 |
-| Wooden Buckler | Shield | Tannery | Rawhide | 5 | 400 | 0 |
+| Iron Helm | Head | Smith | Copper | 5 | 400 | 0 |
 | Leather Cap | Head | Tannery | Rawhide | 5 | 400 | 0 |
-| Padded Vest | Armor | Loom | Burlap | 5 | 400 | 0 |
+| Padded Hood | Head | Loom | Burlap | 5 | 400 | 0 |
+| Chainmail | Body | Smith | Copper | 5 | 400 | 0 |
+| Leather Jerkin | Body | Tannery | Rawhide | 5 | 400 | 0 |
+| Padded Vest | Body | Loom | Burlap | 5 | 400 | 0 |
+| Iron Kite Shield | Off-hand | Smith | Copper | 5 | 400 | 0 |
+| Leather Buckler | Off-hand | Tannery | Rawhide | 5 | 400 | 0 |
+| Padded Shield | Off-hand | Loom | Burlap | 5 | 400 | 0 |
+| Chain Mantle | Garment | Smith | Copper | 5 | 400 | 0 |
+| Hide Cloak | Garment | Tannery | Rawhide | 5 | 400 | 0 |
 | Traveller's Cloak | Garment | Loom | Burlap | 5 | 400 | 0 |
+| Iron Sabatons | Shoes | Smith | Copper | 5 | 400 | 0 |
+| Leather Boots | Shoes | Tannery | Rawhide | 5 | 400 | 0 |
+| Woven Shoes | Shoes | Loom | Burlap | 5 | 400 | 0 |
+
+Every armour slot comes in all three materials. The Leather Buckler keeps the id `item.wooden-buckler`, so a save
+holding one still loads it.
 
 ## 3. Fold — one unit of the band, plus gold
 
@@ -61,15 +75,24 @@ past its grade's cap; past there the only way on is a quench.
 
 ### What one fold is worth on the piece
 
-The finished number is `folds × (1 + quality lift)`, rounded half up. The server writes it onto the copy.
+The finished number is `folds × what one fold buys × (1 + quality lift)`, rounded half up (attack speed to one
+decimal). The server writes it onto the copy.
 
-| Piece | Each fold adds |
-| --- | --- |
-| Weapon (sword, bow, …) | +1 Attack |
-| Weapon — Staff | +1 Magic Attack |
-| Armor, Shield | +1 Defence |
-| Garment | +1 Magic Defence |
-| Head | +1 Defence **and** +1 Magic Defence per **2** folds |
+A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body,
+off-hand and garment take the full amount, head and shoes half. Priced with Ink's own exchange rate — 1 defence =
+8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — so
+a fold is worth the one defence it bought before, split between two stats.
+
+| Piece | Each fold adds (body, off-hand, garment) | Head and shoes |
+| --- | --- | --- |
+| Weapon (sword, bow, …) | +1 Attack | — |
+| Weapon — Staff | +1 Magic Attack | — |
+| Metal armour | +0.5 Defence and +4 HP | +0.25 Defence and +2 HP |
+| Leather armour | +0.25% Attack Speed and +0.25 Evasion | +0.125% Attack Speed and +0.125 Evasion |
+| Cloth armour | +0.5 Magic Defence and +2 MP | +0.25 Magic Defence and +1 MP |
+
+Body armour at A +35: **23 Defence and 182 HP** (metal), **11.4% Attack Speed and 11 Evasion** (leather), **23 Magic
+Defence and 91 MP** (cloth).
 
 | Grade | Quality lift on the fold total |
 | --- | --- |

@@ -409,7 +409,9 @@ public partial class Player3DController : MonoBehaviour
         float dt = Time.deltaTime;
         if (Sprinting)
         {
-            stam -= sprintDrainPerSec * dt;
+            // A worn Tireless makes the same sprint drain slower.
+            float drain = ch != null ? ArmourWords.CutBy(sprintDrainPerSec, ch.States.WornStaminaCut) : sprintDrainPerSec;
+            stam -= drain * dt;
             if (stam <= 0f) { stam = 0f; sprintLocked = true; sprintToggled = false; Sprinting = false; }
         }
         else

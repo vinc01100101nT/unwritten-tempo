@@ -40,7 +40,7 @@ This is the data-shaped half of the caster/target work in [Active Skill System V
 | --- | --- |
 | maxHealth, attack, defense, magicDefense, flee, hit, luk | the six primaries |
 | hardDefPercent, hardMagicDefPercent | MP, MagicAttack (one `attack` + a Physical/Magic switch) |
-| element, attackElement, damageSpread | crit chance, crit multiplier |
+| element (and its level, 1–4), damageSpread | crit chance, crit multiplier |
 | — | attack-speed and cast-speed multipliers |
 
 So the gap is roughly nine additions, not a rebuild — mobs already carry most of the defensive half.
@@ -80,15 +80,13 @@ The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's o
 
 **A ring drops at 0.001%** (1 in 100,000) — its own constant, `LootDropper.RingDropChance`, deliberately separate from the chance every other worn piece drops at. A ring is the most valuable thing a unit carries, so it's the MVP-card-tier prize, not ordinary loot.
 
-### Mobs drop what they wear
+### Mobs never drop what they wear
 
 **A creature gives up NOTHING it wears.** Since V4 gear is made, not taken off a corpse: a kill pays materials, consumables and gold, and the creature's own gear dies with it. Its loot table carries those; each kill also has a 30% chance of one random item that is not equipment. Everything except gold lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
 
-### Mobs put on random gear as they come to life
+### What state a mob's gear is in
 
-Until drop tables are authored, every place a player can wear a piece — weapon, head, armour, garment, shield — is offered one random item that fits it each time a creature spawns or respawns, as a **Raw, unfolded** copy. The creature keeps it on one flat chance, 40% (`CreatureWardrobe`). Authored starting gear is kept, and a place it fills is never offered anything. The server decides it; a watching machine is told what each creature wears.
-
-Single source of truth: the thing it wears is the thing it drops, so a mob can never advertise gear it doesn't actually carry.
+A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, the same station rolls a forge uses. Which stats the Ink lands on, and a weapon's trademark (only above Raw), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
 
 ### There is no such thing as mob-only gear
 
@@ -166,8 +164,8 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Magic defence | INT÷3, base + 1/level, gear, the **same** Def ring node, a timed MagicDefense change |
 | Max health | level curve × (1 + VIT×0.02), gear, the HP ring node, a timed MaxHP change |
 | Max mana | level curve × (1 + INT×0.015), gear, the MP ring node, a timed MaxMP change |
-| Accuracy | level + DEX×1 + LUK÷3, the Accuracy ring node, a timed Accuracy change |
-| Evasion | level + AGI×1 + AGI's jump + LUK÷5, the Evasion ring node, a timed Evasion change |
+| Accuracy | level + DEX×1 + LUK÷3 + worn accuracy (Ink), the Accuracy ring node, a timed Accuracy change |
+| Evasion | level + AGI×1 + AGI's jump + LUK÷5 + worn evasion (Ink, leather folds), the Evasion ring node, a timed Evasion change |
 | Attack speed | AGI 0.5%/pt + DEX at 0.25× that, gear, the AttackSpeed ring node, a timed AttackSpeed change; capped ×3 |
 | Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change |
 | Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |
@@ -192,7 +190,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Hard defence % / hard magic defence % | authored per mob on `Health`; on the player `baseHardDefPercent` is 0 with no item source (dev slider only) |
 | Max stamina | flat 100 on `Character`; drain/refill rates on `Player3DController`, player-only |
 | Block chance | the equipped off-hand `Item.blockChance` |
-| Armour element | `Character.armorElement` / the mob's authored element |
+| Element (what the unit is hit as) | a person: Neutral level 1, or an Armor Converter's element at level 1 while one runs; a mob: its authored element and level (`MonsterDef.element` / `elementLevel`), or a converter's |
 
 ### Regeneration is one ticker for everyone (2026-08-23)
 

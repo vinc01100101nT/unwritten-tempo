@@ -33,6 +33,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   - {fileID: 11400000, guid: 43c287d72a9e44590984c31443b3c361, type: 2}
+  gearQuality: 6
+  gearFolds: 30
+  gearInkTier: 5
   ringRankStats: 000000000400000002000000
   ringRankValues: 280000002800000028000000
   weaponMasteryLevel: 115
@@ -48,7 +51,8 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 0
+  element: 2
+  elementLevel: 3
   attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0

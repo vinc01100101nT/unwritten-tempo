@@ -327,14 +327,18 @@ public static class RigBuilder25D
         // and again whenever something feeding them changes (the list is on UnitStatBlock), so a mob can never drift
         // onto a curve of its own.
         var equip = go.AddComponent<UnitEquipment>();
-        if (arc.startingGear != null) equip.startingGear = arc.startingGear;   // worn gear is also the drop table
+        if (arc.startingGear != null) equip.startingGear = arc.startingGear;
+        // A MIRROR of the creature's catalog entry, which owns these three. MobSpawner re-reads them off the entry as
+        // each creature is made, so a prefab baked before an edit corrects itself rather than serving a stale grade.
+        equip.gearQuality = arc.gearQuality;
+        equip.gearFolds = arc.gearFolds;
+        equip.gearInkTier = arc.gearInkTier;
         var block = go.AddComponent<UnitStatBlock>();
         block.inputs = arc.stats.level > 0 ? arc.stats : UnitStatInputs.Default(1);
         block.ringRankStats  = arc.ringRankStats  ?? System.Array.Empty<StatId>();
         block.ringRankValues = arc.ringRankValues ?? System.Array.Empty<int>();
         block.weaponMasteryLevel = arc.weaponMasteryLevel;
 
-        ai.attackElement          = arc.attackElement;       // outgoing PROPERTY (checked vs player's armor)
         ai.onHitAilment           = arc.onHitAilment;        // status inflicted on a landed hit (chance 0 = none)
         ai.onHitAilmentChance     = arc.onHitAilmentChance;
         ai.onHitAilmentSeconds    = arc.onHitAilmentSeconds;

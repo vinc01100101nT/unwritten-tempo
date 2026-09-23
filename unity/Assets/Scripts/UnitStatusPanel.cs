@@ -174,7 +174,7 @@ public class UnitStatusPanel : MonoBehaviour
             if (tracked == null) return;
 
             tracked.States.Prune();                 // drop expired entries (fires OnChanged → statesDirty)
-            if (statesDirty) { statesDirty = false; RebuildStates(); }
+            if (statesDirty) { statesDirty = false; RebuildStates(); DrawElementBadge(tracked); }
             RefreshNumbers();
             RefreshStates();
             // A new life wears new gear on the same body, so the list is re-read whenever the server's text changes.
@@ -213,19 +213,7 @@ public class UnitStatusPanel : MonoBehaviour
             lastLevel = shell != null ? shell.Level : 0;
             nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
-            Element el = h.element;
-            if (el == Element.Neutral)
-            {
-                elementBadge.gameObject.SetActive(false);
-            }
-            else
-            {
-                elementBadge.gameObject.SetActive(true);
-                Color c = Elements.Tint(el);
-                elementBadge.color = new Color(c.r * 0.35f, c.g * 0.35f, c.b * 0.35f, 0.90f);
-                elementLabel.color = c;
-                elementLabel.text  = el.ToString().ToUpper();
-            }
+            DrawElementBadge(h);
 
             bool mana = h.MaxMP > 0;               // no pool → no bar, rather than an always-empty one
             if (mana != hasMana) { hasMana = mana; Layout(); }
@@ -236,6 +224,24 @@ public class UnitStatusPanel : MonoBehaviour
         }
 
         void MarkStatesDirty() => statesDirty = true;
+
+        // What the target is hit as RIGHT NOW, and at what level: an armour converter's element while one runs, its own
+        // otherwise. Redrawn on a target change and whenever its states change, never per frame.
+        void DrawElementBadge(Health h)
+        {
+            if (h == null) { elementBadge.gameObject.SetActive(false); return; }
+            Element el = h.States.DefendingElementOr(h.element, h.elementLevel, out int level);
+            if (el == Element.Neutral)
+            {
+                elementBadge.gameObject.SetActive(false);
+                return;
+            }
+            elementBadge.gameObject.SetActive(true);
+            Color c = Elements.Tint(el);
+            elementBadge.color = new Color(c.r * 0.35f, c.g * 0.35f, c.b * 0.35f, 0.90f);
+            elementLabel.color = c;
+            elementLabel.text  = UnitLabel.WithLevel(el.ToString().ToUpper(), level);
+        }
 
         void RebuildGear()
         {

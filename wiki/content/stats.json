@@ -121,11 +121,11 @@
         ],
         [
           "**HIT** (accuracy)",
-          "your level + DEX + LUK÷3, the Accuracy ring stat"
+          "your level + DEX + LUK÷3, accuracy written on your gear, the Accuracy ring stat"
         ],
         [
           "**FLEE** (dodge)",
-          "your level + AGI (plus its jump) + LUK÷5, the Evasion ring stat"
+          "your level + AGI (plus its jump) + LUK÷5, evasion on your gear (Ink, and leather armour's folds), the Evasion ring stat"
         ],
         [
           "**Attack speed**",
@@ -179,11 +179,11 @@
         ],
         [
           "**Block chance**",
-          "the shield or off-hand you have equipped — the item, not you"
+          "the off-hand you have equipped — the item, not you — plus a **Guarding** word on it"
         ],
         [
-          "**Armor element**",
-          "your character's own property; incoming attacks are scaled against it"
+          "**Element**",
+          "Neutral, unless an Armor Converter is running — then its element, at level 1. Incoming attacks are scaled against it"
         ],
         [
           "**Stamina**",

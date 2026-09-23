@@ -5,7 +5,8 @@ using UnityEngine;
 /// <summary>Every durational state a unit can carry, unified into one id space (buffs + debuffs). Mapped from a skill's
 /// <c>SkillEffectKind</c> / <c>Ailment</c> at apply time.
 ///
-/// <para>⚠️ <b>APPEND-ONLY.</b> States themselves are never saved, but a skill's combo gate SERIALIZES a value here
+/// <para>⚠️ <b>APPEND-ONLY.</b> A character's running states are saved BY NAME (<see cref="TimedEffectSave"/>), so a
+/// renamed member drops out of old saves — but a skill's combo gate SERIALIZES a value here
 /// (<c>SkillDef.requireState</c>), which Unity stores by int — so inserting or reordering a member would silently
 /// repoint every skill asset that references one. Add new states at the END, exactly like <c>SkillEffectKind</c>.</para></summary>
 public enum StateId
@@ -63,6 +64,12 @@ public enum StateId
     CritChance, CritDamage,
     MaxHP, MaxMP,
     BasicAttackRange,
+
+    // ---- Element converters ---------------------------------------------------------------------------------------
+    // What this unit's ordinary attacks land as, and what it is hit as, while a converter runs. ONE stack each, and the
+    // stack's intAmount is the Element — read off that stack, never off the pile's sum. Never stacking: one element on
+    // one slot has no "twice". See BeginElement.
+    WeaponElement, ArmorElement,
 }
 
 /// <summary>
@@ -215,7 +222,43 @@ public class UnitStates : MonoBehaviour
 
     // Lazy self-expiry: prune (and recompute the cached scalars) ONLY when a state has actually elapsed. One float
     // compare on the common path — so there's no per-frame Update and no staleness, keeping the old lazy-expiry cost.
-    void EnsureFresh() { if (active.Count > 0 && Time.time >= nextExpiry) Prune(); }
+    void EnsureFresh()
+    {
+        if (WornChanged()) Recompute();
+        if (active.Count > 0 && Time.time >= nextExpiry) Prune();
+    }
+
+    // ---- what the unit WEARS -----------------------------------------------------------------------------------
+    // An armour piece's rolled word adds to the SAME sub-stat table a timed buff moves, folded in by Recompute — the one
+    // lift that hands worn words to every reader of those stats, player and creature alike, with no per-stat code. The
+    // gear sits on this same object for both kinds of unit; it is looked up once, and a change is noticed by comparing
+    // one number, never by walking the set.
+    UnitEquipment wornGear;
+    bool wornLooked;
+    int wornVersion = int.MinValue;
+    EquipBonuses worn;
+
+    bool WornChanged()
+    {
+        if (!wornLooked && this != null) { wornGear = GetComponent<UnitEquipment>(); wornLooked = true; }   // perf-ok: once per store
+        if (wornGear == null) return false;
+        int v = wornGear.Version;
+        if (v == wornVersion) return false;
+        wornVersion = v;
+        worn = wornGear.Bonuses;
+        return true;
+    }
+
+    /// <summary>Worn crit shield, as the LUK it is worth to the crit roll (Ironblood).</summary>
+    public int WornCritShieldLuk { get { EnsureFresh(); return UnitStatMath.CritShieldAsLuk(worn.wordCritShieldPercent); } }
+    /// <summary>How much shorter a disable or an ailment on this unit runs, as a fraction (Steadfast).</summary>
+    public float WornDisableCut { get { EnsureFresh(); return Mathf.Clamp01(worn.wordDisableCutPercent / 100f); } }
+    /// <summary>Extra chance to block with the off-hand, as a fraction (Guarding).</summary>
+    public float WornBlockChance { get { EnsureFresh(); return Mathf.Max(0f, worn.wordBlockPercent / 100f); } }
+    /// <summary>How much slower sprinting drains stamina, as a fraction (Tireless).</summary>
+    public float WornStaminaCut { get { EnsureFresh(); return Mathf.Clamp01(worn.wordStaminaCutPercent / 100f); } }
+    /// <summary>The worn cut to damage of <paramref name="attack"/>'s element, as a fraction (the garment wards).</summary>
+    public float WardAgainst(Element attack) { EnsureFresh(); return Mathf.Clamp01(ArmourWords.WardFraction(worn, attack)); }
 
     /// <summary>Slow × Haste move-speed multiplier (1 = normal). Does NOT include the caster's action-lock (casting /
     /// aftercast root) — that stays with the mover, exactly as <c>StatusController.MoveMult</c> layered it.</summary>
@@ -514,6 +557,52 @@ public class UnitStates : MonoBehaviour
     {
         if (seconds <= 0f) return;
         Apply(StateId.DisableImmune, seconds);
+    }
+
+    /// <summary>Convert this unit's weapon (<see cref="StateId.WeaponElement"/>) or armour (<see cref="StateId.ArmorElement"/>)
+    /// to <paramref name="element"/> for <paramref name="seconds"/>. REPLACES whatever converted that slot before, whichever
+    /// skill granted it: piles are keyed by the granting skill, so without clearing first a second converter would open
+    /// a pile beside the first instead of taking its place. Stacking is forced off whatever the applier asked for.</summary>
+    public void BeginElement(StateId slot, Element element, float seconds)
+    {
+        if (seconds <= 0f || (slot != StateId.WeaponElement && slot != StateId.ArmorElement)) return;
+        while (Find(slot) != null) Remove(slot);
+        bool askedToStack = ctxStacking;
+        ctxStacking = false;
+        Apply(slot, seconds, 0f, (int)element);
+        ctxStacking = askedToStack;
+    }
+
+    /// <summary>The element a converter has put on <paramref name="slot"/>, when one is running.</summary>
+    public bool TryConvertedElement(StateId slot, out Element element)
+    {
+        EnsureFresh();
+        var s = Find(slot);
+        if (s != null && s.stacks.Count > 0)
+        {
+            element = (Element)s.stacks[s.stacks.Count - 1].intAmount;
+            return true;
+        }
+        element = Element.Neutral;
+        return false;
+    }
+
+    /// <summary>What this unit's ordinary attacks land as: a weapon converter's element while one runs, otherwise
+    /// <paramref name="natural"/> (the weapon's, or the creature's own). The ONE answer both kinds of unit read.</summary>
+    public Element AttackElementOr(Element natural) =>
+        TryConvertedElement(StateId.WeaponElement, out var converted) ? converted : natural;
+
+    /// <summary>What this unit is hit as: an armour converter's element at <see cref="Elements.ConverterLevel"/> while
+    /// one runs, otherwise its own element at its own level. The ONE answer both kinds of unit read.</summary>
+    public Element DefendingElementOr(Element natural, int naturalLevel, out int level)
+    {
+        if (TryConvertedElement(StateId.ArmorElement, out var converted))
+        {
+            level = Elements.ConverterLevel;
+            return converted;
+        }
+        level = naturalLevel;
+        return natural;
     }
 
     /// <summary>Is every disable being turned away right now? Read by the flinch, the ailment door, the shove door and
@@ -987,6 +1076,62 @@ public class UnitStates : MonoBehaviour
     // Converting to a fraction happens ONCE, at each entry point (StatusController.Haste, Character.Buff*, the Slow
     // applies), so callers keep their natural units and the store keeps one meaning. Additive channels (guard cut,
     // vuln, DoT, shield, leech, reflect, blind) were always fractions and are unaffected.
+    // ---- written into the character's save, and read back ---------------------------------------------------------
+
+    /// <summary>Every live pile, for the character's save. Reads the piles WITHOUT sweeping out the expired ones: a
+    /// sweep would move delayed damage that just ran out into the running total, which is no pile and would be lost —
+    /// so that total rides along as a debt due at once. A taunt is never kept: it points at whoever taunted, who will
+    /// not exist when the save is read back, and a taunt nobody holds would stop every skill for its whole window.</summary>
+    public void CaptureForSave(List<SaveData.TimedEffect> into)
+    {
+        if (into == null) return;
+        into.Clear();
+        float now = Time.time;
+        for (int i = 0; i < active.Count; i++)
+        {
+            if (active[i].id == StateId.Taunt) continue;
+            var rec = TimedEffectSave.Capture(active[i], now);
+            if (rec != null) into.Add(rec);
+        }
+        if (pendingDebt > 0) into.Add(TimedEffectSave.DebtDueNow(pendingDebt));
+    }
+
+    /// <summary>Replace everything in this store with what a save says was running, each clock resuming where it
+    /// stopped. Server only — a player's machine is told its states by the server, never works them out. A pile from
+    /// a skill that no longer exists is dropped, because it would show as a tile with no name.</summary>
+    public void RestoreFromSave(SaveData.TimedEffect[] saved)
+    {
+        Clear();
+        if (saved == null || saved.Length == 0) return;
+        float now = Time.time;
+        for (int i = 0; i < saved.Length; i++)
+        {
+            var rec = saved[i];
+            if (!TimedEffectSave.TryKind(rec, out var id) || id == StateId.Taunt) continue;
+            string sourceId = rec.sourceSkillId ?? "";
+            var src = sourceId.Length > 0 ? SkillCatalog.Get(sourceId) : null;
+            if (sourceId.Length > 0 && src == null) continue;
+
+            var e = pool.Count > 0 ? pool.Pop() : new State();
+            if (!TimedEffectSave.Restore(rec, now, e)) { pool.Push(e); continue; }
+            e.id = id;
+            e.sourceSkillId = sourceId;
+            e.appliedBy = null;
+            e.symbol = src != null ? src.Symbol : "";
+            e.name = src != null ? src.displayName : "";
+            e.tint = id == StateId.DeferredDamage ? DebtTint : Color.white;
+            active.Add(e);
+
+            if (GameLog.On(LogCat.Buff))
+                GameLog.Info(LogCat.Buff, string.Concat(
+                    OwnerMap(), " ", e.id.ToString(), " x", e.stacks.Count.ToString(), " on ", OwnerName(),
+                    " from ", sourceId.Length == 0 ? "(unnamed)" : sourceId,
+                    " restored from the save, ", Mathf.Max(0f, e.endTime - now).ToString("0.##"), "s left"));
+        }
+        Recompute();
+        OnChanged?.Invoke();
+    }
+
     // ---- the server's word, on a machine that only watches -------------------------------------------------------
 
     /// <summary>ONE state as it crosses the wire — what the owner's machine needs in order to SHOW a pile and to
@@ -1150,6 +1295,9 @@ public class UnitStates : MonoBehaviour
                 // Pull drive MonsterAI3D directly — none contribute a cached scalar, they're timer + display entries.
             }
         }
+        // WHAT THE UNIT WEARS joins the same table (ArmourWords.FoldIntoSubStats owns the units).
+        ArmourWords.FoldIntoSubStats(worn, subStatBonus);
+
         // Bonuses → multipliers, once. Floored at 0 so a stack of debuff-shaped piles can't drive a multiplier negative
         // (which would flip damage into healing).
         aspdBuffMult = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.AttackSpeed]);

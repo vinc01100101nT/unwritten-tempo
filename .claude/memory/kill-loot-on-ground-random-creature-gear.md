@@ -1,6 +1,6 @@
 ---
 name: kill-loot-on-ground-random-creature-gear
-description: "Kill loot lands on the GROUND (held 10s for the killer, gone at 60s); gold still to the purse; creatures put on random gear per life (CreatureWardrobe), worn drop chance by rarity, and the hover/target panel lists worn pieces with drop % sent by the server. Built 2026-09-15, unplayed."
+description: "Kill loot lands on the GROUND (held 10s for the killer, gone at 60s); gold still to the purse; the hover/target panel lists worn pieces (grade + folds) sent by the server. The random creature wardrobe and worn drops described below were both REMOVED later. Built 2026-09-15, unplayed."
 metadata:
   node_type: memory
   type: project
@@ -14,10 +14,9 @@ earlier "a kill never leaves anything lying in the world" design.
   `ReserveFor(killer, KillerOnlySeconds 10, KillDropLifetimeSeconds 60)` + `GameNetwork.PublishDrop`.
   `NetPlayer.CmdPickUpDrop` refuses with `MayBeTakenBy`; `NetGroundDrop.Update` destroys an `Expired` drop on the server.
   Player-put-down drops have no reservation and still never expire.
-- **Random gear:** `UnitEquipment.SeatStartingGear` calls `CreatureWardrobe.FillEmptyPlaces` only when `WearsRandomGear`
-  (playing, server/offline, has `MonsterAI3D`, no `TrainingDummy`) — so never the player, never a watched copy. Wear chance
-  by copy rarity 40/30/20/10/5%; authored startingGear places are kept. `TrainingDummy.MakeOne` clears gear.
-- **Worn drop chance:** `LootDropper.WornDropChance(inst)` — 20/12/6/3/1% by rarity, ring 0.001%. The per-prefab
+- **Random gear: REMOVED 2026-09-22.** `CreatureWardrobe` is deleted; a creature wears exactly its authored
+  `startingGear`, at the `gearQuality`/`gearFolds`/`gearInkTier` on its `MonsterDef` (see [[creature-gear-state-authored]]).
+- **Worn drop chance (REMOVED by V4 — creatures drop nothing they wear):** `LootDropper.WornDropChance(inst)` — 20/12/6/3/1% by rarity, ring 0.001%. The per-prefab
   `wornDropChance` field was DELETED, and all 86 baked mob prefabs under `2_Generated/MobPrefabs` were re-saved on
   2026-09-15 so none carries it — the same save also dropped three older dead values (flashColor, flashTime, attackType).
   `AssetDatabase.ForceReserializeAssets` wrote NOTHING to these prefabs while reporting success;

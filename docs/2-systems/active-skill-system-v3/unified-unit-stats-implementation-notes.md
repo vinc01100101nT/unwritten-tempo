@@ -61,7 +61,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 `Tools ▸ unwritten ▸ Catalogs ▸ Mob Table`:
 
-- **Inline:** id, name, biome, boss flag, **LVL + STR/AGI/VIT/INT/DEX/LUK**, element/aElement, weight, XP, gold.
+- **Inline:** id, name, biome, boss flag, **LVL + STR/AGI/VIT/INT/DEX/LUK**, element, Element Lv, weight, XP, gold.
 - **`pts` column:** `spent/budget` — green on budget, **red over**, amber when a real chunk is unspent. Typing a value the level can't afford **snaps** to the highest that fits (`FitSpreadToBudget`), and only the field you edited is adjusted — untouched stats are never knocked down.
 - **Derived readouts** (`=HP/=ATK/=DEF/=FLEE`): read-only, computed live through `UnitStatMath`, so you edit the cause and see the effect. Sorting on them sorts the derived value.
 - **`▸` expander:** per-mob **equipment** (one object field per slot; an item is rejected if its slot doesn't match) and, when a ring is worn, its **ranks** with the % each is worth.

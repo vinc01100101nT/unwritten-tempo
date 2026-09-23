@@ -29,6 +29,9 @@ MonoBehaviour:
   dex: 15
   luk: 10
   startingGear: []
+  gearQuality: 3
+  gearFolds: 7
+  gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
   weaponMasteryLevel: 28
@@ -45,6 +48,7 @@ MonoBehaviour:
   preferredRange: 0
   fleeHpFraction: 0
   element: 1
+  elementLevel: 2
   attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0

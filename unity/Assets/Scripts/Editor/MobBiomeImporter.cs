@@ -135,7 +135,6 @@ public static class MobBiomeImporter
     static void ApplyStats(MonsterDef def, bool isBoss, int band, bool common, Biome biome)
     {
         def.element = BiomeElement(biome);
-        def.attackElement = Element.Neutral;
         def.tint = Color.white;
         def.touchRange = 0.9f;
         def.touchInterval = 1.0f;

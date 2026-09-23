@@ -65,6 +65,7 @@ before any game code runs, has no time and no category.
 | `hit` | `<map> CANNOT REACH <target> — it is <distance> away and this weapon reaches <reach>` |
 | `heal` | `<map> <unit> healed <amount> by <skill> [HP <now>/<max>]` — `by life steal` for life steal; no `by` for regeneration and `/heal` |
 | `buff` | `<map> <state> x<stacks> on <unit> from <skill id> for <seconds>s` — a state arriving or growing |
+| `buff` | `<map> <state> x<stacks> on <unit> from <skill id> restored from the save, <seconds>s left` — a state a character was carrying when it logged out or crossed to another server, back on it with the time it had left |
 | `buff` | `<map> <state> on <unit> from <skill id>: <n> <how>, <left> left` — a state losing stacks; `<how>` is `spent`, `ran out`, `used up` (a shield barrier broken by damage), `dropped over the stack limit`, `removed` or `cleared` (every state at once, as the unit starts a new life) |
 | `passive` | `<map> <unit> fired <skill id> on <trigger> at <target>, <distance> units away` |
 | `passive` | `<map> <unit> skipped <skill id> on <trigger> — <reason>` — `not switched on`, `target <d> units away, cast range <r>`, `already part of this chain`, `its required state is not met` |
@@ -98,7 +99,8 @@ A `hit` line that dealt 0 says why, after `— nothing got through:`
 | `blocked by an off-hand shield` | The target's off-hand shield blocked it |
 | `soaked by a shield barrier` | A Shield skill's barrier ate all of it |
 | `held back by a brace` | A Brace charge held it back — the damage is owed and comes due when the brace ends |
-| `immune to that element` | The target's armour element fully resists the blow's element |
+| `immune to that element` | The target's element, at its level, fully resists the blow's element |
+| `healed by its element` | The target's element, at its level, turns the blow into a heal — the `heal` line beside it says how much it gained |
 | `invincible` | The target has GM invincibility on (`/invuln`) |
 | `dodged` | The target was dashing through it |
 | `already dead` | The target was dead when the blow was resolved |

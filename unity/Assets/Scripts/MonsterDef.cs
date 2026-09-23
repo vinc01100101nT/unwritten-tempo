@@ -60,9 +60,18 @@ public class MonsterDef : ScriptableObject
 
     [Header("Equipment — the SAME items the player wears")]
     [Tooltip("Gear this creature spawns wearing, one piece per slot (the slot comes from the Item itself). Every " +
-             "piece is Raw and unfolded, the same as one straight out of a forge, and none of it drops: a creature " +
-             "gives up materials, consumables and gold, never what it is wearing.")]
+             "piece comes to life at the three settings below, and none of it drops: a creature gives up materials, " +
+             "consumables and gold, never what it is wearing.")]
     public Item[] startingGear = System.Array.Empty<Item>();
+    [Tooltip("THE GRADE every piece this creature wears comes to life at — Raw through A, the same ladder a quench " +
+             "climbs. It decides the fold cap and HOW MANY stats Ink writes on each piece (Raw none, F one, up to A six).")]
+    public Quality gearQuality = Quality.Raw;
+    [Tooltip("How many times every piece this creature wears is folded. Each fold is the piece's own attack or " +
+             "defence. Never past the grade's cap: Raw 5, F 10, E 15, D 20, C 25, B 30, A 35.")]
+    public int gearFolds;
+    [Tooltip("Which Ink writes the stats on every piece this creature wears — 1 Watery, 2 Thin, 3 Faint, 4 Clear, " +
+             "5 Sharp. WHICH stats are written is rolled fresh each life, exactly as a station rolls one.")]
+    [Range(1, 5)] public int gearInkTier = 1;
     [Tooltip("Which stats this creature's ring has invested in. Parallel to Ring Rank Values. The ring is part of "+
              "the creature, so these always count — nothing has to be worn.")]
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
@@ -105,10 +114,12 @@ public class MonsterDef : ScriptableObject
     [Range(0f, 1f)] public float fleeHpFraction = 0f;
 
     [Header("Element & status (RO)")]
-    [Tooltip("This mob's ARMOR property — what the player's attacks are checked against.")]
+    [Tooltip("This mob's element — what its ordinary attacks land as, AND what it is hit as. A creature attacks and " +
+             "defends with its nature.")]
     public Element element = Element.Neutral;
-    [Tooltip("This mob's OUTGOING property — checked vs the player's armor.")]
-    public Element attackElement = Element.Neutral;
+    [Tooltip("How strongly its element resists and is weak, 1 to 4 (Ragnarok's element levels). Only the defending " +
+             "side has a level — an attack never does. Level 3 and 4 heal from their own element.")]
+    [Range(1, 4)] public int elementLevel = 1;
     [Tooltip("Ailment inflicted on the player when a hit lands. Chance 0 below = inflicts nothing (the type is ignored).")]
     public Ailment onHitAilment = Ailment.Poison;
     [Range(0f, 1f)] public float onHitAilmentChance = 0f;
@@ -149,6 +160,9 @@ public class MonsterDef : ScriptableObject
             // here, so there is no second copy able to disagree with the formulas.
             stats = u,
             startingGear = startingGear,
+            gearQuality = gearQuality,
+            gearFolds = gearFolds,
+            gearInkTier = gearInkTier,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
             weaponMasteryLevel = weaponMasteryLevel,
@@ -170,7 +184,6 @@ public class MonsterDef : ScriptableObject
             preferredRange = preferredRange,
             fleeHpFraction = fleeHpFraction,
             element = element,
-            attackElement = attackElement,
             onHitAilment = onHitAilment,
             onHitAilmentChance = onHitAilmentChance,
             onHitAilmentSeconds = onHitAilmentSeconds,

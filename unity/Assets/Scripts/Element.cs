@@ -7,9 +7,10 @@ using UnityEngine;
 /// on the water one" real — the single defining RO combat system that the Physical/Magic split alone
 /// couldn't express.
 ///
-/// Simplified to a single element LEVEL for the MVP (real RO has 4 levels per property with a bigger
-/// chart); the SYSTEM is here and the table below is easy to re-tune. Neutral-vs-Neutral is always 1.0,
-/// so any attack/defender left at the default <see cref="Element.Neutral"/> behaves exactly as before.
+/// A DEFENDING element has a LEVEL, 1 to 4, and the level amplifies what it resists and what it is weak to —
+/// Ragnarok's four pre-renewal tables, copied cell for cell. An ATTACK has no level. A negative value means the
+/// hit HEALS the defender instead of hurting it (<see cref="Elements.ElementHeal"/>). Neutral against Neutral is
+/// always 1.0, so an attack and a defender left at the default <see cref="Element.Neutral"/> are unaffected.
 /// </summary>
 public enum Element
 {
@@ -29,26 +30,94 @@ public static class Elements
 {
     public const int Count = 10;
 
-    // Damage multiplier table: T[attack, defense]. Approximates the RO level-1 armor chart, simplified
-    // into clean 0 / 0.25 / 0.5 / 1.0 / 1.5 / 1.75 / 2.0 steps. Rows = the ATTACK element, columns = the
-    // DEFENDER's armor element (order matches the Element enum). Tune freely — the gameplay is the chart.
-    //                            Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
-    static readonly float[,] T = {
-        /* Neutral */          { 1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,0.25f,1.00f },
-        /* Water   */          { 1.00f,0.50f,1.00f,1.50f,0.50f,1.00f,1.00f,1.00f,1.00f,1.00f },
-        /* Earth   */          { 1.00f,1.00f,0.50f,0.50f,1.50f,1.00f,1.00f,1.00f,1.00f,1.00f },
-        /* Fire    */          { 1.00f,0.50f,1.50f,0.50f,1.00f,1.25f,1.00f,1.00f,1.00f,1.75f },
-        /* Wind    */          { 1.00f,1.50f,0.50f,1.00f,0.50f,1.00f,1.00f,1.00f,1.00f,1.00f },
-        /* Poison  */          { 1.00f,1.00f,1.00f,1.00f,1.00f,0.50f,0.50f,1.00f,1.00f,0.00f },
-        /* Holy    */          { 1.00f,1.00f,1.00f,1.00f,1.00f,1.25f,0.25f,1.50f,1.00f,2.00f },
-        /* Shadow  */          { 1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.50f,0.25f,1.00f,0.25f },
-        /* Ghost   */          { 1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.50f,1.00f },
-        /* Undead  */          { 1.00f,1.00f,1.00f,1.00f,1.00f,1.00f,1.50f,1.00f,1.00f,0.25f },
+    /// <summary>The highest level a defending element can have.</summary>
+    public const int MaxLevel = 4;
+
+    /// <summary>The level an armour converter defends at. Decided 2026-09-23: converters are level 1 only — levels 2 to
+    /// 4 belong to creatures' own nature.</summary>
+    public const int ConverterLevel = 1;
+
+    // THE CHART, in whole percent: Percent[level − 1, attack, defense]. Ragnarok's pre-renewal element tables
+    // (rAthena db/pre-re/attr_fix.yml, sha256 f785222b…a7a6), copied cell for cell — Dark there is Shadow here.
+    // Rows = the ATTACK element, columns = the DEFENDING element, both in Element enum order. Whole percent so no
+    // hand-typed decimal can drift from the source; a value below zero heals the defender.
+    static readonly int[,,] Percent =
+    {
+        {
+            // Level 1
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,   25,  100 },
+            /* Wat */ {  100,   25,  100,  150,   50,  100,   75,  100,  100,  100 },
+            /* Ear */ {  100,  100,  100,   50,  150,  100,   75,  100,  100,  100 },
+            /* Fir */ {  100,   50,  150,   25,  100,  100,   75,  100,  100,  125 },
+            /* Win */ {  100,  175,   50,  100,   25,  100,   75,  100,  100,  100 },
+            /* Poi */ {  100,  100,  125,  125,  125,    0,   75,   50,  100,  -25 },
+            /* Hol */ {  100,  100,  100,  100,  100,  100,    0,  125,  100,  150 },
+            /* Sha */ {  100,  100,  100,  100,  100,   50,  125,    0,  100,  -25 },
+            /* Gho */ {   25,  100,  100,  100,  100,  100,   75,   75,  125,  100 },
+            /* Und */ {  100,  100,  100,  100,  100,   50,  100,    0,  100,    0 },
+        },
+        {
+            // Level 2
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,   25,  100 },
+            /* Wat */ {  100,    0,  100,  175,   25,  100,   50,   75,  100,  100 },
+            /* Ear */ {  100,  100,   50,   25,  175,  100,   50,   75,  100,  100 },
+            /* Fir */ {  100,   25,  175,    0,  100,  100,   50,   75,  100,  150 },
+            /* Win */ {  100,  175,   25,  100,    0,  100,   50,   75,  100,  100 },
+            /* Poi */ {  100,   75,  125,  125,  125,    0,   50,   25,   75,  -50 },
+            /* Hol */ {  100,  100,  100,  100,  100,  100,  -25,  150,  100,  175 },
+            /* Sha */ {  100,  100,  100,  100,  100,   25,  150,  -25,  100,  -50 },
+            /* Gho */ {    0,   75,   75,   75,   75,   75,   50,   50,  150,  125 },
+            /* Und */ {  100,   75,   75,   75,   75,   25,  125,    0,  100,    0 },
+        },
+        {
+            // Level 3
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,    0,  100 },
+            /* Wat */ {  100,  -25,  100,  200,    0,  100,   25,   50,  100,  125 },
+            /* Ear */ {  100,  100,    0,    0,  200,  100,   25,   50,  100,   75 },
+            /* Fir */ {  100,    0,  200,  -25,  100,  100,   25,   50,  100,  175 },
+            /* Win */ {  100,  200,    0,  100,  -25,  100,   25,   50,  100,  100 },
+            /* Poi */ {  100,   50,  100,  100,  100,    0,   25,    0,   50,  -75 },
+            /* Hol */ {  100,  100,  100,  100,  100,  125,  -50,  175,  100,  200 },
+            /* Sha */ {  100,  100,  100,  100,  100,    0,  175,  -50,  100,  -75 },
+            /* Gho */ {    0,   50,   50,   50,   50,   50,   25,   25,  175,  150 },
+            /* Und */ {  100,   50,   50,   50,   50,    0,  150,    0,  100,    0 },
+        },
+        {
+            // Level 4
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,    0,  100 },
+            /* Wat */ {  100,  -50,  100,  200,    0,   75,    0,   25,  100,  150 },
+            /* Ear */ {  100,  100,  -25,    0,  200,   75,    0,   25,  100,   50 },
+            /* Fir */ {  100,    0,  200,  -50,  100,   75,    0,   25,  100,  200 },
+            /* Win */ {  100,  200,    0,  100,  -50,   75,    0,   25,  100,  100 },
+            /* Poi */ {  100,   25,   75,   75,   75,    0,    0,  -25,   25, -100 },
+            /* Hol */ {  100,   75,   75,   75,   75,  125, -100,  200,  100,  200 },
+            /* Sha */ {  100,   75,   75,   75,   75,  -25,  200, -100,  100, -100 },
+            /* Gho */ {    0,   25,   25,   25,   25,   25,    0,    0,  200,  175 },
+            /* Und */ {  100,   25,   25,   25,   25,  -25,  175,    0,  100,    0 },
+        },
     };
 
-    /// <summary>How effective <paramref name="attack"/> is against an <paramref name="defense"/>-element
-    /// defender: 1.0 = normal, &gt;1 = super-effective, &lt;1 = resisted, 0 = immune.</summary>
-    public static float Modifier(Element attack, Element defense) => T[(int)attack, (int)defense];
+    /// <summary>How effective <paramref name="attack"/> is against a defender of <paramref name="defense"/> at
+    /// <paramref name="defenseLevel"/> (1–4; anything outside is held to that range): 1.0 = normal, &gt;1 = weak to it,
+    /// &lt;1 = resisted, 0 = immune, below 0 = the hit heals the defender.</summary>
+    public static float Modifier(Element attack, Element defense, int defenseLevel) =>
+        Percent[Mathf.Clamp(defenseLevel, 1, MaxLevel) - 1, (int)attack, (int)defense] / 100f;
+
+    /// <summary>The chart's answer after a worn ward (a garment's Emberward, Tideward, Stoneward or Galeward) of
+    /// <paramref name="ward"/> — a fraction — against the attack's element. A ward only ever cuts DAMAGE: an immune
+    /// or a healing answer (0 or below) is left exactly as it is.</summary>
+    public static float Warded(float modifier, float ward) =>
+        modifier > 0f ? modifier * (1f - Mathf.Clamp01(ward)) : modifier;
+
+    /// <summary>The health a defender GAINS from a hit its element turns into a heal (<paramref name="modifier"/> below
+    /// zero): what the hit would have dealt after defence, times how far below zero the chart goes. Held to at least 1,
+    /// the same floor a hit that lands has; defence bigger than the attack counts as nothing through, so it gives 1.</summary>
+    public static int ElementHeal(float afterDefense, float modifier) =>
+        Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(0f, afterDefense) * -modifier));
 
     /// <summary>True if the matchup is notably strong (pops a "Weak!" cue over the target).</summary>
     public static bool IsStrong(float mod) => mod > 1.05f;

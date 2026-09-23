@@ -278,15 +278,22 @@ public static class UnitStatMath
         Scale(u.baseMagicDefense + u.magicDefensePerLevel * (u.level - 1) + u.intel / MdefPerInt + eb.mdef, ringPct);
 
     // ---- accuracy / evasion -------------------------------------------------------------------------------------
-    public static int Hit(in UnitStatInputs u, float ringPct) =>
-        Scale(u.level + u.dex * HitPerDex + u.luk / LukPerHit, ringPct);
+    // Worn accuracy and evasion (Ink lines, and a leather piece's folds) add straight in, before the ring's lift —
+    // the same place worn defence joins the defence sum above.
+    public static int Hit(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+        Scale(u.level + u.dex * HitPerDex + u.luk / LukPerHit + eb.accuracy, ringPct);
 
-    public static int Flee(in UnitStatInputs u, float ringPct) =>
-        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + StatJumpBonus(u.agi) + u.luk / LukPerFlee) * (1f + ringPct));
+    public static int Flee(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + StatJumpBonus(u.agi) + u.luk / LukPerFlee + eb.evasion)
+                         * (1f + ringPct));
 
     // ---- crit / speeds ------------------------------------------------------------------------------------------
     /// <summary>The chance one swing crits against a defender with <paramref name="targetLuk"/> LUK: the attacker's
     /// crit chance minus the defender's crit shield, held inside [0, 95%]. The same sum for a player and a mob.</summary>
+    /// <summary>A worn crit shield of <paramref name="percent"/> (whole percent off crit chance) expressed as the LUK it
+    /// is worth to the crit roll, so it joins the one crit-shield sum below instead of opening a second one.</summary>
+    public static int CritShieldAsLuk(float percent) => Mathf.RoundToInt(percent / (CritShieldPerLuk * 100f));
+
     public static float EffectiveCritChance(float critChance01, int targetLuk) =>
         Mathf.Clamp(critChance01 - targetLuk * CritShieldPerLuk, 0f, 0.95f);
 

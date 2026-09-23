@@ -131,6 +131,68 @@ static class Checks
             }
     }
 
+    // ---- armour words --------------------------------------------------------------------------------
+    // Decided 2026-09-23: each armour slot rolls one of ITS OWN words, and no word lives on two slots, so a character
+    // can never wear the same word twice. A wrong answer here is silent — a word that does nothing reads as a word.
+    const string WordsF = "unity/Assets/Scripts/ArmourWords.cs";
+
+    static void ArmourWordRules()
+    {
+        var seen = new Dictionary<ArmourWord, EquipSlotType>();
+        foreach (EquipSlotType slot in Enum.GetValues(typeof(EquipSlotType)))
+            foreach (var w in ArmourWords.For(slot))
+            {
+                That(!seen.ContainsKey(w), WordsF, w + " can roll on two slots");
+                seen[w] = slot;
+            }
+        foreach (ArmourWord w in Enum.GetValues(typeof(ArmourWord)))
+        {
+            if (w == ArmourWord.None) continue;
+            That(seen.ContainsKey(w), WordsF, w + " belongs to no slot, so it can never roll");
+            That(ArmourWords.Amount(w, Quality.Raw) > 0f, WordsF, w + " is worth nothing at Raw");
+            That(ArmourWords.Amount(w, Quality.A) > ArmourWords.Amount(w, Quality.Raw), WordsF, w + " does not grow with grade");
+        }
+        That(ArmourWords.For(EquipSlotType.Weapon).Length == 0, WordsF, "a weapon can roll an armour word");
+
+        // The agreed first numbers, as literals.
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Bulwark, Quality.A) - 8f) < 0.001f, WordsF, "Bulwark at A should be 8%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Fleet, Quality.A) - 10f) < 0.001f, WordsF, "Fleet at A should be 10%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Emberward, Quality.A) - 15f) < 0.001f, WordsF, "a ward at A should be 15%");
+
+        // Ironblood's percentage reaches the crit roll as the LUK it is worth: 7.5% at 0.3% a point is 25 LUK.
+        That(UnitStatMath.CritShieldAsLuk(7.5f) == 25, StatMath, "7.5% crit shield should be worth 25 LUK");
+        // A quarter cut takes a quarter off; a ward cuts damage but never touches immunity or a heal.
+        That(Math.Abs(ArmourWords.CutBy(8f, 0.25f) - 6f) < 0.001f, WordsF, "a 25% cut of 8 should be 6");
+        That(Math.Abs(Elements.Warded(1.5f, 0.1f) - 1.35f) < 0.001f, ElementF, "a 10% ward on 150% should leave 135%");
+        That(Elements.Warded(0f, 0.5f) == 0f && Elements.Warded(-0.5f, 0.5f) == -0.5f, ElementF,
+             "a ward must never change an immune or a healing answer");
+        // A worn word lands in the sub-stat table in that stat's own units.
+        var table = new float[SubStats.All.Length];
+        var eb = default(EquipBonuses);
+        ArmourWords.AddWord(ArmourWord.Fleet, 10f, ref eb);
+        ArmourWords.AddWord(ArmourWord.Wellspring, 2.5f, ref eb);
+        ArmourWords.FoldIntoSubStats(eb, table);
+        That(Math.Abs(table[(int)SubStat.MovementSpeed] - 0.1f) < 0.0001f, WordsF, "Fleet 10% should be +0.10 movement speed");
+        That(Math.Abs(table[(int)SubStat.MPRegen] - 2.5f) < 0.0001f, WordsF, "Wellspring 2.5 should be +2.5 MP a second");
+        // Block chance with a worn extra never makes a wall.
+        That(Math.Abs(Combat.BlockChance(0.05f, 0.08f) - 0.13f) < 0.001f, CombatF, "5% block + 8% Guarding should be 13%");
+        That(Combat.BlockChance(0.9f, 0.5f) <= 0.95f + 0.0001f, CombatF, "block chance passed 95%");
+    }
+
+    // ---- worn accuracy and evasion reach the roll -----------------------------------------------------
+    // Pinned because it was silently dead: Ink wrote Evasion and Accuracy onto gear, the character sheet showed them,
+    // and the roll that decides a hit never read either. Ten worn points must move the number by ten.
+    static void WornAccuracyAndEvasion()
+    {
+        var u = UnitStatInputs.Default(10);
+        var none = default(EquipBonuses);
+        var worn = new EquipBonuses { accuracy = 10, evasion = 10 };
+        That(UnitStatMath.Hit(u, worn, 0f) - UnitStatMath.Hit(u, none, 0f) == 10, StatMath,
+             "10 worn accuracy should add exactly 10 to HIT");
+        That(UnitStatMath.Flee(u, worn, 0f) - UnitStatMath.Flee(u, none, 0f) == 10, StatMath,
+             "10 worn evasion should add exactly 10 to FLEE");
+    }
+
     // ---- the jump every ten points of a primary -------------------------------------------------------
     // A jump that shrinks, or lands off a multiple of ten, shows only as a build that "feels flat". The two
     // literals are the promise from the action plan: crossing 10 adds 4, crossing 100 adds 22.
@@ -190,16 +252,51 @@ static class Checks
              "the element table is sized " + Elements.Count + " but there are " + members + " elements");
         if (Elements.Count != members) return;
 
-        foreach (Element attack in Enum.GetValues(typeof(Element)))
-            foreach (Element armour in Enum.GetValues(typeof(Element)))
-            {
-                float m = Elements.Modifier(attack, armour);
-                That(!float.IsNaN(m) && !float.IsInfinity(m), ElementF,
-                     attack + " against " + armour + " is not a real number");
-                That(m >= 0f, ElementF, attack + " against " + armour + " is negative: " + m);
-            }
-        That(Math.Abs(Elements.Modifier(Element.Neutral, Element.Neutral) - 1f) < 0.001f, ElementF,
+        // rAthena accepts −100 to 200 in its element file, so anything outside that is a typing slip.
+        for (int level = 1; level <= Elements.MaxLevel; level++)
+            foreach (Element attack in Enum.GetValues(typeof(Element)))
+                foreach (Element armour in Enum.GetValues(typeof(Element)))
+                {
+                    float m = Elements.Modifier(attack, armour, level);
+                    That(!float.IsNaN(m) && !float.IsInfinity(m), ElementF,
+                         attack + " against level-" + level + " " + armour + " is not a real number");
+                    That(m >= -1f && m <= 2f, ElementF,
+                         attack + " against level-" + level + " " + armour + " is outside −1..2: " + m);
+                }
+        That(Math.Abs(Elements.Modifier(Element.Neutral, Element.Neutral, 1) - 1f) < 0.001f, ElementF,
              "plain against plain should be exactly one");
+
+        // Cells pinned against Ragnarok's pre-renewal tables — the design promises those, copied exactly.
+        ElementCell(Element.Fire, Element.Fire, 1, 0.25f);
+        ElementCell(Element.Fire, Element.Fire, 2, 0f);
+        ElementCell(Element.Fire, Element.Fire, 3, -0.25f);
+        ElementCell(Element.Fire, Element.Fire, 4, -0.5f);
+        ElementCell(Element.Neutral, Element.Ghost, 1, 0.25f);
+        ElementCell(Element.Neutral, Element.Ghost, 2, 0.25f);
+        ElementCell(Element.Neutral, Element.Ghost, 3, 0f);
+        ElementCell(Element.Neutral, Element.Ghost, 4, 0f);
+        ElementCell(Element.Wind, Element.Water, 1, 1.75f);
+        ElementCell(Element.Earth, Element.Earth, 1, 1f);
+        ElementCell(Element.Poison, Element.Undead, 1, -0.25f);
+        ElementCell(Element.Holy, Element.Holy, 4, -1f);
+        ElementCell(Element.Ghost, Element.Neutral, 1, 0.25f);
+        ElementCell(Element.Water, Element.Fire, 3, 2f);
+        // A level outside 1..4 is held to that range rather than reading past the table.
+        ElementCell(Element.Fire, Element.Fire, 0, 0.25f);
+        ElementCell(Element.Fire, Element.Fire, 9, -0.5f);
+
+        // A hit turned into a heal gives what it would have dealt, times how far below zero the chart goes.
+        That(Elements.ElementHeal(100f, -0.5f) == 50, ElementF,
+             "100 after defence at −50% should heal 50, got " + Elements.ElementHeal(100f, -0.5f));
+        That(Elements.ElementHeal(-40f, -0.5f) == 1, ElementF,
+             "defence bigger than the attack should still heal the floor of 1, got " + Elements.ElementHeal(-40f, -0.5f));
+    }
+
+    static void ElementCell(Element attack, Element armour, int level, float want)
+    {
+        float got = Elements.Modifier(attack, armour, level);
+        That(Math.Abs(got - want) < 0.001f, ElementF,
+             attack + " against level-" + level + " " + armour + " should be " + want + ", got " + got);
     }
 
     // ---- the passive ring -----------------------------------------------------------------------------
@@ -263,17 +360,32 @@ static class Checks
         foreach (var grade in grades)
             for (int folds = 0; folds <= CraftingMath.FoldCap(grade); folds++)
             {
-                CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, folds, grade,
-                                          out int atk, out _, out _, out _);
+                int atk = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, folds, grade).attack;
                 That(atk >= folds, CraftF, grade + " +" + folds + " is worth " + atk + " attack, below its own folds");
                 if (folds == 0) That(atk == 0, CraftF, "an unfolded " + grade + " piece is worth " + atk);
             }
 
-        // Every armour place gains one of the two defences, and a weapon gains one of the two attacks.
-        CraftingMath.PieceNumbers(EquipSlotType.Garment, WeaponType.None, 10, Quality.A, out _, out _, out int gDef, out int gMDef);
-        That(gDef == 0 && gMDef > 0, CraftF, "a garment's folds no longer go to magic defence alone");
-        CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, 10, Quality.A, out int sAtk, out int sMAtk, out _, out _);
-        That(sAtk == 0 && sMAtk > 0, CraftF, "a caster's weapon no longer folds into magic attack");
+        // A caster's weapon folds into magic attack.
+        var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.Metal, 10, Quality.A);
+        That(staff.attack == 0 && staff.magicAttack > 0, CraftF, "a caster's weapon no longer folds into magic attack");
+
+        // An armour piece's MATERIAL decides what a fold buys; its SLOT how much (decided 2026-09-23). The literals are
+        // the agreed table: body armour at A +35 is 23 defence and 182 HP in metal, 11.4% attack speed and 11 evasion
+        // in leather, 23 magic defence and 91 MP in cloth; a head or shoes take half.
+        var metal = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
+        That(metal.defense == 23 && metal.hp == 182 && metal.magicDefense == 0 && metal.evasion == 0, CraftF,
+             "metal body armour at A +35 should be 23 defence and 182 HP, got " + metal.defense + " and " + metal.hp);
+        var leather = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Leather, 35, Quality.A);
+        That(Math.Abs(leather.attackSpeedPercent - 11.4f) < 0.001f && leather.evasion == 11 && leather.defense == 0, CraftF,
+             "leather body armour at A +35 should be 11.4% attack speed and 11 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
+        var cloth = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Cloth, 35, Quality.A);
+        That(cloth.magicDefense == 23 && cloth.mp == 91 && cloth.defense == 0, CraftF,
+             "cloth body armour at A +35 should be 23 magic defence and 91 MP, got " + cloth.magicDefense + " and " + cloth.mp);
+        var shoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
+        That(shoes.defense == 11 && shoes.hp == 91, CraftF,
+             "metal shoes at A +35 should take half: 11 defence and 91 HP, got " + shoes.defense + " and " + shoes.hp);
+        var bare = CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.None, 35, Quality.A);
+        That(bare.defense == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should fold into nothing");
     }
 
     // ---- a quench's odds, with and without Salt ---------------------------------------------------------
@@ -472,6 +584,54 @@ static class Checks
              "ten stacks of +3% (0.03 each) no longer multiply by 1.3: " + pile.Mult);
     }
 
+    // ---- a timed effect's clock stops while its owner is away -----------------------------------------
+    // Decided 2026-09-23: only death ends a timed effect, and logging out PAUSES it. A wrong answer here is silent —
+    // a buff that comes back with the wrong time left looks exactly like a buff.
+    const string SaveF = "unity/Assets/Scripts/TimedEffectSave.cs";
+
+    static void TimedEffectPause()
+    {
+        // Saved at game-time 100 with 30s left on one stack and 5s on another; read back on a server whose clock says 5.
+        var live = new UnitStates.State { id = StateId.MaxHP, stacking = true, startTime = 90f, nextTick = 100.4f, description = "d" };
+        live.stacks.Add(new UnitStates.State.Stack { endTime = 130f, magnitude = 0.2f, intAmount = 3 });
+        live.stacks.Add(new UnitStates.State.Stack { endTime = 105f, magnitude = 0.1f, intAmount = 4 });
+        live.stacks.Add(new UnitStates.State.Stack { endTime = 99f,  magnitude = 9f,   intAmount = 9 });
+        live.Refold();
+        float fracBefore = (130f - 100f) / (130f - 90f);
+
+        var rec = TimedEffectSave.Capture(live, 100f);
+        That(rec != null && rec.stackSecondsLeft.Length == 2, SaveF,
+             "a stack with no time left should be dropped, keeping 2 — kept " + (rec == null ? "nothing" : rec.stackSecondsLeft.Length.ToString()));
+        if (rec == null) return;
+        That(TimedEffectSave.TryKind(rec, out var kind) && kind == StateId.MaxHP, SaveF, "the saved kind should read back as MaxHP");
+
+        var back = new UnitStates.State();
+        That(TimedEffectSave.Restore(rec, 5f, back), SaveF, "a record with stacks in it should restore");
+        That(Math.Abs(back.endTime - 35f) < 0.001f, SaveF,
+             "30s left, restored at 5, should end at 35 (the clock paused) — ends at " + back.endTime);
+        That(back.stacks.Count == 2 && Math.Abs(back.stacks[1].endTime - 10f) < 0.001f, SaveF,
+             "each stack keeps its own time left: the 5s one should end at 10");
+        That(Math.Abs(back.magnitude - 0.3f) < 0.0001f && back.intAmount == 7, SaveF,
+             "the totals rebuilt from the stacks should be 0.3 and 7, got " + back.magnitude + " and " + back.intAmount);
+        float fracAfter = (back.endTime - 5f) / (back.endTime - back.startTime);
+        That(Math.Abs(fracAfter - fracBefore) < 0.001f, SaveF,
+             "the tray's fill should read the same before and after: " + fracBefore + " vs " + fracAfter);
+        That(Math.Abs(back.nextTick - 5.4f) < 0.001f, SaveF,
+             "0.4s to the next tick should still be 0.4s after the pause, got " + (back.nextTick - 5f));
+
+        // Delayed damage already due when the save was written is still owed — due the moment it is read back.
+        var debt = new UnitStates.State { id = StateId.DeferredDamage, stacking = true, startTime = 90f };
+        debt.stacks.Add(new UnitStates.State.Stack { endTime = 99f, intAmount = 40 });
+        debt.Refold();
+        var owed = TimedEffectSave.Capture(debt, 100f);
+        That(owed != null && owed.stackSecondsLeft.Length == 1 && owed.stackSecondsLeft[0] == 0f, SaveF,
+             "delayed damage past its time must be kept, due at once — not dropped");
+
+        // A name the game no longer has is refused rather than guessed at.
+        That(!TimedEffectSave.TryKind(new SaveData.TimedEffect { kind = "Slow" }, out _), SaveF,
+             "a removed state's name must not read back as some other state");
+    }
+
     // ---- regen is paid per SECOND ---------------------------------------------------------------------
     // Pinned because it broke: regen was authored per tick and labelled per second, so the 0.8s tick healed 25% more
     // than any screen said. The rule now lives in the one payout health and mana both use, so it is checked there:
@@ -504,12 +664,15 @@ static class Checks
         AccuracyAndDefence();
         StatJumps();
         ElementChart();
+        WornAccuracyAndEvasion();
+        ArmourWordRules();
         Ring();
         QualityLadder();
         QuenchOdds();
         InkRoll();
         MasteryCurve();
         BuffBonus();
+        TimedEffectPause();
         RegenPerSecond();
 
         if (failures == 0)

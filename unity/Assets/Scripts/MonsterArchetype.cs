@@ -28,6 +28,11 @@ public struct MonsterArchetype
     // wearing it gates the percentage layer (same rule as the player) and it's also what can drop
     // — see LootDropper.RingDropChance.
     public Item[] startingGear;
+    /// <summary>The grade, folds and Ink strength every worn piece comes to life at — the creature's own three
+    /// settings, carried through untouched.</summary>
+    public Quality gearQuality;
+    public int gearFolds;
+    public int gearInkTier;
     public StatId[] ringRankStats;
     public int[] ringRankValues;
 
@@ -49,10 +54,11 @@ public struct MonsterArchetype
     // Behavior style (see MonsterAI3D): 0 preferredRange = melee; fleeHpFraction 0 = never flee.
     public float preferredRange, fleeHpFraction;
 
-    // Element & status (RO). `element` = this mob's ARMOR property (what the player's attacks are checked
-    // against — Fire vs Earth = Weak!, etc.); `attackElement` = its OUTGOING property. On-hit ailment is
-    // inflicted on the player when a hit lands (chance 0 = this mob inflicts no status).
-    public Element element, attackElement;
+    // Element & status (RO). `element` = this mob's element, which its ordinary attacks carry AND which it is hit as
+    // (Fire vs Earth = Weak!, etc.). Its level is not carried here: MobSpawner copies it from the creature data onto
+    // Health at spawn. On-hit ailment is inflicted on the player when a hit lands (chance 0 = this mob inflicts no
+    // status).
+    public Element element;
     public Ailment onHitAilment;
     public float onHitAilmentChance, onHitAilmentSeconds, onHitAilmentMagnitude;
 

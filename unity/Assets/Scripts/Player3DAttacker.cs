@@ -60,7 +60,7 @@ public class Player3DAttacker : MonoBehaviour
     /// <summary>The FULL-SIZE reach before unit-scaling: the equipped weapon's <see cref="Item.attackRange"/> when it
     /// sets one (Weapon slot, &gt; 0 — a bow/spear reaches farther than a fist), else the attacker's own default
     /// <see cref="range"/> (unarmed / the standalone spike with no Character). Read at use-time from the equipped
-    /// weapon — same pattern as <see cref="MeleeElement"/>, the audio lookup, and the stance brain — so there's no per-equip copy to
+    /// weapon — same pattern as the audio lookup and the stance brain — so there's no per-equip copy to
     /// keep in sync; the Item stays the single owner of weapon reach.</summary>
     public float BaseRange
         => Character.Instance != null ? Character.Instance.MeleeReachFullSize
@@ -80,13 +80,6 @@ public class Player3DAttacker : MonoBehaviour
     public float RangeAgainst(Health t)
         => BaseRange * UnitScale.MeleeBlend(UnitScale.CharacterScale,
                                             t != null ? t.MeleeScale : UnitScale.MobScale);
-
-    /// <summary>The attack ELEMENT applied to basic swings and (as the default) skill strikes: the equipped weapon's
-    /// <see cref="Item.element"/> — the weapon is the single owner of its element — or Neutral when unarmed / there's
-    /// no Character (the standalone spike). Read at use-time from the equipped weapon, same pattern as
-    /// <see cref="BaseRange"/> and the audio/stance lookups, so there's no per-equip copy to keep in sync.</summary>
-    public Element MeleeElement
-        => Character.Instance != null ? Character.Instance.BasicElement : Element.Neutral;
 
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= RangeAgainst(t);

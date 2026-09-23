@@ -67,6 +67,7 @@ public class MobTableWindow : EditorWindow
             "weight" => (a, b) => a.weight.CompareTo(b.weight),
             "xp"     => (a, b) => a.xpReward.CompareTo(b.xpReward),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
+            "elemlv" => (a, b) => a.elementLevel.CompareTo(b.elementLevel),
             _        => (a, b) => string.Compare(a.id, b.id, System.StringComparison.OrdinalIgnoreCase),
         };
         _defs.Sort((a, b) => (_sortAsc ? 1 : -1) * cmp(a, b));
@@ -127,7 +128,7 @@ public class MobTableWindow : EditorWindow
         new Col("=DEF",  null,     44),
         new Col("=FLEE", null,     46),
         new Col("elem",  "elem",   84),
-        new Col("aElem", null,     84),
+        new Col("Element Lv", "elemlv", 70),
         new Col("wt",    "weight", 38),
         new Col("XP",    "xp",     46),
         new Col("g.min", null,     46),
@@ -255,7 +256,7 @@ public class MobTableWindow : EditorWindow
         DrawDerived(Next(), Derived(def, DerivedStat.Def));
         DrawDerived(Next(), Derived(def, DerivedStat.Flee));
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
-        var aElem    = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.attackElement);
+        int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
         int xp       = EditorGUI.IntField(VCenter(Next(), 18), def.xpReward);
         int gMin     = EditorGUI.IntField(VCenter(Next(), 18), def.goldMin);
@@ -274,7 +275,7 @@ public class MobTableWindow : EditorWindow
             FitSpreadToBudget(def.level, typed, prior);
             def.str = typed[0]; def.agi = typed[1]; def.vit = typed[2];
             def.intel = typed[3]; def.dex = typed[4]; def.luk = typed[5];
-            def.element = elem; def.attackElement = aElem; def.weight = wt; def.xpReward = xp;
+            def.element = elem; def.elementLevel = Mathf.Clamp(elemLv, 1, Elements.MaxLevel); def.weight = wt; def.xpReward = xp;
             def.goldMin = gMin; def.goldMax = gMax;
             EditorUtility.SetDirty(def);
         }
@@ -339,11 +340,12 @@ public class MobTableWindow : EditorWindow
         {
             if (item == null) continue;
             pieceScratch.def = item;
-            pieceScratch.upgrade = 0;
             pieceScratch.cards.Clear();
-            // A creature wears what it was given as a RAW, unfolded copy — the same thing a forge would hand over
-            // before any work went into it — so a piece adds nothing of its own here.
-            pieceScratch.quality = Quality.Raw;
+            // A creature wears what it was given at ITS OWN grade and folds, so the piece's attack or defence counts
+            // here exactly as it will in the world. Its written stats do NOT: which stats Ink lands on is rolled
+            // fresh every life, so no row could show them without inventing a roll.
+            pieceScratch.quality = def.gearQuality;
+            pieceScratch.upgrade = Mathf.Clamp(def.gearFolds, 0, CraftingMath.FoldCap(def.gearQuality));
             pieceScratch.Recompute();
             pieceScratch.AccumulateInto(ref gear);
         }
@@ -361,7 +363,7 @@ public class MobTableWindow : EditorWindow
             case DerivedStat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP));
             case DerivedStat.Atk:  return UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk));
             case DerivedStat.Def:  return UnitStatMath.Defense(u, gear, Ring(StatId.Def));
-            default:               return UnitStatMath.Flee(u, Ring(StatId.Evasion));
+            default:               return UnitStatMath.Flee(u, gear, Ring(StatId.Evasion));
         }
     }
 
@@ -429,6 +431,31 @@ public class MobTableWindow : EditorWindow
             if (i % perRow == perRow - 1 || i == GearSlots.Length - 1) EditorGUILayout.EndHorizontal();
         }
 
+        // --- what state every piece comes to life at: one set for the whole creature ---
+        GUILayout.Space(4);
+        EditorGUILayout.LabelField("   gear state  (every piece this creature wears comes to life at these)",
+                                   EditorStyles.miniBoldLabel);
+        var quality = def.gearQuality;
+        int folds = def.gearFolds;
+        int inkTier = def.gearInkTier;
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Grade", EditorStyles.miniLabel, GUILayout.Width(74));
+        quality = (Quality)EditorGUILayout.EnumPopup(quality, GUILayout.Width(80));
+        GUILayout.Space(8);
+        EditorGUILayout.LabelField("Folds", EditorStyles.miniLabel, GUILayout.Width(44));
+        int cap = CraftingMath.FoldCap(quality);
+        folds = Mathf.Clamp(EditorGUILayout.IntField(folds, GUILayout.Width(50)), 0, cap);
+        EditorGUILayout.LabelField("of " + cap, EditorStyles.miniLabel, GUILayout.Width(44));
+        GUILayout.Space(8);
+        EditorGUILayout.LabelField("Ink", EditorStyles.miniLabel, GUILayout.Width(30));
+        inkTier = EditorGUILayout.IntPopup(Mathf.Clamp(inkTier, 1, InkTierValues.Length),
+                                           InkTierNames, InkTierValues, GUILayout.Width(80));
+        int written = CraftingMath.InkSlots(quality);
+        EditorGUILayout.LabelField(written == 0 ? "writes nothing" : written == 1 ? "writes 1 stat"
+                                                                   : "writes " + written + " stats",
+                                   EditorStyles.miniLabel, GUILayout.Width(110));
+        EditorGUILayout.EndHorizontal();
+
         // --- ring ranks: part of the creature, so they always count ---
         var stats = new List<StatId>();
         var vals  = new List<int>();
@@ -456,6 +483,9 @@ public class MobTableWindow : EditorWindow
             var gear = new List<Item>();
             foreach (var kv in worn) if (kv.Value != null) gear.Add(kv.Value);
             def.startingGear = gear.ToArray();
+            def.gearQuality = quality;
+            def.gearFolds = Mathf.Clamp(folds, 0, CraftingMath.FoldCap(quality));
+            def.gearInkTier = inkTier;
             def.ringRankStats  = stats.ToArray();
             def.ringRankValues = vals.ToArray();
             EditorUtility.SetDirty(def);
@@ -464,6 +494,10 @@ public class MobTableWindow : EditorWindow
         GUILayout.Space(2);
         EditorGUILayout.EndVertical();
     }
+
+    // The five Inks, by the names the game calls them, for the gear-state dropdown.
+    static readonly string[] InkTierNames = { "Watery", "Thin", "Faint", "Clear", "Sharp" };
+    static readonly int[] InkTierValues = { 1, 2, 3, 4, 5 };
 
     // Ring stats in the canonical LOOP order (SkillRing.Ring), never enum order.
     static readonly StatId[] RingStatOrder =

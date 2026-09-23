@@ -27,9 +27,6 @@ public class MonsterAI3D : MonoBehaviour
 
     [Header("Combat")]
     public int attack = 3;
-    [Tooltip("This mob's attack ELEMENT (RO property), checked against the player's armor element. The mob's " +
-             "OWN armor element (what the player's spells hit) lives on its Health component.")]
-    public Element attackElement = Element.Neutral;
 
     [Header("On-hit status (RO — inflicted on the player when this mob lands a hit)")]
     [Tooltip("The ailment applied on a landed hit. Only used when the chance below is > 0.")]
@@ -150,14 +147,21 @@ public class MonsterAI3D : MonoBehaviour
     /// the player's, so it can always be dodged.</summary>
     public int BasicHit => Mathf.Max(0, hit);   // any accuracy debuff is already folded into `hit` by UnitStatBlock
 
-    /// <summary>The element our attack carries: the held weapon's, exactly as a player's is, or this creature's own
-    /// natural element while its hands are empty.</summary>
+    /// <summary>The element our ordinary attack carries: a weapon converter's while one runs, otherwise an ELEMENTAL held
+    /// weapon's, otherwise this creature's own element — the same one it defends as. A creature attacks and defends with
+    /// its nature; there is no separate attack element to author.
+    ///
+    /// <para>A weapon with NO element (Neutral) does not override that nature — decided 2026-09-23. Every weapon in the
+    /// game is Neutral today and every shadow holds one, so otherwise a Fire shadow would swing as nothing at all.</para></summary>
     public Element BasicElement
     {
         get
         {
             var w = Equipment != null ? Equipment.Get(EquipSlotType.Weapon) : null;
-            return w != null && w.def != null ? w.def.element : attackElement;
+            Element natural = w != null && w.def != null && w.def.element != Element.Neutral ? w.def.element
+                            : Health != null ? Health.element : Element.Neutral;
+            var states = MobStates;
+            return states != null ? states.AttackElementOr(natural) : natural;
         }
     }
 

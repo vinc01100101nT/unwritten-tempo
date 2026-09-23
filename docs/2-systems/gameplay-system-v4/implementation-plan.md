@@ -14,8 +14,9 @@ smallest risk first. **All six landed on 2026-09-20 and none has been play-teste
 **Where the build differed from this plan**, decided while building:
 - The weapon kit's removal (slice 3) and learned skills (slice 5) shipped together, so no session ever ran with
   the kit gone and nothing to replace it.
-- One save version bump covered both slices. The save is now **v14** and both sides' build string is
-  **unwritten-character-v14** — v14 carries a forged weapon's trademark ([Weapon Names & Trademarks](weapon-names-and-trademarks.md)).
+- One save version bump covered both slices: **v14** carries a forged weapon's trademark ([Weapon Names &
+  Trademarks](weapon-names-and-trademarks.md)). The save today is **v15** (timed effects ride it) and both sides'
+  build string is **unwritten-character-v15**.
 - Open question 1 was taken as recommended — the server writes a copy's finished attack, magic attack, defence
   and magic defence onto it, and a player's machine only adds them.
 - Open question 2 was NOT taken as written: instead of the bag wire carrying costs for every copy, a station asks
@@ -72,7 +73,7 @@ as slices land and as the open questions at the bottom are answered.
 **Slice 2 — materials exist and a GM can hand them out.** Twenty-one base band materials (Copper, Bronze, Iron, Steel, Silver, Mithril, Adamant; Burlap, Hemp, Linen, Wool, Cotton, Silk, Brocade; Rawhide, Hide, Buckskin, Leather, Cordovan, Shagreen, Wyrmhide), three Salts (Coarse, Fine, Pure) and five Inks (Watery, Thin, Faint, Clear, Sharp) become real items. Ten of one Ink or Salt tier can be merged into one of the next.
 *Check:* type `/item copper 10` — ten Copper appear in the bag's Material tab. Type `/item "watery ink" 10`, then merge — you have one Thin Ink and no Watery Ink. *Failure:* the item is unknown, lands in the wrong tab, or merging with fewer than ten does something.
 
-**Slice 3 — gear has a grade and folds instead of a rarity and a refine.** Every weapon and armour piece shows one label: its Quality (Raw, or F to A) and its fold count (+N). Rarity words and rarity colours are gone everywhere — bag rows, tooltips, floor drops, chat lines, the creature's health-bar gear list. A piece's attack (weapon) or defence (armour) is exactly its folds lifted by its quality, per the design's §9 table; a Raw +0 piece adds 0. Every piece the player already owns becomes Raw +0 with no stats written on it.
+**Slice 3 — gear has a grade and folds instead of a rarity and a refine.** Every weapon and armour piece shows one label: its Quality (Raw, or F to A) and its fold count (+N). Rarity words and rarity colours are gone everywhere — bag rows, tooltips, floor drops, chat lines, the creature's health-bar gear list. A piece's worth — attack on a weapon; on armour, what its material buys ([Armour Roster](armour-roster.md)) — is exactly its folds lifted by its quality, per the design's §9 table; a Raw +0 piece adds 0. Every piece the player already owns becomes Raw +0 with no stats written on it.
 *Check:* hover a sword in the bag — the tooltip reads "Raw +0" (no Common/Rare, no colour). Hover an armour piece — same. Kill a creature that wears gear — nothing worn drops; only the items in its table and gold do. *Failure:* the word Common/Uncommon/Rare/Epic/Legendary, or a rarity colour, appears anywhere; a piece shows a defence that is not its fold total lifted by its grade.
 
 **Slice 4 — Forge, Fold, Quench, Ink at a station in town.** Standing next to the smith (metal), loom (cloth) or tannery (leather) and pressing F opens the station's window. Forge: pick a design, pay the base materials and gold, receive a Raw +0 piece. Fold: pay 1 unit of the grade's band material + 50 gold × band number; the piece goes up one fold, never past its grade's cap. Quench: pay 10 units of the band + 500 gold × band number, optionally one Salt; the grade goes up one, stays, or (from E and above) drops one, using the §9 odds; folds go to +0 either way; a drop removes the last Ink stat. Ink: choose an empty or occupied stat slot on the piece; one random stat from the eighteen lands with the tier's number; the Ink is spent.
@@ -228,7 +229,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 4. **What a "design" is.** *Recommend:* a base-cost list on the `Item` itself (which band-1 material, how many, how much gold), so the existing gear items are the designs; empty list = not forgeable.
 5. **Whether `EquipSlotType.Ring = 12` is deleted or left unread.** Its integer is pinned (Item.cs:4-10) and no asset holds it. *Recommend:* delete the member and the `ItemType.Ring` bucket.
 6. **Materials in the random-item roll.** Settled 2026-09-22: the 30%-per-kill roll (`ItemCatalog.RandomConsumable`) hands out consumables only, and materials come from the creature's level and kind (`CreatureLoot`, [Mob Roster](../../3-world/mob-roster.md)).
-7. **Creature random wardrobe keyed by rarity** (CreatureWardrobe.cs:20-24). *Recommend:* one flat wear chance per place — the number is the user's; creatures wear Raw +0 copies.
+7. **What creatures wear.** Settled 2026-09-22: no random wardrobe — a creature wears exactly its authored pieces, at the grade, folds and Ink authored on its own catalog entry ([Mob Roster](../../3-world/mob-roster.md), Gear state).
 8. **Starter gear.** Today weapons and armour are never seeded (Character.cs:1938-1943). *Recommend:* seed nothing wearable — V4 says gear is made — and let the first sword be forged.
 9. **Existing copies on old saves.** *Recommend:* every pre-V4 copy loads as Raw, folds 0, no Ink — not keeping `upgrade` as folds, because those refines were bought under the +3 attack rule.
 10. **Learning: automatic or an action.** *Recommend:* automatic — the server adds the skill to the learned set the moment the mastery level is reached; the window shows it as new.

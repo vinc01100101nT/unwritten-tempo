@@ -121,7 +121,7 @@ public class LootDropper : MonoBehaviour
         // AND ONE RANDOM CONSUMABLE, on its own chance.
         if (CombatRng.Chance(RandomItemChance))
         {
-            var extra = ItemCatalog.RandomConsumable();
+            var extra = ItemCatalog.RandomConsumable(health.element);
             if (extra != null) won.Add(extra);
         }
 

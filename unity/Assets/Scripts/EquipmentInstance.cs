@@ -30,20 +30,21 @@ public class EquipmentInstance
 
     // THE SERVER'S FINISHED ANSWER for what this copy's folds and quality are worth, written whenever it is forged,
     // folded or quenched (Recompute). A player's machine never works these out — it adds what it was sent.
-    [Tooltip("Finished attack this copy grants (server-written).")]
-    public int pieceAttack;
-    [Tooltip("Finished magic attack this copy grants (server-written).")]
-    public int pieceMagicAttack;
-    [Tooltip("Finished defence this copy grants (server-written).")]
-    public int pieceDefense;
-    [Tooltip("Finished magic defence this copy grants (server-written).")]
-    public int pieceMagicDefense;
+    [Tooltip("Finished numbers this copy's folds and grade grant (server-written): attack or magic attack on a weapon; " +
+             "on armour, what its material buys — defence and HP (metal), attack speed and evasion (leather), magic " +
+             "defence and MP (cloth).")]
+    public CraftingMath.PieceStats piece;
 
     [Tooltip("The id of this copy's TRADEMARK skill, rolled once at the forge and never changed. Empty = none. Its " +
              "name and the numbers it raises are read from that skill, never stored here.")]
     public string trademarkSkillId = "";
     [Tooltip("Finished lift this copy's trademark adds to its skill's main numbers (server-written, from the grade).")]
     public float trademarkLift;
+
+    [Tooltip("An armour copy's WORD, rolled once at the forge from its slot's words and never changed. None = none.")]
+    public ArmourWord word = ArmourWord.None;
+    [Tooltip("What this copy's word is worth (server-written, from the grade) — see ArmourWords.Amount for its unit.")]
+    public float wordAmount;
 
     public EquipmentInstance() { }
     public EquipmentInstance(Item def, int upgrade = 0)
@@ -68,30 +69,35 @@ public class EquipmentInstance
     // Reused: the stats already written while one piece is being filled in. A piece is filled once per creature life.
     static readonly List<InkStat> inkScratch = new List<InkStat>(6);
 
-    /// <summary>A copy of <paramref name="def"/> at THE BEST A FORGE CAN MAKE IT: the top grade, folded to that grade's
-    /// cap, every stat slot written with the strongest Ink — each stat rolled exactly as a station rolls one — and, on a
-    /// weapon, a trademark rolled exactly as the forge rolls one. Nothing here could not come out of a station, so
-    /// <see cref="CreateFresh"/>'s promise holds. What a shadow wears. Server only: every roll goes through CombatRng.</summary>
-    public static EquipmentInstance CreateAtBest(Item def)
+    /// <summary>A copy of <paramref name="def"/> AT AN AUTHORED STATE: grade <paramref name="quality"/>, folded
+    /// <paramref name="folds"/> times (never past that grade's cap), every stat slot the grade carries written with
+    /// Ink of <paramref name="inkTier"/> — each stat rolled exactly as a station rolls one — and, on a weapon above
+    /// Raw, a trademark rolled exactly as the forge rolls one. Nothing here could not come out of a station, so
+    /// <see cref="CreateFresh"/>'s promise holds. WHAT A CREATURE WEARS, from the three settings on its own catalog
+    /// entry. Server only: every roll goes through CombatRng.</summary>
+    public static EquipmentInstance CreateAt(Item def, Quality quality, int folds, int inkTier)
     {
         var made = CreateFresh(def);
         if (def == null) return made;
-        made.quality = CraftingMath.Best;
-        made.upgrade = CraftingMath.FoldCap(made.quality);
+        made.quality = quality;
+        made.upgrade = Mathf.Clamp(folds, 0, CraftingMath.FoldCap(quality));
+        inkTier = Mathf.Clamp(inkTier, 1, CraftingMath.TopInkTier);
         inkScratch.Clear();
         for (int slot = 0; slot < made.InkSlots; slot++)
         {
             int weight = CraftingMath.RemainingInkWeight(inkScratch);
             if (weight <= 0 || !CraftingMath.RollInkStat(CombatRng.Range(0, weight), inkScratch, out var stat)) break;
-            made.WriteInk(slot, stat, CraftingMath.InkValue(stat, CraftingMath.TopInkTier));
+            made.WriteInk(slot, stat, CraftingMath.InkValue(stat, inkTier));
             inkScratch.Add(stat);
         }
         inkScratch.Clear();
-        if (def.slot == EquipSlotType.Weapon)
+        if (def.slot == EquipSlotType.Weapon && quality > Quality.Raw)
         {
             int total = Trademarks.RollTotal(def.weaponType);
             if (total > 0) made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, total));
         }
+        // AND AN ARMOUR PIECE'S WORD, on the same terms as a weapon's trademark: a creature's armour above Raw rolls one.
+        if (quality > Quality.Raw) made.RollWord();
         made.Recompute();
         return made;
     }
@@ -102,9 +108,17 @@ public class EquipmentInstance
     public void Recompute()
     {
         trademarkLift = string.IsNullOrEmpty(trademarkSkillId) ? 0f : CraftingMath.TrademarkLift(quality);
-        if (def == null) { pieceAttack = pieceMagicAttack = pieceDefense = pieceMagicDefense = 0; return; }
-        CraftingMath.PieceNumbers(def.slot, def.weaponType, upgrade, quality,
-                                  out pieceAttack, out pieceMagicAttack, out pieceDefense, out pieceMagicDefense);
+        piece = def == null ? default : CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, upgrade, quality);
+        wordAmount = word == ArmourWord.None ? 0f : ArmourWords.Amount(word, quality);
+    }
+
+    /// <summary>Roll this ARMOUR copy's word — every word of its slot equally likely, through the one random source.
+    /// THE SERVER calls this once, when the copy is made; a weapon or an unworn item rolls nothing.</summary>
+    public void RollWord()
+    {
+        if (def == null) return;
+        var words = ArmourWords.For(def.slot);
+        word = words.Length == 0 ? ArmourWord.None : ArmourWords.Pick(def.slot, CombatRng.Range(0, words.Length));
     }
 
     /// <summary>How many stats this copy's grade lets it carry.</summary>
@@ -156,7 +170,7 @@ public class EquipmentInstance
 
     /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats and its
     /// trademark, joined for the save and the wire:
-    /// "grade;attack,magic attack,defence,magic defence;stat:value,stat:value;trademark skill id:finished lift".
+    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed;stat:value,stat:value;trademark skill id:finished lift".
     /// Paired with <see cref="DecodeRoll"/>. Kept in the same slot the armour roll used, so the save and the wire
     /// need no new array — and carrying the finished numbers here is what lets a player's machine draw them
     /// without working any of them out.</summary>
@@ -166,15 +180,22 @@ public class EquipmentInstance
         var ci = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
         sb.Append(((int)quality).ToString(ci)).Append(';')
-          .Append(pieceAttack.ToString(ci)).Append(',').Append(pieceMagicAttack.ToString(ci)).Append(',')
-          .Append(pieceDefense.ToString(ci)).Append(',').Append(pieceMagicDefense.ToString(ci)).Append(';');
+          .Append(piece.attack.ToString(ci)).Append(',').Append(piece.magicAttack.ToString(ci)).Append(',')
+          .Append(piece.defense.ToString(ci)).Append(',').Append(piece.magicDefense.ToString(ci)).Append(',')
+          .Append(piece.hp.ToString(ci)).Append(',').Append(piece.mp.ToString(ci)).Append(',')
+          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(';');
         for (int i = 0; i < inkStats.Count; i++)
         {
             if (i > 0) sb.Append(',');
             sb.Append(((int)inkStats[i]).ToString(ci)).Append(':').Append(inkValues[i].ToString("0.###", ci));
         }
+        if (!string.IsNullOrEmpty(trademarkSkillId) || word != ArmourWord.None)
+            sb.Append(';');
         if (!string.IsNullOrEmpty(trademarkSkillId))
-            sb.Append(';').Append(trademarkSkillId).Append(':').Append(trademarkLift.ToString("0.####", ci));
+            sb.Append(trademarkSkillId).Append(':').Append(trademarkLift.ToString("0.####", ci));
+        // The armour word, BY NAME, and the finished amount the server wrote for it.
+        if (word != ArmourWord.None)
+            sb.Append(';').Append(word.ToString()).Append(':').Append(wordAmount.ToString("0.###", ci));
         return sb.ToString();
     }
 
@@ -184,9 +205,11 @@ public class EquipmentInstance
     public void DecodeRoll(string encoded)
     {
         quality = Quality.Raw;
-        pieceAttack = pieceMagicAttack = pieceDefense = pieceMagicDefense = 0;
+        piece = default;
         trademarkSkillId = "";
         trademarkLift = 0f;
+        word = ArmourWord.None;
+        wordAmount = 0f;
         EnsureInkLists();
         inkStats.Clear();
         inkValues.Clear();
@@ -202,13 +225,22 @@ public class EquipmentInstance
             // no such part; the server works them out again below, and nothing else ever does.
             if (parts.Length > 1)
             {
+                // Four numbers from a save written before armour's material decided its folds; eight since. The
+                // server works a piece's numbers out again on load either way (RecomputeIfMine, below).
                 var nums = parts[1].Split(',');
-                if (nums.Length == 4)
+                if (nums.Length == 4 || nums.Length == 8)
                 {
-                    int.TryParse(nums[0], ints, ci, out pieceAttack);
-                    int.TryParse(nums[1], ints, ci, out pieceMagicAttack);
-                    int.TryParse(nums[2], ints, ci, out pieceDefense);
-                    int.TryParse(nums[3], ints, ci, out pieceMagicDefense);
+                    int.TryParse(nums[0], ints, ci, out piece.attack);
+                    int.TryParse(nums[1], ints, ci, out piece.magicAttack);
+                    int.TryParse(nums[2], ints, ci, out piece.defense);
+                    int.TryParse(nums[3], ints, ci, out piece.magicDefense);
+                }
+                if (nums.Length == 8)
+                {
+                    int.TryParse(nums[4], ints, ci, out piece.hp);
+                    int.TryParse(nums[5], ints, ci, out piece.mp);
+                    int.TryParse(nums[6], ints, ci, out piece.evasion);
+                    float.TryParse(nums[7], System.Globalization.NumberStyles.Float, ci, out piece.attackSpeedPercent);
                 }
             }
 
@@ -236,6 +268,19 @@ public class EquipmentInstance
                 if (colon > 0)
                     float.TryParse(parts[3].Substring(colon + 1), System.Globalization.NumberStyles.Float, ci,
                                    out trademarkLift);
+            }
+
+            // The armour word. A save written before words existed has no such part — that copy simply has none. A
+            // name the game no longer has is dropped rather than guessed at.
+            if (parts.Length > 4 && !string.IsNullOrEmpty(parts[4]))
+            {
+                var bits = parts[4].Split(':');
+                if (System.Enum.TryParse(bits[0], out ArmourWord w) && System.Enum.IsDefined(typeof(ArmourWord), w))
+                {
+                    word = w;
+                    if (bits.Length > 1)
+                        float.TryParse(bits[1], System.Globalization.NumberStyles.Float, ci, out wordAmount);
+                }
             }
         }
         RecomputeIfMine();
@@ -279,8 +324,8 @@ public class EquipmentInstance
     public void AddPieceInto(ref EquipBonuses eb)
     {
         if (def == null) return;
-        CraftingMath.AddPiece(pieceAttack, pieceMagicAttack, pieceDefense, pieceMagicDefense,
-                              inkStats, inkValues, ref eb);
+        CraftingMath.AddPiece(piece, inkStats, inkValues, ref eb);
+        ArmourWords.AddWord(word, wordAmount, ref eb);
     }
 }
 
@@ -301,6 +346,14 @@ public struct EquipBonuses
     public float critPercent, aspdPercent, castSpeedPercent;
     /// <summary>Whole-percent addition to how hard a crit lands, the other half of the ring's Critical node.</summary>
     public float critDamagePercent;
+    /// <summary>What the worn pieces' rolled WORDS add (see <see cref="ArmourWords"/>): whole percent, except MP per
+    /// second (Wellspring) and world units of reach (Longreach). Read through the unit's state store, which folds them
+    /// into the same sub-stat table a timed buff moves — so every reader of those stats gets worn words for free.</summary>
+    public float wordCritShieldPercent, wordDisableCutPercent, wordMPRegen, wordDamageCutPercent, wordLifeStealPercent,
+                 wordDamagePercent, wordReflectPercent, wordBlockPercent, wordReach, wordMoveSpeedPercent,
+                 wordStaminaCutPercent;
+    /// <summary>Whole-percent cut to damage of one element, from a garment's ward word.</summary>
+    public float wardFirePercent, wardWaterPercent, wardEarthPercent, wardWindPercent;
 
     /// <summary>The flat primary-stat bonus for one stat (gear + cards).</summary>
     public int Stat(PrimaryStat s)

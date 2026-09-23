@@ -2,19 +2,19 @@ using UnityEngine;
 
 /// <summary>
 /// WHICH OF THE THREE KINDS OF CREATURE this is. The kind decides how many extra skill slots it carries, whether it
-/// summons, what it wears, how long it takes to come back, what it drops and whether it is a 3D character. How strong
+/// summons, how long it takes to come back, what it drops and whether it is a 3D character. How strong
 /// it is never comes from here — that is its level and its stats, through the same formulas a player's go through.
 ///
 /// <para>Serialized by int on every creature asset, so order is load-bearing: append, never insert.</para>
 /// </summary>
 public enum CreatureKind
 {
-    /// <summary>Fills the field. One extra skill slot, unforged gear.</summary>
+    /// <summary>Fills the field. One extra skill slot.</summary>
     Normal,
     /// <summary>The stronger creatures of an area. Two extra skill slots, summons normals.</summary>
     Elite,
     /// <summary>The strongest creatures in the game: a 3D character, one per weapon type, levels 105 to 160. Four extra
-    /// skill slots, the highest-grade gear there is, and summons elites.</summary>
+    /// skill slots and summons elites.</summary>
     Shadow,
 }
 
@@ -67,12 +67,4 @@ public static class CreatureKinds
 
     /// <summary>A shadow is a 3D character; the other two kinds are flat.</summary>
     public static bool Is3D(CreatureKind k) => k == CreatureKind.Shadow;
-
-    /// <summary>Does this kind pick up random pieces for the places nothing was authored for? A shadow wears exactly what
-    /// it was given — most of the twelve have no weapon until their weapon's skills exist.</summary>
-    public static bool WearsRandomGear(CreatureKind k) => k != CreatureKind.Shadow;
-
-    /// <summary>Does this kind wear its gear at the best a forge can make it — the top grade, folded to its cap, every stat
-    /// slot written with the strongest Ink, and a trademark on the weapon? Otherwise every piece is Raw and unfolded.</summary>
-    public static bool WearsBestGear(CreatureKind k) => k == CreatureKind.Shadow;
 }

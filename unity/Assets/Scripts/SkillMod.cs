@@ -26,8 +26,6 @@ public struct SkillContext
     public int   ExtraTargets;        // cleave: extra nearby targets to also hit
     public float CleaveRadius;        // radius to gather cleave targets
     public int   EveryNthFree;        // 0 = never; else every Nth cast is free
-    public bool  ConvertElement;      // true = override the strike's element with NewElement
-    public Element NewElement;
     public bool  ForceCrit;           // true = this strike always crits
     public int   HitCount;            // 1 = single hit; >1 splits the strike into N hits (total damage unchanged)
     public float KnockbackSpeed;      // 0 = no shove; else shove the target away at this speed
@@ -53,8 +51,6 @@ public struct SkillContext
             ExtraTargets = 0,
             CleaveRadius = 0f,
             EveryNthFree = 0,
-            ConvertElement = false,
-            NewElement = Element.Neutral,
             ForceCrit = false,
             HitCount = 1,
             KnockbackSpeed = 0f,

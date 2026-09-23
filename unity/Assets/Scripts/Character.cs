@@ -31,8 +31,6 @@ public class Character : MonoBehaviour, ICombatUnit
     public float mpRegenPerSecond = UnitStatMath.BaseMpRegenPerSecond;
 
     [Header("Element & cards (RO)")]
-    [Tooltip("The player's armor PROPERTY. Incoming attacks are scaled by their element vs this (Elements chart).")]
-    public Element armorElement = Element.Neutral;
     [Range(0f, 1f)]
     [Tooltip("Lifesteal: fraction of damage you DEAL that silently heals you. The mechanical core of a leech card.")]
     public float lifeStealPct = 0f;
@@ -666,8 +664,8 @@ public class Character : MonoBehaviour, ICombatUnit
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
-    public int Hit  => Told ? toldCurrent.hit : UnitStatMath.Hit(Inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
-    public int Flee => Told ? toldCurrent.flee : UnitStatMath.Flee(Inputs, Lift(StatId.Evasion, SubStat.Evasion));
+    public int Hit  => Told ? toldCurrent.hit : UnitStatMath.Hit(Inputs, equipBonuses, Lift(StatId.Accuracy, SubStat.Accuracy));
+    public int Flee => Told ? toldCurrent.flee : UnitStatMath.Flee(Inputs, equipBonuses, Lift(StatId.Evasion, SubStat.Evasion));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
     public float AttackSpeedMult => Told ? toldCurrent.aspdMult : UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
@@ -812,11 +810,15 @@ public class Character : MonoBehaviour, ICombatUnit
     /// one number ring investment does, so there is nothing left to subtract here.</summary>
     public int BasicHit => Mathf.Max(0, Hit);
 
-    /// <summary>The equipped weapon's element (Neutral unarmed) — the weapon is the single owner of it, read at
-    /// use-time so there is no per-equip copy to keep in sync.</summary>
+    /// <summary>What our ordinary attacks land as: a weapon converter's element while one runs, otherwise the equipped
+    /// weapon's (Neutral unarmed) — read at use-time so there is no per-equip copy to keep in sync.</summary>
     public Element BasicElement
     {
-        get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.element : Element.Neutral; }
+        get
+        {
+            var w = GetEquipped(EquipSlotType.Weapon);
+            return States.AttackElementOr(w != null ? w.element : Element.Neutral);
+        }
     }
 
     public bool RollBasicCrit(ICombatUnit victim) => RollCrit(victim != null ? victim.CritShieldLuk : 0);
@@ -828,7 +830,7 @@ public class Character : MonoBehaviour, ICombatUnit
                                     : RollDamage(out crit, targetLuk, type == DamageType.Crit);
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us — the same shield a mob's LUK gives it.</summary>
-    public int CritShieldLuk => P(PrimaryStat.LUK);
+    public int CritShieldLuk => P(PrimaryStat.LUK) + States.WornCritShieldLuk;
 
     /// <summary>Roll the damage NUMBER for an attack whose crit is already decided. Only called once the strike is
     /// known to connect. UnitOffense.Dealt folds in the damage buffs — the same call a mob's swing makes, so both
@@ -1393,7 +1395,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
 
     /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense), then scaled by the
-    /// attacker's <paramref name="attackElement"/> vs our <see cref="armorElement"/>. When
+    /// attacker's <paramref name="attackElement"/> vs what we are hit as (<see cref="ElementModifier"/>). When
     /// <paramref name="attackerHit"/> ≥ 0, the attacker's HIT is first rolled against our <see cref="Flee"/>
     /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="attacker"/>
     /// — whoever swung, person or creature — is what thorns bounce back at and what the moments this blow raises aim
@@ -1423,7 +1425,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
-        if (Combat.Blocked(off))
+        if (Combat.Blocked(off, States.WornBlockChance))
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
             lastMitigation.blocked = true;
@@ -1431,10 +1433,11 @@ public class Character : MonoBehaviour, ICombatUnit
             return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         }
 
-        // Element property: the incoming attack's element vs our armor element scales the damage (RO chart).
-        float mod = Elements.Modifier(attackElement, armorElement);
+        // Element property: the incoming attack's element vs what we are hit as scales the damage (RO chart).
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit), mod);
         // our armor fully resists this element
-        if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // read LAST of the negations, so a charge is only ever spent on a hit that would really have landed (a miss /
         // block / immunity keeps it in hand)
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
@@ -1523,6 +1526,22 @@ public class Character : MonoBehaviour, ICombatUnit
         if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
     }
 
+    /// <summary>The element chart's answer for a hit of <paramref name="attack"/> on us. A person has no element of
+    /// their own — Neutral at level 1 — until an armour converter gives them one.</summary>
+    float ElementModifier(Element attack)
+    {
+        Element defending = States.DefendingElementOr(Element.Neutral, 1, out int level);
+        return Elements.Warded(Elements.Modifier(attack, defending, level), States.WardAgainst(attack));
+    }
+
+    /// <summary>A hit our element turns into a heal: we gain what it would have dealt after defence, and nothing a
+    /// landed hit sets off happens — no thorns, no flinch, no passive, no damage number.</summary>
+    int HealedByElement(float afterDefence, float mod)
+    {
+        Heal(Elements.ElementHeal(afterDefence, mod));
+        return CombatAuthority.NoDamage(NoDamageReason.HealedByElement);
+    }
+
     /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>). Magic
     /// can't be dodged, and evasion does nothing to it. Returns the damage dealt.</summary>
     public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, ICombatUnit attacker = null)
@@ -1534,9 +1553,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // Told, not worked out — the same rule the physical intake above explains.
         if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, MonsterMagicColor, true, false, -1);
 
-        float mod = Elements.Modifier(attackElement, armorElement);
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false), mod);
         // armour already nullified it — nothing to parry, so no charge is spent
-        if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // the read catches magic too: Parry is a timing skill, not a physical block
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
@@ -1909,6 +1929,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         d.stamina = Stamina;
         CaptureCooldowns(d);
+        CaptureTimedEffects(d);
         return d;
     }
 
@@ -2123,6 +2144,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // whatever the character already wears rather than stripping it to nothing.
         if (!string.IsNullOrEmpty(d.modelName)) SetDye(d.dyeSources, d.dyeTargets, d.modelName);
 
+        // TIMED EFFECTS BEFORE HP/MP: a max-health or max-mana buff is part of the maxima the clamp below reads, so a
+        // character saved above their plain maximum would otherwise lose the difference on every login.
+        RestoreTimedEffects(d);
+
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);
         CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
@@ -2135,6 +2160,31 @@ public class Character : MonoBehaviour, ICombatUnit
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnAppearanceChanged?.Invoke();   // apply the loaded outfit dye
+    }
+
+    // ---- timed effects that outlive a logout and a server change ---------------------------------------
+
+    // Only death clears a timed effect (decided 2026-09-23), so a dead character writes none down: their effects are
+    // still on the body until they press respawn, and a save written in that gap must not bring them back.
+    readonly System.Collections.Generic.List<SaveData.TimedEffect> timedEffectScratch =
+        new System.Collections.Generic.List<SaveData.TimedEffect>();
+
+    void CaptureTimedEffects(SaveData d)
+    {
+        d.timedEffects = null;
+        if (IsDead) return;
+        States.CaptureForSave(timedEffectScratch);
+        if (timedEffectScratch.Count > 0) d.timedEffects = timedEffectScratch.ToArray();
+        timedEffectScratch.Clear();
+    }
+
+    // THE SERVER ALONE puts them back. A player's machine also reads its save, but its states are the server's word
+    // (UnitStates.MirrorFromServer) — filling them from the save as well would give it a second answer. A save written
+    // while dead, or older than v15, carries none.
+    void RestoreTimedEffects(SaveData d)
+    {
+        if (!GameServer.IsServer || d.version < 15 || d.currentHP <= 0) return;
+        States.RestoreFromSave(d.timedEffects);
     }
 
     // ---- cooldowns that outlive the process ------------------------------------------------------------

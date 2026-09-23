@@ -70,7 +70,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Attacks and monsters carry an **element**, and element-vs-element interactions modify damage — the classic Ragnarok matchup web. The elements are:"
+      "text": "Every monster has an **element**, and it works both ways: its ordinary attacks land as that element, and it is hit as that element. Element against element changes the damage — the classic Ragnarok matchup web. You are **Neutral** until a converter says otherwise. The elements are:"
     },
     {
       "type": "paragraph",
@@ -78,7 +78,15 @@
     },
     {
       "type": "paragraph",
-      "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Shadow. *(The full multiplier table is being tuned.)*"
+      "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Shadow. A skill keeps its own element — a fire bolt is Fire whoever casts it; only ordinary attacks take the attacker's element."
+    },
+    {
+      "type": "paragraph",
+      "text": "A monster's element has a **level, 1 to 4**. The higher the level, the more it shrugs off what it resists and the harder it falls to what it is weak to. At **level 3 and 4** a monster can **heal** from the element it resists most — hit a level-4 Fire creature with Fire and it regains health instead of losing it."
+    },
+    {
+      "type": "paragraph",
+      "text": "**Converters** change your element for **5:00**. An *Elemental Converter* makes your ordinary attacks land as its element; an *Armor Converter* makes you hit as its element, at level 1. A new converter replaces the old one of the same kind, and one of each can run together. There are four of each — **Flame** (Fire), **Frost** (Water), **Seismic** (Earth) and **Lightning** (Wind) — and each drops from monsters of its own element."
     },
     {
       "type": "heading",
@@ -124,7 +132,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Death clears everything.** Nothing timed survives dying — no buff, no debuff, no banked damage, no charges. That holds for you and for monsters alike, so nothing comes back still carrying what killed it."
+      "text": "**Death clears everything.** Nothing timed survives dying — no buff, no debuff, no banked damage, no charges. That holds for you and for monsters alike, so nothing comes back still carrying what killed it. Logging out or travelling does **not** clear them: they wait, paused, and carry on with the time they had left when you come back."
     },
     {
       "type": "heading",
@@ -193,7 +201,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the model and rules above are set; specific numbers, the element table, and the size matchup are in tuning.*"
+        "*Status: the model and rules above are set; specific numbers and the size matchup are in tuning.*"
       ]
     }
   ]

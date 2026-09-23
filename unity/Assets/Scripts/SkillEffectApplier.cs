@@ -506,6 +506,11 @@ public static class SkillEffectApplier
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
                 if (Fires(e, hit, caster, vars)) states.BeginDisableImmunity(seconds);
                 break;
+            case SkillEffectKind.ElementConverter:
+                // No magnitude and no stacking: the whole knob is which element, on which slot, for how long.
+                if (Fires(e, hit, caster, vars))
+                    states.BeginElement(SkillEffect.ConverterPile(e.converts), e.element, seconds);
+                break;
             case SkillEffectKind.ReduceOutgoingDamage:
                 // The boost's mirror, charges and all — authored as the CUT, and scaled the same two ways, so the
                 // pair can never drift into one growing with investment while the other stays still.

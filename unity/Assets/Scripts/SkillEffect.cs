@@ -190,10 +190,17 @@ public enum SkillEffectKind
 
     /// <summary>Tops the caster's summons back up to its kind's maximum — an elite's normals, a shadow's elites (see
     /// <see cref="CreatureSummons"/>). Which creatures and how many belong to the caster, never to the effect, so the
-    /// effect carries no numbers at all. Used by the one summon skill every summoner carries.
+    /// effect carries no numbers at all. Used by the one summon skill every summoner carries.</summary>
+    Summon,
+
+    /// <summary>For <see cref="SkillEffect.seconds"/>, the target's WEAPON (its ordinary attacks land as
+    /// <see cref="SkillEffect.element"/>) or its ARMOR (it is hit as that element, at level
+    /// <see cref="Elements.ConverterLevel"/>) — which one is <see cref="SkillEffect.converts"/>. A second converter on
+    /// the same slot REPLACES the first; it never stacks (<see cref="UnitStates.BeginElement"/>). What the converter
+    /// consumables run, and any creature skill may carry it too.
     ///
     /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
-    Summon,
+    ElementConverter,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -360,8 +367,12 @@ public class SkillEffect
              "is higher). The roll it multiplies is a physical ATK roll or a magic MATK roll, chosen by the damage " +
              "type above. Affinity picks WHICH stats scale it; this sets HOW BIG. No skill levels.")]
     public ScaledNumber damageMult = new ScaledNumber(1f);
-    [Tooltip("Attack element (RO property), checked against the target's armor element.")]
+    [Tooltip("Attack element (RO property), checked against the target's armor element. On an Element Converter, " +
+             "the element the converted slot takes.")]
     public Element element = Element.Neutral;
+    [Tooltip("Element Converter only: which slot it converts — Weapon (what ordinary attacks land as) or Armor (what " +
+             "the unit is hit as, at level 1).")]
+    public EquipSlotType converts = EquipSlotType.Weapon;
 
     [Header("Heal")]
     [Tooltip("Flat HP restored (Heal kind).")]
@@ -497,9 +508,15 @@ public class SkillEffect
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
             case SkillEffectKind.Shield:        id = StateId.Shield;        return true;
+            case SkillEffectKind.ElementConverter: id = ConverterPile(e.converts); return true;
             default: return false;
         }
     }
+
+    /// <summary>The pile an Element Converter on <paramref name="converts"/> fills — Armor is the armour's, and every
+    /// other slot is read as the weapon's.</summary>
+    public static StateId ConverterPile(EquipSlotType converts) =>
+        converts == EquipSlotType.Armor ? StateId.ArmorElement : StateId.WeaponElement;
 
     /// <summary>EVERY pile this effect can leave on the caster — what its apply creates, plus any pile that apply
     /// causes LATER. The two differ for exactly one kind today: a Brace arms charges now, and each charge that catches
@@ -734,6 +751,7 @@ public static class EffectScaling
             case SkillEffectKind.ImmuneToDisables:
             case SkillEffectKind.Shield:
             case SkillEffectKind.Taunt:
+            case SkillEffectKind.ElementConverter:
                 return true;
             default:
                 return false;

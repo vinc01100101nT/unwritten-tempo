@@ -214,7 +214,8 @@ pure random defensible — and it only works because recycle exists, which is wh
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire. The save is **v14**, and both servers' build string is `unwritten-character-v14`.
+  the wire. Trademarks arrived with save **v14**; the save today is **v15**, and both servers' build string is
+  `unwritten-character-v15`.
 - **In a fight** the lift is added to the per-cast practice lift (`Character.SkillOutputLift` = mastery + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads.
 - **The title** is `+15 Hadori [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
@@ -223,7 +224,7 @@ pure random defensible — and it only works because recycle exists, which is wh
   +20%" and "Skill mastery: +12%" (a passive: "Weapon mastery") on their own lines, each only when it is above zero.
 - **The skill-data check** fails when a published weapon skill with a main number has no trademark name.
 
-## 7. Open, for the user
+## 7. Armour
 
-1. **Armour.** It has no skills, so it has no trademarks. Either it keeps a plain name and only weapons play
-   this game, or armour rolls something of its own — a separate decision, not made here.
+Armour has no skills, so it has no trademark; it rolls a **word** of its own instead, on the same terms — once, at the
+forge, part of its name — see [Armour Roster, Materials & Words](armour-roster.md).

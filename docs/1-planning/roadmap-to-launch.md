@@ -49,7 +49,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 ## What is half-built — measured, each one
 
-**Loot follows the creature's kind and level.** Since [V4](../2-systems/gameplay-system-v4/README.md) a creature gives up **no gear at all** — materials, consumables and gold only. Since 2026-09-22 ([Mob Roster](../3-world/mob-roster.md)) every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable. It lands on the ground, held for the killer for 10 seconds. A normal or an elite still dresses itself at random from the six equipment designs, as Raw, unfolded copies; a shadow wears its own pieces at grade A.
+**Loot follows the creature's kind and level.** Since [V4](../2-systems/gameplay-system-v4/README.md) a creature gives up **no gear at all** — materials, consumables and gold only. Since 2026-09-22 ([Mob Roster](../3-world/mob-roster.md)) every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable. It lands on the ground, held for the killer for 10 seconds. A creature wears exactly the pieces authored for it, at the grade, folds and Ink authored on its own catalog entry — normals from Raw +0 to E +15, elites from D +0 to B +30, every shadow A +30.
 
 **Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 

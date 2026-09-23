@@ -73,7 +73,10 @@ skill that granted it said — never what a later, different grant says.
 
 **Rules:**
 
-- **Expiry** — each stack dies on its own timer.
+- **Expiry** — each stack dies on its own timer. Only DEATH ends a state early: logging out, or crossing to a map
+  another server holds, writes every state into the save with the time it had left, and the timer resumes from there
+  on the next login or arrival — it does not count down while the character is away. (A Taunt is the one state not
+  kept: whoever taunted will not exist when the save is read back.)
 - **Overflow** — past the stack limit, the **oldest** stack drops.
 - **Consumption** — takes the **oldest first**, so a stack about to expire is spent before a fresh one.
 - **Stacking is opt-in per effect.** Off = one instance, newest-wins.

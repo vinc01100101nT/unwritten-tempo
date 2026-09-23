@@ -28,8 +28,10 @@ MonoBehaviour:
   intel: 6
   dex: 8
   luk: 5
-  startingGear:
-  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  startingGear: []
+  gearQuality: 0
+  gearFolds: 1
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
   weaponMasteryLevel: 10
@@ -46,6 +48,7 @@ MonoBehaviour:
   preferredRange: 0
   fleeHpFraction: 0
   element: 2
+  elementLevel: 1
   attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0

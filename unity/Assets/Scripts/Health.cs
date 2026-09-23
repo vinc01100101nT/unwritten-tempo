@@ -42,6 +42,10 @@ public class Health : MonoBehaviour, ICombatUnit
              "so a Fire attack on an Earth mob does extra, on a Water mob is resisted, etc. Neutral = no interaction.")]
     public Element element = Element.Neutral;
 
+    /// <summary>How strongly <see cref="element"/> resists and is weak, 1 to 4 — copied from the creature data by
+    /// <see cref="MobSpawner"/>, the one door every creature is made through, exactly like <see cref="kind"/>.</summary>
+    [System.NonSerialized] public int elementLevel = 1;
+
     [Tooltip("Invoked once, just before the GameObject is removed.")]
     public UnityEngine.Events.UnityEvent onDeath;
 
@@ -145,7 +149,7 @@ public class Health : MonoBehaviour, ICombatUnit
     public int Flee => flee;
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us.</summary>
-    public int CritShieldLuk => luk;
+    public int CritShieldLuk => luk + States.WornCritShieldLuk;
 
     // A skill in this mob's hands: forwarded to the pieces that own each number, exactly as the swing above is.
     // Looked up once, found or not: the training dummy removes its stat block on purpose, and a miss must not turn
@@ -485,7 +489,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (IsWatchedCopy) return false;
         if (!wornGearLooked) { wornGear = GetComponent<UnitEquipment>(); wornGearLooked = true; }
         var shield = wornGear != null ? wornGear.Get(EquipSlotType.Shield) : null;
-        if (shield == null || !Combat.Blocked(shield.def)) return false;
+        if (shield == null || !Combat.Blocked(shield.def, States.WornBlockChance)) return false;
         if (shield.def.guardSfx != null && !shield.def.guardSfx.Empty) Sfx.Play(shield.def.guardSfx);
         return true;
     }
@@ -518,8 +522,10 @@ public class Health : MonoBehaviour, ICombatUnit
 
         // Element property: the attack's element vs this unit's armor element scales the damage (RO chart).
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
-        float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f)
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f)
+            return HealedByElement(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit), mod, false, attacker);
+        if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
@@ -549,8 +555,10 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
 
-        float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f)
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f)
+            return HealedByElement(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit), mod, true, attacker);
+        if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
@@ -578,8 +586,10 @@ public class Health : MonoBehaviour, ICombatUnit
     public int TakeMagicDamageOverkill(int attackerMagic, bool crit, Element attackElement = Element.Neutral,
                                        ICombatUnit attacker = null)
     {
-        float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f)
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f)
+            return HealedByElement(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit), mod, true, attacker);
+        if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
@@ -611,8 +621,10 @@ public class Health : MonoBehaviour, ICombatUnit
                                   ICombatUnit attacker = null)
     {
         if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
-        float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f)
+        float mod = ElementModifier(attackElement);
+        if (mod < 0f)
+            return HealedByElement(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit), mod, false, attacker);
+        if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
@@ -637,11 +649,34 @@ public class Health : MonoBehaviour, ICombatUnit
         return dmg;
     }
 
+    /// <summary>The element chart's answer for a hit of <paramref name="attack"/> on this creature as it defends right
+    /// now — an armour converter's element while one runs, its own element and level otherwise.</summary>
+    float ElementModifier(Element attack)
+    {
+        Element defending = States.DefendingElementOr(element, elementLevel, out int level);
+        return Elements.Warded(Elements.Modifier(attack, defending, level), States.WardAgainst(attack));
+    }
+
+    /// <summary>A hit this creature's element turns into a heal: it gains what the hit would have dealt after defence,
+    /// and NOTHING a landed hit sets off happens — no reflect, no leech, no passive, no flinch, no damage number. A
+    /// creature already dead has no health to gain, so it shows the faded "0" an immune hit shows.</summary>
+    int HealedByElement(float afterDefence, float mod, bool magic, ICombatUnit attacker)
+    {
+        if (IsDead)
+        {
+            Show(ShownBlow.Immune(0f, crit: false, magic: magic), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
+        Heal(Elements.ElementHeal(afterDefence, mod));
+        return CombatAuthority.NoDamage(NoDamageReason.HealedByElement);
+    }
+
     /// <summary>A flurry beat on a creature that is already dead: the number that beat would have been, and the hit
     /// cue — and NOTHING else. No health lost, no parry or barrier spent, no leech, no passive, no death.</summary>
     int ShowOverkillBeat(in DamageInfo info)
     {
-        float mod = Elements.Modifier(info.element, element);
+        // Immune AND would-heal both draw the faded "0" here: a creature already dead has no health to gain.
+        float mod = ElementModifier(info.element);
         if (mod <= 0f)
         {
             Show(ShownBlow.Immune(mod, info.isCrit, info.isMagic), info.attacker);

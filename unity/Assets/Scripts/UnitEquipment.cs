@@ -15,9 +15,19 @@ using UnityEngine;
 /// </summary>
 public class UnitEquipment : MonoBehaviour
 {
-    [Tooltip("Gear this unit SPAWNS wearing. Each item is put in its own slot (Item.slot) as a fresh instance. This is " +
-             "the serialized half — the live dictionary below is runtime-only, so what a mob wears has to be authored here.")]
+    [Tooltip("Gear this unit SPAWNS wearing. Each item is put in its own slot (Item.slot) as a copy at the three " +
+             "settings below. This is the serialized half — the live dictionary below is runtime-only, so what a mob " +
+             "wears has to be authored here.")]
     public Item[] startingGear = System.Array.Empty<Item>();
+
+    [Tooltip("THE GRADE every starting piece comes to life at. A MIRROR of the creature's own catalog entry, which " +
+             "owns these three and writes them here as the creature is made (MobSpawner) — never edited on a body.")]
+    public Quality gearQuality = Quality.Raw;
+    [Tooltip("How many times every starting piece is folded. Clamped to the grade's cap. A mirror of the catalog entry.")]
+    public int gearFolds;
+    [Tooltip("Which Ink writes the stats on every starting piece, 1 Watery to 5 Sharp. The GRADE decides how many " +
+             "stats are written; this decides what each is worth. A mirror of the catalog entry.")]
+    public int gearInkTier = 1;
 
     readonly Dictionary<EquipSlotType, EquipmentInstance> equipped = new Dictionary<EquipSlotType, EquipmentInstance>();
 
@@ -35,8 +45,8 @@ public class UnitEquipment : MonoBehaviour
         SeatStartingGear();
     }
 
-    // Every starting piece as a FRESH copy — Raw and unfolded, the same thing a forge hands over before any work
-    // has gone into it, and the same door a grant comes through.
+    // Every starting piece as a copy AT THE THREE SETTINGS ABOVE — the same door a forged piece and a grant come
+    // through, so nothing here is in a state a station could not have produced.
     void SeatStartingGear()
     {
         equipped.Clear();
@@ -47,13 +57,10 @@ public class UnitEquipment : MonoBehaviour
                 if (item == null || item.slot == EquipSlotType.None) continue;
                 // A WATCHING MACHINE ROLLS NOTHING. Its copy of a creature wears the plain authored pieces, which is all
                 // it needs to draw what is held; the rolled copies live on the server's creature.
-                equipped[item.slot] = GameNetwork.TheWorldIsElsewhere ? new EquipmentInstance(item)
-                    : WearsBestGear ? EquipmentInstance.CreateAtBest(item)
-                    : EquipmentInstance.CreateFresh(item);
+                equipped[item.slot] = GameNetwork.TheWorldIsElsewhere || !Application.isPlaying
+                    ? new EquipmentInstance(item)
+                    : EquipmentInstance.CreateAt(item, gearQuality, gearFolds, gearInkTier);
             }
-        // AND WHATEVER IT PICKS UP AT RANDOM for the places nothing was authored for — a creature on the machine that
-        // owns the world only. A watching machine is told what it wears (NetMob), and a player never gets any.
-        if (WearsRandomGear) CreatureWardrobe.FillEmptyPlaces(equipped);
         dirty = true;
         version++;
         OnChanged?.Invoke();
@@ -62,26 +69,6 @@ public class UnitEquipment : MonoBehaviour
     /// <summary>Raised whenever the worn set changes — seated, equipped, taken off or wiped. What a body showing the
     /// weapon in its hand listens to, so it redraws on the change and never polls.</summary>
     public event System.Action OnChanged;
-
-    // A creature the server owns, and not a training dummy — an instrument that must measure raw output and can never
-    // give anything up. Asked only when gear is seated, never per frame.
-    bool WearsRandomGear =>
-        Application.isPlaying && !GameNetwork.TheWorldIsElsewhere &&
-        GetComponent<MonsterAI3D>() != null && GetComponent<TrainingDummy>() == null &&
-        CreatureKinds.WearsRandomGear(Kind);
-
-    // A creature whose kind wears its pieces at the best a forge makes them (a shadow). Asked only when gear is seated.
-    bool WearsBestGear => Application.isPlaying && CreatureKinds.WearsBestGear(Kind);
-
-    // This unit's creature kind, or Normal for anything that is not a creature. Once per seating, never per frame.
-    CreatureKind Kind
-    {
-        get
-        {
-            var h = GetComponent<Health>();   // perf-ok: once per gear seating
-            return h != null ? h.kind : CreatureKind.Normal;
-        }
-    }
 
     int version;
 

@@ -66,7 +66,7 @@
           "state": "planned",
           "when": "Planned",
           "title": "Dungeons have a destination",
-          "text": "Every dungeon ends in a boss, with a reward worth the walk."
+          "text": "Every elite has its place in the world, and every shadow stands on an end-game map — each worth the walk."
         },
         {
           "state": "planned",
@@ -75,22 +75,34 @@
           "text": "Walk from the first town to every map in the world."
         },
         {
-          "state": "planned",
-          "when": "Planned",
+          "state": "now",
+          "when": "Now",
           "title": "Killing things pays you",
           "text": "Monsters drop the materials you forge with, plus consumables and coin. Pick up what falls and turn it into gear."
         },
         {
-          "state": "planned",
-          "when": "Planned",
-          "title": "A full wardrobe exists",
-          "text": "Make gear for every part of your body — forge it, fold it, and quench it for a better grade."
-        },
-        {
-          "state": "now",
-          "when": "Now",
+          "state": "done",
+          "when": "23 Sep 2026",
           "title": "Checking the foundations",
           "text": "Making sure everything already in the game works as it should, before the milestones above begin."
+        },
+        {
+          "state": "done",
+          "when": "23 Sep 2026",
+          "title": "A full wardrobe exists",
+          "text": "Make gear for every part of your body — forge it, fold it, quench it for a better grade, write stats on it with **Ink**, or **take it apart** for half of what went into it."
+        },
+        {
+          "state": "done",
+          "when": "22 Sep 2026",
+          "title": "Elites and shadows",
+          "text": "Every monster is now a **normal**, an **elite** or a **shadow**. Twelve shadows, levels 105 to 160, each call an elite to their side."
+        },
+        {
+          "state": "done",
+          "when": "21 Sep 2026",
+          "title": "Skills are learned",
+          "text": "Weapons no longer carry skills: you **learn them by fighting** with a weapon, and each skill grows as you use it. Press **K** for the new Skills window. The ring is now part of you, shown in the Character window."
         },
         {
           "state": "done",
@@ -101,8 +113,8 @@
         {
           "state": "done",
           "when": "12 Sep 2026",
-          "title": "Boss looks",
-          "text": "Every **boss** has its own look."
+          "title": "Elite looks",
+          "text": "Every **elite** has its own look."
         },
         {
           "state": "done",
