@@ -10,7 +10,7 @@ metadata:
 On 2026-07-16 `unity/Assets/` was reorganized by INTENDED USAGE into **number-prefixed buckets** (prefixes sort them to the top of Unity's Project window). Any OLDER memory/doc naming a pre-reorg path is stale — translate via this mapping:
 
 - **`0_Raw/`** — vendor packs, untouched: `Art/Pxltgr`, `Art/NinjaAdventure`, `Art/Quat`, `Art/Hovl Studio`, `Art/KenneyCursorPack`, `Blink`, `Eric VFX Studio`, `NamuFX`, `Phoenix3D`, `20 Ground Material Sets MAN MADE`, `Standard Assets (Mobile)` → `Assets/0_Raw/<pack>` (e.g. `Assets/0_Raw/Quat/Rigged`).
-- **`1_Authored/`** — stuff we make/place: `Prefabs/` → `Assets/1_Authored/Prefabs/` (drag-drop palette still at `…/Prefabs/Props`, ground tiles at `…/Props/Grounds/`); `Art/` → `Assets/1_Authored/Art/` (incl. `GroundTiles/prontera_tile.png` — the GPT ground tile).
+- **`1_Authored/`** — stuff we make/place: `Prefabs/` → `Assets/1_Authored/Prefabs/` (drag-drop palette still at `…/Prefabs/Props`); `Art/` → `Assets/1_Authored/Art/` (incl. `GroundTiles/`, since 2026-09-24 the ONE home of every ground tile texture — the old `…/Props/Grounds/` tile prefabs were removed).
 - **`2_Generated/`** — tool output, regenerable: `Materials/Generated`→`2_Generated/Materials`, `Meshes/Generated`→`2_Generated/Meshes`, `Art/BakedChars`→`2_Generated/BakedChars`, minimaps→`2_Generated/Minimaps`, decimated→`2_Generated/Decimated`.
 - **`3_Data/`** — runtime data: `Resources/`→`Assets/3_Data/Resources/` (still named "Resources" so `Resources.Load` is unaffected), `Recipes/` (incl. TownRecipe/FieldRecipe/DungeonRecipe/Prontera that were loose at root)→`3_Data/Recipes`, `ScriptableObjects/` (incl. BrushPalette.asset)→`3_Data/ScriptableObjects`.
 - **Loose root .assets:** BgmTrack.asset → `Assets/Audio/`.

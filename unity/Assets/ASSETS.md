@@ -46,6 +46,14 @@ checker at the bottom is what makes them stick without anybody remembering.
 10. **Settings are pinned.** The main shadow map is 1024 (it was 4096 — 33 MB of VRAM re-rendered every frame to
     cover 18 units), GPU skinning is on (every character was skinned on the CPU), no quality level uses unlimited
     bone weights (4 is the ceiling). Change a pin in `tools/check-asset-rules.py` and here together, with the reason.
+11. **A ground tile is one .png in `1_Authored/Art/GroundTiles/`, imported at 1024, compressed, with no alpha.**
+    Every tile the game paints ground with — base, patch, path, curb — lives in that one folder, is named by its
+    file (`ground_moss`), and nothing else lives there: no materials, no copies, no other formats. To add a tile,
+    drop the .png in the folder; the import rule applies 1024 / compressed / no alpha / repeat / mipmaps by itself,
+    and code reaches it only through `GroundTiles.Load(name)`. The source can be any size (image-generator tiles
+    arrive about 1254 wide), but must be seamless and carry no border. Why: tiles blended on one ground must match
+    in sharpness and format, and a second copy or a second lookup is how the duplicate stones tile shipped twice.
+    Enforced, not advised: the asset-rules check fails any tile that breaks it, and it runs before every commit.
 
 ---
 
@@ -53,8 +61,8 @@ checker at the bottom is what makes them stick without anybody remembering.
 
 | Need | Use | Why |
 | --- | --- | --- |
-| Import settings for anything under `1_Authored/Art/` | **The import rule** `Editor/PixelArtImportPostprocessor.cs` | It is the single OWNER of those settings and re-applies them on every import. Hand-editing a `.meta` there is reverted on the next import — change the rule, then reimport the folder. Its `/GroundTiles/` branch is the one non-pixel-art case: Default + Repeat + mipmaps + **Compressed** + ToNearest. |
-| Ground textures for the blended ground and the prop materials | **One copy**, in `1_Authored/Art/GroundTiles/` | The same four images used to live twice, once compressed and once not, and both shipped — 48 MB of the build was the same three pictures twice. |
+| Import settings for anything under `1_Authored/Art/` | **The import rule** `Editor/PixelArtImportPostprocessor.cs` | It is the single OWNER of those settings and re-applies them on every import. Hand-editing a `.meta` there is reverted on the next import — change the rule, then reimport the folder. Its `/GroundTiles/` branch is the one non-pixel-art case: Default + Repeat + mipmaps + **Compressed** + ToNearest + **max 1024** + **no alpha**, the same for every tile. |
+| Ground textures for the blended ground, the curbs and the prop materials | **One copy**, in `1_Authored/Art/GroundTiles/` — every ground tile the game uses, new ones included, lives there and nowhere else | The same four images used to live twice, once compressed and once not, and both shipped — 48 MB of the build was the same three pictures twice. |
 | Level-of-detail for a placed prop | **`LodGroupWirer.WireAllCore()`** through the live editor link | Nests each `_LODn` copy's mesh under the `_LOD0` prefab (no collider on the copies — the placed prefab already blocks) and lets Unity compute the switching bounds. Idempotent; re-run after re-decimating. |
 | Creature stats, gear, drops | **The creature data files** → `Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs` | The bake is the only road from data to a prefab. After ANY change to a struct a baked component holds, re-bake — adding the missing `[Serializable]` alone changes nothing on disk. |
 | Which packages exist and why | **`tools/packages-in-use.txt`** | One line per package, what uses it, measured. The checker refuses an installed package with no line. |

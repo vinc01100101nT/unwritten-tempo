@@ -167,7 +167,7 @@ public static class WorldAtlasBaker
             ti.textureType = TextureImporterType.Default;
             ti.wrapMode = TextureWrapMode.Clamp;
             ti.mipmapEnabled = false;
-            ti.maxTextureSize = 4096;
+            ti.maxTextureSize = TargetLongSidePx;   // ASSETS.md: nothing above 2048; the atlas is baked at this size
             ti.SaveAndReimport();
         }
         return AssetDatabase.LoadAssetAtPath<Texture2D>(AtlasPngPath);

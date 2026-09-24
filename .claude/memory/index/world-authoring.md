@@ -26,3 +26,4 @@
 - [Procedural town map generator](../map-generator-tool.md) — VIN-13 editor-tool plan + Phase 0 done.
 - [World is 100% Pxltgr](../pxltgr-field-migration.md) — LowPolySimpleNature pack removed; field rebuilt via PxltgrFieldBuilder/Scatter.
 - [Creature kinds + world spawn list](../creature-kinds-and-world-spawns.md) — creatures placed by `Resources/WorldSpawns` rows at map load, never scene spawners; kind drives slots/summons/gear/drops/respawn.
+- [World names tie to shadows and weapons](../world-names-tie-to-shadows-and-weapons.md) — every region/place name links to its shadow AND weapon; Ragnarok-city feel, 1–4 syllables, mixed formats.

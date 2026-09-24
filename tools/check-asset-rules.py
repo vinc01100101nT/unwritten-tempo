@@ -28,6 +28,7 @@ DEFAULT_REPO = os.path.dirname(HERE)
 
 # ---- the numbers pinned by ASSETS.md — change the doc and this together -------------------------------------
 MAX_TEXTURE_SIZE = 2048
+GROUND_TILE_SIZE = 1024     # every ground tile imports at exactly this, no alpha, from a .png — ASSETS.md
 MAX_MAIN_SHADOWMAP = 1024
 MAX_ADDITIONAL_SHADOWMAP = 1024
 BATCHING_STATIC = 4          # StaticEditorFlags.BatchingStatic, read from Unity's own library on 2026-09-20
@@ -60,8 +61,12 @@ def value(block, key):
 
 # ---- A1–A3  textures ------------------------------------------------------------------------------------------
 def check_textures(repo, out):
-    root = os.path.join(repo, "unity", "Assets", "1_Authored")
-    for dirpath, _d, files in os.walk(root):
+    # Every texture the game can use: all of Assets except the untouched vendor packs in 0_Raw (never placed, never
+    # shipped as they are) and Mirror's own bundled samples.
+    root = os.path.join(repo, "unity", "Assets")
+    for dirpath, dirs, files in os.walk(root):
+        if dirpath == root:
+            dirs[:] = [d for d in dirs if d not in ("0_Raw", "Mirror")]
         for f in files:
             if not f.endswith(".meta") or not f[:-5].lower().endswith(TEXTURE_EXT):
                 continue
@@ -87,6 +92,30 @@ def check_textures(repo, out):
             if readable == "1" and not cursor:
                 out("FAIL", p, "isReadable: 1 (Read/Write Enabled) doubles this texture's memory; only the "
                     "hardware cursor needs it")
+            if "/GroundTiles/" in p:
+                if not f[:-5].lower().endswith(".png"):
+                    out("FAIL", p, "a ground tile must be a .png — every tile ships from the same format")
+                if size and int(size) != GROUND_TILE_SIZE:
+                    out("FAIL", p, "maxTextureSize %s — every ground tile imports at exactly %d so blended tiles "
+                        "match in sharpness; reimport the folder so the import rule re-applies it"
+                        % (size, GROUND_TILE_SIZE))
+                if value(meta, "alphaUsage") not in (None, "0"):
+                    out("FAIL", p, "alphaUsage %s — ground tiles import with no alpha so every tile compresses "
+                        "to the same format" % value(meta, "alphaUsage"))
+
+
+# ---- A1b  the ground tile folder holds tile pictures and nothing else ---------------------------------------
+def check_ground_tile_folder(repo, out):
+    folder = os.path.join(repo, "unity", "Assets", "1_Authored", "Art", "GroundTiles")
+    if not os.path.isdir(folder):
+        return
+    for f in sorted(os.listdir(folder)):
+        name = f[:-5] if f.endswith(".meta") else f
+        if name.startswith("."):
+            continue
+        if not name.lower().endswith(".png") or os.path.isdir(os.path.join(folder, name)):
+            out("FAIL", rel(repo, os.path.join(folder, f)), "the ground tile folder holds only .png tile pictures — "
+                "a tile is used by name, so anything else here is either a second way to reach a tile or dead weight")
 
 
 # ---- A4–A5  the prop palette: plants, static flags, foliage batching -----------------------------------------
@@ -322,6 +351,7 @@ def main():
         (fails if level == "FAIL" else warns).append("%s %s: %s" % (level, path, what))
 
     check_textures(repo, out)
+    check_ground_tile_folder(repo, out)
     check_props(repo, out)
     check_lod_families(repo, out)
     check_settings(repo, out)

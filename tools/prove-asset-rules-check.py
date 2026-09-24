@@ -34,6 +34,7 @@ FIXTURE = [
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat",
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat.meta",
     "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+    "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
     "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD1.prefab",
@@ -87,7 +88,16 @@ def main():
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
             ("oversized texture",
              "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
-             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )2048", r"\g<1>4096", t, 1)),
+             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )\d+", r"\g<1>4096", t, 1)),
+            ("ground tile not at the one tile size",
+             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )\d+", r"\g<1>2048", t, 1)),
+            ("ground tile carrying alpha",
+             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             lambda t: t.replace("  alphaUsage: 0\n", "  alphaUsage: 1\n", 1)),
+            ("uncompressed texture outside the authored folder",
+             "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
+             lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
             ("readable texture",
              "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
              lambda t: t.replace("  isReadable: 0\n", "  isReadable: 1\n", 1)),
@@ -136,6 +146,22 @@ def main():
             finally:
                 shutil.rmtree(root, ignore_errors=True)
 
+        # A stray file in the ground tile folder (the leftover material that sat beside prontera_tile).
+        root = tempfile.mkdtemp(prefix="asset-rules-case-")
+        try:
+            shutil.copytree(base, root, dirs_exist_ok=True)
+            stray = os.path.join(root, "unity/Assets/1_Authored/Art/GroundTiles/stray_tile.mat")
+            with open(stray, "w", encoding="utf-8") as f:
+                f.write("%YAML 1.1\n")
+            code, out = run(root)
+            named = code == 1 and "stray_tile.mat" in out
+            print((GRN + "caught  " if named else RED + "MISSED  ") + "a non-tile file in the ground tile folder" + OFF)
+            if not named:
+                failures += 1
+                print(out)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
         # The one rule that must only WARN: an unwired family is debt, not a red turn.
         code, out = run(base)
         lod_quiet = code == 0
@@ -145,7 +171,7 @@ def main():
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
-    total = 13 + 2
+    total = len(cases) + 3   # every planted fault, the stray tile-folder file, the sound copy, the warn-only LOD case
     if failures:
         print(RED + "%d of %d case(s) failed — the asset-rules checker is blind somewhere." % (failures, total) + OFF)
         return 1

@@ -14,7 +14,7 @@ metadata:
 **Why:** consistency — the town is built from Pxltgr, so the field shouldn't use a different pack.
 
 **How it's structured now:**
-- `WorldBuildUtil.cs` — neutral, pack-agnostic helpers (`EnsureLayer`/`EnsureGroundLayer`/`SetLayerRecursive`/`EnsureMeshColliders`/`SurfacePoint`/`RegisterInBuildSettings`). These used to live on `NatureStageBuilder`; everything (`RegionBuilder`, `GroundFill`, `FantasyTownBuilder`, `SystemsSceneBuilder`, `Build25DSpike`) now calls `WorldBuildUtil.*`.
+- `WorldBuildUtil.cs` — neutral, pack-agnostic helpers (`EnsureLayer`/`EnsureGroundLayer`/`SetLayerRecursive`/`EnsureMeshColliders`/`SurfacePoint`/`RegisterInBuildSettings`). These used to live on `NatureStageBuilder`; everything (`RegionBuilder`, `FantasyTownBuilder`, `SystemsSceneBuilder`, `Build25DSpike`) now calls `WorldBuildUtil.*`.
 - `PxltgrGround.LayPlot(...)` — the ONE shared flat grass-plot builder (grass + soil/stone speckle, optional central road, GPU-instanced collider-free tiles over ONE flat floor BoxCollider on the Ground layer, scene-scoped Pathfinder3DConfig). Used by the field AND `RegionBuilder.BuildTownHub`.
 - `PxltgrFieldBuilder.cs` — `World ▸ New Field (Pxltgr grass)` bakes the field at `Assets/Scenes/NatureStage.unity` (kept that scene NAME so the existing Town↔field portal wiring resolves with no churn). Also owns the forest day/night ambience (`Add Forest Ambience` menu, moved here).
 - `PxltgrScatter.cs` — `World ▸ Scatter Nature (Pxltgr, fill map)` scatters Pxltgr trees/stumps/rocks/bushes/grass/flowers/ferns/mushrooms (from `Assets/Prefabs/Props`) at ×0.3, seated by measured bounds; solids keep mesh colliders, decor stripped, all on Default layer.

@@ -440,39 +440,9 @@ public class BrushPaletteWindow : EditorWindow
 
     static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 
-    // Find a ground asset by name for the starter set: prefer a Texture2D (the GroundTiles art), else a ground prop.
-    static Object FindGroundAsset(string name)
-    {
-        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-        return LoadProp(name);
-    }
-
-    // The tile texture a ground brush paints with, resolved by name: a Texture2D, else a Material's base map, else a
-    // ground prop's base map. Same resolution order the ground builder uses at import time.
-    static Texture FindGroundTexture(string name)
-    {
-        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Material"))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (Path.GetFileNameWithoutExtension(path) != name) continue;
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            var t = m != null ? (m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture) : null;
-            if (t != null) return t;
-        }
-        var prop = LoadProp(name);
-        var r = prop != null ? prop.GetComponentInChildren<MeshRenderer>() : null;
-        var mat = r != null ? r.sharedMaterial : null;
-        return mat != null ? (mat.HasProperty("_BaseMap") && mat.GetTexture("_BaseMap") != null ? mat.GetTexture("_BaseMap") : mat.mainTexture) : null;
-    }
+    // Ground brushes paint with a tile from the one tile folder, found by name the same way the ground builder finds it.
+    static Object FindGroundAsset(string name) => GroundTiles.Load(name);
+    static Texture FindGroundTexture(string name) => GroundTiles.Load(name);
 
     // Encode any texture to a ThumbPx PNG via a RenderTexture blit — works even if the source isn't marked readable.
     static byte[] TextureToPng(Texture src)

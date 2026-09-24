@@ -30,10 +30,8 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class GroundBlendBuilder
 {
-    const string PropsDir      = "Assets/1_Authored/Prefabs/Props";
     const string MeshDir       = "Assets/2_Generated/Meshes";
     const string MatDir        = "Assets/2_Generated/Materials";
-    const string GroundTilesDir = "Assets/1_Authored/Art/GroundTiles";
 
     /// <summary>World units ONE ground-blend texture repeat spans in-game (the shader's world-XZ tiling = 1/this).
     /// The single source of truth for ground texture density: the material bake below AND the brush-palette manifest
@@ -98,17 +96,17 @@ public static class GroundBlendBuilder
     /// Lay a single blended grass→dirt ground mesh ~<paramref name="sizeX"/>×<paramref name="sizeZ"/> world units
     /// centred on (<paramref name="center"/>.x, <paramref name="center"/>.z), surface at y=0, under a new root in
     /// <paramref name="scene"/> on <paramref name="groundLayer"/>. Returns the ground root, or <c>null</c> if the
-    /// <c>ground_grass</c> prefab or the <c>Unwritten/GroundBlend</c> shader is missing (caller shows a dialog).
+    /// <c>ground_grass</c> tile or the <c>Unwritten/GroundBlend</c> shader is missing (caller shows a dialog).
     /// </summary>
     /// <param name="dirtAmount">0 = nearly all grass, 1 = mostly dirt. ~0.3 gives occasional organic patches.</param>
     /// <param name="paths">Routed path polylines (world XZ) baked into the vertex red channel as a feathered path
     /// weight. Null/empty = no paths.</param>
     /// <param name="pathWidth">Full width of the path in world units (0 = no path even if routes are supplied).</param>
-    /// <param name="pathTexName">Ground prop name whose Base Map textures the path (e.g. "ground_road",
+    /// <param name="pathTexName">Ground tile name that textures the path (e.g. "ground_road",
     /// "ground_soil", "ground_stones"). Falls back to the dirt texture if missing.</param>
     /// <param name="cell">Vertex spacing in world units — smaller = smoother patch edges, more verts.</param>
-    /// <param name="grassTexName">Ground prop name for the BASE surface (biome base, e.g. "ground_grass"/"ground_rock").</param>
-    /// <param name="dirtTexName">Ground prop name for the PATCH surface blended in by the dirt mask (e.g. "ground_soil").</param>
+    /// <param name="grassTexName">Ground tile name for the BASE surface (biome base, e.g. "ground_grass"/"ground_rock").</param>
+    /// <param name="dirtTexName">Ground tile name for the PATCH surface blended in by the dirt mask (e.g. "ground_soil").</param>
     /// <param name="tint">Albedo multiply applied by the GroundBlend shader's <c>_Color</c> (biome hue). Null = white.</param>
     /// <param name="hardEdge">Snap the dirt + path weights to 0/1 so the grass↔dirt↔path edges are crisp, not feathered.</param>
     public static GameObject LayPlot(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
@@ -166,8 +164,8 @@ public static class GroundBlendBuilder
     /// As <see cref="LayPlot"/>, but the per-vertex grass/dirt/path weights come from <paramref name="sample"/>
     /// instead of noise+routes — so a caller (the Map Painter importer) can drive the blend from an authored cell
     /// grid. Same single-mesh + opaque-shader output, walkable floor and Pathfinder config. Texture names resolve to
-    /// the matching <c>ground_*</c> prop's Base Map (dirt/path fall back if their prop is missing). Returns the
-    /// ground root, or <c>null</c> if the grass prop or the <c>Unwritten/GroundBlend</c> shader is missing.
+    /// the tile of that name in <see cref="GroundTiles"/> (dirt/path fall back if their tile is missing). Returns the
+    /// ground root, or <c>null</c> if the grass tile or the <c>Unwritten/GroundBlend</c> shader is missing.
     /// </summary>
     public static GameObject LayPlotSampled(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                             int groundLayer, GroundSampler sample,
@@ -771,7 +769,7 @@ public static class GroundBlendBuilder
     // ground-blend submesh) if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
     static Material MakeCurbMaterial()
     {
-        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{GroundTilesDir}/ground_curb.png");
+        var tex = GroundTiles.Load("ground_curb");
         if (tex == null) return null;
         // Unwritten/GroundTrim (not URP/Lit): stamps the same stencil bit 32 as the ground so the hand-drawn INK
         // overlay skips the curb wall (a steep curb viewed edge-on otherwise smears into a solid black ink band).
@@ -794,7 +792,7 @@ public static class GroundBlendBuilder
     // if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
     static Material MakeCornerMaterial()
     {
-        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{GroundTilesDir}/ground_curb_corner.png");
+        var tex = GroundTiles.Load("ground_curb_corner");
         if (tex == null) return null;
         // Unwritten/GroundTrim (not URP/Lit): stamps stencil bit 32 so the INK overlay skips the corner stone too.
         var shader = Shader.Find("Unwritten/GroundTrim");
@@ -819,39 +817,8 @@ public static class GroundBlendBuilder
         AssetDatabase.CreateAsset(mesh, meshPath);
     }
 
-    // Pull a ground prop's Base Map so the blend uses the SAME textures the tiled ground does (tracks Fix Materials).
-    static Texture GroundBaseMap(string name)
-    {
-        var p = PropResolver.Load(name);
-        if (p != null)
-        {
-            var r = p.GetComponentInChildren<MeshRenderer>();
-            var m = r != null ? r.sharedMaterial : null;
-            if (m != null)
-                return m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture;
-        }
-        // Not a prop — the palette pointed at a raw texture (or material) asset, e.g. the GroundTiles art. Resolve by name.
-        return FindTextureAsset(name);
-    }
-
-    // Locate a ground texture the palette references directly: a Texture2D by that exact name, else a Material's base map.
-    static Texture FindTextureAsset(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return null;
-        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
-        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Material"))
-        {
-            var path = AssetDatabase.GUIDToAssetPath(guid);
-            if (Path.GetFileNameWithoutExtension(path) != name) continue;
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m != null) return m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture;
-        }
-        return null;
-    }
+    // Every ground texture comes from the one tile folder, by name (GroundTiles is the single way in).
+    static Texture GroundBaseMap(string name) => GroundTiles.Load(name);
 
     static void EnsureFolder(string path)
     {

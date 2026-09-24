@@ -53,11 +53,15 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
         // they don't shimmer at distance. (GroundBlend uses its own inline repeat sampler, so this never affects it —
         // it only fixes materials, like the curb's URP/Lit, that honour the texture's own wrap mode.)
         //
-        // COMPRESSED, unlike the pixel-art sprites below: these are painted 2048-square photos of ground, and block
+        // COMPRESSED, unlike the pixel-art sprites below: these are painted photos of ground, and block
         // compression is invisible on them (the same images already shipped compressed from the prop-texture folder
         // and nobody could tell). Uncompressed they were 85 MB of a 307 MB build. Compression needs power-of-two
-        // sizes, so the four odd-sized tiles are resampled to the nearest — a repeating ground tile has no pixel
-        // grid to keep.
+        // sizes, so odd-sized tiles are resampled to the nearest — a repeating ground tile has no pixel grid to keep.
+        //
+        // EVERY tile ships the SAME way: 1024 at most and no alpha, so any two tiles blended on one ground match in
+        // sharpness and compress to the same format. 1024, not 2048, because the image-generator tiles arrive around
+        // 1254 wide and 1024 is the most every tile can actually deliver. No tile uses alpha, so none imports one,
+        // and every tile lands on the same compressed format.
         if (path.Contains("/GroundTiles/"))
         {
             importer.textureType = TextureImporterType.Default;
@@ -66,6 +70,8 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
             importer.mipmapEnabled = true;
             importer.wrapMode = TextureWrapMode.Repeat;
             importer.npotScale = TextureImporterNPOTScale.ToNearest;
+            importer.maxTextureSize = 1024;
+            importer.alphaSource = TextureImporterAlphaSource.None;
             return;
         }
 
