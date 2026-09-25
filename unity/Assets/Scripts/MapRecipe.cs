@@ -15,6 +15,7 @@ public enum PlacementRule
     Center,      // clustered near the middle (landmarks: tavern, well, statue)
     Grid,        // buildings on a rectangular block grid; roads (paths) carve the streets between blocks (a walled town)
     PerimeterWall, // assemble the modular Pxltgr wall kit (Wall_part/corner/tower/gate) around the plot edge, with a gate gap
+    Clumps,      // bunches: 2.5 m ground-tile cells grown into touching shapes, each filled densely; never on a road
 }
 
 public enum AmountMode { Density, Count }
@@ -23,18 +24,16 @@ public enum AmountMode { Density, Count }
 /// flowers, grass, ferns) and leave solid props (trees, houses, rocks) planted; <c>On</c>/<c>Off</c> force it.</summary>
 public enum SwayMode { Auto, On, Off }
 
-/// <summary>Which Pxltgr ground texture the routed paths use. Maps to the matching <c>ground_*</c> prop's Base Map.</summary>
+/// <summary>Which ground tile the routed paths use, when the map's biome sets no road of its own (see BiomeTable).</summary>
 public enum PathTile { Road, Soil, Stones, Rock }
 
-/// <summary>Theme preset for a map. Drives the ground's base + patch textures, an albedo tint, and (later) ambience —
-/// purely a ground/look layer; props are still authored per recipe. <c>Grassland</c> reproduces the original
-/// look exactly (grass base, soil patches, no tint). The others recombine the existing <c>ground_*</c> textures with a
-/// colour multiply as placeholders until dedicated snow/sand/ash ground textures are authored (same code path then).</summary>
+/// <summary>Theme of a map, and the biome a creature spawns in. What a biome LOOKS like — its ground tiles, colour
+/// wash, road and which props each prop category means — is its row in the editor's BiomeTable, never code here.</summary>
 // NOTE: Unity serializes enums by integer position, so existing assets store the index, not the name.
 // Only ever APPEND new members at the end — inserting/reordering silently remaps every saved value.
 // `None` is the mob-side "biome-agnostic" value: a MonsterDef set to None is spawn-eligible in ANY
 // biome's level band (see MonsterCatalog.Eligible). A MAP recipe should never be None.
-public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None }
+public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None, Forest }
 
 /// <summary>How the ground base/patch/path weights are rendered. <c>Blended</c> = the seamless feathered gradient
 /// (default, today's look). <c>HardEdge</c> = snap each blend weight to 0/1 so grass↔dirt↔path meet in crisp seams
@@ -79,6 +78,10 @@ public class RecipePropGroup
     public bool randomYaw = true;
     [Tooltip("StreetRows only: distance from the centre line out to each of the two rows.")]
     public float rowOffset = 4f;
+    [Tooltip("Clumps only: the most 2.5 m cells one bunch grows to (each bunch is 1 to this many cells, touching). The number of bunches is Count (or Density per square unit).")]
+    public int cellsPerClump = 6;
+    [Tooltip("Clumps only: how many props are tried in each 2.5 m cell of a bunch.")]
+    public int propsPerCell = 10;
 
     [Tooltip("Wind sway, synced to the world wind. Auto = sway foliage automatically: whole-plant decor (flowers/" +
              "grass) sways entirely, while solid props sway only their LEAF material (tree canopies rustle, trunks " +
@@ -123,7 +126,7 @@ public class MapRecipe : ScriptableObject
     [Range(0f, 1f), Tooltip("0 = mostly grass, 1 = mostly dirt — controls the organic soil patches.")]
     public float dirtAmount = 0.18f;
 
-    [Tooltip("Theme preset. Picks the base + patch ground textures and a colour tint. Grassland = the original look (no tint).")]
+    [Tooltip("Theme preset. The biome's row in the Biome Table picks the ground tiles, colour tint, road and props.")]
     public Biome biome = Biome.Grassland;
     [Tooltip("Extra albedo multiply ON TOP of the biome's own tint (white = just the biome's tint, no override).")]
     public Color groundTint = Color.white;

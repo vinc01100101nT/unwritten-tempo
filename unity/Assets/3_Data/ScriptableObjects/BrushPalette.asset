@@ -30,7 +30,7 @@ MonoBehaviour:
     label: 
     colorHex: 
     prefabs: []
-    groundAsset: {fileID: 2800000, guid: b0868fbbb198412394c3532c15392746, type: 3}
+    groundAsset: {fileID: 2800000, guid: 01cf73c3f5df44830b054d86571b8e4a, type: 3}
     forwardOffset: 0
   - role: 2
     label: 

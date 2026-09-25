@@ -11,6 +11,7 @@
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
 - [Map painter WALL pipeline + 3 bugs](../map-painter-wall-pipeline.md) — diagonal runs, thickness, piece pickers, vector-sum tower facing; removed auto road→gate; fixed piece z-fight (scale-to-fit, no min clamp); diagnose via baked scene + Editor.log + offline dotnet compile.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.
+- [⭐ BiomeTable — the one home of a biome's look](../biome-table.md) — tiles/tint/patch/road/props per biome; add a biome = row + append enum + web World Creator list.
 - [Floor autotiling via RuleTiles](../floor-autotile-ruletiles.md) — `Build Floor RuleTiles` → 8 corner-correct RuleTiles.
 - [Runtime material on a PREFAB → null/pink](../runtime-material-on-prefab-null-pink.md) — `new Material()` into a prefab serializes to `fileID:0`; persist as .mat first (Sway Selected Tree).
 - [Ground blend corner smear](../ground-blend-corner-smear.md) — elevated tops coloured off FILLED level → concave corners smear two tiles; colour off PAINTED level (`Lp`), geometry off filled.

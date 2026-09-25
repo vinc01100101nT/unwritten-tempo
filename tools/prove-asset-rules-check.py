@@ -33,7 +33,7 @@ FIXTURE = [
     "unity/Assets/Shaders/FoliageWind.shader.meta",
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat",
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat.meta",
-    "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+    "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
     "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
     "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
@@ -84,22 +84,22 @@ def main():
 
         cases = [
             ("uncompressed texture",
-             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
             ("oversized texture",
-             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )\d+", r"\g<1>4096", t, 1)),
             ("ground tile not at the one tile size",
-             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n    maxTextureSize: )\d+", r"\g<1>2048", t, 1)),
             ("ground tile carrying alpha",
-             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: t.replace("  alphaUsage: 0\n", "  alphaUsage: 1\n", 1)),
             ("uncompressed texture outside the authored folder",
              "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
             ("readable texture",
-             "unity/Assets/1_Authored/Art/GroundTiles/ground_soil.png.meta",
+             "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: t.replace("  isReadable: 0\n", "  isReadable: 1\n", 1)),
             ("plant casting shadows",
              "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
@@ -146,7 +146,7 @@ def main():
             finally:
                 shutil.rmtree(root, ignore_errors=True)
 
-        # A stray file in the ground tile folder (the leftover material that sat beside prontera_tile).
+        # A stray file in the ground tile folder (the leftover material that sat beside the plaza tile, BASE_OR_SIDEWALK_plaza).
         root = tempfile.mkdtemp(prefix="asset-rules-case-")
         try:
             shutil.copytree(base, root, dirs_exist_ok=True)

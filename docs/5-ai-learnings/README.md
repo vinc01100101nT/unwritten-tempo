@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-25
 tags:
   - ai-learnings
 ---
@@ -57,6 +57,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | The user is asking "is there anything else?" for the third or fourth time | [Give the Whole List, Not a Trickle](give-the-whole-list-not-a-trickle.md) — one finding per reply is a loop with no exit. Sweep once, hand back the closed list with its boundary, then fix without asking again. |
 | A tool printed a summary and deleted the detail, and you want to copy the tool to keep its log | [A Tool Threw Away the Detail You Needed](dont-copy-a-tool-to-keep-its-output.md) — a copy resolves the repo from its own path and cannot run. Ask the source first; otherwise run the original with its cleanup disabled. |
 | A wait-loop never finishes, but the thing it is watching answers fine by hand | [A Wait-Loop Must Know Every Answer](a-wait-loop-must-know-every-answer.md) — it exits on the answers you expected, and the tool gave a different healthy one. Read the real answer first, or match on the failure state. |
+| Generated ground tiles come back too big, too busy, or with a seam, or you are about to write image-generator prompts for tiles | [Image-Generator Tiles: Sizes, Counts and Seams](image-generator-tiles-sizes-counts-seams.md) — give sizes as a fraction of the image width, give exact total counts, test every image for seams yourself, and repair a seam with a short reply, not a long prompt. |
 | The reader keeps coming back asking "which one?" | [The Reader Keeps Asking "Which One?"](name-the-thing-never-the-position.md) — every noun is a name or a number, never a position. Number the actors and keep the numbers; a made-up name beats a correct word they must resolve. |
 | About to guard the place the damage SHOWS, not the place the bad thing was let in | [Fixing a Hole Caused by Another Hole](fixing-a-hole-caused-by-another-hole.md) — trace it back to the first place that could have said no, and fix it there. And trace the real path before describing a failure, or you are inventing it. |
 | You added a new reason for something to finish, reusing the machinery that ends it normally — or it keeps finishing and restarting in a loop | [A New Ending Re-runs the Old Ending](a-new-ending-re-runs-the-old-ending.md) — that teardown saves, releases and announces because it means "gone", and its RECOVERY undoes it because it means "failed". Yours means "moved". Read it line by line, mark the thing as moving first, and match the loop's beat to a constant. |

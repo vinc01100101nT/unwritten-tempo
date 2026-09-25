@@ -5,12 +5,12 @@
     "groundTexWorldSize": 2.5,
     "brushes": [
         {
-            "id": "prontera_tile",
-            "label": "prontera_tile",
+            "id": "base_or_sidewalk_plaza",
+            "label": "BASE_OR_SIDEWALK_plaza",
             "color": "#6279D9",
             "kind": "ground",
-            "groundTex": "prontera_tile",
-            "thumb": "thumbnails/prontera_tile.png",
+            "groundTex": "BASE_OR_SIDEWALK_plaza",
+            "thumb": "thumbnails/BASE_OR_SIDEWALK_plaza.png",
             "channel": 0,
             "hasFootprint": false,
             "footprint": {
@@ -20,12 +20,12 @@
             "prefabs": []
         },
         {
-            "id": "ground_sidewalk",
-            "label": "ground_sidewalk",
+            "id": "path_or_sidewalk_flagstone",
+            "label": "PATH_OR_SIDEWALK_flagstone",
             "color": "#A1D962",
             "kind": "ground",
-            "groundTex": "ground_sidewalk",
-            "thumb": "thumbnails/ground_sidewalk.png",
+            "groundTex": "PATH_OR_SIDEWALK_flagstone",
+            "thumb": "thumbnails/PATH_OR_SIDEWALK_flagstone.png",
             "channel": 1,
             "hasFootprint": false,
             "footprint": {
@@ -35,12 +35,12 @@
             "prefabs": []
         },
         {
-            "id": "ground_grass",
-            "label": "ground_grass",
+            "id": "base_or_patch_meadow_grass",
+            "label": "BASE_OR_PATCH_meadow_grass",
             "color": "#D96285",
             "kind": "ground",
-            "groundTex": "ground_grass",
-            "thumb": "thumbnails/ground_grass.png",
+            "groundTex": "BASE_OR_PATCH_meadow_grass",
+            "thumb": "thumbnails/BASE_OR_PATCH_meadow_grass.png",
             "channel": 2,
             "hasFootprint": false,
             "footprint": {
@@ -50,12 +50,12 @@
             "prefabs": []
         },
         {
-            "id": "ground_road",
-            "label": "ground_road",
+            "id": "path_dirt_road",
+            "label": "PATH_dirt_road",
             "color": "#81D962",
             "kind": "ground",
-            "groundTex": "ground_road",
-            "thumb": "thumbnails/ground_road.png",
+            "groundTex": "PATH_dirt_road",
+            "thumb": "thumbnails/PATH_dirt_road.png",
             "channel": 3,
             "hasFootprint": false,
             "footprint": {
@@ -65,12 +65,12 @@
             "prefabs": []
         },
         {
-            "id": "ground_soil",
-            "label": "ground_soil",
+            "id": "base_or_patch_or_path_soil",
+            "label": "BASE_OR_PATCH_OR_PATH_soil",
             "color": "#9F62D9",
             "kind": "ground",
-            "groundTex": "ground_soil",
-            "thumb": "thumbnails/ground_soil.png",
+            "groundTex": "BASE_OR_PATCH_OR_PATH_soil",
+            "thumb": "thumbnails/BASE_OR_PATCH_OR_PATH_soil.png",
             "channel": 4,
             "hasFootprint": false,
             "footprint": {

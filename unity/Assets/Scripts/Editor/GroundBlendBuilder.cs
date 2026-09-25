@@ -19,8 +19,7 @@ using UnityEngine.SceneManagement;
 ///
 /// Produces the surface at y=0 + a flat floor collider + a <see cref="Pathfinder3DConfig"/> via
 /// <see cref="WalkableGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding all work unchanged. Textures are
-/// pulled from the pack's own <c>ground_grass</c> / <c>ground_soil</c> prefab materials, so it tracks
-/// <c>Fix Pxltgr Materials</c> with no extra wiring.
+/// the ground tiles, resolved by name through <see cref="GroundTiles.Load"/>.
 ///
 /// <para><b>Elevated variant</b> (<see cref="LayPlotSampledElevated"/>): when a map paints per-cell heights, the
 /// ground becomes real terrain — each painter cell is a flat top at its level's height, with TRUE vertical walls
@@ -96,24 +95,24 @@ public static class GroundBlendBuilder
     /// Lay a single blended grass→dirt ground mesh ~<paramref name="sizeX"/>×<paramref name="sizeZ"/> world units
     /// centred on (<paramref name="center"/>.x, <paramref name="center"/>.z), surface at y=0, under a new root in
     /// <paramref name="scene"/> on <paramref name="groundLayer"/>. Returns the ground root, or <c>null</c> if the
-    /// <c>ground_grass</c> tile or the <c>Unwritten/GroundBlend</c> shader is missing (caller shows a dialog).
+    /// <c>BASE_OR_PATCH_meadow_grass</c> tile or the <c>Unwritten/GroundBlend</c> shader is missing (caller shows a dialog).
     /// </summary>
     /// <param name="dirtAmount">0 = nearly all grass, 1 = mostly dirt. ~0.3 gives occasional organic patches.</param>
     /// <param name="paths">Routed path polylines (world XZ) baked into the vertex red channel as a feathered path
     /// weight. Null/empty = no paths.</param>
     /// <param name="pathWidth">Full width of the path in world units (0 = no path even if routes are supplied).</param>
-    /// <param name="pathTexName">Ground tile name that textures the path (e.g. "ground_road",
-    /// "ground_soil", "ground_stones"). Falls back to the dirt texture if missing.</param>
+    /// <param name="pathTexName">Ground tile name that textures the path (e.g. "PATH_dirt_road",
+    /// "BASE_OR_PATCH_OR_PATH_soil", "PATH_OR_SIDEWALK_dark_cobble"). Falls back to the dirt texture if missing.</param>
     /// <param name="cell">Vertex spacing in world units — smaller = smoother patch edges, more verts.</param>
-    /// <param name="grassTexName">Ground tile name for the BASE surface (biome base, e.g. "ground_grass"/"ground_rock").</param>
-    /// <param name="dirtTexName">Ground tile name for the PATCH surface blended in by the dirt mask (e.g. "ground_soil").</param>
+    /// <param name="grassTexName">Ground tile name for the BASE surface (biome base, e.g. "BASE_OR_PATCH_meadow_grass"/"BASE_OR_PATCH_snow").</param>
+    /// <param name="dirtTexName">Ground tile name for the PATCH surface blended in by the dirt mask (e.g. "BASE_OR_PATCH_OR_PATH_soil").</param>
     /// <param name="tint">Albedo multiply applied by the GroundBlend shader's <c>_Color</c> (biome hue). Null = white.</param>
     /// <param name="hardEdge">Snap the dirt + path weights to 0/1 so the grass↔dirt↔path edges are crisp, not feathered.</param>
     public static GameObject LayPlot(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                      int groundLayer, int seed = 73,
                                      IReadOnlyList<PathRouting.Route> paths = null, float pathWidth = 0f,
                                      string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f,
-                                     string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
+                                     string grassTexName = "BASE_OR_PATCH_meadow_grass", string dirtTexName = "BASE_OR_PATCH_OR_PATH_soil",
                                      Color? tint = null, bool hardEdge = false)
     {
         return LayPlotSampled(scene, rootName, center, sizeX, sizeZ, groundLayer,
@@ -169,8 +168,8 @@ public static class GroundBlendBuilder
     /// </summary>
     public static GameObject LayPlotSampled(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                             int groundLayer, GroundSampler sample,
-                                            string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
-                                            string pathTexName = "ground_road", string stoneTexName = null,
+                                            string grassTexName = "BASE_OR_PATCH_meadow_grass", string dirtTexName = "BASE_OR_PATCH_OR_PATH_soil",
+                                            string pathTexName = "PATH_dirt_road", string stoneTexName = null,
                                             string rockTexName = null, float cell = 0.8f, Color? tint = null)
     {
         var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
@@ -260,8 +259,8 @@ public static class GroundBlendBuilder
     public static GameObject LayPlotSampledElevated(Scene scene, string rootName, Vector3 center,
                                                     float sizeX, float sizeZ, int groundLayer, GroundSamplerLeveled sample,
                                                     int[,] levels, int cols, int rows, float cellSize,
-                                                    string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
-                                                    string pathTexName = "ground_road", string stoneTexName = null,
+                                                    string grassTexName = "BASE_OR_PATCH_meadow_grass", string dirtTexName = "BASE_OR_PATCH_OR_PATH_soil",
+                                                    string pathTexName = "PATH_dirt_road", string stoneTexName = null,
                                                     string rockTexName = null, Color? tint = null, DiagonalCuts cuts = null)
     {
         var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
@@ -731,10 +730,10 @@ public static class GroundBlendBuilder
     static Material MakeGroundMaterial(string rootName, string grassTexName, string dirtTexName, string pathTexName,
                                        string stoneTexName, string rockTexName, Color? tint)
     {
-        var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "ground_grass" : grassTexName);
+        var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "BASE_OR_PATCH_meadow_grass" : grassTexName);
         if (grassTex == null) return null;
         var dirtTex = (!string.IsNullOrEmpty(dirtTexName) ? GroundBaseMap(dirtTexName) : null)
-                      ?? GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
+                      ?? GroundBaseMap("BASE_OR_PATCH_OR_PATH_soil") ?? GroundBaseMap("PATH_dirt_road");
         var pathTex  = (!string.IsNullOrEmpty(pathTexName)  ? GroundBaseMap(pathTexName)  : null) ?? dirtTex;
         var stoneTex = (!string.IsNullOrEmpty(stoneTexName) ? GroundBaseMap(stoneTexName) : null);
         var rockTex  = (!string.IsNullOrEmpty(rockTexName)  ? GroundBaseMap(rockTexName)  : null);
@@ -765,11 +764,11 @@ public static class GroundBlendBuilder
     }
 
     // The decorative CURB material for 1-notch drops (raised-sidewalk lip / gutter side): a plain lit strip of
-    // ground_curb.png, tiled by the wall's world-space UVs (baked in AddWall). Returns null (walls then stay in the
+    // CURB_blocks.png, tiled by the wall's world-space UVs (baked in AddWall). Returns null (walls then stay in the
     // ground-blend submesh) if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
     static Material MakeCurbMaterial()
     {
-        var tex = GroundTiles.Load("ground_curb");
+        var tex = GroundTiles.Load("CURB_blocks");
         if (tex == null) return null;
         // Unwritten/GroundTrim (not URP/Lit): stamps the same stencil bit 32 as the ground so the hand-drawn INK
         // overlay skips the curb wall (a steep curb viewed edge-on otherwise smears into a solid black ink band).
@@ -787,12 +786,12 @@ public static class GroundBlendBuilder
     }
 
     // The single SQUARE-STONE material dropped at every border corner (inward + outward). Its texture is one lone
-    // stone (ground_curb_corner.png) mapped [0,1]² onto each corner quad, so a corner always reads as one clean
+    // stone (CORNER_curb_slab.png) mapped [0,1]² onto each corner quad, so a corner always reads as one clean
     // full stone instead of a UV-sliced sliver or two overlapping strips. Returns null (corners then get no stone)
     // if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
     static Material MakeCornerMaterial()
     {
-        var tex = GroundTiles.Load("ground_curb_corner");
+        var tex = GroundTiles.Load("CORNER_curb_slab");
         if (tex == null) return null;
         // Unwritten/GroundTrim (not URP/Lit): stamps stencil bit 32 so the INK overlay skips the corner stone too.
         var shader = Shader.Find("Unwritten/GroundTrim");

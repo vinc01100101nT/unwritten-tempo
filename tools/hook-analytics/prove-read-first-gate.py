@@ -24,7 +24,7 @@ RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
 CASES = [
     ("runtime C#", os.path.join(REPO, "unity", "Assets", "Scripts", "Character.cs"),
      os.path.join(REPO, "unity", "Assets", "Scripts", "PERFORMANCE.md")),
-    ("a texture import setting", os.path.join(REPO, "unity", "Assets", "1_Authored", "Art", "GroundTiles", "ground_soil.png.meta"),
+    ("a texture import setting", os.path.join(REPO, "unity", "Assets", "1_Authored", "Art", "GroundTiles", "BASE_OR_PATCH_OR_PATH_soil.png.meta"),
      os.path.join(REPO, "unity", "Assets", "ASSETS.md")),
     ("a prefab", os.path.join(REPO, "unity", "Assets", "1_Authored", "Prefabs", "Props", "Plants", "Grass1.prefab"),
      os.path.join(REPO, "unity", "Assets", "ASSETS.md")),

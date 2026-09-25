@@ -147,31 +147,6 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: ground_grass
-    second: {fileID: 2100000, guid: d083625486af83f4f8369789a75d70dd, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: ground_road
-    second: {fileID: 2100000, guid: cc9e0c86b09548542b3fc13410f098eb, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: ground_rock
-    second: {fileID: 2100000, guid: 5574c5b5c634f0d46ab455328da3fd0c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: ground_soil
-    second: {fileID: 2100000, guid: 3c30a75a3c13e7345b6ef6423d3753ea, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: ground_stones
-    second: {fileID: 2100000, guid: 444eadfc8c3b9194ca2a21654561f844, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
       name: oak_leaves
     second: {fileID: 2100000, guid: 24318f47fdb87c54190fdccbcfb5fbc0, type: 2}
   materials:

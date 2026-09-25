@@ -149,14 +149,14 @@
 // ── World model (v2 — free-form, rectangular) ────────────────────────────────
 // maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome? }]
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
-//          biome = theme the Unity generator applies to the map's ground (RecipeGenerator.BiomeOf); omitted = grassland.
+//          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
 // portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
 const TYPES = ["town", "field", "dungeon", "special"];
 const COLORS = { town: "#f2c200", field: "#3fb24a", dungeon: "#8a3ffb", special: "#e23b3b" };
-// Biomes the Unity side understands (WorldCreator.TryParseBiome → RecipeGenerator.BiomeOf). Swatch colours are
+// Biomes the Unity side understands (WorldCreator.TryParseBiome → the biome's row in BiomeTable). Swatch colours are
 // authoring hints that loosely echo each biome's ground tint. "grassland" is the default → never written to JSON.
-const BIOMES = ["grassland", "snow", "desert", "volcanic", "corrupted"];
-const BIOME_COLORS = { grassland: "#3fb24a", snow: "#bfe3ff", desert: "#e3c878", volcanic: "#b4452f", corrupted: "#9a6cf0" };
+const BIOMES = ["grassland", "snow", "desert", "volcanic", "corrupted", "forest"];
+const BIOME_COLORS = { grassland: "#3fb24a", snow: "#bfe3ff", desert: "#e3c878", volcanic: "#b4452f", corrupted: "#9a6cf0", forest: "#c2703a" };
 function biomeOf(m) { return m.biome || "grassland"; }
 const DEFAULT_SIZE = 60;   // new maps start 60×60 (one classic square)
 const MIN_SIZE = 16;       // smallest a map can be resized to

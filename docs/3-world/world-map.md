@@ -119,7 +119,7 @@ of the ten elements is the majority somewhere.
 | Biome | Most creatures | Also found | Exists today? |
 | --- | --- | --- | --- |
 | Grassland | Neutral | Earth, Wind, Poison | yes |
-| Forest | Earth | Poison, Wind, Neutral | no |
+| Forest | Earth | Poison, Wind, Neutral | yes (in the map generator; no world map uses it yet) |
 | Highland | Earth | Wind, Neutral | no |
 | Peaks | Wind | Holy, Water | no |
 | Steppe | Wind | Neutral, Earth | no |
@@ -184,8 +184,9 @@ castle. With Lastline that is **about 110 maps**, against 41 today.
   server knows the time of day and the weather.
 - **A tide that opens and closes a path** (the Tide Temple).
 - **Guilds and castle gameplay.** There are no guilds in the game yet; castle gameplay is deferred.
-- **Nine new biomes** (see Biomes and elements), and buildings for twelve cultures. Today's ground comes in five
-  kinds: Grassland, Snow, Desert, Volcanic and Corrupted.
+- **Eight new biomes in the map generator** (see Biomes and elements), and buildings for twelve cultures. The game
+  knows six biomes today: Grassland, Snow, Desert, Volcanic, Corrupted and Forest. Ground tiles exist for all fourteen;
+  props exist for nine of them. What each biome looks like is [Biomes — Ground Tiles and Props](biomes.md).
 - **Only 18 elites for twelve homelands.** Six homelands get one elite, six get two. More elites would let every
   homeland have two.
 
@@ -197,5 +198,6 @@ castle. With Lastline that is **about 110 maps**, against 41 today.
 - [Story & Setting (Canon)](story-setting-canon.md) — the last line, the Twelve and their epithets.
 - [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — each weapon's
   identity, which its homeland and shadow site are built around.
+- [Biomes — Ground Tiles and Props](biomes.md) — each biome's ground tiles and props, and the props still to make.
 - [Biome Mob Families](biome-mob-families.md) — how a spawn area picks its creatures by biome and level, and the biome
   list the game has today.

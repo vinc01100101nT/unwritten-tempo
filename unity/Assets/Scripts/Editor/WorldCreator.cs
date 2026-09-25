@@ -321,11 +321,12 @@ public class WorldCreator : EditorWindow
                     clone.sizeX = SizeX(m); clone.sizeZ = SizeZ(m);
                     clone.randomizeSeed = false;
                     clone.seed = m.seed != 0 ? m.seed : StableSeed(m.id);
-                    if (TryParsePathTile(m.pathTile, out var pt)) clone.pathTile = pt;
+                    bool mapPicksRoad = TryParsePathTile(m.pathTile, out var pt);
+                    if (mapPicksRoad) clone.pathTile = pt;
                     if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
                     if (TryParseBiome(m.biome, out var bm)) clone.biome = bm;   // per-cell theme override (else the template's biome)
                     var exits = exitsByMap.TryGetValue(m.id, out var ex) ? ex : null;
-                    var res = RecipeGenerator.Generate(clone, exits);
+                    var res = RecipeGenerator.Generate(clone, exits, mapPicksRoad);
                     if (!res.ok) { EditorUtility.ClearProgressBar(); EditorUtility.DisplayDialog("Build World", $"Failed to bake '{m.id}'. Check the Console.", "OK"); return; }
                     scenePathById[m.id] = res.path;
                 }
@@ -461,17 +462,16 @@ public class WorldCreator : EditorWindow
         }
     }
 
+    // Any biome by its own name (case-insensitive), so a biome appended to the list needs no change here.
+    // None is the creature-side "any biome" value and never a map's biome.
     static bool TryParseBiome(string s, out Biome biome)
     {
-        switch ((s ?? "").Trim().ToLowerInvariant())
-        {
-            case "grassland": case "grass": biome = Biome.Grassland; return true;
-            case "snow": case "ice":        biome = Biome.Snow;      return true;
-            case "desert": case "sand":     biome = Biome.Desert;    return true;
-            case "volcanic": case "lava":   biome = Biome.Volcanic;  return true;
-            case "corrupted": case "void":  biome = Biome.Corrupted; return true;
-            default:                        biome = Biome.Grassland; return false;
-        }
+        string name = (s ?? "").Trim();
+        if (System.Enum.TryParse(name, true, out biome) && biome != Biome.None
+            && string.Equals(biome.ToString(), name, System.StringComparison.OrdinalIgnoreCase))   // names only, not numbers
+            return true;
+        biome = Biome.Grassland;
+        return false;
     }
 
     static string Cap(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s.Substring(1);

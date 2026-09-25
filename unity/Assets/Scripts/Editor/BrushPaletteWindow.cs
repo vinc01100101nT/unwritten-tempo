@@ -226,7 +226,7 @@ public class BrushPaletteWindow : EditorWindow
         { var go = LoadProp(n); if (go != null) wall.prefabs.Add(go); }
         entries.Add(wall);
 
-        foreach (var g in new[] { "ground_grass", "ground_road", "ground_stones", "ground_rock", "ground_soil" })
+        foreach (var g in new[] { "BASE_OR_PATCH_meadow_grass", "PATH_dirt_road", "PATH_OR_SIDEWALK_dark_cobble", "BASE_OR_PATCH_OR_PATH_gravel_scree", "BASE_OR_PATCH_OR_PATH_soil" })
         { var asset = FindGroundAsset(g); if (asset != null) entries.Add(new PaletteEntry { role = BrushRole.Ground, groundAsset = asset }); }
 
         _palette.entries = entries;

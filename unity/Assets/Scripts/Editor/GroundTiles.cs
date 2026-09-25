@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// The ONE way author-time code reaches a ground tile texture. Every tile the game paints ground with lives in
-/// <see cref="Dir"/> (ASSETS.md: one copy, one home) and is named by its file, e.g. <c>ground_grass</c>. The blended
+/// <see cref="Dir"/> (ASSETS.md: one copy, one home) and is named by its file, e.g. <c>BASE_OR_PATCH_meadow_grass</c>. The blended
 /// ground, the curbs and the brush palette all resolve through here, so a tile is found the same way everywhere
 /// and nothing can pick up a same-named texture from another folder.
 /// </summary>

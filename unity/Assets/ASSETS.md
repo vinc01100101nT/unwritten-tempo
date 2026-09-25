@@ -47,8 +47,11 @@ checker at the bottom is what makes them stick without anybody remembering.
     cover 18 units), GPU skinning is on (every character was skinned on the CPU), no quality level uses unlimited
     bone weights (4 is the ceiling). Change a pin in `tools/check-asset-rules.py` and here together, with the reason.
 11. **A ground tile is one .png in `1_Authored/Art/GroundTiles/`, imported at 1024, compressed, with no alpha.**
-    Every tile the game paints ground with — base, patch, path, curb — lives in that one folder, is named by its
-    file (`ground_moss`), and nothing else lives there: no materials, no copies, no other formats. To add a tile,
+    Every tile the game paints ground with — base, patch, path, sidewalk, curb, corner — lives in that one folder,
+    and nothing else lives there: no materials, no copies, no other formats. A tile is named by its uses, then its
+    own name: an UPPERCASE prefix listing every way it can be laid (BASE, PATCH, PATH, SIDEWALK, CURB, CORNER),
+    joined by `_OR_` when there is more than one, then the lowercase name — `BASE_OR_PATCH_meadow_grass`,
+    `PATH_dirt_road`, `CURB_blocks`. Code looks a tile up by that exact file name. To add a tile,
     drop the .png in the folder; the import rule applies 1024 / compressed / no alpha / repeat / mipmaps by itself,
     and code reaches it only through `GroundTiles.Load(name)`. The source can be any size (image-generator tiles
     arrive about 1254 wide), but must be seamless and carry no border. Why: tiles blended on one ground must match
@@ -90,7 +93,7 @@ checker at the bottom is what makes them stick without anybody remembering.
 ```bash
 tools/check-asset-rules.py          # every rule above, on the whole project; --all also lists the debt (WARN)
 tools/check-editor-writes.py        # editor code that writes with no click
-tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — it plants 13 faults and expects each named
+tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — it plants 19 faults and expects each named
 ```
 
 They run by themselves at the end of any turn that edited a texture or model setting, a prefab, a project setting

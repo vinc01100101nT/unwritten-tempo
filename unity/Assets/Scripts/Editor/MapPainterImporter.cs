@@ -333,24 +333,24 @@ public class MapPainterImporter : EditorWindow
                 ? GroundBlendBuilder.LayPlotSampledElevated(
                     scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, SampleLeveled,
                     levels, cols, rows, cellSize,
-                    GroundTexFor(0, "ground_grass"),
-                    GroundTexFor(4, "ground_soil"),
-                    GroundTexFor(1, "ground_road"),
-                    GroundTexFor(2, "ground_stones"),
-                    GroundTexFor(3, "ground_rock"),
+                    GroundTexFor(0, "BASE_OR_PATCH_meadow_grass"),
+                    GroundTexFor(4, "BASE_OR_PATCH_OR_PATH_soil"),
+                    GroundTexFor(1, "PATH_dirt_road"),
+                    GroundTexFor(2, "PATH_OR_SIDEWALK_dark_cobble"),
+                    GroundTexFor(3, "BASE_OR_PATCH_OR_PATH_gravel_scree"),
                     cuts: cuts.any ? cuts : null)
                 : GroundBlendBuilder.LayPlotSampled(
                     scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
-                    GroundTexFor(0, "ground_grass"),
-                    GroundTexFor(4, "ground_soil"),
-                    GroundTexFor(1, "ground_road"),
-                    GroundTexFor(2, "ground_stones"),
-                    GroundTexFor(3, "ground_rock"));
+                    GroundTexFor(0, "BASE_OR_PATCH_meadow_grass"),
+                    GroundTexFor(4, "BASE_OR_PATCH_OR_PATH_soil"),
+                    GroundTexFor(1, "PATH_dirt_road"),
+                    GroundTexFor(2, "PATH_OR_SIDEWALK_dark_cobble"),
+                    GroundTexFor(3, "BASE_OR_PATCH_OR_PATH_gravel_scree"));
             if (ground == null)
             {
                 EditorUtility.DisplayDialog("Import Painted Map",
-                    "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/1_Authored/Prefabs/Props and the "
-                    + "'Unwritten/GroundBlend' shader. Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
+                    "Couldn't build the ground — need the 'BASE_OR_PATCH_meadow_grass' tile in Assets/1_Authored/Art/GroundTiles and the "
+                    + "'Unwritten/GroundBlend' shader.", "OK");
                 if (!open) EditorSceneManager.CloseScene(scene, true);
                 return;
             }

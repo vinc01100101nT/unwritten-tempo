@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>
 /// One-click author helper: stamps a STARTER <see cref="MapRecipe"/> asset for each <see cref="Biome"/> into
 /// <c>Assets/3_Data/Recipes/Biomes/</c> so you can wire world-map cells immediately instead of hand-building every recipe.
-/// Each starter sets the biome (ground base/patch textures + hue come from <c>RecipeGenerator.BiomeOf</c>), a sensible
+/// Each starter sets the biome (ground tiles + hue come from the biome's row in <see cref="BiomeTable"/>), a sensible
 /// <c>dirtAmount</c>, and a couple of generic prop/mob groups you then tune. Create-if-absent: it never clobbers a
 /// recipe you've already edited — delete one to re-stamp it fresh.
 ///

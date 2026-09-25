@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c019a77044ec84bc7a05f60ee4b58046, type: 3}
+  m_Name: BiomeTable
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::BiomeTable
+  rows:
+  - biome: 0
+    baseTile: {fileID: 2800000, guid: 01cf73c3f5df44830b054d86571b8e4a, type: 3}
+    patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    roadTile: {fileID: 0}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: -1
+    props: []
+  - biome: 1
+    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    patchTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
+    roadTile: {fileID: 0}
+    tint: {r: 1.1, g: 1.15, b: 1.3, a: 1}
+    patchAmount: -1
+    props: []
+  - biome: 2
+    baseTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    patchTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    roadTile: {fileID: 0}
+    tint: {r: 1.15, g: 1, b: 0.7, a: 1}
+    patchAmount: -1
+    props: []
+  - biome: 3
+    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    roadTile: {fileID: 0}
+    tint: {r: 0.7, g: 0.35, b: 0.3, a: 1}
+    patchAmount: -1
+    props: []
+  - biome: 4
+    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    roadTile: {fileID: 0}
+    tint: {r: 0.72, g: 0.55, b: 0.95, a: 1}
+    patchAmount: -1
+    props: []
+  - biome: 6
+    baseTile: {fileID: 2800000, guid: 8559430c1feb14211a45564d5f444fa5, type: 3}
+    patchTile: {fileID: 2800000, guid: ba20e6bdbbf8a4c75b73395e71183997, type: 3}
+    roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 6
+      prefabs:
+      - {fileID: 4084776280816671368, guid: fa5d5f8a6a5bba3478ac9e9d0f43f46e, type: 3}
+      - {fileID: 7309047408831455473, guid: b8b371c5f45e74f4f802f270bf6d0dcc, type: 3}
+      - {fileID: 5428224987719116340, guid: 4d753cacc5b287b45b2c666df2146aa9, type: 3}
+      - {fileID: 9095531201573621009, guid: 7117e6eb23913e04ab3305df7f899889, type: 3}
+      - {fileID: 7311960046115780579, guid: b7bd10c94dbb96741b581cca9f39609e, type: 3}
+      - {fileID: 6739030173217430718, guid: 638402e2c17e33b419b4ad506a1851cc, type: 3}
+      - {fileID: 7376482858957275655, guid: da9a446fef357b34da1b1a04e48e96f9, type: 3}
+      - {fileID: 500024648983283114, guid: 7d1d9db1da996f3429d4da11d98b9d8c, type: 3}
+      - {fileID: 7304909446943308764, guid: 6fd8244c341b6e84bb18feb02704687a, type: 3}
+    - category: 10
+      prefabs:
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}

@@ -61,26 +61,27 @@ public static class RecipeGenerator
     // PathTile → the ground_* prop whose Base Map textures the path. Falls back to dirt inside LayPlot if missing.
     static string PathTexName(PathTile t) => t switch
     {
-        PathTile.Road   => "ground_road",
-        PathTile.Soil   => "ground_soil",
-        PathTile.Stones => "ground_stones",
-        PathTile.Rock   => "ground_rock",
-        _               => "ground_road",
+        PathTile.Road   => "PATH_dirt_road",
+        PathTile.Soil   => "BASE_OR_PATCH_OR_PATH_soil",
+        PathTile.Stones => "PATH_OR_SIDEWALK_dark_cobble",
+        PathTile.Rock   => "BASE_OR_PATCH_OR_PATH_gravel_scree",
+        _               => "PATH_dirt_road",
     };
 
-    // Biome → ground BASE texture + PATCH texture + albedo tint. Until dedicated snow/sand/ash ground textures exist,
-    // each non-grassland biome recombines the existing ground_* prefab textures (grey rock / brown soil read better
-    // under a colour multiply than green grass) with a hue. Swap the *Tex names here when real biome textures land —
-    // nothing else changes. The recipe's own pathTile still chooses the road texture; the biome only sets base/patch.
-    struct BiomeSpec { public string baseTex, patchTex; public Color tint; }
-    static BiomeSpec BiomeOf(Biome b) => b switch
+    // A biome's look (ground tiles, colour wash, road, props) is its row in the BiomeTable — the one place it lives.
+    // A missing table, row or tile fails the bake with a dialog rather than falling back to some other look.
+    static BiomeRow BiomeRowOrExplain(Biome b)
     {
-        Biome.Snow      => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_stones", tint = new Color(1.10f, 1.15f, 1.30f) },
-        Biome.Desert    => new BiomeSpec { baseTex = "ground_soil",  patchTex = "ground_rock",   tint = new Color(1.15f, 1.00f, 0.70f) },
-        Biome.Volcanic  => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_soil",   tint = new Color(0.70f, 0.35f, 0.30f) },
-        Biome.Corrupted => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_soil",   tint = new Color(0.72f, 0.55f, 0.95f) },
-        _               => new BiomeSpec { baseTex = "ground_grass", patchTex = "ground_soil",   tint = Color.white },   // Grassland (original look)
-    };
+        var table = BiomeTable.Load();
+        string problem =
+            table == null ? $"No biome table at {BiomeTable.AssetPath}." :
+            table.For(b) is not BiomeRow row ? $"The biome table has no row for {b}." :
+            row.baseTile == null ? $"The {b} row has no main ground tile." :
+            row.patchTile == null ? $"The {b} row has no patch tile." : null;
+        if (problem == null) return table.For(b);
+        EditorUtility.DisplayDialog("Generate Map", problem, "OK");
+        return null;
+    }
 
     // ── ENTRY POINTS ───────────────────────────────────────────────────────────────────────────────────
     /// <summary>Bake <paramref name="r"/> into Assets/Scenes/&lt;mapName&gt;.unity. Returns success + the scene
@@ -91,12 +92,19 @@ public static class RecipeGenerator
 
     /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's warp doorway
     /// positions in world-XZ, passed by the World Creator) routes the paths to terminate at each doorway — so warp
-    /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.</summary>
-    public static (bool ok, string path, int props) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ)
+    /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.
+    /// <paramref name="mapPicksRoad"/> true = the World Creator set this map's road, so it wins over the biome's.</summary>
+    public static (bool ok, string path, int props) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ,
+                                                             bool mapPicksRoad = false)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Generate Map", "Exit Play mode first, then re-run.", "OK"); return (false, null, 0); }
         if (r == null) return (false, null, 0);
+        var bio = BiomeRowOrExplain(r.biome);
+        if (bio == null) return (false, null, 0);
+        bool biomeRoad = !mapPicksRoad && bio.roadTile != null;
+        string roadTex = biomeRoad ? bio.roadTile.name : PathTexName(r.pathTile);
+        float patchAmount = bio.patchAmount >= 0f ? bio.patchAmount : r.dirtAmount;
 
         string safe = Sanitize(string.IsNullOrWhiteSpace(r.mapName) ? "NewMap" : r.mapName);
         string path = $"{ScenesDir}/{safe}.unity";
@@ -129,19 +137,17 @@ public static class RecipeGenerator
             : r.pathStyle == PathStyle.Cardinal
                 ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
                 : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
-        // Ground = one blended mesh; the biome chooses its base/patch textures + hue, the recipe can add a tint on top
-        // and opt into hard (un-feathered) edges. Grassland + white groundTint + Blended reproduces the original look.
-        var bio = BiomeOf(r.biome);
+        // Ground = one blended mesh; the biome row chooses its base/patch/road tiles + hue, the recipe can add a tint on
+        // top and opt into hard (un-feathered) edges.
         var ground = GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
-                                               paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount, 0.8f,
-                                               bio.baseTex, bio.patchTex, bio.tint * r.groundTint,
+                                               paths, r.pathWidth, roadTex, patchAmount, 0.8f,
+                                               bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,
                                                r.groundStyle == GroundStyle.HardEdge);
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Generate Map",
-                "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/1_Authored/Prefabs/Props "
-                + "(and, for the blended style, the 'Unwritten/GroundBlend' shader).\n\n"
-                + "Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
+                "Couldn't build the ground — need the 'BASE_OR_PATCH_meadow_grass' tile in Assets/1_Authored/Art/GroundTiles "
+                + "(and, for the blended style, the 'Unwritten/GroundBlend' shader).", "OK");
             EditorSceneManager.CloseScene(scene, true);
             return (false, null, 0);
         }
@@ -158,7 +164,7 @@ public static class RecipeGenerator
                 if (g == null) continue;
                 var child = new GameObject(string.IsNullOrEmpty(g.label) ? "Group" : g.label);
                 child.transform.SetParent(propsRoot.transform, false);
-                props += PlaceGroup(g, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers);
+                props += PlaceGroup(g, bio, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers);
             }
 
         // NO CREATURES ARE PUT IN THE MAP. Where creatures live is the world spawn list (WorldSpawns), read by the server
@@ -178,7 +184,8 @@ public static class RecipeGenerator
         AssetDatabase.SaveAssets();
 
         // ── SIDECAR: write the painter-editable map.json next to the scene (round-trip into the Map Painter) ──
-        WriteSidecar(safe, r, center, seed, paths);
+        WriteSidecar(safe, r, center, seed, paths, biomeRoad ? PainterBrushForTile(roadTex) : PainterRoadBrush(r.pathTile),
+                     patchAmount);
 
         Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props.");
         return (true, path, props);
@@ -502,7 +509,7 @@ public static class RecipeGenerator
     }
 
     // ── PROP PLACEMENT ENGINE ────────────────────────────────────────────────────────────────────────────
-    static int PlaceGroup(RecipePropGroup g, Transform parent, Vector3 center, float sizeX, float sizeZ,
+    static int PlaceGroup(RecipePropGroup g, BiomeRow bio, Transform parent, Vector3 center, float sizeX, float sizeZ,
                           System.Random rng, int mask, IReadOnlyList<PathRouting.Route> paths, float pathWidth,
                           List<(Vector2 c, float r)> blockers)
     {
@@ -513,9 +520,18 @@ public static class RecipeGenerator
         PathRouting.Route mainRoute = null;
         if (hasPath) { float bestL = -1f; foreach (var rt in paths) { float L = rt.Length; if (L > bestL) { bestL = L; mainRoute = rt; } } }
 
-        // Resolve the prefab pool: explicit picks win; otherwise auto-fill from the category.
+        // Resolve the prefab pool: explicit picks win; then the biome's props for this category; else the pack list.
         var pool = new List<GameObject>();
         if (g.prefabs != null) foreach (var p in g.prefabs) if (p != null) pool.Add(p);
+        if (pool.Count == 0 && g.category != PropCategory.None && bio.TryGetProps(g.category, out var biomeProps))
+        {
+            if (biomeProps != null) foreach (var p in biomeProps) if (p != null) pool.Add(p);
+            if (pool.Count == 0)
+            {
+                Debug.Log($"[unwritten] Prop group '{g.label}': the {bio.biome} biome places no {g.category}; skipped.");
+                return 0;
+            }
+        }
         if (pool.Count == 0) foreach (var n in CategoryNames(g.category)) { var pf = LoadProp(n); if (pf != null) pool.Add(pf); }
         // PerimeterWall ignores category/picks for the run pieces — it loads the wall kit by name.
         if (pool.Count == 0 && g.placement == PlacementRule.PerimeterWall)
@@ -534,7 +550,7 @@ public static class RecipeGenerator
 
         // Seat one prop at (x,z) if the spot is clear. applyAvoidPath is off for street/roadside rules (they
         // intentionally sit near the path).
-        bool TryPlaceAt(float x, float z, bool applyAvoidPath)
+        bool TryPlaceAt(float x, float z, bool applyAvoidPath, bool underOthers = false)
         {
             if (g.clearFromCenter > 0f)
             { float dx = x - center.x, dz = z - center.z; if (dx * dx + dz * dz < g.clearFromCenter * g.clearFromCenter) return false; }
@@ -545,7 +561,8 @@ public static class RecipeGenerator
             float selfR = Mathf.Max(0.3f, g.minSpacing * 0.5f);
             var here = new Vector2(x, z);
             foreach (var p in placedAt) if ((new Vector2(p.x, p.z) - here).sqrMagnitude < g.minSpacing * g.minSpacing) return false;
-            foreach (var b in blockers) if ((b.c - here).magnitude < b.r + selfR) return false;
+            if (!underOthers)
+                foreach (var b in blockers) if ((b.c - here).magnitude < b.r + selfR) return false;
 
             var prefab = pool[rng.Next(pool.Count)];
             var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
@@ -589,6 +606,39 @@ public static class RecipeGenerator
                     attempts++;
                     float ang = (float)rng.NextDouble() * Mathf.PI * 2f, dist = (float)rng.NextDouble() * radius;
                     if (TryPlaceAt(center.x + Mathf.Cos(ang) * dist, center.z + Mathf.Sin(ang) * dist, true)) placed++;
+                }
+                break;
+            }
+            case PlacementRule.Clumps:
+            {
+                // Bunches on the ground-tile grid: each bunch starts on a random cell and grows through touching
+                // cells to 1..cellsPerClump cells; every cell is then filled with propsPerCell tries. TryPlaceAt keeps
+                // each prop off the road (with avoidPath); bunches grow under trees and around rocks, as grass does.
+                float cellM = GroundBlendBuilder.GroundTexWorldSize;
+                int cols = Mathf.Max(1, Mathf.FloorToInt((maxX - minX) / cellM));
+                int rows = Mathf.Max(1, Mathf.FloorToInt((maxZ - minZ) / cellM));
+                int clumps = TargetCount(g, sizeX, sizeZ);
+                var cells = new HashSet<Vector2Int>();
+                var grown = new List<Vector2Int>();
+                for (int c = 0; c < clumps; c++)
+                {
+                    grown.Clear();
+                    grown.Add(new Vector2Int(rng.Next(cols), rng.Next(rows)));
+                    int want = 1 + rng.Next(Mathf.Max(1, g.cellsPerClump));
+                    for (int tries = 0; grown.Count < want && tries < want * 8; tries++)
+                    {
+                        var from = grown[rng.Next(grown.Count)];
+                        var next = from + (rng.Next(4) switch { 0 => Vector2Int.right, 1 => Vector2Int.left, 2 => Vector2Int.up, _ => Vector2Int.down });
+                        if (next.x < 0 || next.y < 0 || next.x >= cols || next.y >= rows || grown.Contains(next)) continue;
+                        grown.Add(next);
+                    }
+                    foreach (var cell in grown) cells.Add(cell);
+                }
+                foreach (var cell in cells)
+                {
+                    float cx0 = minX + cell.x * cellM, cz0 = minZ + cell.y * cellM;
+                    for (int k = 0; k < Mathf.Max(1, g.propsPerCell); k++)
+                        if (TryPlaceAt(cx0 + (float)rng.NextDouble() * cellM, cz0 + (float)rng.NextDouble() * cellM, true, underOthers: true)) placed++;
                 }
                 break;
             }
@@ -803,27 +853,38 @@ public static class RecipeGenerator
         if (!string.IsNullOrEmpty(id)) return id;
         return t switch
         {
-            PathTile.Road   => "ground_road",
-            PathTile.Stones => "ground_stones",
-            PathTile.Rock   => "ground_rock",
-            PathTile.Soil   => "ground_soil",
-            _               => "ground_road",
+            PathTile.Road   => "path_dirt_road",
+            PathTile.Stones => "path_or_sidewalk_dark_cobble",
+            PathTile.Rock   => "base_or_patch_or_path_gravel_scree",
+            PathTile.Soil   => "base_or_patch_or_path_soil",
+            _               => "path_dirt_road",
         };
+    }
+
+    // Painter ground-brush id for a biome's road tile: the palette brush showing that exact tile, else the tile's own
+    // name in the painter's id form (lowercase), which is what the palette would call it once added.
+    static string PainterBrushForTile(string tileName)
+    {
+        var pal = LoadPalette();
+        if (pal != null)
+            foreach (var rb in pal.Resolve())
+                if (rb.IsGround && rb.groundTex == tileName) return rb.id;
+        return tileName.ToLowerInvariant();
     }
 
     // Write <name>.map.json beside the painter: captured props (lossless layout/facing) + the ground rasterised from
     // the SAME procedural sampler the bake used (roads + dirt patches), so the painter's Import reproduces this map.
-    static void WriteSidecar(string mapName, MapRecipe r, Vector3 center, int seed, IReadOnlyList<PathRouting.Route> paths)
+    static void WriteSidecar(string mapName, MapRecipe r, Vector3 center, int seed, IReadOnlyList<PathRouting.Route> paths,
+                             string roadBrush, float patchAmount)
     {
         var pal = LoadPalette();
         float cellSize = pal != null && pal.cellSize > 0f ? pal.cellSize : 4f;
         int cols = Mathf.Max(1, Mathf.RoundToInt(r.sizeX / cellSize));
         int rows = Mathf.Max(1, Mathf.RoundToInt(r.sizeZ / cellSize));
 
-        var sampler = GroundBlendBuilder.MakeProceduralSampler(seed, r.dirtAmount, paths, r.pathWidth,
+        var sampler = GroundBlendBuilder.MakeProceduralSampler(seed, patchAmount, paths, r.pathWidth,
                                                               r.groundStyle == GroundStyle.HardEdge);
-        var ground = MapSidecar.RasterizeGround(sampler, center, r.sizeX, r.sizeZ, cellSize, cols, rows,
-                                                PainterRoadBrush(r.pathTile));
+        var ground = MapSidecar.RasterizeGround(sampler, center, r.sizeX, r.sizeZ, cellSize, cols, rows, roadBrush);
 
         var doc = new MapSidecar.Doc
         {
