@@ -191,7 +191,7 @@ def main():
         if name in held_seen:
             problems.append("%s appears twice" % where)
         held_seen.add(name)
-        for field in ("alwaysPuddles", "alwaysSnowCover", "alwaysFog"):
+        for field in ("alwaysPuddles", "alwaysSnowCover", "alwaysFog", "alwaysClouds"):
             fm = re.search(r"^    %s: ([\d.\-e]+)" % field, rb, re.M)
             if not fm:
                 problems.append("%s has no saved %s" % (where, field))

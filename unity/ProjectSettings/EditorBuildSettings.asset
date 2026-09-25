@@ -200,6 +200,183 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/test_corrupted.unity
     guid: 49b8ac04b0ff3476584c9cab977c6d7a
+  - enabled: 1
+    path: Assets/Scenes/city_shield.unity
+    guid: 78afd2cf92b014e16845cfae6c8cd79f
+  - enabled: 1
+    path: Assets/Scenes/m_f01.unity
+    guid: a56766eea400b4683af5187fe1aa96d3
+  - enabled: 1
+    path: Assets/Scenes/m_f02.unity
+    guid: 6648cfd0513244b348eca80f52bc0d63
+  - enabled: 1
+    path: Assets/Scenes/m_f03.unity
+    guid: 4805cc8d5d74744f59662cc62e0780d3
+  - enabled: 1
+    path: Assets/Scenes/dg_tunnels_1.unity
+    guid: 3428ef8fbd69d49e686c911fd12106ac
+  - enabled: 1
+    path: Assets/Scenes/dg_tunnels_2.unity
+    guid: 0ff568ed9c19d4499883252660853083
+  - enabled: 1
+    path: Assets/Scenes/m_f04.unity
+    guid: b49e4b25f3dce46c7aeb96f7453b6f18
+  - enabled: 1
+    path: Assets/Scenes/city_warhammer.unity
+    guid: 261537b7f2afd41118438d5b6c1cbff1
+  - enabled: 1
+    path: Assets/Scenes/m_f05.unity
+    guid: 062d7c758c4394cb49ef10d864727d94
+  - enabled: 1
+    path: Assets/Scenes/city_spear.unity
+    guid: 91629982ceb3f4695b2f041477317bc9
+  - enabled: 1
+    path: Assets/Scenes/m_f06.unity
+    guid: 2d62770590bbd403ba65384bd44f3e8c
+  - enabled: 1
+    path: Assets/Scenes/m_f07.unity
+    guid: 80294c983df7b4d43a58a4235276270e
+  - enabled: 1
+    path: Assets/Scenes/city_greatsword.unity
+    guid: 1f8ae347a1a624db4b78634d598a24e8
+  - enabled: 1
+    path: Assets/Scenes/m_f09.unity
+    guid: 1c2a32da60f8b4a099891bf529617e3f
+  - enabled: 1
+    path: Assets/Scenes/m_f10.unity
+    guid: 845b7254b66fd4ade83c33503638763a
+  - enabled: 1
+    path: Assets/Scenes/dg_mines_1.unity
+    guid: 50b21afad18de46c9891cfc4667dc279
+  - enabled: 1
+    path: Assets/Scenes/dg_mines_2.unity
+    guid: 472210987a09744d489dbadf9d84142c
+  - enabled: 1
+    path: Assets/Scenes/dg_mines_3.unity
+    guid: 8038dde44ebd64ac0b08e80a130f0b7e
+  - enabled: 1
+    path: Assets/Scenes/m_f11.unity
+    guid: 4411d0d5fa78e47d8bf8eb9796a8fb0a
+  - enabled: 1
+    path: Assets/Scenes/town_sword.unity
+    guid: ad097b0e65a744e09b70312908cd29dd
+  - enabled: 1
+    path: Assets/Scenes/town_kick.unity
+    guid: b8d9f4ac263f341b58e6b9e2a942aa20
+  - enabled: 1
+    path: Assets/Scenes/town_axe.unity
+    guid: 0ae2eb9869c15458eb4baeeb73b67dd6
+  - enabled: 1
+    path: Assets/Scenes/b_f1.unity
+    guid: 21a69f4618f614193856b3879b9a73ae
+  - enabled: 1
+    path: Assets/Scenes/city_bow.unity
+    guid: 500dea2ce11f8470799e7baf6bbb2185
+  - enabled: 1
+    path: Assets/Scenes/f_f1.unity
+    guid: d1185c207e11543acbfd3d9bc23cd248
+  - enabled: 1
+    path: Assets/Scenes/f_f2.unity
+    guid: 9af68d584e63843ebb0457003cb80812
+  - enabled: 1
+    path: Assets/Scenes/f_f3.unity
+    guid: a5a650508968e4507978ad45611cddb4
+  - enabled: 1
+    path: Assets/Scenes/city_dagger.unity
+    guid: 73d6eb4096c23493eb5fd13f47639418
+  - enabled: 1
+    path: Assets/Scenes/f_f4.unity
+    guid: 62f5c4d6934b14fe5ab3e9d205dec6bf
+  - enabled: 1
+    path: Assets/Scenes/f_f5.unity
+    guid: 951b956ae9c164273b9cac54872940e2
+  - enabled: 1
+    path: Assets/Scenes/f_f6.unity
+    guid: 3d6bcbfbf1d3e49fb8f6546b50569873
+  - enabled: 1
+    path: Assets/Scenes/dg_canyon_1.unity
+    guid: 93f04bdd0fd094dc39efee0035f9d4e0
+  - enabled: 1
+    path: Assets/Scenes/dg_canyon_2.unity
+    guid: a4a4145c0a80146b5b90c8d2faa8445d
+  - enabled: 1
+    path: Assets/Scenes/dg_canyon_3.unity
+    guid: ef27d4bd7d04048ecbb63f0ae8d50af5
+  - enabled: 1
+    path: Assets/Scenes/town_firearm.unity
+    guid: 3ebdef9aa68114b608c132ab48ad0a35
+  - enabled: 1
+    path: Assets/Scenes/f_f7.unity
+    guid: 9002508e531894dc7a508730de36e20d
+  - enabled: 1
+    path: Assets/Scenes/city_staff.unity
+    guid: 60bd4d1717592404d84432a2ef3846c3
+  - enabled: 1
+    path: Assets/Scenes/a_f1.unity
+    guid: 62a03d71613c1447c88fa4e174c3190f
+  - enabled: 1
+    path: Assets/Scenes/a_f2.unity
+    guid: d73b8f0afa6d449c0ba6f308cb34913b
+  - enabled: 1
+    path: Assets/Scenes/dg_lava_1.unity
+    guid: dea91ec01d8014da1856991b5608a60a
+  - enabled: 1
+    path: Assets/Scenes/dg_lava_2.unity
+    guid: a0a80a42aba4a428cbf3be6488419632
+  - enabled: 1
+    path: Assets/Scenes/dg_lava_3.unity
+    guid: 50092159d9049481ca9f62886591072c
+  - enabled: 1
+    path: Assets/Scenes/town_fist.unity
+    guid: 184021ea42f1f4131ab889fcac38a79b
+  - enabled: 1
+    path: Assets/Scenes/a_f3.unity
+    guid: e0fbc423fe23e47b7b1a85691300b064
+  - enabled: 1
+    path: Assets/Scenes/town_scythe.unity
+    guid: 3799c38dd8a7840c09a92a853d2c647f
+  - enabled: 1
+    path: Assets/Scenes/a_f4.unity
+    guid: 238fc5c08dd3d44118450ec22e527e12
+  - enabled: 1
+    path: Assets/Scenes/a_f5.unity
+    guid: 3e3451b71030a4d498b88c099ab7e6a7
+  - enabled: 1
+    path: Assets/Scenes/dg_deep_1.unity
+    guid: 5417fae75bc1f422085bd4df9703deb3
+  - enabled: 1
+    path: Assets/Scenes/dg_deep_2.unity
+    guid: 8c568729da8634ec1af3795be4ba8d17
+  - enabled: 1
+    path: Assets/Scenes/dg_deep_3.unity
+    guid: 4016079d612bf4a1ebff43befac6bc70
+  - enabled: 1
+    path: Assets/Scenes/dg_deep_4.unity
+    guid: a0b9ad56f73934b8684a7b25e26f2905
+  - enabled: 1
+    path: Assets/Scenes/a_f6.unity
+    guid: 3f419b8854706430cbe4c5f7c83d3c80
+  - enabled: 1
+    path: Assets/Scenes/a_f7.unity
+    guid: 835330d57337741fab3e2774e81d5675
+  - enabled: 1
+    path: Assets/Scenes/a_f8.unity
+    guid: 21e24027e17a847cbac39a98b512540e
+  - enabled: 1
+    path: Assets/Scenes/a_f10.unity
+    guid: a2a4ab6df7b1e4b728b84814302c73bb
+  - enabled: 1
+    path: Assets/Scenes/a_f9.unity
+    guid: 111a088a924674488bfd45c7b091a8ff
+  - enabled: 1
+    path: Assets/Scenes/city_wand.unity
+    guid: abc2a36c7c75f44f28fb0ed35fa9b4a8
+  - enabled: 1
+    path: Assets/Scenes/a_f11.unity
+    guid: 4f06f2a231575408c88fa1aa9b8cc592
+  - enabled: 1
+    path: Assets/Scenes/a_f12.unity
+    guid: 704c5920259e84ff88573e13aacad191
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 7f75ef44d39a2644da8928259a43b221, type: 2}
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

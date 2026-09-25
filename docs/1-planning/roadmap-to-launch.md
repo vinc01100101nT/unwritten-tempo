@@ -16,7 +16,7 @@ How far the game is from being something a stranger can buy and finish. **This d
 
 ## The one-paragraph answer
 
-The technology is built and the game is empty. Fighting is finished and deep: one weapon has a full skill set, the arithmetic behind every hit is pinned and checked, and the whole of a fight now runs on a server that four separate programs stand up between them. What is missing is everything that makes fighting worth doing — there are thirteen items in the entire game, two of which can be worn; eighty-five of the eighty-six creatures give up nothing but gold; twenty bosses exist and none is placed anywhere; and twenty-three of the forty-one maps have no doorway, so nothing leads to them. A stranger would enjoy twenty minutes and then run out of reasons.
+The technology is built and the game is empty. Fighting is finished and deep: one weapon has a full skill set, the arithmetic behind every hit is pinned and checked, and the whole of a fight now runs on a server that four separate programs stand up between them. What is missing is everything that makes fighting worth doing — there are thirteen items in the entire game, two of which can be worn; eighty-five of the eighty-six creatures give up nothing but gold; twenty bosses exist and none is placed anywhere; and twenty-three of the forty-one older maps (now set aside) have no doorway, so nothing leads to them. A stranger would enjoy twenty minutes and then run out of reasons.
 
 ---
 
@@ -25,7 +25,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 | Thing | Count | What the count means |
 | --- | --- | --- |
 | Game and tooling code files | 375 | 95 of them editor tools, exposing 88 menu commands |
-| Playable maps | 41 | 10 towns · 17 fields · 14 dungeons |
+| Playable maps | 59 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 30 fields · 15 dungeon floors, plus the hand-made Lastline (`town_0`); the 41 older maps are set aside |
 | Creature definitions | 86 | 20 of them bosses; all 20 now have their own artwork |
 | Skills | 42 | see the split below |
 | Items in the whole game | 13 | 11 consumables · 2 that can be worn (a sword and a bow) |
@@ -83,7 +83,7 @@ No quest system — the only trace is a category an item can be filed under, whi
 
 **The blocker is not technology, and has not been for months.** Everything left in the shippable version is content and connective tissue: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product. That is work that can be chewed through item by item, which is what the [Action Plan](action-plan.md) is for.
 
-**Three things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: thirteen of the fourteen weapon families have no skill anybody can obtain; twelve of the thirteen kinds of gear have no item at all; and none of the forty-one maps has a quest, a named person, or a placed boss in it.
+**Three things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: thirteen of the fourteen weapon families have no skill anybody can obtain; twelve of the thirteen kinds of gear have no item at all; and none of the maps has a quest, a named person, or a placed boss in it.
 
 **The multiplayer half went further than the plan intended.** The strategy was to ship a single-player or small-co-op game first and let success justify an online one. Through late August and September the online layer was built anyway, and it now works — while the content gap did not shrink. That is a trade already made, not a proposal. What it bought is real: the world runs across several machines, the server owns the fight, and progress is written where a player's own machine cannot forge it. What it did not buy is a reason to play.
 
@@ -115,7 +115,7 @@ One play-test has been open since 3 September, covering eleven server and skill 
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 96 creatures are comparable to a player.
 - [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the online half is, and its deliberate limits.
 - [Starting the Network](../2-systems/networking/starting-the-network.md) — how to stand the multiplayer half up.
-- [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the 41 maps.
+- [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the maps.
 - [Biome Mob Families — Spawning by Biome and Level](../3-world/biome-mob-families.md) and [Mob Roster](../3-world/mob-roster.md) — how maps get populated.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the reasons the world still needs put into it.
 - [Where the Game Is Hosted](where-the-game-is-hosted.md) — the machine, the latency numbers, and the cost.

@@ -197,6 +197,7 @@ public class WeatherDirector : MonoBehaviour
         SnowGround.Ensure();
         RainAudio.Ensure();
         FogOverlay.Ensure();
+        CloudLayerOverlay.Ensure();
 
         var seq = WeatherSequences.For(p);
         bool load = firstApply;

@@ -30,7 +30,7 @@ public class WorldCreator : EditorWindow
     // Free-form: each map has a world-space top-left pos (x→east, y→south) + an INTEGER size [w,h]. Every
     // portal carries explicit edge anchors on both ends (no grid adjacency is assumed any more).
     [Serializable] class WorldJson  { public int version; public MapJson[] maps; public PortalJson[] portals; }
-    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; }
+    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; public string name; }
     [Serializable] class PortalJson { public string a; public string b; public AnchorJson anchorA; public AnchorJson anchorB; }
     [Serializable] class AnchorJson { public string edge; public float offset; }
 
@@ -56,6 +56,9 @@ public class WorldCreator : EditorWindow
 
     // type → template recipe (persisted across sessions by GUID in EditorPrefs)
     readonly Dictionary<string, MapRecipe> templates = new Dictionary<string, MapRecipe>();
+    // The painted world-map picture the layout was drawn on (persisted by GUID). Set = the world map shows it.
+    Texture2D picture;
+    const string PictureKey = "unwritten.worldcreator.picture";
 
     [MenuItem("Tools/unwritten/World/World Creator…", priority = 188)]
     static void Open()
@@ -81,6 +84,9 @@ public class WorldCreator : EditorWindow
             string p = AssetDatabase.GUIDToAssetPath(guid);
             templates[t] = string.IsNullOrEmpty(p) ? null : AssetDatabase.LoadAssetAtPath<MapRecipe>(p);
         }
+        string pg = EditorPrefs.GetString(PictureKey, "");
+        string pp = string.IsNullOrEmpty(pg) ? "" : AssetDatabase.GUIDToAssetPath(pg);
+        picture = string.IsNullOrEmpty(pp) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(pp);
     }
 
     void SetTemplate(string type, MapRecipe recipe)
@@ -126,6 +132,12 @@ public class WorldCreator : EditorWindow
             }
         }
 
+        EditorGUI.BeginChangeCheck();
+        picture = (Texture2D)EditorGUILayout.ObjectField("World map picture", picture, typeof(Texture2D), false);
+        if (EditorGUI.EndChangeCheck())
+            EditorPrefs.SetString(PictureKey, picture != null ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(picture)) : "");
+        EditorGUILayout.LabelField("Set = the in-game world map shows this picture with every map drawn on it; empty = snapshots.", EditorStyles.miniLabel);
+
         EditorGUILayout.Space();
 
         // 3) Summary + validation
@@ -149,8 +161,8 @@ public class WorldCreator : EditorWindow
         {
             if (GUILayout.Button("⚒ Build World", GUILayout.Height(34)))
                 BuildWorld();
-            if (GUILayout.Button("🗺 Bake World Map only (re-snapshot existing scenes)"))
-                WorldAtlasBaker.Bake(CollectEntries());
+            if (GUILayout.Button(picture != null ? "🗺 Bake World Map only (the picture + every map)" : "🗺 Bake World Map only (re-snapshot existing scenes)"))
+                BakeWorldMap(CollectEntries(), picture, true);
         }
         if (world != null && errors.Count > 0)
             EditorGUILayout.LabelField("Fix the errors above to enable Build World.", EditorStyles.miniLabel);
@@ -194,7 +206,7 @@ public class WorldCreator : EditorWindow
     }
 
     // Each map's warp doorway positions (world-XZ on the plot rim), fed to RecipeGenerator so roads reach them.
-    Dictionary<string, List<Vector2>> ComputeExits(Dictionary<string, MapJson> byId)
+    static Dictionary<string, List<Vector2>> ComputeExits(WorldJson world, Dictionary<string, MapJson> byId)
     {
         var exits = new Dictionary<string, List<Vector2>>();
         if (world.portals == null) return exits;
@@ -269,7 +281,9 @@ public class WorldCreator : EditorWindow
     }
 
     // The free-form world rects (scene name + world-space x/y/w/h + type) the world-atlas baker composites.
-    List<WorldAtlasBaker.Entry> CollectEntries()
+    List<WorldAtlasBaker.Entry> CollectEntries() => CollectEntries(world);
+
+    static List<WorldAtlasBaker.Entry> CollectEntries(WorldJson world)
     {
         var entries = new List<WorldAtlasBaker.Entry>();
         if (world == null) return entries;
@@ -277,7 +291,7 @@ public class WorldCreator : EditorWindow
         {
             if (m.pos == null || m.pos.Length < 2) continue;
             entries.Add(new WorldAtlasBaker.Entry {
-                scene = SceneName(m.id), type = m.type,
+                scene = SceneName(m.id), type = m.type, label = m.name,
                 x = m.pos[0], y = m.pos[1], w = SizeX(m), h = SizeZ(m),
             });
         }
@@ -297,24 +311,66 @@ public class WorldCreator : EditorWindow
             + "⚠ It OVERWRITES those scene files — any hand-edits in them are lost. Continue?", "Build", "Cancel"))
             return;
 
+        string result = Build(world, templates, Path.GetFileName(sourcePath), null, true, true, picture);
+        if (result == null) return;
+        EditorUtility.DisplayDialog("World built", result
+            + "\n\nEach warp is a paired Portal3D + arrival SpawnPoint; portal colour follows the destination "
+            + "(town=yellow, field=green …).\n\n"
+            + "Make sure Systems is set up (Setup Systems Scene), then PLAY from any map — walk into a pad to "
+            + "travel, press N for the World Map.", "OK");
+    }
+
+    /// <summary>Dialog-free build for runs without the user at the controls (called through the live editor).
+    /// Maps whose id is in <paramref name="keepAsIs"/> are hand-made: they are never regenerated and never opened
+    /// or edited — warps INTO them still work, arriving at the map's first arrival point. The scenes the user has
+    /// open, and the active one, are left exactly as they were. Returns a summary, or an error line.</summary>
+    public static string BuildCore(string jsonPath, string townRecipe, string fieldRecipe, string dungeonRecipe,
+                                   string specialRecipe, string[] keepAsIs)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return "ERROR: exit Play mode first.";
+        WorldJson w;
+        try { w = JsonUtility.FromJson<WorldJson>(File.ReadAllText(jsonPath)); }
+        catch (Exception e) { return "ERROR: can't read " + jsonPath + ": " + e.Message; }
+        if (w == null || w.maps == null) return "ERROR: no maps in " + jsonPath;
+        var tpl = new Dictionary<string, MapRecipe>
+        {
+            ["town"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(townRecipe),
+            ["field"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(fieldRecipe),
+            ["dungeon"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(dungeonRecipe),
+            ["special"] = string.IsNullOrEmpty(specialRecipe) ? null : AssetDatabase.LoadAssetAtPath<MapRecipe>(specialRecipe),
+        };
+        var keep = new HashSet<string>(keepAsIs ?? new string[0]);
+        foreach (var m in w.maps)
+            if (!keep.Contains(m.id) && (!tpl.TryGetValue(m.type ?? "", out var t) || t == null))
+                return $"ERROR: no template recipe for type '{m.type}' (map '{m.id}').";
+        return Build(w, tpl, Path.GetFileName(jsonPath), keep, false, false) ?? "ERROR: a map failed to bake — see the Console.";
+    }
+
+    // The one build: PASS 1 bakes every map from its template clone, PASS 2 places the paired portals and arrival
+    // points. leaveScenesOpen = the window's behaviour (each scene opened as the only scene); false = work additively
+    // and close each scene again, so whatever the user had open stays open and unchanged.
+    static string Build(WorldJson world, Dictionary<string, MapRecipe> templates, string sourceName, HashSet<string> keep,
+                        bool leaveScenesOpen, bool interactive, Texture2D picture = null)
+    {
+        keep = keep ?? new HashSet<string>();
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         int mask = groundLayer >= 0 ? 1 << groundLayer : ~0;
 
         var byId = new Dictionary<string, MapJson>();
         foreach (var m in world.maps) byId[m.id] = m;
-        // Portal positions per map → fed to the generator so its roads terminate at the doorways (Part 3).
-        var exitsByMap = ComputeExits(byId);
+        var exitsByMap = ComputeExits(world, byId);
+        var wasActive = SceneManager.GetActiveScene();
 
-        // PASS 1 — bake every map scene from its template clone.
         var scenePathById = new Dictionary<string, string>();
+        int built = 0;
         try
         {
             for (int i = 0; i < world.maps.Length; i++)
             {
                 var m = world.maps[i];
+                if (keep.Contains(m.id)) continue;
                 EditorUtility.DisplayProgressBar("Build World", $"Baking '{m.id}' ({i + 1}/{world.maps.Length})", (float)i / world.maps.Length);
-                var tpl = templates[m.type];
-                var clone = UnityEngine.Object.Instantiate(tpl);   // never mutate the template asset
+                var clone = UnityEngine.Object.Instantiate(templates[m.type]);   // never mutate the template asset
                 try
                 {
                     clone.mapName = SceneName(m.id);
@@ -326,14 +382,19 @@ public class WorldCreator : EditorWindow
                     if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
                     if (TryParseBiome(m.biome, out var bm)) clone.biome = bm;   // per-cell theme override (else the template's biome)
                     var exits = exitsByMap.TryGetValue(m.id, out var ex) ? ex : null;
-                    var res = RecipeGenerator.Generate(clone, exits, mapPicksRoad);
-                    if (!res.ok) { EditorUtility.ClearProgressBar(); EditorUtility.DisplayDialog("Build World", $"Failed to bake '{m.id}'. Check the Console.", "OK"); return; }
+                    var res = RecipeGenerator.Generate(clone, exits, mapPicksRoad, leaveScenesOpen);
+                    if (!res.ok)
+                    {
+                        EditorUtility.ClearProgressBar();
+                        if (interactive) EditorUtility.DisplayDialog("Build World", $"Failed to bake '{m.id}'. Check the Console.", "OK");
+                        return null;
+                    }
                     scenePathById[m.id] = res.path;
+                    built++;
                 }
                 finally { UnityEngine.Object.DestroyImmediate(clone); }
             }
 
-            // PASS 2 — gather paired portals/spawns per scene, then write each scene once.
             var portalsByScene = new Dictionary<string, List<PortalSpec>>();
             var spawnsByScene  = new Dictionary<string, List<SpawnSpec>>();
             void AddPortal(string id, PortalSpec s) { if (!portalsByScene.TryGetValue(id, out var l)) portalsByScene[id] = l = new List<PortalSpec>(); l.Add(s); }
@@ -359,13 +420,14 @@ public class WorldCreator : EditorWindow
             int portalCount = 0;
             foreach (var m in world.maps)
             {
+                if (keep.Contains(m.id)) continue;   // a hand-made map is never opened or edited
                 bool hasP = portalsByScene.TryGetValue(m.id, out var pl) && pl.Count > 0;
                 bool hasS = spawnsByScene.TryGetValue(m.id, out var sl) && sl.Count > 0;
                 if (!hasP && !hasS) continue;
 
                 EditorUtility.DisplayProgressBar("Build World", $"Wiring warps in '{m.id}'", 0.6f);
                 float halfX = SizeX(m) * 0.5f, halfZ = SizeZ(m) * 0.5f;
-                var scene = EditorSceneManager.OpenScene(scenePathById[m.id], OpenSceneMode.Single);
+                var scene = EditorSceneManager.OpenScene(scenePathById[m.id], leaveScenesOpen ? OpenSceneMode.Single : OpenSceneMode.Additive);
                 SceneManager.SetActiveScene(scene);
                 Physics.SyncTransforms();
 
@@ -383,23 +445,50 @@ public class WorldCreator : EditorWindow
 
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
+                if (!leaveScenesOpen)
+                {
+                    EditorSceneManager.CloseScene(scene, true);
+                    if (wasActive.IsValid() && wasActive.isLoaded) SceneManager.SetActiveScene(wasActive);
+                }
             }
 
             EditorUtility.ClearProgressBar();
             AssetDatabase.SaveAssets();
 
-            // Also bake the world-map atlas so the World Map HUD (N) is ready straight away.
-            WorldAtlasBaker.Bake(CollectEntries(), interactive: false);
+            // Also bake the world-map atlas so the World Map HUD (N) is ready straight away. The baker opens every map
+            // as the only open scene, so it runs only from the window, never behind the user's back.
+            // A painted picture needs no scene opened, so it is baked either way.
+            bool baked = picture != null || leaveScenesOpen;
+            if (baked) BakeWorldMap(CollectEntries(world), picture, false);
 
-            Debug.Log($"[unwritten] World Creator built {world.maps.Length} maps + {portalCount} portals from {Path.GetFileName(sourcePath)}.");
-            EditorUtility.DisplayDialog("World built",
-                $"Generated {world.maps.Length} maps and {portalCount} portals, and baked the world map.\n\n"
-                + "Each warp is a paired Portal3D + arrival SpawnPoint; portal colour follows the destination "
-                + "(town=yellow, field=green …).\n\n"
-                + "Make sure Systems is set up (Setup Systems Scene), then PLAY from any map — walk into a pad to "
-                + "travel, press N for the World Map.", "OK");
+            string summary = $"Generated {built} maps and {portalCount} portals from {sourceName}"
+                           + (baked ? ", and baked the world map" : " (the world map is NOT re-baked)")
+                           + (keep.Count > 0 ? $"; kept as they are: {string.Join(", ", keep)}." : ".");
+            Debug.Log("[unwritten] World Creator: " + summary);
+            return summary;
         }
         finally { EditorUtility.ClearProgressBar(); }
+    }
+
+    static void BakeWorldMap(List<WorldAtlasBaker.Entry> entries, Texture2D picture, bool interactive)
+    {
+        if (picture != null) WorldAtlasBaker.BakePainted(entries, picture, interactive);
+        else WorldAtlasBaker.Bake(entries, interactive);
+    }
+
+    /// <summary>Dialog-free: bake the in-game world map from a world.json and the painted picture it was drawn on.
+    /// Opens no scene. Returns a summary, or an error line.</summary>
+    public static string BakeWorldMapCore(string jsonPath, string picturePath)
+    {
+        WorldJson w;
+        try { w = JsonUtility.FromJson<WorldJson>(File.ReadAllText(jsonPath)); }
+        catch (Exception e) { return "ERROR: can't read " + jsonPath + ": " + e.Message; }
+        if (w == null || w.maps == null) return "ERROR: no maps in " + jsonPath;
+        var pic = AssetDatabase.LoadAssetAtPath<Texture2D>(picturePath);
+        if (pic == null) return "ERROR: no picture at " + picturePath;
+        var entries = CollectEntries(w);
+        WorldAtlasBaker.BakePainted(entries, pic, false);
+        return $"Baked the world map: {pic.name} with {entries.Count} maps.";
     }
 
     struct PortalSpec { public string name, target, spawnId, edge; public float offset; }

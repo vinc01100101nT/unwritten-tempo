@@ -7,7 +7,7 @@
 - [World liveliness / ambient life](../world-liveliness-ambient-npcs.md) — SIMULATION: `AmbientLife`→`TownNPC` on `PathAgent3D` + `NpcBarks`.
 - [Hand-authored world content](../hand-authored-world-content.md) — user authors ART by hand; generator automates LAYOUT.
 - [Maps HAND-AUTHORED via Prop Palette](../authoring-toolkit-prop-palette.md) — `PropPalette` + Authoring menu; DON'T write per-map bakers.
-- [World Creator pipeline (HTML→world.json→Unity)](../world-creator-pipeline.md) — Part 1 HTML DONE; spec q176qkd22qmbk4r5t9g7fcc30n895whr.
+- [World Creator pipeline (HTML→world.json→Unity)](../world-creator-pipeline.md) — HTML → world.json → Unity; NEVER click Build World with hand-made maps (town_0) or an unsaved scene open — use BuildCore with a keep list + BakeWorldMapCore; layout in tools/world-creator/worlds/.
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
 - [Map painter WALL pipeline + 3 bugs](../map-painter-wall-pipeline.md) — diagonal runs, thickness, piece pickers, vector-sum tower facing; removed auto road→gate; fixed piece z-fight (scale-to-fit, no min clamp); diagnose via baked scene + Editor.log + offline dotnet compile.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.

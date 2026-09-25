@@ -147,7 +147,8 @@
 "use strict";
 
 // ── World model (v2 — free-form, rectangular) ────────────────────────────────
-// maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome? }]
+// maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome?, name? }]
+//          name = the map's display name, shown on the in-game world map (and here, over the id).
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
 //          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
 // portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
@@ -398,9 +399,10 @@ function draw() {
     const lcx = s.x + w / 2, nameY = s.y + h / 2 - fs * 0.35;
     ctx.font = "800 " + Math.round(fs) + "px system-ui, sans-serif";
     ctx.lineWidth = Math.max(3, fs * 0.22); ctx.strokeStyle = "rgba(0,0,0,0.78)";
-    ctx.strokeText(m.id, lcx, nameY);
+    const label = m.name || m.id;
+    ctx.strokeText(label, lcx, nameY);
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(m.id, lcx, nameY);
+    ctx.fillText(label, lcx, nameY);
     const ss = Math.round(fs * 0.62);
     const sizeY = s.y + h / 2 + fs * 0.7;
     ctx.font = "600 " + ss + "px system-ui, sans-serif";
@@ -760,6 +762,7 @@ function exportJSON() {
     if (m.pathTile !== undefined) o.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) o.pathWidth = m.pathWidth;
     if (m.biome !== undefined && m.biome !== "grassland") o.biome = m.biome;
+    if (m.name) o.name = m.name;
     return o;
   });
   const portals = state.portals.map(p => ({
@@ -795,6 +798,7 @@ function importJSON(text) {
     if (m.pathTile !== undefined) cell.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) cell.pathWidth = m.pathWidth;
     if (m.biome !== undefined) cell.biome = m.biome;
+    if (m.name) cell.name = m.name;
     state.maps.push(cell);
     const msuffix = /_(\d+)$/.exec(m.id || "");
     if (msuffix && state.nextIndex[m.type] !== undefined)
@@ -872,10 +876,9 @@ function setBackdropImage(src, rect) {
     backdrop.img = img; backdrop.src = src;
     if (rect) { backdrop.x = rect.x; backdrop.y = rect.y; backdrop.w = rect.w; backdrop.h = rect.h; }
     else {
-      const cwx = (window.innerWidth / 2 - cam.x) / cam.scale, cwy = (window.innerHeight / 2 - cam.y) / cam.scale;
-      const worldW = (window.innerWidth * 0.7) / cam.scale;
-      const worldH = worldW * (img.height / img.width);
-      backdrop.x = cwx - worldW / 2; backdrop.y = cwy - worldH / 2; backdrop.w = worldW; backdrop.h = worldH;
+      // A new picture sits at world 0,0 at its real size, one pixel per world unit, so a layout drawn on the same
+      // picture (world.json positions are those pixels) lines up without hand-aligning.
+      backdrop.x = 0; backdrop.y = 0; backdrop.w = img.naturalWidth; backdrop.h = img.naturalHeight;
     }
     updateBgUI(); saveBackdrop(); draw();
   };
@@ -920,7 +923,7 @@ bgInput.onchange = (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const reader = new FileReader();
-  reader.onload = () => { backdrop.locked = false; setBackdropImage(reader.result); flash("Background loaded — drag/scale to align, then 🔒 Lock to trace over it"); };
+  reader.onload = () => { backdrop.locked = true; setBackdropImage(reader.result); flash("Background placed at 0,0 at its real size (1 pixel = 1 world unit) — 🔒 Unlock to move or scale it"); };
   reader.readAsDataURL(f);
   bgInput.value = "";
 };

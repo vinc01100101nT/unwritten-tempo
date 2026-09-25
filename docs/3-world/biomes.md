@@ -77,6 +77,11 @@ weather can still bring more on top, and rain still brings its falling drops and
   elsewhere show on High only). Walking through them plays the splash footsteps.
 - **Snow** — the snow blanket over the ground and every prop, at full, on every quality setting.
 - **Mist** — fog at 0.6 of the Fog weather's thickness: near things stay clear, the far edge of the map fades.
+- **Sacred** — patchy, soft white clouds floating over the whole map at treetop height (between about 2 and 4.5
+  metres above the ground), drifting slowly. Tree tops rise out of them and the ground shows through the gaps
+  between patches; within about 6 metres of the point the camera looks at (you) the clouds are gone, and they fade
+  back to full by about 10 metres, so you are never hidden while the far side of the map dissolves into cloud. Fog at
+  0.35 of the Fog weather's thickness hazes the distance on top. The clouds fade in over about 2 seconds on arrival.
 - **Every other biome** — nothing held; puddles, snow and fog come only with the weather.
 
 The levels live in `unity/Assets/3_Data/Resources/BiomeWeather.asset` (one row per biome that holds something). A map

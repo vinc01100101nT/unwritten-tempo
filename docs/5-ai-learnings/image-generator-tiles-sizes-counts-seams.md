@@ -55,6 +55,8 @@ account ran out of credits.
   between neighbouring columns inside the image. An approved tile measured about 1.9×; anything above about 2.5× showed
   a visible seam. Also build the 2×2 corner view (the last N pixels of the right/bottom edges joined to the first N
   of the left/top) and LOOK at it — the number alone missed faint tone steps on very smooth textures.
+- **Tiles only.** For a whole map or scene these exact rules backfire and draw a diagram:
+  [A Generated Scene Came Back Looking Like a Diagram](image-generator-scenes-come-back-as-diagrams.md).
 - **Seam repair:** first reply "still not repeating properly" on the image. If that fails on a smooth texture, cross-
   fade a 40-pixel strip of each edge into the opposite edge and crop — invisible on sand, snow and ice, but it leaves
   see-through ghost shapes on pebbles, so redo those instead.

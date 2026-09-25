@@ -1,115 +1,114 @@
 ---
-status: "PROPOSAL — nothing here is built. Since 2026-09-25 there are fourteen shadows (Fist and Kick added) and the homelands are being rethought; this draft places twelve. Agreed with the user before that: twelve homelands, one per shadow, spread over several irregular landmasses in the Ragnarok style (no ring, no fixed walking order, levels as a rough gradient); the homeland placement on the chosen map below; each homeland has a castle; the game uses no real-country culture; each shadow waits at an iconic place in its homeland, and those twelve place names are agreed; the shadows ARE the Twelve, and their names are their own; all ten elements are spread across the creatures, with one shadow Neutral; castle maps are built now, castle gameplay is deferred; Holy, Shadow and Poison are countered through skill buffs and cards. Teleports and service townspeople are deferred. Biomes set a majority element per map, never a lock. NOT settled: the naming theme, the homeland and shadow names, the big south-east island, and everything listed under Still open."
+status: "PROPOSAL, partly built. Agreed with the user on 2026-09-25: three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), so players travel the whole world; a big city for each one-family weapon and a small town for each two-family weapon, on the border between its two regions; Lastline in Might; the map in use for now is the painted world-map picture in the project (it can be replaced); the 59 maps of the three regions are generated and wired (2026-09-26, not yet walked in play), with the hand-made town_0 as Lastline; five dungeons of 2 to 4 floors with an elite on each bottom floor; elites live everywhere, like normal creatures; the fourteen shadows' elements below; every shadow waits at its own place, a special map away from where players level, entered by quest, key, guide, world clock or a hidden way. The game uses no real-country culture. NOT settled: everything listed under Still open."
 owner: vince
 last-updated: 2026-09-25
 tags:
   - world-content
 ---
 
-# The World Map — Twelve Homelands
+# The World Map — Three Regions
 
 A full redesign of the world. **Only `town_0` survives**, as the town every new character starts in. Every other map
 today is set aside.
 
-## The shape: several landmasses, Ragnarok style
+## The shape: three regions, three level tiers
 
-The world is **several irregular landmasses and remote islands**, not a ring. Towns stand wherever their land puts
-them, wild fields lie between the homelands, and some homelands can only be reached across the sea.
+The world has **three regions, one per weapon family**, and they are **level tiers**: a player starts in Might and
+travels the whole world as they level, never staying in one family's land.
 
-**Lastline** (`town_0`) sits in the middle of the main continent, on the scribe's last written line. It belongs to no
-one. Around it, spread over the landmasses, lie **the homelands**, one for each shadow. This draft places twelve,
-for the first twelve shadows; where the Fist and Kick shadows' homelands go is open.
+| Tier | Region | Levels | Land | Biomes | Big cities |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Might** | 1–33 | the main continent, and the forest half of the north island | Grassland, Forest, Highland, Coast, Snow | Shield, Greatsword, Warhammer, Spear |
+| 2 | **Finesse** | 34–66 | the west continent | Forest, Steppe, Desert, Peaks | Bow, Dagger |
+| 3 | **Arcane** | 67–99 | overseas: the north volcano, the floating island above the clouds in the far north-west, and the dark south (the south-west peninsula, the swamp lagoon, the south-east island) | Volcanic, Mist, Haunted, Corrupted, Sacred, Swamp | Staff, Wand |
 
-**The shadows are the Fourteen themselves**, and the names they carry — Varro, Brigid, Tsubame and the rest — are their
-own. Each one waits in the homeland they came from.
+- **Lastline** (`town_0`) sits in the middle of the main continent, on the scribe's last written line, inside Might.
+  It belongs to no one.
+- **The elements get harder with each tier.** Might holds Neutral, Earth and Water, which today's converters answer;
+  Finesse adds Wind and Fire; Arcane holds Ghost, Undead, Shadow, Holy and Poison, the elements whose counter (skill
+  buffs and cards) is still to come.
+- **No real-country culture.** No city is a real country and no name comes from a real country's language. The theme
+  names are drawn from is not chosen yet.
 
-- **Levels are a rough gradient, with no fixed walking order.** Each homeland covers about eight levels of the 1–99
-  ladder, and nothing forces a player through the homelands in a set order.
-- **The level bands follow the shadows' own order**, from Varro at 105 to Tsubame at 160: the homeland with the
-  lowest levels holds the weakest shadow, and the one with the highest holds the strongest.
-- **No real-country culture.** No homeland is a real country and no name comes from a real country's language.
-  The theme the names are drawn from is not chosen yet.
+**The map in use for now** is a GPT painting (1536×1024), kept in the project as
+`unity/Assets/3_Data/Resources/WorldMap/world-map.png`; it can be replaced. The zones are laid out on it, and the
+in-game world map (N) shows this picture with every map drawn on it as a frame and its name.
 
-**The chosen map** is `world-map-base.png` (1536×1024, in the user's Downloads folder, not yet in the repo).
-`world-map-homelands.png` is the same map marked with where each homeland goes.
+## Cities and towns
 
-## Where each homeland lies
+- **A big city for each one-family weapon** (Might, Finesse or Arcane only): eight cities.
+- **A small town for each two-family weapon**, standing on the border between its two regions: six towns. You walk
+  between the two regions the weapon mixes.
+- **Each one lives where its weapon belongs**: the bow with the hunters in the woods, the greatsword on a snowy
+  summit, and so on.
 
-| # | Homeland | Levels | Where on the map | Tradition | Weapon | Shadow | Element |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Roman | 1–8 | main continent, north-west of Lastline — the starting lands | Roman | Shield | Varro (105) | **Neutral** |
-| 2 | Irish | 9–16 | main continent, east — green hills and sea cliffs | Irish | Wand | Brigid (110) | Holy |
-| 3 | Slavic | 17–24 | main continent, north-east — stone highlands | Slavic | Warhammer | Radomir (115) | Earth |
-| 4 | Greek | 25–33 | the island group off the east coast | Greek | Spear | Kallias (120) | Water |
-| 5 | Norse | 34–41 | the north island, around its volcano and glaciers | Norse | Axe | Brandr (125) | Fire |
-| 6 | Spanish | 42–49 | west continent, north — the dry sierra | Spanish | Firearm | Inés (130) | Shadow |
-| 7 | Cornish | 50–58 | the dark peninsula in the south-west | Cornish | Scythe | Morwenna (135) | Undead |
-| 8 | Italian | 59–66 | the lagoon in the south | Italian | Dagger | Fiora (140) | Poison |
-| 9 | Persian | 67–74 | west continent, south — desert and burning ground | Persian | Staff | Azar (145) | Fire |
-| 10 | German | 75–83 | the north island, the forest under fog | German | Greatsword | Ulrich (150) | Ghost |
-| 11 | Mongol | 84–91 | west continent, east — the steppe | Mongol | Bow | Temülün (155) | Wind |
-| 12 | Japanese | 92–99 | the far island in the north-west | Japanese | Sword | Tsubame (160) | Wind |
+| Weapon | Kind | Region | Where on the map | Biome | Why it lives there |
+| --- | --- | --- | --- | --- | --- |
+| Shield | City | Might | the open grasslands north-west of Lastline | Grassland | a walled city guarding the starting plains |
+| Greatsword | City | Might | the snowy peaks of the north-east highlands | Snow | a huge sword standing on a snowy summit |
+| Warhammer | City | Might | the rocky foot of those highlands, among the pines | Highland | a mining and forge city; hammers break stone |
+| Spear | City | Might | the east sea cliffs | Coast | harpoons and fishing spears by the sea |
+| Bow | City | Finesse | the green woodland on the west continent's north-east | Forest | hunters live in the woods |
+| Dagger | City | Finesse | the sandy south of the west continent's golden plains | Desert | a desert city of narrow alleys where assassins hide |
+| Staff | City | Arcane | the north volcano | Volcanic | the one who burned the field, living at the fire |
+| Wand | City | Arcane | the sacred peak on a **floating island above the clouds**, in the far north-west | Sacred | healers on the holy mountain, above the world |
+| Sword | Town | Might–Finesse | the green east side of the land where the continents join | Grassland | a duellists' crossroads where fighters from both lands meet |
+| Axe | Town | Might–Finesse | the wooded south side of the join | Forest | woodcutters; the axe's first job |
+| Kick | Town | Might–Finesse | the west side of the join, where the steppe starts | Steppe | open plains to run and train on |
+| Firearm | Town | Finesse–Arcane | the west continent's south, beside its burning vent | Volcanic | gunpowder from the sulphur of the burning ground |
+| Fist | Town | Might–Arcane | the rocky island group off the east coast | Coast | a monastery on sea stacks, training among the waves |
+| Scythe | Town | Might–Arcane | the dark south-west peninsula | Haunted | reapers among the graves |
 
-**The homelands have no names yet.** Until they are chosen, each is called by its tradition. Every name must tie to
-its shadow AND its weapon, in the style of Ragnarok's cities, one to four syllables.
+**The Sacred biome looks like a place up among the clouds** (rebuilt 2026-09-26, not yet seen in play): patchy white
+clouds float over every Sacred map at treetop height and drift slowly across it, with the ground showing through the
+gaps, a clear patch around you, and some fog.
 
-**The elements.** All ten are covered, and one shadow, Varro, is Neutral. Ten elements across twelve shadows means two
-repeat. The two repeats are Fire (Brandr, and Azar, whose name *means* fire) and Wind (Temülün's steppe, and Tsubame,
-whose name is the swallow). Each homeland's creatures lean towards its shadow's element, and every element turns up in
-at least one homeland. So you would carry a different converter into each homeland.
+**Town levels:** Might–Finesse about 28–40 (the step from tier 1 to tier 2); Finesse–Arcane and Might–Arcane about
+60–70.
 
-## Where each shadow waits
+## Dungeons
 
-Every shadow has **one iconic place**, a map built only for it. It sits in its homeland, and you can see or reach it
-long before you could survive it. The Roman homeland's shadow is visible from a level-1 field: you see it on day one
-and come back for it at the end.
+**Five dungeons at different levels**, each of **2 to 4 floors**. Each floor goes a few levels deeper, and **an
+elite waits on each bottom floor**. The names are working labels.
 
-| Shadow | The place |
-| --- | --- |
-| **Varro** | **The Last Bridge** — one stone bridge over a bottomless gorge, the only way across. He stands in the middle of it and does not move. |
-| **Brigid** | **The Hill of the Flame** — a ring of standing stones round a fire that has never gone out. Everything that falls near her gets up again. |
-| **Radomir** | **The Iron Gate** — a gate the height of a mountain, cut into the mountain itself. He is the reason it has never opened. |
-| **Kallias** | **The Tide Temple** — a temple on a rock out at sea, reachable on foot only while the tide is out. |
-| **Brandr** | **The Burning Keel** — a longship stranded in a river of cooled lava, at the lip of a live volcano. |
-| **Inés** | **The Dusk Tower** — a bell tower above a city where the sun is always setting. She fires once, from the top. |
-| **Morwenna** | **The Drowned Chapel** — a chapel at the bottom of a black cove, whose bell still rings underwater. |
-| **Fiora** | **The Masked Ballroom** — a ballroom in a sinking palace where every dancer wears a mask. She is one of them, and arrives as the dance ends. |
-| **Azar** | **The Everburning Plain** — a plain where the ground itself is on fire, around a fire temple. |
-| **Ulrich** | **The Walking Road** — a road through fog that keeps going as long as you walk it, ending at a black castle. |
-| **Temülün** | **The Sky Cairn** — a lone stone cairn on an endless steppe. She rides circles round it, always out of reach. |
-| **Tsubame** | **The Thousand Gates** — a path climbing through a thousand shrine gates above the clouds, to a tree in blossom where she waits. |
+| # | Dungeon | Where | Floors | Levels |
+| --- | --- | --- | --- | --- |
+| 1 | Old Tunnels | Might, near the Shield city | 2 | 8–15 |
+| 2 | Highland Mines | Might, the north-east stone highlands | 3 | 24–36 |
+| 3 | Canyon Temple | Finesse, the red rock mountains on the west edge | 3 | 50–62 |
+| 4 | Lava Tubes | Arcane, under the north volcano | 3 | 70–80 |
+| 5 | The Haunted Deep | Arcane, the dark south-west peninsula | 4 | 86–99 |
 
-## Every homeland's shape
+**What lives on a floor** is drawn by level: every ordinary creature today belongs to one biome, and each biome holds
+one stretch of levels (commons 1–9, Grassland 10–27, Snow 28–45, Desert 46–63, Volcanic 64–81, Corrupted 82–99). So a
+dungeon's creatures follow its levels, not its look, until the new biomes have creatures of their own.
 
-Each homeland is its shadow's country. Every one has:
+**Elites live everywhere**, like normal creatures: in fields, in dungeons and on special maps.
 
-- **a town**, with a smith, a loom and a tannery, built in that homeland's own style;
-- **three fields** covering its eight levels, looping round the town;
-- **a dungeon of two or three floors**;
-- **its shadow's iconic place**;
-- **its castle**, for guild wars;
-- **one or two elites**, each met in a different way (below).
+## The shadows and their places
 
-## The 18 elites
+There are **fourteen shadows**, one per weapon. Each waits at **its own place, a special map away from where players
+level**: a shadow needs a guild to bring down, and meeting one in a levelling field would only spoil the levelling.
 
-The elites fall into the homelands by their own levels. **No two in the same homeland are met the same way, and no
-homeland repeats a way used by a homeland it connects to.** Three pairs break the second rule on the draft layout
-(see Still open).
+| Weapon | Element | The place | Way in |
+| --- | --- | --- | --- |
+| Shield | Neutral | **The Last Bridge** — one stone bridge over a bottomless gorge, the only way across. The shadow stands in the middle of it and does not move. It can be seen from a level-1 field. | **Quest**: the bridge-keeper's chain opens the gate at the end. |
+| Wand | Holy | **The Hill of the Flame** — a ring of standing stones round a fire that has never gone out. Everything that falls near the shadow gets up again. | **Quest**: a pilgrimage, carrying the flame between shrines. |
+| Sword | Wind | **The Thousand Gates** — a path climbing through a thousand gates above the clouds, to a tree in blossom. | **Quest**: each gate is a trial. |
+| Warhammer | Earth | **The Iron Gate** — a gate the height of a mountain, cut into the mountain itself. The shadow is the reason it has never opened. | **Key**: the Iron Key, forged from high-value elite drops. |
+| Dagger | Poison | **The Masked Ballroom** — a ballroom in a sinking palace where every dancer wears a mask. The shadow is one of them, and arrives as the dance ends. | **Key**: the Mask, a rare and costly item. |
+| Axe | Fire | **The Burning Keel** — a longship stranded in a river of cooled lava, at the lip of a live volcano. | **Guide**: a lava-walker leads the party across. |
+| Staff | Fire | **The Everburning Plain** — a plain where the ground itself is on fire, around a fire temple. | **Guide**: the fire temple's keeper grants passage. |
+| Bow | Wind | **The Sky Cairn** — a lone stone cairn on an endless steppe. The shadow rides circles round it, always out of reach. | **Guide**: a steppe rider takes the party out. |
+| Spear | Water | **The Tide Temple** — a temple on a rock out at sea. | **World clock**: walkable only while the tide is out. |
+| Firearm | Shadow | **The Dusk Tower** — a bell tower above a city where the sun is always setting. The shadow fires once, from the top. | **World clock**: the door opens only at dusk. |
+| Greatsword | Ghost | **The Walking Road** — a road through fog that keeps going as long as you walk it, ending at a black castle. | **World clock**: the road appears only in fog. |
+| Scythe | Undead | **The Drowned Chapel** — a chapel at the bottom of a black cove, whose bell still rings underwater. | **Hidden**: find the way down yourself. |
+| Fist | Holy | *not named yet* — a mountain monastery under the aurora. | **Quest**: the monastery's trials. |
+| Kick | Wind | *not named yet* | **Hidden**: a path nobody marks. |
 
-| # | Homeland | Elites (level) — how you meet them |
-| --- | --- | --- |
-| 1 | Roman | DemonCyclop (6) — **roams** a loop across the first field, visible from the town gate |
-| 2 | Irish | GiantBamboo2 (11) — behind a **hidden** doorway nobody points you to |
-| 3 | Slavic | GiantRacoon (17) — **night only** · GiantSpirit (22) — **dungeon bottom** |
-| 4 | Greek | DemonCyclop2 (28) — **on the ship** crossing the bay · GiantBlueSamurai (33) — a **duel**, alone in a courtyard |
-| 5 | Norse | GiantRacoonGold (39) — **weather only**, while it snows |
-| 6 | Spanish | SquidGreen (44) — **gatekeeper** on a road out of the homeland; which road is open (see Still open) |
-| 7 | Cornish | GiantFlam (50) — **dungeon bottom** · GiantRedSamurai (55) — a **fortress**, fought through its yard to its keep |
-| 8 | Italian | SquidRed (61) — an **island** in the lagoon · GiantFrog (66) — **night only**, in the canals |
-| 9 | Persian | GiantSlime (72) — **dungeon bottom** |
-| 10 | German | TenguBlue (77) — the **summit** of a climbing tower · GiantBamboo (83) — **weather only**, on rainy nights |
-| 11 | Mongol | GiantFrog2 (88) — **roams** the open steppe |
-| 12 | Japanese | GiantSlime2 (94) — a **duel** on a mountain ledge · TenguRed (99) — **gatekeeper** at the foot of the Thousand Gates |
+- **All ten elements are covered**; Wind is held by three shadows, Fire and Holy by two each.
+- The shadows' names are not settled (see Still open), so this table names them by weapon.
 
 ## Biomes and elements
 
@@ -134,97 +133,76 @@ of the ten elements is the majority somewhere.
 | Mist | Ghost | Shadow, Undead, Wind | yes (in the map generator; no world map uses it yet) |
 | Corrupted | Shadow | Undead, Ghost, Poison | yes |
 
-**Each homeland's own biome matches its shadow's element**, and its town and castle stand in it. Its other maps vary,
-so no homeland is one biome throughout:
-
-| # | Homeland | Home biome | Field 1 | Field 2 | Field 3 | Dungeon | Shadow's place |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Roman | Grassland | Grassland | Grassland | Highland | Coast (aqueduct tunnels) | Highland |
-| 2 | Irish | Sacred | Grassland | Sacred | Coast | Haunted (a barrow) | Sacred |
-| 3 | Slavic | Highland | Forest | Highland | Snow | Highland (mines) | Highland |
-| 4 | Greek | Coast | Coast | Grassland | Highland | Coast (sea caves) | Coast |
-| 5 | Norse | Volcanic | Snow | Volcanic | Coast | Volcanic | Volcanic |
-| 6 | Spanish | Corrupted | Highland | Desert | Corrupted | Haunted (catacombs) | Corrupted |
-| 7 | Cornish | Haunted | Coast | Haunted | Highland | Haunted (tin mines) | Haunted |
-| 8 | Italian | Swamp | Swamp | Coast | Grassland | Swamp (flooded crypts) | Swamp |
-| 9 | Persian | Desert | Desert | Volcanic | Highland | Desert (buried temple) | Volcanic |
-| 10 | German | Mist | Forest | Mist | Highland | Mist | Mist |
-| 11 | Mongol | Steppe | Steppe | Steppe | Desert | Highland (caves) | Steppe |
-| 12 | Japanese | Peaks | Forest | Peaks | Coast | Haunted | Peaks |
+**Each region uses its own biomes** (the region table above). A map's biome sets its creatures' majority element; a
+shadow's element is its own and does not have to match the biome around its place.
 
 ## The castles
 
-**Twelve castles, one per homeland** — the seats guild wars will be fought over.
+Castles are the seats guild wars will be fought over; how many there are, and where, is open.
 
-- **The castle maps are built with their homelands.** Twelve castles stand in the world from the start.
 - **Castle gameplay is deferred**: how a guild takes one, holds it, and what owning it gives. When it is designed, one
   rule already holds: **a castle must not give power**, for the same reason weapons carry no parallel progression.
 
 ## Getting around
 
-- **Wild fields join the homelands.** A homeland's fields lead into the fields of the homelands beside it, and some
-  lead into Lastline's own fields.
-- **The islands are across the sea.** The Greek island group, the north island (Norse and German) and the far
-  Japanese island are not on the main continent.
-- **The crossings are all different.** For example: a ferry across the Greek homeland's bay, a lava causeway into the Norse
-  volcano, the fog road into the German forest, open steppe into the Mongol homeland.
+- **Might and Finesse are joined by land**, where the two continents meet; the Might–Finesse towns stand there.
+- **Arcane is across the sea.** The harbour towns (Fist, Scythe and Firearm) are the ways over. The Wand's floating
+  island is reached from above the sea; how is open.
 - **Teleports and other service townspeople are deferred.**
 
-**The draft layout** (`world-layout.png` and the importable world-creator file `world-homelands.json`, both in the
-user's Downloads folder, drawn on the chosen map) places 88 maps and 92 doors: every homeland's town, three fields,
-dungeon, shadow's place and castle, plus Lastline and three fields of its own. It is a draft, not agreed. Its links
-between homelands:
+## Built (2026-09-26, not yet walked in play)
 
-- **From Lastline's fields:** Roman, Irish, Slavic, Mongol, Italian and Cornish.
-- **Main continent:** Roman ↔ Slavic, Slavic ↔ Irish.
-- **Across the sea:** Irish ↔ Greek, Roman ↔ German, German ↔ Norse, Spanish ↔ Japanese.
-- **West continent and south:** Mongol ↔ Spanish, Mongol ↔ Persian, Persian ↔ Spanish, Persian ↔ Cornish,
-  Cornish ↔ Italian.
-
-## Size
-
-Each homeland is about **nine maps**: a town, three fields, a dungeon of two or three floors, the shadow's place and a
-castle. With Lastline that is **about 110 maps**, against 41 today.
+- **Every map of the three regions exists as a scene**: 8 cities, 6 towns, 30 fields and the 15 dungeon floors, each
+  generated in its own biome and joined by doors, from the layout `tools/world-creator/worlds/world-regions.json`
+  (74 maps, 77 doors; the 14 shadow places in it are not generated).
+- **Lastline is `town_0`, the hand-made town, kept as it is.** Nothing in it was removed. Its two existing gates were
+  pointed at the new world (west gate → the level 1–3 field, east gate → the level 21–24 field), and two doors were
+  added at its south and north gates (→ the south-west forest, 26–30, and the north forest, 9–12).
+- **The in-game world map (N)** shows the painted map with every zone framed in its kind's colour and named.
 
 ## Still open
 
-- **The homeland names.** None chosen; the map stays unlabelled until they are.
-- **Fourteen shadows, twelve homelands.** The Fist and Kick shadows have no homeland, level band, element or iconic
-  place yet, and the homelands themselves are being rethought.
-- **The big dark island in the south-east** has no homeland.
-- **The Mongol steppe (84–91) touches the heart of the main continent**: in the draft layout Lastline's own fields
-  lead straight into it.
-- **Three pairs of connected homelands meet elites the same way** on the draft layout: Norse and German (both
-  **weather only**), Persian and Cornish (both **dungeon bottom**), Spanish and Japanese (both **gatekeeper**).
-- **Which road the Spanish gatekeeper guards.** It was placed on the road into the Cornish homeland, and on this map
-  the Spanish homeland does not border the Cornish one.
+- **Every name**: the shadows', the cities', the towns', the dungeons'. The naming theme is not chosen.
+- **The cities' level bands.** A first split: Shield 1–8, Warhammer 9–16, Spear 17–24, Greatsword 25–33 (the snowy
+  summit tops Might, beside today's Snow creatures at 28–45), Bow 34–49, Dagger 50–66, Staff 67–82, Wand 83–99.
+- **The Fist and Kick shadows' places**: names and exact spots.
+- **Whether one key lets the whole party in** (and is used up), or every member needs their own. Proposed: one per
+  party.
+- **Other special maps**, ideas only: the crossing ships, a climbing tower, hidden places, night and weather places,
+  a fortress, and the Silencer's place (the story's deepest blank page) as the final map.
+- **How many castles**, and where.
+- **The shadow places are not built.** The layout holds them in a block below the map, each with one door from the map
+  it is reached from; none was generated, and their ways in (quest, key, guide, world clock, hidden) need systems the
+  game does not have yet.
+- **Map names shown in the game are working labels**: the weapon's name for a city or town, "Lv 1–3" style for a
+  field, and working names for the dungeons (Old Tunnels, Highland Mines, Canyon Temple, Lava Tubes, The Haunted Deep).
 
 ## What this needs that the game does not have yet
 
 - **Elements on every creature.** Today the 96 creatures use only five elements (Neutral 16, Water 19, Earth 25,
-  Fire 18, Wind 18), and the shadows only four. Every creature and all fourteen shadows need re-assigning to the table
-  above.
+  Fire 18, Wind 18), and the shadows only four. Every creature and all fourteen shadows need re-assigning.
 - **A counter for Holy, Shadow and Poison.** At a shadow's element level (3), nothing a player can attack with today
   does more than 100% to a Holy, Shadow or Poison shadow. A Ghost shadow takes 0 from a plain attack, so a converter
   is required to hurt it. **The counter will come from skill buffs and cards**, both still to be built.
-- **Spawns that come out only at night or in certain weather.** Today a spawn always spawns. Not checked: whether the
-  server knows the time of day and the weather.
-- **A tide that opens and closes a path** (the Tide Temple).
+- **Quests.** The game has no quest system; four shadows' places are reached by quest.
+- **A world clock that opens doors**: a tide, dusk and fog (three shadows' places). Not checked: whether the server
+  knows the time of day and the weather.
+- **Guides**: a townsperson who moves a whole party to another map.
+- **Keys**: an item that opens a door.
+- **The Fist and Kick shadows**, and their weapons.
 - **Guilds and castle gameplay.** There are no guilds in the game yet; castle gameplay is deferred.
-- **Buildings for twelve homelands.** All fourteen biomes are in the map generator, each on its own ground tiles, but
+- **Buildings for the cities and towns.** All fourteen biomes are in the map generator, each on its own ground tiles, but
   no world map uses the nine new ones yet, no creature belongs to them yet, and props exist for nine of the fourteen.
   What each biome looks like is [Biomes — Ground Tiles and Props](biomes.md).
-- **Only 18 elites for twelve homelands.** Six homelands get one elite, six get two. More elites would let every
-  homeland have two.
 
 ## Related
 
-- [Mob Roster — Normal, Elite, Shadow](mob-roster.md) — every creature placed here, with its level.
+- [Mob Roster — Normal, Elite, Shadow](mob-roster.md) — every creature, its kind and its level.
 - [Elements, Element Levels & Converters](../2-systems/gameplay-system-v4/elements-and-converters.md) — the chart
   and what a player can attack with today.
 - [Story & Setting (Canon)](story-setting-canon.md) — the last line, the Fourteen and their epithets.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — each weapon's
-  identity, which its homeland and shadow site are built around.
+  identity and its family, which decide its city or town.
 - [Biomes — Ground Tiles and Props](biomes.md) — each biome's ground tiles and props, and the props still to make.
 - [Biome Mob Families](biome-mob-families.md) — how a spawn area picks its creatures by biome and level, and the biome
   list the game has today.

@@ -36,7 +36,7 @@ map, and the map generator no longer puts any there.
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | its level | its level | its level |
 | Summons | nothing | normals | elites |
-| Lives | everywhere in the field | the field | the end-game maps |
+| Lives | everywhere in the field | everywhere: fields, dungeons (one on each bottom floor) and special maps | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
 
@@ -182,8 +182,7 @@ Several of one material go down as one pile.
   look different each time it comes back.
 - **Test placement:** the level-55 elite Giant Red Samurai and Tsubame stand in `field_0` so respawn and restarts can be
   tried. They move when the maps are done.
-- **TODO — the end-game maps**, and where elites live in the field. Both are part of the world shape, which comes
-  after this.
+- **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
 
 ## Related
 

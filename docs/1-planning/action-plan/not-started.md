@@ -46,9 +46,9 @@ shadow have a row, in `field_0`, for testing. Placing the rest waits on the worl
   the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
   *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
 
-- [ ] `MT-18` **`[A]` Put the fourteen shadows on the end-game maps.** One row each, naming the shadow, once the
-  end-game maps exist. — **2 days**
-  *Done when:* every shadow stands in its fixed place on an end-game map, and the same one is there again after you leave and come back.
+- [ ] `MT-18` **`[A]` Put the fourteen shadows on their own places.** One row each, naming the shadow, once the
+  shadows' place maps exist ([World Map](../../3-world/world-map.md)). — **2 days**
+  *Done when:* every shadow stands in its fixed place on its own map, and the same one is there again after you leave and come back.
 
 ---
 

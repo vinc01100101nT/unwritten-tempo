@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 public static class WorldAtlasBaker
 {
     // World-space rect of one map. (x,y) = top-left corner; x→east, y→south. w,h in world units.
-    public struct Entry { public string scene; public float x, y, w, h; public string type; }
+    public struct Entry { public string scene; public float x, y, w, h; public string type, label; }
 
     const string ResourcesDir = "Assets/3_Data/Resources";
     const string AtlasAssetPath = "Assets/3_Data/Resources/WorldAtlas.asset";
@@ -98,6 +98,22 @@ public static class WorldAtlasBaker
         if (interactive)
             EditorUtility.DisplayDialog("Bake World Map — done",
                 $"Composited {entries.Count} map snapshots into a {atlasW}×{atlasH} world atlas.\n\n"
+                + "Press Play and open the World Map (default key: N) to see it.", "OK");
+    }
+
+    /// <summary>Use the painted world-map picture the layout was drawn on as the world map, instead of snapshots.
+    /// The layout's positions ARE that picture's pixels (the world creator places its background at 0,0 at its real
+    /// size), so the picture spans world 0,0 to its width × height at one pixel per unit. Opens no scene.</summary>
+    public static void BakePainted(List<Entry> entries, Texture2D picture, bool interactive = true)
+    {
+        if (entries == null || entries.Count == 0 || picture == null)
+        { if (interactive) EditorUtility.DisplayDialog("Bake World Map", "Need the maps and the world-map picture.", "OK"); return; }
+        WriteAsset(picture, entries, 0f, 0f, picture.width, picture.height, 1f);
+        Debug.Log($"[unwritten] Baked world map from the painted picture {AssetDatabase.GetAssetPath(picture)} "
+                  + $"({picture.width}×{picture.height}) with {entries.Count} maps.");
+        if (interactive)
+            EditorUtility.DisplayDialog("Bake World Map — done",
+                $"The world map now shows {picture.name} with {entries.Count} maps drawn on it.\n\n"
                 + "Press Play and open the World Map (default key: N) to see it.", "OK");
     }
 
@@ -185,7 +201,7 @@ public static class WorldAtlasBaker
         asset.ppu = ppu;
         asset.maps.Clear();
         foreach (var e in entries)
-            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type });
+            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type, label = e.label });
 
         if (isNew) AssetDatabase.CreateAsset(asset, AtlasAssetPath);
         else EditorUtility.SetDirty(asset);

@@ -1,7 +1,7 @@
 ---
-status: Both parts built; the pipeline has produced all 41 maps
+status: Both parts built; the pipeline has produced the 59 maps of the three-region world (2026-09-26), beside 41 older maps now set aside
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-26
 tags:
   - world-content
 ---
@@ -62,6 +62,8 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
   - `seed` (int, optional) — pin a look; omit to let Unity roll one.
   - `pathTile` ("road" | "soil" | "stones" | "rock", optional) — override; omit to randomize.
   - `pathWidth` (number, optional) — override; omit to randomize.
+  - `biome` (string, optional) — the biome the map is generated in, by its name (`snow`, `sacred` …); omit = grassland.
+  - `name` (string, optional) — the map's display name, shown on the in-game world map and in the browser tool.
 - `portals` (array of portal objects) — **all warps are explicitly anchored on both ends:**
   - `a` (string) — map id of endpoint A.
   - `b` (string) — map id of endpoint B.
@@ -101,7 +103,8 @@ A single self-contained HTML/JS/CSS file (no build step) that runs locally.
 
 - A pannable/zoomable world-space canvas (scale = px per world unit); a faint 10-unit guide grid for alignment only — maps are NOT grid-locked.
 - **Edit mode:** click empty space → a small menu (Town / Field / Dungeon / Special) → drops a default 60×60 map there. **Drag the body** to move it (position snaps to whole units). **Drag the 8 white handles** to resize — width/height **snap to integers** (min 16). Click a map → menu to retype or delete; `Del` removes the selected map.
-- Maps are colour-coded rounded rectangles: **town = yellow, field = green, dungeon = purple, special = red** (matches the in-game portal colour convention), labelled `id` + `w×h`.
+- Maps are colour-coded rounded rectangles: **town = yellow, field = green, dungeon = purple, special = red** (matches the in-game portal colour convention), labelled with the map's `name` (its `id` when it has none) + `w×h`.
+- **🖼 Background** loads a reference picture at world 0,0 at its real size — one picture pixel = one world unit — and locks it, so a layout drawn on the same picture lines up by itself. Unlock it to move or scale it.
 
 **Warps (v2 — one anchored model)**
 
@@ -128,6 +131,8 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
   2. For each `portal`: place paired `Portal3D` + arrival `SpawnPoint` on both maps at the resolved edge/offset, reusing `RegionBuilder.EnsurePortal/EnsureSpawn` (idempotent) and the destination-colour convention.
   3. `RegisterInBuildSettings` for every scene.
   4. **Validate:** every warp two-way, every map reachable, no dangling spawn id, no door in a wall/off-ground.
+- **Build World in the window regenerates EVERY map in the file and opens each one as the only open scene.** It overwrites hand-made maps and drops unsaved changes in whatever scene is open. For a build run through the live editor, `WorldCreator.BuildCore(json, town, field, dungeon, special recipe paths, keep ids)` does the same build without dialogs, never opens or edits the maps named in the keep list (warps into a kept map arrive at its first arrival point until doors are placed there by hand), and opens every other map alongside the user's scenes, closing it again.
+- **The in-game world map (N).** With a **World map picture** set in the window, baking shows that painted picture with every map drawn on it as a frame in its kind's colour and its `name` — no scene is opened. Without one, the baker snapshots every map from above, which opens each map as the only scene. The picture in use lives at `Assets/3_Data/Resources/WorldMap/world-map.png`; `WorldCreator.BakeWorldMapCore(json, picture path)` bakes it without dialogs.
 
 **Map Generator changes (the one real engine change)**
 
@@ -156,7 +161,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the map's centre, where the plaza sits — no arrival point is placed there any more, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
-**The pipeline has been run in anger:** 41 maps sit on disk today — 10 towns, 17 fields, 14 dungeons — all generated through it and all carrying real content.
+**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `town_0` (Lastline, hand-made) kept as it is. The 41 maps it produced before are set aside and stay on disk. The layout's 14 shadow places are not generated yet.
 
 ---
 
@@ -164,7 +169,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 
 - [Mob Roster](mob-roster.md) — where creatures live: the world spawn list the server reads as it loads each map. The generator puts no creatures into a map.
 - [Story & Setting (Canon)](story-setting-canon.md) — the fiction the towns and dungeons are meant to carry.
-- [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the 41 maps this produced, and the M2 gap they still have (no quests, no boss placed).
+- [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the maps this produced, and the M2 gap they still have (no quests, no boss placed).
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — the level bands a generated map spawns against.
 - [Performance Checkup — My Routine](../1-planning/performance-checkup-routine.md) — the field maps this builds are where the stress test runs.
 

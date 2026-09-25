@@ -1,12 +1,13 @@
 # Handoff — World map redesign, ground tiles, and the stacked-props bug
 
-**Task:** redesign the whole world around the twelve shadows' homelands (only `town_0` survives), make the ground
+**Task:** redesign the whole world into three regions around the fourteen shadows (only `town_0` survives), make the ground
 tiles for every biome, and fix a bug found on the way: every prop in field_11 is stacked at the map centre.
 
-**Status:** IN PROGRESS (session of 2026-09-24/25 committed and pushed to main). All 26 new ground tiles are in and
-renamed by use; the all-biome map generator has all 14 biomes built (not yet walked in the game). The world
-design is half-agreed; its doc was rewritten to the agreed layout on 2026-09-25. The stacked-props bug is NOT FIXED; it is measured
-in 40 of the 42 scenes that save prop positions (only town_0 and Systems are clean).
+**Status:** IN PROGRESS. Everything up to the end of the 2026-09-26 session is committed and pushed to main.
+The three-region world is GENERATED (59 new scenes + the hand-made `town_0` as Lastline, all doors wired) but
+**nobody has walked it in play yet — don't trust any "it works" claim about it.** The Sacred cloud look and the
+painted in-game world map (N) are built and compiled but also unseen in play. The 14 biome test maps are still
+unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new 59 are freshly generated and clean).
 
 ---
 
@@ -31,10 +32,12 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
 - **Plan and roadmap:** all built V4 tasks marked done. The wiki Roadmap's Now is "Killing things pays you"
   (only its drop-rate play-test is open). Stale tasks were deleted or rewritten.
 - **Files in `~/Downloads`:**
-  - `world-map-base.png`: the chosen ChatGPT world map, clean, 1536×1024.
-  - `world-map-homelands.png`: the same map marked with which homeland goes where.
+  - `world-map-base.png`: the previous ChatGPT world map, clean, 1536×1024 (replaced by `wm1.png` for now).
+  - `world-map-homelands.png`: the same map marked with the old twelve homelands (superseded).
+  - `world-map-regions.png`: that previous map with the three regions, cities and towns drawn on (superseded by
+    `world-regions-layout.png` on `wm1.png`).
   - `world-layout.png`: 88 zones and 92 warps drawn on the map.
-  - `world-homelands.json`: that layout as an importable world-creator file. The background aligns at 0,0,
+  - `world-homelands.json`: that old layout as an importable world-creator file (superseded). The background aligns at 0,0,
     1536×1024 world units.
   - `world-layout-script.py`: the script that generated both layout files. It runs under Pillow and needs its
     paths edited.
@@ -63,16 +66,29 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
 
 ## What's left
 
-1. **World-map doc rewritten 2026-09-25** to the agreed Ragnarok-style layout (landmasses, placement table, draft
-   links, homelands called by tradition until named). Its Still open list: names, the south-east island, the Mongol
-   steppe touching Lastline's fields, three connected pairs sharing an elite method (Norse/German weather,
-   Persian/Cornish dungeon bottom, Spanish/Japanese gatekeeper), and which road the Spanish gatekeeper guards.
+1. **The three-region world — designed 2026-09-25, generated 2026-09-26.** The design is `docs/3-world/world-map.md`
+   (single home): Might 1–33 / Finesse 34–66 / Arcane 67–99 as level tiers, a city per one-family weapon, a border
+   town per hybrid, 5 dungeons (15 floors), elites everywhere, the 14 shadows' elements, places and ways in. Weapons
+   are 14 (Fist and Kick added; the groups and the Firearm-only magic crit are in the weapon roster doc).
+   - **Layout:** `tools/world-creator/worlds/world-regions.json` (74 maps incl. the 14 shadow places, 77 doors,
+     each map with a `name`). Built from a throwaway Pillow script in the session scratchpad; the draft preview is
+     `~/Downloads/world-regions-layout.png`. The picture: `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
+   - **Generated** with `WorldCreator.BuildCore(...)`, keep list `town_0`, shadow places left out: 59 scenes
+     (`city_*`, `town_*`, `m_f*`, `f_f*`, `a_f*`, `b_f1`, `dg_*`), 122 portals, all registered in Build Settings;
+     59 Map Painter sidecars in `tools/map-painter/exports/`. The window's Build World must NOT be clicked (it would
+     wipe `town_0` and drop unsaved scene changes) — see the World Creator spec.
+   - **Lastline (`town_0`)**: nothing removed; its west/east gates retargeted to `m_f01` / `m_f07`, new doors at its
+     south gate (→ `m_f11`) and north opening (→ `m_f04`). Byte-diff proved only the 8 retarget lines changed.
+   - **In-game world map (N)**: shows the painted picture with every zone framed and named
+     (`WorldMapHUD.BuildZones`, `WorldAtlasBaker.BakePainted`, `WorldCreator.BakeWorldMapCore`).
+   - **Not checked:** whether the map servers are set up to serve the new maps; the user's game SERVER BUILD
+     predates all of this and must be rebuilt before the new world can be played online (ask first).
 2. **Names are NOT settled.** Decided 2026-09-25: the game uses NO real-country culture, so real languages are
    out; a made-up language per homeland was tried and rejected the same day. Every name ties to its shadow AND
    its weapon, in Ragnarok-city style (rule saved in memory `world-names-tie-to-shadows-and-weapons`). Order of
-   work: shadow names first (the current Varro, Brigid… may be replaced), then weapon names and homeland names.
-   The naming theme is not chosen. The map stays label-free, and the world-map doc calls each homeland by its
-   tradition until the names lock.
+   work: shadow names first (the current Varro, Brigid… may be replaced), then weapon names and place names.
+   The naming theme is not chosen. The map stays label-free, and the world-map doc names shadows and cities by
+   weapon until the names lock.
 3. **Ground tiles for every biome** — the per-biome tile and prop tables now live in `docs/3-world/biomes.md`
    (the single home; update it, not this list). **22 tiles, made in ChatGPT in PURE ANIME style.** The user removed
    `ground_grass`, `ground_rock`, `ground_moss` and `ground_stones` (they hated the look); `ground_leaf_litter`
@@ -144,8 +160,9 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
    has the snow blanket, Mist always has fog (the "Weather a biome always has" section of `docs/3-world/biomes.md`, which also holds the
    parked weather-frequency idea).
 5. **Fix the stacked-props bug** (below), then check every map.
-6. **Assign elements** to all 96 creatures and 12 shadows per the world-map biome table. Then update
-   `docs/3-world/mob-roster.md` and `docs/2-systems/gameplay-system-v4/elements-and-converters.md`: both still
+6. **Assign elements** to all 96 creatures (by the biome majority table) and the shadows (the 14 decided in the
+   world-map doc; the game data still gives the 12 existing shadows four converter elements). Then update
+   `docs/3-world/mob-roster.md` and `docs/2-systems/gameplay-system-v4/elements-and-converters.md`, which still
    say the shadows use four elements.
 7. After the world is agreed, rewrite plan Weeks 5 and 6 (`docs/1-planning/action-plan/not-started.md`), which
    still describe connecting today's 41 maps.
@@ -161,6 +178,22 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
      disk — nothing to save. Not traced.
    - **A freshly generated map's ground renders white** in an editor picture for about a minute, then shows its
      tiles. A picture problem only; the map is fine.
+
+10. **Found 2026-09-26, open:**
+   - **Sacred clouds** — rebuilt as a cloud layer at treetop height (`CloudLayerOverlay` + `Unwritten/CloudLayer`,
+     setting `alwaysClouds` in `Resources/BiomeWeather.asset`). Compiled, never seen. The first version showed
+     nothing; the rebuilding agent measured the old wisps at ≤6.5% opacity on 90% of the ground (too faint) and ruled
+     out the biome marker and the shader import. NOT measured: whether the overlay object is actually created on the
+     player's machine in a networked session (`WeatherDirector` → `CloudLayerOverlay.Ensure()`). If it still shows
+     nothing, measure that first.
+   - **Every door uses the plain cylinder pad**: 122 warnings "No Hovl portal prefab found in Assets/0_Raw/Hovl
+     Studio/…/Portals/" during the build. Pre-existing; the portal effect asset is missing.
+   - **The shadow places** (14 special maps) are in the layout, not generated; the Fist and Kick places are unnamed.
+   - **The player wiki's World & Maps page** still lists five biomes and says nothing of the three regions. Left
+     alone while the design is a proposal.
+   - **Fist and Kick** exist only in the docs: the code's weapon types have `Knuckle` (fist) but no kick, and no
+     shadow, mastery or skill exists for either. The Firearm's magic crit is decided, not built (the game blocks
+     every magic crit today).
 
 ## Stacked-props bug — proven vs hypothesis
 
@@ -192,7 +225,8 @@ many instances it would fix read-only, then apply. The counting script used on 2
 ## How to resume
 
 ```text
-Read handoffs/world-map-redesign.md and continue. First the in-game walk of the 14 biome test maps (item 4: ask
-before rebuilding the server). The stacked-props bug and the world-map doc's
-Still open list (names first) are still open.
+Read handoffs/world-map-redesign.md and continue. First: walk the new world in play (rebuild the game server first —
+ask the user), from Lastline through its four gates, checking the doors, the Sacred clouds (item 10) and the world
+map (N). Then the 14 biome test maps (item 4), the stacked-props bug, and the world-map doc's Still open list
+(names first).
 ```

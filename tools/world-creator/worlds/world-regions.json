@@ -1,0 +1,1960 @@
+{
+  "version": 2,
+  "maps": [
+    {
+      "id": "town_0",
+      "pos": [
+        790.0,
+        425.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "name": "Lastline"
+    },
+    {
+      "id": "city_shield",
+      "pos": [
+        610.0,
+        320.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "name": "Shield"
+    },
+    {
+      "id": "m_f01",
+      "pos": [
+        708.0,
+        402.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "name": "Lv 1\u20133"
+    },
+    {
+      "id": "m_f02",
+      "pos": [
+        608.0,
+        432.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "name": "Lv 4\u20136"
+    },
+    {
+      "id": "m_f03",
+      "pos": [
+        568.0,
+        242.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "forest",
+      "name": "Lv 6\u20138"
+    },
+    {
+      "id": "dg_tunnels_1",
+      "pos": [
+        500.0,
+        170.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "highland",
+      "name": "Old Tunnels 1"
+    },
+    {
+      "id": "dg_tunnels_2",
+      "pos": [
+        500.0,
+        218.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "highland",
+      "name": "Old Tunnels 2"
+    },
+    {
+      "id": "m_f04",
+      "pos": [
+        738.0,
+        262.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "forest",
+      "name": "Lv 9\u201312"
+    },
+    {
+      "id": "city_warhammer",
+      "pos": [
+        970.0,
+        360.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "highland",
+      "name": "Warhammer"
+    },
+    {
+      "id": "m_f05",
+      "pos": [
+        1088.0,
+        432.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "highland",
+      "name": "Lv 13\u201316"
+    },
+    {
+      "id": "city_spear",
+      "pos": [
+        1179.0,
+        484.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "coast",
+      "name": "Spear"
+    },
+    {
+      "id": "m_f06",
+      "pos": [
+        1098.0,
+        602.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "coast",
+      "name": "Lv 17\u201320"
+    },
+    {
+      "id": "m_f07",
+      "pos": [
+        968.0,
+        612.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "name": "Lv 21\u201324"
+    },
+    {
+      "id": "city_greatsword",
+      "pos": [
+        1040.0,
+        210.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "snow",
+      "name": "Greatsword"
+    },
+    {
+      "id": "m_f09",
+      "pos": [
+        928.0,
+        222.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "snow",
+      "name": "Lv 25\u201328"
+    },
+    {
+      "id": "m_f10",
+      "pos": [
+        1158.0,
+        262.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "snow",
+      "name": "Lv 29\u201333"
+    },
+    {
+      "id": "dg_mines_1",
+      "pos": [
+        1240.0,
+        180.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "highland",
+      "name": "Mines 1"
+    },
+    {
+      "id": "dg_mines_2",
+      "pos": [
+        1290.0,
+        180.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "highland",
+      "name": "Mines 2"
+    },
+    {
+      "id": "dg_mines_3",
+      "pos": [
+        1340.0,
+        180.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "highland",
+      "name": "Mines 3"
+    },
+    {
+      "id": "m_f11",
+      "pos": [
+        628.0,
+        592.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "forest",
+      "name": "Lv 26\u201330"
+    },
+    {
+      "id": "town_sword",
+      "pos": [
+        528.0,
+        388.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "name": "Sword"
+    },
+    {
+      "id": "town_kick",
+      "pos": [
+        458.0,
+        488.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "biome": "steppe",
+      "name": "Kick"
+    },
+    {
+      "id": "town_axe",
+      "pos": [
+        543.0,
+        608.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "biome": "forest",
+      "name": "Axe"
+    },
+    {
+      "id": "b_f1",
+      "pos": [
+        438.0,
+        392.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "name": "Lv 30\u201334"
+    },
+    {
+      "id": "city_bow",
+      "pos": [
+        410.0,
+        265.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "forest",
+      "name": "Bow"
+    },
+    {
+      "id": "f_f1",
+      "pos": [
+        328.0,
+        257.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "forest",
+      "name": "Lv 34\u201338"
+    },
+    {
+      "id": "f_f2",
+      "pos": [
+        258.0,
+        342.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "steppe",
+      "name": "Lv 39\u201344"
+    },
+    {
+      "id": "f_f3",
+      "pos": [
+        348.0,
+        362.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "steppe",
+      "name": "Lv 45\u201349"
+    },
+    {
+      "id": "city_dagger",
+      "pos": [
+        260.0,
+        420.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "desert",
+      "name": "Dagger"
+    },
+    {
+      "id": "f_f4",
+      "pos": [
+        168.0,
+        442.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "desert",
+      "name": "Lv 50\u201354"
+    },
+    {
+      "id": "f_f5",
+      "pos": [
+        58.0,
+        517.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "peaks",
+      "name": "Lv 55\u201360"
+    },
+    {
+      "id": "f_f6",
+      "pos": [
+        138.0,
+        227.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "peaks",
+      "name": "Lv 61\u201366"
+    },
+    {
+      "id": "dg_canyon_1",
+      "pos": [
+        80.0,
+        330.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "desert",
+      "name": "Canyon Temple 1"
+    },
+    {
+      "id": "dg_canyon_2",
+      "pos": [
+        130.0,
+        330.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "desert",
+      "name": "Canyon Temple 2"
+    },
+    {
+      "id": "dg_canyon_3",
+      "pos": [
+        180.0,
+        330.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "desert",
+      "name": "Canyon Temple 3"
+    },
+    {
+      "id": "town_firearm",
+      "pos": [
+        248.0,
+        528.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "biome": "volcanic",
+      "name": "Firearm"
+    },
+    {
+      "id": "f_f7",
+      "pos": [
+        333.0,
+        572.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "volcanic",
+      "name": "Lv 60\u201364"
+    },
+    {
+      "id": "city_staff",
+      "pos": [
+        680.0,
+        60.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "volcanic",
+      "name": "Staff"
+    },
+    {
+      "id": "a_f1",
+      "pos": [
+        583.0,
+        112.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "volcanic",
+      "name": "Lv 67\u201371"
+    },
+    {
+      "id": "a_f2",
+      "pos": [
+        793.0,
+        122.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "volcanic",
+      "name": "Lv 72\u201376"
+    },
+    {
+      "id": "dg_lava_1",
+      "pos": [
+        880.0,
+        40.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "volcanic",
+      "name": "Lava Tubes 1"
+    },
+    {
+      "id": "dg_lava_2",
+      "pos": [
+        930.0,
+        40.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "volcanic",
+      "name": "Lava Tubes 2"
+    },
+    {
+      "id": "dg_lava_3",
+      "pos": [
+        980.0,
+        40.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "volcanic",
+      "name": "Lava Tubes 3"
+    },
+    {
+      "id": "town_fist",
+      "pos": [
+        1368.0,
+        438.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "biome": "coast",
+      "name": "Fist"
+    },
+    {
+      "id": "a_f3",
+      "pos": [
+        1322.0,
+        511.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "coast",
+      "name": "Lv 64\u201368"
+    },
+    {
+      "id": "town_scythe",
+      "pos": [
+        218.0,
+        758.0
+      ],
+      "size": [
+        64,
+        64
+      ],
+      "type": "town",
+      "biome": "haunted",
+      "name": "Scythe"
+    },
+    {
+      "id": "a_f4",
+      "pos": [
+        98.0,
+        697.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "haunted",
+      "name": "Lv 67\u201371"
+    },
+    {
+      "id": "a_f5",
+      "pos": [
+        318.0,
+        852.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "haunted",
+      "name": "Lv 72\u201376"
+    },
+    {
+      "id": "dg_deep_1",
+      "pos": [
+        40.0,
+        840.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "haunted",
+      "name": "Haunted Deep 1"
+    },
+    {
+      "id": "dg_deep_2",
+      "pos": [
+        40.0,
+        890.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "haunted",
+      "name": "Haunted Deep 2"
+    },
+    {
+      "id": "dg_deep_3",
+      "pos": [
+        90.0,
+        940.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "haunted",
+      "name": "Haunted Deep 3"
+    },
+    {
+      "id": "dg_deep_4",
+      "pos": [
+        140.0,
+        940.0
+      ],
+      "size": [
+        40,
+        40
+      ],
+      "type": "dungeon",
+      "biome": "haunted",
+      "name": "Haunted Deep 4"
+    },
+    {
+      "id": "a_f6",
+      "pos": [
+        588.0,
+        817.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "swamp",
+      "name": "Lv 77\u201381"
+    },
+    {
+      "id": "a_f7",
+      "pos": [
+        788.0,
+        862.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "swamp",
+      "name": "Lv 82\u201386"
+    },
+    {
+      "id": "a_f8",
+      "pos": [
+        1124.0,
+        804.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "corrupted",
+      "name": "Lv 87\u201391"
+    },
+    {
+      "id": "a_f10",
+      "pos": [
+        1308.0,
+        732.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "corrupted",
+      "name": "Lv 96\u201399"
+    },
+    {
+      "id": "a_f9",
+      "pos": [
+        1268.0,
+        852.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "mist",
+      "name": "Lv 92\u201395"
+    },
+    {
+      "id": "city_wand",
+      "pos": [
+        205.0,
+        45.0
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "sacred",
+      "name": "Wand"
+    },
+    {
+      "id": "a_f11",
+      "pos": [
+        98.0,
+        47.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "sacred",
+      "name": "Lv 83\u201390"
+    },
+    {
+      "id": "a_f12",
+      "pos": [
+        328.0,
+        47.0
+      ],
+      "size": [
+        64,
+        56
+      ],
+      "type": "field",
+      "biome": "sacred",
+      "name": "Lv 91\u201399"
+    },
+    {
+      "id": "sp_shield",
+      "pos": [
+        25.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "highland",
+      "name": "Last Bridge"
+    },
+    {
+      "id": "sp_wand",
+      "pos": [
+        130.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "sacred",
+      "name": "Hill of the Flame"
+    },
+    {
+      "id": "sp_sword",
+      "pos": [
+        235.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "peaks",
+      "name": "Thousand Gates"
+    },
+    {
+      "id": "sp_warhammer",
+      "pos": [
+        340.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "highland",
+      "name": "Iron Gate"
+    },
+    {
+      "id": "sp_dagger",
+      "pos": [
+        445.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "swamp",
+      "name": "Masked Ballroom"
+    },
+    {
+      "id": "sp_axe",
+      "pos": [
+        550.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "volcanic",
+      "name": "Burning Keel"
+    },
+    {
+      "id": "sp_staff",
+      "pos": [
+        655.0,
+        1070.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "volcanic",
+      "name": "Everburning Plain"
+    },
+    {
+      "id": "sp_bow",
+      "pos": [
+        25.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "steppe",
+      "name": "Sky Cairn"
+    },
+    {
+      "id": "sp_spear",
+      "pos": [
+        130.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "coast",
+      "name": "Tide Temple"
+    },
+    {
+      "id": "sp_firearm",
+      "pos": [
+        235.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "corrupted",
+      "name": "Dusk Tower"
+    },
+    {
+      "id": "sp_greatsword",
+      "pos": [
+        340.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "mist",
+      "name": "Walking Road"
+    },
+    {
+      "id": "sp_scythe",
+      "pos": [
+        445.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "haunted",
+      "name": "Drowned Chapel"
+    },
+    {
+      "id": "sp_fist",
+      "pos": [
+        550.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "snow",
+      "name": "(Fist place)"
+    },
+    {
+      "id": "sp_kick",
+      "pos": [
+        655.0,
+        1150.0
+      ],
+      "size": [
+        50,
+        50
+      ],
+      "type": "special",
+      "biome": "steppe",
+      "name": "(Kick place)"
+    }
+  ],
+  "portals": [
+    {
+      "a": "town_0",
+      "b": "m_f01",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f01",
+      "b": "city_shield",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_shield",
+      "b": "m_f02",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_shield",
+      "b": "m_f03",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f03",
+      "b": "dg_tunnels_1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_tunnels_1",
+      "b": "dg_tunnels_2",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_0",
+      "b": "m_f04",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f04",
+      "b": "city_warhammer",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_warhammer",
+      "b": "m_f05",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f05",
+      "b": "city_spear",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_spear",
+      "b": "m_f06",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f06",
+      "b": "m_f07",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f07",
+      "b": "town_0",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_warhammer",
+      "b": "m_f09",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f09",
+      "b": "city_greatsword",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_greatsword",
+      "b": "m_f10",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f09",
+      "b": "dg_mines_1",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_mines_1",
+      "b": "dg_mines_2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_mines_2",
+      "b": "dg_mines_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_0",
+      "b": "m_f11",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f11",
+      "b": "town_axe",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f02",
+      "b": "town_sword",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_sword",
+      "b": "b_f1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "b_f1",
+      "b": "town_kick",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_axe",
+      "b": "town_kick",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_kick",
+      "b": "f_f3",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "b_f1",
+      "b": "city_bow",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_bow",
+      "b": "f_f1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f1",
+      "b": "f_f2",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f2",
+      "b": "f_f3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f2",
+      "b": "city_dagger",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_dagger",
+      "b": "f_f4",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f4",
+      "b": "f_f5",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_dagger",
+      "b": "f_f6",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f4",
+      "b": "dg_canyon_1",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_canyon_1",
+      "b": "dg_canyon_2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_canyon_2",
+      "b": "dg_canyon_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f5",
+      "b": "town_firearm",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_firearm",
+      "b": "f_f7",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_staff",
+      "b": "a_f1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_staff",
+      "b": "a_f2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f2",
+      "b": "dg_lava_1",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_lava_1",
+      "b": "dg_lava_2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_lava_2",
+      "b": "dg_lava_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_fist",
+      "b": "a_f3",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_scythe",
+      "b": "a_f4",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_scythe",
+      "b": "a_f5",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f5",
+      "b": "dg_deep_1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_deep_1",
+      "b": "dg_deep_2",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_deep_2",
+      "b": "dg_deep_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dg_deep_3",
+      "b": "dg_deep_4",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f6",
+      "b": "a_f7",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f7",
+      "b": "a_f8",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f8",
+      "b": "a_f10",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f10",
+      "b": "a_f9",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_wand",
+      "b": "a_f11",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_wand",
+      "b": "a_f12",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_spear",
+      "b": "town_fist",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_axe",
+      "b": "town_scythe",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.3
+      }
+    },
+    {
+      "a": "town_firearm",
+      "b": "a_f4",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_scythe",
+      "b": "a_f6",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.7
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_fist",
+      "b": "a_f2",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "city_staff",
+      "b": "a_f11",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.3
+      }
+    },
+    {
+      "a": "m_f01",
+      "b": "sp_shield",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f12",
+      "b": "sp_wand",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "town_sword",
+      "b": "sp_sword",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f05",
+      "b": "sp_warhammer",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f7",
+      "b": "sp_dagger",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f1",
+      "b": "sp_axe",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f7",
+      "b": "sp_staff",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "f_f2",
+      "b": "sp_bow",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "m_f06",
+      "b": "sp_spear",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f10",
+      "b": "sp_firearm",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f9",
+      "b": "sp_greatsword",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f4",
+      "b": "sp_scythe",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "a_f3",
+      "b": "sp_fist",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "b_f1",
+      "b": "sp_kick",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    }
+  ]
+}

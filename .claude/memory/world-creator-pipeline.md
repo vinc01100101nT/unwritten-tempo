@@ -5,6 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 0ed1697a-c3d2-4a71-857d-aaf77fae8078
+  modified: 2026-09-25T17:08:50.191Z
 ---
 
 Started 2026-06-23 (user's design). The proper, autonomous replacement for the manual per-scene `MapLinker`/`LinkMapsWindow` flow. The world's topology becomes ONE declarative source of truth so regenerating a map never strands its warps.
@@ -22,5 +23,15 @@ Started 2026-06-23 (user's design). The proper, autonomous replacement for the m
 Spec doc: Tempo doc `q176qkd22qmbk4r5t9g7fcc30n895whr`. The `MapLinker`/`Link Two Maps…` linker facts in [[recipe-generator]] are now historical — Build World supersedes them.
 
 **PER-MAP BIOME (HTML side completed 2026-06-27):** the Unity side already had it — `WorldCreator.MapJson.biome` + `TryParseBiome` (grassland/snow/desert/volcanic/corrupted, aliases ice/sand/lava/void) + Build World applies `clone.biome` per map (→ `RecipeGenerator.BiomeOf` ground base/patch/tint). The **only missing piece was authoring**: now added to `tools/world-creator/index.html` — the map context menu has a **Biome** section (swatch + ✓), `world.json` export adds `biome` (omitted when grassland=default), import/copy/paste carry it, and each map renders a biome wash + name label. So a field's theme is set per map in the browser tool and flows through to the bake. (No Unity-side change was needed.)
+
+**NEVER CLICK BUILD WORLD WITH HAND-MADE MAPS OR AN UNSAVED SCENE OPEN (2026-09-26):** the window's Build World
+regenerates EVERY map in the file (it would wipe `town_0`, the user's precious hand-made Lastline) and opens each map
+as the only scene (drops unsaved changes in the open Systems scene); the snapshot world-map bake opens scenes the same
+way. Driven through the live editor, use `WorldCreator.BuildCore(json, town/field/dungeon/special recipe paths,
+keep ids)` — keep list never opened or edited, maps opened additively and closed — and
+`WorldCreator.BakeWorldMapCore(json, picture path)` for the painted world map (opens nothing). The current world's
+layout is `tools/world-creator/worlds/world-regions.json` (maps carry a `name`), its picture
+`Resources/WorldMap/world-map.png`; recipes `3_Data/Recipes/{Town,Field,Dungeon}Recipe.asset`. `town_0`'s doors were
+retargeted/added BY HAND to the new fields — rebuilding keeps it only if `town_0` is in the keep list.
 
 **GENERATED MAPS ARE EDITABLE (2026-06-27):** because Build World calls `RecipeGenerator.Generate`, every world map now also emits a Map Painter **sidecar** `tools/map-painter/exports/<scene>.map.json` — see [[map-painter-pipeline]]. Workflow realised: generic maps (fields) fully auto via World Creator; to hand-tweak one, Import its sidecar into the Map Painter, edit, re-bake. Fully-custom towns are still painted from scratch.

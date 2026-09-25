@@ -3,9 +3,9 @@ using UnityEngine;
 
 /// <summary>
 /// The baked world-map image + free-form layout, loaded at runtime by <see cref="WorldMapHUD"/>.
-/// Produced by the editor "Bake World Map" step (in <c>WorldCreator</c> via <c>WorldAtlasBaker</c>): one
-/// top-down snapshot per map, composited into a single <see cref="atlas"/> texture by each map's world-space
-/// rectangle (free placement, any size — no grid).
+/// Produced by the editor "Bake World Map" step (in <c>WorldCreator</c> via <c>WorldAtlasBaker</c>): either the
+/// painted world-map picture the layout was drawn on (one picture pixel = one world unit), or one top-down snapshot
+/// per map composited into a single <see cref="atlas"/> texture by each map's world-space rectangle.
 ///
 /// Lives in <c>Resources/</c> so the HUD can <c>Resources.Load&lt;WorldAtlas&gt;("WorldAtlas")</c> without any
 /// scene wiring. Map space: <c>x</c>→east, <c>y</c>→south; the atlas is north-up / east-right, and empty space is
@@ -19,6 +19,7 @@ public class WorldAtlas : ScriptableObject
         public string scene;    // scene/file name (== sanitized map id)
         public float x, y, w, h; // world-space rect, top-left (x→east, y→south), size in world units
         public string type;     // town | field | dungeon | special
+        public string label;    // the name shown on the world map (the world.json map's name; empty = none)
     }
 
     [Tooltip("Composited top-down image of the whole world (free-form, world-space rectangles).")]
