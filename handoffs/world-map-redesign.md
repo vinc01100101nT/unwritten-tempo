@@ -3,8 +3,8 @@
 **Task:** redesign the whole world into three regions around the fourteen shadows (only `lastline` survives), make the ground
 tiles for every biome, and fix a bug found on the way: every prop in field_11 is stacked at the map centre.
 
-**Status:** IN PROGRESS. Everything up to the end of the second 2026-09-26 session (~05:05) is committed and pushed
-to main. The three-region world is GENERATED (59 new scenes + the hand-made `lastline` as Lastline, all doors wired),
+**Status:** IN PROGRESS. Everything up to the end of the second 2026-09-26 session (~05:05) is committed to main; the
+push failed (this Mac could not resolve github.com) — run `git push origin main` if `git status` says ahead. The three-region world is GENERATED (59 new scenes + the hand-made `lastline` as Lastline, all doors wired),
 every map is named by its id, and normals + elites are placed in every field and dungeon floor — but **nobody has
 walked it in play yet (the user only opened the world map and stood in `test_forest_a`) — don't trust any "it works"
 claim about it.** **Before anyone can play it: the user must run the database update below (item 10) and rebuild the
