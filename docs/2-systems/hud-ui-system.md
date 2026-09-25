@@ -16,7 +16,7 @@ Tracking issue: **VIN-22**.
 
 - **Camera** — RO-style 2.5D: true 3D world with billboard sprites, ¾ overhead/isometric-ish framing via a shared `CameraRig`. HUD assumes a fixed overhead view + feet-Y depth sorting. (Ragnarok bucket, not FFXIV/Albion.)
 - **Combat** — RO-style hybrid: click-to-move + click/point target, skills fired from the hotbar by key or click. Already have multi-hit bursts, status (stun/DoT), 10 elements, leech/reflect. No action-cam reticle.
-- **Skill count** — skills belong to a *weapon*, not a class, and are LEARNED by practising it: each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
+- **Skill count** — skills belong to a *weapon*, not a class, and are LEARNED by practising it: each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
 - **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + what a crafted piece carries: its **quality grade**, its **folds**, the stats **Ink** has written on it, and its card sockets. All of it is live and all of it persists.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
   - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). *It used to name Bash / Charge / Caster as what it was wired to — those hand-written skills are gone; the bar is arranged by the player from what they have learned.*
@@ -129,7 +129,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 - [Active Skill System — V3](active-skill-system-v3/README.md) — what the hotbar, skill book and tooltips are showing.
 - [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md) — the Character sheet's live state readout.
-- [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — where a hotbar kit comes from.
+- [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — where a hotbar kit comes from.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — what the draft panel drafts.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — every number the character sheet prints.
 - [Networking — Implementation Notes](networking/implementation-notes.md) — the sign-in door and the reconnect notice now in front of all of it.

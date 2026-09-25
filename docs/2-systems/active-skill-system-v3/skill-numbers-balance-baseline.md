@@ -162,7 +162,7 @@ A duration is **seconds**; charges are **a number of uses**. A skill may carry b
 - [Active Skill System — V3](README.md) — the channels and effects these numbers are bands for.
 - [Sword — Skill Roster](sword-skill-roster.md) — the pool these rules were applied and verified against.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the window-vs-charges distinction Rule 4 protects.
-- [Weapon Roster — 12 Identities](weapon-roster-12-identities.md) — the identity test that decides *what* before this decides *how much*.
+- [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the identity test that decides *what* before this decides *how much*.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the ring stats the scaling defaults point at.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — where the player anchors in the reference frame come from.
 - [Unified Unit Stats](unified-unit-stats.md) — the real mob numbers to tune damage against.

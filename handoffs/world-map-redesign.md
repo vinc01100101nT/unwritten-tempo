@@ -4,8 +4,8 @@
 tiles for every biome, and fix a bug found on the way: every prop in field_11 is stacked at the map centre.
 
 **Status:** IN PROGRESS (session of 2026-09-24/25 committed and pushed to main). All 26 new ground tiles are in and
-renamed by use; the all-biome map generator is at step 2 of 5 (Forest built, not yet walked in the game). The world
-design is half-agreed, and its doc is partly STALE (see below). The stacked-props bug is NOT FIXED; it is measured
+renamed by use; the all-biome map generator has all 14 biomes built (not yet walked in the game). The world
+design is half-agreed; its doc was rewritten to the agreed layout on 2026-09-25. The stacked-props bug is NOT FIXED; it is measured
 in 40 of the 42 scenes that save prop positions (only town_0 and Systems are clean).
 
 ---
@@ -27,7 +27,7 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
     (`GroundFill.cs`), and the unused `prontera_tile.mat`.
   - World map atlas import cap 4096 → 2048 (`WorldAtlasBaker.cs` now uses `TargetLongSidePx`). No visible change.
 - **New tiles:** `ground_leaf_litter.png` (committed). `ground_moss.png` was committed too, then removed by the user.
-- **World map proposal:** `docs/3-world/world-map.md` (committed). **See the STALE warning under What's left.**
+- **World map proposal:** `docs/3-world/world-map.md` (committed; rewritten 2026-09-25 to the landmass layout, uncommitted).
 - **Plan and roadmap:** all built V4 tasks marked done. The wiki Roadmap's Now is "Killing things pays you"
   (only its drop-rate play-test is open). Stale tasks were deleted or rewritten.
 - **Files in `~/Downloads`:**
@@ -63,31 +63,16 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
 
 ## What's left
 
-1. **Rewrite `docs/3-world/world-map.md`: it is STALE on layout.** It still describes the CLOCK-FACE ring
-   (hours, spokes, homelands bordering in level order). **The user rejected the clock**: it felt small and
-   isolated. The agreed direction is Ragnarok-style: several irregular landmasses, towns at random spots, wild
-   fields between homelands, remote islands, and levels as a rough gradient with no fixed walking order. The
-   chosen map is `~/Downloads/world-map-base.png`; the homeland placement proposed on it is
-   `world-map-homelands.png`:
-   - Main continent: Roman (start), Irish, Slavic.
-   - East islands: Greek.
-   - North island: Norse and German.
-   - West continent: Spanish, Persian, Mongol.
-   - South: Cornish peninsula and Italian lagoon.
-   - Far top-left island: Japanese.
-   - The big dark south-east island is unassigned.
-   - Flagged: the Mongol steppe (84–91) touches Lastline's heartland.
-   - **Still agreed and correct in the doc:** 12 homelands, one per shadow; the shadows ARE the Twelve and keep
-     their names; each homeland has its own language, a town (smith/loom/tannery), 3 fields, a dungeon, the
-     shadow's iconic place (12 place names agreed) and a castle map (castle gameplay deferred); biome table and
-     per-map biomes; all 10 elements spread across creatures with one shadow Neutral (Varro); Holy/Shadow/Poison
-     countered via skill buffs and cards (not built); teleports and service NPCs deferred.
-2. **Homeland names are NOT settled.** The rule, saved in memory `world-names-tie-to-shadows-and-weapons`: every
-   name ties to its shadow AND its weapon, in Ragnarok-city style, 1–4 syllables, with some one-off multi-word
-   formats like "Al De Baran". The last proposal was Brand, Kil Brigh, Khar Num, Zweiburg, Hien, Scutaro, Rad
-   Molot, Porthwenna, Asazar, Kallidora, Santa Inés, Val di Fiora. The user said "plan names later", and the map
-   is kept label-free until then. The doc still carries the older names (Testudo, Tír na mBeo…); replace them
-   once names are chosen.
+1. **World-map doc rewritten 2026-09-25** to the agreed Ragnarok-style layout (landmasses, placement table, draft
+   links, homelands called by tradition until named). Its Still open list: names, the south-east island, the Mongol
+   steppe touching Lastline's fields, three connected pairs sharing an elite method (Norse/German weather,
+   Persian/Cornish dungeon bottom, Spanish/Japanese gatekeeper), and which road the Spanish gatekeeper guards.
+2. **Names are NOT settled.** Decided 2026-09-25: the game uses NO real-country culture, so real languages are
+   out; a made-up language per homeland was tried and rejected the same day. Every name ties to its shadow AND
+   its weapon, in Ragnarok-city style (rule saved in memory `world-names-tie-to-shadows-and-weapons`). Order of
+   work: shadow names first (the current Varro, Brigid… may be replaced), then weapon names and homeland names.
+   The naming theme is not chosen. The map stays label-free, and the world-map doc calls each homeland by its
+   tradition until the names lock.
 3. **Ground tiles for every biome** — the per-biome tile and prop tables now live in `docs/3-world/biomes.md`
    (the single home; update it, not this list). **22 tiles, made in ChatGPT in PURE ANIME style.** The user removed
    `ground_grass`, `ground_rock`, `ground_moss` and `ground_stones` (they hated the look); `ground_leaf_litter`
@@ -144,17 +129,20 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
 
    **Seam test:** place 4 copies 2×2 and look at the corner where they meet, plus the join-vs-normal pixel step
    ratio. Also check square, no alpha, no dark border.
-4. **All-biome map generator — step 2 of 5 DONE (2026-09-25), step 3 (in-game test) next.** The plan, steps and
-   state live in `docs/3-world/biomes.md` (single home). Built: `Scripts/Editor/BiomeTable.cs` + the asset
-   `3_Data/Recipes/BiomeTable.asset` (the generator reads every biome look from it), `Forest` appended to `Biome`,
-   test maps `test_forest_a`/`test_forest_b` (in the build list). Grassland/Snow proven identical before/after with
-   seed 4242. Then, at the user's instruction: trees scatter over the whole field map, grass grows in bunches
-   (~75% cover, ~5k plants/map — **frame cost unmeasured, watch it first**), Forest = mud base + leaf-litter
-   patches, and `test_forest_a` got field_11's spawn row. Rejected and removed: previews of the next zone past a
-   door, and a stone wall along the edges. **Next:** rebuild the game server (`tools/build-game.sh server`, ask the
-   user first — their map server runs from that build), the user restarts their map server, then walks
-   `/tp test_forest_a`. Then step 4 (the other biomes). Open question for the user: while building test maps the
-   assistant moves their Scene view camera and switches the open scene — should that be banned too?
+4. **All-biome map generator — steps 1, 2, 4, 5 DONE (2026-09-25); step 3, the in-game walk, is left.** The steps
+   and state live in `docs/3-world/biomes.md` (single home). All 14 biomes are Biome Table rows on their own tiles;
+   `tools/check-biome-table.py` guards them (pre-commit). A 13-map test chain (one per biome but Grassland) `test_forest_a` → `test_highland` → … → `test_corrupted`
+   is built and linked (24 doors, all checked). `docs/3-world/biome-references.md` puts a real photo beside each
+   biome's test map with a match rate (Snow and Peaks 80%, Haunted and Corrupted 20%) and what is still missing;
+   the next gains need new art (standing stones, dead trees, gravestones, a heather tile, reeds, a sea edge) or
+   ground with height (slopes, dunes). Grass bunches up to ~4.4k plants/map (Sacred) — **frame cost unmeasured,
+   watch it first**. **Next:** rebuild the game server (the user's build predates this session's last round: it
+   still has the deleted `test_forest_b` and the old doors) (`tools/build-game.sh server`, ask the user first — their map server runs from that build), the
+   user restarts their map server, then walks the chain from `/tp test_forest_a`. Never move the user's Scene view
+   camera or switch the open scene while building test maps (banned 2026-09-25); build with `leaveOpen: false`.
+4b. **Weather a biome always has — BUILT 2026-09-25, not walked in game:** Swamp always has puddles, Snow always
+   has the snow blanket, Mist always has fog (the "Weather a biome always has" section of `docs/3-world/biomes.md`, which also holds the
+   parked weather-frequency idea).
 5. **Fix the stacked-props bug** (below), then check every map.
 6. **Assign elements** to all 96 creatures and 12 shadows per the world-map biome table. Then update
    `docs/3-world/mob-roster.md` and `docs/2-systems/gameplay-system-v4/elements-and-converters.md`: both still
@@ -162,6 +150,17 @@ in 40 of the 42 scenes that save prop positions (only town_0 and Systems are cle
 7. After the world is agreed, rewrite plan Weeks 5 and 6 (`docs/1-planning/action-plan/not-started.md`), which
    still describe connecting today's 41 maps.
 8. Decide the field_11 test state (leaf base or patches; keep or remove the grass sample).
+9. **Found 2026-09-25, not fixed:**
+   - **Errors in the user's play session (19:23):** 11 × `MissingReferenceException` on a destroyed `UI.Image` in
+     `HoverPlate.RebuildIcons` (HoverPlate.cs:264, from LateUpdate :137). Unrelated to the biome work; not looked at.
+   - **The field template's map name is "StarterTown"** (`3_Data/Recipes/FieldRecipe.asset`), so ⚒ Generate Map on
+     it saves to `Scenes/StarterTown.unity` every press. No such scene exists today. Offered to the user, not changed.
+   - **Grassland's road:** the biome doc's table says dirt road; Grassland field maps lay the template's soil road.
+     The user's decision, still open.
+   - **Systems scene showed "unsaved"** after an editor script ran, with a saved copy byte-identical to the file on
+     disk — nothing to save. Not traced.
+   - **A freshly generated map's ground renders white** in an editor picture for about a minute, then shows its
+     tiles. A picture problem only; the map is fine.
 
 ## Stacked-props bug — proven vs hypothesis
 
@@ -193,7 +192,7 @@ many instances it would fix read-only, then apply. The counting script used on 2
 ## How to resume
 
 ```text
-Read handoffs/world-map-redesign.md and continue. First the Forest in-game test (item 4: ask before rebuilding the
-server), then generator step 4 (all biomes, per docs/3-world/biomes.md). The stacked-props bug and the world-map doc
-rewrite are still open.
+Read handoffs/world-map-redesign.md and continue. First the in-game walk of the 14 biome test maps (item 4: ask
+before rebuilding the server). The stacked-props bug and the world-map doc's
+Still open list (names first) are still open.
 ```

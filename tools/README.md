@@ -117,6 +117,22 @@ one that matters most — whether every field a script declares is present in th
 2026-09-20 from an audit that found 85 MB of uncompressed ground tiles, 4,608 solid shadow-casting plants, eight
 unused packages and all 84 creatures loading at level 1 because one struct was not marked serializable.
 
+## check-biome-table.py · prove-biome-table-check.py
+
+Is every biome's look whole, and do the biome test maps hold their props where they were put?
+
+```bash
+tools/check-biome-table.py           # the Biome Table, the biome list, the World Creator's list, the held weather, the test_* maps
+tools/prove-biome-table-check.py     # plants 14 faults in a throwaway mirror and expects each named
+```
+
+Fails when a biome has no row, a ground tile is laid for a job its file name does not allow (BASE / PATCH / PATH),
+a row keeps a colour wash, a prop points at no file, a biome places no props at all, the Grassland row changes, the
+browser World Creator is missing a biome, a `test_*` map's saved prop positions point at a part the prop no
+longer has (the fault that stacks every prop at the map centre), a `test_*` map is missing its biome marker or
+carries the wrong one, or the per-biome weather list holds a level outside 0..1. Built 2026-09-25 with the
+all-biome generator.
+
 ## check-editor-writes.py · prove-editor-writes-check.py · cs_methods.py
 
 Can editor code write a saved file with nobody having clicked? (RULE NOEDITORWRITES, mechanically.)

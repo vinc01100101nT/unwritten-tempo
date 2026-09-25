@@ -18,36 +18,179 @@ MonoBehaviour:
     patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
     roadTile: {fileID: 0}
     tint: {r: 1, g: 1, b: 1, a: 1}
-    patchAmount: -1
-    props: []
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 8228000041886255841, guid: be948f5ff94514f439c3581a9c26c55d, type: 3}
+      - {fileID: 5633169578833434508, guid: 26bf138dd1261c24b9fdd9617c79f767, type: 3}
+      - {fileID: 69848184911152519, guid: 9fa424e6246e4134bbe058a1a9a8dc33, type: 3}
+      - {fileID: 2977113885076981213, guid: 5c235160d717e5e4ca6de9538e5708d2, type: 3}
+      - {fileID: 5537864404432032848, guid: 8de34e50acd2a764e9f5bc7d51eeaeaa, type: 3}
+      - {fileID: 982608281792230194, guid: c6cbbb0822c58e549be57561b55d0b33, type: 3}
+      - {fileID: 1138120055121804292, guid: ef085d20f8ed76a4fa589d2bde4ae8b2, type: 3}
+      - {fileID: 2767881006268153731, guid: 2352ef0005117a0429dc19e9c9064e26, type: 3}
+      - {fileID: 7074842730685469867, guid: 98d834d860b4f3248a17c074d820192a, type: 3}
+      - {fileID: 4422922362998585121, guid: 678f3b4278a67c74498a9cbe38d9dd8f, type: 3}
+      - {fileID: 3503643465955504639, guid: 15e3c939a987c414887618ef4ceb4e15, type: 3}
+      - {fileID: 7130412629362694480, guid: 965c05bd72a3be849bf611e33328885e, type: 3}
+      - {fileID: 3416682959313327388, guid: b242ffc517460ee4f99d7cc45d6e64f6, type: 3}
+      - {fileID: 1310099816247465872, guid: a56c4cf086bbbeb48bf8dec3add646e2, type: 3}
+      - {fileID: 7514679905914095409, guid: 005660e83b979394688d221505a3b7e9, type: 3}
+      countMultiplier: 0.4
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 1
+    - category: 6
+      prefabs:
+      - {fileID: 6155537551963965597, guid: 36338a7aa6d6e8e43a23703548c22e6f, type: 3}
+      - {fileID: 790769484399492391, guid: 57b338541108ff147ad06b37e9aa5f81, type: 3}
+      - {fileID: 2005288998442661478, guid: 049605ddb0cc8d441ae1051cf690aa41, type: 3}
+      - {fileID: 5371102101128460778, guid: 3d61289d7434f174ba79ddb9f7dd0d62, type: 3}
+      - {fileID: 6881928116673910377, guid: 93ac5977e47c16241be650a83010ec37, type: 3}
+      - {fileID: 4861530910305468601, guid: 0ef7197cca414c649af707a96a7fc24a, type: 3}
+      - {fileID: 5169985116725478616, guid: 4af723ab9f5dd4b419c68d8df8e311df, type: 3}
+      - {fileID: 2889304774302703723, guid: bb5b7b88a07d76b41bbedcd2a3832d63, type: 3}
+      - {fileID: 6959922714596949426, guid: 60b98af96b3d29941bb88313d48aceb3, type: 3}
+      - {fileID: 2007118893089531924, guid: e4421c24eed96634780e04cb94394012, type: 3}
+      countMultiplier: 1.5
+    - category: 5
+      prefabs:
+      - {fileID: 3732848725574461329, guid: 11762379c77749e409f03787aa8292cd, type: 3}
+      - {fileID: 94755523052854094, guid: d0f84ad5b0cd40e43a7d8c683ef284e7, type: 3}
+      - {fileID: 488550492220688811, guid: df213e05cb99cf742ba0747e559a8171, type: 3}
+      - {fileID: 7822678953641189595, guid: 6f93198897c87f841815509b3add360d, type: 3}
+      - {fileID: 4630890458750868041, guid: 7ca041a7b86c1c049a27a49f4f0ebc25, type: 3}
+      countMultiplier: 0.35
   - biome: 1
-    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
-    patchTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
-    roadTile: {fileID: 0}
-    tint: {r: 1.1, g: 1.15, b: 1.3, a: 1}
-    patchAmount: -1
-    props: []
+    baseTile: {fileID: 2800000, guid: b5ee17888138a4a409a010fb546c1bd5, type: 3}
+    patchTile: {fileID: 2800000, guid: 3e1a2309b648741288ece37d6e5f7e26, type: 3}
+    roadTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs:
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1138120055121804292, guid: ef085d20f8ed76a4fa589d2bde4ae8b2, type: 3}
+      - {fileID: 2767881006268153731, guid: 2352ef0005117a0429dc19e9c9064e26, type: 3}
+      - {fileID: 7074842730685469867, guid: 98d834d860b4f3248a17c074d820192a, type: 3}
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 1.5
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
   - biome: 2
-    baseTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
-    patchTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
-    roadTile: {fileID: 0}
-    tint: {r: 1.15, g: 1, b: 0.7, a: 1}
-    patchAmount: -1
-    props: []
+    baseTile: {fileID: 2800000, guid: 2266e0d8ac35c4d5180a7e273cb49340, type: 3}
+    patchTile: {fileID: 2800000, guid: 31daa0698c51747ee9dbdb8683819781, type: 3}
+    roadTile: {fileID: 2800000, guid: b310a11275d904eb48f7403e72282822, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs: []
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 0.5
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
   - biome: 3
-    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
-    patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
-    roadTile: {fileID: 0}
-    tint: {r: 0.7, g: 0.35, b: 0.3, a: 1}
-    patchAmount: -1
-    props: []
+    baseTile: {fileID: 2800000, guid: aafec8ed65c3543538272e73106df20e, type: 3}
+    patchTile: {fileID: 2800000, guid: 76e9b7ec4684c4ad498fc664d811214d, type: 3}
+    roadTile: {fileID: 2800000, guid: 945fd2a671dc54cd09d08b7bf2e2c617, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.5
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs: []
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 4
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
   - biome: 4
-    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
-    patchTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
-    roadTile: {fileID: 0}
-    tint: {r: 0.72, g: 0.55, b: 0.95, a: 1}
-    patchAmount: -1
-    props: []
+    baseTile: {fileID: 2800000, guid: fb3d788442b7141ec98a0be0b60a9763, type: 3}
+    patchTile: {fileID: 2800000, guid: 555801833b8374aeb951ff3381eada59, type: 3}
+    roadTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs:
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 1.5
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
   - biome: 6
     baseTile: {fileID: 2800000, guid: 8559430c1feb14211a45564d5f444fa5, type: 3}
     patchTile: {fileID: 2800000, guid: ba20e6bdbbf8a4c75b73395e71183997, type: 3}
@@ -66,7 +209,287 @@ MonoBehaviour:
       - {fileID: 7376482858957275655, guid: da9a446fef357b34da1b1a04e48e96f9, type: 3}
       - {fileID: 500024648983283114, guid: 7d1d9db1da996f3429d4da11d98b9d8c, type: 3}
       - {fileID: 7304909446943308764, guid: 6fd8244c341b6e84bb18feb02704687a, type: 3}
+      countMultiplier: 2
     - category: 10
       prefabs:
       - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
       - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 5
+      prefabs:
+      - {fileID: 3732848725574461329, guid: 11762379c77749e409f03787aa8292cd, type: 3}
+      - {fileID: 94755523052854094, guid: d0f84ad5b0cd40e43a7d8c683ef284e7, type: 3}
+      - {fileID: 488550492220688811, guid: df213e05cb99cf742ba0747e559a8171, type: 3}
+      - {fileID: 7822678953641189595, guid: 6f93198897c87f841815509b3add360d, type: 3}
+      - {fileID: 4630890458750868041, guid: 7ca041a7b86c1c049a27a49f4f0ebc25, type: 3}
+      countMultiplier: 0.2
+  - biome: 7
+    baseTile: {fileID: 2800000, guid: 74b2950c1af9b4f5885beb44fd184443, type: 3}
+    patchTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    roadTile: {fileID: 2800000, guid: 7fac21ad41db4206ae513db8236ce64f, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1138120055121804292, guid: ef085d20f8ed76a4fa589d2bde4ae8b2, type: 3}
+      - {fileID: 2767881006268153731, guid: 2352ef0005117a0429dc19e9c9064e26, type: 3}
+      - {fileID: 7074842730685469867, guid: 98d834d860b4f3248a17c074d820192a, type: 3}
+      - {fileID: 2977113885076981213, guid: 5c235160d717e5e4ca6de9538e5708d2, type: 3}
+      - {fileID: 5537864404432032848, guid: 8de34e50acd2a764e9f5bc7d51eeaeaa, type: 3}
+      - {fileID: 982608281792230194, guid: c6cbbb0822c58e549be57561b55d0b33, type: 3}
+      countMultiplier: 0.3
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 3
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs:
+      - {fileID: 3732848725574461329, guid: 11762379c77749e409f03787aa8292cd, type: 3}
+      - {fileID: 94755523052854094, guid: d0f84ad5b0cd40e43a7d8c683ef284e7, type: 3}
+      - {fileID: 488550492220688811, guid: df213e05cb99cf742ba0747e559a8171, type: 3}
+      - {fileID: 7822678953641189595, guid: 6f93198897c87f841815509b3add360d, type: 3}
+      countMultiplier: 0.25
+  - biome: 8
+    baseTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
+    patchTile: {fileID: 2800000, guid: b5ee17888138a4a409a010fb546c1bd5, type: 3}
+    roadTile: {fileID: 2800000, guid: 3e1a2309b648741288ece37d6e5f7e26, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs:
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 1
+      prefabs: []
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 5
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
+  - biome: 9
+    baseTile: {fileID: 2800000, guid: 08c8efa2a64b1478aad2841493b740ed, type: 3}
+    patchTile: {fileID: 2800000, guid: 31daa0698c51747ee9dbdb8683819781, type: 3}
+    roadTile: {fileID: 2800000, guid: 7fac21ad41db4206ae513db8236ce64f, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs: []
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 1
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs:
+      - {fileID: 4630890458750868041, guid: 7ca041a7b86c1c049a27a49f4f0ebc25, type: 3}
+      countMultiplier: 0.3
+  - biome: 10
+    baseTile: {fileID: 2800000, guid: 0c1fc5d1945184206a3f5c407e5f093b, type: 3}
+    patchTile: {fileID: 2800000, guid: 627ce0ab7d9e0468d909f1843cccba68, type: 3}
+    roadTile: {fileID: 2800000, guid: 11f0e27345b04430085f5b09cc9cb4b8, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs: []
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 3
+    - category: 6
+      prefabs: []
+      countMultiplier: 1
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
+  - biome: 11
+    baseTile: {fileID: 2800000, guid: 9b5587d4e4b724704ae40a6126ad1e36, type: 3}
+    patchTile: {fileID: 2800000, guid: 8559430c1feb14211a45564d5f444fa5, type: 3}
+    roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1310099816247465872, guid: a56c4cf086bbbeb48bf8dec3add646e2, type: 3}
+      - {fileID: 7514679905914095409, guid: 005660e83b979394688d221505a3b7e9, type: 3}
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 0.8
+    - category: 3
+      prefabs: []
+      countMultiplier: 1
+    - category: 6
+      prefabs:
+      - {fileID: 4084776280816671368, guid: fa5d5f8a6a5bba3478ac9e9d0f43f46e, type: 3}
+      - {fileID: 7309047408831455473, guid: b8b371c5f45e74f4f802f270bf6d0dcc, type: 3}
+      - {fileID: 5428224987719116340, guid: 4d753cacc5b287b45b2c666df2146aa9, type: 3}
+      - {fileID: 9095531201573621009, guid: 7117e6eb23913e04ab3305df7f899889, type: 3}
+      - {fileID: 7311960046115780579, guid: b7bd10c94dbb96741b581cca9f39609e, type: 3}
+      - {fileID: 6739030173217430718, guid: 638402e2c17e33b419b4ad506a1851cc, type: 3}
+      - {fileID: 7376482858957275655, guid: da9a446fef357b34da1b1a04e48e96f9, type: 3}
+      - {fileID: 500024648983283114, guid: 7d1d9db1da996f3429d4da11d98b9d8c, type: 3}
+      countMultiplier: 1.5
+    - category: 5
+      prefabs:
+      - {fileID: 3732848725574461329, guid: 11762379c77749e409f03787aa8292cd, type: 3}
+      - {fileID: 94755523052854094, guid: d0f84ad5b0cd40e43a7d8c683ef284e7, type: 3}
+      - {fileID: 488550492220688811, guid: df213e05cb99cf742ba0747e559a8171, type: 3}
+      - {fileID: 7822678953641189595, guid: 6f93198897c87f841815509b3add360d, type: 3}
+      countMultiplier: 0.6
+  - biome: 12
+    baseTile: {fileID: 2800000, guid: 6db95e8e4a41e4571816c2ca6f52aa21, type: 3}
+    patchTile: {fileID: 2800000, guid: 01cf73c3f5df44830b054d86571b8e4a, type: 3}
+    roadTile: {fileID: 2800000, guid: 35e76e19afe58134998dafecdb938fec, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 2977113885076981213, guid: 5c235160d717e5e4ca6de9538e5708d2, type: 3}
+      - {fileID: 5537864404432032848, guid: 8de34e50acd2a764e9f5bc7d51eeaeaa, type: 3}
+      - {fileID: 982608281792230194, guid: c6cbbb0822c58e549be57561b55d0b33, type: 3}
+      countMultiplier: 0.5
+    - category: 3
+      prefabs: []
+      countMultiplier: 1
+    - category: 6
+      prefabs:
+      - {fileID: 6155537551963965597, guid: 36338a7aa6d6e8e43a23703548c22e6f, type: 3}
+      - {fileID: 790769484399492391, guid: 57b338541108ff147ad06b37e9aa5f81, type: 3}
+      - {fileID: 2005288998442661478, guid: 049605ddb0cc8d441ae1051cf690aa41, type: 3}
+      - {fileID: 5371102101128460778, guid: 3d61289d7434f174ba79ddb9f7dd0d62, type: 3}
+      - {fileID: 6881928116673910377, guid: 93ac5977e47c16241be650a83010ec37, type: 3}
+      - {fileID: 4861530910305468601, guid: 0ef7197cca414c649af707a96a7fc24a, type: 3}
+      - {fileID: 5169985116725478616, guid: 4af723ab9f5dd4b419c68d8df8e311df, type: 3}
+      - {fileID: 2889304774302703723, guid: bb5b7b88a07d76b41bbedcd2a3832d63, type: 3}
+      - {fileID: 6959922714596949426, guid: 60b98af96b3d29941bb88313d48aceb3, type: 3}
+      - {fileID: 2007118893089531924, guid: e4421c24eed96634780e04cb94394012, type: 3}
+      countMultiplier: 4
+    - category: 5
+      prefabs:
+      - {fileID: 3732848725574461329, guid: 11762379c77749e409f03787aa8292cd, type: 3}
+      - {fileID: 94755523052854094, guid: d0f84ad5b0cd40e43a7d8c683ef284e7, type: 3}
+      - {fileID: 488550492220688811, guid: df213e05cb99cf742ba0747e559a8171, type: 3}
+      - {fileID: 7822678953641189595, guid: 6f93198897c87f841815509b3add360d, type: 3}
+      countMultiplier: 0.7
+  - biome: 13
+    baseTile: {fileID: 2800000, guid: 8f420d47653884df8980937e2b68616f, type: 3}
+    patchTile: {fileID: 2800000, guid: 99049c021e926470092263671aeecbc4, type: 3}
+    roadTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs:
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1067929329867819687, guid: 5bc5216130a45c24e80fe95dbcc7aede, type: 3}
+      - {fileID: 8837585043074074159, guid: ead0476f71ab4a546b9794fe9517990f, type: 3}
+      countMultiplier: 1
+    - category: 3
+      prefabs:
+      - {fileID: 5594097295069320318, guid: 7df0b85ab3c11a94e8c938f76942c423, type: 3}
+      - {fileID: 604975298514726390, guid: 899b270979c731249b3dbd88e9e0631d, type: 3}
+      - {fileID: 3664779541008712253, guid: 842a2cea52c1df14f9c27852e6381721, type: 3}
+      - {fileID: 2217925579724321943, guid: 08c9d02a06a09ce4db8839486152d9f0, type: 3}
+      - {fileID: 6642300450240733895, guid: ad5719ed31676534f926db0cfe725700, type: 3}
+      - {fileID: 4413884148422271285, guid: 2fc5a0cb54512d048b6bb9e3483cfed6, type: 3}
+      countMultiplier: 1
+    - category: 6
+      prefabs:
+      - {fileID: 9095531201573621009, guid: 7117e6eb23913e04ab3305df7f899889, type: 3}
+      - {fileID: 7311960046115780579, guid: b7bd10c94dbb96741b581cca9f39609e, type: 3}
+      - {fileID: 6739030173217430718, guid: 638402e2c17e33b419b4ad506a1851cc, type: 3}
+      - {fileID: 7376482858957275655, guid: da9a446fef357b34da1b1a04e48e96f9, type: 3}
+      - {fileID: 500024648983283114, guid: 7d1d9db1da996f3429d4da11d98b9d8c, type: 3}
+      countMultiplier: 2
+    - category: 5
+      prefabs: []
+      countMultiplier: 1
+  - biome: 14
+    baseTile: {fileID: 2800000, guid: 0fa1ca27025374afd9bebedf3d1f66d1, type: 3}
+    patchTile: {fileID: 2800000, guid: 9d5df096d76774f329f6b691f69ec264, type: 3}
+    roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    patchAmount: 0.9
+    props:
+    - category: 10
+      prefabs: []
+      countMultiplier: 1
+    - category: 1
+      prefabs:
+      - {fileID: 1310099816247465872, guid: a56c4cf086bbbeb48bf8dec3add646e2, type: 3}
+      - {fileID: 7514679905914095409, guid: 005660e83b979394688d221505a3b7e9, type: 3}
+      countMultiplier: 0.8
+    - category: 3
+      prefabs: []
+      countMultiplier: 1
+    - category: 6
+      prefabs:
+      - {fileID: 4084776280816671368, guid: fa5d5f8a6a5bba3478ac9e9d0f43f46e, type: 3}
+      - {fileID: 7309047408831455473, guid: b8b371c5f45e74f4f802f270bf6d0dcc, type: 3}
+      - {fileID: 5428224987719116340, guid: 4d753cacc5b287b45b2c666df2146aa9, type: 3}
+      - {fileID: 9095531201573621009, guid: 7117e6eb23913e04ab3305df7f899889, type: 3}
+      - {fileID: 7311960046115780579, guid: b7bd10c94dbb96741b581cca9f39609e, type: 3}
+      - {fileID: 6739030173217430718, guid: 638402e2c17e33b419b4ad506a1851cc, type: 3}
+      - {fileID: 7376482858957275655, guid: da9a446fef357b34da1b1a04e48e96f9, type: 3}
+      - {fileID: 500024648983283114, guid: 7d1d9db1da996f3429d4da11d98b9d8c, type: 3}
+      countMultiplier: 1.5
+    - category: 5
+      prefabs: []
+      countMultiplier: 1

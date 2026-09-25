@@ -8,7 +8,7 @@ tags:
 
 # Weapon Crafting & Economy (V3)
 
-How players go from a random drop to a deliberate build. Companion to **Weapon Roster — 12 Identities** and **Active Skill System — V3**. Design converged 2026-07-28; numbers below are illustrative and still to be tuned.
+How players go from a random drop to a deliberate build. Companion to **Weapon Roster — 14 Identities** and **Active Skill System — V3**. Design converged 2026-07-28; numbers below are illustrative and still to be tuned.
 
 > **Superseded in intent by [V4](../gameplay-system-v4/README.md)**, which removes rolled kits and rarity and makes gear crafted from materials. This page still records the rarity lift the code runs today.
 >
@@ -173,7 +173,7 @@ The failure case: a great base with a great ult, Potential spent, but the suppor
 ## Related
 
 - [Crafting & Recycling](../crafting-and-recycling.md) — the player-facing half of this same design.
-- [Weapon Roster — 12 Identities](weapon-roster-12-identities.md) — the pools an Add or Reforge draws from.
+- [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the pools an Add or Reforge draws from.
 - [Active Skill System — V3](README.md) — why the ult is the build anchor and the Ring is the power.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the commitment layer crafting must never shortcut.
 - [Unified Unit Stats](unified-unit-stats.md) — where drops come from: a mob drops what it wears.

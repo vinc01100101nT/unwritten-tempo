@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23; not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23, the world's fourteen biomes in the map generator and the weather a biome always has BUILT 2026-09-25; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
-last-updated: 2026-09-23
+last-updated: 2026-09-25
 tags:
   - systems-combat-design
 ---
@@ -151,7 +151,7 @@ whole. Decided 2026-09-21.
 ## 5. Weapon Mastery
 
 **One mastery per weapon type** (Sword Mastery, Bow Mastery, …). It is the character's skill with that kind of
-weapon. It is also the "twelve mastery tracks" the [lore](../../3-world/story-setting-canon.md) already names as
+weapon. It is also the "fourteen mastery tracks" the [lore](../../3-world/story-setting-canon.md) already names as
 the endgame.
 
 - **It is permanent.** Mastery a character has earned is never lost.
@@ -369,13 +369,13 @@ Ordered so a skill always comes after the skill it depends on, and so every grad
 | 65 | Encore | Blade Dance |
 
 By grade: a Raw sword (cap 10) reaches six skills; F adds five; E adds four and the first ultimate; D three;
-C the second ultimate; B the third; only an A-grade sword reaches Encore. The other eleven weapons get their
+C the second ultimate; B the third; only an A-grade sword reaches Encore. The other thirteen weapons get their
 tables when their pools are authored, by the same rule.
 
 ## Still open
 
 - **Card sockets** — deferred.
-- **Unlock tables for the other eleven weapons** — written when each pool is authored. Only the Sword's 22 skills
+- **Unlock tables for the other thirteen weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
   until their pools exist.
 - **Which townspeople are stations** — no smith, loom or tannery is authored in the town scene yet; `/station`
@@ -408,10 +408,12 @@ tables when their pools are authored, by the same rule.
 - [Elements, Element Levels & Converters](elements-and-converters.md) — creatures attack and defend with an element at level 1–4 on Ragnarok's chart, negative values heal, and eight level-1 converters lend players an element for 5:00.
 - [Armour Roster, Materials & Words](armour-roster.md) — five armour slots in three materials; the material decides what a fold buys, and every armour piece rolls one of its slot's words.
 - [Timed Effects Survive Logout](timed-effects-survive-logout.md) — only death ends a timed effect; logging out and changing server pause it with the time it had left.
+- [Biomes — Ground Tiles and Props](../../3-world/biomes.md) — the fourteen biomes every map is generated in (each its own ground tiles, props and prop counts), and the weather a biome always has: Swamp's standing water, Snow's snow blanket, Mist's fog.
+- [Biome References](../../3-world/biome-references.md) — a real photo of each biome beside its test map, with a match rate and what is still missing.
 
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the design as it runs today.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the ring's draft and soft cap, which
   V4 keeps and moves onto the character.
-- [Weapon Roster — 12 Identities](../active-skill-system-v3/weapon-roster-12-identities.md) — the twelve weapon
+- [Weapon Roster — 14 Identities](../active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen weapon
   types masteries are tracked by.
 - [Story & Setting (Canon)](../../3-world/story-setting-canon.md) — mastery as the endgame of naming an Unwritten.

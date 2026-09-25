@@ -23,5 +23,25 @@ bake with a dialog, never a silent fallback.
   Scatter over the whole map (were an EdgeRing), grass uses the new `PlacementRule.Clumps` (bunches of touching
   2.5 m cells; 50 bunches ≤24 cells, 18 tries/cell, spacing 0.2, scale 1.3 → ~75% cover, ~11 plants/cell, ~5k
   plants on a 60 m map — frame cost NOT measured).
-- Test maps `test_forest_a`/`test_forest_b` (in the build list); `test_forest_a` has field_11's spawn row copied.
+- **All 14 biomes built 2026-09-25:** Highland, Peaks, Steppe, Coast, Swamp, Sacred, Haunted, Mist appended after
+  Forest; Snow/Desert/Volcanic/Corrupted moved onto their own tiles, tint white. Every non-Grassland/Forest row lists
+  all five field-template categories (Landmarks, Trees, Rocks, Flowers, Grass), empty = places nothing. Grassland +
+  Forest proven identical before/after (seed 4242, scene lines equal once random fileIDs are masked).
+- **Test maps:** a 13-map chain `test_forest_a` ↔ `test_highland` … ↔ `test_corrupted` (test_forest_b deleted 2026-09-25 at the user's word), 60 m each,
+  W/E doors (`Portal_w{k}_to_*`), each with a copy of test_forest_a's WorldSpawns row. Not walked in game yet.
+- **Building without touching the user's editor:** `RecipeGenerator.Generate(r, exits, mapPicksRoad, leaveOpen:false)`
+  saves and CLOSES the new map and restores the active scene (refuses if that map is open). Wire doors by opening
+  additively + SetActiveScene first (else MakePortal's objects land in the user's scene), save, close. `unity cmd eval`
+  answers "timed out after 5000ms" on long builds but the build keeps running — write progress to a file and poll.
+- **Every row patchAmount 0.9 except Volcanic 0.5** (thin lava glow) (user, 2026-09-25: the recipe's own 0.18 painted "one cell in a zone"). Each
+  `BiomeProps` entry has `countMultiplier` (× the recipe's count for that category; 1 = as-is; applies only when the
+  pool came from the biome's list). Values + reasons live in docs/3-world/biomes.md "How many of each". Snow now uses
+  frozen_dirt patches + gravel_scree road (ice at 0.9 read as a frozen lake); Steppe grass = Rye only; Haunted and
+  Corrupted Trees = the two stumps. Forest re-proven identical after the multiplier code.
+- **Weather a biome always has (runtime, 2026-09-25):** `Resources/BiomeWeather.asset` (class `BiomeWeather`) — per
+  biome `alwaysPuddles` / `alwaysSnowCover` 0..1; Swamp puddles 1, Snow blanket 1, Mist fog 0.6 (`alwaysFog`, read by FogOverlay). `WetGround`/`SnowGround` show
+  `max(weather, held)`; held puddles draw on EVERY tier (rain puddles stay High-only). The map's biome comes from a
+  `MapBiome` marker the generator stamps into each map (`MapBiome.Current`); old maps have none → nothing held.
+  SnowGround snaps its blanket on a map change. The editor-only BiomeTable can't hold these (runtime can't read it).
+- **Guard:** `tools/check-biome-table.py` (+ `prove-biome-table-check.py`), in the pre-commit check.
 - Design + per-biome tile/prop tables: `docs/3-world/biomes.md`. See [[recipe-generator]].

@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the twelve is the last surviving trace of one of the **Twelve Unwritten**, and how the weapon fights *is* how that person fought. None of them was ever named — only described by the deed witnesses remembered. They fall into three families:"
+      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is the last surviving trace of one of the **Fourteen Unwritten**, and how the weapon fights *is* how that person fought. None of them was ever named — only described by the deed witnesses remembered. They fall into four families:"
     },
     {
       "type": "heading",
@@ -37,19 +37,9 @@
       ],
       "rows": [
         [
-          "**Sword**",
-          "The One Who Answered",
-          "Win duels with precise single-target bursts and timed defense."
-        ],
-        [
           "**Greatsword**",
           "The One Who Cleared the Road",
           "Delete whole groups with huge cleaves."
-        ],
-        [
-          "**Axe**",
-          "The One Who Never Stopped",
-          "Snowball through relentless aggression."
         ],
         [
           "**Warhammer**",
@@ -90,11 +80,6 @@
           "**Dagger**",
           "The Late Arrival",
           "Eliminate weakened targets, then vanish."
-        ],
-        [
-          "**Firearm**",
-          "The One Who Fired Once",
-          "Land one devastating shot, then reload."
         ]
       ]
     },
@@ -120,11 +105,58 @@
           "**Wand**",
           "The One Who Brought Them Back",
           "Keep your allies alive."
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Hybrid — two families in one"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Weapon",
+        "Families",
+        "Unwritten",
+        "What it's for"
+      ],
+      "rows": [
+        [
+          "**Sword**",
+          "Might + Finesse",
+          "The One Who Answered",
+          "Win duels with precise single-target bursts and timed defense."
+        ],
+        [
+          "**Axe**",
+          "Might + Finesse",
+          "The One Who Never Stopped",
+          "Snowball through relentless aggression."
+        ],
+        [
+          "**Kick**",
+          "Might + Finesse",
+          "*not yet told*",
+          "*not yet in the game*"
+        ],
+        [
+          "**Fist**",
+          "Might + Arcane",
+          "*not yet told*",
+          "*not yet in the game*"
         ],
         [
           "**Scythe**",
+          "Might + Arcane",
           "The One Who Waited",
           "Slowly overwhelm enemies with stacking curses."
+        ],
+        [
+          "**Firearm**",
+          "Finesse + Arcane",
+          "The One Who Fired Once",
+          "Land one devastating shot, then reload. The only weapon whose magic can crit."
         ]
       ]
     },
@@ -307,7 +339,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the 12-weapon roster and each weapon's one-line identity are locked in design. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"
+        "*Status: the 14-weapon roster is locked in design. Fist and Kick are not in the game yet, and neither is the Firearm's magic crit; the other twelve weapons' one-line identities are locked. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"
       ]
     }
   ]

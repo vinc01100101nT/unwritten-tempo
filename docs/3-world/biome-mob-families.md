@@ -52,8 +52,8 @@ looks get swapped freely later. Don't let art block the data work.
 
 ## Decision: reuse the existing `Biome` enum
 
-Creatures are tagged with the **same** `Biome` enum that ground already uses (`Grassland, Snow, Desert, Volcanic,
-Corrupted`). **`Biome.None` is the biome-agnostic common**, eligible in every biome's mix. No new enum.
+Creatures are tagged with the **same** `Biome` enum that ground already uses — fourteen biomes, of which only
+`Grassland, Snow, Desert, Volcanic, Corrupted` have creatures today. **`Biome.None` is the biome-agnostic common**, eligible in every biome's mix. No new enum.
 
 ## How a spawn area picks
 
@@ -72,7 +72,7 @@ the data. Re-tag freely.
 - **66 normals** from the monster folders: 12 in each of the five biomes, and 6 biome-agnostic commons.
 - **18 elites** from the boss folders, 3 or 4 per biome. **DragonBlue and DragonGreen are not on the roster**: their
   art is separate body parts with no animation picture.
-- **12 shadows**, one per weapon type, biome-agnostic.
+- **12 shadows**, one per weapon type except Fist and Kick (added 2026-09-25, no shadow made yet), biome-agnostic.
 - Levels: normals spread evenly over **1 to 99**, elites over **6 to 99**, shadows **105 to 160**. Because the normals
   were spread in the order they stood before, each biome still holds one stretch of the ladder: the commons 1–9,
   Grassland 10–27, Snow 28–45, Desert 46–63, Volcanic 64–81, Corrupted 82–99.

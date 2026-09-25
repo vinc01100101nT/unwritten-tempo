@@ -32,7 +32,7 @@ The folders match the sections below, so the file tree and this index say the sa
 
 - [Active Skill System — V3](2-systems/active-skill-system-v3/README.md) — channels + role-locked scaling (design source of truth). Folder:
   - [Implementation Notes](2-systems/active-skill-system-v3/implementation-notes.md) — code-facing companion.
-  - [Weapon Roster — 12 Identities](2-systems/active-skill-system-v3/weapon-roster-12-identities.md)
+  - [Weapon Roster — 14 Identities](2-systems/active-skill-system-v3/weapon-roster-12-identities.md)
   - [Weapon Crafting & Economy](2-systems/active-skill-system-v3/weapon-crafting-economy.md)
   - [Skill Numbers & Balance Baseline](2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md)
   - [State System — Buffs, Debuffs & Combo Marks](2-systems/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md)
@@ -61,8 +61,9 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Mob Roster — Normal, Elite, Shadow](3-world/mob-roster.md) — the three kinds of creature: levels, skill slots, gear, summoning, respawn and drops (design, not built).
 - [Biome Mob Families — Spawning by Biome and Level](3-world/biome-mob-families.md) — biome × level mob data + generator wiring.
 - [Biomes — Ground Tiles and Props](3-world/biomes.md) — every biome's main ground, patch and road tiles, the props that fit it, and the props still to make; the all-biome map generator plan.
-- [The World Map — Twelve Homelands](3-world/world-map.md) — proposal: Lastline at the centre, twelve homelands round it like a clock, one per shadow, each with its own language, iconic shadow site and castle.
-- [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Twelve Unwritten (one per weapon).
+- [Biome References — Real Places Beside Our Maps](3-world/biome-references.md) — one real photo per biome beside pictures of its test map, to judge what looks right and what is missing.
+- [The World Map — Twelve Homelands](3-world/world-map.md) — proposal: Lastline in the middle of the main continent, twelve homelands spread over several landmasses and islands (a draft, being rethought for fourteen shadows), each with an iconic shadow site and a castle; no real-country culture.
+- [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Fourteen Unwritten (one per weapon).
 
 ## Art & animation pipeline
 

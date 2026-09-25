@@ -165,8 +165,41 @@ EditorBuildSettings:
     path: Assets/Scenes/test_forest_a.unity
     guid: 5579be25ba66e4df8a9722d857981694
   - enabled: 1
-    path: Assets/Scenes/test_forest_b.unity
-    guid: b928bbaac61f84282a399e1b8722c01c
+    path: Assets/Scenes/test_highland.unity
+    guid: a77c7a32d6c7b4ad4933ab12e4c6951f
+  - enabled: 1
+    path: Assets/Scenes/test_peaks.unity
+    guid: 27d9484bd5cce4537b6bbea463a57e5b
+  - enabled: 1
+    path: Assets/Scenes/test_snow.unity
+    guid: cfa41b6a8827f4c83ae2ba6f9e3a80fa
+  - enabled: 1
+    path: Assets/Scenes/test_steppe.unity
+    guid: cf6b57b55acd44addae963edd4efd412
+  - enabled: 1
+    path: Assets/Scenes/test_coast.unity
+    guid: 4ea5a4e5fe6ad41f6aea586e07fb4733
+  - enabled: 1
+    path: Assets/Scenes/test_desert.unity
+    guid: 068d58cb32f594a889bb084c5d511173
+  - enabled: 1
+    path: Assets/Scenes/test_volcanic.unity
+    guid: a88cd52b717ad45299fd4c208f812962
+  - enabled: 1
+    path: Assets/Scenes/test_swamp.unity
+    guid: 9112a5590c3894c8fa186a6568ca6145
+  - enabled: 1
+    path: Assets/Scenes/test_sacred.unity
+    guid: adffc60240c4e425cb0f63c147390141
+  - enabled: 1
+    path: Assets/Scenes/test_haunted.unity
+    guid: 9b64cd67bc5a6425089aebdccd51b65b
+  - enabled: 1
+    path: Assets/Scenes/test_mist.unity
+    guid: 0c69da0d0906f48539604eb965b477d2
+  - enabled: 1
+    path: Assets/Scenes/test_corrupted.unity
+    guid: 49b8ac04b0ff3476584c9cab977c6d7a
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 7f75ef44d39a2644da8928259a43b221, type: 2}
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

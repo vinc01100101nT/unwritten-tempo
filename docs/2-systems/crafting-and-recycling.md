@@ -29,5 +29,5 @@ how far that practice can go.
 ## Related
 
 - [Gameplay System — V4](gameplay-system-v4/README.md) — the forging loop, the grades, Ink, Salt and mastery.
-- [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — what each weapon is for.
+- [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — what each weapon is for.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the growth the ring owns.

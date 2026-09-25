@@ -252,7 +252,7 @@ not behaving** — a wrong formula compiles perfectly, so neither replaces a pla
   value storage is one reused magnitude field. Turning that into a real catalog would migrate every existing skill
   asset — deferred deliberately.
 - **Ring behavioral voices** and **Cards** are deferred by design (v-next / v3-content) — not in code.
-- **Weapon skill-pools + crafting/economy** are DESIGNED (see *Weapon Roster — 12 Identities* and *Weapon Crafting &
+- **Weapon skill-pools + crafting/economy** are DESIGNED (see *Weapon Roster — 14 Identities* and *Weapon Crafting &
   Economy*) but **not in code**; today the granted skill list is hand-authored per weapon.
 - **`StateId.Knockback` and `StateId.Pull` are declared but never written** — they are instant shoves with no window to
   hold, so they are excluded from the composer's pile dropdown.

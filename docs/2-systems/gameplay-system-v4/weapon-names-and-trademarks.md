@@ -25,7 +25,7 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
   whole crafting ladder climbing that one weapon.
 - **It belongs to one weapon type.** *Hadori* is only ever a sword; *Greenheart* is only ever a bow. So the name
   already says what the thing is, and the item's type does not need repeating in the title.
-- **It names a skill, not a person.** The canon reserves real names for the Twelve — naming an Unwritten is the
+- **It names a skill, not a person.** The canon reserves real names for the Fourteen — naming an Unwritten is the
   mastery endgame. A weapon name is a smith's word for a blade that does one thing especially well.
 
 ## 2. What "empowers" means

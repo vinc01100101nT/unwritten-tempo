@@ -66,6 +66,7 @@ check "every skill's saved data holds together"    py tools/check-skill-data.py
 check "every asset reference points at a file"     py tools/check-asset-wiring.py
 check "per-frame code follows PERFORMANCE.md"      py tools/check-perf-hotpaths.py
 check "every asset follows ASSETS.md"             py tools/check-asset-rules.py
+check "every biome's look is whole"               py tools/check-biome-table.py
 
 if in_commit '^tools/(check-game-math\.sh|prove-game-math-check\.py|game-math-tests/)'; then
   check "the numbers check still catches a change"   py tools/prove-game-math-check.py
@@ -81,6 +82,9 @@ if in_commit '^tools/(check-asset-rules|prove-asset-rules-check)\.py$'; then
 fi
 if in_commit '^tools/(prove-write-scope-gate\.py|hook-analytics/(write_scope_gate|tool_writes)\.py)$'; then
   check "the agent write fence still holds"          py tools/prove-write-scope-gate.py
+fi
+if in_commit '^tools/(check-biome-table|prove-biome-table-check)\.py$'; then
+  check "the biome check still catches faults"      py tools/prove-biome-table-check.py
 fi
 if in_commit '^tools/hook-analytics/(guard_check|prove-guard-check)\.py$'; then
   check "the guard check still sees a dead guard"    py tools/hook-analytics/prove-guard-check.py

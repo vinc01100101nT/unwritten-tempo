@@ -64,6 +64,7 @@ public class SnowGround : MonoBehaviour
     Mesh mesh;
     bool depthRequested;
     float accum;   // current ramped blanket amount (0..1); lerps toward the live snow intensity
+    MapBiome lastMap;   // the map the blanket was last ramped on, so a map change snaps to the new map's blanket
 
     // Footprint buffer, filled from the shared FootstepTracker each frame: (worldX, worldZ, age01, sizeScale);
     // dead slots have age >= 1. Positions/gait are the tracker's job — we just age them by OUR heal time.
@@ -158,8 +159,11 @@ public class SnowGround : MonoBehaviour
     {
         if (mat == null) return;
 
-        // Ramp the blanket toward the live snowfall: builds up when it's snowing, melts back when it stops.
-        float target = enabled ? SnowAmount : 0f;
+        // Ramp the blanket toward the live snowfall: builds up when it's snowing, melts back when it stops. A biome
+        // that always holds snow keeps it there whatever the sky does.
+        float target = enabled ? BiomeWeather.Hold(SnowAmount, BiomeWeather.AlwaysSnowCoverHere) : 0f;
+        // Arriving on another map starts at that map's blanket, instead of the last map's snow melting or building.
+        if (MapBiome.Current != lastMap) { lastMap = MapBiome.Current; accum = target; }
         accum = Mathf.MoveTowards(accum, target, Time.deltaTime / Mathf.Max(0.1f, accumTime));
 
         bool show = enabled && accum > 0.001f;

@@ -51,6 +51,15 @@ public class BiomeRow
         prefabs = null;
         return false;
     }
+
+    /// <summary>How many of its own <paramref name="category"/> props this biome places, as a multiple of the map
+    /// recipe's count; 1 when the biome leaves that category to the pack list.</summary>
+    public float CountMultiplier(PropCategory category)
+    {
+        foreach (var p in props)
+            if (p != null && p.category == category) return p.countMultiplier;
+        return 1f;
+    }
 }
 
 [System.Serializable]
@@ -58,4 +67,6 @@ public class BiomeProps
 {
     public PropCategory category;
     public List<GameObject> prefabs = new List<GameObject>();
+    [Tooltip("How many of these props the biome places, as a multiple of the map recipe's own count for this category: 1 = as the recipe says, 0.5 = half, 3 = three times.")]
+    [Min(0f)] public float countMultiplier = 1f;
 }

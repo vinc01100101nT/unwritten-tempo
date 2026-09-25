@@ -93,9 +93,11 @@ public static class RecipeGenerator
     /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's warp doorway
     /// positions in world-XZ, passed by the World Creator) routes the paths to terminate at each doorway — so warp
     /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.
-    /// <paramref name="mapPicksRoad"/> true = the World Creator set this map's road, so it wins over the biome's.</summary>
+    /// <paramref name="mapPicksRoad"/> true = the World Creator set this map's road, so it wins over the biome's.
+    /// <paramref name="leaveOpen"/> false = save and close the new map, leaving the scenes that were open (and the
+    /// active one) exactly as they were — for builds run without the user at the controls.</summary>
     public static (bool ok, string path, int props) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ,
-                                                             bool mapPicksRoad = false)
+                                                             bool mapPicksRoad = false, bool leaveOpen = true)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Generate Map", "Exit Play mode first, then re-run.", "OK"); return (false, null, 0); }
@@ -108,6 +110,8 @@ public static class RecipeGenerator
 
         string safe = Sanitize(string.IsNullOrWhiteSpace(r.mapName) ? "NewMap" : r.mapName);
         string path = $"{ScenesDir}/{safe}.unity";
+        if (!leaveOpen && SceneManager.GetSceneByPath(path).isLoaded)
+        { Debug.LogError($"[unwritten] '{safe}' is open in the editor; not rebuilding it behind the user's back."); return (false, null, 0); }
 
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
@@ -124,9 +128,14 @@ public static class RecipeGenerator
         _foliageWind = Shader.Find("Unwritten/FoliageWind");
         if (_foliageWind != null) EnsureAlwaysIncluded(_foliageWind);   // so foliage sway survives a player build
 
+        var wasActive = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
         RigBuilder25D.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
+        // The map's biome, stamped so the running game can tell which biome this map is (BiomeWeather reads it).
+        var biomeTag = new GameObject("MapBiome");
+        SceneManager.MoveGameObjectToScene(biomeTag, scene);
+        biomeTag.AddComponent<MapBiome>().biome = r.biome;
 
         Vector3 center = Vector3.zero;
         // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
@@ -180,7 +189,12 @@ public static class RecipeGenerator
         if (open.IsValid() && open.isLoaded && open != scene) EditorSceneManager.CloseScene(open, true);
         EditorSceneManager.SaveScene(scene, path);
         WorldBuildUtil.RegisterInBuildSettings(path);
-        EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+        if (leaveOpen) EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+        else
+        {
+            EditorSceneManager.CloseScene(scene, true);
+            if (wasActive.IsValid() && wasActive.isLoaded) SceneManager.SetActiveScene(wasActive);
+        }
         AssetDatabase.SaveAssets();
 
         // ── SIDECAR: write the painter-editable map.json next to the scene (round-trip into the Map Painter) ──
@@ -522,9 +536,11 @@ public static class RecipeGenerator
 
         // Resolve the prefab pool: explicit picks win; then the biome's props for this category; else the pack list.
         var pool = new List<GameObject>();
+        float countMultiplier = 1f;   // the biome's "how many" for its own props; 1 for picks and the pack list
         if (g.prefabs != null) foreach (var p in g.prefabs) if (p != null) pool.Add(p);
         if (pool.Count == 0 && g.category != PropCategory.None && bio.TryGetProps(g.category, out var biomeProps))
         {
+            countMultiplier = bio.CountMultiplier(g.category);
             if (biomeProps != null) foreach (var p in biomeProps) if (p != null) pool.Add(p);
             if (pool.Count == 0)
             {
@@ -590,7 +606,7 @@ public static class RecipeGenerator
         {
             case PlacementRule.Scatter:
             {
-                int target = TargetCount(g, sizeX, sizeZ);
+                int target = TargetCount(g, sizeX, sizeZ, countMultiplier);
                 int attempts = 0, max = Mathf.Max(8, target * 15);
                 while (placed < target && attempts < max)
                 { attempts++; if (TryPlaceAt(RangeF(rng, minX, maxX), RangeF(rng, minZ, maxZ), true)) placed++; }
@@ -598,7 +614,7 @@ public static class RecipeGenerator
             }
             case PlacementRule.Center:
             {
-                int target = TargetCount(g, sizeX, sizeZ);
+                int target = TargetCount(g, sizeX, sizeZ, countMultiplier);
                 float radius = Mathf.Min(sizeX, sizeZ) * 0.25f;
                 int attempts = 0, max = Mathf.Max(8, target * 20);
                 while (placed < target && attempts < max)
@@ -617,7 +633,7 @@ public static class RecipeGenerator
                 float cellM = GroundBlendBuilder.GroundTexWorldSize;
                 int cols = Mathf.Max(1, Mathf.FloorToInt((maxX - minX) / cellM));
                 int rows = Mathf.Max(1, Mathf.FloorToInt((maxZ - minZ) / cellM));
-                int clumps = TargetCount(g, sizeX, sizeZ);
+                int clumps = TargetCount(g, sizeX, sizeZ, countMultiplier);
                 var cells = new HashSet<Vector2Int>();
                 var grown = new List<Vector2Int>();
                 for (int c = 0; c < clumps; c++)
@@ -645,7 +661,7 @@ public static class RecipeGenerator
             case PlacementRule.EdgeRing:
             {
                 float step = Mathf.Max(1f, g.minSpacing);
-                int cap = g.amountMode == AmountMode.Count ? g.count : int.MaxValue;
+                int cap = g.amountMode == AmountMode.Count ? TargetCount(g, sizeX, sizeZ, countMultiplier) : int.MaxValue;
                 for (float x = minX; x <= maxX && placed < cap; x += step)
                 { if (TryPlaceAt(x, maxZ, false)) placed++; if (placed < cap && TryPlaceAt(x, minZ, false)) placed++; }
                 for (float z = minZ + step; z <= maxZ - step && placed < cap; z += step)
@@ -657,7 +673,7 @@ public static class RecipeGenerator
                 // Houses line the MAIN winding route: walk it and offset a house to either side, perpendicular to
                 // the road's local direction so the two rows curve with it. No path → straight rows at center.z.
                 float step = Mathf.Max(1f, g.minSpacing);
-                int cap = g.amountMode == AmountMode.Count ? g.count : int.MaxValue;
+                int cap = g.amountMode == AmountMode.Count ? TargetCount(g, sizeX, sizeZ, countMultiplier) : int.MaxValue;
                 if (hasPath && mainRoute != null)
                 {
                     foreach (var (pos, dir) in PathRouting.Walk(mainRoute, step))
@@ -681,7 +697,7 @@ public static class RecipeGenerator
             {
                 // Carts/lamps hug the shoulder of EVERY route. No path → straight rows just off center.z.
                 float step = Mathf.Max(1f, g.minSpacing);
-                int cap = g.amountMode == AmountMode.Count ? g.count : int.MaxValue;
+                int cap = g.amountMode == AmountMode.Count ? TargetCount(g, sizeX, sizeZ, countMultiplier) : int.MaxValue;
                 float off = pathWidth * 0.5f + 1.5f;   // just outside the path's clearance band
                 if (hasPath)
                 {
@@ -712,7 +728,7 @@ public static class RecipeGenerator
                 // routed roads carve the streets and the houses left standing form blocks between them — a walled town.
                 // Set randomYaw=false in the recipe for aligned, orderly blocks; clearFromCenter keeps the plaza open.
                 float pitch = Mathf.Max(2f, g.minSpacing);
-                int cap = g.amountMode == AmountMode.Count ? g.count : int.MaxValue;
+                int cap = g.amountMode == AmountMode.Count ? TargetCount(g, sizeX, sizeZ, countMultiplier) : int.MaxValue;
                 for (float x = minX + pitch * 0.5f; x <= maxX && placed < cap; x += pitch)
                     for (float z = minZ + pitch * 0.5f; z <= maxZ && placed < cap; z += pitch)
                         if (TryPlaceAt(x, z, false)) placed++;
@@ -901,8 +917,8 @@ public static class RecipeGenerator
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────────────────────────────────
-    static int TargetCount(RecipePropGroup g, float sizeX, float sizeZ)
-        => g.amountMode == AmountMode.Count ? Mathf.Max(0, g.count) : Mathf.Max(0, Mathf.RoundToInt(sizeX * sizeZ * g.density));
+    static int TargetCount(RecipePropGroup g, float sizeX, float sizeZ, float countMultiplier)
+        => Mathf.Max(0, Mathf.RoundToInt((g.amountMode == AmountMode.Count ? g.count : sizeX * sizeZ * g.density) * countMultiplier));
 
     static float RangeF(System.Random r, float a, float b) => a + (float)r.NextDouble() * (b - a);
 

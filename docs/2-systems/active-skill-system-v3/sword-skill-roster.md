@@ -8,7 +8,7 @@ tags:
 
 # Sword — Skill Roster (V3)
 
-The first fully-authored weapon. Companion to **Weapon Roster — 12 Identities** (identity litmus), **Active Skill System — V3** (channels/effects/scaling), **Skill Numbers & Balance Baseline** (bands), and **State System** (buffs/debuffs/marks). Converged over a long ult-first design pass + a GPT stress-test round.
+The first fully-authored weapon. Companion to **Weapon Roster — 14 Identities** (identity litmus), **Active Skill System — V3** (channels/effects/scaling), **Skill Numbers & Balance Baseline** (bands), and **State System** (buffs/debuffs/marks). Converged over a long ult-first design pass + a GPT stress-test round.
 
 **Identity:** *Win duels through precise single-target bursts and timed defense.* Might / Atk · Burst. Everything is **single-target**.
 
@@ -178,7 +178,7 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 
 ## Related
 
-- [Weapon Roster — 12 Identities](weapon-roster-12-identities.md) — the identity sentence every skill here must reinforce.
+- [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the identity sentence every skill here must reinforce.
 - [Active Skill System — V3](README.md) — the channels, effects and triggers these skills are composed from.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the stacks, charges and gate rules the spine runs on.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the cost and cooldown rules all 22 were verified against.

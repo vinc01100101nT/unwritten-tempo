@@ -148,6 +148,22 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # What each biome looks like, and whether the biome test maps hold their props. A half-right row bakes a map
+    # that looks almost fine, so nothing but this finds it before somebody walks the map.
+    "biomes": {
+        "files": [os.path.join(DATA, "Recipes", "BiomeTable.asset"), os.path.join(SCRIPTS, "MapRecipe.cs"),
+                  os.path.join(DATA, "Resources", "BiomeWeather.asset"),
+                  os.path.join(REPO, "tools", "world-creator", "index.html")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-biome-table.py")],
+        "headline": "A biome's look is incomplete, or a biome test map has props stuck at its centre:",
+    },
+    "biomes-checker": {
+        "files": [os.path.join(TOOLS, "check-biome-table.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-biome-table-check.py")],
+        "headline": "The biome checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
     "editor-writes": {
         "roots": [(SCRIPTS, ".cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-editor-writes.py")],

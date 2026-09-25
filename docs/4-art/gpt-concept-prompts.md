@@ -178,7 +178,7 @@ After import, make each weapon wieldable: add a `**WeaponGrip**` to the prefab r
 ## Related
 
 - [Mixamo Animation Integration — Workflow](mixamo-animation-workflow.md) — the sibling pipeline: characters and their clips, rather than props and weapons.
-- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the twelve weapons the Part 2 prompts have to look like.
+- [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen weapons the Part 2 prompts have to look like.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — what a weapon *is* in the fiction, which the concept art should carry.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the maps these props get placed into.
 - [YouTube Update Format Template](../1-planning/youtube-update-template.md) — where new assets get announced, asset names fact-checked first.

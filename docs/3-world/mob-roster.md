@@ -29,7 +29,7 @@ map, and the map generator no longer puts any there.
 
 | | Normal | Elite | Shadow |
 | --- | --- | --- | --- |
-| How many | the rest of the roster | 18 | 12, one per weapon type |
+| How many | the rest of the roster | 18 | 14, one per weapon type (12 in the game today) |
 | Levels | spread evenly over **1–99** | **6 to 99**, one every 5.5 levels, rounded | **105 to 160**, one every 5 levels |
 | Extra skill slots | 1 | 2 | 4 |
 | Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
@@ -77,13 +77,14 @@ map, and the map generator no longer puts any there.
 ## Shadow
 
 - **The strongest creatures in the game.** They are the 3D characters, each wearing **one weapon type**, so there
-  are twelve of them — one for each weapon.
+  are fourteen of them — one for each weapon. Twelve are in the game; the Fist and Kick shadows (both weapons added
+  2026-09-25) are not made yet.
 - **Levels 105, 110, 115 … 160**, one shadow per step — above the 1–99 range every other creature uses.
 - **The weapon order runs from the least-played weapon at 105 to the most-played at 160.** A shadow is what a
   weapon's end-game materials come from, so the weapons fewest people choose are the easiest to finish — a reason
   to pick them. The order is a first guess, made before there is any player data.
-- **Each shadow has a real name, in the language of its weapon's best-known fighting tradition.** The sword's
-  matches its Japanese weapon names.
+- **Each shadow's name today comes from a real-world fighting tradition** (the Theme column). The game is dropping
+  real-country culture, so these names are to be replaced; the new names are not chosen yet.
 
   | Level | Weapon | Name | Theme | Element |
   | --- | --- | --- | --- | --- |
@@ -99,6 +100,8 @@ map, and the map generator no longer puts any there.
   | 150 | Greatsword | **Ulrich** | German two-hander | Earth |
   | 155 | Bow | **Temülün** | Mongol horse archer | Wind |
   | 160 | Sword | **Tsubame** | Japanese | Water |
+  | *not set* | Fist | *not chosen* | | *not set* |
+  | *not set* | Kick | *not chosen* | | *not set* |
 - **Each shadow has one of the four elements a converter can give** — water, earth, fire or wind, three shadows
   each — so every one of them can be answered with the right converter. At level 3 the answer matters: the element it
   is weak to lands for double, the one it resists lands for nothing, and its own element heals a fire, water or wind
@@ -122,7 +125,7 @@ map, and the map generator no longer puts any there.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
-- **All twelve exist.** Only **Tsubame** (Sword) holds a weapon; the other eleven fight with basic attacks, their four
+- **The twelve made so far exist.** Only **Tsubame** (Sword) holds a weapon; the other eleven fight with basic attacks, their four
   extra skills and summon until their weapon's skills exist, and then each is handed its weapon.
 - They carry their name and an always-visible health bar.
 
@@ -164,7 +167,9 @@ Several of one material go down as one pile.
 
 ## Still open
 
-- **The shadows' names against the canon.** The canon today says the Twelve Unwritten — the twelve weapons —
+- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve), name, element and the elite
+  each summons.
+- **The shadows' names against the canon.** The canon today says the Fourteen Unwritten — the fourteen weapons —
   have no recorded names, only what they did, and that writing an Unwritten's name is the end-game reward of
   weapon mastery. Either the canon is rewritten, or a shadow is an echo of an Unwritten wearing a name of its own.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
@@ -185,6 +190,6 @@ Several of one material go down as one pile.
 - [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — forging, the seven material grades, Ink, Salt
   and mastery: what creatures drop and what shadows wear.
 - [Biome Mob Families](biome-mob-families.md) — how creatures are grouped by biome and drawn by level today.
-- [Story & Setting (Canon)](story-setting-canon.md) — the Twelve Unwritten.
-- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the twelve
+- [Story & Setting (Canon)](story-setting-canon.md) — the Fourteen Unwritten.
+- [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen
   weapon types a shadow each carries.

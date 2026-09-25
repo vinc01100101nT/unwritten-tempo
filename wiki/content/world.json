@@ -64,20 +64,20 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "The Twelve Unwritten"
+      "text": "The Fourteen Unwritten"
     },
     {
       "type": "paragraph",
-      "text": "Twelve people fought the thing that silenced the scribe. Because they acted **after** the last written line, none of it was recorded — not the battle, not whether they won. They left **twelve weapons** and no names."
+      "text": "Fourteen people fought the thing that silenced the scribe. Because they acted **after** the last written line, none of it was recorded — not the battle, not whether they won. They left **fourteen weapons** and no names."
     },
     {
       "type": "list",
       "items": [
-        "**Each of the twelve weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. How the weapon fights *is* how that person fought.",
+        "**Each of the fourteen weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. How the weapon fights *is* how that person fought.",
         "**They are known only by epithet, never by name** — the Shield is *The One Who Stood*, the Dagger is *The Late Arrival*. The missing name is the point, and it is also the reward.",
         "**A weapon teaches its wielder's skills in fragments.** You learn them by fighting with that kind of weapon, a few at a time as your mastery grows — and a weapon forged by a smith carries one of them more strongly than the rest: its **trademark**, the skill it is named for.",
         "**Carrying one bleeds their identity into you** — this is the charcoal-to-color return. You are not recovering *the* truth; you are finishing *a* story.",
-        "**Naming an Unwritten is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — twelve names to write, twelve journeys to finish."
+        "**Naming an Unwritten is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — fourteen names to write, fourteen journeys to finish."
       ]
     },
     {
@@ -93,13 +93,15 @@
         ["**Axe**", "The One Who Never Stopped", "Would not be turned, would not defend, only pressed forward."],
         ["**Warhammer**", "The One Who Said No", "Whatever the enemy meant to do, it did not get to."],
         ["**Spear**", "The One Who Moved the Line", "Decided where everyone stood, on both sides."],
-        ["**Shield**", "The One Who Stood", "Took what was meant for the other eleven."],
+        ["**Shield**", "The One Who Stood", "Took what was meant for the other thirteen."],
         ["**Bow**", "The One Who Kept Distance", "Was never where the blow landed, and never out of range."],
         ["**Dagger**", "The Late Arrival", "Was not in the fight until it was already ending."],
         ["**Firearm**", "The One Who Fired Once", "Needed one shot; waited as long as that took."],
         ["**Staff**", "The One Who Burned the Field", "Unmade the ground the enemy was standing on."],
-        ["**Wand**", "The One Who Brought Them Back", "Is the reason the other eleven were still standing."],
-        ["**Scythe**", "The One Who Waited", "Did nothing quickly, and nothing survived it."]
+        ["**Wand**", "The One Who Brought Them Back", "Is the reason the other thirteen were still standing."],
+        ["**Scythe**", "The One Who Waited", "Did nothing quickly, and nothing survived it."],
+        ["**Fist**", "*not yet told*", "*not yet told*"],
+        ["**Kick**", "*not yet told*", "*not yet told*"]
       ]
     },
     {

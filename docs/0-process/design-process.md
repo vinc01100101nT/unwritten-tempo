@@ -57,6 +57,6 @@ The **Sword** weapon roster (see *Active Skill System — V3 / Sword — Skill R
 
 - [Sword — Skill Roster](../2-systems/active-skill-system-v3/sword-skill-roster.md) — the worked example: the first design taken through this flow end to end.
 - [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — the LOCKED spec a STRESS-TESTER treats as the rules.
-- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the identity litmus test stage 1 pulls constraints from.
+- [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the identity litmus test stage 1 pulls constraints from.
 - [Skill Numbers & Balance Baseline](../2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md) — what "measure, don't guess" reads from when the design is numeric.
 - [Dev Contribution Log](../1-planning/dev-contribution-log.md) — the record of who steered which round.

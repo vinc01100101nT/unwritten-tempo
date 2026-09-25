@@ -237,7 +237,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 12. **The window's name.** Settled: it is the **Skills** window, on **K**; the Grimoire is deleted (2026-09-21).
 13. **Passives on weapon swap.** Settled 2026-09-21: nothing is ticked any more — every learned passive is live, and one whose weapon type is not held simply does not fire.
 14. **Rounding of the quality lift** (e.g. +35 × 1.30 = 45.5). *Recommend:* round half up in the static function — never `Mathf.RoundToInt`, which rounds .5 to even.
-15. **Weapon types for masteries.** `WeaponType` has Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm (WeaponType.cs:15-30); V4's twelve include Greatsword, Warhammer, Shield, Wand, Scythe. *Recommend:* build masteries keyed on the existing enum; append Shield/Scythe/Wand members only when their pools are authored.
+15. **Weapon types for masteries.** `WeaponType` has Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm (WeaponType.cs:15-30); V4's fourteen include Greatsword, Warhammer, Shield, Wand, Scythe, Fist (the enum's Knuckle) and Kick. *Recommend:* build masteries keyed on the existing enum; append Shield/Scythe/Wand/Kick members only when their pools are authored.
 
 ## New user-visible words this plan would need that the V4 design does not already name
 

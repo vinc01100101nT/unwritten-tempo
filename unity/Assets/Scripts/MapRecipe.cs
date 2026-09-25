@@ -33,7 +33,7 @@ public enum PathTile { Road, Soil, Stones, Rock }
 // Only ever APPEND new members at the end — inserting/reordering silently remaps every saved value.
 // `None` is the mob-side "biome-agnostic" value: a MonsterDef set to None is spawn-eligible in ANY
 // biome's level band (see MonsterCatalog.Eligible). A MAP recipe should never be None.
-public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None, Forest }
+public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None, Forest, Highland, Peaks, Steppe, Coast, Swamp, Sacred, Haunted, Mist }
 
 /// <summary>How the ground base/patch/path weights are rendered. <c>Blended</c> = the seamless feathered gradient
 /// (default, today's look). <c>HardEdge</c> = snap each blend weight to 0/1 so grass↔dirt↔path meet in crisp seams

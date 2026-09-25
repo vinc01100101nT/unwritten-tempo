@@ -353,3 +353,123 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25.415157
     playerClearRadius: 6
+  - map: test_highland
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_peaks
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_snow
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_steppe
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_coast
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_desert
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_volcanic
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_swamp
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_sacred
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_haunted
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_mist
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_corrupted
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6

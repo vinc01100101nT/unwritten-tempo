@@ -11,7 +11,7 @@
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
 - [Map painter WALL pipeline + 3 bugs](../map-painter-wall-pipeline.md) — diagonal runs, thickness, piece pickers, vector-sum tower facing; removed auto road→gate; fixed piece z-fight (scale-to-fit, no min clamp); diagnose via baked scene + Editor.log + offline dotnet compile.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.
-- [⭐ BiomeTable — the one home of a biome's look](../biome-table.md) — tiles/tint/patch/road/props per biome; add a biome = row + append enum + web World Creator list.
+- [⭐ BiomeTable — the one home of a biome's look](../biome-table.md) — tiles/tint/patch/road/props + count multiplier per biome (all 14 built); add a biome = row + append enum + web World Creator list; runtime held weather (Swamp water, Snow blanket, Mist fog) is `Resources/BiomeWeather` + the `MapBiome` stamp; build test maps with `leaveOpen:false`.
 - [Floor autotiling via RuleTiles](../floor-autotile-ruletiles.md) — `Build Floor RuleTiles` → 8 corner-correct RuleTiles.
 - [Runtime material on a PREFAB → null/pink](../runtime-material-on-prefab-null-pink.md) — `new Material()` into a prefab serializes to `fileID:0`; persist as .mat first (Sway Selected Tree).
 - [Ground blend corner smear](../ground-blend-corner-smear.md) — elevated tops coloured off FILLED level → concave corners smear two tiles; colour off PAINTED level (`Lp`), geometry off filled.
@@ -27,4 +27,4 @@
 - [Procedural town map generator](../map-generator-tool.md) — VIN-13 editor-tool plan + Phase 0 done.
 - [World is 100% Pxltgr](../pxltgr-field-migration.md) — LowPolySimpleNature pack removed; field rebuilt via PxltgrFieldBuilder/Scatter.
 - [Creature kinds + world spawn list](../creature-kinds-and-world-spawns.md) — creatures placed by `Resources/WorldSpawns` rows at map load, never scene spawners; kind drives slots/summons/gear/drops/respawn.
-- [World names tie to shadows and weapons](../world-names-tie-to-shadows-and-weapons.md) — every region/place name links to its shadow AND weapon; Ragnarok-city feel, 1–4 syllables, mixed formats.
+- [World names tie to shadows and weapons](../world-names-tie-to-shadows-and-weapons.md) — no real-country culture and no made-up languages (both rejected); theme open; shadow names first; every name links to its shadow AND weapon deed; Ragnarok-city feel, 1–4 syllables, mixed formats.

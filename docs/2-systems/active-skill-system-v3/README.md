@@ -229,7 +229,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 - [Unified Unit Stats](unified-unit-stats.md) — the unit half: one stat model, so an effect never asks what it hit.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — what a state IS, and the stacks/charges/gate rules.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the "how much" half, and the locked scaling defaults.
-- [Weapon Roster — 12 Identities](weapon-roster-12-identities.md) — the twelve identity sentences every skill must reinforce.
+- [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the fourteen identity sentences every skill must reinforce.
 - [Weapon Crafting & Economy](weapon-crafting-economy.md) — how a weapon's rolled kit comes to exist. Design only.
 - [Sword — Skill Roster](sword-skill-roster.md) — the one fully-authored pool.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the scaling layer §3 hands the numbers to.

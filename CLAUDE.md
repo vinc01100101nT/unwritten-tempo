@@ -185,7 +185,9 @@ working blind — that exact failure kept a dead bridge in use for five days.
 state a live value, describe how something looks, run an author-time action, or take a second swing at a bug that
 survived one fix — that is the instruction. Measure, don't guess.
 
-**Two things stay the user's:** Play mode, and their visual judgement. And the forced-recompile ban below.
+**Three things stay the user's:** Play mode, their visual judgement, and their Scene view — never move its camera
+and never change which scene is open (added 2026-09-25 at the user's instruction; work on a scene without showing
+it). And the forced-recompile ban below.
 
 The connection details, the proven-vs-unproven list, how to run an editor action safely, and the offline compile
 checker are the **`unity-live-editor` skill**.
@@ -524,6 +526,7 @@ that costs a round.
   tools/check-unity-code.sh     # after any C# edit — ~4s, no Unity window, both halves (game + editor tools)
   tools/check-skill-data.py     # after any skill .asset edit — proves the DATA is sane, where silent bugs live
   tools/check-asset-rules.py    # after any import setting / prefab / project setting / package edit — ASSETS.md as tests
+  tools/check-biome-table.py    # after any Biome Table / biome list edit, or a test map rebuild — every biome's look is whole
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s

@@ -46,7 +46,7 @@ shadow have a row, in `field_0`, for testing. Placing the rest waits on the worl
   the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
   *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
 
-- [ ] `MT-18` **`[A]` Put the twelve shadows on the end-game maps.** One row each, naming the shadow, once the
+- [ ] `MT-18` **`[A]` Put the fourteen shadows on the end-game maps.** One row each, naming the shadow, once the
   end-game maps exist. — **2 days**
   *Done when:* every shadow stands in its fixed place on an end-game map, and the same one is there again after you leave and come back.
 
@@ -133,7 +133,7 @@ A player build and a server build both exist — 458 MB from 8 September and 227
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
-- [ ] `MT-34` **`[A]` Author the bow's skills.** Twelve weapon families are defined. The sword has 22, each with the Weapon Mastery level that teaches it. The staff has one. The other ten have none. **The mastery table is the trap:** a skill is learned only when its weapon's mastery reaches the level written against it, so a bow skill with no row in the bow's unlock table can never be learned and looks like a bug. — **5–8 days**
+- [ ] `MT-34` **`[A]` Author the bow's skills.** Fourteen weapon families are defined. The sword has 22, each with the Weapon Mastery level that teaches it. The staff has one. The other twelve have none. **The mastery table is the trap:** a skill is learned only when its weapon's mastery reaches the level written against it, so a bow skill with no row in the bow's unlock table can never be learned and looks like a bug. — **5–8 days**
 
 - [ ] `MT-35` **`[E]` Make cards something you earn.** Four cards exist and the socket screen offers all four to anyone with an empty socket, regardless of what they own. Two problems, both real: the four are named Andre, Poring, Whisper and Zipper Bear — Ragnarok creatures, and none of our 96 goes by any of those names, so "drops from the creature it's named after" has nothing to attach to. And a card cannot be carried at all: a drop list can only name an item, the bag can only hold an item, and a card is neither. This is a build across the bag, the saved character and the server — not four data rows. — **5–7 days**
 

@@ -83,7 +83,7 @@ No quest system — the only trace is a category an item can be filed under, whi
 
 **The blocker is not technology, and has not been for months.** Everything left in the shippable version is content and connective tissue: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product. That is work that can be chewed through item by item, which is what the [Action Plan](action-plan.md) is for.
 
-**Three things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: eleven of the twelve weapon families have no skill anybody can obtain; twelve of the thirteen kinds of gear have no item at all; and none of the forty-one maps has a quest, a named person, or a placed boss in it.
+**Three things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: thirteen of the fourteen weapon families have no skill anybody can obtain; twelve of the thirteen kinds of gear have no item at all; and none of the forty-one maps has a quest, a named person, or a placed boss in it.
 
 **The multiplayer half went further than the plan intended.** The strategy was to ship a single-player or small-co-op game first and let success justify an online one. Through late August and September the online layer was built anyway, and it now works — while the content gap did not shrink. That is a trade already made, not a proposal. What it bought is real: the world runs across several machines, the server owns the fight, and progress is written where a player's own machine cannot forge it. What it did not buy is a reason to play.
 
@@ -109,7 +109,7 @@ One play-test has been open since 3 September, covering eleven server and skill 
 
 - [Action Plan](action-plan/on-going.md) — the trackable list of what to do next, phase by phase, in three files by status.
 - [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — what the finished combat actually is.
-- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
+- [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — designed, no code.
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 96 creatures are comparable to a player.

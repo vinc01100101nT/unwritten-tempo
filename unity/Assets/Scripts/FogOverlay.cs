@@ -128,6 +128,8 @@ public class FogOverlay : MonoBehaviour
         var wc = WeatherChannels.Instance;
         if (wc != null) shown = wc.Shown(WeatherChannel.Fog);
         else            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
+        // A biome that always holds fog (Mist) keeps at least that much whatever the sky does.
+        shown = BiomeWeather.Hold(shown, BiomeWeather.AlwaysFogHere);
 
         // Zero-cost when clear: deactivate the quad so it issues no draw call at all.
         bool show = enabled && shown > 0.001f;

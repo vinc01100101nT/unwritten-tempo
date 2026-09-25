@@ -5,8 +5,8 @@ using UnityEngine.Rendering.Universal;
 /// HEAVY weather: drives the <c>Unwritten/WetGround</c> screen-space pass — darkens wet surfaces and adds glossy
 /// rippling puddle reflections. Built on the exact full-screen-depth-quad pattern as <see cref="CloudShadows"/>
 /// (camera-locked quad, requests the camera depth texture, world-XZ sampling), so it projects onto whatever the
-/// depth buffer holds. Gated behind <see cref="WeatherFX.Heavy"/> (High tier only) so it never costs anything
-/// on Low/Medium.
+/// depth buffer holds. Rain puddles are gated behind <see cref="WeatherFX.Heavy"/> (High tier only) so they cost
+/// nothing on Low/Medium; a biome's standing water (<see cref="BiomeWeather"/>) shows on every tier.
 ///
 /// <para>The puddle COVERAGE is its own weather CHANNEL (<see cref="WeatherChannel.Puddle"/>), fully decoupled from
 /// rain: this pass just renders <c>Puddle.shown × </c><see cref="puddleAmount"/> (the per-map coverage cap) as the wet
@@ -97,6 +97,7 @@ public class WetGround : MonoBehaviour
     bool depthRequested;
 
     float puddleLevel; // current puddle COVERAGE (0..puddleAmount) fed to _PuddleAmount — self-driven, persists after rain
+    float heldPuddles; // coverage this map's biome always shows (BiomeWeather), refreshed each frame
     float delayTimer;  // counts down the soak-in / dry-out delay before puddleLevel starts spreading/receding
     bool  wasRaining;  // last-frame rain-on state, to catch the start/stop edges
     bool  primed;      // first-frame: if we load into rain, start fully puddled instead of spreading from dry
@@ -139,10 +140,13 @@ public class WetGround : MonoBehaviour
         return w;
     }
 
-    /// <summary>True while there's visible standing water — High tier, enabled, and the puddle coverage still
-    /// spread enough to show. Tracks the self-driven <see cref="puddleLevel"/> (which lingers after the rain stops),
+    /// <summary>True while there's visible standing water — enabled, High tier (or a biome that always holds water,
+    /// which shows on every tier), and the puddle coverage still spread enough to show. Tracks the self-driven <see cref="puddleLevel"/> (which lingers after the rain stops),
     /// so audio and the planar reflection follow the visible puddles, not the rain.</summary>
-    public bool Active => enabled && WeatherFX.Heavy && puddleLevel > 0.001f;
+    public bool Active => enabled && TierShows && puddleLevel > 0.001f;
+
+    // Rain puddles are a High-tier extra; a biome's standing water is part of the place, so it shows on every tier.
+    bool TierShows => WeatherFX.Heavy || heldPuddles > 0.001f;
 
     /// <summary>Is <paramref name="world"/> standing in a visible puddle right now? Re-evaluates the SAME world-XZ
     /// puddle mask the shader draws (<c>fbm(xz*_PuddleScale)</c> thresholded by <c>_PuddleAmount</c>), so the answer
@@ -279,7 +283,10 @@ public class WetGround : MonoBehaviour
             rainNow     = RainOverlay.Instance != null ? RainOverlay.Instance.Shown : 0f;
         }
 
-        bool show = enabled && WeatherFX.Heavy && (puddleLevel > 0.001f || rainNow > 0.001f);
+        heldPuddles = BiomeWeather.AlwaysPuddlesHere * Mathf.Max(0f, puddleAmount);
+        puddleLevel = BiomeWeather.Hold(puddleLevel, heldPuddles);
+
+        bool show = enabled && TierShows && (puddleLevel > 0.001f || rainNow > 0.001f);
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
         if (!show) return;
 
