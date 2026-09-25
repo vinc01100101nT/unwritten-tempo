@@ -148,7 +148,8 @@
 
 // ── World model (v2 — free-form, rectangular) ────────────────────────────────
 // maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome?, name? }]
-//          name = the map's display name, shown on the in-game world map (and here, over the id).
+//          name = the map's display name, shown here and on the exported map picture; id = snakeCase(name) whenever
+//          a name is set (see snakeCase), which is also the Unity scene file name and what /tp takes.
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
 //          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
 // portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
@@ -431,19 +432,7 @@ function draw() {
     }
   }
 
-  // warps — dashed line + square caps
-  for (const p of state.portals) {
-    const a = mapById(p.aId), b = mapById(p.bId);
-    if (!a || !b) continue;
-    const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
-    ctx.strokeStyle = "#2b6cf2"; ctx.lineWidth = 2; ctx.setLineDash([7, 6]);
-    ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
-    for (const pt of [pa, pb]) {
-      ctx.beginPath(); ctx.rect(pt.x - 6, pt.y - 6, 12, 12); ctx.fill(); ctx.stroke();
-    }
-  }
+  paintWarps(ctx, worldToScreen, 1);
 
   // warp link-in-progress rubber band
   if (mode === "warp" && linkPickA) {
@@ -459,6 +448,24 @@ function draw() {
   }
 
   updateHint();
+}
+
+// Every warp: a dashed line between its two doorways, a square at each end. toPx turns a world point into pixels on
+// c; k scales the line, dash and squares (1 = their size on the editor's screen). Shared by the editor and the export.
+function paintWarps(c, toPx, k) {
+  for (const p of state.portals) {
+    const a = mapById(p.aId), b = mapById(p.bId);
+    if (!a || !b) continue;
+    const wa = edgePointWorld(a, p.anchorA.edge, p.anchorA.offset), wb = edgePointWorld(b, p.anchorB.edge, p.anchorB.offset);
+    const pa = toPx(wa.x, wa.y), pb = toPx(wb.x, wb.y);
+    c.strokeStyle = "#2b6cf2"; c.lineWidth = 2 * k; c.setLineDash([7 * k, 6 * k]);
+    c.beginPath(); c.moveTo(pa.x, pa.y); c.lineTo(pb.x, pb.y); c.stroke();
+    c.setLineDash([]);
+    c.fillStyle = "#2b6cf2"; c.strokeStyle = "#cfe0ff"; c.lineWidth = 2 * k;
+    for (const pt of [pa, pb]) {
+      c.beginPath(); c.rect(pt.x - 6 * k, pt.y - 6 * k, 12 * k, 12 * k); c.fill(); c.stroke();
+    }
+  }
 }
 
 function roundRect(c, x, y, w, h, r) {
@@ -728,20 +735,31 @@ function createMap(type, wx, wy) {
   selectedId = id;
   draw();
 }
-// Rename a map's id (also its Unity scene name). Keeps it unique and rewires any warps that reference it.
+// A named map's id is ALWAYS its name in snake_case ("Old Tunnels 1" → old_tunnels_1), and the id is the Unity scene
+// file name and what /tp takes — so the name on the map, the file and the command never disagree. Two maps with the
+// same name get _2, _3… on the later one. Set here on rename and again on every import, so it can't drift.
+function snakeCase(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""); }
+function uniqueId(base, taken) {
+  let id = base, n = 2;
+  while (taken.has(id)) id = base + "_" + (n++);
+  return id;
+}
+
+// Rename a map: sets its name, and its id follows as the snake_case of it. Rewires any warps that reference it.
 function renameMap(m) {
-  const input = prompt("Map name (becomes the Unity scene name; letters, numbers, _ -):", m.id);
+  const input = prompt("Map name (its id and Unity scene file become this in snake_case):", m.name || m.id);
   if (input === null) return;
-  const newId = input.trim().replace(/[^A-Za-z0-9_-]/g, "_");
-  if (!newId || newId === m.id) return;
-  if (state.maps.some(o => o !== m && o.id === newId)) { flash(`A map named '${newId}' already exists`); return; }
+  const name = input.trim(), base = snakeCase(name);
+  if (!base) { flash("A name needs at least one letter or number"); return; }
   recordUndo(snapshot());
   const oldId = m.id;
+  const newId = uniqueId(base, new Set(state.maps.filter(o => o !== m).map(o => o.id)));
   for (const p of state.portals) { if (p.aId === oldId) p.aId = newId; if (p.bId === oldId) p.bId = newId; }
+  m.name = name;
   m.id = newId;
   if (selectedId === oldId) selectedId = newId;
   draw();
-  flash(`Renamed to '${newId}'`);
+  flash(`Renamed to '${name}' (${newId})`);
 }
 
 function deleteMap(id) {
@@ -755,7 +773,7 @@ function deleteMap(id) {
 // ── Export / Import ──────────────────────────────────────────────────────────
 function round2(n) { return Math.round(n * 100) / 100; }
 
-function exportJSON() {
+function worldJson() {
   const maps = state.maps.map(m => {
     const o = { id: m.id, pos: [round2(m.x), round2(m.y)], size: [Math.round(m.w), Math.round(m.h)], type: m.type };
     if (m.seed !== undefined) o.seed = m.seed;
@@ -770,13 +788,57 @@ function exportJSON() {
     anchorA: { edge: p.anchorA.edge, offset: round2(p.anchorA.offset) },
     anchorB: { edge: p.anchorB.edge, offset: round2(p.anchorB.offset) },
   }));
-  const data = { version: 2, maps, portals };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  return JSON.stringify({ version: 2, maps, portals }, null, 2);
+}
+function exportJSON() {
+  const blob = new Blob([worldJson()], { type: "application/json" });
+  saveFile(blob, "json", jsonName, { "application/json": [".json"] });
+}
+
+// ── Saving ───────────────────────────────────────────────────────────────────
+// Saves open the browser's save window in the folder that kind of file was last saved to, remembered across visits
+// (the saved file's handle is kept in IndexedDB), so after one trip to the repo's folder every later save starts
+// there. A browser with no save window (Safari, Firefox) falls back to a plain download.
+let jsonName = "world.json";
+const SAVE_DB = "wc_save_folders";
+function saveDb(mode, run) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open(SAVE_DB, 1);
+    open.onupgradeneeded = () => open.result.createObjectStore("last");
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const tx = open.result.transaction("last", mode);
+      const req = run(tx.objectStore("last"));
+      tx.oncomplete = () => resolve(req.result);
+      tx.onerror = () => reject(tx.error);
+    };
+  });
+}
+function downloadBlob(blob, name) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "world.json";
+  a.download = name;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+async function saveFile(blob, kind, suggestedName, accept) {
+  if (!window.showSaveFilePicker) { downloadBlob(blob, suggestedName); return; }
+  let last = null;
+  try { last = await saveDb("readonly", s => s.get(kind)); } catch (e) { }
+  const opts = { suggestedName, types: [{ accept }] };
+  let handle;
+  try { handle = await showSaveFilePicker(last ? { ...opts, startIn: last } : opts); }
+  catch (e) {
+    if (e.name === "AbortError") return;
+    // A remembered file that no longer exists can't be a starting folder; ask again from the default one.
+    try { handle = await showSaveFilePicker(opts); } catch (e2) { if (e2.name !== "AbortError") alert("Save failed: " + e2.message); return; }
+  }
+  const out = await handle.createWritable();
+  await out.write(blob);
+  await out.close();
+  try { await saveDb("readwrite", s => s.put(handle, kind)); } catch (e) { }
+  if (kind === "json") jsonName = handle.name;
+  flash("Saved " + handle.name);
 }
 
 function importJSON(text) {
@@ -804,11 +866,21 @@ function importJSON(text) {
     if (msuffix && state.nextIndex[m.type] !== undefined)
       state.nextIndex[m.type] = Math.max(state.nextIndex[m.type], +msuffix[1] + 1);
   }
+  // Every named map's id becomes its name in snake_case; unnamed maps keep theirs (and are claimed first).
+  const renamed = {}, taken = new Set(state.maps.filter(m => !snakeCase(m.name)).map(m => m.id));
+  for (const m of state.maps) {
+    if (!snakeCase(m.name)) continue;
+    const id = uniqueId(snakeCase(m.name), taken);
+    taken.add(id);
+    if (id !== m.id) renamed[m.id] = id;
+    m.id = id;
+  }
   for (const p of (data.portals || [])) {
     if (!p.anchorA || !p.anchorB) continue;
-    if (!mapById(p.a) || !mapById(p.b)) continue;
+    const a = renamed[p.a] || p.a, b = renamed[p.b] || p.b;
+    if (!mapById(a) || !mapById(b)) continue;
     state.portals.push({
-      aId: p.a, bId: p.b,
+      aId: a, bId: b,
       anchorA: { edge: p.anchorA.edge, offset: p.anchorA.offset ?? 0.5 },
       anchorB: { edge: p.anchorB.edge, offset: p.anchorB.offset ?? 0.5 },
     });
@@ -816,7 +888,8 @@ function importJSON(text) {
   selectedId = null;
   fitToContent();
   draw();
-  flash(`Imported ${state.maps.length} maps, ${state.portals.length} warps`);
+  const n = Object.keys(renamed).length;
+  flash(`Imported ${state.maps.length} maps, ${state.portals.length} warps` + (n ? ` — ${n} id(s) set from their names; export to keep them` : ""));
 }
 
 function fitToContent() {
@@ -863,6 +936,7 @@ document.getElementById("btn-import").onclick = () => fileInput.click();
 fileInput.onchange = (e) => {
   const f = e.target.files[0];
   if (!f) return;
+  jsonName = f.name;
   const reader = new FileReader();
   reader.onload = () => importJSON(reader.result);
   reader.readAsText(f);
@@ -934,7 +1008,7 @@ const bgOpacity = document.getElementById("bg-opacity");
 bgOpacity.oninput = () => { backdrop.opacity = +bgOpacity.value / 100; draw(); };
 bgOpacity.onchange = saveBackdrop;
 
-// ── Export image (background + cells + labels) ───────────────────────────────
+// ── Export image (background + cells + labels + warps) ───────────────────────────────
 // The export frame is the backdrop's world rect (the art defines the canvas); with no backdrop it's the
 // bounding box of all cells + margin. Output width in px sets the scale, so cells scale WITH the map size.
 function exportFrame() {
@@ -963,15 +1037,14 @@ function paintComposite(c, frame, sc, cellOpacity, showLabels) {
     c.globalAlpha = 1;
     if (!showLabels) continue;
     const fs = clamp(Math.min(w, h) * 0.22, 12, 400);
-    const ncx = x + w / 2, nameY = y + h / 2 - fs * 0.35;
+    const label = m.name || m.id, ncx = x + w / 2, nameY = y + h / 2;
     c.font = "800 " + Math.round(fs) + "px system-ui, sans-serif";
-    c.lineWidth = Math.max(3, fs * 0.22); c.strokeStyle = "rgba(0,0,0,0.78)"; c.strokeText(m.id, ncx, nameY);
-    c.fillStyle = "#ffffff"; c.fillText(m.id, ncx, nameY);
-    const ss = Math.round(fs * 0.62), sizeY = y + h / 2 + fs * 0.7;
-    c.font = "600 " + ss + "px system-ui, sans-serif";
-    c.lineWidth = Math.max(2, ss * 0.22); c.strokeStyle = "rgba(0,0,0,0.7)"; c.strokeText(m.w + "×" + m.h, ncx, sizeY);
-    c.fillStyle = "#e6e6ee"; c.fillText(m.w + "×" + m.h, ncx, sizeY);
+    c.lineWidth = Math.max(3, fs * 0.22); c.strokeStyle = "rgba(0,0,0,0.78)"; c.strokeText(label, ncx, nameY);
+    c.fillStyle = "#ffffff"; c.fillText(label, ncx, nameY);
   }
+  c.globalAlpha = cellOpacity;
+  paintWarps(c, (wx, wy) => ({ x: (wx - frame.x) * sc, y: (wy - frame.y) * sc }), sc);
+  c.globalAlpha = 1;
 }
 
 const exportModal = document.getElementById("export-modal");
@@ -1007,12 +1080,7 @@ exLabels.onchange = renderExport;
 exWidth.oninput = renderExport;
 document.getElementById("ex-download").onclick = () => {
   exCanvas.toBlob((blob) => {
-    if (!blob) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "world-map.png";
-    a.click();
-    URL.revokeObjectURL(a.href);
+    if (blob) saveFile(blob, "png", "world-map.png", { "image/png": [".png"] });
   }, "image/png");
 };
 exportModal.addEventListener("mousedown", (e) => { if (e.target === exportModal) exportModal.style.display = "none"; });

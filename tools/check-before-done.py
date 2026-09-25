@@ -164,6 +164,26 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # Every map id comes from the world layout; the scenes, doors, world map, Map Painter files, the starting map
+    # and the music table are copies of it, and a copy that drifts sends a player (or /tp) to a map that isn't there.
+    "map-ids": {
+        "roots": [(os.path.join(REPO, "unity", "Assets", "Scenes"), ".unity"),
+                  (os.path.join(REPO, "tools", "map-painter", "exports"), ".json")],
+        "files": [os.path.join(REPO, "tools", "world-creator", "worlds", "world-regions.json"),
+                  os.path.join(REPO, "tools", "world-creator", "index.html"),
+                  os.path.join(DATA, "Resources", "WorldAtlas.asset"), os.path.join(DATA, "Resources", "MapBgmTable.asset"),
+                  os.path.join(REPO, "unity", "ProjectSettings", "EditorBuildSettings.asset"),
+                  os.path.join(SCRIPTS, "GameRoot.cs"), os.path.join(SCRIPTS, "Editor", "SystemsSceneBuilder.cs")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-map-ids.py")],
+        "headline": "A map id disagrees with the world layout (the one source of every map id):",
+    },
+    "map-ids-checker": {
+        "files": [os.path.join(TOOLS, "check-map-ids.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-map-ids-check.py")],
+        "headline": "The map id checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
     "editor-writes": {
         "roots": [(SCRIPTS, ".cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-editor-writes.py")],

@@ -19,7 +19,7 @@ creature's bow branch was gated on that sheet, so bow creatures fell through to 
 
 **Deleted as dead knobs:** `Player3DAttacker.arrowSheet/arrowFrameSize/arrowFrames/arrowFps/arrowSpeed/arrowScale`
 and `MonsterAI3D.projectileSheet/projFrameSize/projFrames/projFps/projSpeed/projScale`. Their values still sit in
-`Systems.unity`, `town_0.unity` and the 86 mob prefabs, so those files report unsaved changes once.
+`Systems.unity`, `lastline.unity` and the 86 mob prefabs, so those files report unsaved changes once.
 `Projectile3D.HitPayload` and its payload `Spawn` overload lost their only two callers and now have none.
 
 See [[every-skill-moment-is-shared]], [[the-game-is-always-online]].

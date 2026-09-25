@@ -22,7 +22,7 @@ public static class SystemsSceneBuilder
 {
     const string ScenesDir = "Assets/Scenes";
     const string SystemsPath = ScenesDir + "/Systems.unity";
-    const string FirstMap = "town_0";   // boot into the starting town
+    const string FirstMap = "lastline";   // boot into the starting town
 
     [MenuItem("Tools/unwritten/Scene Setup/Setup Systems Scene", priority = 101)]
     static void Build()

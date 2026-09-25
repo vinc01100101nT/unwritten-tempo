@@ -22,3 +22,11 @@ live editor — don't hand the user a menu click", which I already had and did n
 If yes, run it and say what happened in one line. Only give manual steps when the action genuinely
 cannot be run from here (a visual judgement, Play mode, a web service, their own decision) — and then
 make each step literal, with words for keys, per [[the-five-anti-invention]].
+
+**A standard engineering convention is not a question (2026-09-26).** Asked to make scene files match the names on
+the world map, I asked three questions (now or later, which format, what to do with two repeated names). The user was
+furious: one id per map, derived from its name, snake_case, one source of truth, used everywhere — that is standard
+practice, and "do whatever it takes" (rebuild maps, edit the tools) is implied. **How to apply:** when a request is
+about consistency (ids, names, file names, keys), apply the industry-standard shape without asking — snake_case ids,
+one owning file, every copy generated or checked from it, a guard that fails on drift — and label any genuinely new
+call (like `_2` for a repeated name) as mine in the report instead of asking. See [[world-creator-pipeline]].

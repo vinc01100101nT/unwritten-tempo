@@ -55,7 +55,7 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
 
 - `version` (int) — schema version. **Current `2`.**
 - `maps` (array of map objects):
-  - `id` (string) — unique, stable. Becomes the Unity scene name (`Assets/Scenes/<id>.unity`).
+  - `id` (string) — unique. **When the map has a `name`, the id is that name in snake_case** (`Old Tunnels 1` → `old_tunnels_1`; a repeated name gets `_2`, `_3` on the later map), set by the browser tool on every rename and every import. The id is the Unity scene file name (`Assets/Scenes/<id>.unity`), what `/tp` takes, and what a character's save names. This file is the ONE source of every map id; `tools/check-map-ids.py` fails when a scene, door, the world map, a Map Painter file, the starting map or the music table disagrees with it. An unnamed map keeps the tool's `type_N` id.
   - `pos` ([x, y], float) — top-left corner in world units. `x`→east, `y`→south. Free placement, no grid.
   - `size` ([w, h], **integer**) — map dimensions in world units. Independent axes (rectangular). Drives `MapRecipe.sizeX`/`sizeZ`.
   - `type` ("town" | "field" | "dungeon" | "special") — picks the recipe theme + colour.
@@ -63,7 +63,7 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
   - `pathTile` ("road" | "soil" | "stones" | "rock", optional) — override; omit to randomize.
   - `pathWidth` (number, optional) — override; omit to randomize.
   - `biome` (string, optional) — the biome the map is generated in, by its name (`snow`, `sacred` …); omit = grassland.
-  - `name` (string, optional) — the map's display name, shown on the in-game world map and in the browser tool.
+  - `name` (string, optional) — the map's display name, shown in the browser tool and on the exported map picture; its snake_case is the `id`.
 - `portals` (array of portal objects) — **all warps are explicitly anchored on both ends:**
   - `a` (string) — map id of endpoint A.
   - `b` (string) — map id of endpoint B.
@@ -77,17 +77,17 @@ A warp's `offset` places **both** the portal pad and the paired arrival spawn on
 {
   "version": 2,
   "maps": [
-    { "id": "town_0",  "pos": [0, 0],     "size": [60, 60], "type": "town" },
+    { "id": "lastline",  "pos": [0, 0],     "size": [60, 60], "type": "town" },
     { "id": "field_1", "pos": [0, -90],   "size": [90, 60], "type": "field", "seed": 67890 },
     { "id": "field_2", "pos": [-80, 10],  "size": [60, 40], "type": "field" },
     { "id": "cave_0",  "pos": [70, 20],   "size": [50, 80], "type": "dungeon" }
   ],
   "portals": [
-    { "a": "town_0",  "b": "field_1",
+    { "a": "lastline",  "b": "field_1",
       "anchorA": { "edge": "N", "offset": 0.35 }, "anchorB": { "edge": "S", "offset": 0.35 } },
-    { "a": "town_0",  "b": "field_2",
+    { "a": "lastline",  "b": "field_2",
       "anchorA": { "edge": "W", "offset": 0.5 },  "anchorB": { "edge": "E", "offset": 0.5 } },
-    { "a": "town_0",  "b": "cave_0",
+    { "a": "lastline",  "b": "cave_0",
       "anchorA": { "edge": "E", "offset": 0.6 },  "anchorB": { "edge": "W", "offset": 0.5 } }
   ]
 }
@@ -103,7 +103,7 @@ A single self-contained HTML/JS/CSS file (no build step) that runs locally.
 
 - A pannable/zoomable world-space canvas (scale = px per world unit); a faint 10-unit guide grid for alignment only — maps are NOT grid-locked.
 - **Edit mode:** click empty space → a small menu (Town / Field / Dungeon / Special) → drops a default 60×60 map there. **Drag the body** to move it (position snaps to whole units). **Drag the 8 white handles** to resize — width/height **snap to integers** (min 16). Click a map → menu to retype or delete; `Del` removes the selected map.
-- Maps are colour-coded rounded rectangles: **town = yellow, field = green, dungeon = purple, special = red** (matches the in-game portal colour convention), labelled with the map's `name` (its `id` when it has none) + `w×h`.
+- Maps are colour-coded rounded rectangles: **town = yellow, field = green, dungeon = purple, special = red** (matches the in-game portal colour convention — a door's colour comes from its destination map's `type`), labelled with the map's `name` (its `id` when it has none) + `w×h`.
 - **🖼 Background** loads a reference picture at world 0,0 at its real size — one picture pixel = one world unit — and locks it, so a layout drawn on the same picture lines up by itself. Unlock it to move or scale it.
 
 **Warps (v2 — one anchored model)**
@@ -112,7 +112,8 @@ A single self-contained HTML/JS/CSS file (no build step) that runs locally.
 
 **Data I/O**
 
-- **Export** → downloads `world.json` (v2: `pos`/`size` + anchored `portals`).
+- **Export** (⬇️ JSON) → saves the world (v2: `pos`/`size` + anchored `portals`), suggesting the name of the file last imported (`world.json` when none).
+- **Saving** — ⬇️ JSON and the picture's ⬇️ Download PNG both open the browser's save window, which starts in the folder that kind of file was last saved to (remembered across visits). The layouts and the clean background live beside the tool in `tools/world-creator/worlds/` (`world-regions.json`, `wm1.png`); the picture the game shows is saved over `unity/Assets/3_Data/Resources/WorldMap/world-map.png`. Browsers without a save window (Safari, Firefox) download to their downloads folder instead.
 - **Import** → upload a v2 `world.json` → rebuilds the whole world + warps, fully round-trips. v1 grid files (`cell`) are rejected with a friendly message.
 
 **Status:** Part 1 complete (v2) — free-form rectangular maps + int-snap resize + anchored warps + Export/Import, all in `tools/world-creator/index.html`.
@@ -132,7 +133,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
   3. `RegisterInBuildSettings` for every scene.
   4. **Validate:** every warp two-way, every map reachable, no dangling spawn id, no door in a wall/off-ground.
 - **Build World in the window regenerates EVERY map in the file and opens each one as the only open scene.** It overwrites hand-made maps and drops unsaved changes in whatever scene is open. For a build run through the live editor, `WorldCreator.BuildCore(json, town, field, dungeon, special recipe paths, keep ids)` does the same build without dialogs, never opens or edits the maps named in the keep list (warps into a kept map arrive at its first arrival point until doors are placed there by hand), and opens every other map alongside the user's scenes, closing it again.
-- **The in-game world map (N).** With a **World map picture** set in the window, baking shows that painted picture with every map drawn on it as a frame in its kind's colour and its `name` — no scene is opened. Without one, the baker snapshots every map from above, which opens each map as the only scene. The picture in use lives at `Assets/3_Data/Resources/WorldMap/world-map.png`; `WorldCreator.BakeWorldMapCore(json, picture path)` bakes it without dialogs.
+- **The in-game world map (N).** With a **World map picture** set in the window, baking shows that picture as it is — the game draws nothing on it but the "you are here" marker, and no scene is opened. The picture in use is the browser tool's **🖼️ PNG** export at its default settings: the background with every map's box and its `name` (its id when it has none), and every warp as a dashed line with a square at each doorway, drawn the same as in the editor. Without one, the baker snapshots every map from above, which opens each map as the only scene. The picture in use lives at `Assets/3_Data/Resources/WorldMap/world-map.png`; `WorldCreator.BakeWorldMapCore(json, picture path)` bakes it without dialogs.
 
 **Map Generator changes (the one real engine change)**
 
@@ -161,7 +162,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the map's centre, where the plaza sits — no arrival point is placed there any more, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
-**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `town_0` (Lastline, hand-made) kept as it is. The 41 maps it produced before are set aside and stay on disk. The layout's 14 shadow places are not generated yet.
+**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `lastline` (Lastline, hand-made) kept as it is. The 41 maps it produced before are set aside and stay on disk. The layout's 14 shadow places are not generated yet.
 
 ---
 

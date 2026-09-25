@@ -3,11 +3,11 @@
 - [Biome-agnostic mobs = Biome.None](../biome-none-agnostic.md) — spawns any tier band; `Biome` enum APPEND-ONLY.
 - [Mobs/items/maps as data tables](../mob-item-map-data-tables.md) — `MonsterDef` SO in `Resources/Monsters`, kebab `id` via `MonsterCatalog`.
 - [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<name>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
-- [Portal/warp color by destination](../portal-color-convention.md) — town=yellow, field=green, dungeon=blue, special=red; `ClassifyDestination`.
+- [Portal/warp color by destination](../portal-color-convention.md) — town=yellow, field=green, dungeon=purple (cylinder pad; blue ring fallback), special=red; chosen by the destination map's TYPE (`KindOfType`), never its name.
 - [World liveliness / ambient life](../world-liveliness-ambient-npcs.md) — SIMULATION: `AmbientLife`→`TownNPC` on `PathAgent3D` + `NpcBarks`.
 - [Hand-authored world content](../hand-authored-world-content.md) — user authors ART by hand; generator automates LAYOUT.
 - [Maps HAND-AUTHORED via Prop Palette](../authoring-toolkit-prop-palette.md) — `PropPalette` + Authoring menu; DON'T write per-map bakers.
-- [World Creator pipeline (HTML→world.json→Unity)](../world-creator-pipeline.md) — HTML → world.json → Unity; NEVER click Build World with hand-made maps (town_0) or an unsaved scene open — use BuildCore with a keep list + BakeWorldMapCore; layout in tools/world-creator/worlds/.
+- [World Creator pipeline (HTML→world.json→Unity)](../world-creator-pipeline.md) — HTML → world.json → Unity; NEVER click Build World with hand-made maps (lastline) or an unsaved scene open — use BuildCore with a keep list + BakeWorldMapCore; layout in tools/world-creator/worlds/. Map id = name in snake_case, ONE source (the layout json), guarded by tools/check-map-ids.py.
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
 - [Map painter WALL pipeline + 3 bugs](../map-painter-wall-pipeline.md) — diagonal runs, thickness, piece pickers, vector-sum tower facing; removed auto road→gate; fixed piece z-fight (scale-to-fit, no min clamp); diagnose via baked scene + Editor.log + offline dotnet compile.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.

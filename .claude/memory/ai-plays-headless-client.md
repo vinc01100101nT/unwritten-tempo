@@ -24,7 +24,7 @@ on its line: the server sends a machine only its own player's states (NetPlayer.
 creature's state store is always empty; showing them needs a wire change and a server rebuild.
 
 Proven 2026-09-17 23:05: three players at once (user Alpha in the editor, Tessa on port 7790, a tester sub-agent's
-character on port 7791) met in town_0, saw each other on the players list and talked in chat. Another player is
+character on port 7791) met in lastline, saw each other on the players list and talked in chat. Another player is
 walked to via `p.DrawnBody` (the body drawn for them), never their network object, which stays at spawn.
 
 Measured, not yet fixed (user not yet asked):
@@ -45,7 +45,7 @@ Measured, not yet fixed (user not yet asked):
   MapPainterImporter (with that importer's "Spawn point" tick-box and its ClearImported branch); RegionBuilder's
   boss-placement anchor no longer looks for one. 36 door points across 18 maps are untouched; **23 maps now have
   no arrival point at all** (every dungeon but 10 and 13, field_4/5/6/8, town_2/3/5/6/7/8/9). A new character now
-  starts beside town_0's field_11 door instead of the plaza centre. Both the SERVER and CLIENT builds embed the
+  starts beside lastline's field_11 door instead of the plaza centre. Both the SERVER and CLIENT builds embed the
   scenes, so both need rebuilding before the change reaches a running game.
 - field_15's "Start" spawn (0,0) is inside a tree collider — "MOVEMENT REFUSED ... Nearest solid: Deciduous_tree2
   at 0" (also Rye, Oak_tree3) — anyone arriving by /tp or respawn there cannot walk away. field_10's Start has a

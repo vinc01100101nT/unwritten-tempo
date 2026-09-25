@@ -1,12 +1,15 @@
 # Handoff — World map redesign, ground tiles, and the stacked-props bug
 
-**Task:** redesign the whole world into three regions around the fourteen shadows (only `town_0` survives), make the ground
+**Task:** redesign the whole world into three regions around the fourteen shadows (only `lastline` survives), make the ground
 tiles for every biome, and fix a bug found on the way: every prop in field_11 is stacked at the map centre.
 
-**Status:** IN PROGRESS. Everything up to the end of the 2026-09-26 session is committed and pushed to main.
-The three-region world is GENERATED (59 new scenes + the hand-made `town_0` as Lastline, all doors wired) but
-**nobody has walked it in play yet — don't trust any "it works" claim about it.** The Sacred cloud look and the
-painted in-game world map (N) are built and compiled but also unseen in play. The 14 biome test maps are still
+**Status:** IN PROGRESS. Everything up to the end of the second 2026-09-26 session (~05:05) is committed and pushed
+to main. The three-region world is GENERATED (59 new scenes + the hand-made `lastline` as Lastline, all doors wired),
+every map is named by its id, and normals + elites are placed in every field and dungeon floor — but **nobody has
+walked it in play yet (the user only opened the world map and stood in `test_forest_a`) — don't trust any "it works"
+claim about it.** **Before anyone can play it: the user must run the database update below (item 10) and rebuild the
+game server.** The Sacred cloud look is built and compiled but unseen; the full-screen world map (N) is built and
+compiled but unseen. The 14 biome test maps are still
 unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new 59 are freshly generated and clean).
 
 ---
@@ -32,7 +35,8 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
 - **Plan and roadmap:** all built V4 tasks marked done. The wiki Roadmap's Now is "Killing things pays you"
   (only its drop-rate play-test is open). Stale tasks were deleted or rewritten.
 - **Files in `~/Downloads`:**
-  - `world-map-base.png`: the previous ChatGPT world map, clean, 1536×1024 (replaced by `wm1.png` for now).
+  - `world-map-base.png`: the previous ChatGPT world map, clean, 1536×1024 (replaced by `wm1.png`, now in the repo at
+    `tools/world-creator/worlds/wm1.png`).
   - `world-map-homelands.png`: the same map marked with the old twelve homelands (superseded).
   - `world-map-regions.png`: that previous map with the three regions, cities and towns drawn on (superseded by
     `world-regions-layout.png` on `wm1.png`).
@@ -45,7 +49,7 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
 ## State left in the project (committed 2026-09-25)
 
 - `unity/Assets/Scenes/field_11.unity`: the user's approved **grass sample**, a root `Grass_Sample` of 70 plant
-  props placed around (8, 0, 0) near the town_0 arrival point. Saving the scene also made Unity drop 43 leftover
+  props placed around (8, 0, 0) near the lastline arrival point. Saving the scene also made Unity drop 43 leftover
   scale, material and name override lines. No position data was lost.
 - `unity/Assets/1_Authored/Prefabs/VFX/Textures/Circle2.png.meta`: the editor keeps flipping this texture's import
   settings (sprite↔default, compression). The cause is not investigated.
@@ -73,21 +77,35 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
    - **Layout:** `tools/world-creator/worlds/world-regions.json` (74 maps incl. the 14 shadow places, 77 doors,
      each map with a `name`). Built from a throwaway Pillow script in the session scratchpad; the draft preview is
      `~/Downloads/world-regions-layout.png`. The picture: `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
-   - **Generated** with `WorldCreator.BuildCore(...)`, keep list `town_0`, shadow places left out: 59 scenes
-     (`city_*`, `town_*`, `m_f*`, `f_f*`, `a_f*`, `b_f1`, `dg_*`), 122 portals, all registered in Build Settings;
+   - **Generated** with `WorldCreator.BuildCore(...)`, keep list `lastline`, shadow places left out: 59 scenes
+     (all named by id — see the next bullet), 122 portals, all registered in Build Settings;
      59 Map Painter sidecars in `tools/map-painter/exports/`. The window's Build World must NOT be clicked (it would
-     wipe `town_0` and drop unsaved scene changes) — see the World Creator spec.
-   - **Lastline (`town_0`)**: nothing removed; its west/east gates retargeted to `m_f01` / `m_f07`, new doors at its
-     south gate (→ `m_f11`) and north opening (→ `m_f04`). Byte-diff proved only the 8 retarget lines changed.
-   - **In-game world map (N)**: shows the painted picture with every zone framed and named
-     (`WorldMapHUD.BuildZones`, `WorldAtlasBaker.BakePainted`, `WorldCreator.BakeWorldMapCore`).
+     wipe `lastline` and drop unsaved scene changes) — see the World Creator spec.
+   - **Creatures (2026-09-26):** normals and elites placed for all 30 fields and 15 dungeon floors in the world spawn
+     list (85 rows; the rules are in the world-map doc's Built section). Shadows not placed. Unwalked.
+   - **Map ids (2026-09-26):** every map's id is its name in snake_case (`Lv 1–3` → `lv_1_3`, `town_0` → `lastline`,
+     the two repeated names → `lv_67_71_2`, `lv_72_76_2`). The layout json is the ONE source; the browser tool sets the
+     id on every rename and import; scene files, doors, arrival points, Build Settings, the world map, Map Painter
+     files, the starting map and the music table were all renamed to match, and `tools/check-map-ids.py` (pre-commit
+     and end of turn) fails on any drift. Door colours now come from the destination map's type, not its name; 46
+     pads were recoloured (dungeon doors purple, city/town doors yellow). NOT done: six characters in the database
+     still name `town_0` / `m_f10` as where they stand — the update was refused by the permission guard and is the
+     user's to run. A map without a pinned `seed` rolls it from its id, so rebuilding one now gives a new layout.
+   - **Lastline (`lastline`)**: nothing removed; its west/east gates retargeted to `lv_1_3` / `lv_21_24`, new doors at its
+     south gate (→ `lv_26_30`) and north opening (→ `lv_9_12`). Byte-diff proved only the 8 retarget lines changed.
+   - **In-game world map (N)**: shows the world creator's PNG export (default settings: painting + every map's box,
+     its name and every door's line) as it is, nothing drawn on top but the "you are here" marker (`WorldAtlasBaker.BakePainted`,
+     `WorldCreator.BakeWorldMapCore`). The export sits at `Resources/WorldMap/world-map.png`; the clean painting is
+     `tools/world-creator/worlds/wm1.png`. To refresh it: load wm1.png as the tool's background, import the json,
+     🖼️ PNG → Download PNG, save over that file (the save window remembers its folder), then re-bake.
+     Known: the side-by-side dungeon floors' names overlap in the picture (Lava Tubes, Canyon Temple, Haunted Deep).
    - **Not checked:** whether the map servers are set up to serve the new maps; the user's game SERVER BUILD
      predates all of this and must be rebuilt before the new world can be played online (ask first).
 2. **Names are NOT settled.** Decided 2026-09-25: the game uses NO real-country culture, so real languages are
    out; a made-up language per homeland was tried and rejected the same day. Every name ties to its shadow AND
    its weapon, in Ragnarok-city style (rule saved in memory `world-names-tie-to-shadows-and-weapons`). Order of
    work: shadow names first (the current Varro, Brigid… may be replaced), then weapon names and place names.
-   The naming theme is not chosen. The map stays label-free, and the world-map doc names shadows and cities by
+   The naming theme is not chosen. The world map shows the json's current placeholder names (Lastline, weapon names, "Lv 1–3", dungeon names), and the world-map doc names shadows and cities by
    weapon until the names lock.
 3. **Ground tiles for every biome** — the per-biome tile and prop tables now live in `docs/3-world/biomes.md`
    (the single home; update it, not this list). **22 tiles, made in ChatGPT in PURE ANIME style.** The user removed
@@ -180,6 +198,16 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
      tiles. A picture problem only; the map is fine.
 
 10. **Found 2026-09-26, open:**
+   - **Six characters still stand in maps that were renamed** (`town_0` ×5, `m_f10` = Alpha). The update was refused
+     by the permission guard; it is the user's to run (Alpha already failed to load `m_f10` at 04:50):
+     `psql "$(grep '^DATABASE_URL=' accounts/.env | cut -d= -f2-)" -c "update character set progress = jsonb_set(progress,'{sceneName}', to_jsonb(case progress->>'sceneName' when 'town_0' then 'lastline' when 'm_f10' then 'lv_29_33' end)) where progress->>'sceneName' in ('town_0','m_f10');"`
+   - **The game server build predates every change of this session** (map renames, mob list, world map). Rebuild it
+     (`tools/build-game.sh server`, ask first), then the user restarts the map server.
+   - **Two old maps' doors into Lastline arrive nowhere**: `field_11` → `w0_from_field_11` and `field_15` →
+     `w12_from_field_15` have no arrival point in `lastline` since its gates were retargeted to the new world.
+     Pre-existing; the old maps are set aside.
+   - **The world map picture is 1536×1024 and compressed**; full screen on a large display upscales it. A sharper
+     export needs the baker to take the world span from the layout's background, not the picture's pixel size.
    - **Sacred clouds** — rebuilt as a cloud layer at treetop height (`CloudLayerOverlay` + `Unwritten/CloudLayer`,
      setting `alwaysClouds` in `Resources/BiomeWeather.asset`). Compiled, never seen. The first version showed
      nothing; the rebuilding agent measured the old wisps at ≤6.5% opacity on 90% of the ground (too faint) and ruled
@@ -208,7 +236,7 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
   before 2026-09-21. The overrides are orphaned.
 - `324027705005997943` last appears in git history around `d78abc98` (2026-07-20), `be088eac` (2026-07-15,
   "props shaders for trees and houses, removed old prefabs").
-- **Measured across every scene (2026-09-25):** 42 scenes save prop positions; all except town_0 (0 of 401 broken)
+- **Measured across every scene (2026-09-25):** 42 scenes save prop positions; all except lastline (0 of 401 broken)
   and Systems have them orphaned (field_5 162/162, dungeon_0 144/144, field_11 164/236). Freshly generated maps
   are clean (0 of 352+ broken).
 
@@ -225,8 +253,8 @@ many instances it would fix read-only, then apply. The counting script used on 2
 ## How to resume
 
 ```text
-Read handoffs/world-map-redesign.md and continue. First: walk the new world in play (rebuild the game server first —
-ask the user), from Lastline through its four gates, checking the doors, the Sacred clouds (item 10) and the world
-map (N). Then the 14 biome test maps (item 4), the stacked-props bug, and the world-map doc's Still open list
-(names first).
+Read handoffs/world-map-redesign.md and continue. First: confirm the user ran the database update (item 10), rebuild
+the game server (ask first), then walk the new world from Lastline: doors (purple = dungeon, yellow = town), mobs and
+elites per field, the full-screen world map (N), /tp by map id (e.g. /tp mines_1), the Sacred clouds. Then the 14
+biome test maps (item 4), the stacked-props bug, and the world-map doc's Still open list (names first).
 ```

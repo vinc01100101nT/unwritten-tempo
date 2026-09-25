@@ -4432,7 +4432,7 @@ GameObject:
   - component: {fileID: 748154114}
   - component: {fileID: 748154113}
   m_Layer: 0
-  m_Name: SpawnPoint_w12_from_town_0
+  m_Name: SpawnPoint_w12_from_lastline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4450,7 +4450,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: w12_from_town_0
+  id: w12_from_lastline
 --- !u!4 &748154114
 Transform:
   m_ObjectHideFlags: 0
@@ -11778,7 +11778,7 @@ GameObject:
   - component: {fileID: 1743742390}
   - component: {fileID: 1743742389}
   m_Layer: 0
-  m_Name: Portal_w12_to_town_0
+  m_Name: Portal_w12_to_lastline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11796,7 +11796,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e18c3dc898d6e43b68713827673c2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Portal3D
-  targetScene: town_0
+  targetScene: lastline
   spawnId: w12_from_field_15
 --- !u!65 &1743742390
 BoxCollider:

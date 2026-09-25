@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-26
 tags:
   - ai-learnings
 ---
@@ -11,7 +11,8 @@ tags:
 ## Reach for this when
 
 You are about to make the same kind of edit to several files in ONE script — a batch of find-and-replace, a
-sweep across a folder, a set of doc updates — and you will report them all done when it exits.
+sweep across a folder, a set of doc updates — and you will report them all done when it exits. **Or a command
+came back "rejected" or "interrupted" and you are about to say nothing was changed.**
 
 ## The rule
 
@@ -43,6 +44,11 @@ The same session, the same shape, a second time: a later script's `old` pattern 
 between writing the checklist and writing the plan. Both times the visible error pointed at one file while a
 different file was the one left behind.
 
+2026-09-26, the same failure from the outside: a single command (back up a file, edit it, then run three checks)
+came back "rejected". The user asked why it was interrupted. The backup and the edit had run; only the checks had
+not. Saying "nothing was changed" would have been false — a diff against the backup showed the edit in the file.
+A rejection or interrupt stops a command where it is, not before it started.
+
 ## How to apply
 
 - One file, one write, immediately:
@@ -55,5 +61,7 @@ different file was the one left behind.
   ```
 - Keep `assert s.count(old) == 1` before every replace — it is what makes a silent no-op impossible — but read
   it as "this file was not edited", never as "the script did nothing".
+- **After a rejected or interrupted command, diff every file it could have touched** before saying what
+  happened. Its first steps may have finished.
 - If the files are genuinely independent, prefer one tool call per file. A failed call is then visibly a failed
   call, and nothing else is in doubt.

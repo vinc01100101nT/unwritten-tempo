@@ -2,10 +2,10 @@
   "version": 2,
   "maps": [
     {
-      "id": "town_0",
+      "id": "lastline",
       "pos": [
-        790.0,
-        425.0
+        790,
+        425
       ],
       "size": [
         80,
@@ -15,10 +15,10 @@
       "name": "Lastline"
     },
     {
-      "id": "city_shield",
+      "id": "shield",
       "pos": [
-        610.0,
-        320.0
+        610,
+        320
       ],
       "size": [
         80,
@@ -28,36 +28,36 @@
       "name": "Shield"
     },
     {
-      "id": "m_f01",
+      "id": "lv_1_3",
       "pos": [
-        708.0,
-        402.0
+        708,
+        402
       ],
       "size": [
         64,
         56
       ],
       "type": "field",
-      "name": "Lv 1\u20133"
+      "name": "Lv 1–3"
     },
     {
-      "id": "m_f02",
+      "id": "lv_4_6",
       "pos": [
-        608.0,
-        432.0
+        608,
+        432
       ],
       "size": [
         64,
         56
       ],
       "type": "field",
-      "name": "Lv 4\u20136"
+      "name": "Lv 4–6"
     },
     {
-      "id": "m_f03",
+      "id": "lv_6_8",
       "pos": [
-        568.0,
-        242.0
+        568,
+        242
       ],
       "size": [
         64,
@@ -65,13 +65,13 @@
       ],
       "type": "field",
       "biome": "forest",
-      "name": "Lv 6\u20138"
+      "name": "Lv 6–8"
     },
     {
-      "id": "dg_tunnels_1",
+      "id": "old_tunnels_1",
       "pos": [
-        500.0,
-        170.0
+        500,
+        170
       ],
       "size": [
         40,
@@ -82,10 +82,10 @@
       "name": "Old Tunnels 1"
     },
     {
-      "id": "dg_tunnels_2",
+      "id": "old_tunnels_2",
       "pos": [
-        500.0,
-        218.0
+        500,
+        218
       ],
       "size": [
         40,
@@ -96,10 +96,10 @@
       "name": "Old Tunnels 2"
     },
     {
-      "id": "m_f04",
+      "id": "lv_9_12",
       "pos": [
-        738.0,
-        262.0
+        738,
+        262
       ],
       "size": [
         64,
@@ -107,13 +107,13 @@
       ],
       "type": "field",
       "biome": "forest",
-      "name": "Lv 9\u201312"
+      "name": "Lv 9–12"
     },
     {
-      "id": "city_warhammer",
+      "id": "warhammer",
       "pos": [
-        970.0,
-        360.0
+        970,
+        360
       ],
       "size": [
         80,
@@ -124,10 +124,10 @@
       "name": "Warhammer"
     },
     {
-      "id": "m_f05",
+      "id": "lv_13_16",
       "pos": [
-        1088.0,
-        432.0
+        1088,
+        432
       ],
       "size": [
         64,
@@ -135,13 +135,13 @@
       ],
       "type": "field",
       "biome": "highland",
-      "name": "Lv 13\u201316"
+      "name": "Lv 13–16"
     },
     {
-      "id": "city_spear",
+      "id": "spear",
       "pos": [
-        1179.0,
-        484.0
+        1179,
+        484
       ],
       "size": [
         80,
@@ -152,10 +152,10 @@
       "name": "Spear"
     },
     {
-      "id": "m_f06",
+      "id": "lv_17_20",
       "pos": [
-        1098.0,
-        602.0
+        1098,
+        602
       ],
       "size": [
         64,
@@ -163,26 +163,26 @@
       ],
       "type": "field",
       "biome": "coast",
-      "name": "Lv 17\u201320"
+      "name": "Lv 17–20"
     },
     {
-      "id": "m_f07",
+      "id": "lv_21_24",
       "pos": [
-        968.0,
-        612.0
+        968,
+        612
       ],
       "size": [
         64,
         56
       ],
       "type": "field",
-      "name": "Lv 21\u201324"
+      "name": "Lv 21–24"
     },
     {
-      "id": "city_greatsword",
+      "id": "greatsword",
       "pos": [
-        1040.0,
-        210.0
+        1040,
+        210
       ],
       "size": [
         80,
@@ -193,10 +193,10 @@
       "name": "Greatsword"
     },
     {
-      "id": "m_f09",
+      "id": "lv_25_28",
       "pos": [
-        928.0,
-        222.0
+        928,
+        222
       ],
       "size": [
         64,
@@ -204,13 +204,13 @@
       ],
       "type": "field",
       "biome": "snow",
-      "name": "Lv 25\u201328"
+      "name": "Lv 25–28"
     },
     {
-      "id": "m_f10",
+      "id": "lv_29_33",
       "pos": [
-        1158.0,
-        262.0
+        1158,
+        262
       ],
       "size": [
         64,
@@ -218,13 +218,13 @@
       ],
       "type": "field",
       "biome": "snow",
-      "name": "Lv 29\u201333"
+      "name": "Lv 29–33"
     },
     {
-      "id": "dg_mines_1",
+      "id": "mines_1",
       "pos": [
-        1240.0,
-        180.0
+        1240,
+        180
       ],
       "size": [
         40,
@@ -235,10 +235,10 @@
       "name": "Mines 1"
     },
     {
-      "id": "dg_mines_2",
+      "id": "mines_2",
       "pos": [
-        1290.0,
-        180.0
+        1290,
+        180
       ],
       "size": [
         40,
@@ -249,10 +249,10 @@
       "name": "Mines 2"
     },
     {
-      "id": "dg_mines_3",
+      "id": "mines_3",
       "pos": [
-        1340.0,
-        180.0
+        1340,
+        180
       ],
       "size": [
         40,
@@ -263,10 +263,10 @@
       "name": "Mines 3"
     },
     {
-      "id": "m_f11",
+      "id": "lv_26_30",
       "pos": [
-        628.0,
-        592.0
+        628,
+        592
       ],
       "size": [
         64,
@@ -274,13 +274,13 @@
       ],
       "type": "field",
       "biome": "forest",
-      "name": "Lv 26\u201330"
+      "name": "Lv 26–30"
     },
     {
-      "id": "town_sword",
+      "id": "sword",
       "pos": [
-        528.0,
-        388.0
+        528,
+        388
       ],
       "size": [
         64,
@@ -290,10 +290,10 @@
       "name": "Sword"
     },
     {
-      "id": "town_kick",
+      "id": "kick",
       "pos": [
-        458.0,
-        488.0
+        458,
+        488
       ],
       "size": [
         64,
@@ -304,10 +304,10 @@
       "name": "Kick"
     },
     {
-      "id": "town_axe",
+      "id": "axe",
       "pos": [
-        543.0,
-        608.0
+        543,
+        608
       ],
       "size": [
         64,
@@ -318,23 +318,23 @@
       "name": "Axe"
     },
     {
-      "id": "b_f1",
+      "id": "lv_30_34",
       "pos": [
-        438.0,
-        392.0
+        438,
+        392
       ],
       "size": [
         64,
         56
       ],
       "type": "field",
-      "name": "Lv 30\u201334"
+      "name": "Lv 30–34"
     },
     {
-      "id": "city_bow",
+      "id": "bow",
       "pos": [
-        410.0,
-        265.0
+        410,
+        265
       ],
       "size": [
         80,
@@ -345,10 +345,10 @@
       "name": "Bow"
     },
     {
-      "id": "f_f1",
+      "id": "lv_34_38",
       "pos": [
-        328.0,
-        257.0
+        328,
+        257
       ],
       "size": [
         64,
@@ -356,13 +356,13 @@
       ],
       "type": "field",
       "biome": "forest",
-      "name": "Lv 34\u201338"
+      "name": "Lv 34–38"
     },
     {
-      "id": "f_f2",
+      "id": "lv_39_44",
       "pos": [
-        258.0,
-        342.0
+        258,
+        342
       ],
       "size": [
         64,
@@ -370,13 +370,13 @@
       ],
       "type": "field",
       "biome": "steppe",
-      "name": "Lv 39\u201344"
+      "name": "Lv 39–44"
     },
     {
-      "id": "f_f3",
+      "id": "lv_45_49",
       "pos": [
-        348.0,
-        362.0
+        348,
+        362
       ],
       "size": [
         64,
@@ -384,13 +384,13 @@
       ],
       "type": "field",
       "biome": "steppe",
-      "name": "Lv 45\u201349"
+      "name": "Lv 45–49"
     },
     {
-      "id": "city_dagger",
+      "id": "dagger",
       "pos": [
-        260.0,
-        420.0
+        260,
+        420
       ],
       "size": [
         80,
@@ -401,10 +401,10 @@
       "name": "Dagger"
     },
     {
-      "id": "f_f4",
+      "id": "lv_50_54",
       "pos": [
-        168.0,
-        442.0
+        168,
+        442
       ],
       "size": [
         64,
@@ -412,13 +412,13 @@
       ],
       "type": "field",
       "biome": "desert",
-      "name": "Lv 50\u201354"
+      "name": "Lv 50–54"
     },
     {
-      "id": "f_f5",
+      "id": "lv_55_60",
       "pos": [
-        58.0,
-        517.0
+        58,
+        517
       ],
       "size": [
         64,
@@ -426,13 +426,13 @@
       ],
       "type": "field",
       "biome": "peaks",
-      "name": "Lv 55\u201360"
+      "name": "Lv 55–60"
     },
     {
-      "id": "f_f6",
+      "id": "lv_61_66",
       "pos": [
-        138.0,
-        227.0
+        138,
+        227
       ],
       "size": [
         64,
@@ -440,13 +440,13 @@
       ],
       "type": "field",
       "biome": "peaks",
-      "name": "Lv 61\u201366"
+      "name": "Lv 61–66"
     },
     {
-      "id": "dg_canyon_1",
+      "id": "canyon_temple_1",
       "pos": [
-        80.0,
-        330.0
+        80,
+        330
       ],
       "size": [
         40,
@@ -457,10 +457,10 @@
       "name": "Canyon Temple 1"
     },
     {
-      "id": "dg_canyon_2",
+      "id": "canyon_temple_2",
       "pos": [
-        130.0,
-        330.0
+        130,
+        330
       ],
       "size": [
         40,
@@ -471,10 +471,10 @@
       "name": "Canyon Temple 2"
     },
     {
-      "id": "dg_canyon_3",
+      "id": "canyon_temple_3",
       "pos": [
-        180.0,
-        330.0
+        180,
+        330
       ],
       "size": [
         40,
@@ -485,10 +485,10 @@
       "name": "Canyon Temple 3"
     },
     {
-      "id": "town_firearm",
+      "id": "firearm",
       "pos": [
-        248.0,
-        528.0
+        248,
+        528
       ],
       "size": [
         64,
@@ -499,10 +499,10 @@
       "name": "Firearm"
     },
     {
-      "id": "f_f7",
+      "id": "lv_60_64",
       "pos": [
-        333.0,
-        572.0
+        333,
+        572
       ],
       "size": [
         64,
@@ -510,13 +510,13 @@
       ],
       "type": "field",
       "biome": "volcanic",
-      "name": "Lv 60\u201364"
+      "name": "Lv 60–64"
     },
     {
-      "id": "city_staff",
+      "id": "staff",
       "pos": [
-        680.0,
-        60.0
+        680,
+        60
       ],
       "size": [
         80,
@@ -527,10 +527,10 @@
       "name": "Staff"
     },
     {
-      "id": "a_f1",
+      "id": "lv_67_71",
       "pos": [
-        583.0,
-        112.0
+        583,
+        112
       ],
       "size": [
         64,
@@ -538,13 +538,13 @@
       ],
       "type": "field",
       "biome": "volcanic",
-      "name": "Lv 67\u201371"
+      "name": "Lv 67–71"
     },
     {
-      "id": "a_f2",
+      "id": "lv_72_76",
       "pos": [
-        793.0,
-        122.0
+        793,
+        122
       ],
       "size": [
         64,
@@ -552,13 +552,13 @@
       ],
       "type": "field",
       "biome": "volcanic",
-      "name": "Lv 72\u201376"
+      "name": "Lv 72–76"
     },
     {
-      "id": "dg_lava_1",
+      "id": "lava_tubes_1",
       "pos": [
-        880.0,
-        40.0
+        880,
+        40
       ],
       "size": [
         40,
@@ -569,10 +569,10 @@
       "name": "Lava Tubes 1"
     },
     {
-      "id": "dg_lava_2",
+      "id": "lava_tubes_2",
       "pos": [
-        930.0,
-        40.0
+        930,
+        40
       ],
       "size": [
         40,
@@ -583,10 +583,10 @@
       "name": "Lava Tubes 2"
     },
     {
-      "id": "dg_lava_3",
+      "id": "lava_tubes_3",
       "pos": [
-        980.0,
-        40.0
+        980,
+        40
       ],
       "size": [
         40,
@@ -597,10 +597,10 @@
       "name": "Lava Tubes 3"
     },
     {
-      "id": "town_fist",
+      "id": "fist",
       "pos": [
-        1368.0,
-        438.0
+        1368,
+        438
       ],
       "size": [
         64,
@@ -611,10 +611,10 @@
       "name": "Fist"
     },
     {
-      "id": "a_f3",
+      "id": "lv_64_68",
       "pos": [
-        1322.0,
-        511.0
+        1322,
+        511
       ],
       "size": [
         64,
@@ -622,13 +622,13 @@
       ],
       "type": "field",
       "biome": "coast",
-      "name": "Lv 64\u201368"
+      "name": "Lv 64–68"
     },
     {
-      "id": "town_scythe",
+      "id": "scythe",
       "pos": [
-        218.0,
-        758.0
+        218,
+        758
       ],
       "size": [
         64,
@@ -639,10 +639,10 @@
       "name": "Scythe"
     },
     {
-      "id": "a_f4",
+      "id": "lv_67_71_2",
       "pos": [
-        98.0,
-        697.0
+        98,
+        697
       ],
       "size": [
         64,
@@ -650,13 +650,13 @@
       ],
       "type": "field",
       "biome": "haunted",
-      "name": "Lv 67\u201371"
+      "name": "Lv 67–71"
     },
     {
-      "id": "a_f5",
+      "id": "lv_72_76_2",
       "pos": [
-        318.0,
-        852.0
+        318,
+        852
       ],
       "size": [
         64,
@@ -664,13 +664,13 @@
       ],
       "type": "field",
       "biome": "haunted",
-      "name": "Lv 72\u201376"
+      "name": "Lv 72–76"
     },
     {
-      "id": "dg_deep_1",
+      "id": "haunted_deep_1",
       "pos": [
-        40.0,
-        840.0
+        40,
+        840
       ],
       "size": [
         40,
@@ -681,10 +681,10 @@
       "name": "Haunted Deep 1"
     },
     {
-      "id": "dg_deep_2",
+      "id": "haunted_deep_2",
       "pos": [
-        40.0,
-        890.0
+        40,
+        890
       ],
       "size": [
         40,
@@ -695,10 +695,10 @@
       "name": "Haunted Deep 2"
     },
     {
-      "id": "dg_deep_3",
+      "id": "haunted_deep_3",
       "pos": [
-        90.0,
-        940.0
+        90,
+        940
       ],
       "size": [
         40,
@@ -709,10 +709,10 @@
       "name": "Haunted Deep 3"
     },
     {
-      "id": "dg_deep_4",
+      "id": "haunted_deep_4",
       "pos": [
-        140.0,
-        940.0
+        140,
+        940
       ],
       "size": [
         40,
@@ -723,10 +723,10 @@
       "name": "Haunted Deep 4"
     },
     {
-      "id": "a_f6",
+      "id": "lv_77_81",
       "pos": [
-        588.0,
-        817.0
+        588,
+        817
       ],
       "size": [
         64,
@@ -734,13 +734,13 @@
       ],
       "type": "field",
       "biome": "swamp",
-      "name": "Lv 77\u201381"
+      "name": "Lv 77–81"
     },
     {
-      "id": "a_f7",
+      "id": "lv_82_86",
       "pos": [
-        788.0,
-        862.0
+        788,
+        862
       ],
       "size": [
         64,
@@ -748,13 +748,13 @@
       ],
       "type": "field",
       "biome": "swamp",
-      "name": "Lv 82\u201386"
+      "name": "Lv 82–86"
     },
     {
-      "id": "a_f8",
+      "id": "lv_87_91",
       "pos": [
-        1124.0,
-        804.0
+        1124,
+        804
       ],
       "size": [
         64,
@@ -762,13 +762,13 @@
       ],
       "type": "field",
       "biome": "corrupted",
-      "name": "Lv 87\u201391"
+      "name": "Lv 87–91"
     },
     {
-      "id": "a_f10",
+      "id": "lv_96_99",
       "pos": [
-        1308.0,
-        732.0
+        1308,
+        732
       ],
       "size": [
         64,
@@ -776,13 +776,13 @@
       ],
       "type": "field",
       "biome": "corrupted",
-      "name": "Lv 96\u201399"
+      "name": "Lv 96–99"
     },
     {
-      "id": "a_f9",
+      "id": "lv_92_95",
       "pos": [
-        1268.0,
-        852.0
+        1268,
+        852
       ],
       "size": [
         64,
@@ -790,13 +790,13 @@
       ],
       "type": "field",
       "biome": "mist",
-      "name": "Lv 92\u201395"
+      "name": "Lv 92–95"
     },
     {
-      "id": "city_wand",
+      "id": "wand",
       "pos": [
-        205.0,
-        45.0
+        205,
+        45
       ],
       "size": [
         80,
@@ -807,10 +807,10 @@
       "name": "Wand"
     },
     {
-      "id": "a_f11",
+      "id": "lv_83_90",
       "pos": [
-        98.0,
-        47.0
+        98,
+        47
       ],
       "size": [
         64,
@@ -818,13 +818,13 @@
       ],
       "type": "field",
       "biome": "sacred",
-      "name": "Lv 83\u201390"
+      "name": "Lv 83–90"
     },
     {
-      "id": "a_f12",
+      "id": "lv_91_99",
       "pos": [
-        328.0,
-        47.0
+        328,
+        47
       ],
       "size": [
         64,
@@ -832,13 +832,13 @@
       ],
       "type": "field",
       "biome": "sacred",
-      "name": "Lv 91\u201399"
+      "name": "Lv 91–99"
     },
     {
-      "id": "sp_shield",
+      "id": "last_bridge",
       "pos": [
-        25.0,
-        1070.0
+        25,
+        1070
       ],
       "size": [
         50,
@@ -849,10 +849,10 @@
       "name": "Last Bridge"
     },
     {
-      "id": "sp_wand",
+      "id": "hill_of_the_flame",
       "pos": [
-        130.0,
-        1070.0
+        130,
+        1070
       ],
       "size": [
         50,
@@ -863,10 +863,10 @@
       "name": "Hill of the Flame"
     },
     {
-      "id": "sp_sword",
+      "id": "thousand_gates",
       "pos": [
-        235.0,
-        1070.0
+        235,
+        1070
       ],
       "size": [
         50,
@@ -877,10 +877,10 @@
       "name": "Thousand Gates"
     },
     {
-      "id": "sp_warhammer",
+      "id": "iron_gate",
       "pos": [
-        340.0,
-        1070.0
+        340,
+        1070
       ],
       "size": [
         50,
@@ -891,10 +891,10 @@
       "name": "Iron Gate"
     },
     {
-      "id": "sp_dagger",
+      "id": "masked_ballroom",
       "pos": [
-        445.0,
-        1070.0
+        445,
+        1070
       ],
       "size": [
         50,
@@ -905,10 +905,10 @@
       "name": "Masked Ballroom"
     },
     {
-      "id": "sp_axe",
+      "id": "burning_keel",
       "pos": [
-        550.0,
-        1070.0
+        550,
+        1070
       ],
       "size": [
         50,
@@ -919,10 +919,10 @@
       "name": "Burning Keel"
     },
     {
-      "id": "sp_staff",
+      "id": "everburning_plain",
       "pos": [
-        655.0,
-        1070.0
+        655,
+        1070
       ],
       "size": [
         50,
@@ -933,10 +933,10 @@
       "name": "Everburning Plain"
     },
     {
-      "id": "sp_bow",
+      "id": "sky_cairn",
       "pos": [
-        25.0,
-        1150.0
+        25,
+        1150
       ],
       "size": [
         50,
@@ -947,10 +947,10 @@
       "name": "Sky Cairn"
     },
     {
-      "id": "sp_spear",
+      "id": "tide_temple",
       "pos": [
-        130.0,
-        1150.0
+        130,
+        1150
       ],
       "size": [
         50,
@@ -961,10 +961,10 @@
       "name": "Tide Temple"
     },
     {
-      "id": "sp_firearm",
+      "id": "dusk_tower",
       "pos": [
-        235.0,
-        1150.0
+        235,
+        1150
       ],
       "size": [
         50,
@@ -975,10 +975,10 @@
       "name": "Dusk Tower"
     },
     {
-      "id": "sp_greatsword",
+      "id": "walking_road",
       "pos": [
-        340.0,
-        1150.0
+        340,
+        1150
       ],
       "size": [
         50,
@@ -989,10 +989,10 @@
       "name": "Walking Road"
     },
     {
-      "id": "sp_scythe",
+      "id": "drowned_chapel",
       "pos": [
-        445.0,
-        1150.0
+        445,
+        1150
       ],
       "size": [
         50,
@@ -1003,10 +1003,10 @@
       "name": "Drowned Chapel"
     },
     {
-      "id": "sp_fist",
+      "id": "fist_place",
       "pos": [
-        550.0,
-        1150.0
+        550,
+        1150
       ],
       "size": [
         50,
@@ -1017,10 +1017,10 @@
       "name": "(Fist place)"
     },
     {
-      "id": "sp_kick",
+      "id": "kick_place",
       "pos": [
-        655.0,
-        1150.0
+        655,
+        1150
       ],
       "size": [
         50,
@@ -1033,8 +1033,8 @@
   ],
   "portals": [
     {
-      "a": "town_0",
-      "b": "m_f01",
+      "a": "lastline",
+      "b": "lv_1_3",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1045,8 +1045,8 @@
       }
     },
     {
-      "a": "m_f01",
-      "b": "city_shield",
+      "a": "lv_1_3",
+      "b": "shield",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1057,8 +1057,8 @@
       }
     },
     {
-      "a": "city_shield",
-      "b": "m_f02",
+      "a": "shield",
+      "b": "lv_4_6",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1069,8 +1069,8 @@
       }
     },
     {
-      "a": "city_shield",
-      "b": "m_f03",
+      "a": "shield",
+      "b": "lv_6_8",
       "anchorA": {
         "edge": "N",
         "offset": 0.5
@@ -1081,8 +1081,8 @@
       }
     },
     {
-      "a": "m_f03",
-      "b": "dg_tunnels_1",
+      "a": "lv_6_8",
+      "b": "old_tunnels_1",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1093,8 +1093,8 @@
       }
     },
     {
-      "a": "dg_tunnels_1",
-      "b": "dg_tunnels_2",
+      "a": "old_tunnels_1",
+      "b": "old_tunnels_2",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1105,8 +1105,8 @@
       }
     },
     {
-      "a": "town_0",
-      "b": "m_f04",
+      "a": "lastline",
+      "b": "lv_9_12",
       "anchorA": {
         "edge": "N",
         "offset": 0.5
@@ -1117,8 +1117,8 @@
       }
     },
     {
-      "a": "m_f04",
-      "b": "city_warhammer",
+      "a": "lv_9_12",
+      "b": "warhammer",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1129,8 +1129,8 @@
       }
     },
     {
-      "a": "city_warhammer",
-      "b": "m_f05",
+      "a": "warhammer",
+      "b": "lv_13_16",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1141,8 +1141,8 @@
       }
     },
     {
-      "a": "m_f05",
-      "b": "city_spear",
+      "a": "lv_13_16",
+      "b": "spear",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1153,8 +1153,8 @@
       }
     },
     {
-      "a": "city_spear",
-      "b": "m_f06",
+      "a": "spear",
+      "b": "lv_17_20",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1165,8 +1165,8 @@
       }
     },
     {
-      "a": "m_f06",
-      "b": "m_f07",
+      "a": "lv_17_20",
+      "b": "lv_21_24",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1177,8 +1177,8 @@
       }
     },
     {
-      "a": "m_f07",
-      "b": "town_0",
+      "a": "lv_21_24",
+      "b": "lastline",
       "anchorA": {
         "edge": "N",
         "offset": 0.5
@@ -1189,8 +1189,8 @@
       }
     },
     {
-      "a": "city_warhammer",
-      "b": "m_f09",
+      "a": "warhammer",
+      "b": "lv_25_28",
       "anchorA": {
         "edge": "N",
         "offset": 0.5
@@ -1201,8 +1201,8 @@
       }
     },
     {
-      "a": "m_f09",
-      "b": "city_greatsword",
+      "a": "lv_25_28",
+      "b": "greatsword",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1213,8 +1213,8 @@
       }
     },
     {
-      "a": "city_greatsword",
-      "b": "m_f10",
+      "a": "greatsword",
+      "b": "lv_29_33",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1225,8 +1225,8 @@
       }
     },
     {
-      "a": "m_f09",
-      "b": "dg_mines_1",
+      "a": "lv_25_28",
+      "b": "mines_1",
       "anchorA": {
         "edge": "E",
         "offset": 0.3
@@ -1237,8 +1237,8 @@
       }
     },
     {
-      "a": "dg_mines_1",
-      "b": "dg_mines_2",
+      "a": "mines_1",
+      "b": "mines_2",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1249,8 +1249,8 @@
       }
     },
     {
-      "a": "dg_mines_2",
-      "b": "dg_mines_3",
+      "a": "mines_2",
+      "b": "mines_3",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1261,344 +1261,8 @@
       }
     },
     {
-      "a": "town_0",
-      "b": "m_f11",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.3
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "m_f11",
-      "b": "town_axe",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "m_f02",
-      "b": "town_sword",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_sword",
-      "b": "b_f1",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "b_f1",
-      "b": "town_kick",
-      "anchorA": {
-        "edge": "S",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "N",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_axe",
-      "b": "town_kick",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_kick",
-      "b": "f_f3",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.3
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "b_f1",
-      "b": "city_bow",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_bow",
-      "b": "f_f1",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f1",
-      "b": "f_f2",
-      "anchorA": {
-        "edge": "S",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "N",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f2",
-      "b": "f_f3",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f2",
-      "b": "city_dagger",
-      "anchorA": {
-        "edge": "S",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "N",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_dagger",
-      "b": "f_f4",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f4",
-      "b": "f_f5",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_dagger",
-      "b": "f_f6",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.3
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f4",
-      "b": "dg_canyon_1",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "dg_canyon_1",
-      "b": "dg_canyon_2",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "dg_canyon_2",
-      "b": "dg_canyon_3",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "f_f5",
-      "b": "town_firearm",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.3
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_firearm",
-      "b": "f_f7",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_staff",
-      "b": "a_f1",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_staff",
-      "b": "a_f2",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "a_f2",
-      "b": "dg_lava_1",
-      "anchorA": {
-        "edge": "N",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "S",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "dg_lava_1",
-      "b": "dg_lava_2",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "dg_lava_2",
-      "b": "dg_lava_3",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_fist",
-      "b": "a_f3",
-      "anchorA": {
-        "edge": "S",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "N",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_scythe",
-      "b": "a_f4",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "town_scythe",
-      "b": "a_f5",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "a_f5",
-      "b": "dg_deep_1",
+      "a": "lastline",
+      "b": "lv_26_30",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1609,8 +1273,44 @@
       }
     },
     {
-      "a": "dg_deep_1",
-      "b": "dg_deep_2",
+      "a": "lv_26_30",
+      "b": "axe",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_4_6",
+      "b": "sword",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "sword",
+      "b": "lv_30_34",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_30_34",
+      "b": "kick",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1621,68 +1321,56 @@
       }
     },
     {
-      "a": "dg_deep_2",
-      "b": "dg_deep_3",
+      "a": "axe",
+      "b": "kick",
       "anchorA": {
-        "edge": "E",
+        "edge": "N",
         "offset": 0.5
       },
       "anchorB": {
-        "edge": "W",
+        "edge": "S",
         "offset": 0.5
       }
     },
     {
-      "a": "dg_deep_3",
-      "b": "dg_deep_4",
+      "a": "kick",
+      "b": "lv_45_49",
       "anchorA": {
-        "edge": "E",
-        "offset": 0.5
+        "edge": "N",
+        "offset": 0.3
       },
       "anchorB": {
-        "edge": "W",
+        "edge": "S",
         "offset": 0.5
       }
     },
     {
-      "a": "a_f6",
-      "b": "a_f7",
+      "a": "lv_30_34",
+      "b": "bow",
       "anchorA": {
-        "edge": "E",
+        "edge": "N",
         "offset": 0.5
       },
       "anchorB": {
-        "edge": "W",
+        "edge": "S",
         "offset": 0.5
       }
     },
     {
-      "a": "a_f7",
-      "b": "a_f8",
+      "a": "bow",
+      "b": "lv_34_38",
       "anchorA": {
-        "edge": "E",
+        "edge": "W",
         "offset": 0.5
       },
       "anchorB": {
-        "edge": "W",
+        "edge": "E",
         "offset": 0.5
       }
     },
     {
-      "a": "a_f8",
-      "b": "a_f10",
-      "anchorA": {
-        "edge": "E",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "W",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "a_f10",
-      "b": "a_f9",
+      "a": "lv_34_38",
+      "b": "lv_39_44",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1693,20 +1381,8 @@
       }
     },
     {
-      "a": "city_wand",
-      "b": "a_f11",
-      "anchorA": {
-        "edge": "W",
-        "offset": 0.5
-      },
-      "anchorB": {
-        "edge": "E",
-        "offset": 0.5
-      }
-    },
-    {
-      "a": "city_wand",
-      "b": "a_f12",
+      "a": "lv_39_44",
+      "b": "lv_45_49",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1717,8 +1393,68 @@
       }
     },
     {
-      "a": "city_spear",
-      "b": "town_fist",
+      "a": "lv_39_44",
+      "b": "dagger",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dagger",
+      "b": "lv_50_54",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_50_54",
+      "b": "lv_55_60",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "dagger",
+      "b": "lv_61_66",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_50_54",
+      "b": "canyon_temple_1",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "canyon_temple_1",
+      "b": "canyon_temple_2",
       "anchorA": {
         "edge": "E",
         "offset": 0.5
@@ -1729,8 +1465,272 @@
       }
     },
     {
-      "a": "town_axe",
-      "b": "town_scythe",
+      "a": "canyon_temple_2",
+      "b": "canyon_temple_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_55_60",
+      "b": "firearm",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "firearm",
+      "b": "lv_60_64",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "staff",
+      "b": "lv_67_71",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "staff",
+      "b": "lv_72_76",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_72_76",
+      "b": "lava_tubes_1",
+      "anchorA": {
+        "edge": "N",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "S",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lava_tubes_1",
+      "b": "lava_tubes_2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lava_tubes_2",
+      "b": "lava_tubes_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "fist",
+      "b": "lv_64_68",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "scythe",
+      "b": "lv_67_71_2",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "scythe",
+      "b": "lv_72_76_2",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_72_76_2",
+      "b": "haunted_deep_1",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.3
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "haunted_deep_1",
+      "b": "haunted_deep_2",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "haunted_deep_2",
+      "b": "haunted_deep_3",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "haunted_deep_3",
+      "b": "haunted_deep_4",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_77_81",
+      "b": "lv_82_86",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_82_86",
+      "b": "lv_87_91",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_87_91",
+      "b": "lv_96_99",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lv_96_99",
+      "b": "lv_92_95",
+      "anchorA": {
+        "edge": "S",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "wand",
+      "b": "lv_83_90",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "E",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "wand",
+      "b": "lv_91_99",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "spear",
+      "b": "fist",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "axe",
+      "b": "scythe",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1741,8 +1741,8 @@
       }
     },
     {
-      "a": "town_firearm",
-      "b": "a_f4",
+      "a": "firearm",
+      "b": "lv_67_71_2",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1753,8 +1753,8 @@
       }
     },
     {
-      "a": "town_scythe",
-      "b": "a_f6",
+      "a": "scythe",
+      "b": "lv_77_81",
       "anchorA": {
         "edge": "E",
         "offset": 0.7
@@ -1765,8 +1765,8 @@
       }
     },
     {
-      "a": "town_fist",
-      "b": "a_f2",
+      "a": "fist",
+      "b": "lv_72_76",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1777,8 +1777,8 @@
       }
     },
     {
-      "a": "city_staff",
-      "b": "a_f11",
+      "a": "staff",
+      "b": "lv_83_90",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1789,8 +1789,8 @@
       }
     },
     {
-      "a": "m_f01",
-      "b": "sp_shield",
+      "a": "lv_1_3",
+      "b": "last_bridge",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1801,8 +1801,8 @@
       }
     },
     {
-      "a": "a_f12",
-      "b": "sp_wand",
+      "a": "lv_91_99",
+      "b": "hill_of_the_flame",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1813,8 +1813,8 @@
       }
     },
     {
-      "a": "town_sword",
-      "b": "sp_sword",
+      "a": "sword",
+      "b": "thousand_gates",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1825,8 +1825,8 @@
       }
     },
     {
-      "a": "m_f05",
-      "b": "sp_warhammer",
+      "a": "lv_13_16",
+      "b": "iron_gate",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1837,8 +1837,8 @@
       }
     },
     {
-      "a": "a_f7",
-      "b": "sp_dagger",
+      "a": "lv_82_86",
+      "b": "masked_ballroom",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1849,8 +1849,8 @@
       }
     },
     {
-      "a": "a_f1",
-      "b": "sp_axe",
+      "a": "lv_67_71",
+      "b": "burning_keel",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1861,8 +1861,8 @@
       }
     },
     {
-      "a": "f_f7",
-      "b": "sp_staff",
+      "a": "lv_60_64",
+      "b": "everburning_plain",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1873,8 +1873,8 @@
       }
     },
     {
-      "a": "f_f2",
-      "b": "sp_bow",
+      "a": "lv_39_44",
+      "b": "sky_cairn",
       "anchorA": {
         "edge": "S",
         "offset": 0.3
@@ -1885,8 +1885,8 @@
       }
     },
     {
-      "a": "m_f06",
-      "b": "sp_spear",
+      "a": "lv_17_20",
+      "b": "tide_temple",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1897,8 +1897,8 @@
       }
     },
     {
-      "a": "a_f10",
-      "b": "sp_firearm",
+      "a": "lv_96_99",
+      "b": "dusk_tower",
       "anchorA": {
         "edge": "W",
         "offset": 0.3
@@ -1909,8 +1909,8 @@
       }
     },
     {
-      "a": "a_f9",
-      "b": "sp_greatsword",
+      "a": "lv_92_95",
+      "b": "walking_road",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1921,8 +1921,8 @@
       }
     },
     {
-      "a": "a_f4",
-      "b": "sp_scythe",
+      "a": "lv_67_71_2",
+      "b": "drowned_chapel",
       "anchorA": {
         "edge": "S",
         "offset": 0.5
@@ -1933,8 +1933,8 @@
       }
     },
     {
-      "a": "a_f3",
-      "b": "sp_fist",
+      "a": "lv_64_68",
+      "b": "fist_place",
       "anchorA": {
         "edge": "W",
         "offset": 0.5
@@ -1945,8 +1945,8 @@
       }
     },
     {
-      "a": "b_f1",
-      "b": "sp_kick",
+      "a": "lv_30_34",
+      "b": "kick_place",
       "anchorA": {
         "edge": "S",
         "offset": 0.3

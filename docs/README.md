@@ -62,7 +62,7 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Biome Mob Families — Spawning by Biome and Level](3-world/biome-mob-families.md) — biome × level mob data + generator wiring.
 - [Biomes — Ground Tiles and Props](3-world/biomes.md) — every biome's main ground, patch and road tiles, the props that fit it, and the props still to make; the all-biome map generator plan.
 - [Biome References — Real Places Beside Our Maps](3-world/biome-references.md) — one real photo per biome beside pictures of its test map, to judge what looks right and what is missing.
-- [The World Map — Three Regions](3-world/world-map.md) — proposal, partly built (the 59 maps are generated and wired, with the hand-made town_0 as Lastline): three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), a big city for each one-family weapon and a border town for each hybrid, five dungeons, and each of the fourteen shadows at its own place with its way in; no real-country culture.
+- [The World Map — Three Regions](3-world/world-map.md) — proposal, partly built (the 59 maps are generated and wired, with the hand-made lastline as Lastline): three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), a big city for each one-family weapon and a border town for each hybrid, five dungeons, and each of the fourteen shadows at its own place with its way in; no real-country culture.
 - [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Fourteen Unwritten (one per weapon).
 
 ## Art & animation pipeline

@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 public static class WorldAtlasBaker
 {
     // World-space rect of one map. (x,y) = top-left corner; x→east, y→south. w,h in world units.
-    public struct Entry { public string scene; public float x, y, w, h; public string type, label; }
+    public struct Entry { public string scene; public float x, y, w, h; public string type; }
 
     const string ResourcesDir = "Assets/3_Data/Resources";
     const string AtlasAssetPath = "Assets/3_Data/Resources/WorldAtlas.asset";
@@ -113,7 +113,7 @@ public static class WorldAtlasBaker
                   + $"({picture.width}×{picture.height}) with {entries.Count} maps.");
         if (interactive)
             EditorUtility.DisplayDialog("Bake World Map — done",
-                $"The world map now shows {picture.name} with {entries.Count} maps drawn on it.\n\n"
+                $"The world map now shows {picture.name}.\n\n"
                 + "Press Play and open the World Map (default key: N) to see it.", "OK");
     }
 
@@ -201,7 +201,7 @@ public static class WorldAtlasBaker
         asset.ppu = ppu;
         asset.maps.Clear();
         foreach (var e in entries)
-            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type, label = e.label });
+            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type });
 
         if (isNew) AssetDatabase.CreateAsset(asset, AtlasAssetPath);
         else EditorUtility.SetDirty(asset);

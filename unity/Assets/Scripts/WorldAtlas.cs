@@ -19,7 +19,6 @@ public class WorldAtlas : ScriptableObject
         public string scene;    // scene/file name (== sanitized map id)
         public float x, y, w, h; // world-space rect, top-left (x→east, y→south), size in world units
         public string type;     // town | field | dungeon | special
-        public string label;    // the name shown on the world map (the world.json map's name; empty = none)
     }
 
     [Tooltip("Composited top-down image of the whole world (free-form, world-space rectangles).")]

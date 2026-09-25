@@ -47,7 +47,7 @@ In the AI chat, type `**/perf-checkup**`. The AI reads the rules + history and t
 - Walk around and gather **as many monsters as I can** near the player.
 - Press **T** to hand the fight to the **auto-pilot AI** (your character fights on its own).
 
-> ⚠️ **The old instruction here said "open the NatureStage scene".** There is no such scene — it belonged to an asset pack that was removed. The 41 maps on disk are named `town_0…9`, `field_0…16` and `dungeon_0…13`.
+> ⚠️ **The old instruction here said "open the NatureStage scene".** There is no such scene — it belonged to an asset pack that was removed. The 41 maps on disk are named `lastline…9`, `field_0…16` and `dungeon_0…13`.
 
 **3. Read the PerfHud overlay** (top-left corner of the Game view)
 

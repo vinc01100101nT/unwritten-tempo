@@ -14,7 +14,7 @@ public class MapBgmTable : ScriptableObject
     [Serializable]
     public struct Entry
     {
-        [Tooltip("Scene file name (no extension), e.g. 'town_0'.")]
+        [Tooltip("Scene file name (no extension), e.g. 'lastline'.")]
         public string sceneName;
         [Tooltip("Track to play on that map. Empty = silence there.")]
         public BgmTrack track;

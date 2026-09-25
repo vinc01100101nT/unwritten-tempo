@@ -17,4 +17,4 @@ metadata:
 
 ⚠️ Mobs are baked into scenes at generate time by the editor-only `Build25DSpike.BuildMonster`; runtime code can't call it. So runtime-side fixes (like this) in `PathAgent3D`/`MonsterAI3D` are the way to patch all existing maps without regenerating.
 
-Related: houses/buildings were also reported "elevated" but measured bases sit at y=0 in both town_0 and field_11 (not a physical float — likely flat foundation on top vs tall grass decor). The ~0.37 "elevated grass" is just decorative grass-tuft/flower prop HEIGHT on a flat Ground_Visual at y=0, NOT raised terrain. See [[world-ground-standard]].
+Related: houses/buildings were also reported "elevated" but measured bases sit at y=0 in both lastline and field_11 (not a physical float — likely flat foundation on top vs tall grass decor). The ~0.37 "elevated grass" is just decorative grass-tuft/flower prop HEIGHT on a flat Ground_Visual at y=0, NOT raised terrain. See [[world-ground-standard]].

@@ -221,7 +221,7 @@ public class AgentLink : MonoBehaviour
             if (piece.StartsWith("say ", StringComparison.OrdinalIgnoreCase) || piece.Equals("say", StringComparison.OrdinalIgnoreCase))
             {
                 string rest = line.Substring(at).Trim();
-                while (rest.EndsWith(";")) rest = rest.Substring(0, rest.Length - 1).TrimEnd();   // "say /tp town_0; "
+                while (rest.EndsWith(";")) rest = rest.Substring(0, rest.Length - 1).TrimEnd();   // "say /tp lastline; "
                 into.Add(rest);
                 return;
             }

@@ -133,6 +133,23 @@ longer has (the fault that stacks every prop at the map centre), a `test_*` map 
 carries the wrong one, or the per-biome weather list holds a level outside 0..1. Built 2026-09-25 with the
 all-biome generator.
 
+## check-map-ids.py · prove-map-ids-check.py
+
+Does every map id agree with the ONE place map ids come from — the world layout
+(`tools/world-creator/worlds/world-regions.json`)? A map's id is its name in snake_case, set by the browser World
+Creator; it is the scene file name, what `/tp` takes, and what a character's save names.
+
+```bash
+tools/check-map-ids.py               # the layout, the scenes, their doors, Build Settings, the world map, Map Painter files, starting map, music table
+tools/prove-map-ids-check.py         # plants 9 faults in a throwaway mirror and expects each named
+```
+
+Fails when an id is not the snake_case of its name or is used twice, a generated map has no scene file of that
+exact name or is missing from Build Settings, a door in a world scene leads to a map outside the layout or to an
+arrival point that map does not have, the in-game world map lists a different set of maps than the layout, a Map
+Painter file's saved name differs from its file name, or the starting map or a music-table entry names no scene.
+Built 2026-09-26 when every map was renamed to its name.
+
 ## check-editor-writes.py · prove-editor-writes-check.py · cs_methods.py
 
 Can editor code write a saved file with nobody having clicked? (RULE NOEDITORWRITES, mechanically.)

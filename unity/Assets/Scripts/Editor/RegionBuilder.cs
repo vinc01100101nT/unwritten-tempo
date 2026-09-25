@@ -183,18 +183,17 @@ public static class RegionBuilder
     static readonly Vector3 TriggerSize   = new Vector3(1.5f, 2f, 1.5f);
     static readonly Vector3 TriggerCenter = new Vector3(0f, 1f, 0f);
 
-    // Destination → portal colour. Source of truth is the kind of map the portal LEADS TO, classified from
-    // the target scene name, so fresh bakes and re-links agree without passing a colour around.
+    // Destination → portal colour. Source of truth is the TYPE of the map the portal leads to (town | field |
+    // dungeon | special, from the world layout) — never its name, since a map's id is its name in snake_case.
     enum WarpKind { Town, Field, Dungeon, Special }
 
-    static WarpKind ClassifyDestination(string sceneName)
+    static WarpKind KindOfType(string mapType) => mapType switch
     {
-        var n = (sceneName ?? "").ToLowerInvariant();
-        if (n.Contains("town"))    return WarpKind.Town;
-        if (n.Contains("dungeon")) return WarpKind.Dungeon;
-        if (n.Contains("special")) return WarpKind.Special;
-        return WarpKind.Field;   // NatureStage & other overworld maps
-    }
+        "town"    => WarpKind.Town,
+        "dungeon" => WarpKind.Dungeon,
+        "special" => WarpKind.Special,
+        _         => WarpKind.Field,
+    };
 
     static string PortalPrefabFor(WarpKind kind) => PortalsDir + kind switch
     {
@@ -214,7 +213,7 @@ public static class RegionBuilder
         _                => new Color(0.4f, 0.9f,  0.4f),
     };
 
-    public static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
+    public static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, string destinationType)
     {
         var go = new GameObject(name);
         SceneManager.MoveGameObjectToScene(go, scene);
@@ -230,19 +229,18 @@ public static class RegionBuilder
         portal.targetScene = targetScene;
         portal.spawnId = spawnId;
 
-        AddWarpFx(go);
+        AddWarpFx(go, destinationType);
         FitTriggerToFx(go.transform, box);   // hug the warp ring exactly + drop it onto the ground
         return go;
     }
 
     // Attach the visible warp marker so the player can see the doorway in-game: the destination-coloured
     // upright Hovl "Portal" ring if it's present, otherwise a tinted cylinder fallback (hand-finished later).
-    // The colour is driven by where the portal LEADS (its Portal3D.targetScene) — so World Creator's paired
-    // portals are coloured by their destination map the moment they're placed.
-    static void AddWarpFx(GameObject portal)
+    // The colour is driven by the type of map the portal LEADS to — so World Creator's paired portals are
+    // coloured by their destination map the moment they're placed.
+    static void AddWarpFx(GameObject portal, string destinationType)
     {
-        var p3 = portal.GetComponent<Portal3D>();
-        var kind = ClassifyDestination(p3 != null ? p3.targetScene : "");
+        var kind = KindOfType(destinationType);
         var tint = PortalTintFor(kind);
 
         // Chosen colour first; if that prefab is missing (e.g. no purple in the pack yet), fall back to blue.
@@ -278,11 +276,11 @@ public static class RegionBuilder
     }
 
     // Add a Portal3D only if this scene doesn't already have one pointing at the same target.
-    public static bool EnsurePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
+    public static bool EnsurePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, string destinationType)
     {
         foreach (var p in Object.FindObjectsByType<Portal3D>())
             if (p.targetScene == targetScene && p.gameObject.scene == scene) return false;
-        MakePortal(scene, name, pos, targetScene, spawnId, padColor);
+        MakePortal(scene, name, pos, targetScene, spawnId, destinationType);
         return true;
     }
 }

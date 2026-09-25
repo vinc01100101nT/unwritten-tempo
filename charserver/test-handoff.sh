@@ -40,7 +40,7 @@ i=0; while [ $i -lt 60 ]; do curl -s -m 1 -o /dev/null http://127.0.0.1:7788/ 2>
 
 echo "1. a map server registers"
 R=$(curl -s -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
-  -d "{\"id\":\"stub-1\",\"address\":\"127.0.0.1\",\"port\":7788,\"playerPort\":7777,\"maps\":[\"town_0\",\"field_11\"],\"build\":\"$BUILD\"}")
+  -d "{\"id\":\"stub-1\",\"address\":\"127.0.0.1\",\"port\":7788,\"playerPort\":7777,\"maps\":[\"lastline\",\"field_11\"],\"build\":\"$BUILD\"}")
 echo "$R" | grep -q '"holding":2' || fail "register: $R"
 ok "registered, holding 2 maps"
 
@@ -61,7 +61,7 @@ ok "a player cannot register a map server ($CODE)"
 echo "4. a player asks to enter, and their character is PUSHED ahead of them"
 rm -f /private/tmp/arrival.json
 CID=$(curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | python3 -c 'import sys,json;print(json.load(sys.stdin)["characters"][0]["id"])')
-E=$(curl -s -X POST "$CHAR/characters/$CID/enter" -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"map":"town_0"}')
+E=$(curl -s -X POST "$CHAR/characters/$CID/enter" -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"map":"lastline"}')
 TICKET=$(echo "$E" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("ticket",""))')
 [ -n "$TICKET" ] || fail "enter: $E"
 echo "$E" | grep -q '"port":7777' || fail "the player was given the wrong door — that is the character server's, not theirs: $E"
@@ -105,7 +105,7 @@ ok "a player cannot write through the server door ($CODE)"
 echo "9. a map server that has gone is never handed a player again"
 curl -s -o /dev/null -X DELETE "$CHAR/map-servers/stub-1" -H "x-server-secret: $SECRET"
 rm -f /private/tmp/arrival.json
-E2=$(curl -s -X POST "$CHAR/characters/$CID/enter" -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"map":"town_0"}')
+E2=$(curl -s -X POST "$CHAR/characters/$CID/enter" -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"map":"lastline"}')
 case "$E2" in
   *7788*) fail "still sent to the map server that has gone: $E2";;
 esac

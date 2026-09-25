@@ -25,7 +25,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 | Thing | Count | What the count means |
 | --- | --- | --- |
 | Game and tooling code files | 375 | 95 of them editor tools, exposing 88 menu commands |
-| Playable maps | 59 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 30 fields · 15 dungeon floors, plus the hand-made Lastline (`town_0`); the 41 older maps are set aside |
+| Playable maps | 59 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 30 fields · 15 dungeon floors, plus the hand-made Lastline (`lastline`); the 41 older maps are set aside |
 | Creature definitions | 86 | 20 of them bosses; all 20 now have their own artwork |
 | Skills | 42 | see the split below |
 | Items in the whole game | 13 | 11 consumables · 2 that can be worn (a sword and a bow) |

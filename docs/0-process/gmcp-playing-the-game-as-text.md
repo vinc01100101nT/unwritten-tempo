@@ -11,7 +11,7 @@ tags:
 
 **GMCP** (the game's MCP) lets an AI — Claude in this editor, a tester sub-agent, a debugger — play the built
 game the way a person does, with no window: it reads the screen as text and gives the same orders a click or a
-key gives. Built and first played on 2026-09-17. That evening three players stood together in `town_0` and talked
+key gives. Built and first played on 2026-09-17. That evening three players stood together in `lastline` and talked
 in the game's chat: Vince as **Alpha** in the editor, Claude as **Tessa** through GMCP, and a tester sub-agent as
 **Tester** through a second GMCP client.
 

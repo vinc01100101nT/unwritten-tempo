@@ -527,6 +527,7 @@ that costs a round.
   tools/check-skill-data.py     # after any skill .asset edit — proves the DATA is sane, where silent bugs live
   tools/check-asset-rules.py    # after any import setting / prefab / project setting / package edit — ASSETS.md as tests
   tools/check-biome-table.py    # after any Biome Table / biome list edit, or a test map rebuild — every biome's look is whole
+  tools/check-map-ids.py        # after any world layout, scene, door or map rename — every map id agrees with the layout
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s

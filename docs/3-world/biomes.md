@@ -188,7 +188,7 @@ user's five steps:
 **Adding a biome** takes a table row, its name appended to the biome list, and its name in the browser World
 Creator's biome list (that page cannot read the table). The check above fails until all three are done.
 
-**Known problem the generator must not repeat:** in every existing map except town_0, all saved prop positions point
+**Known problem the generator must not repeat:** in every existing map except lastline, all saved prop positions point
 at a part of the prop that no longer exists, so every prop sits at the map centre (measured 2026-09-25: 40 maps).
 A freshly generated map does not have this problem.
 

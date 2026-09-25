@@ -43,7 +43,7 @@ drew. The server's log is only kept when the server is started with the run comm
   player's machine counts from the time the server gave it on arrival. Two lines 0.250 apart happened a quarter of a
   second apart, and the date keeps a play-test that runs past midnight in order.
 - **Category** — the word in square brackets. Filter on it.
-- **Map** — the scene name of the map the line is about, e.g. `field_15`, `town_0`.
+- **Map** — the scene name of the map the line is about, e.g. `field_15`, `lastline`.
 - **Unit** — the unit's name, a space, `#`, and its spawn_id: `Snake #3`, `Alpha #1`, `Training_Dummy #4`.
 
 Lines about the server itself (start-up, connections) have no map or unit. Unity's own start-up text, printed

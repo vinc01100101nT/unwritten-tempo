@@ -358,8 +358,8 @@ character server will not hand players to a game server it cannot recognise.
 ```
 [map] listening for arrivals on 7788 as 'YourMac-1a2b3c4d'
 [server] listening for players on port 7777
-[server] world up — loading map 'town_0'
-[server] map 'town_0' loaded — 15 root objects, active scene is now 'town_0'
+[server] world up — loading map 'lastline'
+[server] map 'lastline' loaded — 15 root objects, active scene is now 'lastline'
 [map] the character server knows this map server holds 1 map(s).
 ```
 
@@ -377,7 +377,7 @@ evening. See *Which maps a server holds open* below.
 The character server's own terminal says the same thing from its side, with how busy that server is:
 
 ```
-[char] map server 'YourMac-1a2b3c4d' at 127.0.0.1:7788 holds 1 map(s): town_0 [0 player(s), 15 creature(s)]
+[char] map server 'YourMac-1a2b3c4d' at 127.0.0.1:7788 holds 1 map(s): lastline [0 player(s), 15 creature(s)]
 ```
 
 Those two numbers are what it weighs when it decides which server a new zone should be brought up on.

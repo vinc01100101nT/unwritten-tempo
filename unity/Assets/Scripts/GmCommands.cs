@@ -212,7 +212,7 @@ public static class GmCommands
         Register(new GmCommand("where", "where", "Print the map you are in and your position in that map's own coordinates — the numbers a spawn area's Center takes in the world spawn list.", CmdWhere, false, false, "pos"));
 
         // --- World & weather ---
-        Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, false, true, "warp", "goto"));
+        Register(new GmCommand("tp", "tp <map id> [spawnId]", "Travel to another map.", CmdTp, false, true, "warp", "goto"));
         // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
         // everybody on it — and everybody who arrives later — sees the same one.
         Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", CmdTime, false, true));
@@ -717,7 +717,7 @@ public static class GmCommands
     static void CmdTp(GmContext c)
     {
         var scene = c.Arg(0);
-        if (scene == null) { c.Reply("Usage: /tp <scene> [spawnId]"); return; }
+        if (scene == null) { c.Reply("Usage: /tp <map id> [spawnId]"); return; }
         // THROUGH THE DOOR EVERY PORTAL USES. Loading the map on the asker's machine moved nobody: the server
         // still had them where they stood, and the map they wanted may be held by another process entirely.
         var shell = GameNetwork.ShellFor(c.Ch);

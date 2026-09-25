@@ -21,8 +21,9 @@ using UnityEngine.SceneManagement;
 /// UNIQUE paired spawn id — <c>w{i}_from_{map}</c> — and we use the lower-level <c>MakePortal</c>/<c>MakeSpawn</c>.
 /// Because each Build re-bakes scenes from scratch, there are no stale portals to dedupe against anyway.</para>
 ///
-/// Scene name = the sanitized map <c>id</c>, so an id like <c>town_0</c> both becomes <c>Town_0.unity</c> and
-/// drives the destination-coloured portal convention (ClassifyDestination matches "town"/"dungeon"/…).
+/// Scene name = the map <c>id</c>, which the browser tool keeps equal to the map's name in snake_case
+/// ("Old Tunnels 1" → <c>old_tunnels_1.unity</c>), so the world map, the file and <c>/tp</c> all use one id. A door's
+/// colour comes from the destination map's <c>type</c>, never its name.
 /// </summary>
 public class WorldCreator : EditorWindow
 {
@@ -30,7 +31,7 @@ public class WorldCreator : EditorWindow
     // Free-form: each map has a world-space top-left pos (x→east, y→south) + an INTEGER size [w,h]. Every
     // portal carries explicit edge anchors on both ends (no grid adjacency is assumed any more).
     [Serializable] class WorldJson  { public int version; public MapJson[] maps; public PortalJson[] portals; }
-    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; public string name; }
+    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; }
     [Serializable] class PortalJson { public string a; public string b; public AnchorJson anchorA; public AnchorJson anchorB; }
     [Serializable] class AnchorJson { public string edge; public float offset; }
 
@@ -136,7 +137,7 @@ public class WorldCreator : EditorWindow
         picture = (Texture2D)EditorGUILayout.ObjectField("World map picture", picture, typeof(Texture2D), false);
         if (EditorGUI.EndChangeCheck())
             EditorPrefs.SetString(PictureKey, picture != null ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(picture)) : "");
-        EditorGUILayout.LabelField("Set = the in-game world map shows this picture with every map drawn on it; empty = snapshots.", EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("Set = the in-game world map shows this picture as it is; empty = snapshots.", EditorStyles.miniLabel);
 
         EditorGUILayout.Space();
 
@@ -291,7 +292,7 @@ public class WorldCreator : EditorWindow
         {
             if (m.pos == null || m.pos.Length < 2) continue;
             entries.Add(new WorldAtlasBaker.Entry {
-                scene = SceneName(m.id), type = m.type, label = m.name,
+                scene = SceneName(m.id), type = m.type,
                 x = m.pos[0], y = m.pos[1], w = SizeX(m), h = SizeZ(m),
             });
         }
@@ -411,9 +412,9 @@ public class WorldCreator : EditorWindow
                     string arrA = $"w{i}_from_{p.b}";   // land here when arriving on A from B
                     string arrB = $"w{i}_from_{p.a}";   // land here when arriving on B from A
 
-                    AddPortal(p.a, new PortalSpec { name = $"Portal_w{i}_to_{p.b}", target = sceneB, spawnId = arrB, edge = edgeA, offset = offA });
+                    AddPortal(p.a, new PortalSpec { name = $"Portal_w{i}_to_{p.b}", target = sceneB, targetType = byId[p.b].type, spawnId = arrB, edge = edgeA, offset = offA });
                     AddSpawn (p.a, new SpawnSpec  { id = arrA, edge = edgeA, offset = offA });
-                    AddPortal(p.b, new PortalSpec { name = $"Portal_w{i}_to_{p.a}", target = sceneA, spawnId = arrA, edge = edgeB, offset = offB });
+                    AddPortal(p.b, new PortalSpec { name = $"Portal_w{i}_to_{p.a}", target = sceneA, targetType = byId[p.a].type, spawnId = arrA, edge = edgeB, offset = offB });
                     AddSpawn (p.b, new SpawnSpec  { id = arrB, edge = edgeB, offset = offB });
                 }
 
@@ -439,7 +440,7 @@ public class WorldCreator : EditorWindow
                 if (hasP) foreach (var p in pl)
                 {
                     Vector3 raw = EdgePoint(p.edge, p.offset, halfX, halfZ);
-                    RegionBuilder.MakePortal(scene, p.name, WorldBuildUtil.SurfacePoint(raw, mask), p.target, p.spawnId, Color.white);
+                    RegionBuilder.MakePortal(scene, p.name, WorldBuildUtil.SurfacePoint(raw, mask), p.target, p.spawnId, p.targetType);
                     portalCount++;
                 }
 
@@ -491,7 +492,7 @@ public class WorldCreator : EditorWindow
         return $"Baked the world map: {pic.name} with {entries.Count} maps.";
     }
 
-    struct PortalSpec { public string name, target, spawnId, edge; public float offset; }
+    struct PortalSpec { public string name, target, targetType, spawnId, edge; public float offset; }
     struct SpawnSpec  { public string id, edge; public float offset; }
 
     // ── geometry ──────────────────────────────────────────────────────────────────────────────────────────

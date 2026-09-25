@@ -13,14 +13,15 @@ Warp portals are colour-coded by the **kind of map they lead to**, using Hovl St
 
 `unity/Assets/Scripts/Editor/RegionBuilder.cs`:
 - `enum WarpKind { Town, Field, Dungeon, Special }`
-- `ClassifyDestination(sceneName)` — maps a target scene NAME → `WarpKind` (substring match: "town",
-  "dungeon", "special", else Field). This is the single source of truth.
+- `KindOfType(mapType)` — maps the DESTINATION map's `type` from the world layout (town | field | dungeon |
+  special) → `WarpKind`. Never the scene name: a map's id is its name in snake_case (`mines_1`, `lastline`), which says
+  nothing about its kind. (Until 2026-09-26 it matched substrings of the name, so `dg_*` doors came out green.)
 - `PortalPrefabFor(kind)` / `PortalTintFor(kind)` — kind → prefab path / cylinder-fallback tint.
-- `AddWarpFx(portal)` reads `Portal3D.targetScene` off the portal, so fresh bakes AND
-  `RefreshWarpFxInScene` (Relink Region) both pick the right colour with no colour passed around.
+- `MakePortal(..., destinationType)` → `AddWarpFx(portal, destinationType)`; World Creator passes the target map's
+  `type` on every door it builds.
 
-To add a new map kind: add an enum case + a substring rule in `ClassifyDestination` + entries in the two
-`...For(kind)` maps. (The old `padColor` param on `MakePortal`/`EnsurePortal` is now vestigial.)
+To add a new map kind: add an enum case + a case in `KindOfType` + entries in the two `...For(kind)` maps, and the
+same type in the browser World Creator.
 
 ## Portal transform facts
 - Portal ROOT is always unit scale (`localScale = Vector3.one` pinned in `MakePortal`) so the warp FBX/VFX

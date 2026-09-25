@@ -7,7 +7,7 @@ metadata:
   originSessionId: 7267e5ec-04a8-408b-a4c3-ccb46759fd1f
 ---
 
-**Symptom:** Live-3D townsfolk (AmbientLife spawns in town_0) sank their feet ~2cm below the floor
+**Symptom:** Live-3D townsfolk (AmbientLife spawns in lastline) sank their feet ~2cm below the floor
 WHILE WALKING; idle was fine. Player grounded perfectly. Ate ~5 prior rounds of offset guesses.
 
 **Root cause (measured live):** DUAL grounding path — two owners of the NPC's foot Y.

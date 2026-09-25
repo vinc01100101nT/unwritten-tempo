@@ -1,5 +1,5 @@
 ---
-status: "PROPOSAL, partly built. Agreed with the user on 2026-09-25: three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), so players travel the whole world; a big city for each one-family weapon and a small town for each two-family weapon, on the border between its two regions; Lastline in Might; the map in use for now is the painted world-map picture in the project (it can be replaced); the 59 maps of the three regions are generated and wired (2026-09-26, not yet walked in play), with the hand-made town_0 as Lastline; five dungeons of 2 to 4 floors with an elite on each bottom floor; elites live everywhere, like normal creatures; the fourteen shadows' elements below; every shadow waits at its own place, a special map away from where players level, entered by quest, key, guide, world clock or a hidden way. The game uses no real-country culture. NOT settled: everything listed under Still open."
+status: "PROPOSAL, partly built. Agreed with the user on 2026-09-25: three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), so players travel the whole world; a big city for each one-family weapon and a small town for each two-family weapon, on the border between its two regions; Lastline in Might; the map in use for now is the painted world-map picture in the project (it can be replaced); the 59 maps of the three regions are generated and wired (2026-09-26, not yet walked in play), with the hand-made lastline as Lastline; five dungeons of 2 to 4 floors with an elite on each bottom floor; elites live everywhere, like normal creatures; the fourteen shadows' elements below; every shadow waits at its own place, a special map away from where players level, entered by quest, key, guide, world clock or a hidden way. The game uses no real-country culture. NOT settled: everything listed under Still open."
 owner: vince
 last-updated: 2026-09-25
 tags:
@@ -8,7 +8,7 @@ tags:
 
 # The World Map — Three Regions
 
-A full redesign of the world. **Only `town_0` survives**, as the town every new character starts in. Every other map
+A full redesign of the world. **Only `lastline` survives**, as the town every new character starts in. Every other map
 today is set aside.
 
 ## The shape: three regions, three level tiers
@@ -22,7 +22,7 @@ travels the whole world as they level, never staying in one family's land.
 | 2 | **Finesse** | 34–66 | the west continent | Forest, Steppe, Desert, Peaks | Bow, Dagger |
 | 3 | **Arcane** | 67–99 | overseas: the north volcano, the floating island above the clouds in the far north-west, and the dark south (the south-west peninsula, the swamp lagoon, the south-east island) | Volcanic, Mist, Haunted, Corrupted, Sacred, Swamp | Staff, Wand |
 
-- **Lastline** (`town_0`) sits in the middle of the main continent, on the scribe's last written line, inside Might.
+- **Lastline** (`lastline`) sits in the middle of the main continent, on the scribe's last written line, inside Might.
   It belongs to no one.
 - **The elements get harder with each tier.** Might holds Neutral, Earth and Water, which today's converters answer;
   Finesse adds Wind and Fire; Arcane holds Ghost, Undead, Shadow, Holy and Poison, the elements whose counter (skill
@@ -30,9 +30,10 @@ travels the whole world as they level, never staying in one family's land.
 - **No real-country culture.** No city is a real country and no name comes from a real country's language. The theme
   names are drawn from is not chosen yet.
 
-**The map in use for now** is a GPT painting (1536×1024), kept in the project as
-`unity/Assets/3_Data/Resources/WorldMap/world-map.png`; it can be replaced. The zones are laid out on it, and the
-in-game world map (N) shows this picture with every map drawn on it as a frame and its name.
+**The map in use for now** is a GPT painting (1536×1024); it can be replaced. The zones are laid out on it in the
+world creator, and the in-game world map (N) shows that tool's PNG export exactly as exported — the painting with
+every map's box, its name and the lines of every door between maps on it — kept in the project as `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
+The clean painting and the layout sit beside the tool: `tools/world-creator/worlds/wm1.png` and `world-regions.json`.
 
 ## Cities and towns
 
@@ -155,10 +156,17 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
 - **Every map of the three regions exists as a scene**: 8 cities, 6 towns, 30 fields and the 15 dungeon floors, each
   generated in its own biome and joined by doors, from the layout `tools/world-creator/worlds/world-regions.json`
   (74 maps, 77 doors; the 14 shadow places in it are not generated).
-- **Lastline is `town_0`, the hand-made town, kept as it is.** Nothing in it was removed. Its two existing gates were
+- **Lastline is `lastline`, the hand-made town, kept as it is.** Nothing in it was removed. Its two existing gates were
   pointed at the new world (west gate → the level 1–3 field, east gate → the level 21–24 field), and two doors were
   added at its south and north gates (→ the south-west forest, 26–30, and the north forest, 9–12).
-- **The in-game world map (N)** shows the painted map with every zone framed in its kind's colour and named.
+- **Creatures in every field and dungeon floor** (the world spawn list, 85 rows; shadows are not placed yet): each
+  field keeps about 31 normals alive drawn from the level range in its name, and each dungeon floor 26, its dungeon's
+  levels split evenly across its floors (Old Tunnels 8–11 / 12–15; Highland Mines 24–27 / 28–31 / 32–36; Canyon
+  Temple 50–53 / 54–57 / 58–62; Lava Tubes 70–72 / 73–76 / 77–80; Haunted Deep 86–88 / 89–92 / 93–95 / 96–99). A
+  range that crosses from one biome's creatures into the next draws from both. Every elite stands in each field
+  whose range holds its level, and each bottom floor holds the strongest elite at or below its dungeon's top level
+  (Old Tunnels 11, Mines 33, Canyon Temple 61, Lava Tubes 77, Haunted Deep 99). Cities and towns have none.
+- **The in-game world map (N)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
 
 ## Still open
 

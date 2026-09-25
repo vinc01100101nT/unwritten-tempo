@@ -44,7 +44,7 @@ Every one of these was done through the live editor link:
   players come from the built game with no window, driven by text: `AGENT_PORT=<free port>
   tools/agent-play/game_link.py launch`, then `login`, `play`, `look`, `move`, `attack`, `cast`, `say`, and
   `quit` when done — one port per player, and never the port another player is using. PROVEN 2026-09-17: three
-  players (the user in the editor, the main session, and a tester) met in `town_0` and chatted. Full command
+  players (the user in the editor, the main session, and a tester) met in `lastline` and chatted. Full command
   list: `docs/0-process/gmcp-playing-the-game-as-text.md`. Several commands fit on one line, separated by
   `;` (`"go d1; wait 2; attack m1"`), and each answer says why every command ended. A GMCP player's own
   client log is `logs/agent-client-<port>.log` (`logs/agent-client.log` on the default port 7790). When a

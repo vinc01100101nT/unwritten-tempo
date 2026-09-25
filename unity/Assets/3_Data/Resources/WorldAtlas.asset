@@ -19,521 +19,447 @@ MonoBehaviour:
   worldH: 1024
   ppu: 1
   maps:
-  - scene: town_0
+  - scene: lastline
     x: 790
     y: 425
     w: 80
     h: 80
     type: town
-    label: Lastline
-  - scene: city_shield
+  - scene: shield
     x: 610
     y: 320
     w: 80
     h: 80
     type: town
-    label: Shield
-  - scene: m_f01
+  - scene: lv_1_3
     x: 708
     y: 402
     w: 64
     h: 56
     type: field
-    label: "Lv 1\u20133"
-  - scene: m_f02
+  - scene: lv_4_6
     x: 608
     y: 432
     w: 64
     h: 56
     type: field
-    label: "Lv 4\u20136"
-  - scene: m_f03
+  - scene: lv_6_8
     x: 568
     y: 242
     w: 64
     h: 56
     type: field
-    label: "Lv 6\u20138"
-  - scene: dg_tunnels_1
+  - scene: old_tunnels_1
     x: 500
     y: 170
     w: 40
     h: 40
     type: dungeon
-    label: Old Tunnels 1
-  - scene: dg_tunnels_2
+  - scene: old_tunnels_2
     x: 500
     y: 218
     w: 40
     h: 40
     type: dungeon
-    label: Old Tunnels 2
-  - scene: m_f04
+  - scene: lv_9_12
     x: 738
     y: 262
     w: 64
     h: 56
     type: field
-    label: "Lv 9\u201312"
-  - scene: city_warhammer
+  - scene: warhammer
     x: 970
     y: 360
     w: 80
     h: 80
     type: town
-    label: Warhammer
-  - scene: m_f05
+  - scene: lv_13_16
     x: 1088
     y: 432
     w: 64
     h: 56
     type: field
-    label: "Lv 13\u201316"
-  - scene: city_spear
+  - scene: spear
     x: 1179
     y: 484
     w: 80
     h: 80
     type: town
-    label: Spear
-  - scene: m_f06
+  - scene: lv_17_20
     x: 1098
     y: 602
     w: 64
     h: 56
     type: field
-    label: "Lv 17\u201320"
-  - scene: m_f07
+  - scene: lv_21_24
     x: 968
     y: 612
     w: 64
     h: 56
     type: field
-    label: "Lv 21\u201324"
-  - scene: city_greatsword
+  - scene: greatsword
     x: 1040
     y: 210
     w: 80
     h: 80
     type: town
-    label: Greatsword
-  - scene: m_f09
+  - scene: lv_25_28
     x: 928
     y: 222
     w: 64
     h: 56
     type: field
-    label: "Lv 25\u201328"
-  - scene: m_f10
+  - scene: lv_29_33
     x: 1158
     y: 262
     w: 64
     h: 56
     type: field
-    label: "Lv 29\u201333"
-  - scene: dg_mines_1
+  - scene: mines_1
     x: 1240
     y: 180
     w: 40
     h: 40
     type: dungeon
-    label: Mines 1
-  - scene: dg_mines_2
+  - scene: mines_2
     x: 1290
     y: 180
     w: 40
     h: 40
     type: dungeon
-    label: Mines 2
-  - scene: dg_mines_3
+  - scene: mines_3
     x: 1340
     y: 180
     w: 40
     h: 40
     type: dungeon
-    label: Mines 3
-  - scene: m_f11
+  - scene: lv_26_30
     x: 628
     y: 592
     w: 64
     h: 56
     type: field
-    label: "Lv 26\u201330"
-  - scene: town_sword
+  - scene: sword
     x: 528
     y: 388
     w: 64
     h: 64
     type: town
-    label: Sword
-  - scene: town_kick
+  - scene: kick
     x: 458
     y: 488
     w: 64
     h: 64
     type: town
-    label: Kick
-  - scene: town_axe
+  - scene: axe
     x: 543
     y: 608
     w: 64
     h: 64
     type: town
-    label: Axe
-  - scene: b_f1
+  - scene: lv_30_34
     x: 438
     y: 392
     w: 64
     h: 56
     type: field
-    label: "Lv 30\u201334"
-  - scene: city_bow
+  - scene: bow
     x: 410
     y: 265
     w: 80
     h: 80
     type: town
-    label: Bow
-  - scene: f_f1
+  - scene: lv_34_38
     x: 328
     y: 257
     w: 64
     h: 56
     type: field
-    label: "Lv 34\u201338"
-  - scene: f_f2
+  - scene: lv_39_44
     x: 258
     y: 342
     w: 64
     h: 56
     type: field
-    label: "Lv 39\u201344"
-  - scene: f_f3
+  - scene: lv_45_49
     x: 348
     y: 362
     w: 64
     h: 56
     type: field
-    label: "Lv 45\u201349"
-  - scene: city_dagger
+  - scene: dagger
     x: 260
     y: 420
     w: 80
     h: 80
     type: town
-    label: Dagger
-  - scene: f_f4
+  - scene: lv_50_54
     x: 168
     y: 442
     w: 64
     h: 56
     type: field
-    label: "Lv 50\u201354"
-  - scene: f_f5
+  - scene: lv_55_60
     x: 58
     y: 517
     w: 64
     h: 56
     type: field
-    label: "Lv 55\u201360"
-  - scene: f_f6
+  - scene: lv_61_66
     x: 138
     y: 227
     w: 64
     h: 56
     type: field
-    label: "Lv 61\u201366"
-  - scene: dg_canyon_1
+  - scene: canyon_temple_1
     x: 80
     y: 330
     w: 40
     h: 40
     type: dungeon
-    label: Canyon Temple 1
-  - scene: dg_canyon_2
+  - scene: canyon_temple_2
     x: 130
     y: 330
     w: 40
     h: 40
     type: dungeon
-    label: Canyon Temple 2
-  - scene: dg_canyon_3
+  - scene: canyon_temple_3
     x: 180
     y: 330
     w: 40
     h: 40
     type: dungeon
-    label: Canyon Temple 3
-  - scene: town_firearm
+  - scene: firearm
     x: 248
     y: 528
     w: 64
     h: 64
     type: town
-    label: Firearm
-  - scene: f_f7
+  - scene: lv_60_64
     x: 333
     y: 572
     w: 64
     h: 56
     type: field
-    label: "Lv 60\u201364"
-  - scene: city_staff
+  - scene: staff
     x: 680
     y: 60
     w: 80
     h: 80
     type: town
-    label: Staff
-  - scene: a_f1
+  - scene: lv_67_71
     x: 583
     y: 112
     w: 64
     h: 56
     type: field
-    label: "Lv 67\u201371"
-  - scene: a_f2
+  - scene: lv_72_76
     x: 793
     y: 122
     w: 64
     h: 56
     type: field
-    label: "Lv 72\u201376"
-  - scene: dg_lava_1
+  - scene: lava_tubes_1
     x: 880
     y: 40
     w: 40
     h: 40
     type: dungeon
-    label: Lava Tubes 1
-  - scene: dg_lava_2
+  - scene: lava_tubes_2
     x: 930
     y: 40
     w: 40
     h: 40
     type: dungeon
-    label: Lava Tubes 2
-  - scene: dg_lava_3
+  - scene: lava_tubes_3
     x: 980
     y: 40
     w: 40
     h: 40
     type: dungeon
-    label: Lava Tubes 3
-  - scene: town_fist
+  - scene: fist
     x: 1368
     y: 438
     w: 64
     h: 64
     type: town
-    label: Fist
-  - scene: a_f3
+  - scene: lv_64_68
     x: 1322
     y: 511
     w: 64
     h: 56
     type: field
-    label: "Lv 64\u201368"
-  - scene: town_scythe
+  - scene: scythe
     x: 218
     y: 758
     w: 64
     h: 64
     type: town
-    label: Scythe
-  - scene: a_f4
+  - scene: lv_67_71_2
     x: 98
     y: 697
     w: 64
     h: 56
     type: field
-    label: "Lv 67\u201371"
-  - scene: a_f5
+  - scene: lv_72_76_2
     x: 318
     y: 852
     w: 64
     h: 56
     type: field
-    label: "Lv 72\u201376"
-  - scene: dg_deep_1
+  - scene: haunted_deep_1
     x: 40
     y: 840
     w: 40
     h: 40
     type: dungeon
-    label: Haunted Deep 1
-  - scene: dg_deep_2
+  - scene: haunted_deep_2
     x: 40
     y: 890
     w: 40
     h: 40
     type: dungeon
-    label: Haunted Deep 2
-  - scene: dg_deep_3
+  - scene: haunted_deep_3
     x: 90
     y: 940
     w: 40
     h: 40
     type: dungeon
-    label: Haunted Deep 3
-  - scene: dg_deep_4
+  - scene: haunted_deep_4
     x: 140
     y: 940
     w: 40
     h: 40
     type: dungeon
-    label: Haunted Deep 4
-  - scene: a_f6
+  - scene: lv_77_81
     x: 588
     y: 817
     w: 64
     h: 56
     type: field
-    label: "Lv 77\u201381"
-  - scene: a_f7
+  - scene: lv_82_86
     x: 788
     y: 862
     w: 64
     h: 56
     type: field
-    label: "Lv 82\u201386"
-  - scene: a_f8
+  - scene: lv_87_91
     x: 1124
     y: 804
     w: 64
     h: 56
     type: field
-    label: "Lv 87\u201391"
-  - scene: a_f10
+  - scene: lv_96_99
     x: 1308
     y: 732
     w: 64
     h: 56
     type: field
-    label: "Lv 96\u201399"
-  - scene: a_f9
+  - scene: lv_92_95
     x: 1268
     y: 852
     w: 64
     h: 56
     type: field
-    label: "Lv 92\u201395"
-  - scene: city_wand
+  - scene: wand
     x: 205
     y: 45
     w: 80
     h: 80
     type: town
-    label: Wand
-  - scene: a_f11
+  - scene: lv_83_90
     x: 98
     y: 47
     w: 64
     h: 56
     type: field
-    label: "Lv 83\u201390"
-  - scene: a_f12
+  - scene: lv_91_99
     x: 328
     y: 47
     w: 64
     h: 56
     type: field
-    label: "Lv 91\u201399"
-  - scene: sp_shield
+  - scene: last_bridge
     x: 25
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Last Bridge
-  - scene: sp_wand
+  - scene: hill_of_the_flame
     x: 130
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Hill of the Flame
-  - scene: sp_sword
+  - scene: thousand_gates
     x: 235
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Thousand Gates
-  - scene: sp_warhammer
+  - scene: iron_gate
     x: 340
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Iron Gate
-  - scene: sp_dagger
+  - scene: masked_ballroom
     x: 445
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Masked Ballroom
-  - scene: sp_axe
+  - scene: burning_keel
     x: 550
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Burning Keel
-  - scene: sp_staff
+  - scene: everburning_plain
     x: 655
     y: 1070
     w: 50
     h: 50
     type: special
-    label: Everburning Plain
-  - scene: sp_bow
+  - scene: sky_cairn
     x: 25
     y: 1150
     w: 50
     h: 50
     type: special
-    label: Sky Cairn
-  - scene: sp_spear
+  - scene: tide_temple
     x: 130
     y: 1150
     w: 50
     h: 50
     type: special
-    label: Tide Temple
-  - scene: sp_firearm
+  - scene: dusk_tower
     x: 235
     y: 1150
     w: 50
     h: 50
     type: special
-    label: Dusk Tower
-  - scene: sp_greatsword
+  - scene: walking_road
     x: 340
     y: 1150
     w: 50
     h: 50
     type: special
-    label: Walking Road
-  - scene: sp_scythe
+  - scene: drowned_chapel
     x: 445
     y: 1150
     w: 50
     h: 50
     type: special
-    label: Drowned Chapel
-  - scene: sp_fist
+  - scene: fist_place
     x: 550
     y: 1150
     w: 50
     h: 50
     type: special
-    label: (Fist place)
-  - scene: sp_kick
+  - scene: kick_place
     x: 655
     y: 1150
     w: 50
     h: 50
     type: special
-    label: (Kick place)

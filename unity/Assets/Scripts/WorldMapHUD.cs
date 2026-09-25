@@ -4,9 +4,9 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Full-screen world-map overlay. Shows the baked <see cref="WorldAtlas"/> — the painted world map (or, without one,
-/// a top-down snapshot of every map) — with every map drawn on it as a frame and its name, and a pulsing "you are
-/// here" marker over the map you're currently in, placed by that map's rectangle plus the player's position in it. Toggle with <see cref="toggleKey"/>
+/// Full-screen world-map overlay: the map fills the screen at its own aspect. Shows the baked <see cref="WorldAtlas"/> — the world-map picture exported from the
+/// world creator, as it is (or, without one, a top-down snapshot of every map) — with a pulsing "you are here" marker
+/// over the map you're currently in, placed by that map's rectangle plus the player's position in it. Toggle with <see cref="toggleKey"/>
 /// (default <b>N</b>; <b>M</b> is the corner minimap). Esc closes.
 ///
 /// Self-installing: a runtime bootstrap spawns it into the persistent <c>Systems</c> scene (so it survives map
@@ -56,7 +56,6 @@ public class WorldMapHUD : MonoBehaviour
     void Toggle()
     {
         bool open = !panel.activeSelf;
-        if (open) FitAtlas();
         panel.SetActive(open);
         if (open) UpdateMarker();
     }
@@ -92,14 +91,6 @@ public class WorldMapHUD : MonoBehaviour
         if (whereLabel) whereLabel.text = scene;
     }
 
-    // Fit the atlas into ~82% of the screen, preserving its aspect.
-    void FitAtlas()
-    {
-        float aw = data.atlas.width, ah = data.atlas.height;
-        float scale = Mathf.Min(Screen.width * 0.82f / aw, Screen.height * 0.82f / ah);
-        atlasImage.rectTransform.sizeDelta = new Vector2(aw * scale, ah * scale);
-    }
-
     // ── UI construction (own overlay canvas, in code) ─────────────────────────────────────────────────────
     void BuildUI()
     {
@@ -122,22 +113,15 @@ public class WorldMapHUD : MonoBehaviour
         Stretch(dim.rectTransform);
         dim.raycastTarget = true;
 
-        // the atlas image, centred
+        // the atlas image, filling the whole screen at its own aspect (the fitter keeps it fitted on any resize)
         atlasImage = new GameObject("Atlas", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage))
             .GetComponent<RawImage>();
         atlasImage.transform.SetParent(panel.transform, false);
         atlasImage.texture = data.atlas;
-        var art = atlasImage.rectTransform;
-        art.anchorMin = art.anchorMax = art.pivot = new Vector2(0.5f, 0.5f);
-        FitAtlas();
-
-        // thin frame behind the atlas (a slightly larger dark rect)
-        var frame = NewImage("Frame", panel.transform, new Color(0.15f, 0.16f, 0.18f, 1f));
-        frame.rectTransform.anchorMin = frame.rectTransform.anchorMax = frame.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        frame.rectTransform.sizeDelta = atlasImage.rectTransform.sizeDelta + new Vector2(8f, 8f);
-        frame.transform.SetSiblingIndex(atlasImage.transform.GetSiblingIndex());   // behind the atlas
-
-        BuildZones();
+        Stretch(atlasImage.rectTransform);
+        var fit = atlasImage.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = (float)data.atlas.width / Mathf.Max(1, data.atlas.height);
 
         // "you are here" marker (child of the atlas so it shares its rect space)
         var mk = NewImage("YouAreHere", atlasImage.transform, new Color(1f, 0.92f, 0.25f, 1f));
@@ -153,61 +137,6 @@ public class WorldMapHUD : MonoBehaviour
         var hint = NewText("Hint", panel.transform, $"[{toggleKey}] / [Esc] to close", 16, TextAnchor.LowerCenter);
         hint.color = new Color(1f, 1f, 1f, 0.6f);
         Bottom(hint.rectTransform, 34f, 420f);
-    }
-
-    // Every map drawn over the atlas: a thin frame in its kind's colour and its name. Anchored by fraction of the
-    // atlas, so they follow the atlas at any size. Built once; nothing here runs per frame.
-    void BuildZones()
-    {
-        for (int i = 0; i < data.maps.Count; i++)
-        {
-            var e = data.maps[i];
-            float u0 = (e.x - data.minX) / Mathf.Max(1f, data.worldW), u1 = (e.x + e.w - data.minX) / Mathf.Max(1f, data.worldW);
-            float t0 = (e.y - data.minY) / Mathf.Max(1f, data.worldH), t1 = (e.y + e.h - data.minY) / Mathf.Max(1f, data.worldH);
-            if (u1 <= 0f || u0 >= 1f || t1 <= 0f || t0 >= 1f) continue;   // off the picture (e.g. a place kept apart)
-
-            var zone = NewImage("Zone_" + e.scene, atlasImage.transform, new Color(0f, 0f, 0f, 0f));
-            var rt = zone.rectTransform;
-            rt.anchorMin = new Vector2(Mathf.Clamp01(u0), 1f - Mathf.Clamp01(t1));
-            rt.anchorMax = new Vector2(Mathf.Clamp01(u1), 1f - Mathf.Clamp01(t0));
-            rt.offsetMin = rt.offsetMax = Vector2.zero;
-            var c = ZoneColor(e.type);
-            AddEdge(rt, c, new Vector2(0f, 1f), new Vector2(1f, 1f));
-            AddEdge(rt, c, new Vector2(0f, 0f), new Vector2(1f, 0f));
-            AddEdge(rt, c, new Vector2(0f, 0f), new Vector2(0f, 1f));
-            AddEdge(rt, c, new Vector2(1f, 0f), new Vector2(1f, 1f));
-
-            if (string.IsNullOrEmpty(e.label)) continue;
-            bool big = e.type == "town";
-            var name = NewText("Name", rt, e.label, big ? 15 : 11, TextAnchor.MiddleCenter);
-            Stretch(name.rectTransform);
-            name.textWrappingMode = TextWrappingModes.NoWrap;
-            name.overflowMode = TextOverflowModes.Overflow;
-            name.fontStyle = big ? FontStyles.Bold : FontStyles.Normal;
-            name.outlineWidth = 0.25f;
-            name.outlineColor = new Color32(0, 0, 0, 220);
-        }
-    }
-
-    static Color ZoneColor(string type)
-    {
-        switch (type)
-        {
-            case "town":    return new Color(1f, 0.85f, 0.25f, 0.95f);
-            case "dungeon": return new Color(0.75f, 0.5f, 1f, 0.95f);
-            case "special": return new Color(1f, 0.35f, 0.35f, 0.95f);
-            default:        return new Color(0.45f, 0.95f, 0.45f, 0.9f);
-        }
-    }
-
-    // One side of a zone's frame: a 2-pixel strip along the given edge of the zone.
-    static void AddEdge(RectTransform zone, Color c, Vector2 from, Vector2 to)
-    {
-        var edge = NewImage("Edge", zone, c).rectTransform;
-        edge.anchorMin = from; edge.anchorMax = to;
-        edge.pivot = new Vector2(from.x == to.x ? from.x : 0.5f, from.y == to.y ? from.y : 0.5f);
-        edge.sizeDelta = from.x == to.x ? new Vector2(2f, 0f) : new Vector2(0f, 2f);
-        edge.anchoredPosition = Vector2.zero;
     }
 
     // ── tiny uGUI helpers ─────────────────────────────────────────────────────────────────────────────────
