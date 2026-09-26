@@ -31,6 +31,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 
 | You are seeing this | Open this |
 | --- | --- |
+| `git push` of a big commit ends with `Broken pipe` / `the remote end hung up unexpectedly` (exit code may still be 0) | [A Big Push Over SSH Drops the Connection](a-big-push-over-ssh-drops-the-connection.md) — the connection sat silent while uploading and was closed; push again with SSH keep-alives, then fetch and prove it landed. |
 | `git push` fails with `lookup lfs.github.com: no such host`, but `host lfs.github.com` resolves | [Git LFS Push Says "no such host"](git-lfs-push-says-no-such-host.md) — LFS (a Go program) is using Go's own DNS resolver, not the system's; push with `GODEBUG=netdns=cgo git push`. |
 | A play-test says only a couple of options ever get picked, or you are building a "random among ready" chooser over options with different costs | [Replay a Chooser With the Real Costs](replay-a-chooser-with-real-costs.md) — cheap options drain the shared pool and starve the expensive ones; replay the loop offline with the real numbers and count picks before building. |
 | Someone shows you an editor screen and asks "are we aligned — is this what the game does?" | [Before Saying Aligned, Check Both Readers](before-saying-aligned-check-both-readers.md) — the screen and the code often keep separate lists; confirm from both, and fix a disagreement by deleting one list, not syncing it. |
