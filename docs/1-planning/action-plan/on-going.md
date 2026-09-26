@@ -50,5 +50,5 @@ Every task carries:
 - [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md) — forging, folding, quenching, recycling and mastery; built.
 - [Ring System — Current Facts (Trio-Ring)](../../2-systems/ring-system-trio-ring.md) — the progression engine; the ring is part of the character, not an item.
 - [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
-- [Networking — Implementation Notes](../../2-systems/networking/implementation-notes.md) — the six trust gaps, and what they sit on top of.
+- [Networking — Implementation Notes](../../2-systems/networking/implementation-notes.md) — the deliberate limits that are still true, and what they sit on top of.
 - [Starting the Network](../../2-systems/networking/starting-the-network.md) — how to stand the game up to test any of this.

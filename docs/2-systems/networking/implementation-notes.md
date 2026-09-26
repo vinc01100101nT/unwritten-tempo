@@ -218,7 +218,6 @@ and only in that one direction — a buffed or normal caster is exact.
 
 ### Deliberate limits, still true
 
-- **The training dummy takes no damage from a client.** It is a hand-built scene fixture with no shared identity, so a swing at it finds nothing the server has heard of and is refused out loud. It was only ever hittable because a player's machine used to decide damage. Making it work again means giving it a networked identity — and first answering whether a dummy is one fixture everybody shares or one each, which nobody has decided.
 - **Whether a player really HAD the item they used is still their own machine's word.** The use crosses as a message naming the ITEM, and the server acts on it; the check that it was in the bag lands when the bag check moves server-side.
 - **Lifesteal and mana leech only pay out for a player attacker.** A creature having lifesteal is new gameplay nobody has specified, so it was deliberately not invented.
 - **One thing on a player's own machine still works numbers out**: the equip-hover comparison ("ATK 220 → 248"), a preview of a loadout the server has not been asked about. A skill's tooltip shows no damage estimate at all.

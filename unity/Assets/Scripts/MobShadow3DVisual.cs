@@ -285,6 +285,7 @@ public class MobShadow3DVisual : Agent3DVisual
         // set on a watched copy too because the blow was announced to this machine. It used to be inferred here from
         // the health number dropping, which made two owners of one reaction.
         if (status != null && status.MovementFlinched) it.flinching = true;
+        if (status != null) it.flinchCount = status.FlinchCount;
     }
 
     /// <summary>Show or hide the 3D body. The billboard death path hides the SPRITE, which a shadow doesn't render —

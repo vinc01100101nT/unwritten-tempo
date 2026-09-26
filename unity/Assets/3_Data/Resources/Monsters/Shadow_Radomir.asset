@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: Bear
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1
   level: 115
   str: 78
   agi: 62

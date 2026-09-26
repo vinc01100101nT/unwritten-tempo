@@ -1,15 +1,15 @@
 ---
 status: "PROPOSAL, partly built. Agreed with the user on 2026-09-25: three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), so players travel the whole world; a big city for each one-family weapon and a small town for each two-family weapon, on the border between its two regions; Lastline in Might; the map in use for now is the painted world-map picture in the project (it can be replaced); the 59 maps of the three regions are generated and wired (2026-09-26, not yet walked in play), with the hand-made lastline as Lastline; five dungeons of 2 to 4 floors with an elite on each bottom floor; elites live everywhere, like normal creatures; the fourteen shadows' elements below; every shadow waits at its own place, a special map away from where players level, entered by quest, key, guide, world clock or a hidden way. The game uses no real-country culture. NOT settled: everything listed under Still open."
 owner: vince
-last-updated: 2026-09-25
+last-updated: 2026-09-26
 tags:
   - world-content
 ---
 
 # The World Map — Three Regions
 
-A full redesign of the world. **Only `lastline` survives**, as the town every new character starts in. Every other map
-today is set aside.
+A full redesign of the world. **Only `lastline` survives**, as the town every new character starts in. Every other
+old map was deleted on 2026-09-26.
 
 ## The shape: three regions, three level tiers
 
@@ -105,10 +105,10 @@ level**: a shadow needs a guild to bring down, and meeting one in a levelling fi
 | Firearm | Shadow | **The Dusk Tower** — a bell tower above a city where the sun is always setting. The shadow fires once, from the top. | **World clock**: the door opens only at dusk. |
 | Greatsword | Ghost | **The Walking Road** — a road through fog that keeps going as long as you walk it, ending at a black castle. | **World clock**: the road appears only in fog. |
 | Scythe | Undead | **The Drowned Chapel** — a chapel at the bottom of a black cove, whose bell still rings underwater. | **Hidden**: find the way down yourself. |
-| Fist | Holy | *not named yet* — a mountain monastery under the aurora. | **Quest**: the monastery's trials. |
+| Fist | Neutral | *not named yet* — a mountain monastery under the aurora. | **Quest**: the monastery's trials. |
 | Kick | Wind | *not named yet* | **Hidden**: a path nobody marks. |
 
-- **All ten elements are covered**; Wind is held by three shadows, Fire and Holy by two each.
+- **All ten elements are covered**; Wind is held by three shadows, Fire and Neutral by two each.
 - The shadows' names are not settled (see Still open), so this table names them by weapon.
 
 ## Biomes and elements
@@ -120,18 +120,18 @@ of the ten elements is the majority somewhere.
 | Biome | Most creatures | Also found | Exists today? |
 | --- | --- | --- | --- |
 | Grassland | Neutral | Earth, Wind, Poison | yes |
-| Forest | Earth | Poison, Wind, Neutral | yes (in the map generator; no world map uses it yet) |
-| Highland | Earth | Wind, Neutral | yes (in the map generator; no world map uses it yet) |
-| Peaks | Wind | Holy, Water | yes (in the map generator; no world map uses it yet) |
-| Steppe | Wind | Neutral, Earth | yes (in the map generator; no world map uses it yet) |
-| Coast | Water | Wind, Undead | yes (in the map generator; no world map uses it yet) |
+| Forest | Earth | Poison, Wind, Neutral | yes |
+| Highland | Earth | Wind, Neutral | yes |
+| Peaks | Wind | Holy, Water | yes |
+| Steppe | Wind | Neutral, Earth | yes |
+| Coast | Water | Wind, Undead | yes |
 | Snow | Water | Wind, Earth, Shadow | yes |
 | Volcanic | Fire | Earth, Undead | yes |
 | Desert | Fire | Earth, Poison, Undead | yes |
-| Swamp | Poison | Water, Undead | yes (in the map generator; no world map uses it yet) |
-| Sacred | Holy | Neutral, Wind, Ghost | yes (in the map generator; no world map uses it yet) |
-| Haunted | Undead | Ghost, Shadow, Water | yes (in the map generator; no world map uses it yet) |
-| Mist | Ghost | Shadow, Undead, Wind | yes (in the map generator; no world map uses it yet) |
+| Swamp | Poison | Water, Undead | yes |
+| Sacred | Holy | Neutral, Wind, Ghost | yes |
+| Haunted | Undead | Ghost, Shadow, Water | yes |
+| Mist | Ghost | Shadow, Undead, Wind | yes |
 | Corrupted | Shadow | Undead, Ghost, Poison | yes |
 
 **Each region uses its own biomes** (the region table above). A map's biome sets its creatures' majority element; a
@@ -166,6 +166,14 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
   range that crosses from one biome's creatures into the next draws from both. Every elite stands in each field
   whose range holds its level, and each bottom floor holds the strongest elite at or below its dungeon's top level
   (Old Tunnels 11, Mines 33, Canyon Temple 61, Lava Tubes 77, Haunted Deep 99). Cities and towns have none.
+- **Every creature's element (2026-09-26)**, chosen from what the creature is and the biomes of the maps it lives
+  in, inside its tier (Might only Neutral, Earth and Water; Finesse adds Wind and Fire; Arcane adds the other five);
+  the twelve shadows as in the table above. Normals and elites now hold Earth 16, Water 15, Fire 14, Wind 11,
+  Neutral 9, Undead 6, Poison 4, Shadow 4, Ghost 3, Holy 2. **In 24 of the 45 fields and dungeon floors the biome's
+  main element is also the most common one among its creatures; in the other 21 it cannot be**, because a map takes
+  every creature whose level falls in its range, so two maps of different biomes with the same levels hold the same
+  creatures (the level 67–71 and 72–76 fields are each a volcanic map and a haunted map), and a range can fall on sea
+  creatures in a steppe (the 39–44 field).
 - **The in-game world map (N)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
 
 ## Still open
@@ -187,8 +195,6 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
 
 ## What this needs that the game does not have yet
 
-- **Elements on every creature.** Today the 96 creatures use only five elements (Neutral 16, Water 19, Earth 25,
-  Fire 18, Wind 18), and the shadows only four. Every creature and all fourteen shadows need re-assigning.
 - **A counter for Holy, Shadow and Poison.** At a shadow's element level (3), nothing a player can attack with today
   does more than 100% to a Holy, Shadow or Poison shadow. A Ghost shadow takes 0 from a plain attack, so a converter
   is required to hurt it. **The counter will come from skill buffs and cards**, both still to be built.
@@ -199,8 +205,9 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
 - **Keys**: an item that opens a door.
 - **The Fist and Kick shadows**, and their weapons.
 - **Guilds and castle gameplay.** There are no guilds in the game yet; castle gameplay is deferred.
-- **Buildings for the cities and towns.** All fourteen biomes are in the map generator, each on its own ground tiles, but
-  no world map uses the nine new ones yet, no creature belongs to them yet, and props exist for nine of the fourteen.
+- **Buildings for the cities and towns.** All fourteen biomes are in the map generator, each on its own ground tiles, and
+  the new world's maps use all of them; no creature belongs to the nine new ones yet, and props exist for nine of the
+  fourteen.
   What each biome looks like is [Biomes — Ground Tiles and Props](biomes.md).
 
 ## Related

@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.slime2
   displayName: Slime2
   kind: 0
-  size: 1
+  size: 0
   biome: 3
   sheet: Slime2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.0600001
   level: 79
   str: 52
   agi: 42
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 5
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

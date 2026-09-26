@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 7503439337392131614}
   - component: {fileID: 8015065726633714619}
   - component: {fileID: 7727775668815901633}
+  - component: {fileID: 5019353816352343215}
   - component: {fileID: 5620196424794534944}
   m_Layer: 9
   m_Name: DemonCyclop
@@ -41,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.505, y: 1.505, z: 1.505}
+  m_LocalScale: {x: 1.0605406, y: 1.0605406, z: 1.0605406}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -157,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
   moveSpeed: 1.7
-  agentRadius: 0.3
+  agentRadius: 0.31816217
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -213,7 +214,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -231,6 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 2
   simulateRadius: 28
 --- !u!114 &6101228549899214778
 MonoBehaviour:
@@ -308,6 +309,8 @@ MonoBehaviour:
     frames: 6
     footPx: 6
   stripPixelsPerUnit: 50
+  crownAtScaleOne: 0.74
+  paintedWidthAtScaleOne: 0.78
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -390,6 +393,20 @@ MonoBehaviour:
   goldMax: 500
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &5019353816352343215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3198755550373633404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.3924
+  halfWidth: 0.41361082
 --- !u!114 &5620196424794534944
 MonoBehaviour:
   m_ObjectHideFlags: 0

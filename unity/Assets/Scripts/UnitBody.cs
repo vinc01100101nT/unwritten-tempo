@@ -15,8 +15,9 @@ using UnityEngine;
 /// cast bar, target marker and — worse — every projectile homing point and cursor snap point inherited that error.</para>
 ///
 /// <para>PERFORMANCE: a plain field written ONCE when the body is built. <see cref="UnitAnchor"/> reads it with a
-/// single non-allocating <c>TryGetComponent</c>; a billboard mob carries no <see cref="UnitBody"/> at all, so it
-/// takes the fast miss and keeps the scale rule it has always used.</para>
+/// single non-allocating <c>TryGetComponent</c>. A baked billboard mob carries one too, written when its size is
+/// fitted (<see cref="BillboardAnimator3D.FitToHeight"/>), so its anchors sit on its measured art; a billboard with
+/// none keeps the scale rule.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class UnitBody : MonoBehaviour

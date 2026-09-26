@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.mouse
   displayName: Mouse
   kind: 0
-  size: 1
+  size: 0
   biome: 2
   sheet: Mouse
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.13
   level: 57
   str: 36
   agi: 31

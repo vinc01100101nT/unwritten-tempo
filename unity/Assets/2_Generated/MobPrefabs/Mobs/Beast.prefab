@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 8749244296652795994}
   - component: {fileID: 938843856747705068}
   - component: {fileID: 5779536960660928642}
+  - component: {fileID: 8696696243873036402}
   m_Layer: 9
   m_Name: Beast
   m_TagString: Untagged
@@ -40,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
+  m_LocalScale: {x: 0.87200004, y: 0.87200004, z: 0.87200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -212,7 +213,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -230,6 +230,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 2
   simulateRadius: 28
 --- !u!114 &3910655737506619508
 MonoBehaviour:
@@ -307,6 +308,8 @@ MonoBehaviour:
     frames: 0
     footPx: 0
   stripPixelsPerUnit: 0
+  crownAtScaleOne: 0.9
+  paintedWidthAtScaleOne: 1
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -389,3 +392,17 @@ MonoBehaviour:
   goldMax: 12
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &8696696243873036402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 449070445682894043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.3924
+  halfWidth: 0.43600002

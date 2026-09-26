@@ -73,3 +73,4 @@
 - [Mob stats dropped by an unserializable struct](../mob-stats-dropped-by-unserializable-struct.md) — every creature loaded at level 1 with all primaries 1: the baked stat block struct lacked [System.Serializable]; fix = the marker + re-bake all 84.
 - [Ring picks were client-only](../ring-pick-was-client-only.md) — resets on login + no stats: no server request existed; now CmdPickRingStat + TargetRing, server-rolled wildcard.
 - [Creature mastery never reached the prefab](../creature-mastery-never-baked.md) — every creature knew none of its weapon skills: `ToArchetype` dropped `weaponMasteryLevel`; fixed 2026-09-22 + re-bake.
+- [Stand-and-fight latch stayed on past reach](../stand-and-fight-latch-outside-reach.md) — "stops chasing, needs a re-click": a target parked between reach and reach×1.4 froze the attacker; margin moved INSIDE reach 2026-09-26 (players + creatures).

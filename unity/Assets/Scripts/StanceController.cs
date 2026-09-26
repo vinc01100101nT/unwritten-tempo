@@ -62,6 +62,12 @@ public class StanceController : MonoBehaviour
     StanceId actionId;
     float actionWindow;              // runtime window seconds for a FitWindow action (0 = none); for Jump/Fall = clip freeze seconds
     bool actionRelease;             // Jump/Fall only: release the frozen clip and play the landing tail (see PlayClipPhase)
+    int actionBeat;
+    // The action and beat that were ON SCREEN last frame. A new beat of the same action starts its clip over from the
+    // first frame; anything else (a different action, or no action last frame) enters it the ordinary way.
+    bool shownAction;
+    StanceId shownActionId;
+    int shownActionBeat;
 
     // Self-expiring action OVERRIDE — a fire-and-forget one-shot (a skill release) that outranks even the brain's
     // per-frame action, so it can't be stomped by locomotion mid-play. Set once via PlayActionFor; auto-clears when
@@ -144,10 +150,11 @@ public class StanceController : MonoBehaviour
 
     /// <summary>Drive an action stance THIS frame (overrides any held stance). <paramref name="window"/> is the
     /// runtime duration a FitWindow stance fits its clip to (e.g. attacker.SwingTime, dash length); ignored for other
-    /// sources. Call every frame the action holds; <see cref="ClearAction"/> when it ends.</summary>
-    public void DriveStance(StanceId id, float window = 0f, bool release = false)
+    /// sources. Call every frame the action holds; <see cref="ClearAction"/> when it ends. <paramref name="beat"/>
+    /// names which beat of this action it is: a new number while the same action is showing starts its clip over.</summary>
+    public void DriveStance(StanceId id, float window = 0f, bool release = false, int beat = 0)
     {
-        hasAction = true; actionId = id; actionWindow = window; actionRelease = release;
+        hasAction = true; actionId = id; actionWindow = window; actionRelease = release; actionBeat = beat;
     }
 
     /// <summary>Drop the action stance so the held-stance layer (or the fallback) resolves.</summary>
@@ -288,6 +295,7 @@ public class StanceController : MonoBehaviour
     StanceId saidPose;
     float saidPoseWindow;
     bool saidPoseRelease;
+    int saidPoseBeat;
     bool saidHasHeld;
     StanceId saidHeld;
     float saidHeldWindow;
@@ -310,16 +318,16 @@ public class StanceController : MonoBehaviour
     ///
     /// <para>Only the body at THIS keyboard reports; a watched copy of somebody else is showing what it was told and
     /// has nothing of its own to say.</para></summary>
-    void ReportToWatchers(bool hasPose, StanceId poseId, float window, bool release,
+    void ReportToWatchers(bool hasPose, StanceId poseId, float window, bool release, int beat,
                           bool hasHeld, StanceId heldId, float heldWindow)
     {
         if (hasPose && !StanceCatalog.WatchersMustBeTold(poseId)) hasPose = false;
 
-        if (hasPose != saidHasPose || (hasPose && (poseId != saidPose || release != saidPoseRelease
+        if (hasPose != saidHasPose || (hasPose && (poseId != saidPose || release != saidPoseRelease || beat != saidPoseBeat
                                                    || Mathf.Abs(window - saidPoseWindow) > WindowEpsilon)))
         {
-            saidHasPose = hasPose; saidPose = poseId; saidPoseWindow = window; saidPoseRelease = release;
-            GameNetwork.ReportDrivenStance(hasPose, poseId, window, release);
+            saidHasPose = hasPose; saidPose = poseId; saidPoseWindow = window; saidPoseRelease = release; saidPoseBeat = beat;
+            GameNetwork.ReportDrivenStance(hasPose, poseId, window, release, beat);
         }
 
         if (hasHeld != saidHasHeld || (hasHeld && (heldId != saidHeld
@@ -338,7 +346,7 @@ public class StanceController : MonoBehaviour
     /// it on their own screen and hold none on anybody else's, until the next time they happened to change.</para></summary>
     public void ForgetWhatWasSaid()
     {
-        saidHasPose = false; saidPose = default; saidPoseWindow = 0f; saidPoseRelease = false;
+        saidHasPose = false; saidPose = default; saidPoseWindow = 0f; saidPoseRelease = false; saidPoseBeat = 0;
         saidHasHeld = false; saidHeld = default; saidHeldWindow = 0f;
     }
 
@@ -370,8 +378,13 @@ public class StanceController : MonoBehaviour
         if (Player == this)
         {
             bool hasHeld = HeldWinner(out var heldId, out float heldWindow);
-            ReportToWatchers(hasAction, actionId, actionWindow, actionRelease, hasHeld, heldId, heldWindow);
+            ReportToWatchers(hasAction, actionId, actionWindow, actionRelease, actionBeat, hasHeld, heldId, heldWindow);
         }
+
+        // Cleared here and set again only by the action branch below, so every other branch counts as "no action
+        // on screen" and the next action enters the ordinary way.
+        bool actionWasShown = shownAction;
+        shownAction = false;
 
         // 0) One-shot action override (skill release) — beats even the brain's per-frame action until it expires.
         if (Time.time < overrideUntil)
@@ -393,7 +406,14 @@ public class StanceController : MonoBehaviour
         if (hasAction)
         {
             var b = StanceCatalog.Get(actionId);
-            if (b != null) { driving = true; currentResolved = actionId; ApplyStance(b, actionWindow, actionRelease); return; }
+            if (b != null)
+            {
+                bool newBeat = actionWasShown && shownActionId == actionId && shownActionBeat != actionBeat;
+                shownAction = true; shownActionId = actionId; shownActionBeat = actionBeat;
+                driving = true; currentResolved = actionId;
+                ApplyStance(b, actionWindow, actionRelease, seekTo: newBeat ? 0f : -1f);
+                return;
+            }
         }
 
         // 2) Highest-priority active, BAKED held stance. Ties break toward the most-recently pushed (active is in push

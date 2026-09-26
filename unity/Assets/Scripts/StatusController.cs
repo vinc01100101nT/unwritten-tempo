@@ -180,6 +180,10 @@ public class StatusController : MonoBehaviour
     /// <see cref="ActionLocked"/>: a flinched unit still swings, casts and presses skills — it just can't walk.</summary>
     public bool MovementFlinched => Time.time < flinchUntil;
 
+    /// <summary>How many flinches this unit has started. Goes up by one each time a hit actually staggers it, so
+    /// whatever draws the hurt reaction can tell a fresh hit from the one it is already showing and start over.</summary>
+    public int FlinchCount { get; private set; }
+
     /// <summary>Every disable turned away — the bought window (a skill granted it), not the earned one.</summary>
     public bool DisablesBlocked { get { var st = states; return st != null && st.DisablesBlocked; } }
 
@@ -206,6 +210,7 @@ public class StatusController : MonoBehaviour
         if (FlinchImmune) return;
 
         flinchUntil = Mathf.Max(flinchUntil, Time.time + FlinchSeconds());
+        FlinchCount++;
 
         int max = Unit != null ? Unit.MaxHP : 0;
         if (max <= 0) return;

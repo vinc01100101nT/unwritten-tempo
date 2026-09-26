@@ -73,8 +73,6 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | --- | --- | --- |
 | **Import NinjaAdventure Monsters** | Bulk-creates a `MonsterDef` asset in `Resources/Monsters` for every sprite folder under `Actor/Monster` (mobs) + `Actor/Boss` (bosses), pre-tagged with a `Biome` and a level (mobs: 3 per biome×level-band cell + the remainder as biome-agnostic commons; bosses: 1 per cell, made **elites**). Idempotent — skips assets that already exist. *Re-runnable.* | Standing up / refreshing the biome-grouped mob roster. (`MobBiomeImporter.cs`) |
 | **Bake Mob Prefabs** | Bakes every `MonsterDef` in `Resources/Monsters` into a prefab under `2_Generated/MobPrefabs/Mobs/<name>` and marks it **Addressable** (group `Mobs`, address `Mobs/<name>`) — built via `RigBuilder25D.BuildMonster`, `BossBanner` added for elites and shadows. This is what lets every creature be made from data during Play — the world spawn list, the summon skill and the `/summon <count> <normal\|elite\|shadow\|creature>` chat command (the builder is editor-only). *Re-runnable; overwrites in place.* | After adding/editing mob assets, so `/summon` can spawn them. (`MobPrefabBaker.cs`) |
-| **Spawn Training Dummy** | Spawns an inert, click-targetable mob (10M HP, no aggro/movement, full-HP reset every 5s) so you can read your damage/DPS off the same HP plate + target readout every mob uses. *Re-runnable.* | Measuring damage/DPS. (`TrainingDummyTool.cs`) |
-| **Clear Training Dummy** | Removes the training dummy. | Cleanup after a damage test. (`TrainingDummyTool.cs`) |
 
 ---
 

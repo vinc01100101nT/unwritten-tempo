@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: GreenOctopus
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.92
   level: 34
   str: 24
   agi: 17

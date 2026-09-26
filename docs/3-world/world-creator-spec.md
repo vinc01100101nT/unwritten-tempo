@@ -1,5 +1,5 @@
 ---
-status: Both parts built; the pipeline has produced the 59 maps of the three-region world (2026-09-26), beside 41 older maps now set aside
+status: Both parts built; the pipeline has produced the 59 maps of the three-region world (2026-09-26); the 40 older maps were deleted the same day
 owner: vince
 last-updated: 2026-09-26
 tags:
@@ -162,7 +162,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the map's centre, where the plaza sits — no arrival point is placed there any more, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
-**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `lastline` (Lastline, hand-made) kept as it is. The 41 maps it produced before are set aside and stay on disk. The layout's 14 shadow places are not generated yet.
+**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `lastline` (Lastline, hand-made) kept as it is. The 40 maps it produced before, besides Lastline, were deleted on 2026-09-26. The layout's 14 shadow places are not generated yet.
 
 ---
 

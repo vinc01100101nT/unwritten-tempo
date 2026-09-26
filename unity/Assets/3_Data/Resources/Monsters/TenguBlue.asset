@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.tengublue
   displayName: TenguBlue
   kind: 1
-  size: 1
+  size: 0
   biome: 3
   sheet: TenguBlue
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 2.6
   level: 77
   str: 50
   agi: 30

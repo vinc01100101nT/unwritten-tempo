@@ -66,11 +66,13 @@ public static class UnitOffense
     ///
     /// <para>It is STICKY on purpose. A plain distance test flips true and false on alternate frames against a target
     /// hovering at the edge of reach, and everything hanging off it flips with it: the feet start and stop, the step
-    /// sounds machine-gun, and the body snaps between standing and walking. So it turns on at reach and stays on
-    /// until the target has drifted, by the one authored factor on the shared character spec, past its reach.</para>
+    /// sounds machine-gun, and the body snaps between standing and walking. So it turns on a margin INSIDE reach — reach
+    /// divided by the one authored factor on the shared character spec — and stays on until the target is past reach.</para>
     ///
-    /// <para><b>It never extends reach.</b> Landing a blow still asks the strict distance; this only answers whether
-    /// to stand still, which is why the extra margin costs nothing.</para>
+    /// <para><b>It never stands where the blow cannot land.</b> The margin sits inside reach, never outside it. It used
+    /// to sit outside — on at reach, off at reach times the factor — and a target standing in that outer band held the
+    /// asker planted and swinging at nothing, forever: MEASURED 2026-09-26, a spider biting from 0.327 away against a
+    /// reach of 0.325, the person neither swinging nor stepping in until something reset the question.</para>
     ///
     /// <para>Held as a value on the asker — the player's attacker and every creature's brain — so one description of
     /// "stand and fight" serves both. Before this, the person at the keyboard stopped the moment they could swing and
@@ -80,25 +82,36 @@ public static class UnitOffense
         Object at;      // who the answer below is about; a different target starts the question again
         bool engaged;
 
-        /// <summary>Answer for this frame. Both figures are SQUARED — every caller here already has the squared gap
+        /// <summary>Answer for this frame, for a body that walks in to fight: on once the gap is inside reach by the
+        /// margin, off once it is past reach. Both figures are SQUARED — every caller here already has the squared gap
         /// in hand and this runs on every creature every frame, so squaring the reach costs one multiply where taking
         /// the root of the gap would cost a square root per creature. They must be measured the same way as each other
         /// and as the blow itself.</summary>
         public bool Ask(Object target, float distanceSqr, float reachSqr)
+            => Between(target, distanceSqr, reachSqr / MarginSqr, reachSqr);
+
+        /// <summary>The same answer for a creature that HOLDS a shooting distance instead of walking in. Its feet are
+        /// steered by that distance and never by this, so it cannot be stranded by it; this only says whether it may
+        /// shoot, and it keeps the margin OUTSIDE the distance so a target edging just past it is not let off.</summary>
+        public bool AskHolding(Object target, float distanceSqr, float holdSqr)
+            => Between(target, distanceSqr, holdSqr, holdSqr * MarginSqr);
+
+        bool Between(Object target, float distanceSqr, float onWithinSqr, float offPastSqr)
         {
             if (target == null) { engaged = false; at = null; return false; }
             if (target != at) { engaged = false; at = target; }
 
-            if (distanceSqr <= reachSqr) engaged = true;
-            else
-            {
-                // READ FROM THE ONE AUTHORED HOME, here and nowhere else, so there is exactly one place this number
-                // exists and one place it is read. It used to be an authored field on the player and a number written
-                // into this file for creatures — same rule, one side tunable and the other not.
-                float stay = Mathf.Max(1f, CharacterSpec.Active.stayEngagedFactor);
-                if (distanceSqr > reachSqr * stay * stay) engaged = false;
-            }
+            if (distanceSqr <= onWithinSqr) engaged = true;
+            else if (distanceSqr > offPastSqr) engaged = false;
             return engaged;
+        }
+
+        // READ FROM THE ONE AUTHORED HOME, here and nowhere else, so there is exactly one place this number exists and
+        // one place it is read. It used to be an authored field on the player and a number written into this file for
+        // creatures — same rule, one side tunable and the other not.
+        static float MarginSqr
+        {
+            get { float m = Mathf.Max(1f, CharacterSpec.Active.stayEngagedFactor); return m * m; }
         }
     }
 }

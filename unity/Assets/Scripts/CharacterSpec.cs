@@ -139,10 +139,12 @@ public class CharacterSpec : ScriptableObject
              "moment — instead of right at the end.")]
     [Range(0.1f, 1f)] public float hitTiming = 0.70f;
 
-    [Tooltip("Once close enough to stand and fight, keep standing until the target has drifted this many times your " +
-             "reach away. Stops the stand-vs-chase decision flickering against somebody hovering right at the edge " +
-             "of reach, which otherwise machine-guns the footsteps and snaps the body between standing and walking. " +
-             "It never extends reach — landing a blow still asks the strict distance.")]
+    [Tooltip("How far inside reach a fighter stops walking in: it stops at reach divided by this, then stays put " +
+             "until the target moves past its full reach, and chases again. Stops the stand-vs-chase decision " +
+             "flickering against somebody hovering at the edge of reach, which otherwise machine-guns the footsteps " +
+             "and snaps the body between standing and walking — and never leaves anyone standing where their blow " +
+             "cannot land. A creature that holds a shooting distance keeps shooting until the target is this many " +
+             "times that distance away.")]
     [Range(1f, 3f)] public float stayEngagedFactor = 1.4f;
 
     // WHY IT LIVES HERE: this is one question — "am I close enough to stand and fight" — and every character asks it.

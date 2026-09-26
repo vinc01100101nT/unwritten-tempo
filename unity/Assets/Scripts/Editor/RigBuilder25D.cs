@@ -11,9 +11,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// The shared 2.5D rig-builder library (RO-style look). Its public helpers (BuildPlayer/Camera/Light/
-/// Character/HUD/Cursor/Monster, BillboardScale, EnsureUniversalRenderer, MonsterSheet) build
+/// Character/HUD/Cursor/Monster, EnsureUniversalRenderer, MonsterSheet) build
 /// the LIVE-3D rigged player + camera-facing <see cref="Billboard"/> mobs/NPCs on a 3D map viewed from a tilted camera,
-/// and are called by SystemsSceneBuilder, RegionBuilder, RecipeGenerator and TrainingDummyTool.
+/// and are called by SystemsSceneBuilder, RegionBuilder and RecipeGenerator.
 ///
 /// It adds a 3D (Universal) Renderer ALONGSIDE the existing 2D one; index 0 (Systems) is untouched. Safe to re-run.
 /// Load-bearing: deleting this class breaks the whole editor build pipeline.
@@ -29,13 +29,8 @@ public static class RigBuilder25D
     // clip (raise) or float (lower). (Sheets are isReadable:0, so we can't auto-measure the padding.)
     public const float SpriteFoot = SpriteSheetCache.MobFootPivotY;
 
-    // Size of the 2D billboards (mobs / NPCs) RELATIVE to the 3D map. 1 = one world cell tall;
-    // 0.7 = 30% smaller than that. One shared knob so every billboard builder matches. ONLY affects the
-    // 2.5D scenes built here (the legacy 2D game has been removed).
-    public const float BillboardScale = 0.7f;
-
-    // The live-3D player's root scale. Same value as BillboardScale for now, but OWNED SEPARATELY so the
-    // player no longer rides the mob billboard knob (tuning mob size must not resize the player). NOTE: this
+    // The live-3D player's root scale. A mob's size is its own (MobSizes), so tuning mob size never resizes the
+    // player. NOTE: this
     // multiplies the child avatar's own TargetHeight normalization AND its CharacterController capsule, so
     // changing it is a gameplay tweak (height + collision) — playtest before touching.
     public const float PlayerScale = 0.7f;
@@ -262,7 +257,7 @@ public static class RigBuilder25D
             arc.name       = "Mystic";
             arc.tint       = new Color(0.62f, 0.72f, 1f);   // arcane blue marks a caster
         }
-        return BuildMonster(tex, foot, arc);
+        return FitBody(BuildMonster(tex, foot, arc), arc);
     }
 
     /// <summary>Build a mob from a <see cref="MonsterArchetype"/>, resolving its sprite sheet by name
@@ -276,18 +271,103 @@ public static class RigBuilder25D
             anim.idleStrip = idle;
             anim.walkStrip = walk;
             anim.stripPixelsPerUnit = ppu;
-            return go;
+            return FitBody(go, arc);
         }
-        return BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc);
+        return FitBody(BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc), arc);
+    }
+
+    /// <summary>Measure the art this mob plays, then put its size on its body through the one door the spawner uses
+    /// too (<see cref="MobBody.Fit"/>). Last, because strip art is only attached after the core builder returns.</summary>
+    static GameObject FitBody(GameObject go, in MonsterArchetype arc)
+    {
+        var anim = go.GetComponent<BillboardAnimator3D>();
+        if (anim != null) MeasureArt(anim);
+        MobBody.Fit(go, arc.kind, arc.size);
+        return go;
+    }
+
+    /// <summary>How far the tallest played frame's crown sits above its feet line, and how wide the widest frame's
+    /// painted part is, in world units at scale one — read from the picture's own pixels, so padding in the art never
+    /// counts toward a creature's height. Grid art: the walk frames at the top of the four direction columns, feet
+    /// line at <see cref="SpriteFoot"/> of a cell. Strip art: every frame of the idle and walk rows, feet line at the
+    /// strip's own foot row.</summary>
+    static void MeasureArt(BillboardAnimator3D anim)
+    {
+        float crown = 0f, width = 0f;
+        if (anim.idleStrip.sheet != null)
+        {
+            MeasureStrip(anim.idleStrip, anim.stripPixelsPerUnit, ref crown, ref width);
+            MeasureStrip(anim.walkStrip, anim.stripPixelsPerUnit, ref crown, ref width);
+        }
+        else if (anim.sheet != null && anim.cell > 0 && ReadPixels(anim.sheet, out var px, out int w, out int h))
+        {
+            int cols = Mathf.Max(1, w / anim.cell), rows = Mathf.Max(1, h / anim.cell);
+            int frames = Mathf.Clamp(anim.walkFrames, 1, rows);
+            for (int c = 0; c < 4; c++)
+                for (int r = 0; r < frames; r++)
+                    MeasureFrame(px, w, Mathf.Min(c, cols - 1) * anim.cell, h - (r + 1) * anim.cell, anim.cell, anim.cell,
+                                 SpriteFoot * anim.cell, anim.cell, ref crown, ref width);
+        }
+        if (crown <= 0f) Debug.LogWarning($"[unwritten] {anim.name}: no painted pixels measured — its size can't be fitted.");
+        anim.crownAtScaleOne = crown;
+        anim.paintedWidthAtScaleOne = width;
+    }
+
+    static void MeasureStrip(in BillboardAnimator3D.StripClip clip, int ppu, ref float crown, ref float width)
+    {
+        if (clip.sheet == null || clip.frames <= 0 || ppu <= 0) return;
+        if (!ReadPixels(clip.sheet, out var px, out int w, out int h)) return;
+        int fw = w / clip.frames;
+        for (int i = 0; i < clip.frames; i++)
+            MeasureFrame(px, w, i * fw, 0, fw, h, clip.footPx, ppu, ref crown, ref width);
+    }
+
+    // One frame (x, y = its bottom-left corner in pixels, Unity's bottom-up rows): the highest painted row above the
+    // feet line, and the painted span across.
+    static void MeasureFrame(Color32[] px, int texW, int x0, int y0, int fw, int fh, float footPx, int ppu,
+                             ref float crown, ref float width)
+    {
+        int top = -1, minX = int.MaxValue, maxX = -1;
+        for (int y = y0; y < y0 + fh; y++)
+            for (int x = x0; x < x0 + fw; x++)
+            {
+                if (px[y * texW + x].a == 0) continue;
+                if (y > top) top = y;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+            }
+        if (top < 0) return;
+        crown = Mathf.Max(crown, (top - y0 + 1 - footPx) / ppu);
+        width = Mathf.Max(width, (float)(maxX - minX + 1) / ppu);
+    }
+
+    // The picture's own pixels, read from its file — the imported texture is not readable, and switching its import
+    // setting to make it so would be a saved change nobody asked for.
+    static bool ReadPixels(Texture2D tex, out Color32[] px, out int w, out int h)
+    {
+        px = null; w = h = 0;
+        string path = AssetDatabase.GetAssetPath(tex);
+        if (string.IsNullOrEmpty(path) || !File.Exists(path)) return false;
+        var copy = new Texture2D(2, 2);
+        try
+        {
+            if (!copy.LoadImage(File.ReadAllBytes(path))) return false;
+            if (copy.width != tex.width || copy.height != tex.height)
+            {
+                Debug.LogWarning($"[unwritten] {path}: imported at {tex.width}x{tex.height} but the file is {copy.width}x{copy.height} — not measured.");
+                return false;
+            }
+            px = copy.GetPixels32(); w = copy.width; h = copy.height;
+            return true;
+        }
+        finally { Object.DestroyImmediate(copy); }
     }
 
     /// <summary>Core builder: stamp <paramref name="arc"/>'s stats / behavior / look onto the shared
     /// billboard-mob template using <paramref name="tex"/> as the sprite sheet.</summary>
     static GameObject BuildMonster(Texture2D tex, Vector3 foot, in MonsterArchetype arc)
     {
-        float scale = arc.scale <= 0f ? 1f : arc.scale;
         var go = new GameObject("Monster_" + (!string.IsNullOrEmpty(arc.name) ? arc.name : tex != null ? tex.name : "Unnamed"));
-        go.transform.localScale = Vector3.one * BillboardScale * scale;
         go.transform.position = foot;   // pivot = feet on the ground (foot-pivoted sprite renders up from here)
 
         var msr = go.AddComponent<SpriteRenderer>();
@@ -295,7 +375,7 @@ public static class RigBuilder25D
         go.AddComponent<Billboard>();
 
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
-        agent.moveSpeed = arc.moveSpeed; agent.agentRadius = 0.3f;
+        agent.moveSpeed = arc.moveSpeed; agent.agentRadius = MobBody.RoutingRadius;
         var cc = go.GetComponent<CharacterController>();
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, 0.5f, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // capsule STACKS UP from the feet pivot (bottom at y=0), walks gentle slopes
         int crowd = WorldBuildUtil.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)

@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: Lizard
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.0600001
   level: 37
   str: 26
   agi: 19
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 1
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

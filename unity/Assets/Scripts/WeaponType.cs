@@ -38,27 +38,18 @@ public static class WeaponTypes
     public static bool IsRanged(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
 }
 
-/// <summary>A mob's body size — pure data for now (nothing reads it in the slice). It's the column index of
-/// the deferred <see cref="WeaponSizes"/> modifier table; defaulting everything to <see cref="Medium"/>
-/// reproduces RO's "100% everywhere" baseline, so backfill is a no-op.</summary>
-public enum MobSize
-{
-    Small = 0,
-    Medium = 1,
-    Large = 2,
-}
-
 /// <summary>
 /// DEFERRED RO-style weapon-vs-size matchup, modelled exactly like <see cref="Elements"/>: a
 /// <c>[weaponType, mobSize]</c> multiplier on physical damage. <b>Not wired into combat yet</b> — this is the
 /// dormant data so flipping the mechanic on later is a one-line call (<see cref="Modifier"/>) with no data
 /// migration. Values are RO's size-penalty chart (the in-game table) normalised to multipliers (100→1.0).
-/// Defaults to 1.0 for anything unlisted, so it can never silently nerf a weapon you forgot to fill in.
+/// Defaults to 1.0 for anything unlisted, so it can never silently nerf a weapon you forgot to fill in — which
+/// includes <see cref="MobSize.XL"/>: the table has no XL column, and one is a design decision for when this is turned on.
 /// </summary>
 public static class WeaponSizes
 {
     public const int TypeCount = 13;   // WeaponType members
-    public const int SizeCount = 3;    // MobSize members
+    public const int SizeCount = 3;    // MobSize columns filled in (Small / Medium / Large)
 
     // T[weaponType, size] — rows in WeaponType order, columns Small / Medium / Large.
     //                              Sml    Med    Lrg

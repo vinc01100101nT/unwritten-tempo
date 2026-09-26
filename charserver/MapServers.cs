@@ -206,10 +206,19 @@ public sealed class MapServers(Config config)
         return best;
     }
 
-    /// <summary>Tell a map server to bring a map up. TRUE when it took the request — which means it has STARTED
-    /// loading, not that the map is standing. What proves it is standing is the map appearing in that server's
-    /// next registration.</summary>
-    public async Task<bool> AskToHostAsync(Registration to, string map, CancellationToken ct = default)
+    /// <summary>What a map server said to "bring this map up". <c>Taken</c> means it has STARTED loading, not that
+    /// the map is standing — what proves that is the map appearing in its next registration. <c>NoSuchMap</c> means
+    /// its build has no map by that name, and <c>Instead</c> names its starting map.</summary>
+    public enum HostAnswer { Taken, Failed, NoSuchMap }
+
+    /// <summary>Who is holding a map, or — when no build has it — the map to send somebody to instead.</summary>
+    public sealed record Held(Registration? Server, string? NoSuchMapInstead);
+
+    sealed record NoSuchMapReply(string? error, string? instead);
+
+    /// <summary>Tell a map server to bring a map up.</summary>
+    public async Task<(HostAnswer Answer, string? Instead)> AskToHostAsync(Registration to, string map,
+                                                                          CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, $"http://{to.Address}:{to.Port}/host")
         {
@@ -221,30 +230,39 @@ public sealed class MapServers(Config config)
         try
         {
             var reply = await wire.SendAsync(request, ct);
-            return reply.IsSuccessStatusCode;
+            if (reply.IsSuccessStatusCode) return (HostAnswer.Taken, null);
+            if (reply.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                var said = await reply.Content.ReadFromJsonAsync<NoSuchMapReply>(ct);
+                if (!string.IsNullOrWhiteSpace(said?.instead)) return (HostAnswer.NoSuchMap, said.instead);
+            }
+            return (HostAnswer.Failed, null);
         }
         catch (Exception e)
         {
             Console.Error.WriteLine($"[char] could not ask map server {to.Id} to host '{map}' — {e.Message}");
-            return false;
+            return (HostAnswer.Failed, null);
         }
     }
 
     /// <summary>Make sure SOMETHING is holding this map, bringing it up on the quietest process if nobody is.
-    /// Returns the server holding it, or null when there is nobody to ask or it never came up.
+    /// Returns the server holding it; no server when there is nobody to ask or it never came up; and, when the
+    /// build has no map by that name, the starting map the map server named instead.
     ///
     /// <para>It waits for the map to actually appear in a registration rather than trusting the request, because
     /// a map that has been asked for is not a map a player can be pushed into yet.</para></summary>
-    public async Task<Registration?> EnsureHeldAsync(string map, CancellationToken ct = default)
+    public async Task<Held> EnsureHeldAsync(string map, CancellationToken ct = default)
     {
         var already = Holding(map);
-        if (already is not null) return already;
+        if (already is not null) return new Held(already, null);
 
         var host = QuietestAlive();
-        if (host is null) return null;
+        if (host is null) return new Held(null, null);
 
         Console.WriteLine($"[char] nobody holds '{map}' — asking '{host.Id}' to bring it up (load {host.Load}).");
-        if (!await AskToHostAsync(host, map, ct)) return null;
+        var (answer, instead) = await AskToHostAsync(host, map, ct);
+        if (answer == HostAnswer.NoSuchMap) return new Held(null, instead);
+        if (answer != HostAnswer.Taken) return new Held(null, null);
 
         // A map has to load its ground and spawn its creatures before anybody can be put into it, and how long
         // that takes depends on what is in it. Asked for repeatedly rather than waited out in one go, so a map
@@ -253,11 +271,11 @@ public sealed class MapServers(Config config)
         {
             await Task.Delay(250, ct);
             var now = Holding(map);
-            if (now is not null) return now;
+            if (now is not null) return new Held(now, null);
         }
 
         Console.Error.WriteLine($"[char] '{map}' was asked for but never came up on '{host.Id}'.");
-        return null;
+        return new Held(null, null);
     }
 
     // ---- the ticket ------------------------------------------------------------------------------------

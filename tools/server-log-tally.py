@@ -5,11 +5,11 @@ nowhere. Then what every unit took from blows and from everything else, what it 
 (granted, spent, ran out), what its passives did (fired, skipped and why), experience earned, and who killed what.
 
 Each section needs its category on while playing: hit, heal, buff, passive, loot. Units are named by map and
-spawn_id ("field_15 Snake #3"), so two creatures of the same kind are counted separately.
+spawn_id ("lv_1_3 Snake #3"), so two creatures of the same kind are counted separately.
 
     tools/server-log-tally.py                                  # logs/server.log
     tools/server-log-tally.py logs/server-prev.log             # the run before
-    tools/server-log-tally.py --map field_15                   # one map only
+    tools/server-log-tally.py --map lv_1_3                   # one map only
     tools/server-log-tally.py --since "2026-09-15 23:27:00"    # only lines at or after this moment
     tools/server-log-tally.py --since 23:27:00                 # the same, on the date of the log's first game line
 

@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.mouseblack
   displayName: MouseBlack
   kind: 0
-  size: 1
+  size: 0
   biome: 3
   sheet: MouseBlack
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.13
   level: 75
   str: 49
   agi: 40

@@ -40,7 +40,7 @@ i=0; while [ $i -lt 60 ]; do curl -s -m 1 -o /dev/null http://127.0.0.1:7788/ 2>
 
 echo "1. a map server registers"
 R=$(curl -s -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
-  -d "{\"id\":\"stub-1\",\"address\":\"127.0.0.1\",\"port\":7788,\"playerPort\":7777,\"maps\":[\"lastline\",\"field_11\"],\"build\":\"$BUILD\"}")
+  -d "{\"id\":\"stub-1\",\"address\":\"127.0.0.1\",\"port\":7788,\"playerPort\":7777,\"maps\":[\"lastline\",\"lv_1_3\"],\"build\":\"$BUILD\"}")
 echo "$R" | grep -q '"holding":2' || fail "register: $R"
 ok "registered, holding 2 maps"
 

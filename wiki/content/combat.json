@@ -95,7 +95,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Monsters come in **Small, Medium, and Large** sizes, and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"
+      "text": "Monsters come in **Small, Medium, Large and XL** sizes (see *Monsters*), and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"
     },
     {
       "type": "heading",

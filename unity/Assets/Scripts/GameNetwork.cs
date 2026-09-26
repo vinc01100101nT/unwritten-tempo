@@ -2251,10 +2251,10 @@ public class GameNetwork : NetworkManager
 
     /// <summary>Tell the world which pose this body is HOLDING while it does something that takes time — a jump, a
     /// dodge, a flinch, a death. Sent on the change, and "nothing" is a change like any other.</summary>
-    public static void ReportDrivenStance(bool has, StanceId id, float window, bool release)
+    public static void ReportDrivenStance(bool has, StanceId id, float window, bool release, int beat)
     {
         var me = MyPlayer;
-        if (me != null) me.CmdDrivenStance(has, id, window, release);
+        if (me != null) me.CmdDrivenStance(has, id, window, release, beat);
     }
 
     /// <summary>Tell the world which standing pose is underneath all that — the guard, the cast, the seat.</summary>

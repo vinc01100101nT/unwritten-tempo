@@ -1,21 +1,10 @@
 {
-  "4cd5f5ca-a731-47c4-8bf9-65063f15803b": {
+  "6846ae7b-84f0-4b36-83c5-7b9b5cb27050": {
     "counts": {
-      "unwritten-server.app": 1
-    }
-  },
-  "73e119e7-a37e-450a-9160-8276de5c0157": {
-    "counts": {
-      "check-perf-hotpaths.py": 2,
-      "check-skill-data.py": 1,
-      "check-unity-code.sh": 7,
-      "npm start": 1,
-      "recompile": 4
+      "build-game.sh client": 2
     },
     "told": [
-      "check-perf-hotpaths.py",
-      "check-unity-code.sh",
-      "recompile"
+      "build-game.sh client"
     ]
   },
   "7c69e1a3-4830-490f-a8d2-3f1fccafeb0a": {
@@ -80,6 +69,11 @@
   "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
     "counts": {
       "editor_play": 1
+    }
+  },
+  "bcd2e086-c48f-4acf-a854-14cc8f9fec27": {
+    "counts": {
+      "unwritten-server.app globalgamemanagers": 1
     }
   },
   "ce1e2d28-d6de-418e-bfb1-d26ef3761083": {

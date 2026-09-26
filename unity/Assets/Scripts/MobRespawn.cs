@@ -141,7 +141,7 @@ public class MobRespawn : MonoBehaviour
         else { var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true; }
         Enable<MonsterAI3D>(mob); Enable<BillboardAnimator3D>(mob); Enable<AttackLunge>(mob);
         // Enable the controller BEFORE its mover so PathAgent3D never runs a frame against a disabled cc.
-        // Clamp stepOffset FIRST: BillboardAnimator3D scales mobs by UnitScale.ForMob, and once a mob is small
+        // Clamp stepOffset FIRST: a mob's body is scaled to its size (MobBody), and once a mob is small
         // enough the authored 0.3 step exceeds the capsule's climbable height (see ClampStepOffset for the exact
         // bound). Unity then rejects the enable and logs "Step Offset must be ≤ …" every respawn (floods during
         // the auto-pilot AI) — and a controller left disabled also spams "Move called on inactive controller". Fitting
@@ -182,7 +182,7 @@ public class MobRespawn : MonoBehaviour
     static void Enable<T>(GameObject go) where T : MonoBehaviour { var c = go.GetComponent<T>(); if (c != null) c.enabled = true; }
 
     // Unity rejects a CharacterController enable when stepOffset exceeds the capsule's climbable height, and our
-    // billboard mobs shrink at runtime (UnitScale.ForMob), so the authored 0.3 step overshoots once they're small.
+    // billboard mobs are scaled to their size (MobBody), so the authored 0.3 step overshoots once they're small.
     // The editor warning reads "≤ scaledHeight + scaledRadius·2", but the ACTUALLY-enforced bound is tighter:
     // PhysX treats CharacterController.height as the FULL capsule height (the two end-caps ARE the radius), so the
     // real allowance is the CYLINDER height (height − 2·radius, floored at 0) plus 2·radius, all scaled. Using the
@@ -190,7 +190,7 @@ public class MobRespawn : MonoBehaviour
     // Unity still threw (and a controller left disabled then spams "Move called on inactive controller"). We clamp
     // DOWN to the cylinder allowance with a margin that also absorbs the idle-breathe squash (which lowers scale.y
     // a few % after respawn) and float slop. Never raise — only shrink to keep the enable valid at any mob size.
-    static void ClampStepOffset(CharacterController cc)
+    public static void ClampStepOffset(CharacterController cc)
     {
         Vector3 s = cc.transform.lossyScale;
         float scaleY = Mathf.Abs(s.y);

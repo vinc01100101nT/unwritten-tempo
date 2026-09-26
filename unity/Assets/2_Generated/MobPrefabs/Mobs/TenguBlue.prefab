@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 8102399553204288119}
   - component: {fileID: 6330582370142946792}
   - component: {fileID: 954438288931147395}
+  - component: {fileID: 862768356542791263}
   - component: {fileID: 2442551487873153458}
   m_Layer: 9
   m_Name: TenguBlue
@@ -41,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.8199999, y: 1.8199999, z: 1.8199999}
+  m_LocalScale: {x: 0.18029189, y: 0.18029189, z: 0.18029189}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -140,7 +141,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.1622627
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -213,7 +214,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -231,6 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 0
   simulateRadius: 28
 --- !u!114 &2690119892892674642
 MonoBehaviour:
@@ -308,6 +309,8 @@ MonoBehaviour:
     frames: 10
     footPx: 22
   stripPixelsPerUnit: 68
+  crownAtScaleOne: 0.5441176
+  paintedWidthAtScaleOne: 0.8088235
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -390,6 +393,20 @@ MonoBehaviour:
   goldMax: 2000
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &862768356542791263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 327474179358839184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.04905
+  halfWidth: 0.072912164
 --- !u!114 &2442551487873153458
 MonoBehaviour:
   m_ObjectHideFlags: 0

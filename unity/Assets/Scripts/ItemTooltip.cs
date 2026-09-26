@@ -183,7 +183,56 @@ public class ItemTooltip : MonoBehaviour
         AppendAttackKind(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item);
+        AppendMaterialUse(sb, item);
         return sb.ToString();
+    }
+
+    // What a crafting material is FOR, under its description — read off its own kind and step, so every material
+    // (and every one authored later) says it without a line typed per item.
+    static void AppendMaterialUse(StringBuilder sb, Item item)
+    {
+        string use;
+        switch (item.materialKind)
+        {
+            case MaterialKind.Metal:
+            case MaterialKind.Cloth:
+            case MaterialKind.Leather:
+            {
+                if (item.materialStep < 1) return;
+                var grade = CraftingMath.GradeOfBand(item.materialStep);
+                string gear = item.materialKind.ToString().ToLowerInvariant() + " gear";
+                string graded = (grade == Quality.Raw ? "Raw" : grade.ToString()) + "-grade " + gear;
+                string station = CraftStations.Label(StationThatWorks(item.materialKind));
+                if (item.materialStep == 1)
+                    use = "Forges new " + gear + " at the " + station + ", and folds and quenches " + graded + ".";
+                else if (CraftingMath.CanQuench(grade))
+                    use = "Folds and quenches " + graded + " at the " + station + ".";
+                else
+                    use = "Folds " + graded + " at the " + station + ".";
+                break;
+            }
+            case MaterialKind.Ink:
+                use = "Writes one random stat onto a piece of gear. Stronger Ink writes a bigger number.";
+                break;
+            case MaterialKind.Salt:
+                use = "Put into a quench to raise its chance of going up a grade. Spent whether it works or not. " +
+                      "Stronger Salt raises it more.";
+                break;
+            default:
+                return;
+        }
+        sb.Append("\n\n<color=#7FD1C9>").Append(use);
+        if (CraftingMath.Merges(item.materialKind) && item.mergesInto != null)
+            sb.Append("\nMerge ").Append(CraftingMath.MergeCount).Append(" into 1 ").Append(item.mergesInto.displayName).Append('.');
+        sb.Append("</color>");
+    }
+
+    // CraftStations.Works read backwards, so which station works which material stays written in one place.
+    static CraftStation StationThatWorks(MaterialKind kind)
+    {
+        for (var s = CraftStation.Smith; s <= CraftStation.Tannery; s++)
+            if (CraftStations.Works(s) == kind) return s;
+        return CraftStation.None;
     }
 
     // What a consumable DOES, in the same words the skill's own card uses — read straight off the skill it runs

@@ -51,6 +51,7 @@ public abstract class Agent3DVisual : MonoBehaviour
     protected StanceId toldPose;
     protected float toldPoseWindow;
     protected bool toldPoseRelease;
+    protected int toldPoseBeat;
 
     /// <summary>Which travel gear this body is in, as a fact rather than a guess. Speed alone cannot tell a sprint
     /// from a hasted run — both are simply fast.</summary>
@@ -93,12 +94,13 @@ public abstract class Agent3DVisual : MonoBehaviour
     /// <para>TOLD rather than worked out, for the same reason the speed above is: almost everything a person's body
     /// does is decided on their own machine and nothing else on the wire describes it, so a body nobody told would
     /// walk, swing, and do nothing else for the whole of its life.</para></summary>
-    public void TellPose(bool has, StanceId pose, float window, bool release, bool sprinting)
+    public void TellPose(bool has, StanceId pose, float window, bool release, int beat, bool sprinting)
     {
         toldHasPose = has;
         toldPose = pose;
         toldPoseWindow = window;
         toldPoseRelease = release;
+        toldPoseBeat = beat;
         toldSprinting = sprinting;
     }
 
@@ -376,7 +378,7 @@ public abstract class Agent3DVisual : MonoBehaviour
         if (toldHasPose)
             dec = new CharacterBrain.Decision
             {
-                hasAction = true, id = toldPose, window = toldPoseWindow, release = toldPoseRelease,
+                hasAction = true, id = toldPose, window = toldPoseWindow, release = toldPoseRelease, beat = toldPoseBeat,
                 cancelOneShot = toldPose == StanceId.Die,
                 facing = it.facing.sqrMagnitude > 1e-6f ? it.facing.normalized : Vector3.zero,
                 applyFacing = it.facing.sqrMagnitude > 1e-6f,

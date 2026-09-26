@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.bluebat
   displayName: BlueBat
   kind: 0
-  size: 1
+  size: 0
   biome: 2
   sheet: BlueBat
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.99
   level: 48
   str: 31
   agi: 26

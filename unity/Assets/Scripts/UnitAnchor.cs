@@ -17,9 +17,9 @@ using UnityEngine;
 /// </summary>
 public static class UnitAnchor
 {
-    // Feet→centre distance in world units. A billboard is ~one world cell tall at its uniform scale; the
-    // usable body is ~0.8 of that (the rest is transparent foot/head padding), so half-height ≈ 0.4 × scale.
-    // lossyScale.y already folds in RigBuilder25D.BillboardScale, so this tracks per-mob scale automatically.
+    // Feet→centre distance in world units, for a billboard that states no measured body. A billboard is ~one world
+    // cell tall at its uniform scale; the usable body is ~0.8 of that (the rest is transparent foot/head padding), so
+    // half-height ≈ 0.4 × scale. A baked mob states its measured body (UnitBody, from its size), so this is the fallback.
     public const float HalfHeightFactor = 0.4f;
 
     /// <summary>Feet→centre distance (world units) for this unit.
@@ -27,10 +27,12 @@ public static class UnitAnchor
     /// <para>A unit carrying a <see cref="UnitBody"/> states its real half-height outright. That is every LIVE-3D
     /// character (player, townsfolk, shadow mobs), whose root scale is deliberately NOT its size — the body is a
     /// separately-fitted child, so the scale rule below reads the wrong number for them (measured: a shadow's centre
-    /// landed at 0.4 on a 0.327-tall body; the player's at 0.28 on that same body).</para>
+    /// landed at 0.4 on a 0.327-tall body; the player's at 0.28 on that same body) — and every baked billboard mob,
+    /// whose art is measured and fitted to its size's height (<see cref="MobBody"/>), so padding in the picture
+    /// never lifts its nameplate.</para>
     ///
-    /// <para>Everything else — the billboard mobs — keeps the scale rule, which is exactly right for them because the
-    /// sprite IS the root. The lookup is one non-allocating TryGetComponent and misses fast.</para></summary>
+    /// <para>A billboard that states no body keeps the scale rule. The lookup is one non-allocating
+    /// TryGetComponent.</para></summary>
     public static float HalfHeight(Transform t)
         => t.TryGetComponent<UnitBody>(out var b) && b.halfHeight > 0f
             ? b.halfHeight
@@ -39,9 +41,9 @@ public static class UnitAnchor
     /// <summary>How wide this unit's body is, from its middle out to one side, in world units.
     ///
     /// <para>Same two answers as <see cref="HalfHeight"/>, for the same reason. A LIVE-3D character states its
-    /// measured width outright, because its root scale is deliberately not its size. A billboard mob has no
-    /// measured width and keeps the scale rule, which is exactly right for it: the sprite IS the root, so the
-    /// horizontal scale is the body's width.</para>
+    /// measured width outright, because its root scale is deliberately not its size; a baked billboard mob states the
+    /// painted width of its art at its fitted scale. A billboard that states no width keeps the scale rule: the sprite
+    /// IS the root, so the horizontal scale is the body's width.</para>
     ///
     /// <para>The factor is shared with the height on purpose — a billboard's art sits in the same one-cell box
     /// with the same transparent padding on every side, so the usable body is the same fraction across as it is

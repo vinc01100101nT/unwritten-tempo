@@ -138,6 +138,7 @@ public class Character3DVisual : MonoBehaviour
             dashing       = player.Dashing || player.EDashing,
             dashWindow    = player.EDashing ? player.eDashDuration : 0.4f,
             flinching     = status != null && status.MovementFlinched,
+            flinchCount   = status != null ? status.FlinchCount : 0,
         };
 
         // A full 3D controller always has run and jump beats — that capability is structural, not a clip. Whether a

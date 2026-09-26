@@ -78,6 +78,9 @@ public static class CraftingMath
     /// multiplier on what a fold and a quench cost in gold.</summary>
     public static int Band(Quality q) => Index(q) + 1;
 
+    /// <summary>The grade that folds with material band <paramref name="band"/> — <see cref="Band"/> read backwards.</summary>
+    public static Quality GradeOfBand(int band) => (Quality)Mathf.Clamp(band - 1, 0, FoldCaps.Length - 1);
+
     // ---- what a fold and a quench cost --------------------------------------------------------------------
     const int GoldPerFoldPerBand = 50, GoldPerQuenchPerBand = 500;
     /// <summary>Units of the grade's band material one fold costs.</summary>

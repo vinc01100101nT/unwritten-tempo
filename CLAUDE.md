@@ -398,7 +398,7 @@ Never both homes, ever.
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
 - `unity/Assets/Scripts/Editor/` — one-click editor tools under `Tools ▸ unwritten ▸ …`
-- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (77 today)
+- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (74 today)
 - `tools/` — HTML/Python authoring tools (world-creator, map-painter, chatgpt extractor)
 - `tempo/` — auto-generated canvas dev server; do NOT write app code here
 

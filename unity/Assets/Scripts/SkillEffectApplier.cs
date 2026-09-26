@@ -214,7 +214,7 @@ public static class SkillEffectApplier
         ICombatUnit target = null;
         if (targetT == null)
         {
-            // SEARCH radius assumes an ordinary sprite mob — this only asks "is something of the other side standing on
+            // SEARCH radius assumes the stand-in body (UnitScale.MobScale) — this only asks "is something of the other side standing on
             // the aimed spot", and widening it would silently make ground-aimed dashes snap from further away than they
             // used to.
             float searchR = full * UnitScale.MeleeBlend(mover.MeleeScale, UnitScale.MobScale) * LandingReachFactor;

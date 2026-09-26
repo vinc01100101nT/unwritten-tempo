@@ -7,7 +7,7 @@ description: Use whenever you play-test, hunt a bug, verify a fix, review a chan
 
 **The game server's log is the record of what the world actually decided.** Blows, deaths, loot, experience,
 passives, states and heals are decided on the server, and its log writes each one down with the time to the
-millisecond and every unit named by map and spawn_id (`field_15 Snake #3`). A player's machine only knows what it
+millisecond and every unit named by map and spawn_id (`lv_1_3 Snake #3`). A player's machine only knows what it
 drew. When a question is "did X happen, and why", read this log before reasoning from source code.
 
 The full list of line shapes, categories and recipes is the guide: `docs/0-process/reading-the-game-log.md`.

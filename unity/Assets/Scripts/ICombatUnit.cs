@@ -107,7 +107,7 @@ public interface ICombatUnit : IDamageable
     float EquippedReachFullSize { get; }
 
     /// <summary>How big this unit's BODY is, for melee-contact maths — the shared character size for anything built to
-    /// the <see cref="CharacterSpec"/> body, the shrunken mob size for a sprite mob. Reported, never folded into a
+    /// the <see cref="CharacterSpec"/> body, its size's multiple of that for a creature (<see cref="MobSizes"/>). Reported, never folded into a
     /// distance, so any measurement between two units blends the real pair.</summary>
     float MeleeScale { get; }
 

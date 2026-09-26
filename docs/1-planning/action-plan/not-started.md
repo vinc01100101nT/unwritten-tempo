@@ -39,8 +39,8 @@ or a Salt (much more from elites, more again from shadows), a 30% chance of one 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
 18 elites and 12 shadows are defined ([Mob Roster](../../3-world/mob-roster.md)). Where every creature lives is the
-world spawn list, one row per spawn area, which the server reads as it loads each map; today only one elite and one
-shadow have a row, in `field_0`, for testing. Placing the rest waits on the world shape (`MT-16`).
+world spawn list, one row per spawn area, which the server reads as it loads each map; today every elite has a row in
+the new world's fields and dungeon floors (not yet walked in play), and no shadow has one.
 
 - [ ] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
   the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
@@ -139,7 +139,7 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
   - [ ] `ST-35-A` **`[D]` First decide:** rename the four cards after creatures we have, or pick which creature each drops from.
 
-- [ ] `MT-36` **`[E]` Settle the four trust gaps.** All four are written down in the networking notes under a heading calling them deliberate limits: a phone can sign in but cannot enter the world; the training dummy takes no damage from a player; whether a player really had the item they used is their machine's word; and a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. Most already carry a reason — what is missing is a decision about whether they stay that way once strangers play together. **The training-dummy one is the odd one out:** the notes say a swing at it is refused, while the tool that places it calls it a normal mob that takes hits. Those disagree and only playing will settle it. — **unestimated until played**
+- [ ] `MT-36` **`[E]` Settle the three trust gaps.** All three are written down in the networking notes under a heading calling them deliberate limits: a phone can sign in but cannot enter the world; whether a player really had the item they used is their machine's word; and a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. Most already carry a reason — what is missing is a decision about whether they stay that way once strangers play together. — **unestimated until played**
 
 - [ ] `MT-37` **`[E]` Give the eight orphan skills a weapon, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon — and a skill is learned only through its weapon's mastery, so nothing in the game can teach them. Give each one a weapon's pool and a mastery level, or delete it. — **1–2 days**
 

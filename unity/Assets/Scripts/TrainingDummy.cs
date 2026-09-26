@@ -4,7 +4,7 @@ using UnityEngine;
 /// A combat test dummy: a huge-HP, immobile target that resets to full HP on a timer so you can
 /// measure damage / DPS / build output without it ever dying. Pair it with an inert
 /// <see cref="MonsterAI3D"/> (so it's targetable by click-attack and the caster) and a big
-/// <see cref="Health"/>. Spawned by <c>Tools ▸ unwritten ▸ Spawn Training Dummy</c>.
+/// <see cref="Health"/>. Placed in the world by the <c>/dummy</c> GM command, which the server runs, so every player sees and hits the same one.
 ///
 /// <para>It shows NO readout of its own: its HP reads through the same <see cref="MobNameplate"/> and the same
 /// target/hover panels as any other mob (<see cref="UnitStatusPanel"/>), so what you measure on the dummy is what

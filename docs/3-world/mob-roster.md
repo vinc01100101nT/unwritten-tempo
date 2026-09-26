@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-09-22, not yet play-tested. First-guess numbers are listed under Still open."
 owner: vince
-last-updated: 2026-09-22
+last-updated: 2026-09-26
 tags:
   - world-content
 ---
@@ -21,7 +21,7 @@ the ladder is set here.
 
 **Where creatures live is one list, not the maps.** The world spawn list (`Resources/WorldSpawns`) holds one row per
 spawn area: which map, which creatures (a weighted mix of a biome's normals inside a level range, or one named
-creature — the way an elite or a shadow is placed), how many, where in the map (the numbers `/where` prints) and how
+creature — the way an elite or a shadow is placed), how many, where in the map (the numbers `/where` prints: x west to east, y south to north, z height) and how
 far they spread. The server reads a map's rows the moment it loads that map. Nothing about creatures is saved inside a
 map, and the map generator no longer puts any there.
 
@@ -39,6 +39,7 @@ map, and the map generator no longer puts any there.
 | Lives | everywhere in the field | everywhere: fields, dungeons (one on each bottom floor) and special maps | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
+| Size | **Small to XL** — mostly Small or Medium, only 2 XL | **mostly XL** — 12 XL, 2 Large, 2 Medium, 2 Small | always **Medium** |
 
 ## Gear state
 
@@ -56,6 +57,23 @@ map, and the map generator no longer puts any there.
   37, E from level 70, E +15 at 99; elites run D +0 at level 6, C from level 72, B from level 88, B +30 at 99; every
   shadow is A +30.
   Any single creature can be changed after that.
+
+## Sizes
+
+- **Four sizes, each a multiple of a character's height:** Small **0.3×**, Medium **1×**, Large **2.4×**, XL
+  **5.2×**. Medium is exactly a character's size — the player, the townsfolk and every shadow. Each creature's art is
+  measured and fitted to its size, so every creature of one size stands the same height whatever padding its picture
+  carries.
+- **Melee reach counts the same multiple, from the same table**, so how big a creature looks and how far it reaches
+  can never disagree. Against a character, a blow reaches **0.65×** its full reach against a Small creature, **1×**
+  against a Medium one, **1.7×** against a Large one and **3.1×** against an XL one — and the creature's own blows
+  reach the same distance back.
+- **Its collision body grows with it.** A creature wider than the usual routing footprint steers around obstacles
+  with its own width.
+- **Size changes nothing else**: not movement speed, not stats. The weapon-vs-size damage chart is not switched on,
+  and it has no XL column yet.
+- **The split:** normals **26 Small, 28 Medium, 10 Large, 2 XL**; elites **2 Small, 2 Medium, 2 Large, 12 XL**; all
+  shadows Medium. Each creature's size is set on its own catalog entry; a shadow is Medium whatever its entry says.
 
 ## Normal
 
@@ -88,25 +106,26 @@ map, and the map generator no longer puts any there.
 
   | Level | Weapon | Name | Theme | Element |
   | --- | --- | --- | --- | --- |
-  | 105 | Shield | **Varro** | Roman shield wall | Earth |
-  | 110 | Wand | **Brigid** | Irish, the healer | Water |
+  | 105 | Shield | **Varro** | Roman shield wall | Neutral |
+  | 110 | Wand | **Brigid** | Irish, the healer | Holy |
   | 115 | Warhammer | **Radomir** | Slavic mace-bearer | Earth |
   | 120 | Spear | **Kallias** | Greek spearman | Water |
   | 125 | Axe | **Brandr** | Norse | Fire |
-  | 130 | Firearm | **Inés** | Spanish musketeer | Fire |
-  | 135 | Scythe | **Morwenna** | Cornish | Wind |
-  | 140 | Dagger | **Fiora** | Italian stiletto | Wind |
+  | 130 | Firearm | **Inés** | Spanish musketeer | Shadow |
+  | 135 | Scythe | **Morwenna** | Cornish | Undead |
+  | 140 | Dagger | **Fiora** | Italian stiletto | Poison |
   | 145 | Staff | **Azar** | Persian, "fire" | Fire |
-  | 150 | Greatsword | **Ulrich** | German two-hander | Earth |
+  | 150 | Greatsword | **Ulrich** | German two-hander | Ghost |
   | 155 | Bow | **Temülün** | Mongol horse archer | Wind |
-  | 160 | Sword | **Tsubame** | Japanese | Water |
-  | *not set* | Fist | *not chosen* | | *not set* |
-  | *not set* | Kick | *not chosen* | | *not set* |
-- **Each shadow has one of the four elements a converter can give** — water, earth, fire or wind, three shadows
-  each — so every one of them can be answered with the right converter. At level 3 the answer matters: the element it
-  is weak to lands for double, the one it resists lands for nothing, and its own element heals a fire, water or wind
-  shadow and does nothing to an earth one. It swings
-  with its element too; the weapon it holds has none, and a weapon with no element never overrides a creature's own.
+  | 160 | Sword | **Tsubame** | Japanese | Wind |
+  | *not set* | Fist | *not chosen* | | Neutral |
+  | *not set* | Kick | *not chosen* | | Wind |
+- **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Fire and Neutral
+  twice each, the rest once. Only the Water, Earth, Fire and Wind shadows can be answered with a converter today; the
+  counter for the others is to come from skill buffs and cards. At level 3 the element matters, and its own element
+  lands very differently on each: it heals the Water, Fire, Wind, Holy and Shadow shadows, does nothing to the Earth,
+  Poison and Undead ones, lands normally on the Neutral one, and lands for 175% on the Ghost one. It swings with its
+  element too; the weapon it holds has none, and a weapon with no element never overrides a creature's own.
 - **Each shadow summons one elite kind, matched to its place on the ladder.** The top twelve elites, counted
   backwards from 99, pair with the shadows from the top down:
 
@@ -157,7 +176,7 @@ its own grade's **metal, cloth and leather**, plus a chance of an Ink or a Salt:
 
 Every kill also has a 30% chance of one random consumable (a potion or a food), and a creature with an element adds its
 own element's two converters to that roll — a fire creature can drop the Flame Elemental Converter or the Flame Armor
-Converter, a Neutral creature never drops one. Materials are never in that roll.
+Converter; a creature whose element has no converter (Neutral, Poison, Holy, Shadow, Ghost, Undead) never drops one. Materials are never in that roll.
 Several of one material go down as one pile.
 
 ## Server restarts
@@ -167,8 +186,8 @@ Several of one material go down as one pile.
 
 ## Still open
 
-- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve), name, element and the elite
-  each summons.
+- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve), name and the elite each
+  summons. Their elements are set: Fist Neutral, Kick Wind.
 - **The shadows' names against the canon.** The canon today says the Fourteen Unwritten — the fourteen weapons —
   have no recorded names, only what they did, and that writing an Unwritten's name is the end-game reward of
   weapon mastery. Either the canon is rewritten, or a shadow is an echo of an Unwritten wearing a name of its own.
@@ -180,8 +199,6 @@ Several of one material go down as one pile.
   level 36 to 99 still pays what it paid at 36.
 - **A shadow's 3D body is drawn at random from the cast each life**, like every 3D creature's, so a named shadow can
   look different each time it comes back.
-- **Test placement:** the level-55 elite Giant Red Samurai and Tsubame stand in `field_0` so respawn and restarts can be
-  tried. They move when the maps are done.
 - **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
 
 ## Related

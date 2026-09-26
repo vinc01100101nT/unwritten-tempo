@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.yellowsbat
   displayName: YellowsBat
   kind: 0
-  size: 1
+  size: 0
   biome: 5
   sheet: YellowsBat
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.8
   level: 9
   str: 11
   agi: 8

@@ -9,8 +9,8 @@ using UnityEngine;
 ///
 /// <para>SCALE: the model is measured BEFORE parenting (renderer bounds are world-space, so measuring after would
 /// return the parent-scaled height) and its local scale then divides out the root's own lossy scale. That's what
-/// lets the same builder serve an UNSCALED root (townsfolk) and a SCALED one (a mob root carries the authored
-/// billboard scale × <see cref="UnitScale.ForMob"/>) without either caller knowing about the other's rig.</para>
+/// lets the same builder serve an UNSCALED root (townsfolk) and a SCALED one (a mob root carries the scale its size
+/// was fitted to, <see cref="MobBody"/>) without either caller knowing about the other's rig.</para>
 ///
 /// <para>OFF-SCREEN COST: the Animator is set to stop writing bone transforms while the model is off camera
 /// (<see cref="AnimatorCullingMode.CullUpdateTransforms"/>). The state machine still runs, so a swing that started

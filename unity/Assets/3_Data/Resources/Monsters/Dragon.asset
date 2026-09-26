@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.dragon
   displayName: Dragon
   kind: 0
-  size: 1
+  size: 2
   biome: 2
   sheet: Dragon
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.0600001
   level: 49
   str: 31
   agi: 27

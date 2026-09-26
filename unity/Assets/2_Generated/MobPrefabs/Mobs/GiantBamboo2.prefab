@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 1575643992291383349}
   - component: {fileID: 5330016710000025707}
   - component: {fileID: 4407375138530771958}
+  - component: {fileID: 1937985402063633153}
   - component: {fileID: 6727730428762857750}
   m_Layer: 9
   m_Name: GiantBamboo2
@@ -41,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.6099999, y: 1.6099999, z: 1.6099999}
+  m_LocalScale: {x: 1.786861, y: 1.786861, z: 1.786861}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -157,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
   moveSpeed: 1.7
-  agentRadius: 0.3
+  agentRadius: 0.5360583
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -213,7 +214,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -231,6 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 3
   simulateRadius: 28
 --- !u!114 &3821175759805926419
 MonoBehaviour:
@@ -308,6 +309,8 @@ MonoBehaviour:
     frames: 12
     footPx: 1
   stripPixelsPerUnit: 62
+  crownAtScaleOne: 0.9516129
+  paintedWidthAtScaleOne: 0.8064516
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -390,6 +393,20 @@ MonoBehaviour:
   goldMax: 1000
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &1937985402063633153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2854802385293720086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.85019994
+  halfWidth: 0.72050846
 --- !u!114 &6727730428762857750
 MonoBehaviour:
   m_ObjectHideFlags: 0

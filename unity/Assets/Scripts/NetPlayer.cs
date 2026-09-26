@@ -98,6 +98,9 @@ public class NetPlayer : NetworkBehaviour
     [SyncVar] StanceId netDriven;
     [SyncVar] float netDrivenWindow;
     [SyncVar] bool netDrivenRelease;
+    // Which beat of that pose it is. A new number while the same pose holds starts its clip over — a second hit
+    // restarts the flinch on every screen, not only on the one it happened to.
+    [SyncVar] int netDrivenBeat;
 
     // The standing pose UNDERNEATH all of that — guarding, casting, sitting. It outlives any one action, so it is
     // its own value rather than a second meaning for the one above.
@@ -497,7 +500,7 @@ public class NetPlayer : NetworkBehaviour
     }
 
     [Command]
-    public void CmdDrivenStance(bool has, StanceId id, float window, bool release)
+    public void CmdDrivenStance(bool has, StanceId id, float window, bool release, int beat)
     {
         if (Leaving) return;
         if (has && !RealStance(id)) return;
@@ -505,6 +508,7 @@ public class NetPlayer : NetworkBehaviour
         netDriven = id;
         netDrivenWindow = SanePose(window);
         netDrivenRelease = release;
+        netDrivenBeat = beat;
     }
 
     [Command]
@@ -2384,7 +2388,7 @@ public class NetPlayer : NetworkBehaviour
             // line above shows; a jump, a roll, a flinch or a death lasts until it is over, so it is handed over as
             // something to keep doing rather than something that happened. Told every frame and applied only when it
             // changed — the body's own driver holds it from there.
-            bodyVisual.TellPose(netHasDriven, netDriven, netDrivenWindow, netDrivenRelease, netSprinting);
+            bodyVisual.TellPose(netHasDriven, netDriven, netDrivenWindow, netDrivenRelease, netDrivenBeat, netSprinting);
             // …AND THE TWO THINGS A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
             // makes a jump actually leave the ground here, and how fast their legs are churning, which is what every
             // movement-paced clip is played at.

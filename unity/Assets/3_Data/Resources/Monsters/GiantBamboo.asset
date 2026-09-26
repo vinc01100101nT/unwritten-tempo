@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.giantbamboo
   displayName: GiantBamboo
   kind: 1
-  size: 1
+  size: 3
   biome: 4
   sheet: GiantBamboo
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 2.15
   level: 83
   str: 53
   agi: 33
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 0
+  element: 5
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

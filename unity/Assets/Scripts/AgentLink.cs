@@ -293,11 +293,11 @@ public class AgentLink : MonoBehaviour
         "login <email> <password>  sign in, lists characters\n" +
         "create <name>             make a character\n" +
         "play <name|number>        enter the world; answers once everything nearby has arrived\n" +
-        "move <x> <z> | go <id>    walk (ends on arrival, a new map, your HP under 30%, death, or 30s)\n" +
+        "move <x> <y> | go <id>    walk (ends on arrival, a new map, your HP under 30%, death, or 30s)\n" +
         "attack <m#>               fight a mob (ends when it or you die, your HP drops under 30%, or 30s)\n" +
         "auto on|off [secs]        the auto-pilot fights nearby mobs; answers after secs (default 10)\n" +
         "stop                      drop every order\n" +
-        "cast <slot|R|name> [id | x z]  press a hotbar skill, aimed at a unit or a spot\n" +
+        "cast <slot|R|name> [id | x y]  press a hotbar skill, aimed at a unit or a spot\n" +
         "pickup <g#>               walk to a floor item and take it\n" +
         "talk <n#>                 talk to a townsperson\n" +
         "use <bag#|name> | equip <bag#> | unequip <slot>\n" +
@@ -460,9 +460,9 @@ public class AgentLink : MonoBehaviour
     {
         var r = Rig();
         if (r == null) { Say("not in the world"); return; }
-        if (parts.Length < 3 || !TryNum(parts[1], out float x) || !TryNum(parts[2], out float z))
-        { Say("usage: move <x> <z>"); return; }
-        WalkTo(new Vector3(x, r.transform.position.y, z), null);
+        if (parts.Length < 3 || !TryNum(parts[1], out float x) || !TryNum(parts[2], out float y))
+        { Say("usage: move <x> <y>"); return; }
+        WalkTo(Coords.FromShown(x, y, r.transform.position.y), null);
     }
 
     void Go(string[] parts)
@@ -531,7 +531,7 @@ public class AgentLink : MonoBehaviour
     void Cast(string[] parts)
     {
         if (Dead() || Rig() == null) { Say("cannot cast now"); return; }
-        if (parts.Length < 2) { Say("usage: cast <slot|R|name> [id | x z]"); return; }
+        if (parts.Length < 2) { Say("usage: cast <slot|R|name> [id | x y]"); return; }
         var skill = FindHotbarSkill(parts[1], out string label);
         if (skill == null) { Say("no hotbar skill '" + parts[1] + "'"); return; }
 
@@ -540,11 +540,11 @@ public class AgentLink : MonoBehaviour
         bool hasPoint = false;
         Vector3 point = Vector3.zero;
         if (parts.Length == 2) { }
-        else if (parts.Length >= 4 && TryNum(parts[2], out float x) && TryNum(parts[3], out float z))
-        { hasPoint = true; point = new Vector3(x, Rig().transform.position.y, z); }
+        else if (parts.Length >= 4 && TryNum(parts[2], out float x) && TryNum(parts[3], out float y))
+        { hasPoint = true; point = Coords.FromShown(x, y, Rig().transform.position.y); }
         else if (parts[2].ToLowerInvariant() == "me") { unit = Rig().transform; unitIsMe = true; }
         else if (parts[2].Length > 0 && parts[2][0] != 'm' && parts[2][0] != 'p' && parts[2][0] != 'M' && parts[2][0] != 'P')
-        { Say("a skill is aimed at a creature (m#), a player (p#), me, or a spot (x z) — not '" + parts[2] + "'"); return; }
+        { Say("a skill is aimed at a creature (m#), a player (p#), me, or a spot (x y) — not '" + parts[2] + "'"); return; }
         else if (TryFind(parts[2], out unit))
         {
             // A mob named as the target is engaged first, which is what the quick-cast setting fires at.
@@ -564,7 +564,7 @@ public class AgentLink : MonoBehaviour
         if (GroundTargeter.Active)
         {
             if (!hasPoint && unit != null) { hasPoint = true; point = unit.position; }
-            if (!hasPoint) { GroundTargeter.Cancel(); Say(label + " needs a spot: cast " + parts[1] + " <x> <z>"); return; }
+            if (!hasPoint) { GroundTargeter.Cancel(); Say(label + " needs a spot: cast " + parts[1] + " <x> <y>"); return; }
             GroundTargeter.ConfirmAt(point);
         }
 
@@ -1103,10 +1103,8 @@ public class AgentLink : MonoBehaviour
         if (r == null) return "not in the world";
         var cc = r.GetComponent<CharacterController>();   // perf-ok: once per command a player sends
         Vector3 here = r.transform.position;
-        var sb = new StringBuilder("standing at (");
-        sb.Append(here.x.ToString("0.00", CultureInfo.InvariantCulture)).Append(", ")
-          .Append(here.y.ToString("0.00", CultureInfo.InvariantCulture)).Append(", ")
-          .Append(here.z.ToString("0.00", CultureInfo.InvariantCulture)).Append(") in map ").Append(MapManager.CurrentMap);
+        var sb = new StringBuilder("standing at ");
+        sb.Append(Coords.Text(here, "0.00")).Append(" in map ").Append(MapManager.CurrentMap);
         if (cc != null) sb.Append(cc.isGrounded ? " — grounded" : " — IN THE AIR");
 
         sb.Append("\nbelow:");
@@ -1119,7 +1117,7 @@ public class AgentLink : MonoBehaviour
             if (down[i].collider != null && down[i].collider.transform.IsChildOf(r.transform)) continue;
             shown++;
             sb.Append("\n  ").Append(Describe(down[i].collider))
-              .Append(" top at y ").Append(down[i].point.y.ToString("0.00", CultureInfo.InvariantCulture))
+              .Append(" top at z ").Append(down[i].point.y.ToString("0.00", CultureInfo.InvariantCulture))
               .Append(", ").Append((here.y - down[i].point.y).ToString("0.00", CultureInfo.InvariantCulture)).Append(" below you");
         }
         if (shown == 0) sb.Append(" nothing at all within 500 down");
@@ -1142,7 +1140,7 @@ public class AgentLink : MonoBehaviour
         if (c == null) return "(gone)";
         var sb = new StringBuilder(c.name);   // perf-ok: once per line of a ground command
         sb.Append(" [").Append(c.gameObject.scene.name).Append(", layer ").Append(LayerMask.LayerToName(c.gameObject.layer));
-        if (c is BoxCollider box) sb.Append(", box ").Append(box.size.ToString("0.#"));
+        if (c is BoxCollider box) sb.Append(", box ").Append(Coords.ToShown(box.size).ToString("0.#"));
         else if (c is MeshCollider mesh) sb.Append(", mesh ").Append(mesh.convex ? "convex" : "solid");
         else if (c is CapsuleCollider) sb.Append(", capsule");
         else if (c is SphereCollider) sb.Append(", sphere");
@@ -1201,8 +1199,11 @@ public class AgentLink : MonoBehaviour
 
     static float Flat(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
     static string D(float d) => d.ToString("0.0", CultureInfo.InvariantCulture) + "m";
-    static string Pos(Vector3 p) =>
-        "(" + p.x.ToString("0.0", CultureInfo.InvariantCulture) + "," + p.z.ToString("0.0", CultureInfo.InvariantCulture) + ")";
+    static string Pos(Vector3 p)
+    {
+        var s = Coords.ToShown(p);
+        return "(" + s.x.ToString("0.0", CultureInfo.InvariantCulture) + "," + s.y.ToString("0.0", CultureInfo.InvariantCulture) + ")";
+    }
     static bool TryNum(string s, out float v) => float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v);
 
     // Rich-text tags are how the chat log colours a row; as text they are noise.

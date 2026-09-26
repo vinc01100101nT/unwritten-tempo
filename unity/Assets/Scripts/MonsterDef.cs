@@ -22,8 +22,8 @@ public class MonsterDef : ScriptableObject
              "row of the world spawn list names them. The kind sets extra skill slots, summoning, gear, respawn and drops " +
              "(see CreatureKinds); strength still comes from level and stats alone.")]
     public CreatureKind kind = CreatureKind.Normal;
-    [Tooltip("Body size for the DEFERRED weapon-vs-size matchup (WeaponSizes). Unused by combat in the slice; " +
-             "Medium reproduces RO's neutral '100% everywhere' baseline, so leaving it default is safe.")]
+    [Tooltip("Body size. Small stands 0.3x a character's height, Medium 1x (a character's size), Large 2.4x, XL " +
+             "5.2x — and its melee reach counts the same multiple. A Shadow is always Medium whatever this says.")]
     public MobSize size = MobSize.Medium;
 
     [Header("Biome (spawn grouping)")]
@@ -40,8 +40,6 @@ public class MonsterDef : ScriptableObject
     public int weight = 1;
     [Tooltip("SpriteRenderer tint (white = none).")]
     public Color tint = Color.white;
-    [Tooltip("Size multiplier on the base billboard scale.")]
-    public float scale = 1f;
 
     // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
     // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through
@@ -170,7 +168,8 @@ public class MonsterDef : ScriptableObject
             sheet = sheet,
             weight = weight,
             tint = tint,
-            scale = scale,
+            kind = kind,
+            size = size,
             hardDefPercent = hardDefPercent,
             hardMagicDefPercent = hardMagicDefPercent,
             xpReward = xpReward,

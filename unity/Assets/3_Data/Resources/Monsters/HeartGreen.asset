@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.heartgreen
   displayName: HeartGreen
   kind: 0
-  size: 1
+  size: 0
   biome: 3
   sheet: HeartGreen
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.92
   level: 70
   str: 46
   agi: 37
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 9
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

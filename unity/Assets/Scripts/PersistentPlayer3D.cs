@@ -78,7 +78,7 @@ public class PersistentPlayer3D : MonoBehaviour
         if (GameLog.On(LogCat.Client))
             GameLog.Info(LogCat.Client, "placed in '" + MapManager.CurrentMap + "' at "
                              + (spawn != null ? "spawn '" + spawn.id + "' " : "no spawn point — left ")
-                             + transform.position.ToString("0.00"));   // perf-ok: once per map arrival
+                             + Coords.Text(transform.position, "0.00"));   // perf-ok: once per map arrival
 
         AimCamera();
     }

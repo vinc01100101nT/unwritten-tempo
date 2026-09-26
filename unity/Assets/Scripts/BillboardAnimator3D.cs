@@ -40,6 +40,14 @@ public class BillboardAnimator3D : MonoBehaviour
     [Tooltip("Pixels per world unit for both strips, so the two animations draw the creature at the same size.")]
     public int stripPixelsPerUnit;
 
+    [Header("Measured art (written by the mob baker from the frames this plays)")]
+    [Tooltip("How far the tallest frame's crown sits above its feet line, in world units at scale one. The creature's " +
+             "size is fitted against THIS, so every creature of one size stands the same height whatever padding its " +
+             "art carries. Zero = never measured: the body keeps scale one.")]
+    public float crownAtScaleOne;
+    [Tooltip("How wide the widest frame's painted part is, in world units at scale one. Zero = never measured.")]
+    public float paintedWidthAtScaleOne;
+
     [Header("Idle breathing (procedural — the sheets have no idle frames)")]
     [Tooltip("Gentle squash-stretch loop while standing still, so a stopped mob still feels alive.")]
     public bool breathe = true;
@@ -56,10 +64,9 @@ public class BillboardAnimator3D : MonoBehaviour
     Sprite[] playing;
     Vector2 facing = Vector2.down;
     float timer; int frame;
-    Vector3 buildScale;   // authored localScale (UnitScale.ForMob is applied on top of this each frame)
     Vector3 baseScale;
 
-    /// <summary>THE rest scale for this mob's body: its authored size on the live unit-size dial. Everything that
+    /// <summary>THE rest scale for this mob's body: the scale its size was fitted to. Everything that
     /// animates the scale (the idle breathe here, the attack squash in <see cref="AttackLunge"/>) squashes around
     /// THIS one value. <see cref="AttackLunge"/> used to recompute the same product from its own captured build
     /// scale, with a comment saying it "matches BillboardAnimator3D" — a hand-sync note, which is always the tell.</summary>
@@ -71,8 +78,7 @@ public class BillboardAnimator3D : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         agent = GetComponent<PathAgent3D>();
         lunge = GetComponent<AttackLunge>();
-        buildScale = transform.localScale;
-        baseScale = buildScale * UnitScale.ForMob;
+        baseScale = transform.localScale;
         breathePhase = Random.value * Mathf.PI * 2f;   // desync the herd
         BuildFrames();
         if (down != null && down.Length > 0) sr.sprite = down[0];   // show before moving
@@ -80,6 +86,19 @@ public class BillboardAnimator3D : MonoBehaviour
         // Light-facing cast shadow that survives the sun being off to the camera's side (see BillboardShadow).
         // Self-bootstrapped so existing baked mobs get it at Play without a re-bake.
         if (GetComponent<BillboardShadow>() == null) gameObject.AddComponent<BillboardShadow>();
+    }
+
+    /// <summary>Scale this body so its art stands <paramref name="height"/> tall, feet to crown, and state that height
+    /// and the matching width as the unit's real body (<see cref="UnitBody"/>), so its nameplate, health bar, aim point
+    /// and click area use the measured body rather than a guess from the scale. Returns the scale applied. Called by
+    /// <see cref="MobBody.Fit"/> only — once when the prefab is baked and once as each creature is made.</summary>
+    public float FitToHeight(float height)
+    {
+        float s = MobSizes.BodyScale(height, crownAtScaleOne);
+        baseScale = Vector3.one * s;
+        transform.localScale = baseScale;
+        if (crownAtScaleOne > 0f) UnitBody.Set(gameObject, height, paintedWidthAtScaleOne * s);
+        return s;
     }
 
     void BuildFrames()
@@ -102,7 +121,6 @@ public class BillboardAnimator3D : MonoBehaviour
 
     void Update()
     {
-        baseScale = buildScale * UnitScale.ForMob;   // live: track the global/mob unit-size dial (breathe squashes around this)
         bool moving = agent != null && agent.Moving;
         if (moving) facing = agent.Facing;
 

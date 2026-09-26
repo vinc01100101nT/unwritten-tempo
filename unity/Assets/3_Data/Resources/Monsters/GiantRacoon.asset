@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.giantracoon
   displayName: GiantRacoon
   kind: 1
-  size: 1
+  size: 3
   biome: 0
   sheet: GiantRacoon
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 2.45
   level: 17
   str: 14
   agi: 7
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 1
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

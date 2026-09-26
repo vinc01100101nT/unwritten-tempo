@@ -33,7 +33,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **A respawn is a fresh creature.** `MobRespawn.Reactivate` — the one choke both the in-place recycle and the pooled `FieldMobSpawner` reuse go through — calls `UnitStatBlock.ResetToSpawnLevel()` and `MonsterAI3D.ResetCombatXp()` before `Health.Revive()`. Without it a recycled object keeps the levels and banked XP it earned last life, so farming one spot would ratchet a zone permanently upward. The pool is per-type, so the remembered `spawnLevel` always belongs to that mob's own def.
 
-**The training dummy opts OUT of the model.** `TrainingDummyTool` destroys the `UnitStatBlock` after building, because the block would re-derive over its hand-set 10M HP / 0 attack and turn the punching bag into an ordinary level-1 mob. It's a measuring instrument, not a unit.
+**The training dummy opts OUT of the model.** `TrainingDummy.MakeOne` (run by the `/dummy` GM command) strips the `UnitStatBlock` after building, because the block would re-derive over its hand-set 10M HP / 0 attack and turn the punching bag into an ordinary level-1 mob. It's a measuring instrument, not a unit.
 
 **Tune the CAUSE, never the result.** Anything that changes a mob's numbers — `/summon` with a level included — sets Level + the six primaries and re-derives. Writing a derived stat directly is silently overwritten by the block on the next level-up.
 

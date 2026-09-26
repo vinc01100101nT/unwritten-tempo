@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-23 — not play-tested. Decided with the user on 2026-09-23."
+status: "BUILT 2026-09-23 — not play-tested. Decided with the user on 2026-09-23; every creature's element re-set 2026-09-26."
 owner: vince
-last-updated: 2026-09-23
+last-updated: 2026-09-26
 tags:
   - systems-combat-design
 ---
@@ -42,9 +42,15 @@ A few cells, to read the shape:
   Mob Table's **elem** and **Element Lv** columns, and copied onto the creature at the moment it spawns — on the
   server and on every watching machine — so the two can never disagree.
 - **Levels by kind:** every **normal** creature is **level 1**, every **elite level 2**, every **shadow level 3**.
-- **The shadows' elements** are only the four a converter can give, three shadows each, so every shadow can be
-  answered with the right converter: Fire — Azar, Brandr, Inés; Water — Brigid, Tsubame, Kallias; Wind — Temülün,
-  Fiora, Morwenna; Earth — Varro, Radomir, Ulrich. (Full table in [Mob Roster](../../3-world/mob-roster.md).)
+- **Normals and elites** take their element from where they live, following the [World Map](../../3-world/world-map.md)'s
+  biome table and its tiers: Might (levels 1–33) holds only Neutral, Earth and Water; Finesse (34–66) adds Wind and
+  Fire; Arcane (67–99) adds Poison, Holy, Shadow, Ghost and Undead. Set 2026-09-26; each creature's value lives in its
+  creature data only.
+- **The shadows' elements** cover all ten, as decided in the [World Map](../../3-world/world-map.md): Neutral — Varro
+  (Shield); Holy — Brigid (Wand); Earth — Radomir (Warhammer); Water — Kallias (Spear); Fire — Brandr (Axe), Azar
+  (Staff); Shadow — Inés (Firearm); Undead — Morwenna (Scythe); Poison — Fiora (Dagger); Ghost — Ulrich
+  (Greatsword); Wind — Temülün (Bow), Tsubame (Sword). Only four of them — the Water, Earth, Fire and Wind ones —
+  can be answered with a converter today. (Full table in [Mob Roster](../../3-world/mob-roster.md).)
 - **A creature's ordinary attack** lands as: a weapon converter's element while one runs; otherwise its held
   weapon's element if that weapon HAS one; otherwise its own element. A weapon with no element (every weapon today)
   never overrides a creature's own.
@@ -75,7 +81,7 @@ Eight consumables, each running one skill with the **Element Converter** effect:
 - **Ghost is deliberately absent:** a level-1 Ghost armour takes 25% from every neutral hit.
 - **The effect works on creatures too** — any creature skill may carry it, with any of the ten elements.
 - **Drops:** a creature with an element adds its own element's two converters to the 30%-per-kill consumable roll; a
-  Neutral creature never drops one. The element lives once, on the converter's skill; the item carries no copy.
+  creature whose element has no converter (Neutral, Poison, Holy, Shadow, Ghost, Undead) never drops one. The element lives once, on the converter's skill; the item carries no copy.
 - **Weight 8, sell value 150** — the same as a Healing Potion.
 
 ## 4. Where it lives in the code

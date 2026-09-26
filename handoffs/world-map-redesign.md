@@ -1,16 +1,17 @@
-# Handoff — World map redesign, ground tiles, and the stacked-props bug
+# Handoff — World map redesign and ground tiles
 
 **Task:** redesign the whole world into three regions around the fourteen shadows (only `lastline` survives), make the ground
-tiles for every biome, and fix a bug found on the way: every prop in field_11 is stacked at the map centre.
+tiles for every biome.
 
-**Status:** IN PROGRESS. Everything up to the end of the second 2026-09-26 session (~05:05) is committed to main; the
-push failed (this Mac could not resolve github.com) — run `git push origin main` if `git status` says ahead. The three-region world is GENERATED (59 new scenes + the hand-made `lastline` as Lastline, all doors wired),
-every map is named by its id, and normals + elites are placed in every field and dungeon floor — but **nobody has
-walked it in play yet (the user only opened the world map and stood in `test_forest_a`) — don't trust any "it works"
-claim about it.** **Before anyone can play it: the user must run the database update below (item 10) and rebuild the
-game server.** The Sacred cloud look is built and compiled but unseen; the full-screen world map (N) is built and
+**Status:** IN PROGRESS. Everything up to the end of the second 2026-09-26 session (~05:05) is committed and pushed
+(08:25). The third session (08:15–) was committed and pushed on 2026-09-26 around 13:05, together with the mob-size work: the 40 old maps deleted, every creature's element set, and a
+character saved in a map the game no longer has is sent to Lastline. The three-region world is GENERATED (59 new scenes + the hand-made `lastline` as Lastline, all doors wired),
+every map is named by its id, and normals + elites are placed in every field and dungeon floor. The game server was
+rebuilt at 05:03 on 2026-09-26 (its build holds `lastline`, `lv_1_3`, `mines_1`, and no `town_0`), and the user's
+server log of 07:51–08:04 shows Alpha walking `lastline` → `bow` → `lv_34_38` with its mobs spawning — **that is the
+only part walked; the rest of the world, the doors' colours and the world map (N) are unchecked.** The Sacred cloud look is built and compiled but unseen; the full-screen world map (N) is built and
 compiled but unseen. The 14 biome test maps are still
-unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new 59 are freshly generated and clean).
+unwalked. The stacked-props bug went with the 40 old maps it lived in; Lastline never had it (0 of 401 broken).
 
 ---
 
@@ -48,25 +49,17 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
 
 ## State left in the project (committed 2026-09-25)
 
-- `unity/Assets/Scenes/field_11.unity`: the user's approved **grass sample**, a root `Grass_Sample` of 70 plant
-  props placed around (8, 0, 0) near the lastline arrival point. Saving the scene also made Unity drop 43 leftover
-  scale, material and name override lines. No position data was lost.
 - `unity/Assets/1_Authored/Prefabs/VFX/Textures/Circle2.png.meta`: the editor keeps flipping this texture's import
   settings (sprite↔default, compression). The cause is not investigated.
-- **Tile test squares in field_11 (scaffolding, delete when the tiles are final):** `Tile_1_Test`…`Tile_12_Test`,
-  5 m squares (each shows its tile 2×2) in rows of three at x −20..−5 — tiles 1–3 at z 12.5..17.5, 4–6 below,
-  7–9 below that, 10–12 at z −2.5..2.5 — plus `Pebble_Test` (7.5 m) at (10, 0.01, 9). Their images are
-  the renamed tiles (the materials follow the rename, they link by asset ID); their materials are
-  `2_Generated/Materials/Ground_tile_N_test.mat` and `Ground_pebble_test.mat`. Tiles 13–22 have no square.
+- **The grass sample and the tile test squares were in `field_11` and were deleted with it (2026-09-26).** Their
+  materials `2_Generated/Materials/Ground_tile_N_test.mat` and `Ground_pebble_test.mat` are still on disk and now
+  used by nothing.
 - **The 40 map-ground materials and the brush palette that pointed at the removed grass/rock/stones tiles were
   repointed on 2026-09-25** (the commit check refuses broken references): grass → meadow_grass, rock → gravel_scree,
-  stones → dark_cobble — the same mapping the code's name lookups use. Old maps now show those tiles. The cleanup on
+  stones → dark_cobble — the same mapping the code's name lookups use (the old maps are deleted since). The cleanup on
   2026-09-25 removed 11 materials nothing used (5 old prop ground materials, plus 6 map-ground materials no scene
   uses: Field, Prontera, SampleElevation, StarterTown, Systems, Town) and the props model's 5 remap entries to them. The map-painter files' grass brush id was renamed to `base_or_patch_meadow_grass`
   to match.
-- **field_11's ground base is the leaf-litter tile** (a test the user asked for; committed in `Ground_field_11_blend.mat`).
-  The user liked it blended with the soil path. Their idea: use leaves only in patches (base → grass, leaves → the
-  `_DirtMap` patch slot). **The user hasn't decided.**
 
 ## What's left
 
@@ -88,9 +81,8 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
      id on every rename and import; scene files, doors, arrival points, Build Settings, the world map, Map Painter
      files, the starting map and the music table were all renamed to match, and `tools/check-map-ids.py` (pre-commit
      and end of turn) fails on any drift. Door colours now come from the destination map's type, not its name; 46
-     pads were recoloured (dungeon doors purple, city/town doors yellow). NOT done: six characters in the database
-     still name `town_0` / `m_f10` as where they stand — the update was refused by the permission guard and is the
-     user's to run. A map without a pinned `seed` rolls it from its id, so rebuilding one now gives a new layout.
+     pads were recoloured (dungeon doors purple, city/town doors yellow). Four test characters in the database still name
+     `town_0` as where they stand — the Lastline fallback in item 10 moves them. A map without a pinned `seed` rolls it from its id, so rebuilding one now gives a new layout.
    - **Lastline (`lastline`)**: nothing removed; its west/east gates retargeted to `lv_1_3` / `lv_21_24`, new doors at its
      south gate (→ `lv_26_30`) and north opening (→ `lv_9_12`). Byte-diff proved only the 8 retarget lines changed.
    - **In-game world map (N)**: shows the world creator's PNG export (default settings: painting + every map's box,
@@ -99,8 +91,8 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
      `tools/world-creator/worlds/wm1.png`. To refresh it: load wm1.png as the tool's background, import the json,
      🖼️ PNG → Download PNG, save over that file (the save window remembers its folder), then re-bake.
      Known: the side-by-side dungeon floors' names overlap in the picture (Lava Tubes, Canyon Temple, Haunted Deep).
-   - **Not checked:** whether the map servers are set up to serve the new maps; the user's game SERVER BUILD
-     predates all of this and must be rebuilt before the new world can be played online (ask first).
+   - **Served:** the rebuilt server (05:03) serves the new maps; `lastline`, `bow` and `lv_34_38` loaded in the
+     07:51 run. The other maps have not been loaded yet.
 2. **Names are NOT settled.** Decided 2026-09-25: the game uses NO real-country culture, so real languages are
    out; a made-up language per homeland was tried and rejected the same day. Every name ties to its shadow AND
    its weapon, in Ragnarok-city style (rule saved in memory `world-names-tie-to-shadows-and-weapons`). Order of
@@ -170,21 +162,22 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
    biome's test map with a match rate (Snow and Peaks 80%, Haunted and Corrupted 20%) and what is still missing;
    the next gains need new art (standing stones, dead trees, gravestones, a heather tile, reeds, a sea edge) or
    ground with height (slopes, dunes). Grass bunches up to ~4.4k plants/map (Sacred) — **frame cost unmeasured,
-   watch it first**. **Next:** rebuild the game server (the user's build predates this session's last round: it
-   still has the deleted `test_forest_b` and the old doors) (`tools/build-game.sh server`, ask the user first — their map server runs from that build), the
-   user restarts their map server, then walks the chain from `/tp test_forest_a`. Never move the user's Scene view
+   watch it first**. **Next:** the user walks the chain from `/tp test_forest_a` (the 05:03 server build already
+   has the current chain, without the deleted `test_forest_b`). Never move the user's Scene view
    camera or switch the open scene while building test maps (banned 2026-09-25); build with `leaveOpen: false`.
 4b. **Weather a biome always has — BUILT 2026-09-25, not walked in game:** Swamp always has puddles, Snow always
    has the snow blanket, Mist always has fog (the "Weather a biome always has" section of `docs/3-world/biomes.md`, which also holds the
    parked weather-frequency idea).
-5. **Fix the stacked-props bug** (below), then check every map.
-6. **Assign elements** to all 96 creatures (by the biome majority table) and the shadows (the 14 decided in the
-   world-map doc; the game data still gives the 12 existing shadows four converter elements). Then update
-   `docs/3-world/mob-roster.md` and `docs/2-systems/gameplay-system-v4/elements-and-converters.md`, which still
-   say the shadows use four elements.
+5. **Old maps deleted (2026-09-26, uncommitted):** the 40 scenes `field_0–16`, `dungeon_0–13`, `town_1–9`, their
+   ground materials and meshes, their Map Painter files, 33 spawn rows, 40 music rows and 43 Build Settings entries
+   (three were listed twice). Lastline's generated files and its ground object were renamed from `town_0` to
+   `lastline` (asset IDs kept).
+6. **Elements set (2026-09-26, uncommitted):** all 96 creatures, per the world-map doc's Built section. In 21 of the
+   45 fields and dungeon floors the biome's main element is not the most common one among its creatures, because a
+   map takes every creature in its level range — two maps of different biomes with the same levels hold the same
+   creatures. The fix is giving each map only the creatures that fit its biome; it waits on the user's decision.
 7. After the world is agreed, rewrite plan Weeks 5 and 6 (`docs/1-planning/action-plan/not-started.md`), which
-   still describe connecting today's 41 maps.
-8. Decide the field_11 test state (leaf base or patches; keep or remove the grass sample).
+   still describe connecting the 41 old maps. What needs agreeing first was put to the user on 2026-09-26.
 9. **Found 2026-09-25, not fixed:**
    - **Errors in the user's play session (19:23):** 11 × `MissingReferenceException` on a destroyed `UI.Image` in
      `HoverPlate.RebuildIcons` (HoverPlate.cs:264, from LateUpdate :137). Unrelated to the biome work; not looked at.
@@ -198,14 +191,11 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
      tiles. A picture problem only; the map is fine.
 
 10. **Found 2026-09-26, open:**
-   - **Six characters still stand in maps that were renamed** (`town_0` ×5, `m_f10` = Alpha). The update was refused
-     by the permission guard; it is the user's to run (Alpha already failed to load `m_f10` at 04:50):
-     `psql "$(grep '^DATABASE_URL=' accounts/.env | cut -d= -f2-)" -c "update character set progress = jsonb_set(progress,'{sceneName}', to_jsonb(case progress->>'sceneName' when 'town_0' then 'lastline' when 'm_f10' then 'lv_29_33' end)) where progress->>'sceneName' in ('town_0','m_f10');"`
-   - **The game server build predates every change of this session** (map renames, mob list, world map). Rebuild it
-     (`tools/build-game.sh server`, ask first), then the user restarts the map server.
-   - **Two old maps' doors into Lastline arrive nowhere**: `field_11` → `w0_from_field_11` and `field_15` →
-     `w12_from_field_15` have no arrival point in `lastline` since its gates were retargeted to the new world.
-     Pre-existing; the old maps are set aside.
+   - **A character saved in a map the game no longer has goes to Lastline (built 2026-09-26, not run yet):** the map
+     server answers "no such map" with its starting map, and the character server forgets that character's saved
+     map and position and sends them there. Four test characters are in the renamed `town_0` (Tester, Dex, Claude,
+     test2) and will be moved the first time each signs in, once the server build is remade and the character server
+     restarted.
    - **The world map picture is 1536×1024 and compressed**; full screen on a large display upscales it. A sharper
      export needs the baker to take the world span from the layout's background, not the picture's pixel size.
    - **Sacred clouds** — rebuilt as a cloud layer at treetop height (`CloudLayerOverlay` + `Unwritten/CloudLayer`,
@@ -223,38 +213,10 @@ unwalked. The stacked-props bug is NOT FIXED (40 of the 42 older scenes; the new
      shadow, mastery or skill exists for either. The Firearm's magic crit is decided, not built (the game blocks
      every magic crit today).
 
-## Stacked-props bug — proven vs hypothesis
-
-**Proven (measured this session):**
-- Loaded field_11: every child of `Props/Grass` (80), `Flowers` (48), `Treeline` (24), `Rocks` (10) and
-  `Landmarks` (2) sits at world (0, 0, 0), all 80 grass at one distinct position. The scene view showed trees
-  poking out of the centre house.
-- On disk, field_11 has 166 prefab instances, and 164 of their `m_LocalPosition.x` overrides are non-zero, so the
-  positions ARE saved.
-- Those overrides target `fileID: 324027705005997943` on `Grass4.prefab`
-  (guid `6f93198897c87f841815509b3add360d`). The prefab's Transform is `6047917465493172141`, and it already was
-  before 2026-09-21. The overrides are orphaned.
-- `324027705005997943` last appears in git history around `d78abc98` (2026-07-20), `be088eac` (2026-07-15,
-  "props shaders for trees and houses, removed old prefabs").
-- **Measured across every scene (2026-09-25):** 42 scenes save prop positions; all except lastline (0 of 401 broken)
-  and Systems have them orphaned (field_5 162/162, dungeon_0 144/144, field_11 164/236). Freshly generated maps
-  are clean (0 of 352+ broken).
-
-**Hypothesis (unverified):** the mid-July prop prefab rebuild gave every prop new internal IDs, orphaning the
-overrides in every generated map.
-
-## Next single step
-
-Most old maps will be replaced by the new world, and regenerating a map fixes it. For a map worth keeping: map each
-orphaned override target fileID to the current prefab's root Transform fileID (per source-prefab guid), count how
-many instances it would fix read-only, then apply. The counting script used on 2026-09-25 compared each
-`m_LocalPosition.x` override's target fileID against the fileIDs present in its prefab.
-
 ## How to resume
 
 ```text
-Read handoffs/world-map-redesign.md and continue. First: confirm the user ran the database update (item 10), rebuild
-the game server (ask first), then walk the new world from Lastline: doors (purple = dungeon, yellow = town), mobs and
+Read handoffs/world-map-redesign.md and continue. First: push if still ahead, then walk the new world from Lastline: doors (purple = dungeon, yellow = town), mobs and
 elites per field, the full-screen world map (N), /tp by map id (e.g. /tp mines_1), the Sacred clouds. Then the 14
-biome test maps (item 4), the stacked-props bug, and the world-map doc's Still open list (names first).
+biome test maps (item 4), and the world-map doc's Still open list (names first).
 ```

@@ -106,8 +106,8 @@ public class Health : MonoBehaviour, ICombatUnit
     /// a body that comes back is the same creature as far as the log is concerned.</summary>
     public SpawnTag Spawn { get; set; }
 
-    /// <summary>How big this unit's BODY is, for melee-contact maths — read from its brain, which knows whether it is a
-    /// character-sized shadow or a shrunken sprite mob. REPORTED rather than folded into a reach, so whoever measures
+    /// <summary>How big this unit's BODY is, for melee-contact maths — read from its brain, which knows its size. A
+    /// body with no brain counts as <see cref="UnitScale.MobScale"/>. REPORTED rather than folded into a reach, so whoever measures
     /// against this unit blends the real pair of bodies instead of assuming what the other one is.</summary>
     public float MeleeScale { get { var b = Brain; return b != null ? b.MeleeScale : UnitScale.MobScale; } }
 

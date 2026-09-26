@@ -262,6 +262,10 @@ public class MonsterAI3D : MonoBehaviour
     /// <c>Player3DController</c>; the gear speeds now have their own owner, so a mob no longer reads a player at all.</summary>
     public bool UsesCharacterGears { get; set; }
 
+    [Tooltip("This creature's body size — a MIRROR of its catalog entry, which owns it. Written by the mob baker and " +
+             "again as each creature is made (MobBody.Fit), so a prefab baked before a size edit corrects itself.")]
+    public MobSize size = MobSize.Medium;
+
     /// <summary>Live registry of active mobs, so cursor target-magnetism can scan candidates without a
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
     public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
@@ -454,7 +458,7 @@ public class MonsterAI3D : MonoBehaviour
     ///
     /// <para>Reach comes from the EQUIPPED WEAPON (<c>Item.attackRange</c>), falling back to this mob's unarmed
     /// <see cref="touchRange"/> — the identical rule the player uses, through the shared <see cref="WeaponReach"/>.
-    /// A MELEE reach is authored at full unit size and rescaled to the mob's actual size, so a shrunk mob bites at its
+    /// A MELEE reach is authored at full unit size and rescaled to the mob's actual size, so a small mob bites at its
     /// body edge instead of across a gap that dwarfs its sprite. A RANGED mob (<see cref="preferredRange"/> &gt; 0)
     /// keeps its authored range untouched: that standoff is a deliberate distance, not body contact.</para>
     ///
@@ -472,10 +476,11 @@ public class MonsterAI3D : MonoBehaviour
         }
     }
 
-    /// <summary>How big this mob's BODY is, for melee-contact maths — the shared character size when it is a live-3D
-    /// shadow (which is built to the same body as the player), the shrunken mob size otherwise. Reported rather than
-    /// baked into a reach, so whoever measures against this mob blends the real pair.</summary>
-    public float MeleeScale => UsesCharacterGears ? UnitScale.CharacterScale : UnitScale.MobScale;
+    /// <summary>How big this mob's BODY is, for melee-contact maths — its size's multiple of a character, read from the
+    /// same size table its height is fitted from, so how big it looks and how far it reaches can never disagree. A
+    /// shadow is always Medium, which is exactly the character size. Reported rather than baked into a reach, so
+    /// whoever measures against this mob blends the real pair.</summary>
+    public float MeleeScale => MobSizes.MeleeScale(size, UnitScale.CharacterScale);
 
     /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
     /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>
@@ -566,8 +571,8 @@ public class MonsterAI3D : MonoBehaviour
         if (status != null && status.SkillRooted) { if (agent != null) agent.Halt(); return; }
 
         // Move-speed states (Slow × Haste) come from the unified store's MoveMult — the SINGLE source, same as the
-        // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. UnitScale.ForMob couples speed to
-        // size (smaller mob = slower) so it keeps the same body-lengths/sec at any size. A SpeedSource unit (a 3D
+        // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. UnitScale.ForMob is the one speed dial every
+        // billboard mob shares — a creature's size does not change its speed. A SpeedSource unit (a 3D
         // shadow) instead reads the player's own gear speeds — same body, same stride — chasing on the run gear and
         // wandering on the walk gear, exactly the two gears every character has.
         float travel = UsesCharacterGears
@@ -592,7 +597,7 @@ public class MonsterAI3D : MonoBehaviour
         // Use TRUE 3D distance (not planar) so a mob that has fallen off a cliff/edge below the terrain —
         // same XZ as the player but far below — can't keep biting an invisible, "there are no mobs" hit.
         float touch3DSqr = playerAlive ? (player.position - pos).sqrMagnitude : Mathf.Infinity;
-        // MELEE contact range is authored at full unit size; rescale it to the current size (UnitScale) so a shrunk
+        // MELEE contact range is authored at full unit size; rescale it to this mob's size (Reach) so a small
         // mob bites at its actual body edge rather than across a fixed gap that dwarfs its sprite. RANGED mobs
         // (preferredRange > 0) keep their authored touchRange untouched — their reach is a deliberate standoff, not
         // a body-contact distance, so it must NOT shrink with unit size.
@@ -614,8 +619,14 @@ public class MonsterAI3D : MonoBehaviour
         // be different: the creature decided it had ARRIVED on a measurement that ignores height and whether it could
         // REACH on the real one, so a creature 0.54 away flat and 0.79 away in truth held still against a reach of
         // 0.59 and never landed anything.
+        //
+        // AND NEVER STANDING WHERE ITS OWN BLOW CANNOT LAND. A creature that walks in stops inside the nearer of its
+        // hold and its reach; one holding a shooting distance is steered by that distance and only asks whether it may
+        // shoot.
         float hold = HoldDistance();
-        bool standing = Prey != null && player != null && engagement.Ask(player, touch3DSqr, hold * hold);
+        bool standing = Prey != null && player != null && (HoldsAPocket
+            ? engagement.AskHolding(player, touch3DSqr, hold * hold)
+            : engagement.Ask(player, touch3DSqr, Mathf.Min(hold * hold, touch * touch)));
 
         bool swingMoment = player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null;
 
@@ -872,7 +883,7 @@ public class MonsterAI3D : MonoBehaviour
         // A TAUNT takes the pocket away: it is the whole point of the verb that the target keeps coming and keeps
         // swinging, so a taunted ranged mob falls through to the melee close-and-bite below rather than backing off.
         // Its swing RATE is untouched — the taunt removes the gaps between attacks, it never shortens the interval.
-        if (preferredRange > 0f && !Taunted)
+        if (HoldsAPocket)
         {
             float near = preferredRange * 0.8f;
             if (toPlayerSqr < near * near)            { agent.MoveToward(AwayPoint(pos)); FaceToward(player.position - pos); }
@@ -900,6 +911,10 @@ public class MonsterAI3D : MonoBehaviour
         }
     }
 
+    /// <summary>Does this creature hold a shooting distance rather than walk in? One answer, read by its feet, by how
+    /// close it comes, and by whether it may strike. A taunt takes the distance away.</summary>
+    bool HoldsAPocket => preferredRange > 0f && !Taunted;
+
     /// <summary>HOW CLOSE THIS CREATURE COMES BEFORE IT STANDS AND FIGHTS. One answer, read by the blow and by the
     /// feet, so the two can never disagree — which is exactly what they used to do.
     ///
@@ -922,7 +937,7 @@ public class MonsterAI3D : MonoBehaviour
     {
         // A standoff shooter holds its pocket instead; the pocket IS its hold distance. A taunt takes the pocket
         // away — being unable to back off is the whole point of the verb — so a taunted one falls through to melee.
-        if (preferredRange > 0f && !Taunted) return preferredRange;
+        if (HoldsAPocket) return preferredRange;
 
         float reachFraction = touchRange > 1e-4f ? stopDistance / touchRange : 1f;
         float hold = Mathf.Max(Reach * reachFraction, Reach);

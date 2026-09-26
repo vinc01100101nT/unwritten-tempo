@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 6938807077458824790}
   - component: {fileID: 3947294258495500688}
   - component: {fileID: 6459583312507399504}
+  - component: {fileID: 1030936846878615132}
   - component: {fileID: 7610894445615506494}
   m_Layer: 9
   m_Name: TenguRed
@@ -41,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.8199999, y: 1.8199999, z: 1.8199999}
+  m_LocalScale: {x: 0.21741082, y: 0.21741082, z: 0.21741082}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -140,7 +141,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.19566973
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -189,7 +190,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 0
+  element: 7
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -213,7 +214,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -231,6 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 0
   simulateRadius: 28
 --- !u!114 &7155137873378329514
 MonoBehaviour:
@@ -308,6 +309,8 @@ MonoBehaviour:
     frames: 10
     footPx: 22
   stripPixelsPerUnit: 82
+  crownAtScaleOne: 0.4512195
+  paintedWidthAtScaleOne: 0.6707317
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -390,6 +393,20 @@ MonoBehaviour:
   goldMax: 2000
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &1030936846878615132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8018186328866433862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.04905
+  halfWidth: 0.072912164
 --- !u!114 &7610894445615506494
 MonoBehaviour:
   m_ObjectHideFlags: 0

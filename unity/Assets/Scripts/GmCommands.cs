@@ -711,7 +711,7 @@ public static class GmCommands
         var p = c.Player;
         if (p == null) { c.Reply("No character in the world."); return; }
         Vector3 at = MapManager.InMap(p.position, c.MapName);
-        c.Reply($"{c.MapName} — x {at.x:0.#}, y {at.y:0.#}, z {at.z:0.#}");
+        c.Reply(c.MapName + " — " + Coords.Text(at));
     }
 
     static void CmdTp(GmContext c)

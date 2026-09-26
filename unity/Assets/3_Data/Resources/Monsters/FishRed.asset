@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.fishred
   displayName: FishRed
   kind: 0
-  size: 1
+  size: 0
   biome: 2
   sheet: FishRed
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.13
   level: 51
   str: 32
   agi: 28
@@ -47,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 3
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

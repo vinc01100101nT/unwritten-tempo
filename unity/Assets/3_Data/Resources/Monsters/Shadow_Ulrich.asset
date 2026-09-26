@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: Bear
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1
   level: 150
   str: 99
   agi: 83
@@ -51,7 +50,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 8
   elementLevel: 3
   attackElement: 0
   onHitAilment: 0

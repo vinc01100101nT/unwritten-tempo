@@ -294,14 +294,21 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         if (!await rows.ReadAsync()) return NoSuchCharacter();
 
         using var progress = JsonDocument.Parse(rows.GetString(2));
+        string name = rows.GetString(1);
+        bool isGm = rows.GetBoolean(5);
+        var sent = progress.RootElement;
 
         // WHERE THIS PERSON IS GOING. Their save says which map they logged out in; a caller may name one
         // instead, which is what walking through a door into another map server's territory will use.
         var map = body?.map;
+        bool fromSave = false;
         if (string.IsNullOrWhiteSpace(map)
             && progress.RootElement.TryGetProperty("sceneName", out var scene)
             && scene.ValueKind == JsonValueKind.String)
+        {
             map = scene.GetString();
+            fromSave = true;
+        }
 
         // WHICH PROCESS HOLDS THAT MAP — and if nobody does, one is asked to bring it up and we wait for it.
         // No process is given a list of zones when it starts, so "nobody is holding it" is the ordinary state of
@@ -310,7 +317,30 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         MapServers.Registration? to;
         if (map is not null)
         {
-            to = await maps.EnsureHeldAsync(map, http.RequestAborted);
+            var held = await maps.EnsureHeldAsync(map, http.RequestAborted);
+
+            // A SAVED MAP THE GAME NO LONGER HAS. The map server said its build has no map by that name and named
+            // its starting map instead, so that is where they go — and their saved map and position are forgotten
+            // in the row, because the game reads the row again once they arrive and would otherwise walk them
+            // straight back to the map that is gone. With no saved map they stand where anyone new arrives.
+            if (held.NoSuchMapInstead is { } instead && fromSave && instead != map)
+            {
+                await rows.DisposeAsync();
+                await using var forget = new NpgsqlCommand(
+                    @"update character set progress = progress - 'sceneName' - 'posX' - 'posY' - 'posZ',
+                                           updated_at = now()
+                       where id = $1 and deleted_at is null returning progress::text", conn);
+                forget.Parameters.Add(new NpgsqlParameter { Value = characterId });
+                if (await forget.ExecuteScalarAsync() is not string forgottenText) return NoSuchCharacter();
+                using (var forgotten = JsonDocument.Parse(forgottenText)) sent = forgotten.RootElement.Clone();
+
+                Console.WriteLine($"[char] '{name}' was saved in '{map}', which is not in the game any more — "
+                                  + $"sending them to '{instead}' and forgetting where they stood.");
+                map = instead;
+                held = await maps.EnsureHeldAsync(map, http.RequestAborted);
+            }
+
+            to = held.Server;
             if (to is null)
                 return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
         }
@@ -328,8 +358,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
-        bool taken = await maps.AnnounceAsync(to, ticket, rows.GetString(1), progress.RootElement,
-                                              rows.GetBoolean(5), http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, isGm, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

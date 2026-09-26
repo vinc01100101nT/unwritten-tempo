@@ -26,15 +26,16 @@ public class CloudLayerOverlay : MonoBehaviour
     public float patchSize = 16f;
     [Range(0f, 1f)] [Tooltip("Roughly the share of the map left clear between cloud patches: 0 = one unbroken layer, " +
                              "1 = no clouds.")]
-    public float clearShare = 0.5f;
+    public float clearShare = 0.28f;
     [Range(0.05f, 5f)] [Tooltip("How much each metre of cloud the eye looks through hides what is behind it.")]
     public float opacityPerMetre = 0.7f;
     [Tooltip("Where nothing was drawn (the sky), how far along the view the clouds are still counted (metres).")]
     public float maxDistance = 80f;
     [Tooltip("Radius around the point the camera looks at that stays fully clear of cloud (metres).")]
-    public float clearRadius = 6f;
+    // TEMP 2026-09-26: circle switched off (was 6 / 10) so the user can see the Sacred clouds; restore or retune after.
+    public float clearRadius = 0f;
     [Tooltip("Radius at which the clouds are back to full (metres); between the two they fade in.")]
-    public float clearFadeEnd = 10f;
+    public float clearFadeEnd = 0f;
     [Tooltip("How fast the clouds drift (scrolls the world-pinned noise).")]
     public float driftSpeed = 1.5f;
     [Tooltip("Colour of the sunlit tops of the clouds.")]

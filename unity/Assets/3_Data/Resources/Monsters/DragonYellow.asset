@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.dragonyellow
   displayName: DragonYellow
   kind: 0
-  size: 1
+  size: 2
   biome: 3
   sheet: DragonYellow
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.0600001
   level: 67
   str: 44
   agi: 35

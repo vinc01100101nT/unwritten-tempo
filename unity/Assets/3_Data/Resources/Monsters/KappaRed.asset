@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: KappaRed
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.99
   level: 36
   str: 25
   agi: 19

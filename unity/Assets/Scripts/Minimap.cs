@@ -31,6 +31,12 @@ public class Minimap : MonoBehaviour
     [Header("Tuning")]
     [Tooltip("Half-extent (world units) the minimap shows around the player. Smaller = more zoomed-in.")]
     public float viewRadius = 20f;
+    [Tooltip("The closest the + button zooms in: the fewest world units shown from the player to the edge.")]
+    public float minViewRadius = 8f;
+    [Tooltip("The farthest the - button zooms out: the most world units shown from the player to the edge.")]
+    public float maxViewRadius = 60f;
+    [Tooltip("How much one press of + or - zooms.")]
+    public float zoomStep = 1.5f;
     [Tooltip("How high above the player the live fallback camera sits.")]
     public float camHeight = 120f;
     [Tooltip("Live-camera re-render cap (Hz). 0 = follow the game's frame rate (so the terrain pans as smoothly " +
@@ -89,6 +95,28 @@ public class Minimap : MonoBehaviour
         dotSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         arrowSprite = BuildArrowSprite();   // the player marker — rotated to its facing each frame
         BuildCoordLabel();
+        BuildZoomButtons();
+    }
+
+    // + and - in the map's top-right corner. Built while the game runs, never saved into the scene. The map stays
+    // centred on the player, so zooming always closes in on exactly where they stand.
+    void BuildZoomButtons()
+    {
+        var vrt = view.rectTransform;
+        AddZoomButton("+", 1f / zoomStep, vrt, 0f);
+        AddZoomButton("\u2212", zoomStep, vrt, -20f);
+    }
+
+    void AddZoomButton(string label, float factor, RectTransform vrt, float down)
+    {
+        var btn = UiKit.Btn(label, Panel.transform, () =>
+            viewRadius = Mathf.Clamp(viewRadius * factor, minViewRadius, maxViewRadius));
+        btn.gameObject.hideFlags = HideFlags.DontSaveInEditor;
+        var rt = (RectTransform)btn.transform;
+        rt.anchorMin = rt.anchorMax = new Vector2(vrt.anchorMax.x, vrt.anchorMax.y);
+        rt.pivot = new Vector2(1f, 1f);
+        rt.sizeDelta = new Vector2(18f, 18f);
+        rt.anchoredPosition = new Vector2(vrt.offsetMax.x - 3f, vrt.offsetMax.y - 3f + down);
     }
 
     // Built here while the game runs, never saved into the scene: a strip along the bottom of the map view.
@@ -117,7 +145,7 @@ public class Minimap : MonoBehaviour
     void RefreshCoords()
     {
         // YOUR OWN position, which your machine moves (the one thing it may) — shown, never sent anywhere.
-        Vector3 p = player.position;
+        Vector3 p = Coords.ToShown(player.position);
         int x = Mathf.RoundToInt(p.x), y = Mathf.RoundToInt(p.y), z = Mathf.RoundToInt(p.z);
         if (x == lastX && y == lastY && z == lastZ) return;
         lastX = x; lastY = y; lastZ = z;

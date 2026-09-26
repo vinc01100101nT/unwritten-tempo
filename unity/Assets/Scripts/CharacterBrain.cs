@@ -76,6 +76,9 @@ public static class CharacterBrain
         /// <summary>Flinching from a blow. Only ever shows on a body that is standing still: a hit never interrupts
         /// an action or a run, for anybody.</summary>
         public bool flinching;
+        /// <summary>Which flinch this is (<see cref="StatusController.FlinchCount"/>). A new number means a new hit
+        /// staggered the body, and the hurt reaction starts over from its first frame.</summary>
+        public int flinchCount;
     }
 
     /// <summary>The verdict for this frame.</summary>
@@ -92,6 +95,9 @@ public static class CharacterBrain
         /// <summary>This body is lying dead, so a one-shot still running has to be cancelled rather than merely
         /// out-driven — otherwise it dies mid-swing and finishes the swing lying down.</summary>
         public bool cancelOneShot;
+        /// <summary>Which beat of this stance this is. When it changes while the same stance is already showing, the
+        /// clip starts over from its first frame — a second hit restarts the flinch instead of letting it run on.</summary>
+        public int beat;
 
         public Vector3 facing;
         public bool applyFacing;
@@ -140,7 +146,7 @@ public static class CharacterBrain
         if (it.dashing)   { d.hasAction = true; d.id = StanceId.Roll;  d.window = it.dashWindow; return d; }
 
         // A flinch only shows on a body that is standing still — a hit never interrupts an action or a run.
-        if (it.flinching && it.groundSpeed < walkThreshold) { d.hasAction = true; d.id = StanceId.Hurt; return d; }
+        if (it.flinching && it.groundSpeed < walkThreshold) { d.hasAction = true; d.id = StanceId.Hurt; d.beat = it.flinchCount; return d; }
 
         // Locomotion. Run by default; the sprint gear upshifts and the slow-walk gear downshifts, and a rig with no
         // distinct sprint clip sprints on its run clip rather than falling back to standing.
@@ -168,7 +174,7 @@ public static class CharacterBrain
 
         if (d.cancelOneShot) stance.CancelActionOverride();
 
-        if (d.hasAction) stance.DriveStance(d.id, d.window, d.release);
+        if (d.hasAction) stance.DriveStance(d.id, d.window, d.release, d.beat);
         else             stance.ClearAction();
 
         if (d.applyFacing && pose != null) pose.SetFacing(d.facing);

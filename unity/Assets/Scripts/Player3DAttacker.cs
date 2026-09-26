@@ -66,16 +66,16 @@ public class Player3DAttacker : MonoBehaviour
         => Character.Instance != null ? Character.Instance.MeleeReachFullSize
                                       : WeaponReach.Of(null, range);   // the SHARED rule — a mob resolves its reach through this same one
 
-    /// <summary>Reach against an ORDINARY SPRITE MOB — the common pairing, kept only for the callers that have no
+    /// <summary>Reach against the stand-in body (<see cref="UnitScale.MobScale"/>), kept only for the callers that have no
     /// target to measure against (the pickup radius, the editor gizmo). Every actual hit test uses
     /// <see cref="RangeAgainst"/> instead, which blends against the target that is really there.</summary>
     public float EffectiveRange => BaseRange * UnitScale.MeleeReachFactor;
 
     /// <summary>The player's reach AGAINST A SPECIFIC TARGET — the only correct form, because a melee blend is a fact
-    /// about the PAIR of bodies, not about either one alone. A shadow mob is built to the same body as the player, so
-    /// that pair blends to full reach; an ordinary shrunken sprite mob blends down exactly as before.
+    /// about the PAIR of bodies, not about either one alone. A Medium creature (every shadow) is a character's size, so
+    /// that pair blends to full reach; a Small one blends down, a Large or XL one up (<see cref="MobSizes"/>).
     ///
-    /// <para><see cref="EffectiveRange"/> assumes an ordinary sprite mob and now exists only for the callers that have
+    /// <para><see cref="EffectiveRange"/> assumes the stand-in body and now exists only for the callers that have
     /// NO target to measure against (the pickup radius, the editor gizmo). Every real hit test uses this.</para></summary>
     public float RangeAgainst(Health t)
         => BaseRange * UnitScale.MeleeBlend(UnitScale.CharacterScale,
@@ -85,9 +85,9 @@ public class Player3DAttacker : MonoBehaviour
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= RangeAgainst(t);
 
     /// <summary>Sticky version of <see cref="InRange"/> for the controller's stand-vs-chase decision:
-    /// turns true at <see cref="range"/> and stays true until the target has drifted past reach by the one authored
-    /// factor every character reads.
-    /// Landing a hit still uses the strict <see cref="InRange"/>, so the extra margin never extends reach.</summary>
+    /// turns true once the target is inside reach by the one authored margin every character reads, and stays true
+    /// until it is past reach — so it is never true while a swing cannot land, and the chase always picks up again.
+    /// Landing a hit still uses the strict <see cref="InRange"/>.</summary>
     public bool EngagedWith(Health t)
     {
         if (t == null || t.IsDead) return engagement.Ask(null, 0f, 0f);

@@ -15,12 +15,11 @@ MonoBehaviour:
   id: mob.giantbamboo2
   displayName: GiantBamboo2
   kind: 1
-  size: 1
+  size: 3
   biome: 0
   sheet: GiantBamboo2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 2.3
   level: 11
   str: 11
   agi: 5

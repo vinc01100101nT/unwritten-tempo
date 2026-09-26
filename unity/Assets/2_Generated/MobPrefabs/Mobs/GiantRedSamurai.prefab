@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 2711214389273732726}
   - component: {fileID: 2474744376139152602}
   - component: {fileID: 6734931083960377581}
+  - component: {fileID: 5063037448606355637}
   - component: {fileID: 6664464233072362513}
   m_Layer: 9
   m_Name: GiantRedSamurai
@@ -41,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.715, y: 1.715, z: 1.715}
+  m_LocalScale: {x: 1.7003999, y: 1.7003999, z: 1.7003999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -157,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
   moveSpeed: 1.7
-  agentRadius: 0.3
+  agentRadius: 0.51012
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -213,7 +214,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -231,6 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 3
   simulateRadius: 28
 --- !u!114 &8469616466782461157
 MonoBehaviour:
@@ -308,6 +309,8 @@ MonoBehaviour:
     frames: 6
     footPx: 0
   stripPixelsPerUnit: 48
+  crownAtScaleOne: 1
+  paintedWidthAtScaleOne: 1.4583334
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -390,6 +393,20 @@ MonoBehaviour:
   goldMax: 1500
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &5063037448606355637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8748520251079483997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.85019994
+  halfWidth: 1.239875
 --- !u!114 &6664464233072362513
 MonoBehaviour:
   m_ObjectHideFlags: 0

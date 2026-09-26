@@ -18,7 +18,7 @@ public class WorldSpawns : ScriptableObject
     [System.Serializable]
     public class Row
     {
-        [Tooltip("The map's scene name, e.g. 'field_0'.")]
+        [Tooltip("The map's scene name, e.g. 'lv_1_3'.")]
         public string map = "";
         [Tooltip("A creature's id or name, e.g. 'mob.shadow.tsubame' — always that creature, and how an elite or a " +
                  "shadow is placed. Empty = a weighted mix of the Biome's normals inside the level range below.")]
@@ -33,8 +33,9 @@ public class WorldSpawns : ScriptableObject
         public bool includeCommons = true;
         [Tooltip("How many of them are kept alive at once.")]
         [Min(0)] public int population = 1;
-        [Tooltip("The middle of the area, in the map's own coordinates — what /where prints.")]
-        public Vector3 center;
+        [Tooltip("The middle of the area, in the map's own coordinates — what /where prints: X west to east, Y south " +
+                 "to north, Z height.")]
+        [ShownCoords] public Vector3 center;
         [Tooltip("They appear anywhere on the ground within this distance of the middle.")]
         [Min(0f)] public float radius = 10f;
         [Tooltip("Never appear closer than this to a player.")]

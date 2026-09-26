@@ -55,6 +55,11 @@ public class MapServerLink : MonoBehaviour
 
     static MapServerLink spawned;
 
+    // EVERY MAP THIS BUILD CAN LOAD, and where somebody goes when they ask for one it cannot. Filled once, on the
+    // frame this link starts, because both are read on the listening thread, where Unity may not be asked anything.
+    static HashSet<string> mapsInBuild = new HashSet<string>(StringComparer.Ordinal);
+    static string startingMap = "";
+
     /// <summary>Someone the character server has told us to expect, with the character it sent. Held until they
     /// actually connect, or until they have taken too long about it.</summary>
     public sealed class Expected
@@ -97,6 +102,14 @@ public class MapServerLink : MonoBehaviour
         }
 
         ServerId = SystemInfo.deviceName + "-" + Guid.NewGuid().ToString("N")[..8];
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCountInBuildSettings; i++)
+            names.Add(System.IO.Path.GetFileNameWithoutExtension(
+                UnityEngine.SceneManagement.SceneUtility.GetScenePathByBuildIndex(i)));
+        mapsInBuild = names;
+        var root = FindFirstObjectByType<GameRoot>();   // perf-ok: once, as the server starts
+        startingMap = root != null ? root.firstMap : "";
 
         var go = new GameObject("MapServerLink") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
@@ -197,6 +210,16 @@ public class MapServerLink : MonoBehaviour
         {
             var ask = JsonUtility.FromJson<HostRequest>(body);
             if (ask == null || string.IsNullOrEmpty(ask.map)) { Reply(ctx, 400, "{\"error\":\"no map\"}"); return; }
+            // A MAP THIS BUILD DOES NOT HAVE is said at once, with where to send them instead. Taking it would
+            // start a load that can never finish, and the character server would wait out its whole patience for
+            // a map that is never coming — which is what a character saved in a deleted map met on every sign-in.
+            if (!mapsInBuild.Contains(ask.map))
+            {
+                GameLog.Warn(LogCat.Map, "asked to bring up '" + ask.map + "', which is not in this build — "
+                                 + "answered with '" + startingMap + "' instead.");
+                Reply(ctx, 404, JsonUtility.ToJson(new NoSuchMap { error = "no such map", instead = startingMap }));
+                return;
+            }
             lock (toHost) toHost.Enqueue(ask.map);
             Reply(ctx, 200, "{\"ok\":true}");
             return;
@@ -362,6 +385,13 @@ public class MapServerLink : MonoBehaviour
     class HostRequest
     {
         public string map;
+    }
+
+    [Serializable]
+    class NoSuchMap
+    {
+        public string error;
+        public string instead;
     }
 
     [Serializable]

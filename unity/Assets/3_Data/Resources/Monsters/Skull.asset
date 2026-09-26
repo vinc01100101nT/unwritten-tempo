@@ -20,7 +20,6 @@ MonoBehaviour:
   sheet: Skull
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1.0600001
   level: 25
   str: 17
   agi: 14

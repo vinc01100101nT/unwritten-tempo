@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 1813409811947753309}
   - component: {fileID: 7401559599097786582}
   - component: {fileID: 5568789066067283637}
+  - component: {fileID: 625723292292518896}
   m_Layer: 9
   m_Name: Snake
   m_TagString: Untagged
@@ -40,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.791, y: 0.791, z: 0.791}
+  m_LocalScale: {x: 0.109000005, y: 0.109000005, z: 0.109000005}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -139,7 +140,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.0981
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -188,7 +189,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 1
+  element: 4
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -212,7 +213,6 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attack: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
@@ -230,6 +230,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  size: 0
   simulateRadius: 28
 --- !u!114 &2061695947419442853
 MonoBehaviour:
@@ -307,6 +308,8 @@ MonoBehaviour:
     frames: 0
     footPx: 0
   stripPixelsPerUnit: 0
+  crownAtScaleOne: 0.9
+  paintedWidthAtScaleOne: 0.9375
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -389,3 +392,17 @@ MonoBehaviour:
   goldMax: 24
   goldDropChance: 0.85
   lootTable: []
+--- !u!114 &625723292292518896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6172840961055397927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitBody
+  halfHeight: 0.04905
+  halfWidth: 0.051093753

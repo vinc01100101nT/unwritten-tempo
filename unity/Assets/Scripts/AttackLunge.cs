@@ -31,7 +31,7 @@ public class AttackLunge : MonoBehaviour
     // The rest scale the chomp squashes around — READ from the sprite animator, which owns this mob's live body scale,
     // so the chomp and the idle breathe can't disagree about what "rest" means. The local capture is only a fallback
     // for a mob that has no sprite animator at all.
-    Vector3 BaseScale => anim != null ? anim.BaseScale : buildScale * UnitScale.ForMob;
+    Vector3 BaseScale => anim != null ? anim.BaseScale : buildScale;
 
     public void Punch()
     {

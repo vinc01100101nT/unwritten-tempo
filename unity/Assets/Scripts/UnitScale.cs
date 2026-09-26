@@ -1,30 +1,28 @@
 using UnityEngine;
 
 /// <summary>
-/// Global unit-size dial for the 2.5D world. Every unit renders at <c>buildScale × multiplier</c> and moves
-/// at <c>baseSpeed × multiplier</c>, so shrinking a unit also slows it proportionally — it crosses the same
-/// number of body-lengths per second and keeps the same "feel" at any size.
+/// Global unit-size dial for the 2.5D world, plus the melee-contact blend between two bodies.
 ///
 /// <para>Two knobs:
-///   • <see cref="Global"/>      — scales ALL units (player + mobs) together.
-///   • <see cref="MobRelative"/> — an extra multiplier on MOBS only, to match their on-screen size to the
-///     player, so this can default &lt; 1 when the mob art reads larger on screen than the player.</para>
+///   • <see cref="Global"/>      — scales the player's size + speed, and the character height every creature's size
+///     is a multiple of (<see cref="MobSizes"/>).
+///   • <see cref="MobRelative"/> — an extra SPEED multiplier on billboard mobs only. It no longer sizes anything: a
+///     creature's size is its own (<see cref="MobSizes"/>). It is also the stand-in body (<see cref="MobScale"/>)
+///     for a melee blend that has no target to measure against.</para>
 ///
-/// Units read these every frame — <see cref="Player3DController"/> + <see cref="BillboardAnimator3D"/> recompute
-/// their <c>baseScale</c> from a stored build scale (so the idle-breathe squash still works), and the movers
-/// apply the multiplier where they read speed (<see cref="MonsterAI3D"/>, the player). No registration/events —
-/// new spawns and respawns pick it up automatically because each unit recomputes from its own build values.
+/// The player reads these every frame (<see cref="Player3DController"/> recomputes its <c>baseScale</c> from a stored
+/// build scale), and the movers apply the multiplier where they read speed (<see cref="MonsterAI3D"/>, the player).
 /// </summary>
 public static class UnitScale
 {
     /// <summary>Scales every unit's size + speed. 1 = authored size.</summary>
     public static float Global = 1f;
-    /// <summary>Extra size+speed multiplier on mobs only (match mob height to the player). 1 = no change.</summary>
+    /// <summary>Extra SPEED multiplier on billboard mobs only. 1 = no change.</summary>
     public static float MobRelative = 0.30f;
 
     /// <summary>Size+speed multiplier for the player.</summary>
     public static float ForPlayer => Global;
-    /// <summary>Size+speed multiplier for mobs (global × mob-relative).</summary>
+    /// <summary>Speed multiplier for billboard mobs (global × mob-relative).</summary>
     public static float ForMob => Global * MobRelative;
 
     /// <summary>
@@ -45,11 +43,13 @@ public static class UnitScale
     /// live-3D shadow mob. They are the same body, so they are the same size.</summary>
     public static float CharacterScale => ForPlayer;
 
-    /// <summary>Size of an ordinary billboard mob, which is shrunk by <see cref="MobRelative"/>.</summary>
+    /// <summary>The stand-in body for a melee blend with NO target to measure against (a ground-aimed search, the
+    /// editor gizmo, a body with no brain) — the value every sprite mob had before sizes, so those searches did not
+    /// widen. Every blend against a real creature reads that creature's size instead.</summary>
     public static float MobScale => ForMob;
 
-    /// <summary>The blend for the COMMON case — a character against an ordinary sprite mob. Derived from
-    /// <see cref="MeleeBlend"/> rather than re-typed, so it can never disagree with a pairwise check.</summary>
+    /// <summary>The blend of a character against the stand-in body (<see cref="MobScale"/>), for callers with no target.
+    /// Derived from <see cref="MeleeBlend"/> rather than re-typed, so it can never disagree with a pairwise check.</summary>
     public static float MeleeReachFactor => MeleeBlend(CharacterScale, MobScale);
 
     public static void SetGlobal(float v)      => Global      = Mathf.Clamp(v, 0.2f, 3f);

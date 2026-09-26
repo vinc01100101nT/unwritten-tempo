@@ -76,18 +76,18 @@ or a floor item is known by the number the server gave it, a door by where it st
 2026-09-18 an id was tied to the object drawn, and the first screen's `d1` had become `d3` by the next command —
 measured twice, cause in the game not measured.) An id whose body has since been handed to another creature
 answers `unknown id` rather than acting on the wrong one. Every command that waits ends with a line saying why:
-`arrived`, `hit`, `new map field_15`, `m3 died`, `you died`, `HP under 30%`, `cast Lunge`, `picked up Grilled
+`arrived`, `hit`, `new map lv_1_3`, `m3 died`, `you died`, `HP under 30%`, `cast Lunge`, `picked up Grilled
 Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 
 | Command | What it does |
 | --- | --- |
 | `look` | The whole screen as text. Every other answer leaves out the hotbar, villagers or doors when they read exactly as last time, and says so in one line: `unchanged: hotbar, doors`. |
 | `login <email> <password>` · `create <name>` · `play <name\|number>` | Sign in, make a character, enter the world. `play` answers once nothing new has arrived for a second (or after five seconds in a map that never goes quiet), so the first screen has everything on it. |
-| `move <x> <z>` · `go <id>` | Walk to a spot, or to a thing. Ends on arrival, a new map (once it has settled), your HP under 30%, death, or 30 s — not on an ordinary hit, because a creature nibbling 1 HP a second would end every walk at once. |
+| `move <x> <y>` · `go <id>` | Walk to a spot (x west to east, y south to north), or to a thing. Ends on arrival, a new map (once it has settled), your HP under 30%, death, or 30 s — not on an ordinary hit, because a creature nibbling 1 HP a second would end every walk at once. |
 | `attack <m#>` | Fight a monster until it or you die, your HP drops below 30%, or 30 s. |
 | `auto on\|off [secs]` | The auto-pilot fights nearby monsters; answers after `secs` (default 10). |
 | `stop` | Drop every order. |
-| `cast <slot\|R\|name> [m#\|p#\|me \| x z]` | Press a hotbar skill, aimed at a creature, a player, yourself, or a spot. |
+| `cast <slot\|R\|name> [m#\|p#\|me \| x y]` | Press a hotbar skill, aimed at a creature, a player, yourself, or a spot. |
 | `pickup <g#>` · `talk <n#>` | Reach for a floor item — `picked up …` only when the bag gained it, else `… is gone from the floor` (a kill's drops vanish after 60 s); talk to a villager (returns their lines). |
 | `use <bag#\|name>` · `equip <bag#>` · `unequip <slot>` | The bag's own use and equip. |
 | `stat <STR\|AGI\|VIT\|INT\|DEX\|LUK>` | Spend one stat point. |
@@ -125,15 +125,9 @@ Every one of these is a fault in the game, found by playing it as text. None is 
   both map generators no longer plant one, so a re-import cannot bring it back. The door arrival points are
   untouched — 36 of them across 18 maps.
   **What this changes for anyone arriving without a door:** the game now uses the map's first door point instead
-  (a new character starts in town beside the field_11 door rather than in the middle of the plaza). **23 maps have
-  no arrival point at all now** — every dungeon but two, four fields and seven of the small towns — and arriving
-  in one of those leaves the body wherever it already stood. The user is building the respawn rule that answers
-  that case.
+  (a new character starts in town beside one of its doors rather than in the middle of the plaza).
 - **A creature list that empties a few seconds after arriving is this same fall** — the list only shows what is
   within 25 m, and 25 m down takes about 3 seconds. Nothing is wrong with the list.
-- **`field_15`'s Start spawn (0,0) is inside a tree collider**, and `field_10`'s has a tree on it too. Anyone
-  teleported or respawned there cannot walk away ("MOVEMENT REFUSED … Nearest solid: Deciduous_tree2 at 0"; also
-  Rye and Oak_tree3).
 - **A field's own tavern can pin a player standing at its Start**, holding them a metre above the floor and, it
   seems, out of every creature's reach — the same player took no blow in eight minutes with a creature half a
   metre away. Whether the building is what stops the blows is unmeasured. (The line that named `Tavern_LOD0` is
@@ -141,7 +135,6 @@ Every one of these is a fault in the game, found by playing it as text. None is 
   every field carries its own tavern and windmill.)
 - **Being hit about once a second keeps you rooted**: every hit restarts the stagger that stops your legs.
 - **The Sword item's attack range is 0**, so basic swings never land; skills do.
-- **The door from `field_11` back to town** did not fire twice when walked onto; nothing in either log.
 
 ## Related
 

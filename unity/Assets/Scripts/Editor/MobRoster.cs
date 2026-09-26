@@ -22,7 +22,7 @@ public static class MobRoster
         // 1) GRUNT — the baseline melee slime. Common.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(1, wStr: 3f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // fodder bruiser
-            name = "Slime", sheet = "Slime", weight = 4, tint = None, scale = 1.0f,
+            name = "Slime", sheet = "Slime", weight = 4, tint = None, size = MobSize.Small,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // fodder: a sliver of DEF, no crit shield
             xpReward = 5,
             touchRange = 0.9f, touchInterval = 1.0f,
@@ -36,7 +36,7 @@ public static class MobRoster
         // 2) SWARMER — fast, fragile, dodgy harasser. Common; comes in numbers.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(2, wStr: 2f, wAgi: 5f, wVit: 1f, wInt: 1f, wDex: 2f, wLuk: 2f),   // fast + dodgy
-            name = "Bat", sheet = "BlueBat", weight = 4, tint = Cyan, scale = 0.78f,
+            name = "Bat", sheet = "BlueBat", weight = 4, tint = Cyan, size = MobSize.Small,
             hardDefPercent = 0, hardMagicDefPercent = 0,   // no DEF (dodges instead); lucky → some crit shield
             xpReward = 3,
             touchRange = 0.8f, touchInterval = 0.8f,
@@ -50,7 +50,7 @@ public static class MobRoster
         // 3) BRUISER — slow, tanky, heavy hits. Uncommon; a real threat one-on-one.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(6, wStr: 3f, wAgi: 1f, wVit: 5f, wInt: 1f, wDex: 2f, wLuk: 1f),   // tanky
-            name = "Kappa", sheet = "KappaGreen", weight = 2, tint = None, scale = 1.15f,
+            name = "Kappa", sheet = "KappaGreen", weight = 2, tint = None, size = MobSize.Medium,
             hardDefPercent = 25, hardMagicDefPercent = 8,   // TANK: % DEF cuts normal hits hard — crit builds shine here
             xpReward = 12,
             touchRange = 1.0f, touchInterval = 1.4f,
@@ -66,7 +66,7 @@ public static class MobRoster
         // player (speed 4) closes the gap in ~1s. A real telegraphed bolt is the follow-up that sells it.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(5, wStr: 1f, wAgi: 2f, wVit: 2f, wInt: 5f, wDex: 2f, wLuk: 1f),   // caster
-            name = "Flam", sheet = "Flam", weight = 2, tint = Arcane, scale = 0.95f,
+            name = "Flam", sheet = "Flam", weight = 2, tint = Arcane, size = MobSize.Medium,
             hardDefPercent = 0, hardMagicDefPercent = 10,   // squishy to melee; a caster's own magic resist
             xpReward = 10,
             touchRange = 3.6f, touchInterval = 1.6f,
@@ -81,7 +81,7 @@ public static class MobRoster
         // 5) DARTER — hit-and-run; flees once wounded below 40% HP. Uncommon.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(8, wStr: 5f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // heavy hitter
-            name = "Cyclope", sheet = "Cyclope", weight = 2, tint = None, scale = 0.9f,
+            name = "Cyclope", sheet = "Cyclope", weight = 2, tint = None, size = MobSize.Large,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // evasive hit-and-run: high crit shield + dodge
             xpReward = 8,
             touchRange = 0.9f, touchInterval = 1.0f,
@@ -102,7 +102,7 @@ public static class MobRoster
     {
         stats = UnitStatMath.Allocate(30, wStr: 3f, wAgi: 1f, wVit: 4f, wInt: 2f, wDex: 2f, wLuk: 1f),   // boss
         name = "Ancient Dragon", sheet = "Dragon", weight = 0,
-        tint = new Color(1f, 0.85f, 0.85f), scale = 2.3f,
+        tint = new Color(1f, 0.85f, 0.85f), size = MobSize.Large,
         // A real wall of HP + real defenses so the whole kit (multi-hit, status, crit) matters.
         hardDefPercent = 30, hardMagicDefPercent = 20,   // WALL: heavy % DEF + strong crit shield — crit/element/status all matter
 

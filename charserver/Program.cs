@@ -207,7 +207,7 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
         // SOMEBODY MUST BE HOLDING IT BEFORE ANYBODY IS SENT TO IT. Nobody is given a list of zones at start-up,
         // so a zone nobody is standing in is held by nobody — the ordinary state, not a fault. This puts it on
         // the quietest process and waits for it to actually stand up.
-        var to = await maps.EnsureHeldAsync(body.map, http.RequestAborted);
+        var to = (await maps.EnsureHeldAsync(body.map, http.RequestAborted)).Server;
         if (to is null)
             return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
 
