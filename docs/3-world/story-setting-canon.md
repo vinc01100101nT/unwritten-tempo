@@ -1,7 +1,7 @@
 ---
 status: canon seed
 owner: vince
-last-updated: 2026-09-25
+last-updated: 2026-09-26
 tags:
   - world-content
 ---
@@ -39,22 +39,38 @@ Fourteen people fought the thing that silenced the scribe. Because they acted **
 - **Carrying one bleeds their identity into you** — that is the charcoal → color return. You are not recovering *the* truth; you are finishing *a* story.
 - **Naming an Unwritten is the mastery endgame.** Learn enough of a weapon's pool and its true name can finally be written — a codex entry authored by play. Fourteen names to write, fourteen mastery tracks.
 
-| Weapon | Epithet | The deed nobody recorded |
-| --- | --- | --- |
-| Sword | **The One Who Answered** | Met every challenge alone, one at a time, and never lost the exchange. |
-| Greatsword | **The One Who Cleared the Road** | Walked ahead of the others so there would be a path behind. |
-| Axe | **The One Who Never Stopped** | Would not be turned, would not defend, only pressed forward. |
-| Warhammer | **The One Who Said No** | Whatever the enemy meant to do, it did not get to. |
-| Spear | **The One Who Moved the Line** | Decided where everyone stood, on both sides. |
-| Shield | **The One Who Stood** | Took what was meant for the other thirteen. |
-| Bow | **The One Who Kept Distance** | Was never where the blow landed, and never out of range. |
-| Dagger | **The Late Arrival** | Was not in the fight until it was already ending. |
-| Firearm | **The One Who Fired Once** | Needed one shot; waited as long as that took. |
-| Staff | **The One Who Burned the Field** | Unmade the ground the enemy was standing on. |
-| Wand | **The One Who Brought Them Back** | Is the reason the other thirteen were still standing. |
-| Scythe | **The One Who Waited** | Did nothing quickly, and nothing survived it. |
-| Fist | *not written yet* | *not written yet* |
-| Kick | *not written yet* | *not written yet* |
+| Weapon | Epithet | Style | The deed nobody recorded |
+| --- | --- | --- | --- |
+| Sword | **The One Who Answered** | **Blossom Wind** | Met every challenge alone, one at a time, and never lost the exchange. |
+| Greatsword | **The One Who Cleared the Road** | **Silent Snow** | Walked ahead of the others so there would be a path behind. |
+| Axe | **The One Who Never Stopped** | **Forest Fire** | Would not be turned, would not defend, only pressed forward. |
+| Warhammer | **The One Who Said No** | **Stone Bloom** | Whatever the enemy meant to do, it did not get to. |
+| Spear | **The One Who Moved the Line** | **Silver Rain** | Decided where everyone stood, on both sides. |
+| Shield | **The One Who Stood** | **Still Oak** | Took what was meant for the other thirteen. |
+| Bow | **The One Who Kept Distance** | **Feather Rain** | Was never where the blow landed, and never out of range. |
+| Dagger | **The Late Arrival** | **Night Orchid** | Was not in the fight until it was already ending. |
+| Firearm | **The One Who Fired Once** | **Dusk Crow** | Needed one shot; waited as long as that took. |
+| Staff | **The One Who Burned the Field** | **Ashen Field** | Unmade the ground the enemy was standing on. |
+| Wand | **The One Who Brought Them Back** | **Morning Dew** | Is the reason the other thirteen were still standing. |
+| Scythe | **The One Who Waited** | **Black Lily** | Did nothing quickly, and nothing survived it. |
+| Fist | *not written yet* | **Northern Lights** | *not written yet* |
+| Kick | *not written yet* | **Autumn Gale** | *not written yet* |
+
+**Their styles.** Each of the Fourteen fought in a **style**, and a style is not a name — it is how they fought, which
+is all a witness could carry away. Their shadows go by their styles. Every skill of a weapon is one numbered **form** of
+its style, counted in the order the weapon teaches it (the Sword's first form is Piercing Gust), and a form's name is
+built only from its own style's picture — Blossom Wind's forms are wind, petals, branches and storm.
+**Every style is a poetic picture of nature** — a living thing or a natural scene and the weather or season that
+moves it, soft rather than hard: Blossom Wind, Silver Rain, Night Orchid, Black Lily. Never a material or a machine
+(no iron, no gate, no stone wall). It is real English, spelled as English spells it, sounds smooth said with "style",
+never names a real country's culture and never borrows another story's term.
+
+**Calling a form.** Pressing a form calls it out over the caster's head and in the chat log: an ultimate always with
+the full call ("Blossom Wind style, 21st form, Thousand Petals!!"), the weapon's trademark form with the full call at
+most once every 30 seconds, and any other form by its name alone ("Last Petal!!") at most once every 5 seconds. People
+and shadows make the full call; an ordinary creature only names the form. A form that fires on its own is never called.
+The server chooses the words and keeps the timers; other players' calls can be hidden in the settings.
+*The fourteen styles are LOCKED (2026-09-26). Form names are working names and can still change.*
 
 *Rule for authoring: an epithet describes a **deed**, never a name, a title, or a rank — the moment it reads like a name, it stops being unwritten.*
 
@@ -75,7 +91,7 @@ Fourteen people fought the thing that silenced the scribe. Because they acted **
 
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen identity sentences these epithets are the flavour half of.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the growth engine the tradeable-ring lore hangs off (recorded there as proposed, not committed).
-- [Biome Mob Families — Spawning by Biome and Level](biome-mob-families.md) — the blank pages, as data.
+- [Creatures and Where They Live](biome-mob-families.md) — the blank pages, as data.
 - [World Creator — Spec](world-creator-spec.md) — the world these beats have to be placed in.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — "a dropped weapon remembers its wielder in fragments", as a system.
 - [Mixamo Animation Integration — Workflow](../4-art/mixamo-animation-workflow.md) — the charcoal-body rig the fiction is built on.

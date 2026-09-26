@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: AxolotBlue
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 28
-  str: 20
-  agi: 15
-  vit: 20
-  intel: 10
-  dex: 15
-  luk: 10
+  level: 23
+  str: 17
+  agi: 13
+  vit: 17
+  intel: 8
+  dex: 13
+  luk: 8
   startingGear: []
   gearQuality: 0
-  gearFolds: 4
+  gearFolds: 3
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 28
+  weaponMasteryLevel: 23
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5

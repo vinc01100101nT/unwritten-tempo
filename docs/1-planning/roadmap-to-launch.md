@@ -25,7 +25,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 | Thing | Count | What the count means |
 | --- | --- | --- |
 | Game and tooling code files | 375 | 95 of them editor tools, exposing 88 menu commands |
-| Playable maps | 59 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 30 fields · 15 dungeon floors, plus the hand-made Lastline (`lastline`); the 40 older maps were deleted 2026-09-26 |
+| Playable maps | 75 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 39 fields · 22 dungeon floors, plus the hand-made Lastline (`lastline`); the 40 older maps were deleted 2026-09-26 |
 | Creature definitions | 86 | 20 of them bosses; all 20 now have their own artwork |
 | Skills | 42 | see the split below |
 | Items in the whole game | 13 | 11 consumables · 2 that can be worn (a sword and a bow) |
@@ -116,7 +116,7 @@ One play-test has been open since 3 September, covering eleven server and skill 
 - [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the online half is, and its deliberate limits.
 - [Starting the Network](../2-systems/networking/starting-the-network.md) — how to stand the multiplayer half up.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the maps.
-- [Biome Mob Families — Spawning by Biome and Level](../3-world/biome-mob-families.md) and [Mob Roster](../3-world/mob-roster.md) — how maps get populated.
+- [Creatures and Where They Live](../3-world/biome-mob-families.md) and [Mob Roster](../3-world/mob-roster.md) — how maps get populated.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the reasons the world still needs put into it.
 - [Where the Game Is Hosted](where-the-game-is-hosted.md) — the machine, the latency numbers, and the cost.
 - [Performance Checkup — My Routine](performance-checkup-routine.md) — the recurring measurement habit.

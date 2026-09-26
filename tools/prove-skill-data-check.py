@@ -123,11 +123,11 @@ CASES = [
      patch("skill.sword.guard_stance.asset",
            ("\n  manaCost:", "\n  triggersMigrated: 1\n  manaCost:")),
      "OLD FORMAT"),
-    # Every published weapon skill with a main number is a trademark the forge can roll, so a blank name is a
-    # weapon with nothing to be called.
-    ("a trademark skill with no trademark name",
-     patch("skill.sword.lunge.asset", ("trademarkName: Tsuki", "trademarkName: ")),
-     "no trademark name"),
+    # A trademark weapon is called by its skill's own name now; a separate weapon name left in a file is the retired
+    # shape, and the checker must refuse it rather than let a second copy of the name drift.
+    ("a separate trademark name left in a skill",
+     patch("skill.sword.lunge.asset", ("\n  manaCost:", "\n  trademarkName: Tsuki\n  manaCost:")),
+     "OLD FORMAT"),
     ("a tick left in an older saved format",
      patch("skill.sword.guard_stance.asset",
            ("\n  - tickId:", "\n  - scope: 0\n    tickId:")),

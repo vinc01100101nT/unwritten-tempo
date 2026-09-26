@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Eye
   kind: 0
   size: 0
-  biome: 4
+  biome: 8
   sheet: Eye
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 85
-  str: 54
-  agi: 46
-  vit: 54
-  intel: 33
-  dex: 45
-  luk: 32
+  level: 64
+  str: 40
+  agi: 34
+  vit: 40
+  intel: 25
+  dex: 34
+  luk: 24
   startingGear: []
-  gearQuality: 2
-  gearFolds: 13
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 10
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 85
+  weaponMasteryLevel: 64
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 6
+  element: 4
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

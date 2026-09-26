@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: GiantSlime2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 94
-  str: 60
+  level: 95
+  str: 61
   agi: 38
-  vit: 68
+  vit: 69
   intel: 38
-  dex: 51
+  dex: 52
   luk: 36
   startingGear: []
   gearQuality: 5
-  gearFolds: 28
+  gearFolds: 29
   gearInkTier: 5
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 94
+  weaponMasteryLevel: 95
   hardDefPercent: 29
   hardMagicDefPercent: 18
   xpReward: 600
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 8
+  element: 7
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

@@ -41,28 +41,28 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 
 | Symbol | Skill | Tier | Cost | When | What it does |
 | --- | --- | --- | --- | --- | --- |
-| `Bd` | Blade Dance | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage · Parries the next hit within **8s** — no damage taken · +**1%** damage per stack for **8s** · Dashes to the target location |
-| `Br` | Brace | active | MP **12**  CD **7s**  Instant | pressed | Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends |
-| `Ch` | Challenge | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Taunts nearby enemies for **5s** |
-| `Cs` | Committed Strike | active | MP **16**  CD **8s**  Cast **1.2s**  Range **5** | pressed | Deals **2×** physical damage |
-| `Cp` | Composure | passive | MP **0**  CD **0s**  Instant | When you parry | +2 MP regen for **4s** |
-| `Db` | Deathblow | **ULT** | MP **40**  CD **60s**  Cast **1s**  Range **5** | pressed | Deals **6×** physical damage **+ 0.4 × stacks** |
-| `Ds` | Disarm | active | MP **12**  CD **9s**  Instant  Range **5** | pressed | Deals **1×** physical damage · Their next attack deals −**40%** damage within **6s** |
-| `En` | Encore | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Adds **7** to **Blade Dance** |
-| `Fl` | Flow | passive | MP **0**  CD **0s**  Instant  Range **1** | When a basic attack lands | Adds **1** to **Momentum** |
-| `Gs` | Guard Stance | active | MP **12**  CD **9s**  Instant | pressed | +**50%** damage reduction for **6s** |
-| `Ls` | Last Stand | passive | MP **0**  CD **0s**  Instant | When your HP drops low | Adds **5** to **Brace** |
-| `Lb` | Lock Blades | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Lunge | +2 basic attack range per stack for **5s** |
-| `Lu` | Lunge | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **1×** physical damage |
-| `Mo` | Momentum | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**3%** damage per stack for **5s** |
-| `Ob` | Offbeat | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**30%** attack speed for **5s** |
-| `On` | Onslaught | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | +**1%** damage per stack for **5s** · Deals **1×** physical damage |
-| `Op` | Opening | passive | MP **0**  CD **0s**  Instant  Range **11** | When you parry | **50%** per hit: your next attack deals +**200%** damage within **5s** |
-| `Oc` | Overclock | active | MP **12**  CD **12s**  Instant | pressed | +**30%** attack speed for **8s** · −**100%** damage reduction for **3s** |
-| `Pa` | Parry | active | MP **8**  CD **5s**  Instant | pressed | Parries the next hit within **3s** — no damage taken |
-| `Pr` | Pressure | passive | MP **0**  CD **0s**  Instant  Range **11** | When you deal damage | −3 HP regen per stack for **5s** |
-| `Rt` | Retribution | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total** |
-| `Un` | Unwavering | passive | MP **0**  CD **0s**  Instant | After casting Guard Stance | Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts |
+| `Tp` | Thousand Petals | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage · Parries the next hit within **8s** — no damage taken · +**1%** damage per stack for **8s** · Dashes to the target location |
+| `Hb` | Held Breath | active | MP **12**  CD **7s**  Instant | pressed | Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends |
+| `Hw` | Howling Wind | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | Taunts nearby enemies for **5s** |
+| `Sp` | Single Petal | active | MP **16**  CD **8s**  Cast **1.2s**  Range **5** | pressed | Deals **2×** physical damage |
+| `Es` | Eye of the Storm | passive | MP **0**  CD **0s**  Instant | When you parry | +2 MP regen for **4s** |
+| `Lp` | Last Petal | **ULT** | MP **40**  CD **60s**  Cast **1s**  Range **5** | pressed | Deals **6×** physical damage **+ 0.4 × stacks** |
+| `St` | Stripped Bough | active | MP **12**  CD **9s**  Instant  Range **5** | pressed | Deals **1×** physical damage · Their next attack deals −**40%** damage within **6s** |
+| `Sb` | Second Bloom | passive | MP **0**  CD **0s**  Instant | When you kill a mob | Adds **7** to **Thousand Petals** |
+| `Tw` | Tailwind | passive | MP **0**  CD **0s**  Instant  Range **1** | When a basic attack lands | Adds **1** to **Rising Breeze** |
+| `Sa` | Still Air | active | MP **12**  CD **9s**  Instant | pressed | +**50%** damage reduction for **6s** |
+| `Bb` | Bare Branch | passive | MP **0**  CD **0s**  Instant | When your HP drops low | Adds **5** to **Held Breath** |
+| `Cb` | Crossed Branches | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Piercing Gust | +2 basic attack range per stack for **5s** |
+| `Pg` | Piercing Gust | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **1×** physical damage |
+| `Rb` | Rising Breeze | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**3%** damage per stack for **5s** |
+| `Sc` | Scattered Petals | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**30%** attack speed for **5s** |
+| `Ps` | Petal Storm | active | MP **12**  CD **8s**  Instant  Range **11** | pressed | +**1%** damage per stack for **5s** · Deals **1×** physical damage |
+| `Pc` | Parting Clouds | passive | MP **0**  CD **0s**  Instant  Range **11** | When you parry | **50%** per hit: your next attack deals +**200%** damage within **5s** |
+| `Sq` | Squall | active | MP **12**  CD **12s**  Instant | pressed | +**30%** attack speed for **8s** · −**100%** damage reduction for **3s** |
+| `Br` | Bending Reed | active | MP **8**  CD **5s**  Instant | pressed | Parries the next hit within **3s** — no damage taken |
+| `Hd` | Headwind | passive | MP **0**  CD **0s**  Instant  Range **11** | When you deal damage | −3 HP regen per stack for **5s** |
+| `Rw` | Returning Wind | **ULT** | MP **40**  CD **45s**  Instant  Range **11** | pressed | Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total** |
+| `Dr` | Deep Roots | passive | MP **0**  CD **0s**  Instant | After casting Still Air | Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts |
 
 ## Staff  —  colour `#3C3C3C`
 

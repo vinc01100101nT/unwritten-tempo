@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Snake3
   kind: 0
   size: 0
-  biome: 3
+  biome: 6
   sheet: Snake3
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 81
-  str: 53
-  agi: 43
-  vit: 52
-  intel: 30
-  dex: 43
-  luk: 30
+  level: 43
+  str: 29
+  agi: 22
+  vit: 27
+  intel: 16
+  dex: 22
+  luk: 16
   startingGear: []
-  gearQuality: 2
-  gearFolds: 12
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 6
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 81
+  weaponMasteryLevel: 43
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 5
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

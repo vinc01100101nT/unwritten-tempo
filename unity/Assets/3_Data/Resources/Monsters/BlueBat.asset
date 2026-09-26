@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: BlueBat
   kind: 0
   size: 0
-  biome: 2
+  biome: 13
   sheet: BlueBat
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 48
-  str: 31
-  agi: 26
-  vit: 30
-  intel: 17
-  dex: 26
-  luk: 17
+  level: 74
+  str: 49
+  agi: 40
+  vit: 47
+  intel: 26
+  dex: 40
+  luk: 26
   startingGear: []
-  gearQuality: 1
-  gearFolds: 7
-  gearInkTier: 1
+  gearQuality: 2
+  gearFolds: 11
+  gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 48
+  weaponMasteryLevel: 74
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 7
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

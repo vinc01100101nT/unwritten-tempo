@@ -1,0 +1,7827 @@
+{
+    "version": 1,
+    "name": "khn_fild10",
+    "cellSize": 1.0,
+    "size": {
+        "x": 64.0,
+        "z": 56.0
+    },
+    "cols": 64,
+    "rows": 56,
+    "ground": [
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 7,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 10,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 11,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 12,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 13,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 14,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 15,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 16,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 17,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 18,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 19,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 20,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 21,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 22,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 23,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 24,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 25,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 26,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 27,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 28,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 29,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 30,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 31,
+            "cz": 3
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 31,
+            "cz": 4
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 31,
+            "cz": 5
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 31,
+            "cz": 6
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 31,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 31,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 3
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 4
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 5
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 6
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 7
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 32,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 32,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 33,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 33,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 33,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 33,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 33,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 33,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 33,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 33,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 33,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 34,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 34,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 35,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 35,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 7
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 36,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 36,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 37,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 37,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 38,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 38,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 39,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 39,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 40,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 40,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 40,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 41,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 41,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 41,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 7
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 42,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 42,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 42,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 7
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 43,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 43,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 43,
+            "cz": 52
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 44,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 44,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 52
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 45,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 45,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 52
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 46,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 46,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 53
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 47,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 47,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 55
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 48,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 48,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 48,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 8
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 49,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 49,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 49,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 9
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 12
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 13
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 21
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 50,
+            "cz": 23
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 24
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 10
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 11
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 12
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 13
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 14
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 21
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 23
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 51,
+            "cz": 25
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 26
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 12
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 14
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 25
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 52,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 12
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 53,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 53,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 13
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 54,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 54,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 14
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 55,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 55,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 55
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 56,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 56,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 56,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 57,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 57,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 58,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 58,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 59,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 59,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 16
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 60,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_dark_cobble",
+            "cx": 60,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 15
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 12
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 13
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 14
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 17
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 18
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 19
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 20
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 21
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 22
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 44
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 45
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 46
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 47
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 48
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 49
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 50
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 51
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 52
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 53
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 54
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 55
+        }
+    ],
+    "objects": [
+        {
+            "brush": "landmarks",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 37.96200180053711,
+            "z": 34.67100143432617,
+            "yaw": 154.63999938964845
+        },
+        {
+            "brush": "landmarks",
+            "prefab": "Pine_stump_LOD0",
+            "x": 27.31599998474121,
+            "z": 31.104999542236329,
+            "yaw": 104.00299835205078
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 31.170000076293947,
+            "z": 53.18600082397461,
+            "yaw": 254.3280029296875
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 39.388999938964847,
+            "z": 25.493000030517579,
+            "yaw": 138.47999572753907
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 47.483001708984378,
+            "z": 3.058000087738037,
+            "yaw": 205.67100524902345
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 34.444000244140628,
+            "z": 30.01099967956543,
+            "yaw": 27.687999725341798
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 2.878000020980835,
+            "z": 46.30799865722656,
+            "yaw": 280.0719909667969
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 4.09499979019165,
+            "z": 37.172000885009769,
+            "yaw": 252.64300537109376
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 48.73400115966797,
+            "z": 46.32899856567383,
+            "yaw": 253.46299743652345
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 13.140000343322754,
+            "z": 31.88599967956543,
+            "yaw": 252.7310028076172
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 58.75899887084961,
+            "z": 13.635000228881836,
+            "yaw": 150.42100524902345
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 25.566999435424806,
+            "z": 51.926998138427737,
+            "yaw": 310.47601318359377
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 19.31100082397461,
+            "z": 24.954999923706056,
+            "yaw": 0.2409999966621399
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 61.75899887084961,
+            "z": 30.3799991607666,
+            "yaw": 184.77099609375
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 47.06800079345703,
+            "z": 40.03099822998047,
+            "yaw": 72.2040023803711
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 6.354000091552734,
+            "z": 26.5939998626709,
+            "yaw": 114.33899688720703
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 8.925999641418457,
+            "z": 17.839000701904298,
+            "yaw": 47.20899963378906
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 16.334999084472658,
+            "z": 8.890999794006348,
+            "yaw": 138.58799743652345
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 61.742000579833987,
+            "z": 40.16400146484375,
+            "yaw": 148.76300048828126
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 15.25,
+            "z": 6.056000232696533,
+            "yaw": 254.92100524902345
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 45.86199951171875,
+            "z": 24.261999130249025,
+            "yaw": 342.4460144042969
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 42.65800094604492,
+            "z": 52.965999603271487,
+            "yaw": 124.46299743652344
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 53.930999755859378,
+            "z": 30.089000701904298,
+            "yaw": 269.0190124511719
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 37.5880012512207,
+            "z": 16.85700035095215,
+            "yaw": 274.3550109863281
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 9.689000129699707,
+            "z": 27.670000076293947,
+            "yaw": 186.39500427246095
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 31.05699920654297,
+            "z": 49.387001037597659,
+            "yaw": 352.5889892578125
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 37.3120002746582,
+            "z": 4.080999851226807,
+            "yaw": 278.60699462890627
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 60.04800033569336,
+            "z": 32.69200134277344,
+            "yaw": 231.85400390625
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 17.726999282836915,
+            "z": 49.367000579833987,
+            "yaw": 315.74200439453127
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 51.20000076293945,
+            "z": 27.639999389648439,
+            "yaw": 82.34200286865235
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 36.81399917602539,
+            "z": 42.332000732421878,
+            "yaw": 129.0500030517578
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 29.992000579833986,
+            "z": 23.371000289916993,
+            "yaw": 254.23699951171876
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 13.11400032043457,
+            "z": 43.44499969482422,
+            "yaw": 163.5749969482422
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 31.041000366210939,
+            "z": 41.28099822998047,
+            "yaw": 353.5780029296875
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 60.332000732421878,
+            "z": 11.194999694824219,
+            "yaw": 221.01499938964845
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 20.79199981689453,
+            "z": 22.30699920654297,
+            "yaw": 68.14099884033203
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 55.60499954223633,
+            "z": 49.5890007019043,
+            "yaw": 80.5739974975586
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 50.891998291015628,
+            "z": 53.970001220703128,
+            "yaw": 357.42401123046877
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 43.111000061035159,
+            "z": 49.04399871826172,
+            "yaw": 187.30799865722657
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 24.55500030517578,
+            "z": 9.310999870300293,
+            "yaw": 272.60198974609377
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 4.9770002365112309,
+            "z": 11.170000076293946,
+            "yaw": 49.494998931884769
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 43.29499816894531,
+            "z": 31.21500015258789,
+            "yaw": 57.46500015258789
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 29.33799934387207,
+            "z": 45.84400177001953,
+            "yaw": 175.95599365234376
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 39.2599983215332,
+            "z": 18.91200065612793,
+            "yaw": 205.61300659179688
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 49.56100082397461,
+            "z": 41.875,
+            "yaw": 47.65399932861328
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 20.38800048828125,
+            "z": 37.20500183105469,
+            "yaw": 55.459999084472659
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 2.2130000591278078,
+            "z": 28.33099937438965,
+            "yaw": 11.838000297546387
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 21.839000701904298,
+            "z": 18.902999877929689,
+            "yaw": 239.08399963378907
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 5.519999980926514,
+            "z": 17.590999603271486,
+            "yaw": 336.1830139160156
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 33.250999450683597,
+            "z": 22.02899932861328,
+            "yaw": 275.4679870605469
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 44.87799835205078,
+            "z": 6.954999923706055,
+            "yaw": 79.88899993896485
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 8.895000457763672,
+            "z": 34.98699951171875,
+            "yaw": 58.827999114990237
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 47.68000030517578,
+            "z": 51.125999450683597,
+            "yaw": 32.316001892089847
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 25.801000595092775,
+            "z": 23.395999908447267,
+            "yaw": 32.03499984741211
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 13.288000106811524,
+            "z": 47.34299850463867,
+            "yaw": 180.19500732421876
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 15.97700023651123,
+            "z": 34.61600112915039,
+            "yaw": 23.27899932861328
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 48.737998962402347,
+            "z": 16.641000747680665,
+            "yaw": 39.22700119018555
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 55.71699905395508,
+            "z": 5.209000110626221,
+            "yaw": 217.30599975585938
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 27.905000686645509,
+            "z": 42.63100051879883,
+            "yaw": 56.23699951171875
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 61.34400177001953,
+            "z": 15.430000305175782,
+            "yaw": 189.86300659179688
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 52.691001892089847,
+            "z": 47.36199951171875,
+            "yaw": 198.51699829101563
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 24.305999755859376,
+            "z": 15.920999526977539,
+            "yaw": 17.417999267578126
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 5.38100004196167,
+            "z": 39.52899932861328,
+            "yaw": 175.3800048828125
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 48.09600067138672,
+            "z": 34.75,
+            "yaw": 297.78399658203127
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 44.66400146484375,
+            "z": 44.00600051879883,
+            "yaw": 188.33299255371095
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 9.190999984741211,
+            "z": 11.463000297546387,
+            "yaw": 196.07899475097657
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 5.146999835968018,
+            "z": 50.893001556396487,
+            "yaw": 92.18599700927735
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 8.482000350952149,
+            "z": 44.09199905395508,
+            "yaw": 162.71400451660157
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 13.616999626159668,
+            "z": 27.090999603271486,
+            "yaw": 234.35299682617188
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 31.430999755859376,
+            "z": 18.648000717163087,
+            "yaw": 39.82699966430664
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 15.819999694824219,
+            "z": 12.470000267028809,
+            "yaw": 82.10399627685547
+        },
+        {
+            "brush": "trees",
+            "prefab": "Deciduous_tree_stump_LOD0",
+            "x": 40.097999572753909,
+            "z": 12.50100040435791,
+            "yaw": 111.71499633789063
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 26.892000198364259,
+            "z": 48.12799835205078,
+            "yaw": 8.23799991607666
+        },
+        {
+            "brush": "trees",
+            "prefab": "Pine_stump_LOD0",
+            "x": 9.163000106811524,
+            "z": 21.868999481201173,
+            "yaw": 267.4649963378906
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 11.517999649047852,
+            "z": 11.730999946594239,
+            "yaw": 243.17300415039063
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 10.741999626159668,
+            "z": 8.248000144958496,
+            "yaw": 6.5279998779296879
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 28.797000885009767,
+            "z": 39.34600067138672,
+            "yaw": 250.46400451660157
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 29.195999145507814,
+            "z": 51.624000549316409,
+            "yaw": 354.7560119628906
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 39.81100082397461,
+            "z": 49.27299880981445,
+            "yaw": 176.89999389648438
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 16.732999801635743,
+            "z": 23.139999389648439,
+            "yaw": 287.7590026855469
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 37.19900131225586,
+            "z": 8.309000015258789,
+            "yaw": 359.1919860839844
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 51.604000091552737,
+            "z": 39.01900100708008,
+            "yaw": 177.31100463867188
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 60.81399917602539,
+            "z": 52.224998474121097,
+            "yaw": 328.7619934082031
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 16.04400062561035,
+            "z": 41.07600021362305,
+            "yaw": 5.841000080108643
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 53.63600158691406,
+            "z": 51.35300064086914,
+            "yaw": 145.07400512695313
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 22.93400001525879,
+            "z": 52.73500061035156,
+            "yaw": 105.56199645996094
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 17.4950008392334,
+            "z": 14.98900032043457,
+            "yaw": 205.41299438476563
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 55.54800033569336,
+            "z": 36.33700180053711,
+            "yaw": 266.7760009765625
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 33.02799987792969,
+            "z": 24.36199951171875,
+            "yaw": 89.21199798583985
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 58.775001525878909,
+            "z": 39.27899932861328,
+            "yaw": 141.89599609375
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 13.949000358581543,
+            "z": 16.097999572753908,
+            "yaw": 133.76800537109376
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 17.257999420166017,
+            "z": 30.187999725341798,
+            "yaw": 159.81100463867188
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 20.309999465942384,
+            "z": 53.31999969482422,
+            "yaw": 183.49600219726563
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 35.84299850463867,
+            "z": 48.77899932861328,
+            "yaw": 196.64100646972657
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 20.229999542236329,
+            "z": 10.390999794006348,
+            "yaw": 310.8070068359375
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 42.696998596191409,
+            "z": 26.812999725341798,
+            "yaw": 214.85499572753907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 22.448999404907228,
+            "z": 38.61000061035156,
+            "yaw": 202.90499877929688
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 13.199000358581543,
+            "z": 53.10900115966797,
+            "yaw": 290.7070007324219
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 57.012001037597659,
+            "z": 22.881999969482423,
+            "yaw": 175.56300354003907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 10.711000442504883,
+            "z": 38.46099853515625,
+            "yaw": 70.66500091552735
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 42.43600082397461,
+            "z": 3.9579999446868898,
+            "yaw": 268.0369873046875
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 26.93199920654297,
+            "z": 6.526000022888184,
+            "yaw": 130.5399932861328
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 19.57699966430664,
+            "z": 16.70400047302246,
+            "yaw": 242.92300415039063
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 61.45100021362305,
+            "z": 46.74700164794922,
+            "yaw": 336.5060119628906
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 13.98799991607666,
+            "z": 36.54600143432617,
+            "yaw": 275.8240051269531
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 28.32900047302246,
+            "z": 9.409000396728516,
+            "yaw": 156.54600524902345
+        }
+    ]
+}

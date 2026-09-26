@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadow_Varro
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.varro
-  displayName: Varro
+  displayName: Still Oak
   kind: 2
   size: 1
   biome: 5

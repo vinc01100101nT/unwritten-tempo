@@ -85,6 +85,9 @@ public class NetMob : NetworkBehaviour
     [SyncVar] int netLevel;
 
     public CreatureKind Kind => netKind;
+
+    /// <summary>SERVER ONLY: when this creature last called out a form (see <see cref="SkillShout"/>).</summary>
+    public readonly SkillShout.Clock ShoutClock = new SkillShout.Clock();
     public int Level => netLevel;
 
     /// <summary>WHICH BODY a live-3D creature wears, chosen once by this server before the creature is announced.

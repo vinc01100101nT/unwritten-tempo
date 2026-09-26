@@ -6,7 +6,7 @@ Every effect names its own side outright — Caster or Target, nothing else. (Th
 speed" left on Auto cut the player's own and passed every check. Auto was removed 2026-08-24.)
 
 Reading the side off the asset is still worth doing, because no checker can flag the wrong one: every side is
-legal for every kind, and a self-inflicted debuff is a real design (Overclock). So this prints, never judges.
+legal for every kind, and a self-inflicted debuff is a real design (Squall). So this prints, never judges.
 It reads both enums out of the C# at run time, so it cannot drift from the game.
 
     .claude/skills/compose-skill/audit-effect-sides.py            # every skill

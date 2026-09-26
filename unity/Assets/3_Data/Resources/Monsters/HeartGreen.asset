@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: HeartGreen
   kind: 0
   size: 0
-  biome: 3
+  biome: 11
   sheet: HeartGreen
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 70
-  str: 46
-  agi: 37
-  vit: 45
-  intel: 25
-  dex: 37
-  luk: 25
+  level: 68
+  str: 44
+  agi: 36
+  vit: 44
+  intel: 24
+  dex: 36
+  luk: 24
   startingGear: []
-  gearQuality: 2
-  gearFolds: 11
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 10
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 70
+  weaponMasteryLevel: 68
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 9
+  element: 5
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -73,6 +73,12 @@ public static class Trademarks
 
     /// <summary>What <paramref name="weapon"/>'s trademark adds to <paramref name="skillId"/>'s main numbers — the
     /// finished lift the server wrote on the copy, and 0 for any other skill.</summary>
+    public static bool Empowers(EquipmentInstance weapon, string skillId)
+    {
+        var def = SkillOf(weapon);
+        return def != null && def.id == skillId;
+    }
+
     public static float LiftOn(EquipmentInstance weapon, string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return 0f;

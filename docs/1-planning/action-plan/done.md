@@ -158,6 +158,19 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
 
 ---
 
+## Week 5 — The world opens
+
+**Goal:** you can walk from the first town to any map in the game. The three-region world is laid out and generated
+(2026-09-26): 75 maps plus Lastline — 8 cities, 6 towns, 39 fields and 22 dungeon floors — joined by doors, with every
+place named ([World Map](../../3-world/world-map.md)). None of it has been walked in play.
+
+- [DONE] `MT-16` **`[D]` Decide the shape of the world map.** Decided 2026-09-26: three regions (Midlaine, Lirenne, The
+  Far Shores), a city per one-family weapon, a border town per two-family weapon, fields named after the town you walk
+  to them from, and dungeons whose entrance is in one of a town's fields — the [World Map](../../3-world/world-map.md).
+  — **0.5 days**
+
+---
+
 ## Week 6 — Dungeons have a destination
 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.

@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: RedOctopus
   kind: 0
   size: 1
-  biome: 2
+  biome: 3
   sheet: RedOctopus
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 60
-  str: 38
-  agi: 32
-  vit: 38
-  intel: 22
-  dex: 32
-  luk: 22
+  level: 78
+  str: 50
+  agi: 42
+  vit: 50
+  intel: 29
+  dex: 42
+  luk: 29
   startingGear: []
-  gearQuality: 1
-  gearFolds: 9
-  gearInkTier: 1
+  gearQuality: 2
+  gearFolds: 12
+  gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 60
+  weaponMasteryLevel: 78
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10

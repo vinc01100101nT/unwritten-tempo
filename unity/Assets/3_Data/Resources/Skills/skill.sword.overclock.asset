@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.overclock
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.overclock
-  displayName: Overclock
-  symbol: Oc
+  displayName: Squall
+  symbol: Sq
   weaponType: 1
   masteryLevel: 36
   needsSkillId: 
   published: 1
-  trademarkName: Hadori
   description: 'Go faster, fragile.
 
     +30% Attack Speed for 8 seconds, but you

@@ -1,5 +1,5 @@
 ---
-status: Both parts built; the pipeline has produced the 59 maps of the three-region world (2026-09-26); the 40 older maps were deleted the same day
+status: Both parts built; the pipeline has produced the 75 maps of the three-region world (2026-09-26); the 40 older maps were deleted the same day
 owner: vince
 last-updated: 2026-09-26
 tags:
@@ -55,7 +55,7 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
 
 - `version` (int) — schema version. **Current `2`.**
 - `maps` (array of map objects):
-  - `id` (string) — unique. **When the map has a `name`, the id is that name in snake_case** (`Old Tunnels 1` → `old_tunnels_1`; a repeated name gets `_2`, `_3` on the later map), set by the browser tool on every rename and every import. The id is the Unity scene file name (`Assets/Scenes/<id>.unity`), what `/tp` takes, and what a character's save names. This file is the ONE source of every map id; `tools/check-map-ids.py` fails when a scene, door, the world map, a Map Painter file, the starting map or the music table disagrees with it. An unnamed map keeps the tool's `type_N` id.
+  - `id` (string) — unique. **A town, city or special map's id is its `name` in snake_case** (`Old Oak` → `old_oak`; a repeated name gets `_2`, `_3` on the later map), set by the browser tool on every rename and every import. **A field's id is `<town code>_fildNN` and a dungeon floor's `<town code>_dunNN`**, Ragnarok-style (`lst_fild01`, `olk_dun01`), typed in the tool when the map is renamed; a dungeon with no town near it may take its own name instead. The id is the Unity scene file name (`Assets/Scenes/<id>.unity`), what `/tp` takes, and what a character's save names. This file is the ONE source of every map id; `tools/check-map-ids.py` fails when a scene, door, the world map, a Map Painter file, the starting map or the music table disagrees with it. An unnamed map keeps the tool's `type_N` id.
   - `pos` ([x, y], float) — top-left corner in world units. `x`→east, `y`→south. Free placement, no grid.
   - `size` ([w, h], **integer**) — map dimensions in world units. Independent axes (rectangular). Drives `MapRecipe.sizeX`/`sizeZ`.
   - `type` ("town" | "field" | "dungeon" | "special") — picks the recipe theme + colour.
@@ -137,7 +137,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 
 **Map Generator changes (the one real engine change)**
 
-- `RecipeGenerator` gains an **exit-points** input: a list of `{ edge, offset }` (+ resolved world position) where paths must terminate. The path router grows a route from the centre hub to each exit so portals sit on roads.
+- `RecipeGenerator` gains an **exit-points** input: a list of `{ edge, offset }` (+ resolved world position) where paths must terminate. The path router links the exits to each other with meandering roads (no centre meeting point) so portals sit on roads.
 - The orchestrator passes `type`-derived recipe content, the assigned `seed`, and `pathTile`/`pathWidth` (override or randomized) into the generator.
 
 **Open question (deferred):** exact recipe template per `type` — reuse/extend the existing `MapRecipe` assets vs. generate recipes on the fly. Decide when wiring Part 2.
@@ -159,10 +159,10 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 1. **Spec** (this doc). DONE
 2. **HTML World Creator** — paint + colours + Export/Import + adjacent **and distant** warps. DONE
 3. **Unity World Creator window** — import + validate + Build World loop (both adjacent + distant). DONE — `WorldCreator.cs`, `Tools ▸ unwritten ▸ World ▸ World Creator…`. Per-type content from **template recipe assets** wired into the window; each warp gets a unique paired spawn id `w{i}_from_{map}` so up to 3 stacked warps per border work (why `RegionBuilder.EnsurePortal`, which dedupes by destination, was *not* reused; Build World re-bakes scenes fresh so there's nothing stale to dedupe).
-4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the map's centre, where the plaza sits — no arrival point is placed there any more, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
+4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` joins the first two doorways with one meandering road, and gives every further doorway its own meandering road that joins an existing road at a random point along it; a map with one doorway gets a road from it to a random spot in the middle half of the map. There is no centre meeting point. Each road turns across its straight line at random waypoints and stays at least 4 units inside the map edge; how far it drifts is the recipe's `pathWander` (no arrival point is placed at the map centre either, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
-**The pipeline has been run in anger:** on 2026-09-26 it generated the 59 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 30 fields and 15 dungeon floors — with `lastline` (Lastline, hand-made) kept as it is. The 40 maps it produced before, besides Lastline, were deleted on 2026-09-26. The layout's 14 shadow places are not generated yet.
+**The pipeline has been run in anger:** on 2026-09-26 it generated the 75 maps of the three-region world from `tools/world-creator/worlds/world-regions.json` — 8 cities, 6 towns, 39 fields and 22 dungeon floors — with `lastline` (Lastline, hand-made) kept as it is. The 40 maps it produced before, besides Lastline, were deleted on 2026-09-26. The layout's 14 shadow places are not generated yet.
 
 ---
 

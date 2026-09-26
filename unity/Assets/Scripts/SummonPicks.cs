@@ -5,7 +5,8 @@ using System.Collections.Generic;
 /// creature, so adding or re-levelling a creature re-pairs everything with nobody remembering to. Plain lists in, plain
 /// lists out, so the rule can be checked by calling it. Design: docs/3-world/mob-roster.md.
 ///
-/// <para><b>An elite</b> calls the three normals nearest its level at or below it, in the shares
+/// <para><b>An elite</b> calls the three normals nearest its level at or below it — from its own home biome first, so an
+/// elite calls the creatures that live where it lives, and from anywhere only when its biome has too few — in the shares
 /// <see cref="CreatureKinds.EliteSummonShares"/> (five of the nearest, three of the next, two of the one after).</para>
 ///
 /// <para><b>A shadow</b> calls one elite: the shadows ranked from the highest level down pair with the elites ranked the
@@ -31,21 +32,23 @@ public static class SummonPicks
     {
         into.Clear();
         if (summoner == null || roster == null) return;
-        if (summoner.kind == CreatureKind.Elite) ForElite(summoner.level, roster, into);
+        if (summoner.kind == CreatureKind.Elite) ForElite(summoner, roster, into);
         else if (summoner.kind == CreatureKind.Shadow) ForShadow(summoner, roster, into);
     }
 
-    /// <summary>The normals an elite of <paramref name="eliteLevel"/> calls.</summary>
-    public static void ForElite(int eliteLevel, IReadOnlyList<MonsterDef> roster, List<Pick> into)
+    /// <summary>The normals <paramref name="elite"/> calls.</summary>
+    public static void ForElite(MonsterDef elite, IReadOnlyList<MonsterDef> roster, List<Pick> into)
     {
         into.Clear();
         scratch.Clear();
+        int eliteLevel = elite.level;
         for (int i = 0; i < roster.Count; i++)
         {
             var m = roster[i];
             if (m != null && m.kind == CreatureKind.Normal && m.level <= eliteLevel) scratch.Add(m);
         }
-        scratch.Sort(HighestLevelFirst);
+        home = elite.biome;
+        scratch.Sort(OwnBiomeThenHighestLevel);
 
         var shares = CreatureKinds.EliteSummonShares;
         int n = System.Math.Min(shares.Length, scratch.Count);
@@ -80,6 +83,17 @@ public static class SummonPicks
             into.Add(new Pick(scratch2[rank], CreatureKinds.MaxSummons(CreatureKind.Shadow)));
         scratch.Clear();
         scratch2.Clear();
+    }
+
+    // The elite being answered for — read by the sort below, which cannot take an argument of its own.
+    static Biome home;
+
+    // Its own home biome first, then highest level first.
+    static int OwnBiomeThenHighestLevel(MonsterDef a, MonsterDef b)
+    {
+        bool aHome = a.biome == home, bHome = b.biome == home;
+        if (aHome != bHome) return aHome ? -1 : 1;
+        return HighestLevelFirst(a, b);
     }
 
     // Highest level first; the same level is settled by id so every machine and every run agrees.

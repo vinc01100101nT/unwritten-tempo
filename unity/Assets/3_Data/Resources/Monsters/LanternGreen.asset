@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: LanternGreen
   kind: 0
   size: 1
-  biome: 2
+  biome: 13
   sheet: LanternGreen
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 54
-  str: 34
-  agi: 29
-  vit: 34
-  intel: 20
-  dex: 29
-  luk: 20
+  level: 88
+  str: 57
+  agi: 47
+  vit: 56
+  intel: 33
+  dex: 47
+  luk: 33
   startingGear: []
-  gearQuality: 1
-  gearFolds: 8
-  gearInkTier: 1
+  gearQuality: 2
+  gearFolds: 13
+  gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 54
+  weaponMasteryLevel: 88
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 9
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -2067,6 +2067,36 @@ public class GameNetwork : NetworkManager
         }, includeOwner: false);
     }
 
+    /// <summary>Call out a pressed FORM of a style, to everybody who can see the caster AND the caster themselves — in
+    /// the words <see cref="SkillShout"/> decides here, so the timers live on the server and every screen shows the
+    /// same call. Silent off a server, for anybody gone, and when the shout rules say nothing.</summary>
+    public static void AnnounceFormCall(ICombatUnit caster, SkillDef def)
+    {
+        if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null) return;
+        var identity = IdentityOfCaster(caster);
+        if (identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        var mob = shell == null ? identity.GetComponent<NetMob>() : null;
+        if (shell == null && mob == null) return;
+
+        // A person or a shadow may make the full style call; an ordinary creature carries no style of its own.
+        bool mayCallStyle = shell != null || (caster is Health beast && beast.kind == CreatureKind.Shadow);
+        bool trademark = caster is Character person
+            ? Trademarks.Empowers(person.GetEquippedInstance(EquipSlotType.Weapon), def.id)
+            : caster is Health creature && Trademarks.Empowers(creature.HeldWeaponCopy, def.id);
+        string text = SkillShout.Decide(shell != null ? shell.ShoutClock : mob.ShoutClock, def, trademark,
+                                        mayCallStyle, Time.timeAsDouble);
+        if (text == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new ChatHeard
+        {
+            speakerNetId = identity.netId,
+            speaker = shell != null ? shell.playerName : "",
+            text = text,
+            isSkillCall = true,
+        }, includeOwner: true);
+    }
+
     /// <summary>Say that a cast is WINDING UP, to everybody who can see the caster — so the bar and the skill's
     /// name appear over their head there too. Not to the caster's own machine, which draws its bar from the
     /// wind-up it is running itself. Silent off a server, and silent for a skill with no wind-up to show.</summary>
@@ -2482,6 +2512,8 @@ public class GameNetwork : NetworkManager
             if (creature != null && msg.isSkillCall) creature.ShowCreatureCall(msg.text);
             return;
         }
+        // Somebody else's skill call, which this person may have chosen not to see.
+        if (msg.isSkillCall && GameSettings.HideOtherPlayersSkillCalls) return;
         ChatController.Heard(msg.speaker, msg.text, shell.SpeechPose, msg.isSkillCall);
     }
 

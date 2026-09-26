@@ -64,22 +64,6 @@ def parse_run_of_hits_id(source):
     return m.group(1)
 
 
-def parse_main_numbers(effect_src, status_src):
-    """What has a MAIN number, read from the game's own list (EffectScaling.Boostable) rather than kept here:
-    ({kind names that always have one}, {ailment names whose Status has one}). A skill with any such effect is a
-    weapon trademark, and so needs a trademark name."""
-    m = re.search(r"public static bool Boostable\(SkillEffect e\)(.*?)\n    \}", effect_src, re.S)
-    d = re.search(r"public static bool IsDot\(Ailment a\)\s*=>([^;]*);", status_src)
-    if not m or not d:
-        die("Could not find EffectScaling.Boostable or StatusController.IsDot in the game's C#. This checker reads\n"
-            "the real list of main numbers instead of keeping its own copy, so it stops rather than guess.")
-    body = _LINE_COMMENT.sub("", m.group(1))
-    always = set()
-    for block in re.findall(r"((?:case SkillEffectKind\.\w+:\s*)+)return true;", body):
-        always.update(re.findall(r"SkillEffectKind\.(\w+)", block))
-    return always, set(re.findall(r"Ailment\.(\w+)", d.group(1)))
-
-
 def parse_enum(source, name):
     """{member_name: int} in declaration order, honouring explicit `= N` assignments."""
     m = re.search(r"\benum\s+%s\b\s*(?::\s*\w+\s*)?\{" % re.escape(name), source)
@@ -399,7 +383,6 @@ def main():
     armor_pile, weapon_pile = parse_converter_piles(effect_src)
     armor_slot = parse_enum(read(os.path.join(SCRIPTS, "Item.cs")), "EquipSlotType")["Armor"]
     later_piles = parse_later_piles(effect_src)
-    main_kinds, main_ailments = parse_main_numbers(effect_src, read(os.path.join(SCRIPTS, "StatusController.cs")))
 
     kind_name = {v: k for k, v in kinds.items()}
     state_name = {v: k for k, v in states.items()}
@@ -520,6 +503,7 @@ def main():
         "consumeAllStacks": "whether its gate spends the whole pile",
         "triggersMigrated": "the old already-converted marker",
         "targetingMigrated": "the old already-converted marker",
+        "trademarkName":    "a separate weapon name (a trademark weapon is now called by its skill's own name)",
     }
 
     def entries_of(skill):
@@ -559,19 +543,6 @@ def main():
         if as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) == weapons.get("None", 0):
             warn(s, "is published for loot but belongs to no weapon, so no weapon can ever roll it.")
 
-        # ---- the trademark ------------------------------------------------------------
-        # A published weapon skill with a main number on ANY effect is a trademark the forge can roll, automatically,
-        # so it must carry the name a weapon rolled with it is called by.
-        if as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) != weapons.get("None", 0) \
-                and not str(s.get("trademarkName") or "").strip():
-            for b_ in s.get("bindings") or []:
-                if any(kind_name.get(as_int(e.get("kind")), "") in main_kinds
-                       or (kind_name.get(as_int(e.get("kind")), "") == "Status"
-                           and ail_name.get(as_int(e.get("ailment")), "") in main_ailments)
-                       for e in b_.get("effects") or []):
-                    problem(s, "is a trademark skill (an effect of it has a main number) but has no trademark "
-                               "name, so a weapon that rolls it has nothing to be called.")
-                    break
 
         # ---- triggers and their gates -------------------------------------------------
         seen = set()

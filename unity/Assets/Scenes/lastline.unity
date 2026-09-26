@@ -10896,7 +10896,7 @@ GameObject:
   - component: {fileID: 860515445}
   - component: {fileID: 860515444}
   m_Layer: 0
-  m_Name: SpawnPoint_w0_from_lv_1_3
+  m_Name: SpawnPoint_w0_from_lst_fild01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10914,7 +10914,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: w0_from_lv_1_3
+  id: w0_from_lst_fild01
 --- !u!4 &860515445
 Transform:
   m_ObjectHideFlags: 0
@@ -15026,7 +15026,7 @@ GameObject:
   - component: {fileID: 1147801946}
   - component: {fileID: 1147801945}
   m_Layer: 0
-  m_Name: SpawnPoint_w6_from_lv_9_12
+  m_Name: SpawnPoint_w6_from_lst_fild02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -15044,7 +15044,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: w6_from_lv_9_12
+  id: w6_from_lst_fild02
 --- !u!4 &1147801946
 Transform:
   m_ObjectHideFlags: 0
@@ -16244,7 +16244,7 @@ GameObject:
   - component: {fileID: 1235016406}
   - component: {fileID: 1235016405}
   m_Layer: 0
-  m_Name: Portal_w19_to_lv_26_30
+  m_Name: Portal_w19_to_hrw_fild01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16262,7 +16262,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e18c3dc898d6e43b68713827673c2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Portal3D
-  targetScene: lv_26_30
+  targetScene: hrw_fild01
   spawnId: w19_from_lastline
 --- !u!65 &1235016406
 BoxCollider:
@@ -20400,7 +20400,7 @@ GameObject:
   - component: {fileID: 1548291702}
   - component: {fileID: 1548291701}
   m_Layer: 0
-  m_Name: SpawnPoint_w12_from_lv_21_24
+  m_Name: SpawnPoint_w12_from_lst_fild03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -20418,7 +20418,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: w12_from_lv_21_24
+  id: w12_from_lst_fild03
 --- !u!4 &1548291702
 Transform:
   m_ObjectHideFlags: 0
@@ -23924,7 +23924,7 @@ GameObject:
   - component: {fileID: 1868549215}
   - component: {fileID: 1868549214}
   m_Layer: 0
-  m_Name: Portal_w12_to_lv_21_24
+  m_Name: Portal_w12_to_lst_fild03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23942,7 +23942,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e18c3dc898d6e43b68713827673c2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Portal3D
-  targetScene: lv_21_24
+  targetScene: lst_fild03
   spawnId: w12_from_lastline
 --- !u!65 &1868549215
 BoxCollider:
@@ -25202,7 +25202,7 @@ GameObject:
   - component: {fileID: 1990662162}
   - component: {fileID: 1990662161}
   m_Layer: 0
-  m_Name: SpawnPoint_w19_from_lv_26_30
+  m_Name: SpawnPoint_w19_from_hrw_fild01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25220,7 +25220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: w19_from_lv_26_30
+  id: w19_from_hrw_fild01
 --- !u!4 &1990662162
 Transform:
   m_ObjectHideFlags: 0
@@ -27072,7 +27072,7 @@ GameObject:
   - component: {fileID: 2130604219}
   - component: {fileID: 2130604218}
   m_Layer: 0
-  m_Name: Portal_w6_to_lv_9_12
+  m_Name: Portal_w6_to_lst_fild02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27090,7 +27090,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e18c3dc898d6e43b68713827673c2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Portal3D
-  targetScene: lv_9_12
+  targetScene: lst_fild02
   spawnId: w6_from_lastline
 --- !u!65 &2130604219
 BoxCollider:
@@ -27203,7 +27203,7 @@ GameObject:
   - component: {fileID: 2137975643}
   - component: {fileID: 2137975642}
   m_Layer: 0
-  m_Name: Portal_w0_to_lv_1_3
+  m_Name: Portal_w0_to_lst_fild01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27221,7 +27221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1e18c3dc898d6e43b68713827673c2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Portal3D
-  targetScene: lv_1_3
+  targetScene: lst_fild01
   spawnId: w0_from_lastline
 --- !u!65 &2137975643
 BoxCollider:

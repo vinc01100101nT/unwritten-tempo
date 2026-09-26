@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: skill.sword.parry
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.parry
-  displayName: Parry
-  symbol: Pa
+  displayName: Bending Reed
+  symbol: Br
   weaponType: 1
   masteryLevel: 1
   needsSkillId: 

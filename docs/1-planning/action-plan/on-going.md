@@ -42,6 +42,26 @@ Every task carries:
 
 ---
 
+## Week 5 — The world opens
+
+**Goal:** you can walk from the first town to any map in the game. The three-region world is laid out and generated
+(2026-09-26): 75 maps plus Lastline — 8 cities, 6 towns, 39 fields and 22 dungeon floors — joined by doors, with every
+place named ([World Map](../../3-world/world-map.md)). None of it has been walked in play.
+
+- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** Every city, town, field and dungeon floor has its
+  doors from the world layout; the fourteen shadow places are not built. — **4–5 days**
+  *Done when:* starting from Lastline you can reach every one of the 75 maps on foot, without a game-master command.
+
+---
+
+## Week 6 — Dungeons have a destination
+
+**Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
+
+- [ON-GOING] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
+  the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
+  *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
+
 ---
 
 ## Related

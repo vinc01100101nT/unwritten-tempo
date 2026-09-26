@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Reptile2
   kind: 0
   size: 1
-  biome: 4
+  biome: 11
   sheet: Reptile2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 96
-  str: 61
-  agi: 52
-  vit: 61
-  intel: 38
-  dex: 52
-  luk: 36
+  level: 80
+  str: 51
+  agi: 43
+  vit: 50
+  intel: 32
+  dex: 43
+  luk: 30
   startingGear: []
   gearQuality: 2
-  gearFolds: 15
+  gearFolds: 12
   gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 96
+  weaponMasteryLevel: 80
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 9
+  element: 5
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

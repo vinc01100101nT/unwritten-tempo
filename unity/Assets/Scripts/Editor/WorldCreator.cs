@@ -21,8 +21,9 @@ using UnityEngine.SceneManagement;
 /// UNIQUE paired spawn id — <c>w{i}_from_{map}</c> — and we use the lower-level <c>MakePortal</c>/<c>MakeSpawn</c>.
 /// Because each Build re-bakes scenes from scratch, there are no stale portals to dedupe against anyway.</para>
 ///
-/// Scene name = the map <c>id</c>, which the browser tool keeps equal to the map's name in snake_case
-/// ("Old Tunnels 1" → <c>old_tunnels_1.unity</c>), so the world map, the file and <c>/tp</c> all use one id. A door's
+/// Scene name = the map <c>id</c>: a town, city or special map's name in snake_case ("Old Oak" → <c>old_oak.unity</c>),
+/// a field's or dungeon floor's Ragnarok-style id (<c>lst_fild01</c>, <c>olk_dun01</c>), so the world map, the file and
+/// <c>/tp</c> all use one id. A door's
 /// colour comes from the destination map's <c>type</c>, never its name.
 /// </summary>
 public class WorldCreator : EditorWindow

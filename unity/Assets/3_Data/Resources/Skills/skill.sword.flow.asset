@@ -13,16 +13,15 @@ MonoBehaviour:
   m_Name: skill.sword.flow
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.flow
-  displayName: Flow
-  symbol: Fl
+  displayName: Tailwind
+  symbol: Tw
   weaponType: 1
   masteryLevel: 17
   needsSkillId: skill.sword.momentum
   published: 1
-  trademarkName: Nagare
   description: 'Stay on one foe.
 
-    Every basic attack grants extra Momentum equal
+    Every basic attack grants extra Rising Breeze equal
     to a third of your unbroken run of hits on that target.'
   archetype: 1
   family: 2

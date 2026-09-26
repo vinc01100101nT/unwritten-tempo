@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Mushroom2
   kind: 0
   size: 1
-  biome: 0
+  biome: 14
   sheet: Mushroom2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 22
-  str: 16
-  agi: 13
-  vit: 16
-  intel: 9
-  dex: 12
-  luk: 8
+  level: 93
+  str: 62
+  agi: 51
+  vit: 62
+  intel: 35
+  dex: 47
+  luk: 31
   startingGear: []
-  gearQuality: 0
-  gearFolds: 3
-  gearInkTier: 1
+  gearQuality: 2
+  gearFolds: 14
+  gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 22
+  weaponMasteryLevel: 93
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 0
+  element: 8
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

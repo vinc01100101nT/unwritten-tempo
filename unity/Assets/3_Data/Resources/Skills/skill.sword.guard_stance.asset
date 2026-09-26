@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.guard_stance
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.guard_stance
-  displayName: Guard Stance
-  symbol: Gs
+  displayName: Still Air
+  symbol: Sa
   weaponType: 1
   masteryLevel: 5
   needsSkillId: 
   published: 1
-  trademarkName: Kamae
   description: 'Weather it.
 
     Take 50% less damage for 6 seconds.'

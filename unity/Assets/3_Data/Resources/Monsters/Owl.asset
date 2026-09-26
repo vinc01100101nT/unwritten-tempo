@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Owl
   kind: 0
   size: 1
-  biome: 3
+  biome: 6
   sheet: Owl
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 76
-  str: 50
-  agi: 40
-  vit: 49
-  intel: 28
-  dex: 40
-  luk: 28
+  level: 13
+  str: 12
+  agi: 9
+  vit: 11
+  intel: 6
+  dex: 9
+  luk: 6
   startingGear: []
-  gearQuality: 2
-  gearFolds: 11
-  gearInkTier: 2
+  gearQuality: 0
+  gearFolds: 2
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 76
+  weaponMasteryLevel: 13
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 9
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

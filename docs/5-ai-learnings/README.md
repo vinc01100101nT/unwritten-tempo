@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-25
+last-updated: 2026-09-26
 tags:
   - ai-learnings
 ---
@@ -34,7 +34,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | `git push` fails with `lookup lfs.github.com: no such host`, but `host lfs.github.com` resolves | [Git LFS Push Says "no such host"](git-lfs-push-says-no-such-host.md) — LFS (a Go program) is using Go's own DNS resolver, not the system's; push with `GODEBUG=netdns=cgo git push`. |
 | A play-test says only a couple of options ever get picked, or you are building a "random among ready" chooser over options with different costs | [Replay a Chooser With the Real Costs](replay-a-chooser-with-real-costs.md) — cheap options drain the shared pool and starve the expensive ones; replay the loop offline with the real numbers and count picks before building. |
 | Someone shows you an editor screen and asks "are we aligned — is this what the game does?" | [Before Saying Aligned, Check Both Readers](before-saying-aligned-check-both-readers.md) — the screen and the code often keep separate lists; confirm from both, and fix a disagreement by deleting one list, not syncing it. |
-| A feature you wrote is simply ABSENT at runtime — no error, nothing happens — and the code plainly has it | [The Code Adds It, the Committed Artifact Doesn't](the-code-adds-it-the-committed-artifact-doesnt-have-it.md) — a prefab, bundle or generated file in the repo was built before your line existed; the program loads that, not your source. Date it, then grep it for the thing. |
+| A feature you wrote is simply ABSENT at runtime — no error, nothing happens — and the code plainly has it | [The Code Adds It, but What Runs Predates It](the-code-adds-it-the-committed-artifact-doesnt-have-it.md) — a prefab, bundle or generated file was built before your line existed, or a server was STARTED before it; the program runs that, not your source. Date the artifact or the process's start time, then grep it for the thing. |
 | You run a batch in two steps (build, then patch/wire) over many files, in an app someone else is using | [Step Two Ran on Files Step One Never Rebuilt](step-two-must-read-step-ones-results.md) — step two loops over step one's SUCCESSES, never its own list, and re-checks that each file is not open in the other person's app right before writing. |
 | About to run one script that edits several files and report them all done — or a command came back "rejected" / "interrupted" | [A Script That Edits Many Files Can Stop Halfway](a-script-that-edits-many-files-can-stop-halfway.md) — a failure part-way leaves the earlier files written and the later ones untouched, and names only the file it tripped on. Write each file as its edits finish, then verify per file. |
 | Something is running that you need to measure, and you cannot see into it | [Observe With a Disposable Second Instance](observe-with-a-disposable-second-instance.md) — stand up a throwaway copy on its own port with its output to a file; never reason around the live one. |

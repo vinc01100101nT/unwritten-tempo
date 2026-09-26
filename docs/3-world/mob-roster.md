@@ -20,8 +20,9 @@ This is decided before the world shape on purpose: the world is laid out around 
 the ladder is set here.
 
 **Where creatures live is one list, not the maps.** The world spawn list (`Resources/WorldSpawns`) holds one row per
-spawn area: which map, which creatures (a weighted mix of a biome's normals inside a level range, or one named
-creature — the way an elite or a shadow is placed), how many, where in the map (the numbers `/where` prints: x west to east, y south to north, z height) and how
+spawn area: which map, which creatures (one named creature per row — how every map lists its creatures since the
+sandbox layout of 2026-09-26 — or a weighted mix of a biome's normals inside a level range, which only the test maps
+still use), how many, where in the map (the numbers `/where` prints: x west to east, y south to north, z height) and how
 far they spread. The server reads a map's rows the moment it loads that map. Nothing about creatures is saved inside a
 map, and the map generator no longer puts any there.
 
@@ -30,13 +31,13 @@ map, and the map generator no longer puts any there.
 | | Normal | Elite | Shadow |
 | --- | --- | --- | --- |
 | How many | the rest of the roster | 18 | 14, one per weapon type (12 in the game today) |
-| Levels | spread evenly over **1–99** | **6 to 99**, one every 5.5 levels, rounded | **105 to 160**, one every 5 levels |
+| Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 160**, one every 5 levels |
 | Extra skill slots | 1 | 2 | 4 |
 | Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | its level | its level | its level |
 | Summons | nothing | normals | elites |
-| Lives | everywhere in the field | everywhere: fields, dungeons (one on each bottom floor) and special maps | each at its own place, a special map away from where players level |
+| Lives | every map it belongs in, from one end of the world to the other | the fields of its home biome near its level, and one on each dungeon's bottom floor | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
 | Size | **Small to XL** — mostly Small or Medium, only 2 XL | **mostly XL** — 12 XL, 2 Large, 2 Medium, 2 Small | always **Medium** |
@@ -79,17 +80,19 @@ map, and the map generator no longer puts any there.
 
 - The creatures that fill the field. One extra skill slot, and whatever pieces are authored for it — from **Raw +0**
   at level 1 to **E +15** at level 99 (see Gear state).
-- **The 66 normals are spread evenly over levels 1 to 99** in the order they stood before (by old level, then by
-  name), so each biome keeps one stretch of the ladder. Each one's stats were re-spent to its new level's full point
+- **Each of the 66 normals has its own home biome, element and level**, set from what it is (2026-09-26): critters
+  low, large beasts higher. It lives in every map where it belongs, not in one. The full table is
+  [Creatures and Where They Live](biome-mob-families.md). Each one's stats were re-spent to its level's full point
   budget in the same proportions it had.
 
 ## Elite
 
 - The stronger creatures of each area. The 18 creatures that were bosses are the 18 elites.
-- **Their levels** are 99 split into 18 equal steps of 5.5, rounded off, starting from the first step rather than
-  from 1: **6, 11, 17, 22, 28, 33, 39, 44, 50, 55, 61, 66, 72, 77, 83, 88, 94, 99.**
+- **Each elite has its own home biome, element and level** (8 to 99), and at least one elite calls each biome home;
+  the table is [Creatures and Where They Live](biome-mob-families.md).
 - Two extra skill slots, whatever pieces are authored for them — from **D +0** at level 6 to **B +30** at level 99
-  (see Gear state) — and they **summon normals**.
+  (see Gear state) — and they **summon normals**: the three nearest their level at or below it, from their own home
+  biome first.
 - **They drop much more folding material, and the rarer Inks and Salts** (see Drops).
 
 ## Shadow
@@ -101,39 +104,45 @@ map, and the map generator no longer puts any there.
 - **The weapon order runs from the least-played weapon at 105 to the most-played at 160.** A shadow is what a
   weapon's end-game materials come from, so the weapons fewest people choose are the easiest to finish — a reason
   to pick them. The order is a first guess, made before there is any player data.
-- **Each shadow's name today comes from a real-world fighting tradition** (the Theme column). The game is dropping
-  real-country culture, so these names are to be replaced; the new names are not chosen yet.
+- **A shadow goes by its weapon's STYLE**, never a personal name — the Fourteen left no names, only how they fought
+  (see [Story & Setting](story-setting-canon.md), which holds the fourteen styles and how their forms are named). The
+  styles are locked (2026-09-26).
 
-  | Level | Weapon | Name | Theme | Element |
-  | --- | --- | --- | --- | --- |
-  | 105 | Shield | **Varro** | Roman shield wall | Neutral |
-  | 110 | Wand | **Brigid** | Irish, the healer | Holy |
-  | 115 | Warhammer | **Radomir** | Slavic mace-bearer | Earth |
-  | 120 | Spear | **Kallias** | Greek spearman | Water |
-  | 125 | Axe | **Brandr** | Norse | Fire |
-  | 130 | Firearm | **Inés** | Spanish musketeer | Shadow |
-  | 135 | Scythe | **Morwenna** | Cornish | Undead |
-  | 140 | Dagger | **Fiora** | Italian stiletto | Poison |
-  | 145 | Staff | **Azar** | Persian, "fire" | Fire |
-  | 150 | Greatsword | **Ulrich** | German two-hander | Ghost |
-  | 155 | Bow | **Temülün** | Mongol horse archer | Wind |
-  | 160 | Sword | **Tsubame** | Japanese | Wind |
-  | *not set* | Fist | *not chosen* | | Neutral |
-  | *not set* | Kick | *not chosen* | | Wind |
+  | Level | Weapon | Style | Element |
+  | --- | --- | --- | --- |
+  | 105 | Shield | **Still Oak** | Neutral |
+  | 110 | Wand | **Morning Dew** | Holy |
+  | 115 | Warhammer | **Stone Bloom** | Earth |
+  | 120 | Spear | **Silver Rain** | Water |
+  | 125 | Axe | **Forest Fire** | Fire |
+  | 130 | Firearm | **Dusk Crow** | Shadow |
+  | 135 | Scythe | **Black Lily** | Undead |
+  | 140 | Dagger | **Night Orchid** | Poison |
+  | 145 | Staff | **Ashen Field** | Fire |
+  | 150 | Greatsword | **Silent Snow** | Ghost |
+  | 155 | Bow | **Feather Rain** | Wind |
+  | 160 | Sword | **Blossom Wind** | Wind |
+  | *not set* | Fist | **Northern Lights** | Neutral |
+  | *not set* | Kick | **Autumn Gale** | Wind |
 - **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Fire and Neutral
   twice each, the rest once. Only the Water, Earth, Fire and Wind shadows can be answered with a converter today; the
   counter for the others is to come from skill buffs and cards. At level 3 the element matters, and its own element
   lands very differently on each: it heals the Water, Fire, Wind, Holy and Shadow shadows, does nothing to the Earth,
   Poison and Undead ones, lands normally on the Neutral one, and lands for 175% on the Ghost one. It swings with its
   element too; the weapon it holds has none, and a weapon with no element never overrides a creature's own.
-- **Each shadow summons one elite kind, matched to its place on the ladder.** The top twelve elites, counted
-  backwards from 99, pair with the shadows from the top down:
+- **Each shadow summons one elite kind, matched to its place on the ladder.** The top twelve elites by level pair
+  with the shadows from the top down:
 
-  | Shadow level | 160 | 155 | 150 | 145 | 140 | 135 | 130 | 125 | 120 | 115 | 110 | 105 |
-  | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-  | Summons the elite of level | 99 | 94 | 88 | 83 | 77 | 72 | 66 | 61 | 55 | 50 | 44 | 39 |
+  | Shadow | Blossom Wind 160 | Feather Rain 155 | Silent Snow 150 | Ashen Field 145 | Night Orchid 140 | Black Lily 135 |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | Summons | SquidRed 99 | GiantSlime2 95 | TenguRed 92 | GiantSpirit 90 | GiantFlam 80 | GiantFrog 78 |
 
-  The six lowest elites (6 to 33) are summoned by no shadow.
+  | Shadow | Dusk Crow 130 | Forest Fire 125 | Silver Rain 120 | Stone Bloom 115 | Morning Dew 110 | Still Oak 105 |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | Summons | GiantFrog2 66 | GiantRedSamurai 60 | TenguBlue 58 | GiantBamboo 47 | GiantRacoonGold 44 | DemonCyclop2 35 |
+
+  The six lowest elites (8 to 33) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
+  not share its element or place.
 - Four extra skill slots, a complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
   shadows can be seen in the game.
@@ -144,7 +153,7 @@ map, and the map generator no longer puts any there.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
-- **The twelve made so far exist.** Only **Tsubame** (Sword) holds a weapon; the other eleven fight with basic attacks, their four
+- **The twelve made so far exist.** Only **Blossom Wind** (the Sword shadow) holds a weapon; the other eleven fight with basic attacks, their four
   extra skills and summon until their weapon's skills exist, and then each is handed its weapon.
 - They carry their name and an always-visible health bar.
 
@@ -186,17 +195,15 @@ Several of one material go down as one pile.
 
 ## Still open
 
-- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve), name and the elite each
-  summons. Their elements are set: Fist Neutral, Kick Wind.
-- **The shadows' names against the canon.** The canon today says the Fourteen Unwritten — the fourteen weapons —
-  have no recorded names, only what they did, and that writing an Unwritten's name is the end-game reward of
-  weapon mastery. Either the canon is rewritten, or a shadow is an echo of an Unwritten wearing a name of its own.
+- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve) and the elite each summons.
+  Their styles and elements are set: Northern Lights, Neutral; Autumn Gale, Wind.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
   spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience and
   3,000 to 6,000 gold.
 - **Normals' and elites' experience and gold were not changed** when they were re-levelled, so a creature moved from
-  level 36 to 99 still pays what it paid at 36.
+  its old level to its current one still pays what it did before — the Octopus, now level 63, still gives 5
+  experience and 2 to 6 gold.
 - **A shadow's 3D body is drawn at random from the cast each life**, like every 3D creature's, so a named shadow can
   look different each time it comes back.
 - **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
@@ -205,7 +212,7 @@ Several of one material go down as one pile.
 
 - [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — forging, the seven material grades, Ink, Salt
   and mastery: what creatures drop and what shadows wear.
-- [Biome Mob Families](biome-mob-families.md) — how creatures are grouped by biome and drawn by level today.
+- [Creatures and Where They Live](biome-mob-families.md) — every creature's home biome, element and level, and every map's creatures.
 - [Story & Setting (Canon)](story-setting-canon.md) — the Fourteen Unwritten.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen
   weapon types a shadow each carries.

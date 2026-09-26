@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadow_Brigid
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.brigid
-  displayName: Brigid
+  displayName: Morning Dew
   kind: 2
   size: 1
   biome: 5

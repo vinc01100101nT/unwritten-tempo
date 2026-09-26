@@ -287,16 +287,16 @@ public class ItemTooltip : MonoBehaviour
 
     static readonly Color PlainTitle = new Color(0.91f, 0.91f, 0.91f);
 
-    /// <summary>How a copy is named on screen. A weapon with a trademark goes by the trademark's name: its folds,
-    /// the name, then its grade — "+15 Hadori [C]". Anything else: its grade, then its folds, then the piece —
-    /// "B +12 Sword".</summary>
+    /// <summary>How a copy is named on screen. A weapon with a trademark goes by its trademark skill's own name — a
+    /// form of its weapon's style: its folds, the name, then its grade — "+15 Petal Storm [C]". Anything else: its
+    /// grade, then its folds, then the piece — "B +12 Sword".</summary>
     public static string CopyTitle(EquipmentInstance inst)
     {
         if (inst == null || inst.def == null) return "";
         string grade = inst.quality == Quality.Raw ? "Raw" : inst.quality.ToString();
         var trademark = Trademarks.SkillOf(inst);
-        if (trademark != null && !string.IsNullOrEmpty(trademark.trademarkName))
-            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.trademarkName + " [" + grade + "]";
+        if (trademark != null && !string.IsNullOrEmpty(trademark.displayName))
+            return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.displayName + " [" + grade + "]";
         // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Fleet Iron Sabatons [C]".
         if (inst.word != ArmourWord.None)
             return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]";

@@ -148,8 +148,9 @@
 
 // ── World model (v2 — free-form, rectangular) ────────────────────────────────
 // maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome?, name? }]
-//          name = the map's display name, shown here and on the exported map picture; id = snakeCase(name) whenever
-//          a name is set (see snakeCase), which is also the Unity scene file name and what /tp takes.
+//          name = the map's display name, shown here and on the exported map picture. id = the Unity scene file name
+//          and what /tp takes. A town, city or special map's id is snakeCase(name); a field is <town code>_fildNN and a
+//          dungeon floor <town code>_dunNN, Ragnarok-style (lst_fild01, olk_dun01), so theirs is typed, not derived.
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
 //          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
 // portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
@@ -735,9 +736,9 @@ function createMap(type, wx, wy) {
   selectedId = id;
   draw();
 }
-// A named map's id is ALWAYS its name in snake_case ("Old Tunnels 1" → old_tunnels_1), and the id is the Unity scene
-// file name and what /tp takes — so the name on the map, the file and the command never disagree. Two maps with the
-// same name get _2, _3… on the later one. Set here on rename and again on every import, so it can't drift.
+// A named town, city or special map's id is its name in snake_case ("Old Oak" → old_oak); a field's and a dungeon
+// floor's id is typed, Ragnarok-style (lst_fild01, olk_dun01). The id is the Unity scene file name and what /tp takes.
+// Two maps with the same name get _2, _3… on the later one.
 function snakeCase(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""); }
 function uniqueId(base, taken) {
   let id = base, n = 2;
@@ -745,15 +746,24 @@ function uniqueId(base, taken) {
   return id;
 }
 
-// Rename a map: sets its name, and its id follows as the snake_case of it. Rewires any warps that reference it.
+// Rename a map: sets its name. A town, city or special map's id follows as the snake_case of it; a field or a dungeon
+// floor is asked for its id separately (lst_fild01, olk_dun01). Rewires any warps that reference it.
+function idFollowsName(m) { return m.type === "town" || m.type === "special"; }
 function renameMap(m) {
-  const input = prompt("Map name (its id and Unity scene file become this in snake_case):", m.name || m.id);
+  const input = prompt("Map name (shown on the map picture):", m.name || m.id);
   if (input === null) return;
   const name = input.trim(), base = snakeCase(name);
   if (!base) { flash("A name needs at least one letter or number"); return; }
+  let wanted = base;
+  if (!idFollowsName(m)) {
+    const typed = prompt("Map id — the Unity scene file name, e.g. lst_fild01 or olk_dun01:", m.id);
+    if (typed === null) return;
+    wanted = snakeCase(typed);
+    if (!wanted) { flash("An id needs at least one letter or number"); return; }
+  }
   recordUndo(snapshot());
   const oldId = m.id;
-  const newId = uniqueId(base, new Set(state.maps.filter(o => o !== m).map(o => o.id)));
+  const newId = uniqueId(wanted, new Set(state.maps.filter(o => o !== m).map(o => o.id)));
   for (const p of state.portals) { if (p.aId === oldId) p.aId = newId; if (p.bId === oldId) p.bId = newId; }
   m.name = name;
   m.id = newId;
@@ -866,10 +876,11 @@ function importJSON(text) {
     if (msuffix && state.nextIndex[m.type] !== undefined)
       state.nextIndex[m.type] = Math.max(state.nextIndex[m.type], +msuffix[1] + 1);
   }
-  // Every named map's id becomes its name in snake_case; unnamed maps keep theirs (and are claimed first).
-  const renamed = {}, taken = new Set(state.maps.filter(m => !snakeCase(m.name)).map(m => m.id));
+  // A named town, city or special map's id becomes its name in snake_case; fields, dungeon floors and unnamed maps keep
+  // the id the file gives them (and are claimed first).
+  const renamed = {}, taken = new Set(state.maps.filter(m => !snakeCase(m.name) || !idFollowsName(m)).map(m => m.id));
   for (const m of state.maps) {
-    if (!snakeCase(m.name)) continue;
+    if (!snakeCase(m.name) || !idFollowsName(m)) continue;
     const id = uniqueId(snakeCase(m.name), taken);
     taken.add(id);
     if (id !== m.id) renamed[m.id] = id;

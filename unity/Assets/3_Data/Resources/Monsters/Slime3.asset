@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Slime3
   kind: 0
   size: 0
-  biome: 4
+  biome: 1
   sheet: Slime3
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 97
-  str: 62
-  agi: 52
-  vit: 62
-  intel: 39
-  dex: 52
-  luk: 37
+  level: 39
+  str: 25
+  agi: 21
+  vit: 24
+  intel: 15
+  dex: 21
+  luk: 15
   startingGear: []
-  gearQuality: 2
-  gearFolds: 15
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 6
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 97
+  weaponMasteryLevel: 39
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 8
+  element: 1
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

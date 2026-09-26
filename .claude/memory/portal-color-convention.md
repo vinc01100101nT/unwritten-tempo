@@ -14,8 +14,8 @@ Warp portals are colour-coded by the **kind of map they lead to**, using Hovl St
 `unity/Assets/Scripts/Editor/RegionBuilder.cs`:
 - `enum WarpKind { Town, Field, Dungeon, Special }`
 - `KindOfType(mapType)` — maps the DESTINATION map's `type` from the world layout (town | field | dungeon |
-  special) → `WarpKind`. Never the scene name: a map's id is its name in snake_case (`mines_1`, `lastline`), which says
-  nothing about its kind. (Until 2026-09-26 it matched substrings of the name, so `dg_*` doors came out green.)
+  special) → `WarpKind`. Never the scene name: a map's id (`hlt_dun01`, `lastline`, `old_oak`) says
+  nothing reliable about its kind. (Until 2026-09-26 it matched substrings of the name, so `dg_*` doors came out green.)
 - `PortalPrefabFor(kind)` / `PortalTintFor(kind)` — kind → prefab path / cylinder-fallback tint.
 - `MakePortal(..., destinationType)` → `AddWarpFx(portal, destinationType)`; World Creator passes the target map's
   `type` on every door it builds.

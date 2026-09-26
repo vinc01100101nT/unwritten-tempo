@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantRacoonGold
   kind: 1
   size: 3
-  biome: 1
+  biome: 9
   sheet: GiantRacoonGold
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 39
-  str: 26
-  agi: 15
-  vit: 31
-  intel: 13
-  dex: 20
-  luk: 13
+  level: 44
+  str: 29
+  agi: 17
+  vit: 36
+  intel: 14
+  dex: 22
+  luk: 14
   startingGear: []
   gearQuality: 3
-  gearFolds: 11
+  gearFolds: 12
   gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 39
+  weaponMasteryLevel: 44
   hardDefPercent: 29
   hardMagicDefPercent: 18
   xpReward: 600
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 0
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

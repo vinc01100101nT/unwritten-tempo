@@ -19,7 +19,6 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
-  trademarkName: 
   description: Calls up this creature's summons, up to as many as its kind keeps
     out at once.
   archetype: 3

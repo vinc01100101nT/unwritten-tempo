@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: Flam
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 69
-  str: 45
-  agi: 37
-  vit: 44
+  level: 67
+  str: 43
+  agi: 36
+  vit: 43
   intel: 25
-  dex: 36
-  luk: 25
+  dex: 35
+  luk: 24
   startingGear: []
   gearQuality: 1
   gearFolds: 10
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 69
+  weaponMasteryLevel: 67
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40

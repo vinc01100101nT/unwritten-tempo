@@ -45,7 +45,7 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Armour Roster, Materials & Words](2-systems/gameplay-system-v4/armour-roster.md) — BUILT 2026-09-23, not play-tested: Head, Body, Off-hand, Garment and Shoes in metal, leather and cloth (15 designs); the material decides what a fold buys; every armour piece rolls one of its slot's words (Fleet, Bulwark, Emberward…); worn accuracy and evasion now reach the hit roll.
   - [Elements, Element Levels & Converters](2-systems/gameplay-system-v4/elements-and-converters.md) — BUILT 2026-09-23, not play-tested: creatures attack and defend with their element at level 1–4 (normal 1, elite 2, shadow 3) on Ragnarok's four pre-renewal tables, a negative value heals, and eight level-1 converters lend players an element for 5:00.
   - [Timed Effects Survive Logout](2-systems/gameplay-system-v4/timed-effects-survive-logout.md) — BUILT 2026-09-23, not play-tested: only death ends a timed effect; logout and a server change save it with the time left and pause the clock (save v15).
-  - [Weapon Names & Trademark Skills](2-systems/gameplay-system-v4/weapon-names-and-trademarks.md) — BUILT 2026-09-21, not play-tested: a forged weapon rolls one of its weapon's trademark skills and is named for it ("+15 Hadori [C]"), raising every main number of that skill by its grade's percentage.
+  - [Weapon Names & Trademark Skills](2-systems/gameplay-system-v4/weapon-names-and-trademarks.md) — BUILT 2026-09-21, not play-tested: a forged weapon rolls one of its weapon's trademark skills and is named for it — the skill's own form name ("+15 Petal Storm [C]"), raising every main number of that skill by its grade's percentage.
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.
@@ -59,10 +59,10 @@ The folders match the sections below, so the file tree and this index say the sa
 
 - [World Creator — Spec](3-world/world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
 - [Mob Roster — Normal, Elite, Shadow](3-world/mob-roster.md) — the three kinds of creature: levels, skill slots, gear, summoning, respawn and drops (design, not built).
-- [Biome Mob Families — Spawning by Biome and Level](3-world/biome-mob-families.md) — biome × level mob data + generator wiring.
+- [Creatures and Where They Live](3-world/biome-mob-families.md) — every creature's home biome, element and level, and the creatures each map holds (the sandbox layout).
 - [Biomes — Ground Tiles and Props](3-world/biomes.md) — every biome's main ground, patch and road tiles, the props that fit it, and the props still to make; the all-biome map generator plan.
 - [Biome References — Real Places Beside Our Maps](3-world/biome-references.md) — one real photo per biome beside pictures of its test map, to judge what looks right and what is missing.
-- [The World Map — Three Regions](3-world/world-map.md) — proposal, partly built (the 59 maps are generated and wired, with the hand-made lastline as Lastline): three regions that are level tiers (Might 1–33, Finesse 34–66, Arcane 67–99), a big city for each one-family weapon and a border town for each hybrid, five dungeons, and each of the fourteen shadows at its own place with its way in; no real-country culture.
+- [The World Map — Three Regions](3-world/world-map.md) — proposal, partly built (the 75 maps are generated and wired, with the hand-made lastline as Lastline): a sandbox in three regions whose creatures mostly sit at one stretch of levels (Midlaine 1–33, Lirenne 34–66, The Far Shores 67–99), a big city for each one-family weapon and a border town for each hybrid, every place named, eight dungeons, and each of the fourteen shadows at its own place with its way in; no real-country culture.
 - [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Fourteen Unwritten (one per weapon).
 
 ## Art & animation pipeline

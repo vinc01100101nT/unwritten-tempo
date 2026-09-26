@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Beast2
   kind: 0
   size: 2
-  biome: 1
+  biome: 7
   sheet: Beast2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 30
-  str: 22
-  agi: 15
-  vit: 21
-  intel: 11
-  dex: 15
-  luk: 11
+  level: 34
+  str: 24
+  agi: 17
+  vit: 23
+  intel: 12
+  dex: 17
+  luk: 12
   startingGear: []
   gearQuality: 0
-  gearFolds: 4
+  gearFolds: 5
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 30
+  weaponMasteryLevel: 34
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 1
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

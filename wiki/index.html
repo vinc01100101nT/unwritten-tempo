@@ -198,6 +198,7 @@ function skillTable(b){
     list=all.filter(s=>s.weapon===b.source&&(!b.group||skillGroup(s)===b.group))
             .map(s=>({
               name:s.name,
+              form:s.form,
               symbol:s.symbol,
               // The colour belongs to the WEAPON, so it is looked up here rather than repeated on every skill row.
               color:(SKILLS.weaponColors||{})[s.weapon],
@@ -218,6 +219,8 @@ function skillTable(b){
     h+='<div class="skillcard">'+skillIcon(s)+'<div class="body">'+
        `<div class="head"><span class="name">${inline(s.name||'')}</span>`+
        (s.unpublished?'<span class="cost"><em>not in the game yet</em></span>':(s.cost?`<span class="cost">${inline(s.cost)}</span>`:''))+'</div>'+
+       // Which form of its weapon's style this is, read from the export — the same line the in-game card shows.
+       (s.form?`<div class="flavor"><em>${inline(s.form)}</em></div>`:'')+
        (s.trigger?`<div class="flavor"><strong>${inline(s.trigger)}</strong></div>`:'')+
        // The weapon name this skill is the trademark of, read from the export — never typed on the page.
        (s.trademark?`<div class="flavor">Trademark weapon: <strong>${inline(s.trademark)}</strong></div>`:'')+

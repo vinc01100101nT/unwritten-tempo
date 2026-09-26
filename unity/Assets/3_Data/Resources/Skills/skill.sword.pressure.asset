@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.pressure
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.pressure
-  displayName: Pressure
-  symbol: Pr
+  displayName: Headwind
+  symbol: Hd
   weaponType: 1
   masteryLevel: 33
   needsSkillId: 
   published: 1
-  trademarkName: Seme
   description: 'Never let them recover.
 
     Every hit cuts the target''s HP regen

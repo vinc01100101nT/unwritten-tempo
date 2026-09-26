@@ -43,7 +43,7 @@ drew. The server's log is only kept when the server is started with the run comm
   player's machine counts from the time the server gave it on arrival. Two lines 0.250 apart happened a quarter of a
   second apart, and the date keeps a play-test that runs past midnight in order.
 - **Category** — the word in square brackets. Filter on it.
-- **Map** — the scene name of the map the line is about, e.g. `lv_1_3`, `lastline`.
+- **Map** — the scene name of the map the line is about, e.g. `lst_fild01`, `lastline`.
 - **Unit** — the unit's name, a space, `#`, and its spawn_id: `Snake #3`, `Alpha #1`, `Training_Dummy #4`.
 
 Lines about the server itself (start-up, connections) have no map or unit. Unity's own start-up text, printed
@@ -117,7 +117,7 @@ one) and not the player id.
 
 - **Counted per map.** Every map has its own count, starting at 1 when the server starts.
 - **Never restarts while the server runs.** A map nobody is in is let go and brought back later; its count carries
-  on, so `lv_1_3 Snake #3` never means two different snakes in one log. A server restart starts every count again.
+  on, so `lst_fild01 Snake #3` never means two different snakes in one log. A server restart starts every count again.
 - **A creature keeps its number through death.** A snake that dies and comes back is the same body, and says
   `came back` with the number it had. A creature that is new gets the next number.
 - **A map that is let go takes its creatures with it.** When it is brought back its creatures are new, with new
@@ -206,7 +206,7 @@ from one shared file, `tools/server_log_lines.py`, so a line whose wording chang
 ```
 tools/server-log-tally.py                                  # logs/server.log
 tools/server-log-tally.py logs/server-prev.log             # the run before
-tools/server-log-tally.py --map lv_1_3                   # one map only
+tools/server-log-tally.py --map lst_fild01                   # one map only
 tools/server-log-tally.py --since "2026-09-15 23:27:00"    # only from this moment on
 tools/server-log-tally.py --since 23:27:00                 # the same, on the date of the log's first game line
 ```
@@ -260,7 +260,7 @@ was rolled, what was dealt, and why a zero was a zero.
 **"How far apart were those two things?"** — subtract the two times. Everything on one line of the log is stamped
 the moment the server did it.
 
-**"Everything that happened to one unit."** — `grep 'lv_1_3 Snake #3'` (map and number together, since numbers
+**"Everything that happened to one unit."** — `grep 'lst_fild01 Snake #3'` (map and number together, since numbers
 repeat across maps).
 
 **"Everything one player did across maps."** — find their `entered` lines by player id, note the `<map> <name> #<n>`

@@ -16,14 +16,14 @@ MonoBehaviour:
   displayName: YellowsBat
   kind: 0
   size: 0
-  biome: 5
+  biome: 7
   sheet: YellowsBat
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 9
-  str: 11
+  level: 8
+  str: 10
   agi: 8
-  vit: 10
+  vit: 9
   intel: 4
   dex: 7
   luk: 4
@@ -33,7 +33,7 @@ MonoBehaviour:
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 9
+  weaponMasteryLevel: 8
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

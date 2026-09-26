@@ -15,7 +15,7 @@ MonoBehaviour:
   rows:
   - map: test_forest_a
     creature: 
-    biome: 0
+    biome: 6
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -25,7 +25,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_highland
     creature: 
-    biome: 0
+    biome: 7
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -35,7 +35,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_peaks
     creature: 
-    biome: 0
+    biome: 8
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -45,7 +45,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_snow
     creature: 
-    biome: 0
+    biome: 1
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -55,7 +55,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_steppe
     creature: 
-    biome: 0
+    biome: 9
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -65,7 +65,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_coast
     creature: 
-    biome: 0
+    biome: 10
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -75,7 +75,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_desert
     creature: 
-    biome: 0
+    biome: 2
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -85,7 +85,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_volcanic
     creature: 
-    biome: 0
+    biome: 3
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -95,7 +95,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_swamp
     creature: 
-    biome: 0
+    biome: 11
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -105,7 +105,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_sacred
     creature: 
-    biome: 0
+    biome: 12
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -115,7 +115,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_haunted
     creature: 
-    biome: 0
+    biome: 13
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -125,7 +125,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_mist
     creature: 
-    biome: 0
+    biome: 14
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -135,7 +135,7 @@ MonoBehaviour:
     playerClearRadius: 6
   - map: test_corrupted
     creature: 
-    biome: 0
+    biome: 4
     minLevel: 1
     maxLevel: 99
     includeCommons: 1
@@ -143,28 +143,58 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25.415157
     playerClearRadius: 6
-  - map: lv_1_3
-    creature: 
+  - map: lst_fild01
+    creature: mob.slime
     biome: 0
     minLevel: 1
-    maxLevel: 3
-    includeCommons: 1
-    population: 31
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_4_6
-    creature: 
+  - map: lst_fild01
+    creature: mob.butterfly
     biome: 0
-    minLevel: 4
-    maxLevel: 6
-    includeCommons: 1
-    population: 31
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_4_6
-    creature: mob.demoncyclop
+  - map: lst_fild01
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild01
+    creature: mob.larva2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild01
+    creature: mob.snake
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild01
+    creature: mob.giantslime
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -173,18 +203,58 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_6_8
-    creature: 
+  - map: prl_fild01
+    creature: mob.larva2
     biome: 0
-    minLevel: 6
-    maxLevel: 8
-    includeCommons: 1
-    population: 31
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_6_8
-    creature: mob.demoncyclop
+  - map: prl_fild01
+    creature: mob.snake
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild01
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild01
+    creature: mob.butterfly
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild01
+    creature: mob.slime
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild01
+    creature: mob.giantslime
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -193,37 +263,67 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: old_tunnels_1
-    creature: 
+  - map: olk_fild01
+    creature: mob.snake
     biome: 0
-    minLevel: 8
-    maxLevel: 9
-    includeCommons: 1
-    population: 13
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
     center: {x: 0, y: 0, z: 0}
-    radius: 17
+    radius: 25
     playerClearRadius: 6
-  - map: old_tunnels_1
-    creature: 
+  - map: olk_fild01
+    creature: mob.yellowsbat
     biome: 0
-    minLevel: 10
-    maxLevel: 11
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
     population: 13
     center: {x: 0, y: 0, z: 0}
-    radius: 17
+    radius: 25
     playerClearRadius: 6
-  - map: old_tunnels_2
-    creature: 
+  - map: olk_fild01
+    creature: mob.mushroom
     biome: 0
-    minLevel: 12
-    maxLevel: 15
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 26
+    population: 3
     center: {x: 0, y: 0, z: 0}
-    radius: 17
+    radius: 25
     playerClearRadius: 6
-  - map: old_tunnels_2
+  - map: olk_fild01
+    creature: mob.larva2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: olk_fild01
+    creature: mob.mollusc2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: olk_fild01
+    creature: mob.butterfly
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: olk_fild01
     creature: mob.giantbamboo2
     biome: 0
     minLevel: 1
@@ -233,27 +333,177 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_9_12
-    creature: 
+  - map: olk_dun01
+    creature: mob.yellowsbat
     biome: 0
-    minLevel: 9
-    maxLevel: 9
-    includeCommons: 1
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun01
+    creature: mob.spideryellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun01
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun01
+    creature: mob.slime
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.spideryellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.yellowsbat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: olk_dun02
+    creature: mob.demoncyclop
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.mollusc2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.spideryellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.yellowsbat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
     population: 8
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_9_12
-    creature: 
+  - map: lst_fild02
+    creature: mob.owl
     biome: 0
-    minLevel: 10
-    maxLevel: 12
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 23
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_9_12
+  - map: lst_fild02
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.snake
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild02
+    creature: mob.bamboo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild02
     creature: mob.giantbamboo2
     biome: 0
     minLevel: 1
@@ -263,28 +513,58 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_13_16
-    creature: 
+  - map: gmr_fild01
+    creature: mob.spideryellow
     biome: 0
-    minLevel: 13
-    maxLevel: 16
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 9
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_17_20
-    creature: 
+  - map: gmr_fild01
+    creature: mob.spiderred
     biome: 0
-    minLevel: 17
-    maxLevel: 20
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 10
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_17_20
-    creature: mob.giantracoon
+  - map: gmr_fild01
+    creature: mob.yellowsbat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild01
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild01
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild01
+    creature: mob.demoncyclop
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -293,197 +573,67 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_21_24
-    creature: 
-    biome: 0
-    minLevel: 21
-    maxLevel: 24
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_21_24
-    creature: mob.giantspirit
+  - map: plv_fild01
+    creature: mob.fish
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_25_28
-    creature: 
-    biome: 0
-    minLevel: 25
-    maxLevel: 27
-    includeCommons: 0
-    population: 23
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_25_28
-    creature: 
-    biome: 1
-    minLevel: 28
-    maxLevel: 28
+  - map: plv_fild01
+    creature: mob.mollusc
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: plv_fild01
+    creature: mob.axolot
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
     population: 8
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_25_28
-    creature: mob.demoncyclop2
+  - map: plv_fild01
+    creature: mob.kappagreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: plv_fild01
+    creature: mob.axolotblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: plv_fild01
+    creature: mob.mollusc2
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
     population: 1
     center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_29_33
-    creature: 
-    biome: 1
-    minLevel: 29
-    maxLevel: 33
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_29_33
-    creature: mob.giantbluesamurai
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: mines_1
-    creature: 
-    biome: 0
-    minLevel: 24
-    maxLevel: 27
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: mines_2
-    creature: 
-    biome: 1
-    minLevel: 28
-    maxLevel: 31
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: mines_3
-    creature: 
-    biome: 1
-    minLevel: 32
-    maxLevel: 36
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: mines_3
-    creature: mob.giantbluesamurai
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_26_30
-    creature: 
-    biome: 0
-    minLevel: 26
-    maxLevel: 27
-    includeCommons: 0
-    population: 12
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_26_30
-    creature: 
-    biome: 1
-    minLevel: 28
-    maxLevel: 30
-    includeCommons: 0
-    population: 19
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_26_30
-    creature: mob.demoncyclop2
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_30_34
-    creature: 
-    biome: 1
-    minLevel: 30
-    maxLevel: 34
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_30_34
-    creature: mob.giantbluesamurai
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_34_38
-    creature: 
-    biome: 1
-    minLevel: 34
-    maxLevel: 38
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_39_44
-    creature: 
-    biome: 1
-    minLevel: 39
-    maxLevel: 44
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_39_44
-    creature: mob.giantracoongold
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_39_44
+  - map: plv_fild01
     creature: mob.squidgreen
     biome: 0
     minLevel: 1
@@ -493,38 +643,38 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_45_49
-    creature: 
-    biome: 1
-    minLevel: 45
-    maxLevel: 45
+  - map: lst_fild03
+    creature: mob.goldracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 6
+    population: 14
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_45_49
-    creature: 
-    biome: 2
-    minLevel: 46
-    maxLevel: 49
+  - map: lst_fild03
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 25
+    population: 14
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_50_54
-    creature: 
-    biome: 2
-    minLevel: 50
-    maxLevel: 54
+  - map: lst_fild03
+    creature: mob.dragon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_50_54
-    creature: mob.giantflam
+  - map: lst_fild03
+    creature: mob.giantracoon
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -533,17 +683,697 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_55_60
-    creature: 
-    biome: 2
-    minLevel: 55
-    maxLevel: 60
+  - map: hlt_fild02
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_55_60
+  - map: hlt_fild02
+    creature: mob.axolotblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.beast2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.owl
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.slime3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild02
+    creature: mob.giantbluesamurai
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.beast2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.axolotblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.slime3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.owl
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hlt_fild01
+    creature: mob.giantbluesamurai
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hlt_dun01
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun01
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun01
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun01
+    creature: mob.spideryellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun01
+    creature: mob.beast2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.beast2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.mole
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.lizard
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun02
+    creature: mob.cyclope2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.beast2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.mole
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.lizard
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.cyclope2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.mole2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: hlt_dun03
+    creature: mob.demoncyclop2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.dragon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.panda
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.bambooyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild01
+    creature: mob.giantbamboo2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: prl_fild02
+    creature: mob.dragon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild02
+    creature: mob.goldracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 16
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild02
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: prl_fild02
+    creature: mob.giantracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.dragon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.bambooyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.cyclope2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.snake3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.panda
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild01
+    creature: mob.giantbamboo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.snake2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.bambooyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.owl2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.lizard
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.goldracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild01
+    creature: mob.giantracoongold
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: trn_fild01
+    creature: mob.owl2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: trn_fild01
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 14
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: trn_fild01
+    creature: mob.snake2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: trn_fild01
+    creature: mob.bambooyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: trn_fild01
+    creature: mob.giantracoongold
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.lizard2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.dragonyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.snake2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild02
     creature: mob.giantredsamurai
     biome: 0
     minLevel: 1
@@ -553,28 +1383,298 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_61_66
-    creature: 
-    biome: 2
-    minLevel: 61
-    maxLevel: 63
+  - map: brm_fild02
+    creature: mob.reptile
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 16
+    population: 14
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_61_66
-    creature: 
-    biome: 3
-    minLevel: 64
-    maxLevel: 66
+  - map: brm_fild02
+    creature: mob.fishred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild02
+    creature: mob.eye
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild02
+    creature: mob.owl2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild02
+    creature: mob.tengublue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.fishred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.eye
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.reptile
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 14
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.owl2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: vlm_fild03
+    creature: mob.tengublue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.lizard2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.dragonyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.snake2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun01
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.lizard2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.dragonyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun02
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
     population: 15
     center: {x: 0, y: 0, z: 0}
-    radius: 25
+    radius: 17
     playerClearRadius: 6
-  - map: lv_61_66
-    creature: mob.squidred
+  - map: vlm_dun03
+    creature: mob.lizard2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: vlm_dun03
+    creature: mob.giantredsamurai
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -583,77 +1683,817 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_61_66
-    creature: mob.giantfrog
+  - map: brm_fild01
+    creature: mob.eye2
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: canyon_temple_1
-    creature: 
-    biome: 2
-    minLevel: 50
-    maxLevel: 53
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: canyon_temple_2
-    creature: 
-    biome: 2
-    minLevel: 54
-    maxLevel: 57
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: canyon_temple_3
-    creature: 
-    biome: 2
-    minLevel: 58
-    maxLevel: 62
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: canyon_temple_3
-    creature: mob.squidred
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_60_64
-    creature: 
-    biome: 2
-    minLevel: 60
-    maxLevel: 63
-    includeCommons: 0
-    population: 25
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_60_64
-    creature: 
-    biome: 3
-    minLevel: 64
-    maxLevel: 64
+  - map: brm_fild01
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild01
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild01
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
     population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_60_64
+  - map: brm_fild01
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 12
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild01
+    creature: mob.lizard2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild01
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.redoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild01
+    creature: mob.giantflam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.redoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: cdl_fild02
+    creature: mob.giantflam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun01
+    creature: mob.redoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.redoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun02
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.redoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: cdl_dun03
+    creature: mob.giantflam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.grey-trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.octopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.fishred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.kappared
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.slime3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.greenoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lmh_fild01
+    creature: mob.giantfrog2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.bluebat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild02
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.bluebat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild01
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_dun01
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun01
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun01
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun01
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun01
+    creature: mob.flam2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.flam2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun02
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.flam2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun03
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.flam2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun04
     creature: mob.squidred
     biome: 0
     minLevel: 1
@@ -663,87 +2503,67 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_67_71
-    creature: 
-    biome: 3
-    minLevel: 67
-    maxLevel: 71
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_72_76
-    creature: 
-    biome: 3
-    minLevel: 72
-    maxLevel: 76
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_72_76
-    creature: mob.giantslime
+  - map: khn_fild03
+    creature: mob.greenoctopus
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
+    population: 8
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 25
     playerClearRadius: 6
-  - map: lava_tubes_1
-    creature: 
-    biome: 3
-    minLevel: 70
-    maxLevel: 72
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: lava_tubes_2
-    creature: 
-    biome: 3
-    minLevel: 73
-    maxLevel: 76
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: lava_tubes_3
-    creature: 
-    biome: 3
-    minLevel: 77
-    maxLevel: 80
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: lava_tubes_3
-    creature: mob.tengublue
+  - map: khn_fild03
+    creature: mob.octopus2
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_64_68
-    creature: 
-    biome: 3
-    minLevel: 64
-    maxLevel: 68
-    includeCommons: 0
-    population: 31
+    population: 8
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_64_68
+  - map: khn_fild03
+    creature: mob.reptile2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild03
+    creature: mob.slime4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild03
+    creature: mob.heartgreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild03
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild03
     creature: mob.giantfrog
     biome: 0
     minLevel: 1
@@ -753,27 +2573,487 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_67_71_2
-    creature: 
-    biome: 3
-    minLevel: 67
-    maxLevel: 71
+  - map: khn_fild04
+    creature: mob.reptile2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 5
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_72_76_2
-    creature: 
-    biome: 3
-    minLevel: 72
-    maxLevel: 76
+  - map: khn_fild04
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_72_76_2
+  - map: khn_fild04
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild04
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild04
+    creature: mob.greenoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild04
+    creature: mob.slime4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild04
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild04
+    creature: mob.giantfrog
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild05
+    creature: mob.giantslime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild07
+    creature: mob.giantslime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_fild06
+    creature: mob.mushroom2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 14
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild06
+    creature: mob.flam2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild06
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild06
+    creature: mob.bluebat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild06
+    creature: mob.giantspirit
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.spirit
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 12
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.butterflyblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.mushroom2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.eye
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild01
+    creature: mob.tengured
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: hcr_fild02
+    creature: mob.mushroom2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild02
+    creature: mob.butterflyblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild02
+    creature: mob.spirit
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 12
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild02
+    creature: mob.eye
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hcr_fild02
+    creature: mob.tengured
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.bamboo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.owl
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.spideryellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.mollusc2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.panda
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: gmr_fild02
+    creature: mob.giantbamboo2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: lst_fild04
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 13
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild04
+    creature: mob.snake
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild04
+    creature: mob.larva2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild04
+    creature: mob.mouse
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild04
+    creature: mob.goldracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild04
     creature: mob.giantslime
     biome: 0
     minLevel: 1
@@ -783,48 +3063,8 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: haunted_deep_1
-    creature: 
-    biome: 4
-    minLevel: 86
-    maxLevel: 88
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: haunted_deep_2
-    creature: 
-    biome: 4
-    minLevel: 89
-    maxLevel: 92
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: haunted_deep_3
-    creature: 
-    biome: 4
-    minLevel: 93
-    maxLevel: 95
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: haunted_deep_4
-    creature: 
-    biome: 4
-    minLevel: 96
-    maxLevel: 99
-    includeCommons: 0
-    population: 26
-    center: {x: 0, y: 0, z: 0}
-    radius: 17
-    playerClearRadius: 6
-  - map: haunted_deep_4
-    creature: mob.tengured
+  - map: lst_fild04
+    creature: mob.giantracoon
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -833,18 +3073,68 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_77_81
-    creature: 
-    biome: 3
-    minLevel: 77
-    maxLevel: 81
+  - map: hrw_fild02
+    creature: mob.panda
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_77_81
-    creature: mob.tengublue
+  - map: hrw_fild02
+    creature: mob.spiderred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild02
+    creature: mob.bamboo
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild02
+    creature: mob.racoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild02
+    creature: mob.owl
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild02
+    creature: mob.bear
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: hrw_fild02
+    creature: mob.giantbamboo2
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -853,18 +3143,68 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_82_86
-    creature: 
-    biome: 4
-    minLevel: 82
-    maxLevel: 86
+  - map: lst_fild05
+    creature: mob.fish
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_82_86
-    creature: mob.giantbamboo
+  - map: lst_fild05
+    creature: mob.mollusc
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.axolot
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.kappagreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.axolotblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.mollusc2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: lst_fild05
+    creature: mob.squidgreen
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -873,17 +3213,117 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_87_91
-    creature: 
-    biome: 4
-    minLevel: 87
-    maxLevel: 91
+  - map: lst_dun01
+    creature: mob.kappared
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 8
     center: {x: 0, y: 0, z: 0}
-    radius: 25
+    radius: 17
     playerClearRadius: 6
-  - map: lv_87_91
+  - map: lst_dun01
+    creature: mob.fishred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun01
+    creature: mob.octopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun01
+    creature: mob.grey-trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun01
+    creature: mob.slime3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.fishred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.octopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.grey-trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.kappared
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.slime3
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
+    creature: mob.greenoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: lst_dun02
     creature: mob.giantfrog2
     biome: 0
     minLevel: 1
@@ -893,18 +3333,68 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_96_99
-    creature: 
-    biome: 4
-    minLevel: 96
+  - map: pnr_fild02
+    creature: mob.lizard
+    biome: 0
+    minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 6
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_96_99
-    creature: mob.tengured
+  - map: pnr_fild02
+    creature: mob.bambooyellow
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 9
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild02
+    creature: mob.snake2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild02
+    creature: mob.owl2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild02
+    creature: mob.goldracoon
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild02
+    creature: mob.trex
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: pnr_fild02
+    creature: mob.giantracoongold
     biome: 0
     minLevel: 1
     maxLevel: 99
@@ -913,17 +3403,387 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_92_95
-    creature: 
-    biome: 4
-    minLevel: 92
-    maxLevel: 95
+  - map: brm_fild03
+    creature: mob.flam
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 3
     center: {x: 0, y: 0, z: 0}
     radius: 25
     playerClearRadius: 6
-  - map: lv_92_95
+  - map: brm_fild03
+    creature: mob.cyclope
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild03
+    creature: mob.eye2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild03
+    creature: mob.snake4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild03
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild03
+    creature: mob.spirit2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: brm_fild03
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.skull
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.bluebat
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.skullblue
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.lanternred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild08
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild09
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 11
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild09
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 10
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild09
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild09
+    creature: mob.reptile2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild09
+    creature: mob.giantfrog
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.slime4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.heartgreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.greenoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 6
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.reptile2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.kappared
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun05
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.greenoctopus
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.octopus2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.reptile2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 7
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.slime4
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.heartgreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.lanterngreen
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun06
+    creature: mob.giantfrog
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 1
+    center: {x: 0, y: 0, z: 0}
+    radius: 10
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 13
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 4
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 25
+    playerClearRadius: 6
+  - map: khn_fild10
     creature: mob.giantslime2
     biome: 0
     minLevel: 1
@@ -933,58 +3793,158 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 10
     playerClearRadius: 6
-  - map: lv_83_90
-    creature: 
-    biome: 4
-    minLevel: 83
-    maxLevel: 90
-    includeCommons: 0
-    population: 31
-    center: {x: 0, y: 0, z: 0}
-    radius: 25
-    playerClearRadius: 6
-  - map: lv_83_90
-    creature: mob.giantbamboo
+  - map: khn_dun07
+    creature: mob.larva
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
+    population: 8
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 17
     playerClearRadius: 6
-  - map: lv_83_90
-    creature: mob.giantfrog2
+  - map: khn_dun07
+    creature: mob.mouseblack
     biome: 0
     minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 1
+    population: 3
     center: {x: 0, y: 0, z: 0}
-    radius: 10
+    radius: 17
     playerClearRadius: 6
-  - map: lv_91_99
-    creature: 
-    biome: 4
-    minLevel: 91
+  - map: khn_dun07
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
     maxLevel: 99
     includeCommons: 0
-    population: 31
+    population: 5
     center: {x: 0, y: 0, z: 0}
-    radius: 25
+    radius: 17
     playerClearRadius: 6
-  - map: lv_91_99
+  - map: khn_dun07
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun07
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun08
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.heartred
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.slime2
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 5
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.mouseblack
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 3
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.larva
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 8
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
+    creature: mob.beast
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 0
+    population: 2
+    center: {x: 0, y: 0, z: 0}
+    radius: 17
+    playerClearRadius: 6
+  - map: khn_dun09
     creature: mob.giantslime2
-    biome: 0
-    minLevel: 1
-    maxLevel: 99
-    includeCommons: 0
-    population: 1
-    center: {x: 0, y: 0, z: 0}
-    radius: 10
-    playerClearRadius: 6
-  - map: lv_91_99
-    creature: mob.tengured
     biome: 0
     minLevel: 1
     maxLevel: 99

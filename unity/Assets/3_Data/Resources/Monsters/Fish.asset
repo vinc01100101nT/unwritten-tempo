@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Fish
   kind: 0
   size: 0
-  biome: 1
+  biome: 10
   sheet: Fish
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 33
-  str: 23
-  agi: 17
-  vit: 23
-  intel: 12
-  dex: 17
-  luk: 11
+  level: 17
+  str: 14
+  agi: 10
+  vit: 14
+  intel: 7
+  dex: 10
+  luk: 7
   startingGear: []
   gearQuality: 0
-  gearFolds: 5
+  gearFolds: 2
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 33
+  weaponMasteryLevel: 17
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40

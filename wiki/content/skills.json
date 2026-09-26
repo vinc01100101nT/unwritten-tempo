@@ -28,6 +28,18 @@
       "text": "**Your ultimates point at your build.** Each weapon's three ultimates steer toward a different playstyle — and toward which Ring stats to invest in — and they sit deep enough in the mastery that reaching one is a statement about how you have been fighting."
     },
     {
+      "type": "heading",
+      "text": "Styles, forms and calling them out"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every weapon fights in a **style**, and each of its skills is one numbered **form** of that style, counted in the order the weapon teaches them — the sword's style is **Blossom Wind**, and its first form is **Piercing Gust**. A skill's card says which form it is."
+    },
+    {
+      "type": "paragraph",
+      "text": "When you press a form, you call it out. Your ultimate is always the full call — *\"Blossom Wind style, 21st form, Thousand Petals!!\"* — and so is your weapon's trademark form, at most once every 30 seconds. Any other form is called by its name alone, *\"Last Petal!!\"*, at most once every 5 seconds. The shadows call out their forms the same way. You can hide other players' calls under **Settings ▸ Gameplay**."
+    },
+    {
       "type": "paragraph",
       "text": "So two people holding the same sword need not play alike at all: they have the skills they each practised for. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
     },
@@ -76,14 +88,14 @@
     {
       "type": "list",
       "items": [
-        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge, Unwavering off Guard Stance.",
-        "**When a basic attack of yours lands.** Momentum and Flow ride this one.",
+        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Crossed Branches off Piercing Gust, Deep Roots off Still Air.",
+        "**When a basic attack of yours lands.** Rising Breeze and Tailwind ride this one.",
         "**When you begin a basic attack.**",
         "**When a hit of yours deals damage.**",
-        "**When you kill something.** Encore rides this one.",
+        "**When you kill something.** Second Bloom rides this one.",
         "**When you drop to low health.**",
         "**When you take damage.**",
-        "**When you successfully parry.** Opening rides this one."
+        "**When you successfully parry.** Parting Clouds rides this one."
       ]
     },
     {
@@ -116,7 +128,7 @@
         "**Cleanse** — strip debuffs off yourself.",
         "**Execute** — bonus damage that grows huge against low-health enemies.",
         "**Dash / Teleport** — close distance in a rush, or blink to a target spot.",
-        "**Feed another skill** — add stacks to another skill's pile, or give that pile more time. This is how Encore keeps Blade Dance going, and how Flow feeds Momentum."
+        "**Feed another skill** — add stacks to another skill's pile, or give that pile more time. This is how Second Bloom keeps Thousand Petals going, and how Tailwind feeds Rising Breeze."
       ]
     },
     {

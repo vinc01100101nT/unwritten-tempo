@@ -196,7 +196,7 @@ A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one aut
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 
-- `OnSkillCastComplete<skill>` **— parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Lock Blades off Lunge).
+- `OnSkillCastComplete<skill>` **— parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Crossed Branches off Piercing Gust).
 - **Natural events — flat** (`OnBasicAttackDealt`, `OnKill`, `OnLowHP`, `OnDamageDealt`, `OnParry`, `OnBasicAttackStart`, `OnDamageReceived`): a **small, closed** set, listed directly with no wrapper — the whole of `SkillTrigger` besides `OnCast` and the parameterized one above. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
 
 All triggers route through **one dispatch handler** (`PassiveEvents.Fire`) — the single place a trigger's rule is applied, so no fire-site can forget one. A passive **fires as a full skill** — the same VFX, ticks, and effects an active plays; only the trigger differs. Its aim is auto-resolved from the trigger: an aimed skill (single-target / AoE / projectile) lands on the triggering entity or its location; a **self** skill always casts on the caster (never the victim).

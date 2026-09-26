@@ -16,16 +16,16 @@ MonoBehaviour:
   displayName: LanternRed
   kind: 0
   size: 1
-  biome: 3
+  biome: 13
   sheet: LanternRed
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 72
-  str: 47
+  level: 71
+  str: 46
   agi: 38
-  vit: 46
+  vit: 45
   intel: 27
-  dex: 38
+  dex: 37
   luk: 26
   startingGear: []
   gearQuality: 2
@@ -33,7 +33,7 @@ MonoBehaviour:
   gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 72
+  weaponMasteryLevel: 71
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 9
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

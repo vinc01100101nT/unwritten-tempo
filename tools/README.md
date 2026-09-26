@@ -292,7 +292,7 @@ Read the game server's log (`logs/server.log`) after a play-test.
 
 ```bash
 tools/server-log-tally.py                        # per unit: blows, skills, damage, states, passives, heals, experience
-tools/server-log-tally.py --map lv_1_3 --since 23:27:00
+tools/server-log-tally.py --map lst_fild01 --since 23:27:00
 tools/check-server-log.py                        # flags impossible events; exit 1 flagged, 3 no hit lines, 4 old-build log
 tools/check-server-log.py logs/server-prev.log   # the run before
 ```

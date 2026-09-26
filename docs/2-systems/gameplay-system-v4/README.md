@@ -43,8 +43,8 @@ passages on those points are dead. **Not yet play-tested.**
 **Forge (make it).** Choose a design, pay base materials and gold. A **Raw** piece is born: **+0, no quality**.
 A weapon rolls ONE thing at forging — its **trademark** (§6) — and nothing else about any piece is rolled.
 
-**What a piece is called.** A weapon with a trademark goes by the trademark's name: its folds, the name, then its
-grade — **+15 Ranbu [C]**. Any other piece: its grade, its folds, then the item — **B +12 Sword**. That one title
+**What a piece is called.** A weapon with a trademark goes by its trademark skill's own name: its folds, the name,
+then its grade — **+15 Thousand Petals [C]**. Any other piece: its grade, its folds, then the item — **B +12 Sword**. That one title
 is used everywhere a piece is named: the bag list (which sorts and searches by it), its card, the station window
 and the chat replies.
 
@@ -186,7 +186,7 @@ the endgame.
   mastery has no diminishing returns and adds on top, so a maxed ring still gains from mastery. There is no
   combined cap.
 - **It unlocks skills.** Reaching a mastery level is what lets a character learn a skill. This replaces skill
-  points entirely. A skill can also require another skill first, e.g. **Lock Blades requires Lunge**, so a skill
+  points entirely. A skill can also require another skill first, e.g. **Crossed Branches requires Piercing Gust**, so a skill
   can never be held without the skill it depends on.
 - **The equipped weapon's quality caps it.** Each quality grade allows mastery up to a limit. A master swordsman
   holding a poor sword uses only the mastery that sword allows. The earned mastery is not lost; it counts again
@@ -221,28 +221,28 @@ A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names
   handed out any other way (a GM grant, a creature's gear) has none.
 - **Which skills can come up:** every **published** skill of the weapon's type with a **main number** (§7) on
   any of its effects — decided from the skill's own effects every time, so a skill that gains a main number joins
-  the roll, and one that loses its last leaves it. For the sword that is 18 skills; Parry, Brace, Challenge and
-  Unwavering have no main number. **Each ultimate is 5%; the ordinary skills share the rest evenly.**
+  the roll, and one that loses its last leaves it. For the sword that is 18 skills; Bending Reed, Held Breath, Howling Wind and
+  Deep Roots have no main number. **Each ultimate is 5%; the ordinary skills share the rest evenly.**
 - **Its name lives on the skill** — the **trademark name** field in the Skill Composer, shown only while the
   skill can be rolled. The skill-data check fails on a rollable skill with no name.
 - **What it does:** while the weapon is held, **every main number of that skill** rises by the grade's percentage
   (§9) — added to the practice lift (§7), never multiplied onto it. Creatures follow the same rule.
-- **What the cards say.** The weapon's card: "Trademark Skill: Blade Dance", then one line per raised effect
+- **What the cards say.** The weapon's card: "Trademark Skill: Thousand Petals", then one line per raised effect
   ("+20% damage", "+20% damage buff"). The skill's card: each effect's base number, then "Trademark skill bonus
   damage: +20%" and "Skill mastery: +12%" (a passive: "Weapon mastery") on their own lines, each only when it is
   above zero.
 
 ## 7. Skill Mastery
 
-**One mastery per skill** (Lunge mastery, Lock Blades mastery, …), honed by using that skill often. Using Lunge
-with a sword earns **Sword Mastery and Lunge mastery** together.
+**One mastery per skill** (Piercing Gust mastery, Crossed Branches mastery, …), honed by using that skill often. Using Piercing Gust
+with a sword earns **Sword Mastery and Piercing Gust mastery** together.
 
 - **It powers the skill.** It takes over the job rarity used to have: lifting **every main number on every
   effect** of that skill, **up to +30%** at its highest. It is added to the ring's term, never multiplied onto it.
 - **Main numbers, and only main numbers — no exception.** A main number is: a strike's or an execute's damage, a
   heal, a shield, an ailment's damage per tick (Poison, Bleed, Burn), the size of a sub-stat buff or debuff
-  (drawbacks included — Overclock's double damage taken grows too), an outgoing-damage boost or cut, and the
-  stacks a skill adds to another skill's pile. A skill with several (Blade Dance's strike AND its damage buff)
+  (drawbacks included — Squall's double damage taken grows too), an outgoing-damage boost or cut, and the
+  stacks a skill adds to another skill's pile. A skill with several (Thousand Petals' strike AND its damage buff)
   has all of them raised. Chance, duration, number of hits and seconds added are raised by the ring alone. The
   weapon trademark (§6) raises exactly the same numbers.
 - **It is earned per use, regardless of target** — one completed cast is one use, whether it hit a creature, a
@@ -346,30 +346,30 @@ Ordered so a skill always comes after the skill it depends on, and so every grad
 
 | Sword Mastery | Unlocks | Needs |
 | --- | --- | --- |
-| 1 | Lunge, Parry | — |
-| 3 | Momentum | — |
-| 5 | Guard Stance | — |
-| 7 | Lock Blades | Lunge |
-| 9 | Brace | — |
-| 11 | Composure | Parry |
-| 13 | Challenge | — |
-| 15 | Offbeat | — |
-| 17 | Flow | Momentum |
-| 19 | Disarm | — |
-| 21 | Unwavering | Guard Stance |
-| 23 | Onslaught | — |
-| 25 | Opening | Parry |
-| 27 | Committed Strike | — |
-| **30** | **Deathblow** (ultimate) | Momentum |
-| 33 | Pressure | — |
-| 36 | Overclock | — |
-| 40 | Last Stand | Brace |
-| **45** | **Retribution** (ultimate) | Brace |
-| **60** | **Blade Dance** (ultimate) | Overclock |
-| 65 | Encore | Blade Dance |
+| 1 | Piercing Gust, Bending Reed | — |
+| 3 | Rising Breeze | — |
+| 5 | Still Air | — |
+| 7 | Crossed Branches | Piercing Gust |
+| 9 | Held Breath | — |
+| 11 | Eye of the Storm | Bending Reed |
+| 13 | Howling Wind | — |
+| 15 | Scattered Petals | — |
+| 17 | Tailwind | Rising Breeze |
+| 19 | Stripped Bough | — |
+| 21 | Deep Roots | Still Air |
+| 23 | Petal Storm | — |
+| 25 | Parting Clouds | Bending Reed |
+| 27 | Single Petal | — |
+| **30** | **Last Petal** (ultimate) | Rising Breeze |
+| 33 | Headwind | — |
+| 36 | Squall | — |
+| 40 | Bare Branch | Held Breath |
+| **45** | **Returning Wind** (ultimate) | Held Breath |
+| **60** | **Thousand Petals** (ultimate) | Squall |
+| 65 | Second Bloom | Thousand Petals |
 
 By grade: a Raw sword (cap 10) reaches six skills; F adds five; E adds four and the first ultimate; D three;
-C the second ultimate; B the third; only an A-grade sword reaches Encore. The other thirteen weapons get their
+C the second ultimate; B the third; only an A-grade sword reaches Second Bloom. The other thirteen weapons get their
 tables when their pools are authored, by the same rule.
 
 ## Still open

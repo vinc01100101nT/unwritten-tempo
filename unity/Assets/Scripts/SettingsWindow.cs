@@ -61,6 +61,10 @@ public class SettingsWindow : MonoBehaviour
                                          GameSettings.QuickCastGroundTarget);
         quickGround.onValueChanged.AddListener(v => GameSettings.QuickCastGroundTarget = v);
 
+        var hideCalls = UiKit.Checkbox(Row(gameplay, "Hide other players' skill calls", 0.85f),
+                                       GameSettings.HideOtherPlayersSkillCalls);
+        hideCalls.onValueChanged.AddListener(v => GameSettings.HideOtherPlayersSkillCalls = v);
+
         var scrollSens = UiKit.MakeSlider(Row(gameplay, "Scroll sensitivity"), 0f);
         scrollSens.minValue = GameSettings.ScrollSensitivityMin;
         scrollSens.maxValue = GameSettings.ScrollSensitivityMax;

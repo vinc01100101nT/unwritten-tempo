@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantSlime
   kind: 1
   size: 3
-  biome: 3
+  biome: 0
   sheet: GiantSlime
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 72
-  str: 46
-  agi: 28
-  vit: 53
-  intel: 27
-  dex: 39
-  luk: 27
+  level: 8
+  str: 9
+  agi: 5
+  vit: 10
+  intel: 5
+  dex: 8
+  luk: 5
   startingGear: []
-  gearQuality: 4
-  gearFolds: 21
-  gearInkTier: 4
+  gearQuality: 3
+  gearFolds: 1
+  gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 72
+  weaponMasteryLevel: 8
   hardDefPercent: 29
   hardMagicDefPercent: 18
   xpReward: 600
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 0
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

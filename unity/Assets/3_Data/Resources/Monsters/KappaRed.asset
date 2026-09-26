@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: KappaRed
   kind: 0
   size: 1
-  biome: 1
+  biome: 10
   sheet: KappaRed
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 36
-  str: 25
-  agi: 19
-  vit: 25
-  intel: 12
-  dex: 18
-  luk: 12
+  level: 60
+  str: 41
+  agi: 31
+  vit: 41
+  intel: 20
+  dex: 30
+  luk: 20
   startingGear: []
-  gearQuality: 0
-  gearFolds: 5
+  gearQuality: 1
+  gearFolds: 9
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 36
+  weaponMasteryLevel: 60
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10

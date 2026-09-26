@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: Lizard2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 55
-  str: 35
-  agi: 30
-  vit: 34
-  intel: 20
-  dex: 30
-  luk: 20
+  level: 50
+  str: 32
+  agi: 27
+  vit: 31
+  intel: 19
+  dex: 27
+  luk: 18
   startingGear: []
   gearQuality: 1
   gearFolds: 8
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 55
+  weaponMasteryLevel: 50
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20

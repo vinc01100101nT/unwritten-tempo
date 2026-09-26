@@ -13,17 +13,16 @@ MonoBehaviour:
   m_Name: skill.sword.last_stand
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.last_stand
-  displayName: Last Stand
-  symbol: Ls
+  displayName: Bare Branch
+  symbol: Bb
   weaponType: 1
   masteryLevel: 40
   needsSkillId: skill.sword.brace
   published: 1
-  trademarkName: Haisui
   description: 'Cornered, you hold the line.
 
     Dropping to low HP arms 5 more
-    Brace charges.'
+    Held Breath charges.'
   archetype: 2
   family: 0
   shape: 3

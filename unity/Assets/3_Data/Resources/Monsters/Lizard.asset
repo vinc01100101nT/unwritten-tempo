@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Lizard
   kind: 0
   size: 1
-  biome: 1
+  biome: 7
   sheet: Lizard
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}

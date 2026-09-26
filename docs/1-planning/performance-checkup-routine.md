@@ -42,12 +42,12 @@ In the AI chat, type `**/perf-checkup**`. The AI reads the rules + history and t
 **2. Run the stress test in Unity**
 
 - Make sure the **database, the sign-in service, the character server and the game server are running** — Play waits to be let into a world and will sit there otherwise, and without the character server nobody can be let in at all. [Starting the Network](starting-the-network.md) is the runbook.
-- In the **Project** window open `Assets/Scenes/`, double-click any **field** map (e.g. `lv_1_3`), then press **Play** (▶ at the top). Play always boots the persistent `Systems` scene and loads whichever map I had open, so I never press Play *on* `Systems` directly.
+- In the **Project** window open `Assets/Scenes/`, double-click any **field** map (e.g. `lst_fild01`), then press **Play** (▶ at the top). Play always boots the persistent `Systems` scene and loads whichever map I had open, so I never press Play *on* `Systems` directly.
 - Sign in and pick a character at the door.
 - Walk around and gather **as many monsters as I can** near the player.
 - Press **T** to hand the fight to the **auto-pilot AI** (your character fights on its own).
 
-> ⚠️ **The old instruction here said "open the NatureStage scene".** There is no such scene — it belonged to an asset pack that was removed. The maps on disk are Lastline (`lastline`) and the three-region world's maps, each named by its id (`lv_1_3`, `mines_1`, `bow` …).
+> ⚠️ **The old instruction here said "open the NatureStage scene".** There is no such scene — it belonged to an asset pack that was removed. The maps on disk are Lastline (`lastline`) and the three-region world's maps, each named by its id (`lst_fild01`, `hlt_dun01`, `pennaryl` …).
 
 **3. Read the PerfHud overlay** (top-left corner of the Game view)
 

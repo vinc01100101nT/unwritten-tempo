@@ -83,6 +83,12 @@ def main():
     bad = 0
     bad += case("an id that is not the snake_case of its name", LAYOUT, '"id": "%s"' % scene,
                 '"id": "%s_old"' % scene, "its id must be '%s'" % scene)
+    field = next(x["id"] for x in layout["maps"] if x["type"] == "field")
+    bad += case("a field whose id breaks <town code>_fildNN", LAYOUT, '"id": "%s"' % field,
+                '"id": "%s_x"' % field, "a field's id is <town code>_fildNN")
+    dungeon = next(x["id"] for x in layout["maps"] if x["type"] == "dungeon")
+    bad += case("a dungeon whose id breaks <town code>_dunNN", LAYOUT, '"id": "%s"' % dungeon,
+                '"id": "%s_x"' % dungeon, "a dungeon floor's id is <town code>_dunNN")
     txt = read(LAYOUT)
     block = re.search(r'\{\s*"id": "%s".*?"type": "special"' % re.escape(special["id"]), txt, re.S).group(0)
     bad += case("a generated map with no scene file", LAYOUT, block, block.replace('"type": "special"', '"type": "field"'),

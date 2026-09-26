@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Mouse
   kind: 0
   size: 0
-  biome: 2
+  biome: 0
   sheet: Mouse
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 57
-  str: 36
-  agi: 31
-  vit: 36
-  intel: 21
-  dex: 31
-  luk: 20
+  level: 3
+  str: 7
+  agi: 6
+  vit: 6
+  intel: 4
+  dex: 6
+  luk: 4
   startingGear: []
-  gearQuality: 1
-  gearFolds: 9
+  gearQuality: 0
+  gearFolds: 0
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 57
+  weaponMasteryLevel: 3
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

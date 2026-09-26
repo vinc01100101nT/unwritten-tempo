@@ -36,6 +36,11 @@ public static class WeaponTypes
     /// ranged attack instead of melee attack. The one answer the arrow, the whiff sound, the server's landing check
     /// and the damage roll all read, so they can never disagree about which weapons are ranged.</summary>
     public static bool IsRanged(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
+
+    /// <summary>The fighting STYLE a weapon's skills belong to — the name its shadow goes by, since the Fourteen left
+    /// no names of their own. Each of the weapon's skills is one numbered form of it (<see cref="SkillForms"/>). Empty
+    /// for a weapon whose style is not in the game yet. The fourteen styles are in the story canon doc.</summary>
+    public static string StyleOf(WeaponType w) => w == WeaponType.Sword ? "Blossom Wind" : "";
 }
 
 /// <summary>

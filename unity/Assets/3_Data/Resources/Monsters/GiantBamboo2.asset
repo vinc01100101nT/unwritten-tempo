@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantBamboo2
   kind: 1
   size: 3
-  biome: 0
+  biome: 6
   sheet: GiantBamboo2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 11
-  str: 11
-  agi: 5
-  vit: 13
-  intel: 5
-  dex: 9
-  luk: 4
+  level: 15
+  str: 13
+  agi: 7
+  vit: 15
+  intel: 6
+  dex: 10
+  luk: 5
   startingGear: []
   gearQuality: 3
-  gearFolds: 2
+  gearFolds: 3
   gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 11
+  weaponMasteryLevel: 15
   hardDefPercent: 26
   hardMagicDefPercent: 16
   xpReward: 400

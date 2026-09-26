@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: SpiderYellow
   kind: 0
   size: 0
-  biome: 5
+  biome: 7
   sheet: SpiderYellow
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 3
-  str: 8
-  agi: 6
-  vit: 8
-  intel: 3
-  dex: 5
-  luk: 3
+  level: 11
+  str: 12
+  agi: 10
+  vit: 11
+  intel: 4
+  dex: 7
+  luk: 4
   startingGear: []
   gearQuality: 0
-  gearFolds: 0
+  gearFolds: 2
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 3
+  weaponMasteryLevel: 11
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 0
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

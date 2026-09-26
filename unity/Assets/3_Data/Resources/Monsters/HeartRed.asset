@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: HeartRed
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 88
-  str: 56
-  agi: 47
-  vit: 56
-  intel: 35
-  dex: 47
-  luk: 33
+  level: 96
+  str: 61
+  agi: 52
+  vit: 61
+  intel: 38
+  dex: 52
+  luk: 36
   startingGear: []
   gearQuality: 2
-  gearFolds: 13
+  gearFolds: 15
   gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 88
+  weaponMasteryLevel: 96
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 6
+  element: 7
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

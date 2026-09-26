@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Panda
   kind: 0
   size: 2
-  biome: 0
+  biome: 6
   sheet: Panda
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 24
-  str: 17
-  agi: 13
-  vit: 17
+  level: 21
+  str: 15
+  agi: 12
+  vit: 15
   intel: 10
-  dex: 13
-  luk: 9
+  dex: 12
+  luk: 8
   startingGear: []
   gearQuality: 0
-  gearFolds: 4
+  gearFolds: 3
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 24
+  weaponMasteryLevel: 21
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

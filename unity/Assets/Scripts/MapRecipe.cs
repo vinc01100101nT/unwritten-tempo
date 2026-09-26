@@ -41,8 +41,8 @@ public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None, Forest, 
 /// separate builder behind the same one call site in <c>RecipeGenerator</c>; this is the cheap in-pipeline variant.</summary>
 public enum GroundStyle { Blended, HardEdge }
 
-/// <summary>Shape of the road network. <c>Winding</c> = the default <c>pathCount</c> wandering routes through a
-/// jittered hub. <c>Cardinal</c> = a straight plaza-centred cross: one road each to N/E/S/W meeting exactly at the
+/// <summary>Shape of the road network. <c>Winding</c> = the default <c>pathCount</c> meandering routes, each from
+/// one edge to the opposite edge. <c>Cardinal</c> = a straight plaza-centred cross: one road each to N/E/S/W meeting exactly at the
 /// map centre (ignores <c>pathCount</c>/<c>pathWander</c>) — for a planned, RO-style town.</summary>
 public enum PathStyle { Winding, Cardinal }
 
@@ -134,11 +134,11 @@ public class MapRecipe : ScriptableObject
     public GroundStyle groundStyle = GroundStyle.Blended;
 
     [Header("Paths")]
-    [Tooltip("Winding = pathCount wandering routes through a hub. Cardinal = a straight plaza-centred cross to N/E/S/W (ignores pathCount/pathWander).")]
+    [Tooltip("Winding = pathCount meandering routes, each from one edge to the opposite edge. Cardinal = a straight plaza-centred cross to N/E/S/W (ignores pathCount/pathWander).")]
     public PathStyle pathStyle = PathStyle.Winding;
     [Tooltip("Which ground texture the paths use (the 'select your tile as path' choice).")]
     public PathTile pathTile = PathTile.Road;
-    [Tooltip("How many winding routes cross the map (0 = no paths). 2+ share a centre hub → a crossroads.")]
+    [Tooltip("How many meandering routes cross the map (0 = no paths). Maps built by the World Creator ignore this: their roads link the portals.")]
     public int pathCount = 1;
     [Tooltip("Full width of a path in world units (0 = no paths). Solid props are cleared from within half this + a margin.")]
     public float pathWidth = 3.5f;

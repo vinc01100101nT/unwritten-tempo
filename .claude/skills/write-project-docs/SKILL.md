@@ -40,7 +40,7 @@ article and not a person casually explaining mechanics. This was rejected three 
 - In the wiki, skills render as cards via a `skillTable` block: `skills:[{name, icon, cost, flavor, effect}]`
   (subtitle optional). One evocative *flavor* line, plus a terse mechanical `effect` string.
 - **Effect = declarative rules, third person** — "Reduces damage taken by 50% for 5s", "Each basic attack grants
-  +1 Momentum". NOT "you"-narration, NOT casual explanation of interactions.
+  +1 Rising Breeze". NOT "you"-narration, NOT casual explanation of interactions.
 - **Bold the numbers**, mirroring the gold-highlighted values on the real game card.
 - Cost cell compressed like the real card: `MP · CD · Cast · Range`. An untuned skill gets `*in tuning*` —
   **never an invented number**.

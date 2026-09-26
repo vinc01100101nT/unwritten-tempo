@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: GiantRedSamurai
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 55
-  str: 35
-  agi: 21
-  vit: 40
-  intel: 21
-  dex: 30
-  luk: 21
+  level: 60
+  str: 38
+  agi: 23
+  vit: 43
+  intel: 23
+  dex: 33
+  luk: 23
   startingGear: []
   gearQuality: 3
-  gearFolds: 16
+  gearFolds: 17
   gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 55
+  weaponMasteryLevel: 60
   hardDefPercent: 29
   hardMagicDefPercent: 18
   xpReward: 600
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 3
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

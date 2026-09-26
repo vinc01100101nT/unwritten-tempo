@@ -53,7 +53,7 @@ So combat is **single-to-low-double-digit** for a long time. Skill numbers are *
 
 ## Ultimate budget & charge economy
 
-- An ult is marked `tier = 1`. `chargeCost` ≈ **5000** (meteor) — normals leave the field at an unused 100. Sword carries **three** (Deathblow, Retribution, Blade Dance), so "one per weapon" is a guideline the composed pool has already outgrown, not a rule.
+- An ult is marked `tier = 1`. `chargeCost` ≈ **5000** (meteor) — normals leave the field at an unused 100. Sword carries **three** (Last Petal, Returning Wind, Thousand Petals), so "one per weapon" is a guideline the composed pool has already outgrown, not a rule.
 - An ult should *read* as **\~6–10× a normal's single hit** and/or a big multi-hit, plus a signature effect — not just "a slightly bigger skill."
 - :warning: **To measure:** the charge-**gain** rate (how fast 5000 builds in a fight) isn't captured here. Tune it so an ult lands roughly **once per meaningful fight**.
 
@@ -84,7 +84,7 @@ The default ring stat each channel scales off, **unless a skill deliberately ove
 
 ## Attack Speed cap — DONE (implemented 2026-08-04)
 
-`Character.AttackSpeedMult` (`Character.cs:370`) is clamped by `MaxAttackSpeedMult = 3f` (`Character.cs:88`). Sword's **Momentum** (uncapped stacks, generated per basic attack) has an equilibrium of *attack rate × stack duration*; the clamp bounds that ceiling so Momentum — and Deathblow's +40%/stack — can't scale without bound. General combat fix, not Sword-specific. Retune the `3f` in playtest if needed.
+`Character.AttackSpeedMult` (`Character.cs:370`) is clamped by `MaxAttackSpeedMult = 3f` (`Character.cs:88`). Sword's **Rising Breeze** (uncapped stacks, generated per basic attack) has an equilibrium of *attack rate × stack duration*; the clamp bounds that ceiling so Rising Breeze — and Last Petal's +40%/stack — can't scale without bound. General combat fix, not Sword-specific. Retune the `3f` in playtest if needed.
 
 ## Cost & cooldown — the RULES (decided 2026-08-23, applied and verified on all 22 sword skills)
 
@@ -111,11 +111,11 @@ One number, four steps. A skill sits in the step matching what it delivers, and 
 
 - Instant skills (no duration) keep the band cooldown for their step: reaction \~5s, standard \~6s, heavy \~8s.
 - **Ultimates: 45–60s.** A long cooldown, deliberately not a charge gate — decided 2026-08-23, and the `cooldown` band above is corrected to match.
-- Brace already obeys this (4s duration, 7s cooldown) and is the reference.
+- Held Breath already obeys this (4s duration, 7s cooldown) and is the reference.
 
 ### Rule 4 — a WINDOW and a COUNT OF CHARGES are different things, and never mix
 
-A duration is **seconds**; charges are **a number of uses**. A skill may carry both — Brace holds 5 charges for 4s — but they are authored and tuned as separate numbers, and neither is ever expressed in terms of the other. In particular, never write a duration as "however many attacks that is": attack speed varies per character, so the same authored number would mean different things to two players.
+A duration is **seconds**; charges are **a number of uses**. A skill may carry both — Held Breath holds 5 charges for 4s — but they are authored and tuned as separate numbers, and neither is ever expressed in terms of the other. In particular, never write a duration as "however many attacks that is": attack speed varies per character, so the same authored number would mean different things to two players.
 
 ### What the rules produce for the sword pool
 
@@ -123,32 +123,32 @@ A duration is **seconds**; charges are **a number of uses**. A skill may carry b
 
 | Active | Duration | MP | Cooldown | Why |
 | --- | --- | --- | --- | --- |
-| Deathblow | — | 40 | 60 | ultimate |
-| Retribution | — | 40 | 45 | ultimate |
-| Blade Dance | 8s | 40 | 45 | authored `tier = Ultimate`, so it pays an ultimate's price |
-| Committed Strike | — | 16 | 8 | heavy, instant |
-| Overclock | 8s / 3s | 12 | 12 | standard; cooldown raised past its own buff, which used to be permanently up |
-| Guard Stance | 6s | 12 | 9 | 6s × 1.5 |
-| Disarm | 6s | 12 | 9 | 6s × 1.5 |
-| Brace | 4s | 12 | 7 | the reference case |
-| Onslaught | 5s | 12 | 8 | 5s × 1.5 |
-| Challenge | 5s | 12 | 8 | 5s × 1.5 |
-| Offbeat | 5s | 12 | 8 | 5s × 1.5 |
-| Lunge | — | 8 | 5 | reaction, instant |
-| Parry | 3s | 8 | 5 | 3s × 1.5; a shorter cooldown would be permanent parry |
+| Last Petal | — | 40 | 60 | ultimate |
+| Returning Wind | — | 40 | 45 | ultimate |
+| Thousand Petals | 8s | 40 | 45 | authored `tier = Ultimate`, so it pays an ultimate's price |
+| Single Petal | — | 16 | 8 | heavy, instant |
+| Squall | 8s / 3s | 12 | 12 | standard; cooldown raised past its own buff, which used to be permanently up |
+| Still Air | 6s | 12 | 9 | 6s × 1.5 |
+| Stripped Bough | 6s | 12 | 9 | 6s × 1.5 |
+| Held Breath | 4s | 12 | 7 | the reference case |
+| Petal Storm | 5s | 12 | 8 | 5s × 1.5 |
+| Howling Wind | 5s | 12 | 8 | 5s × 1.5 |
+| Scattered Petals | 5s | 12 | 8 | 5s × 1.5 |
+| Piercing Gust | — | 8 | 5 | reaction, instant |
+| Bending Reed | 3s | 8 | 5 | 3s × 1.5; a shorter cooldown would be permanent parry |
 
 | Passive | Duration | MP | Cooldown |
 | --- | --- | --- | --- |
-| Momentum · Unwavering · Lock Blades · Opening · Pressure · Composure | 4–6s | 0 | 0 |
-| Flow · Encore · Last Stand | — | 0 | 0 |
+| Rising Breeze · Deep Roots · Crossed Branches · Parting Clouds · Headwind · Eye of the Storm | 4–6s | 0 | 0 |
+| Tailwind · Second Bloom · Bare Branch | — | 0 | 0 |
 
-**Sword has THREE ultimates** — Deathblow, Retribution and Blade Dance, all authored `tier = Ultimate`. The pricing follows the assets, since the composed skill is the source of truth for what a skill IS; the roster and the wiki both describe three.
+**Sword has THREE ultimates** — Last Petal, Returning Wind and Thousand Petals, all authored `tier = Ultimate`. The pricing follows the assets, since the composed skill is the source of truth for what a skill IS; the roster and the wiki both describe three.
 
 **Rule 3 is a rule about ACTIVES.** Its whole purpose is to keep a *press* meaningful — an effect that outlives its cooldown stops being a decision the player makes. A passive is never pressed, so there is no decision for the rule to protect and nothing for it to govern: a passive that grants a 4–6s state with no cooldown is the design working, not a gap in it. A passive's limiter is its trigger and the build slot it occupies.
 
-**Resolved 2026-08-24 — Opening rolls 50%.** The asset's chance is the authority; the roster doc and the wiki were the stale side and now say a successful parry has a **50% chance** to grant the +200% charge.
+**Resolved 2026-08-24 — Parting Clouds rolls 50%.** The asset's chance is the authority; the roster doc and the wiki were the stale side and now say a successful parry has a **50% chance** to grant the +200% charge.
 
-**Found and FIXED 2026-08-24 — Guard Stance was authored backwards.** It was a `SubStatDebuff` on `DamageReduction`, and `SkillEffectApplier` negates a debuff's magnitude, so the live effect was **+50% damage taken** rather than −50%. Now a `SubStatBuff`, verified off the asset. Overclock still uses the debuff kind on purpose — that is how it doubles incoming damage. **Watch for this shape on any new defensive skill:** the two kinds differ by one word and the wrong one is silently a buff for the enemy.
+**Found and FIXED 2026-08-24 — Still Air was authored backwards.** It was a `SubStatDebuff` on `DamageReduction`, and `SkillEffectApplier` negates a debuff's magnitude, so the live effect was **+50% damage taken** rather than −50%. Now a `SubStatBuff`, verified off the asset. Squall still uses the debuff kind on purpose — that is how it doubles incoming damage. **Watch for this shape on any new defensive skill:** the two kinds differ by one word and the wrong one is silently a buff for the enemy.
 
 ## Open / to measure before mass-tuning
 

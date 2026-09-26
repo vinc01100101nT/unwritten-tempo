@@ -188,6 +188,14 @@ public static class SkillTooltip
             }
             sb.Append('\n');
 
+            // Which form of its weapon's style this is — only for a weapon whose style is in the game.
+            string form = SkillForms.Line(def);
+            if (form.Length > 0)
+            {
+                if (d == Dialect.RichText) sb.Append("<color=").Append(Desc).Append('>').Append(form).Append("</color>\n");
+                else sb.Append(form).Append('\n');
+            }
+
             // Tag (archetype) + category chips.
             if (d == Dialect.RichText)
                 sb.Append("<color=").Append(Hex(ArchetypeColor(def.archetype))).Append("><b>")

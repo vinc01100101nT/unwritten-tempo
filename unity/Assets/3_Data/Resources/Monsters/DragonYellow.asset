@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: DragonYellow
   kind: 0
   size: 2
-  biome: 3
+  biome: 2
   sheet: DragonYellow
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 67
-  str: 44
-  agi: 35
-  vit: 43
-  intel: 24
-  dex: 35
-  luk: 24
+  level: 46
+  str: 31
+  agi: 24
+  vit: 30
+  intel: 16
+  dex: 24
+  luk: 16
   startingGear: []
   gearQuality: 1
-  gearFolds: 10
+  gearFolds: 7
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 67
+  weaponMasteryLevel: 46
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20

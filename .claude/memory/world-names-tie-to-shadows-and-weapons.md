@@ -1,31 +1,46 @@
 ---
 name: world-names-tie-to-shadows-and-weapons
-description: "World names: no real-country culture and no made-up languages (both rejected); theme not chosen; shadow names first; every name ties to its shadow AND weapon; Ragnarok-city feel"
+description: "Naming: shadows go by STYLES (set 2026-09-26), skills are numbered FORMS of the style; style/place names are real English, no real-country culture, no made-up languages, no other franchise's terms; must sound smooth with 'style'"
 metadata:
   node_type: memory
   type: feedback
   originSessionId: bc3ede8f-181a-4749-ab82-2b5f87d35659
-  modified: 2026-09-25T11:20:57.248Z
+  modified: 2026-09-26T06:14:32.038Z
 ---
 
-**The game applies NO real-country culture** (user, 2026-09-25: "we do not apply any country culture in our game").
-Homelands are not Roman/Irish/Japanese etc., and names never come from a real country's language.
+**Shadows are named by their weapon's STYLE (decided 2026-09-26), never a personal name** — the Fourteen left no
+names; a style is how they fought. Every skill of a weapon is a numbered FORM of its style (learning order), and a
+form's name uses only its own style's imagery (Blossom Wind → wind, petals, branches, storm). The skill's name IS the
+form name, and a trademark weapon is called by it. The 14 styles live in the story canon doc; they are working names
+the user said can change any time. Inspired by Demon Slayer's breathing styles.
 
-**Made-up languages are REJECTED too** (2026-09-25): both one shared invented language and one per homeland
-(sound rules + word order + quirk) were tried and dropped the same day. Do not re-propose them. The naming theme is
-still open.
+**The 14 styles are LOCKED (2026-09-26), all in one POETIC register** — a living thing or natural scene plus the
+weather or season that moves it, soft, never a material or machine: Still Oak (Shield), Morning Dew (Wand), Stone
+Bloom (Warhammer), Silver Rain (Spear), Forest Fire (Axe), Dusk Crow (Firearm), Black Lily (Scythe), Night Orchid
+(Dagger), Ashen Field (Staff), Silent Snow (Greatsword), Feather Rain (Bow), Blossom Wind (Sword), Northern Lights
+(Fist), Autumn Gale (Kick). Chosen because a single soft style (Blossom Wind) among hard ones (Iron Gate, Bedrock…)
+felt wrong; the user picked bringing the others to Blossom Wind's register. Do not reopen them.
 
-**Fourteen weapons and fourteen shadows since 2026-09-25** (Fist and Kick added; recorded in the weapon roster doc).
+**What the user accepts in a style name** (learned over ~8 rounds of rejections on 2026-09-26):
+- It must sound smooth said with "style" — "Ash style", "Endless Sky style", "Tide style" were rejected as awkward.
+- A real English word or phrase, spelled as English spells it. Joined-up coinages confused them ("Blackwater" reads
+  as two words; "Fogbreaker" became "Fog Breaker").
+- Not always two-part: one word or three words are welcome — a mix, not a pattern.
+- **Never another franchise's term**: no "Breathing", "Beast" (Demon Slayer), "Windrunner" (Warcraft), "Halo",
+  "Harvest Moon". Check before proposing.
 
-**Order agreed 2026-09-25: shadow names first, then weapon names and region names.** The shadow names (Varro,
-Brigid, Radomir... in the docs) are NOT locked and may be replaced.
+**Place names (2026-09-26):** about ONE THIRD real English (from one syllable like "Hilt" to three words like "The Far
+Shores") and the rest MADE-UP names that sound like Ragnarok locations (Prontera, Payon, Geffen, Aldebaran) — the user
+asked for this mix after an all-English list. A made-up NAME is fine; a made-up LANGUAGE (sound rules, word order) was
+rejected on 2026-09-25 and stays rejected, as does any real country's culture. Each place still ties to its shadow's
+style, its weapon and its setting. Fields are named after the town you walk to them from, Ragnarok-style:
+lst_fild01 (Lastline field 1). **A dungeon near a town takes that town's code: frg_dun01, frg_dun02 (by floor)** —
+"near" = its entrance is in one of that town's fields; only a dungeon with no town near it gets a name of its own.
 
-Every name ties to its homeland's shadow AND its weapon. Style: Ragnarok city names (Prontera, Payon, Morroc,
-Al De Baran, Geffen, Umbala, Lutie) — 1 to 4 syllables, varied shapes, including some one-off multi-word formats
-like "Al De Baran".
+**Locked (2026-09-26):** regions Midlaine / Lirenne / The Far Shores; the 8 cities, 6 towns and their three-letter
+codes, and the Fist and Kick places (Aurora Steps, Unmarked Path) — the table is in `docs/3-world/world-map.md`
+Cities and towns. Do not reopen them unasked.
 
-**Why:** the user rejected, in turn: all same-pattern compounds; names with only a culture link; the whole
-real-country theme; and made-up languages. The twelve homelands exist BECAUSE of the twelve shadows.
-
-**How to apply:** for each name, be able to say in one line how it links to its shadow and its weapon; vary
-syllable count and format across the set. See [[the-five-anti-invention]] — names are still proposals.
+**How to apply:** for each name, say in one line how it links to the deed, the element and the place; offer a pick
+plus alternatives; check the sound with "style" and the franchise risk before offering. See
+[[the-five-anti-invention]].

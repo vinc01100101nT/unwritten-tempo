@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.blade_dance
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.blade_dance
-  displayName: Blade Dance
-  symbol: Bd
+  displayName: Thousand Petals
+  symbol: Tp
   weaponType: 1
   masteryLevel: 60
   needsSkillId: skill.sword.overclock
   published: 1
-  trademarkName: Ranbu
   description: 'Become the storm.
 
     Arms dance charges and half as many parries

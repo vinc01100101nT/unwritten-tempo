@@ -464,15 +464,11 @@ public class SkillDef : ScriptableObject
              "level is reached. 0 means the same as 1.")]
     public int masteryLevel = 1;
     [Tooltip("A skill that must be learned FIRST, by id — so a skill that rides another can never be held " +
-             "without it (Lock Blades needs Lunge). Empty = nothing comes first.")]
+             "without it (Crossed Branches needs Piercing Gust). Empty = nothing comes first.")]
     public string needsSkillId = "";
     [Tooltip("PUBLISHED = a forge may roll this as a weapon's trademark, and a creature may draw it as its extra " +
              "skill. Unpublished or not, it is learned by mastering its weapon.")]
     public bool published = false;
-    [Tooltip("The name a forged weapon carries when this is its TRADEMARK skill — '+15 Hadori [C]'. Only a skill " +
-             "that belongs to a weapon and has a main number on at least one effect can be a trademark; the name " +
-             "lives here and nowhere else, and every weapon looks it up from this skill.")]
-    public string trademarkName = "";
 
     [Header("Codex (hover tooltip)")]
     [TextArea(2, 4)]

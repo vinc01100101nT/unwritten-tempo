@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: SquidGreen
   kind: 1
   size: 3
-  biome: 1
+  biome: 10
   sheet: SquidGreen
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 44
-  str: 29
-  agi: 17
-  vit: 34
-  intel: 15
-  dex: 23
-  luk: 15
+  level: 24
+  str: 17
+  agi: 10
+  vit: 20
+  intel: 9
+  dex: 14
+  luk: 9
   startingGear: []
   gearQuality: 3
-  gearFolds: 12
+  gearFolds: 6
   gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 44
+  weaponMasteryLevel: 24
   hardDefPercent: 32
   hardMagicDefPercent: 20
   xpReward: 800

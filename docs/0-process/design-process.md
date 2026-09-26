@@ -50,7 +50,7 @@ Reuse it for every design unit. It's process, not game content — so it lives h
 
 ## Worked example
 
-The **Sword** weapon roster (see *Active Skill System — V3 / Sword — Skill Roster*) was the first design taken through this flow end-to-end — including the failure that motivated it (GPT stress-testing an intentional Bladedance feature as a bug, and Momentum being mis-framed as default instead of a rollable passive). Read that roster as the reference for what a completed pass looks like.
+The **Sword** weapon roster (see *Active Skill System — V3 / Sword — Skill Roster*) was the first design taken through this flow end-to-end — including the failure that motivated it (GPT stress-testing an intentional Bladedance feature as a bug, and Rising Breeze being mis-framed as default instead of a rollable passive). Read that roster as the reference for what a completed pass looks like.
 ---
 
 ## Related

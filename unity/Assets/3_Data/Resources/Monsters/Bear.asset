@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Bear
   kind: 0
   size: 2
-  biome: 4
+  biome: 1
   sheet: Bear
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 82
-  str: 52
-  agi: 44
-  vit: 52
-  intel: 32
-  dex: 44
-  luk: 31
+  level: 31
+  str: 20
+  agi: 17
+  vit: 20
+  intel: 13
+  dex: 17
+  luk: 12
   startingGear: []
-  gearQuality: 2
-  gearFolds: 12
-  gearInkTier: 2
+  gearQuality: 0
+  gearFolds: 5
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 82
+  weaponMasteryLevel: 31
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 5
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

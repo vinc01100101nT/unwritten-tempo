@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Mollusc2
   kind: 0
   size: 0
-  biome: 1
+  biome: 6
   sheet: Mollusc2
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 39
-  str: 27
-  agi: 20
-  vit: 27
-  intel: 13
-  dex: 20
-  luk: 13
+  level: 10
+  str: 10
+  agi: 9
+  vit: 10
+  intel: 5
+  dex: 8
+  luk: 5
   startingGear: []
-  gearQuality: 1
-  gearFolds: 6
+  gearQuality: 0
+  gearFolds: 1
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 39
+  weaponMasteryLevel: 10
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40

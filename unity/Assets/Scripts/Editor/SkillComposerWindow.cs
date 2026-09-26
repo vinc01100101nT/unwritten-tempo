@@ -962,25 +962,6 @@ public class SkillComposerWindow : EditorWindow
                 EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
                     MessageType.Warning);
 
-            // Only a skill the forge can ROLL asks for a name — the forge's own test, asked again on every redraw, so
-            // adding or removing a main-number effect, the weapon or the published box shows or hides it at once.
-            if (Trademarks.Rollable(sel, sel.weaponType))
-            {
-                string beforeTrademark = sel.trademarkName ?? "";
-                string name = EditorGUILayout.TextField(new GUIContent("trademark name",
-                    "What a forged weapon is called when this is its trademark skill — '+15 Hadori [C]'. Every " +
-                    "published weapon skill with a main number on any effect is a trademark, so every one of them needs a name."),
-                    beforeTrademark);
-                if (name != beforeTrademark)
-                {
-                    sel.trademarkName = name;
-                    EditorUtility.SetDirty(sel);
-                }
-                if (string.IsNullOrWhiteSpace(sel.trademarkName))
-                    EditorGUILayout.HelpBox("This skill is a trademark but has no name — a weapon that rolls it is " +
-                        "called by its item name instead.", MessageType.Warning);
-            }
-
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
         }

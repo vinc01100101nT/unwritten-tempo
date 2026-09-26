@@ -98,7 +98,7 @@ slowed-but-untouched mob shows none.
 ## Stacks, charges and the gate
 
 **Stacks and charges are ONE mechanism.** Each state holds a list of `Stack` structs, each with its OWN end time,
-magnitude and integer amount. A "charge" is N stacks granted together sharing a window; a Momentum-style pile is one
+magnitude and integer amount. A "charge" is N stacks granted together sharing a window; a Rising Breeze-style pile is one
 stack per event, each on its own timer. The state's aggregate is a fold over its stacks, so **every existing reader is
 untouched** — a non-stacking state is one stack whose aggregate IS its value.
 
@@ -119,11 +119,11 @@ entry points — a pressed active (before any cost is paid) and a passive fire. 
 no cast, no cost.
 
 - ⚠️ **The gate names a PILE, not just a skill.** Keying by skill alone summed every state that skill granted and spent
-  them in list order, so a skill with two stacking effects had its piles merged — a Blade Dance beat could have eaten a
+  them in list order, so a skill with two stacking effects had its piles merged — a Thousand Petals beat could have eaten a
   Parry charge. The composer's "which pile" dropdown lists only what the chosen granter actually stacks. Changing what a
   skill stacks re-points or drops its consumers on Save, and a gate that names no pile is reported as an authoring error.
 - **COMPUTE BEFORE CONSUME** — no snapshots anywhere. Effects run reading the LIVE store; the spend happens immediately
-  after the burst returns, once per cast. Deathblow sees the whole Momentum pile while rolling damage and spends it the
+  after the burst returns, once per cast. Last Petal sees the whole Rising Breeze pile while rolling damage and spends it the
   instant that finishes. *(A skill with a requirement but no effect bindings never reaches a tick, so it never
   consumes — a malformed authoring case.)*
 - **The run of hits** is a gate source that no skill grants: one per fight, never spent, ended by the fight itself. It
@@ -168,7 +168,7 @@ place and no fire-site can forget it. Passives self-register when enabled and un
 Every effect carries the set of passives that caused it — one bit per registered passive in a single machine word, so
 zero-alloc. A passive whose bit is already in the chain is skipped; unrelated passives still run. Because no passive can
 repeat within a chain, **every chain is finite by construction**, with no depth counter to tune. Only damage a passive's
-own effects deal stamps its bit, which is what keeps Encore (which merely extends Blade Dance) firing on each kill.
+own effects deal stamps its bit, which is what keeps Second Bloom (which merely extends Thousand Petals) firing on each kill.
 
 ⚠️ **A passive's slot is fixed and never compacted.** A chain is stamped now but consumed frames later, so shifting a
 slot makes a passive stop recognising itself and re-fire off its own damage. This replaced an earlier one-level guard
@@ -180,7 +180,7 @@ A beat of a repeating cast is **not a moment**. Every trigger member is somethin
 the *same cast still running*, which is why a beat spends its charge directly instead of announcing anything. Give a beat
 a trigger and a skill can answer its own beat → which re-enters the skill → which beats again: an unbounded loop that
 also pays nothing, because the pile is only spent by the run that owns it. This is the same trap `OnSkillCastComplete`
-avoids by announcing **only on a player press** — the brake that stops a granter/consumer pair (Lock Blades ⇄ Lunge)
+avoids by announcing **only on a player press** — the brake that stops a granter/consumer pair (Crossed Branches ⇄ Piercing Gust)
 refilling each other forever. **A repeating cast reads its pile; it must never raise a moment.** The rule is restated on
 the trigger enum in code.
 
@@ -192,7 +192,7 @@ this" question excludes self.
 
 - **`repeatCostsCharge`** — each repeat spends one charge of the state the trigger requires, and the run continues *while
   the pile holds*, ignoring the authored repeat count. Because the loop reads the LIVE pile, a passive granting charges
-  mid-run genuinely lengthens it — **Encore needs no special case.**
+  mid-run genuinely lengthens it — **Second Bloom needs no special case.**
 - **`repeatReaim` + `repeatReaimRange`** — each repeat re-aims at a RANDOM living mob within range of the **current
   target** (not the caster, not the original aim), so the run walks target to target; an empty search ends it. One beat =
   one target: this is single-target, never AoE.

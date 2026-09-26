@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: DemonCyclop
   kind: 1
   size: 2
-  biome: 0
+  biome: 7
   sheet: DemonCyclop
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 6
-  str: 9
-  agi: 4
-  vit: 10
-  intel: 4
-  dex: 7
-  luk: 4
+  level: 14
+  str: 12
+  agi: 6
+  vit: 14
+  intel: 6
+  dex: 10
+  luk: 6
   startingGear: []
   gearQuality: 3
-  gearFolds: 0
+  gearFolds: 3
   gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 6
+  weaponMasteryLevel: 14
   hardDefPercent: 23
   hardMagicDefPercent: 14
   xpReward: 200

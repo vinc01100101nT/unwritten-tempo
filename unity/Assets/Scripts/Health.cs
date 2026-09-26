@@ -181,11 +181,17 @@ public class Health : MonoBehaviour, ICombatUnit
 
     /// <summary>What the weapon this creature holds adds to <paramref name="skillId"/> through its trademark — the
     /// same rule a player's weapon follows, so a creature carrying a trademark weapon is dangerous the same way.</summary>
-    public float TrademarkLift(string skillId)
+    public float TrademarkLift(string skillId) => Trademarks.LiftOn(HeldWeaponCopy, skillId);
+
+    /// <summary>The weapon this creature holds, as a forged copy — null when it holds none.</summary>
+    public EquipmentInstance HeldWeaponCopy
     {
-        var b = Brain;
-        var gear = b != null ? b.Equipment : null;
-        return Trademarks.LiftOn(gear != null ? gear.Get(EquipSlotType.Weapon) : null, skillId);
+        get
+        {
+            var b = Brain;
+            var gear = b != null ? b.Equipment : null;
+            return gear != null ? gear.Get(EquipSlotType.Weapon) : null;
+        }
     }
 
     public float SwingTime { get { var b = Brain; return b != null ? b.SwingTime : 0f; } }

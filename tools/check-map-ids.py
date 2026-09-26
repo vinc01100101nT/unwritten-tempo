@@ -2,11 +2,14 @@
 """Every map id in the game comes from ONE place — the world layout — and nothing may disagree with it.
 
 THE SOURCE OF TRUTH: tools/world-creator/worlds/world-regions.json. Each map's `id` is its `name` in snake_case
-("Old Tunnels 1" -> old_tunnels_1; a repeated name gets _2, _3 on the later map), exactly as the browser World
-Creator sets it. That id is the scene file name, what /tp takes, and what a character's save names. Everything else
+("Old Oak" -> old_oak; a repeated name gets _2, _3 on the later map), exactly as the browser World
+Creator sets it — for a town, city or special map. A field's id is <town code>_fildNN and a dungeon floor's
+<town code>_dunNN, Ragnarok-style (lst_fild01, olk_dun01); a dungeon with no town near it may instead take the snake_case
+of its own name. That id is the scene file name, what /tp takes, and what a character's save names. Everything else
 below is a COPY made from the layout by a tool, and this check fails the moment a copy drifts:
 
-  - an id that is not the snake_case of its name, or two maps with one id
+  - a town or special map whose id is not the snake_case of its name, a field or dungeon whose id breaks its pattern,
+    or two maps with one id
   - a generated map (any type but special) with no scene file of that exact name, or one missing from Build Settings
   - a door in a world scene leading to a map that is not in the layout, or to an arrival point that does not exist
   - the in-game world map (WorldAtlas) listing a different set of maps than the layout
@@ -54,11 +57,19 @@ def main():
     layout = json.loads(read(LAYOUT))
     maps = layout["maps"]
 
-    # 1. The ids themselves: the snake_case of the name, unique, assigned in layout order like the tool does.
-    taken = {m["id"] for m in maps if not snake_case(m.get("name"))}
+    # 1. The ids themselves. Fields and dungeon floors follow their Ragnarok-style pattern; everything else is the
+    # snake_case of its name, unique, assigned in layout order like the tool does.
+    for m in maps:
+        if m["type"] == "field" and not re.fullmatch(r"[a-z]{3}_fild\d{2}", m["id"]):
+            faults.append("layout: field '%s' has id '%s' — a field's id is <town code>_fildNN" % (m.get("name"), m["id"]))
+        if m["type"] == "dungeon" and not (re.fullmatch(r"[a-z]{3}_dun\d{2}", m["id"])
+                                           or re.fullmatch(re.escape(snake_case(m.get("name"))) + r"(_\d+)?", m["id"])):
+            faults.append("layout: dungeon '%s' has id '%s' — a dungeon floor's id is <town code>_dunNN" % (m.get("name"), m["id"]))
+    typed = [m for m in maps if m["type"] in ("field", "dungeon")]
+    taken = {m["id"] for m in maps if not snake_case(m.get("name")) or m in typed}
     for m in maps:
         base = snake_case(m.get("name"))
-        if not base:
+        if not base or m in typed:
             continue
         want, n = base, 2
         while want in taken:

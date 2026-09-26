@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Larva2
   kind: 0
   size: 0
-  biome: 0
+  biome: 6
   sheet: Larva2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 19
-  str: 14
-  agi: 11
-  vit: 14
-  intel: 9
-  dex: 11
-  luk: 8
+  level: 4
+  str: 7
+  agi: 6
+  vit: 7
+  intel: 4
+  dex: 6
+  luk: 4
   startingGear: []
   gearQuality: 0
-  gearFolds: 3
+  gearFolds: 0
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 19
+  weaponMasteryLevel: 4
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 1
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

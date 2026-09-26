@@ -101,6 +101,8 @@ public static class SkillExport
             // surface decides what to draw in a space too small for a name.
             Field(json, "symbol", d.symbol, true);
             Field(json, "weapon", d.weaponType.ToString(), true);
+            // "Blossom Wind — 13th Form" — the same line the in-game card shows, empty for a skill that is no form.
+            Field(json, "form", SkillForms.Line(d), true);
             Field(json, "archetype", SkillTooltip.ArchetypeName(d.archetype), true);
             Field(json, "family", d.family.ToString(), true);
             Bool(json, "ultimate", d.IsUltimate);
@@ -115,7 +117,7 @@ public static class SkillExport
             Field(json, "description", d.description, true);
             // The name a forged weapon carries when this skill is its trademark — empty unless the forge can roll it,
             // the same test the forge uses, so the page names exactly the skills a weapon can be named for.
-            Field(json, "trademark", Trademarks.Rollable(d, d.weaponType) ? (d.trademarkName ?? "") : "", true);
+            Field(json, "trademark", Trademarks.Rollable(d, d.weaponType) ? (d.displayName ?? "") : "", true);
 
             json.Append("      \"effects\": [");
             for (int k = 0; k < lines.Count; k++)

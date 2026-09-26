@@ -20,20 +20,20 @@ MonoBehaviour:
   sheet: GoldRacoon
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 16
-  str: 13
-  agi: 10
-  vit: 13
-  intel: 7
-  dex: 10
-  luk: 7
+  level: 28
+  str: 20
+  agi: 15
+  vit: 20
+  intel: 10
+  dex: 15
+  luk: 10
   startingGear: []
   gearQuality: 0
-  gearFolds: 2
+  gearFolds: 4
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 16
+  weaponMasteryLevel: 28
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -86,6 +86,6 @@ Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor to
 - [Unified Unit Stats](unified-unit-stats.md) — the design intent this tracks.
 - [Implementation Notes](implementation-notes.md) — the skill-side sibling.
 - [Active Skill System — V3](README.md) — the design this is the unit half of.
-- [Biome Mob Families — Spawning by Biome and Level](../../3-world/biome-mob-families.md) — where the creatures came from.
+- [Creatures and Where They Live](../../3-world/biome-mob-families.md) — where the creatures came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the curve a mob's ring ranks resolve through.
 - [Networking — Implementation Notes](../networking/implementation-notes.md) — server-owned creatures, built from these blocks.

@@ -25,355 +25,355 @@ MonoBehaviour:
     w: 80
     h: 80
     type: town
-  - scene: shield
+  - scene: old_oak
     x: 610
     y: 320
     w: 80
     h: 80
     type: town
-  - scene: lv_1_3
+  - scene: lst_fild01
     x: 708
     y: 402
     w: 64
     h: 56
     type: field
-  - scene: lv_4_6
+  - scene: prl_fild01
     x: 608
     y: 432
     w: 64
     h: 56
     type: field
-  - scene: lv_6_8
+  - scene: olk_fild01
     x: 568
     y: 242
     w: 64
     h: 56
     type: field
-  - scene: old_tunnels_1
+  - scene: olk_dun01
     x: 500
     y: 170
     w: 40
     h: 40
     type: dungeon
-  - scene: old_tunnels_2
+  - scene: olk_dun02
     x: 500
     y: 218
     w: 40
     h: 40
     type: dungeon
-  - scene: lv_9_12
+  - scene: lst_fild02
     x: 738
     y: 262
     w: 64
     h: 56
     type: field
-  - scene: warhammer
+  - scene: gemmara
     x: 970
     y: 360
     w: 80
     h: 80
     type: town
-  - scene: lv_13_16
+  - scene: gmr_fild01
     x: 1088
     y: 432
     w: 64
     h: 56
     type: field
-  - scene: spear
+  - scene: pluvenne
     x: 1179
     y: 484
     w: 80
     h: 80
     type: town
-  - scene: lv_17_20
+  - scene: plv_fild01
     x: 1098
     y: 602
     w: 64
     h: 56
     type: field
-  - scene: lv_21_24
+  - scene: lst_fild03
     x: 968
     y: 612
     w: 64
     h: 56
     type: field
-  - scene: greatsword
+  - scene: hilt
     x: 1040
     y: 210
     w: 80
     h: 80
     type: town
-  - scene: lv_25_28
+  - scene: hlt_fild02
     x: 928
     y: 222
     w: 64
     h: 56
     type: field
-  - scene: lv_29_33
+  - scene: hlt_fild01
     x: 1158
     y: 262
     w: 64
     h: 56
     type: field
-  - scene: mines_1
+  - scene: hlt_dun01
     x: 1240
     y: 180
     w: 40
     h: 40
     type: dungeon
-  - scene: mines_2
+  - scene: hlt_dun02
     x: 1290
     y: 180
     w: 40
     h: 40
     type: dungeon
-  - scene: mines_3
+  - scene: hlt_dun03
     x: 1340
     y: 180
     w: 40
     h: 40
     type: dungeon
-  - scene: lv_26_30
+  - scene: hrw_fild01
     x: 628
     y: 592
     w: 64
     h: 56
     type: field
-  - scene: sword
+  - scene: parley
     x: 528
     y: 388
     w: 64
     h: 64
     type: town
-  - scene: kick
+  - scene: tornel
     x: 458
     y: 488
     w: 64
     h: 64
     type: town
-  - scene: axe
+  - scene: harrowen
     x: 543
     y: 608
     w: 64
     h: 64
     type: town
-  - scene: lv_30_34
+  - scene: prl_fild02
     x: 438
     y: 392
     w: 64
     h: 56
     type: field
-  - scene: bow
+  - scene: pennaryl
     x: 410
     y: 265
     w: 80
     h: 80
     type: town
-  - scene: lv_34_38
+  - scene: pnr_fild01
     x: 328
     y: 257
     w: 64
     h: 56
     type: field
-  - scene: lv_39_44
+  - scene: vlm_fild01
     x: 258
     y: 342
     w: 64
     h: 56
     type: field
-  - scene: lv_45_49
+  - scene: trn_fild01
     x: 348
     y: 362
     w: 64
     h: 56
     type: field
-  - scene: dagger
+  - scene: velmora
     x: 260
     y: 420
     w: 80
     h: 80
     type: town
-  - scene: lv_50_54
+  - scene: vlm_fild02
     x: 168
     y: 442
     w: 64
     h: 56
     type: field
-  - scene: lv_55_60
+  - scene: brm_fild02
     x: 58
     y: 517
     w: 64
     h: 56
     type: field
-  - scene: lv_61_66
+  - scene: vlm_fild03
     x: 138
     y: 227
     w: 64
     h: 56
     type: field
-  - scene: canyon_temple_1
+  - scene: vlm_dun01
     x: 80
     y: 330
     w: 40
     h: 40
     type: dungeon
-  - scene: canyon_temple_2
+  - scene: vlm_dun02
     x: 130
     y: 330
     w: 40
     h: 40
     type: dungeon
-  - scene: canyon_temple_3
+  - scene: vlm_dun03
     x: 180
     y: 330
     w: 40
     h: 40
     type: dungeon
-  - scene: firearm
+  - scene: brimstone
     x: 248
     y: 528
     w: 64
     h: 64
     type: town
-  - scene: lv_60_64
+  - scene: brm_fild01
     x: 333
     y: 572
     w: 64
     h: 56
     type: field
-  - scene: staff
+  - scene: cindrel
     x: 680
     y: 60
     w: 80
     h: 80
     type: town
-  - scene: lv_67_71
+  - scene: cdl_fild01
     x: 583
     y: 112
     w: 64
     h: 56
     type: field
-  - scene: lv_72_76
+  - scene: cdl_fild02
     x: 793
     y: 122
     w: 64
     h: 56
     type: field
-  - scene: lava_tubes_1
+  - scene: cdl_dun01
     x: 880
     y: 40
     w: 40
     h: 40
     type: dungeon
-  - scene: lava_tubes_2
+  - scene: cdl_dun02
     x: 930
     y: 40
     w: 40
     h: 40
     type: dungeon
-  - scene: lava_tubes_3
+  - scene: cdl_dun03
     x: 980
     y: 40
     w: 40
     h: 40
     type: dungeon
-  - scene: fist
+  - scene: luminhal
     x: 1368
     y: 438
     w: 64
     h: 64
     type: town
-  - scene: lv_64_68
+  - scene: lmh_fild01
     x: 1322
     y: 511
     w: 64
     h: 56
     type: field
-  - scene: scythe
+  - scene: kharnel
     x: 218
     y: 758
     w: 64
     h: 64
     type: town
-  - scene: lv_67_71_2
+  - scene: khn_fild02
     x: 98
     y: 697
     w: 64
     h: 56
     type: field
-  - scene: lv_72_76_2
+  - scene: khn_fild01
     x: 318
     y: 852
     w: 64
     h: 56
     type: field
-  - scene: haunted_deep_1
+  - scene: khn_dun01
     x: 40
     y: 840
     w: 40
     h: 40
     type: dungeon
-  - scene: haunted_deep_2
+  - scene: khn_dun02
     x: 40
     y: 890
     w: 40
     h: 40
     type: dungeon
-  - scene: haunted_deep_3
+  - scene: khn_dun03
     x: 90
     y: 940
     w: 40
     h: 40
     type: dungeon
-  - scene: haunted_deep_4
+  - scene: khn_dun04
     x: 140
     y: 940
     w: 40
     h: 40
     type: dungeon
-  - scene: lv_77_81
+  - scene: khn_fild03
     x: 588
     y: 817
     w: 64
     h: 56
     type: field
-  - scene: lv_82_86
+  - scene: khn_fild04
     x: 788
     y: 862
     w: 64
     h: 56
     type: field
-  - scene: lv_87_91
+  - scene: khn_fild05
     x: 1124
     y: 804
     w: 64
     h: 56
     type: field
-  - scene: lv_96_99
+  - scene: khn_fild07
     x: 1308
     y: 732
     w: 64
     h: 56
     type: field
-  - scene: lv_92_95
+  - scene: khn_fild06
     x: 1268
     y: 852
     w: 64
     h: 56
     type: field
-  - scene: wand
+  - scene: halcyra
     x: 205
     y: 45
     w: 80
     h: 80
     type: town
-  - scene: lv_83_90
+  - scene: hcr_fild01
     x: 98
     y: 47
     w: 64
     h: 56
     type: field
-  - scene: lv_91_99
+  - scene: hcr_fild02
     x: 328
     y: 47
     w: 64
@@ -451,15 +451,111 @@ MonoBehaviour:
     w: 50
     h: 50
     type: special
-  - scene: fist_place
+  - scene: aurora_steps
     x: 550
     y: 1150
     w: 50
     h: 50
     type: special
-  - scene: kick_place
+  - scene: unmarked_path
     x: 655
     y: 1150
     w: 50
     h: 50
     type: special
+  - scene: gmr_fild02
+    x: 840
+    y: 290
+    w: 64
+    h: 56
+    type: field
+  - scene: lst_fild04
+    x: 880
+    y: 540
+    w: 64
+    h: 56
+    type: field
+  - scene: hrw_fild02
+    x: 730
+    y: 600
+    w: 64
+    h: 56
+    type: field
+  - scene: lst_fild05
+    x: 880
+    y: 700
+    w: 64
+    h: 56
+    type: field
+  - scene: lst_dun01
+    x: 960
+    y: 720
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: lst_dun02
+    x: 1010
+    y: 720
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: pnr_fild02
+    x: 228
+    y: 232
+    w: 64
+    h: 56
+    type: field
+  - scene: brm_fild03
+    x: 150
+    y: 590
+    w: 64
+    h: 56
+    type: field
+  - scene: khn_fild08
+    x: 380
+    y: 770
+    w: 64
+    h: 56
+    type: field
+  - scene: khn_fild09
+    x: 880
+    y: 790
+    w: 64
+    h: 56
+    type: field
+  - scene: khn_dun05
+    x: 870
+    y: 930
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: khn_dun06
+    x: 920
+    y: 930
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: khn_fild10
+    x: 1180
+    y: 900
+    w: 64
+    h: 56
+    type: field
+  - scene: khn_dun07
+    x: 1395
+    y: 690
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: khn_dun08
+    x: 1445
+    y: 690
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: khn_dun09
+    x: 1445
+    y: 740
+    w: 40
+    h: 40
+    type: dungeon

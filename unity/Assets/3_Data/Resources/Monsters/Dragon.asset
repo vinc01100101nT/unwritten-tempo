@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Dragon
   kind: 0
   size: 2
-  biome: 2
+  biome: 0
   sheet: Dragon
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 49
-  str: 31
-  agi: 27
-  vit: 31
-  intel: 18
-  dex: 26
-  luk: 17
+  level: 34
+  str: 22
+  agi: 19
+  vit: 22
+  intel: 13
+  dex: 18
+  luk: 12
   startingGear: []
-  gearQuality: 1
-  gearFolds: 7
+  gearQuality: 0
+  gearFolds: 5
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 49
+  weaponMasteryLevel: 34
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

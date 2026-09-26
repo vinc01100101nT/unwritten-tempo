@@ -13,16 +13,15 @@ MonoBehaviour:
   m_Name: skill.sword.encore
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.encore
-  displayName: Encore
-  symbol: En
+  displayName: Second Bloom
+  symbol: Sb
   weaponType: 1
   masteryLevel: 65
   needsSkillId: skill.sword.blade_dance
   published: 1
-  trademarkName: Futatabi
   description: 'The dance goes on.
 
-    A kill during Blade Dance adds 7 more dance
+    A kill during Thousand Petals adds 7 more dance
     charges.'
   archetype: 1
   family: 2

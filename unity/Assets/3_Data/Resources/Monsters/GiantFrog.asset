@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantFrog
   kind: 1
   size: 3
-  biome: 3
+  biome: 11
   sheet: GiantFrog
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 66
-  str: 42
-  agi: 25
-  vit: 48
-  intel: 25
-  dex: 36
-  luk: 25
+  level: 78
+  str: 50
+  agi: 31
+  vit: 57
+  intel: 30
+  dex: 42
+  luk: 30
   startingGear: []
-  gearQuality: 3
-  gearFolds: 19
-  gearInkTier: 3
+  gearQuality: 4
+  gearFolds: 23
+  gearInkTier: 4
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 66
+  weaponMasteryLevel: 78
   hardDefPercent: 26
   hardMagicDefPercent: 16
   xpReward: 400
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 1
+  element: 5
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

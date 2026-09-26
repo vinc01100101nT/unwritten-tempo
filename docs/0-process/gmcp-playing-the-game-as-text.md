@@ -76,7 +76,7 @@ or a floor item is known by the number the server gave it, a door by where it st
 2026-09-18 an id was tied to the object drawn, and the first screen's `d1` had become `d3` by the next command —
 measured twice, cause in the game not measured.) An id whose body has since been handed to another creature
 answers `unknown id` rather than acting on the wrong one. Every command that waits ends with a line saying why:
-`arrived`, `hit`, `new map lv_1_3`, `m3 died`, `you died`, `HP under 30%`, `cast Lunge`, `picked up Grilled
+`arrived`, `hit`, `new map lst_fild01`, `m3 died`, `you died`, `HP under 30%`, `cast Piercing Gust`, `picked up Grilled
 Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 
 | Command | What it does |

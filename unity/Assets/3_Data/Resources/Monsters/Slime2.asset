@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Slime2
   kind: 0
   size: 0
-  biome: 3
+  biome: 4
   sheet: Slime2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 79
-  str: 52
-  agi: 42
-  vit: 50
-  intel: 30
-  dex: 42
-  luk: 29
+  level: 94
+  str: 62
+  agi: 50
+  vit: 60
+  intel: 36
+  dex: 50
+  luk: 35
   startingGear: []
   gearQuality: 2
-  gearFolds: 12
+  gearFolds: 14
   gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 79
+  weaponMasteryLevel: 94
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 5
+  element: 7
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -1,0 +1,1982 @@
+{
+    "version": 1,
+    "name": "brm_fild03",
+    "cellSize": 1.0,
+    "size": {
+        "x": 64.0,
+        "z": 56.0
+    },
+    "cols": 64,
+    "rows": 56,
+    "ground": [
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 1
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 3,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 4,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 4,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 5,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 5,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 6,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 6,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 7,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 7,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 8,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 8,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 9,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 9,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 10,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 10,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 11,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 11,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 12,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 12,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 13,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 13,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 14,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 14,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 15,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 15,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 16,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 16,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 17,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 17,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 18,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 18,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 19,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 19,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 20,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 20,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 21,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 21,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 22,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 22,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 23,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 23,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 24,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 24,
+            "cz": 44
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 25,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 25,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 26,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 26,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 26,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 27,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 27,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 27,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 28,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 28,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 28,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 29,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 29,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 30,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 30,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 31,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 31,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 32,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 32,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 33,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 33,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 33,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 34,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 34,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 34,
+            "cz": 42
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 35,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 35,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 35,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 35,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 36,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 36,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 36,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 37,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 37,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 37,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 31
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 33
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 38,
+            "cz": 35
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 38,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 38,
+            "cz": 43
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 39,
+            "cz": 33
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 39,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 39,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 39,
+            "cz": 43
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 40,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 40,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 41,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 41,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 41,
+            "cz": 42
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 42,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 42,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 42,
+            "cz": 41
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 43,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 43,
+            "cz": 39
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 43,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 36
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 44,
+            "cz": 37
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 44,
+            "cz": 38
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 44,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 44,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 34
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 45,
+            "cz": 35
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 45,
+            "cz": 36
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 45,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 40
+        },
+        {
+            "brush": "dirt",
+            "cx": 45,
+            "cz": 41
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 33
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 46,
+            "cz": 34
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 46,
+            "cz": 35
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 46,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 46,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 47,
+            "cz": 33
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 47,
+            "cz": 34
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 47,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 47,
+            "cz": 40
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 48,
+            "cz": 31
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 48,
+            "cz": 32
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 48,
+            "cz": 33
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 48,
+            "cz": 34
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 36
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 37
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 38
+        },
+        {
+            "brush": "dirt",
+            "cx": 48,
+            "cz": 39
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 5
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 49,
+            "cz": 29
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 49,
+            "cz": 30
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 49,
+            "cz": 31
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 49,
+            "cz": 32
+        },
+        {
+            "brush": "dirt",
+            "cx": 49,
+            "cz": 35
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 50,
+            "cz": 7
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 50,
+            "cz": 28
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 50,
+            "cz": 29
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 50,
+            "cz": 30
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 51,
+            "cz": 8
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 51,
+            "cz": 27
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 51,
+            "cz": 28
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 51,
+            "cz": 29
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 52,
+            "cz": 12
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 52,
+            "cz": 27
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 52,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 10
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 53,
+            "cz": 12
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 53,
+            "cz": 26
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 53,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 11
+        },
+        {
+            "brush": "dirt",
+            "cx": 54,
+            "cz": 12
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 54,
+            "cz": 26
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 54,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 55,
+            "cz": 11
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 55,
+            "cz": 26
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 55,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 56,
+            "cz": 3
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 56,
+            "cz": 26
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 56,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 57,
+            "cz": 4
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 57,
+            "cz": 26
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 57,
+            "cz": 27
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 58,
+            "cz": 5
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 58,
+            "cz": 27
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 58,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 59,
+            "cz": 5
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 59,
+            "cz": 27
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 59,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 60,
+            "cz": 5
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 60,
+            "cz": 27
+        },
+        {
+            "brush": "base_or_patch_or_path_cooled_lava",
+            "cx": 60,
+            "cz": 28
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 61,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 62,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 63,
+            "cz": 4
+        }
+    ],
+    "objects": [
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 23.513999938964845,
+            "z": 22.572999954223634,
+            "yaw": 159.18899536132813
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 7.730000019073486,
+            "z": 25.12299919128418,
+            "yaw": 272.781005859375
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 48.21200180053711,
+            "z": 25.47800064086914,
+            "yaw": 338.5199890136719
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 45.180999755859378,
+            "z": 20.198999404907228,
+            "yaw": 89.9260025024414
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 55.18899917602539,
+            "z": 41.50600051879883,
+            "yaw": 282.3139953613281
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 21.236000061035158,
+            "z": 7.502999782562256,
+            "yaw": 37.93199920654297
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 12.647000312805176,
+            "z": 7.764999866485596,
+            "yaw": 107.10600280761719
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 28.684999465942384,
+            "z": 26.288000106811525,
+            "yaw": 98.86100006103516
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 18.138999938964845,
+            "z": 30.70400047302246,
+            "yaw": 116.80699920654297
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 31.902999877929689,
+            "z": 8.352999687194825,
+            "yaw": 175.65199279785157
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 25.086999893188478,
+            "z": 12.777000427246094,
+            "yaw": 336.42498779296877
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 58.77899932861328,
+            "z": 20.04800033569336,
+            "yaw": 104.18699645996094
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 17.867000579833986,
+            "z": 53.196998596191409,
+            "yaw": 232.35299682617188
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 31.729999542236329,
+            "z": 44.402000427246097,
+            "yaw": 326.2900085449219
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 56.527000427246097,
+            "z": 39.19900131225586,
+            "yaw": 321.9119873046875
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 11.175999641418457,
+            "z": 2.7920000553131105,
+            "yaw": 101.09200286865235
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 27.325000762939454,
+            "z": 18.141000747680665,
+            "yaw": 342.302001953125
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 12.687000274658204,
+            "z": 27.459999084472658,
+            "yaw": 70.64199829101563
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 6.434999942779541,
+            "z": 51.02399826049805,
+            "yaw": 312.39300537109377
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 4.8379998207092289,
+            "z": 2.7190001010894777,
+            "yaw": 138.8509979248047
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 35.58399963378906,
+            "z": 29.28700065612793,
+            "yaw": 53.672000885009769
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 44.69200134277344,
+            "z": 51.29199981689453,
+            "yaw": 292.3689880371094
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 56.28300094604492,
+            "z": 2.8499999046325685,
+            "yaw": 134.50100708007813
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 33.845001220703128,
+            "z": 20.72599983215332,
+            "yaw": 214.82200622558595
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 37.62300109863281,
+            "z": 15.946999549865723,
+            "yaw": 340.7919921875
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 53.01499938964844,
+            "z": 45.25400161743164,
+            "yaw": 359.65301513671877
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 10.076000213623047,
+            "z": 52.125999450683597,
+            "yaw": 10.45199966430664
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 17.905000686645509,
+            "z": 46.16400146484375,
+            "yaw": 351.781005859375
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 42.41400146484375,
+            "z": 30.26300048828125,
+            "yaw": 144.18600463867188
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 36.68199920654297,
+            "z": 38.7599983215332,
+            "yaw": 8.164999961853028
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 12.378000259399414,
+            "z": 31.81399917602539,
+            "yaw": 121.33000183105469
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 54.77299880981445,
+            "z": 15.45300006866455,
+            "yaw": 20.573999404907228
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 19.749000549316408,
+            "z": 11.932000160217286,
+            "yaw": 22.413999557495118
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 55.486000061035159,
+            "z": 19.051000595092775,
+            "yaw": 213.18800354003907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 5.7230000495910648,
+            "z": 34.41999816894531,
+            "yaw": 58.689998626708987
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 47.44900131225586,
+            "z": 22.875,
+            "yaw": 108.69000244140625
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 41.36199951171875,
+            "z": 23.27199935913086,
+            "yaw": 131.49400329589845
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 16.48200035095215,
+            "z": 29.163999557495118,
+            "yaw": 119.5530014038086
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 11.357999801635743,
+            "z": 39.29800033569336,
+            "yaw": 185.4340057373047
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 26.049999237060548,
+            "z": 45.9010009765625,
+            "yaw": 209.23699951171876
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 24.549999237060548,
+            "z": 3.125999927520752,
+            "yaw": 257.9630126953125
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 60.766998291015628,
+            "z": 38.263999938964847,
+            "yaw": 165.18800354003907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 59.04800033569336,
+            "z": 49.652000427246097,
+            "yaw": 267.8489990234375
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 45.749000549316409,
+            "z": 26.812999725341798,
+            "yaw": 168.75999450683595
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 8.876999855041504,
+            "z": 30.41900062561035,
+            "yaw": 197.0030059814453
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 54.731998443603519,
+            "z": 31.825000762939454,
+            "yaw": 303.5400085449219
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 56.130001068115237,
+            "z": 50.31700134277344,
+            "yaw": 107.16799926757813
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 46.16400146484375,
+            "z": 29.889999389648439,
+            "yaw": 46.81999969482422
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 49.659000396728519,
+            "z": 14.71399974822998,
+            "yaw": 47.902000427246097
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 48.92900085449219,
+            "z": 8.517000198364258,
+            "yaw": 303.7640075683594
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 6.919000148773193,
+            "z": 10.406000137329102,
+            "yaw": 119.96399688720703
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 39.683998107910159,
+            "z": 44.433998107910159,
+            "yaw": 100.78800201416016
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 28.113000869750978,
+            "z": 12.918000221252442,
+            "yaw": 192.44400024414063
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 25.972000122070314,
+            "z": 30.297000885009767,
+            "yaw": 167.41900634765626
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 20.55900001525879,
+            "z": 51.097999572753909,
+            "yaw": 233.04600524902345
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 8.439000129699707,
+            "z": 19.982999801635743,
+            "yaw": 4.144000053405762
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 49.959999084472659,
+            "z": 11.045999526977539,
+            "yaw": 321.49700927734377
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 5.747000217437744,
+            "z": 12.494000434875489,
+            "yaw": 30.479000091552736
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 40.33700180053711,
+            "z": 28.551000595092775,
+            "yaw": 93.15899658203125
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 26.7549991607666,
+            "z": 16.02400016784668,
+            "yaw": 35.19900131225586
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 2.500999927520752,
+            "z": 48.7400016784668,
+            "yaw": 114.75700378417969
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 53.606998443603519,
+            "z": 21.385000228881837,
+            "yaw": 145.11399841308595
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 35.01499938964844,
+            "z": 26.493999481201173,
+            "yaw": 345.32598876953127
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 45.459999084472659,
+            "z": 7.97599983215332,
+            "yaw": 293.5369873046875
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 46.79899978637695,
+            "z": 47.367000579833987,
+            "yaw": 135.75799560546876
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 4.550000190734863,
+            "z": 26.323999404907228,
+            "yaw": 250.44400024414063
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 37.49300003051758,
+            "z": 5.341000080108643,
+            "yaw": 341.5580139160156
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 15.932999610900879,
+            "z": 4.831999778747559,
+            "yaw": 149.44200134277345
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 29.202999114990236,
+            "z": 52.78099822998047,
+            "yaw": 154.57899475097657
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 32.040000915527347,
+            "z": 34.48400115966797,
+            "yaw": 143.23899841308595
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 7.892000198364258,
+            "z": 15.571000099182129,
+            "yaw": 336.6109924316406
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 38.89099884033203,
+            "z": 8.817999839782715,
+            "yaw": 224.86000061035157
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 48.88100051879883,
+            "z": 35.61000061035156,
+            "yaw": 160.20899963378907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 58.141998291015628,
+            "z": 34.11600112915039,
+            "yaw": 57.457000732421878
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 23.65399932861328,
+            "z": 40.11800003051758,
+            "yaw": 140.3470001220703
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 15.357000350952149,
+            "z": 37.96200180053711,
+            "yaw": 126.01499938964844
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 12.96399974822998,
+            "z": 34.84199905395508,
+            "yaw": 181.84500122070313
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 13.793999671936036,
+            "z": 21.94300079345703,
+            "yaw": 267.8810119628906
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 15.673999786376954,
+            "z": 12.354999542236329,
+            "yaw": 256.7850036621094
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 22.47599983215332,
+            "z": 31.71299934387207,
+            "yaw": 2.575000047683716
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock2",
+            "x": 49.555999755859378,
+            "z": 49.71900177001953,
+            "yaw": 249.91600036621095
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 3.822000026702881,
+            "z": 41.749000549316409,
+            "yaw": 282.8009948730469
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 38.10200119018555,
+            "z": 47.257999420166019,
+            "yaw": 106.73500061035156
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone3_LOD0",
+            "x": 59.750999450683597,
+            "z": 15.093999862670899,
+            "yaw": 169.66900634765626
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 4.749000072479248,
+            "z": 29.849000930786134,
+            "yaw": 142.35499572753907
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 29.98900032043457,
+            "z": 49.90700149536133,
+            "yaw": 37.069000244140628
+        }
+    ]
+}

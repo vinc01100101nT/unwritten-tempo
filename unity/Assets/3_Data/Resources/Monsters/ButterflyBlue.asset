@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: ButterflyBlue
   kind: 0
   size: 0
-  biome: 4
+  biome: 12
   sheet: ButterflyBlue
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 84
-  str: 54
-  agi: 45
-  vit: 53
-  intel: 33
-  dex: 45
-  luk: 31
+  level: 87
+  str: 57
+  agi: 46
+  vit: 55
+  intel: 34
+  dex: 46
+  luk: 32
   startingGear: []
   gearQuality: 2
   gearFolds: 13
   gearInkTier: 2
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 84
+  weaponMasteryLevel: 87
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 6
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantFrog2
   kind: 1
   size: 3
-  biome: 4
+  biome: 10
   sheet: GiantFrog2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 88
-  str: 56
-  agi: 35
-  vit: 64
-  intel: 35
-  dex: 48
-  luk: 33
+  level: 66
+  str: 42
+  agi: 26
+  vit: 47
+  intel: 26
+  dex: 36
+  luk: 24
   startingGear: []
-  gearQuality: 5
-  gearFolds: 26
-  gearInkTier: 5
+  gearQuality: 3
+  gearFolds: 19
+  gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 88
+  weaponMasteryLevel: 66
   hardDefPercent: 26
   hardMagicDefPercent: 16
   xpReward: 400
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 7
+  element: 1
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

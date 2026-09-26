@@ -13,17 +13,16 @@ MonoBehaviour:
   m_Name: skill.sword.deathblow
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.deathblow
-  displayName: Deathblow
-  symbol: Db
+  displayName: Last Petal
+  symbol: Lp
   weaponType: 1
   masteryLevel: 30
   needsSkillId: skill.sword.momentum
   published: 1
-  trademarkName: Todome
   description: 'Everything, in one swing.
 
     One massive blow for 600% Attack,
-    +40% per Momentum stack, and spends them all.'
+    +40% per Rising Breeze stack, and spends them all.'
   archetype: 0
   family: 0
   shape: 0

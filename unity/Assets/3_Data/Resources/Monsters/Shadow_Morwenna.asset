@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadow_Morwenna
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.morwenna
-  displayName: Morwenna
+  displayName: Black Lily
   kind: 2
   size: 1
   biome: 5

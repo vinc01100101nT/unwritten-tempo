@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Snake4
   kind: 0
   size: 0
-  biome: 4
+  biome: 2
   sheet: Snake4
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 99
-  str: 64
-  agi: 53
-  vit: 63
-  intel: 40
-  dex: 53
-  luk: 37
+  level: 57
+  str: 36
+  agi: 30
+  vit: 36
+  intel: 23
+  dex: 30
+  luk: 21
   startingGear: []
-  gearQuality: 2
-  gearFolds: 15
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 9
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 99
+  weaponMasteryLevel: 57
   hardDefPercent: 15
   hardMagicDefPercent: 0
   xpReward: 40
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 7
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

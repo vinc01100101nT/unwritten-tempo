@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Mole2
   kind: 0
   size: 1
-  biome: 4
+  biome: 1
   sheet: Mole2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 91
-  str: 58
-  agi: 49
-  vit: 58
-  intel: 36
-  dex: 49
-  luk: 34
+  level: 25
+  str: 17
+  agi: 14
+  vit: 17
+  intel: 10
+  dex: 14
+  luk: 10
   startingGear: []
-  gearQuality: 2
-  gearFolds: 14
-  gearInkTier: 2
+  gearQuality: 0
+  gearFolds: 4
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 91
+  weaponMasteryLevel: 25
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 7
+  element: 2
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

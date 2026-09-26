@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 9
+  element: 5
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

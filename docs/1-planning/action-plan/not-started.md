@@ -23,28 +23,13 @@ or a Salt (much more from elites, more again from shadows), a 30% chance of one 
 
 ---
 
-## Week 5 — The world opens
-
-**Goal:** you can walk from the first town to any map in the game. Today 23 of the 41 maps have no doorway at all — 7 towns, 4 fields, and 12 of the 14 dungeons — and nothing anywhere leads to them.
-
-- [ ] `MT-15` **`[A]` Connect the 23 maps that nothing leads to.** There are 36 doorways in the whole world, across 18 maps. — **4–5 days**
-  *Done when:* starting from the first town you can reach every one of the 41 maps on foot, without a game-master command.
-
-- [ ] `MT-16` **`[D]` Decide the shape of the world map.** Which town leads where, and whether dungeons hang off fields or off towns. *Recommendation: sketch it as a picture first — it is faster to redraw than to rewire.* — **0.5 days, do it before the task above**
-
----
-
 ## Week 6 — Dungeons have a destination
 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
 18 elites and 12 shadows are defined ([Mob Roster](../../3-world/mob-roster.md)). Where every creature lives is the
-world spawn list, one row per spawn area, which the server reads as it loads each map; today every elite has a row in
-the new world's fields and dungeon floors (not yet walked in play), and no shadow has one.
-
-- [ ] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
-  the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
-  *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
+world spawn list, one row per spawn area, which the server reads as it loads each map; today every one of the 18 elites
+has a row in the new world's fields and dungeon floors (not yet walked in play), and no shadow has one.
 
 - [ ] `MT-18` **`[A]` Put the fourteen shadows on their own places.** One row each, naming the shadow, once the
   shadows' place maps exist ([World Map](../../3-world/world-map.md)). — **2 days**

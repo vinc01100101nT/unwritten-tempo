@@ -517,7 +517,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
         // one place every way of firing (a press, one of the skill's own automatic triggers) passes
         // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
-        if (!def.IsPassive)
+        // A FORM OF A STYLE is called out differently: only when pressed, and in words the server chooses — the full
+        // style call or the plain form name, on timers (SkillShout) — so it is left entirely to the server, which says
+        // it to the caster's own machine too. Every other active skill is called exactly as before.
+        if (SkillForms.IsForm(def))
+        {
+            if (pressed) GameNetwork.AnnounceFormCall(Caster, def);
+        }
+        else if (!def.IsPassive)
         {
             if (Mine) ChatController.SkillCall(def.displayName);
             // AND TO EVERY MACHINE WATCHING THE CASTER, from the one that owns the world. A skill somebody else

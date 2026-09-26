@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: TenguBlue
   kind: 1
   size: 0
-  biome: 3
+  biome: 8
   sheet: TenguBlue
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 77
-  str: 50
-  agi: 30
-  vit: 56
-  intel: 29
-  dex: 42
-  luk: 29
+  level: 58
+  str: 37
+  agi: 23
+  vit: 42
+  intel: 22
+  dex: 31
+  luk: 22
   startingGear: []
-  gearQuality: 4
-  gearFolds: 23
-  gearInkTier: 4
+  gearQuality: 3
+  gearFolds: 17
+  gearInkTier: 3
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 77
+  weaponMasteryLevel: 58
   hardDefPercent: 32
   hardMagicDefPercent: 20
   xpReward: 800
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 3
+  element: 4
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

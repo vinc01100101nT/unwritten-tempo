@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadow_Radomir
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
   id: mob.shadow.radomir
-  displayName: Radomir
+  displayName: Stone Bloom
   kind: 2
   size: 1
   biome: 5

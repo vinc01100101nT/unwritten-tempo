@@ -1,17 +1,19 @@
 ---
-status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule, the eighteen sword names and the numbers below were agreed with the user on 2026-09-21."
+status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name."
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-26
 tags:
   - systems-combat-design
 ---
 
 # Weapon Names & Trademark Skills
 
-A forged weapon rolls a **name**, and that name **empowers one of its weapon's trademark skills**. The name is
-the piece's identity and never changes; the grade and the folds are its quality and ride alongside it.
+A forged weapon rolls one of its weapon's **trademark skills**, is **named after that skill**, and **empowers it**.
+Every skill is a numbered form of its weapon's style (see [Story & Setting](../../3-world/story-setting-canon.md)), so
+a sword that rolled Petal Storm is called Petal Storm. The name is the piece's identity and never changes; the grade
+and the folds are its quality and ride alongside it.
 
-**The format, decided 2026-09-21:** `+15 Hadori [C]` — folds, name, grade. Any weapon can be folded, quenched
+**The format:** `+15 Petal Storm [C]` — folds, name, grade. Any weapon can be folded, quenched
 and recycled exactly as now, whatever its name.
 
 This replaces the earlier idea of a name-per-grade, which could not work: a name tied to the grade would be
@@ -23,10 +25,10 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
 - **It never changes.** A quench moves the grade, a fold moves the number, a failed quench drops the grade —
   none of them touch the name. **This is the point:** you roll the weapon you want at Raw, and then spend the
   whole crafting ladder climbing that one weapon.
-- **It belongs to one weapon type.** *Hadori* is only ever a sword; *Greenheart* is only ever a bow. So the name
-  already says what the thing is, and the item's type does not need repeating in the title.
-- **It names a skill, not a person.** The canon reserves real names for the Fourteen — naming an Unwritten is the
-  mastery endgame. A weapon name is a smith's word for a blade that does one thing especially well.
+- **It belongs to one weapon type.** *Petal Storm* is a form of Blossom Wind, the sword's style, so it is only ever
+  a sword. The name already says what the thing is, and the item's type does not need repeating in the title.
+- **It names a form, not a person.** The canon reserves real names for the Fourteen — naming an Unwritten is the
+  mastery endgame. A weapon carries the one form of its style it does especially well.
 
 ## 2. What "empowers" means
 
@@ -36,7 +38,7 @@ per-skill lift hook that Skill Mastery uses — `Character.SkillOutputLift(skill
 one more term there.
 
 That covers every shape of skill without a special case, because "output" already means the right thing for
-each: a damage skill hits harder, a heal heals more, a shield absorbs more, and **Overclock's attack-speed buff
+each: a damage skill hits harder, a heal heals more, a shield absorbs more, and **Squall's attack-speed buff
 is bigger** — the user's own example.
 
 ### Main numbers only — decided 2026-09-21
@@ -49,17 +51,17 @@ same line.
 
 **Every effect of the skill that has a main number is lifted — never just one.** The lift is resolved once per
 cast and handed to every effect that cast applies (`SkillEffectApplier.ApplyBurst`), and each main-number effect
-reads it. Blade Dance carries a strike and a damage buff: mastery and a Ranbu raise both. Overclock carries a +30%
-Attack Speed buff and a take-double-damage self-debuff: mastery and a Hadori raise both, as the rule says.
+reads it. Thousand Petals carries a strike and a damage buff: mastery and a Thousand Petals sword raise both. Squall carries a +30%
+Attack Speed buff and a take-double-damage self-debuff: mastery and a Squall sword raise both, as the rule says.
 
 | The main number | Takes the lift? |
 | --- | --- |
 | A strike's damage, an execute's damage | **Yes** |
 | A heal's amount, a shield's pool | **Yes** |
-| A sub-stat buff or debuff's size (Overclock's attack speed) | **Yes** |
+| A sub-stat buff or debuff's size (Squall's attack speed) | **Yes** |
 | An outgoing-damage boost or cut | **Yes** |
 | An ailment's damage per tick (Poison, Bleed, Burn) | **Yes** |
-| Stacks added to another skill's pile (Flow, Last Stand, Encore) | **Yes** |
+| Stacks added to another skill's pile (Tailwind, Bare Branch, Second Bloom) | **Yes** |
 
 | Every other channel | Takes the lift? |
 | --- | --- |
@@ -69,12 +71,12 @@ Attack Speed buff and a take-double-damage self-debuff: mastery and a Hadori rai
 
 **An EMPTY channel changes nothing about this.** Clearing every stat out of *boosts DAMAGE* means "the ring does
 not scale this skill" — it does not mean "nothing scales it". An empty affinity list answers **×1**, and the
-mastery and trademark lifts are ADDED to that, so a Blade Dance with no stats on its damage channel still gets
-×1.30 from a maxed Skill Mastery and ×1.50 with an A-grade Ranbu beside it. The one thing to know is the
+mastery and trademark lifts are ADDED to that, so a Thousand Petals with no stats on its damage channel still gets
+×1.30 from a maxed Skill Mastery and ×1.50 with an A-grade Thousand Petals sword beside it. The one thing to know is the
 consequence: with the channel empty, mastery and the weapon become the *only* things that scale that skill, so
 it lands the same for every build.
 
-**So a Ranbu lifts Blade Dance's damage, not its number of hits.** That is deliberate, and worth keeping:
+**So a Thousand Petals sword lifts Thousand Petals' damage, not its number of hits.** That is deliberate, and worth keeping:
 
 - **A hit is worth far more than its damage.** Every extra strike carries its own crit roll, its own on-hit
   passive triggers and its own charge. A trademark that granted hits would be worth several times one that
@@ -118,7 +120,7 @@ variety:
 - **It maintains itself.** Author a new sword skill with real output and it *has* a trademark, the same day,
   with nobody remembering to add it. A chosen list is a second list to keep in sync with the pool — exactly the
   kind of parallel copy this project bans everywhere else.
-- **A weak trademark is not a dead one.** A weapon that lifts Composure's MP return is a poor prize for most
+- **A weak trademark is not a dead one.** A weapon that lifts Eye of the Storm's MP return is a poor prize for most
   players and the right one for a mana-hungry parry build. That is variety doing its job, and recycling means a
   roll nobody wants costs half of one forge.
 
@@ -133,38 +135,38 @@ Cleanse, ImmuneToDisables, ExtendDuration, or a Stun, Freeze or Silence — has 
 
 Read off the saved skill data on 2026-09-21, every effect decoded.
 
-| Trademark | Mastery | What the lift moves | Name | Why that word |
-| --- | --- | --- | --- | --- |
-| **Lunge** | 1 | its strike — and every auto-lunge Lock Blades fires, since those ARE Lunge | **Tsuki** | the thrust itself |
-| **Momentum** | 3 | its +3%-damage stack | **Hyōshi** | rhythm — the beat you build and keep |
-| **Guard Stance** | 5 | its 50% damage reduction | **Kamae** | *kamae* IS the stance |
-| **Lock Blades** | 7 | its +2 basic attack range per charge | **Tsubazeriai** | the kendo word for two blades locked together |
-| **Composure** | 11 | its 2/sec MP return | **Heijō** | from *heijōshin*, presence of mind |
-| **Offbeat** | 15 | its strike, and the 30% attack-speed cut it puts on them | **Kuzushi** | breaking their balance and rhythm |
-| **Flow** | 17 | the Momentum it adds per basic attack | **Nagare** | "flow" |
-| **Disarm** | 19 | its strike, and the 40% weakening of their next attack | **Kote** | the wrist strike that takes the weapon |
-| **Onslaught** | 23 | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier | **Renzoku** | "continuous", one attack into the next |
-| **Opening** | 25 | the +200% it puts on your next attack after a parry | **Suki** | the gap in their guard — the kendo word for an opening |
-| **Committed Strike** | 27 | its 200% Attack blow | **Ichigeki** | "a single blow", everything in it |
-| **Pressure** | 33 | how far every hit cuts their HP regen | **Seme** | pressure — the kendo word for pressing an opponent |
-| **Overclock** | 36 | its +30% Attack Speed, and its take-double-damage drawback | **Hadori** | the user's own example, kept |
-| **Last Stand** | 40 | the 5 Brace charges it arms at low HP | **Haisui** | from *haisui no jin*, the stand with your back to the water |
-| **Encore** | 65 | the 7 dance charges a kill adds | **Futatabi** | "once more" |
-| **Deathblow** | 30 | its 600% blow | **Todome** | **ULT** — the finishing blow |
-| **Retribution** | 45 | its damage | **Kaeshi** | **ULT** — the counter |
-| **Blade Dance** | 60 | its damage and its stack buff | **Ranbu** | **ULT** — "wild dance" |
+| Trademark — and the weapon's name | Mastery | What the lift moves |
+| --- | --- | --- |
+| **Piercing Gust** | 1 | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
+| **Rising Breeze** | 3 | its +3%-damage stack |
+| **Still Air** | 5 | its 50% damage reduction |
+| **Crossed Branches** | 7 | its +2 basic attack range per charge |
+| **Eye of the Storm** | 11 | its 2/sec MP return |
+| **Scattered Petals** | 15 | its strike, and the 30% attack-speed cut it puts on them |
+| **Tailwind** | 17 | the Rising Breeze it adds per basic attack |
+| **Stripped Bough** | 19 | its strike, and the 40% weakening of their next attack |
+| **Petal Storm** | 23 | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier |
+| **Parting Clouds** | 25 | the +200% it puts on your next attack after a parry |
+| **Single Petal** | 27 | its 200% Attack blow |
+| **Headwind** | 33 | how far every hit cuts their HP regen |
+| **Squall** | 36 | its +30% Attack Speed, and its take-double-damage drawback |
+| **Bare Branch** | 40 | the 5 Held Breath charges it arms at low HP |
+| **Second Bloom** | 65 | the 7 dance charges a kill adds |
+| **Last Petal** (ultimate) | 30 | its 600% blow |
+| **Returning Wind** (ultimate) | 45 | its damage |
+| **Thousand Petals** (ultimate) | 60 | its damage and its stack buff |
 
 ### The four that are not trademarks
 
 | Skill | What it carries |
 | --- | --- |
-| **Parry** | the parry itself — no main number |
-| **Brace** | the brace itself — no main number |
-| **Challenge** | a taunt — no main number |
-| **Unwavering** | disable immunity — no main number |
+| **Bending Reed** | the parry itself — no main number |
+| **Held Breath** | the brace itself — no main number |
+| **Howling Wind** | a taunt — no main number |
+| **Deep Roots** | disable immunity — no main number |
 
 That leaves a permanent asymmetry: a player built around parrying and bracing has fewer weapons to chase than
-a damage build. It is softened by **Opening and Composure, which are both parry-gated and both pass**, so the
+a damage build. It is softened by **Parting Clouds and Eye of the Storm, which are both parry-gated and both pass**, so the
 parry routine does have weapons of its own.
 
 ## 4. Forging: random, as asked
@@ -202,8 +204,8 @@ pure random defensible — and it only works because recycle exists, which is wh
 
 ## 6. How it is built
 
-- **The name lives on the skill** — a **trademark name** field in the Skill Composer, shown only on a skill that
-  can be a trademark (`SkillDef.trademarkName`). There is no separate table of names to keep in step with the skills.
+- **The name IS the skill's name** (`SkillDef.displayName`) — there is no separate weapon-name field and no table of
+  names to keep in step with the skills. Rename a skill and every weapon carrying it is renamed with it.
 - **Everything else is read from the skill as it is now** (`Trademarks`): whether it can be a trademark
   (`Trademarks.Qualifies` — it belongs to a weapon and `EffectScaling.HasMainNumber`), which of its effects the
   weapon raises (`EffectScaling.Boostable`, the same list mastery and the ring read), and what the weapon's card
@@ -218,11 +220,11 @@ pure random defensible — and it only works because recycle exists, which is wh
   `unwritten-character-v15`.
 - **In a fight** the lift is added to the per-cast practice lift (`Character.SkillOutputLift` = mastery + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads.
-- **The title** is `+15 Hadori [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
-- **The weapon's card** reads "Trademark Skill: Blade Dance" and one line per raised effect ("+20% damage",
+- **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
+- **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
   "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
   +20%" and "Skill mastery: +12%" (a passive: "Weapon mastery") on their own lines, each only when it is above zero.
-- **The skill-data check** fails when a published weapon skill with a main number has no trademark name.
+- **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`).
 
 ## 7. Armour
 

@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Cyclope2
   kind: 0
   size: 2
-  biome: 1
+  biome: 7
   sheet: Cyclope2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 31
-  str: 22
-  agi: 16
-  vit: 22
-  intel: 11
-  dex: 15
-  luk: 11
+  level: 41
+  str: 29
+  agi: 21
+  vit: 28
+  intel: 14
+  dex: 20
+  luk: 14
   startingGear: []
-  gearQuality: 0
-  gearFolds: 5
+  gearQuality: 1
+  gearFolds: 6
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 31
+  weaponMasteryLevel: 41
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20

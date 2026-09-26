@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.momentum
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.momentum
-  displayName: Momentum
-  symbol: Mo
+  displayName: Rising Breeze
+  symbol: Rb
   weaponType: 1
   masteryLevel: 3
   needsSkillId: 
   published: 1
-  trademarkName: "Hy\u014Dshi"
   description: 'Every hit adds up.
 
     Each basic attack that lands grants a stack:

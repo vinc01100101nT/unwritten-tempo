@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: TenguRed
   kind: 1
   size: 0
-  biome: 4
+  biome: 12
   sheet: TenguRed
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 99
-  str: 63
-  agi: 40
-  vit: 72
-  intel: 40
-  dex: 54
-  luk: 38
+  level: 92
+  str: 58
+  agi: 38
+  vit: 67
+  intel: 37
+  dex: 50
+  luk: 35
   startingGear: []
   gearQuality: 5
-  gearFolds: 30
+  gearFolds: 28
   gearInkTier: 5
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 99
+  weaponMasteryLevel: 92
   hardDefPercent: 32
   hardMagicDefPercent: 20
   xpReward: 800
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 7
+  element: 6
   elementLevel: 2
   attackElement: 0
   onHitAilment: 0

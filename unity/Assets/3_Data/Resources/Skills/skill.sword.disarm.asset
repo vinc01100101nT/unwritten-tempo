@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.disarm
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.disarm
-  displayName: Disarm
-  symbol: Ds
+  displayName: Stripped Bough
+  symbol: St
   weaponType: 1
   masteryLevel: 19
   needsSkillId: 
   published: 1
-  trademarkName: Kote
   description: 'Blunt their swing.
 
     A strike for 100% Attack; their next attack

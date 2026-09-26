@@ -20,9 +20,9 @@ grep -n "enum StateId" -A 60 unity/Assets/Scripts/UnitStates.cs             # pi
 
 **Every effect answers `side` outright: `Caster` or `Target`. There is no third option, deliberately.**
 
-There used to be an `Auto` meaning "this KIND's traditional side", and it shipped a broken skill: sub-stat changes were traditionally SELF, so an effect authored to "cut THEIR attack speed" and left on Auto cut **the player's own** attack speed — saved clean, passed the data checker, and looked right until someone read the "To the caster" heading in the composer (Offbeat, 2026-08-24). Auto was deleted the same day and all 46 authored sides were rewritten to what they already resolved to, so no skill changed behaviour.
+There used to be an `Auto` meaning "this KIND's traditional side", and it shipped a broken skill: sub-stat changes were traditionally SELF, so an effect authored to "cut THEIR attack speed" and left on Auto cut **the player's own** attack speed — saved clean, passed the data checker, and looked right until someone read the "To the caster" heading in the composer (Scattered Petals, 2026-08-24). Auto was deleted the same day and all 46 authored sides were rewritten to what they already resolved to, so no skill changed behaviour.
 
-**So the rule is now enforced by the data model rather than by discipline** — but the reading still matters, because **no checker can flag the wrong side**: every side is legal for every kind, and a self-inflicted debuff is a real design (Overclock deliberately doubles its own incoming damage). PROVE it per skill before you report anything:
+**So the rule is now enforced by the data model rather than by discipline** — but the reading still matters, because **no checker can flag the wrong side**: every side is legal for every kind, and a self-inflicted debuff is a real design (Squall deliberately doubles its own incoming damage). PROVE it per skill before you report anything:
 
 ```bash
 .claude/skills/compose-skill/audit-effect-sides.py sword

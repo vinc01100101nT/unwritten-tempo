@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Octopus
   kind: 0
   size: 1
-  biome: 1
+  biome: 10
   sheet: Octopus
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 40
-  str: 28
-  agi: 20
-  vit: 27
-  intel: 14
-  dex: 20
-  luk: 14
+  level: 63
+  str: 44
+  agi: 31
+  vit: 42
+  intel: 22
+  dex: 31
+  luk: 22
   startingGear: []
   gearQuality: 1
-  gearFolds: 6
+  gearFolds: 9
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 40
+  weaponMasteryLevel: 63
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5

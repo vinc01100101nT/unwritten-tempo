@@ -23,13 +23,14 @@ public static class GameSettings
     const string SfxVolumeKey          = "set_volume_sfx";
     const string MusicVolumeKey        = "set_volume_music";
     const string ScrollSensitivityKey  = "set_scroll_sensitivity";
+    const string HideOtherCallsKey     = "set_hide_other_skill_calls";
 
     public const float ScrollSensitivityMin = 0.25f;
     public const float ScrollSensitivityMax = 3f;
 
     static bool smoothCameraFollowValue;
     static bool smoothCameraFollowLoaded;
-    static bool? quickCastSingle, quickCastGround;
+    static bool? quickCastSingle, quickCastGround, hideOtherCalls;
     static float? master, sfx, music, scrollSensitivity;
 
     /// <summary>How far one scroll moves things, as a multiple of one mouse-wheel notch: every scrolling list in
@@ -90,6 +91,14 @@ public static class GameSettings
     {
         get => Flag(ref quickCastGround, QuickCastGroundKey);
         set => SetFlag(ref quickCastGround, QuickCastGroundKey, value);
+    }
+
+    /// <summary>Hide the skill calls other people make — the bubble over their head and the line in the log. Your own
+    /// calls always show. Off by default.</summary>
+    public static bool HideOtherPlayersSkillCalls
+    {
+        get => Flag(ref hideOtherCalls, HideOtherCallsKey);
+        set => SetFlag(ref hideOtherCalls, HideOtherCallsKey, value);
     }
 
     /// <summary>Overall loudness — scales EVERY sound the game makes (effects, music, ambience, rain).</summary>

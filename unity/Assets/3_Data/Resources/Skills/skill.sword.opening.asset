@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.opening
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.opening
-  displayName: Opening
-  symbol: Op
+  displayName: Parting Clouds
+  symbol: Pc
   weaponType: 1
   masteryLevel: 25
   needsSkillId: skill.sword.parry
   published: 1
-  trademarkName: Suki
   description: "Find the weakness.\nA parry has a 50% chance to charge your next
     attack with +200% damage, within 5s \u2014 spent whether it hits or misses."
   archetype: 1

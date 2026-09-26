@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: GiantFlam
   kind: 1
   size: 1
-  biome: 2
+  biome: 3
   sheet: GiantFlam
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 50
-  str: 32
-  agi: 19
-  vit: 37
-  intel: 19
-  dex: 26
-  luk: 19
+  level: 80
+  str: 51
+  agi: 31
+  vit: 59
+  intel: 31
+  dex: 43
+  luk: 31
   startingGear: []
-  gearQuality: 3
-  gearFolds: 14
-  gearInkTier: 3
+  gearQuality: 4
+  gearFolds: 24
+  gearInkTier: 4
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 50
+  weaponMasteryLevel: 80
   hardDefPercent: 26
   hardMagicDefPercent: 16
   xpReward: 400

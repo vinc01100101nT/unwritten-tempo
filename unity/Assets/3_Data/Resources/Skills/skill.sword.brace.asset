@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.brace
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.brace
-  displayName: Brace
-  symbol: Br
+  displayName: Held Breath
+  symbol: Hb
   weaponType: 1
   masteryLevel: 9
   needsSkillId: 
   published: 1
-  trademarkName: 
   description: 'Take it now, pay it later.
 
     Arms 5 charges for 4s. Each holds

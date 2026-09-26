@@ -13,17 +13,16 @@ MonoBehaviour:
   m_Name: skill.sword.lunge
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.lunge
-  displayName: Lunge
-  symbol: Lu
+  displayName: Piercing Gust
+  symbol: Pg
   weaponType: 1
   masteryLevel: 1
   needsSkillId: 
   published: 1
-  trademarkName: Tsuki
   description: 'Close the distance.
 
     Dashes to the target and strikes for 100%
-    Attack. With Lock Blades, casting it also arms 5 charges.'
+    Attack. With Crossed Branches, casting it also arms 5 charges.'
   archetype: 1
   family: 2
   shape: 4

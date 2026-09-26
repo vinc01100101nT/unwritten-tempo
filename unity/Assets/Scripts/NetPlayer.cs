@@ -37,6 +37,9 @@ public class NetPlayer : NetworkBehaviour
 
     [SyncVar] public string playerName = "";
 
+    /// <summary>SERVER ONLY: when this person last called out a form (see <see cref="SkillShout"/>).</summary>
+    public readonly SkillShout.Clock ShoutClock = new SkillShout.Clock();
+
     /// <summary>WHAT THIS PERSON IS WEARING, written by the server in the same words a creature's worn set travels in
     /// (<see cref="WornList"/>). A watching machine dresses the body it built for them out of it, so the weapon in
     /// their hand is the weapon the server has them holding.

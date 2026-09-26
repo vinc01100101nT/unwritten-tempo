@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.committed_strike
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.committed_strike
-  displayName: Committed Strike
-  symbol: Cs
+  displayName: Single Petal
+  symbol: Sp
   weaponType: 1
   masteryLevel: 27
   needsSkillId: 
   published: 1
-  trademarkName: Ichigeki
   description: 'Wind up and commit.
 
     A slow, telegraphed heavy blow for 200%

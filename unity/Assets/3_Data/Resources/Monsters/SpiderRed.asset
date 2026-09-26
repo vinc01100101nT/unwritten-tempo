@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: SpiderRed
   kind: 0
   size: 0
-  biome: 5
+  biome: 7
   sheet: SpiderRed
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 1
-  str: 7
-  agi: 5
-  vit: 7
-  intel: 3
-  dex: 5
-  luk: 3
+  level: 19
+  str: 15
+  agi: 11
+  vit: 15
+  intel: 7
+  dex: 11
+  luk: 7
   startingGear: []
   gearQuality: 0
-  gearFolds: 0
+  gearFolds: 3
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 1
+  weaponMasteryLevel: 19
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5

@@ -14,13 +14,13 @@ tags:
 > any edit, re-read the whole doc and confirm nothing elsewhere still states the old rule.
 
 > **Status (2026-08-24): built, authored against, and shipping.** The store, stacks/charges, the gate, compute-before-consume
-> and the no-self-feeding brake are all live code, and the sword pool (22 skills) is composed on top of them — Momentum,
-> Deathblow, Lock Blades, Parry, Brace, Retribution and the outgoing-damage charges are all states in the sense this doc
+> and the no-self-feeding brake are all live code, and the sword pool (22 skills) is composed on top of them — Rising Breeze,
+> Last Petal, Crossed Branches, Bending Reed, Held Breath, Returning Wind and the outgoing-damage charges are all states in the sense this doc
 > describes. Code-side record: [Implementation Notes](implementation-notes.md).
 
 ## Why this exists
 
-Skill **pairing** (skill A sets up a condition that skill B pays off — Lunge → Lock Blades, Momentum → Deathblow) does
+Skill **pairing** (skill A sets up a condition that skill B pays off — Piercing Gust → Crossed Branches, Rising Breeze → Last Petal) does
 **not** need a separate "mark" system. Every buff and debuff is *already* a state on a target, and self-buffs already draw
 icons on-screen. So marks are unified into the existing state system — no parallel mechanism — plus the few knobs pairing
 and stacking require. Companion to **Active Skill System — V3**; combos are composable per skill, never hardcoded per weapon.
@@ -58,8 +58,8 @@ new one in the middle would silently repoint saved skills at a different pile. N
 
 A pile holds a **list of stacks**. Each stack carries **its own magnitude and its own duration**.
 
-- **A stack** = one application. Momentum adds one per basic attack, each dying on its own timer.
-- **A charge** = several stacks granted at once, sharing one window. "Lunge grants 3 charges of Lock Blades" IS three stacks
+- **A stack** = one application. Rising Breeze adds one per basic attack, each dying on its own timer.
+- **A charge** = several stacks granted at once, sharing one window. "Piercing Gust grants 3 charges of Crossed Branches" IS three stacks
   applied together.
 
 There is no separate charge system — a charge is a stack. Building two would be two doors to one room.
@@ -80,7 +80,7 @@ skill that granted it said — never what a later, different grant says.
 - **Overflow** — past the stack limit, the **oldest** stack drops.
 - **Consumption** — takes the **oldest first**, so a stack about to expire is spent before a fresh one.
 - **Stacking is opt-in per effect.** Off = one instance, newest-wins.
-- A **safety ceiling** exists even for piles the design calls "uncapped" (Momentum). Design never reaches it; it removes the
+- A **safety ceiling** exists even for piles the design calls "uncapped" (Rising Breeze). Design never reaches it; it removes the
   unbounded-growth risk.
 
 ### Stacks the caster never authored — earned from attack speed
@@ -110,7 +110,7 @@ landed.
 **Every computation reads the live store. Never a snapshot, never a copy.** A snapshot would be a second place the value
 lives, which is what single-source-of-truth forbids.
 
-The order is: **check the requirement → run the effects (reading the store live) → consume.** Deathblow sees all 10 Momentum
+The order is: **check the requirement → run the effects (reading the store live) → consume.** Last Petal sees all 10 Rising Breeze
 stacks while computing its damage, and they are spent the instant that computation finishes. Consumption happens **once per
 use**, at the moment the skill's effects actually land — not when the cast begins. Consumption has no inverse, deliberately:
 do not add one.
@@ -122,7 +122,7 @@ do not add one.
 Every effect carries the set of passives that led to it; a passive already in that set is skipped, while any other passive
 runs normally.
 
-- **Lock Blades** → its auto-lunge hits carry "Lock Blades" → those hits can't fire Lock Blades again. Loop closed.
+- **Crossed Branches** → its auto-lunge hits carry "Crossed Branches" → those hits can't fire Crossed Branches again. Loop closed.
 - **Passive A kills → passive B reacts** → legal, B was never in the chain.
 - **A → B → A** is also blocked. The rule is "not already in the history", not merely "not the immediate parent" — otherwise
   two passives could still feed each other in a ring.
@@ -140,8 +140,8 @@ to prevent.
 **Only damage dealt by the passive's own effects.** A passive that merely buffs, extends or grants something does **not**
 stamp itself onto damage that an *active* deals.
 
-This is what keeps **Encore** working: Encore extends Blade Dance, but Blade Dance's storm is still the active's damage, so
-each kill can fire Encore again. If Encore dealt damage itself, that damage would carry Encore's name and couldn't re-fire it.
+This is what keeps **Second Bloom** working: Second Bloom extends Thousand Petals, but Thousand Petals' storm is still the active's damage, so
+each kill can fire Second Bloom again. If Second Bloom dealt damage itself, that damage would carry Second Bloom's name and couldn't re-fire it.
 
 ### Why this, and not charges
 
@@ -164,15 +164,15 @@ at any depth. It **replaces** the older partial guard, which only caught immedia
 
 The gate lives on the **trigger entry**, not per-effect and not once per skill: a skill has multiple triggers, and firing
 through one trigger may read a state while another doesn't. When the requirement isn't met the whole skill simply does not
-run — **no VFX, no cast, no cost paid**. This matters for Lock Blades, which must show no auto-lunge at all when out of
+run — **no VFX, no cast, no cost paid**. This matters for Crossed Branches, which must show no auto-lunge at all when out of
 charges.
 
-- **Whose stacks** — the id of the skill that grants them (Deathblow reads Momentum's), or the run of hits.
+- **Whose stacks** — the id of the skill that grants them (Last Petal reads Rising Breeze's), or the run of hits.
 - **Which pile** — a skill can grant more than one stacking state, so the gate must name which. ⚠️ **A gate that reads a
   skill's stacks without naming the pile is an authoring error and is reported as one** — it would otherwise silently point
   at the first pile in the list and count nothing.
 - **Minimum stacks** — "only fire at ≥3". 1 = just needs the state at all.
-- **Consume** — spend ALL on use (Deathblow cashing Momentum), or a fixed count, or nothing at all for a pure condition.
+- **Consume** — spend ALL on use (Last Petal cashing Rising Breeze), or a fixed count, or nothing at all for a pure condition.
 
 ### Deferred — Owner (Private / Shared)
 
@@ -194,13 +194,13 @@ show their count.
 
 ## First consumers — all composed
 
-- **Momentum → Deathblow** (stacks): basic attacks add one stack each with their own timers and FIFO expiry, each a fixed
-  attack bonus; Deathblow reads the live total, then consumes all. Exercises independent per-stack timers, sum-of-stacks, and
+- **Rising Breeze → Last Petal** (stacks): basic attacks add one stack each with their own timers and FIFO expiry, each a fixed
+  attack bonus; Last Petal reads the live total, then consumes all. Exercises independent per-stack timers, sum-of-stacks, and
   consume-all after compute.
-- **Lunge → Lock Blades** (charges): casting Lunge grants charges; each basic attack you start triggers an auto-lunge and spends one.
+- **Piercing Gust → Crossed Branches** (charges): casting Piercing Gust grants charges; each basic attack you start triggers an auto-lunge and spends one.
   Exercises stacks-granted-at-once, the trigger gate, consume-per-use, and the no-self-feeding brake.
-- **Parry, Brace and Retribution** exercise the charge piles and the two-state debt rule; **Blade Dance** exercises
-  attack-speed-earned stacks; **Encore** exercises duration extension without stamping itself on the damage.
+- **Bending Reed, Held Breath and Returning Wind** exercise the charge piles and the two-state debt rule; **Thousand Petals** exercises
+  attack-speed-earned stacks; **Second Bloom** exercises duration extension without stamping itself on the damage.
 
 ---
 

@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: TRex
   kind: 0
   size: 3
-  biome: 5
+  biome: 9
   sheet: TRex
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 7
-  str: 10
-  agi: 7
-  vit: 9
-  intel: 4
-  dex: 6
-  luk: 4
+  level: 48
+  str: 36
+  agi: 25
+  vit: 33
+  intel: 14
+  dex: 22
+  luk: 14
   startingGear: []
-  gearQuality: 0
-  gearFolds: 1
+  gearQuality: 1
+  gearFolds: 7
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 7
+  weaponMasteryLevel: 48
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5

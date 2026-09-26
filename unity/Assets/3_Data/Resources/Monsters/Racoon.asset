@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Racoon
   kind: 0
   size: 2
-  biome: 1
+  biome: 6
   sheet: Racoon
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 42
-  str: 29
-  agi: 21
-  vit: 29
-  intel: 15
-  dex: 21
-  luk: 14
+  level: 14
+  str: 12
+  agi: 10
+  vit: 12
+  intel: 6
+  dex: 9
+  luk: 6
   startingGear: []
-  gearQuality: 1
-  gearFolds: 6
+  gearQuality: 0
+  gearFolds: 2
   gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 42
+  weaponMasteryLevel: 14
   hardDefPercent: 5
   hardMagicDefPercent: 0
   xpReward: 10
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 4
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

@@ -13,13 +13,12 @@ MonoBehaviour:
   m_Name: skill.sword.composure
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.composure
-  displayName: Composure
-  symbol: Cp
+  displayName: Eye of the Storm
+  symbol: Es
   weaponType: 1
   masteryLevel: 11
   needsSkillId: skill.sword.parry
   published: 1
-  trademarkName: "Heij\u014D"
   description: 'A read pays for the next one.
 
     After a parry, MP returns at 2

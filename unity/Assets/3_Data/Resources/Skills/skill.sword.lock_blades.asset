@@ -13,16 +13,15 @@ MonoBehaviour:
   m_Name: skill.sword.lock_blades
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.lock_blades
-  displayName: Lock Blades
-  symbol: Lb
+  displayName: Crossed Branches
+  symbol: Cb
   weaponType: 1
   masteryLevel: 7
   needsSkillId: skill.sword.lunge
   published: 1
-  trademarkName: Tsubazeriai
   description: 'No escape.
 
-    Casting Lunge arms 5 charges, each +2 basic attack
+    Casting Piercing Gust arms 5 charges, each +2 basic attack
     range for 5s. Every basic attack you start spends one to lunge at the target
     again.'
   archetype: 0

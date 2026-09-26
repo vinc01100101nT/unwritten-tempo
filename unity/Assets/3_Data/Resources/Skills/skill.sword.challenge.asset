@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: skill.sword.challenge
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.challenge
-  displayName: Challenge
-  symbol: Ch
+  displayName: Howling Wind
+  symbol: Hw
   weaponType: 1
   masteryLevel: 13
   needsSkillId: 

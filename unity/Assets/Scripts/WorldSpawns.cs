@@ -18,7 +18,7 @@ public class WorldSpawns : ScriptableObject
     [System.Serializable]
     public class Row
     {
-        [Tooltip("The map's scene name, e.g. 'lv_1_3'.")]
+        [Tooltip("The map's scene name, e.g. 'lst_fild01'.")]
         public string map = "";
         [Tooltip("A creature's id or name, e.g. 'mob.shadow.tsubame' — always that creature, and how an elite or a " +
                  "shadow is placed. Empty = a weighted mix of the Biome's normals inside the level range below.")]

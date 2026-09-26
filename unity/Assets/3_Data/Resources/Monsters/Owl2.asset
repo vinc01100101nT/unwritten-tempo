@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Owl2
   kind: 0
   size: 1
-  biome: 4
+  biome: 9
   sheet: Owl2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 94
-  str: 60
-  agi: 51
-  vit: 60
-  intel: 37
-  dex: 51
-  luk: 35
+  level: 45
+  str: 28
+  agi: 24
+  vit: 28
+  intel: 18
+  dex: 24
+  luk: 17
   startingGear: []
-  gearQuality: 2
-  gearFolds: 14
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 7
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 94
+  weaponMasteryLevel: 45
   hardDefPercent: 0
   hardMagicDefPercent: 0
   xpReward: 5
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 9
+  element: 4
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

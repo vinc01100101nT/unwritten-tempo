@@ -214,6 +214,6 @@ This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — where these formulas came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the percentage curve mobs share with the player.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the sub-stat piles the table above is read through.
-- [Biome Mob Families — Spawning by Biome and Level](../../3-world/biome-mob-families.md) — the creatures this model was reset onto.
+- [Creatures and Where They Live](../../3-world/biome-mob-families.md) — the creatures this model was reset onto.
 - [Crafting & Recycling](../crafting-and-recycling.md) — the materials a mob drops that it isn't wearing.
 - [Networking — Implementation Notes](../networking/implementation-notes.md) — the per-connection fighter the server builds from this block.

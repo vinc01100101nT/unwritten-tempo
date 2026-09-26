@@ -13,16 +13,15 @@ MonoBehaviour:
   m_Name: skill.sword.retribution
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.retribution
-  displayName: Retribution
-  symbol: Rt
+  displayName: Returning Wind
+  symbol: Rw
   weaponType: 1
   masteryLevel: 45
   needsSkillId: skill.sword.brace
   published: 1
-  trademarkName: Kaeshi
   description: 'Answer all of it at once.
 
-    Cashes the damage Brace banked: five
+    Cashes the damage Held Breath banked: five
     strikes, each landing 100% Attack plus 250% of the banked total, and the debt
     is erased. With an empty bank it still casts, landing five plain attacks.'
   archetype: 0

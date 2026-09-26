@@ -328,7 +328,7 @@ public class InventoryList
         return string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase);
     }
 
-    // What a row is called: a copy by its full title ("+15 Ranbu [C]", "B +12 Sword"), anything else by its item
+    // What a row is called: a copy by its full title ("+15 Thousand Petals [C]", "B +12 Sword"), anything else by its item
     // name. The one name the list shows, sorts by and searches.
     static string NameOf(BagEntry e)
     {

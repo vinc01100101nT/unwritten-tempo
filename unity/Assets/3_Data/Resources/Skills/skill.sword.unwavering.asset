@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: skill.sword.unwavering
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.unwavering
-  displayName: Unwavering
-  symbol: Un
+  displayName: Deep Roots
+  symbol: Dr
   weaponType: 1
   masteryLevel: 21
   needsSkillId: skill.sword.guard_stance
   published: 1
-  description: "Stand your ground.\nAfter casting Guard Stance, nothing stops you
+  description: "Stand your ground.\nAfter casting Still Air, nothing stops you
     for 6s \u2014 no flinch, stun, freeze, silence, knockback or pull."
   archetype: 2
   family: 0

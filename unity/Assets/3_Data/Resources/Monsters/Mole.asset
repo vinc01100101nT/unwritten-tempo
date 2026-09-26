@@ -16,24 +16,24 @@ MonoBehaviour:
   displayName: Mole
   kind: 0
   size: 1
-  biome: 3
+  biome: 7
   sheet: Mole
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 73
-  str: 48
-  agi: 38
-  vit: 47
-  intel: 27
-  dex: 38
-  luk: 27
+  level: 36
+  str: 24
+  agi: 19
+  vit: 24
+  intel: 13
+  dex: 19
+  luk: 13
   startingGear: []
-  gearQuality: 2
-  gearFolds: 11
-  gearInkTier: 2
+  gearQuality: 0
+  gearFolds: 5
+  gearInkTier: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 73
+  weaponMasteryLevel: 36
   hardDefPercent: 10
   hardMagicDefPercent: 0
   xpReward: 20
@@ -46,7 +46,7 @@ MonoBehaviour:
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 0
   elementLevel: 1
   attackElement: 0
   onHitAilment: 0

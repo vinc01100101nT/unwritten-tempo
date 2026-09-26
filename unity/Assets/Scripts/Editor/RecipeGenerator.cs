@@ -139,7 +139,7 @@ public static class RecipeGenerator
 
         Vector3 center = Vector3.zero;
         // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
-        // With warp exits (World Creator), roads run hub→each doorway so pads sit on roads; else random routes.
+        // With warp exits (World Creator), roads link the doorways to each other so pads sit on roads; else random routes.
         bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
         var paths = toExits
             ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)

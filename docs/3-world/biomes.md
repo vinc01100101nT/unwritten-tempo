@@ -201,5 +201,5 @@ but cannot turn green into yellow or red, and all 19 plants share one image, so 
   test map.
 - [The World Map — Twelve Homelands](world-map.md) — the fourteen biomes, the element each favours, and which
   homeland map uses which biome.
-- [Biome Mob Families](biome-mob-families.md) — how a spawn area picks its creatures by biome and level.
+- [Creatures and Where They Live](biome-mob-families.md) — which creatures live in each map, and each creature's biome, element and level.
 - [World Creator — Spec](world-creator-spec.md) — the tool that builds a world of linked maps.
