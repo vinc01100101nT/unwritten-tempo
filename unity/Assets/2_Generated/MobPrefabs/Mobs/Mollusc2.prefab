@@ -41,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.11713433, y: 0.11713433, z: 0.11713433}
+  m_LocalScale: {x: 0.07808955, y: 0.07808955, z: 0.07808955}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -140,7 +140,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.105420895
+  m_StepOffset: 0.0702806
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -230,7 +230,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
-  size: 0
+  size: 0.2
   simulateRadius: 28
 --- !u!114 &4448203674937519325
 MonoBehaviour:
@@ -245,8 +245,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
-  gearQuality: 1
-  gearFolds: 6
+  gearQuality: 0
+  gearFolds: 1
   gearInkTier: 1
 --- !u!114 &3527616483643923064
 MonoBehaviour:
@@ -261,13 +261,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 39
-    str: 27
-    agi: 20
-    vit: 27
-    intel: 13
-    dex: 20
-    luk: 13
+    level: 10
+    str: 10
+    agi: 9
+    vit: 10
+    intel: 5
+    dex: 8
+    luk: 5
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -282,7 +282,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 39
+  weaponMasteryLevel: 10
 --- !u!114 &3987870978170719171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,5 +404,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.04905
-  halfWidth: 0.058567166
+  halfHeight: 0.0327
+  halfWidth: 0.039044775

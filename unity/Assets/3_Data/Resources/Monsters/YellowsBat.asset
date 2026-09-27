@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.yellowsbat
   displayName: YellowsBat
   kind: 0
-  size: 0
+  size: 0.25
   biome: 7
   sheet: YellowsBat
   weight: 4

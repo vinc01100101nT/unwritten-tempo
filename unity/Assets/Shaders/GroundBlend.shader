@@ -28,6 +28,10 @@ Shader "Unwritten/GroundBlend"
         _StoneTiling ("Stone Tiling (tiles/world-unit)", Float) = 0.4
         _RockTiling  ("Rock Tiling (tiles/world-unit)",  Float) = 0.4
         _Color       ("Tint", Color) = (1,1,1,1)
+        // Cliff faces only (keyword _CLIFF_ROCK, set on a map's cliff material): rock projected from all three axes,
+        // faded in by uv1.x. Every other ground material leaves the keyword off and draws exactly as before.
+        _CliffRockMap    ("Cliff Rock Map (uv1.x)", 2D) = "white" {}
+        _CliffRockTiling ("Cliff Rock Tiling (tiles/world-unit)", Float) = 0.4
     }
 
     SubShader
@@ -58,6 +62,7 @@ Shader "Unwritten/GroundBlend"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fog
+            #pragma shader_feature_local _CLIFF_ROCK
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Lib/AdditionalLights.hlsl"
@@ -67,11 +72,12 @@ Shader "Unwritten/GroundBlend"
             TEXTURE2D(_PathMap);
             TEXTURE2D(_StoneMap);
             TEXTURE2D(_RockMap);
+            TEXTURE2D(_CliffRockMap);
             // Inline sampler: FORCE trilinear + repeat regardless of how the texture was imported. The Pxltgr
             // ground textures come in sprite-style (Clamp wrap), which with our continuous world-space UVs smears
             // the texture and leaves a bright "cross" at the UV origin (world 0,0) — this sidesteps that entirely.
             SAMPLER(sampler_trilinear_repeat);
-            float _GrassTiling, _DirtTiling, _PathTiling, _StoneTiling, _RockTiling;
+            float _GrassTiling, _DirtTiling, _PathTiling, _StoneTiling, _RockTiling, _CliffRockTiling;
             float4 _Color;
 
             struct Attributes
@@ -79,6 +85,9 @@ Shader "Unwritten/GroundBlend"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float4 color      : COLOR;     // .a = dirt mask; .r = road; .g = stone; .b = rock (all 0..1 weights)
+            #if defined(_CLIFF_ROCK)
+                float2 uv1        : TEXCOORD1; // .x = cliff rock weight
+            #endif
             };
             struct Varyings
             {
@@ -88,6 +97,9 @@ Shader "Unwritten/GroundBlend"
                 float  blend      : TEXCOORD2; // interpolated vertex-alpha → the soft grass↔dirt gradient
                 float3 pathW      : TEXCOORD3; // interpolated vertex .rgb  → road / stone / rock weights
                 float  fogCoord   : TEXCOORD4;
+            #if defined(_CLIFF_ROCK)
+                float  cliffW     : TEXCOORD5;
+            #endif
             };
 
             Varyings vert (Attributes IN)
@@ -98,6 +110,9 @@ Shader "Unwritten/GroundBlend"
                 OUT.positionWS = p.positionWS;
                 OUT.normalWS   = TransformObjectToWorldNormal(IN.normalOS);
                 OUT.blend      = IN.color.a;
+            #if defined(_CLIFF_ROCK)
+                OUT.cliffW     = IN.uv1.x;
+            #endif
                 OUT.pathW      = IN.color.rgb;   // .x road, .y stone, .z rock
                 OUT.fogCoord   = ComputeFogFactor(p.positionCS.z);
                 return OUT;
@@ -115,6 +130,16 @@ Shader "Unwritten/GroundBlend"
                 half3 albedo = lerp(gd, path,  saturate(IN.pathW.x));           // road feathered on top
                 albedo       = lerp(albedo, stone, saturate(IN.pathW.y));       // then stone
                 albedo       = lerp(albedo, rock,  saturate(IN.pathW.z));       // then rock
+            #if defined(_CLIFF_ROCK)
+                // A cliff face is steep, so world-XZ alone would smear the rock down it in streaks: project the rock
+                // from all three axes and weight each by how squarely the surface faces it.
+                float3 tw = pow(abs(normalize(IN.normalWS)), 4.0);
+                tw /= (tw.x + tw.y + tw.z);
+                half3 rockX = SAMPLE_TEXTURE2D(_CliffRockMap, sampler_trilinear_repeat, IN.positionWS.zy * _CliffRockTiling).rgb;
+                half3 rockY = SAMPLE_TEXTURE2D(_CliffRockMap, sampler_trilinear_repeat, IN.positionWS.xz * _CliffRockTiling).rgb;
+                half3 rockZ = SAMPLE_TEXTURE2D(_CliffRockMap, sampler_trilinear_repeat, IN.positionWS.xy * _CliffRockTiling).rgb;
+                albedo       = lerp(albedo, rockX * tw.x + rockY * tw.y + rockZ * tw.z, saturate(IN.cliffW));
+            #endif
                 albedo      *= _Color.rgb;
 
                 // Cheap Lambert + ambient SH + main-light shadow (ground is large; keep it light).

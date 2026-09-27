@@ -139,6 +139,16 @@ public static class GmCommands
         catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{tokens[0]} failed: {e.Message}</color>"); }
     }
 
+    /// <summary>May somebody who is not a GM run this command? Asked by the server when a request arrives, because the
+    /// server turns away every other request from a non-GM.</summary>
+    public static bool AnyoneMayRun(string line)
+    {
+        EnsureBootstrap();
+        if (!IsCommand(line)) return false;
+        var tokens = Tokenize(line);
+        return tokens.Length > 0 && byName.TryGetValue(tokens[0], out var cmd) && cmd.anyoneMayRun;
+    }
+
     /// <summary>Does this command belong to the machine that owns the world? Asked by the server when a request
     /// arrives, so that a request for anything else is refused rather than quietly run on the wrong machine.</summary>
     public static bool ChangesTheWorld(string line)
@@ -209,6 +219,18 @@ public static class GmCommands
                                anyoneMayRun: false, changesTheWorld: true));
         Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level] [skill id]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Give a skill id to make it every summoned creature's extra skill, for every life, instead of a random one — any skill, published or not.", CmdSummon,
                                anyoneMayRun: false, changesTheWorld: true));
+        // ANY PLAYER MAY ASK THESE, and the SERVER answers both: a creature's numbers are worked out on the machine that
+        // owns the world, never on a player's, so these ride the server's door although they change nothing.
+        Register(new GmCommand("whereis", "whereis <creature>", "List every map a creature lives in, and how many of it "
+                               + "each keeps alive.", CmdWhereIs, anyoneMayRun: true, changesTheWorld: true));
+        Register(new GmCommand("mobinfo", "mobinfo <creature>", "Show a creature's level, size, element, combat numbers, "
+                               + "stats, experience, gold and drops, as it spawns.", CmdMobInfo,
+                               anyoneMayRun: true, changesTheWorld: true));
+        Register(new GmCommand("whodrops", "whodrops <item>", "List every creature that drops an item, and at what "
+                               + "chance.", CmdWhoDrops, anyoneMayRun: true, changesTheWorld: true));
+        Register(new GmCommand("iteminfo", "iteminfo <item>", "Show what an item is — its type, weight, sell value, "
+                               + "what it does when used — and every creature that drops it.", CmdItemInfo,
+                               anyoneMayRun: true, changesTheWorld: true));
         Register(new GmCommand("where", "where", "Print the map you are in and your position in that map's own coordinates — the numbers a spawn area's Center takes in the world spawn list.", CmdWhere, false, false, "pos"));
 
         // --- World & weather ---
@@ -335,13 +357,7 @@ public static class GmCommands
 
         if (c.Ch == null) { c.Reply("No character."); return; }
 
-        Item found = null;
-        foreach (var it in Resources.LoadAll<Item>("Items"))
-        {
-            if (it == null) continue;
-            if (string.Equals(it.id, key, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(it.displayName, key, StringComparison.OrdinalIgnoreCase)) { found = it; break; }
-        }
+        var found = FindItem(key);
         if (found == null) { c.Reply($"No item '{key}'."); return; }
 
         GiveTo(c.Ch, found, count);
@@ -632,8 +648,8 @@ public static class GmCommands
         }
 
         // Optional trailing modifiers, order-free because each is told apart by its shape:
-        //   a LEVEL    — re-stats the summoned creature at that level (see the re-stat block below), up to 160, the
-        //                highest shadow;
+        //   a LEVEL    — re-stats the summoned creature at that level (see the re-stat block below), up to the
+        //                highest level any creature has (the top shadow);
         //   a SKILL ID — any id in the skill catalog, made the creature's extra skill for every life it lives.
         // A shadow is a 3D character because it is a shadow — MobSpawner decides that from its kind.
         int level = 0;
@@ -641,7 +657,7 @@ public static class GmCommands
         for (int i = 2; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
-            if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, 160); continue; }
+            if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, MonsterCatalog.HighestLevel); continue; }
             if (SkillCatalog.IsKnown(a)) { extraSkillId = a; continue; }
             c.Reply(a.StartsWith("skill.") ? $"No skill with the id '{a}'. {usage}" : usage); return;
         }
@@ -706,6 +722,138 @@ public static class GmCommands
 
     // WHERE YOU ARE, in the numbers the world spawn list is written in: the map's OWN coordinates, which stay the same
     // wherever a server happens to set that map down. Reads the asker's own machine — nothing changes.
+    static readonly List<(string map, int count)> homesScratch = new List<(string map, int count)>();
+
+    static void CmdWhereIs(GmContext c)
+    {
+        string typed = c.Rest(0);
+        if (string.IsNullOrWhiteSpace(typed)) { c.Reply("Usage: /whereis <creature>"); return; }
+        var def = MonsterCatalog.Get(typed);
+        if (def == null) { c.Reply($"No creature called '{typed}'."); return; }
+
+        WorldSpawns.HomesOf(def, homesScratch);
+        if (homesScratch.Count == 0) { c.Reply($"{def.displayName} lives in no map."); return; }
+        var sb = new StringBuilder(def.displayName).Append(" — ");
+        for (int i = 0; i < homesScratch.Count; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append(homesScratch[i].map).Append(" (×").Append(homesScratch[i].count).Append(')');
+        }
+        c.Reply(sb.ToString());
+    }
+
+    static void CmdMobInfo(GmContext c)
+    {
+        string typed = c.Rest(0);
+        if (string.IsNullOrWhiteSpace(typed)) { c.Reply("Usage: /mobinfo <creature>"); return; }
+        var d = MonsterCatalog.Get(typed);
+        if (d == null) { c.Reply($"No creature called '{typed}'."); return; }
+
+        float size = MobSizes.Of(d.kind, d.size);
+        c.Reply($"<color=#C8A862>{d.displayName}</color> ({d.id}) — {d.kind}, Lv {d.level}");
+        c.Reply($"Size {size:0.##} ({MobSizes.GroupOf(size)}) · Element {d.element} {d.elementLevel} · Biome {d.biome}");
+        c.Reply($"HP {MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP)} · ATK {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk)}"
+                + $" · DEF {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}");
+        c.Reply($"STR {d.str} · AGI {d.agi} · VIT {d.vit} · INT {d.intel} · DEX {d.dex} · LUK {d.luk}");
+        c.Reply($"XP {d.xpReward} · Gold {d.goldMin}–{d.goldMax}");
+
+        // WHAT IT DROPS, read from the same tables the death roll reads, in the one wording the wiki prints too.
+        c.Reply("Drops: " + CreatureDrops.Line(d));
+    }
+
+    static readonly List<CreatureDrops.Source> sourcesScratch = new List<CreatureDrops.Source>();
+
+    /// <summary>The item a player typed: its id, or its name as shown, either case.</summary>
+    static Item FindItem(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        foreach (var it in ItemCatalog.All)
+        {
+            if (it == null) continue;
+            if (string.Equals(it.id, key, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(it.displayName, key, StringComparison.OrdinalIgnoreCase)) return it;
+        }
+        return null;
+    }
+
+    static void CmdWhoDrops(GmContext c)
+    {
+        string typed = c.Rest(0);
+        if (string.IsNullOrWhiteSpace(typed)) { c.Reply("Usage: /whodrops <item>"); return; }
+        var item = FindItem(typed);
+        if (item == null) { c.Reply($"No item called '{typed}'."); return; }
+        ReplyWhoDrops(c, item);
+    }
+
+    // The most creatures named on one line of /whodrops before the rest are counted instead of named.
+    const int MostNamesOnALine = 8;
+
+    /// <summary>Every creature that drops <paramref name="item"/>, grouped by the chance and count they drop it at,
+    /// the likeliest first. Shared by /whodrops and /iteminfo.</summary>
+    static void ReplyWhoDrops(GmContext c, Item item)
+    {
+        var groups = new List<(float chance, int min, int max, List<MonsterDef> who)>();
+        void Note(MonsterDef d, float chance, int min, int max)
+        {
+            if (chance <= 0f) return;
+            int at = groups.FindIndex(g => g.chance == chance && g.min == min && g.max == max);
+            if (at < 0) groups.Add((chance, min, max, new List<MonsterDef> { d }));
+            else groups[at].who.Add(d);
+        }
+        CreatureDrops.WhoDrops(item, sourcesScratch);
+        foreach (var s in sourcesScratch) Note(s.creature, s.chance, s.min, s.max);
+        if (groups.Count == 0) { c.Reply($"No creature drops {item.displayName}."); return; }
+
+        groups.Sort((a, b) => b.chance.CompareTo(a.chance));
+        c.Reply($"<color=#C8A862>{item.displayName}</color> — dropped by:");
+        foreach (var g in groups)
+        {
+            g.who.Sort((a, b) => a.level.CompareTo(b.level));
+            var sb = new StringBuilder("  ").Append(LootDropper.ChanceText(g.chance));
+            if (g.max > 1) sb.Append(" ×").Append(CreatureDrops.CountText(g.min, g.max));
+            sb.Append(" — ");
+            for (int i = 0; i < g.who.Count && i < MostNamesOnALine; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(g.who[i].displayName);
+            }
+            if (g.who.Count > MostNamesOnALine) sb.Append(" and ").Append(g.who.Count - MostNamesOnALine).Append(" more");
+            c.Reply(sb.ToString());
+        }
+    }
+
+    static void CmdItemInfo(GmContext c)
+    {
+        string typed = c.Rest(0);
+        if (string.IsNullOrWhiteSpace(typed)) { c.Reply("Usage: /iteminfo <item>"); return; }
+        var it = FindItem(typed);
+        if (it == null) { c.Reply($"No item called '{typed}'."); return; }
+
+        var type = ItemTypes.Of(it);
+        var head = new StringBuilder($"<color=#C8A862>{it.displayName}</color> ({it.id}) — {type}");
+        if (type == ItemType.Weapon && it.weaponType != WeaponType.None) head.Append(" · ").Append(it.weaponType);
+        else if (type == ItemType.Armor) head.Append(" · ").Append(EquipSlots.Label(it.slot));
+        if (it.element != Element.Neutral) head.Append(" · ").Append(it.element);
+        c.Reply(head.ToString());
+
+        var facts = new StringBuilder($"Weight {it.weight} · Sells for {it.zeny} zeny");
+        if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
+        if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
+        // A band material's step is its BAND, an Ink's or a Salt's its TIER — the words the item's own field uses.
+        if (it.materialKind != MaterialKind.None)
+            facts.Append(" · ").Append(it.materialKind)
+                 .Append(it.materialKind == MaterialKind.Ink || it.materialKind == MaterialKind.Salt ? " tier " : " band ")
+                 .Append(it.materialStep);
+        c.Reply(facts.ToString());
+
+        if (it.IsUsable)
+        {
+            var skill = SkillCatalog.Get(it.useSkillId);
+            c.Reply("Use: " + (skill != null ? skill.displayName : it.useSkillId));
+        }
+        ReplyWhoDrops(c, it);
+    }
+
     static void CmdWhere(GmContext c)
     {
         var p = c.Player;

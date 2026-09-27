@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.bluebat
   displayName: BlueBat
   kind: 0
-  size: 0
+  size: 0.25
   biome: 13
   sheet: BlueBat
   weight: 3

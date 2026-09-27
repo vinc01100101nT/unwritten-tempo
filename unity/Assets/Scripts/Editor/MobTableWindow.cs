@@ -62,8 +62,8 @@ public class MobTableWindow : EditorWindow
             "pts"    => (a, b) => (UnitStatMath.PointsSpent(a.StatInputs) - UnitStatMath.PointsEarnedByLevel(a.level))
                         .CompareTo(UnitStatMath.PointsSpent(b.StatInputs) - UnitStatMath.PointsEarnedByLevel(b.level)),
             // Sort by the DERIVED value the column shows, not the superseded stored field.
-            "hp"     => (a, b) => Derived(a, DerivedStat.HP).CompareTo(Derived(b, DerivedStat.HP)),
-            "atk"    => (a, b) => Derived(a, DerivedStat.Atk).CompareTo(Derived(b, DerivedStat.Atk)),
+            "hp"     => (a, b) => Derived(a, MonsterDefStats.Stat.HP).CompareTo(Derived(b, MonsterDefStats.Stat.HP)),
+            "atk"    => (a, b) => Derived(a, MonsterDefStats.Stat.Atk).CompareTo(Derived(b, MonsterDefStats.Stat.Atk)),
             "weight" => (a, b) => a.weight.CompareTo(b.weight),
             "xp"     => (a, b) => a.xpReward.CompareTo(b.xpReward),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
@@ -108,6 +108,7 @@ public class MobTableWindow : EditorWindow
         new Col("name",  "name",   120),
         new Col("biome", "biome",  90),
         new Col("kind",  null,     64),
+        new Col("size",  null,     100),
         // The AUTHORED stat block — a mob is a level and six primaries, exactly like the player.
         new Col("LVL",   "lvl",    38),
         new Col("STR",   null,     38),
@@ -185,6 +186,7 @@ public class MobTableWindow : EditorWindow
             {
                 AssetDatabase.SaveAssets();
                 MonsterCatalog.Reload();
+                WikiExport.RunAll();
             }
             flow.Item(60);
             if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) Reload();
@@ -241,6 +243,14 @@ public class MobTableWindow : EditorWindow
         // Biome.None = biome-agnostic (spawns in any biome); it's just another choice in the dropdown.
         var biome    = (Biome)EditorGUI.EnumPopup(VCenter(Next(), 18), def.biome);
         var kind     = (CreatureKind)EditorGUI.EnumPopup(VCenter(Next(), 18), def.kind);
+        // Size is one number, times a character's height; its group (Small / Medium / Large) is worked out from it and
+        // shown beside it, never typed. A shadow is always 1 whatever its entry says (MobSizes.Of), so it is locked.
+        var sizeCell = Next();
+        EditorGUI.BeginDisabledGroup(def.kind == CreatureKind.Shadow);
+        float size   = EditorGUI.FloatField(VCenter(new Rect(sizeCell.x, sizeCell.y, 44f, sizeCell.height), 18), def.size);
+        EditorGUI.EndDisabledGroup();
+        GUI.Label(VCenter(new Rect(sizeCell.x + 48f, sizeCell.y, sizeCell.width - 48f, sizeCell.height), 18),
+                  MobSizes.GroupOf(MobSizes.Of(def.kind, def.size)).ToString(), EditorStyles.miniLabel);
         int lvl      = EditorGUI.IntField(VCenter(Next(), 18), def.level);
         int str      = EditorGUI.IntField(VCenter(Next(), 18), def.str);
         int agi      = EditorGUI.IntField(VCenter(Next(), 18), def.agi);
@@ -251,10 +261,10 @@ public class MobTableWindow : EditorWindow
         DrawPoints(Next(), def);
         DrawGearSummary(Next(), def);
         // Derived readouts — computed live from the block just edited, never stored and never editable.
-        DrawDerived(Next(), Derived(def, DerivedStat.HP));
-        DrawDerived(Next(), Derived(def, DerivedStat.Atk));
-        DrawDerived(Next(), Derived(def, DerivedStat.Def));
-        DrawDerived(Next(), Derived(def, DerivedStat.Flee));
+        DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.HP));
+        DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Atk));
+        DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Def));
+        DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Flee));
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
         int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
@@ -266,6 +276,7 @@ public class MobTableWindow : EditorWindow
             Undo.RecordObject(def, "Edit Mob");
             def.id = id; def.displayName = name; def.biome = biome;
             def.kind = kind;
+            def.size = MobSizes.Clamp(size);
             def.level = Mathf.Max(1, lvl);
             // Budget guard: an entry the level can't afford SNAPS to the highest value that fits, rather than being
             // stored as an over-budget spread. Each stat is checked against what's left once the other five are paid
@@ -314,58 +325,8 @@ public class MobTableWindow : EditorWindow
         }
     }
 
-    enum DerivedStat { HP, Atk, Def, Flee }
-
-    // The table's derived columns read the SAME functions the game runs (UnitStatMath), through the def's own
-    // StatInputs — so what a designer sees here is what the mob will actually have, not a parallel estimate. Its worn
-    // gear and its ring are folded in the way a spawned mob folds them in: one piece per slot (the last one authored
-    // for a slot wins, as UnitEquipment seats them), gear primaries added to the inputs, the weapon held picking melee
-    // or ranged attack, and the ring's percentages counting only while a ring is worn. No sub-stat buffs: a table row
-    // is a mob at rest.
-    // Scratch reused by every Derived call: the table asks four times per row per draw and twice per comparison while
-    // sorting, so nothing in it may allocate.
-    static readonly Item[] wornScratch = new Item[System.Enum.GetValues(typeof(EquipSlotType)).Cast<int>().Max() + 1];
-    static readonly EquipmentInstance pieceScratch = new EquipmentInstance();
-    static readonly PassiveRanks ringScratch = new PassiveRanks();
-
-    static int Derived(MonsterDef def, DerivedStat which)
-    {
-        System.Array.Clear(wornScratch, 0, wornScratch.Length);
-        if (def.startingGear != null)
-            foreach (var item in def.startingGear)
-                if (item != null && item.slot != EquipSlotType.None) wornScratch[(int)item.slot] = item;
-
-        var gear = default(EquipBonuses);
-        foreach (var item in wornScratch)
-        {
-            if (item == null) continue;
-            pieceScratch.def = item;
-            pieceScratch.cards.Clear();
-            // A creature wears what it was given at ITS OWN grade and folds, so the piece's attack or defence counts
-            // here exactly as it will in the world. Its written stats do NOT: which stats Ink lands on is rolled
-            // fresh every life, so no row could show them without inventing a roll.
-            pieceScratch.quality = def.gearQuality;
-            pieceScratch.upgrade = Mathf.Clamp(def.gearFolds, 0, CraftingMath.FoldCap(def.gearQuality));
-            pieceScratch.Recompute();
-            pieceScratch.AccumulateInto(ref gear);
-        }
-        pieceScratch.def = null;
-        var weapon = wornScratch[(int)EquipSlotType.Weapon];
-        var held = weapon != null ? weapon.weaponType : WeaponType.None;
-
-        bool hasRanks = def.ringRankStats != null && def.ringRankValues != null && def.ringRankStats.Length > 0;
-        if (hasRanks) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
-        float Ring(StatId stat) => hasRanks ? ringScratch.Percent(stat) : 0f;
-
-        var u = def.StatInputs.WithGear(gear);
-        switch (which)
-        {
-            case DerivedStat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP));
-            case DerivedStat.Atk:  return UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk));
-            case DerivedStat.Def:  return UnitStatMath.Defense(u, gear, Ring(StatId.Def));
-            default:               return UnitStatMath.Flee(u, gear, Ring(StatId.Evasion));
-        }
-    }
+    // The derived columns read the one calculation /mobinfo reads too, so the table and the game can never disagree.
+    static int Derived(MonsterDef def, MonsterDefStats.Stat which) => MonsterDefStats.Derived(def, which);
 
     static int GearCount(MonsterDef d)
     {

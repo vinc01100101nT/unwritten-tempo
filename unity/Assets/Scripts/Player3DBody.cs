@@ -30,17 +30,33 @@ public static class Player3DBody
     /// (or no player to dress).</summary>
     public static void Wear(string modelName, System.Action<string> onDone = null)
     {
+        // SAID OUT LOUD WHEN IT CANNOT. Asked while the player is switched off, this used to do nothing at all, and
+        // every character entered the world in the default body with nothing anywhere saying why.
         var player = Object.FindAnyObjectByType<Player3DController>();
-        if (player == null) { onDone?.Invoke(null); return; }
+        if (player == null)
+        {
+            GameLog.Warn(LogCat.Client, "could not put on '" + modelName + "' — there is no player to dress yet.");
+            onDone?.Invoke(null);
+            return;
+        }
 
         CharacterModels.Load(modelName, model =>
         {
-            if (model == null) { onDone?.Invoke(null); return; }
+            if (model == null)
+            {
+                GameLog.Warn(LogCat.Client, "could not put on '" + modelName + "' — no character model by that name.");
+                onDone?.Invoke(null);
+                return;
+            }
             if (player == null) { onDone?.Invoke(null); return; }   // player went away while the model loaded
 
             var built = Configure(player, Object.Instantiate(model), modelName,
                                   CharacterSpec.Active.animatorController);
-            if (built != null) Worn = modelName;
+            if (built != null)
+            {
+                Worn = modelName;
+                GameLog.Info(LogCat.Client, "wearing '" + modelName + "'");
+            }
             onDone?.Invoke(built != null ? modelName : null);
         });
     }
@@ -57,8 +73,11 @@ public static class Player3DBody
     {
         if (player == null || instance == null) return null;
 
-        // Snapshot the visuals to replace, but DON'T remove them yet — build the new one FIRST.
-        var toRemove = Object.FindObjectsByType<Character3DVisual>(FindObjectsSortMode.None);
+        // Snapshot the visuals to replace, but DON'T remove them yet — build the new one FIRST. Enumerated with
+        // FindObjectsOfTypeAll, not FindObjectsByType: a body worn in Play is marked not-to-be-saved below, and
+        // FindObjectsByType skips exactly those — so the body being replaced was never found and never removed.
+        // It also lists prefab assets on disk, which are not in any scene; those are skipped.
+        var toRemove = Resources.FindObjectsOfTypeAll<Character3DVisual>();
 
         instance.name = "Player3DVisual (" + charName + ")";
         if (Application.isPlaying)
@@ -88,7 +107,8 @@ public static class Player3DBody
         if (instance.GetComponent<OccludedSilhouetteTarget>() == null) instance.AddComponent<OccludedSilhouetteTarget>();
 
         // New visual is fully built — now retire the old one(s). (Skip the new instance in case it was already matched.)
-        foreach (var v in toRemove) if (v != null && v.gameObject != instance) Object.DestroyImmediate(v.gameObject);
+        foreach (var v in toRemove)
+            if (v != null && v.gameObject != instance && v.gameObject.scene.IsValid()) Object.DestroyImmediate(v.gameObject);
 
         return instance;
     }

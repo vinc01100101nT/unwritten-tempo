@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mushroom
   displayName: Mushroom
   kind: 0
-  size: 1
+  size: 0.7
   biome: 6
   sheet: Mushroom
   weight: 1

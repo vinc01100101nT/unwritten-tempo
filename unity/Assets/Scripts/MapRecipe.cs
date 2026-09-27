@@ -147,6 +147,16 @@ public class MapRecipe : ScriptableObject
     [Range(0, 3), Tooltip("Rounds the angular corners into curves (0 = sharp/faceted look, 1 = gentle, 2-3 = smooth). Chaikin passes.")]
     public int pathSmoothness = 0;
 
+    [Header("Cliffs")]
+    [Tooltip("How tall the rock cliffs lining both sides of every road stand, in world units (a character is 0.5 tall). " +
+             "0 = no cliffs. The ground away from the roads is raised to this height and nobody can climb it.")]
+    [Min(0f)] public float cliffHeight = 0f;
+    [Tooltip("How wide the walkable pass between the two cliff faces is, in world units, measured across the road.")]
+    [Min(1f)] public float cliffPassWidth = 8f;
+    [Tooltip("How many meeting points the cliffs have: places, chosen at random along the pass, where a cliff shrinks to " +
+             "nothing and its high ground slopes down to meet the pass, so it can be walked up onto. 0 = none.")]
+    [Min(0)] public int cliffMeetingPoints = 0;
+
     [Header("Content")]
     public List<RecipePropGroup> propGroups = new List<RecipePropGroup>();
 

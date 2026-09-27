@@ -17,8 +17,8 @@ public struct MonsterArchetype
     public string sheet;        // folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. "Slime")
     public int    weight;       // relative spawn frequency in a mixed field
     public Color  tint;         // SpriteRenderer tint (white = none)
-    public CreatureKind kind;   // a shadow's body is a 3D character, always Medium
-    public MobSize size;        // body size — how tall it stands and how far its melee reaches (MobSizes)
+    public CreatureKind kind;   // a shadow's body is a 3D character, always size 1
+    public float  size;         // body size — times a character's height, and how far its melee reaches (MobSizes)
 
     // THE stat block, carried through to the spawned mob so it can RE-DERIVE on level-up instead of being scaled
     // by a mob-only growth rate. The derived fields below are the values at THIS level — a convenience snapshot for

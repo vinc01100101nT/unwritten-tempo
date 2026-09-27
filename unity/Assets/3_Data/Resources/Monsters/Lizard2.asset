@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.lizard2
   displayName: Lizard2
   kind: 0
-  size: 1
+  size: 0.3
   biome: 2
   sheet: Lizard2
   weight: 2

@@ -28,6 +28,9 @@ MonoBehaviour:
   pathWidth: 4
   pathWander: 0
   pathSmoothness: 0
+  cliffHeight: 0
+  cliffPassWidth: 8
+  cliffMeetingPoints: 0
   propGroups:
   - label: City Wall
     prefabs: []

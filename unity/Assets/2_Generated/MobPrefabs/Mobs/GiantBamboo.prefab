@@ -42,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.786861, y: 1.786861, z: 1.786861}
+  m_LocalScale: {x: 1.0308813, y: 1.0308813, z: 1.0308813}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -158,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
   moveSpeed: 1.7
-  agentRadius: 0.5360583
+  agentRadius: 0.3092644
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -190,7 +190,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 5
+  element: 2
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -246,9 +246,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
-  gearQuality: 4
-  gearFolds: 25
-  gearInkTier: 4
+  gearQuality: 3
+  gearFolds: 13
+  gearInkTier: 3
 --- !u!114 &3855303904707699695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,13 +262,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 83
-    str: 53
-    agi: 33
-    vit: 60
-    intel: 33
-    dex: 45
-    luk: 31
+    level: 47
+    str: 30
+    agi: 19
+    vit: 34
+    intel: 19
+    dex: 25
+    luk: 17
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -283,7 +283,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 83
+  weaponMasteryLevel: 47
 --- !u!114 &2873496699415487670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,8 +405,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.85019994
-  halfWidth: 0.72050846
+  halfHeight: 0.49049997
+  halfWidth: 0.41567793
 --- !u!114 &3450159037000654943
 MonoBehaviour:
   m_ObjectHideFlags: 0

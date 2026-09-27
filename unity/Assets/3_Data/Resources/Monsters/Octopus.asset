@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.octopus
   displayName: Octopus
   kind: 0
-  size: 1
+  size: 0.9
   biome: 10
   sheet: Octopus
   weight: 3

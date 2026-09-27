@@ -10,7 +10,7 @@ using System.Collections.Generic;
 /// <see cref="CreatureKinds.EliteSummonShares"/> (five of the nearest, three of the next, two of the one after).</para>
 ///
 /// <para><b>A shadow</b> calls one elite: the shadows ranked from the highest level down pair with the elites ranked the
-/// same way, so the level-160 shadow calls the level-99 elite and each step down the shadows is a step down the elites.</para>
+/// same way, so the level-170 shadow calls the level-99 elite and each step down the shadows is a step down the elites.</para>
 /// </summary>
 public static class SummonPicks
 {

@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 105
-    str: 71
-    agi: 56
-    vit: 71
-    intel: 36
-    dex: 56
-    luk: 36
+    level: 115
+    str: 78
+    agi: 62
+    vit: 78
+    intel: 40
+    dex: 61
+    luk: 40
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 040000000200000003000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 105
+  weaponMasteryLevel: 115
 --- !u!114 &6000270278042916536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Varro
+  bossName: Still Oak

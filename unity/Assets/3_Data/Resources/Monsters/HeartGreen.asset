@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.heartgreen
   displayName: HeartGreen
   kind: 0
-  size: 0
+  size: 0.4
   biome: 11
   sheet: HeartGreen
   weight: 3

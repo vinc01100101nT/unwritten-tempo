@@ -62,8 +62,6 @@ MonoBehaviour:
   capsuleHeight: 0.5
   capsuleRadius: 0.15
   capsuleCenterY: 0.25
-  capsuleStepOffset: 0.075
-  capsuleSlopeLimit: 45
   capsuleSkinWidth: 0.02
   routingRadius: 0.35
   hitTiming: 0.7

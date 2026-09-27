@@ -83,6 +83,19 @@ public static class ItemCatalog
         return pick < unworn.Count ? unworn[pick] : own[pick - unworn.Count];
     }
 
+    /// <summary><paramref name="item"/>'s share of what <see cref="RandomConsumable"/> picks from for a creature of
+    /// <paramref name="creatureElement"/> — one over the size of that pool, or 0 when the pool never holds it. The same
+    /// pool the pick reads, so what a creature is said to drop is what it drops.</summary>
+    public static float ShareOfRandomConsumable(Item item, Element creatureElement)
+    {
+        if (item == null) return 0f;
+        EnsurePools();
+        convertersByElement.TryGetValue(creatureElement, out var own);
+        int total = unworn.Count + (own != null ? own.Count : 0);
+        if (total == 0) return 0f;
+        return unworn.Contains(item) || (own != null && own.Contains(item)) ? 1f / total : 0f;
+    }
+
     /// <summary>The element a converter item gives, read off the skill it runs — the effect is the ONE place a
     /// converter's element lives, so the item carries no second copy of it.</summary>
     static bool ConverterElement(Item it, out Element element)
@@ -101,6 +114,13 @@ public static class ItemCatalog
                 }
         }
         return false;
+    }
+
+    /// <summary>Forget every cached list, so a newly authored or changed item is picked up. The editor calls this before
+    /// writing the wiki's tables; the game never needs to.</summary>
+    public static void Reload()
+    {
+        itemsById = null; cardsByName = null; wornBySlot = null; unworn = null; convertersByElement = null; all = null;
     }
 
     /// <summary>The shared <see cref="Item"/> definition for a saved id, or null if it no longer exists.</summary>

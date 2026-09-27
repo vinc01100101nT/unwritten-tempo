@@ -20,13 +20,13 @@ MonoBehaviour:
   sheet: Bear
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
-  level: 160
+  level: 170
   str: 99
-  agi: 93
+  agi: 99
   vit: 99
-  intel: 66
-  dex: 92
-  luk: 66
+  intel: 78
+  dex: 99
+  luk: 78
   startingGear:
   - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
   - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
@@ -38,7 +38,7 @@ MonoBehaviour:
   gearInkTier: 5
   ringRankStats: 080000000000000002000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 160
+  weaponMasteryLevel: 170
   hardDefPercent: 30
   hardMagicDefPercent: 20
   xpReward: 2000

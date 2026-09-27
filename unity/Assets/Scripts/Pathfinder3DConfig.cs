@@ -18,16 +18,37 @@ public class Pathfinder3DConfig : MonoBehaviour
     [Tooltip("Layer(s) that count as walkable GROUND (terrain tiers + ramps). REQUIRED when height-aware.")]
     public LayerMask groundMask;
 
-    [Tooltip("Max walkable height change between adjacent cells (stair/ramp rise). Bigger = cliff = blocked.")]
-    public float maxStep = GroundElevation.MaxClimbStep;
+    // This map's connected-area labels (see Pathfinder3D.LabelAreas), held so they go when the map does.
+    object areaLabels;
 
     void Awake() => Apply();
     void OnEnable() => Apply();
 
+    // In Start, not Awake: a server sets each map down in its own place after the map has loaded and before its
+    // first frame, so only from here on are its positions final.
+    void Start()
+    {
+        if (!Application.isPlaying || groundMask.value == 0) return;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        bool any = false;
+        var bounds = new Bounds();
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+            foreach (var c in root.GetComponentsInChildren<Collider>(true))
+            {
+                if (c.isTrigger || (groundMask.value & (1 << c.gameObject.layer)) == 0) continue;
+                if (any) bounds.Encapsulate(c.bounds); else { bounds = c.bounds; any = true; }
+            }
+        if (!any) return;
+        areaLabels = Pathfinder3D.LabelAreas(bounds);
+        GameLog.Info(LogCat.Unwritten, string.Concat("map '", gameObject.scene.name, "' route areas labelled in ",
+                                                     sw.ElapsedMilliseconds.ToString(), " ms"));
+    }
+
+    void OnDestroy() => Pathfinder3D.ForgetAreas(areaLabels);
+
     void Apply()
     {
         Pathfinder3D.HeightAware = heightAware;
-        Pathfinder3D.MaxStep = maxStep;
         if (!heightAware) return;
 
         if (groundMask.value == 0)

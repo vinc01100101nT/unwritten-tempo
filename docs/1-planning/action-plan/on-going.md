@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-27
 tags:
   - planning-production
 ---
@@ -10,9 +10,9 @@ tags:
 
 Tasks whose status is `[ON-GOING]` — built, or under way, and not yet proven. The plan is three files by status — [done](done.md), [on-going](on-going.md), [not-started](not-started.md) — and a task moves between them when its status changes, wording untouched. A subtask sits in the file of its OWN status, indented as it was, and its ID names its parent (`ST-3-K` belongs to `MT-3`). Week goals repeat in every file that has a task from that week. The intro and the **How to read it** key are in [on-going.md](on-going.md).
 
-Twelve weeks of work, as tasks. **This is the "what next" list.** [Roadmap to Launch](../roadmap-to-launch.md) is the "how far are we" picture — what is built, what is half-built, what is missing, all counted. Neither repeats the other.
+Eleven weeks of work and the play-test between Week 6 and Week 7, as tasks. **This is the "what next" list.** [Roadmap to Launch](../roadmap-to-launch.md) is the "how far are we" picture — what is built, what is half-built, what is missing, all counted. Neither repeats the other.
 
-**Every fact in this plan was measured on 2026-09-12 or 2026-09-13** by reading the game's own files, its database or its builds.
+**Every fact in this plan was measured between 2026-09-12 and 2026-09-27** by reading the game's own files, its database or its builds.
 
 ---
 
@@ -36,9 +36,9 @@ Every task carries:
 
 **Decisions are tasks, never gates.** Each one sits in the week *before* the work that needs it, with a recommendation attached so you can settle it by agreeing. If a decision slips, the work after it still starts — on the recommendation — and the estimate already covers changing course.
 
-**My assumptions, labelled as mine:** a week is five working days, you and me together. The twelve weeks are ordered by dependency, not by calendar. Slipping one pushes the rest; it does not break them.
+**My assumptions, labelled as mine:** a week is five working days, you and me together. The weeks are ordered by dependency, not by calendar. Slipping one pushes the rest; it does not break them.
 
-**Where the weeks are tight, said plainly.** Every week fits inside five days at the low end of its estimates. Two do not fit at the high end: **Week 4** (up to 5.5 days) and **Week 10** (up to 6). Those are the weeks where a decision going the long way costs you a day, and they are the two most likely to spill into the next week. Nothing is padded to hide it.
+**Where the weeks are tight, said plainly.** Every week fits inside five days at the low end of its estimates. Two do not fit at the high end: **Week 4** (up to 5.5 days) and **Week 10** (up to 6). Those are the weeks where a decision going the long way costs you a day, and they are the two most likely to spill into the next week. The play-test is not a week: its tasks add up to 7–10 days, two weeks of work. Nothing is padded to hide it.
 
 ---
 
@@ -51,6 +51,15 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 - [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** Every city, town, field and dungeon floor has its
   doors from the world layout; the fourteen shadow places are not built. — **4–5 days**
   *Done when:* starting from Lastline you can reach every one of the 75 maps on foot, without a game-master command.
+- [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** Built
+  2026-09-27: a biome's ground settles into flat levels joined by slopes (Grassland: 0, 0.6 and 1.2 m, slopes to 20°);
+  a map recipe can line its roads with carved rock cliffs 1.5–2.7 m tall, with meeting points where a cliff slopes down
+  to meet the pass; the player, every creature and every route walk by one rule (45° slopes, 0.075 m steps); and a map
+  knows at load which of its areas connect, so an unreachable target costs no search
+  ([Biomes](../../3-world/biomes.md), [Walking and Routing](../../2-systems/walking-and-routing.md)). Only the test maps
+  `test_grassland` and `test_grassland_cliffs` use it. — **built**
+  *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you
+  up and down both.
 
 ---
 

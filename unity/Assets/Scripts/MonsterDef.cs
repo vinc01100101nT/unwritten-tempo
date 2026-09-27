@@ -22,9 +22,10 @@ public class MonsterDef : ScriptableObject
              "row of the world spawn list names them. The kind sets extra skill slots, summoning, gear, respawn and drops " +
              "(see CreatureKinds); strength still comes from level and stats alone.")]
     public CreatureKind kind = CreatureKind.Normal;
-    [Tooltip("Body size. Small stands 0.3x a character's height, Medium 1x (a character's size), Large 2.4x, XL " +
-             "5.2x — and its melee reach counts the same multiple. A Shadow is always Medium whatever this says.")]
-    public MobSize size = MobSize.Medium;
+    [Tooltip("Body size: how many times a character's height it stands, 1 being a character. Its melee reach counts " +
+             "the same number. Under 0.6 it is Small, 0.6 to 1.5 Medium, over 1.5 Large; 0.1 to 5.2. A Shadow is " +
+             "always 1 whatever this says.")]
+    public float size = MobSizes.Character;
 
     [Header("Biome (spawn grouping)")]
     [Tooltip("Which biome this mob spawns in. The map generator spawns a map's mobs from its recipe Biome. " +

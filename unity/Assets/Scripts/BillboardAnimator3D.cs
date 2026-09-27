@@ -119,10 +119,27 @@ public class BillboardAnimator3D : MonoBehaviour
         down = dirs[0]; up = dirs[1]; left = dirs[2]; right = dirs[3];
     }
 
+    // WATCHING MACHINES ONLY: whether the server says this creature is travelling, and which way on the ground. Its
+    // mover is switched off on a machine that only watches it, and a switched-off mover answers "standing, facing
+    // down" forever — so without these every watched creature showed one picture and never stepped.
+    bool travelIsTold;
+    bool toldMoving;
+    Vector2 toldHeading;
+
+    /// <summary>The server's word on whether this creature is travelling and which way, in world terms (x, z). Safe
+    /// to call every frame. Once called, this body stops asking its own mover.</summary>
+    public void TellTravel(bool moving, Vector2 worldHeading)
+    {
+        travelIsTold = true;
+        toldMoving = moving;
+        toldHeading = worldHeading;
+    }
+
     void Update()
     {
-        bool moving = agent != null && agent.Moving;
-        if (moving) facing = agent.Facing;
+        bool moving = travelIsTold ? toldMoving : agent != null && agent.Moving;
+        if (moving)
+            facing = travelIsTold ? Facing3D.FromWorldDir(new Vector3(toldHeading.x, 0f, toldHeading.y)) : agent.Facing;
 
         var clip = idleClip != null ? (moving ? walkClip : idleClip) : ClipFor(facing);
         if (clip == null || clip.Length == 0) return;

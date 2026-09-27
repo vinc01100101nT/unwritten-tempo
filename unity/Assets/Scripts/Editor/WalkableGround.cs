@@ -5,8 +5,9 @@ using UnityEngine.SceneManagement;
 /// Shared <b>walkable-floor</b> helper for generated maps. A FLAT map's ground is the single blended grass→dirt
 /// mesh built by <see cref="GroundBlendBuilder"/>; this class supplies the one piece both the mesh and the
 /// routing need: a flat floor <see cref="BoxCollider"/> (top at y=0) on the Ground layer that the player snaps
-/// to and the pathfinder rays against, plus a scene-scoped <see cref="Pathfinder3DConfig"/>. An ELEVATED map
-/// instead carries its collision on the shaped mesh itself (a <see cref="MeshCollider"/> the builder adds), so it
+/// to and the pathfinder rays against, plus a scene-scoped <see cref="Pathfinder3DConfig"/>. An ELEVATED map, and
+/// ground raised into mounds, instead carries its collision on the shaped mesh itself (a <see cref="MeshCollider"/>
+/// the builder adds), so it
 /// only needs the shared <see cref="EnsurePathfinderConfig"/> — the config-adding logic lives here so both paths
 /// stay identical. (The old tiled grass-plot builder was retired when the world moved to one blended ground style
 /// — see <see cref="RecipeGenerator"/>.)
@@ -34,8 +35,8 @@ public static class WalkableGround
     }
 
     /// <summary>
-    /// Add a scene-scoped <see cref="Pathfinder3DConfig"/> (height-aware, step-gated by
-    /// <see cref="GroundElevation.MaxClimbStep"/>) if THIS scene lacks one. Scene-scoped rather than
+    /// Add a scene-scoped <see cref="Pathfinder3DConfig"/> (height-aware, gated by the one walking rule,
+    /// <see cref="GroundElevation.Walkable"/>) if THIS scene lacks one. Scene-scoped rather than
     /// <c>FindObjectOfType</c> because maps load additively — another loaded scene's config must not make us skip
     /// adding one here. Shared by the flat floor and the elevated MeshCollider path so both agree on the routing.
     /// </summary>
@@ -47,6 +48,6 @@ public static class WalkableGround
         var cfgGO = new GameObject("Pathfinder3DConfig");
         SceneManager.MoveGameObjectToScene(cfgGO, scene);
         var cfg = cfgGO.AddComponent<Pathfinder3DConfig>();
-        cfg.heightAware = true; cfg.groundMask = 1 << groundLayer; cfg.maxStep = GroundElevation.MaxClimbStep;
+        cfg.heightAware = true; cfg.groundMask = 1 << groundLayer;
     }
 }

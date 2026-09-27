@@ -46,8 +46,8 @@ public class CharacterPreview : MonoBehaviour
     public System.Collections.Generic.IReadOnlyList<Color> Parts =>
         dye != null ? dye.DetectableParts() : System.Array.Empty<Color>();
 
-    /// <summary>Recolour one part of the body on show. Nothing is persisted — this preview has no character
-    /// behind it, so the dye lives only on the model in the frame until the character is created.</summary>
+    /// <summary>Recolour one part of the body on show. Nothing is saved: the colours are held by the persistent
+    /// character this screen sits on, stamped for this body, and only written down when the character is created.</summary>
     public void SetPartColor(Color source, Color target)
     {
         if (dye != null) dye.SetPartColor(source, target);
@@ -235,9 +235,9 @@ public class CharacterPreview : MonoBehaviour
             animator.runtimeAnimatorController = CharacterSpec.Active.animatorController;
             animator.applyRootMotion = false;
 
-            // The SAME recolouring the wardrobe uses in game. With no live character to bind to it applies the
-            // colours straight to the model in front of us and persists nothing, which is exactly what a preview
-            // wants — the choice is only written down when the character is actually created.
+            // The SAME recolouring the wardrobe uses in game. It binds to the persistent character that already
+            // exists under this screen, so the world body is bound to the same colours — which is why a body only
+            // SHOWS colours stamped for it and never erases them. Nothing is saved until the character is created.
             dye = body.AddComponent<CharacterDye3D>();
             ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
             OnBodyChanged?.Invoke();

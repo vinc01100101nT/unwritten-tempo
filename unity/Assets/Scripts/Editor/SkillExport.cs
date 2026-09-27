@@ -188,7 +188,8 @@ public static class SkillExport
         (s ?? "").Replace("|", "\\|").Replace("\r", "").Replace("\n", " ").Trim();
 
     // Only touch the file when the bytes actually differ, so a save that changed nothing leaves a clean diff.
-    static void WriteIfChanged(string path, string text)
+    // The creature export writes through this too.
+    internal static void WriteIfChanged(string path, string text)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path));
         if (File.Exists(path) && File.ReadAllText(path) == text) return;

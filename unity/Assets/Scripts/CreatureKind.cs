@@ -13,7 +13,7 @@ public enum CreatureKind
     Normal,
     /// <summary>The stronger creatures of an area. Two extra skill slots, summons normals.</summary>
     Elite,
-    /// <summary>The strongest creatures in the game: a 3D character, one per weapon type, levels 105 to 160. Four extra
+    /// <summary>The strongest creatures in the game: a 3D character, one per weapon type, levels 105 to 170. Four extra
     /// skill slots and summons elites.</summary>
     Shadow,
 }

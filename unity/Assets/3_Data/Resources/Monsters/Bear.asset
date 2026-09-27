@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.bear
   displayName: Bear
   kind: 0
-  size: 2
+  size: 1.6
   biome: 1
   sheet: Bear
   weight: 3

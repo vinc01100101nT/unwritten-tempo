@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.panda
   displayName: Panda
   kind: 0
-  size: 2
+  size: 1.1
   biome: 6
   sheet: Panda
   weight: 3

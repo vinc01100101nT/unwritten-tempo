@@ -11,7 +11,16 @@
   This file holds ZERO wiki text — only structure, styling, and the renderers.
   Page content lives in ./content/ as JSON block documents ({ title, blocks:[] }) —
   the one content format (see content/manifest.json for the page list). Block types:
-  lede, heading, paragraph, list, table, quote/callout, image, skillTable, serverStats, timeline, hr.
+  lede, heading, paragraph, list, table, quote/callout, image, skillTable, skillDatabase, mobTable, worldMap,
+  elementTable, equipmentTable, materialTable, trademarkTable, armorVariantTable, serverStats, timeline, hr.
+  mobTable draws every creature from content/monsters.generated.json, which the game writes from its own data.
+  skillDatabase draws every skill as one table from content/skills.generated.json — numbers, description and effects.
+  equipmentTable and materialTable draw the items from content/items.generated.json (who drops a material included);
+  trademarkTable and armorVariantTable draw, from the same file, every trademark a forge can roll and every armour
+  word, with what each does at every grade.
+  elementTable draws the game's element chart, every level, from content/elements.generated.json.
+  worldMap draws the game's world map from content/world.generated.json; hovering a map shows its preview and the
+  creatures that live there, joined from the creature export.
   serverStats draws an empty box that is filled from a live server and refreshed while the page is open.
 -->
 <style>
@@ -67,6 +76,37 @@
   #content th,#content td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
   #content th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:rgba(200,162,74,0.05)}
   #content tr:hover td{background:rgba(255,255,255,0.02)}
+  /* The creature table is wider and far taller than the page, so it scrolls inside its own box — which keeps the
+     sideways scrollbar on screen — with the column names pinned to the top of that box. */
+  #content .dbscroll{overflow:auto;max-height:80vh;margin:18px 0;border:1px solid var(--rule);border-radius:6px}
+  #content .dbscroll thead th{position:sticky;top:0;z-index:1;background:var(--charcoal-2)}
+  #content .dbscroll table{margin:0;font-size:13px;width:max-content}
+  #content .dbscroll th,#content .dbscroll td{padding:7px 9px;white-space:nowrap}
+  /* A table cell ignores min-width, so the two long columns get a fixed width to wrap inside. */
+  #content .dbscroll td.long{white-space:normal;width:22em}
+  #content .dbscroll ul{margin:0;padding-left:1.1em}
+  #content .dbscroll li{margin:0}
+  #content .dbscroll .sym{display:inline-block;min-width:2.4em;margin-right:6px;padding:0 4px;border:1px solid;border-radius:4px;
+    text-align:center;font-weight:700}
+  /* element chart (JSON elementTable block): a 10×10 grid per level, scrolling sideways on a narrow screen */
+  #content .xscroll{overflow-x:auto;margin:12px 0 26px}
+  #content .xscroll table{margin:0;font-size:13px;width:auto}
+  #content .xscroll th,#content .xscroll td{padding:6px 7px;white-space:nowrap;text-align:right}
+  #content .xscroll th{letter-spacing:.3px}
+  #content .xscroll th:first-child,#content .xscroll td:first-child{text-align:left}
+  /* world map (JSON worldMap block): the picture with every map outlined where the game places it */
+  #content .worldmap{position:relative;margin:18px 0;border:1px solid var(--rule);border-radius:6px;overflow:hidden;line-height:0}
+  #content .worldmap img{display:block;width:100%;height:auto}
+  #content .worldmap .zone{position:absolute;border:1px solid rgba(233,226,208,0.45);border-radius:2px;cursor:pointer}
+  #content .worldmap .zone:hover,#content .worldmap .zone.on{border-color:var(--gold-bright);background:rgba(230,193,104,0.18)}
+  .zonecard{position:fixed;z-index:20;width:280px;background:var(--panel);border:1px solid var(--gold);border-radius:8px;
+    padding:10px 12px;font-size:13px;line-height:1.45;color:var(--ink);box-shadow:0 8px 28px rgba(0,0,0,0.55);pointer-events:none}
+  .zonecard[hidden]{display:none}
+  .zonecard .zname{font-size:16px;font-weight:600;color:#f4eedd}
+  .zonecard .ztype{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold)}
+  .zonecard img{display:block;width:100%;margin:8px 0;border:1px solid var(--rule);border-radius:4px}
+  .zonecard ul{margin:4px 0 0;padding-left:16px}
+  .zonecard li{margin:1px 0}
   #content blockquote{background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--gold);
     padding:12px 16px;border-radius:6px;margin:20px 0;font-size:14px;color:var(--ink-dim);font-style:italic}
   #content blockquote p{margin:4px 0}
@@ -168,9 +208,9 @@ function skillIcon(s){
   const tint=s.color?` style="color:${esc(s.color)};border-color:${esc(s.color)}"`:'';
   return `<span class="icon${sym?' sym':''}"${tint}>${esc(sym||(s.name||'?').trim().slice(0,1))}</span>`;
 }
-// Generated skill data — content/skills.generated.json, written by the Skill Composer from the game's own skill
-// assets. A skillTable block that names a `source` is rendered FROM this, so a number on the page cannot disagree
-// with the number in the game. Loaded once per visit, before any page that needs it renders.
+// Generated skill data — content/skills.generated.json, written by the editor from the game's own skill assets.
+// A skillTable block that names a `source`, and the skillDatabase block, are rendered FROM this, so a number on the
+// page cannot disagree with the number in the game. Read afresh on every visit to a page that needs it.
 let SKILLS=null;
 async function ensureSkills(){
   if(SKILLS) return SKILLS;
@@ -180,8 +220,211 @@ async function ensureSkills(){
   }catch(e){ SKILLS={skills:[]}; }
   return SKILLS;
 }
+// Generated creature data — content/monsters.generated.json, written by the game's editor from the creature catalog
+// and the world spawn list. A mobTable block is rendered FROM this, so no creature number is ever typed on a page.
+let MOBS=null;
+async function ensureMobs(){
+  if(MOBS) return MOBS;
+  try{
+    const res=await fetch('content/monsters.generated.json',{cache:'no-store'});
+    MOBS=res.ok?await res.json():{creatures:[]};
+  }catch(e){ MOBS={creatures:[]}; }
+  return MOBS;
+}
+function needsMobs(doc){
+  return (doc.blocks||[]).some(b=>b&&b.type==='mobTable');
+}
+function mobTable(){
+  const all=(MOBS&&MOBS.creatures)||[];
+  if(!all.length) return '<p><em>No creatures exported yet — run the Mob Table\'s Save All in the editor.</em></p>';
+  const where=m=>(m.homes||[]).length?m.homes.map(h=>`${esc(h.name)} ×${h.count}`).join(', '):'—';
+  return '<div class="dbscroll"><table><thead><tr>'+
+    ['Name','Lv','Locations','Kind','Element','Size','Biome','HP','ATK','DEF','FLEE','XP','Gold','Drops']
+      .map(h=>`<th>${h}</th>`).join('')+
+    '</tr></thead><tbody>'+
+    all.map(m=>'<tr>'+
+      `<td><strong>${esc(m.name||m.id)}</strong></td><td>${m.level}</td><td class="long">${where(m)}</td><td>${esc(m.kind)}</td>`+
+      `<td>${esc(m.element)} ${m.elementLevel}</td><td>${esc(m.size)}</td><td>${esc(m.biome)}</td>`+
+      `<td>${m.hp}</td><td>${m.atk}</td><td>${m.def}</td><td>${m.flee}</td><td>${m.xp}</td>`+
+      `<td>${m.goldMin}–${m.goldMax}</td><td class="long">${esc(m.drops||'')}</td>`+
+    '</tr>').join('')+
+    '</tbody></table></div>';
+}
+// Generated world map — content/world.generated.json, written by the game's editor from the same world map the
+// game's World Map window loads. Which creatures live on each map is joined here from the creature export, so there
+// is one copy of it, and it moves the moment a creature is placed somewhere else.
+let WORLD=null;
+async function ensureWorld(){
+  if(WORLD) return WORLD;
+  try{
+    const res=await fetch('content/world.generated.json',{cache:'no-store'});
+    WORLD=res.ok?await res.json():{maps:[]};
+  }catch(e){ WORLD={maps:[]}; }
+  return WORLD;
+}
+function needsWorld(doc){
+  return (doc.blocks||[]).some(b=>b&&b.type==='worldMap');
+}
+function worldMap(){
+  const maps=(WORLD&&WORLD.maps)||[];
+  if(!maps.length) return '<p><em>No world map exported yet — bake the world map in the editor.</em></p>';
+  const pct=v=>(v*100).toFixed(3)+'%';
+  return `<div class="worldmap"><img src="${esc(WORLD.picture)}" alt="World map">`+
+    maps.map(z=>`<a class="zone" data-zone="${esc(z.id)}" style="left:${pct(z.left)};top:${pct(z.top)};`+
+                `width:${pct(z.width)};height:${pct(z.height)}" aria-label="${esc(z.name)}"></a>`).join('')+
+    '</div><div class="zonecard" hidden></div>';
+}
+// Every creature placed on each map, strongest last, read off the creature export's homes.
+function livesOn(){
+  const by={};
+  ((MOBS&&MOBS.creatures)||[]).forEach(m=>(m.homes||[]).forEach(h=>{
+    (by[h.map]=by[h.map]||[]).push({name:m.name||m.id,level:m.level,count:h.count});
+  }));
+  Object.values(by).forEach(l=>l.sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name)));
+  return by;
+}
+function wireWorldMap(){
+  const box=document.querySelector('#content .worldmap'); if(!box) return;
+  const card=document.querySelector('#content .zonecard');
+  const byId={}; ((WORLD&&WORLD.maps)||[]).forEach(z=>byId[z.id]=z);
+  const lives=livesOn();
+  const fill=z=>{
+    const who=lives[z.id]||[];
+    card.innerHTML=`<div class="zname">${esc(z.name)}</div><div class="ztype">${esc(z.type||'')}</div>`+
+      (z.preview?`<img src="${esc(z.preview)}" alt="${esc(z.name)} from above">`:'')+
+      '<strong>Monsters</strong>'+(who.length
+        ?'<ul>'+who.map(c=>`<li>${esc(c.name)} — Lv ${c.level} ×${c.count}</li>`).join('')+'</ul>'
+        :'<div>—</div>');
+  };
+  const place=(x,y)=>{
+    const r=card.getBoundingClientRect(), pad=14;
+    let left=x+pad, top=y+pad;
+    if(left+r.width>innerWidth-8) left=x-r.width-pad;
+    if(top+r.height>innerHeight-8) top=Math.max(8,innerHeight-r.height-8);
+    card.style.left=Math.max(8,left)+'px'; card.style.top=top+'px';
+  };
+  let shown=null;
+  const show=(el,x,y)=>{
+    if(shown!==el){ if(shown) shown.classList.remove('on'); shown=el; el.classList.add('on'); fill(byId[el.dataset.zone]); card.hidden=false; }
+    place(x,y);
+  };
+  const hide=()=>{ if(shown) shown.classList.remove('on'); shown=null; card.hidden=true; };
+  box.querySelectorAll('.zone').forEach(el=>{
+    el.addEventListener('mousemove',e=>show(el,e.clientX,e.clientY));
+    el.addEventListener('mouseleave',hide);
+    // A touch screen has no hover: a tap shows the card, a second tap on the same map hides it.
+    el.addEventListener('click',e=>{ e.preventDefault(); if(shown===el) hide(); else show(el,e.clientX,e.clientY); });
+  });
+}
+// Generated element chart — content/elements.generated.json, written by the game's editor from the chart the game
+// hits with. Rows are the attack's element, columns the defender's; one table per defending element level.
+let ELEMENTS=null;
+async function ensureElements(){
+  if(ELEMENTS) return ELEMENTS;
+  try{
+    const res=await fetch('content/elements.generated.json',{cache:'no-store'});
+    ELEMENTS=res.ok?await res.json():{levels:[]};
+  }catch(e){ ELEMENTS={levels:[]}; }
+  return ELEMENTS;
+}
+function needsElements(doc){
+  return (doc.blocks||[]).some(b=>b&&b.type==='elementTable');
+}
+function elementTable(){
+  const levels=(ELEMENTS&&ELEMENTS.levels)||[], names=(ELEMENTS&&ELEMENTS.elements)||[];
+  if(!levels.length) return '<p><em>No element chart exported yet — open the editor once to write it.</em></p>';
+  return levels.map(l=>`<h2>Level ${l.level}</h2><div class="xscroll"><table><thead><tr><th>Attack ↓</th>`+
+    names.map(n=>`<th>${esc(n)}</th>`).join('')+'</tr></thead><tbody>'+
+    l.rows.map(r=>`<tr><td><strong>${esc(r.attack)}</strong></td>`+r.percent.map(p=>`<td>${p}%</td>`).join('')+'</tr>').join('')+
+    '</tbody></table></div>').join('');
+}
+// Generated item data — content/items.generated.json, written by the game's editor from every item asset, with who
+// drops each one read from the same tables a creature's death roll reads.
+let ITEMS=null;
+async function ensureItems(){
+  if(ITEMS) return ITEMS;
+  try{
+    const res=await fetch('content/items.generated.json',{cache:'no-store'});
+    ITEMS=res.ok?await res.json():{items:[]};
+  }catch(e){ ITEMS={items:[]}; }
+  return ITEMS;
+}
+function needsItems(doc){
+  return (doc.blocks||[]).some(b=>b&&['equipmentTable','materialTable','trademarkTable','armorVariantTable'].includes(b.type));
+}
+const dash=v=>(v===undefined||v===null||v===''||v===0)?'—':v;
+const descCell=d=>d?String(d).split('\n').filter(x=>x.trim()).map(x=>`<div>${inline(x)}</div>`).join(''):'—';
+function itemRows(headers,list,row){
+  if(!list.length) return '<p><em>No items exported yet — run the item export in the editor.</em></p>';
+  return '<div class="dbscroll"><table><thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+
+    list.map(it=>'<tr>'+row(it)+'</tr>').join('')+'</tbody></table></div>';
+}
+function equipmentTable(){
+  const list=((ITEMS&&ITEMS.items)||[]).filter(it=>it.type==='Weapon'||it.type==='Armor')
+    .sort((a,b)=>a.slotOrder-b.slotOrder||a.name.localeCompare(b.name));
+  return itemRows(['Name','Description','Slot','Weapon','Reach','Element','Made of','Forge cost','Card slots','Block chance','Weight','Sells for'],list,it=>
+    `<td><strong>${esc(it.name)}</strong></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>`+
+    `<td>${esc(dash(it.weaponType))}</td><td>${dash(it.reach)}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>`+
+    `<td>${it.forgeUnits>0?`${it.forgeUnits} ${esc(it.forgeMaterial)} + ${it.forgeGold} gold`:'—'}</td>`+
+    `<td>${dash(it.cardSlots)}</td><td>${esc(dash(it.blockChance))}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+}
+function materialTable(){
+  const list=((ITEMS&&ITEMS.items)||[]).filter(it=>it.type==='Material')
+    .sort((a,b)=>a.materialKindOrder-b.materialKindOrder||a.materialStep-b.materialStep||a.name.localeCompare(b.name));
+  // Who drops it, grouped by the chance and count they drop it at, likeliest first — the way /whodrops answers.
+  const droppers=it=>{
+    const groups={};
+    (it.droppedBy||[]).forEach(s=>{const k=s.chance+(s.count!=='1'?' ×'+s.count:'');(groups[k]=groups[k]||[]).push(s);});
+    const keys=Object.keys(groups).sort((a,b)=>parseFloat(b)-parseFloat(a));
+    return keys.length?keys.map(k=>`<div><strong>${esc(k)}</strong> — `+
+      groups[k].sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name)).map(s=>esc(s.name)).join(', ')+'</div>').join(''):'—';
+  };
+  return itemRows(['Name','Description','Kind','Band / Tier','Merges into','Dropped by','Weight','Sells for'],list,it=>
+    `<td><strong>${esc(it.name)}</strong></td><td class="long">${descCell(it.description)}</td><td>${esc(it.materialKind)}</td>`+
+    `<td>${it.materialKind==='Ink'||it.materialKind==='Salt'?'Tier':'Band'} ${it.materialStep}</td>`+
+    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+}
+// Every trademark a forge can roll, and what it raises at each grade.
+function trademarkTable(){
+  const grades=(ITEMS&&ITEMS.grades)||[], list=(ITEMS&&ITEMS.trademarks)||[];
+  return itemRows(['Name','Weapon','Chance'].concat(grades),list,t=>
+    `<td><strong>${esc(t.name)}</strong></td><td>${esc(t.weapon)}</td><td>${esc(t.chance)}</td>`+
+    (t.byGrade||[]).map(g=>`<td>${(g.lines||[]).length?g.lines.map(l=>`<div>${esc(l)}</div>`).join(''):'—'}</td>`).join(''));
+}
+// Every armour word, the slot that rolls it, the pieces worn there, and what it does at each grade.
+function armorVariantTable(){
+  const grades=(ITEMS&&ITEMS.grades)||[];
+  const list=((ITEMS&&ITEMS.words)||[]).slice().sort((a,b)=>a.slotOrder-b.slotOrder||a.name.localeCompare(b.name));
+  const pieces=slot=>((ITEMS&&ITEMS.items)||[]).filter(it=>it.type==='Armor'&&it.slot===slot).map(it=>esc(it.name)).join(', ')||'—';
+  return itemRows(['Variant','Slot','Pieces','Chance'].concat(grades),list,w=>
+    `<td><strong>${esc(w.name)}</strong></td><td>${esc(w.slot)}</td><td class="long">${pieces(w.slot)}</td><td>${esc(w.chance)}</td>`+
+    (w.byGrade||[]).map(g=>`<td>${esc(g)}</td>`).join(''));
+}
 function needsSkills(doc){
-  return (doc.blocks||[]).some(b=>b&&b.type==='skillTable'&&b.source);
+  return (doc.blocks||[]).some(b=>b&&((b.type==='skillTable'&&b.source)||b.type==='skillDatabase'));
+}
+// Every exported skill as one table row: the same numbers, description and effect lines the cards print.
+function skillDatabase(){
+  const all=((SKILLS&&SKILLS.skills)||[]).slice();
+  if(!all.length) return '<p><em>No skills exported yet — run the Skill Composer\'s export.</em></p>';
+  const order={ultimate:0,active:1,passive:2}, label={ultimate:'Ultimate',active:'Active',passive:'Passive'};
+  const colors=SKILLS.weaponColors||{};
+  all.sort((a,b)=>a.weapon.localeCompare(b.weapon)||order[skillGroup(a)]-order[skillGroup(b)]||(a.name||'').localeCompare(b.name||''));
+  const sym=s=>{const c=colors[s.weapon];const tint=c?` style="color:${esc(c)};border-color:${esc(c)}"`:'';
+                return s.symbol?`<span class="sym"${tint}>${esc(s.symbol)}</span>`:'';};
+  return '<div class="dbscroll"><table><thead><tr>'+
+    ['Name','Description','Weapon','Form','Type','Trigger','MP','CD','Cast','Range','Effects'].map(h=>`<th>${h}</th>`).join('')+
+    '</tr></thead><tbody>'+
+    all.map(s=>'<tr>'+
+      `<td>${sym(s)}<strong>${esc(s.name||s.id)}</strong></td>`+
+      // A description is authored as separate lines (a flavour line, then what it does); each keeps its own line.
+      `<td class="long">${s.description?String(s.description).split('\n').filter(x=>x.trim()).map(x=>`<div>${inline(x)}</div>`).join(''):'—'}</td>`+
+      `<td>${esc(s.weapon)}</td><td>${esc(s.form||'—')}</td>`+
+      `<td>${label[skillGroup(s)]}</td><td>${inline(s.trigger||'—')}</td>`+
+      `<td>${s.manaCost}</td><td>${s.cooldown}s</td><td>${s.castTime>0?s.castTime+'s':'Instant'}</td>`+
+      `<td>${s.castRange>0?s.castRange:'—'}</td>`+
+      `<td class="long">${(s.effects||[]).length?'<ul>'+s.effects.map(e=>`<li>${inline(e)}</li>`).join('')+'</ul>':'—'}</td>`+
+    '</tr>').join('')+'</tbody></table></div>';
 }
 // Which bucket a generated skill belongs to. The three are mutually exclusive and come straight from the asset,
 // so a skill re-tiered in the Composer moves section on the page by itself.
@@ -249,6 +492,14 @@ function block(b){
                              (b.rows||[]).map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
     case 'image':     return `<figure class="fig"><img src="${esc(b.src)}" alt="${esc(b.alt||'')}">`+(b.caption?`<figcaption>${inline(b.caption)}</figcaption>`:'')+'</figure>';
     case 'skillTable':return skillTable(b);
+    case 'skillDatabase':return skillDatabase();
+    case 'mobTable':  return mobTable();
+    case 'worldMap':  return worldMap();
+    case 'elementTable':return elementTable();
+    case 'equipmentTable':return equipmentTable();
+    case 'materialTable':return materialTable();
+    case 'trademarkTable':return trademarkTable();
+    case 'armorVariantTable':return armorVariantTable();
     case 'serverStats':return `<div class="livestats" data-from="${esc(b.from||'')}"><p class="loading">Asking the server…</p></div>`;
     // Items draw in array order, top to bottom; an unknown state falls back to planned so a typo never draws a finished dot.
     case 'timeline':  return '<ol class="timeline">'+(b.items||[]).map(it=>{
@@ -351,19 +602,33 @@ function renderDoc(doc){
 
 // ---- app: build nav from manifest, load pages (JSON block documents) ----
 let PAGES={};
+// ---- generated pages -----------------------------------------------------------------------------------------
+// The editor rewrites the generated files whenever the game's data or code changes. A page reads them fresh on every
+// visit and nothing more — no timer re-reads them while it is open.
+async function ensureGenerated(doc){
+  if(needsSkills(doc)) await ensureSkills();
+  if(needsMobs(doc)||needsWorld(doc)) await ensureMobs();
+  if(needsWorld(doc)) await ensureWorld();
+  if(needsElements(doc)) await ensureElements();
+  if(needsItems(doc)) await ensureItems();
+}
+function forgetGenerated(){ SKILLS=null; MOBS=null; WORLD=null; ELEMENTS=null; ITEMS=null; }
 async function load(id){
   const p=PAGES[id]; if(!p) return;
   const el=document.getElementById('content');
   // BEFORE the page is replaced: whatever the last page left running is pointed at boxes about to be thrown away.
   stopLiveStats();
+  // Every visit to a page reads the generated files afresh — nothing is carried over from the page before.
+  forgetGenerated();
   el.innerHTML='<div class="loading">Loading…</div>';
   try{
     const res=await fetch('content/'+p.file,{cache:'no-store'});
     if(!res.ok) throw new Error(res.status);
     const doc=await res.json();
-    // A page whose skill cards are generated needs the export in hand before it renders — block() is synchronous.
-    if(needsSkills(doc)) await ensureSkills();
+    // A page drawn from generated data needs it in hand before it renders — block() is synchronous.
+    await ensureGenerated(doc);
     el.innerHTML=renderDoc(doc);
+    wireWorldMap();
     startLiveStats();
   }catch(e){
     el.innerHTML=`<h1>Couldn't load page</h1><p class="lede">${p.file} — ${e.message}</p>`;

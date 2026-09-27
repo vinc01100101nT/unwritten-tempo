@@ -294,9 +294,13 @@ public class CharacterDye3D : MonoBehaviour
     {
         // A dye belongs to the specific character it was made on — it must NOT ride onto a different character
         // just because they share a base color (both navy, etc.). The dye is stamped with a signature of the
-        // worn TEXTURE (each Quaternius character has its own, even when the mesh is shared); if the persisted
-        // stamp doesn't match the worn texture, the dye is foreign → drop it. An un-stamped legacy dye (null,
-        // unknown origin) also fails the match, so it's cleared once — after which every dye carries its stamp.
+        // worn TEXTURE (each Quaternius character has its own, even when the mesh is shared); if the stamp doesn't
+        // match the worn texture, THIS body shows its own plain colours.
+        //
+        // IT NEVER ERASES THE CHARACTER'S DYE. Two bodies are often bound to one character at once — the creation
+        // preview beside the world body, or the old body still standing while the chosen one loads at sign-in —
+        // and the wrong one used to wipe the colours the right one was about to show. The first recolour on a
+        // body replaces the whole map anyway, so a foreign dye left in the save never survives being edited.
         if (boundCharacter != null && boundCharacter.DyeSources != null && boundCharacter.DyeSources.Length > 0)
         {
             string sig = ModelSignature();
@@ -304,8 +308,8 @@ public class CharacterDye3D : MonoBehaviour
             {
                 sources.Clear();
                 targets.Clear();
-                boundCharacter.SetDye(System.Array.Empty<string>(), System.Array.Empty<string>(), sig);
-                return;   // SetDye re-fires OnAppearanceChanged → PullFromCharacter (now clean) → Apply
+                Apply();
+                return;
             }
         }
 

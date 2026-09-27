@@ -26,10 +26,10 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 | --- | --- | --- |
 | Game and tooling code files | 375 | 95 of them editor tools, exposing 88 menu commands |
 | Playable maps | 75 new + Lastline | the three-region world, generated 2026-09-26: 8 cities · 6 towns · 39 fields · 22 dungeon floors, plus the hand-made Lastline (`lastline`); the 40 older maps were deleted 2026-09-26 |
-| Creature definitions | 86 | 20 of them bosses; all 20 now have their own artwork |
+| Creature definitions | 98 | 66 normals, 18 elites and 14 shadows |
 | Skills | 42 | see the split below |
 | Items in the whole game | 13 | 11 consumables · 2 that can be worn (a sword and a bow) |
-| Cards | 4 | Andre, Poring, Whisper, Zipper Bear |
+| Cards | 0 | the four Ragnarok-named placeholders were deleted 2026-09-26; the card roster is being designed |
 | Live characters in the database | 14 | the furthest is level 80 with 4,396 gold |
 | Builds that exist | 2 | a 458 MB player build (8 Sep) and a 227 MB server build (10 Sep) |
 
@@ -112,7 +112,7 @@ One play-test has been open since 3 September, covering eleven server and skill 
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — designed, no code.
-- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 96 creatures are comparable to a player.
+- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 98 creatures are comparable to a player.
 - [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the online half is, and its deliberate limits.
 - [Starting the Network](../2-systems/networking/starting-the-network.md) — how to stand the multiplayer half up.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the maps.

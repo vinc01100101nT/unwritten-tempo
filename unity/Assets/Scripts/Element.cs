@@ -21,7 +21,7 @@ public enum Element
     Wind,
     Poison,
     Holy,
-    Shadow,
+    Dark,
     Ghost,
     Undead,
 }
@@ -38,14 +38,14 @@ public static class Elements
     public const int ConverterLevel = 1;
 
     // THE CHART, in whole percent: Percent[level − 1, attack, defense]. Ragnarok's pre-renewal element tables
-    // (rAthena db/pre-re/attr_fix.yml, sha256 f785222b…a7a6), copied cell for cell — Dark there is Shadow here.
+    // (rAthena db/pre-re/attr_fix.yml, sha256 f785222b…a7a6), copied cell for cell.
     // Rows = the ATTACK element, columns = the DEFENDING element, both in Element enum order. Whole percent so no
     // hand-typed decimal can drift from the source; a value below zero heals the defender.
     static readonly int[,,] Percent =
     {
         {
             // Level 1
-            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Drk   Gho   Und
             /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,   25,  100 },
             /* Wat */ {  100,   25,  100,  150,   50,  100,   75,  100,  100,  100 },
             /* Ear */ {  100,  100,  100,   50,  150,  100,   75,  100,  100,  100 },
@@ -53,13 +53,13 @@ public static class Elements
             /* Win */ {  100,  175,   50,  100,   25,  100,   75,  100,  100,  100 },
             /* Poi */ {  100,  100,  125,  125,  125,    0,   75,   50,  100,  -25 },
             /* Hol */ {  100,  100,  100,  100,  100,  100,    0,  125,  100,  150 },
-            /* Sha */ {  100,  100,  100,  100,  100,   50,  125,    0,  100,  -25 },
+            /* Drk */ {  100,  100,  100,  100,  100,   50,  125,    0,  100,  -25 },
             /* Gho */ {   25,  100,  100,  100,  100,  100,   75,   75,  125,  100 },
             /* Und */ {  100,  100,  100,  100,  100,   50,  100,    0,  100,    0 },
         },
         {
             // Level 2
-            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Drk   Gho   Und
             /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,   25,  100 },
             /* Wat */ {  100,    0,  100,  175,   25,  100,   50,   75,  100,  100 },
             /* Ear */ {  100,  100,   50,   25,  175,  100,   50,   75,  100,  100 },
@@ -67,13 +67,13 @@ public static class Elements
             /* Win */ {  100,  175,   25,  100,    0,  100,   50,   75,  100,  100 },
             /* Poi */ {  100,   75,  125,  125,  125,    0,   50,   25,   75,  -50 },
             /* Hol */ {  100,  100,  100,  100,  100,  100,  -25,  150,  100,  175 },
-            /* Sha */ {  100,  100,  100,  100,  100,   25,  150,  -25,  100,  -50 },
+            /* Drk */ {  100,  100,  100,  100,  100,   25,  150,  -25,  100,  -50 },
             /* Gho */ {    0,   75,   75,   75,   75,   75,   50,   50,  150,  125 },
             /* Und */ {  100,   75,   75,   75,   75,   25,  125,    0,  100,    0 },
         },
         {
             // Level 3
-            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Drk   Gho   Und
             /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,    0,  100 },
             /* Wat */ {  100,  -25,  100,  200,    0,  100,   25,   50,  100,  125 },
             /* Ear */ {  100,  100,    0,    0,  200,  100,   25,   50,  100,   75 },
@@ -81,13 +81,13 @@ public static class Elements
             /* Win */ {  100,  200,    0,  100,  -25,  100,   25,   50,  100,  100 },
             /* Poi */ {  100,   50,  100,  100,  100,    0,   25,    0,   50,  -75 },
             /* Hol */ {  100,  100,  100,  100,  100,  125,  -50,  175,  100,  200 },
-            /* Sha */ {  100,  100,  100,  100,  100,    0,  175,  -50,  100,  -75 },
+            /* Drk */ {  100,  100,  100,  100,  100,    0,  175,  -50,  100,  -75 },
             /* Gho */ {    0,   50,   50,   50,   50,   50,   25,   25,  175,  150 },
             /* Und */ {  100,   50,   50,   50,   50,    0,  150,    0,  100,    0 },
         },
         {
             // Level 4
-            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Sha   Gho   Und
+            //             Neu   Wat   Ear   Fir   Win   Poi   Hol   Drk   Gho   Und
             /* Neu */ {  100,  100,  100,  100,  100,  100,  100,  100,    0,  100 },
             /* Wat */ {  100,  -50,  100,  200,    0,   75,    0,   25,  100,  150 },
             /* Ear */ {  100,  100,  -25,    0,  200,   75,    0,   25,  100,   50 },
@@ -95,7 +95,7 @@ public static class Elements
             /* Win */ {  100,  200,    0,  100,  -50,   75,    0,   25,  100,  100 },
             /* Poi */ {  100,   25,   75,   75,   75,    0,    0,  -25,   25, -100 },
             /* Hol */ {  100,   75,   75,   75,   75,  125, -100,  200,  100,  200 },
-            /* Sha */ {  100,   75,   75,   75,   75,  -25,  200, -100,  100, -100 },
+            /* Drk */ {  100,   75,   75,   75,   75,  -25,  200, -100,  100, -100 },
             /* Gho */ {    0,   25,   25,   25,   25,   25,    0,    0,  200,  175 },
             /* Und */ {  100,   25,   25,   25,   25,  -25,  175,    0,  100,    0 },
         },
@@ -143,12 +143,31 @@ public static class Elements
             case Element.Wind:   return new Color(0.55f, 0.95f, 0.70f);
             case Element.Poison: return new Color(0.65f, 0.45f, 0.85f);
             case Element.Holy:   return new Color(1.00f, 0.92f, 0.55f);
-            case Element.Shadow: return new Color(0.55f, 0.40f, 0.70f);
+            case Element.Dark: return new Color(0.55f, 0.40f, 0.70f);
             case Element.Ghost:  return new Color(0.70f, 0.95f, 0.95f);
             case Element.Undead: return new Color(0.55f, 0.70f, 0.45f);
-            default:             return Color.white;   // Neutral
+            default:             return new Color(0.62f, 0.62f, 0.66f);   // Neutral: a plain stone grey
         }
     }
 
     public static string Name(Element e) => e.ToString();
+
+    /// <summary>The element's short face, drawn on a tile of its <see cref="Tint"/> the way a skill's two letters sit
+    /// on its weapon's colour (<see cref="SkillSymbol"/>).</summary>
+    public static string Symbol(Element e)
+    {
+        switch (e)
+        {
+            case Element.Water:  return "Wr";
+            case Element.Earth:  return "Ea";
+            case Element.Fire:   return "Fr";
+            case Element.Wind:   return "Wd";
+            case Element.Poison: return "Ps";
+            case Element.Holy:   return "Ho";
+            case Element.Dark:   return "Dk";
+            case Element.Ghost:  return "Gh";
+            case Element.Undead: return "Ud";
+            default:             return "Ne";   // Neutral
+        }
+    }
 }

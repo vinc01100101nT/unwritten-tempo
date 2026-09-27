@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.giantslime2
   displayName: GiantSlime2
   kind: 1
-  size: 3
+  size: 2
   biome: 4
   sheet: GiantSlime2
   weight: 0

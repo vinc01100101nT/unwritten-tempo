@@ -109,9 +109,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SettingsWindow>();           // Gameplay/Sound/Graphics tabs, opened from the System window
         canvasGO.AddComponent<SystemWindow>();             // Esc (when nothing else answers it) → System menu ▸ Settings
 
-        // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime; needs the
-        // starter Card assets.
-        ProgressionWindowsBuilder.EnsureStarterCards();
+        // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime.
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
         canvasGO.AddComponent<CharacterWardrobePanel>();   // O = Wardrobe: per-part runtime clothing dye (live-3D)
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
@@ -203,7 +201,7 @@ public static class UIShellBuilder
         var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
 
-        // Minimap — top-right corner (terrain RT + player/mob blips). Sits above the gold counter.
+        // Minimap — top-right corner (the map's picture + player/mob blips). Sits above the gold counter.
         BuildMinimap(canvas);
 
         // Gold counter — top-right, tucked just under the minimap; GoldCounter.cs wires it to Wallet.OnChanged.
@@ -243,8 +241,8 @@ public static class UIShellBuilder
 
     const int MinimapSize = 180;   // square minimap edge (px @ reference resolution)
 
-    // Top-right minimap: a themed frame holding a RawImage (terrain RenderTexture) + a clipped blip layer.
-    // The Minimap component spawns the top-down camera/RT at runtime and projects player/mob dots onto blipRoot.
+    // Top-right minimap: a themed frame holding a RawImage (the current map's picture) + a clipped blip layer.
+    // The Minimap component loads that picture at runtime and projects player/mob dots onto blipRoot.
     static void BuildMinimap(Transform canvas)
     {
         var panel = NewSliced("HUD_Minimap", canvas, panelSprite);

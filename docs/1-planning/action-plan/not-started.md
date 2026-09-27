@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-09-27
 tags:
   - planning-production
 ---
@@ -27,13 +27,56 @@ or a Salt (much more from elites, more again from shadows), a 30% chance of one 
 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
-18 elites and 12 shadows are defined ([Mob Roster](../../3-world/mob-roster.md)). Where every creature lives is the
+18 elites and 14 shadows are defined ([Mob Roster](../../3-world/mob-roster.md)). Where every creature lives is the
 world spawn list, one row per spawn area, which the server reads as it loads each map; today every one of the 18 elites
 has a row in the new world's fields and dungeon floors (not yet walked in play), and no shadow has one.
 
 - [ ] `MT-18` **`[A]` Put the fourteen shadows on their own places.** One row each, naming the shadow, once the
   shadows' place maps exist ([World Map](../../3-world/world-map.md)). — **2 days**
   *Done when:* every shadow stands in its fixed place on its own map, and the same one is there again after you leave and come back.
+
+---
+
+## Play-test — strangers can play it
+
+**Goal:** people you invite download the game, make their own account, and play it on a server we rent, not on
+this machine. This is the play-test: the phase where interested players gather before the official release. Steam
+is not part of it — the game is handed out from our own download page. Quests, shops and the title screen are not
+needed to open it; they arrive as updates while it runs, which gives testers a reason to come back.
+
+**It opens once `MT-14`, `MT-15` and `MT-17` are done** — the loop's rates judged, every map reachable, every elite
+placed. The shadows (`MT-18`) are not needed for it. **Testers get one weapon with skills, the sword** — the bow has
+none yet — so the invitation says so, or it gets reported as a bug.
+
+**It does not fit in one week.** The tasks below add up to 7–10 days, so it is two weeks of work.
+
+- [ ] `MT-41` **`[E]` Put the game on a rented machine.** One Vultr machine in Singapore, 2 cores / 4 GB, $24 a
+  month ([Where the Game Is Hosted](../where-the-game-is-hosted.md)). The world server needs a Linux build, which
+  has never been made — the Linux add-on is installed for the project's Unity version, so it is untested rather
+  than blocked. All four programs — database, sign-in, characters, world — must start when the machine starts and
+  restart after a crash; today they are started by hand. A domain name and an encrypted connection (the setup file
+  for it is already written), the plain unencrypted doors shut, and a database backup kept on a different machine.
+  — **2–3 days**
+  *Done when:* you restart the rented machine, touch nothing on it, and can still sign in to the game on it from
+  this Mac; and a copy of its database exists somewhere other than that machine.
+
+- [ ] `MT-42` **`[E]` Make a Windows version of the game.** The only player build is a Mac one, and the Windows
+  add-on is not installed for the project's Unity version. Needs a Windows PC to try it on. — **1–2 days**
+  *Done when:* on a Windows PC, double-clicking the game reaches the sign-in box of the rented server, with nothing
+  typed into a terminal.
+
+- [ ] `MT-43` **`[E]` A download page, and one place testers sign up and report problems.** — **1 day**
+  *Done when:* somebody who has never seen the game follows one link, downloads it for Windows or Mac, and knows
+  where to report what went wrong.
+
+- [ ] `MT-32` **`[E]` Rebuild both halves and play the packaged game end to end, against the rented server.** A
+  player build (571 MB, 26 September) and a server build (253 MB, 27 September) exist, both for Mac. **Whether the
+  player build runs on a machine that is not this one has not been measured.** — **2–3 days**
+  *Done when:* you install it on a machine that is not this one, sign in, fight, pick up loot, forge a piece of
+  gear, put it on and quit, without opening Unity once.
+
+- [ ] `MT-33` **`[E]` Write down what broke that the editor never showed.** — **1 day**
+  *Done when:* every difference between the editor and the packaged game is written down, fixed or deliberately accepted.
 
 ---
 
@@ -100,39 +143,37 @@ has a row in the new world's fields and dungeon floors (not yet walked in play),
 
 ---
 
-## Week 12 — It is a thing you can hand somebody
-
-**Goal:** the game runs as a packaged program on a machine that is not this one.
-
-A player build and a server build both exist — 458 MB from 8 September and 227 MB from 10 September — but everything in weeks 1 to 11 will have been judged in the editor unless this is done deliberately. **Whether the current client build still runs has not been measured.**
-
-- [ ] `MT-32` **`[E]` Rebuild both halves and play the packaged game end to end.** — **2–3 days**
-  *Done when:* you install it on a machine that is not this one, sign in, fight, pick up loot, finish a quest, spend gold and quit, without opening Unity once.
-
-- [ ] `MT-33` **`[E]` Write down what broke that the editor never showed.** — **1 day**
-  *Done when:* every difference between the editor and the packaged game is written down, fixed or deliberately accepted.
-
----
-
-## Backlog — real work, deliberately not in the twelve weeks
+## Backlog — real work, deliberately not in the weeks above
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
 - [ ] `MT-34` **`[A]` Author the bow's skills.** Fourteen weapon families are defined. The sword has 22, each with the Weapon Mastery level that teaches it. The staff has one. The other twelve have none. **The mastery table is the trap:** a skill is learned only when its weapon's mastery reaches the level written against it, so a bow skill with no row in the bow's unlock table can never be learned and looks like a bug. — **5–8 days**
 
-- [ ] `MT-35` **`[E]` Make cards something you earn.** Four cards exist and the socket screen offers all four to anyone with an empty socket, regardless of what they own. Two problems, both real: the four are named Andre, Poring, Whisper and Zipper Bear — Ragnarok creatures, and none of our 96 goes by any of those names, so "drops from the creature it's named after" has nothing to attach to. And a card cannot be carried at all: a drop list can only name an item, the bag can only hold an item, and a card is neither. This is a build across the bag, the saved character and the server — not four data rows. — **5–7 days**
+- [ ] `MT-35` **`[E]` Make cards something you earn.** No cards exist: the four Ragnarok-named placeholders were deleted on 2026-09-26, and the socket screen offers whatever cards exist to anyone with an empty socket, regardless of what they own. Settled on 2026-09-26: every card is a "vs something" card (against a size, a kind or an element — race is left out for now, and so is biome); a weapon rolls 3 to 4 sockets and an armour piece 0 to 1, when it is forged; a card is permanent once socketed and never comes back out. What is still missing: a card cannot be carried at all — a drop list can only name an item, the bag can only hold an item, and a card is neither. This is a build across the bag, the saved character and the server — not a handful of data rows. — **5–7 days**
 
-  - [ ] `ST-35-A` **`[D]` First decide:** rename the four cards after creatures we have, or pick which creature each drops from.
+  - [ ] `ST-35-A` **`[D]` First decide:** the card roster, and which creature drops each card.
 
 - [ ] `MT-36` **`[E]` Settle the three trust gaps.** All three are written down in the networking notes under a heading calling them deliberate limits: a phone can sign in but cannot enter the world; whether a player really had the item they used is their machine's word; and a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. Most already carry a reason — what is missing is a decision about whether they stay that way once strangers play together. — **unestimated until played**
 
 - [ ] `MT-37` **`[E]` Give the eight orphan skills a weapon, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon — and a skill is learned only through its weapon's mastery, so nothing in the game can teach them. Give each one a weapon's pool and a mastery level, or delete it. — **1–2 days**
 
+- [ ] `MT-45` **`[A]` Make a rock-face tile for cliffs.** Cliff faces are drawn with the gravel ground tile until a
+  repeating rock-face tile exists; the cliff material already takes any tile. — **0.5–1 day**
+
+- [ ] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** Cliff height, pass width and meeting points are
+  settings on a map recipe only; the World Creator builds every field from one template, so no world map can have
+  cliffs yet. — **1–2 days**
+
+- [ ] `MT-47` **`[D]` Decide whether the ten smallest creatures get bigger collision shapes.** Every body steps up
+  0.075 m, except ten creatures whose collision shape is too small for Unity to allow it: they step up 0.039–0.07 m, so
+  a one-notch curb (0.05 m) can stop the smallest while the route plans over it. *Recommendation: make their shapes
+  just tall enough for 0.075 m; nobody sees a collision shape.* — **0.5 days**
+
 ---
 
 ## Not scheduled at all
 
-Named so nobody thinks they were forgotten: class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam, and live-service operations — monitoring, anti-cheat and a way to patch a running game. Hosting has been decided and costed; none of the rest is started.
+Named so nobody thinks they were forgotten: class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam (the play-test is handed out without it), and live-service operations — monitoring, anti-cheat and a way to patch a running game. None of it is started.
 
 ---
 

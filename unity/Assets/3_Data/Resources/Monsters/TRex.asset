@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.trex
   displayName: TRex
   kind: 0
-  size: 3
+  size: 2.8
   biome: 9
   sheet: TRex
   weight: 4

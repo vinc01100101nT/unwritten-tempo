@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.grey-trex
   displayName: Grey Trex
   kind: 0
-  size: 3
+  size: 2.8
   biome: 10
   sheet: Grey Trex
   weight: 3

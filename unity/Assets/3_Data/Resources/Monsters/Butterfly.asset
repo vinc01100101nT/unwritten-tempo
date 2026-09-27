@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.butterfly
   displayName: Butterfly
   kind: 0
-  size: 0
+  size: 0.15
   biome: 0
   sheet: Butterfly
   weight: 3

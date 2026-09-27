@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.goldracoon
   displayName: GoldRacoon
   kind: 0
-  size: 2
+  size: 0.3
   biome: 0
   sheet: GoldRacoon
   weight: 3

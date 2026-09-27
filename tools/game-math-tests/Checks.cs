@@ -657,6 +657,25 @@ static class Checks
         }
     }
 
+    // THE ONE WALKING RULE every body and every route obeys. A wrong answer here is silent: a creature that will not
+    // climb a hill, or plans a route up a ledge it then walks into, looks like "the AI being dumb" for weeks.
+    const string WalkF = "unity/Assets/Scripts/GroundElevation.cs";
+    static void WalkingRule()
+    {
+        float t20 = (float)Math.Tan(20.0 * Math.PI / 180.0), t50 = (float)Math.Tan(50.0 * Math.PI / 180.0);
+        float t44 = (float)Math.Tan(44.0 * Math.PI / 180.0);
+        That(GroundElevation.Walkable(0.05f, 0.5f, 0f, 0f), WalkF, "a one-notch curb (0.05) between flat ground must be walkable");
+        That(!GroundElevation.Walkable(0.1f, 0.5f, 0f, 0f), WalkF, "a two-notch ledge (0.1) between flat ground must be a wall");
+        That(GroundElevation.Walkable(0.5f * t20, 0.5f, t20, t20), WalkF, "a 20-degree hillside must be walkable");
+        That(GroundElevation.Walkable(0.5f * t44, 0.5f, t44, t44), WalkF, "a 44-degree slope must be walkable (the limit is 45)");
+        That(!GroundElevation.Walkable(0.5f * t50, 0.5f, t50, t50), WalkF, "a 50-degree slope must be a wall (the limit is 45)");
+        That(GroundElevation.Walkable(0.09f, 0.5f, 0f, t20), WalkF, "the foot of a 20-degree slope, flat on one side, must be walkable");
+        That(!GroundElevation.Walkable(0.25f, 0.5f, t20, 0f), WalkF, "a 0.25 drop beside a 20-degree slope must be a wall");
+        That(!GroundElevation.Walkable(1.5f, 0.5f, 0f, 0f), WalkF, "a cliff must be a wall");
+        That(GroundElevation.Walkable(-0.05f, 0.5f, 0f, 0f) == GroundElevation.Walkable(0.05f, 0.5f, 0f, 0f), WalkF,
+             "down a step and up it must get the same answer");
+    }
+
     static int Main()
     {
         ExperienceCurve();
@@ -674,6 +693,7 @@ static class Checks
         BuffBonus();
         TimedEffectPause();
         RegenPerSecond();
+        WalkingRule();
 
         if (failures == 0)
         {

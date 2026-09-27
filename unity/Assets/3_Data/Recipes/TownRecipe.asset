@@ -28,6 +28,9 @@ MonoBehaviour:
   pathWidth: 4.5
   pathWander: 0.732
   pathSmoothness: 1
+  cliffHeight: 0
+  cliffPassWidth: 8
+  cliffMeetingPoints: 0
   propGroups:
   - label: Houses
     prefabs: []

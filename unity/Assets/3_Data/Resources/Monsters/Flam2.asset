@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.flam2
   displayName: Flam2
   kind: 0
-  size: 1
+  size: 0.7
   biome: 14
   sheet: Flam2
   weight: 1

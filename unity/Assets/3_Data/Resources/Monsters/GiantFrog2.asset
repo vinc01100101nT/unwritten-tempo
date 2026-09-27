@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.giantfrog2
   displayName: GiantFrog2
   kind: 1
-  size: 3
+  size: 2.2
   biome: 10
   sheet: GiantFrog2
   weight: 0

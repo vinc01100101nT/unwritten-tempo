@@ -35,6 +35,19 @@ public static class MonsterCatalog
 
     public static IReadOnlyList<MonsterDef> All { get { EnsureLoaded(); return _all; } }
 
+    /// <summary>The highest level any creature in the catalog has — the top of the shadow ladder. 1 when the catalog
+    /// is empty.</summary>
+    public static int HighestLevel
+    {
+        get
+        {
+            EnsureLoaded();
+            int top = 1;
+            foreach (var d in _all) if (d != null && d.level > top) top = d.level;
+            return top;
+        }
+    }
+
     /// <summary>How many mob assets are loaded. 0 = migration not run yet → callers should fall back to MobRoster.</summary>
     public static int Count { get { EnsureLoaded(); return _all.Length; } }
 

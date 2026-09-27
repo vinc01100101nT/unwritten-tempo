@@ -1,12 +1,4 @@
 {
-  "6846ae7b-84f0-4b36-83c5-7b9b5cb27050": {
-    "counts": {
-      "build-game.sh client": 2
-    },
-    "told": [
-      "build-game.sh client"
-    ]
-  },
   "7c69e1a3-4830-490f-a8d2-3f1fccafeb0a": {
     "counts": {
       "check-perf-hotpaths.py 2>&1": 5,
@@ -23,6 +15,11 @@
       "recompile 2>&1",
       "recompile _status"
     ]
+  },
+  "966fe462-842a-4f3c-9675-542a1950b59d": {
+    "counts": {
+      "build-game.sh server": 1
+    }
   },
   "9b455eae-e360-4634-a5b1-1471fd7bd6f7": {
     "counts": {

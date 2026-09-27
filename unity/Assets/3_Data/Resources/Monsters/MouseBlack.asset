@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mouseblack
   displayName: MouseBlack
   kind: 0
-  size: 0
+  size: 0.12
   biome: 4
   sheet: MouseBlack
   weight: 1

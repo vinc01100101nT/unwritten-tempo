@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 150
+    level: 160
     str: 99
-    agi: 83
+    agi: 93
     vit: 99
-    intel: 57
-    dex: 83
-    luk: 56
+    intel: 66
+    dex: 92
+    luk: 66
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 000000000900000002000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 150
+  weaponMasteryLevel: 160
 --- !u!114 &892378015828775312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Ulrich
+  bossName: Silent Snow

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.giantracoon
   displayName: GiantRacoon
   kind: 1
-  size: 3
+  size: 1.8
   biome: 0
   sheet: GiantRacoon
   weight: 0

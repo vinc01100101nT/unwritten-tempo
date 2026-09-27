@@ -452,6 +452,7 @@ public class MapServerLink : MonoBehaviour
             playerPort = GameNetwork.PlayerPort,
             maps = maps.ToArray(),
             build = CharacterBuild,
+            startingMap = startingMap,
             // HOW BUSY THIS ONE IS, so the character server can put a zone on the quietest process instead of
             // guessing. People first, because a person costs far more than a creature and is the thing a zone
             // placed here would have to share a frame with.
@@ -522,6 +523,10 @@ public class MapServerLink : MonoBehaviour
         public int playerPort;
         public string[] maps;
         public string build;
+
+        // Where a character nobody has played yet begins — the character server has no map list of its own, so
+        // this is how it learns which map to bring up for them.
+        public string startingMap;
 
         // How busy this process is right now — the two numbers the character server weighs when it decides
         // which process a zone nobody is holding should be brought up on.

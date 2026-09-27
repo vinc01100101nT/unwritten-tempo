@@ -74,11 +74,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**Neutral · Water · Earth · Fire · Wind · Poison · Holy · Shadow · Ghost · Undead**"
+      "text": "**Neutral · Water · Earth · Fire · Wind · Poison · Holy · Dark · Ghost · Undead**"
     },
     {
       "type": "paragraph",
-      "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Shadow. A skill keeps its own element — a fire bolt is Fire whoever casts it; only ordinary attacks take the attacker's element."
+      "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Dark. A skill keeps its own element — a fire bolt is Fire whoever casts it; only ordinary attacks take the attacker's element."
     },
     {
       "type": "paragraph",
@@ -95,7 +95,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Monsters come in **Small, Medium, Large and XL** sizes (see *Monsters*), and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"
+      "text": "Monsters come in **Small, Medium and Large** sizes (see *Monsters*), and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"
     },
     {
       "type": "heading",

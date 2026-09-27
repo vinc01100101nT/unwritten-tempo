@@ -1,47 +1,54 @@
 using UnityEngine;
 
-/// <summary>A creature's body size. Medium is a character's size — the player, the townsfolk and every shadow stand
-/// exactly this tall. Serialized by int on every creature asset, so order is load-bearing: append, never insert.</summary>
+/// <summary>A creature's size GROUP — the three a card or a weapon's size penalty will ask about. Never authored: it is
+/// worked out from the creature's own size number (<see cref="MobSizes.GroupOf"/>). No asset stores it; the order
+/// matters only because the weapon-vs-size chart's columns follow it.</summary>
 public enum MobSize
 {
     Small = 0,
     Medium = 1,
     Large = 2,
-    XL = 3,
 }
 
 /// <summary>
-/// THE SIZE TABLE — the one place a size's number is written. A creature stands <see cref="Multiple"/> times a
-/// character's height, and its body counts that same multiple for melee reach, so how big it LOOKS and how far it
-/// REACHES read one number and can never drift apart. Plain arithmetic, no components: <see cref="MobBody"/> applies it.
+/// THE SIZE TABLE. A creature's size is ONE number, how many times a character's height it stands — Medium 1 is a
+/// character, the player, the townsfolk and every shadow. Its body counts that same number for melee reach, so how big
+/// it LOOKS and how far it REACHES read one number and can never drift apart. Which of the three size groups it belongs
+/// to is worked out from that number by the ranges here, so the group can never disagree with the size either.
+/// Plain arithmetic, no components: <see cref="MobBody"/> applies it.
 /// </summary>
 public static class MobSizes
 {
-    /// <summary>How many times a character's height this size stands — and, the same number, how big its body counts
-    /// for melee contact.</summary>
-    public static float Multiple(MobSize s)
-    {
-        switch (s)
-        {
-            case MobSize.Small: return 0.3f;
-            case MobSize.Large: return 2.4f;
-            case MobSize.XL:    return 5.2f;
-            default:            return 1f;
-        }
-    }
+    /// <summary>Below this a creature is Small.</summary>
+    public const float SmallBelow = 0.6f;
+    /// <summary>Above this a creature is Large; from <see cref="SmallBelow"/> up to and including this, Medium.</summary>
+    public const float LargeAbove = 1.5f;
+    /// <summary>The largest size a creature may have.</summary>
+    public const float Largest = 5.2f;
+    /// <summary>The smallest size a creature may have — above zero, so no creature can be authored invisible.</summary>
+    public const float Smallest = 0.1f;
+    /// <summary>A character's size, and every shadow's.</summary>
+    public const float Character = 1f;
 
-    /// <summary>The size a creature actually has: a shadow is a character, so it is always Medium whatever its asset
-    /// says; every other kind has the size it was authored with.</summary>
-    public static MobSize Of(CreatureKind kind, MobSize authored) =>
-        kind == CreatureKind.Shadow ? MobSize.Medium : authored;
+    /// <summary>An authored size held inside the range a creature may have.</summary>
+    public static float Clamp(float size) => Mathf.Clamp(size, Smallest, Largest);
 
-    /// <summary>World height, feet to crown, of a creature of size <paramref name="s"/> beside a character
+    /// <summary>Which size group a creature of this size belongs to.</summary>
+    public static MobSize GroupOf(float size) =>
+        size < SmallBelow ? MobSize.Small : size <= LargeAbove ? MobSize.Medium : MobSize.Large;
+
+    /// <summary>The size a creature actually has: a shadow is a character, so it is always
+    /// <see cref="Character"/> whatever its entry says; every other kind has the size it was authored with.</summary>
+    public static float Of(CreatureKind kind, float authored) =>
+        kind == CreatureKind.Shadow ? Character : Clamp(authored);
+
+    /// <summary>World height, feet to crown, of a creature of size <paramref name="size"/> beside a character
     /// <paramref name="characterHeight"/> tall.</summary>
-    public static float Height(MobSize s, float characterHeight) => characterHeight * Multiple(s);
+    public static float Height(float size, float characterHeight) => characterHeight * size;
 
-    /// <summary>Melee-contact scale of a body of size <paramref name="s"/>, against a character's
+    /// <summary>Melee-contact scale of a body of size <paramref name="size"/>, against a character's
     /// <paramref name="characterScale"/> — the value <see cref="UnitScale.MeleeBlend"/> takes.</summary>
-    public static float MeleeScale(MobSize s, float characterScale) => characterScale * Multiple(s);
+    public static float MeleeScale(float size, float characterScale) => characterScale * size;
 
     /// <summary>The uniform scale that makes art whose crown sits <paramref name="crownAtScaleOne"/> above its feet at
     /// scale one stand <paramref name="height"/> tall. Art with no measured crown keeps scale one.</summary>
@@ -54,7 +61,7 @@ public static class MobSizes
 /// creature is made, so a prefab baked before a size edit corrects itself. A flat creature is scaled so its art stands
 /// its size's height; its collision capsule rides that scale; its routing footprint grows to fit a body wider than
 /// <see cref="RoutingRadius"/> (never shrinks below it); and its brain learns the size its melee reach reads. A shadow's 3D body is
-/// fitted by <see cref="MobShadow3DVisual"/> instead, so only its brain is told (Medium).
+/// fitted by <see cref="MobShadow3DVisual"/> instead, so only its brain is told (a character's size, 1).
 /// </summary>
 public static class MobBody
 {
@@ -62,9 +69,9 @@ public static class MobBody
     /// obstacles with. A body wider than this routes with its own width instead.</summary>
     public const float RoutingRadius = 0.3f;
 
-    public static void Fit(GameObject go, CreatureKind kind, MobSize authored)
+    public static void Fit(GameObject go, CreatureKind kind, float authored)
     {
-        MobSize size = MobSizes.Of(kind, authored);
+        float size = MobSizes.Of(kind, authored);
         var brain = go.GetComponent<MonsterAI3D>();   // perf-ok: once per creature made
         if (brain != null) brain.size = size;
         if (CreatureKinds.Is3D(kind)) return;

@@ -1392,13 +1392,15 @@ MonoBehaviour:
   view: {fileID: 57375486454147563}
   blipRoot: {fileID: 9194040257217233294}
   viewRadius: 20
-  camHeight: 120
-  renderHz: 20
-  maxRenderHz: 120
-  textureSize: 256
+  minViewRadius: 8
+  maxViewRadius: 60
+  zoomStep: 1.5
   toggleKey: 109
   playerColor: {r: 0.35, g: 1, b: 0.45, a: 1}
   mobColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  eliteColor: {r: 0.7, g: 0.35, b: 1, a: 1}
+  shadowColor: {r: 1, g: 0.6, b: 0.15, a: 1}
+  otherPlayerColor: {r: 1, g: 1, b: 1, a: 1}
   portalColor: {r: 0.45, g: 0.75, b: 1, a: 1}
   blipSize: 7
   portalBlipScale: 1.6
@@ -1745,8 +1747,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Spring \xB7 Day 1\nClear"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2902,8 +2904,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: HP
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3482,8 +3484,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 0 z
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4176,8 +4178,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: MP
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

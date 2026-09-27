@@ -42,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.21741082, y: 0.21741082, z: 0.21741082}
+  m_LocalScale: {x: 0.94211346, y: 0.94211346, z: 0.94211346}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -141,7 +141,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.19566973
+  m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -190,7 +190,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 7
+  element: 6
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -231,7 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
-  size: 0
+  size: 1.3
   simulateRadius: 28
 --- !u!114 &7155137873378329514
 MonoBehaviour:
@@ -247,7 +247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
   gearQuality: 5
-  gearFolds: 30
+  gearFolds: 28
   gearInkTier: 5
 --- !u!114 &8490391805690832549
 MonoBehaviour:
@@ -262,13 +262,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 99
-    str: 63
-    agi: 40
-    vit: 72
-    intel: 40
-    dex: 54
-    luk: 38
+    level: 92
+    str: 58
+    agi: 38
+    vit: 67
+    intel: 37
+    dex: 50
+    luk: 35
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -283,7 +283,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 99
+  weaponMasteryLevel: 92
 --- !u!114 &4948777907851585585
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,8 +405,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.04905
-  halfWidth: 0.072912164
+  halfHeight: 0.21254998
+  halfWidth: 0.3159527
 --- !u!114 &7610894445615506494
 MonoBehaviour:
   m_ObjectHideFlags: 0

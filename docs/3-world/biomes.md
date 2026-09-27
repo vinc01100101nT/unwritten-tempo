@@ -1,7 +1,7 @@
 ---
-status: "Ground tiles DONE for all 14 biomes (33 tiles in the project). The biome → tile and biome → prop matching below was agreed by the user on 2026-09-25. Generator steps 1, 2, 4 and 5 DONE (2026-09-25): all 14 biomes are rows in the Biome Table, each on its own tiles, with a test map each and a check that guards the table; step 3, walking the test maps in the game, is the one step left."
+status: "Ground tiles DONE for all 14 biomes (33 tiles in the project). The biome → tile and biome → prop matching below was agreed by the user on 2026-09-25. Generator steps 1, 2, 4 and 5 DONE (2026-09-25): all 14 biomes are rows in the Biome Table, each on its own tiles, with a test map each and a check that guards the table; step 3, walking the test maps in the game, is the one step left. Ground levels (2026-09-27): Grassland only, built into its test map test_grassland, not walked yet. Rock cliffs lining the roads (2026-09-27): a map recipe setting, built into test_grassland_cliffs, not walked yet."
 owner: vince
-last-updated: 2026-09-25
+last-updated: 2026-09-27
 tags:
   - world-content
 ---
@@ -151,27 +151,47 @@ user's five steps:
 1. **Planning** — done (2026-09-25).
 2. **One biome first: Forest** — done (2026-09-25).
    - **The Biome Table** (`unity/Assets/3_Data/Recipes/BiomeTable.asset`) is the one place a biome's look lives: one
-     row per biome with its main ground, patch and road tiles, its colour wash, and which props each prop category
-     means in that biome (a category left out uses the whole pack list; a category listed with no props places
-     nothing). A map's own road choice in the World Creator still wins over the biome's road.
-   - Forest's row: mud main ground, leaf-litter patches, soil road; "Flowers" means ferns, mushrooms and the bush;
-     "Landmarks" means the two tree stumps.
-   - Trees in the field template are scattered over the whole map (they used to stand only in a ring on the map's
-     edge) — changed 2026-09-25 at the user's instruction, so every field map generated from now on has them.
-   - Grass in the field template grows in **bunches** (2026-09-25, the user's instruction): each bunch is one or more
-     touching 2.5 m ground-tile cells in any shape, filled densely, never on a road, growing under trees and around
-     rocks. 50 bunches of up to 24 cells each cover about three quarters of a 60 m map (measured 73% and 77% on
-     two Forest test maps), with about 11 plants in every grassy cell — 4,700 and 5,200 grass plants per map, each at
-     full size instead of 30%. The frame-rate cost of that many plants has not been measured yet.
-   - **Every biome uses the same patch amount, 0.9** (the user's call, 2026-09-25): patches cover about a third of
-     the ground (33–44% measured on the Forest maps). The map's own amount laid only a few small spots. **Volcanic is
-     the one exception, at 0.5**, because its patches are the glowing lava cracks and real lava glows only in thin
-     lines (approved 2026-09-25 as one of the reference-sheet wins).
-3. **Testing in the game** — NOT DONE. Thirteen linked test maps, one per biome except Grassland, wait to be
-   walked: `test_forest_a` ↔ `test_highland` ↔ `test_peaks` ↔ `test_snow` ↔ `test_steppe` ↔ `test_coast` ↔ `test_desert` ↔ `test_volcanic` ↔
+     row per biome with its main ground, patch and road tiles, its colour wash, how high its ground rises, how wide
+     its hills are and how many levels it settles into, and which props each prop category means in that biome (a category left out uses the whole
+     pack list; a category listed with no props places nothing). A map's own road choice in the World Creator still
+     wins over the biome's road.
+   - **Ground levels** (2026-09-27, the user's request): a ground height above 0 raises the ground into hills, with
+     the collision on the same raised surface, so feet, props, doors and creatures all stand on them. With a level
+     count of 2 or more the hills settle into that many flat levels joined by slopes, each level covering about the
+     same share of the map; with 0 they are smooth rolling mounds. No slope is steeper than the biome's steepest
+     slope: where the ground would be, the higher side's edge is cut back into a ramp of that slope, so the levels
+     keep their heights. Only Grassland has any: 3 levels at 0, 0.6 and 1.2 m (a character is 0.5 m tall), hills
+     about 16 m across, slopes up to 20°. On `test_grassland` that measured 27% / 36% / 36% of the ground at the
+     three levels and a steepest slope of 19.6°. Players and creatures walk every one of those slopes by the same
+     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). A map already
+     built keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
+     re-imported through it comes back flat.
+   - **Cliffs** (2026-09-27, the user's request): a map recipe's cliff height above 0 raises all the ground farther
+     than half the pass width from every road, and lines the pass with one smooth rock surface: a carved face
+     (columns and rock bands) whose foot curves into the pass floor, and a rounded shoulder at the top that rolls back
+     into the grass. On a cliff map the biome's ground levels go on the cliff tops, not in the pass: the pass floor is
+     flat, so everything in it can walk the whole pass, and each cliff stands its height plus the level of the ground
+     behind it (1.5–2.7 m on `test_grassland_cliffs`), so its edge rises and falls. No stretch is straight: the
+     cliff's edge wanders up to 0.8 m in toward the road and out again (an 8 m pass is 6.4–9.6 m wide), every corner —
+     where passes meet, where a road bends sharply — is rounded, and the rim swells up to 0.35 m. Rock also lines the
+     map's own edge 1.5 m in, so a pass running to the edge ends in a curved cliff instead of opening onto nothing.
+     **Meeting points** (a recipe count, chosen at random along the pass, at least 15 m apart and 6 m in from the map's
+     edge): there a cliff shrinks to nothing within 1.5 m of the spot and back to full height by 10 m, and its high
+     ground slopes down to meet the pass, so a player can walk up onto the top; on `test_grassland_cliffs` (3 of them)
+     walking straight up measured 22.7–25.6° at the steepest. The rock and the grass fade into each other over the
+     shoulder and at the foot; the grass on top is the map's own ground. The cliff collides exactly as it is drawn:
+     feet stand on its grass top, bodies stop against its carved face, and creatures chase up and down the
+     meeting points like a player does.
+     Nothing is placed in the band the cliff takes up. The rock is the gravel ground tile until a rock-face tile
+     exists. The only map using it is `test_grassland_cliffs` (1.5 m cliffs, 8 m pass, 3 meeting points). The World
+     Creator cannot set cliffs on a map yet, and the Map Painter does not carry them.
+3. **Testing in the game** — NOT DONE. Fifteen linked test maps, one per biome plus a Grassland map with cliffs,
+   wait to be walked: `test_grassland_cliffs` ↔ `test_grassland` ↔ `test_forest_a` ↔ `test_highland` ↔ `test_peaks` ↔ `test_snow` ↔ `test_steppe` ↔ `test_coast` ↔ `test_desert` ↔ `test_volcanic` ↔
    `test_swamp` ↔ `test_sacred` ↔ `test_haunted` ↔ `test_mist` ↔ `test_corrupted`, each 60 m, joined west to east by
    one door each way. Each has the same creatures as `test_forest_a` (32 Grassland normals and commons, levels 1–99,
-   within 25 m of the centre), because no creature belongs to any of the nine new biomes yet.
+   within 25 m of the centre), because no creature belongs to any of the nine new biomes yet. `test_grassland`
+   (added 2026-09-27 to try the Grassland ground levels) is the exception: its row asks for Grassland's own creatures, and
+   so do the three small areas of `test_grassland_cliffs`, which sit on its road so nothing is placed up on a cliff.
 4. **All biomes** — done (2026-09-25). The nine new biomes (Highland, Peaks, Steppe, Coast, Swamp, Sacred, Haunted,
    Mist, and Forest before them) were appended to the END of the biome list — inserting one in the middle would
    silently change every creature's biome — and Snow, Desert, Volcanic and Corrupted moved off the general tiles and

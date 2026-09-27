@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.heartred
   displayName: HeartRed
   kind: 0
-  size: 0
+  size: 0.4
   biome: 4
   sheet: HeartRed
   weight: 3

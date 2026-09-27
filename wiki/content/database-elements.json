@@ -1,0 +1,12 @@
+{
+ "title": "Elements",
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "Rows are the attack's element, columns the defender's element. The level is the defender's element level. Below 0% the hit heals the defender."
+  },
+  {
+   "type": "elementTable"
+  }
+ ]
+}

@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -6,20 +5,17 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// One-click setup for the Inventory and Character windows: ensures the starter Card assets exist,
-/// then drops a canvas carrying <see cref="ProgressionWindows"/> (+ its <see cref="InventoryStore"/>)
+/// One-click setup for the Inventory and Character windows: drops a canvas carrying
+/// <see cref="ProgressionWindows"/> (+ its <see cref="InventoryStore"/>)
 /// into the open scene. Press Play and toggle with B / C (Esc closes). Reads the live <see cref="Character"/> from the Systems scene for real stats.
 /// </summary>
 public static class ProgressionWindowsBuilder
 {
     const string CanvasName = "ProgressionWindowsCanvas";
-    const string CardDir = "Assets/3_Data/Resources/Cards";
 
     [MenuItem("Tools/unwritten/UI/Build Progression Windows", priority = 121)]
     static void Build()
     {
-        EnsureStarterCards();
-
         var existing = GameObject.Find(CanvasName);
         if (existing != null) Undo.DestroyObjectImmediate(existing);
 
@@ -47,37 +43,5 @@ public static class ProgressionWindowsBuilder
         Debug.Log("[unwritten] Built Progression Windows (Inventory/Character). Press Play: " +
                   "B = Inventory, C = Character, Esc = close. Stats read the live Character " +
                   "(load via Systems scene); layout works standalone too.");
-    }
-
-    public static void EnsureStarterCards()
-    {
-        EnsureFolder(CardDir);
-        AddCard("Andre Card",       "+20 ATK",          c => { c.bonusAttack = 20; });
-        AddCard("Poring Card",      "+2 LUK",           c => { c.bonusLuk = 2; });
-        AddCard("Whisper Card",     "+6 ASPD",          c => { c.bonusAspdPercent = 6; });
-        AddCard("Zipper Bear Card", "+30 ATK, -3 ASPD", c => { c.bonusAttack = 30; c.bonusAspdPercent = -3; });
-        AssetDatabase.SaveAssets();
-    }
-
-    static void AddCard(string name, string blurb, System.Action<Card> set)
-    {
-        string path = $"{CardDir}/{name}.asset";
-        var card = AssetDatabase.LoadAssetAtPath<Card>(path);
-        bool isNew = card == null;
-        if (isNew) card = ScriptableObject.CreateInstance<Card>();
-        card.displayName = name;
-        card.blurb = blurb;
-        set(card);
-        if (isNew) AssetDatabase.CreateAsset(card, path);
-        else EditorUtility.SetDirty(card);
-    }
-
-    static void EnsureFolder(string path)
-    {
-        if (AssetDatabase.IsValidFolder(path)) return;
-        var parent = Path.GetDirectoryName(path).Replace('\\', '/');
-        var leaf = Path.GetFileName(path);
-        if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
-        AssetDatabase.CreateFolder(parent, leaf);
     }
 }

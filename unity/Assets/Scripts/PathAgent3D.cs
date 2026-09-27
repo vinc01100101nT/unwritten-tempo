@@ -43,6 +43,10 @@ public class PathAgent3D : MonoBehaviour
     public bool separateWhenIdle = true;
 
     public Vector2 Facing { get; private set; } = Vector2.down;   // cardinal (x, z)
+    /// <summary>The last direction this agent travelled on the ground, in WORLD terms (x, z). Unlike
+    /// <see cref="Facing"/> it depends on no camera, so it is the one a server can send to the machines watching,
+    /// which each turn it into a picture for their own camera.</summary>
+    public Vector2 Heading { get; private set; } = Vector2.down;
     public bool Moving { get; private set; }
     public bool Arrived => !active;
 
@@ -76,6 +80,8 @@ public class PathAgent3D : MonoBehaviour
         // looks planted. Shrink it so the feet sit on the ground. Reads the single owner constant so every
         // unit shares one skin-width value (see CharacterSpec.capsuleSkinWidth).
         cc.skinWidth = CharacterSpec.Active.capsuleSkinWidth;
+        // THE SAME LEGS AS THE PLAYER: the one walking rule for step and slope, not whatever a baked prefab carried.
+        GroundElevation.ApplyWalkRules(cc);
     }
 
     /// <summary>Shove this agent in <paramref name="worldDir"/> at <paramref name="speed"/>, easing out
@@ -189,6 +195,7 @@ public class PathAgent3D : MonoBehaviour
             {
                 Vector3 g = toDest / left;
                 Facing = Facing3D.FromWorldDir(g);
+                Heading = new Vector2(g.x, g.z);
                 cc.Move((g * GlideSpeed(left) + Vector3.down * gravity) * Time.deltaTime);
                 Moving = true;
                 return;
@@ -219,6 +226,7 @@ public class PathAgent3D : MonoBehaviour
         {
             dir = Steer(transform.position, dir);
             Facing = Facing3D.FromWorldDir(dir);
+            if (dir.sqrMagnitude > 1e-6f) Heading = new Vector2(dir.x, dir.z);
             cc.Move((dir * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
         }
         else

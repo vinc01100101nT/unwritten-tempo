@@ -1,31 +1,24 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 /// <summary>
-/// Top-right HUD minimap for the 2.5D world. The backdrop comes from one of two sources, picked
-/// automatically per map; the moving <b>blips</b> layer on top is identical either way:
+/// Top-right HUD minimap for the 2.5D world. The backdrop is the current map's own picture, drawn once in the editor
+/// straight down from above (<see cref="MinimapCatalog"/>): it is loaded when you enter a map, let go when you leave,
+/// and slid under you as you walk. No camera renders the world for it.
 ///
-///  • <b>Baked image (preferred)</b> — if the loaded map has a <see cref="MinimapData"/> (a top-down
-///    snapshot baked at author-time by the Bake Minimap tool), the HUD shows that PNG and pans/zooms a
-///    UV window around the player. No second camera runs — basically free. This is the RO-style chart look.
-///  • <b>Live camera (fallback)</b> — for maps with no bake yet, a runtime orthographic camera mounted
-///    above the player renders the terrain into a <see cref="RenderTexture"/>. Created lazily and only
-///    while it's actually needed.
+/// On top of it, the billboards (player + mobs) are edge-on from straight above, so units are shown as projected UI
+/// <b>blips</b> (green = player, red = mobs from <see cref="MonsterAI3D.Active"/>), centred on the player and scaled by
+/// <see cref="viewRadius"/>. Fixed-north, like the classic RO minimap.
 ///
-/// In BOTH modes the billboards (player + mobs) are edge-on from straight above, so units are shown as
-/// projected UI <b>blips</b> (green = player, red = mobs from <see cref="MonsterAI3D.Active"/>), centred
-/// on the player and scaled by <see cref="viewRadius"/>. Fixed-north, like the classic RO minimap.
-///
-/// Built onto the persistent HUD by <see cref="UIShellBuilder"/>, so it survives map swaps with the rest
-/// of the UI. Performance (HARD constraint — see PERFORMANCE.md): the live camera is disabled and driven
-/// by a throttled manual <c>Render()</c>; blips reuse a pooled <see cref="Image"/> set + scratch — 0 B/frame.
+/// Built onto the persistent HUD by <see cref="UIShellBuilder"/>, so it survives map swaps with the rest of the UI.
+/// Performance (HARD constraint — see PERFORMANCE.md): a map change loads one picture; every other frame only moves a
+/// UV window, and blips reuse a pooled <see cref="Image"/> set + scratch — 0 B/frame.
 /// </summary>
 public class Minimap : MonoBehaviour
 {
     [Header("Wired by UIShellBuilder")]
-    public RawImage view;          // backdrop surface (baked image or live RT)
+    public RawImage view;          // backdrop surface: the current map's picture
     public RectTransform blipRoot; // clipped container the dots live in
 
     [Header("Tuning")]
@@ -37,14 +30,6 @@ public class Minimap : MonoBehaviour
     public float maxViewRadius = 60f;
     [Tooltip("How much one press of + or - zooms.")]
     public float zoomStep = 1.5f;
-    [Tooltip("How high above the player the live fallback camera sits.")]
-    public float camHeight = 120f;
-    [Tooltip("Live-camera re-render cap (Hz). 0 = follow the game's frame rate (so the terrain pans as smoothly " +
-             "as the world moves, up to 120). Blips/baked-image pan always track every frame regardless.")]
-    public float renderHz = 20f;
-    [Tooltip("Upper bound on the live re-render rate when following the frame rate, so it never exceeds the world cap.")]
-    public float maxRenderHz = 120f;
-    public int textureSize = 256;
     public KeyCode toggleKey = KeyCode.M;
 
     [Header("Blip colours")]
@@ -59,13 +44,13 @@ public class Minimap : MonoBehaviour
     [Tooltip("Portal blips are drawn this much bigger than unit blips (and clamped to the map edge when off-screen).")]
     public float portalBlipScale = 1.6f;
 
-    static readonly Rect FullRect = new Rect(0, 0, 1, 1);
-
-    Camera cam;                    // live fallback only (lazy)
-    RenderTexture rt;              // live fallback only (lazy)
     Transform player;
     Player3DController playerCtrl; // cached for WorldFacing (orients the arrow)
-    float nextRender;
+
+    // The map whose picture is showing, by MapManager.MapVersion — a map change is noticed by one integer compare.
+    int shownVersion = -1;
+    MinimapCatalog.Entry shown;
+    Texture2D picture;
 
     readonly List<Image> pool = new List<Image>();
     Sprite dotSprite;
@@ -77,11 +62,8 @@ public class Minimap : MonoBehaviour
 
     void Start()
     {
-        // A server has no screen and a dedicated server build ships no shaders, so asking the render pipeline
-        // to draw the map throws — every frame, forever. Stand down the same way this already does when its
-        // refs are missing: the map still exists on the server, nobody is looking at a picture of it. A client
-        // started with no window (a player reading the game as text) has no screen either, and its map camera
-        // fails the same way, about thirty times a second into its log.
+        // A server has no screen, and neither has a client started with no window (a player reading the game as
+        // text): nobody is looking at a minimap there, so it stands down rather than load pictures nobody sees.
         if (GameServer.IsServer || Application.isBatchMode) { enabled = false; return; }
 
         if (view == null || blipRoot == null)
@@ -179,8 +161,7 @@ public class Minimap : MonoBehaviour
 
     void OnDestroy()
     {
-        if (cam != null) Destroy(cam.gameObject);
-        if (rt != null) { rt.Release(); Destroy(rt); }
+        if (picture != null) Resources.UnloadAsset(picture);
     }
 
     GameObject Panel => view.transform.parent.gameObject;   // the themed HUD_Minimap frame
@@ -200,79 +181,51 @@ public class Minimap : MonoBehaviour
         }
         if (player == null) return;
 
-        var data = MinimapData.Current;
-        if (data != null && data.image != null) RenderStatic(data);
-        else                                     RenderLive();
+        ShowBackdrop();
 
         PlaceBlips();
         if (coordLabel != null) RefreshCoords();
     }
 
-    // ---- backdrop: baked image (pan/zoom a UV window around the player) --------
-    void RenderStatic(MinimapData data)
+    // ---- backdrop: the map's picture (pan/zoom a UV window around the player) ----
+    void ShowBackdrop()
     {
-        if (view.texture != data.image) view.texture = data.image;
+        if (MapManager.MapVersion != shownVersion)
+        {
+            shownVersion = MapManager.MapVersion;
+            SwapPicture(MapManager.CurrentMap);
+        }
+        if (shown == null) return;
 
-        float size = Mathf.Max(1f, data.worldSize);
-        Vector3 p = player.position;
-        float u = (p.x - data.worldMin.x) / size;     // player position as 0..1 across the map
-        float v = (p.z - data.worldMin.y) / size;
-        float hw = viewRadius / size;                 // half-window in UV
+        float size = Mathf.Max(1f, shown.worldSize);
+        // Where you stand INSIDE the map, the same coordinates the picture was drawn in.
+        Vector3 p = MapManager.InMap(player.position, MapManager.CurrentMap);
+        float u = (p.x - shown.worldMin.x) / size;     // player position as 0..1 across the map
+        float v = (p.z - shown.worldMin.y) / size;
+        float hw = viewRadius / size;                  // half-window in UV
         view.uvRect = new Rect(u - hw, v - hw, 2f * hw, 2f * hw);
     }
 
-    // ---- backdrop: live fallback camera ---------------------------------------
-    void RenderLive()
+    // Let the last map's picture go and load this one's. A map nobody has drawn shows no backdrop — only the blips —
+    // and says so once, so the missing picture is found rather than guessed at.
+    void SwapPicture(string map)
     {
-        EnsureCamera();
-        if (view.texture != rt) { view.texture = rt; view.uvRect = FullRect; }
-
-        Vector3 p = player.position;
-        cam.transform.position = new Vector3(p.x, p.y + camHeight, p.z);
-        cam.orthographicSize = viewRadius;
-
-        if (Time.unscaledTime >= nextRender)
+        if (picture != null) { Resources.UnloadAsset(picture); picture = null; }
+        var catalog = MinimapCatalog.Instance;
+        shown = catalog != null ? catalog.Find(map) : null;
+        if (shown != null) picture = MinimapCatalog.LoadPicture(map);
+        if (picture == null)
         {
-            // renderHz <= 0 → match the world's frame rate (the game targets 60; -1 = display refresh), so the
-            // terrain pans in lock-step with movement instead of stepping at a fixed low rate.
-            float hz = renderHz > 0f
-                ? renderHz
-                : Mathf.Clamp(Application.targetFrameRate > 0 ? Application.targetFrameRate : maxRenderHz, 30f, maxRenderHz);
-            nextRender = Time.unscaledTime + 1f / Mathf.Max(1f, hz);
-            // URP/Unity 6: manual Camera.Render() is unsupported — use a render request (with a legacy fallback).
-            var req = new RenderPipeline.StandardRequest();
-            if (RenderPipeline.SupportsRenderRequest(cam, req)) { req.destination = rt; RenderPipeline.SubmitRenderRequest(cam, req); }
-            else cam.Render();
+            shown = null;
+            if (!string.IsNullOrEmpty(map))
+                GameLog.Warn(LogCat.Unwritten, "No minimap picture for map '" + map + "' — its scene has not been drawn "
+                                               + "yet (Tools ▸ unwritten ▸ World ▸ Bake Minimaps).");
         }
+        view.texture = picture;
+        view.enabled = picture != null;
     }
 
-    void EnsureCamera()
-    {
-        if (cam != null) return;
-
-        rt = new RenderTexture(textureSize, textureSize, 16, RenderTextureFormat.Default)
-        { name = "MinimapRT", useMipMap = false, autoGenerateMips = false };
-        rt.Create();
-
-        var camGo = new GameObject("MinimapCamera") { hideFlags = HideFlags.DontSaveInEditor };
-        cam = camGo.AddComponent<Camera>();
-        cam.orthographic = true;
-        cam.orthographicSize = viewRadius;
-        cam.nearClipPlane = 0.3f;
-        cam.farClipPlane = camHeight + 200f;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.08f, 0.10f, 0.09f, 1f);
-        // Exclude UI and the weather overlay quads (rain / wet-puddles / snow all live on TransparentFX)
-        // so the minimap shows clean terrain, never the storm.
-        cam.cullingMask = ~((1 << LayerMask.NameToLayer("UI")) | (1 << LayerMask.NameToLayer("TransparentFX")));
-        cam.allowMSAA = false;
-        cam.allowHDR = false;
-        cam.targetTexture = rt;
-        cam.enabled = false;          // we call Render() ourselves on a throttle
-        camGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);   // straight down, fixed-north
-    }
-
-    // ---- blips (shared by both modes) -----------------------------------------
+    // ---- blips -----------------------------------------------------------------
     void PlaceBlips()
     {
         Vector2 half = blipRoot.rect.size * 0.5f;

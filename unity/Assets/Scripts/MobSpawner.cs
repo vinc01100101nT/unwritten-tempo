@@ -55,6 +55,10 @@ public static class MobSpawner
             health.element = def.element;
             health.elementLevel = def.elementLevel;
         }
+        // ITS NAME, from its data. The plate otherwise falls back to the object's name, which Unity has just made
+        // "<prefab>(Clone)" — and every readout that asks the plate for a name prints that suffix.
+        var plate = go.GetComponent<MobNameplate>();   // perf-ok: once per creature made
+        if (plate != null && !string.IsNullOrEmpty(def.displayName)) plate.displayName = def.displayName;
         // ITS GEAR'S GRADE, FOLDS AND INK come from its catalog entry, which OWNS them; the baked prefab only mirrors
         // what the baker saw. Its gear was already put on while it was being built, so a mirror that has gone stale —
         // the table edited without re-baking — is corrected here by putting it on again at the entry's settings.

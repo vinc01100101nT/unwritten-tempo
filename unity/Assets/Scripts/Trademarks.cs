@@ -49,6 +49,16 @@ public static class Trademarks
         return total;
     }
 
+    /// <summary>The chance a forge of <paramref name="weapon"/> rolls <paramref name="def"/> as its trademark — its
+    /// weight over the whole roll, 0 when it cannot be rolled. Read by the wiki's trademark table; never on a hot path.</summary>
+    public static float ChanceOf(SkillDef def, WeaponType weapon)
+    {
+        if (!Rollable(def, weapon)) return 0f;
+        int total = RollTotal(weapon);
+        Gather(weapon, out int ord, out int ult);
+        return total > 0 ? CraftingMath.TrademarkWeight(def.IsUltimate, ord, ult) / (float)total : 0f;
+    }
+
     /// <summary>The skill id a draw of <paramref name="roll"/> (0 to <see cref="RollTotal"/> − 1) lands on, or "" when
     /// the weapon has nothing to roll.</summary>
     public static string Pick(WeaponType weapon, int roll)

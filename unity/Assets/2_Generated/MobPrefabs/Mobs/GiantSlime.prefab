@@ -42,7 +42,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.9221913, y: 1.9221913, z: 1.9221913}
+  m_LocalScale: {x: 0.73930436, y: 0.73930436, z: 0.73930436}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -158,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
   moveSpeed: 1.7
-  agentRadius: 0.5766574
+  agentRadius: 0.3
   arriveRadius: 0.1
   repathInterval: 0.35
   repathThreshold: 0.6
@@ -190,7 +190,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 3
+  element: 0
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -231,7 +231,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
-  size: 3
+  size: 2
   simulateRadius: 28
 --- !u!114 &5649005124143557407
 MonoBehaviour:
@@ -246,9 +246,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
-  gearQuality: 4
-  gearFolds: 21
-  gearInkTier: 4
+  gearQuality: 3
+  gearFolds: 1
+  gearInkTier: 3
 --- !u!114 &525306364829365750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,13 +262,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 72
-    str: 46
-    agi: 28
-    vit: 53
-    intel: 27
-    dex: 39
-    luk: 27
+    level: 8
+    str: 9
+    agi: 5
+    vit: 10
+    intel: 5
+    dex: 8
+    luk: 5
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -283,7 +283,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 72
+  weaponMasteryLevel: 8
 --- !u!114 &2540954225837613378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -405,8 +405,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.85019994
-  halfWidth: 1.0904739
+  halfHeight: 0.327
+  halfWidth: 0.41941306
 --- !u!114 &2551222147840346299
 MonoBehaviour:
   m_ObjectHideFlags: 0

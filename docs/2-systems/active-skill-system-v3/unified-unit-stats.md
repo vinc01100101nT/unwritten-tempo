@@ -12,7 +12,7 @@ tags:
 
 **Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.RollWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
 
-**Not done:** nothing in the model, and the roster reset has been run (96 creatures, levels 1–160, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
+**Not done:** nothing in the model, and the roster reset has been run (98 creatures, levels 1–170, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
 
 ### The stat-point budget (added 2026-08-10)
 

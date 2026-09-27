@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.fish
   displayName: Fish
   kind: 0
-  size: 0
+  size: 0.3
   biome: 10
   sheet: Fish
   weight: 1

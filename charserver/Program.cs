@@ -117,7 +117,7 @@ app.MapPost("/map-servers", async (HttpContext http, MapServerRegistration? reg)
         }, statusCode: 409);
 
     var registered = maps.Register(reg.id, reg.address, reg.port, reg.playerPort, reg.maps ?? [], reg.build,
-                                   reg.players, reg.creatures);
+                                   reg.players, reg.creatures, reg.startingMap);
     Console.WriteLine($"[char] map server '{registered.Id}' at {registered.Address}:{registered.Port} " +
                       $"holds {registered.Maps.Length} map(s): {string.Join(", ", registered.Maps)} " +
                       $"[{registered.Players} player(s), {registered.Creatures} creature(s)]");
@@ -252,6 +252,6 @@ return 0;
 // `players` and `creatures` are how busy that process says it is — the two numbers a zone is placed by. An older
 // map server that does not send them registers as idle, which is honest: it has not told us otherwise.
 record MapServerRegistration(string? id, string? address, int port, int playerPort, string[]? maps, string? build,
-                             int players = 0, int creatures = 0);
+                             int players = 0, int creatures = 0, string? startingMap = null);
 record SpendBody(string? ticket);
 record MoveBody(string? map, string? accountId, bool isGm);

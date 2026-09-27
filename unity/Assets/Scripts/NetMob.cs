@@ -145,6 +145,12 @@ public class NetMob : NetworkBehaviour
     /// already holds sends nothing.</summary>
     [SyncVar] float netSpeed;
 
+    /// <summary>Which way this creature last travelled on the ground, in world terms (x, z). Only a flat-picture
+    /// creature needs it: each watcher turns it into the up / down / left / right picture for its own camera. A live-3D
+    /// creature's direction already rides on <see cref="netYaw"/>. Left alone while it stands, so it keeps facing the
+    /// way it last walked.</summary>
+    [SyncVar] Vector2 netHeading = Vector2.down;
+
     // ---- what this creature is DOING ---------------------------------------------------------------------
     // The action beat: which action, the moment it began on the clock both machines share, and how long it runs.
     // HELD AS A VALUE rather than shouted once, which is what lets somebody who only just started watching pick
@@ -291,6 +297,7 @@ public class NetMob : NetworkBehaviour
         // Slow or Haste folded into it — so a watcher picks the right gait AND churns the legs at the right
         // cadence for a slowed creature, neither of which a plain walking/not-walking flag could say.
         netSpeed = serverAgent != null && serverAgent.Moving ? serverAgent.moveSpeed : 0f;
+        if (!isShadow && netSpeed > 0f) netHeading = serverAgent.Heading;
 
         // WHAT IT WEARS, re-sent only when the worn set has changed — a new life's fresh gear, above all.
         if (serverGear != null && serverGear.Version != wornVersionSent) PublishWorn();
@@ -349,6 +356,9 @@ public class NetMob : NetworkBehaviour
     // frame on every creature on screen, and a per-frame component lookup at that rate is exactly what
     // PERFORMANCE.md bans. Null on a flat sprite creature, which has no such driver and needs none.
     Agent3DVisual viewVisual;
+    // The flat-picture animator, cached at build time for the same reason. Null on a live-3D creature, which
+    // destroys its own.
+    BillboardAnimator3D viewBillboard;
     // The copy's worn set, cached at build time: dressed from what the server wrote, never worked out.
     UnitEquipment viewGear;
     readonly System.Collections.Generic.List<WornList.Entry> wornEntries =
@@ -410,6 +420,7 @@ public class NetMob : NetworkBehaviour
             if (netActionAt > 0d) viewVisual.TellAction(netAction, netActionAt, netActionSeconds);
             viewVisual.TellHeld(netHasHeld, netHeld, netHeldWindow);
         }
+        if (viewBillboard != null) viewBillboard.TellTravel(netSpeed > 0f, netHeading);
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
         // nameplate below only redraws when it sees a different value anyway.
@@ -553,6 +564,8 @@ public class NetMob : NetworkBehaviour
         // Resolved AFTER the line above, or a body being given its live-3D driver for the first time would be
         // filed as having none and would never be told anything for the whole of its life.
         viewVisual = go.GetComponent<Agent3DVisual>();
+        // A live-3D creature destroys its flat-picture animator at the end of this frame, so it is never cached.
+        viewBillboard = isShadow ? null : go.GetComponent<BillboardAnimator3D>();
 
         // AND WHICH BODY THIS CREATURE WEARS, which is the server's to choose and never this machine's. Said even
         // when the name has not arrived yet: an empty one tells the creature to WAIT for it rather than draw one of
@@ -633,6 +646,7 @@ public class NetMob : NetworkBehaviour
         view = null;
         viewHealth = null;
         viewVisual = null;
+        viewBillboard = null;
         viewGear = null;
         WatchedTarget = null;
         viewLoading = false;

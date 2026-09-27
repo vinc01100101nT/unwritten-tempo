@@ -34,6 +34,22 @@
       "text": "Each biome carries a **themed set of monsters**, drawn by level, so a zone's danger and its inhabitants match its biome automatically."
     },
     {
+      "type": "heading",
+      "text": "The lie of the land"
+    },
+    {
+      "type": "paragraph",
+      "text": "The fields are not flat. Their ground rises and falls in **broad levels joined by slopes**, so there is always higher ground to climb and lower ground to look down on."
+    },
+    {
+      "type": "paragraph",
+      "text": "Some roads run through a **pass between rock cliffs**. You cannot climb a cliff face — but here and there a cliff runs out and its high ground **slopes down to meet the road**, and there you can walk up onto the top."
+    },
+    {
+      "type": "paragraph",
+      "text": "Monsters walk exactly the ground you walk: any slope you can climb, they can climb after you, and a cliff that stops you stops them too."
+    },
+    {
       "type": "quote",
       "text": [
         "*Status: the biome framework is in place. The specific map list, layouts, and named zones are still being built.*"

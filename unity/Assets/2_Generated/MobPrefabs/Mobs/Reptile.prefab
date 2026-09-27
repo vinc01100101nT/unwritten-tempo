@@ -189,7 +189,7 @@ MonoBehaviour:
   luk: 0
   hpRegenPerSecond: 0
   flee: 0
-  element: 3
+  element: 1
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -245,9 +245,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
-  gearQuality: 2
-  gearFolds: 12
-  gearInkTier: 2
+  gearQuality: 1
+  gearFolds: 9
+  gearInkTier: 1
 --- !u!114 &8564269986607981773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,13 +261,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 78
-    str: 51
-    agi: 41
-    vit: 50
-    intel: 30
-    dex: 41
-    luk: 29
+    level: 59
+    str: 38
+    agi: 31
+    vit: 37
+    intel: 22
+    dex: 31
+    luk: 22
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -282,7 +282,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 78
+  weaponMasteryLevel: 59
 --- !u!114 &2928767567939316247
 MonoBehaviour:
   m_ObjectHideFlags: 0

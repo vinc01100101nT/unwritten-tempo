@@ -16,7 +16,7 @@ element, and it is hit as that element. Players have no element of their own; th
 
 - **Ragnarok's four pre-renewal element tables, copied cell for cell** from rAthena's
   `db/pre-re/attr_fix.yml` (sha256 `f785222b…a7a6`, 400 cells, verified against the file). Rows are the attacking
-  element, columns the defending element; rAthena's *Dark* is our *Shadow*. The tables live in `Element.cs`, in whole
+  element, columns the defending element, with rAthena's element names. The tables live in `Element.cs`, in whole
   percent, and are pinned by the game-maths tests.
 - **Only the defending side has a level, 1 to 4.** An attack never does. The higher the level, the more the defender
   shrugs off what it resists and the harder it falls to what it is weak to.
@@ -44,11 +44,11 @@ A few cells, to read the shape:
 - **Levels by kind:** every **normal** creature is **level 1**, every **elite level 2**, every **shadow level 3**.
 - **Normals and elites** take their element from where they live, following the [World Map](../../3-world/world-map.md)'s
   biome table and the level tiers: a creature of levels 1–33 is only Neutral, Earth or Water; 34–66 adds Wind and
-  Fire; 67–99 adds Poison, Holy, Shadow, Ghost and Undead. Set 2026-09-26; each creature's value lives in its
+  Fire; 67–99 adds Poison, Holy, Dark, Ghost and Undead. Set 2026-09-26; each creature's value lives in its
   creature data only.
 - **The shadows' elements** cover all ten, as decided in the [World Map](../../3-world/world-map.md): Neutral — Still Oak
   (Shield); Holy — Morning Dew (Wand); Earth — Stone Bloom (Warhammer); Water — Silver Rain (Spear); Fire — Forest Fire (Axe),
-  Ashen Field (Staff); Shadow — Dusk Crow (Firearm); Undead — Black Lily (Scythe); Poison — Night Orchid (Dagger); Ghost — Silent Snow (Greatsword); Wind — Feather Rain (Bow), Blossom Wind (Sword). A shadow goes by its weapon's style. Only four of them — the Water, Earth, Fire and Wind ones —
+  Ashen Field (Staff); Dark — Dusk Crow (Firearm); Undead — Black Lily (Scythe); Poison — Night Orchid (Dagger); Ghost — Silent Snow (Greatsword); Wind — Feather Rain (Bow), Blossom Wind (Sword). A shadow goes by its weapon's style. Only four of them — the Water, Earth, Fire and Wind ones —
   can be answered with a converter today. (Full table in [Mob Roster](../../3-world/mob-roster.md).)
 - **A creature's ordinary attack** lands as: a weapon converter's element while one runs; otherwise its held
   weapon's element if that weapon HAS one; otherwise its own element. A weapon with no element (every weapon today)
@@ -80,7 +80,7 @@ Eight consumables, each running one skill with the **Element Converter** effect:
 - **Ghost is deliberately absent:** a level-1 Ghost armour takes 25% from every neutral hit.
 - **The effect works on creatures too** — any creature skill may carry it, with any of the ten elements.
 - **Drops:** a creature with an element adds its own element's two converters to the 30%-per-kill consumable roll; a
-  creature whose element has no converter (Neutral, Poison, Holy, Shadow, Ghost, Undead) never drops one. The element lives once, on the converter's skill; the item carries no copy.
+  creature whose element has no converter (Neutral, Poison, Holy, Dark, Ghost, Undead) never drops one. The element lives once, on the converter's skill; the item carries no copy.
 - **Weight 8, sell value 150** — the same as a Healing Potion.
 
 ## 4. Where it lives in the code

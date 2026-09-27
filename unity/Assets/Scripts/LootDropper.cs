@@ -69,7 +69,9 @@ public class LootDropper : MonoBehaviour
     // same time.
     static readonly List<Item> won = new List<Item>(40);
 
-    static Item MaterialFor(in CreatureLoot.Line line, int level)
+    /// <summary>The item a material line gives up for a creature of <paramref name="level"/> — read by the roll below
+    /// and by <c>/mobinfo</c>, so what a creature is said to drop is what it drops.</summary>
+    public static Item MaterialFor(in CreatureLoot.Line line, int level)
     {
         int step = CreatureLoot.StepFor(line, level);
         switch (line.kind)

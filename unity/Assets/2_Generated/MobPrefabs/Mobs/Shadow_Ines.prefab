@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 130
-    str: 88
-    agi: 70
-    vit: 88
-    intel: 47
-    dex: 70
-    luk: 46
+    level: 140
+    str: 95
+    agi: 76
+    vit: 95
+    intel: 50
+    dex: 75
+    luk: 50
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 090000000500000000000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 130
+  weaponMasteryLevel: 140
 --- !u!114 &2283299317693620707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: "In\xE9s"
+  bossName: Dusk Crow

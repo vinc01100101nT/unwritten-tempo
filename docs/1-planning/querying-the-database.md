@@ -227,7 +227,8 @@ select name, deleted_at
 `progress` is one JSON document, written by the game, in the game's own shape. Nothing is mirrored into
 columns beside it — so anything you want out of a save, you read out of the document.
 
-A character that has never been played carries `{}`.
+A character that has never been played carries only its look — `modelName`, `dyeSources`, `dyeTargets` — and no
+`version`.
 
 `->` returns JSON, `->>` returns text. To compare a number you must say it is a number:
 

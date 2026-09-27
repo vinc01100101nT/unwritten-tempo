@@ -26091,7 +26091,6 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 256
-  maxStep: 0.6
 --- !u!4 &2041310473
 Transform:
   m_ObjectHideFlags: 0

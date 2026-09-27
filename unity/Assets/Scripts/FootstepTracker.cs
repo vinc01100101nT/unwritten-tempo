@@ -194,12 +194,11 @@ public class FootstepTracker : MonoBehaviour
             // Reach the PLAYER's pose through the player-only visual, NOT by searching for any Character3DPose: every
             // townsperson and shadow mob carries one too, so a bare search starts returning an NPC's pose the moment
             // ambient life spawns — and the player's own footsteps would then be driven off a stranger's walk cycle.
-            // (Character3DVisual's own summary already warns about exactly this.)
-            if (pose == null)
-            {
-                var pv = FindAnyObjectByType<Character3DVisual>();
-                pose = pv != null ? pv.Pose as Character3DPose : null;
-            }
+            // (Character3DVisual's own summary already warns about exactly this.) Read from the one owner of "which
+            // body is mine", never searched for: the worn body is a Play-time object marked not-to-be-saved, and a
+            // scene search skips exactly those, so a search here found nothing and the player's steps never fired.
+            if (pose == null && StanceController.Player != null)
+                pose = StanceController.Player.Pose as Character3DPose;
             nextFind = Time.time + 1f;
         }
         if (player == null) return;

@@ -1,0 +1,8 @@
+{
+ "title": "World Map",
+ "blocks": [
+  {
+   "type": "worldMap"
+  }
+ ]
+}

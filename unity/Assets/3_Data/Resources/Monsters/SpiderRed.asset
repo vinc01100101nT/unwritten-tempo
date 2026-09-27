@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.spiderred
   displayName: SpiderRed
   kind: 0
-  size: 0
+  size: 0.3
   biome: 7
   sheet: SpiderRed
   weight: 4

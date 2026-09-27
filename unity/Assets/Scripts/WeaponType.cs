@@ -48,8 +48,8 @@ public static class WeaponTypes
 /// <c>[weaponType, mobSize]</c> multiplier on physical damage. <b>Not wired into combat yet</b> — this is the
 /// dormant data so flipping the mechanic on later is a one-line call (<see cref="Modifier"/>) with no data
 /// migration. Values are RO's size-penalty chart (the in-game table) normalised to multipliers (100→1.0).
-/// Defaults to 1.0 for anything unlisted, so it can never silently nerf a weapon you forgot to fill in — which
-/// includes <see cref="MobSize.XL"/>: the table has no XL column, and one is a design decision for when this is turned on.
+/// Defaults to 1.0 for anything unlisted, so it can never silently nerf a weapon you forgot to fill in. The size is a
+/// creature's size GROUP (<see cref="MobSizes.GroupOf"/>), never its size number.
 /// </summary>
 public static class WeaponSizes
 {

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.butterflyblue
   displayName: ButterflyBlue
   kind: 0
-  size: 0
+  size: 0.15
   biome: 12
   sheet: ButterflyBlue
   weight: 3

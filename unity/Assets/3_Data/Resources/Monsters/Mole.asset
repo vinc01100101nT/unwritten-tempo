@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mole
   displayName: Mole
   kind: 0
-  size: 1
+  size: 0.2
   biome: 7
   sheet: Mole
   weight: 2

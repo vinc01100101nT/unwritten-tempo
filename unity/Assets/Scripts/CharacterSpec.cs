@@ -107,10 +107,6 @@ public class CharacterSpec : ScriptableObject
     public float capsuleRadius = 0.15f;
     [Tooltip("Capsule centre height above the root. The VISUAL is seated on the ground separately.")]
     public float capsuleCenterY = 0.25f;
-    [Tooltip("Tallest step that can be climbed. Shares the pathfinder's cliff/stair threshold so what a character " +
-             "can walk up and what the router thinks it can walk up are the same number.")]
-    public float capsuleStepOffset = GroundElevation.MaxClimbStep;
-    public float capsuleSlopeLimit = 45f;
     [Tooltip("Low, so the capsule bottom rests on the ground instead of hovering.")]
     public float capsuleSkinWidth = 0.02f;
 
@@ -126,9 +122,9 @@ public class CharacterSpec : ScriptableObject
         cc.height = capsuleHeight;
         cc.radius = capsuleRadius;
         cc.center = new Vector3(0f, capsuleCenterY, 0f);
-        cc.stepOffset = capsuleStepOffset;
-        cc.slopeLimit = capsuleSlopeLimit;
         cc.skinWidth = capsuleSkinWidth;
+        // Step and slope are not this character's own: every body walks by the one rule (see GroundElevation).
+        GroundElevation.ApplyWalkRules(cc);
     }
 
     // ---- the swing ------------------------------------------------------------------------------------------------

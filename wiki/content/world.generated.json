@@ -1,0 +1,908 @@
+{
+    "note": "GENERATED from the game's world map (Resources/WorldAtlas) and the world layout's names by the editor (WikiExport), after any change to the game's data or code. Do NOT hand-edit: the next change overwrites this file.",
+    "picture": "assets/world-map.png",
+    "width": 1536,
+    "height": 1024,
+    "maps": [
+        {
+            "id": "lastline",
+            "name": "Lastline",
+            "type": "town",
+            "preview": "assets/minimaps/lastline.jpg",
+            "left": 0.5143229365348816,
+            "top": 0.4150390625,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "old_oak",
+            "name": "Old Oak",
+            "type": "town",
+            "preview": "assets/minimaps/old_oak.jpg",
+            "left": 0.3971354067325592,
+            "top": 0.3125,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "lst_fild01",
+            "name": "Lastline Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/lst_fild01.jpg",
+            "left": 0.4609375,
+            "top": 0.392578125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "prl_fild01",
+            "name": "Parley Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/prl_fild01.jpg",
+            "left": 0.3958333432674408,
+            "top": 0.421875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "olk_fild01",
+            "name": "Old Oak Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/olk_fild01.jpg",
+            "left": 0.3697916567325592,
+            "top": 0.236328125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "olk_dun01",
+            "name": "Old Oak Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/olk_dun01.jpg",
+            "left": 0.3255208432674408,
+            "top": 0.166015625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "olk_dun02",
+            "name": "Old Oak Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/olk_dun02.jpg",
+            "left": 0.3255208432674408,
+            "top": 0.212890625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "lst_fild02",
+            "name": "Lastline Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/lst_fild02.jpg",
+            "left": 0.48046875,
+            "top": 0.255859375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "gemmara",
+            "name": "Gemmara",
+            "type": "town",
+            "preview": "assets/minimaps/gemmara.jpg",
+            "left": 0.6315104365348816,
+            "top": 0.3515625,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "gmr_fild01",
+            "name": "Gemmara Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/gmr_fild01.jpg",
+            "left": 0.7083333134651184,
+            "top": 0.421875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "pluvenne",
+            "name": "Pluvenne",
+            "type": "town",
+            "preview": "assets/minimaps/pluvenne.jpg",
+            "left": 0.767578125,
+            "top": 0.47265625,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "plv_fild01",
+            "name": "Pluvenne Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/plv_fild01.jpg",
+            "left": 0.71484375,
+            "top": 0.587890625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "lst_fild03",
+            "name": "Lastline Field 3",
+            "type": "field",
+            "preview": "assets/minimaps/lst_fild03.jpg",
+            "left": 0.6302083134651184,
+            "top": 0.59765625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "hilt",
+            "name": "Hilt",
+            "type": "town",
+            "preview": "assets/minimaps/hilt.jpg",
+            "left": 0.6770833134651184,
+            "top": 0.205078125,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "hlt_fild02",
+            "name": "Hilt Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/hlt_fild02.jpg",
+            "left": 0.6041666865348816,
+            "top": 0.216796875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "hlt_fild01",
+            "name": "Hilt Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/hlt_fild01.jpg",
+            "left": 0.75390625,
+            "top": 0.255859375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "hlt_dun01",
+            "name": "Hilt Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/hlt_dun01.jpg",
+            "left": 0.8072916865348816,
+            "top": 0.17578125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "hlt_dun02",
+            "name": "Hilt Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/hlt_dun02.jpg",
+            "left": 0.83984375,
+            "top": 0.17578125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "hlt_dun03",
+            "name": "Hilt Dungeon 3",
+            "type": "dungeon",
+            "preview": "assets/minimaps/hlt_dun03.jpg",
+            "left": 0.8723958134651184,
+            "top": 0.17578125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "hrw_fild01",
+            "name": "Harrowen Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/hrw_fild01.jpg",
+            "left": 0.4088541567325592,
+            "top": 0.578125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "parley",
+            "name": "Parley",
+            "type": "town",
+            "preview": "assets/minimaps/parley.jpg",
+            "left": 0.34375,
+            "top": 0.37890625,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "tornel",
+            "name": "Tornel",
+            "type": "town",
+            "preview": "assets/minimaps/tornel.jpg",
+            "left": 0.2981770932674408,
+            "top": 0.4765625,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "harrowen",
+            "name": "Harrowen",
+            "type": "town",
+            "preview": "assets/minimaps/harrowen.jpg",
+            "left": 0.353515625,
+            "top": 0.59375,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "prl_fild02",
+            "name": "Parley Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/prl_fild02.jpg",
+            "left": 0.28515625,
+            "top": 0.3828125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "pennaryl",
+            "name": "Pennaryl",
+            "type": "town",
+            "preview": "assets/minimaps/pennaryl.jpg",
+            "left": 0.2669270932674408,
+            "top": 0.2587890625,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "pnr_fild01",
+            "name": "Pennaryl Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/pnr_fild01.jpg",
+            "left": 0.2135416716337204,
+            "top": 0.2509765625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "vlm_fild01",
+            "name": "Velmora Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/vlm_fild01.jpg",
+            "left": 0.16796875,
+            "top": 0.333984375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "trn_fild01",
+            "name": "Tornel Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/trn_fild01.jpg",
+            "left": 0.2265625,
+            "top": 0.353515625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "velmora",
+            "name": "Velmora",
+            "type": "town",
+            "preview": "assets/minimaps/velmora.jpg",
+            "left": 0.1692708283662796,
+            "top": 0.41015625,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "vlm_fild02",
+            "name": "Velmora Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/vlm_fild02.jpg",
+            "left": 0.109375,
+            "top": 0.431640625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "brm_fild02",
+            "name": "Brimstone Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/brm_fild02.jpg",
+            "left": 0.0377604179084301,
+            "top": 0.5048828125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "vlm_fild03",
+            "name": "Velmora Field 3",
+            "type": "field",
+            "preview": "assets/minimaps/vlm_fild03.jpg",
+            "left": 0.08984375,
+            "top": 0.2216796875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "vlm_dun01",
+            "name": "Velmora Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/vlm_dun01.jpg",
+            "left": 0.0520833320915699,
+            "top": 0.322265625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "vlm_dun02",
+            "name": "Velmora Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/vlm_dun02.jpg",
+            "left": 0.0846354141831398,
+            "top": 0.322265625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "vlm_dun03",
+            "name": "Velmora Dungeon 3",
+            "type": "dungeon",
+            "preview": "assets/minimaps/vlm_dun03.jpg",
+            "left": 0.1171875,
+            "top": 0.322265625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "brimstone",
+            "name": "Brimstone",
+            "type": "town",
+            "preview": "assets/minimaps/brimstone.jpg",
+            "left": 0.1614583283662796,
+            "top": 0.515625,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "brm_fild01",
+            "name": "Brimstone Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/brm_fild01.jpg",
+            "left": 0.216796875,
+            "top": 0.55859375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "cindrel",
+            "name": "Cindrel",
+            "type": "town",
+            "preview": "assets/minimaps/cindrel.jpg",
+            "left": 0.4427083432674408,
+            "top": 0.05859375,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "cdl_fild01",
+            "name": "Cindrel Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/cdl_fild01.jpg",
+            "left": 0.3795572817325592,
+            "top": 0.109375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "cdl_fild02",
+            "name": "Cindrel Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/cdl_fild02.jpg",
+            "left": 0.5162760615348816,
+            "top": 0.119140625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "cdl_dun01",
+            "name": "Cindrel Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/cdl_dun01.jpg",
+            "left": 0.5729166865348816,
+            "top": 0.0390625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "cdl_dun02",
+            "name": "Cindrel Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/cdl_dun02.jpg",
+            "left": 0.60546875,
+            "top": 0.0390625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "cdl_dun03",
+            "name": "Cindrel Dungeon 3",
+            "type": "dungeon",
+            "preview": "assets/minimaps/cdl_dun03.jpg",
+            "left": 0.6380208134651184,
+            "top": 0.0390625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "luminhal",
+            "name": "Luminhal",
+            "type": "town",
+            "preview": "assets/minimaps/luminhal.jpg",
+            "left": 0.890625,
+            "top": 0.427734375,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "lmh_fild01",
+            "name": "Luminhal Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/lmh_fild01.jpg",
+            "left": 0.8606770634651184,
+            "top": 0.4990234375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "kharnel",
+            "name": "Kharnel",
+            "type": "town",
+            "preview": "assets/minimaps/kharnel.jpg",
+            "left": 0.1419270783662796,
+            "top": 0.740234375,
+            "width": 0.0416666679084301,
+            "height": 0.0625
+        },
+        {
+            "id": "khn_fild02",
+            "name": "Kharnel Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild02.jpg",
+            "left": 0.0638020858168602,
+            "top": 0.6806640625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild01",
+            "name": "Kharnel Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild01.jpg",
+            "left": 0.20703125,
+            "top": 0.83203125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_dun01",
+            "name": "Kharnel Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun01.jpg",
+            "left": 0.02604166604578495,
+            "top": 0.8203125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun02",
+            "name": "Kharnel Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun02.jpg",
+            "left": 0.02604166604578495,
+            "top": 0.869140625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun03",
+            "name": "Kharnel Dungeon 3",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun03.jpg",
+            "left": 0.05859375,
+            "top": 0.91796875,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun04",
+            "name": "Kharnel Dungeon 4",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun04.jpg",
+            "left": 0.0911458358168602,
+            "top": 0.91796875,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_fild03",
+            "name": "Kharnel Field 3",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild03.jpg",
+            "left": 0.3828125,
+            "top": 0.7978515625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild04",
+            "name": "Kharnel Field 4",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild04.jpg",
+            "left": 0.5130208134651184,
+            "top": 0.841796875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild05",
+            "name": "Kharnel Field 5",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild05.jpg",
+            "left": 0.7317708134651184,
+            "top": 0.78515625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild07",
+            "name": "Kharnel Field 7",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild07.jpg",
+            "left": 0.8515625,
+            "top": 0.71484375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild06",
+            "name": "Kharnel Field 6",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild06.jpg",
+            "left": 0.8255208134651184,
+            "top": 0.83203125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "halcyra",
+            "name": "Halcyra",
+            "type": "town",
+            "preview": "assets/minimaps/halcyra.jpg",
+            "left": 0.1334635466337204,
+            "top": 0.0439453125,
+            "width": 0.0520833320915699,
+            "height": 0.078125
+        },
+        {
+            "id": "hcr_fild01",
+            "name": "Halcyra Field 1",
+            "type": "field",
+            "preview": "assets/minimaps/hcr_fild01.jpg",
+            "left": 0.0638020858168602,
+            "top": 0.0458984375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "hcr_fild02",
+            "name": "Halcyra Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/hcr_fild02.jpg",
+            "left": 0.2135416716337204,
+            "top": 0.0458984375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "last_bridge",
+            "name": "Last Bridge",
+            "type": "special",
+            "preview": "",
+            "left": 0.01627604104578495,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "hill_of_the_flame",
+            "name": "Hill of the Flame",
+            "type": "special",
+            "preview": "",
+            "left": 0.0846354141831398,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "thousand_gates",
+            "name": "Thousand Gates",
+            "type": "special",
+            "preview": "",
+            "left": 0.1529947966337204,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "iron_gate",
+            "name": "Iron Gate",
+            "type": "special",
+            "preview": "",
+            "left": 0.2213541716337204,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "masked_ballroom",
+            "name": "Masked Ballroom",
+            "type": "special",
+            "preview": "",
+            "left": 0.2897135317325592,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "burning_keel",
+            "name": "Burning Keel",
+            "type": "special",
+            "preview": "",
+            "left": 0.3580729067325592,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "everburning_plain",
+            "name": "Everburning Plain",
+            "type": "special",
+            "preview": "",
+            "left": 0.4264322817325592,
+            "top": 1.044921875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "sky_cairn",
+            "name": "Sky Cairn",
+            "type": "special",
+            "preview": "",
+            "left": 0.01627604104578495,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "tide_temple",
+            "name": "Tide Temple",
+            "type": "special",
+            "preview": "",
+            "left": 0.0846354141831398,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "dusk_tower",
+            "name": "Dusk Tower",
+            "type": "special",
+            "preview": "",
+            "left": 0.1529947966337204,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "walking_road",
+            "name": "Walking Road",
+            "type": "special",
+            "preview": "",
+            "left": 0.2213541716337204,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "drowned_chapel",
+            "name": "Drowned Chapel",
+            "type": "special",
+            "preview": "",
+            "left": 0.2897135317325592,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "aurora_steps",
+            "name": "Aurora Steps",
+            "type": "special",
+            "preview": "",
+            "left": 0.3580729067325592,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "unmarked_path",
+            "name": "Unmarked Path",
+            "type": "special",
+            "preview": "",
+            "left": 0.4264322817325592,
+            "top": 1.123046875,
+            "width": 0.0325520820915699,
+            "height": 0.048828125
+        },
+        {
+            "id": "gmr_fild02",
+            "name": "Gemmara Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/gmr_fild02.jpg",
+            "left": 0.546875,
+            "top": 0.283203125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "lst_fild04",
+            "name": "Lastline Field 4",
+            "type": "field",
+            "preview": "assets/minimaps/lst_fild04.jpg",
+            "left": 0.5729166865348816,
+            "top": 0.52734375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "hrw_fild02",
+            "name": "Harrowen Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/hrw_fild02.jpg",
+            "left": 0.4752604067325592,
+            "top": 0.5859375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "lst_fild05",
+            "name": "Lastline Field 5",
+            "type": "field",
+            "preview": "assets/minimaps/lst_fild05.jpg",
+            "left": 0.5729166865348816,
+            "top": 0.68359375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "lst_dun01",
+            "name": "Lastline Dungeon 1",
+            "type": "dungeon",
+            "preview": "assets/minimaps/lst_dun01.jpg",
+            "left": 0.625,
+            "top": 0.703125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "lst_dun02",
+            "name": "Lastline Dungeon 2",
+            "type": "dungeon",
+            "preview": "assets/minimaps/lst_dun02.jpg",
+            "left": 0.6575520634651184,
+            "top": 0.703125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "pnr_fild02",
+            "name": "Pennaryl Field 2",
+            "type": "field",
+            "preview": "assets/minimaps/pnr_fild02.jpg",
+            "left": 0.1484375,
+            "top": 0.2265625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "brm_fild03",
+            "name": "Brimstone Field 3",
+            "type": "field",
+            "preview": "assets/minimaps/brm_fild03.jpg",
+            "left": 0.09765625,
+            "top": 0.576171875,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild08",
+            "name": "Kharnel Field 8",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild08.jpg",
+            "left": 0.2473958283662796,
+            "top": 0.751953125,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_fild09",
+            "name": "Kharnel Field 9",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild09.jpg",
+            "left": 0.5729166865348816,
+            "top": 0.771484375,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_dun05",
+            "name": "Kharnel Dungeon 5",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun05.jpg",
+            "left": 0.56640625,
+            "top": 0.908203125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun06",
+            "name": "Kharnel Dungeon 6",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun06.jpg",
+            "left": 0.5989583134651184,
+            "top": 0.908203125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_fild10",
+            "name": "Kharnel Field 10",
+            "type": "field",
+            "preview": "assets/minimaps/khn_fild10.jpg",
+            "left": 0.7682291865348816,
+            "top": 0.87890625,
+            "width": 0.0416666679084301,
+            "height": 0.0546875
+        },
+        {
+            "id": "khn_dun07",
+            "name": "Kharnel Dungeon 7",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun07.jpg",
+            "left": 0.908203125,
+            "top": 0.673828125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun08",
+            "name": "Kharnel Dungeon 8",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun08.jpg",
+            "left": 0.9407551884651184,
+            "top": 0.673828125,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        },
+        {
+            "id": "khn_dun09",
+            "name": "Kharnel Dungeon 9",
+            "type": "dungeon",
+            "preview": "assets/minimaps/khn_dun09.jpg",
+            "left": 0.9407551884651184,
+            "top": 0.72265625,
+            "width": 0.02604166604578495,
+            "height": 0.0390625
+        }
+    ]
+}

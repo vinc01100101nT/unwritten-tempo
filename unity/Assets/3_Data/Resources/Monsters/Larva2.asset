@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.larva2
   displayName: Larva2
   kind: 0
-  size: 0
+  size: 0.15
   biome: 6
   sheet: Larva2
   weight: 2

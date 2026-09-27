@@ -30,7 +30,7 @@ there.
    **home biome** and the other biomes it plausibly lives in.
 3. **Its element** fits its home biome — the biome's main element or one of its "also found" elements (the
    [World Map](world-map.md)'s biome table) — and stays within the level tiers: levels 1–33 only Neutral, Earth and
-   Water; 34–66 add Wind and Fire; 67–99 add Poison, Holy, Shadow, Ghost and Undead.
+   Water; 34–66 add Wind and Fire; 67–99 add Poison, Holy, Dark, Ghost and Undead.
 4. **Its level** places it where its kind belongs: critters low, large beasts higher (size nudges it up a little).
 5. **A map takes** the creatures that live in its biome **near its level** (within 6 levels of its range) as its
    residents, up to five, plus up to two **visitors** from further along the ladder — one weaker, and, from level 9 up,
@@ -97,7 +97,7 @@ there.
 | LanternRed | 71 | Undead | Haunted | Volcanic | 10 |
 | Slime4 | 72 | Poison | Swamp | Forest, Corrupted | 4 |
 | Beast | 73 | Fire | Volcanic | Corrupted | 12 |
-| BlueBat | 74 | Shadow | Haunted | Highland, Mist | 4 |
+| BlueBat | 74 | Dark | Haunted | Highland, Mist | 4 |
 | Skull | 76 | Undead | Haunted | Volcanic | 8 |
 | GreenOctopus | 77 | Poison | Swamp | Coast | 6 |
 | RedOctopus | 78 | Fire | Volcanic | Coast | 5 |
@@ -108,11 +108,11 @@ there.
 | LanternGreen | 88 | Undead | Haunted | Swamp | 11 |
 | Larva | 90 | Poison | Corrupted | Swamp | 8 |
 | SkullBlue | 91 | Ghost | Mist | Haunted, Snow | 6 |
-| MouseBlack | 92 | Shadow | Corrupted | Haunted | 11 |
+| MouseBlack | 92 | Dark | Corrupted | Haunted | 11 |
 | Mushroom2 | 93 | Ghost | Mist | Sacred | 3 |
-| Slime2 | 94 | Shadow | Corrupted | Swamp | 8 |
+| Slime2 | 94 | Dark | Corrupted | Swamp | 8 |
 | Flam2 | 95 | Ghost | Mist | Haunted | 5 |
-| HeartRed | 96 | Shadow | Corrupted | Haunted | 9 |
+| HeartRed | 96 | Dark | Corrupted | Haunted | 9 |
 
 ## The elites
 
@@ -134,7 +134,7 @@ there.
 | GiantFlam | 80 | Fire | Volcanic | Cindrel Field 1, Cindrel Field 2, Cindrel Dungeon 3 |
 | GiantSpirit | 90 | Ghost | Mist | Kharnel Field 6 |
 | TenguRed | 92 | Holy | Sacred | Halcyra Field 1, Halcyra Field 2 |
-| GiantSlime2 | 95 | Shadow | Corrupted | Kharnel Field 5, Kharnel Field 7, Kharnel Field 10, Kharnel Dungeon 9 |
+| GiantSlime2 | 95 | Dark | Corrupted | Kharnel Field 5, Kharnel Field 7, Kharnel Field 10, Kharnel Dungeon 9 |
 | SquidRed | 99 | Undead | Haunted | Kharnel Dungeon 4 |
 
 ## Every map

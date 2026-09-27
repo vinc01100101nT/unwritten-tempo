@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.eye2
   displayName: Eye2
   kind: 0
-  size: 0
+  size: 0.3
   biome: 3
   sheet: Eye2
   weight: 1

@@ -48,6 +48,7 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Weapon Names & Trademark Skills](2-systems/gameplay-system-v4/weapon-names-and-trademarks.md) — BUILT 2026-09-21, not play-tested: a forged weapon rolls one of its weapon's trademark skills and is named for it — the skill's own form name ("+15 Petal Storm [C]"), raising every main number of that skill by its grade's percentage.
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
+- [Walking and Routing](2-systems/walking-and-routing.md) — BUILT 2026-09-27, not play-tested: one walking rule (45° slopes, 0.075 m steps) for the player, every creature and every route; each map's route areas, so an unreachable target is known at once.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.
 - [Networking — Architecture](2-systems/networking/README.md) — the whole shape of the multiplayer layer on one page: the four processes and what each may decide, how a person gets from sign-in to standing in the world, what crosses the wire, and the single ownership table everything else points at. **Start here.** Folder:
   - [Implementation Notes](2-systems/networking/implementation-notes.md) — what is actually built, the conventions, and every trap already paid for. **Read before touching anything networked.**

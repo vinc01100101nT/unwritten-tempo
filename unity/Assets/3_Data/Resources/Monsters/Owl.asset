@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.owl
   displayName: Owl
   kind: 0
-  size: 1
+  size: 0.35
   biome: 6
   sheet: Owl
   weight: 3

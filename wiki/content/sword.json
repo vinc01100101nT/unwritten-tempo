@@ -8,16 +8,16 @@
   {
    "type": "quote",
    "text": [
-    "*The Sword is the trace left by **The One Who Answered** — the Unwritten who met every challenge alone, one at a time, and never lost the exchange. Every skill below is a fragment of how they fought.*"
+    "*The Sword is the trace left by **The One Who Answered** — the Unwritten who met every challenge alone, one at a time, and never lost the exchange. Every Sword skill is a fragment of how they fought.*"
    ]
   },
   {
    "type": "callout",
-   "text": "**Status:** the Sword's pool is complete — every skill below is built and in the game. Numbers are still in tuning."
+   "text": "**Status:** the Sword's pool is complete — every skill is built and in the game. Numbers are still in tuning."
   },
   {
    "type": "paragraph",
-   "text": "You learn these by practising the sword: each opens at the **Sword Mastery** level it names, and some need another skill first. A forged sword is also named for one of them — its **trademark**, shown on each card below — and raises every number that skill puts out while you hold it (see *Weapons & Equipment*)."
+   "text": "You learn these by practising the sword: each opens at the **Sword Mastery** level it names, and some need another skill first. A forged sword is also named for one of them — its **trademark** — and raises every number that skill puts out while you hold it (see *Weapons & Equipment*). Every Sword skill, with its numbers and effects, is listed in *Database ▸ Skills*."
   },
   {
    "type": "heading",
@@ -25,20 +25,8 @@
    "text": "Ultimates"
   },
   {
-   "type": "skillTable",
-   "source": "Sword",
-   "group": "ultimate",
-   "subtitle": "Three, opening at Sword Mastery 30, 45 and 60. 40 MP, and a long cooldown rather than a charge meter."
-  },
-  {
-   "type": "heading",
-   "level": 2,
-   "text": "Active skills"
-  },
-  {
-   "type": "skillTable",
-   "source": "Sword",
-   "group": "active"
+   "type": "paragraph",
+   "text": "Three, opening at Sword Mastery 30, 45 and 60. 40 MP, and a long cooldown rather than a charge meter."
   },
   {
    "type": "heading",
@@ -46,10 +34,8 @@
    "text": "Passive skills"
   },
   {
-   "type": "skillTable",
-   "source": "Sword",
-   "group": "passive",
-   "subtitle": "No button, no mana, no cooldown — each one fires on a moment in the fight."
+   "type": "paragraph",
+   "text": "No button, no mana, no cooldown — each one fires on a moment in the fight."
   },
   {
    "type": "heading",

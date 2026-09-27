@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.slime2
   displayName: Slime2
   kind: 0
-  size: 0
+  size: 0.3
   biome: 4
   sheet: Slime2
   weight: 2

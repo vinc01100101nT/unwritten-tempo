@@ -310,6 +310,17 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
             fromSave = true;
         }
 
+        // A CHARACTER NOBODY HAS PLAYED YET names no map, so they begin at the starting map the map servers name,
+        // brought up below like any other. Sent to a process with no map named, they were filed under whatever
+        // map that process happened to be holding, while their own machine loaded the starting map.
+        if (string.IsNullOrWhiteSpace(map))
+        {
+            var starting = maps.QuietestAlive()?.StartingMap;
+            if (!string.IsNullOrEmpty(starting)) map = starting;
+            else Console.Error.WriteLine($"[char] no map server says where a new character begins, so '{name}' is sent "
+                                        + "to the quietest one as it is — rebuild the map server.");
+        }
+
         // WHICH PROCESS HOLDS THAT MAP — and if nobody does, one is asked to bring it up and we wait for it.
         // No process is given a list of zones when it starts, so "nobody is holding it" is the ordinary state of
         // every map nobody is standing in, not an error. It only becomes one when there is no process at all, or

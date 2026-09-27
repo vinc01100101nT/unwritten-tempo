@@ -24,6 +24,7 @@ public class SaveManager : MonoBehaviour
     Character character;
     bool initialized;
     bool loading;      // a load is in flight — the answer comes over a network, so it spans frames
+    bool bodyToWear;   // the chosen body is waiting for the player to be switched on
 
     /// <summary>The last data read or written. Kept so the resume point and anything else that wants to know
     /// what the save SAID can ask, without going back to the network for it.</summary>
@@ -64,6 +65,17 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
+        // THE CHOSEN BODY GOES ON ONCE THERE IS A PLAYER TO WEAR IT. The save is read the moment a character is
+        // chosen, while the persistent layer is still switched off waiting for the server to let them in — and a
+        // body put on then found no player to dress, so everybody entered wearing the default body. Reading the
+        // save later instead is not the answer: that read takes the character over, so it would throw out the
+        // connection that had just been let in.
+        if (bodyToWear && character != null && character.isActiveAndEnabled)
+        {
+            bodyToWear = false;
+            if (!string.IsNullOrEmpty(AccountSession.ModelName)) Player3DBody.Wear(AccountSession.ModelName);
+        }
+
         if (!initialized)
         {
             // Nothing to do until someone is playing a character AND the Systems scene is up.
@@ -86,6 +98,16 @@ public class SaveManager : MonoBehaviour
         ProfileStore.Current.Load(data =>
         {
             if (this == null) return;   // left the game while the request was out
+
+            // THE CHARACTER THIS WAS FOR IS GONE. A refused entry reloads the persistent layer while the read is
+            // still out, so the answer arrives for a destroyed character. Laying it on threw, and `loading` stayed
+            // up for good — the next character chosen in that session was never loaded at all. Start over instead.
+            if (character == null || character != Character.Instance)
+            {
+                loading = false;
+                character = null;
+                return;
+            }
 
             Loaded = data;
             if (Loaded != null)
@@ -129,7 +151,7 @@ public class SaveManager : MonoBehaviour
     // Wear the body this character was created with and its chosen recolour.
     void ApplyAppearance()
     {
-        if (!string.IsNullOrEmpty(AccountSession.ModelName)) Player3DBody.Wear(AccountSession.ModelName);
+        bodyToWear = true;
         character.SetDye(AccountSession.DyeSources, AccountSession.DyeTargets, AccountSession.ModelName);
     }
 

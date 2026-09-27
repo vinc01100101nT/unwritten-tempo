@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.bamboo
   displayName: Bamboo
   kind: 0
-  size: 1
+  size: 0.8
   biome: 6
   sheet: Bamboo
   weight: 3

@@ -266,13 +266,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 160
+    level: 170
     str: 99
-    agi: 93
+    agi: 99
     vit: 99
-    intel: 66
-    dex: 92
-    luk: 66
+    intel: 78
+    dex: 99
+    luk: 78
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -287,7 +287,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 080000000000000002000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 160
+  weaponMasteryLevel: 170
 --- !u!114 &7785284270692907468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,4 +409,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Tsubame
+  bossName: Blossom Wind

@@ -377,7 +377,8 @@ public static class RigBuilder25D
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
         agent.moveSpeed = arc.moveSpeed; agent.agentRadius = MobBody.RoutingRadius;
         var cc = go.GetComponent<CharacterController>();
-        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, 0.5f, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // capsule STACKS UP from the feet pivot (bottom at y=0), walks gentle slopes
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, 0.5f, 0f);   // capsule STACKS UP from the feet pivot (bottom at y=0)
+        GroundElevation.ApplyWalkRules(cc);   // the one step + slope every body walks by
         int crowd = WorldBuildUtil.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)
         if (crowd >= 0) go.layer = crowd;
 
@@ -464,7 +465,8 @@ public static class RigBuilder25D
             }
         }
 
-        // The floating HP bar + name (MobNameplate) is auto-added at runtime by MonsterAI3D.Awake, so it
+        // The nameplate (MobNameplate — the display name) is auto-added at
+        // runtime by MonsterAI3D.Awake, so it
         // works on mobs baked before it existed too — no re-bake needed.
         return go;
     }

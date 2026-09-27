@@ -576,9 +576,10 @@ Already in the database. Password for both: `testpass123`
 
 ## GM accounts — who may type commands
 
-Every chat command except `/help` changes something: a level, a bag, the creatures standing in the world. So
-**none of them work unless the account is marked a GM.** An ordinary player who types one is told *That command
-is for GMs.* and nothing happens.
+Every chat command except `/help`, `/whereis` and `/mobinfo` is for GMs: nearly all of them change something — a
+level, a bag, the creatures standing in the world. So **none of those work unless the account is marked a GM.** An
+ordinary player who types one is told *That command is for GMs.* and nothing happens. `/help`, `/whereis` and
+`/mobinfo` only read, and anybody may type them.
 
 The mark belongs to the **account**, not to a character — being trusted with commands is a fact about a person,
 so it covers every character they make.
@@ -602,9 +603,10 @@ psql -d unwritten -c "select email, is_gm from account order by created_at;"
 
 ### Where each command actually runs
 
-**Every command except `/help` is carried out by the server** — `/summon`, `/dummy`, `/kill`, `/killall`, `/log`,
-`/gold`, `/item`, `/weapon`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`, `/revive`, `/invuln`,
-`/bind`, `/tp`, `/speed`, `/model`, `/time` and `/weather`. Your game hands the typed line over, the server checks its own copy of the mark, does the work on your
+**Every command except `/help` and `/where` is carried out by the server** — `/summon`, `/dummy`, `/kill`, `/killall`,
+`/log`, `/gold`, `/item`, `/weapon`, `/mastery`, `/station`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
+`/revive`, `/invuln`, `/bind`, `/tp`, `/speed`, `/model`, `/time`, `/weather`, `/whereis` and `/mobinfo`. Your game
+hands the typed line over, the server checks its own copy of the mark, does the work on your
 character, sends your game the result, and sends the answer back into your chat a moment later. Each one shows
 up in the server's log as *"<name> ran '/…'"*. Summoned creatures are visible to everybody and can actually be
 hit, because they are born on the machine that owns the world.
@@ -613,7 +615,15 @@ They are here because **everything about a character is the server's**. Run on a
 lied — `/item` answered *"Gave 5× Healing Potion"* while the bag went from nothing to nothing, and `/statpts`
 showed 61 points while the server held 1, so every point spent past the real ones was silently refused.
 
-`/help` only lists the commands, so it runs in your own game and anybody may type it.
+`/help` only lists the commands, so it runs in your own game and anybody may type it. `/where` prints your own
+position, so it runs in your own game too, but only a GM may type it.
+
+**`/whereis` and `/mobinfo` may be typed by anybody**, GM or not, and are the only commands the server takes from a
+non-GM. Both only read. `/whereis <creature>` lists every map the world spawn list places that creature in by name,
+with how many of it each map keeps alive; a test map that fills from a random mix is left out. `/mobinfo <creature>`
+shows its catalog entry as it spawns: level, size, element, health, attack, defence, flee, its six stats, experience,
+gold and drops. The server answers them because a creature's combat numbers are worked out on the server, never on a
+player's machine — the same numbers the Mob Table shows.
 
 **`/model`, `/time` and `/weather` change what everybody sees.** `/model` changes your body on every screen that
 can see you. `/time` and `/weather` change the sky for every player on that game server, and anybody who joins

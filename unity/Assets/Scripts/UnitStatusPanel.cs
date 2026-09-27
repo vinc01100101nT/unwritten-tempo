@@ -429,7 +429,7 @@ public class UnitStatusPanel : MonoBehaviour
         }
     }
 
-    // ── HP color (mirrors MobNameplate) ───────────────────────────────────────
+    // ── HP color (mirrors HoverPlate) ───────────────────────────────────────
 
     static Color HpColor(float f)
     {

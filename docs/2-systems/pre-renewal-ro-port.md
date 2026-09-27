@@ -51,7 +51,7 @@ The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning)
 - **DEF split (authentic) — DONE.** damage = `ATK × (1 − hardDef/100) − softDef`, where hard DEF = % reduction, soft DEF = flat (from VIT). Same split for MATK vs MDEF. Lives in `Combat.AfterDefense`.
 - **Crit semantics — DONE.** A crit **ignores FLEE** (guaranteed hit) AND **ignores both hard + soft DEF**; `Combat.Missed` skips the miss roll on a crit and `AfterDefense` returns the raw attack. Element/race/size modifiers still apply. All three wiring tasks are in: the `crit` flag reaches the damage call, the miss roll is skipped, and the DEF step is skipped whole.
 - **Crit shield — DONE.** Target LUK lowers attacker crit chance (`UnitStatMath.CritShieldPerLuk`, 0.3%/pt), and mobs carry LUK because they carry all six primaries now.
-- **Mob-stat pass — DONE, by a different route than planned.** Rather than hand-shaping DEF/VIT/LUK per mob, the whole roster was reset onto the player's own stat model, every creature on its point budget — today 96 creatures, levels 1 to 160 (see [Mob Roster](../3-world/mob-roster.md)). See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
+- **Mob-stat pass — DONE, by a different route than planned.** Rather than hand-shaping DEF/VIT/LUK per mob, the whole roster was reset onto the player's own stat model, every creature on its point budget — today 98 creatures, levels 1 to 170 (see [Mob Roster](../3-world/mob-roster.md)). See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
 - **Retuning pass — STILL OPEN.** % DEF, the skill passive-% layer and cast breakpoints all interact, and this needs play rather than code.
 
 ## Phase 4 — HP/SP + ASPD (DONE)

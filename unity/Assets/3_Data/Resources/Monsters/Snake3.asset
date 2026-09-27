@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.snake3
   displayName: Snake3
   kind: 0
-  size: 0
+  size: 0.25
   biome: 6
   sheet: Snake3
   weight: 1

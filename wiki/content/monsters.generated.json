@@ -1,0 +1,3856 @@
+{
+    "note": "GENERATED from the creature catalog and the world spawn list by the editor (WikiExport), after any change to the game's data or code. Do NOT hand-edit: the next change overwrites this file.",
+    "creatures": [
+        {
+            "id": "mob.slime",
+            "name": "Slime",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Grassland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 1,
+            "elementLevel": 1,
+            "hp": 22,
+            "atk": 13,
+            "def": 3,
+            "flee": 6,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "olk_dun01",
+                    "name": "Old Oak Dungeon 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.butterfly",
+            "name": "Butterfly",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Grassland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 2,
+            "elementLevel": 1,
+            "hp": 29,
+            "atk": 15,
+            "def": 4,
+            "flee": 7,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 10
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 10
+                },
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.mouse",
+            "name": "Mouse",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Grassland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 3,
+            "elementLevel": 1,
+            "hp": 36,
+            "atk": 17,
+            "def": 5,
+            "flee": 9,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "olk_dun01",
+                    "name": "Old Oak Dungeon 1",
+                    "count": 3
+                },
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.larva2",
+            "name": "Larva2",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Forest",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 4,
+            "elementLevel": 1,
+            "hp": 43,
+            "atk": 18,
+            "def": 6,
+            "flee": 10,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 6
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 9
+                }
+            ]
+        },
+        {
+            "id": "mob.mushroom",
+            "name": "Mushroom",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Medium",
+            "biome": "Forest",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 5,
+            "elementLevel": 1,
+            "hp": 50,
+            "atk": 20,
+            "def": 7,
+            "flee": 11,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.snake",
+            "name": "Snake",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Grassland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 6,
+            "elementLevel": 1,
+            "hp": 59,
+            "atk": 22,
+            "def": 9,
+            "flee": 12,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.giantslime",
+            "name": "GiantSlime",
+            "kind": "Elite",
+            "element": "Neutral",
+            "size": "Large",
+            "biome": "Grassland",
+            "drops": "Copper 60% ×5–10, Burlap 60% ×5–10, Rawhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 8,
+            "elementLevel": 2,
+            "hp": 74,
+            "atk": 25,
+            "def": 15,
+            "flee": 14,
+            "xp": 600,
+            "goldMin": 750,
+            "goldMax": 1500,
+            "homes": [
+                {
+                    "map": "lst_fild01",
+                    "name": "Lastline Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "prl_fild01",
+                    "name": "Parley Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.yellowsbat",
+            "name": "YellowsBat",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Highland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 8,
+            "elementLevel": 1,
+            "hp": 73,
+            "atk": 29,
+            "def": 11,
+            "flee": 16,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 13
+                },
+                {
+                    "map": "olk_dun01",
+                    "name": "Old Oak Dungeon 1",
+                    "count": 11
+                },
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 8
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 8
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 10
+                }
+            ]
+        },
+        {
+            "id": "mob.mollusc2",
+            "name": "Mollusc2",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Forest",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 10,
+            "elementLevel": 1,
+            "hp": 89,
+            "atk": 32,
+            "def": 17,
+            "flee": 20,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 2
+                },
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.spideryellow",
+            "name": "SpiderYellow",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Highland",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 11,
+            "elementLevel": 1,
+            "hp": 98,
+            "atk": 34,
+            "def": 18,
+            "flee": 25,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "olk_dun01",
+                    "name": "Old Oak Dungeon 1",
+                    "count": 11
+                },
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 8
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 7
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 9
+                },
+                {
+                    "map": "hlt_dun01",
+                    "name": "Hilt Dungeon 1",
+                    "count": 2
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.owl",
+            "name": "Owl",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Forest",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 13,
+            "elementLevel": 1,
+            "hp": 112,
+            "atk": 37,
+            "def": 20,
+            "flee": 23,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 6
+                },
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 2
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.demoncyclop",
+            "name": "DemonCyclop",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Copper 60% ×5–10, Burlap 60% ×5–10, Rawhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 14,
+            "elementLevel": 2,
+            "hp": 125,
+            "atk": 39,
+            "def": 22,
+            "flee": 21,
+            "xp": 200,
+            "goldMin": 250,
+            "goldMax": 500,
+            "homes": [
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.racoon",
+            "name": "Racoon",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Forest",
+            "drops": "Copper 20%, Burlap 20%, Rawhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 14,
+            "elementLevel": 1,
+            "hp": 122,
+            "atk": 38,
+            "def": 22,
+            "flee": 29,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 6
+                },
+                {
+                    "map": "lst_fild03",
+                    "name": "Lastline Field 3",
+                    "count": 14
+                },
+                {
+                    "map": "prl_fild02",
+                    "name": "Parley Field 2",
+                    "count": 4
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 13
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.giantbamboo2",
+            "name": "GiantBamboo2",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Forest",
+            "drops": "Bronze 60% ×5–10, Hemp 60% ×5–10, Hide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 15,
+            "elementLevel": 2,
+            "hp": 135,
+            "atk": 41,
+            "def": 24,
+            "flee": 23,
+            "xp": 400,
+            "goldMin": 500,
+            "goldMax": 1000,
+            "homes": [
+                {
+                    "map": "olk_fild01",
+                    "name": "Old Oak Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.kappagreen",
+            "name": "KappaGreen",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "Coast",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 15,
+            "elementLevel": 1,
+            "hp": 129,
+            "atk": 41,
+            "def": 23,
+            "flee": 30,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.bamboo",
+            "name": "Bamboo",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Medium",
+            "biome": "Forest",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 16,
+            "elementLevel": 1,
+            "hp": 136,
+            "atk": 43,
+            "def": 24,
+            "flee": 31,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lst_fild02",
+                    "name": "Lastline Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.fish",
+            "name": "Fish",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Small",
+            "biome": "Coast",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 17,
+            "elementLevel": 1,
+            "hp": 148,
+            "atk": 44,
+            "def": 25,
+            "flee": 32,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.mollusc",
+            "name": "Mollusc",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Small",
+            "biome": "Coast",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 18,
+            "elementLevel": 1,
+            "hp": 154,
+            "atk": 45,
+            "def": 26,
+            "flee": 34,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.spiderred",
+            "name": "SpiderRed",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Highland",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 19,
+            "elementLevel": 1,
+            "hp": 166,
+            "atk": 47,
+            "def": 28,
+            "flee": 35,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 8
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 10
+                },
+                {
+                    "map": "hlt_dun01",
+                    "name": "Hilt Dungeon 1",
+                    "count": 10
+                },
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 7
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 9
+                }
+            ]
+        },
+        {
+            "id": "mob.axolot",
+            "name": "Axolot",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Small",
+            "biome": "Coast",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 20,
+            "elementLevel": 1,
+            "hp": 172,
+            "atk": 49,
+            "def": 28,
+            "flee": 37,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.panda",
+            "name": "Panda",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Medium",
+            "biome": "Forest",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 21,
+            "elementLevel": 1,
+            "hp": 182,
+            "atk": 51,
+            "def": 30,
+            "flee": 38,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 10
+                },
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "gmr_fild02",
+                    "name": "Gemmara Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.giantracoon",
+            "name": "GiantRacoon",
+            "kind": "Elite",
+            "element": "Neutral",
+            "size": "Large",
+            "biome": "Grassland",
+            "drops": "Bronze 60% ×5–10, Hemp 60% ×5–10, Hide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 22,
+            "elementLevel": 2,
+            "hp": 201,
+            "atk": 53,
+            "def": 32,
+            "flee": 37,
+            "xp": 600,
+            "goldMin": 750,
+            "goldMax": 1500,
+            "homes": [
+                {
+                    "map": "lst_fild03",
+                    "name": "Lastline Field 3",
+                    "count": 1
+                },
+                {
+                    "map": "prl_fild02",
+                    "name": "Parley Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.axolotblue",
+            "name": "AxolotBlue",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Small",
+            "biome": "Snow",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 23,
+            "elementLevel": 1,
+            "hp": 204,
+            "atk": 55,
+            "def": 32,
+            "flee": 41,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 8
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.squidgreen",
+            "name": "SquidGreen",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Coast",
+            "drops": "Bronze 60% ×5–10, Hemp 60% ×5–10, Hide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 24,
+            "elementLevel": 2,
+            "hp": 221,
+            "atk": 57,
+            "def": 40,
+            "flee": 39,
+            "xp": 800,
+            "goldMin": 1000,
+            "goldMax": 2000,
+            "homes": [
+                {
+                    "map": "plv_fild01",
+                    "name": "Pluvenne Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_fild05",
+                    "name": "Lastline Field 5",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.mole2",
+            "name": "Mole2",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Snow",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 25,
+            "elementLevel": 1,
+            "hp": 220,
+            "atk": 58,
+            "def": 34,
+            "flee": 45,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "olk_dun02",
+                    "name": "Old Oak Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "gmr_fild01",
+                    "name": "Gemmara Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "hlt_dun01",
+                    "name": "Hilt Dungeon 1",
+                    "count": 5
+                },
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.goldracoon",
+            "name": "GoldRacoon",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Grassland",
+            "drops": "Bronze 20%, Hemp 20%, Hide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 28,
+            "elementLevel": 1,
+            "hp": 255,
+            "atk": 70,
+            "def": 44,
+            "flee": 49,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lst_fild03",
+                    "name": "Lastline Field 3",
+                    "count": 14
+                },
+                {
+                    "map": "prl_fild02",
+                    "name": "Parley Field 2",
+                    "count": 16
+                },
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "lst_fild04",
+                    "name": "Lastline Field 4",
+                    "count": 3
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.bear",
+            "name": "Bear",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Snow",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 31,
+            "elementLevel": 1,
+            "hp": 280,
+            "atk": 75,
+            "def": 47,
+            "flee": 54,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 8
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "hlt_dun01",
+                    "name": "Hilt Dungeon 1",
+                    "count": 7
+                },
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 6
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 6
+                },
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 10
+                },
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "hrw_fild02",
+                    "name": "Harrowen Field 2",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.giantbluesamurai",
+            "name": "GiantBlueSamurai",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Snow",
+            "drops": "Iron 60% ×5–10, Linen 60% ×5–10, Buckskin 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 33,
+            "elementLevel": 2,
+            "hp": 322,
+            "atk": 80,
+            "def": 51,
+            "flee": 52,
+            "xp": 400,
+            "goldMin": 500,
+            "goldMax": 1000,
+            "homes": [
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.beast2",
+            "name": "Beast2",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 34,
+            "elementLevel": 1,
+            "hp": 318,
+            "atk": 82,
+            "def": 51,
+            "flee": 57,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 7
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "hlt_dun01",
+                    "name": "Hilt Dungeon 1",
+                    "count": 2
+                },
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 5
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.dragon",
+            "name": "Dragon",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Grassland",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 34,
+            "elementLevel": 1,
+            "hp": 314,
+            "atk": 81,
+            "def": 51,
+            "flee": 59,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "lst_fild03",
+                    "name": "Lastline Field 3",
+                    "count": 3
+                },
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 6
+                },
+                {
+                    "map": "prl_fild02",
+                    "name": "Parley Field 2",
+                    "count": 11
+                },
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.demoncyclop2",
+            "name": "DemonCyclop2",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Iron 60% ×5–10, Linen 60% ×5–10, Buckskin 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 35,
+            "elementLevel": 2,
+            "hp": 349,
+            "atk": 84,
+            "def": 54,
+            "flee": 54,
+            "xp": 200,
+            "goldMin": 250,
+            "goldMax": 500,
+            "homes": [
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.mole",
+            "name": "Mole",
+            "kind": "Normal",
+            "element": "Neutral",
+            "size": "Small",
+            "biome": "Highland",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 36,
+            "elementLevel": 1,
+            "hp": 340,
+            "atk": 85,
+            "def": 54,
+            "flee": 61,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "id": "mob.lizard",
+            "name": "Lizard",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Highland",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 37,
+            "elementLevel": 1,
+            "hp": 354,
+            "atk": 88,
+            "def": 55,
+            "flee": 62,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 4
+                },
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.bambooyellow",
+            "name": "BambooYellow",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Medium",
+            "biome": "Forest",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 38,
+            "elementLevel": 1,
+            "hp": 363,
+            "atk": 89,
+            "def": 56,
+            "flee": 70,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "hrw_fild01",
+                    "name": "Harrowen Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 9
+                }
+            ]
+        },
+        {
+            "id": "mob.slime3",
+            "name": "Slime3",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Small",
+            "biome": "Snow",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 39,
+            "elementLevel": 1,
+            "hp": 367,
+            "atk": 90,
+            "def": 57,
+            "flee": 73,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "hlt_fild02",
+                    "name": "Hilt Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "hlt_fild01",
+                    "name": "Hilt Field 1",
+                    "count": 4
+                },
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "lst_dun01",
+                    "name": "Lastline Dungeon 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.cyclope2",
+            "name": "Cyclope2",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Highland",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 41,
+            "elementLevel": 1,
+            "hp": 406,
+            "atk": 96,
+            "def": 60,
+            "flee": 74,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "hlt_dun02",
+                    "name": "Hilt Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "hlt_dun03",
+                    "name": "Hilt Dungeon 3",
+                    "count": 4
+                },
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.snake2",
+            "name": "Snake2",
+            "kind": "Normal",
+            "element": "Wind",
+            "size": "Small",
+            "biome": "Steppe",
+            "drops": "Iron 20%, Linen 20%, Buckskin 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 42,
+            "elementLevel": 1,
+            "hp": 404,
+            "atk": 96,
+            "def": 60,
+            "flee": 78,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 1
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.snake3",
+            "name": "Snake3",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Forest",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 43,
+            "elementLevel": 1,
+            "hp": 419,
+            "atk": 100,
+            "def": 62,
+            "flee": 78,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.giantracoongold",
+            "name": "GiantRacoonGold",
+            "kind": "Elite",
+            "element": "Neutral",
+            "size": "Large",
+            "biome": "Steppe",
+            "drops": "Steel 60% ×5–10, Wool 60% ×5–10, Leather 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 44,
+            "elementLevel": 2,
+            "hp": 478,
+            "atk": 100,
+            "def": 74,
+            "flee": 67,
+            "xp": 600,
+            "goldMin": 750,
+            "goldMax": 1500,
+            "homes": [
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.owl2",
+            "name": "Owl2",
+            "kind": "Normal",
+            "element": "Wind",
+            "size": "Small",
+            "biome": "Steppe",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 45,
+            "elementLevel": 1,
+            "hp": 443,
+            "atk": 102,
+            "def": 64,
+            "flee": 82,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 11
+                },
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 3
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 3
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.dragonyellow",
+            "name": "DragonYellow",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Desert",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 46,
+            "elementLevel": 1,
+            "hp": 464,
+            "atk": 114,
+            "def": 74,
+            "flee": 83,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.giantbamboo",
+            "name": "GiantBamboo",
+            "kind": "Elite",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Forest",
+            "drops": "Steel 60% ×5–10, Wool 60% ×5–10, Leather 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 47,
+            "elementLevel": 2,
+            "hp": 497,
+            "atk": 114,
+            "def": 76,
+            "flee": 73,
+            "xp": 200,
+            "goldMin": 250,
+            "goldMax": 500,
+            "homes": [
+                {
+                    "map": "pnr_fild01",
+                    "name": "Pennaryl Field 1",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.trex",
+            "name": "TRex",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Large",
+            "biome": "Steppe",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 48,
+            "elementLevel": 1,
+            "hp": 501,
+            "atk": 119,
+            "def": 77,
+            "flee": 85,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "vlm_fild01",
+                    "name": "Velmora Field 1",
+                    "count": 9
+                },
+                {
+                    "map": "trn_fild01",
+                    "name": "Tornel Field 1",
+                    "count": 14
+                },
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 9
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 8
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 8
+                },
+                {
+                    "map": "pnr_fild02",
+                    "name": "Pennaryl Field 2",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.lizard2",
+            "name": "Lizard2",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Small",
+            "biome": "Desert",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 50,
+            "elementLevel": 1,
+            "hp": 509,
+            "atk": 120,
+            "def": 78,
+            "flee": 90,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 2
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.spirit2",
+            "name": "Spirit2",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "Desert",
+            "drops": "Steel 20%, Wool 20%, Leather 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 54,
+            "elementLevel": 1,
+            "hp": 595,
+            "atk": 129,
+            "def": 84,
+            "flee": 104,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 8
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 6
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 8
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 15
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 12
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.snake4",
+            "name": "Snake4",
+            "kind": "Normal",
+            "element": "Earth",
+            "size": "Small",
+            "biome": "Desert",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 57,
+            "elementLevel": 1,
+            "hp": 612,
+            "atk": 134,
+            "def": 87,
+            "flee": 109,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 2
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 2
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 3
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.eye2",
+            "name": "Eye2",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Small",
+            "biome": "Volcanic",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 58,
+            "elementLevel": 1,
+            "hp": 630,
+            "atk": 136,
+            "def": 88,
+            "flee": 111,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_dun01",
+                    "name": "Velmora Dungeon 1",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 4
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 1
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.tengublue",
+            "name": "TenguBlue",
+            "kind": "Elite",
+            "element": "Wind",
+            "size": "Medium",
+            "biome": "Peaks",
+            "drops": "Silver 60% ×5–10, Cotton 60% ×5–10, Cordovan 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 58,
+            "elementLevel": 2,
+            "hp": 666,
+            "atk": 136,
+            "def": 100,
+            "flee": 95,
+            "xp": 800,
+            "goldMin": 1000,
+            "goldMax": 2000,
+            "homes": [
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.reptile",
+            "name": "Reptile",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "Peaks",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 59,
+            "elementLevel": 1,
+            "hp": 640,
+            "atk": 138,
+            "def": 89,
+            "flee": 112,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 14
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 14
+                }
+            ]
+        },
+        {
+            "id": "mob.giantredsamurai",
+            "name": "GiantRedSamurai",
+            "kind": "Elite",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Desert",
+            "drops": "Silver 60% ×5–10, Cotton 60% ×5–10, Cordovan 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 60,
+            "elementLevel": 2,
+            "hp": 696,
+            "atk": 140,
+            "def": 102,
+            "flee": 97,
+            "xp": 600,
+            "goldMin": 750,
+            "goldMax": 1500,
+            "homes": [
+                {
+                    "map": "vlm_fild02",
+                    "name": "Velmora Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.kappared",
+            "name": "KappaRed",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "Coast",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 60,
+            "elementLevel": 1,
+            "hp": 681,
+            "atk": 152,
+            "def": 101,
+            "flee": 113,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_dun01",
+                    "name": "Lastline Dungeon 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.fishred",
+            "name": "FishRed",
+            "kind": "Normal",
+            "element": "Wind",
+            "size": "Small",
+            "biome": "Coast",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 62,
+            "elementLevel": 1,
+            "hp": 679,
+            "atk": 144,
+            "def": 92,
+            "flee": 118,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 5
+                },
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_dun01",
+                    "name": "Lastline Dungeon 1",
+                    "count": 3
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.octopus",
+            "name": "Octopus",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "Coast",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 63,
+            "elementLevel": 1,
+            "hp": 721,
+            "atk": 158,
+            "def": 105,
+            "flee": 116,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_dun01",
+                    "name": "Lastline Dungeon 1",
+                    "count": 7
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.eye",
+            "name": "Eye",
+            "kind": "Normal",
+            "element": "Wind",
+            "size": "Small",
+            "biome": "Peaks",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 64,
+            "elementLevel": 1,
+            "hp": 716,
+            "atk": 158,
+            "def": 105,
+            "flee": 120,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "brm_fild02",
+                    "name": "Brimstone Field 2",
+                    "count": 9
+                },
+                {
+                    "map": "vlm_fild03",
+                    "name": "Velmora Field 3",
+                    "count": 9
+                },
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "hcr_fild02",
+                    "name": "Halcyra Field 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.grey-trex",
+            "name": "Grey Trex",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Coast",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 65,
+            "elementLevel": 1,
+            "hp": 735,
+            "atk": 160,
+            "def": 106,
+            "flee": 122,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "lst_dun01",
+                    "name": "Lastline Dungeon 1",
+                    "count": 7
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.giantfrog2",
+            "name": "GiantFrog2",
+            "kind": "Elite",
+            "element": "Water",
+            "size": "Large",
+            "biome": "Coast",
+            "drops": "Silver 60% ×5–10, Cotton 60% ×5–10, Cordovan 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 66,
+            "elementLevel": 2,
+            "hp": 795,
+            "atk": 163,
+            "def": 109,
+            "flee": 106,
+            "xp": 400,
+            "goldMin": 500,
+            "goldMax": 1000,
+            "homes": [
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.flam",
+            "name": "Flam",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "Volcanic",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 67,
+            "elementLevel": 1,
+            "hp": 774,
+            "atk": 164,
+            "def": 109,
+            "flee": 125,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 3
+                },
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 2
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.heartgreen",
+            "name": "HeartGreen",
+            "kind": "Normal",
+            "element": "Poison",
+            "size": "Small",
+            "biome": "Swamp",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 68,
+            "elementLevel": 1,
+            "hp": 793,
+            "atk": 167,
+            "def": 110,
+            "flee": 126,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 6
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.cyclope",
+            "name": "Cyclope",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Volcanic",
+            "drops": "Silver 20%, Cotton 20%, Cordovan 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 69,
+            "elementLevel": 1,
+            "hp": 805,
+            "atk": 171,
+            "def": 111,
+            "flee": 127,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "vlm_dun02",
+                    "name": "Velmora Dungeon 2",
+                    "count": 1
+                },
+                {
+                    "map": "vlm_dun03",
+                    "name": "Velmora Dungeon 3",
+                    "count": 2
+                },
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 6
+                },
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 5
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 1
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.lanternred",
+            "name": "LanternRed",
+            "kind": "Normal",
+            "element": "Undead",
+            "size": "Small",
+            "biome": "Haunted",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 71,
+            "elementLevel": 1,
+            "hp": 836,
+            "atk": 172,
+            "def": 114,
+            "flee": 132,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "brm_fild01",
+                    "name": "Brimstone Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 7
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 7
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 6
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.slime4",
+            "name": "Slime4",
+            "kind": "Normal",
+            "element": "Poison",
+            "size": "Small",
+            "biome": "Swamp",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 72,
+            "elementLevel": 1,
+            "hp": 874,
+            "atk": 175,
+            "def": 116,
+            "flee": 133,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 1
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.beast",
+            "name": "Beast",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Volcanic",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 73,
+            "elementLevel": 1,
+            "hp": 886,
+            "atk": 176,
+            "def": 117,
+            "flee": 146,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 8
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 6
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 6
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 5
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 2
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 2
+                },
+                {
+                    "map": "brm_fild03",
+                    "name": "Brimstone Field 3",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun07",
+                    "name": "Kharnel Dungeon 7",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun08",
+                    "name": "Kharnel Dungeon 8",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 2
+                }
+            ]
+        },
+        {
+            "id": "mob.bluebat",
+            "name": "BlueBat",
+            "kind": "Normal",
+            "element": "Dark",
+            "size": "Small",
+            "biome": "Haunted",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 74,
+            "elementLevel": 1,
+            "hp": 889,
+            "atk": 180,
+            "def": 117,
+            "flee": 147,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild06",
+                    "name": "Kharnel Field 6",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 6
+                }
+            ]
+        },
+        {
+            "id": "mob.skull",
+            "name": "Skull",
+            "kind": "Normal",
+            "element": "Undead",
+            "size": "Small",
+            "biome": "Haunted",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 76,
+            "elementLevel": 1,
+            "hp": 931,
+            "atk": 183,
+            "def": 120,
+            "flee": 149,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 5
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 5
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 4
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 4
+                },
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 5
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "id": "mob.greenoctopus",
+            "name": "GreenOctopus",
+            "kind": "Normal",
+            "element": "Poison",
+            "size": "Medium",
+            "biome": "Swamp",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 77,
+            "elementLevel": 1,
+            "hp": 971,
+            "atk": 199,
+            "def": 134,
+            "flee": 138,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "lmh_fild01",
+                    "name": "Luminhal Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 8
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 6
+                },
+                {
+                    "map": "lst_dun02",
+                    "name": "Lastline Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 6
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.giantfrog",
+            "name": "GiantFrog",
+            "kind": "Elite",
+            "element": "Poison",
+            "size": "Large",
+            "biome": "Swamp",
+            "drops": "Mithril 60% ×5–10, Silk 60% ×5–10, Shagreen 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 78,
+            "elementLevel": 2,
+            "hp": 1031,
+            "atk": 199,
+            "def": 137,
+            "flee": 133,
+            "xp": 400,
+            "goldMin": 500,
+            "goldMax": 1000,
+            "homes": [
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild09",
+                    "name": "Kharnel Field 9",
+                    "count": 1
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.redoctopus",
+            "name": "RedOctopus",
+            "kind": "Normal",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "Volcanic",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 78,
+            "elementLevel": 1,
+            "hp": 964,
+            "atk": 199,
+            "def": 134,
+            "flee": 153,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 7
+                },
+                {
+                    "map": "cdl_dun01",
+                    "name": "Cindrel Dungeon 1",
+                    "count": 2
+                },
+                {
+                    "map": "cdl_dun02",
+                    "name": "Cindrel Dungeon 2",
+                    "count": 6
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.octopus2",
+            "name": "Octopus2",
+            "kind": "Normal",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "Haunted",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 79,
+            "elementLevel": 1,
+            "hp": 986,
+            "atk": 201,
+            "def": 136,
+            "flee": 154,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "khn_fild02",
+                    "name": "Kharnel Field 2",
+                    "count": 2
+                },
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun01",
+                    "name": "Kharnel Dungeon 1",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 2
+                },
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 8
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.giantflam",
+            "name": "GiantFlam",
+            "kind": "Elite",
+            "element": "Fire",
+            "size": "Large",
+            "biome": "Volcanic",
+            "drops": "Mithril 60% ×5–10, Silk 60% ×5–10, Shagreen 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 80,
+            "elementLevel": 2,
+            "hp": 1077,
+            "atk": 202,
+            "def": 139,
+            "flee": 135,
+            "xp": 400,
+            "goldMin": 500,
+            "goldMax": 1000,
+            "homes": [
+                {
+                    "map": "cdl_fild01",
+                    "name": "Cindrel Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "cdl_fild02",
+                    "name": "Cindrel Field 2",
+                    "count": 1
+                },
+                {
+                    "map": "cdl_dun03",
+                    "name": "Cindrel Dungeon 3",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.reptile2",
+            "name": "Reptile2",
+            "kind": "Normal",
+            "element": "Poison",
+            "size": "Medium",
+            "biome": "Swamp",
+            "drops": "Mithril 20%, Silk 20%, Shagreen 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 80,
+            "elementLevel": 1,
+            "hp": 988,
+            "atk": 202,
+            "def": 136,
+            "flee": 157,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 8
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 5
+                },
+                {
+                    "map": "khn_fild09",
+                    "name": "Kharnel Field 9",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 7
+                }
+            ]
+        },
+        {
+            "id": "mob.spirit",
+            "name": "Spirit",
+            "kind": "Normal",
+            "element": "Holy",
+            "size": "Medium",
+            "biome": "Sacred",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 85,
+            "elementLevel": 1,
+            "hp": 1153,
+            "atk": 232,
+            "def": 159,
+            "flee": 162,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 12
+                },
+                {
+                    "map": "hcr_fild02",
+                    "name": "Halcyra Field 2",
+                    "count": 12
+                }
+            ]
+        },
+        {
+            "id": "mob.butterflyblue",
+            "name": "ButterflyBlue",
+            "kind": "Normal",
+            "element": "Holy",
+            "size": "Small",
+            "biome": "Sacred",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 87,
+            "elementLevel": 1,
+            "hp": 1126,
+            "atk": 218,
+            "def": 145,
+            "flee": 167,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 9
+                },
+                {
+                    "map": "hcr_fild02",
+                    "name": "Halcyra Field 2",
+                    "count": 9
+                }
+            ]
+        },
+        {
+            "id": "mob.lanterngreen",
+            "name": "LanternGreen",
+            "kind": "Normal",
+            "element": "Undead",
+            "size": "Small",
+            "biome": "Haunted",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 88,
+            "elementLevel": 1,
+            "hp": 1149,
+            "atk": 219,
+            "def": 146,
+            "flee": 169,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "khn_fild01",
+                    "name": "Kharnel Field 1",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun01",
+                    "name": "Kharnel Dungeon 1",
+                    "count": 11
+                },
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild03",
+                    "name": "Kharnel Field 3",
+                    "count": 2
+                },
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild09",
+                    "name": "Kharnel Field 9",
+                    "count": 11
+                },
+                {
+                    "map": "khn_dun05",
+                    "name": "Kharnel Dungeon 5",
+                    "count": 1
+                },
+                {
+                    "map": "khn_dun06",
+                    "name": "Kharnel Dungeon 6",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.giantspirit",
+            "name": "GiantSpirit",
+            "kind": "Elite",
+            "element": "Ghost",
+            "size": "Large",
+            "biome": "Mist",
+            "drops": "Adamant 60% ×5–10, Brocade 60% ×5–10, Wyrmhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 90,
+            "elementLevel": 2,
+            "hp": 1374,
+            "atk": 222,
+            "def": 184,
+            "flee": 146,
+            "xp": 800,
+            "goldMin": 1000,
+            "goldMax": 2000,
+            "homes": [
+                {
+                    "map": "khn_fild06",
+                    "name": "Kharnel Field 6",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.larva",
+            "name": "Larva",
+            "kind": "Normal",
+            "element": "Poison",
+            "size": "Small",
+            "biome": "Corrupted",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 90,
+            "elementLevel": 1,
+            "hp": 1186,
+            "atk": 223,
+            "def": 149,
+            "flee": 172,
+            "xp": 10,
+            "goldMin": 4,
+            "goldMax": 12,
+            "homes": [
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild09",
+                    "name": "Kharnel Field 9",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 13
+                },
+                {
+                    "map": "khn_dun07",
+                    "name": "Kharnel Dungeon 7",
+                    "count": 8
+                },
+                {
+                    "map": "khn_dun08",
+                    "name": "Kharnel Dungeon 8",
+                    "count": 8
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.skullblue",
+            "name": "SkullBlue",
+            "kind": "Normal",
+            "element": "Ghost",
+            "size": "Small",
+            "biome": "Mist",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 91,
+            "elementLevel": 1,
+            "hp": 1243,
+            "atk": 242,
+            "def": 165,
+            "flee": 173,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "khn_dun01",
+                    "name": "Kharnel Dungeon 1",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild06",
+                    "name": "Kharnel Field 6",
+                    "count": 9
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 4
+                }
+            ]
+        },
+        {
+            "id": "mob.mouseblack",
+            "name": "MouseBlack",
+            "kind": "Normal",
+            "element": "Dark",
+            "size": "Small",
+            "biome": "Corrupted",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 92,
+            "elementLevel": 1,
+            "hp": 1234,
+            "atk": 242,
+            "def": 151,
+            "flee": 175,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "khn_dun01",
+                    "name": "Kharnel Dungeon 1",
+                    "count": 4
+                },
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild08",
+                    "name": "Kharnel Field 8",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 4
+                },
+                {
+                    "map": "khn_dun07",
+                    "name": "Kharnel Dungeon 7",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun08",
+                    "name": "Kharnel Dungeon 8",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 3
+                }
+            ]
+        },
+        {
+            "id": "mob.tengured",
+            "name": "TenguRed",
+            "kind": "Elite",
+            "element": "Holy",
+            "size": "Medium",
+            "biome": "Sacred",
+            "drops": "Adamant 60% ×5–10, Brocade 60% ×5–10, Wyrmhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 92,
+            "elementLevel": 2,
+            "hp": 1324,
+            "atk": 226,
+            "def": 168,
+            "flee": 155,
+            "xp": 800,
+            "goldMin": 1000,
+            "goldMax": 2000,
+            "homes": [
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 1
+                },
+                {
+                    "map": "hcr_fild02",
+                    "name": "Halcyra Field 2",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.mushroom2",
+            "name": "Mushroom2",
+            "kind": "Normal",
+            "element": "Ghost",
+            "size": "Medium",
+            "biome": "Mist",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 93,
+            "elementLevel": 1,
+            "hp": 1281,
+            "atk": 242,
+            "def": 167,
+            "flee": 190,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "khn_fild06",
+                    "name": "Kharnel Field 6",
+                    "count": 14
+                },
+                {
+                    "map": "hcr_fild01",
+                    "name": "Halcyra Field 1",
+                    "count": 9
+                },
+                {
+                    "map": "hcr_fild02",
+                    "name": "Halcyra Field 2",
+                    "count": 9
+                }
+            ]
+        },
+        {
+            "id": "mob.slime2",
+            "name": "Slime2",
+            "kind": "Normal",
+            "element": "Dark",
+            "size": "Small",
+            "biome": "Corrupted",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 94,
+            "elementLevel": 1,
+            "hp": 1272,
+            "atk": 246,
+            "def": 168,
+            "flee": 191,
+            "xp": 20,
+            "goldMin": 6,
+            "goldMax": 18,
+            "homes": [
+                {
+                    "map": "khn_fild04",
+                    "name": "Kharnel Field 4",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 6
+                },
+                {
+                    "map": "khn_fild09",
+                    "name": "Kharnel Field 9",
+                    "count": 7
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 8
+                },
+                {
+                    "map": "khn_dun07",
+                    "name": "Kharnel Dungeon 7",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun08",
+                    "name": "Kharnel Dungeon 8",
+                    "count": 5
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.flam2",
+            "name": "Flam2",
+            "kind": "Normal",
+            "element": "Ghost",
+            "size": "Medium",
+            "biome": "Mist",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 95,
+            "elementLevel": 1,
+            "hp": 1285,
+            "atk": 247,
+            "def": 169,
+            "flee": 194,
+            "xp": 40,
+            "goldMin": 8,
+            "goldMax": 24,
+            "homes": [
+                {
+                    "map": "khn_dun01",
+                    "name": "Kharnel Dungeon 1",
+                    "count": 1
+                },
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 2
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 3
+                },
+                {
+                    "map": "khn_fild06",
+                    "name": "Kharnel Field 6",
+                    "count": 5
+                }
+            ]
+        },
+        {
+            "id": "mob.giantslime2",
+            "name": "GiantSlime2",
+            "kind": "Elite",
+            "element": "Dark",
+            "size": "Large",
+            "biome": "Corrupted",
+            "drops": "Adamant 60% ×5–10, Brocade 60% ×5–10, Wyrmhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 95,
+            "elementLevel": 2,
+            "hp": 1390,
+            "atk": 248,
+            "def": 172,
+            "flee": 158,
+            "xp": 600,
+            "goldMin": 750,
+            "goldMax": 1500,
+            "homes": [
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 1
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 1
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.heartred",
+            "name": "HeartRed",
+            "kind": "Normal",
+            "element": "Dark",
+            "size": "Small",
+            "biome": "Corrupted",
+            "drops": "Adamant 20%, Brocade 20%, Wyrmhide 20%, Watery Ink 4%, Thin Ink 1%, Coarse Salt 2%, a random potion or food 30%",
+            "level": 96,
+            "elementLevel": 1,
+            "hp": 1310,
+            "atk": 249,
+            "def": 170,
+            "flee": 195,
+            "xp": 5,
+            "goldMin": 2,
+            "goldMax": 6,
+            "homes": [
+                {
+                    "map": "khn_dun02",
+                    "name": "Kharnel Dungeon 2",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun03",
+                    "name": "Kharnel Dungeon 3",
+                    "count": 7
+                },
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild05",
+                    "name": "Kharnel Field 5",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild07",
+                    "name": "Kharnel Field 7",
+                    "count": 10
+                },
+                {
+                    "map": "khn_fild10",
+                    "name": "Kharnel Field 10",
+                    "count": 3
+                },
+                {
+                    "map": "khn_dun07",
+                    "name": "Kharnel Dungeon 7",
+                    "count": 8
+                },
+                {
+                    "map": "khn_dun08",
+                    "name": "Kharnel Dungeon 8",
+                    "count": 8
+                },
+                {
+                    "map": "khn_dun09",
+                    "name": "Kharnel Dungeon 9",
+                    "count": 8
+                }
+            ]
+        },
+        {
+            "id": "mob.squidred",
+            "name": "SquidRed",
+            "kind": "Elite",
+            "element": "Undead",
+            "size": "Large",
+            "biome": "Haunted",
+            "drops": "Adamant 60% ×5–10, Brocade 60% ×5–10, Wyrmhide 60% ×5–10, Faint Ink 30%, Clear Ink 15%, Sharp Ink 5%, Fine Salt 20%, Pure Salt 5%, a random potion or food 30%",
+            "level": 99,
+            "elementLevel": 2,
+            "hp": 1508,
+            "atk": 255,
+            "def": 193,
+            "flee": 163,
+            "xp": 800,
+            "goldMin": 1000,
+            "goldMax": 2000,
+            "homes": [
+                {
+                    "map": "khn_dun04",
+                    "name": "Kharnel Dungeon 4",
+                    "count": 1
+                }
+            ]
+        },
+        {
+            "id": "mob.shadow.autumngale",
+            "name": "Autumn Gale",
+            "kind": "Shadow",
+            "element": "Wind",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 105,
+            "elementLevel": 3,
+            "hp": 1558,
+            "atk": 286,
+            "def": 198,
+            "flee": 223,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.northernlights",
+            "name": "Northern Lights",
+            "kind": "Shadow",
+            "element": "Neutral",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 110,
+            "elementLevel": 3,
+            "hp": 1672,
+            "atk": 413,
+            "def": 204,
+            "flee": 300,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.varro",
+            "name": "Still Oak",
+            "kind": "Shadow",
+            "element": "Neutral",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 115,
+            "elementLevel": 3,
+            "hp": 2523,
+            "atk": 306,
+            "def": 295,
+            "flee": 254,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.brigid",
+            "name": "Morning Dew",
+            "kind": "Shadow",
+            "element": "Holy",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 120,
+            "elementLevel": 3,
+            "hp": 1879,
+            "atk": 231,
+            "def": 302,
+            "flee": 258,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.radomir",
+            "name": "Stone Bloom",
+            "kind": "Shadow",
+            "element": "Earth",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 125,
+            "elementLevel": 3,
+            "hp": 2867,
+            "atk": 483,
+            "def": 337,
+            "flee": 269,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.kallias",
+            "name": "Silver Rain",
+            "kind": "Shadow",
+            "element": "Water",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 130,
+            "elementLevel": 3,
+            "hp": 3067,
+            "atk": 497,
+            "def": 247,
+            "flee": 294,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.brandr",
+            "name": "Forest Fire",
+            "kind": "Shadow",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 135,
+            "elementLevel": 3,
+            "hp": 2340,
+            "atk": 540,
+            "def": 273,
+            "flee": 301,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.ines",
+            "name": "Dusk Crow",
+            "kind": "Shadow",
+            "element": "Dark",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 140,
+            "elementLevel": 3,
+            "hp": 2477,
+            "atk": 553,
+            "def": 279,
+            "flee": 311,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.morwenna",
+            "name": "Black Lily",
+            "kind": "Shadow",
+            "element": "Undead",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 145,
+            "elementLevel": 3,
+            "hp": 3639,
+            "atk": 294,
+            "def": 285,
+            "flee": 318,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.fiora",
+            "name": "Night Orchid",
+            "kind": "Shadow",
+            "element": "Poison",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 150,
+            "elementLevel": 3,
+            "hp": 2724,
+            "atk": 415,
+            "def": 291,
+            "flee": 451,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.azar",
+            "name": "Ashen Field",
+            "kind": "Shadow",
+            "element": "Fire",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 155,
+            "elementLevel": 3,
+            "hp": 2813,
+            "atk": 333,
+            "def": 296,
+            "flee": 357,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.ulrich",
+            "name": "Silent Snow",
+            "kind": "Shadow",
+            "element": "Ghost",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 160,
+            "elementLevel": 3,
+            "hp": 4064,
+            "atk": 605,
+            "def": 301,
+            "flee": 389,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.temulun",
+            "name": "Feather Rain",
+            "kind": "Shadow",
+            "element": "Wind",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 165,
+            "elementLevel": 3,
+            "hp": 2992,
+            "atk": 440,
+            "def": 306,
+            "flee": 519,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        },
+        {
+            "id": "mob.shadow.tsubame",
+            "name": "Blossom Wind",
+            "kind": "Shadow",
+            "element": "Wind",
+            "size": "Medium",
+            "biome": "None",
+            "drops": "Adamant 100% ×5–10, Brocade 100% ×5–10, Wyrmhide 100% ×5–10, Faint Ink 60%, Clear Ink 30%, Sharp Ink 15%, Fine Salt 40%, Pure Salt 15%, a random potion or food 30%",
+            "level": 170,
+            "elementLevel": 3,
+            "hp": 4313,
+            "atk": 682,
+            "def": 311,
+            "flee": 407,
+            "xp": 2000,
+            "goldMin": 3000,
+            "goldMax": 6000,
+            "homes": []
+        }
+    ]
+}

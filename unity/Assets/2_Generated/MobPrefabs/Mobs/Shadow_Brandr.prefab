@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 125
-    str: 85
-    agi: 67
-    vit: 84
-    intel: 45
-    dex: 67
-    luk: 44
+    level: 135
+    str: 92
+    agi: 72
+    vit: 92
+    intel: 49
+    dex: 72
+    luk: 48
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 080000000000000009000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 125
+  weaponMasteryLevel: 135
 --- !u!114 &6390852226453349945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Brandr
+  bossName: Forest Fire

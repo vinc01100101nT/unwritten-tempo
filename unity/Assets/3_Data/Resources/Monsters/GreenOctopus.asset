@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.greenoctopus
   displayName: GreenOctopus
   kind: 0
-  size: 1
+  size: 0.9
   biome: 11
   sheet: GreenOctopus
   weight: 3

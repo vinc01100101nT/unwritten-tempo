@@ -1,0 +1,288 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ffe45fe8f2a943fe8ed41376cecda2e, type: 3}
+  m_Name: MinimapCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MinimapCatalog
+  maps:
+  - map: brimstone
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: brm_fild01
+    worldMin: {x: -33.332813, y: -33.27623}
+    worldSize: 66.613846
+  - map: brm_fild02
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: brm_fild03
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: cdl_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: cdl_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: cdl_dun03
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: cdl_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: cdl_fild02
+    worldMin: {x: -33.28, y: -33.27318}
+    worldSize: 66.56
+  - map: cindrel
+    worldMin: {x: -41.6, y: -41.6}
+    worldSize: 83.2
+  - map: gemmara
+    worldMin: {x: -42.382893, y: -42.309353}
+    worldSize: 84.78978
+  - map: gmr_fild01
+    worldMin: {x: -33.28, y: -33.263813}
+    worldSize: 66.56
+  - map: gmr_fild02
+    worldMin: {x: -33.297306, y: -34.52899}
+    worldSize: 67.460045
+  - map: halcyra
+    worldMin: {x: -42.6136, y: -42.384426}
+    worldSize: 85.012276
+  - map: harrowen
+    worldMin: {x: -35.73195, y: -36.490475}
+    worldSize: 71.582
+  - map: hcr_fild01
+    worldMin: {x: -33.377987, y: -33.329956}
+    worldSize: 66.65991
+  - map: hcr_fild02
+    worldMin: {x: -33.28, y: -33.444366}
+    worldSize: 66.56
+  - map: hilt
+    worldMin: {x: -42.40415, y: -42.41428}
+    worldSize: 84.89078
+  - map: hlt_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: hlt_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: hlt_dun03
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: hlt_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: hlt_fild02
+    worldMin: {x: -33.28, y: -33.07728}
+    worldSize: 66.56
+  - map: hrw_fild01
+    worldMin: {x: -34.199444, y: -33.876606}
+    worldSize: 69.06869
+  - map: hrw_fild02
+    worldMin: {x: -33.322582, y: -33.344902}
+    worldSize: 66.60342
+  - map: kharnel
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun03
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun04
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun05
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun06
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun07
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun08
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_dun09
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: khn_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild02
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild03
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild04
+    worldMin: {x: -34.00843, y: -33.690662}
+    worldSize: 67.30271
+  - map: khn_fild05
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild06
+    worldMin: {x: -34.157948, y: -34.30739}
+    worldSize: 68.068726
+  - map: khn_fild07
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild08
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: khn_fild09
+    worldMin: {x: -33.28, y: -32.727394}
+    worldSize: 66.56
+  - map: khn_fild10
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: lastline
+    worldMin: {x: -32.239998, y: -32.239998}
+    worldSize: 64.479996
+  - map: lmh_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: lst_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: lst_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: lst_fild01
+    worldMin: {x: -35.070225, y: -34.62173}
+    worldSize: 69.24346
+  - map: lst_fild02
+    worldMin: {x: -33.69462, y: -33.575935}
+    worldSize: 66.98275
+  - map: lst_fild03
+    worldMin: {x: -33.287067, y: -33.46381}
+    worldSize: 66.92762
+  - map: lst_fild04
+    worldMin: {x: -33.28, y: -33.203568}
+    worldSize: 66.56
+  - map: lst_fild05
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: luminhal
+    worldMin: {x: -35.648937, y: -34.682243}
+    worldSize: 68.97539
+  - map: old_oak
+    worldMin: {x: -44.152306, y: -44.607048}
+    worldSize: 88.39479
+  - map: olk_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: olk_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: olk_fild01
+    worldMin: {x: -33.9899, y: -33.667606}
+    worldSize: 67.91382
+  - map: parley
+    worldMin: {x: -35.284, y: -35.33378}
+    worldSize: 70.80207
+  - map: pennaryl
+    worldMin: {x: -44.099045, y: -44.222397}
+    worldSize: 87.86156
+  - map: pluvenne
+    worldMin: {x: -41.73891, y: -42.065006}
+    worldSize: 83.67412
+  - map: plv_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: pnr_fild01
+    worldMin: {x: -33.733402, y: -33.334927}
+    worldSize: 67.16082
+  - map: pnr_fild02
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: prl_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: prl_fild02
+    worldMin: {x: -33.815685, y: -33.553093}
+    worldSize: 67.106186
+  - map: test_coast
+    worldMin: {x: -31.417189, y: -31.626026}
+    worldSize: 62.834377
+  - map: test_corrupted
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_desert
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_forest_a
+    worldMin: {x: -31.839832, y: -31.636494}
+    worldSize: 63.765068
+  - map: test_grassland
+    worldMin: {x: -32.332172, y: -32.40442}
+    worldSize: 64.664345
+  - map: test_grassland_cliffs
+    worldMin: {x: -31.809704, y: -31.700136}
+    worldSize: 63.619408
+  - map: test_haunted
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_highland
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_mist
+    worldMin: {x: -31.656525, y: -32.09549}
+    worldSize: 63.31305
+  - map: test_peaks
+    worldMin: {x: -31.490856, y: -31.31049}
+    worldSize: 62.69656
+  - map: test_sacred
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_snow
+    worldMin: {x: -31.30989, y: -31.256021}
+    worldSize: 62.512043
+  - map: test_steppe
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: test_swamp
+    worldMin: {x: -31.650465, y: -32.083607}
+    worldSize: 63.30093
+  - map: test_volcanic
+    worldMin: {x: -31.199999, y: -31.199999}
+    worldSize: 62.399998
+  - map: tornel
+    worldMin: {x: -33.28453, y: -33.397842}
+    worldSize: 66.795685
+  - map: trn_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: velmora
+    worldMin: {x: -41.6, y: -41.6}
+    worldSize: 83.2
+  - map: vlm_dun01
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: vlm_dun02
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: vlm_dun03
+    worldMin: {x: -20.8, y: -20.8}
+    worldSize: 41.6
+  - map: vlm_fild01
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: vlm_fild02
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56
+  - map: vlm_fild03
+    worldMin: {x: -33.28, y: -33.28}
+    worldSize: 66.56

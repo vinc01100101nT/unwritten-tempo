@@ -34,7 +34,6 @@ public class ChatController : MonoBehaviour
     ScrollRect scroll;
     TMP_InputField input;
     bool built;
-    Character3DVisual playerVisual;   // resolved lazily on first say — its feet-seated pose anchors the chat bubble
 
     static ChatController instance;   // the one live chat, so the game can post a line without a lookup
 
@@ -272,15 +271,9 @@ public class ChatController : MonoBehaviour
 
     // The head THIS machine's own player speaks over — their avatar's feet-seated visual, which is what the white
     // NPC bark bubble already anchors to, through the same path so a said line sits exactly where a bark does.
-    // The find happens once per session and is kept.
-    IStancePose MyPose
-    {
-        get
-        {
-            if (playerVisual == null) playerVisual = FindAnyObjectByType<Character3DVisual>();   // perf-ok: once per line said or skill called, never per frame
-            return playerVisual != null ? playerVisual.Pose : null;
-        }
-    }
+    // READ FROM THE ONE OWNER OF "WHICH BODY IS MINE", never searched for: the worn body is a Play-time object marked
+    // not-to-be-saved, and a scene search skips exactly those — so the search found nothing and no bubble ever showed.
+    IStancePose MyPose => StanceController.Player != null ? StanceController.Player.Pose : null;
 
     /// <summary>Every row the chat log gains, as the text it was given — raised whether or not the log is drawn, so a
     /// player reading the game as text (AgentLink) sees exactly the rows a player reading the screen does.</summary>

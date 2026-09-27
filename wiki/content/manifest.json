@@ -223,6 +223,41 @@
       ]
     },
     {
+      "title": "Database",
+      "pages": [
+        {
+          "id": "database-monsters",
+          "title": "Monsters",
+          "file": "database-monsters.json"
+        },
+        {
+          "id": "database-skills",
+          "title": "Skills",
+          "file": "database-skills.json"
+        },
+        {
+          "id": "database-equipment",
+          "title": "Equipment",
+          "file": "database-equipment.json"
+        },
+        {
+          "id": "database-materials",
+          "title": "Materials",
+          "file": "database-materials.json"
+        },
+        {
+          "id": "database-world-map",
+          "title": "World Map",
+          "file": "database-world-map.json"
+        },
+        {
+          "id": "database-elements",
+          "title": "Elements",
+          "file": "database-elements.json"
+        }
+      ]
+    },
+    {
       "title": "Development",
       "pages": [
         {

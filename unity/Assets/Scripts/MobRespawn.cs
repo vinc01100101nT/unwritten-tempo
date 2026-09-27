@@ -192,12 +192,7 @@ public class MobRespawn : MonoBehaviour
     // a few % after respawn) and float slop. Never raise — only shrink to keep the enable valid at any mob size.
     public static void ClampStepOffset(CharacterController cc)
     {
-        Vector3 s = cc.transform.lossyScale;
-        float scaleY = Mathf.Abs(s.y);
-        float scaleR = Mathf.Max(Mathf.Abs(s.x), Mathf.Abs(s.z));
-        float cylH    = Mathf.Max(cc.height - 2f * cc.radius, 0f) * scaleY;   // PhysX cylinder portion
-        float scaledR = cc.radius * scaleR;
-        float maxStep = (cylH + 2f * scaledR) * 0.9f;                          // 0.9 = breathing + float headroom
+        float maxStep = GroundElevation.StepBound(cc);
         if (cc.stepOffset > maxStep) cc.stepOffset = Mathf.Max(0f, maxStep);
     }
 }

@@ -7,7 +7,7 @@ using TMPro;
 /// THE READOUT THAT FLOATS OVER WHOEVER YOU ARE POINTING AT — a creature, another person, a villager, anything
 /// carrying health. Four things, stacked, sitting just clear of their head:
 /// <list type="number">
-/// <item>their name</item>
+/// <item>their name, with their element beside it as a coloured tile with its letters</item>
 /// <item>a health bar</item>
 /// <item>a mana bar under it</item>
 /// <item>their buffs and debuffs as small icons, wrapped onto as many rows as it takes to fit</item>
@@ -32,8 +32,7 @@ using TMPro;
 /// </summary>
 public class HoverPlate : MonoBehaviour
 {
-    // World size of one UI pixel — matched to MobNameplate so a bar on this plate reads at the same weight as the
-    // bar under a creature's feet.
+    // World size of one UI pixel — matched to CastBar so the two bars over a unit read at the same weight.
     const float WorldScale = 0.0075f;
 
     const float NameH = 13f;
@@ -42,6 +41,9 @@ public class HoverPlate : MonoBehaviour
     const float RowGap = 1.5f;
     const float IconSize = 11f;
     const float IconGap = 1.5f;
+
+    // A unit's element sits beside its name as a tile the size of a buff icon, so the two read as one family.
+    const float ElementGap = 2f;
 
     // The narrowest a bar may be drawn, in UI pixels. A body width is honoured above this; below it the bar would
     // be a couple of pixels of nothing, which reads as a glitch rather than as a small creature.
@@ -58,6 +60,10 @@ public class HoverPlate : MonoBehaviour
     RectTransform root;
     Image hpFill, mpTrack, mpFill;
     TextMeshProUGUI nameLabel;
+    Image elementTile;
+    TextMeshProUGUI elementText;
+    bool elementShown;
+    Element shownElement;
     readonly List<Image> iconSlots = new List<Image>(8);
     readonly List<TextMeshProUGUI> iconSymbols = new List<TextMeshProUGUI>(8);
     readonly List<TextMeshProUGUI> iconCounts = new List<TextMeshProUGUI>(8);
@@ -129,12 +135,14 @@ public class HoverPlate : MonoBehaviour
         {
             lastLevel = shell.Level;
             nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
+            PlaceNameRow();
         }
 
         if (subscribed != null)
         {
             subscribed.Prune();
-            if (iconsDirty) { iconsDirty = false; RebuildIcons(); }
+            // An armour converter starting or ending is a state change, so the element tile is redrawn here too.
+            if (iconsDirty) { iconsDirty = false; RebuildIcons(); DrawElement(); }
         }
     }
 
@@ -168,6 +176,8 @@ public class HoverPlate : MonoBehaviour
         lastLevel = shell != null ? shell.Level : 0;
         nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
+        DrawElement();
+
         // A unit with no mana pool gets no mana bar, rather than an empty one that looks broken.
         hasMana = unit.MaxMP > 0;
 
@@ -187,6 +197,48 @@ public class HoverPlate : MonoBehaviour
     }
 
     void MarkIconsDirty() => iconsDirty = true;
+
+    // ---- the element --------------------------------------------------------------------------------------
+
+    // WHAT THE CREATURE IS HIT AS RIGHT NOW — an armour converter's element while one runs, its own otherwise — read
+    // through the same one answer the target panel reads, so the two can never show different elements. Every unit
+    // gets a tile, Neutral included — a creature, an elite, a person, a villager alike. Runs on a bind and on a state
+    // change, never per frame.
+    void DrawElement()
+    {
+        bool show = tracked != null;
+        Element el = Element.Neutral;
+        if (show)
+        {
+            var st = tracked.States;
+            el = st != null ? st.DefendingElementOr(tracked.element, tracked.elementLevel, out _) : tracked.element;
+        }
+        if (show == elementShown && el == shownElement) return;
+        elementShown = show;
+        shownElement = el;
+        elementTile.gameObject.SetActive(show);
+        if (show)
+        {
+            elementTile.color = Elements.Tint(el);
+            elementText.text = Elements.Symbol(el);
+        }
+        PlaceNameRow();
+    }
+
+    // The name and the element tile, centred together as one row. Runs when either one changes — a bind, a level, a
+    // converter — never per frame.
+    void PlaceNameRow()
+    {
+        if (root == null) return;
+        float nameW = nameLabel.GetPreferredValues(nameLabel.text).x;   // perf-ok: on bind / level / element change only
+        float extra = elementShown ? ElementGap + IconSize : 0f;
+        float left = -(nameW + extra) * 0.5f;
+        var nrt = nameLabel.rectTransform;
+        nrt.anchoredPosition = new Vector2(left + nameW * 0.5f, 0f);
+        if (elementShown)
+            elementTile.rectTransform.anchoredPosition =
+                new Vector2(left + nameW + ElementGap + IconSize * 0.5f, -(NameH - IconSize) * 0.5f);
+    }
 
     // ---- the numbers --------------------------------------------------------------------------------------
 
@@ -211,8 +263,8 @@ public class HoverPlate : MonoBehaviour
         }
     }
 
-    // Green when healthy, through yellow, to red when nearly dead — the same reading as the bar under a creature's
-    // feet, because a player should not have to learn two colour languages for one number.
+    // Green when healthy, through yellow, to red when nearly dead — the same reading as the target panel's bar,
+    // because a player should not have to learn two colour languages for one number.
     static Color HpColor(float f)
     {
         var green = new Color(0.40f, 0.85f, 0.30f);
@@ -329,6 +381,13 @@ public class HoverPlate : MonoBehaviour
         nameLabel.fontStyle = FontStyles.Bold;
         nameLabel.fontSharedMaterial = UiKit.WorldNameMaterial();
 
+        // The element tile: a plain coloured square with its letters on top, built like a buff icon below.
+        elementTile = NewImage("Element", root, Color.white);
+        Place(elementTile.rectTransform, Vector2.zero, new Vector2(IconSize, IconSize));
+        elementText = NewText("Symbol", elementTile.rectTransform, 7);
+        StretchFull(elementText.rectTransform);
+        elementTile.gameObject.SetActive(false);
+
         var hpTrack = NewImage("HpTrack", root, TrackBg);
         hpFill = NewBarFill("HpFill", hpTrack.rectTransform, HpColor(1f));
         FillInside(hpFill.rectTransform);
@@ -366,9 +425,11 @@ public class HoverPlate : MonoBehaviour
             y += RowGap;
             Place(mpTrack.rectTransform, new Vector2(0f, -y), new Vector2(barW, MpBarH));
         }
+
+        PlaceNameRow();
     }
 
-    // ---- small builders, matching the ones the creature plate uses ----------------------------------------
+    // ---- small builders ------------------------------------------------------------------------------------
 
     static RectTransform NewRect(string name, Transform parent)
     {

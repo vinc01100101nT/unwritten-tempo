@@ -43,10 +43,12 @@ MAP_BIOME_META = os.path.join(ASSETS, "Scripts", "MapBiome.cs.meta")
 
 # The Grassland row, pinned: meadow grass, soil patches, the recipe's own road, no wash, the same 0.9 patch amount
 # every biome uses (the user's call, 2026-09-25), and all five field-template prop categories listed (an open meadow,
-# 2026-09-25).
+# 2026-09-25), and ground in 3 levels up to 1.2 high, hills 16 wide, slopes up to 20 degrees (the user's call,
+# 2026-09-27: "higher ground and lower ground should be obvious", "make the slope greater than 5 degree").
 # Change it on purpose or not at all.
 GRASSLAND_PIN = {"base": "BASE_OR_PATCH_meadow_grass", "patch": "BASE_OR_PATCH_OR_PATH_soil", "road": None,
-                 "tint": (1.0, 1.0, 1.0, 1.0), "patchAmount": 0.9, "props": 5}
+                 "tint": (1.0, 1.0, 1.0, 1.0), "patchAmount": 0.9, "props": 5,
+                 "bumpHeight": 1.2, "bumpWidth": 16.0, "bumpLevels": 3, "bumpSteepestDegrees": 20.0}
 
 problems = []
 
@@ -143,6 +145,12 @@ def main():
             problems.append("%s: colour wash %s over its own tiles (must be white)" % (where, tint))
         pm = re.search(r"^    patchAmount: ([\d.\-e]+)", ch, re.M)
         patch_amount = float(pm.group(1)) if pm else None
+        bh = re.search(r"^    bumpHeight: ([\d.\-e]+)", ch, re.M)
+        bw = re.search(r"^    bumpWidth: ([\d.\-e]+)", ch, re.M)
+        bl = re.search(r"^    bumpLevels: (\d+)", ch, re.M)
+        bs = re.search(r"^    bumpSteepestDegrees: ([\d.\-e]+)", ch, re.M)
+        if not bh or not bw or not bl or not bs:
+            problems.append("%s: no saved ground height, hill width, levels and steepest slope (an unset one reads as flat)" % where)
 
         # props: category → prefab guids
         listed = {}
@@ -166,7 +174,10 @@ def main():
 
         if name == "Grassland":
             got = {"base": row["baseTile"], "patch": row["patchTile"], "road": row["roadTile"], "tint": tint,
-                   "patchAmount": patch_amount, "props": len(listed)}
+                   "patchAmount": patch_amount, "props": len(listed),
+                   "bumpHeight": float(bh.group(1)) if bh else None, "bumpWidth": float(bw.group(1)) if bw else None,
+                   "bumpLevels": int(bl.group(1)) if bl else None,
+                   "bumpSteepestDegrees": float(bs.group(1)) if bs else None}
             for k, v in GRASSLAND_PIN.items():
                 if got[k] != v:
                     problems.append("%s changed: %s is %r, pinned %r (Grassland's look is pinned; change the pin on purpose)"

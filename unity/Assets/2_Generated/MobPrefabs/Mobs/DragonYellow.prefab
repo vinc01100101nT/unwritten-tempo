@@ -41,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.93707466, y: 0.93707466, z: 0.93707466}
+  m_LocalScale: {x: 0.78089553, y: 0.78089553, z: 0.78089553}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -246,7 +246,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear: []
   gearQuality: 1
-  gearFolds: 10
+  gearFolds: 7
   gearInkTier: 1
 --- !u!114 &3832146284535481239
 MonoBehaviour:
@@ -261,13 +261,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 67
-    str: 44
-    agi: 35
-    vit: 43
-    intel: 24
-    dex: 35
-    luk: 24
+    level: 46
+    str: 31
+    agi: 24
+    vit: 30
+    intel: 16
+    dex: 24
+    luk: 16
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -282,7 +282,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 67
+  weaponMasteryLevel: 46
 --- !u!114 &6400287393913304324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,5 +404,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.3924
-  halfWidth: 0.46853733
+  halfHeight: 0.327
+  halfWidth: 0.39044777

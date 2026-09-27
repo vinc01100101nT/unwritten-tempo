@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.spideryellow
   displayName: SpiderYellow
   kind: 0
-  size: 0
+  size: 0.3
   biome: 7
   sheet: SpiderYellow
   weight: 4

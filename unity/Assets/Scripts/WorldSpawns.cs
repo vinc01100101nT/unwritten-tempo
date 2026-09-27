@@ -44,6 +44,23 @@ public class WorldSpawns : ScriptableObject
 
     public List<Row> rows = new List<Row>();
 
+    /// <summary>Every map <paramref name="def"/> is placed in BY NAME, with how many of it that map keeps alive —
+    /// several rows naming it in one map are one map. A row that draws a mix is left out: it says only that the
+    /// creature MIGHT appear, and its count belongs to the whole mix. Fills <paramref name="into"/> in list order.</summary>
+    public static void HomesOf(MonsterDef def, List<(string map, int count)> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (def == null || list == null) return;
+        foreach (var row in list.rows)
+        {
+            if (row == null || string.IsNullOrEmpty(row.creature) || MonsterCatalog.Get(row.creature) != def) continue;
+            int at = into.FindIndex(h => h.map == row.map);
+            if (at < 0) into.Add((row.map, row.population));
+            else into[at] = (row.map, into[at].count + row.population);
+        }
+    }
+
     static WorldSpawns loaded;
     static bool looked;
 

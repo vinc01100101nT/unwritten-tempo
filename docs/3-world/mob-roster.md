@@ -30,8 +30,8 @@ map, and the map generator no longer puts any there.
 
 | | Normal | Elite | Shadow |
 | --- | --- | --- | --- |
-| How many | the rest of the roster | 18 | 14, one per weapon type (12 in the game today) |
-| Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 160**, one every 5 levels |
+| How many | the rest of the roster | 18 | 14, one per weapon type |
+| Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 170**, one every 5 levels |
 | Extra skill slots | 1 | 2 | 4 |
 | Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
@@ -40,7 +40,7 @@ map, and the map generator no longer puts any there.
 | Lives | every map it belongs in, from one end of the world to the other | the fields of its home biome near its level, and one on each dungeon's bottom floor | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
-| Size | **Small to XL** — mostly Small or Medium, only 2 XL | **mostly XL** — 12 XL, 2 Large, 2 Medium, 2 Small | always **Medium** |
+| Size | **Small to Large** — mostly Small or Medium | **mostly Large** — 16 Large, 2 Medium | always **1** (Medium) |
 
 ## Gear state
 
@@ -61,20 +61,23 @@ map, and the map generator no longer puts any there.
 
 ## Sizes
 
-- **Four sizes, each a multiple of a character's height:** Small **0.3×**, Medium **1×**, Large **2.4×**, XL
-  **5.2×**. Medium is exactly a character's size — the player, the townsfolk and every shadow. Each creature's art is
-  measured and fitted to its size, so every creature of one size stands the same height whatever padding its picture
-  carries.
-- **Melee reach counts the same multiple, from the same table**, so how big a creature looks and how far it reaches
-  can never disagree. Against a character, a blow reaches **0.65×** its full reach against a Small creature, **1×**
-  against a Medium one, **1.7×** against a Large one and **3.1×** against an XL one — and the creature's own blows
-  reach the same distance back.
+- **A creature's size is one number: how many times a character's height it stands.** **1** is a character — the
+  player, the townsfolk and every shadow. It runs from **0.1** to **5.2**: a mouse is **0.12**, a raccoon **0.3**, a
+  bear **1.6**, a giant squid **4**. Each creature's art is measured and fitted to that height, so it stands exactly
+  that tall whatever padding its picture carries.
+- **Three size groups, worked out from that number and never typed:** under **0.6** is **Small**, **0.6 to 1.5** is
+  **Medium**, over **1.5** is **Large**. The group is what cards and the weapon-vs-size chart will read; the number
+  is what the body and reach use.
+- **Melee reach counts the same number**, so how big a creature looks and how far it reaches can never disagree.
+  Against a character, a blow reaches half of (1 + the creature's size) times its full reach — **0.65×** against a
+  raccoon, **1.3×** against a bear, **2.5×** against a giant squid — and the creature's own blows reach the same
+  distance back.
 - **Its collision body grows with it.** A creature wider than the usual routing footprint steers around obstacles
   with its own width.
-- **Size changes nothing else**: not movement speed, not stats. The weapon-vs-size damage chart is not switched on,
-  and it has no XL column yet.
-- **The split:** normals **26 Small, 28 Medium, 10 Large, 2 XL**; elites **2 Small, 2 Medium, 2 Large, 12 XL**; all
-  shadows Medium. Each creature's size is set on its own catalog entry; a shadow is Medium whatever its entry says.
+- **Size changes nothing else**: not movement speed, not stats. The weapon-vs-size damage chart is not switched on.
+- **The split:** normals **40 Small, 17 Medium, 9 Large**; elites **16 Large, 2 Medium**; all shadows **1**
+  (Medium). Each creature's size is set on its own catalog entry, in the Mob Table's **size** column, with its group
+  shown beside it; a shadow is always 1 whatever its entry says, so its size is locked there.
 
 ## Normal
 
@@ -98,10 +101,9 @@ map, and the map generator no longer puts any there.
 ## Shadow
 
 - **The strongest creatures in the game.** They are the 3D characters, each wearing **one weapon type**, so there
-  are fourteen of them — one for each weapon. Twelve are in the game; the Fist and Kick shadows (both weapons added
-  2026-09-25) are not made yet.
-- **Levels 105, 110, 115 … 160**, one shadow per step — above the 1–99 range every other creature uses.
-- **The weapon order runs from the least-played weapon at 105 to the most-played at 160.** A shadow is what a
+  are fourteen of them — one for each weapon, all fourteen in the game.
+- **Levels 105, 110, 115 … 170**, one shadow per step — above the 1–99 range every other creature uses.
+- **The weapon order runs from the least-played weapon at 105 to the most-played at 170.** A shadow is what a
   weapon's end-game materials come from, so the weapons fewest people choose are the easiest to finish — a reason
   to pick them. The order is a first guess, made before there is any player data.
 - **A shadow goes by its weapon's STYLE**, never a personal name — the Fourteen left no names, only how they fought
@@ -110,38 +112,38 @@ map, and the map generator no longer puts any there.
 
   | Level | Weapon | Style | Element |
   | --- | --- | --- | --- |
-  | 105 | Shield | **Still Oak** | Neutral |
-  | 110 | Wand | **Morning Dew** | Holy |
-  | 115 | Warhammer | **Stone Bloom** | Earth |
-  | 120 | Spear | **Silver Rain** | Water |
-  | 125 | Axe | **Forest Fire** | Fire |
-  | 130 | Firearm | **Dusk Crow** | Shadow |
-  | 135 | Scythe | **Black Lily** | Undead |
-  | 140 | Dagger | **Night Orchid** | Poison |
-  | 145 | Staff | **Ashen Field** | Fire |
-  | 150 | Greatsword | **Silent Snow** | Ghost |
-  | 155 | Bow | **Feather Rain** | Wind |
-  | 160 | Sword | **Blossom Wind** | Wind |
-  | *not set* | Fist | **Northern Lights** | Neutral |
-  | *not set* | Kick | **Autumn Gale** | Wind |
+  | 105 | Kick | **Autumn Gale** | Wind |
+  | 110 | Fist | **Northern Lights** | Neutral |
+  | 115 | Shield | **Still Oak** | Neutral |
+  | 120 | Wand | **Morning Dew** | Holy |
+  | 125 | Warhammer | **Stone Bloom** | Earth |
+  | 130 | Spear | **Silver Rain** | Water |
+  | 135 | Axe | **Forest Fire** | Fire |
+  | 140 | Firearm | **Dusk Crow** | Dark |
+  | 145 | Scythe | **Black Lily** | Undead |
+  | 150 | Dagger | **Night Orchid** | Poison |
+  | 155 | Staff | **Ashen Field** | Fire |
+  | 160 | Greatsword | **Silent Snow** | Ghost |
+  | 165 | Bow | **Feather Rain** | Wind |
+  | 170 | Sword | **Blossom Wind** | Wind |
 - **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Fire and Neutral
   twice each, the rest once. Only the Water, Earth, Fire and Wind shadows can be answered with a converter today; the
   counter for the others is to come from skill buffs and cards. At level 3 the element matters, and its own element
-  lands very differently on each: it heals the Water, Fire, Wind, Holy and Shadow shadows, does nothing to the Earth,
+  lands very differently on each: it heals the Water, Fire, Wind, Holy and Dark shadows, does nothing to the Earth,
   Poison and Undead ones, lands normally on the Neutral one, and lands for 175% on the Ghost one. It swings with its
   element too; the weapon it holds has none, and a weapon with no element never overrides a creature's own.
-- **Each shadow summons one elite kind, matched to its place on the ladder.** The top twelve elites by level pair
+- **Each shadow summons one elite kind, matched to its place on the ladder.** The top fourteen elites by level pair
   with the shadows from the top down:
 
-  | Shadow | Blossom Wind 160 | Feather Rain 155 | Silent Snow 150 | Ashen Field 145 | Night Orchid 140 | Black Lily 135 |
-  | --- | --- | --- | --- | --- | --- | --- |
-  | Summons | SquidRed 99 | GiantSlime2 95 | TenguRed 92 | GiantSpirit 90 | GiantFlam 80 | GiantFrog 78 |
+  | Shadow | Blossom Wind 170 | Feather Rain 165 | Silent Snow 160 | Ashen Field 155 | Night Orchid 150 | Black Lily 145 | Dusk Crow 140 |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | Summons | SquidRed 99 | GiantSlime2 95 | TenguRed 92 | GiantSpirit 90 | GiantFlam 80 | GiantFrog 78 | GiantFrog2 66 |
 
-  | Shadow | Dusk Crow 130 | Forest Fire 125 | Silver Rain 120 | Stone Bloom 115 | Morning Dew 110 | Still Oak 105 |
-  | --- | --- | --- | --- | --- | --- | --- |
-  | Summons | GiantFrog2 66 | GiantRedSamurai 60 | TenguBlue 58 | GiantBamboo 47 | GiantRacoonGold 44 | DemonCyclop2 35 |
+  | Shadow | Forest Fire 135 | Silver Rain 130 | Stone Bloom 125 | Morning Dew 120 | Still Oak 115 | Northern Lights 110 | Autumn Gale 105 |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+  | Summons | GiantRedSamurai 60 | TenguBlue 58 | GiantBamboo 47 | GiantRacoonGold 44 | DemonCyclop2 35 | GiantBlueSamurai 33 | SquidGreen 24 |
 
-  The six lowest elites (8 to 33) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
+  The four lowest elites (8 to 22) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
   not share its element or place.
 - Four extra skill slots, a complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
@@ -149,12 +151,14 @@ map, and the map generator no longer puts any there.
 - **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
   trademark on the weapon — each roll made the way a station makes it.
 - **Weapon mastery equals its level, capped at 70 by its A-grade weapon**, so the Sword shadow knows every sword skill.
-- **Ring ranks:** 40 in each of the three stats its weapon's mastery raises.
+- **Ring ranks:** 40 in each of the three stats its weapon's mastery raises. The Fist shadow uses the fist's
+  placeholder row (Attack Speed, Attack, Evasion); the Kick shadow has none, because the kick has no mastery row yet.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
-- **The twelve made so far exist.** Only **Blossom Wind** (the Sword shadow) holds a weapon; the other eleven fight with basic attacks, their four
-  extra skills and summon until their weapon's skills exist, and then each is handed its weapon.
+- **All fourteen exist.** Only **Blossom Wind** (the Sword shadow) holds a weapon; the other thirteen fight with
+  basic attacks, their four extra skills and summon until their weapon's skills exist, and then each is handed its
+  weapon.
 - They carry their name and an always-visible health bar.
 
 ## Summoning
@@ -185,7 +189,7 @@ its own grade's **metal, cloth and leather**, plus a chance of an Ink or a Salt:
 
 Every kill also has a 30% chance of one random consumable (a potion or a food), and a creature with an element adds its
 own element's two converters to that roll — a fire creature can drop the Flame Elemental Converter or the Flame Armor
-Converter; a creature whose element has no converter (Neutral, Poison, Holy, Shadow, Ghost, Undead) never drops one. Materials are never in that roll.
+Converter; a creature whose element has no converter (Neutral, Poison, Holy, Dark, Ghost, Undead) never drops one. Materials are never in that roll.
 Several of one material go down as one pile.
 
 ## Server restarts
@@ -195,8 +199,9 @@ Several of one material go down as one pile.
 
 ## Still open
 
-- **The Fist and Kick shadows**: their level (the ladder of 105 to 160 holds twelve) and the elite each summons.
-  Their styles and elements are set: Northern Lights, Neutral; Autumn Gale, Wind.
+- **The Kick shadow's ring ranks**: waiting on which three stats kick mastery raises.
+- **Kick and Fist at the bottom of the ladder** (105 and 110) is a first guess at the least-played weapons, made
+  before there is any player data, like the rest of the order.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
   spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience and

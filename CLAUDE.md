@@ -408,8 +408,8 @@ The `Assets/` root leads with four number-prefixed buckets (prefixes float them 
 
 - `0_Raw/` — imported vendor/asset packs, **untouched**. Never edit these, never place them in a scene directly. To use one, run its import/bake tool → the result lands in `1_Authored/`.
 - `1_Authored/` — what WE make and place: `Prefabs/Props/` is THE drag-and-drop palette (place things from here); `Art/` is our textures/sprites. Baked prop prefabs, hand art, ground tiles → here.
-- `2_Generated/` — tool/baker OUTPUT, safe to delete & regenerate (ground meshes+materials, baked 8-dir sprites, minimaps, decimated meshes). **Never hand-edit** — re-run the tool.
-- `3_Data/` — data the game loads at runtime: `Resources/` (keep this folder named exactly "Resources"), `Recipes/`, `ScriptableObjects/`.
+- `2_Generated/` — tool/baker OUTPUT, safe to delete & regenerate (ground meshes+materials, baked 8-dir sprites, decimated meshes). **Never hand-edit** — re-run the tool.
+- `3_Data/` — data the game loads at runtime: `Resources/` (keep this folder named exactly "Resources"), `Recipes/`, `ScriptableObjects/`. Baked output the game LOADS BY NAME lives here too, under `Resources/` — the minimap pictures (`Resources/Minimaps/`, drawn by Bake Minimaps).
 - **UNMOVED at root** (engine / package-owned — do NOT relocate): `Scripts`, `Scenes`, `Shaders`, `Settings`, `Audio`, `UI`, `UI Toolkit`, `TextMesh Pro`.
 
 When an editor tool writes assets, its output path must point at the correct bucket (paths are hard-coded `const string` in each tool). If you move a bucket, patch those path strings + the two-arg `AssetDatabase.CreateFolder("Assets", "…")` calls in the same change. Scenes/prefabs/materials link by GUID (in `.meta`), so moving a file with its `.meta` never breaks references — only code path-strings do. See memory `assets-reorg-2026-07` for the full old→new mapping.

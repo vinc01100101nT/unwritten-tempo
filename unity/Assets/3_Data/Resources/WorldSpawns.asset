@@ -23,6 +23,46 @@ MonoBehaviour:
     center: {x: 0, y: 0, z: 0}
     radius: 25.415157
     playerClearRadius: 6
+  - map: test_grassland
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 32
+    center: {x: 0, y: 0, z: 0}
+    radius: 25.415157
+    playerClearRadius: 6
+  - map: test_grassland_cliffs
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 10
+    center: {x: -18, y: 0, z: 6.1}
+    radius: 2.5
+    playerClearRadius: 6
+  - map: test_grassland_cliffs
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 11
+    center: {x: 6, y: 0, z: -11.2}
+    radius: 2.5
+    playerClearRadius: 6
+  - map: test_grassland_cliffs
+    creature: 
+    biome: 0
+    minLevel: 1
+    maxLevel: 99
+    includeCommons: 1
+    population: 11
+    center: {x: 18, y: 0, z: -3}
+    radius: 2.5
+    playerClearRadius: 6
   - map: test_highland
     creature: 
     biome: 7

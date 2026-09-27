@@ -264,7 +264,7 @@ public class MonsterAI3D : MonoBehaviour
 
     [Tooltip("This creature's body size — a MIRROR of its catalog entry, which owns it. Written by the mob baker and " +
              "again as each creature is made (MobBody.Fit), so a prefab baked before a size edit corrects itself.")]
-    public MobSize size = MobSize.Medium;
+    public float size = MobSizes.Character;
 
     /// <summary>Live registry of active mobs, so cursor target-magnetism can scan candidates without a
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
@@ -315,10 +315,10 @@ public class MonsterAI3D : MonoBehaviour
         home = transform.position;
         UnitCrowd.Register(gameObject);   // pass through other units (no stacking / climbing on heads)
 
-        // Floating HP bar + name under the sprite. Auto-added here so EVERY mob gets one (even those baked
-        // before the nameplate existed — no re-bake), the training dummy included: a test target that reads
-        // differently from a real mob tests the wrong thing. The boss's name + always-visible bar are configured by
-        // BossBanner. DisallowMultipleComponent + this guard avoid a duplicate when one is already present.
+        // The nameplate holds the creature's display name for every readout. Auto-added here so EVERY mob gets one
+        // (even those baked before the nameplate existed — no re-bake), the training dummy included. It draws nothing:
+        // every unit's bar and name read through the one HoverPlate.
+        // DisallowMultipleComponent + this guard avoid a duplicate when one is already present.
         if (!TryGetComponent<MobNameplate>(out _)) gameObject.AddComponent<MobNameplate>();
 
         EnsureSimulationLod();
@@ -346,9 +346,8 @@ public class MonsterAI3D : MonoBehaviour
 
         var lod = gameObject.AddComponent<SimulationLod>();
         lod.simulateRadius = simulateRadius;
-        // The mover and the sprite animator are the per-frame costs worth stopping. The nameplate and depth sorter
-        // stay live: an off-screen unit's plate is already invisible, and freezing the sorter would strand its sprite
-        // at a stale draw order the moment it thaws.
+        // The mover and the sprite animator are the per-frame costs worth stopping. The depth sorter stays live:
+        // freezing it would strand the sprite at a stale draw order the moment it thaws.
         lod.Freeze(agent, GetComponent<BillboardAnimator3D>());
         Lod = lod;
     }
@@ -477,8 +476,8 @@ public class MonsterAI3D : MonoBehaviour
     }
 
     /// <summary>How big this mob's BODY is, for melee-contact maths — its size's multiple of a character, read from the
-    /// same size table its height is fitted from, so how big it looks and how far it reaches can never disagree. A
-    /// shadow is always Medium, which is exactly the character size. Reported rather than baked into a reach, so
+    /// same number its height is fitted from, so how big it looks and how far it reaches can never disagree. A
+    /// shadow is always 1, which is exactly the character size. Reported rather than baked into a reach, so
     /// whoever measures against this mob blends the real pair.</summary>
     public float MeleeScale => MobSizes.MeleeScale(size, UnitScale.CharacterScale);
 

@@ -1,0 +1,8 @@
+{
+ "title": "Monsters",
+ "blocks": [
+  {
+   "type": "mobTable"
+  }
+ ]
+}

@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 145
-    str: 54
-    agi: 78
-    vit: 97
+    level: 155
+    str: 63
+    agi: 87
+    vit: 99
     intel: 99
-    dex: 78
-    luk: 53
+    dex: 87
+    luk: 62
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 010000000600000003000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 145
+  weaponMasteryLevel: 155
 --- !u!114 &7763605847880627560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Azar
+  bossName: Ashen Field

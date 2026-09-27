@@ -34,7 +34,7 @@ so a region has a feel, not a lock.
   It belongs to no one. The fields beside it hold only weak creatures (no stronger visitor below level 9), so a new
   character's first steps are safe; nothing stops them walking further.
 - **The elements get harder with each tier, by the creature's level.** A creature of levels 1–33 is only Neutral,
-  Earth or Water, which today's converters answer; 34–66 adds Wind and Fire; 67–99 adds Ghost, Undead, Shadow, Holy
+  Earth or Water, which today's converters answer; 34–66 adds Wind and Fire; 67–99 adds Ghost, Undead, Dark, Holy
   and Poison, the elements whose counter (skill buffs and cards) is still to come.
 - **No real-country culture.** No city is a real country and no name comes from a real country's language. How place
   names are made is under Cities and towns.
@@ -122,7 +122,7 @@ level**: a shadow needs a guild to bring down, and meeting one in a levelling fi
 | Staff | **Ashen Field** | Fire | **The Everburning Plain** — a plain where the ground itself is on fire, around a fire temple. | **Guide**: the fire temple's keeper grants passage. |
 | Bow | **Feather Rain** | Wind | **The Sky Cairn** — a lone stone cairn on an endless steppe. The shadow rides circles round it, always out of reach. | **Guide**: a steppe rider takes the party out. |
 | Spear | **Silver Rain** | Water | **The Tide Temple** — a temple on a rock out at sea. | **World clock**: walkable only while the tide is out. |
-| Firearm | **Dusk Crow** | Shadow | **The Dusk Tower** — a bell tower above a city where the sun is always setting. The shadow fires once, from the top. | **World clock**: the door opens only at dusk. |
+| Firearm | **Dusk Crow** | Dark | **The Dusk Tower** — a bell tower above a city where the sun is always setting. The shadow fires once, from the top. | **World clock**: the door opens only at dusk. |
 | Greatsword | **Silent Snow** | Ghost | **The Walking Road** — a road through fog that keeps going as long as you walk it, ending at a black castle. | **World clock**: the road appears only in fog. |
 | Scythe | **Black Lily** | Undead | **The Drowned Chapel** — a chapel at the bottom of a black cove, whose bell still rings underwater. | **Hidden**: find the way down yourself. |
 | Fist | **Northern Lights** | Neutral | **Aurora Steps** — a mountain monastery under the aurora. | **Quest**: the monastery's trials. |
@@ -135,7 +135,7 @@ level**: a shadow needs a guild to bring down, and meeting one in a levelling fi
 ## Biomes and elements
 
 Every creature map has a **biome**, and the biome sets which element **most** of its creatures carry. It is a
-majority, never a lock: a snow field is mostly Water, but some of its creatures are Earth, Shadow or Wind. Every one
+majority, never a lock: a snow field is mostly Water, but some of its creatures are Earth, Dark or Wind. Every one
 of the ten elements is the majority somewhere.
 
 | Biome | Most creatures | Also found | Exists today? |
@@ -146,14 +146,14 @@ of the ten elements is the majority somewhere.
 | Peaks | Wind | Holy, Water | yes |
 | Steppe | Wind | Neutral, Earth | yes |
 | Coast | Water | Wind, Undead | yes |
-| Snow | Water | Wind, Earth, Shadow | yes |
+| Snow | Water | Wind, Earth, Dark | yes |
 | Volcanic | Fire | Earth, Undead | yes |
 | Desert | Fire | Earth, Poison, Undead | yes |
 | Swamp | Poison | Water, Undead | yes |
 | Sacred | Holy | Neutral, Wind, Ghost | yes |
-| Haunted | Undead | Ghost, Shadow, Water | yes |
-| Mist | Ghost | Shadow, Undead, Wind | yes |
-| Corrupted | Shadow | Undead, Ghost, Poison | yes |
+| Haunted | Undead | Ghost, Dark, Water | yes |
+| Mist | Ghost | Dark, Undead, Wind | yes |
+| Corrupted | Dark | Undead, Ghost, Poison | yes |
 
 **Each region uses its own biomes** (the region table above). A map's biome sets its creatures' majority element; a
 shadow's element is its own and does not have to match the biome around its place.
@@ -189,7 +189,7 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
   Kharnel 1–4: 86–88 / 89–92 / 93–95 / 96–99; Lastline 58–61 / 62–66; Kharnel 5–6: 70–74 / 75–79; Kharnel 7–9:
   86–90 / 91–95 / 96–99). Elites stand in the fields of their home biome
   near their level, and the first five dungeons' bottom floors each hold their own. Every creature, every map and the rules are in
-  [Creatures and Where They Live](biome-mob-families.md); the twelve shadows' elements are in the table above.
+  [Creatures and Where They Live](biome-mob-families.md); the fourteen shadows' elements are in the table above.
   Cities and towns have none.
 - **The in-game world map (N)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
 
@@ -215,15 +215,15 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
 
 ## What this needs that the game does not have yet
 
-- **A counter for Holy, Shadow and Poison.** At a shadow's element level (3), nothing a player can attack with today
-  does more than 100% to a Holy, Shadow or Poison shadow. A Ghost shadow takes 0 from a plain attack, so a converter
+- **A counter for Holy, Dark and Poison.** At a shadow's element level (3), nothing a player can attack with today
+  does more than 100% to a Holy, Dark or Poison shadow. A Ghost shadow takes 0 from a plain attack, so a converter
   is required to hurt it. **The counter will come from skill buffs and cards**, both still to be built.
 - **Quests.** The game has no quest system; four shadows' places are reached by quest.
 - **A world clock that opens doors**: a tide, dusk and fog (three shadows' places). Not checked: whether the server
   knows the time of day and the weather.
 - **Guides**: a townsperson who moves a whole party to another map.
 - **Keys**: an item that opens a door.
-- **The Fist and Kick shadows**, and their weapons.
+- **The Fist and Kick weapons.** Their shadows exist; the weapons do not.
 - **Guilds and castle gameplay.** There are no guilds in the game yet; castle gameplay is deferred.
 - **Buildings for the cities and towns.** All fourteen biomes are in the map generator, each on its own ground tiles, and
   the new world's maps use all of them, and every biome has creatures of its own; props exist for nine of the

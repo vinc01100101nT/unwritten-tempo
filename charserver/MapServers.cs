@@ -31,7 +31,8 @@ public sealed class MapServers(Config config)
         string Build,
         DateTimeOffset At,
         int Players,
-        int Creatures)
+        int Creatures,
+        string StartingMap)
     {
         /// <summary>How busy this process is, as one number to compare processes by. A person weighs far more
         /// than a creature because a person is played at: they move every frame, they fight, they are written
@@ -74,10 +75,10 @@ public sealed class MapServers(Config config)
     }
 
     public Registration Register(string id, string address, int port, int playerPort, string[] maps, string build,
-                                 int players, int creatures)
+                                 int players, int creatures, string? startingMap)
     {
         var reg = new Registration(id, address, port, playerPort, maps ?? [], build, DateTimeOffset.UtcNow,
-                                   players, creatures);
+                                   players, creatures, startingMap?.Trim() ?? "");
         byId[id] = reg;
         Rebuild();
         return reg;

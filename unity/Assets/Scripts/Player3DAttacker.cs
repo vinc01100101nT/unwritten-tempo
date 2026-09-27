@@ -73,7 +73,7 @@ public class Player3DAttacker : MonoBehaviour
 
     /// <summary>The player's reach AGAINST A SPECIFIC TARGET — the only correct form, because a melee blend is a fact
     /// about the PAIR of bodies, not about either one alone. A Medium creature (every shadow) is a character's size, so
-    /// that pair blends to full reach; a Small one blends down, a Large or XL one up (<see cref="MobSizes"/>).
+    /// that pair blends to full reach; a smaller one blends down, a bigger one up (<see cref="MobSizes"/>).
     ///
     /// <para><see cref="EffectiveRange"/> assumes the stand-in body and now exists only for the callers that have
     /// NO target to measure against (the pickup radius, the editor gizmo). Every real hit test uses this.</para></summary>

@@ -139,7 +139,7 @@ whole. Decided 2026-09-21.
 - **Rare materials are the surprise drop**, and they drop from creatures **of every level**. Only the base
   forging, weaving and tanning materials are level-gated.
 - **Which band a creature drops is its level's answer** (decided 2026-09-22): the seven bands split creature levels
-  1–99 evenly — 1–14 Raw, 15–28 F, 29–42 E, 43–56 D, 57–70 C, 71–84 B, 85–99 A — and a shadow (105–160) drops band
+  1–99 evenly — 1–14 Raw, 15–28 F, 29–42 E, 43–56 D, 57–70 C, 71–84 B, 85–99 A — and a shadow (105–170) drops band
   A. A creature drops its band's metal, cloth and leather, and a chance of an Ink or a Salt; how much, and which
   tiers, is its kind's answer (normal, elite, shadow). The table is in [Mob Roster](../../3-world/mob-roster.md).
   Every kill also has a 30% chance of one random consumable; materials are never in that roll.

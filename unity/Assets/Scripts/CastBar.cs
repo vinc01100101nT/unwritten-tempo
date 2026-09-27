@@ -27,8 +27,8 @@ using TMPro;
 [DisallowMultipleComponent]
 public class CastBar : MonoBehaviour
 {
-    // Layout (UI pixels, scaled into the world by worldScale — matched to MobNameplate so the bar reads at
-    // the same size as a mob's HP plate).
+    // Layout (UI pixels, scaled into the world by worldScale — matched to HoverPlate so the bar reads at
+    // the same size as a unit's HP bar).
     const float WorldScale = 0.0075f;
     const float BarWidth = 60f, BarHeight = 8f;
     const int   LabelFontSize = 14;
@@ -114,7 +114,7 @@ public class CastBar : MonoBehaviour
         }
         bar.lastSetFrame = Time.frameCount;
 
-        // Ride the caster's head and yaw to face the camera (same as MobNameplate/DamagePopup).
+        // Ride the caster's head and yaw to face the camera (same as HoverPlate/DamagePopup).
         bar.root.position = UnitAnchor.Head(over);
         bar.root.rotation = camT.rotation;
 

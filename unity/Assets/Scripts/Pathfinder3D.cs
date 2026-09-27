@@ -22,23 +22,20 @@ public static class Pathfinder3D
     public static float ProbeY = 0.5f;
 
     // ---- elevation (opt-in) ---------------------------------------------------
-    /// <summary>When true, the grid samples the ground height under each cell and only lets you step
-    /// between cells whose heights differ by <= <see cref="MaxStep"/> — so ramps/stairs are walkable
-    /// and cliffs are not. Default false keeps the original flat-XZ behaviour (no per-cell raycasts).
-    /// Set via <see cref="Pathfinder3DConfig"/>.</summary>
+    /// <summary>When true, the grid samples the ground under each cell — its height and how steep it is — and only
+    /// lets a route step between cells a body could walk between (<see cref="GroundElevation.Walkable"/>, the same
+    /// rule every body's controller walks by) — so slopes and stairs are walkable and cliffs are not. Default false
+    /// keeps the original flat-XZ behaviour (no per-cell raycasts). Set via <see cref="Pathfinder3DConfig"/>.</summary>
     public static bool HeightAware = false;
 
     /// <summary>Layers that count as walkable GROUND (terrain tiers + ramps) for height sampling.
     /// Must be set (non-zero) when <see cref="HeightAware"/> is on, or every cell reads as void.</summary>
     public static LayerMask GroundMask = 0;
 
-    /// <summary>Max walkable height change between adjacent cells (a step/stair/ramp rise). Larger
-    /// deltas are cliffs and block the move.</summary>
-    public static float MaxStep = 0.6f;
-
     const float RayTop = 60f;   // height we drop ground-probe rays from
-    static readonly System.Collections.Generic.Dictionary<long, float> groundCache
-        = new System.Collections.Generic.Dictionary<long, float>();
+    // Per cell: x = ground height (NaN = nothing underneath), y = how steep it is there (a tangent, see GroundElevation.SlopeTan).
+    static readonly System.Collections.Generic.Dictionary<long, Vector2> groundCache
+        = new System.Collections.Generic.Dictionary<long, Vector2>();
 
     // Reset the elevation statics at every Play start so they can't leak between scenes when
     // "Enter Play Mode" domain reload is disabled — each scene's Pathfinder3DConfig (or its absence)
@@ -50,6 +47,7 @@ public static class Pathfinder3D
         GroundMask = 0;
         ObstacleMask = ~0;
         groundCache.Clear();
+        areaGrids.Clear();
     }
 
     public static string LastOutcome = "";
@@ -70,20 +68,28 @@ public static class Pathfinder3D
 
     // Ground surface Y under a world XZ point (raycast straight down on the ground layers), or NaN if
     // there's no ground there (a hole/void — treated as unwalkable).
-    static float SampleGroundYWorld(Vector2 xz)
+    static float SampleGroundYWorld(Vector2 xz) => SampleGround(xz, out float y, out _) ? y : float.NaN;
+
+    // The ground under a world XZ point: its height and how steep it is there. False when there is none.
+    static bool SampleGround(Vector2 xz, out float y, out float slopeTan)
     {
         if (Physics.Raycast(new Vector3(xz.x, RayTop, xz.y), Vector3.down, out var hit, RayTop * 2f, GroundMask, QueryTriggerInteraction.Ignore))
-            return hit.point.y;
-        return float.NaN;
+        {
+            y = hit.point.y;
+            slopeTan = GroundElevation.SlopeTan(hit.normal);
+            return true;
+        }
+        y = float.NaN; slopeTan = 0f;
+        return false;
     }
 
-    static float GroundYCell(int x, int y)
+    static Vector2 GroundCell(int x, int y)
     {
         long k = Key(x, y);
-        if (groundCache.TryGetValue(k, out float gy)) return gy;
-        gy = SampleGroundYWorld(Center(x, y));
-        groundCache[k] = gy;
-        return gy;
+        if (groundCache.TryGetValue(k, out var g)) return g;
+        g = SampleGround(Center(x, y), out float gy, out float slope) ? new Vector2(gy, slope) : new Vector2(float.NaN, 0f);
+        groundCache[k] = g;
+        return g;
     }
 
     static readonly (int dx, int dy)[] N8 =
@@ -99,13 +105,15 @@ public static class Pathfinder3D
 
     static bool Blocked(Vector2 center, float radius)
     {
-        float py = ProbeY;
-        if (HeightAware)
-        {
-            float gy = SampleGroundYWorld(center);
-            if (float.IsNaN(gy)) return true;   // no ground under this cell = void = unwalkable
-            py = gy + ProbeY;                   // probe obstacles relative to the local ground height
-        }
+        if (!HeightAware) return BlockedAt(center, radius, ProbeY);
+        float gy = SampleGroundYWorld(center);
+        if (float.IsNaN(gy)) return true;   // no ground under this cell = void = unwalkable
+        return BlockedAt(center, radius, gy + ProbeY);   // probe obstacles relative to the local ground height
+    }
+
+    // Is anything solid within radius of this point, at this height?
+    static bool BlockedAt(Vector2 center, float radius, float py)
+    {
         Vector3 p = new Vector3(center.x, py, center.y);
         int n = Physics.OverlapSphereNonAlloc(p, Mathf.Max(0.01f, radius), overlapBuf, ObstacleMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < n; i++)
@@ -137,7 +145,8 @@ public static class Pathfinder3D
     /// the air over a drop), which is why height-aware mode used to refuse to straight-line or smooth at all —
     /// and so the agent stair-stepped cell-to-cell even across clearly open, level ground (the "drift"). Instead
     /// we MARCH the segment in small steps and accept it only when the ground stays continuous (no void, no rise
-    /// bigger than <see cref="MaxStep"/> between samples) AND no obstacle blocks the swept body. Cliffs/steps
+    /// between samples that a body could not walk, see <see cref="GroundElevation.Walkable"/>) AND no obstacle blocks
+    /// the swept body. Cliffs/steps
     /// still fail and fall back to the grid; flat open ground goes perfectly straight.</summary>
     static bool HasClearWalkableLine(Vector2 a, Vector2 b, float radius)
     {
@@ -149,18 +158,17 @@ public static class Pathfinder3D
         float stepLen = Mathf.Max(0.05f, CellSize * 0.5f);
         int steps = Mathf.CeilToInt(dist / stepLen);
 
-        float prevGy = SampleGroundYWorld(a);
-        if (float.IsNaN(prevGy)) return false;              // start over a void
+        if (!SampleGround(a, out float prevGy, out float prevSlope)) return false;   // start over a void
 
+        float prevAlong = 0f;
         for (int i = 1; i <= steps; i++)
         {
             float along = Mathf.Min(dist, i * stepLen);
             Vector2 p = a + dir * along;
-            float gy = SampleGroundYWorld(p);
-            if (float.IsNaN(gy)) return false;              // hole / off the edge
-            if (Mathf.Abs(gy - prevGy) > MaxStep) return false;   // cliff or step between samples
+            if (!SampleGround(p, out float gy, out float slope)) return false;   // hole / off the edge
+            if (!GroundElevation.Walkable(gy - prevGy, along - prevAlong, prevSlope, slope)) return false;   // cliff, ledge or too steep
             if (Blocked(p, radius)) return false;           // prop / wall in the way
-            prevGy = gy;
+            prevGy = gy; prevSlope = slope; prevAlong = along;
         }
         return true;
     }
@@ -212,6 +220,17 @@ public static class Pathfinder3D
             return false;
         }
 
+        // NO WAY THERE AT ALL — known in nanoseconds instead of found out by searching every cell that can be
+        // reached until the budget runs out (MEASURED: 52–57 ms from a cliff top to a creature below it, asked
+        // again every 0.3 s while chasing). Head straight at the goal and stop at the last spot still in our own
+        // area: the edge above it, or the foot of the cliff below it — where the search would have ended anyway.
+        if (KnownApart(sx, sy, gx, gy, out AreaGrid area, out ushort own))
+        {
+            ApproachWithin(area, own, from, to, result);
+            LastOutcome = "partial-other-area";
+            return true;
+        }
+
         came.Clear(); gScore.Clear(); closed.Clear(); open.Clear();
 
         long startKey = Key(sx, sy);
@@ -241,12 +260,13 @@ public static class Pathfinder3D
                 long nk = Key(nx, ny);
                 if (closed.Contains(nk)) continue;
 
-                // Elevation step-gate: only walk to a neighbour whose ground height is within MaxStep
-                // (a stair/ramp rise). A bigger delta (or a void) is a cliff — not a valid move.
+                // Elevation gate: only to a neighbour a body could walk to — the same rule its controller walks by.
+                // A void, a ledge or ground too steep is not a valid move.
                 if (HeightAware)
                 {
-                    float gn = GroundYCell(nx, ny);
-                    if (float.IsNaN(gn) || Mathf.Abs(gn - GroundYCell(cur.x, cur.y)) > MaxStep) continue;
+                    Vector2 gn = GroundCell(nx, ny), gc = GroundCell(cur.x, cur.y);
+                    float run = (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize;
+                    if (float.IsNaN(gn.x) || !GroundElevation.Walkable(gn.x - gc.x, run, gc.y, gn.y)) continue;
                 }
 
                 bool isStart = nx == sx && ny == sy;
@@ -295,6 +315,126 @@ public static class Pathfinder3D
 
         LastOutcome = found ? "routed" : "partial";
         return true;
+    }
+
+    // ---- connected areas ---------------------------------------------------------
+    //
+    // Every cell of a map, labelled once — when the map loads — with which connected area it belongs to, by the
+    // same rules the search walks by: ground under it, nothing solid in it, and a step to its neighbour a body could
+    // walk (GroundElevation.Walkable) —
+    // its neighbour. Two cells with different labels can never be joined by a route, so a search between them is
+    // skipped. The labelling is deliberately MORE permissive than the search (the thinnest possible body, and
+    // diagonal steps allowed past corners), so "different areas" is only ever said when it is certainly true;
+    // when in doubt the search runs exactly as it always did.
+
+    sealed class AreaGrid
+    {
+        public int x0, y0, nx, ny;
+        public ushort[] label;   // 0 = not walkable (solid, or nothing underneath)
+        public ushort At(int x, int y)
+        {
+            x -= x0; y -= y0;
+            return x < 0 || y < 0 || x >= nx || y >= ny ? (ushort)0 : label[y * nx + x];
+        }
+        public bool Holds(int x, int y) => x >= x0 && y >= y0 && x < x0 + nx && y < y0 + ny;
+    }
+
+    static readonly List<AreaGrid> areaGrids = new List<AreaGrid>();
+
+    /// <summary>Label the connected areas of the ground inside <paramref name="bounds"/> (a whole map). One-off, at
+    /// load: MEASURED 13 ms and 28.8 KB for a 60×60 map. Returns what to hand <see cref="ForgetAreas"/> when the map
+    /// goes; null when the labelling was skipped (too many areas to tell apart), which only disables the shortcut.</summary>
+    public static object LabelAreas(Bounds bounds)
+    {
+        var g = new AreaGrid { x0 = Floor(bounds.min.x), y0 = Floor(bounds.min.z) };
+        g.nx = Floor(bounds.max.x) - g.x0 + 1;
+        g.ny = Floor(bounds.max.z) - g.y0 + 1;
+        int n = g.nx * g.ny;
+        g.label = new ushort[n];
+        var height = new float[n];
+        var slope = new float[n];
+        var open = new bool[n];
+        for (int y = 0; y < g.ny; y++)
+            for (int x = 0; x < g.nx; x++)
+            {
+                int i = y * g.nx + x;
+                Vector2 c = Center(g.x0 + x, g.y0 + y);
+                float gy = 0f;
+                if (HeightAware && !SampleGround(c, out gy, out slope[i])) continue;
+                height[i] = gy;
+                open[i] = !BlockedAt(c, 0.01f, HeightAware ? gy + ProbeY : ProbeY);
+            }
+
+        var queue = new int[n];
+        ushort next = 0;
+        for (int start = 0; start < n; start++)
+        {
+            if (!open[start] || g.label[start] != 0) continue;
+            if (next == ushort.MaxValue) return null;
+            next++;
+            int head = 0, tail = 0;
+            g.label[start] = next;
+            queue[tail++] = start;
+            while (head < tail)
+            {
+                int cur = queue[head++];
+                int cx = cur % g.nx, cy = cur / g.nx;
+                foreach (var (dx, dy) in N8)
+                {
+                    int x = cx + dx, y = cy + dy;
+                    if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
+                    int i = y * g.nx + x;
+                    if (!open[i] || g.label[i] != 0) continue;
+                    if (HeightAware && !GroundElevation.Walkable(height[i] - height[cur],
+                            (dx != 0 && dy != 0) ? CellSize * Sqrt2 : CellSize, slope[cur], slope[i])) continue;
+                    g.label[i] = next;
+                    queue[tail++] = i;
+                }
+            }
+        }
+        areaGrids.Add(g);
+        return g;
+    }
+
+    /// <summary>Drop a map's labels when the map goes, so a later map set down in the same place is not judged by them.</summary>
+    public static void ForgetAreas(object labels)
+    {
+        if (labels is AreaGrid g) areaGrids.Remove(g);
+    }
+
+    // Are these two cells in one labelled map but in areas no route joins? A cell that is not walkable (label 0) is
+    // never judged: the search has its own ways of starting from, or aiming near, such a cell.
+    static bool KnownApart(int sx, int sy, int gx, int gy, out AreaGrid area, out ushort own)
+    {
+        for (int i = 0; i < areaGrids.Count; i++)
+        {
+            var g = areaGrids[i];
+            if (!g.Holds(sx, sy) || !g.Holds(gx, gy)) continue;
+            own = g.At(sx, sy);
+            ushort theirs = g.At(gx, gy);
+            area = g;
+            return own != 0 && theirs != 0 && own != theirs;
+        }
+        area = null; own = 0;
+        return false;
+    }
+
+    // Walk the straight line toward the goal and stop at the last point still in our own area — which is where we
+    // already stand when we are at the edge, so a chase waits there instead of walking off it.
+    static void ApproachWithin(AreaGrid area, ushort own, Vector2 from, Vector2 to, List<Vector2> result)
+    {
+        Vector2 d = to - from;
+        float dist = d.magnitude;
+        float step = CellSize * 0.5f;
+        Vector2 last = from;
+        for (float along = step; along < dist; along += step)
+        {
+            Vector2 p = from + d * (along / dist);
+            ushort here = area.At(Floor(p.x), Floor(p.y));
+            if (here == own) last = p;
+            else if (here != 0) break;
+        }
+        result.Add(last);
     }
 
     static bool FindNearbyOpen(ref int gx, ref int gy, float radius)

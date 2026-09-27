@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.spirit
   displayName: Spirit
   kind: 0
-  size: 1
+  size: 0.9
   biome: 12
   sheet: Spirit
   weight: 4

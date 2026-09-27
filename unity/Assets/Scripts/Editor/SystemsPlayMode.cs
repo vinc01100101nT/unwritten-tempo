@@ -52,8 +52,12 @@ static class SystemsPlayMode
 
         EnsurePlayStartsAtSystems();   // belt-and-suspenders in case it was cleared this session
 
+        // Pressing Play in Systems itself names no map, so the one remembered from an EARLIER press is forgotten —
+        // otherwise it outlived that test and beat everything, a new character's starting map included.
         if (active.IsValid() && !string.IsNullOrEmpty(active.name) && active.name != MapManager.SystemsScene)
             SessionState.SetString("unwritten.bootMap", active.name);
+        else
+            SessionState.EraseString("unwritten.bootMap");
     }
 
     // Point the editor Play-start scene at Systems so the camera always boots, whatever map is open.

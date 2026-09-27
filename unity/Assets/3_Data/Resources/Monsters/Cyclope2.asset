@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.cyclope2
   displayName: Cyclope2
   kind: 0
-  size: 2
+  size: 2.4
   biome: 7
   sheet: Cyclope2
   weight: 2

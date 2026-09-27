@@ -218,7 +218,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 ## Still open
 
 - Ring **voice** design when it returns (v-next); **card** list + mob categories (v3-content).
-- Mobs have the full stat model and their roster is reset onto it (96 creatures, levels 1–160, all on point budget), but there is almost no gear for them to wear yet — two equipment items exist. See *Unified Unit Stats — Implementation Notes*.
+- Mobs have the full stat model and their roster is reset onto it (98 creatures, levels 1–170, all on point budget), but there is almost no gear for them to wear yet — two equipment items exist. See *Unified Unit Stats — Implementation Notes*.
 
 ---
 

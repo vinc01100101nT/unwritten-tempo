@@ -9,7 +9,7 @@ using UnityEngine;
 /// Bakes every <see cref="MonsterDef"/> in the catalog into a prefab and marks it ADDRESSABLE so the game
 /// can summon mobs from data during Play — the builder (<see cref="RigBuilder25D"/>) is editor-only and
 /// can't run in a build. Each prefab is built the normal way, <c>RigBuilder25D.BuildMonster(def.ToArchetype())</c>,
-/// plus a <see cref="BossBanner"/> for elites and shadows, which carry their name and an always-visible bar.
+/// plus a <see cref="BossBanner"/> for elites and shadows, which gives them their display name.
 /// <see cref="MobSpawner"/> loads them by address.
 ///
 /// Output: <c>Assets/2_Generated/MobPrefabs/Mobs/&lt;def name&gt;.prefab</c> (NOT under Resources — Addressables
@@ -61,7 +61,7 @@ public static class MobPrefabBaker
                 EditorUtility.DisplayProgressBar("Bake Mob Prefabs", def.name, (float)i / defs.Count);
 
                 var go = RigBuilder25D.BuildMonster(def.ToArchetype(), Vector3.zero);
-                // An elite or a shadow carries its name and an always-visible bar, as the old bosses did.
+                // An elite or a shadow carries its display name on a BossBanner.
                 if (def.kind != CreatureKind.Normal)
                     go.AddComponent<BossBanner>().bossName = string.IsNullOrEmpty(def.displayName) ? def.name : def.displayName;
 

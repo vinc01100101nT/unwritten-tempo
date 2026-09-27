@@ -265,13 +265,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
   inputs:
-    level: 110
-    str: 36
-    agi: 56
-    vit: 71
-    intel: 84
-    dex: 56
-    luk: 36
+    level: 120
+    str: 40
+    agi: 61
+    vit: 78
+    intel: 92
+    dex: 61
+    luk: 40
     baseMaxHP: 20
     hpPerLevel: 6
     baseAttack: 4
@@ -286,7 +286,7 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 030000000600000004000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 110
+  weaponMasteryLevel: 120
 --- !u!114 &630289806321633186
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -408,4 +408,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Brigid
+  bossName: Morning Dew

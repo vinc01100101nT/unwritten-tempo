@@ -35,6 +35,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1642f4fa9906a45bca041587990bf208
+    m_Address: Mobs/Shadow_NorthernLights
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 172ebe8822673594a8879eba921082d1
     m_Address: Mobs/GiantFrog2
     m_ReadOnly: 0
@@ -402,6 +407,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bc11821806b19b74399b039256376cd1
     m_Address: Mobs/GiantRedSamurai
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bec265ad126f64b6b92e5f46ec4cbfbb
+    m_Address: Mobs/Shadow_AutumnGale
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

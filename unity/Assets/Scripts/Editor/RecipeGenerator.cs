@@ -147,11 +147,16 @@ public static class RecipeGenerator
                 ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
                 : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
         // Ground = one blended mesh; the biome row chooses its base/patch/road tiles + hue, the recipe can add a tint on
-        // top and opt into hard (un-feathered) edges.
+        // top and opt into hard (un-feathered) edges. The biome row also says how high its ground's mounds rise; the
+        // recipe says whether rock cliffs line the roads.
+        var cliffs = r.cliffHeight > 0f && paths.Count > 0
+            ? new GroundCliffs.Spec(paths, r.cliffHeight, r.cliffPassWidth, seed, center, r.sizeX, r.sizeZ,
+                                    r.cliffMeetingPoints) : null;
         var ground = GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
                                                paths, r.pathWidth, roadTex, patchAmount, 0.8f,
                                                bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,
-                                               r.groundStyle == GroundStyle.HardEdge);
+                                               r.groundStyle == GroundStyle.HardEdge, bio.bumpHeight, bio.bumpWidth,
+                                               bio.bumpLevels, bio.bumpSteepestDegrees, cliffs);
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Generate Map",
@@ -173,7 +178,7 @@ public static class RecipeGenerator
                 if (g == null) continue;
                 var child = new GameObject(string.IsNullOrEmpty(g.label) ? "Group" : g.label);
                 child.transform.SetParent(propsRoot.transform, false);
-                props += PlaceGroup(g, bio, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers);
+                props += PlaceGroup(g, bio, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers, cliffs);
             }
 
         // NO CREATURES ARE PUT IN THE MAP. Where creatures live is the world spawn list (WorldSpawns), read by the server
@@ -525,7 +530,7 @@ public static class RecipeGenerator
     // ── PROP PLACEMENT ENGINE ────────────────────────────────────────────────────────────────────────────
     static int PlaceGroup(RecipePropGroup g, BiomeRow bio, Transform parent, Vector3 center, float sizeX, float sizeZ,
                           System.Random rng, int mask, IReadOnlyList<PathRouting.Route> paths, float pathWidth,
-                          List<(Vector2 c, float r)> blockers)
+                          List<(Vector2 c, float r)> blockers, GroundCliffs.Spec cliffs)
     {
         bool hasPath = paths != null && paths.Count > 0 && pathWidth > 0f;
         bool sway = g.ShouldSway;                          // soft decor leans in the wind (Unwritten/FoliageWind)
@@ -570,6 +575,8 @@ public static class RecipeGenerator
         {
             if (g.clearFromCenter > 0f)
             { float dx = x - center.x, dz = z - center.z; if (dx * dx + dz * dz < g.clearFromCenter * g.clearFromCenter) return false; }
+            // Nothing stands in a cliff's face or on its lip, or it would poke through the rock.
+            if (cliffs != null && cliffs.InCliffBand(x, z)) return false;
             // Unobstructed guarantee: a SOLID prop never sits on a path; decor avoids it only if it opted in.
             if (hasPath && (g.solid || (applyAvoidPath && g.avoidPath))
                 && PathRouting.MinDistanceXZ(new Vector2(x, z), paths) < pathClear) return false;

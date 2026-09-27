@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mollusc2
   displayName: Mollusc2
   kind: 0
-  size: 0
+  size: 0.2
   biome: 6
   sheet: Mollusc2
   weight: 1

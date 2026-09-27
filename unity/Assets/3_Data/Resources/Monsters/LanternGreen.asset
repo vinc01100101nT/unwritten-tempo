@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.lanterngreen
   displayName: LanternGreen
   kind: 0
-  size: 1
+  size: 0.35
   biome: 13
   sheet: LanternGreen
   weight: 3

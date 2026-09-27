@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.fishred
   displayName: FishRed
   kind: 0
-  size: 0
+  size: 0.3
   biome: 10
   sheet: FishRed
   weight: 1

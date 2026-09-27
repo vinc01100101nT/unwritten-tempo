@@ -29,12 +29,6 @@
         {
           "state": "planned",
           "when": "Planned",
-          "title": "It is a thing you can hand somebody",
-          "text": "Install the game and play it like any other."
-        },
-        {
-          "state": "planned",
-          "when": "Planned",
           "title": "A stranger can start it",
           "text": "A title screen, and a start that shows a new player what to do."
         },
@@ -65,6 +59,12 @@
         {
           "state": "planned",
           "when": "Planned",
+          "title": "Strangers can play it",
+          "text": "The play-test: download the game, make your own account, and play it online before the official release."
+        },
+        {
+          "state": "planned",
+          "when": "Planned",
           "title": "Dungeons have a destination",
           "text": "Every elite has its place in the world, and every shadow stands on an end-game map — each worth the walk."
         },
@@ -82,6 +82,12 @@
         },
         {
           "state": "done",
+          "when": "27 Sep 2026",
+          "title": "Fields with hills and cliffs",
+          "text": "The fields now rise and fall in **hills and levels**. **Rock cliffs** line some roads, with slopes where you can climb up onto the high ground, and monsters can **chase you up any slope you can walk**."
+        },
+        {
+          "state": "done",
           "when": "23 Sep 2026",
           "title": "Checking the foundations",
           "text": "Making sure everything already in the game works as it should, before the milestones above begin."
@@ -96,7 +102,7 @@
           "state": "done",
           "when": "22 Sep 2026",
           "title": "Elites and shadows",
-          "text": "Every monster is now a **normal**, an **elite** or a **shadow**. Twelve shadows, levels 105 to 160, each call an elite to their side."
+          "text": "Every monster is now a **normal**, an **elite** or a **shadow**. Fourteen shadows, levels 105 to 170, each call an elite to their side."
         },
         {
           "state": "done",

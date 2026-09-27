@@ -28,6 +28,9 @@ MonoBehaviour:
   pathWidth: 2
   pathWander: 0.75
   pathSmoothness: 1
+  cliffHeight: 0
+  cliffPassWidth: 8
+  cliffMeetingPoints: 0
   propGroups:
   - label: Landmarks
     prefabs: []

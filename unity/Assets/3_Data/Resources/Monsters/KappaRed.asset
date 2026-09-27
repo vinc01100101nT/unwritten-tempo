@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.kappared
   displayName: KappaRed
   kind: 0
-  size: 1
+  size: 0.7
   biome: 10
   sheet: KappaRed
   weight: 3

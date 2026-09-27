@@ -18,7 +18,9 @@ using UnityEngine.SceneManagement;
 /// (see PERFORMANCE.md; one mesh + one draw beats hundreds of feathered transparent tiles).
 ///
 /// Produces the surface at y=0 + a flat floor collider + a <see cref="Pathfinder3DConfig"/> via
-/// <see cref="WalkableGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding all work unchanged. Textures are
+/// <see cref="WalkableGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding all work unchanged — or, when the biome
+/// gives its ground mounds (<see cref="GroundBumps"/>), the raised surface with a <see cref="MeshCollider"/> on it
+/// instead of the flat box. Textures are
 /// the ground tiles, resolved by name through <see cref="GroundTiles.Load"/>.
 ///
 /// <para><b>Elevated variant</b> (<see cref="LayPlotSampledElevated"/>): when a map paints per-cell heights, the
@@ -108,16 +110,24 @@ public static class GroundBlendBuilder
     /// <param name="dirtTexName">Ground tile name for the PATCH surface blended in by the dirt mask (e.g. "BASE_OR_PATCH_OR_PATH_soil").</param>
     /// <param name="tint">Albedo multiply applied by the GroundBlend shader's <c>_Color</c> (biome hue). Null = white.</param>
     /// <param name="hardEdge">Snap the dirt + path weights to 0/1 so the grass↔dirt↔path edges are crisp, not feathered.</param>
+    /// <param name="bumpHeight">How high the rolling mounds rise, world units; 0 = flat. See <see cref="GroundBumps"/>.</param>
+    /// <param name="bumpWidth">How wide one hill is, world units.</param>
+    /// <param name="bumpLevels">How many flat levels the ground settles into; 0 = smooth mounds.</param>
+    /// <param name="bumpSteepestDegrees">The steepest slope the ground may have, in degrees.</param>
+    /// <param name="cliffs">Rock cliffs lining both sides of the paths (<see cref="GroundCliffs"/>); null = none.</param>
     public static GameObject LayPlot(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                      int groundLayer, int seed = 73,
                                      IReadOnlyList<PathRouting.Route> paths = null, float pathWidth = 0f,
                                      string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f,
                                      string grassTexName = "BASE_OR_PATCH_meadow_grass", string dirtTexName = "BASE_OR_PATCH_OR_PATH_soil",
-                                     Color? tint = null, bool hardEdge = false)
+                                     Color? tint = null, bool hardEdge = false,
+                                     float bumpHeight = 0f, float bumpWidth = 10f, int bumpLevels = 0,
+                                     float bumpSteepestDegrees = 5.4f, GroundCliffs.Spec cliffs = null)
     {
         return LayPlotSampled(scene, rootName, center, sizeX, sizeZ, groundLayer,
                               MakeProceduralSampler(seed, dirtAmount, paths, pathWidth, hardEdge),
-                              grassTexName, dirtTexName, pathTexName, null, null, cell, tint);
+                              grassTexName, dirtTexName, pathTexName, null, null, cell, tint,
+                              bumpHeight, bumpWidth, seed, bumpLevels, bumpSteepestDegrees, cliffs);
     }
 
     /// <summary>
@@ -165,12 +175,19 @@ public static class GroundBlendBuilder
     /// grid. Same single-mesh + opaque-shader output, walkable floor and Pathfinder config. Texture names resolve to
     /// the tile of that name in <see cref="GroundTiles"/> (dirt/path fall back if their tile is missing). Returns the
     /// ground root, or <c>null</c> if the grass tile or the <c>Unwritten/GroundBlend</c> shader is missing.
+    /// <para><paramref name="bumpHeight"/> above 0 raises the plane into rolling mounds (<see cref="GroundBumps"/>),
+    /// and the floor becomes a <see cref="MeshCollider"/> on that same shaped mesh instead of the flat box, so feet,
+    /// props and pathing all stand on the mounds. <paramref name="cliffs"/> likewise raises the ground away from the
+    /// roads and lines the pass with carved rock faces (<see cref="GroundCliffs"/>).</para>
     /// </summary>
     public static GameObject LayPlotSampled(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                             int groundLayer, GroundSampler sample,
                                             string grassTexName = "BASE_OR_PATCH_meadow_grass", string dirtTexName = "BASE_OR_PATCH_OR_PATH_soil",
                                             string pathTexName = "PATH_dirt_road", string stoneTexName = null,
-                                            string rockTexName = null, float cell = 0.8f, Color? tint = null)
+                                            string rockTexName = null, float cell = 0.8f, Color? tint = null,
+                                            float bumpHeight = 0f, float bumpWidth = 10f, int bumpSeed = 0,
+                                            int bumpLevels = 0, float bumpSteepestDegrees = 5.4f,
+                                            GroundCliffs.Spec cliffs = null)
     {
         var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
         if (mat == null) return null;
@@ -186,6 +203,32 @@ public static class GroundBlendBuilder
         var cols  = new Color[vcount];
         float halfX = sizeX * 0.5f, halfZ = sizeZ * 0.5f;
 
+        bool bumpy = bumpHeight > 0f;
+        bool shaped = bumpy || cliffs != null;
+        float dx = sizeX / nx, dz = sizeZ / nz, originX = center.x - halfX, originZ = center.z - halfZ;
+        // groundShape = the biome's hills or levels. Without cliffs that is the ground. With cliffs the pass floor stays
+        // flat — so everything down there can still walk the whole pass — and the shape goes on the cliff tops instead,
+        // so the cliffs' edges stand higher in some places and lower in others.
+        // floorHeights = the ground before any cliff raises it; topRise = what the cliffs add on top; heights = drawn.
+        float[] groundShape = null, floorHeights = null, topRise = null, heights = null;
+        if (shaped)
+        {
+            groundShape = bumpy
+                ? GroundBumps.Make(nx, nz, sizeX, sizeZ, originX, originZ, bumpSeed, bumpHeight, bumpWidth, bumpLevels,
+                                   Mathf.Tan(bumpSteepestDegrees * Mathf.Deg2Rad))
+                : new float[vcount];
+            if (cliffs != null) { topRise = groundShape; floorHeights = new float[vcount]; }
+            else floorHeights = groundShape;
+            heights = (float[])floorHeights.Clone();
+        }
+
+        // Which vertices the cliffs raise. A triangle joining a raised vertex to a low one would be a steep ramp —
+        // it lies under the cliff's grass top, and where it touches that top it shows through as a dark crease — so
+        // those triangles are left out; the cliff's own surface and invisible top floor cover the gap.
+        var raised = cliffs != null ? new bool[vcount] : null;
+        // The cliff-top height at every vertex, raised or not, so the cliff's grass top can be laid exactly on the drawn
+        // high ground by interpolating it the way the ground mesh itself interpolates.
+        var topHeights = cliffs != null ? new float[vcount] : null;
         int vi = 0;
         for (int j = 0; j <= nz; j++)
             for (int i = 0; i <= nx; i++)
@@ -196,7 +239,12 @@ public static class GroundBlendBuilder
 
                 sample(wx, wz, out Vector4 w);
 
-                verts[vi] = new Vector3(lx, 0f, lz);
+                if (cliffs != null)
+                {
+                    topHeights[vi] = floorHeights[vi] + cliffs.Standing(wx, wz) * (cliffs.height + topRise[vi]);
+                    if (cliffs.IsHigh(wx, wz)) { heights[vi] = topHeights[vi]; raised[vi] = true; }
+                }
+                verts[vi] = new Vector3(lx, shaped ? heights[vi] : 0f, lz);
                 norms[vi] = Vector3.up;
                 uvs[vi]   = new Vector2(wx, wz);
                 cols[vi]  = new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y),       // .r=road, .g=stone
@@ -207,13 +255,16 @@ public static class GroundBlendBuilder
         int row = nx + 1;
         var tris = new int[nx * nz * 6];
         int ti = 0;
+        bool Level(int a, int b, int c) => raised == null || (raised[a] == raised[b] && raised[b] == raised[c]);
         for (int j = 0; j < nz; j++)
             for (int i = 0; i < nx; i++)
             {
                 int v0 = j * row + i, v1 = v0 + 1, v2 = v0 + row, v3 = v2 + 1;
-                tris[ti++] = v0; tris[ti++] = v2; tris[ti++] = v1;   // wound so the face normal points +Y (up)
-                tris[ti++] = v1; tris[ti++] = v2; tris[ti++] = v3;
+                // wound so the face normal points +Y (up)
+                if (Level(v0, v2, v1)) { tris[ti++] = v0; tris[ti++] = v2; tris[ti++] = v1; }
+                if (Level(v1, v2, v3)) { tris[ti++] = v1; tris[ti++] = v2; tris[ti++] = v3; }
             }
+        if (ti < tris.Length) System.Array.Resize(ref tris, ti);
 
         var mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
         mesh.indexFormat = vcount > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
@@ -222,8 +273,14 @@ public static class GroundBlendBuilder
         mesh.uv       = uvs;
         mesh.colors   = cols;
         mesh.triangles = tris;
+        if (shaped) mesh.RecalculateNormals();   // a mound's slopes must face the sun to read as mounds
         mesh.RecalculateBounds();
         PersistMesh(mesh, rootName);
+        if (bumpy)
+            Debug.Log($"[unwritten] {rootName}: {(cliffs != null ? "cliff tops" : "ground")} up to {GroundBumps.Highest(groundShape):0.000}u in " +
+                      $"{(bumpLevels >= 2 ? bumpLevels + " levels" : "rolling mounds")}, steepest slope " +
+                      $"{GroundBumps.SteepestSlope(groundShape, nx, nz, dx, dz):0.000}u per unit " +
+                      $"(allowed {Mathf.Tan(bumpSteepestDegrees * Mathf.Deg2Rad):0.000}; every body walks up to {GroundElevation.MaxWalkSlopeDegrees}°).");
 
         // ── Scene objects ───────────────────────────────────────────────────────────────────────────────
         var root = new GameObject(rootName);
@@ -239,7 +296,21 @@ public static class GroundBlendBuilder
         mr.receiveShadows = true;
 
         WorldBuildUtil.SetLayerRecursive(root, groundLayer);
-        WalkableGround.AddWalkableFloor(scene, root, center, sizeX, sizeZ, groundLayer);
+        if (cliffs != null)
+        {
+            float FloorY(float x, float z) => GroundBumps.SampleGrid(floorHeights, nx, nz, dx, dz, originX, originZ, x, z);
+            float TopY(float x, float z) => GroundBumps.SampleGrid(topHeights, nx, nz, dx, dz, originX, originZ, x, z);
+            AddCliffs(root, cliffs, center, sizeX, sizeZ, mat, sample, rootName, groundLayer, FloorY, TopY,
+                      cliffs.height + GroundBumps.Highest(topRise));
+        }
+        if (shaped)
+        {
+            // Collision IS the drawn surface, as on elevated ground — a flat box would leave feet inside the mounds.
+            vis.AddComponent<MeshCollider>().sharedMesh = mesh;
+            WalkableGround.EnsurePathfinderConfig(scene, groundLayer);
+            Physics.SyncTransforms();
+        }
+        else WalkableGround.AddWalkableFloor(scene, root, center, sizeX, sizeZ, groundLayer);
 
         AssetDatabase.SaveAssets();
         return root;
@@ -717,6 +788,51 @@ public static class GroundBlendBuilder
         return root;
     }
 
+    // The cliffs: one mesh on the Ground layer, drawn with the cliff material and collided with as it is drawn — feet
+    // stand on its grass top, bodies stop against its face, and the creatures' pathfinder reads its height. See
+    // GroundCliffs.
+    static void AddCliffs(GameObject root, GroundCliffs.Spec cliffs, Vector3 center, float sizeX, float sizeZ,
+                          Material groundMat, GroundSampler sample, string rootName, int groundLayer,
+                          System.Func<float, float, float> floorY, System.Func<float, float, float> topY, float maxRise)
+    {
+        var cliffMat = MakeCliffMaterial(groundMat, rootName);
+        var built = GroundCliffs.Build(cliffs, center, sizeX, sizeZ, floorY, topY, maxRise, sample);
+        PersistMesh(built.mesh, rootName, "_cliffs");
+
+        var face = new GameObject("Cliffs");
+        face.transform.SetParent(root.transform, false);
+        face.layer = groundLayer;
+        face.AddComponent<MeshFilter>().sharedMesh = built.mesh;
+        var fr = face.AddComponent<MeshRenderer>();
+        fr.sharedMaterial = cliffMat != null ? cliffMat : groundMat;
+        fr.shadowCastingMode = ShadowCastingMode.On;   // a cliff throws a real shadow across the pass
+        fr.receiveShadows = true;
+        face.AddComponent<MeshCollider>().sharedMesh = built.mesh;
+
+        Debug.Log($"[unwritten] {rootName}: cliffs {cliffs.height:0.##}–{maxRise:0.##}u tall along the roads, pass " +
+                  $"{cliffs.passWidth:0.##}u wide, {cliffs.MeetingPoints.Count} meeting points, {built.segments} traced pieces " +
+                  $"({built.mesh.vertexCount} vertices).");
+    }
+
+    // The cliff's material: a copy of this map's own ground material with its rock layer switched on (the gravel ground
+    // tile, until a rock-face tile exists), so the grass on the cliff top is the ground's grass exactly and the rock
+    // fades in from it. Null (the cliff then draws as plain ground) if the tile is missing.
+    static Material MakeCliffMaterial(Material groundMat, string rootName)
+    {
+        var tex = GroundTiles.Load("BASE_OR_PATCH_OR_PATH_gravel_scree");
+        if (tex == null) return null;
+        EnsureFolder(MatDir);
+        string matPath = $"{MatDir}/{Sanitize(rootName)}_cliff.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+        if (mat == null) { mat = new Material(groundMat); AssetDatabase.CreateAsset(mat, matPath); }
+        else mat.CopyPropertiesFromMaterial(groundMat);
+        mat.EnableKeyword("_CLIFF_ROCK");
+        mat.SetTexture("_CliffRockMap", tex);
+        mat.SetFloat("_CliffRockTiling", 1f / GroundTexWorldSize);
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
     // smoothstep(a,b,x) — soft 0→1 ramp, the source of the feathered grass↔dirt edge.
     static float Smooth(float a, float b, float x)
     {
@@ -808,10 +924,10 @@ public static class GroundBlendBuilder
     }
 
     // Persist the mesh as an asset (so the saved scene keeps a stable reference), replacing any prior bake.
-    static void PersistMesh(Mesh mesh, string rootName)
+    static void PersistMesh(Mesh mesh, string rootName, string suffix = "_ground")
     {
         EnsureFolder(MeshDir);
-        string meshPath = $"{MeshDir}/{Sanitize(rootName)}_ground.asset";
+        string meshPath = $"{MeshDir}/{Sanitize(rootName)}{suffix}.asset";
         AssetDatabase.DeleteAsset(meshPath);
         AssetDatabase.CreateAsset(mesh, meshPath);
     }

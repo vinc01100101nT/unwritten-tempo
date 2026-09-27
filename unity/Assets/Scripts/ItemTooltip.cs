@@ -312,7 +312,20 @@ public class ItemTooltip : MonoBehaviour
         var skill = Trademarks.SkillOf(inst);
         if (skill == null) return;
         sb.Append("\n\n<color=#B9B9B9>Trademark Skill: </color>").Append(skill.displayName);
-        string pct = "+" + Mathf.RoundToInt(inst.trademarkLift * 100f) + "% ";
+        TrademarkLines(skill, inst.trademarkLift, trademarkScratch);
+        foreach (var line in trademarkScratch) sb.Append('\n').Append(line);
+        trademarkScratch.Clear();
+    }
+
+    static readonly System.Collections.Generic.List<string> trademarkScratch = new System.Collections.Generic.List<string>();
+
+    /// <summary>What a trademark of <paramref name="skill"/> at <paramref name="lift"/> raises, one line per effect with a
+    /// main number — "+12% damage". The one wording of it: this card and the wiki's trademark table both print it.</summary>
+    public static void TrademarkLines(SkillDef skill, float lift, System.Collections.Generic.List<string> into)
+    {
+        into.Clear();
+        if (skill == null) return;
+        string pct = "+" + Mathf.RoundToInt(lift * 100f) + "% ";
         for (int b = 0; b < skill.bindings.Count; b++)
         {
             var fx = skill.bindings[b]?.effects;
@@ -320,7 +333,7 @@ public class ItemTooltip : MonoBehaviour
             for (int i = 0; i < fx.Count; i++)
             {
                 string word = SkillTooltip.MainNumberWord(fx[i]);
-                if (word != null) sb.Append('\n').Append(pct).Append(word);
+                if (word != null) into.Add(pct + word);
             }
         }
     }

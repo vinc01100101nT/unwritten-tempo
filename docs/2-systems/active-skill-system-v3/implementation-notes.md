@@ -92,8 +92,8 @@ the tray the other, so a move-speed buff sped the player up while showing no ico
 player's store **lazily from `Character.Instance.States`** for this reason. Mobs are one GameObject and were always
 fine. See memory `player-two-gameobjects-one-store`.
 
-*Nameplate limitation:* mob icons only show once a mob has been damaged, because the plate hides at full HP — so a
-slowed-but-untouched mob shows none.
+*Where a mob's icons show:* on the plate over the unit you are pointing at, damaged or not. No unit draws a plate
+under its feet — every creature, elite, shadow, person and villager reads through that one hover plate.
 
 ## Stacks, charges and the gate
 

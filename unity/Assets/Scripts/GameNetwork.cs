@@ -2536,8 +2536,9 @@ public class GameNetwork : NetworkManager
 
         // 1. IS THIS PERSON TRUSTED. Read off what the account service told this server at the door — never off
         //    anything the request said about itself, exactly as a player's name and body already are. A game that
-        //    has been tampered with can send this message; it cannot make this answer true.
-        if (!asker.ServerIsGm) { Answer(GmCommands.NotAGm); return; }
+        //    has been tampered with can send this message; it cannot make this answer true. The only commands a
+        //    non-GM gets past this are the ones marked for anybody, which only read.
+        if (!asker.ServerIsGm && !GmCommands.AnyoneMayRun(msg.line)) { Answer(GmCommands.NotAGm); return; }
 
         // 2. IS THIS EVEN OURS TO RUN. Only the commands that change the shared world belong here. Anything else
         //    arriving is either an old game or a poked one, and running it would act on whichever character this
