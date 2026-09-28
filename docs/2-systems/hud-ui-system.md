@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-13
+last-updated: 2026-09-28
 tags:
   - systems-combat-design
 ---
@@ -35,11 +35,26 @@ Tracking issue: **VIN-22**.
 
 ## Status
 
-Visual spec LOCKED (v2). Hover and selection are tinted cyan. Portrait = billboard front-facing frame (no separate portrait-art pipeline). The token sheet is below, and every value in it was read off the code.
+Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
+value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map, a settings window and a wardrobe panel all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
-## Design tokens — read off the code 2026-09-09
+## The theme rule
+
+**There is ONE interface theme, and it lives in `UiKit`.** Every colour a window, panel, button, label, bar or
+floor label is drawn in is a named row of `UiKit`'s palette, and every rounded shape and the title bar come from
+its helpers (`Window` / `DressWindow`, `Btn`, `Field`, `Card`, `Plate`, `TitleBar`, `Round`). **A script never
+types an interface colour of its own** — a new need is a new row in the palette, named for what it paints, and
+rich text reads its tint with `UiKit.Hex(...)`. Changing the look of the whole game is an edit to that one file.
+
+**What keeps its own colours, deliberately:** the floating combat numbers (damage, MISS, parry — anything
+`DamagePopup` draws); colours that MEAN something — health red/yellow/green, mana blue, a skill's or weapon's
+colour, an element's tint, a weather's tint, a season's tint, the minimap's dots, the dye swatches; and the
+things drawn straight over the world with a black edge (the name over whoever you point at, their health plate,
+the cast bar), which stay light text on the world.
+
+## Design tokens — read off the code 2026-09-28
 
 **Every value here was verified against the running game's source, not against an earlier version of this
 doc.** Colours are authored as floats in `UiKit`; the hex beside each one is that float converted. When a value
@@ -47,33 +62,43 @@ here and the code disagree, the code is right and this table is stale — re-ver
 
 ### Surfaces
 
-| Token | Hex | Alpha | What it is |
-| --- | --- | --- | --- |
-| Panel fill | `#15161A` | 0.98 | every window's body |
-| Panel raise | `#212228` | 0.98 | detail and sub-panels — the same charcoal ~6% lighter |
-| Slot fill | `#121317` | 1.0 | the well behind a text field, the bag's search box and a slider track, darker than the panel it sits on |
+| Token | Hex | What it is |
+| --- | --- | --- |
+| PanelFill | `#F7F8FA` | every window's body, and a speech bubble |
+| PanelRaise | `#EDF1F7` | a sub-panel inside a window — the bag's column header, a stat row, the chat log |
+| SlotFill | `#FFFFFF` | the well of a text field, the bag's search box, a checkbox |
+| WindowEdge | `#7F97BD` | the edge around every window, tooltip, menu and HUD plate |
+| TitleBarTop | `#E6EEFA` | a window's title bar fades from this at its top edge… |
+| TitleBarBottom | `#B9CCE9` | …down to this at its bottom edge |
+| ButtonFill | `#E9EBEF` | a button's face |
+| ButtonEdge | `#B5BDC9` | a button's edge, a text field's edge, a slider track, an unselected row's edge |
+| Rule | `#C9D3E2` | a divider line, a bar's empty track |
+| Hover | `#D6E5FB` | behind whatever the pointer is over; a text selection |
+| CloseFill | `#D9DFE8` | the close button |
 
-There is **no background gradient and no gradient of any kind** — every surface is a flat fill. `#0D0E10` is a
-real authored colour but it belongs to the **sign-in screen** (its camera background and veil), not the HUD.
+**The title bar is the one gradient**: it fades top to bottom between the two title-bar colours. Every other
+surface is a flat fill. `#0D0E10` is a real authored colour but it belongs to the **sign-in screen** (its camera
+background and veil), not to any window.
 
 ### Text
 
 | Token | Hex | What it is |
 | --- | --- | --- |
-| Text main | `#E7E3D5` | warm ivory; all primary copy |
-| Text dim | `#A79E88` | labels, units, secondary copy |
+| TextMain | `#1B1B1B` | all primary copy |
+| TextDim | `#6C7380` | labels, units, secondary copy |
+| TitleText | `#22324D` | a window's title and headings |
+| ButtonText | `#222222` | a button's label |
+| TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice, the death screen |
+| Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers |
+| Good | `#2E7D41` | a stat that went up |
+| Bad | `#B83A3A` | a stat that went down; a refusal |
 
-### Accents
+### Shapes
 
-| Token | Hex | Alpha | What it is |
-| --- | --- | --- | --- |
-| Gold | `#C8A862` | 1.0 | **the window border**, and every gold accent |
-| Gold (header wash) | `#C8A862` | 0.16 | the title strip behind a window's header |
-| Cyan | `#59F2FF` | 1.0 | hover and pressed tints on buttons, text carets, checkbox ticks, the selected character's border |
-| Cyan glow | `#4CD9FF` | 0.22 | in the shared palette, but nothing in the game draws it at this alpha |
-
-**The window border is GOLD, at full alpha.** There is no brown border and no gold gradient anywhere in the
-project — not in a script, a scene, a prefab or a material. Do not add either: a border is one flat gold.
+Windows, tooltips, menus and HUD plates have **5-unit rounded corners**; buttons, fields and checkboxes **3**.
+There are **no corner ornaments and no divider flourishes** on any window. The shapes are white images the
+game tints — `Resources/UI/Theme`, written by `tools/ui-theme-sprites.py` — so a colour change never touches
+them; a corner-radius change means re-running that script.
 
 ### Item colour — retired
 
@@ -82,29 +107,25 @@ on 2026-09-20: an item's name, its bag row, its card and a drop's sparkle are al
 colour, and what a piece is worth is written in words — its **grade and its folds**, "B +12". The five-tier
 palette that used to live here (Common grey through Legendary gold) is gone from the code with it.
 
-Selection and hover are still cyan, and the window border is still one flat gold.
-
 ### Fonts
 
-**Three, not two.** All are imported as TextMeshPro assets; the UI is uGUI + TextMeshPro throughout.
+**Two.** Both are loaded at runtime as TextMeshPro assets; the UI is uGUI + TextMeshPro throughout.
 
 | Font | Role |
 | --- | --- |
-| Cinzel | window titles, section headings, item names |
-| Inter | body copy, numbers, labels |
+| DejaVu Sans Condensed | everything — titles, headings, body, numbers, labels, names |
 | PixelFont | the floating combat numbers only |
+
+DejaVu Sans Condensed is the free stand-in for Tahoma: Tahoma's own licence (Microsoft's) forbids shipping it
+inside a game. Its licence text ships beside it in `Resources/Fonts`.
 
 **There is no monospaced font in the project.** Anything needing columns to line up must align them by layout
 and by tabular figures, not by character width.
 
 ### Type sizes
 
-The four bands this doc used to lock (titles 28–32 / sections 16–18 / body 13–14 / numbers 14–16) describe body
-and section copy correctly and nothing else. **Thirteen sizes are actually in use:** 11, 12, 13, 14, 15, 16, 17,
-18, 19, 20, 22, 28, 34. The most common by far are **14 and 13** (body), then **15**, then 12, 16, 17.
-
-Treat 13–14 as body, 16–18 as sections and item names, 28+ as a window title, and read the rest as drift rather
-than as a scale anyone designed.
+A window's title bar is **14, bold**; a button's label is **14, regular**. Elsewhere, 13–14 is body, 16–18 is
+sections and item names, and 28+ is a front-screen heading (sign-in, character select).
 
 ### Text crispness
 
@@ -113,10 +134,9 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 ## Asset sourcing (settled with GPT)
 
-- **Flourishes** — GPT authors a custom "unwritten" ornament kit (corner filigree, dividers, portrait backplate) as transparent gold-only PNGs, separable pieces (not baked mockups). Claude implements them as a **decorative overlay layer** (Panel → Border → Background → Flourish Overlay) so future re-skins stay possible. Kit delivered later; build structural UI first, drop overlays in when they land.
 - **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for boss drops, quest artifacts and named relics.
 - **Stat icons** — reuse the approved brand-sheet family (Might/Magic/Finesse) for BOTH base (STR/AGI/VIT/INT/DEX/LUK) and derived (ATK/MATK/DEF/MDEF/CRIT/ASPD/HIT/FLEE). One icon language, no second set.
-- **Built in uGUI, no art files** — flat panel fills, gold borders, cyan hover and selection tints, tabs, stat-row strips, dividers. **Fonts** Cinzel + Inter + PixelFont = open-license, imported as TMP assets (see the token sheet above; there are three, and PixelFont is the combat numbers alone).
+- **Built in uGUI** — the palette, two corner radii and the title bar fade above; no painted frame art.
 
 ## Phase plan — where it actually stands (measured 2026-08-30)
 

@@ -143,7 +143,12 @@ public class WetGround : MonoBehaviour
     /// <summary>True while there's visible standing water — enabled, High tier (or a biome that always holds water,
     /// which shows on every tier), and the puddle coverage still spread enough to show. Tracks the self-driven <see cref="puddleLevel"/> (which lingers after the rain stops),
     /// so audio and the planar reflection follow the visible puddles, not the rain.</summary>
-    public bool Active => enabled && TierShows && puddleLevel > 0.001f;
+    public bool Active => enabled && drawn && (PuddlesShow || WaterSurfaces.Count > WaterSurfaces.FilmCount);
+    /// <summary>Do the puddle sheets show at all right now? Without them only the lakes hold water.</summary>
+    public bool PuddlesShow => puddleLevel > 0.001f;
+    // Is the wet ground drawn this frame (set in LateUpdate)? The mirrors run whenever it is and water stands, so water
+    // never shows without its reflection.
+    bool drawn;
 
     // Rain puddles are a High-tier extra; a biome's standing water is part of the place, so it shows on every tier.
     bool TierShows => WeatherFX.Heavy || heldPuddles > 0.001f;
@@ -159,8 +164,6 @@ public class WetGround : MonoBehaviour
         if (!Active) return false;
         int water = WaterSurfaces.WaterUnder(world, out bool lake, out float runoff);
         if (water < 0) return false;
-        var mirrors = PlanarReflection.Instance;
-        if (mirrors != null && mirrors.Running && !mirrors.Mirrors(WaterSurfaces.Heights[water])) return false;
         if (lake) return true;
         float pn = Fbm(new Vector2(world.x, world.z) * puddleScale) + runoff * WaterPooling.RunoffPull;
         // match the LIVE coverage the shader is drawing, not the per-map max
@@ -225,6 +228,7 @@ public class WetGround : MonoBehaviour
 
     void OnDisable()
     {
+        drawn = false;
         if (quad != null) quad.gameObject.SetActive(false);
         WaterSurfaces.SetDrawn(false);
     }
@@ -300,16 +304,21 @@ public class WetGround : MonoBehaviour
         heldPuddles = BiomeWeather.AlwaysPuddlesHere * Mathf.Max(0f, puddleAmount);
         puddleLevel = BiomeWeather.Hold(puddleLevel, heldPuddles);
 
-        bool show = enabled && TierShows && (puddleLevel > 0.001f || rainNow > 0.001f);
+        // The lakes fill from the rain standing on the map — the same on every player's machine (shared world clock).
+        float standing = WaterPooling.Rainfall(WorldClock.EpochSecondsNow,
+            WeatherDirector.WaterRain, WeatherDirector.WaterRainSince,
+            WeatherDirector.WaterRainBefore, WeatherDirector.WaterRainBeforeSince, BiomeWeather.AlwaysPuddlesHere);
+        // After the rain the lakes drain on their own clock (a minute), longer than the puddles dry — so the ground
+        // stays drawn while any rain still stands, or the lakes would vanish half full with the puddles.
+        bool draining = WeatherDirector.WaterRain <= 0f && standing > 0f;
+        bool show = enabled && TierShows && (puddleLevel > 0.001f || rainNow > 0.001f || draining);
+        drawn = show && quad != null;
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
-        WaterSurfaces.SetDrawn(show && quad != null);
+        WaterSurfaces.SetDrawn(drawn);
         if (!show) return;
         // the map's water: read once per map, a flag check otherwise
         WaterSurfaces.Refresh();
-        // the lakes fill from the rain standing on the map — the same on every player's machine (shared world clock)
-        WaterSurfaces.SetRain(WaterPooling.Rainfall(WorldClock.EpochSecondsNow,
-            WeatherDirector.WaterRain, WeatherDirector.WaterRainSince,
-            WeatherDirector.WaterRainBefore, WeatherDirector.WaterRainBeforeSince, BiomeWeather.AlwaysPuddlesHere));
+        WaterSurfaces.SetRain(standing);
 
         var cam = CameraRig.Cam;
         if (cam != null)

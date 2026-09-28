@@ -143,7 +143,7 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
   character actually IS lives in one place and you can read it in one command. It settles "is their hotbar really
   empty", "did that binding save", "what is equipped" in seconds, and it is the truth the game loads:
   ```bash
-  psql "$(grep '^DATABASE_URL=' accounts/.env | cut -d= -f2-)" -A -t -c \
+  psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -A -t -c \
     "select name, updated_at, progress->'hotbarBindings', progress->'equipItemIds' \
      from character where deleted_at is null order by updated_at desc limit 5;"
   ```
@@ -398,7 +398,7 @@ Never both homes, ever.
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
 - `unity/Assets/Scripts/Editor/` — one-click editor tools under `Tools ▸ unwritten ▸ …`
-- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (74 today)
+- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (75 today)
 - `tools/` — HTML/Python authoring tools (world-creator, map-painter, chatgpt extractor)
 - `tempo/` — auto-generated canvas dev server; do NOT write app code here
 
@@ -576,7 +576,7 @@ that costs a round.
 - **PROTOTYPING A UI? NEVER TYPE A COLOUR OR A FONT — IMPORT THE GAME'S OWN, AND SHOW THE SCREEN AND NOTHING
   ELSE.** Any in-game screen gets prototyped as one clickable local HTML file in `prototypes/` (`mockups/` is for
   static pictures), and it starts by importing `prototypes/ui-tokens.css`, which `tools/ui-tokens.py` writes from
-  the game's own code — the shared palette, the rarity table and the game's three real font files. A hand-typed
+  the game's own code — the shared palette and the game's real font files. A hand-typed
   hex is the drift this replaces: the values used to live in the code, the token doc AND the page, and a doc
   cannot vouch for itself (on 2026-09-09 three of its nine colours existed nowhere in the project). Colours are
   floats in the source and in scenes, so convert before searching or an absent hex will look like proof; anything

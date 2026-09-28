@@ -5,10 +5,10 @@
   "type": "module",
   "description": "Account + character service for unwritten: who you are, which characters you own, and their saves.",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
-    "start": "node --env-file-if-exists=.env src/server.ts",
-    "migrate": "node --env-file-if-exists=.env src/migrate.ts",
-    "test": "node --env-file-if-exists=.env test/smoke.ts",
+    "dev": "node --env-file-if-exists=../settings.env --watch src/server.ts",
+    "start": "node --env-file-if-exists=../settings.env src/server.ts",
+    "migrate": "node --env-file-if-exists=../settings.env src/migrate.ts",
+    "test": "node --env-file-if-exists=../settings.env test/smoke.ts",
     "sync-roster": "node scripts/sync-roster.mjs",
     "typecheck": "tsc --noEmit"
   },

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-05
+last-updated: 2026-09-28
 tags:
   - planning-production
 ---
@@ -58,8 +58,8 @@ Proves the sign-in service is up **and** can reach the database. Want `{"ok":tru
 curl -s http://localhost:8080/health
 ```
 
-Starts the character server. Leave that terminal open too. It reads the SAME settings the sign-in service
-reads — including `SERVER_SECRET` — so nothing is typed on the line.
+Starts the character server. Leave that terminal open too. It reads the SAME settings file the sign-in service
+reads — `settings.env` at the top of the project, including `SERVER_SECRET` — so nothing is typed on the line.
 
 ```
 charserver/run.sh
@@ -71,14 +71,11 @@ Proves the character server is up **and** can reach the database. Want `{"ok":tr
 curl -s http://localhost:8081/health
 ```
 
-Runs the game server. Run it from the top of this project. The settings are not optional any more — without
-`SERVER_SECRET` the character server refuses this map server and nobody can get in.
+Runs the game server. It reads its settings from `settings.env` too — the character server's address, the
+secret the two servers share, and the address it is reached at — and keeps its log (below).
 
 ```
-mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null
-CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET="$(grep '^SERVER_SECRET=' accounts/.env | cut -d= -f2-)" MAP_SERVER_ADDRESS=127.0.0.1 \
-  builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 \
-  | tee logs/server.log
+tools/run-map-server.sh
 ```
 
 **To start with log categories already switched on**, put `LOG_CATEGORIES=` in front of the command with the
@@ -91,10 +88,11 @@ could not write down, a map that would not come up — goes to `logs/server.log`
 before it is kept as `logs/server-prev.log`. It used to go only to the terminal, which meant the one account of what
 the server actually did could not be read back afterwards by anyone, including Claude.
 
-Opens the game for one player. Run it again for each extra player. **The setting is not optional** — see below.
+Opens the game for one player. Run it again for each extra player. It dials the addresses `tools/build-game.sh`
+wrote into it from `settings.env` — see step 5.
 
 ```
-CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
+builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
 Serves the player wiki, whose **Server Status** page reads the live numbers from the character server. Optional
@@ -137,6 +135,43 @@ how many characters it read back **out of the file**, so a backup that saved not
 
 ```
 tools/backup-database.sh
+```
+
+### Handing out an update
+
+The full explanation is [Handing out updates](#handing-out-updates), at the end of this page.
+
+Builds the launcher players download — once, and again only when the launcher itself or `PATCH_URL` changes.
+
+```
+tools/build-launcher.sh
+```
+
+Builds the game, then publishes it as an update into `builds/patch/`. Write any news in `launcher/news.json` first.
+
+```
+tools/build-game.sh client
+tools/publish-update.py
+```
+
+Tries the launcher on this Mac, after building and publishing. Serve the update folder and leave that terminal
+open (Ctrl+C stops it):
+
+```
+cd builds/patch && python3 -m http.server 8090
+```
+
+Then, in a second terminal, open the launcher:
+
+```
+open builds/launcher/mac-arm64/unwritten.app
+```
+
+Copies the update to the rented machine, `version.txt` last.
+
+```
+rsync -a --delete --exclude version.txt builds/patch/ host:/srv/unwritten/patch/
+rsync -a builds/patch/version.txt host:/srv/unwritten/patch/
 ```
 
 ### Checking what is running
@@ -198,6 +233,18 @@ Lists who has it.
 ```
 psql -d unwritten -c "select email, is_gm from account order by created_at;"
 ```
+
+## 0. The settings file
+
+Every secret and every address the four programs need lives in ONE file, `settings.env` at the top of the
+project. It is never committed. Make it once:
+
+```
+cp settings.env.example settings.env
+```
+
+Then fill in `JWT_SECRET` and `SERVER_SECRET` (the file says how to make each). Everything else is already right
+for your desk. Every command on this page reads it, and a setting typed in front of a command still wins.
 
 ## 1. The database
 
@@ -267,7 +314,8 @@ are standing in.
 
 It exists because loading those settings by hand has a trap in it: `. .env` makes zsh search your PATH instead
 of the folder you are in, so it reports *no such file or directory* while the file is sitting right there. That
-caught us twice on 2026-09-02. The script is the same work with nothing to mistype.
+caught us twice on 2026-09-02. The script loads `settings.env` with nothing to mistype, and a setting typed in
+front of it still wins.
 
 ```
 charserver/run.sh
@@ -286,9 +334,9 @@ It listens on **port 8081**.
 
 **`SERVER_SECRET` is how the two servers recognise each other.** It is NOT a player's sign-in token and the two
 are never interchangeable: a person signing in must not be able to register a game server or read somebody
-else's character, and a game server does not sign in. It lives in `accounts/.env` (gitignored) and nowhere
-else: `charserver/run.sh` loads it from there and refuses to start without it, and the map server command
-above reads the same line so the two can never disagree. Generate one with `openssl rand -base64 32`.
+else's character, and a game server does not sign in. It lives in `settings.env` (never committed) and nowhere
+else: `charserver/run.sh` loads it from there and refuses to start without it, and `tools/run-map-server.sh`
+reads the same line so the two can never disagree. Generate one with `openssl rand -base64 32`.
 
 If it refuses to start it says why in one line and quits, rather than listening and failing on the first
 player. The two reasons it refuses: the port is already taken (another one is running — that is the common
@@ -342,16 +390,13 @@ It tells you if Unity is not running, and it fails loudly if nothing came out. W
 ### Running it
 
 ```
-mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null
-CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET="$(grep '^SERVER_SECRET=' accounts/.env | cut -d= -f2-)" MAP_SERVER_ADDRESS=127.0.0.1 \
-  builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 \
-  | tee logs/server.log
+tools/run-map-server.sh
 ```
 
 Run it from the top of this project.
 
-**Those settings are required now.** With no `SERVER_SECRET` it says so and nobody can enter the world: the
-character server will not hand players to a game server it cannot recognise.
+**`SERVER_SECRET` is required.** Without it in `settings.env` the script says so and stops: the character
+server will not hand players to a game server it cannot recognise.
 
 **Worked when:** it prints these lines and keeps running —
 
@@ -401,20 +446,19 @@ Open the normal game build, once per player. Each one signs in, picks a characte
 the character server on the way in.
 
 ```
-CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
+builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
 Run that once for each player on this Mac. It starts the game's own program rather than the app, which is what
-lets a second copy open AND what carries the setting to it.
+lets a second copy open. `open -n builds/client/unwritten.app` works as well.
 
-**Why not `open -n builds/client/unwritten.app`.** `open` hands the app to the operating system to start, and the
-operating system passes it **none** of the settings from the terminal that ran it — so the game comes up with no
-character server to ask, cannot be let into the world, and is refused at the door. It now says so and stops
-rather than retrying forever, but it still cannot get in. If you prefer `open`, it has to carry the setting
-itself:
+**Where it dials.** `tools/build-game.sh client` writes two addresses into every build it makes, from
+`settings.env`: `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL` once the rented server exists, this machine's
+`ACCOUNTS_URL` and `CHAR_SERVER_URL` while those two are empty. So while you have no rented server, a fresh build
+dials this Mac by itself. Once it does, point a build at this Mac by typing both in front of it:
 
 ```
-open -n --env CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app
+ACCOUNTS_URL=http://127.0.0.1:8080 CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
 **Worked when:** each player sees the other walking around, and the server prints a line as each arrives —
@@ -422,8 +466,8 @@ open -n --env CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app
 landing, and it appears *before* the player's own connection does. **Watched happening on 2026-09-02** with two
 accounts on this Mac.
 
-**If a player connects and instantly drops, over and over,** they were started without `CHAR_SERVER_URL` — see
-the troubleshooting entry below. That is the one failure this step has actually produced.
+**If a player connects and instantly drops, over and over,** their copy has no `CHAR_SERVER_URL` — a build made
+before `settings.env` had one; rebuild it — see the troubleshooting entry below. That is the one failure this step has actually produced.
 
 ---
 
@@ -463,8 +507,10 @@ and the character server must be started with that address in `WIKI_ORIGINS`. Se
 rather than adding to it, so list every address that needs to read it, separated by commas:
 
 ```
-WIKI_ORIGINS=http://wiki.example.com charserver/run.sh
+WIKI_ORIGINS=http://wiki.example.com
 ```
+
+in `settings.env`, then restart the character server.
 
 **That refusal is SILENT** — the page simply says it cannot reach the character server, and the browser writes
 nothing anywhere you would look. So if the status page says that while `curl -s http://localhost:8081/stats` in
@@ -475,10 +521,10 @@ is filled in for every existing character the next time the sign-in service star
 
 ## Pointing it somewhere else
 
-A build made once can be aimed anywhere by setting these before you start it — no rebuild. A copy you HAND TO
-SOMEBODY ELSE has no terminal to set them in, so it carries the two addresses in a file instead
-(`unity/Assets/StreamingAssets/server.txt`); anything set here still wins over that file, so nothing about your
-own builds or the servers changes.
+Every one of these lives in `settings.env` at the top of the project — the one file for every secret and address
+(its template, `settings.env.example`, explains each). Typing one in front of a command still wins over the file,
+so a build made once can be aimed anywhere without a rebuild. A copy you HAND TO SOMEBODY ELSE has no terminal, so
+it carries the two addresses in its own settings file, written there by `tools/build-game.sh`.
 
 | Setting | What it does | Default |
 | --- | --- | --- |
@@ -486,10 +532,12 @@ own builds or the servers changes.
 | `GAME_SERVER_HOST` | Which machine a player's game dials. | `localhost` |
 | `GAME_SERVER_PORT` | The port both sides use. Must match. | `7777` |
 | `ACCOUNTS_URL` | Where the sign-in service lives. A whole address, so `https://…` needs nothing else changed. | `http://localhost:8080` |
-| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. On a copy you hand out, put it in the settings file instead. | `http://localhost:8081` on a server; empty on a player's build — which is why you must set it |
+| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. Every build carries it, written in by `tools/build-game.sh`. | `http://localhost:8081` on a server; on a player's build, whatever the build carries |
+| `PUBLIC_ACCOUNTS_URL`, `PUBLIC_CHAR_SERVER_URL` | The two addresses written into every game build instead of the two above, once the rented server exists — and the names the encrypting front door answers to. | empty — builds carry this machine's addresses |
+| `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. | empty — `http://localhost:8090` |
 | `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. | `0.0.0.0` — every address |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
-| `MAP_SERVER_ADDRESS` | How the character server reaches this game server back. Its address on the network, not the player's. | `127.0.0.1` |
+| `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | `127.0.0.1` |
 | `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the wiki, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | `http://127.0.0.1:8099` |
 
 **There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
@@ -679,7 +727,7 @@ believing a game server that has said nothing for two minutes, so a crashed one 
 **Everything works but nothing is saved.** The game server writes through the character server. If the
 character server is down, the world keeps playing and stops being written down — its log says so each time.
 
-**A player connects and immediately reconnects, over and over, and the server says "refused a connection nobody announced — no good ticket."** The game was started without `CHAR_SERVER_URL`, so it never asked the character server to let it in and dialled the world with no ticket — and a map server refuses every connection it was not told to expect. **Watched happening on 2026-09-02**, from launching the built game with `open`, which passes it none of the terminal's settings. Start it the way *The players* above says. The game now says this out loud and stops instead of retrying, so if you see the old silent loop you are running a build from before that.
+**A player connects and immediately reconnects, over and over, and the server says "refused a connection nobody announced — no good ticket."** The game had no `CHAR_SERVER_URL`, so it never asked the character server to let it in and dialled the world with no ticket — and a map server refuses every connection it was not told to expect. **Watched happening on 2026-09-02**, from launching a build that carried no address with `open`, which passes it none of the terminal's settings. A build made by `tools/build-game.sh` now carries the address from `settings.env`; rebuild an older one, or start it the way *The players* above says. The game now says this out loud and stops instead of retrying, so if you see the old silent loop you are running a build from before that.
 
 **You restarted the character server and now nobody can enter.** Expected, and it fixes itself: a fresh
 character server starts knowing about no game servers at all. The game server says hello again on its own
@@ -796,12 +844,17 @@ while the plain door beside it is still open to the internet. **The world server
 it** — players reach those on a different kind of connection that certificates do not cover, and its protection
 is the one-time entry ticket the character server hands out.
 
-**A copy with no terminal carries its addresses.** `unity/Assets/StreamingAssets/server.txt` holds
-`ACCOUNTS_URL` and `CHAR_SERVER_URL` — the same two names you would set in a terminal, and a terminal still
-wins where there is one. Fill it in, then build the copies you give people. **Both are needed:** signing in
-uses the first, and without the second nobody can enter the world at all. **This is also what the EDITOR
-reads** when it was started from the Dock or Unity Hub instead of a terminal, which is why the file ships
-pointing at this machine rather than empty — an editor with no addresses can sign in and then cannot enter.
+**A copy with no terminal carries its addresses.** Fill in `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL`
+in `settings.env` on the Mac you build on, then build the copies you give people: `tools/build-game.sh client`
+writes those two into each build, under the names `ACCOUNTS_URL` and `CHAR_SERVER_URL`, and nothing else from the
+file. **Both are needed:** signing in uses the first, and without the second nobody can enter the world at all.
+The EDITOR started from the Dock or Unity Hub reads this machine's own `ACCOUNTS_URL` and `CHAR_SERVER_URL`
+straight from `settings.env`, so it keeps talking to the servers on your desk.
+
+**The rented machine has its own `settings.env`**, made from `settings.env.example` the same way: its own
+secrets, `BIND_HOST=127.0.0.1`, `MAP_SERVER_ADDRESS` set to its public address, `PATCH_DIR`, and the same three
+public addresses and `CERT_EMAIL` the front door serves. Everything on that machine — both services, the world
+server, the backup and the front door — reads it.
 
 **Back the database up on a schedule.** It is the only thing here that exists nowhere else — the code is in git
 and every build can be rebuilt, but a lost database is lost players. On the hosted machine, once a day:
@@ -819,6 +872,81 @@ pg_restore --clean --if-exists -d "$DATABASE_URL" /var/backups/unwritten/unwritt
 When the world later runs on more than one machine, the character server and the world servers still speak
 plain text to each other. That is fine only while they share a private network, which every host offers within
 one region — never over the open internet.
+
+### Handing out updates
+
+Players download a **launcher** once. Every time they open it, it compares their game files with the update
+folder on the hosted machine, downloads only the files that changed, and then lets them press **Start**. A copy
+of the game whose version differs from the published one is refused by the character server with *"Your game is
+out of date. Close it and run the launcher to update."* — so nobody plays a copy that no longer matches the
+server.
+
+**Once — build the launcher.** It is pointed at `PATCH_URL` from `settings.env`, so fill that in first:
+
+```
+tools/build-launcher.sh
+```
+
+It writes `builds/launcher/windows/unwritten-launcher.exe` and a Mac `unwritten.app` each for Apple silicon and
+Intel (about 100 MB each, about 41 MB zipped — offer them zipped). Those are what the download page offers. A Windows player's game goes beside the
+launcher, in a `game` folder; a Mac player's goes in `~/Library/Application Support/unwritten/game`.
+
+**Every update:**
+
+1. Build the game: `tools/build-game.sh client` (the Windows copy is not built by this script yet).
+2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first.
+3. Publish: `tools/publish-update.py` (add `--windows <folder>` once there is a Windows build). It stamps one
+   version into every build it is given, writes `builds/patch/`, and warns if a build still points at this machine.
+4. Copy `builds/patch/` to `/srv/unwritten/patch/` on the hosted machine, `version.txt` LAST — the moment it
+   lands, the server demands the new version, so the files for it must already be there:
+
+   ```
+   rsync -a --delete --exclude version.txt builds/patch/ host:/srv/unwritten/patch/
+   rsync -a builds/patch/version.txt host:/srv/unwritten/patch/
+   ```
+
+   `--delete` removes the files the publish no longer needs, so the folder does not grow with every update.
+
+The character server reads the version from that same folder (`PATCH_DIR` in the rented machine's
+`settings.env`), and re-reads it when it changes, so step 4 needs no restart. **A platform left out of a publish
+keeps its old version**, so its players are told to update until it is published too.
+
+### Trying the launcher on this Mac
+
+No rented machine needed: this Mac serves the update folder itself. With `PATCH_URL` empty in `settings.env`, a
+launcher built here looks for updates at `http://localhost:8090`, which is where step 3 serves them.
+
+1. Build the launcher:
+
+   ```
+   tools/build-launcher.sh
+   ```
+
+2. Publish your latest game build as an update. This stamps a version into `builds/client` itself:
+
+   ```
+   tools/publish-update.py
+   ```
+
+3. Serve the update folder, and leave this terminal open:
+
+   ```
+   cd builds/patch && python3 -m http.server 8090
+   ```
+
+4. Open the launcher:
+
+   ```
+   open builds/launcher/mac-arm64/unwritten.app
+   ```
+
+**Worked when:** the News box fills, the bar downloads the whole game (about 600 MB) the first time, and **Start**
+lights up and opens the game. Open it again and it downloads nothing; publish again and it downloads only what
+changed. **"Could not reach the update server"** means step 3 is not running.
+
+**Stop the folder server** with Ctrl+C in its terminal. The launcher keeps the game it downloaded in
+`~/Library/Application Support/unwritten/`; delete that folder to try a first install again.
+
 ---
 
 ## Related

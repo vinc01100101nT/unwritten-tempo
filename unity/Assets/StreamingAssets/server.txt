@@ -1,23 +1,12 @@
 # WHERE THE SERVERS ARE, for a copy of the game that has no terminal to be told by.
 #
-# That is two cases and they are really the same one: a copy you hand to somebody else, who double-clicks it,
-# and THE EDITOR when it was started from the Dock or from Unity Hub rather than from a terminal. Neither
-# carries the settings you would export in a shell, so without this file both come up with nobody to ask to be
-# let into the world.
+# NOTHING IS TYPED HERE. Every address lives in settings.env at the top of the project, the one file every
+# program reads. tools/build-game.sh copies the addresses into each BUILD's copy of this file after building:
 #
-# The names are the SAME ones you would set in a terminal, and a value set in the terminal still wins — so a
-# build you start from a shell, and the servers themselves, behave exactly as they always have.
+#   ACCOUNTS_URL=...       from PUBLIC_ACCOUNTS_URL (or ACCOUNTS_URL while that is empty)
+#   CHAR_SERVER_URL=...    from PUBLIC_CHAR_SERVER_URL (or CHAR_SERVER_URL while that is empty)
 #
-# TWO addresses are needed, not one. The account service signs people in; the character server owns their
-# characters and is the only thing that can let them into the world. A copy with no character server address
-# can sign in and then get no further.
+# and tools/publish-update.py adds GAME_VERSION=... to a build it publishes. Only those names, never a secret.
 #
-# The values below are THIS machine — right for playing in the editor, and for a build on your own desk.
-# REPLACE them before you build copies to hand out, with the https:// addresses the servers answer on once
-# they are behind the encrypting front door:
-#
-#   ACCOUNTS_URL=https://accounts.example.com
-#   CHAR_SERVER_URL=https://characters.example.com
-
-ACCOUNTS_URL=http://localhost:8080
-CHAR_SERVER_URL=http://localhost:8081
+# The EDITOR, opened from the Dock rather than a terminal, reads the two addresses straight from settings.env.
+# A value set in a terminal still wins over both.

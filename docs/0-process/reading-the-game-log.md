@@ -126,7 +126,7 @@ one) and not the player id.
   another map, or reconnecting, gives a new one. The `entered` line carries their player id, which is what joins
   their numbers across maps.
 - **The player id** is the id of their row in the `character` table. Look one up:
-  `psql "$(grep '^DATABASE_URL=' accounts/.env | cut -d= -f2-)" -A -t -c "select id, name from character where deleted_at is null;"`
+  `psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -A -t -c "select id, name from character where deleted_at is null;"`
 - **Townsfolk** get a number on their `appeared` line and nowhere else — they take no blows.
 - **Only the server hands them out.** A player's machine logs units by plain name with no number.
 

@@ -107,8 +107,8 @@ public class BattleNotice : MonoBehaviour
         ((RectTransform)go.transform).sizeDelta = new Vector2(220, 40);
 
         var t = go.AddComponent<TextMeshProUGUI>();
-        t.font = UiKit.BodyFont;
-        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);   // dark edge, reads on any backdrop
+        t.font = UiKit.Font;
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font);   // dark edge, reads on any backdrop
         t.fontSize = 64;
         t.fontStyle = FontStyles.Bold;
         t.alignment = TextAlignmentOptions.Center;

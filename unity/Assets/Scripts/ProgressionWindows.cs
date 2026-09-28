@@ -188,7 +188,7 @@ public class ProgressionWindows : MonoBehaviour
         invFooter.rectTransform.anchorMax = new Vector2(1, 0);
         invFooter.rectTransform.pivot = new Vector2(0.5f, 0);
         invFooter.rectTransform.sizeDelta = new Vector2(0, 24);
-        invFooter.color = UiKit.Gold;
+        invFooter.color = UiKit.TextMain;
     }
 
     void AddTab(Transform parent, string label, bool filtered, ItemCategory cat)
@@ -242,21 +242,21 @@ public class ProgressionWindows : MonoBehaviour
     {
         if (invFooter == null) return;
         int w = InventoryStore.Instance != null ? InventoryStore.Instance.TotalWeight : 0;
-        invFooter.text = $"<color=#A79E88>Weight</color> {w}        <color=#C8A862>{Wallet.Gold:n0} z</color>";
+        invFooter.text = $"<color={DimHex}>Weight</color> {w}        {Wallet.Gold:n0} z";
     }
     // ---- Card insert dialog ---------------------------------------------------
 
     void BuildCardDialog(Transform parent)
     {
-        var border = UiKit.Img("CardDialog", parent, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("CardDialog", parent, UiKit.WindowEdge), UiKit.WindowRadius);
         border.rectTransform.anchorMin = border.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         border.rectTransform.pivot = new Vector2(0.5f, 0.5f);
         border.rectTransform.sizeDelta = new Vector2(260, 280);
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
 
-        var title = UiKit.Label("Title", fill.transform, "Insert Card", 16, FontStyle.Bold, TextAnchor.UpperCenter, title: true);
-        title.color = UiKit.Gold;
+        var title = UiKit.Label("Title", fill.transform, "Insert Card", 16, FontStyle.Bold, TextAnchor.UpperCenter);
+        title.color = UiKit.TitleText;
         title.rectTransform.anchorMin = new Vector2(0, 1); title.rectTransform.anchorMax = new Vector2(1, 1);
         title.rectTransform.pivot = new Vector2(0.5f, 1); title.rectTransform.sizeDelta = new Vector2(0, 24);
         title.rectTransform.anchoredPosition = new Vector2(0, -6);
@@ -337,9 +337,12 @@ public class ProgressionWindows : MonoBehaviour
                                    new Vector2(0, 0), out charRoot);
         CharacterRoot = charRoot;
 
-        // Ornament Kit v1: a portrait/name backplate behind the identity block (placeholder — a portrait
-        // sprite drops into it later). Decorative, sits behind the stat column so it never disturbs layout.
-        var plate = Ornament.Backplate(content, new Vector2(-4, 56));
+        // A plate behind the identity block. Decorative, sits behind the stat column so it never disturbs layout.
+        var plate = UiKit.Round(UiKit.Img("Backplate", content, UiKit.ButtonEdge), UiKit.ButtonRadius);
+        plate.raycastTarget = false;
+        var plateFill = UiKit.Round(UiKit.Img("Fill", plate.transform, UiKit.PanelRaise), UiKit.ButtonRadius);
+        UiKit.Fill(plateFill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+        plateFill.raycastTarget = false;
         var prt = plate.rectTransform;
         prt.anchorMin = new Vector2(0, 1); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 1);
         prt.sizeDelta = new Vector2(StatColumnW - 4, 56); prt.anchoredPosition = new Vector2(2, 0);
@@ -350,7 +353,7 @@ public class ProgressionWindows : MonoBehaviour
         colRt.anchorMin = new Vector2(0, 0); colRt.anchorMax = new Vector2(0, 1); colRt.pivot = new Vector2(0, 0.5f);
         colRt.sizeDelta = new Vector2(StatColumnW, 0); colRt.anchoredPosition = Vector2.zero;
 
-        var split = UiKit.Img("ColumnDivider", content, new Color(1, 1, 1, 0.12f));
+        var split = UiKit.Img("ColumnDivider", content, UiKit.Rule);
         split.raycastTarget = false;
         var splitRt = split.rectTransform;
         splitRt.anchorMin = new Vector2(0, 0); splitRt.anchorMax = new Vector2(0, 1); splitRt.pivot = new Vector2(0.5f, 0.5f);
@@ -369,12 +372,12 @@ public class ProgressionWindows : MonoBehaviour
 
         charIdentity = UiKit.Label("Identity", col.transform, "", 16, FontStyle.Bold, TextAnchor.UpperLeft);
         charPoints = UiKit.Label("Points", col.transform, "", 15, FontStyle.Bold, TextAnchor.UpperLeft);
-        charPoints.color = UiKit.Gold;
+        charPoints.color = UiKit.TitleText;
 
         // Six allocatable stat rows (moved here from the retired StatPanel): value · next-cost · + button.
         for (int i = 0; i < StatOrder.Length; i++) BuildStatRow(col.transform, i);
 
-        var div = UiKit.Img("Div", col.transform, new Color(1, 1, 1, 0.12f));
+        var div = UiKit.Img("Div", col.transform, UiKit.Rule);
         div.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
 
         charDerived = UiKit.Label("Derived", col.transform, "", 13, FontStyle.Normal, TextAnchor.UpperLeft);
@@ -384,7 +387,7 @@ public class ProgressionWindows : MonoBehaviour
     void BuildStatRow(Transform parent, int i)
     {
         var stat = StatOrder[i];
-        var row = UiKit.Img("Row_" + stat, parent, new Color(1, 1, 1, 0.04f));
+        var row = UiKit.Img("Row_" + stat, parent, UiKit.PanelRaise);
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 26;
         var h = row.gameObject.AddComponent<HorizontalLayoutGroup>();
         h.spacing = 6; h.padding = new RectOffset(6, 6, 0, 0);
@@ -425,7 +428,7 @@ public class ProgressionWindows : MonoBehaviour
         var c = Character.Instance;
         // Nothing is drawn from placeholder zeros: the window fills in the moment the server's first sheet arrives.
         if (!c.SheetReady) return;
-        charIdentity.text = $"<color=#C8A862>Adventurer</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
+        charIdentity.text = $"<color={AccentHex}>Adventurer</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
         charPoints.text = $"Stat Points: {c.StatPoints}";
 
         for (int i = 0; i < StatOrder.Length; i++)
@@ -442,9 +445,9 @@ public class ProgressionWindows : MonoBehaviour
             bool capped = cost < 0;
             bool can = c.CanRaise(s);
             statCost[i].text = capped ? "MAX" : "(" + cost + ")";
-            statCost[i].color = capped ? UiKit.Gold
-                              : can    ? new Color(0.65f, 0.85f, 0.65f)
-                                       : new Color(0.60f, 0.45f, 0.45f);
+            statCost[i].color = capped ? UiKit.TitleText
+                              : can    ? UiKit.Good
+                                       : UiKit.Bad;
             statPlus[i].interactable = can;
         }
 
@@ -457,7 +460,7 @@ public class ProgressionWindows : MonoBehaviour
         // Hard DEF/M.DEF ride their DEF line as a "+N%" suffix — they're the same defence read two ways (flat
         // subtraction, then a percentage), so pairing them beats giving each its own row.
         charDerived.text =
-            "<color=#A79E88>DERIVED</color>\n" +
+            $"<color={DimHex}>DERIVED</color>\n" +
             $"MELEE ATK  {b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}    RANGED ATK {b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
             $"M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
             $"DEF   {b.def}{Hard(b.hardDefPct)}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Hard(b.hardMdefPct)}{Delta(d.mdef - b.mdef)}\n" +
@@ -473,7 +476,7 @@ public class ProgressionWindows : MonoBehaviour
     }
 
     static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";
-    static string Hard(int pct) => pct > 0 ? $" <color=#A79E88>+{pct}%</color>" : "";
+    static string Hard(int pct) => pct > 0 ? $" <color={DimHex}>+{pct}%</color>" : "";
 
     // Sprint/run gear lives on the player's BODY, not the character sheet — surfaced here because it's a speed the
     // player feels. Shown as the real run speed so it reads next to MOVE.
@@ -487,8 +490,11 @@ public class ProgressionWindows : MonoBehaviour
         return playerBody = sc != null ? sc.GetComponent<Player3DController>() : null;
     }
 
-    static readonly string BonusHex = "#6FD46F";   // green = a buff is helping
-    static readonly string MalusHex = "#E06A6A";   // red   = a debuff is hurting
+    // green = a buff is helping, red = a debuff is hurting; the rest are the theme's dim and accent text
+    static readonly string BonusHex = UiKit.Hex(UiKit.Good);
+    static readonly string MalusHex = UiKit.Hex(UiKit.Bad);
+    static readonly string DimHex = UiKit.Hex(UiKit.TextDim);
+    static readonly string AccentHex = UiKit.Hex(UiKit.Accent);
 
     // " (+3)" / " (−2)", coloured; empty when nothing is modifying the stat (no parentheses noise on a clean sheet).
     static string Delta(int diff) => diff == 0 ? "" : $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Mathf.Abs(diff)})</color>";
@@ -534,11 +540,11 @@ public class ProgressionWindows : MonoBehaviour
         lc.sortingOrder = 200;
         var host = layer.transform;
 
-        // The gold border IS the layout root: VerticalLayoutGroup + ContentSizeFitter MUST live on
+        // The edge IS the layout root: VerticalLayoutGroup + ContentSizeFitter MUST live on
         // the SAME object (and own the title/body children). The old setup split them — VLG on the
         // inner fill, fitter on the border — so the panel never sized to its content and the title
         // rendered ON TOP of the body's first line (the "doubled title / overlapping header" bug).
-        var border = UiKit.Img("ItemTooltip", host, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("ItemTooltip", host, UiKit.WindowEdge), UiKit.WindowRadius);
         var rt = border.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0, 1);
         rt.sizeDelta = new Vector2(264, 90);   // width is kept (horizontal fit = Unconstrained); height auto-fits
@@ -546,22 +552,22 @@ public class ProgressionWindows : MonoBehaviour
         var cg = border.gameObject.AddComponent<CanvasGroup>();
         cg.blocksRaycasts = false; cg.interactable = false;
         var vlg = border.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(14, 14, 10, 12); vlg.spacing = 2;   // 2px gold frame + inner pad
+        vlg.padding = new RectOffset(14, 14, 10, 12); vlg.spacing = 2;   // 2px edge + inner pad
         vlg.childControlWidth = vlg.childControlHeight = true;
         vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
         var fitter = border.gameObject.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // Dark inner panel: a background that fills the gold border but is IGNORED by the layout
+        // Inner panel: a background that fills the edge but is IGNORED by the layout
         // (otherwise the VLG would try to stack it) and drawn behind the text.
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         fill.raycastTarget = false;
         fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
         fill.transform.SetAsFirstSibling();
 
-        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Normal, TextAnchor.UpperLeft, title: true);
+        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Normal, TextAnchor.UpperLeft);
         title.raycastTarget = false;
         var body = UiKit.Label("Body", border.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;
@@ -584,7 +590,7 @@ public class ProgressionWindows : MonoBehaviour
     static void Stat(System.Text.StringBuilder sb, string label, int v, string suffix = "")
     {
         if (v == 0) return;
-        sb.Append(v > 0 ? "\n<color=#7FD17F>+" : "\n<color=#E08A8A>")
+        sb.Append(v > 0 ? $"\n<color={BonusHex}>+" : $"\n<color={MalusHex}>")
           .Append(v).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 

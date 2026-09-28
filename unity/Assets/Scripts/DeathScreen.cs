@@ -182,27 +182,18 @@ public class DeathScreen : MonoBehaviour
         Place(title.rectTransform, new Vector2(0.5f, 0.62f), new Vector2(900, 120));
 
         var subtitle = NewText("Subtitle", canvasGO.transform, "You were slain in the wilds.",
-                            26, FontStyle.Normal, new Color(0.85f, 0.82f, 0.80f));
+                            26, FontStyle.Normal, UiKit.TextOnDim);
         Place(subtitle.rectTransform, new Vector2(0.5f, 0.52f), new Vector2(900, 44));
 
         countdown = NewText("Countdown", canvasGO.transform, "", 24, FontStyle.Italic,
-                            new Color(0.75f, 0.72f, 0.70f));
+                            new Color(UiKit.TextOnDim.r, UiKit.TextOnDim.g, UiKit.TextOnDim.b, 0.8f));
         Place(countdown.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(600, 40));
 
-        // Respawn button.
-        var btnImg = NewImage("RespawnButton", canvasGO.transform, new Color(0.55f, 0.12f, 0.14f, 1f));
-        Place(btnImg.rectTransform, new Vector2(0.5f, 0.30f), new Vector2(240, 60));
-        respawnButton = btnImg.gameObject.AddComponent<Button>();
-        respawnButton.targetGraphic = btnImg;
-        var colors = respawnButton.colors;
-        colors.highlightedColor = new Color(0.72f, 0.18f, 0.20f);
-        colors.pressedColor = new Color(0.40f, 0.08f, 0.10f);
-        colors.disabledColor = new Color(0.30f, 0.10f, 0.11f);
-        respawnButton.colors = colors;
-        respawnButton.onClick.AddListener(OnRespawnClicked);
-
-        respawnLabel = NewText("Label", btnImg.transform, "Respawn", 26, FontStyle.Bold, Color.white);
-        Stretch(respawnLabel.rectTransform);
+        // Respawn button — the game's one button, at this screen's size.
+        respawnButton = UiKit.Btn("Respawn", canvasGO.transform, OnRespawnClicked);
+        Place((RectTransform)respawnButton.transform, new Vector2(0.5f, 0.30f), new Vector2(240, 60));
+        respawnLabel = respawnButton.GetComponentInChildren<TMP_Text>();
+        respawnLabel.fontSize = 26;
     }
 
     static Image NewImage(string name, Transform parent, Color color)

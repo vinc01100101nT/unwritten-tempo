@@ -195,8 +195,11 @@ public static class GroundBlendBuilder
         // ── Build the subdivided plane, painting each vertex's path/dirt weight from the sampler ──────────
         // A shaped ground is drawn finer: its rounded level edges are only as round as the triangles drawing them.
         if (bumpHeight > 0f) cell = Mathf.Min(cell, GroundBumps.DrawnSpacing);
-        int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, 240);
-        int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, 240);
+        // The 240-square cap never draws a shaped ground coarser than DrawnSpacing (a 64 m field needs 256).
+        int mostX = bumpHeight > 0f ? Mathf.Max(240, Mathf.CeilToInt(sizeX / GroundBumps.DrawnSpacing)) : 240;
+        int mostZ = bumpHeight > 0f ? Mathf.Max(240, Mathf.CeilToInt(sizeZ / GroundBumps.DrawnSpacing)) : 240;
+        int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, mostX);
+        int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, mostZ);
         int vcount = (nx + 1) * (nz + 1);
 
         var verts = new Vector3[vcount];

@@ -23,7 +23,8 @@ token at all instead of a session nobody else can read: this one verifies it wit
 
 ## Running it
 
-It reads the **same** `DATABASE_URL` and `JWT_SECRET` the login service reads. A different value for either
+It reads the **same** `DATABASE_URL` and `JWT_SECRET` the login service reads, from the same file — `settings.env`
+at the top of the project. A different value for either
 is a bug, not a configuration — they would be looking at different databases, or refusing each other's
 players.
 
@@ -31,8 +32,8 @@ players.
 charserver/run.sh
 ```
 
-Run it from the top of the project. It loads the same settings the sign-in service uses and starts the server.
-Set `SERVER_SECRET=…` in front of it for anything that leaves this machine.
+Run it from the top of the project. It loads `settings.env` and starts the server; a setting typed in front of
+it wins over the file. It refuses to start without `SERVER_SECRET`.
 
 It refuses to start if it cannot reach the database, rather than listening and failing on the first player,
 and `/health` asks the database every time rather than answering from memory — so "alive" keeps meaning
@@ -51,6 +52,7 @@ trace, which anyone could otherwise reach without a token by sending a malformed
 | `CHARACTER_MODELS_PATH` | `accounts/data/character-models.json` |
 | `SERVER_SECRET` | required — shared with the map servers, never a player token |
 | `MAX_PROGRESS_BYTES` | 262144 — the ceiling on ONE save; a larger one is refused in words, not by the wire |
+| `PATCH_DIR` | unset — no copy of the game is turned away. Set it to the launcher's update folder (written by `tools/publish-update.py`) and every player route below refuses a copy whose version differs from that folder's `version.txt`, with a message telling the player to update. Re-read when the file changes, so publishing needs no restart |
 | `ASPNETCORE_ENVIRONMENT` | Production unless you set it |
 
 ## Proving it works
@@ -69,21 +71,18 @@ from a stranger leaking no stack trace, and health actually reaching the databas
 
 ## Pointing the game at it
 
-One setting on the game, and nothing else:
+One setting on the game, `CHAR_SERVER_URL`, set in `settings.env` at the top of the project (`http://localhost:8081`
+on your desk).
 
-```
-CHAR_SERVER_URL=http://localhost:8081
-```
-
-Leave it unset and every request about a character goes where it always did — the login service answers those
-too, exactly as before. That is what makes this switchable back in one line if anything misbehaves. **Entering
-the world is the exception:** only this server hands out an entry ticket, so a game with no address for it can
-sign in and then get no further. Anything without a terminal — a copy handed to a player, and the editor started from the Dock — reads the
-address from the file the build ships with (`unity/Assets/StreamingAssets/server.txt`) instead.
+**It is required.** The login service answers no character route at all, so a game with no address for this
+server can sign in and then get no further — it cannot list, create or enter a character. The editor reads it
+from `settings.env`; a build carries it in its own settings file, written there by `tools/build-game.sh` (the
+`PUBLIC_CHAR_SERVER_URL` address when that is set). A value set in a terminal wins over both.
 
 ## The endpoints
 
-Identical to the ones `accounts` serves today, so the game cannot tell the difference beyond the address.
+Every route in this table except `/health` needs a player's sign-in token, and — when `PATCH_DIR` is set — a
+copy of the game whose version matches the published one (the `X-Game-Version` header the game sends).
 
 | | |
 | --- | --- |
@@ -93,7 +92,7 @@ Identical to the ones `accounts` serves today, so the game cannot tell the diffe
 | `PATCH /characters/:id/appearance` | recolour or change body; merged, never replacing the save |
 | `DELETE /characters/:id` | soft delete; frees the name |
 | `GET /characters/:id/progress` | the save, plus whether the account is trusted with GM commands |
-| `PUT /characters/:id/progress` | write the save |
+| `PUT /characters/:id/progress` | refused (405) — a player never writes their own save; the map server writes it through its own door |
 | `GET /health` | no token needed; says whether it is alive |
 
 ## The handoff — how somebody gets into the world

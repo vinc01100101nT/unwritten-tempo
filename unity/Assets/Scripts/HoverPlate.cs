@@ -466,8 +466,8 @@ public class HoverPlate : MonoBehaviour
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var txt = go.AddComponent<TextMeshProUGUI>();
-        txt.font = UiKit.BodyFont;
-        txt.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);
+        txt.font = UiKit.Font;
+        txt.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font);
         txt.fontSize = size;
         txt.alignment = TextAlignmentOptions.Center;
         txt.raycastTarget = false;

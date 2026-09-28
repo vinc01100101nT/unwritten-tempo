@@ -23,9 +23,9 @@ file that took seconds to change, instead of in a Unity window that takes minute
 does not own and a colour palette invented from scratch, and had to be restyled afterwards.
 
 Run `tools/ui-tokens.py`. It reads the game's own code and writes `prototypes/ui-tokens.css` — the shared
-palette and the game's three real font files, loaded from where the game keeps them. The page links that file
-and uses `var(--gold)`, `var(--text-main)`, `var(--font-ui)`. (It used to carry five rarity tiers as well; V4
-removed rarity from the game on 2026-09-20 and nothing is coloured by a tier any more.) **A hand-typed hex in a
+palette and the game's real font files, loaded from where the game keeps them. The page links that file
+and uses `var(--window-edge)`, `var(--text-main)`, `var(--font-ui)`. Nothing is coloured by an item tier: V4
+removed rarity from the game on 2026-09-20. **A hand-typed hex in a
 mock page is a bug**, because the same value then lives in the code, in the token doc and in the page, and copies
 drift.
 
@@ -36,8 +36,8 @@ what the values MEAN and for the type sizes, which the game has no single table 
 
 A token sheet is a document, and a document cannot vouch for its own freshness. On 2026-09-09 three of the nine
 documented colours existed **nowhere in the project** — not in a script, a scene, a prefab or a material — and a
-fourth was real but belonged to a different screen. The window border was documented as brown and is actually
-gold.
+fourth was real but belonged to a different screen. The window border was documented as brown while the code
+drew it in another colour.
 
 **Mark the element that IS the window**, naming the screen in the game's own word for it, never a file name:
 

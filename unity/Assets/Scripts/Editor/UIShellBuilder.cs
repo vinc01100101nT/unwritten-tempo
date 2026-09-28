@@ -9,67 +9,22 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Builds the Phase E UI shell (HUD + the Skills, Customize and Calendar panels) skinned
-/// with a chosen Ninja Adventure UI theme. The theme + frame scale are picked in
-/// the <see cref="UIShellWindow"/> (Tools ▸ unwritten ▸ UI Shell Theme…) and stored
-/// in EditorPrefs; the plain menu item rebuilds with whatever was last chosen.
-///
-/// Only "Theme Wood" ships a complete kit (panel + cell + bar); the Wip themes are
-/// panel-only, so cells/bars fall back to Theme Wood. The pack's frames are
-/// Multiple-mode sprites (which makes the 9-slice border a no-op), so
-/// <see cref="SlicedSprite"/> forces them to Single before applying the border.
+/// Builds the UI shell (the HUD + the Calendar window) in the game's one interface theme — every
+/// colour, shape and font comes from <see cref="UiKit"/>, exactly as the windows built at runtime do.
 /// </summary>
 public static class UIShellBuilder
 {
     const string CanvasName = "GameUICanvas";
     const string UIRoot = "Assets/1_Authored/Art/Billboards/Ui";
-    const string WOOD   = UIRoot + "/Theme/Theme Wood";
     const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
-    const string FontPath = UIRoot + "/Font/NormalFont.ttf";
     const string ResourcePrefabPath = "Assets/3_Data/Resources/GameUICanvas.prefab";
 
-    // EditorPrefs keys (shared with the picker window).
-    public const string PrefTheme = "unwritten.ui.theme";
-    public const string PrefScale = "unwritten.ui.refppu";
-    public const string DefaultTheme = WOOD;
-    public const int DefaultScale = 32;     // referencePixelsPerUnit; lower = thicker frame
-
-    static Sprite panelSprite, cellSprite, barBgSprite;
-
     [MenuItem("Tools/unwritten/UI/Build UI Shell (Systems scene)", priority = 110)]
-    static void BuildUIShellMenu()
+    static void BuildUIShellMenu() => Build();
+
+    /// <summary>Builds (or rebuilds) the UI shell.</summary>
+    public static void Build()
     {
-        Build(EditorPrefs.GetString(PrefTheme, DefaultTheme),
-              EditorPrefs.GetInt(PrefScale, DefaultScale));
-    }
-
-    /// <summary>Builds (or rebuilds) the UI shell with the given theme folder and
-    /// frame scale (= CanvasScaler.referencePixelsPerUnit; lower → chunkier).</summary>
-    public static void Build(string themeFolder, int refPixelsPerUnit)
-    {
-        panelSprite = SlicedSprite(themeFolder + "/nine_path_panel.png", new Vector4(6, 6, 6, 6));
-
-        // Self-heal a STALE saved theme (e.g. a pre-reorg EditorPrefs path that no longer exists): fall back to the
-        // default Wood theme and re-save it, instead of aborting. Only the resave clears the bad pref for next time.
-        if (panelSprite == null && themeFolder != DefaultTheme)
-        {
-            Debug.LogWarning($"[unwritten] UI theme '{themeFolder}' has no nine_path_panel.png — falling back to '{DefaultTheme}'.");
-            themeFolder = DefaultTheme;
-            EditorPrefs.SetString(PrefTheme, themeFolder);
-            panelSprite = SlicedSprite(themeFolder + "/nine_path_panel.png", new Vector4(6, 6, 6, 6));
-        }
-
-        cellSprite  = SlicedSprite(FirstExisting(themeFolder + "/inventory_cell.png", WOOD + "/inventory_cell.png"), new Vector4(3, 3, 3, 3));
-        barBgSprite = SlicedSprite(FirstExisting(themeFolder + "/nine_path_bg.png",    WOOD + "/nine_path_bg.png"),    new Vector4(2, 2, 2, 2));
-
-        if (panelSprite == null)
-        {
-            EditorUtility.DisplayDialog("Build UI Shell",
-                $"No 'nine_path_panel.png' in '{themeFolder}'. Pick a theme in " +
-                "Tools ▸ unwritten ▸ UI Shell Theme…", "OK");
-            return;
-        }
-
         var existing = GameObject.Find(CanvasName);
         if (existing != null) Undo.DestroyObjectImmediate(existing);
 
@@ -79,16 +34,17 @@ public static class UIShellBuilder
         var scaler = canvasGO.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
-        scaler.referencePixelsPerUnit = Mathf.Clamp(refPixelsPerUnit, 8, 96);
+        // The theme's shape images are 100 pixels per unit; at this matching value one image pixel is one UI unit,
+        // the same as on every other canvas, so a corner is the same size everywhere.
+        scaler.referencePixelsPerUnit = 100;
         UiKit.ApplyTextCrispness(scaler);
         var root = canvasGO.transform;
 
         SetupEventSystem(root);
         BuildHud(root);
         // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
-        //   Skills (K)→SkillsWindow · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
+        //   Skills (K)→SkillsWindow · Calendar (L)→CalendarPanel ·
         //   Inventory (B)/Character (C, the Ring of Progression included)→ProgressionWindows. PanelToggle is retired.
-        BuildCustomizePanel(root);
         BuildCalendarPanel(root);
         // The Inventory and Character windows are built by ProgressionWindows (added below), and stat-point
         // allocation lives in that Character window, so StatPanel + BagSeeder are not added here.
@@ -111,7 +67,6 @@ public static class UIShellBuilder
 
         // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime.
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
-        canvasGO.AddComponent<CharacterWardrobePanel>();   // O = Wardrobe: per-part runtime clothing dye (live-3D)
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
         // Sprite refs into the prefab now — same pattern as the skill-icon Sprites the hotbar reads).
@@ -140,39 +95,16 @@ public static class UIShellBuilder
 
         EditorSceneManager.MarkSceneDirty(canvasGO.scene);
         Selection.activeGameObject = canvasGO;
-        Debug.Log($"[unwritten] Built UI shell — theme '{ShortName(themeFolder)}', scale {scaler.referencePixelsPerUnit}. " +
+        Debug.Log($"[unwritten] Built UI shell. " +
                   $"Saved persistent prefab → {ResourcePrefabPath}. It now survives scene loads and auto-spawns " +
                   "in any scene. Press Play: B = Bag (Inventory + Equipment), C = Character, K = Skills, V = Sprint, Esc = close all.");
-    }
-
-    // ---- theme discovery (used by the picker window) --------------------------
-
-    /// <summary>All theme folders under UI/Theme that contain a nine_path_panel.png.</summary>
-    public static List<string> DiscoverThemes()
-    {
-        var themes = AssetDatabase.FindAssets("nine_path_panel t:Texture2D", new[] { UIRoot + "/Theme" })
-            .Select(AssetDatabase.GUIDToAssetPath)
-            .Where(p => Path.GetFileNameWithoutExtension(p) == "nine_path_panel")
-            .Select(p => p.Substring(0, p.LastIndexOf('/')))
-            .Distinct()
-            .OrderBy(p => p != WOOD)      // Theme Wood first (the complete kit)
-            .ThenBy(p => p)
-            .ToList();
-        if (themes.Count == 0) themes.Add(WOOD);
-        return themes;
-    }
-
-    public static string ShortName(string themeFolder)
-    {
-        var n = themeFolder.Replace(UIRoot + "/Theme/", "").Replace("Wip/", "");
-        return n.StartsWith("Theme ") ? n.Substring(6) : n;   // "Theme Wood" -> "Wood"
     }
 
     // ---- HUD ------------------------------------------------------------------
 
     static void BuildHud(Transform canvas)
     {
-        var bar = NewSliced("HUD_HealthBar", canvas, barBgSprite);
+        var bar = NewBar("HUD_HealthBar", canvas);
         Anchor(bar.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
         // Bottom-left stack is lifted 28px to clear the full-width XP strip (XpBarHUD) along the very bottom.
         bar.rectTransform.anchoredPosition = new Vector2(16, 44);
@@ -184,11 +116,11 @@ public static class UIShellBuilder
         fill.fillMethod = Image.FillMethod.Horizontal;
         fill.fillOrigin = (int)Image.OriginHorizontal.Left;
         Fill(fill.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
-        var hp = NewText("Label", bar.transform, "HP", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        var hp = NewText("Label", bar.transform, "HP", 16, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(hp.rectTransform, Vector2.zero, Vector2.zero);
 
         // Mana bar, sitting just above the health bar (blue).
-        var mana = NewSliced("HUD_ManaBar", canvas, barBgSprite);
+        var mana = NewBar("HUD_ManaBar", canvas);
         Anchor(mana.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
         mana.rectTransform.anchoredPosition = new Vector2(16, 76);
         mana.rectTransform.sizeDelta = new Vector2(200, 18);
@@ -198,30 +130,29 @@ public static class UIShellBuilder
         mfill.fillMethod = Image.FillMethod.Horizontal;
         mfill.fillOrigin = (int)Image.OriginHorizontal.Left;
         Fill(mfill.rectTransform, new Vector2(3, 3), new Vector2(-3, -3));
-        var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
 
         // Minimap — top-right corner (the map's picture + player/mob blips). Sits above the gold counter.
         BuildMinimap(canvas);
 
         // Gold counter — top-right, tucked just under the minimap; GoldCounter.cs wires it to Wallet.OnChanged.
-        var goldPanel = NewSliced("HUD_GoldPanel", canvas, barBgSprite);
+        var goldPanel = NewPlate("HUD_GoldPanel", canvas);
         Anchor(goldPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
         goldPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8));
         goldPanel.rectTransform.sizeDelta = new Vector2(120, 26);
-        var goldLabel = NewText("HUD_Gold", goldPanel.transform, "0 z", 15, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        var goldLabel = NewText("HUD_Gold", goldPanel.transform, "0 z", 15, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(goldLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
-        goldLabel.color = new Color(1f, 0.90f, 0.3f);   // warm gold tint
         goldLabel.gameObject.AddComponent<GoldCounter>();
 
         // Calendar + weather readout — continues the top-right stack (minimap ▸ gold ▸ date/weather).
         // CalendarWeatherHUD.cs wires the two text lines to GameCalendar.DateString + WeatherDirector.CurrentName.
-        var calPanel = NewSliced("HUD_CalendarPanel", canvas, barBgSprite);
+        var calPanel = NewPlate("HUD_CalendarPanel", canvas);
         Anchor(calPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
         calPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8 + 26 + 8));
         calPanel.rectTransform.sizeDelta = new Vector2(150, 42);
         calPanel.raycastTarget = false;   // purely informational — never eats clicks
-        var calLabel = NewText("HUD_Calendar", calPanel.transform, "Spring · Day 1\nClear", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        var calLabel = NewText("HUD_Calendar", calPanel.transform, "Spring · Day 1\nClear", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(calLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
         calLabel.raycastTarget = false;
         calLabel.gameObject.AddComponent<CalendarWeatherHUD>();
@@ -236,22 +167,22 @@ public static class UIShellBuilder
         h.childControlWidth = h.childControlHeight = false;
         h.childForceExpandWidth = h.childForceExpandHeight = false;
         for (int i = 0; i < HotbarBindings.SlotCount; i++)
-            NewSliced("Hotslot", holder.transform, cellSprite).rectTransform.sizeDelta = new Vector2(48, 48);
+            UiKit.Round(NewColor("Hotslot", holder.transform, UiKit.ButtonEdge), UiKit.ButtonRadius).rectTransform.sizeDelta = new Vector2(48, 48);
     }
 
     const int MinimapSize = 180;   // square minimap edge (px @ reference resolution)
 
-    // Top-right minimap: a themed frame holding a RawImage (the current map's picture) + a clipped blip layer.
+    // Top-right minimap: a framed plate holding a RawImage (the current map's picture) + a clipped blip layer.
     // The Minimap component loads that picture at runtime and projects player/mob dots onto blipRoot.
     static void BuildMinimap(Transform canvas)
     {
-        var panel = NewSliced("HUD_Minimap", canvas, panelSprite);
+        var panel = NewPlate("HUD_Minimap", canvas);
         Anchor(panel.rectTransform, Vector2.one, Vector2.one, Vector2.one);   // top-right corner
         panel.rectTransform.anchoredPosition = new Vector2(-16, -16);
         panel.rectTransform.sizeDelta = new Vector2(MinimapSize, MinimapSize);
         panel.raycastTarget = false;
 
-        // Terrain RenderTexture surface, inset so the themed frame border shows around it.
+        // The map picture, inset so the frame shows around it.
         var viewGo = new GameObject("MinimapView", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         viewGo.transform.SetParent(panel.transform, false);
         var view = viewGo.GetComponent<RawImage>();
@@ -271,101 +202,42 @@ public static class UIShellBuilder
 
     // ---- Panels ---------------------------------------------------------------
 
-    // Centre-wide panel — leaves room for the left preview + right swatch palette.
-    // CharacterWardrobePanel populates the Content area at runtime.
-    static GameObject BuildCustomizePanel(Transform canvas)
-    {
-        var content = NewPanel(canvas, "CustomizePanel",
-            new Vector2(0.22f, 0.18f), new Vector2(0.78f, 0.84f), "Wardrobe");
-        // Content is intentionally left empty here — CharacterWardrobePanel builds
-        // the parts list + colour palette into it at runtime.
-        return content.parent.gameObject;
-    }
-
     // Empty themed window — CalendarPanel.cs builds the header + 4×3 day-cell grid into Content at runtime
     // (each cell shows that day's deterministic weather). Toggled by L / clicking the top-right date widget.
     static GameObject BuildCalendarPanel(Transform canvas)
     {
-        var content = NewPanel(canvas, "CalendarPanel", new Vector2(0.28f, 0.18f), new Vector2(0.72f, 0.82f), "Calendar");
-        return content.parent.gameObject;
+        return NewPanel(canvas, "CalendarPanel", new Vector2(0.28f, 0.18f), new Vector2(0.72f, 0.82f), "Calendar");
     }
 
-    const int HeaderH = 30;   // height of the draggable title bar across the top of every window
-
-    static RectTransform NewPanel(Transform canvas, string name, Vector2 aMin, Vector2 aMax, string title)
+    // A window stretched between two anchor points, dressed exactly like every window built at runtime. Returns the
+    // window itself (hidden); its content area is "Fill/Content".
+    static GameObject NewPanel(Transform canvas, string name, Vector2 aMin, Vector2 aMax, string title)
     {
-        var bg = NewSliced(name, canvas, panelSprite);
+        var bg = NewColor(name, canvas, UiKit.WindowEdge);
         bg.rectTransform.anchorMin = aMin;
         bg.rectTransform.anchorMax = aMax;
         bg.rectTransform.offsetMin = Vector2.zero;
         bg.rectTransform.offsetMax = Vector2.zero;
 
-        BuildWindowHeader(bg, title);
-
-        var content = NewColor("Content", bg.transform, new Color(0, 0, 0, 0f));
-        content.rectTransform.anchorMin = Vector2.zero;
-        content.rectTransform.anchorMax = Vector2.one;
-        content.rectTransform.offsetMin = new Vector2(16, 16);
-        content.rectTransform.offsetMax = new Vector2(-16, -(HeaderH + 16));   // start below the header bar
-
+        UiKit.DressWindow(bg, title);
         bg.gameObject.SetActive(false);
-        return content.rectTransform;
-    }
-
-    // A draggable title bar across the top of a window: title on the left, an ✕ close
-    // button on the right, and the whole bar acts as the drag handle (WindowDragHandle
-    // moves the window; WindowCloseButton hides it). The bar is inset a little so the
-    // window's 9-slice frame still shows around it.
-    static void BuildWindowHeader(Image bg, string title)
-    {
-        var header = NewSliced("Header", bg.transform, barBgSprite);
-        header.rectTransform.anchorMin = new Vector2(0, 1);
-        header.rectTransform.anchorMax = new Vector2(1, 1);
-        header.rectTransform.pivot = new Vector2(0.5f, 1);
-        header.rectTransform.offsetMin = new Vector2(6, -(6 + HeaderH));   // left 6, bottom = top - HeaderH
-        header.rectTransform.offsetMax = new Vector2(-6, -6);              // right 6, top 6 below the frame
-        header.gameObject.AddComponent<WindowDragHandle>().window = bg.rectTransform;
-
-        var titleText = NewText("Title", header.transform, title, 20, FontStyle.Bold, TextAnchor.MiddleLeft, true);
-        titleText.rectTransform.anchorMin = Vector2.zero;
-        titleText.rectTransform.anchorMax = Vector2.one;
-        titleText.rectTransform.offsetMin = new Vector2(12, 0);
-        titleText.rectTransform.offsetMax = new Vector2(-(HeaderH + 4), 0);   // leave room for the ✕ on the right
-        titleText.raycastTarget = false;   // let clicks fall through to the drag handle
-
-        // ✕ close button — a generous transparent hit area (full header height) pinned to the header's
-        // right edge carries the raycast + WindowCloseButton; the visible red cell + X are non-raycast
-        // children centered inside it. Decoupling the hit box from the small square keeps the clickable
-        // region centered on the glyph with margin, so it can't drift off the icon.
-        var close = NewColor("Close", header.transform, new Color(0, 0, 0, 0));
-        close.raycastTarget = true;   // must catch the click (WindowCloseButton listens here)
-        close.rectTransform.anchorMin = new Vector2(1, 0.5f);
-        close.rectTransform.anchorMax = new Vector2(1, 0.5f);
-        close.rectTransform.pivot = new Vector2(1, 0.5f);
-        close.rectTransform.sizeDelta = new Vector2(HeaderH + 6, HeaderH);
-        close.rectTransform.anchoredPosition = Vector2.zero;
-        close.gameObject.AddComponent<WindowCloseButton>().window = bg.gameObject;
-
-        var closeVis = NewColor("CloseVis", close.transform, new Color(0.62f, 0.14f, 0.14f, 0.95f));
-        closeVis.raycastTarget = false;
-        closeVis.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        closeVis.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        closeVis.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        closeVis.rectTransform.sizeDelta = new Vector2(HeaderH - 8, HeaderH - 8);
-        closeVis.rectTransform.anchoredPosition = new Vector2(-3, 0);
-
-        var x = NewText("X", closeVis.transform, "X", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
-        Fill(x.rectTransform, Vector2.zero, Vector2.zero);
-        x.raycastTarget = false;   // the visual cell is non-raycast; the transparent hit area catches the click
+        return bg.gameObject;
     }
 
     // ---- primitives -----------------------------------------------------------
 
-    static Image NewSliced(string name, Transform parent, Sprite sprite)
+    // A HUD plate: the window edge around the window body, rounded. Children added later sit on the body.
+    static Image NewPlate(string name, Transform parent)
+        => UiKit.Framed(NewColor(name, parent, UiKit.WindowEdge), UiKit.WindowEdge, UiKit.PanelFill, UiKit.WindowRadius);
+
+    // A HUD bar's frame: the window edge around an empty track. The caller adds the "Fill" and "Label" children
+    // that CharacterUIBinder looks up by name.
+    static Image NewBar(string name, Transform parent)
     {
-        var img = NewColor(name, parent, Color.white);
-        img.sprite = sprite;
-        img.type = Image.Type.Sliced;
+        var img = UiKit.Round(NewColor(name, parent, UiKit.WindowEdge), UiKit.WindowRadius);
+        var track = UiKit.Round(NewColor("Track", img.transform, UiKit.Rule), UiKit.WindowRadius - 1);
+        track.raycastTarget = false;
+        Fill(track.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         return img;
     }
 
@@ -378,14 +250,9 @@ public static class UIShellBuilder
         return img;
     }
 
-    // Delegates to the one central TMP factory. `shadow` is kept for call-site compatibility but is a no-op:
-    // SDF text is crisp on its own and HUD elements sit on backing plates, so no drop shadow is needed.
-    static TextMeshProUGUI NewText(string name, Transform parent, string content, int size, FontStyle style, TextAnchor anchor, bool shadow)
-    {
-        var t = UiKit.MakeText(name, parent, content, size, style, anchor);
-        t.color = Color.white;
-        return t;
-    }
+    // Delegates to the one central TMP factory, in the theme's primary text colour.
+    static TextMeshProUGUI NewText(string name, Transform parent, string content, int size, FontStyle style, TextAnchor anchor)
+        => UiKit.MakeText(name, parent, content, size, style, anchor);
 
     static void Anchor(RectTransform rt, Vector2 min, Vector2 max, Vector2 pivot)
     {
@@ -415,35 +282,5 @@ public static class UIShellBuilder
         var leaf = Path.GetFileName(path);
         if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
         AssetDatabase.CreateFolder(parent, leaf);
-    }
-
-    static string FirstExisting(string a, string b)
-        => AssetDatabase.LoadAssetAtPath<Texture2D>(a) != null ? a : b;
-
-    // Sets 9-slice border + FullRect mesh, then loads the sprite.
-    //  • Force Single mode: the pack ships frames as Multiple, where the top-level
-    //    border is ignored (so the frame stretches).
-    //  • spriteBorder is set LAST (SetTextureSettings re-reads the on-disk border).
-    //  • Force a synchronous reimport so the Library sprite isn't a stale border-0 copy.
-    static Sprite SlicedSprite(string path, Vector4 border)
-    {
-        var ti = AssetImporter.GetAtPath(path) as TextureImporter;
-        if (ti != null)
-        {
-            var s = new TextureImporterSettings();
-            ti.ReadTextureSettings(s);
-            s.spriteMode = (int)SpriteImportMode.Single;
-            s.spriteMeshType = SpriteMeshType.FullRect;
-            ti.SetTextureSettings(s);
-            ti.spriteImportMode = SpriteImportMode.Single;
-            ti.spriteBorder = border;
-            ti.SaveAndReimport();
-            AssetDatabase.ImportAsset(path,
-                ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
-        }
-        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        if (sprite != null && sprite.border == Vector4.zero)
-            Debug.LogWarning($"[unwritten] 9-slice border still zero on '{path}'. Right-click ▸ Reimport, then rebuild.");
-        return sprite;
     }
 }

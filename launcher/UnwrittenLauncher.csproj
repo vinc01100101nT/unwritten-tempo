@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- THE LAUNCHER a player opens instead of the game: it downloads what changed since their last update, then
+       starts the game. A separate program, not part of the Unity project, because it must be able to replace the
+       game's own files — which the game cannot do to itself while it is running. -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>unwritten-launcher</AssemblyName>
+    <RootNamespace>UnwrittenLauncher</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- One file per platform, carrying its own .NET, so a player needs nothing installed first. -->
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- NOT compressed, although that would halve it (98 MB to 43 MB). Measured 2026-09-28: the compressed program
+         crashed on its first download, every run, with "Attempted to read or write protected memory" inside .NET's
+         own web code; the same program uncompressed ran clean five times out of five. The download page can zip it. -->
+
+    <!-- .NET ITSELF COMES FROM MICROSOFT, whichever .NET is installed on the machine that builds this. The one on
+         this Mac is Homebrew's, whose Apple-silicon copy of .NET expects Homebrew's own libraries on the machine
+         it runs on — so a launcher built from it cannot start on a player's Mac. Pointing the local copy at a folder
+         that does not exist makes the build fetch Microsoft's copy for every platform instead. -->
+    <NetCoreTargetingPackRoot>$(MSBuildProjectDirectory)/obj/no-local-dotnet</NetCoreTargetingPackRoot>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+  </ItemGroup>
+
+  <!-- THE GAME'S OWN FONTS, read from where the game keeps them rather than copied, so the launcher can never
+       drift from the game's look. -->
+  <ItemGroup>
+    <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/Cinzel.ttf" Link="Assets/Fonts/Cinzel.ttf" />
+    <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/Inter.ttf" Link="Assets/Fonts/Inter.ttf" />
+  </ItemGroup>
+
+</Project>

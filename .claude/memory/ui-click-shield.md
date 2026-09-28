@@ -11,7 +11,7 @@ metadata:
 
 **Single-source fix = `UiKit.ClickShield(RectTransform root)`** (`UiKit.cs`): inserts a full-rect, fully transparent, `raycastTarget=true` Image as the BACKMOST child of a window root, so the WHOLE window area registers as UI. Idempotent (guards on `root.Find("ClickShield")`). Applied at every window root:
 - `UiKit.Window` (covers the ProgressionWindows: Inventory/Character).
-- Runtime in the panels that find a pre-baked UIShellBuilder window: `SkillDraftPanel` (SkillsPanel), `CharacterCustomizePanel` (CustomizePanel), `CalendarPanel` (CalendarPanel) — shield applied where each resolves `panelRoot`/`panel` from `content.parent`, so existing baked scenes are fixed WITHOUT re-running Build UI Shell.
+- Runtime in the panels that find a pre-baked UIShellBuilder window: `SkillDraftPanel` (SkillsPanel), `CalendarPanel` (CalendarPanel) — shield applied where it resolves `panel` (the window found by name), so existing baked scenes are fixed WITHOUT re-running Build UI Shell.
 - `WorldMapHUD` was already fine (full-screen `dim` backdrop with raycastTarget).
 
 ⚠️ world-input already checks `!PointerOverUI()` (`Player3DController`, `UnitTargeter`); the shield just guarantees that returns true over the whole window. For any NEW window, call `UiKit.ClickShield(rootRect)` once on its root — don't rely on per-element raycast coverage. Shield sits behind content, transparent, so buttons/drag-handles on top still work (GraphicRaycaster picks topmost).

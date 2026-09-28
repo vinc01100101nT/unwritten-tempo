@@ -78,8 +78,8 @@ def main():
 
     panel = data["palette"]["PanelFill"]["hex"]
     text = data["palette"]["TextMain"]["hex"]
-    gold = data["palette"]["Gold"]["hex"]
-    font = data["fonts"][1]["family"]
+    edge = data["palette"]["WindowEdge"]["hex"]
+    font = next(f["family"] for f in data["fonts"] if f["var"] == "ui")
     INVENTED = "#ff00ff"
 
     # A colour that belongs to ONE other screen, taken from the generated data rather than typed
@@ -101,7 +101,7 @@ def main():
     def page(inside=None, outside=None, fnt=None, region=None, screen="Inventory"):
         return PAGE % {
             "panel": panel, "text": text, "font": fnt or font,
-            "inside": inside or gold,
+            "inside": inside or edge,
             "outside": outside or panel,
             "region": region if region and region.startswith("<section class=\"screen\" data-mocks=\"" + screen)
                       else (region or REGION) % screen,
@@ -127,7 +127,7 @@ def main():
          page(screen="Level Up"), 0, ["the game has no screen by that name"], ["flag  "]),
 
         ("a page with nothing marked says so and reads the text instead",
-         PAGE % {"panel": panel, "text": text, "font": font, "inside": gold, "outside": panel,
+         PAGE % {"panel": panel, "text": text, "font": font, "inside": edge, "outside": panel,
                  "region": '<section class="screen"><p>x</p></section>'},
          0, ["nothing marked as a screen"], ["flag  "]),
     ]

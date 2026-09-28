@@ -231,7 +231,7 @@ public class WorldMapHUD : MonoBehaviour
         whereLabel = NewText("Where", panel.transform, "", 20, TextAnchor.LowerCenter);
         Bottom(whereLabel.rectTransform, 64f, 420f);
         var hint = NewText("Hint", panel.transform, $"[{toggleKey}] / [Esc] to close", 16, TextAnchor.LowerCenter);
-        hint.color = new Color(1f, 1f, 1f, 0.6f);
+        hint.color = new Color(UiKit.TextOnDim.r, UiKit.TextOnDim.g, UiKit.TextOnDim.b, 0.6f);
         Bottom(hint.rectTransform, 34f, 420f);
 
         // back to where you are — only shown while zoomed in and looking somewhere else (see Update)
@@ -240,7 +240,7 @@ public class WorldMapHUD : MonoBehaviour
         lrt.anchorMin = lrt.anchorMax = lrt.pivot = new Vector2(1f, 0f);
         lrt.sizeDelta = new Vector2(56f, 56f);
         lrt.anchoredPosition = new Vector2(-40f, 40f);
-        var pin = NewImage("Pin", locate.transform, UiKit.Gold);
+        var pin = NewImage("Pin", locate.transform, UiKit.Accent);
         pin.sprite = BuildPinSprite();
         pin.rectTransform.sizeDelta = new Vector2(34f, 34f);
         locateButton = locate.gameObject;
@@ -288,7 +288,7 @@ public class WorldMapHUD : MonoBehaviour
     static TMP_Text NewText(string name, Transform parent, string s, int size, TextAnchor anchor)
     {
         var t = UiKit.MakeText(name, parent, s, size, FontStyle.Normal, anchor);
-        t.color = Color.white;
+        t.color = UiKit.TextOnDim;
         t.raycastTarget = false;
         return t;
     }

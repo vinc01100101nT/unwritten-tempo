@@ -3,13 +3,8 @@
    a browser can read, so a mock page never types a colour of its own. */
 
 @font-face {
-  font-family: "Cinzel";
-  src: url("../unity/Assets/3_Data/Resources/Fonts/Cinzel.ttf") format("truetype");
-  font-display: swap;
-}
-@font-face {
-  font-family: "Inter";
-  src: url("../unity/Assets/3_Data/Resources/Fonts/Inter.ttf") format("truetype");
+  font-family: "DejaVu Sans Condensed";
+  src: url("../unity/Assets/3_Data/Resources/Fonts/DejaVuSansCondensed.ttf") format("truetype");
   font-display: swap;
 }
 @font-face {
@@ -20,17 +15,27 @@
 
 :root {
   /* the shared palette */
-  --cyan: #59f2ff;
-  --cyan-glow: rgba(76, 217, 255, 0.22);
-  --gold: #c8a862;
-  --panel-fill: rgba(21, 22, 26, 0.98);
-  --panel-raise: rgba(33, 34, 40, 0.98);
-  --slot-fill: #121317;
-  --text-dim: #a79e88;
-  --text-main: #e7e3d5;
+  --accent: #5b86c9;
+  --bad: #b83a3a;
+  --button-edge: #b5bdc9;
+  --button-fill: #e9ebef;
+  --button-text: #222222;
+  --close-fill: #d9dfe8;
+  --good: #2e7d41;
+  --hover: #d6e5fb;
+  --panel-fill: #f7f8fa;
+  --panel-raise: #edf1f7;
+  --rule: #c9d3e2;
+  --slot-fill: #ffffff;
+  --text-dim: #6c7380;
+  --text-main: #1b1b1b;
+  --text-on-dim: #ffffff;
+  --title-bar-bottom: #b9cce9;
+  --title-bar-top: #e6eefa;
+  --title-text: #22324d;
+  --window-edge: #7f97bd;
 
-  /* the game's own three faces */
-  --font-title: "Cinzel";
-  --font-ui: "Inter";
+  /* the game's own faces */
+  --font-ui: "DejaVu Sans Condensed";
   --font-pixel: "PixelFont";
 }

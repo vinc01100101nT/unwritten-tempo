@@ -31,10 +31,9 @@ public class UnitStatusPanel : MonoBehaviour
     // One row per place a unit can wear something: head, armour, weapon, shield, garment and the ring.
     const int   MaxGearRows = 6;
 
-    static readonly Color PanelBg   = new Color(0.05f, 0.04f, 0.08f, 0.88f);
-    static readonly Color TrackBg   = new Color(0.10f, 0.08f, 0.13f, 1f);
+    static readonly Color TrackBg   = UiKit.Rule;
     static readonly Color MpColor   = new Color(0.35f, 0.55f, 0.95f);
-    static readonly Color CellBg    = new Color(0.10f, 0.10f, 0.13f, 0.9f);
+    static readonly Color CellBg    = UiKit.ButtonEdge;
     static readonly Color Shade     = new Color(0f, 0f, 0f, 0.5f);
     static readonly Color StackTint = new Color(1f, 0.87f, 0.45f);   // warm gold, same as the player's status bar
 
@@ -131,21 +130,18 @@ public class UnitStatusPanel : MonoBehaviour
             group.blocksRaycasts = hoverableIcons;
             group.interactable = false;
 
-            var bg = NewImage("BG", root, PanelBg);
-            StretchFull(bg.rectTransform);
+            UiKit.Plate(root);
 
             hpTrack = NewImage("HPTrack", root, TrackBg);
             hpFill  = NewBarFill(hpTrack.rectTransform, HpColor(1f));
 
-            hpLabel = NewText("HPLabel", hpTrack.rectTransform, 9, TextAlignmentOptions.Center,
-                              new Color(0.85f, 0.85f, 0.85f));
+            hpLabel = NewText("HPLabel", hpTrack.rectTransform, 9, TextAlignmentOptions.Center, UiKit.TextMain);
             StretchFull(hpLabel.rectTransform);
 
             mpTrack = NewImage("MPTrack", root, TrackBg);
             mpFill  = NewBarFill(mpTrack.rectTransform, MpColor);
 
-            nameLabel = NewText("Name", root, 13, TextAlignmentOptions.TopLeft,
-                                new Color(0.97f, 0.97f, 0.99f));
+            nameLabel = NewText("Name", root, 13, TextAlignmentOptions.TopLeft, UiKit.TitleText);
 
             elementBadge = NewImage("ElementBadge", root, new Color(0.2f, 0.15f, 0.28f, 0.90f));
             elementLabel = NewText("ElementLabel", elementBadge.rectTransform, 9, TextAlignmentOptions.Center, Color.white);
@@ -158,7 +154,7 @@ public class UnitStatusPanel : MonoBehaviour
 
             for (int i = 0; i < MaxGearRows; i++)
             {
-                var row = NewText("Gear", root, 10, TextAlignmentOptions.TopLeft, Color.white);
+                var row = NewText("Gear", root, 10, TextAlignmentOptions.TopLeft, UiKit.TextMain);
                 row.gameObject.SetActive(false);
                 gearRows.Add(row);
             }

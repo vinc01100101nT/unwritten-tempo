@@ -11,16 +11,13 @@ using TMPro;
 /// </summary>
 public static class UiKit
 {
-    // HUD v2 typeface: Cinzel for titles/section heads, Inter for body/numbers (locked token sheet).
+    // THE interface typeface: DejaVu Sans Condensed, the one face every window, button, name and label is drawn in
+    // (the combat numbers keep PixelFont). It is the free stand-in for Tahoma, whose licence forbids shipping it.
     // TextMeshPro (SDF) so text stays razor-sharp at ANY window size — the whole game routes text through
-    // here. The TMP font assets are created ONCE at runtime from the TTFs already in Resources/Fonts
+    // here. The TMP font asset is created ONCE at runtime from the TTF already in Resources/Fonts
     // (dynamic SDF atlas, glyphs populated on demand) — no Font Asset Creator step, no saved .asset to bake.
-    public static TMP_FontAsset TitleFont => _title != null ? _title : (_title = MakeFont("Fonts/Cinzel"));
-    public static TMP_FontAsset BodyFont  => _body  != null ? _body  : (_body  = MakeFont("Fonts/Inter"));
-    static TMP_FontAsset _title, _body, _pixel, _fallback;
-
-    /// <summary>Back-compat alias: legacy callers using <c>UiKit.Font</c> get the body face.</summary>
-    public static TMP_FontAsset Font => BodyFont;
+    public static TMP_FontAsset Font => _font != null ? _font : (_font = MakeFont("Fonts/DejaVuSansCondensed"));
+    static TMP_FontAsset _font, _pixel, _fallback;
 
     /// <summary>The crunchy pixel face for RO/OSRS-style combat numbers.</summary>
     public static TMP_FontAsset PixelFont => _pixel != null ? _pixel : (_pixel = MakeFont("Fonts/PixelFont"));
@@ -58,8 +55,8 @@ public static class UiKit
     }
 
     // THE look of a name floating over the world — the name over whoever you point at, and an item's name on the
-    // floor. Inter, drawn bold, with a heavier black edge than other outlined text (0.3, the width the damage
-    // numbers use) so it reads over any ground. The bold is heavier too: the Inter file holds only the regular
+    // floor. The interface face, drawn bold, with a heavier black edge than other outlined text (0.3, the width the damage
+    // numbers use) so it reads over any ground. The bold is heavier too: the font file holds only the regular
     // weight, so bold is drawn by thickening the letters, and the font's default amount (0.75) is too slight to see
     // at these sizes. 1.5 is double it, and still fits inside the margin the letters are stored with once the edge
     // is added. Set the text's style to bold as well, or this thickening is never used.
@@ -68,7 +65,7 @@ public static class UiKit
     public static Material WorldNameMaterial()
     {
         if (_worldName != null) return _worldName;
-        var outlined = OutlinedMaterial(BodyFont, 0.3f);
+        var outlined = OutlinedMaterial(Font, 0.3f);
         if (outlined == null) return null;
         _worldName = new Material(outlined);
         _worldName.SetFloat(ShaderUtilities.ID_WeightBold, WorldNameBoldWeight);
@@ -107,7 +104,7 @@ public static class UiKit
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         var t = go.AddComponent<TextMeshProUGUI>();
-        t.font = font != null ? font : BodyFont;
+        t.font = font != null ? font : Font;
         t.fontSize = size;
         t.fontStyle = TmpStyle(style);
         t.alignment = TmpAlign(anchor);
@@ -117,16 +114,135 @@ public static class UiKit
         return t;
     }
 
-    public static readonly Color PanelFill = new Color(0.082f, 0.086f, 0.102f, 0.98f); // #15161A
-    public static readonly Color PanelRaise = new Color(0.130f, 0.135f, 0.155f, 0.98f);// detail/sub-panels: same charcoal family, ~6% lighter than PanelFill
-    public static readonly Color SlotFill  = new Color(0.07f, 0.075f, 0.09f, 1f);
-    public static readonly Color Gold      = new Color(0.784f, 0.659f, 0.384f, 1f);    // #C8A862
-    public static readonly Color Cyan      = new Color(0.35f, 0.95f, 1f, 1f);
-    // A soft cyan kept in the shared palette; nothing in the game draws it at this alpha.
-    public static readonly Color CyanGlow  = new Color(0.30f, 0.85f, 1f, 0.22f);
-    public static readonly Color TextMain  = new Color(0.906f, 0.890f, 0.835f);        // #E7E3D5
-    public static readonly Color TextDim   = new Color(0.655f, 0.620f, 0.533f);        // #A79E88
-    public static readonly Color Bad       = new Color(0.878f, 0.541f, 0.541f);        // #E08A8A — the tooltip's red for a stat that went down; also a refusal
+    // ---- THE interface theme: the one place every window, panel, button, label and bar reads its colours from ----
+    // Light windows with a pale-blue fading title bar, a soft blue-grey edge, rounded corners and dark text. No script
+    // types an interface colour of its own: a new colour need is a new row here, named for what it paints.
+    // The combat numbers (DamagePopup) are the one exception and keep their own colours.
+    // #F7F8FA — every window's body
+    public static readonly Color PanelFill = new Color(0.969f, 0.973f, 0.980f);
+    // #EDF1F7 — a sub-panel inside a window
+    public static readonly Color PanelRaise = new Color(0.929f, 0.945f, 0.969f);
+    // #FFFFFF — a text field, slot or track well
+    public static readonly Color SlotFill = new Color(1.000f, 1.000f, 1.000f);
+    // #7F97BD — the edge around every window
+    public static readonly Color WindowEdge = new Color(0.498f, 0.592f, 0.741f);
+    // #E6EEFA — the title bar fades from this…
+    public static readonly Color TitleBarTop = new Color(0.902f, 0.933f, 0.980f);
+    // #B9CCE9 — …down to this
+    public static readonly Color TitleBarBottom = new Color(0.725f, 0.800f, 0.914f);
+    // #22324D — a window's title, and headings
+    public static readonly Color TitleText = new Color(0.133f, 0.196f, 0.302f);
+    // #E9EBEF
+    public static readonly Color ButtonFill = new Color(0.914f, 0.922f, 0.937f);
+    // #B5BDC9 — also the edge of a text field or slot
+    public static readonly Color ButtonEdge = new Color(0.710f, 0.741f, 0.788f);
+    // #222222
+    public static readonly Color ButtonText = new Color(0.133f, 0.133f, 0.133f);
+    // #C9D3E2 — a divider line
+    public static readonly Color Rule = new Color(0.788f, 0.827f, 0.886f);
+    // #D6E5FB — behind whatever the pointer is over
+    public static readonly Color Hover = new Color(0.839f, 0.898f, 0.984f);
+    // #5B86C9 — hover edge, caret, tick, slider fill, a selected border
+    public static readonly Color Accent = new Color(0.357f, 0.525f, 0.788f);
+    // #D9DFE8 — the close button
+    public static readonly Color CloseFill = new Color(0.851f, 0.875f, 0.910f);
+    // #1B1B1B — all primary text
+    public static readonly Color TextMain = new Color(0.106f, 0.106f, 0.106f);
+    // #6C7380 — labels, units, secondary text
+    public static readonly Color TextDim = new Color(0.424f, 0.451f, 0.502f);
+    // #B83A3A — a stat that went down; a refusal
+    public static readonly Color Bad = new Color(0.722f, 0.227f, 0.227f);
+    // #FFFFFF — text laid straight over a darkened screen, not in a window
+    public static readonly Color TextOnDim = new Color(1.000f, 1.000f, 1.000f);
+    // #2E7D41 — a stat that went up
+    public static readonly Color Good = new Color(0.180f, 0.490f, 0.255f);
+
+    /// <summary>A theme colour as a rich-text tag value, "#RRGGBB" — for text that colours part of a line. Read it
+    /// into a static field once; never call it per frame (it builds a string).</summary>
+    public static string Hex(Color c) => "#" + ColorUtility.ToHtmlStringRGB(c);
+
+    // Corner rounding, in UI units, of a window and of a button/field — the same rounded shape, two radii.
+    public const int WindowRadius = 5, ButtonRadius = 3;
+
+    static readonly System.Collections.Generic.Dictionary<int, Sprite> _rounded = new();
+
+    /// <summary>A white rounded rectangle, 9-sliced, of the given corner radius — tint it with an Image colour. One
+    /// image per radius, stored in Resources/UI/Theme and written by tools/ui-theme-sprites.py; a radius with no
+    /// image there is a bug, reported once.</summary>
+    public static Sprite RoundedSprite(int radius)
+    {
+        if (_rounded.TryGetValue(radius, out var cached) && cached != null) return cached;
+        var sp = Resources.Load<Sprite>("UI/Theme/Rounded" + radius);
+        if (sp == null) Debug.LogError($"[UiKit] no theme image for corner radius {radius} — run tools/ui-theme-sprites.py");
+        _rounded[radius] = sp;
+        return sp;
+    }
+
+    /// <summary>Draw <paramref name="img"/> as a rounded rectangle of <paramref name="radius"/>, keeping its colour.</summary>
+    public static Image Round(Image img, int radius)
+    {
+        img.sprite = RoundedSprite(radius);
+        img.type = Image.Type.Sliced;
+        return img;
+    }
+
+    /// <summary>Draw <paramref name="img"/> as a text field or slot well: a thin <see cref="ButtonEdge"/> rim around a
+    /// <see cref="SlotFill"/> well, rounded.</summary>
+    public static Image Field(Image img) => Framed(img, ButtonEdge, SlotFill, ButtonRadius);
+
+    /// <summary>Draw <paramref name="img"/> as a card — a tooltip or hover card: the window edge around the window
+    /// body, rounded.</summary>
+    public static Image Card(Image img) => Framed(img, WindowEdge, PanelFill, WindowRadius);
+
+    /// <summary>Turn <paramref name="img"/> into a one-unit <paramref name="edge"/> rim around a <paramref name="body"/>,
+    /// both rounded. The body is a background child that layout groups ignore, so this is safe on an element that
+    /// lays out its own children.</summary>
+    public static Image Framed(Image img, Color edge, Color body, int radius)
+    {
+        Round(img, radius).color = edge;
+        var well = Round(Img("Well", img.transform, body), Mathf.Max(1, radius - 1));
+        well.raycastTarget = false;
+        well.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        Fill(well.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+        well.transform.SetAsFirstSibling();
+        return img;
+    }
+
+    /// <summary>A panel background filling <paramref name="parent"/>: the window edge around the window body, rounded,
+    /// behind everything else in it. For HUD panels that are not draggable windows. Returns the body.</summary>
+    public static Image Plate(Transform parent, string name = "BG")
+    {
+        var edge = Round(Img(name, parent, WindowEdge), WindowRadius);
+        edge.raycastTarget = false;
+        Fill(edge.rectTransform, Vector2.zero, Vector2.zero);
+        edge.transform.SetAsFirstSibling();
+        var body = Round(Img("Fill", edge.transform, PanelFill), WindowRadius - 1);
+        body.raycastTarget = false;
+        Fill(body.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+        return body;
+    }
+
+    static Sprite _titleBody, _titleFade;
+
+    /// <summary>THE title bar: a strip across the top of a window's body that fades from <see cref="TitleBarTop"/>
+    /// down to <see cref="TitleBarBottom"/>, its top corners rounded to sit inside the body. Two tinted layers —
+    /// the body in the bottom colour, the fade over it in the top colour — so the colours stay in this palette.
+    /// Every header comes from here; the caller positions the returned image.</summary>
+    public static Image TitleBar(Transform windowFill, string name = "Header")
+    {
+        if (_titleBody == null) _titleBody = Resources.Load<Sprite>("UI/Theme/TitleBarBody");
+        if (_titleFade == null) _titleFade = Resources.Load<Sprite>("UI/Theme/TitleBarFade");
+        var header = Img(name, windowFill, TitleBarBottom);
+        header.sprite = _titleBody;
+        header.type = Image.Type.Sliced;
+        var fade = Img("Fade", header.transform, TitleBarTop);
+        fade.sprite = _titleFade;
+        fade.type = Image.Type.Sliced;
+        fade.raycastTarget = false;
+        fade.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        Fill(fade.rectTransform, Vector2.zero, Vector2.zero);
+        return header;
+    }
 
     /// <summary>
     /// Single source of truth for HUD text crispness. Legacy uGUI <see cref="Text"/> rasterizes its glyph
@@ -170,20 +286,19 @@ public static class UiKit
         img.transform.SetAsFirstSibling();                             // sits BEHIND all real content
     }
 
-    /// <summary>A drop-shadowed uGUI label. Pass <paramref name="title"/>=true for the Cinzel title
-    /// face (window headers, section heads, item names); default is the Inter body face.</summary>
-    public static TextMeshProUGUI Label(string name, Transform parent, string s, int size, FontStyle style, TextAnchor anchor, bool title = false)
-        => MakeText(name, parent, s, size, style, anchor, title ? TitleFont : BodyFont);
+    /// <summary>A uGUI label in the interface face.</summary>
+    public static TextMeshProUGUI Label(string name, Transform parent, string s, int size, FontStyle style, TextAnchor anchor)
+        => MakeText(name, parent, s, size, style, anchor);
 
-    /// <summary>A gold-bordered button with a centered label. Returns the Button.</summary>
+    /// <summary>A rounded button with a thin edge and a centered label. Returns the Button.</summary>
     public static Button Btn(string label, Transform parent, Action onClick)
     {
-        var border = Img("Btn_" + label, parent, Gold);
-        var fill = Img("Fill", border.transform, new Color(0.12f, 0.12f, 0.14f, 1f));
+        var border = Round(Img("Btn_" + label, parent, ButtonEdge), ButtonRadius);
+        var fill = Round(Img("Fill", border.transform, ButtonFill), ButtonRadius);
         Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        var t = Label("Text", fill.transform, label, 14, FontStyle.Bold, TextAnchor.MiddleCenter);
+        var t = Label("Text", fill.transform, label, 14, FontStyle.Normal, TextAnchor.MiddleCenter);
         Fill(t.rectTransform, Vector2.zero, Vector2.zero);
-        t.color = Gold; t.raycastTarget = false;
+        t.color = ButtonText; t.raycastTarget = false;
         var btn = border.gameObject.AddComponent<Button>();
         btn.targetGraphic = border;
         // shared hover/press feel for every HUD button (see UiButtonFx) — added once at the factory
@@ -226,13 +341,16 @@ public static class UiKit
     /// on/off control for option rows. Returns the Toggle so the caller wires onValueChanged.</summary>
     public static Toggle Checkbox(Transform parent, bool on)
     {
-        var box = Img("Checkbox", parent, new Color(0.09f, 0.10f, 0.13f, 1f));
+        var box = Round(Img("Checkbox", parent, ButtonEdge), ButtonRadius);
         var brt = box.rectTransform;
         brt.anchorMin = brt.anchorMax = new Vector2(1f, 0.5f);
         brt.pivot = new Vector2(1f, 0.5f);
         brt.sizeDelta = new Vector2(20f, 20f);
 
-        var tick = Img("Tick", box.transform, Cyan);
+        var well = Round(Img("Well", box.transform, SlotFill), ButtonRadius);
+        well.raycastTarget = false;
+        Fill(well.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+        var tick = Round(Img("Tick", box.transform, Accent), ButtonRadius);
         tick.raycastTarget = false;
         Fill(tick.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
 
@@ -247,7 +365,7 @@ public static class UiKit
     /// control for option rows that hold an amount. Returns the Slider so the caller wires onValueChanged.</summary>
     public static Slider MakeSlider(Transform parent, float value)
     {
-        var track = Img("Slider", parent, SlotFill);
+        var track = Round(Img("Slider", parent, ButtonEdge), ButtonRadius);
         var trt = track.rectTransform;
         trt.anchorMin = new Vector2(0.45f, 0.5f);
         trt.anchorMax = new Vector2(1f, 0.5f);
@@ -259,11 +377,11 @@ public static class UiKit
         var fillArea = Img("FillArea", track.transform, new Color(0, 0, 0, 0));
         fillArea.raycastTarget = false;
         Fill(fillArea.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        var fill = Img("Fill", fillArea.transform, Gold);
+        var fill = Round(Img("Fill", fillArea.transform, Accent), ButtonRadius);
         fill.raycastTarget = false;
         Fill(fill.rectTransform, Vector2.zero, Vector2.zero);
 
-        var handle = Img("Handle", track.transform, TextMain);
+        var handle = Round(Img("Handle", track.transform, WindowEdge), ButtonRadius);
         handle.rectTransform.sizeDelta = new Vector2(10f, 18f);
 
         var slider = track.gameObject.AddComponent<Slider>();
@@ -287,7 +405,7 @@ public static class UiKit
     /// toggling) comes back via <paramref name="root"/>. Hidden (inactive) by default.</summary>
     public static RectTransform Window(Transform canvas, string title, Vector2 size, Vector2 pos, out GameObject root)
     {
-        var border = Img("Window_" + title, canvas, Gold);
+        var border = Img("Window_" + title, canvas, WindowEdge);
         var rt = border.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
@@ -297,24 +415,39 @@ public static class UiKit
         frame.persistKey = title;
         ClickShield(rt);   // catch clicks over the whole window (gaps included) so none leak to the world
 
-        var fill = Img("Fill", border.transform, PanelFill);
+        var content = DressWindow(border, title);
+        border.gameObject.SetActive(false);
+        root = border.gameObject;
+        return content;
+    }
+
+    /// <summary>THE window look, put on an existing <paramref name="border"/> image however it is sized: the rounded
+    /// edge, the body, the draggable fading title bar with <paramref name="title"/> and a close button, and an empty
+    /// Content area below the bar, which is returned. Every window in the game — built at runtime or baked into the
+    /// HUD — is dressed by this, so none can drift from the rest.</summary>
+    public static RectTransform DressWindow(Image border, string title)
+    {
+        Round(border, WindowRadius).color = WindowEdge;
+        var rt = border.rectTransform;
+
+        var fill = Round(Img("Fill", border.transform, PanelFill), WindowRadius - 1);
         Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         fill.raycastTarget = true;
 
         // header (drag) + close
-        var header = Img("Header", fill.transform, new Color(Gold.r, Gold.g, Gold.b, 0.16f));
+        var header = TitleBar(fill.transform);
         header.rectTransform.anchorMin = new Vector2(0, 1);
         header.rectTransform.anchorMax = new Vector2(1, 1);
         header.rectTransform.pivot = new Vector2(0.5f, 1);
         header.rectTransform.sizeDelta = new Vector2(0, 32);
         header.gameObject.AddComponent<WindowDragHandle>().window = rt;
 
-        var titleT = Label("Title", header.transform, title, 17, FontStyle.Bold, TextAnchor.MiddleLeft, title: true);
+        var titleT = Label("Title", header.transform, title, 14, FontStyle.Bold, TextAnchor.MiddleLeft);
         Fill(titleT.rectTransform, new Vector2(14, 0), new Vector2(-36, 0));
-        titleT.color = Gold; titleT.raycastTarget = false;
+        titleT.color = TitleText; titleT.raycastTarget = false;
 
         // Close: a generous transparent hit area (full header height) carries the raycast +
-        // WindowCloseButton; the visible red cell + X are non-raycast children centered inside it.
+        // WindowCloseButton; the visible close cell + X are non-raycast children centered inside it.
         // Decoupling the hit box from the small 24px visual keeps the clickable region centered on
         // the glyph with margin on every side, so it can't drift off the icon ("had to click to the
         // right of the X" bug).
@@ -325,7 +458,7 @@ public static class UiKit
         close.rectTransform.anchoredPosition = Vector2.zero;
         close.gameObject.AddComponent<WindowCloseButton>().window = border.gameObject;
 
-        var closeVis = Img("CloseVis", close.transform, new Color(0.6f, 0.16f, 0.16f, 0.9f));
+        var closeVis = Round(Img("CloseVis", close.transform, CloseFill), ButtonRadius);
         closeVis.raycastTarget = false;
         closeVis.rectTransform.anchorMin = closeVis.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         closeVis.rectTransform.pivot = new Vector2(0.5f, 0.5f);
@@ -333,16 +466,11 @@ public static class UiKit
         closeVis.rectTransform.anchoredPosition = new Vector2(-2, 0);
         var x = Label("X", closeVis.transform, "X", 15, FontStyle.Bold, TextAnchor.MiddleCenter);
         Fill(x.rectTransform, Vector2.zero, Vector2.zero); x.raycastTarget = false;
+        x.color = TitleText;
 
         var content = Img("Content", fill.transform, new Color(0, 0, 0, 0));
         content.raycastTarget = false;
         Fill(content.rectTransform, new Vector2(14, 14), new Vector2(-14, -40));
-
-        // Ornament Kit v1: corner brackets + a header divider (procedural placeholders until kit art is wired).
-        Ornament.DecorateWindow(fill.rectTransform, 32f);
-
-        border.gameObject.SetActive(false);
-        root = border.gameObject;
         return content.rectTransform;
     }
 }

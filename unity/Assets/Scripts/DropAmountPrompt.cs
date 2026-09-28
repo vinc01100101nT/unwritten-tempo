@@ -15,7 +15,7 @@ using UnityEngine.UI;
 /// screen puts an item down — the right-click menu and dragging an item out of the window both go through it, so
 /// the two cannot start disagreeing about when you are asked and what happens when you answer.</para>
 ///
-/// <para>Built like <see cref="ItemActionMenu"/> and opened at the same place on screen: one flat gold border
+/// <para>Built like <see cref="ItemActionMenu"/> and opened at the same place on screen: one thin rounded edge
 /// around a flat panel, floating above every window on the HUD canvas.</para>
 /// </summary>
 public class DropAmountPrompt
@@ -80,7 +80,7 @@ public class DropAmountPrompt
         canvas = hostCanvas;
         if (canvas == null) return;
 
-        var border = UiKit.Img("DropAmountPrompt", canvas.transform, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("DropAmountPrompt", canvas.transform, UiKit.WindowEdge), UiKit.WindowRadius);
         root = border.rectTransform;
         root.anchorMin = root.anchorMax = new Vector2(0, 0);
         root.pivot = new Vector2(0f, 1f);
@@ -94,7 +94,7 @@ public class DropAmountPrompt
         var fitter = border.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        var fill = UiKit.Img("Fill", root, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", root, UiKit.PanelFill), UiKit.WindowRadius - 1);
         var v = fill.gameObject.AddComponent<VerticalLayoutGroup>();
         v.padding = new RectOffset(8, 8, 6, 8);
         v.spacing = 6f;
@@ -122,7 +122,7 @@ public class DropAmountPrompt
 
     void BuildField(Transform parent)
     {
-        var box = UiKit.Img("Field", parent, UiKit.SlotFill);
+        var box = UiKit.Field(UiKit.Img("Field", parent, UiKit.SlotFill));
         var le = box.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = 26f;
 
@@ -136,8 +136,8 @@ public class DropAmountPrompt
         field.lineType = TMP_InputField.LineType.SingleLine;
         field.contentType = TMP_InputField.ContentType.IntegerNumber;
         field.customCaretColor = true;
-        field.caretColor = UiKit.Cyan;
-        field.selectionColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.25f);
+        field.caretColor = UiKit.Accent;
+        field.selectionColor = UiKit.Hover;
         field.onSubmit.AddListener(_ => Confirm());
     }
 

@@ -82,10 +82,9 @@ public class InventoryList
     Action onChanged;                // the window's own refresh, raised after an action mutates the bag
 
     // The same blue mark the approved design uses, on a name that is otherwise drawn plain.
-    const string WornTag = "   <size=11><color=#4F8CFF>worn</color></size>";
+    static readonly string WornTag = "   <size=11><color=" + UiKit.Hex(UiKit.Accent) + ">worn</color></size>";
 
     static readonly Color HeaderIdle = UiKit.TextDim;
-    static readonly Color RowHover = new Color(0.30f, 0.85f, 1f, 0.10f);   // the cyan bloom, at list weight
 
     /// <summary>Build the search field, the sortable header and the scrolling row list into
     /// <paramref name="parent"/>. <paramref name="refresh"/> is raised after any action that changes the bag,
@@ -113,7 +112,7 @@ public class InventoryList
 
     void BuildSearch(Transform parent)
     {
-        var bar = UiKit.Img("Search", parent, UiKit.SlotFill);
+        var bar = UiKit.Field(UiKit.Img("Search", parent, UiKit.SlotFill));
         var le = bar.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = SearchHeight;
         var h = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -149,8 +148,8 @@ public class InventoryList
         search.placeholder = placeholder;
         search.lineType = TMP_InputField.LineType.SingleLine;
         search.customCaretColor = true;
-        search.caretColor = UiKit.Cyan;
-        search.selectionColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.25f);
+        search.caretColor = UiKit.Accent;
+        search.selectionColor = UiKit.Hover;
         search.onValueChanged.AddListener(s =>
         {
             // Case-insensitive: both sides are lowered before they meet.
@@ -167,7 +166,7 @@ public class InventoryList
 
     void BuildHeader(Transform parent)
     {
-        var head = UiKit.Img("Header", parent, new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.10f));
+        var head = UiKit.Img("Header", parent, UiKit.PanelRaise);
         var le = head.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = HeaderHeight;
         var h = head.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -202,8 +201,8 @@ public class InventoryList
             btn.targetGraphic = cellImg;
             var colors = btn.colors;
             colors.normalColor = new Color(1, 1, 1, 0);
-            colors.highlightedColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.12f);
-            colors.pressedColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.22f);
+            colors.highlightedColor = UiKit.Hover;
+            colors.pressedColor = UiKit.Rule;
             colors.selectedColor = colors.normalColor;
             colors.disabledColor = colors.normalColor;
             btn.colors = colors;

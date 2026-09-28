@@ -1,4 +1,3 @@
-# Real secrets: the database password and the token signing key. Never committed.
+# Settings live in settings.env at the top of the project now. A stray .env here is still never committed.
 .env
 .env.*
-!.env.example

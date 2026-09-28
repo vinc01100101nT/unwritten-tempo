@@ -10,19 +10,27 @@
 #
 # WHAT YOU NEED FIRST:
 #   1. A domain name. A certificate cannot be issued for a bare numeric address, so this is not optional.
-#   2. Two DNS "A" records, both pointing at the machine's address:
+#   2. Three DNS "A" records, all pointing at the machine's address:
 #        accounts.example.com    -> 203.0.113.10
 #        characters.example.com  -> 203.0.113.10
-#      Two names rather than one because the two services are two different programs on two ports, and a name
-#      each means neither the game nor these services need to learn about paths they did not have before.
+#        patch.example.com       -> 203.0.113.10     (the launcher's update folder)
+#      A name per service rather than one because the two services are two different programs on two ports, and a
+#      name each means neither the game nor these services need to learn about paths they did not have before.
 #   3. Ports 80 and 443 open on the machine. Port 80 is how the certificate is issued and renewed; closing it
 #      makes renewal fail silently three months later.
 #   4. Both services started with BIND_HOST=127.0.0.1, so the only way in is through this file.
 #
-# INSTALL AND RUN (Debian/Ubuntu):
+# NOTHING IS TYPED IN THIS FILE. Every name, address, port and folder below is read from settings.env — the one
+# file every program here reads — through {$NAME}: PUBLIC_ACCOUNTS_URL, PUBLIC_CHAR_SERVER_URL and PATCH_URL are
+# the three web addresses (written with their https://), CERT_EMAIL, PATCH_DIR, and the two ports.
+#
+# INSTALL AND RUN (Debian/Ubuntu), with the project at /srv/unwritten:
 #   sudo apt install -y caddy
-#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile      # after editing the names below
-#   sudo systemctl reload caddy
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl edit caddy        # add these two lines, so Caddy reads settings.env:
+#                                    #   [Service]
+#                                    #   EnvironmentFile=/srv/unwritten/settings.env
+#   sudo systemctl restart caddy
 #
 # PROVE IT WORKS:
 #   curl -s https://accounts.example.com/health        # want {"ok":true}
@@ -30,21 +38,29 @@
 
 {
 	# Where the certificate authority writes to you when a renewal is failing. A real address you read.
-	email you@example.com
+	email {$CERT_EMAIL}
 }
 
-accounts.example.com {
-	reverse_proxy 127.0.0.1:8080
+{$PUBLIC_ACCOUNTS_URL} {
+	reverse_proxy 127.0.0.1:{$PORT:8080}
 }
 
-characters.example.com {
-	reverse_proxy 127.0.0.1:8081
+{$PUBLIC_CHAR_SERVER_URL} {
+	reverse_proxy 127.0.0.1:{$CHAR_SERVER_PORT:8081}
+}
+
+# THE UPDATE FOLDER the launcher downloads from — tools/publish-update.py writes it; copy it here. Plain files,
+# served as they are. The character server reads its version from the SAME folder (PATCH_DIR), so the version it
+# demands is the one this folder hands out.
+{$PATCH_URL} {
+	root * {$PATCH_DIR}
+	file_server
 }
 
 # THE PLAYER WIKI, if you serve it. Its Server Status page reads the character server from a browser, and a
 # browser refuses that unless the character server was told this exact address — including the https:// and
 # with no trailing slash. It refuses SILENTLY, with nothing in the browser's console, so a status page that
-# has simply gone blank is almost always this. Start the character server with:
+# has simply gone blank is almost always this. Set it in settings.env:
 #     WIKI_ORIGINS=https://wiki.example.com
 #
 # wiki.example.com {

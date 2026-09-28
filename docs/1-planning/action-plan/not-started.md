@@ -48,7 +48,8 @@ needed to open it; they arrive as updates while it runs, which gives testers a r
 placed. The shadows (`MT-18`) are not needed for it. **Testers get one weapon with skills, the sword** — the bow has
 none yet — so the invitation says so, or it gets reported as a bug.
 
-**It does not fit in one week.** The tasks below add up to 7–10 days, so it is two weeks of work.
+**It does not fit in one week.** Its tasks — the five below, and `MT-50` and `MT-51`, which are under way — add up
+to 11–15 days, so it is two to three weeks of work.
 
 - [ ] `MT-41` **`[E]` Put the game on a rented machine.** One Vultr machine in Singapore, 2 cores / 4 GB, $24 a
   month ([Where the Game Is Hosted](../where-the-game-is-hosted.md)). The world server needs a Linux build, which
@@ -170,7 +171,7 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
 ## Not scheduled at all
 
-Named so nobody thinks they were forgotten: class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam (the play-test is handed out without it), and live-service operations — monitoring, anti-cheat and a way to patch a running game. None of it is started.
+Named so nobody thinks they were forgotten: class and job advancement, the remaining ten weapon families, trading, parties, guilds, auction house, player-versus-player, a real tutorial, pause, controller support, translations, anything to do with Steam (the play-test is handed out without it), and live-service operations — monitoring, anti-cheat and a way to update the servers without taking the game down (players' own copies are updated by the launcher, `MT-50`). None of it is started.
 
 ---
 

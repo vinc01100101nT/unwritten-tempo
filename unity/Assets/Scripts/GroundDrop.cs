@@ -300,8 +300,8 @@ public class GroundDrop : MonoBehaviour
     const string SparkleEffect = "loot.drop";
 
     static Transform host;
-    RectTransform plate;       // the dark plate + gold border the name sits on
-    Image plateFill;           // the dark part, brightened while the cursor is on it
+    RectTransform plate;       // the plate + rounded edge the name sits on
+    Image plateFill;           // the plate's body, tinted while the cursor is on it
     TMP_Text label;
     Vfx.EffectHandle sparkle;
 
@@ -321,7 +321,7 @@ public class GroundDrop : MonoBehaviour
     const float BaseScale = 0.0026f;
     const int FontSize = 48;
 
-    // Breathing room between the words and the gold edge, in the same pixels the font is measured in. Wider at
+    // Breathing room between the words and the edge, in the same pixels the font is measured in. Wider at
     // the sides than the ends, which is what stops a one-word name reading as a cramped box.
     const int TextPadSides = 14;
     const int TextPadEnds = 5;
@@ -335,21 +335,21 @@ public class GroundDrop : MonoBehaviour
         StartSparkle();
     }
 
-    /// <summary>The name on a dark plate with a thin gold edge — the same frame the right-click menu and the item
+    /// <summary>The name on a plate with a thin rounded edge — the same frame the right-click menu and the item
     /// tooltip are built from, so a thing on the floor is dressed like every other panel in the game rather than
     /// being a look of its own. It sizes itself to the words, so a long name and a short one both fit exactly.</summary>
     void BuildPlate()
     {
         EnsureHost();
 
-        // The gold OUTER box. It is one pixel bigger than the fill on every side, and that one pixel IS the border
+        // The OUTER box. It is one pixel bigger than the fill on every side, and that one pixel IS the border
         // — the same way every window in this game draws its edge.
-        var border = UiKit.Img("DropLabel", host, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("DropLabel", host, UiKit.WindowEdge), UiKit.WindowRadius);
         plate = border.rectTransform;
         // Nothing until the ticker first puts it on the screen at its real size.
         plate.localScale = Vector3.zero;
         // The whole plate is the thing you point at, edge included — so the cursor never falls through the one
-        // pixel of gold at its rim.
+        // pixel of edge at its rim.
         border.raycastTarget = true;
 
         var frame = border.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -359,9 +359,9 @@ public class GroundDrop : MonoBehaviour
         var frameFitter = border.gameObject.AddComponent<ContentSizeFitter>();
         frameFitter.horizontalFit = frameFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        // The dark fill. The game's own panel colour rather than a fresh black typed here, so the floor and the
-        // windows can never drift apart.
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        // The fill. The game's own panel colour rather than one typed here, so the floor and the windows can never
+        // drift apart.
+        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         fill.raycastTarget = false;
         plateFill = fill;
         var inner = fill.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -371,11 +371,9 @@ public class GroundDrop : MonoBehaviour
 
         label = UiKit.MakeText("Text", fill.transform, Text, FontSize, FontStyle.Bold,
                                TextAnchor.MiddleCenter, null, false);
-        // The same bold, black-edged Inter as the name over whoever you point at. ONE shared material across every
-        // drop, so a floor covered in them is still one draw call.
-        label.font = UiKit.BodyFont;
-        label.fontSharedMaterial = UiKit.WorldNameMaterial();
-        label.color = NameColor;
+        // Dark text on the light plate, like any window's text; the font's own shared material, so a floor covered
+        // in them is still one draw call.
+        label.color = UiKit.TextMain;
         label.raycastTarget = false;
 
         // SIZED NOW, while it can be. A box that is switched off does no layout, so one measured only when Alt is
@@ -390,9 +388,8 @@ public class GroundDrop : MonoBehaviour
         plate.gameObject.SetActive(false);
     }
 
-    // The one colour a dropped name and its sparkle are drawn in. There are no tiers to colour a drop by any more:
-    // what a piece is worth is its grade and its folds, which are words on the label, not a hue.
-    static readonly Color NameColor = new Color(0.91f, 0.91f, 0.91f);
+    // The one colour a drop's sparkle is drawn in. There are no tiers to colour a drop by any more: what a piece is
+    // worth is its grade and its folds, which are words on the label, not a hue.
     static readonly Color SparkleColor = new Color(0.85f, 0.82f, 0.62f);
 
     /// <summary>Light the spot up. Through the game's own effect system, so it is pooled like every other effect
@@ -520,13 +517,10 @@ public class GroundDropLabelPointer : MonoBehaviour, IPointerEnterHandler, IPoin
         fill = background;
     }
 
-    /// <summary>What a name looks like with the cursor on it: the plate's own dark fill carrying the cyan bloom
-    /// this game already uses to say "you are pointing at this", at the same weight a bag row and a menu row use
-    /// it. Mixed into the fill rather than laid over it, because the plate must stay solid — a see-through one
-    /// would read the ground through the words.</summary>
-    static readonly Color Hovered = Color.Lerp(UiKit.PanelFill, UiKit.Cyan, 0.14f);
-
-    public void OnPointerEnter(PointerEventData e) { if (fill != null) fill.color = Hovered; }
+    /// <summary>What a name looks like with the cursor on it: the plate filled with the theme's hover colour, the one
+    /// this game uses to say "you are pointing at this". Solid, because a see-through plate would read the ground
+    /// through the words.</summary>
+    public void OnPointerEnter(PointerEventData e) { if (fill != null) fill.color = UiKit.Hover; }
     public void OnPointerExit(PointerEventData e) { if (fill != null) fill.color = UiKit.PanelFill; }
 
     public void OnPointerClick(PointerEventData e)

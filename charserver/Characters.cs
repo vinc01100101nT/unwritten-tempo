@@ -9,7 +9,7 @@ namespace CharServer;
 /// Everything a character IS, and the only code that reads or writes one. The map server never touches this
 /// database; it asks here. That is the single rule this whole server exists to make true.
 /// </summary>
-public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServers maps)
+public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServers maps, GameVersion version)
 {
     // Names players read out loud and type at each other: letters, digits and underscore only, so a name
     // cannot hide look-alike whitespace or wear punctuation that breaks a chat command.
@@ -28,7 +28,9 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
     public void MapOnto(WebApplication app)
     {
-        var chars = app.MapGroup("").AddEndpointFilter(RequireSignedIn);
+        // Every route a PLAYER'S COPY calls is in this group, and every path into the world starts here — so an
+        // outdated copy is turned away at the character list, before it can choose anyone.
+        var chars = app.MapGroup("").AddEndpointFilter(version.RequireCurrent).AddEndpointFilter(RequireSignedIn);
 
         chars.MapGet("/character-models", () => Results.Ok(new { models = roster.Models }));
         // CAST, and it matters. ListAsync's only argument is the request itself, which makes it look exactly

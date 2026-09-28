@@ -62,8 +62,8 @@ public class DialogBox : MonoBehaviour
         UiKit.ApplyTextCrispness(scaler);
         gameObject.AddComponent<GraphicRaycaster>();
 
-        // Panel: gold-bordered dark box, bottom-centre.
-        var border = UiKit.Img("Panel", transform, UiKit.Gold);
+        // Panel: a box with the window edge, bottom-centre.
+        var border = UiKit.Round(UiKit.Img("Panel", transform, UiKit.WindowEdge), UiKit.WindowRadius);
         var pr = border.rectTransform;
         pr.anchorMin = pr.anchorMax = new Vector2(0.5f, 0f);
         pr.pivot = new Vector2(0.5f, 0f);
@@ -71,12 +71,12 @@ public class DialogBox : MonoBehaviour
         pr.anchoredPosition = new Vector2(0f, 28f);
         panel = border.gameObject;
 
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         UiKit.ClickShield(pr);
 
-        speakerText = UiKit.MakeText("Speaker", fill.transform, "", 17, FontStyle.Bold, TextAnchor.UpperLeft, UiKit.TitleFont);
-        speakerText.color = UiKit.Gold; speakerText.raycastTarget = false;
+        speakerText = UiKit.MakeText("Speaker", fill.transform, "", 17, FontStyle.Bold, TextAnchor.UpperLeft);
+        speakerText.color = UiKit.TitleText; speakerText.raycastTarget = false;
         var sr = speakerText.rectTransform;
         sr.anchorMin = new Vector2(0, 1); sr.anchorMax = new Vector2(1, 1); sr.pivot = new Vector2(0, 1);
         sr.sizeDelta = new Vector2(-40f, 26f); sr.anchoredPosition = new Vector2(20f, -12f);

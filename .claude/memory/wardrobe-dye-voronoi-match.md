@@ -7,7 +7,7 @@ metadata:
   originSessionId: 9dfc1ee7-8011-4ad5-814a-b5feb9352794
 ---
 
-**Symptom:** In the in-game Wardrobe (`O` key), recoloring most cloth parts did nothing, while one swatch (a light color) recolored many parts at once.
+**Symptom:** In the in-game Wardrobe (`O` key — the window was removed 2026-09-28; the same dye shader and part detection now serve only character creation's colour mixer), recoloring most cloth parts did nothing, while one swatch (a light color) recolored many parts at once.
 
 **Root cause:** `AtlasRecolor.shader` matched each pixel to the **first** source part within a tolerance ball (`_Tol`=0.12 → radius ~0.21) and only *dyed* parts were fed to the shader. Cloth parts are close navy shades, so their tolerance balls overlapped: the first match ate later parts' pixels (they "did nothing"), and a single dyed part's wide ball swallowed neighbor regions that had no swatch claiming them (one swatch "changed many parts").
 

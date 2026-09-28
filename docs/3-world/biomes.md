@@ -184,11 +184,11 @@ user's five steps:
      | Mist | 0.8 m | 14 m | 0 | 12° | off |
      | Corrupted | 1.5 m | 12 m | 3 | 30° | on |
 
-     Grassland's 3 levels sit at 0, 0.6 and 1.2 m. `test_grassland` was rebuilt with the 0.25 m ground on 2026-09-28; its
-     steepest slope is 19.6°. The 39 world fields were rebuilt with rounded edges on 2026-09-27 but still at 0.8 m, so
-     their level edges still step until they are built again. Players and creatures walk every one of those slopes by the same
-     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). The 39 world fields were rebuilt with these shapes on 2026-09-27; a map
-     built before that keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
+     Grassland's 3 levels sit at 0, 0.6 and 1.2 m. `test_grassland`, `test_grassland_cliffs` and the 39 world fields
+     were rebuilt with these shapes and the 0.25 m ground on 2026-09-28; `test_grassland`'s steepest slope is 19.6°.
+     Players and creatures walk every one of those slopes by the same
+     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). A map
+     built before then keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
      re-imported through it comes back flat.
    - **Cliffs** (2026-09-27, the user's request): a map with cliffs raises all the ground farther than half the pass
      width from every road, and lines the pass with one smooth rock surface: a carved face

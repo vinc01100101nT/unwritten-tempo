@@ -15,7 +15,7 @@ using UnityEngine.UI;
 /// </summary>
 public class SettingsWindow : MonoBehaviour
 {
-    static readonly Color TabIdle = new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.35f);
+    static readonly Color TabIdle = UiKit.ButtonEdge;
 
     GameObject root;
     readonly List<Image> tabBorders = new List<Image>();
@@ -112,7 +112,7 @@ public class SettingsWindow : MonoBehaviour
         for (int i = 0; i < pages.Count; i++)
         {
             pages[i].SetActive(i == index);
-            if (tabBorders[i] != null) tabBorders[i].color = i == index ? UiKit.Gold : TabIdle;
+            if (tabBorders[i] != null) tabBorders[i].color = i == index ? UiKit.Accent : TabIdle;
         }
     }
 

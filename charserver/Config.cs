@@ -37,6 +37,11 @@ public sealed class Config
     /// a map server does not sign in. Set the same value on both.</summary>
     public required string ServerSecret { get; init; }
 
+    /// <summary>The folder the launcher downloads updates from, when this machine hands them out. Its
+    /// <c>version.txt</c> is the version every player's copy must match — see <see cref="GameVersion"/>. Unset
+    /// means no copy is ever turned away for being out of date.</summary>
+    public string? PatchDir { get; init; }
+
     public static Config FromEnvironment()
     {
         return new Config
@@ -47,6 +52,7 @@ public sealed class Config
             BindHost = Environment.GetEnvironmentVariable("BIND_HOST") ?? "0.0.0.0",
             MaxProgressBytes = OptionalInt("MAX_PROGRESS_BYTES", 256 * 1024),
             ServerSecret = Required("SERVER_SECRET"),
+            PatchDir = Environment.GetEnvironmentVariable("PATCH_DIR"),
             WikiOrigins = Origins(Environment.GetEnvironmentVariable("WIKI_ORIGINS") ?? "http://127.0.0.1:8099"),
         };
     }

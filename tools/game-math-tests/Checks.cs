@@ -711,6 +711,53 @@ static class Checks
         WaterPooling.KeepWaterHeights(found, 16);
         That(found.Count == 1, WaterF, "a water height of exactly the smallest area must be kept");
 
+        // A sheet lies only on its own level ground. A strip 8 units long: level at 0.6 for its first 2 units, then a slope
+        // climbing from 0.05 to 1.25 that passes through 0.6 at x = 4.75, the centre of a square. Only the level squares may hold the 0.6 sheet — the
+        // slope's crossing is no level ground (it drew a ring of water round a hollow, 2026-09-28).
+        {
+            var sv = new List<UnityEngine.Vector3>();
+            var st = new List<int>();
+            void Quad(float x0, float y0, float x1, float y1)
+            {
+                int b0 = sv.Count;
+                sv.Add(new UnityEngine.Vector3(x0, y0, 0)); sv.Add(new UnityEngine.Vector3(x1, y1, 0));
+                sv.Add(new UnityEngine.Vector3(x0, y0, 1)); sv.Add(new UnityEngine.Vector3(x1, y1, 1));
+                st.AddRange(new[] { b0, b0 + 2, b0 + 1, b0 + 1, b0 + 2, b0 + 3 });
+            }
+            Quad(0f, 0.6f, 2f, 0.6f);
+            for (int s = 0; s < 6; s++) Quad(2f + s, 0.05f + 0.2f * s, 3f + s, 0.05f + 0.2f * (s + 1));
+            var levelFound = new List<WaterPooling.FlatHeight>();
+            WaterPooling.AddFlatTriangles(sv.ToArray(), st.ToArray(), UnityEngine.Matrix4x4.identity, levelFound);
+            var sheets = WaterPooling.JoinFilms(levelFound);
+            int lx = 16, lz = 2;
+            var lgrid = new float[lx * lz];
+            for (int k = 0; k < lgrid.Length; k++) lgrid[k] = float.NegativeInfinity;
+            WaterPooling.RaiseToGround(sv.ToArray(), st.ToArray(), UnityEngine.Matrix4x4.identity, 0f, 0f, WaterPooling.RunoffCell, lx, lz, lgrid);
+            var levelOf = new byte[lx * lz];
+            WaterPooling.MarkLevelGround(sv.ToArray(), st.ToArray(), UnityEngine.Matrix4x4.identity, sheets, sheets.Count,
+                                         lgrid, 0f, 0f, WaterPooling.RunoffCell, lx, lz, levelOf);
+            int levelSquares = 0, slopeSquares = 0;
+            for (int i = 0; i < lx; i++) { if (levelOf[i] == 0) continue; if (i < 4) levelSquares++; else slopeSquares++; }
+            That(sheets.Count == 1 && levelSquares == 4 && slopeSquares == 0, WaterF,
+                 "the 0.6 sheet must lie on its 4 level squares and none of the slope through 0.6, got " + levelSquares +
+                 " level and " + slopeSquares + " on the slope");
+        }
+
+        // Smooth water: between two rain amounts each lake glides from where it stood at the lower one. A lake that
+        // was there starts at its lower level; a lake that was not starts just under its own bottom (it grows from
+        // nothing, never pops in at full depth).
+        {
+            var upA = new WaterPooling.Lake { bottom = 0f, level = 0.10f }; upA.cells.Add(0); upA.cells.Add(1);
+            var upB = new WaterPooling.Lake { bottom = 0.3f, level = 0.35f }; upB.cells.Add(5);
+            var lowA = new WaterPooling.Lake { bottom = 0f, level = 0.08f }; lowA.cells.Add(1);
+            var bodyOf = new byte[8];
+            bodyOf[0] = bodyOf[1] = 3; bodyOf[5] = 4;   // two sheets first: upper lakes are bodies 2 and 3 (+1 stored)
+            var from = new float[8];
+            WaterPooling.StartLevels(new List<WaterPooling.Lake> { lowA }, new List<WaterPooling.Lake> { upA, upB }, 2, bodyOf, 2, from);
+            That(Math.Abs(from[2] - 0.08f) < 1e-6f, WaterF, "a lake that stood at the lower rain must glide from its lower level 0.08, got " + from[2]);
+            That(from[3] < 0.3f, WaterF, "a lake that did not exist at the lower rain must start under its bottom 0.3, got " + from[3]);
+        }
+
         // Runoff: a grid, low on the left half, a 1.5 cliff on the right. The foot of the cliff gets the most, far
         // flat ground gets none, and the cliff top (nothing above it) gets none.
         int nx = 20, nz = 3;

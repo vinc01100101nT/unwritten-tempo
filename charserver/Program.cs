@@ -89,7 +89,8 @@ catch (Exception e)
 }
 
 var maps = new MapServers(config);
-new Characters(db, auth, roster, maps).MapOnto(app);
+var gameVersion = new GameVersion(config.PatchDir);
+new Characters(db, auth, roster, maps, gameVersion).MapOnto(app);
 
 // The one public read: what the world looks like right now, for the player wiki's status page. No token, no
 // secret, counts and public names only — see WorldStats.
@@ -246,6 +247,9 @@ app.MapGet("/health", async () =>
 });
 
 Console.WriteLine($"[char] listening on {config.Port}, {roster.Models.Count} character models, database reachable.");
+Console.WriteLine(gameVersion.IsOn
+    ? $"[char] game version check ON — players need version '{gameVersion.Current ?? "(none published yet)"}' from {config.PatchDir}"
+    : "[char] game version check off — PATCH_DIR is not set, so no copy is turned away for being out of date.");
 app.Run();
 return 0;
 

@@ -4,7 +4,7 @@
 
 function required(name: string): string {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing required environment variable ${name}. Copy .env.example to .env.`);
+  if (!v) throw new Error(`Missing required setting ${name}. Copy settings.env.example to settings.env at the top of the project and fill it in.`);
   return v;
 }
 

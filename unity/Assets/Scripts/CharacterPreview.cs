@@ -235,7 +235,7 @@ public class CharacterPreview : MonoBehaviour
             animator.runtimeAnimatorController = CharacterSpec.Active.animatorController;
             animator.applyRootMotion = false;
 
-            // The SAME recolouring the wardrobe uses in game. It binds to the persistent character that already
+            // The SAME recolouring the character wears in game. It binds to the persistent character that already
             // exists under this screen, so the world body is bound to the same colours — which is why a body only
             // SHOWS colours stamped for it and never erases them. Nothing is saved until the character is created.
             dye = body.AddComponent<CharacterDye3D>();

@@ -42,7 +42,7 @@ public class HotbarPanel : MonoBehaviour
     static Color Dim(Color c) => new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.5f, c.a);
     static readonly Color CellDim    = new Color(0.5f, 0.5f, 0.55f, 1f);
     static readonly Color CellEmpty  = new Color(0.32f, 0.32f, 0.37f, 0.6f);   // unbound slot
-    static readonly Color KeyColor   = new Color(1f, 0.85f, 0.45f);
+    static readonly Color KeyColor   = UiKit.TextOnDim;
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);

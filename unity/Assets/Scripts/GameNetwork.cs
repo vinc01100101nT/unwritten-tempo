@@ -330,14 +330,15 @@ public class GameNetwork : NetworkManager
             //
             // Every way of arriving here is the same way: something started the game WITHOUT a terminal, so none
             // of the settings a shell would have carried reached it — `open` on the built game, a player
-            // double-clicking one, or the EDITOR started from the Dock. The file the build ships with covers all
-            // three, so reaching this now means that file is empty too, not merely that nobody typed anything.
+            // double-clicking one, or the EDITOR started from the Dock. A build carries the address in its own
+            // settings file and the editor reads settings.env, so reaching this now means that file is empty too,
+            // not merely that nobody typed anything.
             GameLog.Error(LogCat.Client, "this copy has no character server to ask, so nobody can let it into the "
                            + "world — CHAR_SERVER_URL is not set"
                            + (string.IsNullOrEmpty(characterId) ? ", and no character has been chosen" : "")
-                           + ". Set it in the terminal you start from, or — for the editor and for a copy "
-                           + "somebody double-clicks, neither of which has one — in "
-                           + "Assets/StreamingAssets/server.txt. See docs/2-systems/networking/starting-the-network.md.");
+                           + ". Set CHAR_SERVER_URL in settings.env at the top of the project (the editor reads it "
+                           + "there, and tools/build-game.sh writes it into every build), or in the terminal you "
+                           + "start from. See docs/2-systems/networking/starting-the-network.md.");
             OnLostWorld?.Invoke();
             return;
         }

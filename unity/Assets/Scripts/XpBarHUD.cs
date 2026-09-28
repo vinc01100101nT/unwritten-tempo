@@ -11,10 +11,10 @@ using TMPro;
 /// </summary>
 public class XpBarHUD : MonoBehaviour
 {
-    static readonly Color BarBg     = new Color(0f, 0f, 0f, 0.55f);
+    static readonly Color BarBg     = UiKit.Rule;
     static readonly Color CharFill  = new Color(0.55f, 0.85f, 0.5f, 0.9f);    // green — the character track
     static readonly Color RingFill  = new Color(0.55f, 0.8f, 1f, 0.9f);       // blue — the ring track
-    static readonly Color Gold      = new Color(1f, 0.86f, 0.5f);
+    static readonly Color LabelColor = UiKit.TextMain;
 
     const float BarH = 16f;        // bar height
     const float EdgeInset = 8f;    // gap from the screen's left/right edge
@@ -81,7 +81,7 @@ public class XpBarHUD : MonoBehaviour
         frt.pivot = new Vector2(0f, 0.5f);
         frt.offsetMin = frt.offsetMax = Vector2.zero;
 
-        label = NewText("Label", bg.transform, "", 11, FontStyle.Bold, TextAnchor.MiddleCenter, Gold);
+        label = NewText("Label", bg.transform, "", 11, FontStyle.Bold, TextAnchor.MiddleCenter, LabelColor);
         var lrt = label.rectTransform;
         lrt.anchorMin = Vector2.zero; lrt.anchorMax = Vector2.one;
         lrt.offsetMin = new Vector2(6, 0); lrt.offsetMax = new Vector2(-6, 0);

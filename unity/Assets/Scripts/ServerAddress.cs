@@ -18,11 +18,12 @@ using UnityEngine;
 /// <para>Empty on the desktop, always — nothing types into it there, so both env-var paths behave exactly as
 /// they did before this existed.</para>
 ///
-/// <para><b>And anything started WITHOUT A TERMINAL is told by a file the build carries</b> — see
-/// <see cref="Setting"/>. That is a copy handed to a player who double-clicks it, and it is equally the
-/// EDITOR when it was opened from the Dock or Unity Hub: neither receives the settings a shell would have
-/// exported, so both would otherwise have no character server to ask and could sign in but never enter. The
-/// environment still wins where there is one, so a build or a server started from a shell is unaffected.</para>
+/// <para><b>And anything started WITHOUT A TERMINAL is told by a file</b> — see <see cref="Setting"/>. A copy
+/// handed to a player who double-clicks it reads the addresses tools/build-game.sh wrote into the build; the
+/// EDITOR opened from the Dock or Unity Hub reads them from the project's settings.env, the file the servers
+/// start from. Neither receives the settings a shell would have exported, so both would otherwise have no
+/// character server to ask and could sign in but never enter. The environment still wins where there is one, so
+/// a build or a server started from a shell is unaffected.</para>
 /// </summary>
 public static class ServerAddress
 {
@@ -92,9 +93,7 @@ public static class ServerAddress
         try
         {
             var path = Path.Combine(Application.streamingAssetsPath, SettingsFileName);
-            if (!File.Exists(path)) return found;
-
-            foreach (var raw in File.ReadAllLines(path))
+            foreach (var raw in File.Exists(path) ? File.ReadAllLines(path) : Array.Empty<string>())
             {
                 var line = raw.Trim();
                 if (line.Length == 0 || line[0] == '#') continue;
@@ -112,6 +111,47 @@ public static class ServerAddress
             GameLog.Warn(LogCat.Client, "server address: could not read " + SettingsFileName + ": " + e.Message);
         }
 
+#if UNITY_EDITOR
+        ReadProjectSettings(found);
+#endif
         return found;
     }
+
+#if UNITY_EDITOR
+    /// <summary>The addresses THIS machine's servers answer on, which the editor reads straight from the project's
+    /// one settings file (settings.env, at the top of the project) — the same file the servers themselves start
+    /// from, so the editor can never be pointed somewhere different from them. A build carries these in its own
+    /// copy of <see cref="SettingsFileName"/> instead, written there by tools/build-game.sh.
+    ///
+    /// <para><b>Only the two addresses are taken, by name.</b> That file also holds every secret the servers have,
+    /// and none of those may ever reach anything in the game — so nothing but these two names is read out of it,
+    /// and this code does not exist outside the editor.</para></summary>
+    static void ReadProjectSettings(Dictionary<string, string> found)
+    {
+        try
+        {
+            var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "settings.env"));
+            if (!File.Exists(path)) return;
+
+            foreach (var raw in File.ReadAllLines(path))
+            {
+                var line = raw.Trim();
+                if (line.StartsWith("export ", StringComparison.Ordinal)) line = line.Substring(7).Trim();
+                var split = line.IndexOf('=');
+                if (split <= 0) continue;
+
+                var name = line.Substring(0, split).Trim();
+                if (name != "ACCOUNTS_URL" && name != "CHAR_SERVER_URL") continue;
+                if (found.ContainsKey(name)) continue;
+
+                var value = line.Substring(split + 1).Trim().Trim('"');
+                if (value.Length > 0) found[name] = value;
+            }
+        }
+        catch (Exception e)
+        {
+            GameLog.Warn(LogCat.Client, "server address: could not read settings.env: " + e.Message);
+        }
+    }
+#endif
 }

@@ -57,8 +57,7 @@ public static class SkillHoverCard
 
         root = new GameObject("SkillInfoCard", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         root.transform.SetParent(canvasRT, false);
-        var img = root.GetComponent<Image>();
-        img.color = new Color(0.06f, 0.06f, 0.08f, 0.97f);
+        var img = UiKit.Card(root.GetComponent<Image>());
         img.raycastTarget = false;
         rt = (RectTransform)root.transform;
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -75,7 +74,7 @@ public static class SkillHoverCard
         fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
         text = UiKit.MakeText("Text", root.transform, "", 12, FontStyle.Normal, TextAnchor.UpperLeft, wrap: false);
-        text.color = Color.white;
+        text.color = UiKit.TextMain;
         text.raycastTarget = false;
         text.richText = true;
         text.textWrappingMode = TextWrappingModes.Normal;

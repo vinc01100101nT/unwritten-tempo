@@ -31,7 +31,7 @@ public class CraftStationPanel : MonoBehaviour
     enum Page { Menu, Forge, Fold, Quench, Ink, Recycle }
     Page page = Page.Menu;
 
-    static readonly Color Sub = new Color(0.655f, 0.620f, 0.533f);
+    static readonly Color Sub = UiKit.TextDim;
 
     void Awake() => Instance = this;
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -134,7 +134,7 @@ public class CraftStationPanel : MonoBehaviour
 
         if (page == Page.Menu)
         {
-            Line(CraftStations.Label(station), 18, UiKit.Gold);
+            Line(CraftStations.Label(station), 18, UiKit.TitleText);
             Row("Forge", () => Open(Page.Forge));
             Row("Fold", () => Open(Page.Fold));
             Row("Quench", () => Open(Page.Quench));
@@ -143,7 +143,7 @@ public class CraftStationPanel : MonoBehaviour
             return;
         }
 
-        Line(CraftStations.Label(station) + "  ·  " + PageWord(page), 18, UiKit.Gold);
+        Line(CraftStations.Label(station) + "  ·  " + PageWord(page), 18, UiKit.TitleText);
         Row("← Back", () => Open(Page.Menu));
 
         if (page == Page.Forge) { ForgePage(); return; }

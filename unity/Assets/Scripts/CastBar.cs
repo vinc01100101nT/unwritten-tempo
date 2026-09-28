@@ -191,8 +191,8 @@ public class CastBar : MonoBehaviour
         lrt.anchoredPosition = new Vector2(0f, 2f);
         lrt.sizeDelta = new Vector2(BarWidth * 3f, LabelFontSize + 4);
         bar.label = labelGO.AddComponent<TextMeshProUGUI>();
-        bar.label.font = UiKit.BodyFont;
-        bar.label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);   // dark edge + draws over terrain
+        bar.label.font = UiKit.Font;
+        bar.label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font);   // dark edge + draws over terrain
         bar.label.fontSize = LabelFontSize;
         bar.label.fontStyle = FontStyles.Bold;
         bar.label.alignment = TextAlignmentOptions.Bottom;

@@ -23,9 +23,10 @@ public class ChatController : MonoBehaviour
 {
     const int MaxLines = 200;   // oldest lines are trimmed past this so the log can't grow unbounded
 
-    static readonly Color SayColor   = new Color(0.62f, 0.70f, 0.80f);   // "You:" prefix
-    static readonly Color EchoColor  = new Color(0.784f, 0.659f, 0.384f); // a command you typed (echoed back)
-    static readonly Color InputFill  = new Color(0.05f, 0.055f, 0.07f, 1f);
+    // Rich-text tints read from the theme once: the speaker's name, a command you typed (echoed back), the hint line.
+    static readonly string SpeakerHex = UiKit.Hex(UiKit.TitleText);
+    static readonly string EchoHex = UiKit.Hex(UiKit.Accent);
+    static readonly string HintHex = UiKit.Hex(UiKit.TextDim);
 
     const float BubbleLife = 4f;   // seconds a said line floats over the player's head
 
@@ -122,12 +123,12 @@ public class ChatController : MonoBehaviour
     // Who is speaking, written once: a said line and a skill call are the same person talking, so they share this
     // rather than each typing their own copy. An empty name is the person at this keyboard.
     static string SpeakerPrefix(string name)
-        => string.IsNullOrEmpty(name) ? "<color=#9FB4CC>You:</color>"
-                                      : $"<color=#9FB4CC>{Sanitize(name)}:</color>";
+        => string.IsNullOrEmpty(name) ? $"<color={SpeakerHex}>You:</color>"
+                                      : $"<color={SpeakerHex}>{Sanitize(name)}:</color>";
 
     // The tint a call is logged in, taken from the palette's own colour rather than typed here as a second copy.
     static string callHex;
-    static string CallHex => callHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Cyan);
+    static string CallHex => callHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Accent);
 
     void Update()
     {
@@ -180,7 +181,7 @@ public class ChatController : MonoBehaviour
     // One-line input box pinned to the bottom of the content area.
     void BuildInput(RectTransform content)
     {
-        var bg = UiKit.Img("Input", content, InputFill);
+        var bg = UiKit.Field(UiKit.Img("Input", content, UiKit.SlotFill));
         bg.raycastTarget = true;
         bg.rectTransform.anchorMin = new Vector2(0, 0);
         bg.rectTransform.anchorMax = new Vector2(1, 0);
@@ -207,7 +208,7 @@ public class ChatController : MonoBehaviour
     // Scrolling message log filling the content area above the input box.
     void BuildLog(RectTransform content)
     {
-        var view = UiKit.Img("Log", content, new Color(0, 0, 0, 0.15f));
+        var view = UiKit.Img("Log", content, UiKit.PanelRaise);
         view.raycastTarget = true;   // a graphic for the scroll wheel to land on
         UiKit.Fill(view.rectTransform, new Vector2(0, 34), new Vector2(0, 0));   // sit above the 28px input (+ gap)
         view.gameObject.AddComponent<RectMask2D>();
@@ -234,7 +235,7 @@ public class ChatController : MonoBehaviour
         scroll.viewport = view.rectTransform;
         scroll.content = logContent;
 
-        AddLine("<color=#A79E88>Chat ready. Enter to type · /help for commands · Esc to close.</color>");
+        AddLine($"<color={HintHex}>Chat ready. Enter to type · /help for commands · Esc to close.</color>");
     }
 
     // ---- submit + log ---------------------------------------------------------
@@ -256,7 +257,7 @@ public class ChatController : MonoBehaviour
     {
         if (GmCommands.IsCommand(text))
         {
-            AddLine($"<color=#C8A862>{Sanitize(text)}</color>");
+            AddLine($"<color={EchoHex}>{Sanitize(text)}</color>");
             GmCommands.Execute(text, AddLine);
         }
         else

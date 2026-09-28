@@ -24,7 +24,6 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_FILE="$REPO/accounts/.env"
 BACKUP_DIR="${BACKUP_DIR:-$REPO/backups}"
 KEEP="${KEEP:-14}"
 
@@ -34,18 +33,11 @@ lost() { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 command -v pg_dump    >/dev/null 2>&1 || fail "No pg_dump on this machine. Install the PostgreSQL client tools first."
 command -v pg_restore >/dev/null 2>&1 || fail "No pg_restore on this machine. Install the PostgreSQL client tools first."
 
-# The database address lives with the sign-in service, and there is only one of it. Sourced the same careful
-# way the character server does it — a bare `. .env` makes zsh search PATH instead of this folder and reports
-# "no such file or directory" while the file is sitting right there.
-if [ -z "${DATABASE_URL:-}" ]; then
-  [ -f "$ENV_FILE" ] || fail "No settings at $ENV_FILE, and DATABASE_URL is not set in this shell.
-   Either copy accounts/.env.example to accounts/.env and fill it in, or run this with DATABASE_URL=..."
-  set -a
-  # shellcheck disable=SC1090
-  . "$ENV_FILE"
-  set +a
-fi
-[ -n "${DATABASE_URL:-}" ] || fail "DATABASE_URL is empty. Nothing to back up."
+# The database address lives in settings.env, with every other setting, and there is only one of it. Loaded
+# the one way every script here loads it; a DATABASE_URL already set in this shell wins.
+. "$REPO/tools/load-settings.sh"
+[ -n "${DATABASE_URL:-}" ] || fail "DATABASE_URL is not set in settings.env or in this shell.
+   Copy settings.env.example to settings.env and fill it in, or run this with DATABASE_URL=..."
 
 mkdir -p "$BACKUP_DIR" || fail "Cannot write to $BACKUP_DIR"
 

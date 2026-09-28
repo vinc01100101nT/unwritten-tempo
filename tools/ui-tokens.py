@@ -7,7 +7,7 @@ somewhere a browser can see. Nothing here invents a colour, and nothing here wri
 Two outputs, both regenerated from scratch every run:
 
   prototypes/ui-tokens.css   the shared palette and the rarity table as CSS variables, plus the
-                             game's own three font files loaded from where the game keeps them
+                             game's own font files loaded from where the game keeps them
   prototypes/ui-tokens.json  the same values, plus which colours each individual screen declares
                              for itself, for check-ui-prototypes.py to read
 
@@ -29,10 +29,9 @@ FONT_DIR_REL = "../unity/Assets/3_Data/Resources/Fonts"
 # 2026-09-20 — nothing is coloured by a tier any more — so the table and its variables are gone with it.)
 SHARED = "UiKit.cs"
 
-# The game's three faces, as the game loads them.
+# The game's two faces, as the game loads them: the one interface face, and the combat numbers' face.
 FONTS = [
-    ("title", "Cinzel", "Cinzel.ttf"),
-    ("ui", "Inter", "Inter.ttf"),
+    ("ui", "DejaVu Sans Condensed", "DejaVuSansCondensed.ttf"),
     ("pixel", "PixelFont", "PixelFont.ttf"),
 ]
 
@@ -191,7 +190,7 @@ def main():
             r, g, b = (int(c["hex"][i:i + 2], 16) for i in (1, 3, 5))
             lines.append("  --%s: rgba(%d, %d, %d, %s);" % (kebab(name), r, g, b, c["alpha"]))
     lines.append("")
-    lines.append("  /* the game's own three faces */")
+    lines.append("  /* the game's own faces */")
     for v, fam, f in FONTS:
         lines.append('  --font-%s: "%s";' % (v, fam))
     lines.append("}")

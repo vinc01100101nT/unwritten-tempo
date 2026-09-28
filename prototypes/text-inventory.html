@@ -4,27 +4,21 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Unwritten Inventory Ledger</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="ui-tokens.css">
 <style>
-  /* Every value below is the game's own, from the HUD/UI system doc's token sheet — which was itself read
-     off UiKit and Rarity. Nothing here is invented for the page. */
+  /* The page's own names for the game's theme colours, every one read from ui-tokens.css, which is generated
+     from UiKit. Nothing here is typed for the page. */
   :root {
-    /* Surfaces — flat fills, no gradients anywhere in this game */
-    --ground:     #0D0E10;   /* the sign-in screen's dark; the only authored "outside a window" tone */
-    --panel:      #15161A;   /* every window's body */
-    --panel-up:   #212228;   /* detail and sub-panels, ~6% lighter */
-    --slot:       #121317;   /* a slot's well, darker than the panel it sits in */
-
-    /* Text */
-    --text:       #E7E3D5;   /* warm ivory */
-    --text-dim:   #A79E88;
-
-    /* Accents */
-    --gold:       #C8A862;   /* the border of every window AND of the item tooltip */
-    --gold-wash:  rgba(200, 168, 98, 0.16);   /* the header strip behind a window title */
-    --gold-soft:  rgba(200, 168, 98, 0.30);
-    --cyan:       #59F2FF;                    /* hover and selection tint */
-    --cyan-glow:  rgba(76, 217, 255, 0.22);   /* hover wash, deliberately soft */
+    --ground:     #0D0E10;   /* the page backdrop, outside every window */
+    --panel:      var(--panel-fill);
+    --panel-up:   var(--panel-raise);
+    --slot:       var(--slot-fill);
+    --text:       var(--text-main);
+    --gold:       var(--window-edge);
+    --gold-wash:  var(--title-bar-bottom);
+    --gold-soft:  var(--rule);
+    --cyan:       var(--accent);
+    --cyan-glow:  var(--hover);
 
     /* The five rarity tiers — the ONLY colours allowed to mark an item */
     --common:     #CBD2E0;
@@ -38,12 +32,12 @@
     --epic-b:      #A855F7;
     --legendary-b: #F5B942;
 
-    /* Type: Cinzel titles, Inter everything else. The project has no monospaced font, so columns are
+    /* Type: the game's one interface face for everything. The project has no monospaced font, so columns are
        aligned by the grid and by tabular figures instead of by character width. */
-    --title: "Cinzel", "Trajan Pro", Georgia, serif;
-    --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --title: var(--font-ui);
+    --ui: var(--font-ui);
 
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   * { box-sizing: border-box; }

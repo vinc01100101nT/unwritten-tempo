@@ -17,7 +17,6 @@ public class StateInfoCard : MonoBehaviour
     /// so its card grows LEFT; a tray along the top has room underneath instead.</summary>
     public enum Side { Left, Below }
 
-    static readonly Color CardBg = new Color(0.05f, 0.05f, 0.07f, 0.97f);
 
     static StateInfoCard inst;
 
@@ -95,7 +94,7 @@ public class StateInfoCard : MonoBehaviour
     {
         if (root == null)
         {
-            var bg = UiKit.Img("StateInfoCard", canvas.transform, CardBg);
+            var bg = UiKit.Card(UiKit.Img("StateInfoCard", canvas.transform, UiKit.PanelFill));
             root = bg.rectTransform;
             root.sizeDelta = new Vector2(230f, 60f);   // width fixed; height driven by the fitter below
             bg.raycastTarget = false;

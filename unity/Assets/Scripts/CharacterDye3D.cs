@@ -20,7 +20,7 @@ public class CharacterDye3D : MonoBehaviour
     const int MaxParts = 8;   // must match MAXPARTS in AtlasRecolor.shader
     const float MatchTol = 0.12f;
 
-    // Skin / eyes / mouth families NEVER offered as dyeable parts (so the wardrobe only shows clothing).
+    // Skin / eyes / mouth families NEVER offered as dyeable parts (so character creation only offers clothing).
     // Deliberately NO near-black entry: a dark OUTFIT sits close to eye/outline black, and filtering black
     // would wrongly hide dark clothing. True outline black is dropped as background in ScanColors, and eye
     // pixels are too few to survive the min-coverage cut, so they never reach the parts list anyway.
@@ -110,32 +110,6 @@ public class CharacterDye3D : MonoBehaviour
         PushToCharacter();   // writes the SSOT + fires OnAppearanceChanged → PullFromCharacter → Apply
     }
 
-    /// <summary>Clear the dye on a part (revert to its original atlas color).</summary>
-    public void ClearPart(Color source)
-    {
-        int i = IndexOf(source);
-        if (i < 0) return;
-        sources.RemoveAt(i);
-        targets.RemoveAt(i);
-        PushToCharacter();
-    }
-
-    /// <summary>Drop any dye entries whose source isn't one of this character's parts. Prevents a previous
-    /// character's dyes from lingering and overflowing the shader's fixed slot count (they'd shove the current
-    /// character's picks past the limit, so they'd never render).</summary>
-    public void RetainParts(IReadOnlyList<Color> valid)
-    {
-        bool changed = false;
-        for (int i = sources.Count - 1; i >= 0; i--)
-        {
-            bool keep = false;
-            for (int j = 0; j < valid.Count; j++)
-                if (Approximately(sources[i], valid[j])) { keep = true; break; }
-            if (!keep) { sources.RemoveAt(i); targets.RemoveAt(i); changed = true; }
-        }
-        if (changed) PushToCharacter();   // persist the pruned map + re-bake
-    }
-
     /// <summary>The chosen color for a part, or the part's own color if it hasn't been dyed.</summary>
     public Color TargetFor(Color source)
     {
@@ -144,7 +118,7 @@ public class CharacterDye3D : MonoBehaviour
     }
 
     /// <summary>The character's distinct dyeable cloth colors (skin/eyes filtered out), detected once at
-    /// runtime and cached. Drives the in-game wardrobe's part swatches.
+    /// runtime and cached. Drives character creation's part swatches.
     ///
     /// <para>Samples the atlas ONLY at the texels the mesh actually maps to (its UV footprint), so unworn
     /// atlas regions / other-part swatches never surface as phantom "clothing" the character can't display.

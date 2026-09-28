@@ -33,7 +33,8 @@ createdb unwritten
 cd accounts && npm install
 ```
 
-Copy `.env.example` to `.env` and fill in `DATABASE_URL` and `JWT_SECRET`, then:
+Copy `settings.env.example` (at the top of the project) to `settings.env` and fill in `DATABASE_URL`, `JWT_SECRET`
+and `SERVER_SECRET` — every script here reads that one file — then:
 
 ```bash
 cd accounts && npm run migrate

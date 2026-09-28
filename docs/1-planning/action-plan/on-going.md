@@ -38,7 +38,7 @@ Every task carries:
 
 **My assumptions, labelled as mine:** a week is five working days, you and me together. The weeks are ordered by dependency, not by calendar. Slipping one pushes the rest; it does not break them.
 
-**Where the weeks are tight, said plainly.** Every week fits inside five days at the low end of its estimates. Two do not fit at the high end: **Week 4** (up to 5.5 days) and **Week 10** (up to 6). Those are the weeks where a decision going the long way costs you a day, and they are the two most likely to spill into the next week. The play-test is not a week: its tasks add up to 7–10 days, two weeks of work. Nothing is padded to hide it.
+**Where the weeks are tight, said plainly.** Every week fits inside five days at the low end of its estimates. Two do not fit at the high end: **Week 4** (up to 5.5 days) and **Week 10** (up to 6). Those are the weeks where a decision going the long way costs you a day, and they are the two most likely to spill into the next week. The play-test is not a week: its tasks add up to 11–15 days, two to three weeks of work. Nothing is padded to hide it.
 
 ---
 
@@ -73,6 +73,30 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 
 ---
 
+## Play-test — strangers can play it
+
+**Goal:** people you invite download the game, make their own account, and play it on a server we rent, not on
+this machine. This is the play-test: the phase where interested players gather before the official release. Steam
+is not part of it — the game is handed out from our own download page. Quests, shops and the title screen are not
+needed to open it; they arrive as updates while it runs, which gives testers a reason to come back.
+
+- [ON-GOING] `MT-50` **`[E]` A patcher launcher.** The game is downloaded in full once; after that the player opens a small
+  launcher, like Ragnarok Online's, which compares their files against a list on our server, downloads only the
+  ones that changed, and starts the game. Built 2026-09-28 for Windows and both kinds of Mac, with a news box, and
+  proven on this Mac against a test update folder: a first install fetched all 494 files, an update fetched only the
+  3 that changed, and a damaged file was fetched again. Not yet run on Windows, nor by a tester. — **3–4 days**
+  *Done when:* you change one thing in the game, publish the update, and a tester's launcher downloads only the
+  changed files and starts the updated game — on Windows and on Mac.
+
+- [ON-GOING] `MT-51` **`[E]` The server turns away an outdated game.** Built 2026-09-28: the game sends its version
+  with every request to the character server, which refuses a copy whose version differs from the published one
+  with "Your game is out of date. Close it and run the launcher to update." Proven against a test copy of the
+  character server; not yet seen in a real session. Off on any machine that does not hand out updates. — **1 day**
+  *Done when:* an old copy of the game is refused with a message telling the player to update, and the updated
+  copy gets in.
+
+---
+
 ## Backlog — real work, deliberately not in the weeks above
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
@@ -87,8 +111,8 @@ Each of these is worth doing and none of them blocks the loop above. They are he
   on level ground; lakes that fill every hollow at once from the rain its slopes collect, spill downhill into the next
   and flood the lowest ground; the same water for every player from the shared world clock; an exact reflection per
   water height; things fade under water by depth, their outlines with them; shaped ground drawn at 0.25 m so level
-  edges curve ([Rain and Standing Water](../../2-systems/rain-and-standing-water.md)). Only `test_grassland` has the
-  0.25 m ground. — **built**
+  edges curve ([Rain and Standing Water](../../2-systems/rain-and-standing-water.md)). `test_grassland`,
+  `test_grassland_cliffs` and the 39 fields have the 0.25 m ground (rebuilt 2026-09-28). — **built**
   *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills,
   two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.
 

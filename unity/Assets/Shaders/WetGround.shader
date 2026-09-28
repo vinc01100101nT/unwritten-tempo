@@ -6,7 +6,9 @@
 // water all over, rising as the rain goes on. A pixel is water when its ground lies between its body's floor and
 // surface, so every shoreline is where the ground itself rises out of the water.
 // On High tier each water height on screen has its own planar mirror (PlanarReflection), and a puddle samples the
-// mirror at ITS OWN height, which is how still water reflects; a water height with no mirror left is drawn dry.
+// mirror at ITS OWN height, which is how still water reflects. Only water near the middle of the view reflects the
+// world; farther out it fades to reflecting the sky alone (a sky-only mirror, the same at every height), and so does a
+// water height with no mirror left, so no water ever blinks out.
 //
 // Single pass with premultiplied blend (One OneMinusSrcAlpha): result = spec + dst*(1 - darken). That lets one
 // pass BOTH darken the surface and add a highlight, with dry pixels (mask 0) left exactly as the camera drew
@@ -69,6 +71,10 @@ Shader "Unwritten/WetGround"
             TEXTURE2D(_ReflectionTex0); TEXTURE2D(_ReflectionTex1); TEXTURE2D(_ReflectionTex2); TEXTURE2D(_ReflectionTex3);
             TEXTURE2D(_ReflectionTex4); TEXTURE2D(_ReflectionTex5); TEXTURE2D(_ReflectionTex6); TEXTURE2D(_ReflectionTex7);
             SAMPLER(sampler_ReflectionTex0);
+            // The sky alone, reflected (PlanarReflection's sky mirror); xy = the middle of the view on the ground (world XZ),
+            // z = how far from it the world is still fully reflected, w = how far until only the sky is.
+            TEXTURE2D(_ReflectionSky);
+            float4 _ReflectNear;
 
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings   { float4 positionHCS : SV_POSITION; };
@@ -222,13 +228,16 @@ Shader "Unwritten/WetGround"
                 // keeps Option A ~free: off-puddle ground pays only for the cheap ambient rings above.
                 if (wet > 0.001)
                 {
+                    // The water's surface is flat whatever stands in it: start from straight up, never from the surface
+                    // under the water. A leg, a body or a creature's picture below the surface faces sideways, and its
+                    // tilt threw the reflection sideways and lit a white fresnel band across it (2026-09-28).
                     // Animated ripples: perturb the normal by the gradient of scrolling noise → shimmering fresnel.
                     float t = _Time.y * _RippleSpeed;
                     float2 rc = wp.xz * 2.0 + t;
                     float e = 0.06;
                     float hx = vnoise(rc + float2(e, 0)) - vnoise(rc - float2(e, 0));
                     float hz = vnoise(rc + float2(0, e)) - vnoise(rc - float2(0, e));
-                    N = normalize(N + float3(-hx, 0.0, -hz) * _RippleStrength);
+                    N = normalize(float3(0.0, 1.0, 0.0) + float3(-hx, 0.0, -hz) * _RippleStrength);
 
                     // Faked reflection: a glancing-angle fresnel tinted by the sky/reflection colour.
                     float3 V = normalize(_WorldSpaceCameraPos - wp);
@@ -250,12 +259,15 @@ Shader "Unwritten/WetGround"
                     spec += _ReflectColor.rgb * steps * wet;
 
                     // Planar reflection: sample THIS water height's mirror at this screen pixel, ripple-distorted,
-                    // blended by wetness. Contributes nothing when no mirror runs. Water reflects more the lower the
-                    // view skims it (Fresnel): at the game's usual steep view this is _ReflStrength, rising to a full
-                    // mirror as the view flattens toward the surface.
+                    // blended by wetness — near the middle of the view; farther out it fades to the sky alone, which is
+                    // also all a height with no mirror shows. Contributes nothing when no mirror runs. Water reflects
+                    // more the lower the view skims it (Fresnel): at the game's usual steep view this is _ReflStrength,
+                    // rising to a full mirror as the view flattens toward the surface.
                     float2 ruv = saturate(uv + N.xz * _ReflDistort);
                     ruv.y = lerp(ruv.y, 1.0 - ruv.y, _ReflFlipY);
-                    float3 refl = SampleMirror(mirror, ruv);
+                    float3 sky = SAMPLE_TEXTURE2D_LOD(_ReflectionSky, sampler_ReflectionTex0, ruv, 0).rgb;
+                    float nearView = 1.0 - smoothstep(_ReflectNear.z, max(_ReflectNear.w, _ReflectNear.z + 0.001), distance(wp.xz, _ReflectNear.xy));
+                    float3 refl = mirror >= 0 ? lerp(sky, SampleMirror(mirror, ruv), nearView) : sky;
                     float skim = pow(1.0 - saturate(V.y), 5.0);
                     spec += refl * (wet * lerp(_ReflStrength, 1.0, skim));
                 }

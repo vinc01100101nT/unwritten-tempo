@@ -36,10 +36,15 @@ public class SkillDraftPanel : MonoBehaviour
 
     const float SlideDur = 0.45f;
 
-    static readonly Color CardBg     = new Color(0.16f, 0.16f, 0.20f, 0.95f);
-    static readonly Color LeaderEdge = new Color(1f, 0.92f, 0.5f);     // gold = the center "stack" card
-    static readonly Color WildEdge   = new Color(0.85f, 0.55f, 1f);    // purple = the gamble
-    static readonly Color RowDim     = new Color(1f, 1f, 1f, 0.5f);
+    static readonly Color CardBg     = UiKit.PanelRaise;
+    // the accent = the center "stack" card
+    static readonly Color LeaderEdge = UiKit.Accent;
+    // purple = the gamble
+    static readonly Color WildEdge   = new Color(0.85f, 0.55f, 1f);
+    static readonly Color RowDim     = UiKit.TextDim;
+    static readonly string TitleHex = UiKit.Hex(UiKit.TitleText);
+    static readonly string StackHex = UiKit.Hex(UiKit.TextDim);
+    static readonly string WildHex = UiKit.Hex(WildEdge);
 
     bool wasOpen;
 
@@ -143,7 +148,7 @@ public class SkillDraftPanel : MonoBehaviour
     // The "Your ring" divider + the 10 ring rows (the walk). Shared by the equipped and unequipped states.
     void BuildRingReadout(PassiveRanks p)
     {
-        SetHeight(NewImage(content, new Color(1, 1, 1, 0.12f)).gameObject, 2);   // divider
+        SetHeight(NewImage(content, UiKit.Rule).gameObject, 2);   // divider
         NewLabel(content, "Your ring");
 
         ringContainer = NewImage(content, new Color(0, 0, 0, 0)).rectTransform;
@@ -162,16 +167,16 @@ public class SkillDraftPanel : MonoBehaviour
     {
         var r = c.Ring;
 
-        var title = NewText(content, $"<color=#FFDB80>Ring of Progression</color>   <b>Lv {r.Level}</b>",
+        var title = NewText(content, $"<color={TitleHex}>Ring of Progression</color>   <b>Lv {r.Level}</b>",
                             16, FontStyle.Bold, TextAnchor.MiddleCenter);
         SetHeight(title.gameObject, 24);
 
         // XP fill bar (bg + left-anchored fill scaled to the XP fraction).
-        var barBg = NewImage(content, new Color(1, 1, 1, 0.10f));
+        var barBg = NewImage(content, UiKit.Rule);
         SetHeight(barBg.gameObject, 12);
         barBg.raycastTarget = false;
         float frac = Mathf.Clamp01(r.XP / (float)Mathf.Max(1, r.XPToNext));
-        var fill = NewImage(barBg.transform, new Color(0.55f, 0.8f, 1f, 0.85f));
+        var fill = NewImage(barBg.transform, UiKit.Accent);
         fill.raycastTarget = false;
         var frt = fill.rectTransform;
         frt.anchorMin = new Vector2(0f, 0f); frt.anchorMax = new Vector2(frac, 1f);
@@ -222,7 +227,7 @@ public class SkillDraftPanel : MonoBehaviour
         cardSet = BuildStrip(Character.Instance.Passives.Leader, cardViewport);
 
         // A thin divider makes it visually clear the wildcard is a SEPARATE option (not part of the window).
-        var sep = NewImage(band, new Color(1, 1, 1, 0.18f));
+        var sep = NewImage(band, UiKit.Rule);
         sep.raycastTarget = false;
         var se = sep.gameObject.AddComponent<LayoutElement>();
         se.preferredWidth = 2; se.preferredHeight = 60;
@@ -331,8 +336,8 @@ public class SkillDraftPanel : MonoBehaviour
 
         int cur = p.RanksIn(opt.stat);
         float next = SkillRing.Percent(opt.stat, cur + 1);   // total this stat would reach after the pick
-        string tag = opt.isLeader ? "<color=#CFCFCF>STACK</color>"
-                   : opt.isWildcard ? "<color=#D98CFF>WILD</color>" : "";
+        string tag = opt.isLeader ? $"<color={StackHex}>STACK</color>"
+                   : opt.isWildcard ? $"<color={WildHex}>WILD</color>" : "";
         var label = NewText(face.transform,
             $"<b>{SkillRing.ShortName(opt.stat)}</b>\n+{Mathf.RoundToInt(next * 100)}%\n{tag}",
             14, FontStyle.Normal, TextAnchor.MiddleCenter);
@@ -374,7 +379,7 @@ public class SkillDraftPanel : MonoBehaviour
             if (row == null) continue;
             row.text = $"{(isLeader ? "▶ " : "  ")}{SkillRing.ShortName(stat),-6}  ×{r,-2}   +{Mathf.RoundToInt(p.Percent(stat) * 100)}%";
             row.fontStyle = isLeader ? FontStyles.Bold : FontStyles.Normal;
-            row.color = isLeader ? LeaderEdge : inTrio ? Color.white : RowDim;
+            row.color = isLeader ? LeaderEdge : inTrio ? UiKit.TextMain : RowDim;
         }
     }
 
@@ -497,7 +502,7 @@ public class SkillDraftPanel : MonoBehaviour
 
         for (float e = 0; e < 0.35f; e += Time.unscaledDeltaTime)
         {
-            t.color = Color.Lerp(Color.white, LeaderEdge, e / 0.35f);
+            t.color = Color.Lerp(UiKit.TextMain, LeaderEdge, e / 0.35f);
             yield return null;
         }
         t.color = LeaderEdge;
@@ -530,11 +535,11 @@ public class SkillDraftPanel : MonoBehaviour
         var go = t.gameObject;
 
         const float hold = 1.4f, fade = 0.8f;
-        var gold = new Color(1f, 0.92f, 0.5f);
+        var ink = UiKit.Accent;
         for (float e = 0; e < hold + fade; e += Time.unscaledDeltaTime)
         {
             float a = e < hold ? 1f : 1f - (e - hold) / fade;
-            t.color = new Color(gold.r, gold.g, gold.b, a);
+            t.color = new Color(ink.r, ink.g, ink.b, a);
             rt.anchoredPosition = new Vector2(0, Mathf.Lerp(0, 18, e / (hold + fade)));
             yield return null;
         }
@@ -547,7 +552,7 @@ public class SkillDraftPanel : MonoBehaviour
     TMP_Text NewLabel(Transform parent, string str)
     {
         var t = NewText(parent, str, 14, FontStyle.Italic, TextAnchor.MiddleCenter);
-        t.color = new Color(1, 1, 1, 0.75f);
+        t.color = UiKit.TextDim;
         SetHeight(t.gameObject, 20);
         return t;
     }
@@ -555,7 +560,7 @@ public class SkillDraftPanel : MonoBehaviour
     TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
         var t = UiKit.MakeText("Text", parent, str, size, style, anchor);
-        t.color = Color.white;
+        t.color = UiKit.TextMain;
         return t;
     }
 

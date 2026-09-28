@@ -1,0 +1,78 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UnwrittenLauncher.MainWindow"
+        Title="unwritten"
+        Width="760" Height="500" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="#121317"
+        FontFamily="avares://unwritten-launcher/Assets/Fonts#Inter 18pt">
+
+  <!-- THE RAGNAROK ONLINE PATCHER'S LAYOUT: a big news box, the buttons beside it, and the download bar across the
+       bottom. Every colour is the game's own shared palette (prototypes/ui-tokens.css, read from the game's code). -->
+  <Window.Styles>
+    <!-- Start stays greyed out until the update has finished, so the game is never started half-patched. -->
+    <Style Selector="Button:disabled">
+      <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <!-- The theme's own hover and press colours are replaced with the game's, so a button keeps its fill. -->
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#212228" />
+      <Setter Property="BorderBrush" Value="#59f2ff" />
+      <Setter Property="Foreground" Value="#e7e3d5" />
+    </Style>
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#15161a" />
+      <Setter Property="BorderBrush" Value="#59f2ff" />
+      <Setter Property="Foreground" Value="#e7e3d5" />
+    </Style>
+    <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#212228" />
+      <Setter Property="BorderBrush" Value="#c8a862" />
+      <Setter Property="Foreground" Value="#e7e3d5" />
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto,*,Auto" Margin="18">
+
+    <!-- The name, and which version the update server is handing out. -->
+    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+      <TextBlock Grid.Column="0" Text="UNWRITTEN" FontSize="30" Foreground="#c8a862"
+                 FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold"
+                 VerticalAlignment="Center" />
+      <TextBlock Grid.Column="1" x:Name="VersionLabel" Foreground="#a79e88" FontSize="12"
+                 VerticalAlignment="Bottom" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,170">
+
+      <!-- The news box. -->
+      <Border Grid.Column="0" Background="#15161a" BorderBrush="#c8a862" BorderThickness="1" CornerRadius="3"
+              Padding="14,10">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="News" Foreground="#c8a862" FontSize="16" Margin="0,0,0,8"
+                     FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold" />
+          <ScrollViewer>
+            <StackPanel x:Name="NewsList" Spacing="14" />
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <!-- The buttons. -->
+      <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Bottom">
+        <Button x:Name="StartButton" Content="Start" IsEnabled="False" Height="52"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold" FontSize="18"
+                Background="#212228" Foreground="#e7e3d5" BorderBrush="#c8a862" BorderThickness="1" />
+        <Button x:Name="ExitButton" Content="Exit" Height="36"
+                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                Background="#212228" Foreground="#a79e88" BorderBrush="#a79e88" BorderThickness="1" />
+      </StackPanel>
+    </Grid>
+
+    <!-- What is happening, and how far along the download is. -->
+    <StackPanel Grid.Row="2" Margin="0,14,0,0" Spacing="6">
+      <TextBlock x:Name="StatusLabel" Foreground="#e7e3d5" FontSize="12" TextTrimming="CharacterEllipsis" />
+      <ProgressBar x:Name="Bar" Minimum="0" Maximum="1" Height="14" Background="#15161a" Foreground="#59f2ff" />
+    </StackPanel>
+  </Grid>
+</Window>

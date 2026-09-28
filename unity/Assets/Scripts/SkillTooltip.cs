@@ -9,9 +9,10 @@ using UnityEngine;
 /// </summary>
 public static class SkillTooltip
 {
-    const string Num = "#FFD27F";   // highlighted variable numbers (warm gold)
-    const string Desc = "#B4B4BE";  // description grey
-    const string Chip = "#C8C8D2";  // category text
+    // Rich-text tints from the interface theme: highlighted variable numbers, the description, category text.
+    static readonly string Num = UiKit.Hex(UiKit.Accent);
+    static readonly string Desc = UiKit.Hex(UiKit.TextMain);
+    static readonly string Chip = UiKit.Hex(UiKit.TextDim);
 
     static readonly StringBuilder sb = new StringBuilder(512);
 

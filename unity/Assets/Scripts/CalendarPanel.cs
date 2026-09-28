@@ -77,9 +77,11 @@ public class CalendarPanel : MonoBehaviour
     // ── Build (once, into the panel UIShellBuilder made) ─────────────────────────────────────────────────────────
     void TryBuild()
     {
-        var content = FindContent();
+        var window = FindWindow();
+        // UiKit.DressWindow puts the content area inside the window's body ("Fill").
+        var content = window != null ? window.Find("Fill/Content") as RectTransform : null;
         if (content == null) return;
-        panel = content.parent.gameObject;
+        panel = window.gameObject;
         UiKit.ClickShield(panel.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
 
         // Header: [<]  Season · Year  [Today]  [>]
@@ -144,7 +146,7 @@ public class CalendarPanel : MonoBehaviour
 
     void BuildCell(Transform parent, int i)
     {
-        var bg = NewImage(parent, new Color(1, 1, 1, 0.06f));
+        var bg = NewImage(parent, UiKit.PanelRaise);
         bg.name = "Cell" + i;
         // A coloured ring we light up only for "today" (kept transparent otherwise — no per-refresh add/remove).
         var ring = bg.gameObject.AddComponent<Outline>();
@@ -220,7 +222,7 @@ public class CalendarPanel : MonoBehaviour
             // Tinted background; today gets a brighter wash + a coloured ring so it pops.
             cellBg[i].color    = new Color(c.r, c.g, c.b, isToday ? 0.28f : 0.10f);
             cellRing[i].effectColor = isToday ? new Color(c.r, c.g, c.b, 0.95f) : new Color(0, 0, 0, 0);
-            cellDay[i].color   = isToday ? Color.white : new Color(0.85f, 0.85f, 0.85f);
+            cellDay[i].color   = isToday ? UiKit.TitleText : UiKit.TextMain;
         }
     }
 
@@ -243,32 +245,25 @@ public class CalendarPanel : MonoBehaviour
 
     // ── Wiring + helpers ─────────────────────────────────────────────────────────────────────────────────────────
 
-    RectTransform FindContent()
+    Transform FindWindow()
     {
         foreach (var t in GetComponentsInChildren<Transform>(true))
-            if (t.name == "CalendarPanel")
-                return t.Find("Content") as RectTransform;
+            if (t.name == "CalendarPanel") return t;
         return null;
     }
 
+    // The game's one button, plus the click sound and the width this header gives it.
     Button NewButton(Transform parent, string label, float width, Action onClick)
     {
-        var img = NewImage(parent, new Color(0.24f, 0.34f, 0.46f));
-        img.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
-        var t = NewText(img.transform, label, 16, FontStyle.Bold, TextAnchor.MiddleCenter);
-        t.raycastTarget = false;
-        var rt = t.rectTransform; rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
-        var btn = img.gameObject.AddComponent<Button>();
-        btn.targetGraphic = img;
-        btn.onClick.AddListener(() => { onClick(); UISounds.PlayClick(); });
+        var btn = UiKit.Btn(label, parent, () => { onClick(); UISounds.PlayClick(); });
+        btn.gameObject.AddComponent<LayoutElement>().preferredWidth = width;
         return btn;
     }
 
     TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
         var t = UiKit.MakeText("Text", parent, str, size, style, anchor, wrap: false);
-        t.color = Color.white;
+        t.color = UiKit.TextMain;
         return t;
     }
 

@@ -19,10 +19,10 @@ public class SkillsWindow : MonoBehaviour
 
     const float RowH = 46f, LinePad = 18f, LevelColW = 44f, LineX = 58f, LineW = 4f, NodeSize = 12f, TileX = 76f, TileSize = 36f;
 
-    static readonly Color LineBg     = new Color(1f, 1f, 1f, 0.12f);
-    static readonly Color LockedTile = new Color(0.26f, 0.27f, 0.30f, 1f);
-    static readonly Color LockedText = new Color(0.50f, 0.50f, 0.52f, 1f);
-    static readonly Color RowBg      = new Color(1f, 1f, 1f, 0.04f);
+    static readonly Color LineBg     = UiKit.Rule;
+    static readonly Color LockedTile = UiKit.Rule;
+    static readonly Color LockedText = UiKit.TextDim;
+    static readonly Color RowBg      = UiKit.PanelRaise;
 
     GameObject root;
     RectTransform content;          // the window's fixed Content node; each view is rebuilt into it
@@ -147,7 +147,7 @@ public class SkillsWindow : MonoBehaviour
                               : "  ·  " + into.ToString("0.#") + " / " + size.ToString("0.#") + " exp";
         var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
         UiKit.Fill(head.rectTransform, new Vector2(80, 0), Vector2.zero);
-        head.color = UiKit.Gold; head.raycastTarget = false;
+        head.color = UiKit.TitleText; head.raycastTarget = false;
 
         // The line itself scrolls: 22 sword skills are taller than the window.
         var viewport = UiKit.Img("LineViewport", content, new Color(0, 0, 0, 0)).rectTransform;
@@ -204,7 +204,7 @@ public class SkillsWindow : MonoBehaviour
         var lrt = lvl.rectTransform;
         lrt.anchorMin = lrt.anchorMax = new Vector2(0, 0); lrt.pivot = new Vector2(0, 0.5f);
         lrt.sizeDelta = new Vector2(LevelColW, RowH); lrt.anchoredPosition = new Vector2(0, y);
-        lvl.color = learned ? UiKit.Gold : LockedText; lvl.raycastTarget = false;
+        lvl.color = learned ? UiKit.TitleText : LockedText; lvl.raycastTarget = false;
 
         // The node on the line.
         var node = UiKit.Img("Node", tree, learned ? weaponColor : LockedTile);
@@ -232,7 +232,7 @@ public class SkillsWindow : MonoBehaviour
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = UiKit.Label("Name", row.transform, name, 14, FontStyle.Bold, TextAnchor.MiddleLeft);
         UiKit.Fill(title.rectTransform, new Vector2(TileSize + 14f, 0), new Vector2(-6f, 0));
-        title.color = !learned ? LockedText : def.tint == default ? Color.white : def.tint;
+        title.color = !learned ? LockedText : def.tint == default ? UiKit.TextMain : def.tint;
         title.raycastTarget = false;
 
         SkillHoverCard.Attach(row.transform, def, beside: true);

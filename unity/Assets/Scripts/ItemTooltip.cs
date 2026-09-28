@@ -70,7 +70,7 @@ public class ItemTooltip : MonoBehaviour
     {
         if (item == null) { group.alpha = 0f; return; }
         titleText.text = item.displayName;
-        titleText.color = PlainTitle;
+        titleText.color = UiKit.TitleText;
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         group.alpha = 1f;
@@ -82,7 +82,7 @@ public class ItemTooltip : MonoBehaviour
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var def = inst.def;
         titleText.text = CopyTitle(inst);
-        titleText.color = PlainTitle;
+        titleText.color = UiKit.TitleText;
         bodyText.text = DescribeInstance(inst);
         ShowSkillIcons(null);
         group.alpha = 1f;
@@ -95,7 +95,7 @@ public class ItemTooltip : MonoBehaviour
         var c = Character.Instance;
         var def = inst.def;
         titleText.text = CopyTitle(inst);
-        titleText.color = PlainTitle;
+        titleText.color = UiKit.TitleText;
 
         var sb = new StringBuilder();
         sb.Append(DescribeInstance(inst));
@@ -103,12 +103,12 @@ public class ItemTooltip : MonoBehaviour
         {
             var equipped = c.GetEquippedInstance(previewSlot);
             if (equipped != null && equipped.def != null && equipped != inst)
-                sb.Append("\n\n<color=#B9B9B9>Replaces </color><color=#D8D8D8>")
+                sb.Append("\n\n" + DimTag + "Replaces </color>" + MainTag)
                   .Append(CopyTitle(equipped)).Append("</color>");
 
             var before = c.CurrentDerived;
             var after  = c.DeriveWith(previewSlot, inst);
-            sb.Append("\n<color=#B9B9B9>If equipped:</color>");
+            sb.Append("\n" + DimTag + "If equipped:</color>");
             AppendDelta(sb, "MELEE ATK", before.meleeMax, after.meleeMax);
             AppendDelta(sb, "RANGED ATK", before.rangedMax, after.rangedMax);
             AppendDelta(sb, "M.ATK", before.matkMax, after.matkMax);
@@ -221,7 +221,7 @@ public class ItemTooltip : MonoBehaviour
             default:
                 return;
         }
-        sb.Append("\n\n<color=#7FD1C9>").Append(use);
+        sb.Append("\n\n" + UseTag).Append(use);
         if (CraftingMath.Merges(item.materialKind) && item.mergesInto != null)
             sb.Append("\nMerge ").Append(CraftingMath.MergeCount).Append(" into 1 ").Append(item.mergesInto.displayName).Append('.');
         sb.Append("</color>");
@@ -247,8 +247,8 @@ public class ItemTooltip : MonoBehaviour
         useLines.Clear();
         SkillTooltip.EffectLines(def, SkillTooltip.Dialect.RichText, useLines);
         for (int i = 0; i < useLines.Count; i++)
-            sb.Append("\n<color=#7FD1C9>").Append(useLines[i]).Append("</color>");
-        sb.Append("\n<color=#7FD1C9>(right-click to use)</color>");
+            sb.Append("\n" + UseTag).Append(useLines[i]).Append("</color>");
+        sb.Append("\n" + UseTag + "(right-click to use)</color>");
     }
 
     static string DescribeInstance(EquipmentInstance inst)
@@ -264,11 +264,11 @@ public class ItemTooltip : MonoBehaviour
         int slots = def.cardSlots;
         if (slots > 0)
         {
-            sb.Append("\n<color=#B9B9B9>Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
+            sb.Append("\n" + DimTag + "Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
             if (inst.cards != null)
                 foreach (var card in inst.cards)
                     if (card != null)
-                        sb.Append("\n  <color=#C7B27A>◇ ").Append(card.displayName).Append("</color>");
+                        sb.Append("\n  " + CardTag + "◇ ").Append(card.displayName).Append("</color>");
         }
         AppendFooter(sb, def);
         return sb.ToString();
@@ -282,10 +282,20 @@ public class ItemTooltip : MonoBehaviour
         // "Shield" and "Boots" where a player reads "Off-hand" and "Shoes".
         string category = item.slot != EquipSlotType.None ? EquipSlots.Label(item.slot)
                         : item.IsUsable ? "Consumable" : item.category.ToString();
-        sb.Append("<color=#B9B9B9>").Append(category).Append("</color>");
+        sb.Append(DimTag).Append(category).Append("</color>");
     }
 
-    static readonly Color PlainTitle = new Color(0.91f, 0.91f, 0.91f);
+
+    // Rich-text tints, read from the interface theme once: labels, values, a use effect, a slotted card, and a stat
+    // going up or down.
+    static readonly string GoodHex = UiKit.Hex(UiKit.Good);
+    static readonly string BadHex = UiKit.Hex(UiKit.Bad);
+    static readonly string DimTag = "<color=" + UiKit.Hex(UiKit.TextDim) + ">";
+    static readonly string MainTag = "<color=" + UiKit.Hex(UiKit.TextMain) + ">";
+    static readonly string UseTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
+    static readonly string CardTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
+    static readonly string GoodTag = "<color=" + GoodHex + ">";
+    static readonly string BadTag = "<color=" + BadHex + ">";
 
     /// <summary>How a copy is named on screen. A weapon with a trademark goes by its trademark skill's own name — a
     /// form of its weapon's style: its folds, the name, then its grade — "+15 Petal Storm [C]". Anything else: its
@@ -311,7 +321,7 @@ public class ItemTooltip : MonoBehaviour
     {
         var skill = Trademarks.SkillOf(inst);
         if (skill == null) return;
-        sb.Append("\n\n<color=#B9B9B9>Trademark Skill: </color>").Append(skill.displayName);
+        sb.Append("\n\n" + DimTag + "Trademark Skill: </color>").Append(skill.displayName);
         TrademarkLines(skill, inst.trademarkLift, trademarkScratch);
         foreach (var line in trademarkScratch) sb.Append('\n').Append(line);
         trademarkScratch.Clear();
@@ -342,7 +352,7 @@ public class ItemTooltip : MonoBehaviour
     static void AppendWord(StringBuilder sb, EquipmentInstance inst)
     {
         if (inst == null || inst.word == ArmourWord.None) return;
-        sb.Append("\n\n<color=#B9B9B9>").Append(inst.word).Append(": </color>")
+        sb.Append("\n\n" + DimTag).Append(inst.word).Append(": </color>")
           .Append(ArmourWords.Describe(inst.word, inst.wordAmount));
     }
 
@@ -415,31 +425,31 @@ public class ItemTooltip : MonoBehaviour
         int slots = inst.InkSlots;
         if (slots <= 0) return;
         int used = inst.inkStats != null ? inst.inkStats.Count : 0;
-        sb.Append("\n<color=#B9B9B9>Written ").Append(used).Append('/').Append(slots).Append("</color>");
+        sb.Append("\n" + DimTag + "Written ").Append(used).Append('/').Append(slots).Append("</color>");
     }
 
     static void AppendFooter(StringBuilder sb, Item item)
     {
         // Weight and value on their own lines — packed on one row they read as cramped.
         if (item.weight > 0)
-            sb.Append("\n<color=#8A8F99>Weight ").Append(item.weight).Append("</color>");
+            sb.Append("\n" + DimTag + "Weight ").Append(item.weight).Append("</color>");
         if (item.zeny > 0)
-            sb.Append("\n<color=#8A8F99>Value ").Append(item.zeny).Append("z</color>");
+            sb.Append("\n" + DimTag + "Value ").Append(item.zeny).Append("z</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
-            sb.Append("\n\n<color=#D8D8D8>").Append(item.description).Append("</color>");
+            sb.Append("\n\n" + MainTag).Append(item.description).Append("</color>");
     }
 
     static void AppendStat(StringBuilder sb, string label, int v, string suffix = "")
     {
         if (v == 0) return;
-        sb.Append(v > 0 ? "\n<color=#7FD17F>+" : "\n<color=#E08A8A>")
+        sb.Append(v > 0 ? "\n" + GoodTag + "+" : "\n" + BadTag)
           .Append(v).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 
     static void AppendStat(StringBuilder sb, string label, float v, string suffix = "")
     {
         if (Mathf.Approximately(v, 0f)) return;
-        sb.Append(v > 0f ? "\n<color=#7FD17F>+" : "\n<color=#E08A8A>")
+        sb.Append(v > 0f ? "\n" + GoodTag + "+" : "\n" + BadTag)
           .Append(v.ToString("0.##")).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 
@@ -448,8 +458,8 @@ public class ItemTooltip : MonoBehaviour
     {
         if (before == after) return;
         int d = after - before;
-        string color = d > 0 ? "#7FD17F" : "#E08A8A";
-        sb.Append("\n<color=#C9C9C9>").Append(label).Append("</color>  ")
+        string color = d > 0 ? GoodHex : BadHex;
+        sb.Append("\n" + DimTag).Append(label).Append("</color>  ")
           .Append(before).Append(" → ").Append(after)
           .Append(" <color=").Append(color).Append('>').Append(d > 0 ? "+" : "").Append(d).Append("</color>");
     }
@@ -459,8 +469,8 @@ public class ItemTooltip : MonoBehaviour
         int b = Mathf.RoundToInt(before * 100f), a = Mathf.RoundToInt(after * 100f);
         if (b == a) return;
         int d = a - b;
-        string color = d > 0 ? "#7FD17F" : "#E08A8A";
-        sb.Append("\n<color=#C9C9C9>").Append(label).Append("</color>  ")
+        string color = d > 0 ? GoodHex : BadHex;
+        sb.Append("\n" + DimTag).Append(label).Append("</color>  ")
           .Append(b).Append("% → ").Append(a).Append("% <color=").Append(color).Append('>')
           .Append(d > 0 ? "+" : "").Append(d).Append("%</color>");
     }

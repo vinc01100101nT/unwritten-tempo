@@ -2,12 +2,12 @@
 
 - [UI click-shield](../ui-click-shield.md) — `UiKit.ClickShield(rootRect)` transparent raycast; once per NEW root.
 - [GM commands are the test tool](../gm-commands-are-the-test-tool.md) — the P-key dev panel was deleted 2026-09-13; test through `/` commands, which all run on the server.
-- [HUD progression windows + Ornament Kit v1](../hud-progression-windows.md) — `ProgressionWindows.cs` on `UiKit`; `Ornament.cs`.
+- [HUD windows + the one interface theme](../hud-progression-windows.md) — `ProgressionWindows.cs` on `UiKit`; Ragnarok-style light theme, every colour/shape from `UiKit` (2026-09-28).
 - [HUD hotbar = IHotbarSkill + HotbarPanel](../hotbar-ihotbarskill.md) — implement `IHotbarSkill` → auto on bar; re-bake Build UI Shell.
 - [HUD build process (ONE way)](../hud-build-process.md) — GameUICanvas Resources PREFAB; wire into UIShellBuilder + Build UI Shell.
 - [Window open/close motion choke](../ui-window-motion-choke.md) — `UiAnim.Toggle/Open/Close/IsOpen`, never SetActive a panel root; `UiButtonFx` in `UiKit.Btn`.
 - [HUD NRE from stale baked scene (legacy Text vs TMP)](../hud-stale-baked-scene-nre.md) — GoldCounter/CalendarWeatherHUD `label` null; scene drifted from builder; fix = rebuild HUD shell via MCP, don't patch scripts.
-- [Wardrobe dye Voronoi match](../wardrobe-dye-voronoi-match.md) — parts did nothing / one swatch changed many; fix = nearest-part shader match fed ALL parts, not first-within-tol dyed only. Also: created look lost in-game = a mismatched body ERASED the dye, and the body swap ran while the player was switched off before joining.
+- [Clothing dye Voronoi match](../wardrobe-dye-voronoi-match.md) — (character creation's colour mixer; the Wardrobe window is gone) parts did nothing / one swatch changed many; fix = nearest-part shader match fed ALL parts, not first-within-tol dyed only. Also: created look lost in-game = a mismatched body ERASED the dye, and the body swap ran while the player was switched off before joining.
 - [Scene-bloat prevention: runtime roots tagged DontSaveInEditor](../damagepopup-pooled-clone-savable-gap.md) — project-wide sweep 2026-07-19; MEASURED: children of a flagged parent are NOT saved (root tag suffices); `SceneSaveBloatGuard` warns on saved "(Clone)" junk.
 - [Chat crosses the wire](../chat-crosses-the-wire.md) — a said line and a skill call are sent to the server and echoed to everyone who can see the speaker; nothing is drawn at the keyboard that typed it.
 - [Minimap is a baked picture](../minimap-is-a-baked-picture.md) — one central list + one picture per map, no live camera, no per-scene component; re-drawn when a map scene is saved (decided 2026-09-26, reversing 2026-09-07).

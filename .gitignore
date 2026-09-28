@@ -38,3 +38,6 @@ tools/hook-analytics/hook-heartbeat.json
 
 # database backups (tools/backup-database.sh) — the live data, never in git
 backups/
+
+# every secret and address, one per machine (settings.env.example is the committed template)
+settings.env

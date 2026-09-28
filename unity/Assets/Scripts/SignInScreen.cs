@@ -79,8 +79,8 @@ public class SignInScreen : MonoBehaviour
 #endif
         var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight));
 
-        var title = UiKit.Label("Title", panel, "unwritten", 34, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
-        title.color = UiKit.Gold;
+        var title = UiKit.Label("Title", panel, "unwritten", 34, FontStyle.Normal, TextAnchor.MiddleCenter);
+        title.color = UiKit.TitleText;
         FrontScreen.Row(title.rectTransform, -34, 44);
 
         var line = UiKit.Label("Line", panel, "Sign in to continue", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
@@ -101,7 +101,7 @@ public class SignInScreen : MonoBehaviour
         y -= StatusGap;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
-        status.color = UiKit.Gold;
+        status.color = UiKit.TitleText;
         FrontScreen.Row(status.rectTransform, y, 18);
         y -= ButtonGap;
 
@@ -295,16 +295,16 @@ public static class FrontScreen
         rt.anchoredPosition = Vector2.zero;
     }
 
-    /// <summary>A gold-bordered charcoal panel, centred. Returns the fill to parent contents to.</summary>
+    /// <summary>A centred panel with the window edge. Returns the fill to parent contents to.</summary>
     public static Transform Panel(Transform canvas, Vector2 size)
     {
-        var border = UiKit.Img("Panel", canvas, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("Panel", canvas, UiKit.WindowEdge), UiKit.WindowRadius);
         border.rectTransform.anchorMin = border.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         border.rectTransform.pivot = new Vector2(0.5f, 0.5f);
         border.rectTransform.sizeDelta = size;
         border.rectTransform.anchoredPosition = Vector2.zero;
 
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         return fill.transform;
     }
@@ -347,7 +347,7 @@ public static class FrontScreen
         caption.color = UiKit.TextDim;
         Row(caption.rectTransform, top, 18, left, right);
 
-        var box = UiKit.Img(label + "Box", panel, UiKit.SlotFill);
+        var box = UiKit.Field(UiKit.Img(label + "Box", panel, UiKit.SlotFill));
         box.raycastTarget = true;
         Row(box.rectTransform, top - 20, 32, left, right);
 

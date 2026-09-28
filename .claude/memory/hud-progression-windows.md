@@ -1,6 +1,6 @@
 ---
 name: hud-progression-windows
-description: "Inventory/Character HUD windows — locked design + Ornament Kit v1; files, palette tokens, and drop-in art hooks"
+description: "Inventory/Character HUD windows — built at runtime on UiKit; the one Ragnarok-style light theme (2026-09-28); dragging and tooltip gotchas"
 metadata: 
   node_type: memory
   type: project
@@ -9,9 +9,14 @@ metadata:
 
 The **Inventory (`B`) and Character (`C`) windows** are built at RUNTIME by `ProgressionWindows.cs` on top of the `UiKit.cs` construction kit — NOT by the editor builders (UIShellBuilder just `AddComponent`s it into `Assets/Resources/GameUICanvas.prefab`). Lives in the **Unity checkout** at `D:\tempo\projects\roguelike-mmo\unity\Assets\Scripts\` (see [[unity-2d-direction]] — NOT in the Tempo React worktree). There is no equipment window: what you wear is listed at the top of the inventory ([[bag-is-a-text-list]]).
 
-**Locked design (GPT⇄Claude HUD relay, 2026-06-25):** charcoal **+** gold theme. Palette tokens live in `UiKit.cs`: `PanelFill #15161A`, `PanelRaise` (~6% lighter, for detail/sub-panels), `Gold #C8A862`, `Cyan` (hover/selection tints) and `CyanGlow` (in the palette, drawn nowhere), `TextMain`/`TextDim`. Rarity colors are the single source of truth in `Rarity.cs` (`Rarities.Border` = tooltip rarity LABEL + ground-drop sparkle; `Rarities.Text` = item NAME) — Legendary name is warm ivory `#F1E7D0` so it doesn't merge with the gold label. Fonts: Cinzel (titles, `title:true`) + Inter body, both in `Resources/Fonts/`; legacy uGUI Text has NO SemiBold and Cinzel is single-weight, so item names use Normal weight (one step under Bold titles).
-
-**Ornament Kit v1** (`Ornament.cs`, runtime): procedural gold corner brackets + header divider-with-diamond on every `UiKit.Window`, + a `Backplate` (portrait/name plate) in the Character window. Has **drop-in sprite hooks** (`Ornament.cornerArt`/`dividerArt`, null⇒procedural) — assign final kit art via UIShellBuilder later, no layout change. GPT moved Ornament Kit to active production after locking the windows; next: corners/dividers/accents/portrait-backplate as actual sprites, then stat-row icons, THEN evaluate whether the warm wood HUD shell survives (deliberately NOT harmonized yet).
+**Theme (decided by the user 2026-09-28, replacing the charcoal + gold look):** the Ragnarok-style light theme —
+light window bodies, a pale-blue title bar that fades top to bottom, a soft blue-grey edge, rounded corners (5 on
+windows, 3 on buttons/fields), dark text, NO corner ornaments (`Ornament.cs` was deleted), one font: DejaVu Sans
+Condensed (the free stand-in for Tahoma, whose licence forbids shipping it; Cinzel and Inter were removed).
+Every interface colour is a named row in `UiKit`'s palette and every shape comes from its helpers (`DressWindow`,
+`Btn`, `Field`, `Card`, `Plate`, `TitleBar`, `Round`); the shapes are tinted white images in `Resources/UI/Theme`
+written by `tools/ui-theme-sprites.py`. The user's words: "game-wide universal theme". Damage popups keep their
+own colours by the user's choice. The full token sheet is `docs/2-systems/hud-ui-system.md`.
 
 **Dragging (2026-06-26):** `SlotDragHandler.cs` sits beside the `ItemSlot` on every bag row and does **row→row = reorder · row→world = drop on the ground**, operating on the `InventoryStore` MODEL (via `boundEntry` + `InventoryStore.Reorder` / `DropAmountPrompt.DropFromScreen`), NOT on the rows, so it never desyncs on refresh. There is no drag-to-equip.
 

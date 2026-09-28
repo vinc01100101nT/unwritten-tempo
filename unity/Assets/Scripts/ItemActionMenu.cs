@@ -67,9 +67,9 @@ public class ItemActionMenu
         canvas = hostCanvas;
         if (canvas == null) return;
 
-        // A window's frame in this game is one flat gold border around a flat panel — the item tooltip is built
+        // A window's frame in this game is a thin rounded edge around the panel — the item tooltip is built
         // the same way, so a floating menu matching it is the house style rather than a new look.
-        var border = UiKit.Img("ItemActionMenu", canvas.transform, UiKit.Gold);
+        var border = UiKit.Round(UiKit.Img("ItemActionMenu", canvas.transform, UiKit.WindowEdge), UiKit.WindowRadius);
         root = border.rectTransform;
         root.anchorMin = root.anchorMax = new Vector2(0, 0);
         root.pivot = new Vector2(0f, 1f);
@@ -82,7 +82,7 @@ public class ItemActionMenu
         // from the rows here leaves one rectangle: the one that is painted is the one that is tested. Place()
         // reads the same height to flip the menu up near the bottom of the screen, which never fired either.
         var frame = border.gameObject.AddComponent<VerticalLayoutGroup>();
-        // 1px on every side is the gold border showing around the fill
+        // 1px on every side is the edge showing around the fill
         frame.padding = new RectOffset(1, 1, 1, 1);
         frame.childControlWidth = frame.childControlHeight = true;
         frame.childForceExpandWidth = true;
@@ -91,7 +91,7 @@ public class ItemActionMenu
         frameFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         // Sized by the frame above, so no stretch-to-parent and no fitter of its own.
-        var fill = UiKit.Img("Fill", root, UiKit.PanelFill);
+        var fill = UiKit.Round(UiKit.Img("Fill", root, UiKit.PanelFill), UiKit.WindowRadius - 1);
 
         var v = fill.gameObject.AddComponent<VerticalLayoutGroup>();
         v.padding = new RectOffset(0, 0, 0, 4);
@@ -100,7 +100,7 @@ public class ItemActionMenu
         v.childForceExpandWidth = true;
         v.childForceExpandHeight = false;
 
-        var head = UiKit.Img("Title", fill.transform, new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.16f));
+        var head = UiKit.TitleBar(fill.transform, "Title");
         var hl = head.gameObject.AddComponent<LayoutElement>();
         hl.minHeight = hl.preferredHeight = TitleHeight;
         // wrap:false is the real switch (MakeText sets textWrappingMode); the obsolete property did nothing.
@@ -257,14 +257,14 @@ public class ItemActionMenu
         spawned.Clear();
 
         title.text = e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName;
-        title.color = UiKit.TextMain;
+        title.color = UiKit.TitleText;
 
         for (int i = 0; i < entries.Count; i++)
         {
             var it = entries[i];
             if (it.separator)
             {
-                var sep = UiKit.Img("Sep", rowHost, new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.22f));
+                var sep = UiKit.Img("Sep", rowHost, UiKit.Rule);
                 var sl = sep.gameObject.AddComponent<LayoutElement>();
                 sl.minHeight = sl.preferredHeight = 1f;
                 spawned.Add(sep.gameObject);
@@ -298,8 +298,8 @@ public class ItemActionMenu
                 btn.targetGraphic = rowImg;
                 var colors = btn.colors;
                 colors.normalColor = new Color(1, 1, 1, 0);
-                colors.highlightedColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.14f);
-                colors.pressedColor = new Color(UiKit.Cyan.r, UiKit.Cyan.g, UiKit.Cyan.b, 0.24f);
+                colors.highlightedColor = UiKit.Hover;
+                colors.pressedColor = UiKit.Rule;
                 colors.selectedColor = colors.normalColor;
                 colors.disabledColor = colors.normalColor;
                 btn.colors = colors;

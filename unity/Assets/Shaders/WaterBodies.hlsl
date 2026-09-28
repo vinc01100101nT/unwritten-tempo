@@ -38,12 +38,11 @@ int MirrorSlot(float h)
     return -1;
 }
 
-// Is this body drawn as water this frame? Only while the wet ground is on screen at all, and — while mirrors run —
-// only when its height has a mirror (a body without one is drawn dry, never with another height's reflection).
+// Is this body drawn as water this frame? Whenever the wet ground is on screen at all. A body with no mirror of its
+// own still shows: it reflects only the sky (WetGround.shader), never another height's reflection.
 bool BodyShows(int body)
 {
-    if (body < 0 || _WaterDrawn < 0.5) return false;
-    return _MirrorsOn < 0.5 || MirrorSlot(_WaterLevels[body]) >= 0;
+    return body >= 0 && _WaterDrawn >= 0.5;
 }
 
 bool IsLake(int body) { return body >= (int)_WaterFilmCount; }

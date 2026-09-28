@@ -147,7 +147,6 @@ public class TouchHud : MonoBehaviour
         TrayRow("Inventory", KeyCode.B);
         TrayRow("Character", KeyCode.C);
         TrayRow("Skills", KeyCode.K);
-        TrayRow("Wardrobe", KeyCode.O);
         TrayRow("Calendar", KeyCode.L);
         TrayRow("World Map", KeyCode.N);
         TrayRow("Minimap", KeyCode.M);

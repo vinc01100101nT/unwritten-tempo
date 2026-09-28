@@ -16,7 +16,7 @@ using UnityEngine.UI;
 public static class LoadingScreen
 {
     static RectTransform root;
-    static Text stepLabel;
+    static TMPro.TMP_Text stepLabel;
     static Image barFill;
     static string step = "";
 
@@ -74,15 +74,9 @@ public static class LoadingScreen
         if (root == null) return;
         Object.DontDestroyOnLoad(root.GetComponentInParent<Canvas>().gameObject);
 
-        var labelGO = new GameObject("Step", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        var labelRT = (RectTransform)labelGO.transform;
-        labelRT.SetParent(root, false);
-        FrontScreen.Place(labelRT, new Vector2(0f, -40f), new Vector2(520f, 34f));
-        stepLabel = labelGO.GetComponent<Text>();
-        stepLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        stepLabel.fontSize = 18;
-        stepLabel.alignment = TextAnchor.MiddleCenter;
-        stepLabel.color = new Color(0.85f, 0.87f, 0.92f);
+        stepLabel = UiKit.MakeText("Step", root, "", 18, FontStyle.Normal, TextAnchor.MiddleCenter, wrap: false);
+        FrontScreen.Place(stepLabel.rectTransform, new Vector2(0f, -40f), new Vector2(520f, 34f));
+        stepLabel.color = UiKit.TextOnDim;
         stepLabel.raycastTarget = false;
 
         var stripGO = new GameObject("Bar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -90,7 +84,7 @@ public static class LoadingScreen
         stripRT.SetParent(root, false);
         FrontScreen.Place(stripRT, new Vector2(0f, -84f), new Vector2(320f, 6f));
         var strip = stripGO.GetComponent<Image>();
-        strip.color = new Color(1f, 1f, 1f, 0.12f);
+        strip.color = UiKit.Rule;
         strip.raycastTarget = false;
 
         var fillGO = new GameObject("Fill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -101,7 +95,7 @@ public static class LoadingScreen
         fillRT.offsetMin = Vector2.zero;
         fillRT.offsetMax = Vector2.zero;
         barFill = fillGO.GetComponent<Image>();
-        barFill.color = new Color(0.55f, 0.72f, 1f);
+        barFill.color = UiKit.Accent;
         barFill.type = Image.Type.Filled;
         barFill.fillMethod = Image.FillMethod.Horizontal;
         barFill.fillAmount = 0f;

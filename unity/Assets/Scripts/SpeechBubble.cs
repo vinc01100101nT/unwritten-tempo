@@ -29,7 +29,8 @@ public class SpeechBubble : MonoBehaviour
     // One bubble per character: the live bubble each owner currently has, so a new line REPLACES it instead of
     // stacking a second bubble over the same head. Keyed by the follow transform (a character's feet-seated visual).
     static readonly Dictionary<Transform, SpeechBubble> active = new Dictionary<Transform, SpeechBubble>();
-    static Sprite bubbleSprite, tailSprite;
+    static Sprite tailSprite;
+    const int BubbleRadius = 14;
 
     Image bg, tail;
     TMP_Text text;
@@ -95,9 +96,8 @@ public class SpeechBubble : MonoBehaviour
         b.rt.pivot = new Vector2(0.5f, 0f);
 
         b.bg = go.GetComponent<Image>();
-        b.bg.sprite = BubbleSprite();
-        b.bg.type = Image.Type.Sliced;          // 9-slice so corners stay round at any size
-        b.bg.color = Color.white;
+        UiKit.Round(b.bg, BubbleRadius);
+        b.bg.color = UiKit.PanelFill;
 
         // Downward tail (classic speech-bubble pointer): hangs just below the bubble's bottom edge, pointing at
         // the owner's head. Anchored to bottom-centre, pivot at its top so it dangles below.
@@ -105,7 +105,7 @@ public class SpeechBubble : MonoBehaviour
         tg.transform.SetParent(go.transform, false);
         b.tail = tg.GetComponent<Image>();
         b.tail.sprite = TailSprite();
-        b.tail.color = Color.white;
+        b.tail.color = UiKit.PanelFill;
         b.tail.raycastTarget = false;
         var tlrt = (RectTransform)tg.transform;
         tlrt.anchorMin = tlrt.anchorMax = new Vector2(0.5f, 0f);   // bottom-centre of the bubble
@@ -115,7 +115,7 @@ public class SpeechBubble : MonoBehaviour
 
         // Dark text, parented to the bubble and inset by the padding.
         b.text = UiKit.MakeText("Text", go.transform, "", FontSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: false);
-        b.text.color = new Color(0.12f, 0.12f, 0.14f);
+        b.text.color = UiKit.TextMain;
         b.text.raycastTarget = false;
         b.text.richText = false;   // player chat is arbitrary text — a stray '<' must stay literal, never markup
         var trt = b.text.rectTransform;
@@ -177,29 +177,6 @@ public class SpeechBubble : MonoBehaviour
         follow = null;
         gameObject.SetActive(false);
         pool.Push(this);
-    }
-
-    // One-time procedural rounded-rect sprite (white, soft 1px edge), 9-sliced so it scales without distorting
-    // the corners. Cached statically — built at most once per session.
-    static Sprite BubbleSprite()
-    {
-        if (bubbleSprite != null) return bubbleSprite;
-        const int S = 48, R = 14;
-        var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-        var px = new Color32[S * S];
-        for (int y = 0; y < S; y++)
-            for (int x = 0; x < S; x++)
-            {
-                float fx = x + 0.5f, fy = y + 0.5f;
-                float cx = Mathf.Clamp(fx, R, S - R), cy = Mathf.Clamp(fy, R, S - R);
-                float d = Mathf.Sqrt((fx - cx) * (fx - cx) + (fy - cy) * (fy - cy));
-                byte a = (byte)(Mathf.Clamp01(R - d + 0.5f) * 255f);   // inside=255, ~1px soft edge
-                px[y * S + x] = new Color32(255, 255, 255, a);
-            }
-        tex.SetPixels32(px); tex.Apply();
-        bubbleSprite = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 100f, 0,
-                                     SpriteMeshType.FullRect, new Vector4(R, R, R, R));
-        return bubbleSprite;
     }
 
     // One-time white DOWNWARD triangle for the bubble's tail (wide at the top, apex at the bottom), soft 1px

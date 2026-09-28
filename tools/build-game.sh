@@ -19,6 +19,8 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UNITY_CLI="$HOME/.unity/bin/unity"
 OUT_ROOT="$REPO/builds"
+# The addresses a client build carries come from settings.env, the one file every program reads.
+. "$REPO/tools/load-settings.sh"
 TARGET="StandaloneOSX"
 
 fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 2; }
@@ -135,8 +137,31 @@ EOF
     return 1
   fi
 
+  if [ "$kind" = "client" ]; then write_addresses "$out" || return 1; fi
+
   printf '\033[32m%s built\033[0m  %s  (%s)\n' "$kind" "$out" "$(du -sh "$out" | cut -f1)"
   return 0
+}
+
+# THE ADDRESSES A PLAYER'S COPY DIALS, copied from settings.env into the build's own settings file — the
+# addresses players are handed (PUBLIC_*) when the rented server exists, this machine's own until then. Only
+# these two names are written; nothing else in settings.env ever goes into a build.
+write_addresses() {
+  local build="$1" file
+  file="$(find "$build" -path '*/StreamingAssets/server.txt' | head -1)"
+  [ -n "$file" ] || { printf '\033[31mThe build has no StreamingAssets/server.txt to write the addresses into.\033[0m\n' >&2; return 1; }
+  local accounts="${PUBLIC_ACCOUNTS_URL:-${ACCOUNTS_URL:-}}" characters="${PUBLIC_CHAR_SERVER_URL:-${CHAR_SERVER_URL:-}}"
+  [ -n "$accounts" ] && [ -n "$characters" ] || {
+    printf '\033[31mNo ACCOUNTS_URL / CHAR_SERVER_URL in settings.env — the build would reach no server.\033[0m\n' >&2; return 1; }
+  grep -v -E '^(ACCOUNTS_URL|CHAR_SERVER_URL)=' "$file" > "$file.tmp"
+  printf 'ACCOUNTS_URL=%s\nCHAR_SERVER_URL=%s\n' "$accounts" "$characters" >> "$file.tmp"
+  mv "$file.tmp" "$file"
+  # Changing a file inside a Mac app breaks its signature, and a Mac will not open a downloaded app whose
+  # signature is broken — so it is signed again, the same no-certificate way Unity signed it.
+  if [ "$(uname)" = "Darwin" ] && [ "${build%.app}" != "$build" ]; then
+    codesign --force --deep --sign - "$build" >/dev/null 2>&1 || { printf '\033[31mCould not sign %s again.\033[0m\n' "$build" >&2; return 1; }
+  fi
+  printf 'the build dials  %s  and  %s\n' "$accounts" "$characters"
 }
 
 STATUS=0
@@ -149,8 +174,7 @@ esac
 if [ "$STATUS" -eq 0 ]; then
   echo
   echo "Run the server with:"
-  echo "  mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null"
-  echo "  $OUT_ROOT/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 | tee logs/server.log"
+  echo "  tools/run-map-server.sh"
   echo "Open a player's game with:"
   echo "  open -n $OUT_ROOT/client/unwritten.app"
 fi

@@ -18,8 +18,8 @@ checker at the bottom is what makes them stick.
 
 1. **A secret never has a default.** The servers' shared secret — the only thing between a stranger and a door
    that writes any save to any character — defaulted to the literal word `change-me`, and the real server ran with
-   it. Both services refuse to start without one; it lives in `accounts/.env` and nowhere else, and the start
-   commands read it from there. `openssl rand -base64 32` makes one.
+   it. Both services refuse to start without one; it lives in `settings.env` at the top of the project and
+   nowhere else, and every start command reads it from there. `openssl rand -base64 32` makes one.
 2. **The sign-in service serves no character route.** A leftover door on it let any signed-in player overwrite
    their own save — level, gold, gear, everything — with anything carrying a whole number called `version`. The
    character server had refused that write for weeks; the sign-in service had not. There is no character path on
@@ -56,7 +56,7 @@ checker at the bottom is what makes them stick.
 
 | Need | Use | Why |
 | --- | --- | --- |
-| A setting both servers must agree on | **`accounts/.env`**, read by `charserver/run.sh` and by the map server's start command | One file, one value; a different value on either side is a bug, not a configuration. |
+| A setting both servers must agree on — or any secret or address | **`settings.env`** at the top of the project, read by the sign-in service, `charserver/run.sh`, `tools/run-map-server.sh`, the backup, the front door, and the game and launcher builds; a shell script loads it with `tools/load-settings.sh` | One file, one value; a different value on either side is a bug, not a configuration. |
 | Writing a character's progress | **`PUT /server/characters/{id}/progress` on the character server, with `x-server-secret`** | The only write. The player-facing `PUT` returns 405 on the character server and 404 on the sign-in service. |
 | Reading a character in the world | **The announcement** (`/arriving` on the map server, sent BY the character server) | The character travels with the ticket; the map server never fetches it. |
 | Every user value in SQL | **`$1`, `$2` …** — never pasted | Both services do this without exception; keep it that way. |
@@ -95,7 +95,7 @@ mechanical: they are here so a reader knows them, and a checker for each is the 
 
 ## Checklist before committing a server change
 
-- [ ] No new secret has a default; a new one is in `accounts/.env.example` with how to generate it.
+- [ ] No new secret has a default; a new one is in `settings.env.example` with how to generate it.
 - [ ] No new route on the sign-in service touches characters.
 - [ ] A new query with `order by` names its index, and the index is in a migration.
 - [ ] A new table has the line that deletes from it.

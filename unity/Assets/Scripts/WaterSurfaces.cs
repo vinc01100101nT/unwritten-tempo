@@ -44,7 +44,12 @@ public static class WaterSurfaces
     static byte[] bodyIds = new byte[0];
     static int nx, nz;
     static float originX, originZ;
-    static float rainNow = -1f, rainLogged = -1f;
+    static float rainLo = float.NaN, rainLogged = -1f, blendShown = float.NaN;
+    static readonly float[] lakeFrom = new float[MaxHeights];
+    static readonly float[] lakeTo = new float[MaxHeights];
+    static readonly List<WaterPooling.Lake> NoLakes = new List<WaterPooling.Lake>();
+    static float cachedRainA = -1f, cachedRainB = -1f;
+    static List<WaterPooling.Lake> cachedLakesA, cachedLakesB;
     static Texture2D runoffTex, bodyTex;
     static bool dirty = true;
     static int groundLayer = -2;
@@ -139,6 +144,9 @@ public static class WaterSurfaces
         grid = new float[nx * nz];
         for (int k = 0; k < grid.Length; k++) grid[k] = float.NegativeInfinity;
         foreach (var m in meshes) WaterPooling.RaiseToGround(m.verts, m.tris, m.toWorld, originX, originZ, cell, nx, nz, grid);
+        var levelOf = new byte[nx * nz];
+        foreach (var m in meshes)
+            WaterPooling.MarkLevelGround(m.verts, m.tris, m.toWorld, films, FilmCount, grid, originX, originZ, cell, nx, nz, levelOf);
 
         // The sheets: each over its level ground, its edge where the ground beside it has risen FilmDepth.
         filmIds = new byte[nx * nz];
@@ -152,18 +160,13 @@ public static class WaterSurfaces
             chunks[i] = new List<Bounds>(film.chunks.Values).ToArray();
             for (int c = 0; c < chunks[i].Length; c++)
                 chunks[i][c].Expand(new Vector3(cell * 2f, WaterPooling.FilmDepth * 2f, cell * 2f));
-            MarkFilm(Floors[i], Heights[i], (byte)(i + 1));
+            MarkFilm(levelOf, (byte)(i + 1));
         }
 
         // Rain on level ground stays there as its sheet; rain on every other square runs downhill into the hollows.
         var sheds = new bool[nx * nz];
         for (int k = 0; k < grid.Length; k++)
-        {
-            if (float.IsNegativeInfinity(grid[k])) continue;
-            bool level = false;
-            for (int i = 0; i < FilmCount && !level; i++) level = grid[k] >= Floors[i] && grid[k] <= Heights[i];
-            sheds[k] = !level;
-        }
+            sheds[k] = !float.IsNegativeInfinity(grid[k]) && levelOf[k] == 0;
         watershed = WaterPooling.BuildWatershed(grid, nx, nz, sheds);
 
         runoff = new float[nx * nz];
@@ -183,8 +186,11 @@ public static class WaterSurfaces
         Shader.SetGlobalFloat(RunoffPullID, WaterPooling.RunoffPull);
         Shader.SetGlobalFloat(FilmCountID, FilmCount);
 
-        rainNow = -1f;
-        Fill(0f);
+        cachedRainA = cachedRainB = -1f;
+        cachedLakesA = cachedLakesB = null;
+        Shader.SetGlobalFloatArray(HeightsID, Heights);
+        Fill(-1f);
+        Blend(0f);
         GameLog.Info(LogCat.Unwritten, "WaterSurfaces: " + FilmCount + " level sheet(s) on " + meshes.Count +
                      " ground mesh(es), ground map " + nx + "x" + nz + ".");
     }
@@ -204,12 +210,13 @@ public static class WaterSurfaces
         return tex;
     }
 
-    // Mark the squares whose ground lies between a sheet's floor and its surface, and the squares within EdgeReach of
-    // one (the sheet's edge crosses those), with its id; which pixels in them are water is then decided by their own height.
-    static void MarkFilm(float floor, float top, byte id)
+    // Mark the squares on a sheet's level ground (WaterPooling.MarkLevelGround), and the squares within EdgeReach of one
+    // (the sheet's edge crosses those), with its id; which pixels in them are water is then decided by their own height.
+    // Never by height alone: a slope passing through the sheet's height would draw a strip of water along it.
+    static void MarkFilm(byte[] levelOf, byte id)
     {
         var inside = new List<int>();
-        for (int k = 0; k < grid.Length; k++) if (grid[k] >= floor && grid[k] <= top) inside.Add(k);
+        for (int k = 0; k < grid.Length; k++) if (levelOf[k] == id) inside.Add(k);
         foreach (int k in inside) filmIds[k] = id;
         foreach (int k in inside)
         {
@@ -225,24 +232,40 @@ public static class WaterSurfaces
         }
     }
 
-    /// <summary>How much rain stands on the map now (<see cref="WaterPooling.Rainfall"/>, world units of water): the
-    /// lakes are filled again only when it moved by <see cref="RainQuantum"/>.</summary>
+    /// <summary>How much rain stands on the map now (<see cref="WaterPooling.Rainfall"/>, world units of water). The
+    /// lakes are worked out at the two whole <see cref="RainQuantum"/>s either side of it, again only when it crosses
+    /// one; in between, every lake's surface glides from where it stood at the lower amount to where it stands at the
+    /// higher, so the water rises and falls smoothly instead of in steps.</summary>
     public static void SetRain(float rain)
     {
         if (grid.Length == 0) return;
-        rain = Mathf.Round(Mathf.Max(0f, rain) / RainQuantum) * RainQuantum;
-        if (rain == rainNow) return;
-        Fill(rain);
+        rain = Mathf.Max(0f, rain);
+        // No rain standing: no lakes at all — not lakes of zero depth, which would still take mirrors.
+        float lo = rain > 0f ? Mathf.Floor(rain / RainQuantum) * RainQuantum : -1f;
+        if (lo != rainLo) Fill(lo);
+        Blend(lo >= 0f ? Mathf.Clamp01((rain - lo) / RainQuantum) : 0f);
     }
 
-    // perf-ok: runs when the standing rain moves by RainQuantum — a few times in each 3-second rise, never per frame.
-    static void Fill(float rain)
+    // The lakes at a rain amount, reusing the last two worked out: water moving by one quantum needs only one new fill.
+    static List<WaterPooling.Lake> LakesAt(float rain)
     {
-        rainNow = rain;
+        if (rain <= 0f || watershed == null) return NoLakes;
+        if (rain == cachedRainA) return cachedLakesA;
+        if (rain == cachedRainB) return cachedLakesB;
+        var lakes = WaterPooling.Fill(watershed, grid, WaterPooling.RunoffCell, rain);
+        cachedRainB = cachedRainA; cachedLakesB = cachedLakesA;
+        cachedRainA = rain; cachedLakesA = lakes;
+        return lakes;
+    }
+
+    // perf-ok: runs when the standing rain crosses a RainQuantum — a few times in each 3-second rise, never per frame.
+    // Bodies are marked from the lakes at the HIGHER amount, which hold every square the water reaches in between.
+    static void Fill(float lo)
+    {
+        rainLo = lo;
         float cell = WaterPooling.RunoffCell;
-        var lakes = rain > 0f && watershed != null
-            ? WaterPooling.Fill(watershed, grid, cell, rain)
-            : new List<WaterPooling.Lake>();
+        var lower = LakesAt(lo);
+        var lakes = lo >= 0f ? LakesAt(lo + RainQuantum) : NoLakes;
         int lakeCount = Mathf.Min(lakes.Count, MaxHeights - FilmCount);
         Count = FilmCount + lakeCount;
 
@@ -253,9 +276,10 @@ public static class WaterSurfaces
             chunks[i] = null;
             Heights[i] = 0f;
             Floors[i] = 0f;
+            lakeTo[i] = 0f;
             if (i >= Count) continue;
             var lake = lakes[i - FilmCount];
-            Heights[i] = lake.level;
+            lakeTo[i] = lake.level;
             Floors[i] = float.MinValue;
             chunks[i] = LakeChunks(lake, cell);
             byte id = (byte)(i + 1);
@@ -274,14 +298,16 @@ public static class WaterSurfaces
                     }
             }
         }
+        WaterPooling.StartLevels(lower, lakes, lakeCount, bodyIds, FilmCount, lakeFrom);
         bodyTex = Upload(bodyTex, "WaterBodies", bodyIds, FilterMode.Point);
         Shader.SetGlobalTexture(BodyTexID, bodyTex);
         Shader.SetGlobalTexture(RunoffTexID, runoffTex);
-        Shader.SetGlobalFloatArray(HeightsID, Heights);
         Shader.SetGlobalFloatArray(FloorsID, Floors);
         Shader.SetGlobalFloat(CountID, Count);
+        blendShown = float.NaN;
 
         // Said out loud once per 2 mm of rain, so a lake that does not rise can be told from one that rises unseen.
+        float rain = Mathf.Max(0f, lo);
         if (Mathf.Abs(rain - rainLogged) >= 0.002f || (rain == 0f && rainLogged > 0f))
         {
             rainLogged = rain;
@@ -291,6 +317,16 @@ public static class WaterSurfaces
                          " lake(s) of " + lakes.Count + ", the deepest " + deepestLake.ToString("0.000") + " deep, " + Count +
                          " bodies of water.");
         }
+    }
+
+    // Every lake's surface this frame, `blend` of the way from the lower rain amount to the higher — written only when
+    // it moved.
+    static void Blend(float blend)
+    {
+        if (blend == blendShown) return;
+        blendShown = blend;
+        for (int i = FilmCount; i < Count; i++) Heights[i] = Mathf.Lerp(lakeFrom[i], lakeTo[i], blend);
+        Shader.SetGlobalFloatArray(HeightsID, Heights);
     }
 
     // The lake's squares, gathered into the on-screen test's chunks, from its lowest ground up to its level.
@@ -321,6 +357,24 @@ public static class WaterSurfaces
             for (int c = 0; c < list.Length; c++)
                 if (GeometryUtility.TestPlanesAABB(frustum, list[c])) { into.Add(i); break; }
         }
+    }
+
+    /// <summary>The squared distance, across the ground, from <paramref name="x"/>, <paramref name="z"/> to the nearest
+    /// of <paramref name="body"/>'s chunks (0 inside one).</summary>
+    public static float NearestSqrXZ(int body, float x, float z)
+    {
+        var list = body >= 0 && body < Count ? chunks[body] : null;
+        if (list == null) return float.PositiveInfinity;
+        float best = float.PositiveInfinity;
+        for (int c = 0; c < list.Length; c++)
+        {
+            var b = list[c];
+            float dx = Mathf.Max(0f, Mathf.Max(b.min.x - x, x - b.max.x));
+            float dz = Mathf.Max(0f, Mathf.Max(b.min.z - z, z - b.max.z));
+            float d = dx * dx + dz * dz;
+            if (d < best) best = d;
+        }
+        return best;
     }
 
     /// <summary>The body of water standing over <paramref name="world"/>, or -1 — the same test the shader makes per

@@ -54,3 +54,4 @@
 - [Sprint manager ticks, never adds](../sprint-manager-ticks-never-adds.md) — write a new MT task / roadmap line yourself first (insert a line, don't re-dump roadmap.json), then send it to tick.
 - [Reproduce with GMCP, not the user](../reproduce-with-gmcp-not-the-user.md) — play a gameplay bug yourself through the text-play client; never park a recorder and ask the user to reproduce. Rebuild the client first if code changed.
 - [Wiki is deployed on Vercel](../wiki-deployed-on-vercel.md) — local wiki/ changes reach players only once deployed; static site, no polling.
+- [Built client crashes as it closes = Unity engine diagnostics](../built-game-crashes-on-quit-engine-diagnostics.md) — segfault in Unity's teardown (asset-bundle analytics after Insights is gone); fix = engine diagnostics off; our quit code cannot reach it.

@@ -14,8 +14,8 @@ using UnityEngine.UI;
 /// </summary>
 public class CharacterSelectScreen : MonoBehaviour
 {
-    // Selection wears the cyan the rest of the UI already uses for "this one"; everything else stays gold.
-    static readonly Color RowIdle = new Color(0.07f, 0.075f, 0.09f, 1f);
+    // Selection wears the accent the rest of the UI already uses for "this one"; everything else the plain edge.
+    static readonly Color RowIdle = UiKit.SlotFill;
 
     Transform panel;
     Transform listRoot;
@@ -56,11 +56,11 @@ public class CharacterSelectScreen : MonoBehaviour
         var canvas = FrontScreen.Canvas(transform);
         panel = FrontScreen.Panel(canvas, new Vector2(780, 620));
 
-        var title = UiKit.Label("Title", panel, "Your Characters", 28, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
-        title.color = UiKit.Gold;
+        var title = UiKit.Label("Title", panel, "Your Characters", 28, FontStyle.Normal, TextAnchor.MiddleCenter);
+        title.color = UiKit.TitleText;
         FrontScreen.Row(title.rectTransform, -28, 36);
 
-        var listBox = UiKit.Img("List", panel, new Color(0, 0, 0, 0.18f));
+        var listBox = UiKit.Img("List", panel, UiKit.PanelRaise);
         listBox.rectTransform.anchorMin = new Vector2(0, 1);
         listBox.rectTransform.anchorMax = new Vector2(1, 1);
         listBox.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -71,7 +71,7 @@ public class CharacterSelectScreen : MonoBehaviour
         listRoot = listBox.transform;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
-        status.color = UiKit.Gold;
+        status.color = UiKit.TitleText;
         FrontScreen.Row(status.rectTransform, -518, 18);
 
         enterButton = UiKit.Btn("Enter World", panel, OnEnter);
@@ -115,7 +115,7 @@ public class CharacterSelectScreen : MonoBehaviour
             var info = characters[i];
             int index = i;
 
-            var border = UiKit.Img("Row" + i, listRoot, UiKit.Gold);
+            var border = UiKit.Round(UiKit.Img("Row" + i, listRoot, UiKit.ButtonEdge), UiKit.ButtonRadius);
             border.rectTransform.anchorMin = new Vector2(0, 1);
             border.rectTransform.anchorMax = new Vector2(1, 1);
             border.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -125,10 +125,10 @@ public class CharacterSelectScreen : MonoBehaviour
             border.rectTransform.anchoredPosition = new Vector2(0, -8 - i * 68);
             rowBorders.Add(border);
 
-            var fill = UiKit.Img("Fill", border.transform, RowIdle);
+            var fill = UiKit.Round(UiKit.Img("Fill", border.transform, RowIdle), UiKit.ButtonRadius);
             UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
 
-            var name = UiKit.Label("Name", fill.transform, info.name, 18, FontStyle.Normal, TextAnchor.MiddleLeft, title: true);
+            var name = UiKit.Label("Name", fill.transform, info.name, 18, FontStyle.Normal, TextAnchor.MiddleLeft);
             name.color = UiKit.TextMain;
             name.raycastTarget = false;
             UiKit.Fill(name.rectTransform, new Vector2(14, 22), new Vector2(-14, -6));
@@ -157,7 +157,7 @@ public class CharacterSelectScreen : MonoBehaviour
     void PaintSelection()
     {
         for (int i = 0; i < rowBorders.Count; i++)
-            if (rowBorders[i] != null) rowBorders[i].color = i == selected ? UiKit.Cyan : UiKit.Gold;
+            if (rowBorders[i] != null) rowBorders[i].color = i == selected ? UiKit.Accent : UiKit.ButtonEdge;
 
         bool has = selected >= 0 && selected < characters.Count;
         if (enterButton != null) enterButton.interactable = has;
@@ -219,7 +219,7 @@ public class CharacterSelectScreen : MonoBehaviour
     {
         if (createPanel != null) return;
 
-        var box = UiKit.Img("Create", panel, UiKit.Gold);
+        var box = UiKit.Round(UiKit.Img("Create", panel, UiKit.WindowEdge), UiKit.WindowRadius);
         box.rectTransform.anchorMin = new Vector2(0, 1);
         box.rectTransform.anchorMax = new Vector2(1, 1);
         box.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -229,16 +229,16 @@ public class CharacterSelectScreen : MonoBehaviour
         box.rectTransform.anchoredPosition = new Vector2(0, -76);
         createPanel = box.gameObject;
 
-        var fill = UiKit.Img("Fill", box.transform, UiKit.PanelRaise);
+        var fill = UiKit.Round(UiKit.Img("Fill", box.transform, UiKit.PanelRaise), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         var inner = fill.transform;
 
-        var heading = UiKit.Label("Heading", inner, "A new character", 20, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
-        heading.color = UiKit.Gold;
+        var heading = UiKit.Label("Heading", inner, "A new character", 20, FontStyle.Normal, TextAnchor.MiddleCenter);
+        heading.color = UiKit.TitleText;
         FrontScreen.Row(heading.rectTransform, -16, 28);
 
         // The body, shown as itself. It owns the left column outright; nothing else is allowed into that strip.
-        var frame = UiKit.Img("PreviewFrame", inner, UiKit.Gold);
+        var frame = UiKit.Img("PreviewFrame", inner, UiKit.ButtonEdge);
         FrontScreen.Place(frame.rectTransform, new Vector2(-232, -56), new Vector2(212, 300));
         var shot = new GameObject("Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         shot.transform.SetParent(frame.transform, false);
@@ -320,7 +320,7 @@ public class CharacterSelectScreen : MonoBehaviour
         blueSlider  = MixerRow(inner, "B", -310, left, right, new Color(0.45f, 0.6f, 1f));
 
         // Sits level with the middle slider, past their right end, so the mix reads as the sum of the three.
-        var border = UiKit.Img("Mixed", inner, UiKit.Gold);
+        var border = UiKit.Img("Mixed", inner, UiKit.ButtonEdge);
         FrontScreen.Place(border.rectTransform, new Vector2(mid + 138, -266), new Vector2(52, 52));
         mixedSwatch = UiKit.Img("Fill", border.transform, Color.white);
         UiKit.Fill(mixedSwatch.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
@@ -373,7 +373,7 @@ public class CharacterSelectScreen : MonoBehaviour
         for (int i = 0; i < parts.Count; i++)
         {
             int index = i;
-            var border = UiKit.Img("Part", partsRow, i == 0 ? UiKit.Cyan : UiKit.Gold);
+            var border = UiKit.Img("Part", partsRow, i == 0 ? UiKit.Accent : UiKit.ButtonEdge);
             var le = border.gameObject.AddComponent<UnityEngine.UI.LayoutElement>();
             le.preferredWidth = le.preferredHeight = SwatchSize;
 
@@ -398,7 +398,7 @@ public class CharacterSelectScreen : MonoBehaviour
         for (int i = 0; i < partSwatches.Count; i++)
         {
             var border = partSwatches[i] != null ? partSwatches[i].transform.parent.GetComponent<Image>() : null;
-            if (border != null) border.color = i == selectedPart ? UiKit.Cyan : UiKit.Gold;
+            if (border != null) border.color = i == selectedPart ? UiKit.Accent : UiKit.ButtonEdge;
         }
     }
 

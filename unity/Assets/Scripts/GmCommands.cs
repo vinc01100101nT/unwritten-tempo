@@ -16,6 +16,10 @@ public static class GmCommands
 {
     static readonly List<GmCommand> all = new List<GmCommand>();
     static readonly Dictionary<string, GmCommand> byName = new Dictionary<string, GmCommand>(StringComparer.OrdinalIgnoreCase);
+
+    // Rich-text tints for command replies, read from the interface theme once: a failure, and a name or command.
+    static readonly string FailHex = UiKit.Hex(UiKit.Bad);
+    static readonly string NameHex = UiKit.Hex(UiKit.Accent);
     static bool bootstrapped;
 
     /// <summary>Every registered command, in registration order (for <c>/help</c>).</summary>
@@ -107,7 +111,7 @@ public static class GmCommands
         var ctx = new GmContext { args = args, reply = reply };
         if (GameLog.On(LogCat.Command)) GameLog.Info(LogCat.Command, line);
         try { cmd.run(ctx); }
-        catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{name} failed: {e.Message}</color>"); }
+        catch (Exception e) { reply?.Invoke($"<color={FailHex}>/{name} failed: {e.Message}</color>"); }
     }
 
     /// <summary>What somebody who is not a GM is told, written once so the game and the server refuse in the
@@ -136,7 +140,7 @@ public static class GmCommands
 
         var ctx = new GmContext { args = args, reply = reply, askerCharacter = askerCharacter, askerBody = askerBody };
         try { cmd.run(ctx); }
-        catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{tokens[0]} failed: {e.Message}</color>"); }
+        catch (Exception e) { reply?.Invoke($"<color={FailHex}>/{tokens[0]} failed: {e.Message}</color>"); }
     }
 
     /// <summary>May somebody who is not a GM run this command? Asked by the server when a request arrives, because the
@@ -750,7 +754,7 @@ public static class GmCommands
         if (d == null) { c.Reply($"No creature called '{typed}'."); return; }
 
         float size = MobSizes.Of(d.kind, d.size);
-        c.Reply($"<color=#C8A862>{d.displayName}</color> ({d.id}) — {d.kind}, Lv {d.level}");
+        c.Reply($"<color={NameHex}>{d.displayName}</color> ({d.id}) — {d.kind}, Lv {d.level}");
         c.Reply($"Size {size:0.##} ({MobSizes.GroupOf(size)}) · Element {d.element} {d.elementLevel} · Biome {d.biome}");
         c.Reply($"HP {MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP)} · ATK {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk)}"
                 + $" · DEF {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}");
@@ -805,7 +809,7 @@ public static class GmCommands
         if (groups.Count == 0) { c.Reply($"No creature drops {item.displayName}."); return; }
 
         groups.Sort((a, b) => b.chance.CompareTo(a.chance));
-        c.Reply($"<color=#C8A862>{item.displayName}</color> — dropped by:");
+        c.Reply($"<color={NameHex}>{item.displayName}</color> — dropped by:");
         foreach (var g in groups)
         {
             g.who.Sort((a, b) => a.level.CompareTo(b.level));
@@ -830,7 +834,7 @@ public static class GmCommands
         if (it == null) { c.Reply($"No item called '{typed}'."); return; }
 
         var type = ItemTypes.Of(it);
-        var head = new StringBuilder($"<color=#C8A862>{it.displayName}</color> ({it.id}) — {type}");
+        var head = new StringBuilder($"<color={NameHex}>{it.displayName}</color> ({it.id}) — {type}");
         if (type == ItemType.Weapon && it.weaponType != WeaponType.None) head.Append(" · ").Append(it.weaponType);
         else if (type == ItemType.Armor) head.Append(" · ").Append(EquipSlots.Label(it.slot));
         if (it.element != Element.Neutral) head.Append(" · ").Append(it.element);
@@ -963,11 +967,11 @@ public static class GmCommands
         var one = ctx.Arg(0);
         if (one != null && byName.TryGetValue(one.TrimStart('/'), out var cmd))
         {
-            ctx.Reply($"<color=#C8A862>/{cmd.usage}</color> — {cmd.summary}");
+            ctx.Reply($"<color={NameHex}>/{cmd.usage}</color> — {cmd.summary}");
             return;
         }
-        ctx.Reply("<color=#C8A862>Commands:</color>");
+        ctx.Reply($"<color={NameHex}>Commands:</color>");
         foreach (var c in all)
-            ctx.Reply($"  <color=#C8A862>/{c.name}</color> — {c.summary}");
+            ctx.Reply($"  <color={NameHex}>/{c.name}</color> — {c.summary}");
     }
 }

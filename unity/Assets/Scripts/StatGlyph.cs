@@ -3,18 +3,16 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Stat Family Icon Set v1 — the six primary-stat glyphs (STR/AGI/VIT/INT/DEX/LUK) drawn in the
-/// SAME procedural ink+gold line-art vocabulary as <see cref="Ornament"/> (thin gold bars + small
-/// rotated-square "diamonds"). They sit in the left gutter of each <see cref="StatPanel"/> row so the
+/// procedural line-art in the theme's accent colour (thin bars + small rotated-square "diamonds"). They sit in the left gutter of each <see cref="StatPanel"/> row so the
 /// six rows gain visual rhythm and the eye can find a stat by its mark, not by reading the label.
 ///
 /// Direction (GPT⇄Claude relay, 2026-06-25): the Character panel was the flattest panel; per the ROI
-/// order ("make information more recognizable, not add more decoration") this is the next gain after
-/// Ornament Kit v1.1 locked. Guardrails inherited from the kit:
-///   • monochrome GOLD only (never competes with rarity colors),
+/// order ("make information more recognizable, not add more decoration"). Guardrails:
+///   • one colour only, the theme's accent,
 ///   • ~1.5–2.5px stroke weight (line-art, must survive 720p / small windows / Steam Deck),
 ///   • recognition over literalism — each glyph is a distinct EMBLEM, not an illustration,
 ///   • drop-in sprite hook (<see cref="art"/>) so a hand-drawn icon family can replace any glyph later
-///     with zero layout change (exactly like Ornament's cornerArt/dividerArt hooks).
+///     with zero layout change.
 ///
 /// Distinct silhouettes (the whole point — they must read apart at ~18px):
 ///   STR ∧ wedge/anvil · AGI » speed chevrons · VIT ✚ cross · INT ◇ gem ring · DEX ↗ aim arrow · LUK ✦ sparkle
@@ -27,8 +25,8 @@ public static class StatGlyph
     /// UIShellBuilder once a hand-drawn icon family exists.</summary>
     public static readonly Sprite[] art = new Sprite[6];
 
-    static Color Gold     => UiKit.Gold;
-    static Color GoldSoft => new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.55f);
+    static Color Ink     => UiKit.Accent;
+    static Color InkSoft => new Color(UiKit.Accent.r, UiKit.Accent.g, UiKit.Accent.b, 0.55f);
 
     /// <summary>Build the glyph for <paramref name="stat"/> into a fixed <paramref name="box"/>-sized,
     /// centre-anchored holder under <paramref name="parent"/>. The holder is transparent and carries a
@@ -71,7 +69,7 @@ public static class StatGlyph
     static void Agi(RectTransform p)
     {
         Chevron(p, -2.5f, 1f);
-        Chevron(p,  3.5f, 1f, GoldSoft);       // trailing chevron faded = motion trail
+        Chevron(p,  3.5f, 1f, InkSoft);       // trailing chevron faded = motion trail
     }
 
     // a ">" chevron (peak at right) centred at (cx,cy).
@@ -95,7 +93,7 @@ public static class StatGlyph
         Bar(p,  3.4f, -3.4f, 1.7f, 10f, -45f);   // bottom-right edge "/"
         Bar(p, -3.4f, -3.4f, 1.7f, 10f,  45f);   // bottom-left edge "\"
         Bar(p, -3.4f,  3.4f, 1.7f, 10f, -45f);   // top-left edge "/"
-        Diamond(p, 0f, 0f, 3.4f, Gold);          // centre stud
+        Diamond(p, 0f, 0f, 3.4f, Ink);          // centre stud
     }
 
     // DEX — an aim arrow ↗ (precision). A "/" shaft + an L-shaped head at the upper-right tip.
@@ -114,14 +112,14 @@ public static class StatGlyph
         Bar(p, 0f, 0f, 15f, 1.6f);            // horizontal ray
         Bar(p, 0f, 0f, 1.5f, 12f,  45f);      // diagonal ray "\"
         Bar(p, 0f, 0f, 1.5f, 12f, -45f);      // diagonal ray "/"
-        Diamond(p, 0f, 0f, 5f, Gold);          // bright centre
+        Diamond(p, 0f, 0f, 5f, Ink);          // bright centre
     }
 
-    // ---- primitives (mirror Ornament's Bar/Diamond, but centre-anchored for a self-contained glyph) ----
+    // ---- primitives (bars and diamonds, centre-anchored for a self-contained glyph) ----
 
     static Image Bar(RectTransform p, float x, float y, float w, float h, float angle = 0f, Color? c = null)
     {
-        var img = UiKit.Img("g", p, c ?? Gold);
+        var img = UiKit.Img("g", p, c ?? Ink);
         img.raycastTarget = false;
         var rt = img.rectTransform;
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
@@ -136,7 +134,7 @@ public static class StatGlyph
 
     static void Sprite(RectTransform holder, Sprite s, float box)
     {
-        var img = UiKit.Img("Art", holder, Gold);
+        var img = UiKit.Img("Art", holder, Ink);
         img.sprite = s; img.preserveAspect = true; img.raycastTarget = false;
         var rt = img.rectTransform;
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);

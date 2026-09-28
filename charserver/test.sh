@@ -6,9 +6,10 @@ LOGIN=http://127.0.0.1:8080
 CHAR=http://127.0.0.1:8081
 # A save is written only through the server-to-server door, with the secret both servers share. Read from the
 # same file charserver/run.sh reads it from, so the test can never disagree with the server it is testing.
-HERE="$(cd "$(dirname "$0")" && pwd)"
-SECRET="${SERVER_SECRET:-$(grep '^SERVER_SECRET=' "$HERE/../accounts/.env" | cut -d= -f2-)}"
-[ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in accounts/.env"; exit 1; }
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+. "$REPO/tools/load-settings.sh"
+SECRET="${SERVER_SECRET:-}"
+[ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in settings.env"; exit 1; }
 EMAIL="e2e-$(date +%s)-$$@example.com"
 NAME="E2E$(date +%s | tail -c 6)"
 fail() { echo "FAIL: $1"; exit 1; }

@@ -14,7 +14,7 @@ How players go from a random drop to a deliberate build. Companion to **Weapon R
 >
 > **Status: MOSTLY DESIGN.** Re-verified 2026-09-10: *Potential*, *Essence*, *Reforge* and *Transmog* appear in **zero** source files, and there is still no way to forge anything. What IS built: the five-tier rarity ladder driving item presentation, the refine level equipment carries and saves, the per-copy rolled rarity and rolled skill kit, and — since 2026-09-09 — the **rarity output lift**, which is live and scaling real damage. Everything else on this page is unbuilt.
 >
-> ⚠️ **The game has a "wardrobe", and it is NOT this one.** The in-game wardrobe recolours the character's clothing per part and saves the dye with the character. It has nothing to do with Transmog's appearance-collection below — same word, different feature. Don't read one as evidence of the other.
+> ⚠️ **Clothing colour is NOT this.** A character's clothing colours are chosen once, at character creation, and saved with the character. That has nothing to do with Transmog's appearance-collection below. Don't read one as evidence of the other.
 
 ## Philosophy — fate → forge → commit
 

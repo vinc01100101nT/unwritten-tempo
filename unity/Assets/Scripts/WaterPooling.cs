@@ -200,6 +200,43 @@ public static class WaterPooling
         }
     }
 
+    /// <summary>Which squares of the ground grid lie on a sheet's level ground: a square gets sheet index + 1 in
+    /// <paramref name="levelOf"/> when an exactly-level triangle at that sheet's height covers its centre and is the
+    /// top ground there (<paramref name="grid"/>, from <see cref="RaiseToGround"/>). A slope that only passes through
+    /// a sheet's height is never level ground, so it holds no sheet. Feed every ground mesh in turn.</summary>
+    public static void MarkLevelGround(Vector3[] verts, int[] tris, Matrix4x4 toWorld, List<FlatHeight> films, int filmCount,
+                                       float[] grid, float originX, float originZ, float cell, int nx, int nz, byte[] levelOf)
+    {
+        for (int t = 0; t + 2 < tris.Length; t += 3)
+        {
+            Vector3 a = toWorld.MultiplyPoint3x4(verts[tris[t]]);
+            Vector3 b = toWorld.MultiplyPoint3x4(verts[tris[t + 1]]);
+            Vector3 c = toWorld.MultiplyPoint3x4(verts[tris[t + 2]]);
+            if (Mathf.Abs(a.y - b.y) > SameHeight || Mathf.Abs(a.y - c.y) > SameHeight) continue;
+            int film = -1;
+            for (int i = 0; i < filmCount && film < 0; i++)
+                if (a.y >= films[i].y - SameHeight && a.y <= films[i].top + SameHeight) film = i;
+            if (film < 0) continue;
+            float det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+            if (Mathf.Abs(det) < 1e-9f) continue;
+
+            int i0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(a.x, Mathf.Min(b.x, c.x)) - originX) / cell - 0.5f));
+            int i1 = Mathf.Min(nx - 1, Mathf.CeilToInt((Mathf.Max(a.x, Mathf.Max(b.x, c.x)) - originX) / cell - 0.5f));
+            int j0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(a.z, Mathf.Min(b.z, c.z)) - originZ) / cell - 0.5f));
+            int j1 = Mathf.Min(nz - 1, Mathf.CeilToInt((Mathf.Max(a.z, Mathf.Max(b.z, c.z)) - originZ) / cell - 0.5f));
+            for (int j = j0; j <= j1; j++)
+                for (int i = i0; i <= i1; i++)
+                {
+                    float px = originX + (i + 0.5f) * cell, pz = originZ + (j + 0.5f) * cell;
+                    float wa = ((b.z - c.z) * (px - c.x) + (c.x - b.x) * (pz - c.z)) / det;
+                    float wb = ((c.z - a.z) * (px - c.x) + (a.x - c.x) * (pz - c.z)) / det;
+                    if (wa < 0f || wb < 0f || 1f - wa - wb < 0f) continue;
+                    int k = j * nx + i;
+                    if (Mathf.Abs(a.y - grid[k]) <= SameHeight) levelOf[k] = (byte)(film + 1);
+                }
+        }
+    }
+
     /// <summary>How much rain runs to each square of a ground grid that holds water, 0..1: for the rising ground
     /// within <see cref="RunoffReach"/>, the most of (its rise over <see cref="RunoffFullRise"/>, capped at 1) × (how
     /// near it is). Flat ground with nothing rising near it gets 0; the foot of a slope or a cliff gets the most.
@@ -556,6 +593,24 @@ public static class WaterPooling
     {
         foreach (int c in w.own) if (grid[c] < lake.level) lake.cells.Add(c);
         foreach (int kid in w.kids) Collect(ws, ws.hollows[kid], grid, lake);
+    }
+
+    /// <summary>Where each lake of <paramref name="upper"/> (the lakes at a little more rain) stood at the rain just
+    /// below it (<paramref name="lower"/>), so its surface can glide between the two instead of jumping: water only
+    /// rises with rain, so every lower lake lies inside one upper lake — the one <paramref name="bodyOf"/> marks on its
+    /// first square (body index + 1, upper lake k being body <paramref name="firstLake"/> + k). An upper lake with no
+    /// lower lake inside it starts just under its own lowest ground, so it grows from nothing. Fills
+    /// <paramref name="from"/>[firstLake + k].</summary>
+    public static void StartLevels(List<Lake> lower, List<Lake> upper, int upperCount, byte[] bodyOf, int firstLake, float[] from)
+    {
+        for (int k = 0; k < upperCount; k++) from[firstLake + k] = upper[k].bottom - 2f * HeightTolerance;
+        foreach (var l in lower)
+        {
+            if (l.cells.Count == 0) continue;
+            int body = bodyOf[l.cells[0]] - 1;
+            if (body < firstLake || body >= firstLake + upperCount) continue;
+            from[body] = Mathf.Min(upper[body - firstLake].level, Mathf.Max(from[body], l.level));
+        }
     }
 
     /// <summary>A 0..1 value stored the way an 8-bit texture holds it, so what is drawn and what is asked agree.</summary>

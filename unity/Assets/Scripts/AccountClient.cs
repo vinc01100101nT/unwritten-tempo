@@ -60,6 +60,11 @@ public static class AccountClient
             request.SetRequestHeader("Content-Type", "application/json");
         }
         if (!string.IsNullOrEmpty(bearerToken)) request.SetRequestHeader("Authorization", "Bearer " + bearerToken);
+        // WHICH VERSION THIS COPY IS, so the character server can turn an outdated one away with a message to
+        // update instead of letting it into a world it no longer matches. Stamped into the copy's settings file by
+        // tools/publish-update.py; a copy that was never published (the editor, a build on this desk) sends none.
+        var gameVersion = ServerAddress.Setting("GAME_VERSION");
+        if (!string.IsNullOrEmpty(gameVersion)) request.SetRequestHeader("X-Game-Version", gameVersion);
 
         request.SendWebRequest().completed += _ =>
         {

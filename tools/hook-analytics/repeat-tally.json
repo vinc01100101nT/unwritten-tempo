@@ -1,20 +1,9 @@
 {
-  "7c69e1a3-4830-490f-a8d2-3f1fccafeb0a": {
+  "36567d40-b2f3-4279-92d5-baa2c75e691c": {
     "counts": {
-      "check-perf-hotpaths.py 2>&1": 5,
-      "check-unity-code.sh 2>&1": 15,
-      "recompile 2>&1": 3,
-      "recompile _status": 5,
-      "recompile _status\"],capture_output=True,text=True)": 1,
-      "recompile _status\"],capture_output=True,text=True).stdout": 1,
-      "recompile and": 1
-    },
-    "told": [
-      "check-perf-hotpaths.py 2>&1",
-      "check-unity-code.sh 2>&1",
-      "recompile 2>&1",
-      "recompile _status"
-    ]
+      "build-game.sh": 1,
+      "build-game.sh client": 1
+    }
   },
   "966fe462-842a-4f3c-9675-542a1950b59d": {
     "counts": {
