@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Creation</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  body { margin: 0; padding: 32px; background: #0d0e10; font-family: var(--font-ui); }
+  .note { color: #cfd3da; font: 13px system-ui, sans-serif; margin: 0 0 18px; max-width: 820px; }
+
+  /* ---- the creation box, in the game's theme ---- */
+  .create { width: 900px; background: var(--window-edge); padding: 2px; border-radius: 5px; }
+  .fill { background: var(--panel-raise); border-radius: 4px; padding: 14px 20px 18px; }
+  h2 { margin: 0 0 12px; text-align: center; font: 400 20px var(--font-ui); color: var(--title-text); }
+  .cols { display: grid; grid-template-columns: 212px 250px 1fr; gap: 24px; align-items: start; }
+  .cap { font: 13px var(--font-ui); color: var(--text-dim); margin: 0 0 4px; }
+
+  button {
+    font: 14px var(--font-ui); color: var(--button-text); background: var(--button-fill);
+    border: 1px solid var(--button-edge); border-radius: 3px; cursor: pointer;
+  }
+  button:hover { background: var(--hover); border-color: var(--accent); }
+
+  /* preview */
+  .frame { height: 300px; background: #ffffff; border: 2px solid var(--button-edge); display: grid; place-items: center;
+           perspective: 600px; overflow: hidden; }
+  .figure { transition: transform .25s; transform-style: preserve-3d; }
+  .turn { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
+  .turn button { width: 44px; height: 32px; font-size: 18px; }
+
+  /* stats hexagon */
+  .hex svg { display: block; touch-action: none; }
+  .hex text { font: 12px var(--font-ui); fill: var(--text-main); }
+  .hex .val { font: 700 12px var(--font-ui); fill: var(--title-text); }
+  .hex .knob { cursor: grab; }
+
+  /* name / body / colours */
+  .field { height: 30px; border: 1px solid var(--button-edge); border-radius: 3px; background: var(--slot-fill);
+           display: flex; align-items: center; padding: 0 8px; font: 14px var(--font-ui); color: var(--text-main); margin-bottom: 12px; }
+  .body-pick { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+  .body-pick button { width: 40px; height: 30px; }
+  .body-pick span { width: 140px; text-align: center; font: 15px var(--font-ui); color: var(--text-main); }
+  .swatches { display: flex; gap: 6px; margin-bottom: 10px; }
+  .swatch { width: 26px; height: 26px; border: 2px solid var(--button-edge); cursor: pointer; box-sizing: border-box; }
+  .swatch.on { border-color: var(--accent); }
+
+  /* colour picker (square + hue strip + HEX) */
+  .picker { border: 1px solid var(--button-edge); border-radius: 3px; overflow: hidden; background: var(--slot-fill); }
+  .pick-top { display: grid; grid-template-columns: 90px 1fr; height: 130px; }
+  .chosen { }
+  .sv { position: relative; cursor: crosshair; }
+  .sv::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, #fff, rgba(255,255,255,0)); }
+  .sv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, #000, rgba(0,0,0,0)); }
+  .sv .ring { position: absolute; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%;
+              transform: translate(-50%, -50%); z-index: 2; box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none; }
+  .hue { position: relative; height: 10px; margin: 12px 14px; border-radius: 5px; cursor: pointer;
+         background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+  .hue .ring { position: absolute; top: 50%; width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%;
+               transform: translate(-50%, -50%); box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none; }
+  .hexrow { display: flex; align-items: center; gap: 6px; margin: 0 14px 12px; }
+  .hexrow label { font: 12px var(--font-ui); color: var(--text-dim); }
+  .hexrow input { flex: 1; height: 26px; border: 1px solid var(--button-edge); border-radius: 3px; text-align: center;
+                  font: 14px var(--font-ui); color: var(--text-main); background: var(--slot-fill); }
+  .hexrow button { width: 30px; height: 28px; font-size: 13px; }
+
+  .actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+  .actions button { width: 140px; height: 34px; }
+</style>
+</head>
+<body>
+<p class="note">Drag a corner of the hexagon (or click a stat's name) to shift points between it and the stat opposite.
+Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D character; the arrows turn it.</p>
+
+<section class="create" data-mocks="Character Select">
+  <div class="fill">
+    <h2>A new character</h2>
+    <div class="cols">
+      <div>
+        <div class="frame"><svg class="figure" id="fig" width="120" height="260" viewBox="0 0 120 260"></svg></div>
+        <div class="turn"><button id="left" title="Turn left">⟲</button><button id="right" title="Turn right">⟳</button></div>
+      </div>
+
+      <div class="hex">
+        <p class="cap">Stats</p>
+        <svg id="hex" width="250" height="250" viewBox="-125 -125 250 250"></svg>
+      </div>
+
+      <div>
+        <p class="cap">Name</p>
+        <div class="field">Ariona</div>
+        <p class="cap">Body</p>
+        <div class="body-pick"><button id="prev">&lt;</button><span id="bodyn">Body 1 of 6</span><button id="next">&gt;</button></div>
+        <p class="cap">Colours</p>
+        <div class="swatches" id="swatches"></div>
+        <div class="picker">
+          <div class="pick-top"><div class="chosen" id="chosen"></div><div class="sv" id="sv"><div class="ring" id="svring"></div></div></div>
+          <div class="hue" id="hue"><div class="ring" id="huering"></div></div>
+          <div class="hexrow"><label>HEX</label><input id="hexin" spellcheck="false"><button id="copy" title="Copy">⧉</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions"><button>Create</button><button>Cancel</button></div>
+  </div>
+</section>
+
+<script>
+/* ---------- stats hexagon ---------- */
+// Around the ring; each stat's opposite is three places on. Each pair always adds up to 10, each stat 1..9.
+const STATS = ["STR", "AGI", "VIT", "INT", "LUK", "DEX"];
+const val = [5, 5, 5, 5, 5, 5];
+const R = 90, NS = "http://www.w3.org/2000/svg";
+const hex = document.getElementById("hex");
+const ang = i => -Math.PI / 2 + i * Math.PI / 3;
+const pt = (i, v) => [Math.cos(ang(i)) * R * v / 9, Math.sin(ang(i)) * R * v / 9];
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+function set(i, v) { v = Math.max(1, Math.min(9, Math.round(v))); val[i] = v; val[(i + 3) % 6] = 10 - v; drawHex(); }
+function drawHex() {
+  hex.innerHTML = "";
+  for (let r = 3; r <= 9; r += 3)
+    el("polygon", { points: STATS.map((_, i) => pt(i, r).join(",")).join(" "), fill: "none", stroke: "var(--rule)" }, hex);
+  STATS.forEach((_, i) => el("line", { x1: 0, y1: 0, x2: pt(i, 9)[0], y2: pt(i, 9)[1], stroke: "var(--rule)" }, hex));
+  el("polygon", { points: STATS.map((_, i) => pt(i, val[i]).join(",")).join(" "),
+                  fill: "var(--hover)", stroke: "var(--accent)", "stroke-width": 2 }, hex);
+  STATS.forEach((s, i) => {
+    const [x, y] = pt(i, val[i]);
+    const k = el("circle", { cx: x, cy: y, r: 6, fill: "var(--accent)", class: "knob" }, hex);
+    k.onpointerdown = e => { k.setPointerCapture(e.pointerId); k.onpointermove = m => drag(i, m); };
+    k.onpointerup = () => { k.onpointermove = null; };
+    const [lx, ly] = pt(i, 11.4);
+    const t = el("text", { x: lx, y: ly - 3, "text-anchor": "middle", style: "cursor:pointer" }, hex); t.textContent = s;
+    t.onclick = () => set(i, val[i] + 1);
+    const n = el("text", { x: lx, y: ly + 11, "text-anchor": "middle", class: "val" }, hex); n.textContent = val[i];
+  });
+}
+function drag(i, e) {
+  const b = hex.getBoundingClientRect(), x = e.clientX - b.left - 125, y = e.clientY - b.top - 125;
+  const along = x * Math.cos(ang(i)) + y * Math.sin(ang(i));
+  set(i, along / R * 9);
+}
+drawHex();
+
+/* ---------- colours: part swatches + picker ---------- */
+const parts = ["#3b5ba5", "#6b4a2e", "#2f2f35", "#c9a14a"];
+let part = 0, H = 0, S = 0, V = 0;
+const sw = document.getElementById("swatches");
+function hsv2hex(h, s, v) {
+  const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+  return "#" + [f(5), f(3), f(1)].map(c => Math.round(c * 255).toString(16).padStart(2, "0")).join("");
+}
+function hex2hsv(hx) {
+  const r = parseInt(hx.slice(1, 3), 16) / 255, g = parseInt(hx.slice(3, 5), 16) / 255, b = parseInt(hx.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, mx ? d / mx : 0, mx];
+}
+function drawSwatches() {
+  sw.innerHTML = "";
+  parts.forEach((c, i) => {
+    const d = document.createElement("div"); d.className = "swatch" + (i === part ? " on" : ""); d.style.background = c;
+    d.onclick = () => { part = i; [H, S, V] = hex2hsv(parts[i]); drawSwatches(); drawPicker(); };
+    sw.appendChild(d);
+  });
+}
+function drawPicker() {
+  const c = hsv2hex(H, S, V);
+  document.getElementById("sv").style.background = hsv2hex(H, 1, 1);
+  document.getElementById("svring").style.left = S * 100 + "%";
+  document.getElementById("svring").style.top = (1 - V) * 100 + "%";
+  document.getElementById("huering").style.left = H / 360 * 100 + "%";
+  document.getElementById("huering").style.background = hsv2hex(H, 1, 1);
+  document.getElementById("chosen").style.background = c;
+  const hi = document.getElementById("hexin"); if (document.activeElement !== hi) hi.value = c;
+  parts[part] = c; sw.children[part].style.background = c; drawFigure();
+}
+function track(el, fn) {
+  el.onpointerdown = e => { el.setPointerCapture(e.pointerId); fn(e); el.onpointermove = fn; };
+  el.onpointerup = () => { el.onpointermove = null; };
+}
+const clamp = v => Math.max(0, Math.min(1, v));
+track(document.getElementById("sv"), e => {
+  const b = e.currentTarget.getBoundingClientRect();
+  S = clamp((e.clientX - b.left) / b.width); V = 1 - clamp((e.clientY - b.top) / b.height); drawPicker();
+});
+track(document.getElementById("hue"), e => {
+  const b = e.currentTarget.getBoundingClientRect(); H = clamp((e.clientX - b.left) / b.width) * 359.9; drawPicker();
+});
+document.getElementById("hexin").oninput = e => {
+  const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { [H, S, V] = hex2hsv(v.toLowerCase()); drawPicker(); }
+};
+document.getElementById("copy").onclick = () => navigator.clipboard && navigator.clipboard.writeText(document.getElementById("hexin").value);
+
+/* ---------- stand-in figure + turning ---------- */
+const fig = document.getElementById("fig");
+let turn = 0;
+function drawFigure() {
+  fig.innerHTML =
+    `<circle cx="60" cy="34" r="22" fill="#e8c4a0"/>` +
+    `<path d="M38 22 Q60 -4 82 22 L82 30 Q60 18 38 30 Z" fill="${parts[3]}"/>` +
+    `<rect x="34" y="60" width="52" height="80" rx="10" fill="${parts[0]}"/>` +
+    `<rect x="36" y="140" width="22" height="80" rx="6" fill="${parts[1]}"/>` +
+    `<rect x="62" y="140" width="22" height="80" rx="6" fill="${parts[1]}"/>` +
+    `<rect x="32" y="218" width="28" height="16" rx="5" fill="${parts[2]}"/>` +
+    `<rect x="60" y="218" width="28" height="16" rx="5" fill="${parts[2]}"/>`;
+}
+function spin(d) { turn += d; fig.style.transform = `rotateY(${turn}deg)`; }
+document.getElementById("left").onclick = () => spin(-45);
+document.getElementById("right").onclick = () => spin(45);
+
+/* ---------- body stepper (no model name shown) ---------- */
+let body = 1; const BODIES = 6;
+function showBody() { document.getElementById("bodyn").textContent = `Body ${body} of ${BODIES}`; }
+document.getElementById("prev").onclick = () => { body = body === 1 ? BODIES : body - 1; showBody(); };
+document.getElementById("next").onclick = () => { body = body === BODIES ? 1 : body + 1; showBody(); };
+
+[H, S, V] = hex2hsv(parts[0]); drawSwatches(); drawPicker();
+</script>
+</body>
+</html>

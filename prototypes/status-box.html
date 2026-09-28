@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status Box</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  body { margin: 0; padding: 32px; background: #3b4a3c; font-family: var(--font-ui); }
+  .note { color: #e8e8e8; font: 13px system-ui, sans-serif; margin: 0 0 18px; max-width: 640px; }
+
+  /* ---- the status box: one window, drawn in the game's theme ---- */
+  .box { width: 340px; background: var(--window-edge); padding: 1px; border-radius: 5px; }
+  .body { background: var(--panel-fill); border-radius: 4px; overflow: hidden; }
+  .head {
+    height: 24px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 10px;
+    background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+    color: var(--title-text); font: 700 13px var(--font-ui);
+  }
+  .head .lv { flex: 1; }
+  .head .z { font-weight: 400; color: var(--text-main); }
+  .expand {
+    width: 18px; height: 18px; border-radius: 3px; border: 1px solid var(--button-edge);
+    background: var(--button-fill); color: var(--button-text); font: 700 13px/16px var(--font-ui);
+    text-align: center; cursor: pointer; padding: 0;
+  }
+  .expand:hover { background: var(--hover); border-color: var(--accent); }
+  .rows { padding: 6px 10px 8px; display: grid; gap: 5px; }
+  .row { display: grid; grid-template-columns: 124px 1fr; align-items: center; gap: 8px;
+         font: 12px var(--font-ui); color: var(--text-main); }
+  .bar { position: relative; height: 12px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; }
+  .bar span { position: absolute; inset: 0; text-align: center; font: 700 10px/12px var(--font-ui); color: var(--text-main); }
+  .char i { background: rgba(140, 217, 128, 0.9); }
+  .ring i { background: rgba(140, 204, 255, 0.9); }
+  .mastery i { background: #ff0f00; }
+
+  .windows { display: none; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0 10px 10px; }
+  .box.open .windows { display: grid; }
+  .windows button {
+    height: 24px; border-radius: 3px; border: 1px solid var(--button-edge); background: var(--button-fill);
+    color: var(--button-text); font: 12px var(--font-ui); cursor: pointer;
+  }
+  .windows button:hover { background: var(--hover); border-color: var(--accent); }
+</style>
+</head>
+<body>
+<p class="note">Left: closed. Right: after clicking + (click either one to toggle). The numbers are sample values.</p>
+
+<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
+<section class="box"  data-mocks="Status Box">
+  <div class="body">
+    <div class="head">
+      <span class="lv"></span>
+      <span class="z">2,089 z</span>
+      <button class="expand" title="Windows">+</button>
+    </div>
+    <div class="rows">
+      <div class="row"><span>Lv 12</span><div class="bar char"><i style="width:62%"></i><span>1,240 / 2,000</span></div></div>
+      <div class="row"><span>Ring Lv 3</span><div class="bar ring"><i style="width:35%"></i><span>70 / 200</span></div></div>
+      <div class="row"><span>Sword Mastery Lv 4</span><div class="bar mastery"><i style="width:48%"></i><span>24 / 50</span></div></div>
+    </div>
+    <div class="windows">
+      <button>Inventory</button><button>Character</button><button>Skills</button>
+      <button>Calendar</button><button>World Map</button><button>Minimap</button>
+      <button>Chat</button><button>Settings</button><button>System</button>
+    </div>
+  </div>
+</section>
+<section class="box open"  data-mocks="Status Box">
+  <div class="body">
+    <div class="head">
+      <span class="lv"></span>
+      <span class="z">2,089 z</span>
+      <button class="expand" title="Windows">−</button>
+    </div>
+    <div class="rows">
+      <div class="row"><span>Lv 12</span><div class="bar char"><i style="width:62%"></i><span>1,240 / 2,000</span></div></div>
+      <div class="row"><span>Ring Lv 3</span><div class="bar ring"><i style="width:35%"></i><span>70 / 200</span></div></div>
+      <div class="row"><span>Sword Mastery Lv 4</span><div class="bar mastery"><i style="width:48%"></i><span>24 / 50</span></div></div>
+    </div>
+    <div class="windows">
+      <button>Inventory</button><button>Character</button><button>Skills</button>
+      <button>Calendar</button><button>World Map</button><button>Minimap</button>
+      <button>Chat</button><button>Settings</button><button>System</button>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+  for (const box of document.querySelectorAll(".box")) {
+    const btn = box.querySelector(".expand");
+    btn.onclick = () => { const open = box.classList.toggle("open"); btn.textContent = open ? "−" : "+"; };
+  }
+</script>
+</body>
+</html>
