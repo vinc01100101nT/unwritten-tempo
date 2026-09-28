@@ -181,3 +181,14 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
   *Done when:* killing an elite reliably produces something an ordinary creature never gives.
 
 ---
+
+## Backlog — real work, deliberately not in the weeks above
+
+Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
+
+- [DONE] `MT-47` **`[D]` Decide whether the ten smallest creatures get bigger collision shapes.** Decided 2026-09-27 by the
+  user: yes, as one general rule, not per creature. Built the same day: any body whose collision shape is too short
+  for the full 0.075 m step is grown just tall enough (bottom and width unchanged); all 98 creatures now step 0.075 m.
+  — **0.5 days**
+
+---

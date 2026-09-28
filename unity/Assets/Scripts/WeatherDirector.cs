@@ -115,12 +115,99 @@ public class WeatherDirector : MonoBehaviour
     /// inspector override below.</summary>
     public static Preset? ForcedByServer { get; private set; }
 
-    /// <summary>Take the weather the server holds — null when it holds none. On a server this is the command setting
-    /// it; on a player's machine it is the server's word arriving.</summary>
-    public static void TakeForced(Preset? preset) => ForcedByServer = preset;
+    /// <summary>When the weather the server holds began (world-clock epoch seconds), and what it held before then (null
+    /// = the calendar's weather) and since when — so every player knows how long it has rained, whenever they arrived.</summary>
+    public static double ForcedSince { get; private set; }
+    public static Preset? ForcedBefore { get; private set; }
+    public static double ForcedBeforeSince { get; private set; }
+
+    /// <summary>On the server: hold <paramref name="preset"/> (null = none) from now, remembering what it replaces.</summary>
+    public static void TakeForced(Preset? preset)
+    {
+        if (preset == ForcedByServer) return;
+        TakeForced(preset, WorldClock.EpochSecondsNow, ForcedByServer, ForcedSince);
+    }
+
+    /// <summary>Take the weather the server holds, with when it began and what came before it — on a server the
+    /// command setting it, on a player's machine the server's word arriving.</summary>
+    public static void TakeForced(Preset? preset, double since, Preset? before, double beforeSince)
+    {
+        ForcedByServer = preset;
+        ForcedSince = since;
+        ForcedBefore = before;
+        ForcedBeforeSince = beforeSince;
+    }
+
+    /// <summary>The rain standing water fills from, on the shared world clock (epoch seconds), the same on every
+    /// player's machine: the rain (0..1) of the weather in force and when it began, and the same for the weather before
+    /// it. Read by <see cref="WetGround"/> through <see cref="WaterPooling.Rainfall"/>.</summary>
+    public static float WaterRain { get; private set; }
+    public static double WaterRainSince { get; private set; }
+    public static float WaterRainBefore { get; private set; }
+    public static double WaterRainBeforeSince { get; private set; }
+
+    static readonly float[] rainOf = new float[System.Enum.GetValues(typeof(Preset)).Length];
+    static readonly bool[] rainKnown = new bool[rainOf.Length];
+
+    // How hard a weather rains once it has built up (its rain channel's settled value), worked out once per weather.
+    static float RainOf(Preset p)
+    {
+        int i = (int)p;
+        if (!rainKnown[i])
+        {
+            var seq = WeatherSequences.For(p);
+            rainOf[i] = seq != null ? seq.SettledValue(WeatherChannel.Rain) : 0f;
+            rainKnown[i] = true;
+        }
+        return rainOf[i];
+    }
+
+    long waterDay = long.MinValue;
+    double waterForcedSince = double.NaN;
+    Preset? waterForced;
+
+    // Work out the rain history for the water — only when the day or the server's held weather changes.
+    void UpdateWaterRain()
+    {
+        var tod = TimeOfDay.Instance;
+        if (tod == null) return;
+        long day = tod.DayIndex;
+        if (day == waterDay && ForcedByServer == waterForced && ForcedSince.Equals(waterForcedSince)) return;
+        waterDay = day;
+        waterForced = ForcedByServer;
+        waterForcedSince = ForcedSince;
+
+        double dayLen = tod.DayLengthSeconds;
+        double epoch = WorldClock.ToEpochSeconds(TimeOfDay.Epoch) - TimeOfDay.ShiftSeconds;
+        if (ForcedByServer.HasValue)
+        {
+            WaterRain = RainOf(ForcedByServer.Value);
+            WaterRainSince = ForcedSince;
+            if (ForcedBefore.HasValue)
+            {
+                WaterRainBefore = RainOf(ForcedBefore.Value);
+                WaterRainBeforeSince = ForcedBeforeSince;
+            }
+            else
+            {
+                // Before the server held one, the calendar's weather for the day the hold began.
+                long then = (long)System.Math.Floor((ForcedSince - epoch) / dayLen);
+                WaterRainBefore = RainOf(PresetForDay(then));
+                WaterRainBeforeSince = epoch + then * dayLen;
+            }
+        }
+        else
+        {
+            WaterRain = RainOf(PresetForDay(day));
+            WaterRainSince = epoch + day * dayLen;
+            WaterRainBefore = RainOf(PresetForDay(day - 1));
+            WaterRainBeforeSince = epoch + (day - 1) * dayLen;
+        }
+    }
 
     void Update()
     {
+        UpdateWaterRain();
         if (ForcedByServer.HasValue)
         {
             var held = ForcedByServer.Value;

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-26
+last-updated: 2026-09-28
 tags:
   - ai-learnings
 ---
@@ -33,6 +33,13 @@ The first corrected attempt then showed the second half of this lesson. It loade
 showed the character server throwing out the connection that had just come in, and that change was reverted
 before it reached the user. A hand-built replay would not have caught that either.
 
+2026-09-27, the same failure in arithmetic: rain lakes were checked with each function called on its own and with a
+replay over every real map that printed lake COUNTS and AREAS — all plausible. Nobody printed a lake's LEVEL. The game
+chains the two functions (hollows found at the deepest depth, then filled to that same depth), and in that chain a
+lake beside dry land never stopped rising: its level was infinity, so it flooded whole 0.5 m squares of the map at
+any height. The user saw square-edged water and water that "never rose", and it cost a round plus a 15-minute
+debugger run; a replay that printed the levels would have shown `inf` on the first map.
+
 ## How to apply
 
 - If the project has a way to play the real client without a window (here: the `unwritten-game` MCP,
@@ -42,5 +49,8 @@ before it reached the user. A hand-built replay would not have caught that eithe
   unique to the change.
 - If the outcome is not visible in the tool's text, add a permanent log line at the decision (success AND
   failure). Silence is how the original bug hid.
+- In a replay, print the VALUES the screen will use (a level, a height, a price), not only counts and sizes — a
+  count stays plausible while the value behind it is infinity. Replay the functions chained exactly as the caller
+  chains them, with the same arguments.
 - Read the whole log of the run, the server's too, not only the line you expected. The self-kick was two lines
   away from the success line.

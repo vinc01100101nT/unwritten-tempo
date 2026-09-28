@@ -24,9 +24,12 @@ Two numbers, both in `GroundElevation`:
 **On the bodies.** `GroundElevation.ApplyWalkRules` puts both numbers on a body's controller. The player and every
 townsperson get them through the shared character capsule (`CharacterSpec.ApplyCapsule`), and every creature gets
 them when its mover starts (`PathAgent3D`). A creature's baked prefab no longer decides its own step: before this,
-creature steps ran from 0.039 m to 0.23 m. The one exception is physical: Unity refuses a step taller than a
-controller's capsule can take, so the 10 smallest creatures are held at 0.039–0.07 m — measured on the 98 creature
-prefabs; the other 88 take the full 0.075 m.
+creature steps ran from 0.039 m to 0.23 m. **Every body takes the full step, the smallest included:** Unity
+refuses a step taller than a controller's capsule can take, so a capsule too short for it is grown just tall enough
+(0.084 m of scaled height), its bottom kept where it was and its width untouched — only the invisible collision shape
+changes, never what is drawn. A creature resized to its size (`MobBody.Fit`) gets the rule put back on at the new
+size. Measured on the 98 creature prefabs: every one steps 0.075 m; the ten that were too short (mice, butterflies,
+larvae, moles, molluscs) grew from 0.044–0.078 m to 0.083 m. Pinned in the maths checks too.
 
 **On routes.** The route-finder asks `GroundElevation.Walkable` before stepping from one cell to the next: neither
 spot steeper than 45°, and the height change no more than a step plus what the slope under them explains. That is

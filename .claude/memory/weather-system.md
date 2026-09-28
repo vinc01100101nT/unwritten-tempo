@@ -9,8 +9,8 @@ metadata:
 
 Built a full storm stack on branch `experiment/3d-world` (Opus, June 2026), all in `unity/Assets/Scripts/` + `unity/Assets/Shaders/`:
 - `RainOverlay` + `RainScreen.shader` — screen-space rain (depth-layered, randomly-scattered drops).
-- `WetGround` + `WetGround.shader` — depth-based wet darkening, puddles (world-XZ noise on flat ground), faked-fresnel reflection, animated rain ripples + **footstep ripples** (alternating L/R, world-XZ buffer pushed to shader, masked by the puddle mask so they only show on puddles).
-- `PlanarReflection` — true mirror-camera planar reflection into puddles (3D world **and** Crowd-layer billboard sprites; sprites work because upright billboards share the mirror cam's yaw). Weather FX quads moved to **TransparentFX** layer to keep them out of the reflection.
+- `WetGround` + `WetGround.shader` — depth-based wet darkening, puddles (world-XZ noise on 1 cm water sheets over level ground, plus lakes filled from the shared rainfall — docs/2-systems/rain-and-standing-water.md, gotchas in [[water-reflection-quantized-plane-bug]]; `WeatherHeld` carries when a GM weather began), faked-fresnel shine, animated rain ripples + **footstep ripples** (alternating L/R, world-XZ buffer pushed to shader, masked by the puddle mask so they only show on puddles).
+- `PlanarReflection` — true mirror-camera planar reflection into puddles, one mirror per water height on screen (3D world **and** Crowd-layer billboard sprites; sprites work because upright billboards share the mirror cam's yaw). Weather FX quads moved to **TransparentFX** layer to keep them out of the reflection.
 - `RainAudio` — Forest Day/Night Storm loops crossfaded by `TimeOfDay.Night01`, scaled by rain intensity.
 
 **Key decisions (not obvious from code):**

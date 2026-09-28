@@ -674,6 +674,132 @@ static class Checks
         That(!GroundElevation.Walkable(1.5f, 0.5f, 0f, 0f), WalkF, "a cliff must be a wall");
         That(GroundElevation.Walkable(-0.05f, 0.5f, 0f, 0f) == GroundElevation.Walkable(0.05f, 0.5f, 0f, 0f), WalkF,
              "down a step and up it must get the same answer");
+        // Every body takes the full step: a capsule grown to HeightForFullStep accepts it, at any size and scale.
+        foreach (var (radius, sy, sr) in new[]{ (0.013f, 1f, 1f), (0.3f, 0.044f, 0.044f), (0.15f, 1f, 1f), (0.3f, 0.2f, 0.25f), (0.02f, 3f, 0.5f) })
+        {
+            float h = GroundElevation.HeightForFullStep(radius, sy, sr);
+            That(GroundElevation.StepBoundFor(h, radius, sy, sr) >= GroundElevation.MaxClimbStep, WalkF,
+                 "a capsule of radius " + radius + " at scale " + sy + "/" + sr + " grown to " + h + " must take the full step");
+        }
+        That(GroundElevation.HeightForFullStep(0.15f, 1f, 1f) <= 0.5f, WalkF,
+             "the player's 0.5-tall capsule must already take the full step (it must never be grown)");
+    }
+
+    // WHERE RAIN WATER STANDS, and which mirror each puddle shows. A wrong answer is silent: a puddle a few
+    // millimetres off its surface shows a reflection a pixel or two out of place, which nobody can name as a bug.
+    const string WaterF = "unity/Assets/Scripts/WaterPooling.cs";
+    static void WaterRules()
+    {
+        var heights = new[] { 0f, 2.7f, 2.704f, 0.003f };
+        That(WaterPooling.MatchHeight(2.704f, heights, 4) == 2, WaterF, "a cliff top's grass 4 mm over the ground must match its own height, not the ground's");
+        That(WaterPooling.MatchHeight(2.7f, heights, 4) == 1, WaterF, "the ground at 2.7 must match 2.7");
+        That(WaterPooling.MatchHeight(0.0015f, heights, 3) == 0, WaterF, "a surface 1.5 mm over a water height must still lie on it");
+        That(WaterPooling.MatchHeight(1.2f, heights, 4) == -1, WaterF, "ground at no water height must hold no water");
+        That(WaterPooling.MatchHeight(0.002f, heights, 4) == 3, WaterF, "a surface between two close heights must match the NEAREST");
+
+        // A flat square at 0 and a tilted one: only the flat one is water.
+        var verts = new[]
+        {
+            new UnityEngine.Vector3(0, 0, 0), new UnityEngine.Vector3(1, 0, 0), new UnityEngine.Vector3(0, 0, 1), new UnityEngine.Vector3(1, 0, 1),
+            new UnityEngine.Vector3(2, 0, 0), new UnityEngine.Vector3(3, 0.5f, 0), new UnityEngine.Vector3(2, 0, 1),
+        };
+        var tris = new[] { 0, 2, 1, 1, 2, 3, 4, 6, 5 };
+        var found = new List<WaterPooling.FlatHeight>();
+        WaterPooling.AddFlatTriangles(verts, tris, UnityEngine.Matrix4x4.identity, found);
+        That(found.Count == 1 && Math.Abs(found[0].area - 1f) < 1e-4f, WaterF,
+             "one flat unit square and one slope must give one water height of area 1, got " + found.Count);
+        WaterPooling.KeepWaterHeights(found, 16);
+        That(found.Count == 1, WaterF, "a water height of exactly the smallest area must be kept");
+
+        // Runoff: a grid, low on the left half, a 1.5 cliff on the right. The foot of the cliff gets the most, far
+        // flat ground gets none, and the cliff top (nothing above it) gets none.
+        int nx = 20, nz = 3;
+        float cell = WaterPooling.RunoffCell;
+        var grid = new float[nx * nz];
+        for (int j = 0; j < nz; j++) for (int i = 0; i < nx; i++) grid[j * nx + i] = i >= 10 ? 1.5f : 0f;
+        var run = new float[nx * nz];
+        WaterPooling.Runoff(grid, nx, nz, cell, new[] { 0f, 1.5f }, 2, run);
+        var runNoWater = new float[nx * nz];
+        WaterPooling.Runoff(grid, nx, nz, cell, new[] { 1.5f }, 1, runNoWater);
+        That(runNoWater[1 * nx + 9] == 0f, WaterF, "ground at no water height must receive no runoff, got " + runNoWater[1 * nx + 9]);
+        float foot = run[1 * nx + 9], far = run[1 * nx + 0], top = run[1 * nx + 15];
+        That(Math.Abs(foot - (1f - cell / WaterPooling.RunoffReach)) < 1e-4f, WaterF, "the square at a cliff's foot must get almost all the runoff, got " + foot);
+        That(far == 0f, WaterF, "flat ground " + 10 * cell + " units from the cliff (beyond the reach) must get no runoff, got " + far);
+        That(top == 0f, WaterF, "a cliff top with nothing above it must get no runoff, got " + top);
+        That(Math.Abs(WaterPooling.SampleSmooth(run, nx, nz, 0f, 0f, cell, 9.5f * cell, 1.5f * cell) - foot) < 1e-5f, WaterF,
+             "reading the runoff at a square's centre must give that square's own value");
+
+        // Lakes fill from the rain their slopes collect. What the lakes hold must equal what fell on the sloping ground
+        // (the map's edge keeps it in), a map with no slope must hold no lake, and two bowls whose water meets over the
+        // ridge between them must become one lake.
+        int bn = 21;
+        var bowl = new float[bn * bn];
+        for (int j = 0; j < bn; j++) for (int i = 0; i < bn; i++) bowl[j * bn + i] = 0.01f * ((i - 10) * (i - 10) + (j - 10) * (j - 10));
+        var allShed = new bool[bn * bn];
+        for (int k = 0; k < allShed.Length; k++) allShed[k] = true;
+        float rain = 0.02f;
+        var lakes = WaterPooling.Fill(WaterPooling.BuildWatershed(bowl, bn, bn, allShed), bowl, cell, rain);
+        double held = 0;
+        if (lakes.Count == 1) foreach (int c in lakes[0].cells) held += lakes[0].level - bowl[c];
+        That(lakes.Count == 1 && Math.Abs(held - rain * bowl.Length) < 1e-3, WaterF,
+             "a bowl must hold exactly the rain that fell on it: " + rain * bowl.Length + " squares of water, got " + held +
+             " in " + lakes.Count + " lake(s)");
+        var flat = new float[bn * bn];
+        var noShed = new bool[bn * bn];
+        That(WaterPooling.Fill(WaterPooling.BuildWatershed(flat, bn, bn, noShed), flat, cell, 0.04f).Count == 0, WaterF,
+             "level ground everywhere (a town) must collect no lake");
+        var twin = new float[bn * bn];
+        for (int j = 0; j < bn; j++) for (int i = 0; i < bn; i++)
+            twin[j * bn + i] = Math.Min(0.02f * ((i - 5) * (i - 5) + (j - 10) * (j - 10)), 0.02f * ((i - 15) * (i - 15) + (j - 10) * (j - 10)));
+        var twinWs = WaterPooling.BuildWatershed(twin, bn, bn, allShed);
+        That(WaterPooling.Fill(twinWs, twin, cell, 0.002f).Count == 2, WaterF, "two bowls with a little rain must be two lakes");
+        That(WaterPooling.Fill(twinWs, twin, cell, 0.5f).Count == 1, WaterF, "two bowls whose water rises over the ridge must be one lake");
+        // A small bowl under a big slope fills deeper than a big bowl under a small one: the left bowl here drains the
+        // whole left side, the right one only a sliver.
+        var lopsided = new float[bn * bn];
+        for (int j = 0; j < bn; j++) for (int i = 0; i < bn; i++)
+            lopsided[j * bn + i] = i < 16 ? 0.004f * (i - 3) * (i - 3) + 0.001f * (j - 10) * (j - 10) : 0.3f + 0.002f * (i - 18) * (i - 18) + 0.001f * (j - 10) * (j - 10);
+        lakes = WaterPooling.Fill(WaterPooling.BuildWatershed(lopsided, bn, bn, allShed), lopsided, cell, 0.01f);
+        float deepLeft = 0f, deepRight = 0f;
+        foreach (var l in lakes) { int c0 = l.cells[0] % bn; if (c0 < 16) deepLeft = Math.Max(deepLeft, l.level - l.bottom); else deepRight = Math.Max(deepRight, l.level - l.bottom); }
+        That(deepLeft > deepRight, WaterF, "the hollow under the bigger slope must stand deeper, got " + deepLeft + " against " + deepRight);
+
+        // The user's three-step slope: a hollow high on a long slope, a small one just below it, the flat bottom at the
+        // map's edge. The high one overflows; its spill runs down the slope INTO the small one below, which fills to its
+        // rim though its own little slope could not fill it — and only then does water go on to the bottom.
+        int sx = 40, sz = 3;
+        var slope = new float[sx * sz];
+        for (int j = 0; j < sz; j++)
+            for (int i = 0; i < sx; i++)
+                slope[j * sx + i] = 0.02f * i - 0.1f * Math.Max(0f, 1f - Math.Abs(i - 30) / 2.5f) - 0.1f * Math.Max(0f, 1f - Math.Abs(i - 24) / 2.5f);
+        var slopeShed = new bool[sx * sz];
+        for (int k = 0; k < slopeShed.Length; k++) slopeShed[k] = true;
+        lakes = WaterPooling.Fill(WaterPooling.BuildWatershed(slope, sx, sz, slopeShed), slope, cell, 0.008f);
+        WaterPooling.Lake middle = null;
+        foreach (var l in lakes) if (Math.Abs(l.bottom - 0.38f) < 0.005f) middle = l;
+        That(middle != null && middle.level > 0.4199f, WaterF,
+             "the small hollow below an overflowing one must fill to its rim (0.42) with the water running down into it, got " +
+             (middle != null ? middle.level.ToString() : "no lake"));
+
+        // Rain adds a step every 30 seconds (each filling in over 3), up to the most one spell leaves; dry weather drains it.
+        float step = WaterPooling.RainPerStep;
+        That(WaterPooling.Rainfall(1000, 1f, 1000, 0f, 0, 0f) == 0f, WaterF, "no time, no rain");
+        That(Math.Abs(WaterPooling.Rainfall(1003, 1f, 1000, 0f, 0, 0f) - step) < 1e-7f, WaterF, "the first step must be in after 3 seconds");
+        That(Math.Abs(WaterPooling.Rainfall(1029, 1f, 1000, 0f, 0, 0f) - step) < 1e-7f, WaterF, "the rain must hold still between steps");
+        That(Math.Abs(WaterPooling.Rainfall(1033, 1f, 1000, 0f, 0, 0f) - 2 * step) < 1e-7f, WaterF, "30 seconds on, two steps");
+        That(Math.Abs(WaterPooling.Rainfall(1033, 0.5f, 1000, 0f, 0, 0f) - step) < 1e-7f, WaterF, "a half-strength rain must fall half as fast");
+        That(WaterPooling.Rainfall(100000, 1f, 1000, 0f, 0, 0f) == WaterPooling.MostRain, WaterF, "a long rain must stop at the most");
+        That(Math.Abs(WaterPooling.Rainfall(1000 + WaterPooling.DrainSeconds / 2, 0f, 1000, 1f, 0, 0f) - WaterPooling.MostRain / 2) < 1e-6f,
+             WaterF, "after a long rain, half the drain time must leave half the water");
+        That(WaterPooling.Rainfall(1000 + WaterPooling.DrainSeconds * 2, 0f, 1000, 1f, 0, 0f) == 0f, WaterF, "the water must drain away");
+        That(Math.Abs(WaterPooling.Rainfall(5000, 0f, 1000, 0f, 0, 1f) - step) < 1e-7f, WaterF,
+             "a place that always holds water must keep one step of it with no rain");
+        // Level ground a few millimetres apart lies under one sheet.
+        var flats = new List<WaterPooling.FlatHeight> { new WaterPooling.FlatHeight { y = 2.7f, top = 2.7f, area = 5f },
+                                                        new WaterPooling.FlatHeight { y = 2.704f, top = 2.704f, area = 1f },
+                                                        new WaterPooling.FlatHeight { y = 1.5f, top = 1.5f, area = 3f } };
+        var films = WaterPooling.JoinFilms(flats);
+        That(films.Count == 2 && films[0].y == 2.7f && films[0].top == 2.704f, WaterF, "levels 4 mm apart must share one sheet");
     }
 
     static int Main()
@@ -694,6 +820,7 @@ static class Checks
         TimedEffectPause();
         RegenPerSecond();
         WalkingRule();
+        WaterRules();
 
         if (failures == 0)
         {

@@ -1,9 +1,12 @@
 // HEAVY weather: screen-space WET GROUND. Like CloudShadow, a camera-locked full-screen quad reads the scene
 // DEPTH texture, reconstructs each pixel's WORLD position, and re-shades wet surfaces — darkening them and
-// adding a glossy fresnel "reflection" with animated ripples. Puddles are a world-XZ noise mask confined to
-// near-flat surfaces (normal derived from depth via ddx/ddy), so walls/roofs stay dry-ish and only the ground
-// pools water. NOT true SSR (no ray-march): the reflection is a faked sky-tint fresnel + ripple shimmer, which
-// reads as "wet" and suits the stylized art far better than ray-traced reflections.
+// adding a glossy fresnel shine with animated ripples. Standing water is a set of BODIES (WaterSurfaces), each marked
+// on the squares of the map it covers and each with a flat surface: a thin SHEET over each level of flat ground, where
+// a world-XZ noise mask picks the puddles (raised where rain runs off rising ground nearby), and a LAKE in each hollow,
+// water all over, rising as the rain goes on. A pixel is water when its ground lies between its body's floor and
+// surface, so every shoreline is where the ground itself rises out of the water.
+// On High tier each water height on screen has its own planar mirror (PlanarReflection), and a puddle samples the
+// mirror at ITS OWN height, which is how still water reflects; a water height with no mirror left is drawn dry.
 //
 // Single pass with premultiplied blend (One OneMinusSrcAlpha): result = spec + dst*(1 - darken). That lets one
 // pass BOTH darken the surface and add a highlight, with dry pixels (mask 0) left exactly as the camera drew
@@ -51,6 +54,7 @@ Shader "Unwritten/WetGround"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Splash.hlsl"   // rain crown-splash SHAPE primitive (SplashShape)
+            #include "WaterBodies.hlsl"   // the map's bodies of water, shared with the ink outlines
 
             float _Wetness, _RainNow, _Darken, _PuddleScale, _PuddleAmount;
             float _RippleSpeed, _RippleStrength, _SpecStrength, _Flatness;
@@ -59,8 +63,12 @@ Shader "Unwritten/WetGround"
             float4 _ReflectColor;
             float4 _Steps[24];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot). [0,16) player, [16,24) NPCs
 
-            TEXTURE2D(_ReflectionTex);   // global planar-reflection texture (black when reflections are off)
-            SAMPLER(sampler_ReflectionTex);
+            TEXTURE2D(_WaterRunoffTex);
+            SAMPLER(sampler_WaterRunoffTex);
+
+            TEXTURE2D(_ReflectionTex0); TEXTURE2D(_ReflectionTex1); TEXTURE2D(_ReflectionTex2); TEXTURE2D(_ReflectionTex3);
+            TEXTURE2D(_ReflectionTex4); TEXTURE2D(_ReflectionTex5); TEXTURE2D(_ReflectionTex6); TEXTURE2D(_ReflectionTex7);
+            SAMPLER(sampler_ReflectionTex0);
 
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings   { float4 positionHCS : SV_POSITION; };
@@ -89,6 +97,20 @@ Shader "Unwritten/WetGround"
                 float c = hash21(i + float2(0, 1));
                 float d = hash21(i + float2(1, 1));
                 return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
+            }
+
+            float3 SampleMirror(int slot, float2 uv)
+            {
+                float3 c = float3(0, 0, 0);
+                if      (slot == 0) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex0, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 1) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex1, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 2) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex2, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 3) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex3, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 4) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex4, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 5) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex5, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 6) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex6, sampler_ReflectionTex0, uv, 0).rgb;
+                else if (slot == 7) c = SAMPLE_TEXTURE2D_LOD(_ReflectionTex7, sampler_ReflectionTex0, uv, 0).rgb;
+                return c;
             }
 
             float fbm(float2 p)
@@ -158,10 +180,23 @@ Shader "Unwritten/WetGround"
                 //                 darkening — the full puddle look, PERSISTING after the rain has stopped.
                 float flat = saturate(flatW);
 
-                // Puddle mask: low spots of world-XZ noise, only on flat ground. _PuddleAmount IS the live coverage.
-                float pn = fbm(wp.xz * _PuddleScale);
+                // Standing water: in a body of water, and — while mirrors run — only where that surface has a mirror, so
+                // no puddle ever shows another surface's reflection. A lake is water all over; a sheet holds the puddle
+                // pattern below.
+                int water = BodyIndex(wp);
+                bool inLake = water >= 0 && IsLake(water);
+                int mirror = water >= 0 ? MirrorSlot(_WaterLevels[water]) : -1;
+                bool holdsWater = BodyShows(water);
+                // How much of what lies under a lake still shows through it: less the deeper it is.
+                float shows = holdsWater ? UnderWaterShows(wp, water) : 1.0;
+
+                // Puddle mask: world-XZ noise, raised where rain runs off rising ground nearby (WaterPooling.Runoff).
+                // _PuddleAmount IS the live coverage.
+                float runoff = SAMPLE_TEXTURE2D_LOD(_WaterRunoffTex, sampler_WaterRunoffTex,
+                                                    (wp.xz - _WaterRunoffRect.xy) * _WaterRunoffRect.zw, 0).r;
+                float pn = fbm(wp.xz * _PuddleScale) + runoff * _WaterRunoffPull;
                 float puddle = smoothstep(1.0 - _PuddleAmount, 1.0 - _PuddleAmount + 0.18, pn);
-                float wet = saturate(puddle * flat) * _Wetness;
+                float wet = holdsWater ? (inLake ? 1.0 : saturate(puddle)) * _Wetness : 0.0;
 
                 // Open-ground rain impact has a rain-intensity ONSET: nothing in a drizzle, easing in above
                 // _GroundImpactStart and reaching full at heavy rain. (Puddle rings below still use raw _RainNow, so
@@ -214,15 +249,21 @@ Shader "Unwritten/WetGround"
                     }
                     spec += _ReflectColor.rgb * steps * wet;
 
-                    // Planar reflection: sample the mirror RT at this screen pixel, ripple-distorted, blended by
-                    // wetness. Contributes nothing when reflections are off (texture is bound to black).
+                    // Planar reflection: sample THIS water height's mirror at this screen pixel, ripple-distorted,
+                    // blended by wetness. Contributes nothing when no mirror runs. Water reflects more the lower the
+                    // view skims it (Fresnel): at the game's usual steep view this is _ReflStrength, rising to a full
+                    // mirror as the view flattens toward the surface.
                     float2 ruv = saturate(uv + N.xz * _ReflDistort);
                     ruv.y = lerp(ruv.y, 1.0 - ruv.y, _ReflFlipY);
-                    float3 refl = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, ruv).rgb;
-                    spec += refl * (wet * _ReflStrength);
+                    float3 refl = SampleMirror(mirror, ruv);
+                    float skim = pow(1.0 - saturate(V.y), 5.0);
+                    spec += refl * (wet * lerp(_ReflStrength, 1.0, skim));
                 }
 
-                return half4(spec, _Darken * wet);   // premultiplied: add spec, darken puddles by _Darken*wet
+                // Premultiplied: what was drawn is kept at (1 - alpha). A sheet darkens the wet ground under it by _Darken;
+                // a lake also swallows what lies under it the deeper it is (shows → 0), leaving only its surface.
+                float keep = (1.0 - _Darken) * shows;
+                return half4(spec, wet * (1.0 - keep));
             }
             ENDHLSL
         }

@@ -46,6 +46,10 @@ public enum GroundStyle { Blended, HardEdge }
 /// map centre (ignores <c>pathCount</c>/<c>pathWander</c>) — for a planned, RO-style town.</summary>
 public enum PathStyle { Winding, Cardinal }
 
+/// <summary>Whether a map lines its roads with cliffs: as its biome says (the Biome Table's cliffs switch), or on or off
+/// for this map regardless. Only APPEND members — saved recipes store the position.</summary>
+public enum CliffChoice { FollowBiome, On, Off }
+
 [System.Serializable]
 public class RecipePropGroup
 {
@@ -148,9 +152,12 @@ public class MapRecipe : ScriptableObject
     public int pathSmoothness = 0;
 
     [Header("Cliffs")]
-    [Tooltip("How tall the rock cliffs lining both sides of every road stand, in world units (a character is 0.5 tall). " +
-             "0 = no cliffs. The ground away from the roads is raised to this height and nobody can climb it.")]
-    [Min(0f)] public float cliffHeight = 0f;
+    [Tooltip("Whether this map lines its roads with rock cliffs: Follow Biome = as the biome's row in the Biome Table says; " +
+             "On / Off = regardless of the biome. A map in the World Creator can set On or Off for itself.")]
+    public CliffChoice cliffs = CliffChoice.FollowBiome;
+    [Tooltip("How tall the rock cliffs lining both sides of every road stand, in world units (a character is 0.5 tall), " +
+             "when this map has cliffs. The ground away from the roads is raised to this height and nobody can climb it.")]
+    [Min(0f)] public float cliffHeight = 1.5f;
     [Tooltip("How wide the walkable pass between the two cliff faces is, in world units, measured across the road.")]
     [Min(1f)] public float cliffPassWidth = 8f;
     [Tooltip("How many meeting points the cliffs have: places, chosen at random along the pass, where a cliff shrinks to " +

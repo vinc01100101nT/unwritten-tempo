@@ -211,14 +211,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad72f3a830717f044983c44697fde252, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlanarReflection
-  waterHeight: 0
-  followGround: 1
-  groundOffset: 0
   reflectMask:
     serializedVersion: 2
     m_Bits: 4294967295
-  resScale: 0.5
-  clipPlaneOffset: 0.03
   reflectionShadows: 0
 --- !u!114 &132730608
 MonoBehaviour:
@@ -1638,6 +1633,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 280114455252663457, guid: edb360daf9136634aa6f9da60435cd47, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -14.9999695
+      objectReference: {fileID: 0}
     - target: {fileID: 415805600325210329, guid: edb360daf9136634aa6f9da60435cd47, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -15.0000305
@@ -1752,7 +1751,7 @@ PrefabInstance:
       objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 4837388956048738155, guid: edb360daf9136634aa6f9da60435cd47, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -15.0000305
+      value: -15.000015
       objectReference: {fileID: 0}
     - target: {fileID: 6161580450575977421, guid: edb360daf9136634aa6f9da60435cd47, type: 3}
       propertyPath: m_fontAsset

@@ -1,55 +1,79 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// HEAVY weather: true <b>planar reflection</b> of the scene onto wet ground. A second "mirror" camera is placed
-/// as the reflection of the main camera across the water plane (<see cref="waterHeight"/>), renders the world into
-/// a half-res <see cref="RenderTexture"/>, and exposes it as the global <c>_ReflectionTex</c> that
-/// <c>Unwritten/WetGround</c> samples (screen-projected, ripple-distorted) inside the puddle mask.
+/// HEAVY weather: true <b>planar reflection</b> of the scene in standing water. Still water is flat, and a flat water
+/// surface reflects exactly like a mirror laid at its height, so every water height of the map
+/// (<see cref="WaterSurfaces"/>) gets a mirror of its own: a camera placed as the reflection of the main camera across
+/// that height renders the world, at the main camera's full pixel size, into its own texture, exposed as the global
+/// <c>_ReflectionTex0..7</c> with its height in <c>_MirrorHeights</c>. <c>Unwritten/WetGround</c> samples, at each
+/// water pixel, the texture of the mirror at that pixel's own height (screen-projected, ripple-distorted) — so a tree
+/// on a cliff top meets its reflection in the cliff-top puddle, and the low ground's puddles show the cliff.
+///
+/// <para>Only the water heights with ground on screen get a mirror each frame — one per distinct height, shared by every
+/// body of water standing at it — at most <see cref="MaxMirrors"/>; a water height on screen with no mirror left is
+/// drawn dry rather than with the wrong reflection.</para>
 ///
 /// <para>So everything above the water — houses, trees, props, terrain, AND the billboard player/mobs (Crowd
 /// layer) — shows up inverted in the puddles. The sprites work without any per-camera facing: they're upright
 /// billboards that share the mirror camera's yaw (the mirror is the main camera flipped below the plane, same
-/// XZ), so they present their front face. Uses the canonical reflection-matrix + oblique-near-clip so nothing
-/// below the water leaks.</para>
+/// XZ), so they present their front face. Uses the canonical reflection-matrix + an oblique near-clip laid exactly on
+/// the water surface: nothing beneath the water is ever reflected, not even a sliver of it.</para>
 ///
-/// <para>Cost: one extra scene render. Gated behind <see cref="WeatherFX.Heavy"/> AND live rain, rendered at
-/// <see cref="resScale"/> (half-res by default) with a tight cull mask — so it's free on Low/Medium or when dry.
-/// The mirror camera auto-renders to its target texture (no manual Render call); its view/projection are rewritten
-/// each frame in <see cref="OnBeginCamera"/>, and culling is inverted around its pass (the mirror flips winding).</para>
+/// <para>Cost: one extra scene render per water height on screen. Gated behind <see cref="WeatherFX.Heavy"/> AND
+/// visible puddles, with a tight cull mask — so it's free on Low/Medium or when dry. Each mirror camera
+/// auto-renders to its target texture (no manual Render call); its view/projection are rewritten each frame in
+/// <see cref="OnBeginCamera"/>, and culling is inverted around its pass (the mirror flips winding).</para>
 /// </summary>
+// After every ordinary LateUpdate: the camera has moved for this frame (CameraFollow3D) and the water has been refilled
+// (WetGround), so the mirrors are handed out for the view and the water heights this frame actually draws. Handed out
+// earlier, a refill in the same frame left every mirror at the old heights, and the water blinked dry for that frame.
+[DefaultExecutionOrder(1000)]
 [DisallowMultipleComponent]
 public class PlanarReflection : MonoBehaviour
 {
-    [Tooltip("World Y of the water surface the scene is mirrored about (puddles sit ~ground level). When " +
-        "'followGround' is on this is overwritten each frame with the real ground height under the player.")]
-    public float waterHeight = 0f;
-    [Tooltip("Auto-snap waterHeight to the real ground under the player each frame (raycasts the Ground layer), " +
-        "so puddle reflections line up at the true floor on every map without hand-tuning. Off = set waterHeight manually.")]
-    public bool followGround = true;
-    [Tooltip("Fine offset added to the auto-detected ground height (use to nudge the reflection seam up/down).")]
-    public float groundOffset = 0f;
     [Tooltip("Layers the reflection renders. Default = the 3D world; sprites (Crowd), UI, FX quads, Water are excluded.")]
     public LayerMask reflectMask = -1;
-    [Range(0.25f, 1f)] [Tooltip("Reflection texture resolution scale (0.5 = half-res, cheaper).")]
-    public float resScale = 0.5f;
-    [Tooltip("Pushes the clip plane slightly below the water so the shoreline doesn't shimmer.")]
-    public float clipPlaneOffset = 0.03f;
     [Tooltip("Render shadows into the reflection (costlier). Off reads fine in small puddles.")]
     public bool reflectionShadows = false;
 
+    /// <summary>The most mirrors drawn in one frame — one per water height on screen.</summary>
+    public const int MaxMirrors = 8;
+
     public static PlanarReflection Instance { get; private set; }
 
-    Camera reflCam;
-    UniversalAdditionalCameraData reflData;
-    RenderTexture rt;
-    int rtW, rtH;
-    bool running;
-    Transform focus;        // what we raycast under for the ground height (player, else camera)
-    int groundMask = -1;    // cached Ground layer mask (-1 = not resolved yet)
+    sealed class Mirror
+    {
+        public Camera cam;
+        public UniversalAdditionalCameraData data;
+        public RenderTexture rt;
+        public float height;
+    }
 
-    static readonly int ReflectionTexID = Shader.PropertyToID("_ReflectionTex");
+    readonly Mirror[] mirrors = new Mirror[MaxMirrors];
+    readonly float[] mirrorHeights = new float[MaxMirrors];
+    readonly float[] shownHeights = new float[MaxMirrors];
+    readonly Texture[] shownTex = new Texture[MaxMirrors];
+    readonly Plane[] frustum = new Plane[6];
+    readonly List<int> onScreen = new List<int>(WaterSurfaces.MaxHeights);
+    int mirrorCount;
+    int shownCount = -1;
+    bool running;
+    bool shownRunning;
+    int shownUnmirrored;
+
+    static readonly int[] ReflectionTexIDs =
+    {
+        Shader.PropertyToID("_ReflectionTex0"), Shader.PropertyToID("_ReflectionTex1"),
+        Shader.PropertyToID("_ReflectionTex2"), Shader.PropertyToID("_ReflectionTex3"),
+        Shader.PropertyToID("_ReflectionTex4"), Shader.PropertyToID("_ReflectionTex5"),
+        Shader.PropertyToID("_ReflectionTex6"), Shader.PropertyToID("_ReflectionTex7"),
+    };
+    static readonly int MirrorHeightsID = Shader.PropertyToID("_MirrorHeights");
+    static readonly int MirrorCountID   = Shader.PropertyToID("_MirrorCount");
+    static readonly int MirrorsOnID     = Shader.PropertyToID("_MirrorsOn");
 
     /// <summary>Default cull mask: the solid 3D world PLUS the Crowd sprites (player + mobs — Step 2). They're
     /// upright billboards that share the mirror camera's yaw, so they show their front face in the reflection.
@@ -94,10 +118,17 @@ public class PlanarReflection : MonoBehaviour
         RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
         RenderPipelineManager.endCameraRendering   -= OnEndCamera;
         if (Instance == this) Instance = null;
-        Shader.SetGlobalTexture(ReflectionTexID, Texture2D.blackTexture);
-        if (reflCam != null) { Destroy(reflCam.gameObject); reflCam = null; }
-        if (rt != null) { rt.Release(); Destroy(rt); rt = null; }
+        for (int i = 0; i < MaxMirrors; i++)
+        {
+            var m = mirrors[i];
+            if (m == null) continue;
+            if (m.cam != null) { m.cam.targetTexture = null; Destroy(m.cam.gameObject); }
+            if (m.rt != null) { m.rt.Release(); Destroy(m.rt); }
+            mirrors[i] = null;
+        }
+        mirrorCount = 0;
         running = false;
+        Publish();
     }
 
     bool ShouldRun()
@@ -106,103 +137,154 @@ public class PlanarReflection : MonoBehaviour
         // with the puddles instead of snapping off the moment the rain stops.
         && WetGround.Instance != null && WetGround.Instance.Active;
 
-    void Update()
+    /// <summary>Is a mirror drawing the water height <paramref name="height"/> this frame? When mirrors run, a water
+    /// height without one is drawn dry (see the class summary), and <see cref="WetGround.IsPuddleAt"/> must agree.</summary>
+    public bool Mirrors(float height)
     {
-        // Decide per-frame whether the mirror pass runs (this runs BEFORE rendering, so the toggle is same-frame).
+        for (int i = 0; i < mirrorCount; i++)
+            if (mirrorHeights[i] == height) return true;
+        return false;
+    }
+
+    /// <summary>True while mirrors are being drawn this frame.</summary>
+    public bool Running => running;
+
+    void LateUpdate()
+    {
+        // Decide per-frame which mirrors run (this runs BEFORE rendering, so the toggle is same-frame).
         var main = CameraRig.Cam;
         running = main != null && ShouldRun();
+        mirrorCount = 0;
 
-        if (!running)
+        if (running)
         {
-            if (reflCam != null) reflCam.gameObject.SetActive(false);
-            Shader.SetGlobalTexture(ReflectionTexID, Texture2D.blackTexture);   // puddles get no reflection
-            return;
+            WaterSurfaces.Refresh();
+            GeometryUtility.CalculateFrustumPlanes(main, frustum);
+            WaterSurfaces.OnScreen(frustum, onScreen);
+            int w = Mathf.Max(2, main.pixelWidth), h = Mathf.Max(2, main.pixelHeight);
+            for (int k = 0; k < onScreen.Count && mirrorCount < MaxMirrors; k++)
+            {
+                // Water at the same height is one mirror, however many separate bodies stand at it (every lake on the
+                // same low level rises to the same height): a second mirror would draw the same picture again.
+                float height = WaterSurfaces.Heights[onScreen[k]];
+                if (Mirrors(height)) continue;
+                var m = EnsureMirror(mirrorCount, main, w, h);
+                m.height = height;
+                mirrorHeights[mirrorCount] = m.height;
+                if (!m.cam.gameObject.activeSelf) m.cam.gameObject.SetActive(true);
+                mirrorCount++;
+            }
         }
 
-        if (followGround) TrackGround();   // snap the mirror plane to the real ground before MirrorTo uses it
+        for (int i = mirrorCount; i < MaxMirrors; i++)
+            if (mirrors[i] != null && mirrors[i].cam.gameObject.activeSelf) mirrors[i].cam.gameObject.SetActive(false);
 
-        EnsureResources(main);
-        reflCam.gameObject.SetActive(true);
-        Shader.SetGlobalTexture(ReflectionTexID, rt);
+        // Said out loud when it changes: water on screen that got no mirror is drawn dry.
+        int unmirrored = 0;
+        if (running)
+            for (int k = 0; k < onScreen.Count; k++)
+                if (!Mirrors(WaterSurfaces.Heights[onScreen[k]])) unmirrored++;
+        if (unmirrored != shownUnmirrored)
+        {
+            shownUnmirrored = unmirrored;
+            if (unmirrored > 0)
+                GameLog.Info(LogCat.Unwritten, "PlanarReflection: " + unmirrored + " body(ies) of water on screen got no mirror (" +
+                             mirrorCount + " mirrors in use) — drawn dry.");
+        }
+
+        Publish();
     }
 
-    // Raycast straight down onto the Ground layer under the player (or camera) and park the mirror plane on it,
-    // so the puddle reflection always meets objects at the true floor — even if a map's ground isn't exactly Y0.
-    void TrackGround()
+    // Hand the shader which mirrors run and at what height — written only when that changed.
+    void Publish()
     {
-        if (groundMask == -1)
-        {
-            int l = LayerMask.NameToLayer("Ground");
-            groundMask = l >= 0 ? (1 << l) : 0;
-        }
-        if (groundMask == 0) return;   // no Ground layer in this project — leave waterHeight as authored
+        bool changed = shownRunning != running || shownCount != mirrorCount;
+        for (int i = 0; i < mirrorCount && !changed; i++)
+            changed = shownHeights[i] != mirrorHeights[i] || shownTex[i] != mirrors[i].rt;
+        if (!changed) return;
 
-        if (focus == null)
+        for (int i = 0; i < MaxMirrors; i++)
         {
-            var p = FindAnyObjectByType<Player3DController>();
-            focus = p != null ? p.transform : (CameraRig.Cam != null ? CameraRig.Cam.transform : null);
+            Texture tex = i < mirrorCount ? mirrors[i].rt : Texture2D.blackTexture;
+            shownHeights[i] = i < mirrorCount ? mirrorHeights[i] : 0f;
+            shownTex[i] = tex;
+            Shader.SetGlobalTexture(ReflectionTexIDs[i], tex);
         }
-        if (focus == null) return;
-
-        Vector3 origin = focus.position + Vector3.up * 100f;
-        if (Physics.Raycast(origin, Vector3.down, out var hit, 500f, groundMask, QueryTriggerInteraction.Ignore))
-            waterHeight = hit.point.y + groundOffset;
+        Shader.SetGlobalFloatArray(MirrorHeightsID, shownHeights);
+        Shader.SetGlobalFloat(MirrorCountID, mirrorCount);
+        Shader.SetGlobalFloat(MirrorsOnID, running ? 1f : 0f);
+        shownCount = mirrorCount;
+        shownRunning = running;
     }
 
-    void EnsureResources(Camera main)
+    Mirror EnsureMirror(int slot, Camera main, int w, int h)
     {
-        int w = Mathf.Max(2, Mathf.RoundToInt(Screen.width  * resScale));
-        int h = Mathf.Max(2, Mathf.RoundToInt(Screen.height * resScale));
-        if (rt == null || w != rtW || h != rtH)
+        var m = mirrors[slot];
+        if (m == null)
         {
-            if (rt != null) { rt.Release(); Destroy(rt); }
-            rt = new RenderTexture(w, h, 16, RenderTextureFormat.Default) { name = "PlanarReflectionRT" };
-            rt.Create();
-            rtW = w; rtH = h;
-            if (reflCam != null) reflCam.targetTexture = rt;
-        }
-
-        if (reflCam == null)
-        {
-            var go = new GameObject("PlanarReflectionCam") { hideFlags = HideFlags.DontSave };
+            m = new Mirror();
+            var go = new GameObject("PlanarReflectionCam" + slot) { hideFlags = HideFlags.DontSave };
             go.transform.SetParent(transform, false);
-            reflCam = go.AddComponent<Camera>();
-            reflCam.enabled = true;                 // auto-renders to its target texture each frame
-            reflCam.targetTexture = rt;
-            reflCam.depth = main.depth - 10;        // render before the main camera
-            reflCam.allowMSAA = false;
-            reflCam.allowHDR = main.allowHDR;
+            m.cam = go.AddComponent<Camera>();
+            // auto-renders to its target texture each frame
+            m.cam.enabled = true;
+            // render before the main camera
+            m.cam.depth = main.depth - 10;
+            m.cam.allowMSAA = false;
+            m.cam.allowHDR = main.allowHDR;
 
-            reflData = reflCam.GetUniversalAdditionalCameraData();
-            reflData.renderType = CameraRenderType.Base;
-            reflData.renderPostProcessing = false;
-            reflData.requiresDepthTexture = false;
-            reflData.requiresColorTexture = false;
-            reflData.renderShadows = reflectionShadows;
+            m.data = m.cam.GetUniversalAdditionalCameraData();
+            m.data.renderType = CameraRenderType.Base;
+            m.data.renderPostProcessing = false;
+            m.data.requiresDepthTexture = false;
+            m.data.requiresColorTexture = false;
+            m.data.renderShadows = reflectionShadows;
+            mirrors[slot] = m;
         }
+
+        // The main camera's own pixel size, so each reflected pixel lands on exactly one screen pixel.
+        if (m.rt == null || m.rt.width != w || m.rt.height != h)
+        {
+            // Unhook the old texture from the camera first: releasing one a camera still targets is an error.
+            m.cam.targetTexture = null;
+            if (m.rt != null) { m.rt.Release(); Destroy(m.rt); }
+            // A 24-bit depth buffer: a 16-bit one cannot tell apart surfaces millimetres apart at this camera distance
+            // (a cliff top's grass lies 4 mm over the ground), and would flicker between them in the reflection.
+            m.rt = new RenderTexture(w, h, 24, RenderTextureFormat.Default) { name = "PlanarReflectionRT" + slot };
+            m.rt.Create();
+            m.cam.targetTexture = m.rt;
+        }
+        return m;
     }
 
     // ── per-camera hooks ─────────────────────────────────────────────────────────────────────────────────────
     void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
     {
-        if (!running || reflCam == null || cam != reflCam) return;
+        if (!running) return;
+        Mirror m = null;
+        for (int i = 0; i < mirrorCount; i++)
+            if (mirrors[i].cam == cam) { m = mirrors[i]; break; }
+        if (m == null) return;
 
         var main = CameraRig.Cam;
         if (main == null) return;
 
-        MirrorTo(main);
-        reflData.renderShadows = reflectionShadows;
-        GL.invertCulling = true;        // the mirror flips triangle winding; flip back so faces aren't culled
+        MirrorTo(main, m);
+        m.data.renderShadows = reflectionShadows;
+        // the mirror flips triangle winding; flip back so faces aren't culled
+        GL.invertCulling = true;
     }
 
     void OnEndCamera(ScriptableRenderContext ctx, Camera cam)
     {
-        if (reflCam != null && cam == reflCam) GL.invertCulling = false;
+        for (int i = 0; i < MaxMirrors; i++)
+            if (mirrors[i] != null && mirrors[i].cam == cam) { GL.invertCulling = false; return; }
     }
 
     // ── reflection math (canonical planar reflection) ────────────────────────────────────────────────────────
-    void MirrorTo(Camera main)
+    void MirrorTo(Camera main, Mirror m)
     {
+        var reflCam = m.cam;
         reflCam.fieldOfView   = main.fieldOfView;
         reflCam.nearClipPlane = main.nearClipPlane;
         reflCam.farClipPlane  = main.farClipPlane;
@@ -211,12 +293,13 @@ public class PlanarReflection : MonoBehaviour
         // Clear with the SKYBOX so the wrapped sky (gradient + sun + drifting clouds) shows up in the puddles —
         // the mirror cam looks UP from below the water, so it samples the sky in the reflected directions.
         reflCam.clearFlags    = CameraClearFlags.Skybox;
-        reflCam.backgroundColor = main.backgroundColor;   // fallback only (used if no skybox material is set)
+        // fallback only (used if no skybox material is set)
+        reflCam.backgroundColor = main.backgroundColor;
 
-        Vector3 planePos = new Vector3(0f, waterHeight, 0f);
+        Vector3 planePos = new Vector3(0f, m.height, 0f);
         Vector3 normal   = Vector3.up;
 
-        // Reflection matrix about the plane y = waterHeight.
+        // Reflection matrix about the plane y = this mirror's water height.
         Vector4 plane = new Vector4(normal.x, normal.y, normal.z, -Vector3.Dot(normal, planePos));
         Matrix4x4 reflection = CalculateReflectionMatrix(plane);
 
@@ -228,8 +311,8 @@ public class PlanarReflection : MonoBehaviour
 
         reflCam.worldToCameraMatrix = main.worldToCameraMatrix * reflection;
 
-        // Oblique near-clip at the water plane so nothing below the surface is reflected.
-        Vector4 clip = CameraSpacePlane(reflCam.worldToCameraMatrix, planePos, normal, 1f);
+        // Oblique near-clip exactly on the water surface: whatever is beneath it is not reflected.
+        Vector4 clip = CameraSpacePlane(reflCam.worldToCameraMatrix, planePos, normal);
         reflCam.projectionMatrix = main.CalculateObliqueMatrix(clip);
     }
 
@@ -243,11 +326,10 @@ public class PlanarReflection : MonoBehaviour
         return m;
     }
 
-    Vector4 CameraSpacePlane(Matrix4x4 worldToCam, Vector3 pos, Vector3 normal, float sideSign)
+    static Vector4 CameraSpacePlane(Matrix4x4 worldToCam, Vector3 pos, Vector3 normal)
     {
-        Vector3 offsetPos = pos - normal * clipPlaneOffset;
-        Vector3 cPos = worldToCam.MultiplyPoint(offsetPos);
-        Vector3 cNormal = worldToCam.MultiplyVector(normal).normalized * sideSign;
+        Vector3 cPos = worldToCam.MultiplyPoint(pos);
+        Vector3 cNormal = worldToCam.MultiplyVector(normal).normalized;
         return new Vector4(cNormal.x, cNormal.y, cNormal.z, -Vector3.Dot(cPos, cNormal));
     }
 }

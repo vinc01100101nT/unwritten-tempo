@@ -23,6 +23,8 @@ MonoBehaviour:
     bumpWidth: 16
     bumpLevels: 3
     bumpSteepestDegrees: 20
+    cliffs: 0
+    cliffFaceColor: {r: 0.3764706, g: 0.27450982, b: 0.13725491, a: 1}
     props:
     - category: 10
       prefabs: []
@@ -81,10 +83,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 241904155deb14e559a6754c5c2bf44e, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
+    bumpHeight: 1.2
+    bumpWidth: 20
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 15
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs:
@@ -117,10 +121,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: b310a11275d904eb48f7403e72282822, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
+    bumpHeight: 1.5
+    bumpWidth: 14
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 20
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs: []
@@ -149,10 +155,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 945fd2a671dc54cd09d08b7bf2e2c617, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.5
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 1.8
+    bumpWidth: 14
+    bumpLevels: 3
+    bumpSteepestDegrees: 25
+    cliffs: 1
+    cliffFaceColor: {r: 0.2376, g: 0.2157, b: 0.2186, a: 1}
     props:
     - category: 10
       prefabs: []
@@ -181,10 +189,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 1.5
+    bumpWidth: 12
+    bumpLevels: 3
+    bumpSteepestDegrees: 30
+    cliffs: 1
+    cliffFaceColor: {r: 0.1742, g: 0.1545, b: 0.1927, a: 1}
     props:
     - category: 10
       prefabs:
@@ -217,10 +227,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
+    bumpHeight: 0.8
+    bumpWidth: 12
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 15
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 6
       prefabs:
@@ -253,10 +265,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 7fac21ad41db4206ae513db8236ce64f, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 1.8
+    bumpWidth: 18
+    bumpLevels: 4
+    bumpSteepestDegrees: 25
+    cliffs: 1
+    cliffFaceColor: {r: 0.4818, g: 0.4855, b: 0.4957, a: 1}
     props:
     - category: 10
       prefabs: []
@@ -295,10 +309,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 3e1a2309b648741288ece37d6e5f7e26, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 2.4
+    bumpWidth: 20
+    bumpLevels: 4
+    bumpSteepestDegrees: 30
+    cliffs: 1
+    cliffFaceColor: {r: 0.4818, g: 0.4855, b: 0.4957, a: 1}
     props:
     - category: 10
       prefabs:
@@ -328,10 +344,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 7fac21ad41db4206ae513db8236ce64f, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
+    bumpHeight: 0.4
+    bumpWidth: 30
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 8
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs: []
@@ -361,10 +379,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 11f0e27345b04430085f5b09cc9cb4b8, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 1
+    bumpWidth: 18
+    bumpLevels: 2
+    bumpSteepestDegrees: 20
+    cliffs: 1
+    cliffFaceColor: {r: 0.6324, g: 0.5853, b: 0.545, a: 1}
     props:
     - category: 10
       prefabs: []
@@ -393,10 +413,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
+    bumpHeight: 0.3
     bumpWidth: 10
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 8
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs: []
@@ -435,10 +457,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: 35e76e19afe58134998dafecdb938fec, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 1.2
+    bumpWidth: 16
+    bumpLevels: 3
+    bumpSteepestDegrees: 20
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs: []
@@ -478,10 +502,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: aa57a2769aab7433795da2f0d2f38ec9, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
-    bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpHeight: 0.8
+    bumpWidth: 12
+    bumpLevels: 2
+    bumpSteepestDegrees: 20
+    cliffs: 1
+    cliffFaceColor: {r: 0.2558, g: 0.2105, b: 0.1779, a: 1}
     props:
     - category: 10
       prefabs:
@@ -519,10 +545,12 @@ MonoBehaviour:
     roadTile: {fileID: 2800000, guid: e87a7ca2e337418db359dde9c66edb6d, type: 3}
     tint: {r: 1, g: 1, b: 1, a: 1}
     patchAmount: 0.9
-    bumpHeight: 0
-    bumpWidth: 10
+    bumpHeight: 0.8
+    bumpWidth: 14
     bumpLevels: 0
-    bumpSteepestDegrees: 5.4
+    bumpSteepestDegrees: 12
+    cliffs: 0
+    cliffFaceColor: {r: 0, g: 0, b: 0, a: 0}
     props:
     - category: 10
       prefabs: []

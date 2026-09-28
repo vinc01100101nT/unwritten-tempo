@@ -63,6 +63,9 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
   - `pathTile` ("road" | "soil" | "stones" | "rock", optional) — override; omit to randomize.
   - `pathWidth` (number, optional) — override; omit to randomize.
   - `biome` (string, optional) — the biome the map is generated in, by its name (`snow`, `sacred` …); omit = grassland.
+    The biome also decides the map's ground levels and whether it has cliffs ([Biomes](biomes.md)).
+  - `cliffs` ("on" | "off", optional) — rock cliffs lining this map's roads regardless of its biome; omit = as the
+    biome says. Set from the map's menu in the browser tool ("Cliffs: as the biome says / on / off").
   - `name` (string, optional) — the map's display name, shown in the browser tool and on the exported map picture; its snake_case is the `id`.
 - `portals` (array of portal objects) — **all warps are explicitly anchored on both ends:**
   - `a` (string) — map id of endpoint A.

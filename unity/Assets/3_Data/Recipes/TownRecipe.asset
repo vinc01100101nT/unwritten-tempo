@@ -28,7 +28,8 @@ MonoBehaviour:
   pathWidth: 4.5
   pathWander: 0.732
   pathSmoothness: 1
-  cliffHeight: 0
+  cliffs: 2
+  cliffHeight: 1.5
   cliffPassWidth: 8
   cliffMeetingPoints: 0
   propGroups:

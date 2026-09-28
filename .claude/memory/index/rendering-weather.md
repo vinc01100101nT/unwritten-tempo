@@ -1,8 +1,7 @@
 # Rendering / lighting / reflection / weather
 
 - [NightLight ranked vs STATIONARY pivot](../nightlight-shadow-stationary-pivot.md) — fix = cached `PlayerTransform()`.
-- [Planar reflection clip-plane sign fix](../planar-reflection-clip-sign-fix.md) — `CameraSpacePlane`→`pos - normal*clipPlaneOffset`.
-- [Water reflection anchored to ground](../water-reflection-quantized-plane-bug.md) — quantized grouping key wrongly used as mirror plane; use real `PlaneY`.
+- [Rain water gotchas](../water-reflection-quantized-plane-bug.md) — design in docs/2-systems/rain-and-standing-water.md; never tie water to a player body, shader arrays lock their first size, mirror hand-out order, 0.25 m ground for round level edges.
 - [Ground shader must loop additional lights](../ground-shader-additional-lights.md) — add `_ADDITIONAL_LIGHTS` loop; needs URP Per-Pixel.
 - [Billboard sprites receive lamp/torch lights](../billboard-additional-lights.md) — `BillboardLit` loops add-lights; `PropLight.cs`.
 - [Weather system (rain/wet/reflection)](../weather-system.md) — storm gated behind `WeatherFX.Quality>=High`.

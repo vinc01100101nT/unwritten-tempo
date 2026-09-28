@@ -83,7 +83,7 @@ public class WetGround : MonoBehaviour
 
     [Header("Planar reflection")]
     [Range(0f, 2f)] [Tooltip("How strongly the mirrored scene shows in puddles. Needs a PlanarReflection in the " +
-        "rig (the builder adds one) + High tier; PlanarReflection binds _ReflectionTex to black when off, so this " +
+        "rig (the builder adds one) + High tier; with no mirrors running the puddles show no reflection, so this " +
         "stays safe even at >0.")]
     public float reflStrength = 0.90f;
     [Range(0f, 0.3f)] [Tooltip("Ripple distortion of the reflection.")]
@@ -148,16 +148,25 @@ public class WetGround : MonoBehaviour
     // Rain puddles are a High-tier extra; a biome's standing water is part of the place, so it shows on every tier.
     bool TierShows => WeatherFX.Heavy || heldPuddles > 0.001f;
 
-    /// <summary>Is <paramref name="world"/> standing in a visible puddle right now? Re-evaluates the SAME world-XZ
-    /// puddle mask the shader draws (<c>fbm(xz*_PuddleScale)</c> thresholded by <c>_PuddleAmount</c>), so the answer
-    /// agrees with what the player sees — used to swap in the water/splash footstep SFX. Assumes flat ground (the
-    /// shader's flatness term is ~1 where the player can stand). Cheap + zero-GC; call at most per footstep.</summary>
+    /// <summary>Is <paramref name="world"/> standing in a visible puddle right now? Re-evaluates the SAME puddle
+    /// test the shader draws: the spot must be in one of the map's bodies of water
+    /// (<see cref="WaterSurfaces.WaterUnder"/>) — a lake, or a sheet on level ground, where the world-XZ puddle pattern (<c>fbm(xz*_PuddleScale)</c>, raised by the runoff to that spot) must also clear
+    /// <c>_PuddleAmount</c> — and that surface must have a mirror when mirrors are running, so the answer agrees with
+    /// what the player sees. Used to swap in the water/splash
+    /// footstep SFX. Cheap + zero-GC (one short ray down); call at most per footstep.</summary>
     public bool IsPuddleAt(Vector3 world)
     {
         if (!Active) return false;
-        float pn = Fbm(new Vector2(world.x, world.z) * puddleScale);
-        float edge = 1f - puddleLevel;   // match the LIVE coverage the shader is drawing, not the per-map max
-        return Smoothstep(edge, edge + 0.18f, pn) >= 0.5f;   // past the midpoint of the shader's puddle smoothstep
+        int water = WaterSurfaces.WaterUnder(world, out bool lake, out float runoff);
+        if (water < 0) return false;
+        var mirrors = PlanarReflection.Instance;
+        if (mirrors != null && mirrors.Running && !mirrors.Mirrors(WaterSurfaces.Heights[water])) return false;
+        if (lake) return true;
+        float pn = Fbm(new Vector2(world.x, world.z) * puddleScale) + runoff * WaterPooling.RunoffPull;
+        // match the LIVE coverage the shader is drawing, not the per-map max
+        float edge = 1f - puddleLevel;
+        // past the midpoint of the shader's puddle smoothstep
+        return Smoothstep(edge, edge + 0.18f, pn) >= 0.5f;
     }
 
     // --- C# replica of the shader's value-noise puddle field (WetGround.shader: hash21 / vnoise / fbm). Must
@@ -197,6 +206,7 @@ public class WetGround : MonoBehaviour
         return t * t * (3f - 2f * t);
     }
 
+
     void Awake()
     {
         Instance = this;
@@ -213,7 +223,11 @@ public class WetGround : MonoBehaviour
         BuildQuad();
     }
 
-    void OnDisable() { if (quad != null) quad.gameObject.SetActive(false); }
+    void OnDisable()
+    {
+        if (quad != null) quad.gameObject.SetActive(false);
+        WaterSurfaces.SetDrawn(false);
+    }
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
@@ -288,7 +302,14 @@ public class WetGround : MonoBehaviour
 
         bool show = enabled && TierShows && (puddleLevel > 0.001f || rainNow > 0.001f);
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
+        WaterSurfaces.SetDrawn(show && quad != null);
         if (!show) return;
+        // the map's water: read once per map, a flag check otherwise
+        WaterSurfaces.Refresh();
+        // the lakes fill from the rain standing on the map — the same on every player's machine (shared world clock)
+        WaterSurfaces.SetRain(WaterPooling.Rainfall(WorldClock.EpochSecondsNow,
+            WeatherDirector.WaterRain, WeatherDirector.WaterRainSince,
+            WeatherDirector.WaterRainBefore, WeatherDirector.WaterRainBeforeSince, BiomeWeather.AlwaysPuddlesHere));
 
         var cam = CameraRig.Cam;
         if (cam != null)

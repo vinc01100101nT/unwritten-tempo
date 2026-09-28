@@ -11,6 +11,22 @@ using UnityEngine;
 /// </summary>
 public static class GroundBumps
 {
+    /// <summary>The spacing, in world units, the shape is worked out at before it is read back at the ground's vertices
+    /// (ground drawn coarser than this is worked out on a finer grid). On the vertices alone, a level's edge and the foot
+    /// of its ramp could only follow the grid's own lines, so they ran in straight zigzags that puddles traced exactly;
+    /// worked out finer, a vertex just past an edge gets the height the smooth ground has there.</summary>
+    public const float FineSpacing = 0.2f;
+
+    /// <summary>The widest spacing, in world units, a shaped ground is drawn with. A level's edge can be no rounder than
+    /// the triangles drawing it: at 0.8 the water on a level still ended in 0.8-unit steps along its rim, because a sheet
+    /// of water ends exactly where the drawn ground drops away.</summary>
+    public const float DrawnSpacing = 0.25f;
+
+    /// <summary>How softly, in world units, every edge of the shape is rounded once its slopes are limited — the
+    /// spread of the blur that turns the sharp crease at a ramp's top and foot into a curve. A blur never makes a slope
+    /// steeper, and it leaves the middle of a level exactly level.</summary>
+    public const float EdgeRounding = 0.5f;
+
     /// <summary>The ground's shape for a biome: rolling mounds, or — with <paramref name="levels"/> of 2 or more — that
     /// many flat levels joined by slopes, from 0 up to <paramref name="height"/>, hills about <paramref name="width"/>
     /// across. Never steeper than <paramref name="maxSlope"/>: where it would be, the higher side is cut back into a
@@ -18,46 +34,99 @@ public static class GroundBumps
     public static float[] Make(int nx, int nz, float sizeX, float sizeZ, float originX, float originZ,
                                int seed, float height, float width, int levels, float maxSlope)
     {
-        float dx = sizeX / nx, dz = sizeZ / nz;
-        var h = Heights(nx, nz, sizeX, sizeZ, originX, originZ, seed, height, width);
-        if (levels >= 2) Terrace(h, levels, height);
+        int per = Mathf.Max(1, Mathf.RoundToInt(sizeX / nx / FineSpacing));
+        int fx = nx * per, fz = nz * per;
+        float fdx = sizeX / fx, fdz = sizeZ / fz, dx = sizeX / nx, dz = sizeZ / nz;
+        var fine = Heights(fx, fz, sizeX, sizeZ, originX, originZ, seed, height, width);
+        if (levels >= 2) Terrace(fine, levels, height);
         float allowed = maxSlope;
+        float[] h = null;
         for (int tries = 0; tries < 6; tries++)
         {
-            LimitSlope(h, nx, nz, dx, dz, allowed);
+            var limited = (float[])fine.Clone();
+            LimitSlope(limited, fx, fz, fdx, fdz, allowed);
+            Soften(limited, fx, fz, fdx, fdz, EdgeRounding);
+            h = AtVertices(limited, fx, nx, nz, per);
             float steepest = SteepestSlope(h, nx, nz, dx, dz);
             if (steepest <= maxSlope) return h;
-            // A slope limited along the grid lines can still run a little steeper across a triangle: tighten and redo.
+            // A slope limited on the fine points can still run a little steeper across a drawn triangle: tighten and redo.
             allowed *= maxSlope / steepest * 0.98f;
         }
         CapSlope(h, nx, nz, dx, dz, maxSlope);
         return h;
     }
 
-    /// <summary>Lower every vertex that stands higher than a <paramref name="slope"/> rise from any neighbour allows,
-    /// until none does: the high ground's edges become ramps of exactly that slope, and nothing low is raised.</summary>
+    /// <summary>Blur a height grid (<paramref name="nx"/>+1 × <paramref name="nz"/>+1 points, spacing
+    /// <paramref name="dx"/> × <paramref name="dz"/>) with a bell curve <paramref name="spread"/> wide, clamped at the
+    /// edges. The weights add up to exactly one, so ground that is level everywhere within reach stays level.</summary>
+    public static void Soften(float[] h, int nx, int nz, float dx, float dz, float spread)
+    {
+        if (spread <= 0f) return;
+        int row = nx + 1;
+        var tmp = new float[h.Length];
+        Pass(h, tmp, true);
+        Pass(tmp, h, false);
+
+        void Pass(float[] from, float[] to, bool alongX)
+        {
+            float step = alongX ? dx : dz;
+            int reach = Mathf.CeilToInt(3f * spread / step);
+            var w = new float[reach * 2 + 1];
+            float sum = 0f;
+            for (int k = -reach; k <= reach; k++) { float d = k * step / spread; w[k + reach] = Mathf.Exp(-0.5f * d * d); sum += w[k + reach]; }
+            for (int k = 0; k < w.Length; k++) w[k] /= sum;
+            for (int j = 0; j <= nz; j++)
+                for (int i = 0; i <= nx; i++)
+                {
+                    float acc = 0f;
+                    for (int k = -reach; k <= reach; k++)
+                    {
+                        int si = alongX ? Mathf.Clamp(i + k, 0, nx) : i, sj = alongX ? j : Mathf.Clamp(j + k, 0, nz);
+                        acc += from[sj * row + si] * w[k + reach];
+                    }
+                    to[j * row + i] = acc;
+                }
+        }
+    }
+
+    /// <summary>The fine grid's heights at the ground's own vertices (every <paramref name="step"/>-th fine point).</summary>
+    public static float[] AtVertices(float[] fine, int fx, int nx, int nz, int step)
+    {
+        var h = new float[(nx + 1) * (nz + 1)];
+        for (int j = 0; j <= nz; j++)
+            for (int i = 0; i <= nx; i++)
+                h[j * (nx + 1) + i] = fine[j * step * (fx + 1) + i * step];
+        return h;
+    }
+
+    /// <summary>Lower every vertex that stands higher than a <paramref name="slope"/> rise from any vertex near it allows,
+    /// until none does: the high ground's edges become ramps of that slope, and nothing low is raised. Each vertex looks
+    /// at its sixteen nearest neighbours in the two sweeps — the eight around it and the eight a knight's move away — so
+    /// a ramp's foot and top run within about 2% of true circles around a level instead of eight-sided shapes.</summary>
     public static void LimitSlope(float[] h, int nx, int nz, float dx, float dz, float slope)
     {
         int row = nx + 1;
-        float cx = slope * dx, cz = slope * dz, cd = slope * Mathf.Sqrt(dx * dx + dz * dz);
+        int[] oi = { -1, -2, -1, 0, 1, 2, -1, 1 };
+        int[] oj = { 0, -1, -1, -1, -1, -1, -2, -2 };
+        var rise = new float[oi.Length];
+        for (int o = 0; o < oi.Length; o++) rise[o] = slope * Mathf.Sqrt(oi[o] * dx * oi[o] * dx + oj[o] * dz * oj[o] * dz);
+
         bool changed = true;
         for (int pass = 0; changed && pass < 200; pass++)
         {
             changed = false;
             for (int j = 0; j <= nz; j++)
                 for (int i = 0; i <= nx; i++)
-                    changed |= Lower(i, j, i - 1, j, cx) | Lower(i, j, i, j - 1, cz)
-                             | Lower(i, j, i - 1, j - 1, cd) | Lower(i, j, i + 1, j - 1, cd);
+                    for (int o = 0; o < oi.Length; o++) changed |= Lower(i, j, i + oi[o], j + oj[o], rise[o]);
             for (int j = nz; j >= 0; j--)
                 for (int i = nx; i >= 0; i--)
-                    changed |= Lower(i, j, i + 1, j, cx) | Lower(i, j, i, j + 1, cz)
-                             | Lower(i, j, i + 1, j + 1, cd) | Lower(i, j, i - 1, j + 1, cd);
+                    for (int o = 0; o < oi.Length; o++) changed |= Lower(i, j, i - oi[o], j - oj[o], rise[o]);
         }
 
-        bool Lower(int i, int j, int ni, int nj, float rise)
+        bool Lower(int i, int j, int ni, int nj, float r)
         {
             if (ni < 0 || nj < 0 || ni > nx || nj > nz) return false;
-            float limit = h[nj * row + ni] + rise;
+            float limit = h[nj * row + ni] + r;
             if (h[j * row + i] <= limit + 1e-6f) return false;
             h[j * row + i] = limit;
             return true;

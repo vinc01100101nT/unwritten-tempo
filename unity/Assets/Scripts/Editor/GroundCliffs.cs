@@ -33,6 +33,10 @@ public static class GroundCliffs
     // drawn in this many rows.
     const float ShoulderMin = 0.25f, ShoulderMax = 0.55f;
     const int ShoulderRows = 5;
+    // The rounded foot where the pass floor curves up into the face: a quarter circle this big, out in front of the wall
+    // line, drawn in this many rows. Its lowest part is gentle enough to walk; the rest is as steep as the face.
+    const float FootRadius = 0.5f;
+    const int FootRows = 5;
     // How far the wall line wanders in toward the road and back out, and how long one bay or point is along it.
     const float EdgeWander = 0.8f;
     const float EdgeWanderLength = 8f;
@@ -59,6 +63,9 @@ public static class GroundCliffs
     // How finely the wall line is traced, and the height of one row of the carved face, in world units.
     const float TraceStep = 0.25f;
     const float RowHeight = 0.25f;
+    // The shallowest the face may lean back between two rows, in degrees: well past the 45° every body can walk, so no
+    // part of the face below the shoulder is ever a slope to walk up. Leaning forward (a ledge's underside) is free.
+    const float FaceSteepestLeanDegrees = 50f;
     // Rock stands along the map's own edge too, this far in, so a pass that runs to the edge ends in a cliff instead of
     // opening onto nothing.
     const float EdgeRock = 1.5f;
@@ -78,6 +85,8 @@ public static class GroundCliffs
         public readonly IReadOnlyList<PathRouting.Route> roads;
         public readonly float height, passWidth;
         public readonly int seed;
+        /// <summary>The face's colour, shaded lighter up the cliff; alpha 0 = none chosen, so the face is drawn with the rock tile.</summary>
+        public readonly Color faceColor;
 
         readonly float wx, wz, rx, rz, jx, jz;
         // The smoothed wall-line field, worked out once over the whole map plus a margin, and read back by
@@ -91,9 +100,10 @@ public static class GroundCliffs
         readonly List<Vector2> meetings = new List<Vector2>();
 
         public Spec(IReadOnlyList<PathRouting.Route> roads, float height, float passWidth, int seed,
-                    Vector3 center, float sizeX, float sizeZ, int meetingPoints = 0)
+                    Vector3 center, float sizeX, float sizeZ, int meetingPoints = 0, Color faceColor = default)
         {
             this.roads = roads; this.height = height; this.passWidth = passWidth; this.seed = seed;
+            this.faceColor = faceColor;
             var rng = new System.Random(seed ^ 0x3C1D5E);
             wx = (float)rng.NextDouble() * 1000f; wz = (float)rng.NextDouble() * 1000f;
             rx = (float)rng.NextDouble() * 1000f; rz = (float)rng.NextDouble() * 1000f;
@@ -190,7 +200,7 @@ public static class GroundCliffs
         public bool InCliffBand(float x, float z)
         {
             float d = PastWall(x, z);
-            return d > -0.5f && d < RampEnd + 0.3f;
+            return d > -FootRadius && d < RampEnd + 0.3f;
         }
     }
 
@@ -224,7 +234,7 @@ public static class GroundCliffs
     }
 
     /// <summary>The finished cliff: one mesh, drawn and collided with (vertex colours = the ground's own weights, uv1.x
-    /// = how much rock shows).</summary>
+    /// = how much rock shows, uv1.y = how far up the cliff, 0 at the pass floor to 1 at the top).</summary>
     public struct Built { public Mesh mesh; public int segments; }
 
     /// <summary>Trace the wall line over a plot and build the face, shoulder and grass strip along it.
@@ -271,17 +281,22 @@ public static class GroundCliffs
             return g.sqrMagnitude > 1e-10f ? g.normalized : Vector3.forward;
         }
 
-        // How far behind the wall line the face stands at this point: stepped columns that run the full height, and
-        // ledges that run level. A function of position only, so it is seamless.
+        // How far behind the wall line the face stands at this point: the face stands well back, cut into stepped
+        // columns and blocks each at its own depth, and level bands jut forward from it almost to the wall line like
+        // ledges. A function of position only, so it is seamless.
         float Recessed(float x, float z, float y)
         {
             // Columns lean a little as they rise, and come in a few sharp depths, like split rock.
-            float column = Mathf.Round(Mathf.PerlinNoise(x * 0.9f + y * 0.12f + o1, z * 0.9f - y * 0.08f + o2) * 5f) / 5f;
+            float column = Mathf.Round(Mathf.PerlinNoise(x * 0.9f + y * 0.12f + o1, z * 0.9f - y * 0.08f + o2) * 4f) / 4f;
+            // Blocks about 1–2 m across and half a metre tall, each at one of four depths, like fractured slabs.
+            float block = Mathf.Round(Mathf.PerlinNoise(x * 0.55f + o3, z * 0.55f + y * 2f + o4) * 3f) / 3f;
             float slab = Mathf.PerlinNoise(x * 2.3f + o3, z * 2.3f + o4);
-            // Strata: bands where the face steps back, their heights wandering along the cliff.
-            float band = Mathf.Repeat(y * 1.6f + Mathf.PerlinNoise((x + z) * 0.15f + o4, o3) * 2f, 1f);
-            float ledge = band > 0.72f ? 0.35f : 0f;
-            return Recess * Mathf.Clamp01(column * 0.7f + slab * 0.2f + ledge);
+            float back = Mathf.Clamp01(0.4f + column * 0.25f + block * 0.25f + slab * 0.1f);
+            // Ledges: level bands about 0.45 m tall, one every metre, their heights wandering along the cliff, that jut
+            // forward out of the face — broken off here and there so no ledge runs the whole cliff.
+            float band = Mathf.Repeat(y + Mathf.PerlinNoise((x + z) * 0.15f + o4, o3) * 2f, 1f);
+            bool ledge = band > 0.55f && Mathf.PerlinNoise(x * 0.35f + o2, z * 0.35f + o1) > 0.35f;
+            return Recess * (ledge ? back * 0.15f : back);
         }
 
         // How far back the grass strip reaches from a point: to where the ground's ramp is sure to be at the top; or,
@@ -305,22 +320,29 @@ public static class GroundCliffs
             return crestL;
         }
 
-        // The grass strip's far edge lies on the ground; its shading must match the ground's there or the edge shows.
+        // The grass strip's far edge lies on the ground, and so does the rounded foot's; their shading must match the
+        // ground's there or the edge shows.
         var onGround = new List<int>();
+        var onFloor = new List<int>();
         Vector3 GroundNormal(float x, float z)
         {
             const float e = 0.1f;
             return new Vector3(topY(x - e, z) - topY(x + e, z), 2f * e, topY(x, z - e) - topY(x, z + e)).normalized;
         }
+        Vector3 FloorNormal(float x, float z)
+        {
+            const float e = 0.1f;
+            return new Vector3(floorY(x - e, z) - floorY(x + e, z), 2f * e, floorY(x, z - e) - floorY(x, z + e)).normalized;
+        }
 
-        int Vertex(Vector3 v, float rock)
+        int Vertex(Vector3 v, float rock, float up)
         {
             var key = new Vector3Int(Mathf.RoundToInt(v.x * 1e4f), Mathf.RoundToInt(v.y * 1e4f), Mathf.RoundToInt(v.z * 1e4f));
             if (shared.TryGetValue(key, out int at)) return at;
             at = verts.Count;
             verts.Add(v);
             uvs.Add(new Vector2(v.x, v.z));
-            rockW.Add(new Vector2(Mathf.Clamp01(rock), 0f));
+            rockW.Add(new Vector2(Mathf.Clamp01(rock), Mathf.Clamp01(up)));
             sample(v.x, v.z, out Vector4 w);
             cols.Add(new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y), Mathf.Clamp01(w.z), Mathf.Clamp01(w.w)));
             shared.Add(key, at);
@@ -340,26 +362,46 @@ public static class GroundCliffs
             float top = topY(p.x, p.z) + rim;
             float radius = Mathf.Min(Mathf.Lerp(ShoulderMin, ShoulderMax, Mathf.PerlinNoise(p.x * 0.45f + o2, p.z * 0.45f + o1)),
                                      (top - fy) * 0.5f);
-            float faceTop = top - radius, bottom = fy - 0.1f;
+            // The rounded foot, shrinking with the cliff near a meeting point and never more than a third of its height
+            // — but always there, however small, so every cross-section has the same rows and neighbours join up.
+            float foot = Mathf.Max(0.02f, Mathf.Min(FootRadius * standing, (top - fy) * 0.3f));
+            float faceTop = top - radius, bottom = fy + foot;
             // Where the rock gives way to grass on the shoulder, wandering a little along the cliff.
             float edge = (Mathf.PerlinNoise(p.x * 1.7f + o3, p.z * 1.7f + o4) - 0.5f) * 0.6f;
 
-            float rTop = 0f;
+            // Up the rounded foot: from flat on the floor out in front of the wall line, curving up to stand upright at
+            // the wall line at the foot's height, where the face takes over. The lowest point tucks just under the floor.
+            for (int m = 0; m < FootRows; m++)
+            {
+                float a = m / (float)FootRows * Mathf.PI * 0.5f;
+                float outward = foot * (1f - Mathf.Sin(a));
+                float y = m == 0 ? fy - 0.02f : fy + foot * (1f - Mathf.Cos(a));
+                float above = y - fy;
+                int at = Vertex(new Vector3(p.x, y, p.z) + inward * outward, Smooth01((above + 0.05f) / 0.35f),
+                                above / Mathf.Max(0.01f, top - fy));
+                into.Add(at);
+                if (m == 0) onFloor.Add(at);
+            }
+
+            float rTop = 0f, rBelow = 0f;
+            float leanPerRow = (faceTop - bottom) / faceRows / Mathf.Tan(FaceSteepestLeanDegrees * Mathf.Deg2Rad);
             for (int k = 0; k <= faceRows; k++)
             {
                 float y = Mathf.Lerp(bottom, faceTop, k / (float)faceRows);
                 float above = y - fy;
-                // The foot eases out to the wall line, so the face curves into the floor instead of meeting it in a crease.
-                float r = Recessed(p.x, p.z, y) * Smooth01(above / 0.5f) * standing;
+                // The face's own carving eases in from the wall line above the foot, so the two meet without a step.
+                float r = Recessed(p.x, p.z, y) * Smooth01((y - bottom) / 0.5f) * standing;
+                if (k > 0) r = Mathf.Min(r, rBelow + leanPerRow);
+                rBelow = r;
                 if (k == faceRows) rTop = r;
-                into.Add(Vertex(new Vector3(p.x, y, p.z) - inward * r, Smooth01((above + 0.05f) / 0.35f)));
+                into.Add(Vertex(new Vector3(p.x, y, p.z) - inward * r, Smooth01((above + 0.05f) / 0.35f), above / Mathf.Max(0.01f, top - fy)));
             }
             for (int m = 1; m <= ShoulderRows; m++)
             {
                 float t = m / (float)ShoulderRows, a = t * Mathf.PI * 0.5f;
                 float r = rTop + radius * (1f - Mathf.Cos(a));
                 float y = faceTop + radius * Mathf.Sin(a);
-                into.Add(Vertex(new Vector3(p.x, y, p.z) - inward * r, 1f - Smooth01((t + edge - 0.15f) / 0.9f)));
+                into.Add(Vertex(new Vector3(p.x, y, p.z) - inward * r, 1f - Smooth01((t + edge - 0.15f) / 0.9f), (y - fy) / Mathf.Max(0.01f, top - fy)));
             }
             Vector3 front = p - inward * (rTop + radius);
             float reach = Mathf.Max(CapReach(p, -inward), rTop + radius + 0.3f);
@@ -372,7 +414,7 @@ public static class GroundCliffs
                 float along = span * t;
                 // A hair above the ground it lies over, down to exactly on it at the far edge, so the edge meets it.
                 v.y = topY(v.x, v.z) + rim * (1f - Smooth01(along / RimRoll)) + (k == CapRows ? 0f : 0.004f);
-                int at = Vertex(v, edge - 0.1f - t);
+                int at = Vertex(v, edge - 0.1f - t, 1f);
                 into.Add(at);
                 if (along >= RimRoll || k == CapRows) onGround.Add(at);
             }
@@ -427,6 +469,7 @@ public static class GroundCliffs
         visual.RecalculateNormals();
         var normals = visual.normals;
         foreach (int i in onGround) normals[i] = GroundNormal(verts[i].x, verts[i].z);
+        foreach (int i in onFloor) normals[i] = FloorNormal(verts[i].x, verts[i].z);
         visual.normals = normals;
         visual.RecalculateBounds();
 

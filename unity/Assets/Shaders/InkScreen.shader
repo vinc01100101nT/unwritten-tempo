@@ -45,6 +45,7 @@ Shader "Unwritten/InkScreen"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "WaterBodies.hlsl"   // the map's water, so ink under a lake fades exactly as the thing it outlines
 
             float4 _InkColor;
             float _Intensity, _LineStrength, _DepthEdge, _NormalEdge, _Thickness, _EdgeThresh, _EdgeSoft;
@@ -103,6 +104,13 @@ Shader "Unwritten/InkScreen"
                 float paperA = (1.0 - paper) * _PaperStrength;
 
                 float a = saturate(max(e * _LineStrength, paperA)) * _Intensity * _InkColor.a;
+                // Under a lake the ink fades with what it outlines: the water shows as much of it as it shows of the body.
+                if (!isSky)
+                {
+                    float3 wp = ComputeWorldSpacePosition(uv, rawC, UNITY_MATRIX_I_VP);
+                    int body = BodyIndex(wp);
+                    if (BodyShows(body)) a *= UnderWaterShows(wp, body);
+                }
                 return half4(_InkColor.rgb, a);
             }
             ENDHLSL

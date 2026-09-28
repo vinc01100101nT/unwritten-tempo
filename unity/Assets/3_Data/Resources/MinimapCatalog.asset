@@ -17,7 +17,7 @@ MonoBehaviour:
     worldMin: {x: -33.28, y: -33.28}
     worldSize: 66.56
   - map: brm_fild01
-    worldMin: {x: -33.332813, y: -33.27623}
+    worldMin: {x: -33.332813, y: -33.265697}
     worldSize: 66.613846
   - map: brm_fild02
     worldMin: {x: -33.28, y: -33.28}
@@ -38,7 +38,7 @@ MonoBehaviour:
     worldMin: {x: -33.28, y: -33.28}
     worldSize: 66.56
   - map: cdl_fild02
-    worldMin: {x: -33.28, y: -33.27318}
+    worldMin: {x: -33.28, y: -33.340958}
     worldSize: 66.56
   - map: cindrel
     worldMin: {x: -41.6, y: -41.6}
@@ -47,8 +47,8 @@ MonoBehaviour:
     worldMin: {x: -42.382893, y: -42.309353}
     worldSize: 84.78978
   - map: gmr_fild01
-    worldMin: {x: -33.28, y: -33.263813}
-    worldSize: 66.56
+    worldMin: {x: -33.336582, y: -33.308846}
+    worldSize: 66.61769
   - map: gmr_fild02
     worldMin: {x: -33.297306, y: -34.52899}
     worldSize: 67.460045

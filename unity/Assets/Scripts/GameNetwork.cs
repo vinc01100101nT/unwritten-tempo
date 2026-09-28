@@ -472,6 +472,11 @@ public class GameNetwork : NetworkManager
     {
         /// <summary>The preset, or -1 when this server holds none and the calendar decides.</summary>
         public int preset;
+        /// <summary>When the server began holding it (world-clock epoch seconds), what it held before (-1 = the
+        /// calendar's weather) and since when — so standing water is the same for everyone, whenever they arrived.</summary>
+        public double since;
+        public int before;
+        public double beforeSince;
     }
 
     public struct JoinRequest : NetworkMessage
@@ -899,10 +904,17 @@ public class GameNetwork : NetworkManager
 
     static void OnTimeOfDayShift(TimeOfDayShift msg) => TimeOfDay.TakeShift(msg.seconds);
     static void OnWeatherHeld(WeatherHeld msg)
-        => WeatherDirector.TakeForced(msg.preset < 0 ? null : (WeatherDirector.Preset?)msg.preset);
+        => WeatherDirector.TakeForced(msg.preset < 0 ? null : (WeatherDirector.Preset?)msg.preset, msg.since,
+                                      msg.before < 0 ? null : (WeatherDirector.Preset?)msg.before, msg.beforeSince);
 
     static WeatherHeld WeatherHeldNow()
-        => new WeatherHeld { preset = WeatherDirector.ForcedByServer.HasValue ? (int)WeatherDirector.ForcedByServer.Value : -1 };
+        => new WeatherHeld
+        {
+            preset = WeatherDirector.ForcedByServer.HasValue ? (int)WeatherDirector.ForcedByServer.Value : -1,
+            since = WeatherDirector.ForcedSince,
+            before = WeatherDirector.ForcedBefore.HasValue ? (int)WeatherDirector.ForcedBefore.Value : -1,
+            beforeSince = WeatherDirector.ForcedBeforeSince,
+        };
 
     /// <summary>Server-only: tell everybody on this server the time-of-day shift it now holds.</summary>
     public static void TellEveryoneTheTimeOfDay()

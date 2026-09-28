@@ -193,6 +193,8 @@ public static class GroundBlendBuilder
         if (mat == null) return null;
 
         // ── Build the subdivided plane, painting each vertex's path/dirt weight from the sampler ──────────
+        // A shaped ground is drawn finer: its rounded level edges are only as round as the triangles drawing them.
+        if (bumpHeight > 0f) cell = Mathf.Min(cell, GroundBumps.DrawnSpacing);
         int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, 240);
         int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, 240);
         int vcount = (nx + 1) * (nz + 1);
@@ -795,7 +797,7 @@ public static class GroundBlendBuilder
                           Material groundMat, GroundSampler sample, string rootName, int groundLayer,
                           System.Func<float, float, float> floorY, System.Func<float, float, float> topY, float maxRise)
     {
-        var cliffMat = MakeCliffMaterial(groundMat, rootName);
+        var cliffMat = MakeCliffMaterial(groundMat, rootName, cliffs.faceColor);
         var built = GroundCliffs.Build(cliffs, center, sizeX, sizeZ, floorY, topY, maxRise, sample);
         PersistMesh(built.mesh, rootName, "_cliffs");
 
@@ -814,20 +816,24 @@ public static class GroundBlendBuilder
                   $"({built.mesh.vertexCount} vertices).");
     }
 
-    // The cliff's material: a copy of this map's own ground material with its rock layer switched on (the gravel ground
-    // tile, until a rock-face tile exists), so the grass on the cliff top is the ground's grass exactly and the rock
-    // fades in from it. Null (the cliff then draws as plain ground) if the tile is missing.
-    static Material MakeCliffMaterial(Material groundMat, string rootName)
+    // The cliff's material: a copy of this map's own ground material with its rock layer switched on, so the grass on
+    // the cliff top is the ground's grass exactly and the face fades in from it. The face is the biome's colour when it
+    // has one — lighter up the cliff, darker and greyer at its foot, in patches, split by cracks — else the gravel
+    // ground tile. Null (the cliff then draws as plain ground) if that tile is needed and missing.
+    static Material MakeCliffMaterial(Material groundMat, string rootName, Color faceColor)
     {
-        var tex = GroundTiles.Load("BASE_OR_PATCH_OR_PATH_gravel_scree");
-        if (tex == null) return null;
+        bool flat = faceColor.a > 0f;
+        var tex = flat ? null : GroundTiles.Load("BASE_OR_PATCH_OR_PATH_gravel_scree");
+        if (!flat && tex == null) return null;
         EnsureFolder(MatDir);
         string matPath = $"{MatDir}/{Sanitize(rootName)}_cliff.mat";
         var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
         if (mat == null) { mat = new Material(groundMat); AssetDatabase.CreateAsset(mat, matPath); }
         else mat.CopyPropertiesFromMaterial(groundMat);
         mat.EnableKeyword("_CLIFF_ROCK");
+        if (flat) mat.EnableKeyword("_CLIFF_FACE_COLOR"); else mat.DisableKeyword("_CLIFF_FACE_COLOR");
         mat.SetTexture("_CliffRockMap", tex);
+        mat.SetColor("_CliffFaceColor", flat ? new Color(faceColor.r, faceColor.g, faceColor.b, 1f) : Color.white);
         mat.SetFloat("_CliffRockTiling", 1f / GroundTexWorldSize);
         EditorUtility.SetDirty(mat);
         return mat;

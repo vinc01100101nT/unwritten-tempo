@@ -83,7 +83,8 @@ public static class MobBody
 
         var cc = go.GetComponent<CharacterController>();   // perf-ok: once per creature made
         if (cc == null) return;
-        MobRespawn.ClampStepOffset(cc);
+        // Resized, so the walking rule is put back on at the new size: the full step, its capsule grown to take it.
+        GroundElevation.ApplyWalkRules(cc);
         var agent = go.GetComponent<PathAgent3D>();   // perf-ok: once per creature made
         if (agent != null) agent.agentRadius = Mathf.Max(RoutingRadius, cc.radius * s);
     }

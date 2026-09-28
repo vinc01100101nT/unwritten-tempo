@@ -1,5 +1,5 @@
 ---
-status: "Ground tiles DONE for all 14 biomes (33 tiles in the project). The biome → tile and biome → prop matching below was agreed by the user on 2026-09-25. Generator steps 1, 2, 4 and 5 DONE (2026-09-25): all 14 biomes are rows in the Biome Table, each on its own tiles, with a test map each and a check that guards the table; step 3, walking the test maps in the game, is the one step left. Ground levels (2026-09-27): Grassland only, built into its test map test_grassland, not walked yet. Rock cliffs lining the roads (2026-09-27): a map recipe setting, built into test_grassland_cliffs, not walked yet."
+status: "Ground tiles DONE for all 14 biomes (33 tiles in the project). The biome → tile and biome → prop matching below was agreed by the user on 2026-09-25. Generator steps 1, 2, 4 and 5 DONE (2026-09-25): all 14 biomes are rows in the Biome Table, each on its own tiles, with a test map each and a check that guards the table; step 3, walking the test maps in the game, is the one step left. Ground levels and rock cliffs (2026-09-27): every biome has its own ground shape and six have cliffs; the 39 world fields were rebuilt with them the same day, and a flat brown cliff face for Grassland is being tried on test_grassland_cliffs. None of it walked yet."
 owner: vince
 last-updated: 2026-09-27
 tags:
@@ -73,8 +73,10 @@ reeds (32) and cactus (33).
 Some biomes keep a weather look whatever the sky is doing (the user's call, 2026-09-25). It only ever adds: the day's
 weather can still bring more on top, and rain still brings its falling drops and rings.
 
-- **Swamp** — standing puddles over the ground at full coverage, on every graphics quality setting (rain puddles
-  elsewhere show on High only). Walking through them plays the splash footsteps.
+- **Swamp** — standing puddles over the ground at full coverage, and water standing in its hollows as if the first
+  30 seconds of heavy rain had just fallen, on every graphics quality setting (rain puddles elsewhere show on High
+  only). Rain on a Swamp fills its hollows further like anywhere else. Walking through the water plays the splash
+  footsteps.
 - **Snow** — the snow blanket over the ground and every prop, at full, on every quality setting.
 - **Mist** — fog at 0.6 of the Fog weather's thickness: near things stay clear, the far edge of the map fades.
 - **Sacred** — patchy, soft white clouds floating over the whole map at treetop height (between about 2 and 4.5
@@ -152,7 +154,7 @@ user's five steps:
 2. **One biome first: Forest** — done (2026-09-25).
    - **The Biome Table** (`unity/Assets/3_Data/Recipes/BiomeTable.asset`) is the one place a biome's look lives: one
      row per biome with its main ground, patch and road tiles, its colour wash, how high its ground rises, how wide
-     its hills are and how many levels it settles into, and which props each prop category means in that biome (a category left out uses the whole
+     its hills are and how many levels it settles into, whether its fields have cliffs and what colour a cliff face is, and which props each prop category means in that biome (a category left out uses the whole
      pack list; a category listed with no props places nothing). A map's own road choice in the World Creator still
      wins over the biome's road.
    - **Ground levels** (2026-09-27, the user's request): a ground height above 0 raises the ground into hills, with
@@ -160,31 +162,68 @@ user's five steps:
      count of 2 or more the hills settle into that many flat levels joined by slopes, each level covering about the
      same share of the map; with 0 they are smooth rolling mounds. No slope is steeper than the biome's steepest
      slope: where the ground would be, the higher side's edge is cut back into a ramp of that slope, so the levels
-     keep their heights. Only Grassland has any: 3 levels at 0, 0.6 and 1.2 m (a character is 0.5 m tall), hills
-     about 16 m across, slopes up to 20°. On `test_grassland` that measured 27% / 36% / 36% of the ground at the
-     three levels and a steepest slope of 19.6°. Players and creatures walk every one of those slopes by the same
-     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). A map already
-     built keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
+     keep their heights. Shaped ground is drawn with its points 0.25 m apart (flat ground keeps 0.8 m), the shape is
+     worked out on a 0.2 m grid, the ramps curve around each level, and the crease where a ramp meets a level is
+     rounded over about half a metre, so a level's edge follows a smooth curve instead of a zigzag of the ground's
+     triangles (the zigzag showed as a straight, stepped cut through puddles). Each biome's shape (a character is 0.5 m tall; levels 0 = smooth mounds):
+
+     | Biome | Height | Hills across | Levels | Steepest slope | Cliffs |
+     | --- | --- | --- | --- | --- | --- |
+     | Grassland | 1.2 m | 16 m | 3 | 20° | off |
+     | Forest | 0.8 m | 12 m | 0 | 15° | off |
+     | Highland | 1.8 m | 18 m | 4 | 25° | on |
+     | Peaks | 2.4 m | 20 m | 4 | 30° | on |
+     | Snow | 1.2 m | 20 m | 0 | 15° | off |
+     | Steppe | 0.4 m | 30 m | 0 | 8° | off |
+     | Coast | 1.0 m | 18 m | 2 | 20° | on |
+     | Desert | 1.5 m | 14 m | 0 | 20° | off |
+     | Volcanic | 1.8 m | 14 m | 3 | 25° | on |
+     | Swamp | 0.3 m | 10 m | 0 | 8° | off |
+     | Sacred | 1.2 m | 16 m | 3 | 20° | off |
+     | Haunted | 0.8 m | 12 m | 2 | 20° | on |
+     | Mist | 0.8 m | 14 m | 0 | 12° | off |
+     | Corrupted | 1.5 m | 12 m | 3 | 30° | on |
+
+     Grassland's 3 levels sit at 0, 0.6 and 1.2 m. `test_grassland` was rebuilt with the 0.25 m ground on 2026-09-28; its
+     steepest slope is 19.6°. The 39 world fields were rebuilt with rounded edges on 2026-09-27 but still at 0.8 m, so
+     their level edges still step until they are built again. Players and creatures walk every one of those slopes by the same
+     rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). The 39 world fields were rebuilt with these shapes on 2026-09-27; a map
+     built before that keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
      re-imported through it comes back flat.
-   - **Cliffs** (2026-09-27, the user's request): a map recipe's cliff height above 0 raises all the ground farther
-     than half the pass width from every road, and lines the pass with one smooth rock surface: a carved face
-     (columns and rock bands) whose foot curves into the pass floor, and a rounded shoulder at the top that rolls back
+   - **Cliffs** (2026-09-27, the user's request): a map with cliffs raises all the ground farther than half the pass
+     width from every road, and lines the pass with one smooth rock surface: a carved face
+     (standing well back, cut into columns and blocks about 1–2 m wide and half a metre tall each at its own depth,
+     with level ledges about 0.45 m tall, one every metre and broken off here and there, jutting forward from it almost
+     to the wall line; the face itself stays behind the wall line, at most 0.7 m back; going up, the face never leans back shallower than 50°,
+     so no part of it is a slope anyone can walk up — only the meeting points are), a rounded foot where the pass floor
+     curves up into the face (a quarter circle 0.5 m across out in front of the face, fading from the ground's colours
+     into the rock; only its lowest 15 cm is gentle enough to walk), and a rounded shoulder at the top that rolls back
      into the grass. On a cliff map the biome's ground levels go on the cliff tops, not in the pass: the pass floor is
      flat, so everything in it can walk the whole pass, and each cliff stands its height plus the level of the ground
      behind it (1.5–2.7 m on `test_grassland_cliffs`), so its edge rises and falls. No stretch is straight: the
      cliff's edge wanders up to 0.8 m in toward the road and out again (an 8 m pass is 6.4–9.6 m wide), every corner —
      where passes meet, where a road bends sharply — is rounded, and the rim swells up to 0.35 m. Rock also lines the
      map's own edge 1.5 m in, so a pass running to the edge ends in a curved cliff instead of opening onto nothing.
-     **Meeting points** (a recipe count, chosen at random along the pass, at least 15 m apart and 6 m in from the map's
+     **Whether a map has cliffs:** each biome's row in the Biome Table has a cliffs switch (on for Highland, Peaks, Coast, Volcanic,
+     Haunted and Corrupted),
+     and a map can override it — "on" or "off" — from its menu in the browser World Creator, or in its recipe. How
+     tall they stand, the pass width and the meeting points come from the map's recipe: the field template says 1.5
+     m, 8 m and 3. **Meeting points** (chosen at random along the pass, at least 15 m apart and 6 m in from the map's
      edge): there a cliff shrinks to nothing within 1.5 m of the spot and back to full height by 10 m, and its high
      ground slopes down to meet the pass, so a player can walk up onto the top; on `test_grassland_cliffs` (3 of them)
      walking straight up measured 22.7–25.6° at the steepest. The rock and the grass fade into each other over the
      shoulder and at the foot; the grass on top is the map's own ground. The cliff collides exactly as it is drawn:
      feet stand on its grass top, bodies stop against its carved face, and creatures chase up and down the
      meeting points like a player does.
-     Nothing is placed in the band the cliff takes up. The rock is the gravel ground tile until a rock-face tile
-     exists. The only map using it is `test_grassland_cliffs` (1.5 m cliffs, 8 m pass, 3 meeting points). The World
-     Creator cannot set cliffs on a map yet, and the Map Painter does not carry them.
+     Nothing is placed in the band the cliff takes up. **The face's colour:** a biome with a cliff face colour in its row draws the face in shades of that colour —
+     lighter toward the top, darker and greyer toward the foot, in patches about 2.5 m and 0.8 m across, split by thin dark cracks along the borders of rock cells about 0.9 m
+     across and 2 m tall, only some lengths of them cracked. Each biome's colour is the average colour of its own earthy or rocky
+     ground tile: Grassland brown #604623 (soil), Highland and Peaks grey #7B7C7E (gravel_scree), Coast pale grey-brown
+     #A1958B (pebbles), Volcanic dark grey #3D3738 (cooled_lava), Haunted dark brown #41362D (grave_dirt), Corrupted
+     near-black violet #2C2731 (blighted_soil). A biome with none draws the face with the gravel ground tile. Maps with
+     cliffs: `test_grassland_cliffs` (cliffs on, from the field template's numbers) and the 16 world fields of the six
+     cliff biomes, rebuilt with all of the above on 2026-09-28.
+     The Map Painter does not carry cliffs.
 3. **Testing in the game** — NOT DONE. Fifteen linked test maps, one per biome plus a Grassland map with cliffs,
    wait to be walked: `test_grassland_cliffs` ↔ `test_grassland` ↔ `test_forest_a` ↔ `test_highland` ↔ `test_peaks` ↔ `test_snow` ↔ `test_steppe` ↔ `test_coast` ↔ `test_desert` ↔ `test_volcanic` ↔
    `test_swamp` ↔ `test_sacred` ↔ `test_haunted` ↔ `test_mist` ↔ `test_corrupted`, each 60 m, joined west to east by

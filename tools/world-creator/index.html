@@ -147,12 +147,13 @@
 "use strict";
 
 // ── World model (v2 — free-form, rectangular) ────────────────────────────────
-// maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome?, name? }]
+// maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome?, cliffs?, name? }]
 //          name = the map's display name, shown here and on the exported map picture. id = the Unity scene file name
 //          and what /tp takes. A town, city or special map's id is snakeCase(name); a field is <town code>_fildNN and a
 //          dungeon floor <town code>_dunNN, Ragnarok-style (lst_fild01, olk_dun01), so theirs is typed, not derived.
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
 //          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
+//          cliffs = "on" / "off": rock cliffs lining this map's roads, regardless of its biome; omitted = as the biome says.
 // portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
 const TYPES = ["town", "field", "dungeon", "special"];
 const COLORS = { town: "#f2c200", field: "#3fb24a", dungeon: "#8a3ffb", special: "#e23b3b" };
@@ -164,6 +165,9 @@ const BIOME_COLORS = { grassland: "#3fb24a", snow: "#bfe3ff", desert: "#e3c878",
                        highland: "#8fae5a", peaks: "#9aa3ad", steppe: "#c9b25a", coast: "#e8d9a8", swamp: "#5f7a3c", sacred: "#7fd36a",
                        haunted: "#7a6b52", mist: "#a8b8b0" };
 function biomeOf(m) { return m.biome || "grassland"; }
+// A map's cliffs: "on" or "off" for this map, or omitted = as its biome says (the Biome Table's cliffs switch).
+const CLIFF_CHOICES = [{ value: undefined, label: "Cliffs: as the biome says" }, { value: "on", label: "Cliffs: on" },
+                       { value: "off", label: "Cliffs: off" }];
 const DEFAULT_SIZE = 60;   // new maps start 60×60 (one classic square)
 const MIN_SIZE = 16;       // smallest a map can be resized to
 const GRID_STEP = 10;      // faint guide grid every N world units
@@ -314,6 +318,7 @@ function copySelected() {
   if (m.pathTile !== undefined) clipboard.pathTile = m.pathTile;
   if (m.pathWidth !== undefined) clipboard.pathWidth = m.pathWidth;
   if (m.biome !== undefined) clipboard.biome = m.biome;
+  if (m.cliffs !== undefined) clipboard.cliffs = m.cliffs;
   flash("Copied " + m.id);
 }
 // Paste a fresh map (new id) from the clipboard. atMouse → centre on cursor; else offset from the source.
@@ -329,6 +334,7 @@ function pasteClipboard(atMouse) {
   if (clipboard.pathTile !== undefined) m.pathTile = clipboard.pathTile;
   if (clipboard.pathWidth !== undefined) m.pathWidth = clipboard.pathWidth;
   if (clipboard.biome !== undefined) m.biome = clipboard.biome;
+  if (clipboard.cliffs !== undefined) m.cliffs = clipboard.cliffs;
   state.maps.push(m); selectedId = id; draw();
   flash("Pasted " + id);
 }
@@ -419,6 +425,15 @@ function draw() {
       ctx.strokeText(biome, lcx, biomeY);
       ctx.fillStyle = BIOME_COLORS[biome];
       ctx.fillText(biome, lcx, biomeY);
+    }
+    if (m.cliffs !== undefined) {                                 // a map's own cliffs choice (only when it has one)
+      const cs = Math.round(ss * 0.85), cliffY = sizeY + ss * (biome !== "grassland" ? 2.3 : 1.2);
+      const text = m.cliffs === "on" ? "cliffs" : "no cliffs";
+      ctx.font = "700 " + cs + "px system-ui, sans-serif";
+      ctx.lineWidth = Math.max(2, cs * 0.22); ctx.strokeStyle = "rgba(0,0,0,0.7)";
+      ctx.strokeText(text, lcx, cliffY);
+      ctx.fillStyle = "#d8d0c0";
+      ctx.fillText(text, lcx, cliffY);
     }
 
     // resize handles on the selected map (edit mode)
@@ -703,6 +718,17 @@ function openMapMenu(px, py, m) {
     };
     menu.appendChild(row);
   }
+  const sepC = document.createElement("div"); sepC.className = "sep"; menu.appendChild(sepC);
+  for (const c of CLIFF_CHOICES) {
+    const row = document.createElement("button");
+    row.className = "row";
+    row.innerHTML = c.label + (m.cliffs === c.value ? " ✓" : "");
+    row.onclick = () => {
+      if (m.cliffs !== c.value) { recordUndo(snapshot()); if (c.value === undefined) delete m.cliffs; else m.cliffs = c.value; }
+      draw(); closeMenu();
+    };
+    menu.appendChild(row);
+  }
   const sep = document.createElement("div"); sep.className = "sep"; menu.appendChild(sep);
   const ren = document.createElement("button");
   ren.className = "row";
@@ -790,6 +816,7 @@ function worldJson() {
     if (m.pathTile !== undefined) o.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) o.pathWidth = m.pathWidth;
     if (m.biome !== undefined && m.biome !== "grassland") o.biome = m.biome;
+    if (m.cliffs === "on" || m.cliffs === "off") o.cliffs = m.cliffs;
     if (m.name) o.name = m.name;
     return o;
   });
@@ -870,6 +897,7 @@ function importJSON(text) {
     if (m.pathTile !== undefined) cell.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) cell.pathWidth = m.pathWidth;
     if (m.biome !== undefined) cell.biome = m.biome;
+    if (m.cliffs === "on" || m.cliffs === "off") cell.cliffs = m.cliffs;
     if (m.name) cell.name = m.name;
     state.maps.push(cell);
     const msuffix = /_(\d+)$/.exec(m.id || "");
@@ -1130,7 +1158,7 @@ function updateHint() {
   if (bgEditable())
     h.textContent = "🖼 Align background: drag the image to move · drag the cyan handles to scale (corners keep aspect) · adjust opacity in the toolbar · 🔒 Lock when aligned to resume placing maps";
   else if (mode === "edit")
-    h.textContent = "✏️ Edit: click empty to add · click a map to retype/set biome/delete · drag to move · handles to resize · [Ctrl+C/V] copy/paste · [Ctrl+D] duplicate · [Ctrl+Z/Y] undo/redo · [Del] remove · Shift/middle-drag pan · scroll zoom · [W] warp";
+    h.textContent = "✏️ Edit: click empty to add · click a map to retype/set biome/cliffs/delete · drag to move · handles to resize · [Ctrl+C/V] copy/paste · [Ctrl+D] duplicate · [Ctrl+Z/Y] undo/redo · [Del] remove · Shift/middle-drag pan · scroll zoom · [W] warp";
   else
     h.textContent = "🔵 Warp: click map A then map B to link them · drag a square end-marker to slide the doorway along its edge · click an end-marker to delete · [Esc] cancel · [E] edit";
 }

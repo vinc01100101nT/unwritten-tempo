@@ -49,19 +49,45 @@ public static class GroundElevation
     {
         if (cc == null) return;
         cc.slopeLimit = MaxWalkSlopeDegrees;
+        // EVERY BODY TAKES THE FULL STEP, the smallest included. Unity refuses a step taller than the controller's
+        // capsule can take, so a capsule too short for it is made just tall enough — its bottom kept where it was, its
+        // width untouched. Only the invisible collision shape changes, never what is drawn.
+        Vector3 s = cc.transform.lossyScale;
+        float scaleY = Mathf.Abs(s.y), scaleR = Mathf.Max(Mathf.Abs(s.x), Mathf.Abs(s.z));
+        float need = HeightForFullStep(cc.radius, scaleY, scaleR);
+        if (cc.height < need)
+        {
+            Vector3 c = cc.center;
+            c.y += (need - cc.height) * 0.5f;
+            cc.center = c;
+            cc.height = need;
+        }
         cc.stepOffset = Mathf.Min(MaxClimbStep, StepBound(cc));
     }
 
-    /// <summary>The tallest step this controller will accept, at its current size. PhysX counts the controller's
-    /// height as the WHOLE capsule (the end caps are the radius), so the real allowance is the cylinder part plus the
-    /// two caps, all scaled — kept 10% under that for the idle-breathe squash and float slop.</summary>
+    /// <summary>The tallest step this controller will accept, at its current size (see <see cref="StepBoundFor"/>).</summary>
     public static float StepBound(CharacterController cc)
     {
         Vector3 s = cc.transform.lossyScale;
-        float scaleY = Mathf.Abs(s.y);
-        float scaleR = Mathf.Max(Mathf.Abs(s.x), Mathf.Abs(s.z));
-        float cylH = Mathf.Max(cc.height - 2f * cc.radius, 0f) * scaleY;
-        return (cylH + 2f * cc.radius * scaleR) * 0.9f;
+        return StepBoundFor(cc.height, cc.radius, Mathf.Abs(s.y), Mathf.Max(Mathf.Abs(s.x), Mathf.Abs(s.z)));
+    }
+
+    /// <summary>The tallest step a capsule of this height and radius, at this scale, will accept. PhysX counts the
+    /// height as the WHOLE capsule (the end caps are the radius), so the real allowance is the cylinder part plus the
+    /// two caps, all scaled — kept 10% under that for the idle-breathe squash and float slop.</summary>
+    public static float StepBoundFor(float height, float radius, float scaleY, float scaleR)
+    {
+        float cylH = Mathf.Max(height - 2f * radius, 0f) * scaleY;
+        return (cylH + 2f * radius * scaleR) * 0.9f;
+    }
+
+    /// <summary>The shortest capsule height (before scaling) that accepts the full <see cref="MaxClimbStep"/>, for this
+    /// radius and scale.</summary>
+    public static float HeightForFullStep(float radius, float scaleY, float scaleR)
+    {
+        float wanted = MaxClimbStep / 0.9f * 1.001f;   // the scaled allowance StepBoundFor needs, with a hair over
+        float cylinder = Mathf.Max(0f, wanted - 2f * radius * scaleR) / Mathf.Max(1e-6f, scaleY);
+        return 2f * radius + cylinder;
     }
 
     /// <summary>World-Y for an integer elevation level.</summary>

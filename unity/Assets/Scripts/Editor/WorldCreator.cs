@@ -32,7 +32,7 @@ public class WorldCreator : EditorWindow
     // Free-form: each map has a world-space top-left pos (x→east, y→south) + an INTEGER size [w,h]. Every
     // portal carries explicit edge anchors on both ends (no grid adjacency is assumed any more).
     [Serializable] class WorldJson  { public int version; public MapJson[] maps; public PortalJson[] portals; }
-    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; }
+    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; public string cliffs; }
     [Serializable] class PortalJson { public string a; public string b; public AnchorJson anchorA; public AnchorJson anchorB; }
     [Serializable] class AnchorJson { public string edge; public float offset; }
 
@@ -383,6 +383,8 @@ public class WorldCreator : EditorWindow
                     if (mapPicksRoad) clone.pathTile = pt;
                     if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
                     if (TryParseBiome(m.biome, out var bm)) clone.biome = bm;   // per-cell theme override (else the template's biome)
+                    if (m.cliffs == "on") clone.cliffs = CliffChoice.On;         // per-map cliffs (else as the template says)
+                    else if (m.cliffs == "off") clone.cliffs = CliffChoice.Off;
                     var exits = exitsByMap.TryGetValue(m.id, out var ex) ? ex : null;
                     var res = RecipeGenerator.Generate(clone, exits, mapPicksRoad, leaveScenesOpen);
                     if (!res.ok)

@@ -149,9 +149,10 @@ public static class RecipeGenerator
         // Ground = one blended mesh; the biome row chooses its base/patch/road tiles + hue, the recipe can add a tint on
         // top and opt into hard (un-feathered) edges. The biome row also says how high its ground's mounds rise; the
         // recipe says whether rock cliffs line the roads.
-        var cliffs = r.cliffHeight > 0f && paths.Count > 0
+        bool cliffsOn = r.cliffs == CliffChoice.On || (r.cliffs == CliffChoice.FollowBiome && bio.cliffs);
+        var cliffs = cliffsOn && r.cliffHeight > 0f && paths.Count > 0
             ? new GroundCliffs.Spec(paths, r.cliffHeight, r.cliffPassWidth, seed, center, r.sizeX, r.sizeZ,
-                                    r.cliffMeetingPoints) : null;
+                                    r.cliffMeetingPoints, bio.cliffFaceColor) : null;
         var ground = GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
                                                paths, r.pathWidth, roadTex, patchAmount, 0.8f,
                                                bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,

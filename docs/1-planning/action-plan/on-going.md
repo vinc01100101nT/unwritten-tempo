@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-27
+last-updated: 2026-09-28
 tags:
   - planning-production
 ---
@@ -52,12 +52,12 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
   doors from the world layout; the fourteen shadow places are not built. — **4–5 days**
   *Done when:* starting from Lastline you can reach every one of the 75 maps on foot, without a game-master command.
 - [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** Built
-  2026-09-27: a biome's ground settles into flat levels joined by slopes (Grassland: 0, 0.6 and 1.2 m, slopes to 20°);
+  2026-09-27: a biome's ground settles into flat levels joined by slopes, each biome with its own shape (Grassland: 0, 0.6 and 1.2 m, slopes to 20°);
   a map recipe can line its roads with carved rock cliffs 1.5–2.7 m tall, with meeting points where a cliff slopes down
   to meet the pass; the player, every creature and every route walk by one rule (45° slopes, 0.075 m steps); and a map
   knows at load which of its areas connect, so an unreachable target costs no search
-  ([Biomes](../../3-world/biomes.md), [Walking and Routing](../../2-systems/walking-and-routing.md)). Only the test maps
-  `test_grassland` and `test_grassland_cliffs` use it. — **built**
+  ([Biomes](../../3-world/biomes.md), [Walking and Routing](../../2-systems/walking-and-routing.md)). The test maps
+  `test_grassland` and `test_grassland_cliffs` and the 39 world fields (rebuilt 2026-09-27) use it. — **built**
   *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you
   up and down both.
 
@@ -70,6 +70,27 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 - [ON-GOING] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
   the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
   *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
+
+---
+
+## Backlog — real work, deliberately not in the weeks above
+
+Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
+
+- [ON-GOING] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** Built 2026-09-27: each biome has a cliffs switch in
+  the Biome Table, a map can set cliffs on or off for itself from its menu in the browser World Creator, and a build
+  gives the field template's cliffs (1.5 m, 8 m pass, 3 meeting points) to every map that has them. — **built**
+  *Done when:* a field set to "Cliffs: on" in the World Creator comes out of Build World with cliffs, and one set to
+  off comes out without.
+
+- [ON-GOING] `MT-48` **`[E]` Rain leaves standing water that works like water.** Built 2026-09-27/28: 1 cm puddle sheets
+  on level ground; lakes that fill every hollow at once from the rain its slopes collect, spill downhill into the next
+  and flood the lowest ground; the same water for every player from the shared world clock; an exact reflection per
+  water height; things fade under water by depth, their outlines with them; shaped ground drawn at 0.25 m so level
+  edges curve ([Rain and Standing Water](../../2-systems/rain-and-standing-water.md)). Only `test_grassland` has the
+  0.25 m ground. — **built**
+  *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills,
+  two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.
 
 ---
 

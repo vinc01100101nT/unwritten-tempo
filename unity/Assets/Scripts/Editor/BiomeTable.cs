@@ -50,6 +50,13 @@ public class BiomeRow
     [Tooltip("The steepest slope the ground may have, in degrees. Players and creatures walk slopes up to 45 degrees; " +
              "anything steeper is a wall to both.")]
     [Range(1f, 40f)] public float bumpSteepestDegrees = 5.4f;
+    [Tooltip("Whether this biome's fields line their roads with rock cliffs. How tall they stand, how wide the pass is and " +
+             "how many meeting points they have come from the map's recipe; a map in the World Creator can turn them on " +
+             "or off for itself.")]
+    public bool cliffs = false;
+    [Tooltip("The colour of this biome's cliff faces, drawn lighter toward the top and darker toward the foot. Fully " +
+             "transparent (alpha 0) = not chosen: the face is drawn with the rock tile instead.")]
+    public Color cliffFaceColor = new Color(0f, 0f, 0f, 0f);
 
     [Tooltip("Which props a recipe's prop category places in this biome. A category not listed uses the full pack list; a category listed with no prefabs places nothing.")]
     public List<BiomeProps> props = new List<BiomeProps>();

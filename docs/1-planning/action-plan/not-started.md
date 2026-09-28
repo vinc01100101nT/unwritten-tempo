@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-27
+last-updated: 2026-09-28
 tags:
   - planning-production
 ---
@@ -157,19 +157,16 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
 - [ ] `MT-37` **`[E]` Give the eight orphan skills a weapon, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon — and a skill is learned only through its weapon's mastery, so nothing in the game can teach them. Give each one a weapon's pool and a mastery level, or delete it. — **1–2 days**
 
-- [ ] `MT-45` **`[A]` Make a rock-face tile for cliffs.** Cliff faces are drawn with the gravel ground tile until a
-  repeating rock-face tile exists; the cliff material already takes any tile. — **0.5–1 day**
-
-- [ ] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** Cliff height, pass width and meeting points are
-  settings on a map recipe only; the World Creator builds every field from one template, so no world map can have
-  cliffs yet. — **1–2 days**
-
-- [ ] `MT-47` **`[D]` Decide whether the ten smallest creatures get bigger collision shapes.** Every body steps up
-  0.075 m, except ten creatures whose collision shape is too small for Unity to allow it: they step up 0.039–0.07 m, so
-  a one-notch curb (0.05 m) can stop the smallest while the route plans over it. *Recommendation: make their shapes
-  just tall enough for 0.075 m; nobody sees a collision shape.* — **0.5 days**
+- [ ] `MT-45` **`[A]` Make a rock-face tile for cliffs.** Every cliff biome now has a cliff face colour, which the face is
+  drawn in instead of any tile; a biome with none would still draw its faces with the gravel ground tile, and the cliff
+  material already takes any tile. — **0.5–1 day**
 
 ---
+
+- [ ] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons.** Seen 2026-09-28 in play: hundreds of
+  "the object of type Image / TextMeshProUGUI has been destroyed" errors a session, from the hover plate over a unit
+  rebuilding its status icons (`HoverPlate.RebuildIcons`, line 316, from its LateUpdate). Cause not looked into yet.
+  *Done when:* a play session with fights and map changes logs none of them.
 
 ## Not scheduled at all
 

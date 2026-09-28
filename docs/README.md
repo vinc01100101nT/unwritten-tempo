@@ -49,6 +49,7 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Walking and Routing](2-systems/walking-and-routing.md) — BUILT 2026-09-27, not play-tested: one walking rule (45° slopes, 0.075 m steps) for the player, every creature and every route; each map's route areas, so an unreachable target is known at once.
+- [Rain and Standing Water](2-systems/rain-and-standing-water.md) — BUILT 2026-09-27/28, partly play-tested: 1 cm puddle sheets on level ground, lakes that fill the hollows from the rain their slopes collect and spill downhill, the same for every player from the shared world clock; exact reflections, fading under water, ground drawn at 0.25 m.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.
 - [Networking — Architecture](2-systems/networking/README.md) — the whole shape of the multiplayer layer on one page: the four processes and what each may decide, how a person gets from sign-in to standing in the world, what crosses the wire, and the single ownership table everything else points at. **Start here.** Folder:
   - [Implementation Notes](2-systems/networking/implementation-notes.md) — what is actually built, the conventions, and every trap already paid for. **Read before touching anything networked.**
