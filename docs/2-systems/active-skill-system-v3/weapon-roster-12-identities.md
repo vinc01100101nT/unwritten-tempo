@@ -12,7 +12,7 @@ Locked 2026-07-27 after a diversity pass. This is the **canonical weapon lineup*
 
 ## 1. The litmus test — one sentence per weapon
 
-| Weapon | Identity (every skill must reinforce this) | Unwritten (the wielder the identity comes from) |
+| Weapon | Identity (every skill must reinforce this) | Kashira (the wielder the identity comes from) |
 | --- | --- | --- |
 | **Sword** | Win duels through precise single-target bursts and timed defense. | The One Who Answered |
 | **Greatsword** | Delete groups with huge cleaves. | The One Who Cleared the Road |
@@ -29,7 +29,7 @@ Locked 2026-07-27 after a diversity pass. This is the **canonical weapon lineup*
 | **Fist** | *not written yet* | *not written yet* |
 | **Kick** | *not written yet* | *not written yet* |
 
-Each weapon is the only surviving trace of one of **the Fourteen Unwritten** — the people who fought the thing that silenced the scribe, after the last recorded line, so none of it was written down. The epithet and the identity sentence are the same statement in two registers: the identity is the litmus test for skills, the epithet is the flavor it must sound like. A skill that doesn't fit the epithet doesn't fit the weapon. Full lore in `../story-setting-canon.md`.
+Each weapon is what the artist kept of one of **the Fourteen Kashira** — the champions he imagined to fight Chaos, from before his paranoia turned them into the fourteen shadows. They were never put on the page, so they have no names. The epithet and the identity sentence are the same statement in two registers: the identity is the litmus test for skills, the epithet is the flavor it must sound like. A skill that doesn't fit the epithet doesn't fit the weapon. Full lore in `../story-setting-canon.md`.
 
 **The rolled kit is diegetic:** a dropped weapon remembers its wielder in fragments, so whichever skills it carries are *which memories surfaced*. Write drop/kit-roll flavor text in those terms, never as "randomized stats."
 
@@ -103,7 +103,7 @@ Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Ma
 
 ## Related
 
-- [Story & Setting (Canon)](../../3-world/story-setting-canon.md) — the Fourteen Unwritten these identities are the mechanical half of.
+- [Story & Setting (Canon)](../../3-world/story-setting-canon.md) — the Fourteen Kashira these identities are the mechanical half of.
 - [Sword — Skill Roster](sword-skill-roster.md) — the one identity taken all the way to a composed pool.
 - [Active Skill System — V3](README.md) — the channels, effects and scaling every pool is built from.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands to author the other thirteen pools within.

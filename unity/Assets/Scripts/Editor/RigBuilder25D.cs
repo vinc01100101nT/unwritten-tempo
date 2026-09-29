@@ -250,7 +250,7 @@ public static class RigBuilder25D
     public static GameObject BuildMonster(Texture2D tex, Vector3 foot, bool mystic)
     {
         var arc = MobRoster.All[0];          // the Slime grunt as the baseline
-        arc.sheet = null;                   // use the caller's texture, not the archetype's sheet
+        arc.artFolder = null;               // use the caller's texture, not the archetype's art
         arc.tint  = Color.white;
         if (mystic)
         {
@@ -260,11 +260,14 @@ public static class RigBuilder25D
         return FitBody(BuildMonster(tex, foot, arc), arc);
     }
 
-    /// <summary>Build a mob from a <see cref="MonsterArchetype"/>, resolving its sprite sheet by name
-    /// (falls back to the default monster sheet if that art folder is missing).</summary>
+    /// <summary>Build a mob from a <see cref="MonsterArchetype"/>, resolving its sprite sheet from its linked art
+    /// folder (falls back to the default monster sheet if that folder is missing).</summary>
     public static GameObject BuildMonster(in MonsterArchetype arc, Vector3 foot)
     {
-        if (TryStripArt(arc.sheet, out var idle, out var walk, out int ppu))
+        // A kind drawn as a 3D character (MobShadow3DVisual gives it its body at spawn) carries no flat picture.
+        if (CreatureKinds.Is3D(arc.kind)) return FitBody(BuildMonster(null, foot, arc), arc);
+        string dir = ArtFolderPath(arc.artFolder);
+        if (TryStripArt(dir, out var idle, out var walk, out int ppu))
         {
             var go = BuildMonster(null, foot, arc);
             var anim = go.GetComponent<BillboardAnimator3D>();
@@ -273,7 +276,7 @@ public static class RigBuilder25D
             anim.stripPixelsPerUnit = ppu;
             return FitBody(go, arc);
         }
-        return FitBody(BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc), arc);
+        return FitBody(BuildMonster(MonsterSheet(dir) ?? MonsterSheet(), foot, arc), arc);
     }
 
     /// <summary>Measure the art this mob plays, then put its size on its body through the one door the spawner uses
@@ -299,18 +302,25 @@ public static class RigBuilder25D
             MeasureStrip(anim.idleStrip, anim.stripPixelsPerUnit, ref crown, ref width);
             MeasureStrip(anim.walkStrip, anim.stripPixelsPerUnit, ref crown, ref width);
         }
-        else if (anim.sheet != null && anim.cell > 0 && ReadPixels(anim.sheet, out var px, out int w, out int h))
-        {
-            int cols = Mathf.Max(1, w / anim.cell), rows = Mathf.Max(1, h / anim.cell);
-            int frames = Mathf.Clamp(anim.walkFrames, 1, rows);
-            for (int c = 0; c < 4; c++)
-                for (int r = 0; r < frames; r++)
-                    MeasureFrame(px, w, Mathf.Min(c, cols - 1) * anim.cell, h - (r + 1) * anim.cell, anim.cell, anim.cell,
-                                 SpriteFoot * anim.cell, anim.cell, ref crown, ref width);
-        }
+        else MeasureGridSheet(anim.sheet, anim.cell, anim.walkFrames, ref crown, ref width);
         if (crown <= 0f) Debug.LogWarning($"[unwritten] {anim.name}: no painted pixels measured — its size can't be fitted.");
         anim.crownAtScaleOne = crown;
         anim.paintedWidthAtScaleOne = width;
+    }
+
+    /// <summary>How far the tallest walk frame of a GRID sheet reaches above its feet line, and how wide the widest one is
+    /// painted, in world units at scale one — the walk frames at the top of the four direction columns, feet line at
+    /// <see cref="SpriteFoot"/> of a cell. What a mob's body is fitted against, and what a saved character's asset
+    /// records for its sheet.</summary>
+    public static void MeasureGridSheet(Texture2D sheet, int cell, int walkFrames, ref float crown, ref float width)
+    {
+        if (sheet == null || cell <= 0 || !ReadPixels(sheet, out var px, out int w, out int h)) return;
+        int cols = Mathf.Max(1, w / cell), rows = Mathf.Max(1, h / cell);
+        int frames = Mathf.Clamp(walkFrames, 1, rows);
+        for (int c = 0; c < 4; c++)
+            for (int r = 0; r < frames; r++)
+                MeasureFrame(px, w, Mathf.Min(c, cols - 1) * cell, h - (r + 1) * cell, cell, cell,
+                             SpriteFoot * cell, cell, ref crown, ref width);
     }
 
     static void MeasureStrip(in BillboardAnimator3D.StripClip clip, int ppu, ref float crown, ref float width)
@@ -427,7 +437,7 @@ public static class RigBuilder25D
         // No NinjaAdventure VFX sheets: a creature holding a ranged weapon lands its blow instantly (null projectileSheet)
         // and the stun indicator stays off (null stunSheet) until a non-Ninja effect is wired in.
 
-        go.AddComponent<BillboardAnimator3D>().sheet = tex;
+        if (!CreatureKinds.Is3D(arc.kind)) go.AddComponent<BillboardAnimator3D>().sheet = tex;
         if (arc.tint.a > 0f && arc.tint != Color.white) msr.color = arc.tint;   // tint AFTER the animator sets frames
 
         go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
@@ -436,14 +446,10 @@ public static class RigBuilder25D
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
-        // Loot: Zeny and/or items paid to whoever earned the kill, on death.
-        bool hasGold  = arc.goldMax > 0;
+        // Loot: every creature carries its kind's materials, plus any items of its own, paid to whoever earned the kill.
         bool hasItems = arc.itemDropNames != null && arc.itemDropNames.Length > 0;
-        if (hasGold || hasItems)
         {
             var dropper = go.AddComponent<LootDropper>();
-            dropper.goldMin = arc.goldMin;
-            dropper.goldMax = arc.goldMax;
 
             if (hasItems)
             {
@@ -478,19 +484,27 @@ public static class RigBuilder25D
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 
-    /// <summary>Load a specific creature's sheet by its folder name (e.g. "Slime"), or null if no art folder
-    /// of that name has a usable sheet — callers fall back to <see cref="MonsterSheet()"/>.
+    /// <summary>The project path of the art folder a creature links to (<see cref="MonsterDef.artFolder"/>), or null
+    /// when the link is empty or no longer points at a folder.</summary>
+    public static string ArtFolderPath(string folderGuid)
+    {
+        if (string.IsNullOrEmpty(folderGuid)) return null;
+        string path = AssetDatabase.GUIDToAssetPath(folderGuid);
+        return AssetDatabase.IsValidFolder(path) ? path : null;
+    }
+
+    /// <summary>Load a specific creature's sheet from its art folder's path, or null if that folder has no usable
+    /// sheet — callers fall back to <see cref="MonsterSheet()"/>.
     /// Handles both naming conventions in the pack: <c>SpriteSheet.png</c> and a single sheet named after the
     /// folder (e.g. <c>Slime/Slime.png</c>); else the first non-Faceset/non-Preview png.
     ///
     /// <para>Only a GRID sheet counts — a picture laid out in 16px cells, one column per direction. Boss art is one
     /// picture per animation instead and is resolved by <see cref="TryStripArt"/>; slicing one of those pictures as a
     /// grid is what showed every boss as a 16px corner of its Attack or Hit picture.</para></summary>
-    public static Texture2D MonsterSheet(string name)
+    public static Texture2D MonsterSheet(string dir)
     {
-        if (string.IsNullOrEmpty(name)) return MonsterSheet();
-        string sheetPath = ResolveMonsterSheetPath($"{MobBiomeImporter.MonsterArtDir}/{name}", name)
-                        ?? ResolveMonsterSheetPath($"{MobBiomeImporter.BossArtDir}/{name}", name);
+        if (string.IsNullOrEmpty(dir)) return MonsterSheet();
+        string sheetPath = ResolveMonsterSheetPath(dir, Path.GetFileName(dir));
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 
@@ -515,22 +529,18 @@ public static class RigBuilder25D
     /// <summary>Resolve a creature whose art is one picture per animation (Boss/&lt;Name&gt;/Idle.png, Walk.png…).
     /// Idle plays while standing; Walk plays while moving, or Jump for the creatures that move by jumping and have
     /// no Walk. Frame count and feet line come from the slicing Unity already saved on each picture.</summary>
-    public static bool TryStripArt(string name, out BillboardAnimator3D.StripClip idle,
+    public static bool TryStripArt(string dir, out BillboardAnimator3D.StripClip idle,
                                    out BillboardAnimator3D.StripClip walk, out int pixelsPerUnit)
     {
         idle = default; walk = default; pixelsPerUnit = 0;
-        if (string.IsNullOrEmpty(name)) return false;
-        foreach (var dir in new[] { $"{MobBiomeImporter.MonsterArtDir}/{name}", $"{MobBiomeImporter.BossArtDir}/{name}" })
-        {
-            if (!Directory.Exists(dir) || ResolveMonsterSheetPath(dir, name) != null) continue;
-            string idlePath = FindStrip(dir, "Idle");
-            if (idlePath == null || !TryStripClip(idlePath, out idle)) continue;
-            string walkPath = FindStrip(dir, "Walk") ?? FindStrip(dir, "Jump");
-            if (walkPath == null || !TryStripClip(walkPath, out walk)) walk = default;
-            pixelsPerUnit = idle.sheet.height;
-            return true;
-        }
-        return false;
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return false;
+        if (ResolveMonsterSheetPath(dir, Path.GetFileName(dir)) != null) return false;
+        string idlePath = FindStrip(dir, "Idle");
+        if (idlePath == null || !TryStripClip(idlePath, out idle)) return false;
+        string walkPath = FindStrip(dir, "Walk") ?? FindStrip(dir, "Jump");
+        if (walkPath == null || !TryStripClip(walkPath, out walk)) walk = default;
+        pixelsPerUnit = idle.sheet.height;
+        return true;
     }
 
     static string FindStrip(string dir, string animation)
@@ -595,7 +605,7 @@ public static class RigBuilder25D
     static string FindMonsterSheet()
     {
         const string dir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
-        foreach (var n in new[] { "Slime", "KappaGreen", "Cyclope", "BlueBat", "Flam" })
+        foreach (var n in new[] { "Plopling", "Kappi", "Cyclo", "Drizzle", "Cinder" })
         {
             string p = $"{dir}/{n}/SpriteSheet.png";
             if (File.Exists(p)) return p;

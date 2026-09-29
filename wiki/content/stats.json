@@ -27,7 +27,7 @@
     },
     {
       "type": "paragraph",
-      "text": "You get points to spend as you level, and **each point into a stat costs more the higher that stat already is** — every block of ten gets pricier. So a lopsided build is genuinely expensive: going all-in on one stat buys fewer total points than spreading out. What you can afford is fixed by your level; nothing else grants stat points."
+      "text": "**You choose your starting stats when you create a character**, by pulling the corners of a hexagon. Opposite stats — STR and INT, AGI and LUK, VIT and DEX — always add up to 10, so raising one lowers its partner, and every shape spends all your starting points. After that you get points to spend as you level, and **each point into a stat costs more the higher that stat already is** — every block of ten gets pricier. So a lopsided build is genuinely expensive: going all-in on one stat buys fewer total points than spreading out. What you can afford is fixed by your level; nothing else grants stat points."
     },
     {
       "type": "heading",

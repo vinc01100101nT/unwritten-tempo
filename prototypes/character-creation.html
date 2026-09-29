@@ -11,8 +11,11 @@
 
   /* ---- the creation box, in the game's theme ---- */
   .create { width: 900px; background: var(--window-edge); padding: 2px; border-radius: 5px; }
-  .fill { background: var(--panel-raise); border-radius: 4px; padding: 14px 20px 18px; }
-  h2 { margin: 0 0 12px; text-align: center; font: 400 20px var(--font-ui); color: var(--title-text); }
+  .fill { background: var(--panel-raise); border-radius: 4px; overflow: hidden; }
+  .head { height: 32px; display: flex; align-items: center; padding: 0 14px;
+          background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+          color: var(--title-text); font: 700 14px var(--font-ui); }
+  .inner { padding: 14px 20px 18px; }
   .cols { display: grid; grid-template-columns: 212px 250px 1fr; gap: 24px; align-items: start; }
   .cap { font: 13px var(--font-ui); color: var(--text-dim); margin: 0 0 4px; }
 
@@ -74,7 +77,8 @@ Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D
 
 <section class="create" data-mocks="Character Select">
   <div class="fill">
-    <h2>A new character</h2>
+    <div class="head">Character Creation</div>
+    <div class="inner">
     <div class="cols">
       <div>
         <div class="frame"><svg class="figure" id="fig" width="120" height="260" viewBox="0 0 120 260"></svg></div>
@@ -101,6 +105,7 @@ Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D
       </div>
     </div>
     <div class="actions"><button>Create</button><button>Cancel</button></div>
+    </div>
   </div>
 </section>
 
@@ -109,7 +114,7 @@ Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D
 // Around the ring; each stat's opposite is three places on. Each pair always adds up to 10, each stat 1..9.
 const STATS = ["STR", "AGI", "VIT", "INT", "LUK", "DEX"];
 const val = [5, 5, 5, 5, 5, 5];
-const R = 90, NS = "http://www.w3.org/2000/svg";
+const R = 80, NS = "http://www.w3.org/2000/svg";
 const hex = document.getElementById("hex");
 const ang = i => -Math.PI / 2 + i * Math.PI / 3;
 const pt = (i, v) => [Math.cos(ang(i)) * R * v / 9, Math.sin(ang(i)) * R * v / 9];
@@ -125,14 +130,16 @@ function drawHex() {
   STATS.forEach((s, i) => {
     const [x, y] = pt(i, val[i]);
     const k = el("circle", { cx: x, cy: y, r: 6, fill: "var(--accent)", class: "knob" }, hex);
-    k.onpointerdown = e => { k.setPointerCapture(e.pointerId); k.onpointermove = m => drag(i, m); };
-    k.onpointerup = () => { k.onpointermove = null; };
+    k.onpointerdown = e => { dragging = i; hex.setPointerCapture(e.pointerId); };
     const [lx, ly] = pt(i, 11.4);
     const t = el("text", { x: lx, y: ly - 3, "text-anchor": "middle", style: "cursor:pointer" }, hex); t.textContent = s;
     t.onclick = () => set(i, val[i] + 1);
     const n = el("text", { x: lx, y: ly + 11, "text-anchor": "middle", class: "val" }, hex); n.textContent = val[i];
   });
 }
+let dragging = -1;
+hex.onpointermove = e => { if (dragging >= 0) drag(dragging, e); };
+hex.onpointerup = () => { dragging = -1; };
 function drag(i, e) {
   const b = hex.getBoundingClientRect(), x = e.clientX - b.left - 125, y = e.clientY - b.top - 125;
   const along = x * Math.cos(ang(i)) + y * Math.sin(ang(i));
@@ -175,7 +182,7 @@ function drawPicker() {
   parts[part] = c; sw.children[part].style.background = c; drawFigure();
 }
 function track(el, fn) {
-  el.onpointerdown = e => { el.setPointerCapture(e.pointerId); fn(e); el.onpointermove = fn; };
+  el.onpointerdown = e => { fn(e); el.onpointermove = fn; try { el.setPointerCapture(e.pointerId); } catch (_) {} };
   el.onpointerup = () => { el.onpointermove = null; };
 }
 const clamp = v => Math.max(0, Math.min(1, v));

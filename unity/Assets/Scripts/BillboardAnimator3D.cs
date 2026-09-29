@@ -2,9 +2,9 @@ using UnityEngine;
 
 /// <summary>
 /// 4-direction billboard animator for mobs in the 2.5D world. Slices a Ninja Adventure character
-/// sheet at RUNTIME (via <see cref="Sprite.Create"/>, like CharacterAnimator2D's attack poses — so
-/// the sheet doesn't need to be pre-sliced in the project) and plays the walk frames based on a
-/// <see cref="PathAgent3D"/>'s motion. Columns are Down/Up/Left/Right; the top rows are walk frames.
+/// sheet at RUNTIME (via <see cref="SpriteSheetCache"/>, so the sheet doesn't need to be pre-sliced in the
+/// project) and plays the walk frames based on a <see cref="PathAgent3D"/>'s motion. Columns are
+/// Down/Up/Left/Right; the top rows are walk frames, and a character's sheet has pose rows under them.
 ///
 /// <para>Art that comes as one picture per animation instead (the bosses: Idle.png, Walk.png…, each a single row of
 /// front-facing frames) sets <see cref="idleStrip"/> and <see cref="walkStrip"/>, which replace the grid sheet: the
@@ -81,6 +81,7 @@ public class BillboardAnimator3D : MonoBehaviour
         baseScale = transform.localScale;
         breathePhase = Random.value * Mathf.PI * 2f;   // desync the herd
         BuildFrames();
+        BuildPoses();
         if (down != null && down.Length > 0) sr.sprite = down[0];   // show before moving
 
         // Light-facing cast shadow that survives the sun being off to the camera's side (see BillboardShadow).
@@ -95,10 +96,94 @@ public class BillboardAnimator3D : MonoBehaviour
     public float FitToHeight(float height)
     {
         float s = MobSizes.BodyScale(height, crownAtScaleOne);
-        baseScale = Vector3.one * s;
+        baseScale = new Vector3(s * widthScale, s, s);
         transform.localScale = baseScale;
-        if (crownAtScaleOne > 0f) UnitBody.Set(gameObject, height, paintedWidthAtScaleOne * s);
+        if (crownAtScaleOne > 0f) UnitBody.Set(gameObject, height, paintedWidthAtScaleOne * s * widthScale);
         return s;
+    }
+
+    // How wide this body is drawn against its height — 1 for every creature, narrower for a saved character (see
+    // UseSheet). Not saved: it belongs to the life, and a body only becomes a character while the game runs.
+    [System.NonSerialized] float widthScale = 1f;
+
+    // ---- the poses under a character sheet's walk --------------------------------------------------------
+    // A character's sheet carries three more rows under its four walk rows: an attack, one picture per direction;
+    // a jump; and a row of single pictures — dead, casting, releasing a cast, releasing with no cast. A sheet without
+    // them (every mob's) simply has none of these, and every call below does nothing on it.
+    const int AttackRow = 4;
+    const int PoseRow = 6;
+    const float AttackPoseSeconds = 0.3f;
+    const float ReleasePoseSeconds = 0.4f;
+    // A release this soon after a wind-up ended is that wind-up's release; later than this, it had none.
+    const float ReleaseFollowsCastSeconds = 0.5f;
+
+    Sprite[] attackPoses;
+    Sprite deadPose, castPose, releasePose, instantReleasePose;
+    Sprite posing;
+    float poseUntil;
+    bool holdingCast;
+    float castEndedAt = -1f;
+
+    void BuildPoses()
+    {
+        attackPoses = null;
+        deadPose = castPose = releasePose = instantReleasePose = posing = null;
+        holdingCast = false;
+        if (sheet == null || cell <= 0 || idleStrip.sheet != null) return;
+        var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow);
+        var poses = SpriteSheetCache.FootRow(sheet, cell, PoseRow);
+        if (attack.Length < 4 || poses.Length < 4) return;
+        attackPoses = attack;
+        deadPose = poses[0];
+        castPose = poses[1];
+        releasePose = poses[2];
+        instantReleasePose = poses[3];
+    }
+
+    /// <summary>A swing: the attack picture for the way it faces, briefly. Nothing on a sheet without one.</summary>
+    public void ShowAttack()
+    {
+        if (attackPoses == null) return;
+        posing = attackPoses[DirectionColumn(facing)];
+        poseUntil = Time.time + AttackPoseSeconds;   // server-math: how long a picture stays on screen, not a game number
+    }
+
+    /// <summary>Hold, or stop holding, the casting picture — a skill's wind-up.</summary>
+    public void HoldCast(bool on)
+    {
+        if (castPose == null || on == holdingCast) return;
+        holdingCast = on;
+        if (!on) castEndedAt = Time.time;
+    }
+
+    /// <summary>A skill let go: the releasing picture after a wind-up, or the one for a skill with no wind-up.</summary>
+    public void ShowRelease()
+    {
+        if (releasePose == null) return;
+        bool afterCast = holdingCast || (castEndedAt >= 0f && Time.time - castEndedAt <= ReleaseFollowsCastSeconds);
+        holdingCast = false;
+        castEndedAt = -1f;
+        posing = afterCast ? releasePose : instantReleasePose;
+        poseUntil = Time.time + ReleasePoseSeconds;   // server-math: how long a picture stays on screen, not a game number
+    }
+
+    /// <summary>Show the dead picture — called as the body starts its death fade, which then stops this animator.</summary>
+    public void ShowDeathPose()
+    {
+        if (deadPose == null) return;
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
+        posing = null;
+        holdingCast = false;
+        sr.sprite = deadPose;
+    }
+
+    // Columns are down, up, left, right — the same order the walk is read in.
+    static int DirectionColumn(Vector2 f)
+    {
+        if (f.y > 0f) return 1;
+        if (f.y < 0f) return 0;
+        if (f.x < 0f) return 2;
+        return 3;
     }
 
     void BuildFrames()
@@ -117,6 +202,26 @@ public class BillboardAnimator3D : MonoBehaviour
         // of each instance allocating its own identical copies in Awake.
         var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames);
         down = dirs[0]; up = dirs[1]; left = dirs[2]; right = dirs[3];
+    }
+
+    /// <summary>Draw this body from a different grid <paramref name="grid"/> from now on — a creature that has turned back
+    /// into the character it was drawn as. Any strip art is dropped, and the art's measured height and width come with the
+    /// picture, because the body's size is fitted against them (<see cref="MobBody.Fit"/>, which the caller runs next).</summary>
+    public void UseSheet(Texture2D grid, float crown, float paintedWidth, float drawnWidth = 1f)
+    {
+        if (grid == null) return;
+        sheet = grid;
+        widthScale = Mathf.Max(0.05f, drawnWidth);
+        idleStrip = default;
+        walkStrip = default;
+        idleClip = walkClip = playing = null;
+        crownAtScaleOne = crown;
+        paintedWidthAtScaleOne = paintedWidth;
+        frame = 0; timer = 0f;
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
+        BuildFrames();
+        BuildPoses();
+        if (down != null && down.Length > 0) sr.sprite = down[0];
     }
 
     // WATCHING MACHINES ONLY: whether the server says this creature is travelling, and which way on the ground. Its
@@ -140,6 +245,15 @@ public class BillboardAnimator3D : MonoBehaviour
         bool moving = travelIsTold ? toldMoving : agent != null && agent.Moving;
         if (moving)
             facing = travelIsTold ? Facing3D.FromWorldDir(new Vector3(toldHeading.x, 0f, toldHeading.y)) : agent.Facing;
+
+        // A POSE OVERRIDES THE WALK: the casting picture for as long as the wind-up lasts, a swing or a release for a
+        // moment. Only a character's sheet has any.
+        if (holdingCast && castPose != null) { sr.sprite = castPose; ApplyIdleScale(true); return; }
+        if (posing != null)
+        {
+            if (Time.time < poseUntil) { sr.sprite = posing; ApplyIdleScale(true); return; }
+            posing = null;
+        }
 
         var clip = idleClip != null ? (moving ? walkClip : idleClip) : ClipFor(facing);
         if (clip == null || clip.Length == 0) return;

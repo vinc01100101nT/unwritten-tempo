@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Mossnail
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.mossnail
+  displayName: Mossnail
+  kind: 0
+  size: 0.2
+  biome: 6
+  artFolder: ef2ddfd8942d38c40b9986681e8d5b54
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 10
+  str: 10
+  agi: 9
+  vit: 10
+  intel: 5
+  dex: 8
+  luk: 5
+  startingGear: []
+  gearQuality: 0
+  gearFolds: 1
+  gearInkTier: 1
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 10
+  hardDefPercent: 15
+  hardMagicDefPercent: 0
+  xpReward: 40
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 8
+  goldMax: 24
+  itemDropNames: []
+  itemDropChances: []

@@ -18,11 +18,16 @@ public class PooledMob : MonoBehaviour
     /// <summary>What kind of creature it is — how long it stays gone after it dies is the kind's answer.</summary>
     public CreatureKind kind;
 
+    /// <summary>A pool that is not a field spawner's — the saved characters' (see <see cref="SavedCharacters"/>). Used when
+    /// <see cref="owner"/> is not set.</summary>
+    public System.Action<PooledMob> returnTo;
+
     /// <summary>Called by <see cref="Health.Die"/> after the death fade finishes: hand the object back to the
     /// pool. Falls back to hiding itself if its spawner is gone (e.g. scene torn down).</summary>
     public void OnFadedOut()
     {
         if (owner != null) owner.ReturnToPool(this);
+        else if (returnTo != null) returnTo(this);
         else gameObject.SetActive(false);
     }
 }

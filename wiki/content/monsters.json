@@ -3,7 +3,7 @@
  "blocks": [
   {
    "type": "paragraph",
-   "text": "*The blank pages you hunt.*"
+   "text": "*The corrupted pages you hunt.*"
   },
   {
    "type": "heading",
@@ -12,7 +12,7 @@
   },
   {
    "type": "paragraph",
-   "text": "Every monster in Unwritten is a **blank page** — one of the pages that should have carried the rest of the world's record and never did, given hostile form. That's why they appear **flat and papery**: their two-dimensional look isn't a style choice — it's what they *are*. To defeat one is to **fill it in**: one more line of the record that now exists because you wrote it."
+   "text": "Every monster in Unwritten is a **corrupted page** — a drawing from the artist's book that Chaos twisted into hostile form. That's why they appear **flat and papery**: their two-dimensional look isn't a style choice — it's what they *are*. To defeat one is to **restore its page**."
   },
   {
    "type": "heading",
@@ -57,7 +57,7 @@
   },
   {
    "type": "paragraph",
-   "text": "A monster **keeps what it wears** — its gear dies with it, because gear is made, not taken off a corpse. What it gives up is **materials**, **consumables** and **coin**. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does. Coin goes straight into your purse."
+   "text": "A monster **keeps what it wears** — its gear dies with it, because gear is made, not taken off a corpse. What it gives up is **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."
   },
   {
    "type": "list",
@@ -69,13 +69,30 @@
   {
    "type": "heading",
    "level": 2,
-   "text": "Bosses & the silencer"
+   "text": "Pages that turn back"
+  },
+  {
+   "type": "paragraph",
+   "text": "A beaten monster sometimes turns back into the character the artist really drew on its page — about **3 kills in 20**, for ordinary monsters and elites; a shadow never does. The monster's own drops still fall. The character says a line — for its first 2 seconds an aura shows which kind it is: hearts for one that never fights, stars for an ally, a dark haze for a rebel — and it stays for 30 seconds, doing one of three things:"
   },
   {
    "type": "list",
    "items": [
-    "**Bosses** are larger, self-assembled masses of blank page — absence gathered into something powerful and deliberate.",
-    "**The silencer** is the thing that stopped the scribe mid-sentence — the reason any page was left blank, and the deepest blankness in the world."
+    "**Some never fight.** They thank you, stay a while and leave — and saving one is the only way to earn **gold**: the monster's own gold range, times more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans).",
+    "**Some fight beside you** against monsters and rebels, then say goodbye. You cannot hit them, and what they beat counts as yours.",
+    "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. A rebel carries **more and rarer loot** — as if it were one kind stronger — and the experience of the monster it came from. An elite always turns into the same ninja, and every ninja rebels."
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Elites & the shadows"
+  },
+  {
+   "type": "list",
+   "items": [
+    "**Elites** are the strongest corrupted pages of an area, and they keep calling ordinary monsters to their side.",
+    "**The shadows** are the Fourteen Kashira, turned by the artist's fear — the strongest creatures in the world, levels 105 to 170, one for each weapon."
    ]
   },
   {

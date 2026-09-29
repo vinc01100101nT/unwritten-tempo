@@ -115,8 +115,6 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 **Saved data upgrade:** none — the ring was never serialized (SaveData.cs:72-73); no version bump, no character-server restart.
 
-**Measured today:** none of the 84 monster assets carries ring ranks or a ring item (83 omit `ringRankStats`/`startingGear` entirely; Axolot carries a Sword and no ranks) and no ring `Item` asset exists (17 item assets, none with `slot: 12`) — so removing the gate changes no creature's numbers and the fallback item at Character.cs:872-880 is the only ring that ever existed.
-
 **Touches but does not alter:** the ring's XP curve `20 + Level × 12` (RingProgress.cs:31); one draft point per ring level (RingProgress.cs:53); the ten ring stats and their order (SkillRing.cs:42-53); the +80%/+50%/+60% caps and K=40 (SkillRing.cs:63-76); the level-up draft UI; ring XP still coming from the same kills as character XP (Character.cs:1632-1634). The rule "ring XP only accrues while worn" (Character.cs:1633) simply becomes "always" — that is what §8 says.
 
 **Rebuild:** game server yes; char server no; accounts no.

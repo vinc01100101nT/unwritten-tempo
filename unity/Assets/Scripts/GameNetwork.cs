@@ -1697,6 +1697,10 @@ public class GameNetwork : NetworkManager
             return;
         }
 
+        // ONLY AN ENEMY. A creature fighting beside you, or one that fights nobody, is not somebody you may strike —
+        // and that is this machine's answer, not the cursor's that asked.
+        if (!Sides.Hostile(swinger, VictimBehind(identity) as ICombatUnit)) return;
+
         // THE BEAT IS THIS MACHINE'S, not the swinger's. Until now the only thing standing between a client and
         // twenty blows a second was the flood ceiling, which is set far above any real attack speed on purpose —
         // so a machine that sent a request the moment it was allowed to, instead of when its own animation reached
@@ -1797,6 +1801,8 @@ public class GameNetwork : NetworkManager
         // Same refusal as FighterFor makes: somebody on their way out of this world does not act in it.
         var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
         if (swinger == null) return;
+        // Asked again at the contact: the victim may have stopped being an enemy during the swing.
+        if (!Sides.Hostile(swinger, victim as ICombatUnit)) return;
 
         // AND THE DEAD DO NOT SWING. A blow is scheduled when the swing begins and lands a fraction of a second
         // later, so a person killed inside their own wind-up was still landing it — and nothing here refused a

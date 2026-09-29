@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-07
+last-updated: 2026-09-30
 tags:
   - ai-learnings
 ---
@@ -21,6 +21,7 @@ memory, how big the download — and you got it from a search, a folder listing 
 Every one of these is a different quantity and they differ by multiples, not percentages:
 
 - lines a search matched · files it matched in · items those files describe
+- entries in a folder listing · the sub-folders among them · the things those sub-folders hold
 - bytes on disk · bytes in the shipped build · bytes resident in memory while running
 - assets in the project · assets the game actually references
 - **POINTS added to a multiplier · a PERCENTAGE of the finished number** — an additive bonus is only "+X%" at
@@ -71,11 +72,19 @@ The roll is two coin-flips and a quarter-chance, so the exact answers are 18.75 
 my four printed figures were wrong, and the measurement I was so pleased with was the thing that made them look
 verified. Both were caught by another session reading the docs, not by me.
 
+2026-09-29, a folder listing. Asked which character sprites could become mobs, I counted 95 entries in the folder,
+found 89 standard sheets plus 3 odd ones, and reported "3 more, unusual size, not checked". The other 3 entries
+were loose preview pictures sitting beside the character folders, not characters. The user then asked me to
+assess and resize "the 3 unusual ones", and the round went on finding out there was nothing to resize.
+
 ## How to apply
 
 - **Count files, not hits.** `grep -l … | wc -l` counts files; `grep -c` and a bare `grep … | wc -l` count lines.
   If you mean "how many things", the per-thing number must be exactly 1 — prove it on ONE item before trusting
   the total.
+- **Count folders, not entries.** A folder listing mixes loose files with sub-folders; filter to directories
+  (`[ -d ]`, `os.path.isdir`) before a count becomes "N characters", and make the parts add up to the whole
+  before reporting a remainder as a finding.
 - **A folder size answers "what is on disk" and nothing else.** For what actually ships, read the build's own
   size report rather than adding up source files; Unity writes one into its editor log after every build, broken
   down by textures / meshes / audio, with the biggest assets listed. It settled in seconds that this project's

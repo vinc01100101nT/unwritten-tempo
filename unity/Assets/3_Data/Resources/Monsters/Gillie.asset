@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Gillie
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.gillie
+  displayName: Gillie
+  kind: 0
+  size: 0.3
+  biome: 10
+  artFolder: b52ddd9b9a70aa64d819f8d9549525b9
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 17
+  str: 14
+  agi: 10
+  vit: 14
+  intel: 7
+  dex: 10
+  luk: 7
+  startingGear: []
+  gearQuality: 0
+  gearFolds: 2
+  gearInkTier: 1
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 17
+  hardDefPercent: 15
+  hardMagicDefPercent: 0
+  xpReward: 40
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 1
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 8
+  goldMax: 24
+  itemDropNames: []
+  itemDropChances: []

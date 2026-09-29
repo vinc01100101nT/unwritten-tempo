@@ -3,7 +3,7 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*The official guide to **Unwritten** — a 2.5D MMORPG where you hunt the blank pages of an unfinished world and write your own color into it.*"
+      "text": "*The official guide to **Unwritten** — a 2.5D MMORPG where you restore the corrupted pages of an artist's unfinished book and write your own color into it.*"
     },
     {
       "type": "quote",
@@ -18,15 +18,15 @@
     },
     {
       "type": "paragraph",
-      "text": "Long ago, someone wrote down the **truth of the world** — a record kept current as the world happened. Then the scribe was **silenced, mid-sentence**, and the record stops. Everything after that line was never written, and what is never written does not hold together: the blank pages that should have carried the rest scattered across the land and became **monsters**. With nobody keeping the record, people lost their identities — no name was ever inked — leaving them as **charcoal husks**."
+      "text": "An artist wrote a gentle story in a book and drew its pictures himself. Then unwanted thoughts took shape in his mind as **Chaos**, and Chaos **corrupted the pages** — the drawings on them twisted into **monsters**. The fourteen champions he imagined to stop it sealed it away, but his fear that Chaos had infected them turned them into the **fourteen shadows**."
     },
     {
       "type": "paragraph",
-      "text": "You are one of those husks. You wander an endless world, hunting the blank pages and filling them in — and as you write, your **color arrives**. That gradual arrival of self *is* your progression."
+      "text": "You are one of the **unwritten** — real in the artist's mind but not yet on the page: a charcoal body with no color. You restore the corrupted pages and face the shadows, and as you are written in, your **color arrives**. That gradual arrival of self *is* your progression."
     },
     {
       "type": "paragraph",
-      "text": "The look of the game is the story: the flat, papery monsters **are** the blank pages; the 3D-but-colorless heroes **are** people no one ever wrote down."
+      "text": "The look of the game is the story: the flat, papery monsters **are** the corrupted pages; the 3D-but-colorless heroes **are** the people not yet written."
     },
     {
       "type": "heading",
@@ -41,9 +41,9 @@
     {
       "type": "list",
       "items": [
-        "**The World of Unwritten** — the setting, the Fourteen Unwritten, and why everything looks the way it does",
-        "**Getting Started** — your first steps as a husk *(work in progress)*",
-        "**World & Maps** — biomes and where the pages fell"
+        "**The World of Unwritten** — the setting, the Fourteen Kashira, and why everything looks the way it does",
+        "**Getting Started** — your first steps as one of the unwritten *(work in progress)*",
+        "**World & Maps** — biomes and where the corrupted pages are"
       ]
     },
     {
@@ -82,7 +82,7 @@
     {
       "type": "list",
       "items": [
-        "**Monsters** — the blank pages you hunt"
+        "**Monsters** — the corrupted pages you hunt"
       ]
     },
     {

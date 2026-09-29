@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Peeper
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.peeper
+  displayName: Peeper
+  kind: 0
+  size: 2.4
+  biome: 7
+  artFolder: 4887f2dab9b6a0149b941dfa607aecb9
+  weight: 2
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 41
+  str: 29
+  agi: 21
+  vit: 28
+  intel: 14
+  dex: 20
+  luk: 14
+  startingGear: []
+  gearQuality: 1
+  gearFolds: 6
+  gearInkTier: 1
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 41
+  hardDefPercent: 10
+  hardMagicDefPercent: 0
+  xpReward: 20
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2.1000001
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 6
+  goldMax: 18
+  itemDropNames: []
+  itemDropChances: []

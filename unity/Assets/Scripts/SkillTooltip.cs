@@ -13,6 +13,8 @@ public static class SkillTooltip
     static readonly string Num = UiKit.Hex(UiKit.Accent);
     static readonly string Desc = UiKit.Hex(UiKit.TextMain);
     static readonly string Chip = UiKit.Hex(UiKit.TextDim);
+    // The ultimate's pink, darkened only as far as it must be to read on a window.
+    static readonly string UltimateHex = UiKit.Hex(UiKit.Readable(new Color(1f, 0.549f, 0.878f)));
 
     static readonly StringBuilder sb = new StringBuilder(512);
 
@@ -180,7 +182,7 @@ public static class SkillTooltip
             if (d == Dialect.RichText)
             {
                 sb.Append("<size=120%><b>").Append(def.displayName).Append("</b></size>");
-                if (def.IsUltimate) sb.Append("  <color=#FF8CE0><b>ULTIMATE</b></color>");
+                if (def.IsUltimate) sb.Append("  <color=").Append(UltimateHex).Append("><b>ULTIMATE</b></color>");
             }
             else
             {
@@ -199,7 +201,7 @@ public static class SkillTooltip
 
             // Tag (archetype) + category chips.
             if (d == Dialect.RichText)
-                sb.Append("<color=").Append(Hex(ArchetypeColor(def.archetype))).Append("><b>")
+                sb.Append("<color=").Append(Hex(UiKit.Readable(ArchetypeColor(def.archetype)))).Append("><b>")
                   .Append(ArchetypeName(def.archetype)).Append("</b></color>");
             else
                 sb.Append(ArchetypeName(def.archetype));

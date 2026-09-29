@@ -15,10 +15,11 @@ namespace CharServer;
 /// </summary>
 public static class Progress
 {
-    /// <summary>The only keys a never-played character is allowed to carry — the look chosen at creation.</summary>
-    static readonly HashSet<string> AppearanceKeys = new(StringComparer.Ordinal)
+    /// <summary>The only keys a never-played character is allowed to carry — what was chosen at creation: the look,
+    /// and the six stats from the creation hexagon.</summary>
+    static readonly HashSet<string> CreationKeys = new(StringComparer.Ordinal)
     {
-        "modelName", "dyeSources", "dyeTargets",
+        "modelName", "dyeSources", "dyeTargets", "primary",
     };
 
     public readonly record struct Verdict(bool Ok, string? Reason);
@@ -32,10 +33,10 @@ public static class Progress
             return new Verdict(true, null);
 
         // No version. Legitimate for exactly one document: a character created but never played, which carries
-        // only the look chosen at creation. Without this, ANY object at all would be accepted and stored as
+        // only what was chosen at creation. Without this, ANY object at all would be accepted and stored as
         // somebody's character.
         foreach (var prop in progress.EnumerateObject())
-            if (!AppearanceKeys.Contains(prop.Name))
+            if (!CreationKeys.Contains(prop.Name))
                 return new Verdict(false, "progress must carry a whole-number 'version'");
 
         return new Verdict(true, null);

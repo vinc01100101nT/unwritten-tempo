@@ -93,33 +93,26 @@ public static class SkillEffectApplier
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
         if (scope == SkillScope.Single && singleTarget != null)
         {
-            // IN A CREATURE'S HANDS the other side is PEOPLE: the unit it picked is a person, and an effect aimed at
-            // "mobs" reaches them. Its own side (the caster) is reached exactly as a person's is.
-            if (CastByCreature(ch))
-            {
-                var person = PersonWithBody(singleTarget);
-                if (person != null)
-                {
-                    if ((targets & SkillTargets.Mobs) != 0)
-                    {
-                        burstPeople.Clear(); burstPeople.Add(person);
-                        DispatchPeopleHits(effects, burstPeople, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
-                    }
-                }
-                else if ((targets & SkillTargets.Player) != 0)
-                    ApplyEffectsToPlayer(effects, relocatePoint, srcSymbol, srcName, srcId, ch, vars);
-                return;
-            }
-
+            // THE PICKED UNIT, if it is an enemy of the caster: "mobs" is the side you fight, whichever side you are on
+            // (see Sides). Anything else — yourself, a friend, one who fights for nobody — is reached as the caster's
+            // own side is.
             var mob = singleTarget.GetComponentInParent<MonsterAI3D>();
-            if (mob != null)
+            if (mob != null && mob.Health == null) return;
+            ICombatUnit unit = mob != null ? mob.Health : PersonWithBody(singleTarget);
+            if (unit != null && Sides.Hostile(ch, unit))
             {
+                if ((targets & SkillTargets.Mobs) == 0) return;
                 // A single target that died before this landed is still struck — its numbers show, and nothing else
-                // lands on it (DispatchMobHits routes a dead mob to the damage-only beat).
-                if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null)
+                // lands on it (the dispatchers route a dead unit to the damage-only beat).
+                if (mob != null)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
                     DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
+                }
+                else
+                {
+                    burstPeople.Clear(); burstPeople.Add(unit);
+                    DispatchPeopleHits(effects, burstPeople, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
@@ -129,23 +122,10 @@ public static class SkillEffectApplier
 
         float r2 = Mathf.Max(0.05f, radius); r2 *= r2;
 
-        if ((targets & SkillTargets.Mobs) != 0 && CastByCreature(ch))
+        if ((targets & SkillTargets.Mobs) != 0)
         {
-            GatherPeople(point, r2, ch.Map);
+            GatherOpponents(point, r2, ch, burstPeople, burstTargets);
             DispatchPeopleHits(effects, burstPeople, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
-        }
-        else if ((targets & SkillTargets.Mobs) != 0)
-        {
-            burstTargets.Clear();
-            var list = MonsterAI3D.Active;
-            for (int i = 0; i < list.Count; i++)
-            {
-                var ai = list[i];
-                if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-                Vector3 d = ai.transform.position - point; d.y = 0f;
-                if (d.sqrMagnitude > r2) continue;
-                burstTargets.Add(ai);
-            }
             DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
         }
 
@@ -241,76 +221,55 @@ public static class SkillEffectApplier
         return new Vector3(center.x + Mathf.Cos(a) * reach, center.y, center.z + Mathf.Sin(a) * reach);
     }
 
-    /// <summary>A living mob picked at RANDOM from those within <paramref name="radius"/> of <paramref name="point"/>
-    /// (planar), or null when the area is empty. The sibling of <see cref="MobAt"/> — same zero-alloc sweep over the
-    /// small Active registry, but every candidate is equally likely instead of the nearest winning.
-    ///
-    /// <para>One pass, no temporary list: the i-th candidate found replaces the current pick with probability 1/i,
-    /// which leaves every candidate equally likely. The die comes from <see cref="CombatRng"/> because it DECIDES a
-    /// result — a server-authoritative build must be able to reproduce which target the dance chose.</para></summary>
-    public static Transform RandomMobNear(Vector3 point, float radius)
-    {
-        var list = MonsterAI3D.Active;
-        float r2 = Mathf.Max(0.01f, radius); r2 *= r2;
-        Transform pick = null;
-        int seen = 0;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var ai = list[i];
-            if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-            Vector3 d = ai.transform.position - point; d.y = 0f;
-            if (d.sqrMagnitude > r2) continue;
-            seen++;
-            if (seen == 1 || CombatRng.Range(0, seen) == 0) pick = ai.transform;
-        }
-        return pick;
-    }
+    // ---- the other side ----------------------------------------------------
+    // SkillTargets.Mobs is "the side you fight" — whoever Sides says is the caster's enemy. For a person that is the
+    // creatures; for a creature it is PEOPLE and the creatures fighting for them; for a creature fighting for the
+    // players it is the creatures. So a skill never lands on the caster's own side and always reaches its enemies.
 
-    // The living mob nearest `point` within `radius` (planar), if any. Same zero-alloc sweep over the small Active
-    // registry the AoE gather uses — no physics query, no GetComponent; runs once per relocation cast.
-    static bool MobAt(Vector3 point, float radius, out Vector3 pos, out Health hit)
-    {
-        pos = point; hit = null;
-        var list = MonsterAI3D.Active;
-        float best = radius * radius; bool found = false;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var ai = list[i];
-            if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-            Vector3 d = ai.transform.position - point; d.y = 0f;
-            float sqr = d.sqrMagnitude;
-            if (sqr > best) continue;
-            best = sqr; pos = ai.transform.position; hit = ai.Health; found = true;
-        }
-        return found;
-    }
-
-    // ---- the other side, when a creature is casting -------------------------
-    // SkillTargets.Mobs is "the side you fight". For a person that is the creatures; for a creature it is PEOPLE, so a
-    // creature's skill never lands on the creatures around it and always reaches whoever it is fighting.
-
-    /// <summary>Is a CREATURE using this skill — so its other side is people rather than creatures?</summary>
-    static bool CastByCreature(ICombatUnit caster) => caster is Health;
-
-    // Reused, like burstTargets: the people one tick of a creature's skill reaches.
+    // Reused, like burstTargets: the people one tick reaches.
     static readonly List<ICombatUnit> burstPeople = new List<ICombatUnit>(8);
 
-    // Everybody alive within the squared radius of `point` (planar), in `map` — the people a creature's area tick
-    // reaches. Only people in the caster's own map: every map shares one set of coordinates on the server.
-    static void GatherPeople(Vector3 point, float radiusSqr, string map)
+    // Reused by the re-aim and landing pickers, which can run while a tick is still walking burstPeople/burstTargets.
+    static readonly List<ICombatUnit> pickPeople = new List<ICombatUnit>(8);
+    static readonly List<MonsterAI3D> pickCreatures = new List<MonsterAI3D>(16);
+
+    // Every living enemy of `caster` within the squared radius of `point` (planar): people into `people`, creatures into
+    // `creatures`. People only in the caster's own map — every map shares one set of coordinates on the server.
+    // Creatures are not filtered by map, which is how the players' gather has always read them.
+    static void GatherOpponents(Vector3 point, float radiusSqr, ICombatUnit caster,
+                                List<ICombatUnit> people, List<MonsterAI3D> creatures)
     {
-        burstPeople.Clear();
-        var all = PlayerUnits.Present;
-        for (int i = 0; i < all.Count; i++)
+        people.Clear();
+        creatures.Clear();
+        var casterSide = Sides.Of(caster);
+        if (casterSide == Side.None) return;
+
+        if (Sides.Hostile(casterSide, Side.Players))
         {
-            var person = all[i];
-            if (PlayerUnits.Gone(person) || person.IsDead) continue;
-            if (!string.IsNullOrEmpty(map) && person.Map != map) continue;
-            var body = person.Body;
-            if (body == null) continue;
-            Vector3 d = body.position - point; d.y = 0f;
+            string map = caster != null ? caster.Map : null;
+            var all = PlayerUnits.Present;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var person = all[i];
+                if (PlayerUnits.Gone(person) || person.IsDead) continue;
+                if (!string.IsNullOrEmpty(map) && person.Map != map) continue;
+                var body = person.Body;
+                if (body == null) continue;
+                Vector3 d = body.position - point; d.y = 0f;
+                if (d.sqrMagnitude > radiusSqr) continue;
+                people.Add(person);
+            }
+        }
+
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var ai = list[i];
+            if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
+            if (!Sides.Hostile(casterSide, ai.Health.side)) continue;
+            Vector3 d = ai.transform.position - point; d.y = 0f;
             if (d.sqrMagnitude > radiusSqr) continue;
-            burstPeople.Add(person);
+            creatures.Add(ai);
         }
     }
 
@@ -342,11 +301,17 @@ public static class SkillEffectApplier
     /// when there is nobody. What a re-aiming run walks to next.</summary>
     public static Transform RandomOpponentNear(Vector3 point, float radius, ICombatUnit caster)
     {
-        if (!CastByCreature(caster)) return RandomMobNear(point, radius);
         float r2 = Mathf.Max(0.01f, radius); r2 *= r2;
-        GatherPeople(point, r2, caster.Map);
-        Transform pick = burstPeople.Count > 0 ? burstPeople[CombatRng.Range(0, burstPeople.Count)].Body : null;
-        burstPeople.Clear();
+        GatherOpponents(point, r2, caster, pickPeople, pickCreatures);
+        int count = pickPeople.Count + pickCreatures.Count;
+        Transform pick = null;
+        if (count > 0)
+        {
+            int i = CombatRng.Range(0, count);
+            pick = i < pickPeople.Count ? pickPeople[i].Body : pickCreatures[i - pickPeople.Count].transform;
+        }
+        pickPeople.Clear();
+        pickCreatures.Clear();
         return pick;
     }
 
@@ -354,23 +319,25 @@ public static class SkillEffectApplier
     // bare spot lands beside.
     static bool OpponentAt(Vector3 point, float radius, ICombatUnit caster, out Vector3 pos, out ICombatUnit hit)
     {
-        if (!CastByCreature(caster))
-        {
-            bool found = MobAt(point, radius, out pos, out Health mob);
-            hit = mob;
-            return found;
-        }
         pos = point; hit = null;
-        GatherPeople(point, radius * radius, caster.Map);
+        GatherOpponents(point, radius * radius, caster, pickPeople, pickCreatures);
         float best = float.MaxValue;
-        for (int i = 0; i < burstPeople.Count; i++)
+        for (int i = 0; i < pickPeople.Count; i++)
         {
-            Vector3 at = burstPeople[i].Body.position;
+            Vector3 at = pickPeople[i].Body.position;
             Vector3 d = at - point; d.y = 0f;
             if (d.sqrMagnitude >= best) continue;
-            best = d.sqrMagnitude; pos = at; hit = burstPeople[i];
+            best = d.sqrMagnitude; pos = at; hit = pickPeople[i];
         }
-        burstPeople.Clear();
+        for (int i = 0; i < pickCreatures.Count; i++)
+        {
+            Vector3 at = pickCreatures[i].transform.position;
+            Vector3 d = at - point; d.y = 0f;
+            if (d.sqrMagnitude >= best) continue;
+            best = d.sqrMagnitude; pos = at; hit = pickCreatures[i].Health;
+        }
+        pickPeople.Clear();
+        pickCreatures.Clear();
         return hit != null;
     }
 

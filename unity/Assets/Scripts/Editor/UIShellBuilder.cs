@@ -54,13 +54,12 @@ public static class UIShellBuilder
         // (No PanelToggle: every window now owns its own hotkey + Esc in its runtime controller.)
 
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
-        canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Character (C) window
         canvasGO.AddComponent<SkillsWindow>();             // Skills (K): the skills you have learned, by weapon, on a mastery line
         canvasGO.AddComponent<CraftStationPanel>();        // the smith / loom / tannery window, opened by reaching one
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
-        canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
+        canvasGO.AddComponent<StatusBox>();                // top-left: name, HP, MP, levels + experience, zeny, window buttons
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
         canvasGO.AddComponent<SettingsWindow>();           // Gameplay/Sound/Graphics tabs, opened from the System window
         canvasGO.AddComponent<SystemWindow>();             // Esc (when nothing else answers it) → System menu ▸ Settings
@@ -104,34 +103,7 @@ public static class UIShellBuilder
 
     static void BuildHud(Transform canvas)
     {
-        var bar = NewBar("HUD_HealthBar", canvas);
-        Anchor(bar.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
-        // Bottom-left stack is lifted 28px to clear the full-width XP strip (XpBarHUD) along the very bottom.
-        bar.rectTransform.anchoredPosition = new Vector2(16, 44);
-        bar.rectTransform.sizeDelta = new Vector2(240, 28);
-        // Filled image so CharacterUIBinder can drive fillAmount (needs a sprite + Filled type).
-        var fill = NewColor("Fill", bar.transform, new Color(0.80f, 0.20f, 0.22f, 1f));
-        fill.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        fill.type = Image.Type.Filled;
-        fill.fillMethod = Image.FillMethod.Horizontal;
-        fill.fillOrigin = (int)Image.OriginHorizontal.Left;
-        Fill(fill.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
-        var hp = NewText("Label", bar.transform, "HP", 16, FontStyle.Bold, TextAnchor.MiddleCenter);
-        Fill(hp.rectTransform, Vector2.zero, Vector2.zero);
-
-        // Mana bar, sitting just above the health bar (blue).
-        var mana = NewBar("HUD_ManaBar", canvas);
-        Anchor(mana.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
-        mana.rectTransform.anchoredPosition = new Vector2(16, 76);
-        mana.rectTransform.sizeDelta = new Vector2(200, 18);
-        var mfill = NewColor("Fill", mana.transform, new Color(0.25f, 0.45f, 0.95f, 1f));
-        mfill.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        mfill.type = Image.Type.Filled;
-        mfill.fillMethod = Image.FillMethod.Horizontal;
-        mfill.fillOrigin = (int)Image.OriginHorizontal.Left;
-        Fill(mfill.rectTransform, new Vector2(3, 3), new Vector2(-3, -3));
-        var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter);
-        Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
+        // The character's name, HP, MP, levels, experience and zeny are the status box's (StatusBox, top-left).
 
         // Minimap — top-right corner (the map's picture + player/mob blips). Sits above the gold counter.
         BuildMinimap(canvas);
@@ -159,7 +131,7 @@ public static class UIShellBuilder
 
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
-        holder.rectTransform.anchoredPosition = new Vector2(0, 42);   // lifted to clear the bottom XP strip (XpBarHUD)
+        holder.rectTransform.anchoredPosition = new Vector2(0, 42);
         holder.rectTransform.sizeDelta = new Vector2(5 * 54, 54);   // four bindable slots (keys 1–4) + the ult
         var h = holder.gameObject.AddComponent<HorizontalLayoutGroup>();
         h.spacing = 6;
@@ -229,17 +201,6 @@ public static class UIShellBuilder
     // A HUD plate: the window edge around the window body, rounded. Children added later sit on the body.
     static Image NewPlate(string name, Transform parent)
         => UiKit.Framed(NewColor(name, parent, UiKit.WindowEdge), UiKit.WindowEdge, UiKit.PanelFill, UiKit.WindowRadius);
-
-    // A HUD bar's frame: the window edge around an empty track. The caller adds the "Fill" and "Label" children
-    // that CharacterUIBinder looks up by name.
-    static Image NewBar(string name, Transform parent)
-    {
-        var img = UiKit.Round(NewColor(name, parent, UiKit.WindowEdge), UiKit.WindowRadius);
-        var track = UiKit.Round(NewColor("Track", img.transform, UiKit.Rule), UiKit.WindowRadius - 1);
-        track.raycastTarget = false;
-        Fill(track.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        return img;
-    }
 
     static Image NewColor(string name, Transform parent, Color color)
     {

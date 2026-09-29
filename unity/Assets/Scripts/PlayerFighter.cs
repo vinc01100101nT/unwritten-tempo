@@ -97,8 +97,18 @@ public static class PlayerFighter
             // be their own machine that decided this, and the two raced: whichever landed last won, so a new
             // player either saw a bag the server did not have (every use silently ignored) or none at all.
             character.SeedBag();
+            // THE STATS CHOSEN AT CREATION, checked here against the one rule before any of them is used. A spread
+            // the hexagon cannot make leaves the character on the default start (all 1, the full starting pool).
+            if (pushed != null && pushed.primary != null && !character.StartWithCreationStats(pushed.primary))
+                GameLog.Warn(LogCat.Server, "" + shell.playerName + " came with creation stats the hexagon cannot make ("
+                          + string.Join(",", pushed.primary) + ") — started on the default spread.");
             GameLog.Info(LogCat.Server, "" + shell.playerName + " has never been played — given "
-                      + character.Bag.Count + " starter stack(s).");
+                      + character.Bag.Count + " starter stack(s), stats " + string.Join(",", character.CaptureStatsForOwner())
+                      + ", " + character.StatPoints + " point(s) unspent.");
+            // AND THEIR OWN MACHINE IS TOLD. It builds a never-played character fresh (all 1, the full pool) because
+            // there is no save to read yet, so the stats laid on above never reached their screen until they
+            // happened to spend a point.
+            shell.PushStatsToOwner();
             shell.SaveSoon();
         }
 

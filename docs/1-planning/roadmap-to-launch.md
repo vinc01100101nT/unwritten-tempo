@@ -49,7 +49,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 ## What is half-built — measured, each one
 
-**Loot follows the creature's kind and level.** Since [V4](../2-systems/gameplay-system-v4/README.md) a creature gives up **no gear at all** — materials, consumables and gold only. Since 2026-09-22 ([Mob Roster](../3-world/mob-roster.md)) every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable. It lands on the ground, held for the killer for 10 seconds. A creature wears exactly the pieces authored for it, at the grade, folds and Ink authored on its own catalog entry — normals from Raw +0 to E +15, elites from D +0 to B +30, every shadow A +30.
+**Loot follows the creature's kind and level.** Since [V4](../2-systems/gameplay-system-v4/README.md) a creature gives up **no gear at all** — materials and consumables only; since 2026-09-30 gold comes from saving a character that never fights ([Saved Characters](../3-world/saved-characters.md)). Since 2026-09-22 ([Mob Roster](../3-world/mob-roster.md)) every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable. It lands on the ground, held for the killer for 10 seconds. A creature wears exactly the pieces authored for it, at the grade, folds and Ink authored on its own catalog entry — normals from Raw +0 to E +15, elites from D +0 to B +30, every shadow A +30.
 
 **Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 
@@ -67,7 +67,9 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 **The ring nobody authored.** Every character wears a "Ring of Beginnings" that the game builds in memory as it loads, because no ring item exists. The game already prefers an authored one if it finds it, so authoring it needs no code change.
 
-**Bosses pay 500 to 2000 gold; an ordinary creature pays 6 to 24.** The reward is already there; what they drop is not.
+**No death pays gold** since 2026-09-30: a creature's gold range is what a character saved from it is paid from, times its tier — ordinary ×20, helpless ×40, wealthy ×60.
+
+**Saved characters are built and not yet played** (2026-09-30, [Saved Characters](../3-world/saved-characters.md)): 15% of normal and elite kills turn the creature back into one of 91 characters for 30 seconds — one that never fights, an ally or a rebel — on one rule for who is whose enemy. Nobody has watched it in play yet.
 
 ---
 

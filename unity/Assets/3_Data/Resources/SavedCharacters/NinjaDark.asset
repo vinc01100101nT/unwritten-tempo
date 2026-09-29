@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a73a3dbee4b1747d8ac158a3bf9afa88, type: 3}
+  m_Name: NinjaDark
+  m_EditorClassIdentifier: Assembly-CSharp::SavedCharacter
+  id: character.ninja-dark
+  displayName: Ninja Dark
+  sheet: {fileID: 2800000, guid: 1f51b41f7de8cbc48a2be92a56920a61, type: 3}
+  behaviour: 2
+  group: 8
+  goldTier: 0
+  eliteId: mob.venom-gloop
+  crownAtScaleOne: 0.9
+  paintedWidthAtScaleOne: 0.9375

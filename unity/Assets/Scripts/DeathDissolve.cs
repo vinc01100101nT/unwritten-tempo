@@ -58,6 +58,8 @@ public class DeathDissolve : MonoBehaviour
         // out of range and back mid-fade would otherwise "thaw" the corpse and switch them straight back on.
         var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Suspend();
         Disable<MonsterAI3D>();
+        // The dead picture first, for a body whose sheet has one — the animator stops right after and holds it.
+        var anim = GetComponent<BillboardAnimator3D>(); if (anim != null) anim.ShowDeathPose();
         Disable<BillboardAnimator3D>();
         Disable<PathAgent3D>();
         var cc = GetComponent<CharacterController>(); if (cc != null) cc.enabled = false;

@@ -27,7 +27,7 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
   whole crafting ladder climbing that one weapon.
 - **It belongs to one weapon type.** *Petal Storm* is a form of Blossom Wind, the sword's style, so it is only ever
   a sword. The name already says what the thing is, and the item's type does not need repeating in the title.
-- **It names a form, not a person.** The canon reserves real names for the Fourteen — naming an Unwritten is the
+- **It names a form, not a person.** The canon reserves real names for the Fourteen — naming a Kashira is the
   mastery endgame. A weapon carries the one form of its style it does especially well.
 
 ## 2. What "empowers" means

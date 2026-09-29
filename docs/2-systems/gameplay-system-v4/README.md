@@ -416,4 +416,4 @@ tables when their pools are authored, by the same rule.
   V4 keeps and moves onto the character.
 - [Weapon Roster — 14 Identities](../active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen weapon
   types masteries are tracked by.
-- [Story & Setting (Canon)](../../3-world/story-setting-canon.md) — mastery as the endgame of naming an Unwritten.
+- [Story & Setting (Canon)](../../3-world/story-setting-canon.md) — mastery as the endgame of naming a Kashira.

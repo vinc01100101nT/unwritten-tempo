@@ -23,6 +23,29 @@ using UnityEngine.InputSystem;
 /// </summary>
 public static class Hotkeys
 {
+    // ---- on-screen buttons that stand in for a key --------------------------------------------------------------
+    // The phone's tray and the status box's window buttons "press" a key rather than calling each window: every
+    // window already listens for its key here, so a button needs no second way in. A press made during one frame is
+    // answered for the WHOLE of the next frame, then gone — so every reader sees it exactly once, whichever order the
+    // scripts that read keys run in. Started each frame by VirtualPressClock, on every platform.
+
+    static readonly System.Collections.Generic.HashSet<KeyCode> pendingPress = new System.Collections.Generic.HashSet<KeyCode>();
+    static readonly System.Collections.Generic.HashSet<KeyCode> framePress = new System.Collections.Generic.HashSet<KeyCode>();
+
+    /// <summary>An on-screen button pressed <paramref name="key"/>: <see cref="Down"/> answers it next frame.</summary>
+    public static void PressOnScreen(KeyCode key) => pendingPress.Add(key);
+
+    /// <summary>True for the frame an on-screen button's press is answered in.</summary>
+    public static bool PressedOnScreen(KeyCode key) => framePress.Contains(key);
+
+    /// <summary>Last frame's on-screen presses become this frame's; nothing older survives. Once per frame, first.</summary>
+    public static void BeginFrame()
+    {
+        framePress.Clear();
+        framePress.UnionWith(pendingPress);
+        pendingPress.Clear();
+    }
+
     /// <summary>Nobody is at the keyboard of a server, so no key is ever down there. Checked by every reader
     /// below, which is the whole point of this being the one gate: the answer is given ONCE and no input site
     /// can forget it.
@@ -55,9 +78,7 @@ public static class Hotkeys
     public static bool Down(KeyCode key)
     {
         if (NoKeyboard || Typing) return false;
-#if UNITY_ANDROID
-        if (TouchControls.VirtualDown(key)) return true;   // an on-screen button counts as the key being struck
-#endif
+        if (PressedOnScreen(key)) return true;   // an on-screen button counts as the key being struck
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -93,10 +114,8 @@ public static class Hotkeys
     public static bool CancelDown()
     {
         if (NoKeyboard) return false;
-#if UNITY_ANDROID
         // The Android Back gesture already arrives here as Escape; this adds the on-screen route to the same door.
-        if (TouchControls.VirtualDown(KeyCode.Escape)) return true;
-#endif
+        if (PressedOnScreen(KeyCode.Escape)) return true;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null && kb.escapeKey.wasPressedThisFrame) return true;
@@ -177,9 +196,7 @@ public static class Hotkeys
     public static bool DigitDown(int i)
     {
         if (i < 0 || i > 8 || NoKeyboard || Typing) return false;
-#if UNITY_ANDROID
-        if (TouchControls.VirtualDown((KeyCode)((int)KeyCode.Alpha1 + i))) return true;
-#endif
+        if (PressedOnScreen((KeyCode)((int)KeyCode.Alpha1 + i))) return true;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;

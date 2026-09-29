@@ -14,7 +14,7 @@ using UnityEngine;
 public struct MonsterArchetype
 {
     public string name;
-    public string sheet;        // folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. "Slime")
+    public string artFolder;    // Unity's id for the art folder (see MonsterDef.artFolder); empty = the caller brings the picture
     public int    weight;       // relative spawn frequency in a mixed field
     public Color  tint;         // SpriteRenderer tint (white = none)
     public CreatureKind kind;   // a shadow's body is a 3D character, always size 1
@@ -25,9 +25,7 @@ public struct MonsterArchetype
     // the builder; UnitStatBlock recomputes them from these inputs whenever level or gear changes.
     public UnitStatInputs stats;
 
-    // What the mob SPAWNS WEARING, plus its ring's invested ranks. A ring is just the piece in the Ring slot;
-    // wearing it gates the percentage layer (same rule as the player) and it's also what can drop
-    // — see LootDropper.RingDropChance.
+    // What the mob SPAWNS WEARING, plus its ring's invested ranks. Nothing worn is ever dropped (see LootDropper).
     public Item[] startingGear;
     /// <summary>The grade, folds and Ink strength every worn piece comes to life at — the creature's own three
     /// settings, carried through untouched.</summary>
@@ -62,9 +60,6 @@ public struct MonsterArchetype
     public Element element;
     public Ailment onHitAilment;
     public float onHitAilmentChance, onHitAilmentSeconds, onHitAilmentMagnitude;
-
-    // Loot (Zeny drop on death). goldDropChance defaults to 0.85 in LootDropper if both are 0.
-    public int goldMin, goldMax;
 
     // Item drops: parallel arrays — name must match a Resources/Items/*.asset displayName (without .asset).
     // Each entry is rolled independently on death. Leave null/empty for no item drops.

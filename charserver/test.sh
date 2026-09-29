@@ -39,16 +39,17 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' "$CHAR/characters")
 ok "anonymous refused ($CODE)"
 
 echo "5. create a character"
+STATS='[9,5,5,1,5,5]'   # a hexagon spread: STR 9 so INT 1, the other pairs at 5
 MODEL=$(echo "$MODELS" | python3 -c 'import sys,json;print(json.load(sys.stdin)["models"][0])')
 NEW=$(curl -s -X POST "$CHAR/characters" -H "authorization: Bearer $TOK" -H 'content-type: application/json' \
-  -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\",\"dyeSources\":[\"#112233\"],\"dyeTargets\":[\"#445566\"]}")
+  -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\",\"dyeSources\":[\"#112233\"],\"dyeTargets\":[\"#445566\"],\"primary\":$STATS}")
 CID=$(echo "$NEW" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("id",""))')
 [ -n "$CID" ] || fail "create: $NEW"
 ok "created $NAME ($CID)"
 
 echo "6. the same name twice is refused"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/characters" -H "authorization: Bearer $TOK" \
-  -H 'content-type: application/json' -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\"}")
+  -H 'content-type: application/json' -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\",\"primary\":$STATS}")
 [ "$CODE" = "409" ] || fail "expected 409 for a taken name, got $CODE"
 ok "duplicate name refused ($CODE)"
 
@@ -57,6 +58,14 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/characters" -H "aut
   -H 'content-type: application/json' -d "{\"name\":\"no spaces!\",\"modelName\":\"$MODEL\"}")
 [ "$CODE" = "400" ] || fail "expected 400 for a bad name, got $CODE"
 ok "bad name refused ($CODE)"
+
+echo "7b. stats that are not six numbers from 1 to 9 are refused"
+for BAD in '[10,5,5,0,5,5]' '[5,5,5,5,5]' 'null'; do
+  CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/characters" -H "authorization: Bearer $TOK" \
+    -H 'content-type: application/json' -d "{\"name\":\"${NAME}x\",\"modelName\":\"$MODEL\",\"primary\":$BAD}")
+  [ "$CODE" = "400" ] || fail "expected 400 for stats $BAD, got $CODE"
+done
+ok "bad stats refused"
 
 echo "8. it appears in the list, with its level read out of the save"
 LIST=$(curl -s "$CHAR/characters" -H "authorization: Bearer $TOK")
@@ -172,7 +181,7 @@ echo "21. delete frees the name"
 curl -s -o /dev/null -X DELETE "$CHAR/characters/$CID" -H "authorization: Bearer $TOK"
 curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | grep -q "$NAME" && fail "still listed after delete"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/characters" -H "authorization: Bearer $TOK" \
-  -H 'content-type: application/json' -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\"}")
+  -H 'content-type: application/json' -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\",\"primary\":$STATS}")
 [ "$CODE" = "201" ] || fail "the name was not freed by the delete, got $CODE"
 ok "deleted, and the name came free"
 

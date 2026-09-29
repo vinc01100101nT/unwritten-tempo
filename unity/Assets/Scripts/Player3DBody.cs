@@ -81,7 +81,10 @@ public static class Player3DBody
 
         instance.name = "Player3DVisual (" + charName + ")";
         if (Application.isPlaying)
+        {
             instance.hideFlags = HideFlags.DontSaveInEditor;   // a Play-time swap must never bake into a saved scene
+            QuitTeardown.Register(instance);
+        }
         SceneManager.MoveGameObjectToScene(instance, player.gameObject.scene);
         instance.transform.position = player.transform.position;
 

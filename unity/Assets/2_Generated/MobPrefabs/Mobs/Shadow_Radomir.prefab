@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: 1849141465310063635}
   - component: {fileID: 6320782807505732122}
   - component: {fileID: 2702009346095560551}
-  - component: {fileID: 6765342881415089269}
   - component: {fileID: 4678701920155792750}
   - component: {fileID: 5722598131818281042}
   - component: {fileID: 6322245657547228913}
@@ -140,7 +139,7 @@ CharacterController:
   m_Height: 1
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.075
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.5, z: 0}
@@ -287,36 +286,6 @@ MonoBehaviour:
   ringRankStats: 000000000400000002000000
   ringRankValues: 280000002800000028000000
   weaponMasteryLevel: 125
---- !u!114 &6765342881415089269
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3826109905087819080}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ce5573af86bf78488623cdd460ecfc7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BillboardAnimator3D
-  sheet: {fileID: 2800000, guid: 3dbe21f0459c17446ad620fab63d36f3, type: 3}
-  cell: 16
-  walkFrames: 4
-  framesPerSecond: 6
-  idleStrip:
-    sheet: {fileID: 0}
-    frames: 0
-    footPx: 0
-  walkStrip:
-    sheet: {fileID: 0}
-    frames: 0
-    footPx: 0
-  stripPixelsPerUnit: 0
-  crownAtScaleOne: 0.9
-  paintedWidthAtScaleOne: 1
-  breathe: 1
-  breatheAmount: 0.03
-  breatheSpeed: 2.5
 --- !u!114 &4678701920155792750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -392,9 +361,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a20794ae48d9253438b2c6825e1a6a79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootDropper
-  goldMin: 3000
-  goldMax: 6000
-  goldDropChance: 0.85
   lootTable: []
 --- !u!114 &1914028014196116931
 MonoBehaviour:
@@ -408,4 +374,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1686ac7efa45c489f9803799fa47f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
-  bossName: Stone Bloom

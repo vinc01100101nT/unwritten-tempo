@@ -849,9 +849,65 @@ static class Checks
         That(films.Count == 2 && films[0].y == 2.7f && films[0].top == 2.704f, WaterF, "levels 4 mm apart must share one sheet");
     }
 
+    // ---- the creation hexagon spends exactly the starting points ---------------------------------------
+    // A new character starts with the hexagon's stats and NONE left over; that is only true while every legal
+    // spread costs exactly the starting grant. A change to the point-cost curve or the grant breaks it silently —
+    // characters would be born with points to spare, or in debt.
+    static void CreationSpreads()
+    {
+        int legal = 0;
+        for (int str = 1; str <= 9; str++)
+        for (int agi = 1; agi <= 9; agi++)
+        for (int vit = 1; vit <= 9; vit++)
+        {
+            var s = new int[6];
+            s[0] = str; s[1] = agi; s[2] = vit;
+            s[UnitStatMath.CreationOpposite(0)] = 10 - str;
+            s[UnitStatMath.CreationOpposite(1)] = 10 - agi;
+            s[UnitStatMath.CreationOpposite(2)] = 10 - vit;
+            if (!UnitStatMath.IsCreationSpread(s)) { Fail(StatMath, "hexagon spread " + string.Join(",", s) + " was refused"); return; }
+            int cost = 0;
+            foreach (var v in s) cost += UnitStatMath.PointsToRaise(v);
+            if (cost != UnitStatMath.StartingStatPoints)
+            { Fail(StatMath, "hexagon spread " + string.Join(",", s) + " costs " + cost + ", not the starting " + UnitStatMath.StartingStatPoints); return; }
+            legal++;
+        }
+        That(legal == 729, StatMath, "expected 729 legal hexagon spreads, counted " + legal);
+        That(!UnitStatMath.IsCreationSpread(new[] { 9, 9, 9, 9, 9, 9 }), StatMath, "a spread whose pairs add past 10 was accepted");
+        That(!UnitStatMath.IsCreationSpread(new[] { 10, 5, 5, 0, 5, 5 }), StatMath, "a spread outside 1..9 was accepted");
+        That(!UnitStatMath.IsCreationSpread(new[] { 5, 5, 5, 5, 5 }), StatMath, "a spread of five stats was accepted");
+        That(!UnitStatMath.IsCreationSpread(null), StatMath, "no spread at all was accepted");
+    }
+
+    // SAVED CHARACTERS: the gold a rescue pays, the drops a rebel gives up, the side each behaviour stands on, and the
+    // one question every targeting path asks. Pinned from docs/3-world/saved-characters.md, agreed 2026-09-30.
+    static void SavedCharacterNumbers()
+    {
+        const string F = "unity/Assets/Scripts/SavedCharacterRules.cs";
+        const string S = "unity/Assets/Scripts/Side.cs";
+        That(SavedCharacterRules.TransformChance == 0.15f, F, "a beaten normal or elite turns back 15% of the time");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5) == 100, F, "an ordinary rescue pays the mob's gold x20");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Helpless, 5) == 200, F, "a helpless rescue pays x40");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Wealthy, 5) == 300, F, "a wealthy rescue pays x60");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Ally, GoldTier.Wealthy, 5) == 0, F, "an ally pays no gold");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Rebel, GoldTier.Ordinary, 5) == 0, F, "a rebel pays no gold");
+        That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Normal) == CreatureKind.Elite, F, "a rebel from a normal drops as an elite");
+        That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Elite) == CreatureKind.Shadow, F, "a rebel from an elite drops as a shadow");
+        That(!SavedCharacterRules.CanTurnBack(CreatureKind.Shadow), F, "a shadow never turns back");
+        That(SavedCharacterRules.StaySeconds(SavedBehaviour.NeverFights) == 30f && SavedCharacterRules.StaySeconds(SavedBehaviour.Ally) == 30f
+             && SavedCharacterRules.StaySeconds(SavedBehaviour.Rebel) == 30f, F, "every saved character stays 30s");
+        That(SavedCharacterRules.DrawnWidth == 0.5f, F, "a saved character is drawn at half its picture's width");
+        That(SavedCharacterRules.AppearAuraSeconds == 2f, F, "the appear aura plays 2s before it fades");
+        That(SavedCharacterRules.SideOf(SavedBehaviour.Ally) == Side.Players && SavedCharacterRules.SideOf(SavedBehaviour.Rebel) == Side.Creatures
+             && SavedCharacterRules.SideOf(SavedBehaviour.NeverFights) == Side.None, F, "allies stand with the players, rebels with the creatures, the rest with nobody");
+        That(Sides.Hostile(Side.Players, Side.Creatures) && !Sides.Hostile(Side.Players, Side.Players)
+             && !Sides.Hostile(Side.None, Side.Creatures) && !Sides.Hostile(Side.Players, Side.None), S, "only the two opposite sides fight; nobody fights one who stands with nobody");
+    }
+
     static int Main()
     {
         ExperienceCurve();
+        CreationSpreads();
         StatPoints();
         AccuracyAndDefence();
         StatJumps();
@@ -868,6 +924,7 @@ static class Checks
         RegenPerSecond();
         WalkingRule();
         WaterRules();
+        SavedCharacterNumbers();
 
         if (failures == 0)
         {

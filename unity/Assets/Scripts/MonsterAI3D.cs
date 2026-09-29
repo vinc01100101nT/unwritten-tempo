@@ -968,6 +968,8 @@ public class MonsterAI3D : MonoBehaviour
         // Whoever it has stops counting the moment they die, their body leaves the world, or they leave it
         // themselves — the last of which does NOT look like null from here (see PlayerUnits.Gone).
         if (Prey != null && (PlayerUnits.Gone(Prey) || Prey.IsDead || Prey.Body == null)) SetPrey(null);
+        // …and so does one that stopped being an enemy — a saved character that said goodbye stands with nobody.
+        if (Prey != null && Health != null && !Sides.Hostile(Health, Prey)) SetPrey(null);
 
         if (Taunted) return;                       // pinned: the taunt already chose
         if (Time.time < nextPreyCheck) return;
@@ -976,9 +978,24 @@ public class MonsterAI3D : MonoBehaviour
         // Already busy with somebody who is still in reach of the chase — leave it be.
         if (Prey != null && chasing && PlanarSqr(pos, Prey.Body.position) <= leashRadius * leashRadius) return;
 
-        // ONLY PEOPLE IN THIS CREATURE'S OWN MAP. The machine that owns the world holds every map at once in one set
-        // of coordinates, so "nearest by distance" alone picks people who are not here at all.
-        SetPrey(PlayerUnits.NearestTo(pos, gameObject.scene.name));
+        // ONLY ITS ENEMIES, AND ONLY IN THIS CREATURE'S OWN MAP. The machine that owns the world holds every map at once
+        // in one set of coordinates, so "nearest by distance" alone picks units that are not here at all. Who its
+        // enemies are is Sides' answer: people and the creatures fighting for them, for a creature; the creatures, for
+        // one fighting for the players; nobody, for one that fights nobody.
+        SetPrey(NearestEnemy(pos, gameObject.scene.name));
+    }
+
+    ICombatUnit NearestEnemy(Vector3 pos, string map)
+    {
+        var mySide = Health != null ? Health.side : Side.Creatures;
+        if (mySide == Side.None) return null;
+        if (mySide == Side.Players) return Sides.NearestCreatureSideCreature(pos, map);
+
+        var person = PlayerUnits.NearestTo(pos, map);
+        var ally = Sides.NearestPlayerSideCreature(pos, map, out float allySqr);
+        if (ally == null) return person;
+        if (person == null || person.Body == null) return ally;
+        return PlanarSqr(pos, person.Body.position) <= allySqr ? person : ally;
     }
 
     void SetPrey(ICombatUnit unit)

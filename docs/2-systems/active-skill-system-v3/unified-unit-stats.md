@@ -16,7 +16,7 @@ tags:
 
 ### The stat-point budget (added 2026-08-10)
 
-A unit's primaries are an ALLOCATION, not free-typed numbers. `PointsEarnedByLevel(L)` = 48 at level 1 plus `⌊L/5⌋+3` per level after, and `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly the stats a player who reached L could have bought — which is what keeps the two sides comparable without any multiplier. `UnitStatMath.Allocate` spends a level's whole budget across a weighted spread (verified on-budget from level 1 to 99; 0–4 points can remain unspendable when the next point costs more than what's left).
+A unit's primaries are an ALLOCATION, not free-typed numbers. `PointsEarnedByLevel(L)` = 48 at level 1 plus `⌊L/5⌋+3` per level after — and a player's 48 are spent at character creation, on the stat hexagon: STR/INT, AGI/LUK and VIT/DEX are opposite pairs that always add to 10, each stat 1–9, and every such spread costs exactly 48 (`UnitStatMath.IsCreationSpread`, pinned by the maths checks), so a new character starts with none left. `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly the stats a player who reached L could have bought — which is what keeps the two sides comparable without any multiplier. `UnitStatMath.Allocate` spends a level's whole budget across a weighted spread (verified on-budget from level 1 to 99; 0–4 points can remain unspendable when the next point costs more than what's left).
 
 ## The principle
 
@@ -82,7 +82,7 @@ The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's o
 
 ### Mobs never drop what they wear
 
-**A creature gives up NOTHING it wears.** Since V4 gear is made, not taken off a corpse: a kill pays materials, consumables and gold, and the creature's own gear dies with it. Its loot table carries those; each kill also has a 30% chance of one random item that is not equipment. Everything except gold lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
+**A creature gives up NOTHING it wears.** Since V4 gear is made, not taken off a corpse: a kill pays materials and consumables, and the creature's own gear dies with it (no death pays gold — see [Saved Characters](../../3-world/saved-characters.md)). Its loot table carries those; each kill also has a 30% chance of one random item that is not equipment. Everything lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
 
 ### What state a mob's gear is in
 

@@ -19,22 +19,29 @@ public class CharacterPreview : MonoBehaviour
     // Far enough above the map that no world geometry, weather or light can wander into frame.
     static readonly Vector3 Stage = new Vector3(0f, 5000f, 0f);
 
-    const int Size = 512;
+    // Used only when the picture's on-screen size cannot be read (no canvas yet).
+    const int FallbackSize = 512;
 
     Camera cam;
+    Camera world;
     RenderTexture picture;
+    RawImage shownIn;
+
+    // The portrait's own view angle, used when there is no world camera to match.
+    const float PortraitFov = 30f;
+    // How much further back than the portrait distance the camera stands, so a narrower view keeps the same framing.
+    float spread = 1f;
     Transform stageRoot;
     Transform bodyPivot;
     GameObject body;
     CharacterDye3D dye;
     string shownModel;
 
-    // How the body is being held right now. The camera and the lights never move sideways — turning the BODY
-    // is what a hand expects when it drags a doll, and it also keeps the lighting steady while it turns.
-    float turn, tilt, lean;
+    // How the body is being held right now. The camera and the lights never move sideways — it is the BODY that
+    // turns, which keeps the lighting steady while it does.
+    float turn;
     float zoom = 1f;
 
-    const float TiltLimit = 60f;     // past this the body is being looked at from above or below, not turned
     const float ZoomIn = 0.45f;
     const float ZoomOut = 1.9f;
 
@@ -64,6 +71,7 @@ public class CharacterPreview : MonoBehaviour
         var go = new GameObject("CharacterPreview") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.SetParent(owner, false);
         var preview = go.AddComponent<CharacterPreview>();
+        QuitTeardown.Register(go);
         preview.Build(into);
         return preview;
     }
@@ -74,13 +82,14 @@ public class CharacterPreview : MonoBehaviour
         stageRoot.SetParent(transform, false);
         stageRoot.position = Stage;
 
-        // The body hangs from a pivot at half its height, so tilting turns it about its middle. Hung from the
-        // feet instead, a tilt swings the head right out of the frame.
+        // The body hangs from a pivot at half its height, so it turns about its own middle.
         bodyPivot = new GameObject("BodyPivot") { hideFlags = HideFlags.DontSaveInEditor }.transform;
         bodyPivot.SetParent(stageRoot, false);
         bodyPivot.localPosition = new Vector3(0f, Character3DBody.BodyHeight * 0.5f, 0f);
 
-        picture = new RenderTexture(Size, Size, 16) { name = "CharacterPreview" };
+        // The ink itself: the game's own filter, with its own live settings — not a copy. It draws for every camera
+        // that renders its layer, this one included; this only makes sure it exists on a screen before the world.
+        HandDrawnFX.Ensure();
 
         var camGo = new GameObject("Camera") { hideFlags = HideFlags.DontSaveInEditor };
         camGo.transform.SetParent(stageRoot, false);
@@ -88,12 +97,11 @@ public class CharacterPreview : MonoBehaviour
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = Color.white;   // a plain white studio, so a body reads as itself and not as a silhouette
         cam.orthographic = false;
-        cam.fieldOfView = 30f;
+        cam.fieldOfView = PortraitFov;
         cam.nearClipPlane = 0.01f;
-        // Only just past the furthest the camera can be pulled back to, so nothing but the staged body can be
-        // in shot. Measured against the zoom limit rather than guessed, or a body vanishes when zoomed out.
-        cam.farClipPlane = Character3DBody.BodyHeight * (2.6f * ZoomOut + 2f);
-        cam.targetTexture = picture;
+        world = FindWorldCamera();
+        shownIn = into;
+        FitPicture();
 
         // Slightly above eye level looking down a little, which reads as a portrait rather than a floor plan.
         camGo.transform.localRotation = Quaternion.Euler(6f, 0f, 0f);
@@ -120,9 +128,8 @@ public class CharacterPreview : MonoBehaviour
 
         if (into != null)
         {
-            into.texture = picture;
             into.color = Color.white;
-            into.raycastTarget = true;   // the picture IS the handle: it has to be able to catch a drag
+            into.raycastTarget = true;   // the picture catches the wheel and the double-click
             var hand = into.gameObject.AddComponent<PreviewHandle>();
             hand.preview = this;
         }
@@ -130,18 +137,10 @@ public class CharacterPreview : MonoBehaviour
 
     // ---- holding the body ------------------------------------------------------------------------------
 
-    /// <summary>Turn the body left/right and tilt it forwards/backwards, in degrees.</summary>
-    public void Turn(float turnDegrees, float tiltDegrees)
+    /// <summary>Turn the body left/right, in degrees — what the screen's two turn buttons call.</summary>
+    public void Turn(float degrees)
     {
-        turn += turnDegrees;
-        tilt = Mathf.Clamp(tilt + tiltDegrees, -TiltLimit, TiltLimit);
-        ApplyView();
-    }
-
-    /// <summary>Lean the body over sideways, in degrees — the third axis a drag cannot reach on its own.</summary>
-    public void Lean(float degrees)
-    {
-        lean += degrees;
+        turn += degrees;
         ApplyView();
     }
 
@@ -155,42 +154,57 @@ public class CharacterPreview : MonoBehaviour
     /// <summary>Back to the straight-on portrait the preview opens with.</summary>
     public void ResetView()
     {
-        turn = tilt = lean = 0f;
+        turn = 0f;
         zoom = 1f;
         ApplyView();
     }
 
     void ApplyView()
     {
-        if (bodyPivot != null) bodyPivot.localRotation = Quaternion.Euler(tilt, turn, lean);
+        if (bodyPivot != null) bodyPivot.localRotation = Quaternion.Euler(0f, turn, 0f);
         if (cam == null) return;
         float height = Character3DBody.BodyHeight;
-        cam.transform.localPosition = new Vector3(0f, height * 0.62f * zoom, -height * 2.6f * zoom);
+        var portrait = new Vector3(0f, height * 0.62f * zoom, -height * 2.6f * zoom);
+        // Backed off along its own line of sight, about the point where that line crosses the body, so what sits
+        // in the middle of the picture stays there however narrow the view is.
+        var fwd = cam.transform.localRotation * Vector3.forward;
+        float along = -portrait.z / fwd.z;
+        cam.transform.localPosition = portrait + fwd * (along * (1f - spread));
+        // Only just past the furthest the camera can be pulled back to, so nothing but the staged body can be
+        // in shot. Measured against the zoom limit rather than guessed, or a body vanishes when zoomed out.
+        cam.farClipPlane = height * (2.6f * ZoomOut * spread + 2f);
     }
 
-    /// <summary>The picture's own hands. Left drag turns and tilts the body, right drag leans it and pushes the
-    /// camera in and out, the wheel zooms, and a double-click puts it back the way it opened.</summary>
-    class PreviewHandle : MonoBehaviour, IDragHandler, IScrollHandler, IPointerClickHandler
+    // THE SAME VIEW PER PIXEL AS THE WORLD. The ink finds creases by comparing depth a fixed number of PIXELS apart,
+    // so how many lines grow on a body depends on how much of the view one pixel covers. The world camera's pixel
+    // covers about a third of the portrait's (35° over 972 pixels against 30° over 265, measured), which drew
+    // three times the lines here. Given the world's share per pixel, the same body grows the same lines.
+    void MatchWorldView()
+    {
+        if (cam == null || picture == null) return;
+        if (world == null || world.pixelHeight <= 0) { cam.fieldOfView = PortraitFov; spread = 1f; ApplyView(); return; }
+        float perPixel = Mathf.Tan(world.fieldOfView * 0.5f * Mathf.Deg2Rad) / world.pixelHeight;
+        float halfView = perPixel * picture.height;
+        cam.fieldOfView = 2f * Mathf.Atan(halfView) * Mathf.Rad2Deg;
+        spread = Mathf.Tan(PortraitFov * 0.5f * Mathf.Deg2Rad) / halfView;
+        ApplyView();
+    }
+
+    // The world's camera, found once. On the front screen it is switched off, which hides it from Camera.main.
+    static Camera FindWorldCamera()
+    {
+        foreach (var c in FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (c.CompareTag("MainCamera")) return c;
+        return null;
+    }
+
+    /// <summary>The picture's own hands: the wheel zooms, and a double-click puts it back the way it opened. It is
+    /// deliberately NOT draggable — the screen's turn buttons turn it.</summary>
+    class PreviewHandle : MonoBehaviour, IScrollHandler, IPointerClickHandler
     {
         public CharacterPreview preview;
 
-        const float TurnPerPixel = 0.55f;
-        const float TiltPerPixel = 0.35f;
-        const float LeanPerPixel = 0.4f;
-        const float ZoomPerPixel = 0.005f;
         const float ZoomPerNotch = 0.09f;
-
-        public void OnDrag(PointerEventData e)
-        {
-            if (preview == null) return;
-            if (e.button == PointerEventData.InputButton.Left)
-                preview.Turn(-e.delta.x * TurnPerPixel, -e.delta.y * TiltPerPixel);
-            else
-            {
-                preview.Lean(e.delta.x * LeanPerPixel);
-                preview.Zoom(e.delta.y * ZoomPerPixel);
-            }
-        }
 
         public void OnScroll(PointerEventData e)
         {
@@ -242,6 +256,33 @@ public class CharacterPreview : MonoBehaviour
             ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
             OnBodyChanged?.Invoke();
         });
+    }
+
+    void LateUpdate() => FitPicture();
+
+    // THE SAME PIXELS IT IS SHOWN AT. The game's ink outline (HandDrawnFX) is drawn a set number of PIXELS thick
+    // into whatever picture a camera renders, so a picture smaller than its box is stretched up and its lines grow
+    // thick and blocky with it. The box's size on screen is only settled once its canvas has scaled — it was
+    // measured at 120x171 while the box showed 186x265 — and it changes again with the window, so it is followed
+    // rather than read once. The picture is remade only when that size actually moves.
+    void FitPicture()
+    {
+        var size = PixelSize(shownIn);
+        if (picture != null && picture.width == size.x && picture.height == size.y) return;
+        if (cam != null) cam.targetTexture = null;
+        if (picture != null) { picture.Release(); Destroy(picture); }
+        picture = new RenderTexture(size.x, size.y, 16) { name = "CharacterPreview" };
+        if (cam != null) cam.targetTexture = picture;
+        if (shownIn != null) shownIn.texture = picture;
+        MatchWorldView();
+    }
+
+    // The picture's size on screen in pixels, from its box and its canvas's scale.
+    static Vector2Int PixelSize(RawImage into)
+    {
+        if (into == null || into.canvas == null) return new Vector2Int(FallbackSize, FallbackSize);
+        var r = into.rectTransform.rect.size * into.canvas.scaleFactor;
+        return new Vector2Int(Mathf.Max(64, Mathf.RoundToInt(r.x)), Mathf.Max(64, Mathf.RoundToInt(r.y)));
     }
 
     void OnDestroy()

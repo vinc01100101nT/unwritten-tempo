@@ -208,6 +208,22 @@ public class Character : MonoBehaviour, ICombatUnit
         OnManaChanged?.Invoke();
     }
 
+    /// <summary>A never-played character's stats, as chosen on the creation hexagon: laid on as the six primaries,
+    /// with the unspent pool worked out from what they cost (none, for any legal spread). Refuses — and changes
+    /// nothing — when the spread is not one the hexagon can make. Server only.</summary>
+    public bool StartWithCreationStats(int[] spread)
+    {
+        if (!UnitStatMath.IsCreationSpread(spread)) return false;
+        for (int i = 0; i < primary.Length; i++) primary[i] = spread[i];
+        ReconcilePointsToLevel();
+        CurrentHP = MaxHP;
+        CurrentMP = MaxMP;
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
+        OnManaChanged?.Invoke();
+        return true;
+    }
+
     /// <summary>Spend points to raise <paramref name="s"/> by 1 using the pre-renewal cost curve. No-op if
     /// the stat is capped or there aren't enough points for the next (escalating) point.</summary>
     /// <summary>The six primaries and the unspent points, for handing to the machine that shows them. The

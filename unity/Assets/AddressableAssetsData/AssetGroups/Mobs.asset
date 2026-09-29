@@ -16,492 +16,492 @@ MonoBehaviour:
   m_GUID: 0c65cef304202144f888a99f2459479c
   m_SerializeEntries:
   - m_GUID: 031647bba4c46164c8992f6cb2d29374
-    m_Address: Mobs/Octopus2
+    m_Address: Mobs/mob.squirt
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 08006eafd696af842832d6284f565284
-    m_Address: Mobs/Mushroom2
+    m_Address: Mobs/mob.frostcap
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0fd8d185e8c70c642880cae5a388c79e
-    m_Address: Mobs/Eye
+    m_Address: Mobs/mob.iris
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1145840f99f26d7439a23b2f6e1092da
-    m_Address: Mobs/Grey Trex
+    m_Address: Mobs/mob.gnasher
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1642f4fa9906a45bca041587990bf208
-    m_Address: Mobs/Shadow_NorthernLights
+    m_Address: Mobs/mob.shadow.northernlights
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 172ebe8822673594a8879eba921082d1
-    m_Address: Mobs/GiantFrog2
+    m_Address: Mobs/mob.great-croak
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 17853d6e53643964a84282435f0fbb9b
-    m_Address: Mobs/TenguRed
+    m_Address: Mobs/mob.oni-tengu
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19307675a5443448ba03d7027658ccaf
-    m_Address: Mobs/Shadow_Ines
+    m_Address: Mobs/mob.shadow.ines
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 209b509f0b632df429662497ee394ef1
-    m_Address: Mobs/KappaRed
+    m_Address: Mobs/mob.rivershell
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2166570ce56c1af49b8c3b3ad5cc5618
-    m_Address: Mobs/Slime3
+    m_Address: Mobs/mob.dewdrop
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 21cfbb4d23026cb42a7374d3a6f66780
-    m_Address: Mobs/ButterflyBlue
+    m_Address: Mobs/mob.skywing
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 251a6dba3da296c478c3ac3b7c1d4e5c
-    m_Address: Mobs/Bamboo
+    m_Address: Mobs/mob.shootling
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2542900c5622f3943a9c4ffab7acc162
-    m_Address: Mobs/GiantRacoonGold
+    m_Address: Mobs/mob.golden-bandit
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 25781af2664b54f55a1da266b762dfbf
-    m_Address: Mobs/Shadow_Azar
+    m_Address: Mobs/mob.shadow.azar
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 33603a46070164146905f6c9f66a87b7
-    m_Address: Mobs/Mole2
+    m_Address: Mobs/mob.burrowbo
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 34f1b8167647fc247abedb7f6dabdd94
-    m_Address: Mobs/Flam2
+    m_Address: Mobs/mob.frostwick
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35d89429f97c51d4288abfc81eb74046
-    m_Address: Mobs/Beast2
+    m_Address: Mobs/mob.mossgore
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3605ef2441b7ba64fb77f25e8e34c022
-    m_Address: Mobs/AxolotBlue
+    m_Address: Mobs/mob.mudpup
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3d2523cc993c9be4385526313907c315
-    m_Address: Mobs/Octopus
+    m_Address: Mobs/mob.octi
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3f4cf9e8140124d47a0f4e700eafa3d0
-    m_Address: Mobs/Eye2
+    m_Address: Mobs/mob.bloodshot
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 40d65aa685f1f3a4b8ed70684768a224
-    m_Address: Mobs/DemonCyclop
+    m_Address: Mobs/mob.oculord
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 45d6ccbd6b0482149b8d64488f4cc9b1
-    m_Address: Mobs/Spirit2
+    m_Address: Mobs/mob.willo
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4691d35218abe1647abfb4a6850b5ded
-    m_Address: Mobs/Flam
+    m_Address: Mobs/mob.cinder
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 477420ab1802eda4791c04be6e526595
-    m_Address: Mobs/Axolot
+    m_Address: Mobs/mob.newtie
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 49ab345326d20704e8832ca338944023
-    m_Address: Mobs/SquidGreen
+    m_Address: Mobs/mob.deep-maw
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4cc27bce0fad6f24e87839c769dcaf35
-    m_Address: Mobs/GiantFrog
+    m_Address: Mobs/mob.toadmaw
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ddea4bf62e17484493821ae2c6aa52a
-    m_Address: Mobs/Racoon
+    m_Address: Mobs/mob.rascal
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 514e1cfb797c8cf4fa9f3a0cd49a78f0
-    m_Address: Mobs/GiantFlam
+    m_Address: Mobs/mob.inferno-mask
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5239500f63784844ca0b37c2a45fc442
-    m_Address: Mobs/RedOctopus
+    m_Address: Mobs/mob.sucker
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 535f90ae9f3c76c4da0ec9d52148e76c
-    m_Address: Mobs/DemonCyclop2
+    m_Address: Mobs/mob.mossmaw
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 54a0c4c6626ad584b98a743cee9ebbea
-    m_Address: Mobs/Mushroom
+    m_Address: Mobs/mob.capling
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 56cd72efdf8c26c4181db82ccb973cb2
-    m_Address: Mobs/Snake4
+    m_Address: Mobs/mob.adder
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ac40f5dbdc9a6d4cb23a085996f8a3d
-    m_Address: Mobs/GiantSpirit
+    m_Address: Mobs/mob.wraithmother
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5dbcab152125b6741a3a834b62ca183f
-    m_Address: Mobs/HeartRed
+    m_Address: Mobs/mob.lovebite
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 62c091b535834f24889cb8aa752d8388
-    m_Address: Mobs/GoldRacoon
+    m_Address: Mobs/mob.pilfer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 69dfc4d32b5e79e4f8a958060ee3afb2
-    m_Address: Mobs/Mollusc
+    m_Address: Mobs/mob.shellby
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6df3958e465ca0842b30b33c1b0047aa
-    m_Address: Mobs/Mollusc2
+    m_Address: Mobs/mob.mossnail
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7012777de996f5b41a19de064a294f29
-    m_Address: Mobs/YellowsBat
+    m_Address: Mobs/mob.blinkbat
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70697a03b273c4140841e726cbc92b9a
-    m_Address: Mobs/GiantSlime
+    m_Address: Mobs/mob.gloop-king
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 72357cb924814ee488c95d3d3be385dd
-    m_Address: Mobs/GreenOctopus
+    m_Address: Mobs/mob.inky
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 747daae8987b0a0479cedeccb01b8ef8
-    m_Address: Mobs/GiantBamboo
+    m_Address: Mobs/mob.elder-stalk
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 759549db2fd459b4bae11b734ca7b884
-    m_Address: Mobs/FishRed
+    m_Address: Mobs/mob.snapper
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7f2b03a63a944714cab9d78a946469ab
-    m_Address: Mobs/DragonYellow
+    m_Address: Mobs/mob.emberwyrm
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 81f499d37f37abf4d9417cc907c76e87
-    m_Address: Mobs/KappaGreen
+    m_Address: Mobs/mob.kappi
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 823015db7017f4044a49e1181ea07675
-    m_Address: Mobs/Owl2
+    m_Address: Mobs/mob.emberhoot
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 832233e784df9fe48987560f4a7668ad
-    m_Address: Mobs/Dragon
+    m_Address: Mobs/mob.wyrmlet
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 841cf47b10b8c44d68599073bab6fd8e
-    m_Address: Mobs/Shadow_Brandr
+    m_Address: Mobs/mob.shadow.brandr
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 84926e0d54894cb4db204af75088493c
-    m_Address: Mobs/TenguBlue
+    m_Address: Mobs/mob.karasu
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8618411ccf372449c80ae07144559c23
-    m_Address: Mobs/Shadow_Radomir
+    m_Address: Mobs/mob.shadow.radomir
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8749f7070959c9e47a49989806eff93d
-    m_Address: Mobs/Slime4
+    m_Address: Mobs/mob.moldy
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c3019c662f26ca4984dcdc915198ad4
-    m_Address: Mobs/Cyclope2
+    m_Address: Mobs/mob.peeper
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8d1325d8b3d394b4d97a7b745b3041d6
-    m_Address: Mobs/Shadow_Ulrich
+    m_Address: Mobs/mob.shadow.ulrich
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 926446e0cfe8417429a4b9a52ffa87a3
-    m_Address: Mobs/SpiderYellow
+    m_Address: Mobs/mob.tarantix
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9411ec2b7613b4e9fb83cc7c78e8b79b
-    m_Address: Mobs/Shadow_Kallias
+    m_Address: Mobs/mob.shadow.kallias
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 94295841b818406448b9fd083d40e99c
-    m_Address: Mobs/HeartGreen
+    m_Address: Mobs/mob.bittersweet
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 98688f770e3fb7d44868f34cfc3619c7
-    m_Address: Mobs/BlueBat
+    m_Address: Mobs/mob.drizzle
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9a7cd37de9698c3438bc2fa66f411c8d
-    m_Address: Mobs/Owl
+    m_Address: Mobs/mob.hootie
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9a86203da82e2cf40b46be12739bef84
-    m_Address: Mobs/Larva2
+    m_Address: Mobs/mob.crawlet
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c23ee34c11b01c4a8d48c457c5528a5
-    m_Address: Mobs/Beast
+    m_Address: Mobs/mob.horngore
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9f0d19f0edd86b44e945d03a3020f36a
-    m_Address: Mobs/Reptile2
+    m_Address: Mobs/mob.swampfang
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a08c2fb8b2ff347e1bf051deccc2ade3
-    m_Address: Mobs/Shadow_Brigid
+    m_Address: Mobs/mob.shadow.brigid
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a0d65aff54b7cf64a93f84aa9255ea5c
-    m_Address: Mobs/Mole
+    m_Address: Mobs/mob.digger
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1770034eb846c048a9bdd55837f011c
-    m_Address: Mobs/Panda
+    m_Address: Mobs/mob.pando
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1ac7d0dcd0b9d646944b98ae902b3d9
-    m_Address: Mobs/Larva
+    m_Address: Mobs/mob.grubble
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1f0d564492fdd547a642360faab1d7a
-    m_Address: Mobs/LanternGreen
+    m_Address: Mobs/mob.glowcoil
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a302ae98dfbed487db414be0e61958bc
-    m_Address: Mobs/Shadow_Tsubame
+    m_Address: Mobs/mob.shadow.tsubame
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a485f67ae5023444bb5c801672b86b1b
-    m_Address: Mobs/Shadow_Varro
+    m_Address: Mobs/mob.shadow.varro
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a4a64b4f3a7a649a58c2dc93e4221355
-    m_Address: Mobs/Shadow_Temulun
+    m_Address: Mobs/mob.shadow.temulun
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a50565c8624bc3a44b9978bf31f90a3a
-    m_Address: Mobs/SkullBlue
+    m_Address: Mobs/mob.frostskull
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a69e936a9c779ae44bfa39c938470503
-    m_Address: Mobs/Bear
+    m_Address: Mobs/mob.grumbear
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9446a9c387277642aed0ecf357451af
-    m_Address: Mobs/Butterfly
+    m_Address: Mobs/mob.flutterby
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a9ce6fb75f945a74cb6c0578cc7c21b3
-    m_Address: Mobs/GiantBlueSamurai
+    m_Address: Mobs/mob.frost-ronin
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aa30889277ebf451b82e516949e676e9
-    m_Address: Mobs/Shadow_Fiora
+    m_Address: Mobs/mob.shadow.fiora
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aa80508352284b946964187ebd829cdc
-    m_Address: Mobs/Lizard
+    m_Address: Mobs/mob.scaly
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b3c0f160a70364f84bc7859d1db665c3
-    m_Address: Mobs/Shadow_Morwenna
+    m_Address: Mobs/mob.shadow.morwenna
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b3f613f4bd04fa9479e7a9cf735f8fd2
-    m_Address: Mobs/SquidRed
+    m_Address: Mobs/mob.abyss-maw
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b5e285da1ca2fa34388b0c61fa66f647
-    m_Address: Mobs/Slime2
+    m_Address: Mobs/mob.goopie
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b8f444d5441a17b44acda6f2872e4e97
-    m_Address: Mobs/SpiderRed
+    m_Address: Mobs/mob.webber
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bc11821806b19b74399b039256376cd1
-    m_Address: Mobs/GiantRedSamurai
+    m_Address: Mobs/mob.blood-ronin
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bec265ad126f64b6b92e5f46ec4cbfbb
-    m_Address: Mobs/Shadow_AutumnGale
+    m_Address: Mobs/mob.shadow.autumngale
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c0fb3026b5d24934680c1f06bbed504b
-    m_Address: Mobs/Lizard2
+    m_Address: Mobs/mob.sunscale
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c93d1699aca59d34891892504f50cbd0
-    m_Address: Mobs/Fish
+    m_Address: Mobs/mob.gillie
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9982a43ded6578408573ad07ac94382
-    m_Address: Mobs/GiantRacoon
+    m_Address: Mobs/mob.bandit-boss
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c9e08431975ff49459619c238496f79b
-    m_Address: Mobs/Reptile
+    m_Address: Mobs/mob.hornscale
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d8e5a7ca5c396fb4085dee816ae69598
-    m_Address: Mobs/MouseBlack
+    m_Address: Mobs/mob.nightsqueak
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: da6c8d87e46c24b4fa08aada9bdd467b
-    m_Address: Mobs/Slime
+    m_Address: Mobs/mob.plopling
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db5e0e279555bcc42965e7456bae5680
-    m_Address: Mobs/BambooYellow
+    m_Address: Mobs/mob.canewick
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e798a578993d848438ce4702c8b8697a
-    m_Address: Mobs/GiantBamboo2
+    m_Address: Mobs/mob.autumn-stalk
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ec9204bd1f5f9444fb862ed7044abec3
-    m_Address: Mobs/Mouse
+    m_Address: Mobs/mob.squeak
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ef18e21778cedf1428b5ba7c77e78c9e
-    m_Address: Mobs/Cyclope
+    m_Address: Mobs/mob.cyclo
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f0ea66dbd737bc349bc03529f93ef906
-    m_Address: Mobs/LanternRed
+    m_Address: Mobs/mob.emberlurk
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f2b052db6cffe8740b43efed1bd046cd
-    m_Address: Mobs/Snake
+    m_Address: Mobs/mob.hisser
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f491a8817668569448dae7313d1a6f49
-    m_Address: Mobs/Snake2
+    m_Address: Mobs/mob.viper
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f6d2fc998f1a2e848be114cc8e124c73
-    m_Address: Mobs/Skull
+    m_Address: Mobs/mob.blazeskull
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f9add625d430c5646b2467bc82a8755e
-    m_Address: Mobs/GiantSlime2
+    m_Address: Mobs/mob.venom-gloop
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fa73b12d97a30ce4e8db38e9b5363853
-    m_Address: Mobs/Spirit
+    m_Address: Mobs/mob.wisp
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fd53258eb42d0294195b4204ba85d5e7
-    m_Address: Mobs/TRex
+    m_Address: Mobs/mob.chomper
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ff9480d3b75899c4a92ec56c6426561c
-    m_Address: Mobs/Snake3
+    m_Address: Mobs/mob.coily
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

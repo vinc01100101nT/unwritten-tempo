@@ -21,15 +21,14 @@ using UnityEngine;
 /// Idempotent: an asset that already exists is left untouched, so hand edits + re-runs are safe.
 ///
 /// A mob folder's <c>SpriteSheet.png</c> renders directly as a grid; a boss folder has one picture per animation
-/// (Idle.png, Walk.png…), which RigBuilder25D.TryStripArt resolves from the folder name stored in
-/// <see cref="MonsterDef.sheet"/>. A folder with neither is skipped (see RigBuilder25D.HasCreatureArt).
+/// (Idle.png, Walk.png…), which RigBuilder25D.TryStripArt resolves from the folder linked in
+/// <see cref="MonsterDef.artFolder"/>. A folder with neither is skipped (see RigBuilder25D.HasCreatureArt).
 /// Boss art is a deferred pass.
 /// </summary>
 public static class MobBiomeImporter
 {
-    // Public because the prefab baker resolves a creature's sheet from these same two folders. It used to
-    // hardcode the monster one and know nothing of the boss one, so every boss baked with the fallback sheet
-    // and all 20 of them stood in the world wearing KappaGreen's sprite. One owner for the pair, read by both.
+    // The two folders this importer turns into creatures. A creature made here links to its own folder
+    // (MonsterDef.artFolder), so nothing after this point looks art up by these paths.
     public const string MonsterArtDir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
     public const string BossArtDir     = "Assets/1_Authored/Art/Billboards/Actor/Boss";
     const string ResourceDir    = "Assets/3_Data/Resources/Monsters";
@@ -89,7 +88,7 @@ public static class MobBiomeImporter
     }
 
     /// <summary>Subfolders of <paramref name="artDir"/> holding art a creature can be built from, sorted by name:
-    /// a grid sheet (<c>SpriteSheet.png</c>, or one named after the folder like <c>Slime/Slime.png</c>) or an Idle
+    /// a grid sheet (<c>SpriteSheet.png</c>) or an Idle
     /// strip (the bosses). Folders with neither — the split-part dragons — are skipped.</summary>
     static List<string> SpriteFolders(string artDir)
     {
@@ -112,7 +111,7 @@ public static class MobBiomeImporter
         var def = ScriptableObject.CreateInstance<MonsterDef>();
         def.id = "mob." + Kebab(folder);
         def.displayName = folder;
-        def.sheet = folder;
+        def.artFolder = AssetDatabase.AssetPathToGUID($"{(isBoss ? BossArtDir : MonsterArtDir)}/{folder}");
         def.kind = isBoss ? CreatureKind.Elite : CreatureKind.Normal;
         def.biome = biome;
 

@@ -39,7 +39,7 @@ public class ItemActionMenu
 
     const float Width = 200f;
     const float RowHeight = 24f;
-    const float TitleHeight = 26f;
+    const float TitleHeight = UiKit.TitleBarHeight;
 
     RectTransform root;
     Transform rowHost;

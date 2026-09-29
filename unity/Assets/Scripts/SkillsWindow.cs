@@ -232,7 +232,7 @@ public class SkillsWindow : MonoBehaviour
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = UiKit.Label("Name", row.transform, name, 14, FontStyle.Bold, TextAnchor.MiddleLeft);
         UiKit.Fill(title.rectTransform, new Vector2(TileSize + 14f, 0), new Vector2(-6f, 0));
-        title.color = !learned ? LockedText : def.tint == default ? UiKit.TextMain : def.tint;
+        title.color = !learned ? LockedText : def.tint == default ? UiKit.TextMain : UiKit.Readable(def.tint);
         title.raycastTarget = false;
 
         SkillHoverCard.Attach(row.transform, def, beside: true);

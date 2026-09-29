@@ -34,7 +34,7 @@ public static class MobExport
     [Serializable] class Creature
     {
         public string id, name, kind, element, size, biome, drops;
-        public int level, elementLevel, hp, atk, def, flee, xp, goldMin, goldMax;
+        public int level, elementLevel, hp, atk, def, flee, xp;
         public Home[] homes;
     }
 
@@ -79,8 +79,6 @@ public static class MobExport
                 def = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def),
                 flee = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee),
                 xp = d.xpReward,
-                goldMin = d.goldMin,
-                goldMax = d.goldMax,
                 drops = CreatureDrops.Line(d),
                 homes = h,
             });

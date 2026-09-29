@@ -38,7 +38,7 @@ Tracking issue: **VIN-22**.
 Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
 value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the world map and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## The theme rule
 
@@ -52,7 +52,31 @@ rich text reads its tint with `UiKit.Hex(...)`. Changing the look of the whole g
 `DamagePopup` draws); colours that MEAN something — health red/yellow/green, mana blue, a skill's or weapon's
 colour, an element's tint, a weather's tint, a season's tint, the minimap's dots, the dye swatches; and the
 things drawn straight over the world with a black edge (the name over whoever you point at, their health plate,
-the cast bar), which stay light text on the world.
+the cast bar), which stay light text on the world. **A meaning colour drawn as TEXT on a window goes through
+`UiKit.Readable`**, which darkens it — same hue — only as far as it must go to read at 4.5 : 1 on the window body.
+
+## Window headings
+
+**Every window's heading is its blue title bar, and the title is always in it** — "Login", "Your Characters",
+"Character Creation", "Inventory", "Skills", the status box, the right-click menu, the card dialog, the drop
+prompt. The bar is **`UiKit.TitleBarHeight` = 24 units high on every one of them**, whatever it carries, and is
+built by the one `UiKit.Header` (through `DressWindow`) or, for a menu's strip, `UiKit.TitleBar`.
+
+At the bar's right-hand end an in-game window carries **_ (minimise)** and **X (close)**, close right-most.
+Minimise leaves only the bar on screen, still draggable; pressing it again brings the window back exactly as it
+was. The front screens (Login, Your Characters, Character Creation) carry neither button and do not drag. The
+status box minimises but has no close. The card dialog and the drop prompt carry no bar buttons — each has its
+own Close / Cancel below.
+
+## The status box
+
+Top-left by default, draggable by its bar, and it remembers where it was left. Its bar carries the character's
+name, HP and MP. Its body shows **Lv**, **Ring Lv** and **[held weapon] Mastery Lv**, each with its experience bar
+(the mastery row only while a weapon is held), then the zeny with a + beside it that shows or hides a button for
+every HUD window: Inventory, Character, Skills, Calendar, World Map, Minimap, Chat, Settings, System. Each button
+opens its window by the key that already opens it (`Hotkeys.PressOnScreen`) — the same one-frame press the
+phone's tray uses — so it adds no second way into any window. It replaced the experience strip along the bottom of
+the screen and the health and mana bars at the bottom left.
 
 ## Design tokens — read off the code 2026-09-28
 
@@ -143,7 +167,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 - **Phase 1 — DONE.** The Inventory and Character windows exist; what you wear is listed at the top of the inventory. Hotbar + stat allocation were already done.
 - **Phase 2 — mostly done.** The buff/debuff bar and both tooltips (item and skill) are built. **The quest tracker is not**, and cannot be: no quest system exists anywhere in the game.
 - **Phase 3 — no longer "deferred", and no longer one phase.** Chat is built. Guild / marketplace / mail are still absent, but they are now ordinary features on a real networked game rather than a bracket nobody expected to open.
-- **Phase 4 — partly done.** Windows are movable and carry drag handles and close buttons. **Saved layouts and UI scaling are not built**, and UI Toolkit was never revisited — it is still uGUI throughout.
+- **Phase 4 — partly done.** Windows are movable by their title bar, and in-game windows carry minimise and close buttons. **Saved layouts and UI scaling are not built**, and UI Toolkit was never revisited — it is still uGUI throughout.
 
 ## Related
 

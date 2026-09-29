@@ -383,7 +383,7 @@ public class AgentLink : MonoBehaviour
         AccountClient.ListModels((models, err) =>
         {
             if (models == null || models.Length == 0) { pendingError = err ?? "no character models offered"; pendingDone = true; return; }
-            AccountClient.CreateCharacter(name, models[0], null, null, (info, e2) =>
+            AccountClient.CreateCharacter(name, models[0], null, null, UnitStatMath.EvenCreationSpread(), (info, e2) =>
             {
                 if (info == null) { pendingError = e2 ?? "could not create"; pendingDone = true; return; }
                 AccountClient.ListCharacters((list, e3) => { characters = list; pendingError = e3; pendingDone = true; });

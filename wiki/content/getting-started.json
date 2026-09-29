@@ -3,16 +3,16 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*Your first steps as a husk. (This page grows as the early game is finalized.)*"
+      "text": "*Your first steps as one of the unwritten. (This page grows as the early game is finalized.)*"
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "You begin as a husk"
+      "text": "You begin unwritten"
     },
     {
       "type": "paragraph",
-      "text": "You wake with no color — one of the many nobody ever wrote down. Your goal from the first minute is the goal of the whole game: **hunt the blank pages** (the monsters), fill them in, and write your color into the world."
+      "text": "You wake with no color — real in the artist's mind, but not yet on the page. Your goal from the first minute is the goal of the whole game: **restore the corrupted pages** (the monsters), and be written in, color and all."
     },
     {
       "type": "heading",
@@ -23,11 +23,11 @@
       "type": "list",
       "ordered": true,
       "items": [
-        "**Fight monsters** — each one is a blank page. Defeating it writes a line onto it.",
+        "**Fight monsters** — each one is a corrupted page. Defeating it restores the page.",
         "**Level up** — every level lets you draft a point of growth on your **Ring** (see *Stats & the Ring*).",
         "**Practise a weapon** — fighting with a kind of weapon teaches you its **skills**, and the weapon type in your hands decides which of them you may use.",
         "**Grow into a role** — where you invest your ring points quietly commits you to a role (a bruiser, a mage, a healer…).",
-        "**Get your color** — as you progress, identity leaks into your husk for the first time."
+        "**Get your color** — as you progress, identity arrives in your charcoal body for the first time."
       ]
     },
     {

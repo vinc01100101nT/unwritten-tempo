@@ -143,6 +143,9 @@ public class GameRoot : MonoBehaviour
         {
             if (root == gameObject) continue;                                    // the gate itself has to keep running
             if (root.GetComponentInChildren<EventSystem>(true) != null) continue; // the sign-in screen needs input to work
+            // The creation preview draws its outline with the game's own ink. The front camera renders no layers,
+            // so left running it inks nothing but that preview.
+            if (root.GetComponent<HandDrawnFX>() != null) continue;
             if (!root.activeSelf) continue;
 
             root.SetActive(false);

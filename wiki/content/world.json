@@ -3,37 +3,37 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*The setting, the sentence that never finished, and why the world looks the way it does.*"
+      "text": "*The setting, the artist's unfinished book, and why the world looks the way it does.*"
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "The record, and the silence"
+      "text": "The artist and the book"
     },
     {
       "type": "paragraph",
-      "text": "In ancient history, one person wrote down the **truth of the world** — a record of what was and what is, kept current as the world happened. Then the scribe was **silenced, mid-sentence**. The record simply stops."
+      "text": "An artist wrote a story in a book and drew its pictures himself — a gentle, peaceful story. Everything he finished is on the page, **drawn flat**. Everyone he has only imagined so far is **unwritten**: real in his mind, not yet on the page."
     },
     {
       "type": "paragraph",
-      "text": "Everything before that line has a name, a shape, a settled truth. Everything after it was **never written down** — and what is never written does not hold together. The blank pages that should have carried the rest of the record scattered across the world, and where they landed they **transformed into monsters**: unrecorded space given hostile form."
+      "text": "But unwanted thoughts kept breaking into his mind, and the pictures there grew chaotic. Those thoughts took one shape and one name: **Chaos**. Chaos lives only inside the artist's mind, and it has tried again and again to wreck his peace and his book. It never erases what he wrote — it **corrupts** it."
     },
     {
       "type": "paragraph",
-      "text": "The world is called *Unwritten* for exactly that reason. Not un-done — **never recorded.** The quest is not to restore a lost book; it is to write the part that was never there."
+      "text": "The world is called *Unwritten* for the people still waiting to be written — and you are one of them."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "What the silence did to people"
+      "text": "The Fourteen, and the fear"
     },
     {
       "type": "paragraph",
-      "text": "With no record still being kept, **people lost their identities.** Their color, their sense of self — all of it drained away, leaving behind **charcoal-like husks**. A body still stands: present, real, solid. But nobody's name was ever inked."
+      "text": "To fight Chaos the artist imagined fourteen champions, the **Fourteen Kashira**. Together they sealed it away — but not before it **corrupted pages of the book**, twisting the characters drawn on them into monsters."
     },
     {
       "type": "paragraph",
-      "text": "The husks did not simply give up. They wander a seemingly endless journey across the world, **hunting the scattered pages** — trying to finish what the scribe never got to write. You are one of them."
+      "text": "After the battles the artist grew **paranoid**: what if Chaos had infected the Fourteen before it was sealed? He thought it until, in his mind, it became true. Chaos's power spread evenly through the fourteen, and they turned — the **fourteen shadows**. Now only the unwritten stand with him. You are one of them, and your task is to end that fear: restore the corrupted pages, and in the end face the shadows."
     },
     {
       "type": "heading",
@@ -47,9 +47,9 @@
     {
       "type": "list",
       "items": [
-        "**The flat, papery monsters are blank pages.** They are literally paper — the pages that should have held the rest of the record and never did. Their flatness isn't an art choice; it's what they are.",
-        "**The colorless, charcoal heroes are people who were never named.** The body is 3D and fully present, but no ink ever reached it — no color, no self. A faint trace of identity still clings on: a hint of colored hair, an inked eye.",
-        "**What you take from a page is text you put on it.** To defeat a monster is to *fill it in* — one more line of the record that now exists because you wrote it."
+        "**The flat, papery monsters are corrupted pages.** They are literally paper — drawings Chaos twisted. Their flatness isn't an art choice; it's what they are.",
+        "**The colorless, charcoal heroes are the unwritten.** The body is 3D and fully present, but the artist hasn't put them on the page yet — no color, no self. A faint trace of identity is already there: a hint of colored hair, an inked eye.",
+        "**Beating a monster restores its page.** What it drops is what the page gives back."
       ]
     },
     {
@@ -59,25 +59,26 @@
     },
     {
       "type": "paragraph",
-      "text": "Progression in Unwritten is the story of **getting your color.** As a husk writes more of the record — growing stronger, journeying further, uncovering story, mastering a weapon — **color returns to them**, identity leaking in for the first time. A fully realized hero is one who has written a great deal of themselves into existence."
+      "text": "Progression in Unwritten is the story of **getting your color.** The more of you is written — growing stronger, journeying further, uncovering story, mastering a weapon — the more **color returns to you**, identity arriving for the first time. A fully realized hero is one the artist has written a great deal of."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "The Fourteen Unwritten"
+      "text": "The Fourteen Kashira"
     },
     {
       "type": "paragraph",
-      "text": "Fourteen people fought the thing that silenced the scribe. Because they acted **after** the last written line, none of it was recorded — not the battle, not whether they won. They left **fourteen weapons** and no names."
+      "text": "The Fourteen Kashira were never put on the page, so they have **no names** — only epithets, and **fourteen weapons**. They sealed Chaos away; then the artist's fear turned them into the fourteen shadows."
     },
     {
       "type": "list",
       "items": [
-        "**Each of the fourteen weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. How the weapon fights *is* how that person fought.",
+        "**Each of the fourteen weapons is one of them.** A weapon is what the artist kept of a Kashira from before the fear took them. How the weapon fights *is* how that Kashira fought.",
         "**They are known only by epithet, never by name** — the Shield is *The One Who Stood*, the Dagger is *The Late Arrival*. The missing name is the point, and it is also the reward.",
         "**A weapon teaches its wielder's skills in fragments.** You learn them by fighting with that kind of weapon, a few at a time as your mastery grows — and a weapon forged by a smith carries one of them more strongly than the rest: its **trademark**, the skill it is named for.",
+        "**Remembering who they really were frees the artist.** Every Kashira you come to know through their weapon proves to him that Chaos never truly had them. Master whichever weapons you like — nobody has to learn all fourteen.",
         "**Carrying one bleeds their identity into you** — this is the charcoal-to-color return. You are not recovering *the* truth; you are finishing *a* story.",
-        "**Naming an Unwritten is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — fourteen names to write, fourteen journeys to finish."
+        "**Naming a Kashira is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — fourteen names to write, fourteen journeys to finish."
       ]
     },
     {
@@ -112,9 +113,9 @@
     {
       "type": "list",
       "items": [
-        "**The silencer** — the thing that stopped the scribe mid-sentence, and the deepest blankness in the world.",
-        "**Bosses** — larger, self-assembled masses of blank page: absence gathered into something powerful and deliberate.",
-        "**The scattered pages** — the ordinary monsters of the world, and the reason to keep walking."
+        "**Chaos** — the unwanted thoughts in the artist's mind, sealed away by the Fourteen. It never erases; it corrupts.",
+        "**The fourteen shadows** — the Kashira, turned by the artist's fear. Chaos's power is split evenly between them.",
+        "**The corrupted pages** — the monsters of the world, and the reason to keep walking."
       ]
     },
     {
@@ -122,7 +123,7 @@
     },
     {
       "type": "paragraph",
-      "text": "*Canon reference: this page is drawn from the game's canon lore. Story beats, the silencer's history, and the codex you write as you play will be expanded as they are designed.*"
+      "text": "*Canon reference: this page is drawn from the game's canon lore. Story beats and the codex you write as you play will be expanded as they are designed.*"
     }
   ]
 }

@@ -35,8 +35,9 @@ public class MonsterDef : ScriptableObject
     // is falls out of its level + stats through the shared formulas, exactly as it does for the player.
 
     [Header("Art")]
-    [Tooltip("Sprite-sheet folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. 'Slime').")]
-    public string sheet = "";
+    [Tooltip("The folder its pictures are in. Kept by Unity's own link to the folder, so renaming or moving the " +
+             "folder changes nothing here.")]
+    [FolderLink] public string artFolder = "";
     [Tooltip("Relative spawn frequency in a mixed field (commons higher). Bosses use 0.")]
     public int weight = 1;
     [Tooltip("SpriteRenderer tint (white = none).")]
@@ -126,7 +127,10 @@ public class MonsterDef : ScriptableObject
     public float onHitAilmentMagnitude = 0f;
 
     [Header("Loot")]
+    [Tooltip("The gold range a saved character that never fights pays its saver, before its tier multiplies it. A death " +
+             "itself pays no gold.")]
     public int goldMin = 0;
+    [Tooltip("The top of that range.")]
     public int goldMax = 0;
     [Tooltip("Item drops. Each entry is rolled independently on death. Names must match a Resources/Items/*.asset.")]
     public string[] itemDropNames = System.Array.Empty<string>();
@@ -166,7 +170,7 @@ public class MonsterDef : ScriptableObject
             ringRankValues = ringRankValues,
             weaponMasteryLevel = weaponMasteryLevel,
             name = string.IsNullOrEmpty(displayName) ? name : displayName,
-            sheet = sheet,
+            artFolder = artFolder,
             weight = weight,
             tint = tint,
             kind = kind,
@@ -188,8 +192,6 @@ public class MonsterDef : ScriptableObject
             onHitAilmentChance = onHitAilmentChance,
             onHitAilmentSeconds = onHitAilmentSeconds,
             onHitAilmentMagnitude = onHitAilmentMagnitude,
-            goldMin = goldMin,
-            goldMax = goldMax,
             itemDropNames = itemDropNames,
             itemDropChances = itemDropChances,
         };

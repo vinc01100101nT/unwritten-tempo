@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: OniTengu
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.oni-tengu
+  displayName: Oni Tengu
+  kind: 1
+  size: 1.3
+  biome: 12
+  artFolder: 8cad465112e36f249b9f5427b215e5be
+  weight: 0
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 92
+  str: 58
+  agi: 38
+  vit: 67
+  intel: 37
+  dex: 50
+  luk: 35
+  startingGear: []
+  gearQuality: 5
+  gearFolds: 28
+  gearInkTier: 5
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 92
+  hardDefPercent: 32
+  hardMagicDefPercent: 20
+  xpReward: 800
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 1.7
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 6
+  elementLevel: 2
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 1000
+  goldMax: 2000
+  itemDropNames: []
+  itemDropChances: []

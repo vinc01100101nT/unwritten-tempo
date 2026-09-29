@@ -12,11 +12,12 @@ Tasks whose status is empty `[ ]` — not started. The plan is three files by st
 
 ## Week 4 — Killing things pays you
 
-**Goal:** the phase that turns two months of finished combat into a game. You kill something, it pays materials, consumables and gold, you forge the materials into gear, you put it on, your character sheet changes.
+**Goal:** the phase that turns two months of finished combat into a game. You kill something, it pays materials and consumables (and, when it turns back into a character that never fights, gold), you forge the materials into gear, you put it on, your character sheet changes.
 
 Every creature wears the pieces authored for it, at its own authored grade, folds and Ink, but **gives up none of it** — since V4, gear is made, not taken off a
 corpse. Since 2026-09-22 a kill pays the creature's own level's band of metal, cloth and leather, a chance of an Ink
-or a Salt (much more from elites, more again from shadows), a 30% chance of one random consumable, and gold.
+or a Salt (much more from elites, more again from shadows), and a 30% chance of one random consumable; gold comes from
+saving a character that never fights.
 
 - [ ] `MT-14` **`[E]` Play-test the loop and judge the rates.** The first session where the numbers from Week 2's decision meet a real fight. — **1 day**
   *Done when:* you have played an hour, and either kept the drop rates or written down the new ones and applied them.
@@ -161,6 +162,10 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 - [ ] `MT-45` **`[A]` Make a rock-face tile for cliffs.** Every cliff biome now has a cliff face colour, which the face is
   drawn in instead of any tile; a biome with none would still draw its faces with the gravel ground tile, and the cliff
   material already takes any tile. — **0.5–1 day**
+
+- [ ] `MT-57` **`[A]` DeepMaw's portrait is one pixel short.** Found 2026-09-30: its portrait is 38×37, every other
+  portrait 38×38. The game draws no portraits yet, so nothing shows it. — **0.1 days**
+  *Done when:* every creature and character portrait is 38×38.
 
 ---
 

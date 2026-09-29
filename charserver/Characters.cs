@@ -114,9 +114,16 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         var model = roster.Resolve(body.modelName);
         if (model is null) return Bad($"no character model called '{body.modelName}'");
 
-        // The look goes straight into the save document — the character has no other home for it. It carries no
-        // version, which is exactly what marks this character as never played.
-        var born = JsonSerializer.Serialize(new { modelName = model, dyeSources = sources, dyeTargets = targets });
+        // The six stats chosen on the creation hexagon. Only their SHAPE is checked here — six whole numbers, 1 to 9 —
+        // so nothing absurd is stored. Whether they are a spread the hexagon can make is the game's own rule
+        // (UnitStatMath.IsCreationSpread), applied by the map server on the character's first entry; it is not
+        // written twice.
+        var primary = body.primary ?? [];
+        if (primary.Length != 6 || primary.Any(v => v < 1 || v > 9)) return Bad("send six stats, each 1 to 9");
+
+        // The look and the stats go straight into the save document — the character has no other home for them.
+        // It carries no version, which is exactly what marks this character as never played.
+        var born = JsonSerializer.Serialize(new { modelName = model, dyeSources = sources, dyeTargets = targets, primary });
 
         try
         {
@@ -407,6 +414,6 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     static IResult Bad(string why) => Results.Json(new { error = why }, statusCode: 400);
     static IResult NoSuchCharacter() => Results.Json(new { error = "no such character" }, statusCode: 404);
 
-    public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets);
+    public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets, int[]? primary);
     public sealed record AppearanceBody(string? modelName, string[]? dyeSources, string[]? dyeTargets);
 }

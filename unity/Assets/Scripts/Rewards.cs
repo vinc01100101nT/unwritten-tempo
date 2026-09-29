@@ -58,7 +58,13 @@ public static class Rewards
     /// <para>THE ONE PLACE THIS IS DECIDED. When a share of the work is worked out properly — how much damage each
     /// person did, who healed, who held it still — it is worked out HERE, and every payment follows it without
     /// another line changing.</para></summary>
-    public static ICombatUnit WhoEarned(Health victim) => victim != null ? victim.LastAttacker : null;
+    public static ICombatUnit WhoEarned(Health victim)
+    {
+        var last = victim != null ? victim.LastAttacker : null;
+        // A CREATURE FIGHTING FOR SOMEBODY earns for them: a saved character's kills are its saver's.
+        if (last is Health fighter && fighter.owner != null && !PlayerUnits.Gone(fighter.owner)) return fighter.owner;
+        return last;
+    }
 
     /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: <paramref name="gold"/> Zeny straight
     /// into their purse, and every item in <paramref name="items"/> onto the ground where

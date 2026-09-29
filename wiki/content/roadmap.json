@@ -78,7 +78,7 @@
           "state": "now",
           "when": "Now",
           "title": "Killing things pays you",
-          "text": "Monsters drop the materials you forge with, plus consumables and coin. Pick up what falls and turn it into gear."
+          "text": "Monsters drop the materials you forge with, plus consumables; saving a character that never fights pays coin. Pick up what falls and turn it into gear."
         },
         {
           "state": "done",

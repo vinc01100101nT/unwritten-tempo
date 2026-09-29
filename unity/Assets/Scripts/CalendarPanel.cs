@@ -214,7 +214,7 @@ public class CalendarPanel : MonoBehaviour
 
             cellDay[i].text  = isToday ? $"Day {i + 1}  ★" : $"Day {i + 1}";
             cellTag[i].text  = WeatherDirector.TagOf(p);
-            cellTag[i].color = c;
+            cellTag[i].color = UiKit.Readable(c);
             // Weather icon (sprite + tint). Hide gracefully if the art wasn't assigned (e.g. pre-rebake).
             var (sprite, iconTint) = IconFor(p);
             if (sprite != null) { cellIcon[i].sprite = sprite; cellIcon[i].color = iconTint; cellIcon[i].enabled = true; }

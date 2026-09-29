@@ -67,6 +67,39 @@ public class Health : MonoBehaviour, ICombatUnit
         extraVersion++;
     }
 
+    /// <summary>Which side of the fight this creature stands on (see <see cref="Sides"/>). The creatures' side unless a
+    /// saved character is put elsewhere; a watched copy is told by the server.</summary>
+    [System.NonSerialized] public Side side = Side.Creatures;
+
+    /// <summary>The character this creature turned back into, for this life — null for an ordinary creature.</summary>
+    [System.NonSerialized] public SavedCharacter savedAs;
+
+    /// <summary>Who this creature fights for, for this life: the player who saved it, when it is an ally. Its kills are
+    /// that player's (see <see cref="Rewards.WhoEarned"/>).</summary>
+    [System.NonSerialized] public ICombatUnit owner;
+
+    public bool IsSavedCharacter => savedAs != null;
+
+    /// <summary>Stand on <paramref name="now"/>. The one way a creature changes side, so the side registry never drifts.</summary>
+    public void SetSide(Side now)
+    {
+        side = now;
+        Sides.Filed(this, now);
+    }
+
+    /// <summary>Make this creature, for this life, the character <paramref name="character"/> — standing on
+    /// <paramref name="standsOn"/> and fighting for <paramref name="fightsFor"/>. Its skills are rebuilt, because a saved
+    /// character carries no summon skill of its own.</summary>
+    public void BecomeSaved(SavedCharacter character, Side standsOn, ICombatUnit fightsFor)
+    {
+        savedAs = character;
+        owner = fightsFor;
+        SetSide(standsOn);
+        extraVersion++;
+    }
+
+    void OnDestroy() => Sides.Filed(this, Side.None);
+
     public int Current { get; private set; }
     public bool IsDead => Current <= 0;
 
@@ -366,8 +399,8 @@ public class Health : MonoBehaviour, ICombatUnit
             bool byMastery = held != WeaponType.None && def.weaponType == held
                              && Mathf.Max(1, def.masteryLevel) <= mastery;
             // THE SUMMON SKILL, in a slot of its own on top of the extra ones — for a kind that summons, and never for a
-            // creature that was itself summoned.
-            bool summon = def.id == CreatureKinds.SummonSkillId && CreatureKinds.Summons(kind) && !IsSummoned;
+            // creature that was itself summoned, or that turned back into a saved character.
+            bool summon = def.id == CreatureKinds.SummonSkillId && CreatureKinds.Summons(kind) && !IsSummoned && savedAs == null;
             if (byMastery || summon || extra.Contains(def.id)) kitScratch.Add(def);
         }
         return kitScratch;

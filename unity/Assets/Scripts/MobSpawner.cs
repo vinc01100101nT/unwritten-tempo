@@ -36,7 +36,7 @@ public static class MobSpawner
     {
         if (def == null) { onSpawned?.Invoke(null); return; }
 
-        AddressablePrefabs.Load(AddressPrefix + def.name,
+        AddressablePrefabs.Load(AddressPrefix + def.id,
                                 prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
     }
 
@@ -88,6 +88,9 @@ public static class MobSpawner
         // AND A KIND THAT SUMMONS gets the list its summons are kept in, knowing which creature it is so it can work out
         // whom it calls. Server only: a watching copy summons nothing, it is told about each summon.
         if (GameServer.IsServer && CreatureKinds.Summons(def.kind)) go.AddComponent<CreatureSummons>().def = def;   // perf-ok: once per creature made
+        // AND A KIND THAT CAN TURN BACK into the character the artist drew rolls for it when it dies (SavedCharacters).
+        // Server only: a watching copy is told about the character, it rolls nothing.
+        if (GameServer.IsServer && SavedCharacterRules.CanTurnBack(def.kind)) go.AddComponent<TurnsBackOnDeath>().def = def;   // perf-ok: once per creature made
         return go;
     }
 }

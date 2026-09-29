@@ -137,11 +137,11 @@ map, and the map generator no longer puts any there.
 
   | Shadow | Blossom Wind 170 | Feather Rain 165 | Silent Snow 160 | Ashen Field 155 | Night Orchid 150 | Black Lily 145 | Dusk Crow 140 |
   | --- | --- | --- | --- | --- | --- | --- | --- |
-  | Summons | SquidRed 99 | GiantSlime2 95 | TenguRed 92 | GiantSpirit 90 | GiantFlam 80 | GiantFrog 78 | GiantFrog2 66 |
+  | Summons | Abyss Maw 99 | Venom Gloop 95 | Oni Tengu 92 | Wraithmother 90 | Inferno Mask 80 | Toadmaw 78 | Great Croak 66 |
 
   | Shadow | Forest Fire 135 | Silver Rain 130 | Stone Bloom 125 | Morning Dew 120 | Still Oak 115 | Northern Lights 110 | Autumn Gale 105 |
   | --- | --- | --- | --- | --- | --- | --- | --- |
-  | Summons | GiantRedSamurai 60 | TenguBlue 58 | GiantBamboo 47 | GiantRacoonGold 44 | DemonCyclop2 35 | GiantBlueSamurai 33 | SquidGreen 24 |
+  | Summons | Blood Ronin 60 | Karasu 58 | Elder Stalk 47 | Golden Bandit 44 | Mossmaw 35 | Frost Ronin 33 | Deep Maw 24 |
 
   The four lowest elites (8 to 22) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
   not share its element or place.
@@ -204,11 +204,12 @@ Several of one material go down as one pile.
   before there is any player data, like the rest of the order.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
-  spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience and
-  3,000 to 6,000 gold.
-- **Normals' and elites' experience and gold were not changed** when they were re-levelled, so a creature moved from
-  its old level to its current one still pays what it did before — the Octopus, now level 63, still gives 5
-  experience and 2 to 6 gold.
+  spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience.
+- **Normals' and elites' experience and gold ranges were not changed** when they were re-levelled, so a creature moved
+  from its old level to its current one still pays the experience it did before — the Octi, now level 63, still gives
+  5 experience — and its gold range (2 to 6 for the Octi) is still what a character saved from it is multiplied from.
+- **No death pays gold** (decided 2026-09-30): gold comes only from saving a character that never fights — see
+  [Saved Characters](saved-characters.md).
 - **A shadow's 3D body is drawn at random from the cast each life**, like every 3D creature's, so a named shadow can
   look different each time it comes back.
 - **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
@@ -218,6 +219,6 @@ Several of one material go down as one pile.
 - [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — forging, the seven material grades, Ink, Salt
   and mastery: what creatures drop and what shadows wear.
 - [Creatures and Where They Live](biome-mob-families.md) — every creature's home biome, element and level, and every map's creatures.
-- [Story & Setting (Canon)](story-setting-canon.md) — the Fourteen Unwritten.
+- [Story & Setting (Canon)](story-setting-canon.md) — the artist, Chaos and the Fourteen Kashira.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen
   weapon types a shadow each carries.

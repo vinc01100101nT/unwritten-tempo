@@ -239,14 +239,14 @@ function mobTable(){
   if(!all.length) return '<p><em>No creatures exported yet — run the Mob Table\'s Save All in the editor.</em></p>';
   const where=m=>(m.homes||[]).length?m.homes.map(h=>`${esc(h.name)} ×${h.count}`).join(', '):'—';
   return '<div class="dbscroll"><table><thead><tr>'+
-    ['Name','Lv','Locations','Kind','Element','Size','Biome','HP','ATK','DEF','FLEE','XP','Gold','Drops']
+    ['Name','Lv','Locations','Kind','Element','Size','Biome','HP','ATK','DEF','FLEE','XP','Drops']
       .map(h=>`<th>${h}</th>`).join('')+
     '</tr></thead><tbody>'+
     all.map(m=>'<tr>'+
       `<td><strong>${esc(m.name||m.id)}</strong></td><td>${m.level}</td><td class="long">${where(m)}</td><td>${esc(m.kind)}</td>`+
       `<td>${esc(m.element)} ${m.elementLevel}</td><td>${esc(m.size)}</td><td>${esc(m.biome)}</td>`+
       `<td>${m.hp}</td><td>${m.atk}</td><td>${m.def}</td><td>${m.flee}</td><td>${m.xp}</td>`+
-      `<td>${m.goldMin}–${m.goldMax}</td><td class="long">${esc(m.drops||'')}</td>`+
+      `<td class="long">${esc(m.drops||'')}</td>`+
     '</tr>').join('')+
     '</tbody></table></div>';
 }

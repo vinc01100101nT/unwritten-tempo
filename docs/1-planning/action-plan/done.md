@@ -68,7 +68,7 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
   - [DONE] `ST-3-S` **`[E]` A copy keeps its grade, its folds and what was written on it** — through the bag, the body, a save and a restart. Built 2026-09-20 in `MT-39`: the save carries each piece's grade and its written stats. Waiting on a play-test.
     *Done when:* a piece that was forged, folded, quenched and written on shows the same grade, folds and writing after the game restarts.
 
-- [DONE] `MT-4` **`[D]` Gear comes from neither kills nor a shop.** A player forges it at a station from materials, and a kill pays materials, consumables and gold. Every item still carries a sell value, so selling works the moment a shop exists; nothing carries a buy price. Decided 2026-09-20 with `MT-39`. — **0.25 days**
+- [DONE] `MT-4` **`[D]` Gear comes from neither kills nor a shop.** A player forges it at a station from materials, and a kill pays materials and consumables (gold comes from saving a character that never fights, since 2026-09-30). Every item still carries a sell value, so selling works the moment a shop exists; nothing carries a buy price. Decided 2026-09-20 with `MT-39`. — **0.25 days**
 
 ---
 
@@ -124,7 +124,7 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
   - [DONE] `ST-39-C` **`[E]` Quality and folds replace rarity and refine.** Rarity is deleted from the game — no
     labels, no colours, no drop weights. A piece carries a grade (Raw, then F to A) and a fold count, and
     creatures stop dropping equipment altogether.
-    *Done when:* no tier word appears anywhere on screen, and a kill gives up materials, consumables and gold only.
+    *Done when:* no tier word appears anywhere on screen, and a kill gives up materials and consumables only.
 
   - [DONE] `ST-39-D` **`[E]` The stations.** Forge, fold, quench and write with Ink at a smith, a loom or a tannery.
     Every cost, every roll and every grade is the server's; the window draws what it is told.
@@ -143,7 +143,7 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
 
 ## Week 4 — Killing things pays you
 
-**Goal:** the phase that turns two months of finished combat into a game. You kill something, it pays materials, consumables and gold, you forge the materials into gear, you put it on, your character sheet changes.
+**Goal:** the phase that turns two months of finished combat into a game. You kill something, it pays materials and consumables (and, when it turns back into a character that never fights, gold), you forge the materials into gear, you put it on, your character sheet changes.
 
 - [DONE] `MT-12` **`[A]` Creatures drop their band.** Built 2026-09-22 as ONE rule rather than 96 hand-written lists:
   a creature's level picks its band and its kind picks the amounts and the Ink and Salt tiers (`MT-11`), so a new
@@ -176,8 +176,7 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
 - [DONE] `MT-19` **`[A]` Make an elite and a shadow worth the walk.** Built 2026-09-22 as drops: an elite drops 5 to 10
-  of each of its band's materials and the rarer Inks and Salts, a shadow the same at higher chances, and elites pay
-  250 to 2000 gold against an ordinary creature's 2 to 24. — **1–2 days**
+  of each of its band's materials and the rarer Inks and Salts, and a shadow the same at higher chances. — **1–2 days**
   *Done when:* killing an elite reliably produces something an ordinary creature never gives.
 
 ---
@@ -190,5 +189,25 @@ Each of these is worth doing and none of them blocks the loop above. They are he
   user: yes, as one general rule, not per creature. Built the same day: any body whose collision shape is too short
   for the full 0.075 m step is grown just tall enough (bottom and width unchanged); all 98 creatures now step 0.075 m.
   — **0.5 days**
+
+- [DONE] `MT-52` **`[E]` A creature's name lives in one place.** Built 2026-09-29: a creature's shown name is one field on
+  its definition; its art is linked to its folder by Unity's own link and its model is looked up by its permanent id,
+  so renaming a creature, its folder or its file breaks nothing. The 84 creatures were renamed the same day to names
+  with no numbers, in the Ragnarok style (Plopling, Gloop King…). — **0.5 days**
+  *Done when:* every creature's art, model and spawns resolve under the new names (all 98 checked 2026-09-29).
+
+- [DONE] `MT-53` **`[E]` A shadow carries no flat picture.** Built 2026-09-29: a shadow is drawn only as a 3D character,
+  so its baked model no longer holds a flat animation or the placeholder art it never showed. — **0.25 days**
+  *Done when:* the 14 shadow models hold no flat animation (checked 2026-09-29).
+
+- [DONE] `MT-54` **`[A]` The character sprites are one standard.** Done 2026-09-30: every character folder holds one
+  64×112 sheet and one 38×38 portrait; the duplicate pose folders, loose files and a duplicate villager are gone, and no
+  folder name carries a number. Child and OldWoman keep their 2-row sheets. — **0.25 days**
+  *Done when:* all 89 standard folders match (checked 2026-09-30).
+
+- [DONE] `MT-55` **`[D]` Decide the story.** Decided 2026-09-30 with the user: an artist's unfinished book; Chaos, his
+  unwanted thoughts, corrupts pages and never erases; the mobs are corrupted pages; the Fourteen Kashira sealed Chaos
+  and his paranoia turned them into the fourteen shadows; the player ends the paranoia
+  ([Story & Setting](../../3-world/story-setting-canon.md)). — **0.25 days**
 
 ---

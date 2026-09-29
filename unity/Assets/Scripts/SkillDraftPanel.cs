@@ -44,7 +44,7 @@ public class SkillDraftPanel : MonoBehaviour
     static readonly Color RowDim     = UiKit.TextDim;
     static readonly string TitleHex = UiKit.Hex(UiKit.TitleText);
     static readonly string StackHex = UiKit.Hex(UiKit.TextDim);
-    static readonly string WildHex = UiKit.Hex(WildEdge);
+    static readonly string WildHex = UiKit.Hex(UiKit.Readable(WildEdge));
 
     bool wasOpen;
 

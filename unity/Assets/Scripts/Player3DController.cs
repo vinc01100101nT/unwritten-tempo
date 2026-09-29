@@ -991,7 +991,7 @@ public partial class Player3DController : MonoBehaviour
             var ai = list[i];
             if (ai == null) continue;
             var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
-            if (h == null || h.IsDead) continue;
+            if (h == null || h.IsDead || !Sides.HostileToPeople(h)) continue;
             Vector3 d = ai.transform.position - me; d.y = 0f;   // planar distance — ignore height
             float sqr = d.sqrMagnitude;
             if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
@@ -1081,7 +1081,8 @@ public partial class Player3DController : MonoBehaviour
         if (Physics.Raycast(ray, out var hit, 500f))
         {
             var h = hit.collider.GetComponentInParent<Health>();
-            if (h != null && !h.IsDead && h.GetComponent<MonsterAI3D>() != null) return h;
+            // Only an ENEMY is picked: a creature fighting beside you, or one that fights nobody, is not a target.
+            if (h != null && !h.IsDead && Sides.HostileToPeople(h) && h.GetComponent<MonsterAI3D>() != null) return h;
         }
 
         // 2) Soft-snap (magnetism): if no exact hit, grab the nearest LIVING mob whose on-screen sprite
@@ -1094,7 +1095,7 @@ public partial class Player3DController : MonoBehaviour
             var ai = list[i];
             if (ai == null) continue;
             var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
-            if (h == null || h.IsDead) continue;
+            if (h == null || h.IsDead || !Sides.HostileToPeople(h)) continue;
             // Aim at the sprite's CENTRE (mid-body). The mob's transform.position is its FEET on the ground;
             // UnitAnchor owns the feet→centre offset (size-scaled), so the snap circle overlaps the body at
             // any mob scale instead of demanding pixel-aim on the centre.

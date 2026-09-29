@@ -53,12 +53,11 @@ public static class TouchControls
     /// speed. Written by the on-screen stick every frame it is held, cleared the frame it is released.</summary>
     public static Vector2 MoveAxis { get; set; }
 
-    static readonly HashSet<KeyCode> virtualDown = new HashSet<KeyCode>();
     static readonly HashSet<KeyCode> virtualHeld = new HashSet<KeyCode>();
 
-    /// <summary>Fire a one-shot key press from a HUD button. Answered by <see cref="Hotkeys.Down"/> for exactly
-    /// one frame, which is what every window toggle and one-shot ability already reads.</summary>
-    public static void PressVirtual(KeyCode key) => virtualDown.Add(key);
+    /// <summary>Fire a one-shot key press from a HUD button — through <see cref="Hotkeys.PressOnScreen"/>, the one
+    /// on-screen press every platform shares.</summary>
+    public static void PressVirtual(KeyCode key) => Hotkeys.PressOnScreen(key);
 
     /// <summary>Start/stop a held key from a HUD button, for the reads that ask "is it down right now".</summary>
     public static void HoldVirtual(KeyCode key, bool held)
@@ -66,8 +65,7 @@ public static class TouchControls
         if (held) virtualHeld.Add(key); else virtualHeld.Remove(key);
     }
 
-    public static bool VirtualDown(KeyCode key) => virtualDown.Contains(key);
-    public static bool VirtualHeld(KeyCode key) => virtualHeld.Contains(key) || virtualDown.Contains(key);
+    public static bool VirtualHeld(KeyCode key) => virtualHeld.Contains(key) || Hotkeys.PressedOnScreen(key);
 
     // ---- what the fingers produce ----------------------------------------------------------------------
 
@@ -113,7 +111,6 @@ public static class TouchControls
     /// <see cref="TouchDriver"/> — never from gameplay code.</summary>
     public static void Tick()
     {
-        virtualDown.Clear();             // one-shot presses live exactly one frame
         WorldCommit = false;
         OrbitDelta = Vector2.zero;
         ZoomDir = 0;

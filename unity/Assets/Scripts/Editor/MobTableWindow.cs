@@ -79,13 +79,14 @@ public class MobTableWindow : EditorWindow
     {
         if (_sheets.TryGetValue(def, out var t)) return t;
         t = (null, default);
-        if (!string.IsNullOrEmpty(def.sheet))
+        string dir = RigBuilder25D.ArtFolderPath(def.artFolder);
+        if (dir != null)
         {
-            if (RigBuilder25D.TryStripArt(def.sheet, out var idle, out _, out _))
+            if (RigBuilder25D.TryStripArt(dir, out var idle, out _, out _))
                 t = (idle.sheet, new Rect(0f, 0f, 1f / idle.frames, 1f));
             else
             {
-                var tex = RigBuilder25D.MonsterSheet(def.sheet);
+                var tex = RigBuilder25D.MonsterSheet(dir);
                 if (tex != null)
                 {
                     // Unity tex coords are bottom-left origin, so the top row sits at the top of the [0,1] V range.
@@ -168,7 +169,7 @@ public class MobTableWindow : EditorWindow
         string s = _search.ToLowerInvariant();
         return (d.id ?? "").ToLowerInvariant().Contains(s)
             || (d.displayName ?? "").ToLowerInvariant().Contains(s)
-            || (d.sheet ?? "").ToLowerInvariant().Contains(s)
+            || (RigBuilder25D.ArtFolderPath(d.artFolder) ?? "").ToLowerInvariant().Contains(s)
             || d.biome.ToString().ToLowerInvariant().Contains(s);
     }
 

@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is the last surviving trace of one of the **Fourteen Unwritten**, and how the weapon fights *is* how that person fought. None of them was ever named — only described by the deed witnesses remembered. They fall into four families:"
+      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is what the artist kept of one of the **Fourteen Kashira**, and how the weapon fights *is* how that Kashira fought. None of them was ever named — only described by the deed they are remembered for. They fall into four families:"
     },
     {
       "type": "heading",
@@ -32,7 +32,7 @@
       "type": "table",
       "headers": [
         "Weapon",
-        "Unwritten",
+        "Kashira",
         "What it's for"
       ],
       "rows": [
@@ -67,7 +67,7 @@
       "type": "table",
       "headers": [
         "Weapon",
-        "Unwritten",
+        "Kashira",
         "What it's for"
       ],
       "rows": [
@@ -92,7 +92,7 @@
       "type": "table",
       "headers": [
         "Weapon",
-        "Unwritten",
+        "Kashira",
         "What it's for"
       ],
       "rows": [
@@ -118,7 +118,7 @@
       "headers": [
         "Weapon",
         "Families",
-        "Unwritten",
+        "Kashira",
         "What it's for"
       ],
       "rows": [

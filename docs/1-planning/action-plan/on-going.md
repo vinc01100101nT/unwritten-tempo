@@ -116,6 +116,15 @@ Each of these is worth doing and none of them blocks the loop above. They are he
   *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills,
   two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.
 
+- [ON-GOING] `MT-56` **`[E]` A beaten mob can turn back into the character the artist drew.** Built 2026-09-30
+  ([Saved Characters](../../3-world/saved-characters.md)): 15% of normal and elite kills leave one of 91 characters for
+  30 seconds — one that never fights (and pays the only gold: the mob's range ×20, ×40 or ×60), an ally that fights for
+  its saver, or a rebel that fights everyone and drops loot one kind up; every elite becomes its own ninja rebel. Lines,
+  appear auras, half-width drawing and attack / cast / release / death poses. Deaths pay no gold. Built on one rule for
+  who is whose enemy, ready for player-versus-player. — **built**
+  *Done when:* in play a kill turns back about 3 times in 20, each kind behaves as described, gold arrives only from a
+  never-fights character, and two players see the same character, line and aura.
+
 ---
 
 ## Related

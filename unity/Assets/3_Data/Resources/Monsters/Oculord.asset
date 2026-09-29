@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Oculord
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.oculord
+  displayName: Oculord
+  kind: 1
+  size: 3.5
+  biome: 7
+  artFolder: a680a7d70eed26d48a206dc8ebc2d81b
+  weight: 0
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 14
+  str: 12
+  agi: 6
+  vit: 14
+  intel: 6
+  dex: 10
+  luk: 6
+  startingGear: []
+  gearQuality: 3
+  gearFolds: 3
+  gearInkTier: 3
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 14
+  hardDefPercent: 23
+  hardMagicDefPercent: 14
+  xpReward: 200
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 1.7
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 2
+  elementLevel: 2
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 250
+  goldMax: 500
+  itemDropNames: []
+  itemDropChances: []

@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: GreatCroak
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.great-croak
+  displayName: Great Croak
+  kind: 1
+  size: 2.2
+  biome: 10
+  artFolder: b3acd6d226ee7e2458e03b1453bc3f7d
+  weight: 0
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 66
+  str: 42
+  agi: 26
+  vit: 47
+  intel: 26
+  dex: 36
+  luk: 24
+  startingGear: []
+  gearQuality: 3
+  gearFolds: 19
+  gearInkTier: 3
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 66
+  hardDefPercent: 26
+  hardMagicDefPercent: 16
+  xpReward: 400
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 1.7
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 1
+  elementLevel: 2
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 500
+  goldMax: 1000
+  itemDropNames: []
+  itemDropChances: []

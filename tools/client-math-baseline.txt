@@ -18,7 +18,6 @@ unity/Assets/Scripts/Health.cs 45b6d08ea808
 unity/Assets/Scripts/Health.cs 68106bc67169
 unity/Assets/Scripts/Health.cs 746ee2ea1e17
 unity/Assets/Scripts/Health.cs e4365100998b
-unity/Assets/Scripts/LootDropper.cs 8dd15a2963df
 unity/Assets/Scripts/MonsterAI3D.cs 843b182736da
 unity/Assets/Scripts/MonsterAI3D.cs 92ffcead1dcb
 unity/Assets/Scripts/MonsterAI3D.cs 98d7829ae360
@@ -44,4 +43,3 @@ unity/Assets/Scripts/UnitStatBlock.cs c143679933f3
 unity/Assets/Scripts/UnitStates.cs 3c8cf1dd0811
 unity/Assets/Scripts/UnitStates.cs 7ab66c830c26
 unity/Assets/Scripts/UnitStates.cs ee0425ae28d0
-unity/Assets/Scripts/XpBarHUD.cs 769eff7fb248

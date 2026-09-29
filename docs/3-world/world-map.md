@@ -30,7 +30,7 @@ so a region has a feel, not a lock.
 | 2 | **Lirenne** | Finesse | 34–66 | the west continent | Forest, Steppe, Desert, Peaks | Pennaryl, Velmora |
 | 3 | **The Far Shores** | Arcane | 67–99 | overseas: the north volcano, the floating island above the clouds in the far north-west, and the dark south (the south-west peninsula, the swamp lagoon, the south-east island) | Volcanic, Mist, Haunted, Corrupted, Sacred, Swamp | Cindrel, Halcyra |
 
-- **Lastline** (`lastline`) sits in the middle of the main continent, on the scribe's last written line, inside Midlaine.
+- **Lastline** (`lastline`) sits in the middle of the main continent, on the last line the artist wrote, inside Midlaine.
   It belongs to no one. The fields beside it hold only weak creatures (no stronger visitor below level 9), so a new
   character's first steps are safe; nothing stops them walking further.
 - **The elements get harder with each tier, by the creature's level.** A creature of levels 1–33 is only Neutral,
@@ -201,7 +201,7 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
 - **Whether one key lets the whole party in** (and is used up), or every member needs their own. Proposed: one per
   party.
 - **Other special maps**, ideas only: the crossing ships, a climbing tower, hidden places, night and weather places,
-  a fortress, and the Silencer's place (the story's deepest blank page) as the final map.
+  a fortress, and a place for the final fight against the paranoia as the final map.
 - **Kharnel holds 10 fields and 9 dungeon floors**, because the swamp lagoon and the south-east island have no town
   of their own and their maps take the nearest town's code. A town there would give them their own.
 - **The Lastline sea caves are levels 58–66**, one field from the starting town. A sandbox allows it; whether a new

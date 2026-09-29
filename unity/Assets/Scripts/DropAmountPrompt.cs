@@ -96,17 +96,21 @@ public class DropAmountPrompt
 
         var fill = UiKit.Round(UiKit.Img("Fill", root, UiKit.PanelFill), UiKit.WindowRadius - 1);
         var v = fill.gameObject.AddComponent<VerticalLayoutGroup>();
-        v.padding = new RectOffset(8, 8, 6, 8);
+        // The top padding makes room for the blue bar, which sits across the whole top outside the layout.
+        v.padding = new RectOffset(8, 8, (int)UiKit.TitleBarHeight + 6, 8);
         v.spacing = 6f;
         v.childControlWidth = v.childControlHeight = true;
         v.childForceExpandWidth = true;
         v.childForceExpandHeight = false;
 
-        title = UiKit.MakeText("Title", fill.transform, "", 12, FontStyle.Bold,
-                               TextAnchor.MiddleLeft, null, false);
-        title.color = UiKit.TextDim;
-        var tl = title.gameObject.AddComponent<LayoutElement>();
-        tl.minHeight = tl.preferredHeight = 18f;
+        var bar = UiKit.TitleBar(fill.transform, "Title");
+        bar.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        var brt = bar.rectTransform;
+        brt.anchorMin = new Vector2(0, 1); brt.anchorMax = new Vector2(1, 1); brt.pivot = new Vector2(0.5f, 1);
+        brt.sizeDelta = new Vector2(0, UiKit.TitleBarHeight); brt.anchoredPosition = Vector2.zero;
+        title = UiKit.MakeText("Text", bar.transform, "", 12, FontStyle.Bold, TextAnchor.MiddleLeft, null, false);
+        UiKit.Fill(title.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
+        title.color = UiKit.TitleText;
 
         BuildField(fill.transform);
         BuildButtons(fill.transform);

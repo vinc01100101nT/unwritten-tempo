@@ -1,45 +1,51 @@
 ---
 status: canon seed
 owner: vince
-last-updated: 2026-09-26
+last-updated: 2026-09-30
 tags:
   - world-content
 ---
 
 # Unwritten — Story & Setting (Canon)
 
-The anchor lore doc. Everything else (world, mobs, classes, Ring of Progression, progression visuals) should be consistent with this. The core discovery: **the game's visual split — 3D charcoal players vs. flat 2D mobs — IS the story.** Nothing about the art is arbitrary.
+The anchor lore doc. Everything else (world, mobs, weapons, progression visuals) should be consistent with this. The core discovery: **the game's visual split — flat 2D pages vs. 3D charcoal people — IS the story.** Nothing about the art is arbitrary.
 
 ## The premise
 
-In ancient history, one person wrote down the **truth of the world** — a record of what was and what is, kept current as the world happened. Then the scribe was **silenced, mid-sentence**. The record simply stops.
+An artist wrote a story in a book and drew its pictures himself. The story was gentle, pure and peaceful. **Everything he finished is on the page, drawn flat** — the 2D characters. **Everyone still only in his imagination is unwritten** — real in his mind, not yet on the page: every 3D person, the Kashira, and you.
 
-Everything before that line has a name, a shape, a settled truth. Everything after it was **never written down** — and what is never written does not hold together. The blank pages that should have carried the rest of the record scattered across the world, and where they landed they **transformed into monsters**: unrecorded space given hostile form.
+The artist was troubled by unwanted thoughts that kept breaking in, and the pictures in his head grew chaotic. The story gives those thoughts one shape and one name: **Chaos**. Chaos lives only inside the artist's mind. It has tried again and again to wreck his peace and his book, and he has fought back every time — the battles all happen inside his mind.
 
-With no record still being kept, **people lost their identities** — their color, their self, drained away, leaving them **charcoal-like husks**. Nobody's name was ever inked. Now they wander a seemingly endless journey, hunting the scattered pages, trying to **finish what the scribe never got to write**.
+To fight it he imagined **fourteen champions, the Fourteen Kashira**. Together they sealed Chaos away — but not before it **corrupted pages of the book**. Those corrupted pages are the 2D mobs.
 
-The world is *Unwritten* — not un-done, but **never recorded**. The quest is not to restore a lost book; it is to write the part that was never there.
+After the battles the artist grew **paranoid**: what if Chaos had infected the Fourteen before it was sealed? He thought about it until, in his mind, it became true. Chaos's power spread evenly through the fourteen, and they turned — **the fourteen shadows**.
 
-> **Naming note (2026-08-10).** The earlier canon said an entity "un-wrote" the book. That contradicted the title — *unwritten* means *never written*, not *undone*. The premise above replaces it. The paper-monsters, charcoal-people, and page-loot logic all survive the change unaltered.
+Now only the unwritten are on the artist's side. **Your goal is to end the paranoia**: restore the corrupted pages, and in the end face the fourteen shadows.
+
+- **Chaos corrupts; it never erases.** It blots, smears and twists what is written. "Unwritten" only ever means *not yet written* — never *undone*.
+- **The artist is never named and never appears.**
+- **Care rule:** Chaos is unwanted thoughts and paranoia, never a named real diagnosis. The story is about the artist fighting back and getting better.
 
 ## Why the art means what it means
 
-- **2D flat mobs = blank pages.** They are literally paper. Flatness is not a style choice — it is what they are: pages that should have held the rest of the record and never did.
-- **3D-but-charcoal players/NPCs = people who were never named.** The body is there (3D, present, real) but no ink ever reached it — no color, no self. The Quaternius charcoal-body + colored-hair + ink-eye rig telegraphs exactly this: a trace of identity clinging on.
-- **Loot / drops = text you put on a blank page.** Killing a page = filling it in = one more line of the record that now exists because you wrote it.
-- **"Unwritten"** = the state of everything past the scribe's last sentence — including you.
+- **2D flat mobs = corrupted pages.** They are literally paper, and Chaos is what twisted them.
+- **The 2D characters = those pages as the artist drew them.** Beating a mob can turn it back into its true character — see [Saved Characters](saved-characters.md).
+- **3D-but-charcoal players and NPCs = the unwritten.** They exist in the artist's mind but have not been put on the page, so no colour has reached them. The charcoal body + coloured hair + ink-eye rig telegraphs exactly this: a trace of identity waiting to be written in.
+- **Beating a mob = restoring a page**, and what it drops is what that page gives back.
+- **"Unwritten"** = everyone still in the artist's imagination — including you.
 
-## The Fourteen Unwritten
+## The Fourteen Kashira
 
-Fourteen people fought the thing that silenced the scribe. Because they acted **after** the last written line, none of it was recorded. Whether they won is not known. They left **fourteen weapons** and no names.
+The artist imagined fourteen champions to fight Chaos. They sealed it, then his paranoia turned them into the fourteen shadows. They were never put on the page, so they have **no names** — only epithets, and **fourteen weapons**.
 
-- **Each of the 14 weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. The one-sentence identity in `active-skill-system-v3/weapon-roster-12-identities.md` **is** that person's character — the Shield is the one who stood in front, the Dagger is the one nobody saw arrive.
-- **They are known only by epithet, never by name.** An epithet is what witnesses called someone when no one had written the name down. The missing name is the point — and the reward.
-- **Learning a weapon is remembering its wielder.** A weapon holds all of one of the Fourteen, and what you can draw out of it is however much of them you have lived: each skill comes back at the point where your practice with that weapon reaches it. A finer blade lets you remember further. Two people carrying the same kind of weapon know different halves of the same person.
-- **Carrying one bleeds their identity into you** — that is the charcoal → color return. You are not recovering *the* truth; you are finishing *a* story.
-- **Naming an Unwritten is the mastery endgame.** Learn enough of a weapon's pool and its true name can finally be written — a codex entry authored by play. Fourteen names to write, fourteen mastery tracks.
+- **Each of the 14 weapons is one of them.** A weapon is what the artist kept of a Kashira from before the paranoia. The one-sentence identity in `active-skill-system-v3/weapon-roster-12-identities.md` **is** that Kashira's character — the Shield is the one who stood in front, the Dagger is the one nobody saw arrive.
+- **They are known only by epithet, never by name.** An epithet is what someone is called when no one has written the name down. The missing name is the point — and the reward.
+- **Learning a weapon is remembering who its Kashira really was.** A weapon holds all of one Kashira, and what you can draw out of it is however much of them you have lived: each skill comes back at the point where your practice with that weapon reaches it. A finer blade lets you remember further. Two people carrying the same kind of weapon know different halves of the same Kashira.
+- **Every Kashira remembered frees the artist a little.** Knowing who they truly were is what proves to him that Chaos never really had them. A player masters whichever weapons they choose — nobody has to learn all fourteen.
+- **Carrying one bleeds their identity into you** — that is the charcoal → colour return. You are not recovering *the* truth; you are finishing *a* story.
+- **Naming a Kashira is the mastery endgame.** Learn enough of a weapon's pool and its true name can finally be written — a codex entry authored by play. Fourteen names to write, fourteen mastery tracks.
 
-| Weapon | Epithet | Style | The deed nobody recorded |
+| Weapon | Epithet | Style | The deed nobody wrote down |
 | --- | --- | --- | --- |
 | Sword | **The One Who Answered** | **Blossom Wind** | Met every challenge alone, one at a time, and never lost the exchange. |
 | Greatsword | **The One Who Cleared the Road** | **Silent Snow** | Walked ahead of the others so there would be a path behind. |
@@ -56,19 +62,20 @@ Fourteen people fought the thing that silenced the scribe. Because they acted **
 | Fist | *not written yet* | **Northern Lights** | *not written yet* |
 | Kick | *not written yet* | **Autumn Gale** | *not written yet* |
 
-**Their styles.** Each of the Fourteen fought in a **style**, and a style is not a name — it is how they fought, which
-is all a witness could carry away. Their shadows go by their styles. Every skill of a weapon is one numbered **form** of
+**Their styles.** Each Kashira fought in a **style**, and a style is not a name — it is how they fought, which
+is all anyone could carry away. Each is called by it — the Blossom Wind Kashira — and their shadows go by their styles. Every skill of a weapon is one numbered **form** of
 its style, counted in the order the weapon teaches it (the Sword's first form is Piercing Gust), and a form's name is
 built only from its own style's picture — Blossom Wind's forms are wind, petals, branches and storm.
 **Every style is a poetic picture of nature** — a living thing or a natural scene and the weather or season that
 moves it, soft rather than hard: Blossom Wind, Silver Rain, Night Orchid, Black Lily. Never a material or a machine
 (no iron, no gate, no stone wall). It is real English, spelled as English spells it, sounds smooth said with "style",
-never names a real country's culture and never borrows another story's term.
+never names a real country's culture and never borrows another story's term. The one word outside this rule is
+their rank, **Kashira** (Japanese for a head, a chief), chosen by the user on 2026-09-30.
 
 **Calling a form.** Pressing a form calls it out over the caster's head and in the chat log: an ultimate always with
 the full call ("Blossom Wind style, 21st form, Thousand Petals!!"), the weapon's trademark form with the full call at
-most once every 30 seconds, and any other form by its name alone ("Last Petal!!") at most once every 5 seconds. People
-and shadows make the full call; an ordinary creature only names the form. A form that fires on its own is never called.
+most once every 30 seconds, and any other form by its name alone ("Last Petal!!") at most once every 5 seconds. People,
+the Kashira and their shadows make the full call; an ordinary creature only names the form. A form that fires on its own is never called.
 The server chooses the words and keeps the timers; other players' calls can be hidden in the settings.
 *The fourteen styles are LOCKED (2026-09-26). Form names are working names and can still change.*
 
@@ -76,22 +83,23 @@ The server chooses the words and keeps the timers; other players' calls can be h
 
 ## Mechanical hooks this justifies (design directions, not commitments)
 
-- **Charcoal → color as progression.** As a player writes more of the record (levels, ring points, story beats, weapon mastery), color returns to them — identity leaking in for the first time. The rig already supports a gradient from charcoal husk toward a fully-colored self.
-- **Killing a 2D mob = filling in a page.** Drops can be *fragments* that assemble into written lore entries — a codex the player authored. Ties directly into loot + MapRecipe content.
+- **Charcoal → colour as progression.** As a player is written in (levels, ring points, story beats, weapon mastery), colour returns to them — identity arriving for the first time. The rig already supports a gradient from charcoal toward a fully coloured self.
+- **Beating a mob = restoring a page.** A restored page can turn back into its true character — [Saved Characters](saved-characters.md). Drops can be *fragments* that assemble into written lore entries — a codex the player authored.
 - **Ring of Progression = a vessel that holds written identity.** Tradeable, with lineage; the conservation economy fits — what's written is *passed on, never minted*. See the **Ring System — Current Facts (Trio-Ring)** doc (the tradeable-ring direction is recorded there as a proposed, uncommitted concept).
-- **Bosses / the silencer = concentrated blankness.** Larger, self-assembled masses of blank page; the thing that silenced the scribe is the deepest one.
+- **The shadows hold Chaos.** Its power is split evenly between the fourteen, which is why ending the paranoia means facing them.
 - **Conservation as balance driver.** Every gain pays a cost — mirrors "a line written here is a line not written elsewhere."
-- **Weapon mastery = naming an Unwritten.** Per-weapon codex track; see **The Fourteen Unwritten** above and the weapon roster doc.
+- **Weapon mastery = naming a Kashira.** Per-weapon codex track; see **The Fourteen Kashira** above and the weapon roster doc.
 
-*Status: canon seed, written 2026-07-04, premise renamed 2026-08-10. Expand as story beats, the entity, and the codex get designed.*
+*Status: canon seed, written 2026-07-04; premise rebuilt around the artist and Chaos on 2026-09-30. Expand as story beats and the codex get designed.*
 
 ---
 
 ## Related
 
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the fourteen identity sentences these epithets are the flavour half of.
+- [Saved Characters — When a Mob Transforms Back](saved-characters.md) — what a restored page becomes.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the growth engine the tradeable-ring lore hangs off (recorded there as proposed, not committed).
-- [Creatures and Where They Live](biome-mob-families.md) — the blank pages, as data.
+- [Creatures and Where They Live](biome-mob-families.md) — the corrupted pages, as data.
 - [World Creator — Spec](world-creator-spec.md) — the world these beats have to be placed in.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — "a dropped weapon remembers its wielder in fragments", as a system.
 - [Mixamo Animation Integration — Workflow](../4-art/mixamo-animation-workflow.md) — the charcoal-body rig the fiction is built on.

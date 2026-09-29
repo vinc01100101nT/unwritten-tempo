@@ -2,7 +2,8 @@
 
 - [Biome-agnostic mobs = Biome.None](../biome-none-agnostic.md) — spawns any tier band; `Biome` enum APPEND-ONLY.
 - [Mobs/items/maps as data tables](../mob-item-map-data-tables.md) — `MonsterDef` SO in `Resources/Monsters`, kebab `id` via `MonsterCatalog`.
-- [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<name>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
+- [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<id>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
+- [Saved characters + the side system](../saved-characters-and-sides.md) — a beaten mob turns back (10%) into its 2D character on a body of the SAME mob; `Sides.Hostile` is the one enemy question for skills, prey, the server swing refusal and the cursor; deaths pay no gold, rescue does.
 - [Portal/warp color by destination](../portal-color-convention.md) — town=yellow, field=green, dungeon=purple (cylinder pad; blue ring fallback), special=red; chosen by the destination map's TYPE (`KindOfType`), never its name.
 - [World liveliness / ambient life](../world-liveliness-ambient-npcs.md) — SIMULATION: `AmbientLife`→`TownNPC` on `PathAgent3D` + `NpcBarks`.
 - [Hand-authored world content](../hand-authored-world-content.md) — user authors ART by hand; generator automates LAYOUT.

@@ -248,32 +248,26 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildCardDialog(Transform parent)
     {
-        var border = UiKit.Round(UiKit.Img("CardDialog", parent, UiKit.WindowEdge), UiKit.WindowRadius);
+        var border = UiKit.Img("CardDialog", parent, UiKit.WindowEdge);
         border.rectTransform.anchorMin = border.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         border.rectTransform.pivot = new Vector2(0.5f, 0.5f);
         border.rectTransform.sizeDelta = new Vector2(260, 280);
-        var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
-        UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+        // Its title in the blue bar; its own Close button below closes it, so the bar carries no buttons.
+        var content = UiKit.DressWindow(border, "Insert Card", closable: false, minimizable: false, draggable: false);
 
-        var title = UiKit.Label("Title", fill.transform, "Insert Card", 16, FontStyle.Bold, TextAnchor.UpperCenter);
-        title.color = UiKit.TitleText;
-        title.rectTransform.anchorMin = new Vector2(0, 1); title.rectTransform.anchorMax = new Vector2(1, 1);
-        title.rectTransform.pivot = new Vector2(0.5f, 1); title.rectTransform.sizeDelta = new Vector2(0, 24);
-        title.rectTransform.anchoredPosition = new Vector2(0, -6);
-
-        var list = UiKit.Img("List", fill.transform, new Color(0, 0, 0, 0));
+        var list = UiKit.Img("List", content, new Color(0, 0, 0, 0));
         list.raycastTarget = false;
-        UiKit.Fill(list.rectTransform, new Vector2(8, 36), new Vector2(-8, -34));
+        UiKit.Fill(list.rectTransform, new Vector2(0, 34), Vector2.zero);
         var vl = list.gameObject.AddComponent<VerticalLayoutGroup>();
         vl.spacing = 4; vl.childControlWidth = vl.childControlHeight = true;
         vl.childForceExpandWidth = true; vl.childForceExpandHeight = false;
         cardListRoot = list.transform;
 
-        var close = UiKit.Btn("Close", fill.transform, () => UiAnim.Close(cardDialog));
+        var close = UiKit.Btn("Close", content, () => UiAnim.Close(cardDialog));
         var crt = (RectTransform)close.transform;
         crt.anchorMin = new Vector2(0, 0); crt.anchorMax = new Vector2(1, 0);
-        crt.pivot = new Vector2(0.5f, 0); crt.sizeDelta = new Vector2(-16, 26);
-        crt.anchoredPosition = new Vector2(0, 8);
+        crt.pivot = new Vector2(0.5f, 0); crt.sizeDelta = new Vector2(0, 26);
+        crt.anchoredPosition = Vector2.zero;
 
         cardDialog = border.gameObject;
         cardDialog.SetActive(false);

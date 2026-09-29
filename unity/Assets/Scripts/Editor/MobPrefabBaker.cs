@@ -9,11 +9,11 @@ using UnityEngine;
 /// Bakes every <see cref="MonsterDef"/> in the catalog into a prefab and marks it ADDRESSABLE so the game
 /// can summon mobs from data during Play — the builder (<see cref="RigBuilder25D"/>) is editor-only and
 /// can't run in a build. Each prefab is built the normal way, <c>RigBuilder25D.BuildMonster(def.ToArchetype())</c>,
-/// plus a <see cref="BossBanner"/> for elites and shadows, which gives them their display name.
+/// plus a <see cref="BossBanner"/> for elites and shadows, which gives them their name plate.
 /// <see cref="MobSpawner"/> loads them by address.
 ///
 /// Output: <c>Assets/2_Generated/MobPrefabs/Mobs/&lt;def name&gt;.prefab</c> (NOT under Resources — Addressables
-/// bundles them), each entered in the <b>Mobs</b> Addressable group under address <c>Mobs/&lt;def name&gt;</c>.
+/// bundles them), each entered in the <b>Mobs</b> Addressable group under address <c>Mobs/&lt;def id&gt;</c>.
 /// Tool OUTPUT, safe to delete and regenerate. Re-runnable; overwrites in place.
 /// </summary>
 public static class MobPrefabBaker
@@ -57,13 +57,13 @@ public static class MobPrefabBaker
             for (int i = 0; i < defs.Count; i++)
             {
                 var def = defs[i];
-                if (def == null || string.IsNullOrWhiteSpace(def.name)) continue;
+                if (def == null || string.IsNullOrWhiteSpace(def.name) || string.IsNullOrWhiteSpace(def.id)) continue;
                 EditorUtility.DisplayProgressBar("Bake Mob Prefabs", def.name, (float)i / defs.Count);
 
                 var go = RigBuilder25D.BuildMonster(def.ToArchetype(), Vector3.zero);
-                // An elite or a shadow carries its display name on a BossBanner.
+                // An elite or a shadow carries its name plate on a BossBanner.
                 if (def.kind != CreatureKind.Normal)
-                    go.AddComponent<BossBanner>().bossName = string.IsNullOrEmpty(def.displayName) ? def.name : def.displayName;
+                    go.AddComponent<BossBanner>();
 
                 // Repoint the billboard renderer at the saved .mat asset so the prefab keeps a real material
                 // reference (RigBuilder assigns a runtime `new Material` that serializes to null in a prefab → pink).
@@ -76,7 +76,7 @@ public static class MobPrefabBaker
 
                 string guid = AssetDatabase.AssetPathToGUID(path);
                 var entry = settings.CreateOrMoveEntry(guid, group);
-                entry.address = AddressPrefix + def.name;
+                entry.address = AddressPrefix + def.id;
                 baked++;
             }
         }
@@ -86,7 +86,7 @@ public static class MobPrefabBaker
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log($"[unwritten] Baked {baked} mob prefab(s) → {OutDir} (Addressable group '{GroupName}')");
-        return $"Baked {baked} mob prefab(s) into the '{GroupName}' Addressable group (address Mobs/<name>).\n\n" +
+        return $"Baked {baked} mob prefab(s) into the '{GroupName}' Addressable group (address Mobs/<id>).\n\n" +
                "Summon them in Play with /summon <count> <normal|elite|shadow|creature>.";
     }
 

@@ -145,6 +145,7 @@ public static class AccountClient
         public string modelName;
         public string[] dyeSources;
         public string[] dyeTargets;
+        public int[] primary;
     }
 
     public static void ListCharacters(Action<CharacterInfo[], string> onDone)
@@ -169,10 +170,12 @@ public static class AccountClient
         });
     }
 
-    /// <summary>Create a character. The recolour travels WITH the creation, because appearance is chosen at the
-    /// same moment as the name and belongs to the character record, not to anything saved later.</summary>
+    /// <summary>Create a character. The recolour and the six stats from the creation hexagon (by
+    /// <see cref="PrimaryStat"/> index) travel WITH the creation, because they are chosen at the same moment as the
+    /// name and belong to the character record. They are the player's CHOICE, not a result: the map server checks
+    /// the spread against the one rule before using any of it.</summary>
     public static void CreateCharacter(string name, string modelName, string[] dyeSources, string[] dyeTargets,
-                                       Action<CharacterInfo, string> onDone)
+                                       int[] primary, Action<CharacterInfo, string> onDone)
     {
         var body0 = new NewCharacter
         {
@@ -180,6 +183,7 @@ public static class AccountClient
             modelName = modelName,
             dyeSources = dyeSources ?? Array.Empty<string>(),
             dyeTargets = dyeTargets ?? Array.Empty<string>(),
+            primary = primary,
         };
         Send("POST", "/characters", JsonUtility.ToJson(body0),
              true, (ok, body, error) =>

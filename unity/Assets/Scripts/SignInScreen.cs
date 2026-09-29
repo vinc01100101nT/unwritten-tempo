@@ -60,6 +60,7 @@ public class SignInScreen : MonoBehaviour
 
     // The panel's vertical rhythm, named once so a row can be inserted without re-typing every offset below it.
     const float RowGap = 56f;      // one labelled field to the next
+    const float TitleSpace = 64f;  // the room the big title used to take above the first line
     const float StatusGap = 60f;   // last field to the status line
     const float ButtonGap = 32f;   // status line to the buttons
 
@@ -77,19 +78,16 @@ public class SignInScreen : MonoBehaviour
 #if UNITY_ANDROID
         panelHeight += RowGap;   // the server line needs a row of its own
 #endif
-        var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight));
-
-        var title = UiKit.Label("Title", panel, "unwritten", 34, FontStyle.Normal, TextAnchor.MiddleCenter);
-        title.color = UiKit.TitleText;
-        FrontScreen.Row(title.rectTransform, -34, 44);
+        // The title is the blue bar's ("Login"); the space the old big title took comes off the top.
+        var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight - TitleSpace), "Login", out _);
 
         var line = UiKit.Label("Line", panel, "Sign in to continue", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
         line.color = UiKit.TextDim;
-        FrontScreen.Row(line.rectTransform, -82, 20);
+        FrontScreen.Row(line.rectTransform, -82 + TitleSpace, 20);
 
         // Rows walk DOWN the panel from here rather than each carrying a hand-typed offset, so inserting the
         // phone's server line above them moves everything below it without a second copy of the layout.
-        float y = -124f;
+        float y = -124f + TitleSpace;
 #if UNITY_ANDROID
         serverField = FrontScreen.Field(panel, "Server", y, false);
         serverField.text = ServerAddress.TypedHost;   // whatever this device was told last time
@@ -295,19 +293,31 @@ public static class FrontScreen
         rt.anchoredPosition = Vector2.zero;
     }
 
-    /// <summary>A centred panel with the window edge. Returns the fill to parent contents to.</summary>
-    public static Transform Panel(Transform canvas, Vector2 size)
+    /// <summary>A centred window with <paramref name="title"/> in its blue bar — no close, no minimise, no drag,
+    /// because a front screen is the whole screen's business. <paramref name="size"/> is the area UNDER the bar;
+    /// that area is returned to parent contents to, so every row's "from the top" starts below the title.
+    /// The window root comes back through <paramref name="window"/>, to show or hide the whole thing.</summary>
+    public static Transform Panel(Transform canvas, Vector2 size, string title, out GameObject window)
     {
         var border = UiKit.Round(UiKit.Img("Panel", canvas, UiKit.WindowEdge), UiKit.WindowRadius);
         border.rectTransform.anchorMin = border.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         border.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        border.rectTransform.sizeDelta = size;
+        border.rectTransform.sizeDelta = size + new Vector2(0f, BarHeight);
         border.rectTransform.anchoredPosition = Vector2.zero;
+        window = border.gameObject;
 
         var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
-        return fill.transform;
+        UiKit.Header(fill, title, border, closable: false, minimizable: false, draggable: false);
+
+        var body = new GameObject("Body", typeof(RectTransform));
+        body.transform.SetParent(fill.transform, false);
+        UiKit.Fill((RectTransform)body.transform, Vector2.zero, new Vector2(0f, -BarHeight));
+        return body.transform;
     }
+
+    // The title bar's height, which a front screen's panel adds on top of its contents.
+    const float BarHeight = UiKit.TitleBarHeight;
 
     /// <summary>A row whose top edge sits at <paramref name="top"/> from the panel's top edge, inset by
     /// <paramref name="left"/> and <paramref name="right"/>. The insets let a row share its line with something

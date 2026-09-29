@@ -61,11 +61,12 @@ The folders match the sections below, so the file tree and this index say the sa
 
 - [World Creator — Spec](3-world/world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
 - [Mob Roster — Normal, Elite, Shadow](3-world/mob-roster.md) — the three kinds of creature: levels, skill slots, gear, summoning, respawn and drops (design, not built).
+- [Saved Characters — When a Mob Transforms Back](3-world/saved-characters.md) — a beaten mob can turn back into the character the artist drew: never-fights (pays gold), allies, rebels; the gold rule, the elite-to-ninja table and how each behaves (built, not play-tested).
 - [Creatures and Where They Live](3-world/biome-mob-families.md) — every creature's home biome, element and level, and the creatures each map holds (the sandbox layout).
 - [Biomes — Ground Tiles and Props](3-world/biomes.md) — every biome's main ground, patch and road tiles, the props that fit it, and the props still to make; the all-biome map generator plan.
 - [Biome References — Real Places Beside Our Maps](3-world/biome-references.md) — one real photo per biome beside pictures of its test map, to judge what looks right and what is missing.
 - [The World Map — Three Regions](3-world/world-map.md) — proposal, partly built (the 75 maps are generated and wired, with the hand-made lastline as Lastline): a sandbox in three regions whose creatures mostly sit at one stretch of levels (Midlaine 1–33, Lirenne 34–66, The Far Shores 67–99), a big city for each one-family weapon and a border town for each hybrid, every place named, eight dungeons, and each of the fourteen shadows at its own place with its way in; no real-country culture.
-- [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; premise + the Fourteen Unwritten (one per weapon).
+- [Story & Setting (Canon)](3-world/story-setting-canon.md) — the anchor lore doc; the artist, Chaos, the corrupted pages and the Fourteen Kashira (one per weapon).
 
 ## Art & animation pipeline
 

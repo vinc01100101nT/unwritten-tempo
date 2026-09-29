@@ -68,6 +68,8 @@ public class TrainingDummy : MonoBehaviour
         Strip<DeathDissolve>(go);
         // A GM kill command CAN kill it, and a dummy that kept its drop paid gold to whoever had been hitting it.
         Strip<LootDropper>(go);
+        // …and the same kill must not turn it back into a character: an instrument was never a page.
+        Strip<TurnsBackOnDeath>(go);
         // NOTHING WORN, including whatever it was handed at random as it was built: an instrument has no gear, and its
         // health bar must not list pieces it can never give up.
         var gear = go.GetComponent<UnitEquipment>();

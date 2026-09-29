@@ -17,7 +17,7 @@ MonoBehaviour:
   kind: 2
   size: 1
   biome: 5
-  sheet: Bear
+  artFolder: 
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   level: 120
@@ -52,7 +52,6 @@ MonoBehaviour:
   fleeHpFraction: 0
   element: 6
   elementLevel: 3
-  attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0

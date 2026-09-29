@@ -29,6 +29,11 @@ public static class SpriteSheetCache
     static readonly Dictionary<(EntityId tex, int cell, int frames), Sprite[][]> walk4
         = new Dictionary<(EntityId, int, int), Sprite[][]>();
 
+    // One whole ROW of a grid sheet's cells, feet-pivoted like the walk frames. Used for the pose rows under a
+    // character sheet's walk (attack, then death / casting / release).
+    static readonly Dictionary<(EntityId tex, int cell, int row), Sprite[]> footRows
+        = new Dictionary<(EntityId, int, int), Sprite[]>();
+
     // Arbitrary horizontal clips read left→right from a grid cell. Used by the row-major NinjaGreen
     // "CharacterAnimated" sheets (one direction per ROW), vs walk4's column-major mob sheets.
     static readonly Dictionary<(EntityId tex, int cell, int row, int col, int frames, int ppu), Sprite[]> grids
@@ -108,6 +113,24 @@ public static class SpriteSheetCache
         for (int i = 0; i < frames; i++)
             arr[i] = Sprite.Create(sheet, new Rect(i * w, 0, w, h), new Vector2(0.5f, (float)footPx / h), ppu);
         rows[key] = arr;
+        return arr;
+    }
+
+    /// <summary>Every cell of row <paramref name="row"/> (0 = the TOP of the sheet) of a <paramref name="cell"/>px grid,
+    /// left to right, with the same feet-line pivot and size as <see cref="Walk4"/> — so a pose drawn from it stands
+    /// exactly where the walk frames stand. Empty when the sheet has no such row. Shared/read-only.</summary>
+    public static Sprite[] FootRow(Texture2D sheet, int cell, int row)
+    {
+        if (sheet == null || cell <= 0 || row < 0 || (row + 1) * cell > sheet.height) return System.Array.Empty<Sprite>();
+        var key = (sheet.GetEntityId(), cell, row);
+        if (footRows.TryGetValue(key, out var cached)) return cached;
+
+        int cols = Mathf.Max(1, sheet.width / cell);
+        var arr = new Sprite[cols];
+        for (int c = 0; c < cols; c++)
+            arr[c] = Sprite.Create(sheet, new Rect(c * cell, sheet.height - (row + 1) * cell, cell, cell),
+                                   new Vector2(0.5f, MobFootPivotY), cell);
+        footRows[key] = arr;
         return arr;
     }
 

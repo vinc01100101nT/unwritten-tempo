@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Squirt
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.squirt
+  displayName: Squirt
+  kind: 0
+  size: 0.9
+  biome: 13
+  artFolder: efd586e2c089f514f8723bfa1fa9be88
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 79
+  str: 51
+  agi: 42
+  vit: 51
+  intel: 30
+  dex: 42
+  luk: 29
+  startingGear: []
+  gearQuality: 2
+  gearFolds: 12
+  gearInkTier: 2
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 79
+  hardDefPercent: 0
+  hardMagicDefPercent: 0
+  xpReward: 5
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2.3000002
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 1
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 2
+  goldMax: 6
+  itemDropNames: []
+  itemDropChances: []

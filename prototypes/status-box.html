@@ -6,34 +6,37 @@
 <title>Status Box</title>
 <link rel="stylesheet" href="ui-tokens.css">
 <style>
-  body { margin: 0; padding: 32px; background: #3b4a3c; font-family: var(--font-ui); }
-  .note { color: #e8e8e8; font: 13px system-ui, sans-serif; margin: 0 0 18px; max-width: 640px; }
+  body { margin: 0; padding: 24px; background: #1b1d21; font-family: var(--font-ui); }
+  .note { color: #e8e8e8; font: 13px system-ui, sans-serif; margin: 0 0 14px; max-width: 900px; }
+  /* A stand-in for the game view, at 1280×720 shown at 75%. */
+  .screen { position: relative; width: 960px; height: 540px; overflow: hidden;
+            background: linear-gradient(160deg, #4d6b45, #3a5237 60%, #2f4430); }
 
-  /* ---- the status box: one window, drawn in the game's theme ---- */
-  .box { width: 340px; background: var(--window-edge); padding: 1px; border-radius: 5px; }
+  /* ---- the status box ---- */
+  .box { position: absolute; left: 12px; top: 12px; width: 330px; background: var(--window-edge); padding: 1px; border-radius: 5px; }
   .body { background: var(--panel-fill); border-radius: 4px; overflow: hidden; }
   .head {
-    height: 24px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 10px;
+    height: 24px; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 8px; cursor: move; user-select: none;
     background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
-    color: var(--title-text); font: 700 13px var(--font-ui);
+    color: var(--title-text); font: 12px var(--font-ui);
   }
-  .head .lv { flex: 1; }
-  .head .z { font-weight: 400; color: var(--text-main); }
-  .expand {
-    width: 18px; height: 18px; border-radius: 3px; border: 1px solid var(--button-edge);
-    background: var(--button-fill); color: var(--button-text); font: 700 13px/16px var(--font-ui);
-    text-align: center; cursor: pointer; padding: 0;
+  .head .ign { font-weight: 700; }
+  .head .gap { flex: 1; }
+  .hb {
+    width: 18px; height: 18px; border-radius: 3px; border: 1px solid var(--button-edge); padding: 0;
+    background: var(--button-fill); color: var(--button-text); font: 700 12px/16px var(--font-ui); cursor: pointer;
   }
-  .expand:hover { background: var(--hover); border-color: var(--accent); }
-  .rows { padding: 6px 10px 8px; display: grid; gap: 5px; }
-  .row { display: grid; grid-template-columns: 124px 1fr; align-items: center; gap: 8px;
-         font: 12px var(--font-ui); color: var(--text-main); }
+  .hb:hover { background: var(--hover); border-color: var(--accent); }
+  .rows { padding: 6px 10px 6px; display: grid; gap: 5px; }
+  .box.min .rows, .box.min .windows { display: none; }
+  .row { display: grid; grid-template-columns: 124px 1fr; align-items: center; gap: 8px; font: 12px var(--font-ui); color: var(--text-main); }
   .bar { position: relative; height: 12px; border-radius: 3px; background: var(--rule); overflow: hidden; }
   .bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; }
   .bar span { position: absolute; inset: 0; text-align: center; font: 700 10px/12px var(--font-ui); color: var(--text-main); }
   .char i { background: rgba(140, 217, 128, 0.9); }
   .ring i { background: rgba(140, 204, 255, 0.9); }
   .mastery i { background: #ff0f00; }
+  .zeny { display: flex; justify-content: flex-end; align-items: center; gap: 8px; font: 12px var(--font-ui); color: var(--text-main); }
 
   .windows { display: none; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0 10px 10px; }
   .box.open .windows { display: grid; }
@@ -45,54 +48,50 @@
 </style>
 </head>
 <body>
-<p class="note">Left: closed. Right: after clicking + (click either one to toggle). The numbers are sample values.</p>
+<p class="note">Drag the box by its blue bar. _ minimises it to its blue bar; the + beside the zeny shows the window buttons. The numbers are sample values.</p>
 
-<div style="display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap">
-<section class="box"  data-mocks="Status Box">
-  <div class="body">
-    <div class="head">
-      <span class="lv"></span>
-      <span class="z">2,089 z</span>
-      <button class="expand" title="Windows">+</button>
+<div class="screen" id="screen">
+  <section class="box open" id="box" data-mocks="Status Box">
+    <div class="body">
+      <div class="head" id="head">
+        <span class="ign">Ariona</span>
+        <span>HP 480 / 520</span>
+        <span>MP 95 / 120</span>
+        <span class="gap"></span>
+        <button class="hb" id="min" title="Minimise">_</button>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Lv 12</span><div class="bar char"><i style="width:62%"></i><span>1,240 / 2,000</span></div></div>
+        <div class="row"><span>Ring Lv 3</span><div class="bar ring"><i style="width:35%"></i><span>70 / 200</span></div></div>
+        <div class="row"><span>Sword Mastery Lv 4</span><div class="bar mastery"><i style="width:48%"></i><span>24 / 50</span></div></div>
+        <div class="zeny"><span>2,089 z</span><button class="hb" id="expand" title="Windows">−</button></div>
+      </div>
+      <div class="windows">
+        <button>Inventory</button><button>Character</button><button>Skills</button>
+        <button>Calendar</button><button>World Map</button><button>Minimap</button>
+        <button>Chat</button><button>Settings</button><button>System</button>
+      </div>
     </div>
-    <div class="rows">
-      <div class="row"><span>Lv 12</span><div class="bar char"><i style="width:62%"></i><span>1,240 / 2,000</span></div></div>
-      <div class="row"><span>Ring Lv 3</span><div class="bar ring"><i style="width:35%"></i><span>70 / 200</span></div></div>
-      <div class="row"><span>Sword Mastery Lv 4</span><div class="bar mastery"><i style="width:48%"></i><span>24 / 50</span></div></div>
-    </div>
-    <div class="windows">
-      <button>Inventory</button><button>Character</button><button>Skills</button>
-      <button>Calendar</button><button>World Map</button><button>Minimap</button>
-      <button>Chat</button><button>Settings</button><button>System</button>
-    </div>
-  </div>
-</section>
-<section class="box open"  data-mocks="Status Box">
-  <div class="body">
-    <div class="head">
-      <span class="lv"></span>
-      <span class="z">2,089 z</span>
-      <button class="expand" title="Windows">−</button>
-    </div>
-    <div class="rows">
-      <div class="row"><span>Lv 12</span><div class="bar char"><i style="width:62%"></i><span>1,240 / 2,000</span></div></div>
-      <div class="row"><span>Ring Lv 3</span><div class="bar ring"><i style="width:35%"></i><span>70 / 200</span></div></div>
-      <div class="row"><span>Sword Mastery Lv 4</span><div class="bar mastery"><i style="width:48%"></i><span>24 / 50</span></div></div>
-    </div>
-    <div class="windows">
-      <button>Inventory</button><button>Character</button><button>Skills</button>
-      <button>Calendar</button><button>World Map</button><button>Minimap</button>
-      <button>Chat</button><button>Settings</button><button>System</button>
-    </div>
-  </div>
-</section>
+  </section>
 </div>
 
 <script>
-  for (const box of document.querySelectorAll(".box")) {
-    const btn = box.querySelector(".expand");
-    btn.onclick = () => { const open = box.classList.toggle("open"); btn.textContent = open ? "−" : "+"; };
-  }
+  const box = document.getElementById("box"), screen = document.getElementById("screen");
+  const exp = document.getElementById("expand"), min = document.getElementById("min");
+  exp.onclick = () => { const open = box.classList.toggle("open"); exp.textContent = open ? "−" : "+"; };
+  min.onclick = () => box.classList.toggle("min");
+  // Drag by the blue bar, kept inside the screen.
+  const head = document.getElementById("head");
+  head.onpointerdown = e => {
+    if (e.target.closest("button")) return;
+    const sx = e.clientX - box.offsetLeft, sy = e.clientY - box.offsetTop;
+    head.onpointermove = m => {
+      box.style.left = Math.max(0, Math.min(screen.clientWidth - box.offsetWidth, m.clientX - sx)) + "px";
+      box.style.top = Math.max(0, Math.min(screen.clientHeight - box.offsetHeight, m.clientY - sy)) + "px";
+    };
+    try { head.setPointerCapture(e.pointerId); } catch (_) {}
+  };
+  head.onpointerup = () => { head.onpointermove = null; };
 </script>
 </body>
 </html>

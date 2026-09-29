@@ -108,6 +108,37 @@ public static class UnitStatMath
     /// <summary>Points every unit starts with at level 1.</summary>
     public const int StartingStatPoints = 48;
 
+    // ---- the stats chosen at CHARACTER CREATION (the hexagon) --------------------------------------------------
+    // Three opposite pairs — STR/INT, AGI/LUK, VIT/DEX — each always adding up to CreationPairTotal, every stat
+    // between CreationMin and CreationMax. Below 10 a point costs 2, so every legal spread costs 2 × (30 − 6) = 48:
+    // exactly StartingStatPoints, which is why a new character starts with none left.
+
+    public const int CreationMin = 1, CreationMax = 9, CreationPairTotal = 10;
+
+    /// <summary>The stat opposite <paramref name="stat"/> on the creation hexagon, by <see cref="PrimaryStat"/> index.</summary>
+    public static int CreationOpposite(int stat) => stat switch { 0 => 3, 3 => 0, 1 => 5, 5 => 1, 2 => 4, 4 => 2, _ => -1 };
+
+    /// <summary>The even spread — every stat at half its pair's total — where the hexagon starts.</summary>
+    public static int[] EvenCreationSpread()
+    {
+        var s = new int[6];
+        for (int i = 0; i < 6; i++) s[i] = CreationPairTotal / 2;
+        return s;
+    }
+
+    /// <summary>True when <paramref name="spread"/> (six values, by <see cref="PrimaryStat"/> index) is a spread the
+    /// creation hexagon can make. THE one statement of the rule — the map server applies nothing that fails it.</summary>
+    public static bool IsCreationSpread(int[] spread)
+    {
+        if (spread == null || spread.Length != 6) return false;
+        for (int i = 0; i < 6; i++)
+        {
+            if (spread[i] < CreationMin || spread[i] > CreationMax) return false;
+            if (spread[i] + spread[CreationOpposite(i)] != CreationPairTotal) return false;
+        }
+        return true;
+    }
+
     /// <summary>Status points GAINED on reaching base level <paramref name="level"/>: <c>⌊L/5⌋ + 3</c> (3 early,
     /// growing every 5 levels to keep pace with the rising <see cref="StatCost"/>).</summary>
     public static int PointsGainedAtLevel(int level) => level / 5 + 3;

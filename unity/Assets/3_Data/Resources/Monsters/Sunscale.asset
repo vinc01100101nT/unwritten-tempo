@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Sunscale
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.sunscale
+  displayName: Sunscale
+  kind: 0
+  size: 0.3
+  biome: 2
+  artFolder: f17ad60a25d50b1498ab6fcd460279ed
+  weight: 2
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  level: 50
+  str: 32
+  agi: 27
+  vit: 31
+  intel: 19
+  dex: 27
+  luk: 18
+  startingGear: []
+  gearQuality: 1
+  gearFolds: 8
+  gearInkTier: 1
+  ringRankStats: 
+  ringRankValues: 
+  weaponMasteryLevel: 50
+  hardDefPercent: 10
+  hardMagicDefPercent: 0
+  xpReward: 20
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2.1000001
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 3
+  elementLevel: 1
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 6
+  goldMax: 18
+  itemDropNames: []
+  itemDropChances: []

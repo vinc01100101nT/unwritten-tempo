@@ -86,6 +86,41 @@ public class NetMob : NetworkBehaviour
 
     public CreatureKind Kind => netKind;
 
+    /// <summary>THE CHARACTER THIS CREATURE TURNED BACK INTO, by id — empty for an ordinary creature (see
+    /// <see cref="SavedCharacters"/>). A watcher draws the body in that character's picture. PRIVATE for the same reason
+    /// the map name is: the wire carries it, the saved prefab does not.</summary>
+    [SyncVar] string savedCharacter = "";
+
+    /// <summary>WHICH SIDE this creature fights on, as the server holds it — what the watching player's cursor asks before
+    /// it will pick the creature. Re-sent when it changes: a character that says goodbye stops fighting.</summary>
+    [SyncVar(hook = nameof(OnSideArrived))] Side netSide;
+
+    // THE LAST THING THIS CREATURE SAID and the moment it said it, on the shared clock — held as a value, like an action,
+    // so somebody who walks up a second later still reads the line.
+    [SyncVar] string netLine = "";
+    [SyncVar] double netLineAt;
+    double lineShownAt;
+
+    /// <summary>When this creature turned back into its character, on the shared clock — so a watcher who sees it within
+    /// its first moments plays the aura that marks it, and one who arrives later does not.</summary>
+    [SyncVar] double netSavedAt;
+
+    // The last action this body was shown as a pose (a flat character's swing), so each is shown once.
+    double poseShownAt;
+
+    void OnSideArrived(Side _, Side now)
+    {
+        if (viewHealth != null) viewHealth.SetSide(now);
+    }
+
+    /// <summary>SERVER ONLY: this creature says <paramref name="line"/> — shown over its head on every watching machine.</summary>
+    public void Say(string line)
+    {
+        if (!isServer || string.IsNullOrEmpty(line)) return;
+        netLine = line;
+        netLineAt = NetworkTime.time;
+    }
+
     /// <summary>SERVER ONLY: when this creature last called out a form (see <see cref="SkillShout"/>).</summary>
     public readonly SkillShout.Clock ShoutClock = new SkillShout.Clock();
     public int Level => netLevel;
@@ -237,6 +272,10 @@ public class NetMob : NetworkBehaviour
         serverBlock = mob != null ? mob.GetComponent<UnitStatBlock>() : null;
         if (serverBlock != null) { netMaxMana = serverBlock.MaxMP; netMana = serverBlock.CurrentMP; netLevel = serverBlock.Level; }
         if (serverHealth != null) netKind = serverHealth.kind;
+        // AND WHICH CHARACTER IT IS, and whose side it is on, so the very first message about it already says so.
+        savedCharacter = serverHealth != null && serverHealth.savedAs != null ? serverHealth.savedAs.id : "";
+        netSavedAt = savedCharacter.Length > 0 ? NetworkTime.time : 0d;
+        netSide = serverHealth != null ? serverHealth.side : Side.Creatures;
         serverGear = mob != null ? mob.GetComponent<UnitEquipment>() : null;
         // AND WHAT IT WEARS, so the very first message about this creature already says so.
         PublishWorn();
@@ -311,6 +350,7 @@ public class NetMob : NetworkBehaviour
         {
             netHealth = serverHealth.CurrentHP;
             netMaxHealth = serverHealth.maxHealth;
+            netSide = serverHealth.side;
         }
         if (serverBlock != null)
         {
@@ -420,7 +460,26 @@ public class NetMob : NetworkBehaviour
             if (netActionAt > 0d) viewVisual.TellAction(netAction, netActionAt, netActionSeconds);
             viewVisual.TellHeld(netHasHeld, netHeld, netHeldWindow);
         }
-        if (viewBillboard != null) viewBillboard.TellTravel(netSpeed > 0f, netHeading);
+        if (viewBillboard != null)
+        {
+            viewBillboard.TellTravel(netSpeed > 0f, netHeading);
+            // A FLAT CHARACTER'S POSES, from the same beats a live-3D body plays: its casting picture while a wind-up is
+            // held, and its attack picture for a swing — each swing once, and only while it is fresh.
+            viewBillboard.HoldCast(netHasHeld && netHeld == StanceId.Casting);
+            if (netActionAt > 0d && netActionAt != poseShownAt)
+            {
+                poseShownAt = netActionAt;
+                if (NetworkTime.time - netActionAt < netActionSeconds + 0.1d && IsSwing(netAction)) viewBillboard.ShowAttack();
+            }
+        }
+
+        // A LINE IT SAID, shown once — and only while it is still fresh, so walking up to a creature later does not
+        // replay something it said a minute ago.
+        if (netLineAt > 0d && netLineAt != lineShownAt)
+        {
+            lineShownAt = netLineAt;
+            if (NetworkTime.time - netLineAt < LineFreshSeconds) ShowCreatureCall(netLine);
+        }
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
         // nameplate below only redraws when it sees a different value anyway.
@@ -463,6 +522,8 @@ public class NetMob : NetworkBehaviour
     public void ShowCast(SkillDef def, Transform aimedAt, Vector3 aimPointInMap, int seed)
     {
         if (view == null) return;
+        // A flat character lets the skill go in a picture of its own — see BillboardAnimator3D.ShowRelease.
+        if (viewBillboard != null) viewBillboard.ShowRelease();
         watchedCast.Play(def, view.transform, aimedAt, MapManager.InWorld(aimPointInMap, mapName), seed);
     }
 
@@ -472,6 +533,12 @@ public class NetMob : NetworkBehaviour
 
     /// <summary>Stop showing it — finished, broken, or the body is going away.</summary>
     public void StopCastWindup() => watchedCast.StopWindup(view != null ? view.transform : null);
+
+    // A basic swing, of any weapon — what a flat character shows its attack picture for.
+    static bool IsSwing(StanceId action) => action == StanceId.Attack || WeaponStances.IsBasicAttack(action);
+
+    // How long after it was said a line is still worth showing to somebody who only just started watching.
+    const double LineFreshSeconds = 3d;
 
     /// <summary>This creature calling out a skill: the name in a bubble over its head.</summary>
     public void ShowCreatureCall(string skillName)
@@ -586,6 +653,21 @@ public class NetMob : NetworkBehaviour
         // the body down underneath the shell that speaks for it.
         if (viewHealth != null) viewHealth.MarkAsWatchedCopy();
 
+        // WHICH SIDE IT FIGHTS ON and, for a creature that turned back, WHO IT IS — its picture, its size and its name.
+        // Every body is told, because a banked body keeps whatever the last creature it drew was told.
+        if (viewHealth != null) viewHealth.SetSide(netSide);
+        var saved = SavedCharacterCatalog.Get(savedCharacter);
+        if (saved != null)
+        {
+            if (viewHealth != null) viewHealth.savedAs = saved;
+            SavedCharacters.Wear(go, saved, netKind);
+            // AND THE AURA THAT MARKS IT AS IT APPEARS, for whatever is left of its time — nothing for somebody who
+            // only arrives afterwards.
+            float auraLeft = SavedCharacterRules.AppearAuraSeconds - (float)(NetworkTime.time - netSavedAt);
+            if (netSavedAt > 0d && auraLeft > 0.1f)
+                Vfx.Attach(SavedCharacters.AppearAuraFor(saved.behaviour), go.transform, lifetime: auraLeft);
+        }
+
         // AND WHAT IT WEARS. A reused body still wears the last creature's gear until told.
         viewGear = go.GetComponent<UnitEquipment>();
         ApplyWornToView();
@@ -690,7 +772,9 @@ public class NetMob : NetworkBehaviour
     /// body handed back for a creature wearing a different model would come back wearing the wrong one — which is
     /// the very thing putting the model on the wire exists to stop. Bodies of one model still pool among themselves,
     /// which is the case that matters: a field of the same creature reuses freely.</para></summary>
-    string BodyKind => isShadow ? defId + " 3d " + shadowModel : defId;
+    string BodyKind => isShadow ? defId + " 3d " + shadowModel
+                     : string.IsNullOrEmpty(savedCharacter) ? defId
+                     : defId + " as " + savedCharacter;
 
     /// <summary>How many bodies of one kind are worth keeping. Past this they are let go — a player who walks
     /// through a whole map should not still be holding a body for every creature they passed.</summary>

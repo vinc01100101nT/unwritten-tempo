@@ -74,3 +74,4 @@
 - [Ring picks were client-only](../ring-pick-was-client-only.md) — resets on login + no stats: no server request existed; now CmdPickRingStat + TargetRing, server-rolled wildcard.
 - [Creature mastery never reached the prefab](../creature-mastery-never-baked.md) — every creature knew none of its weapon skills: `ToArchetype` dropped `weaponMasteryLevel`; fixed 2026-09-22 + re-bake.
 - [Stand-and-fight latch stayed on past reach](../stand-and-fight-latch-outside-reach.md) — "stops chasing, needs a re-click": a target parked between reach and reach×1.4 froze the attacker; margin moved INSIDE reach 2026-09-26 (players + creatures).
+- [Creation stat hexagon](../creation-stat-hexagon.md) — starting stats pulled on a hexagon (pairs sum 10) spend exactly the 48 starting points; rule in UnitStatMath, applied by the map server on first entry (2026-09-29).

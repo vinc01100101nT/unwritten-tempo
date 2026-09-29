@@ -17,9 +17,9 @@ public class ItemDropEntry
 
 /// <summary>
 /// WHAT A CREATURE IS CARRYING, and the rolls that decide how much of it survives its death. Hooks
-/// <see cref="Health.onDeath"/> and hands everything that won its roll to whoever earned the kill — Zeny straight into
-/// their purse, and every item onto the ground where the creature fell (<see cref="Rewards.PayLoot"/>). Configured
-/// per-archetype by <see cref="RigBuilder25D"/>.
+/// <see cref="Health.onDeath"/> and hands everything that won its roll to whoever earned the kill — every item onto the
+/// ground where the creature fell (<see cref="Rewards.PayLoot"/>). A death pays NO gold: gold comes only from saving a
+/// character that never fights (see <see cref="SavedCharacters"/>). Configured per-archetype by <see cref="RigBuilder25D"/>.
 ///
 /// <para><b>What falls is kept for the killer first.</b> Loot on the ground is a race — two people reaching for the same
 /// thing, one of them quietly told no — so a kill's drops are held for whoever earned the kill for
@@ -30,21 +30,12 @@ public class ItemDropEntry
 [RequireComponent(typeof(Health))]
 public class LootDropper : MonoBehaviour
 {
-    [Header("Gold drop")]
-    [Tooltip("Minimum Zeny dropped (inclusive). 0 = always drops nothing if max is also 0.")]
-    public int goldMin = 1;
-    [Tooltip("Maximum Zeny dropped (inclusive).")]
-    public int goldMax = 5;
-    [Range(0f, 1f)]
-    [Tooltip("Chance that any gold drops at all. 1 = always, 0 = never.")]
-    public float goldDropChance = 0.85f;
-
     [Header("Item drops")]
     [Tooltip("Each entry is rolled independently. Multiple items can drop from one kill.")]
     public ItemDropEntry[] lootTable = System.Array.Empty<ItemDropEntry>();
 
-    // NOTHING WORN IS EVER GIVEN UP. Gear is made, not taken off a corpse: a creature drops materials, consumables
-    // and gold, and its own gear dies with it. The worn roll that used to live here is gone for that reason.
+    // NOTHING WORN IS EVER GIVEN UP. Gear is made, not taken off a corpse: a creature drops materials and
+    // consumables, and its own gear dies with it. The worn roll that used to live here is gone for that reason.
 
     /// <summary>A chance written the way it is shown: 0.2 → "20%", 0.015 → "1.5%".</summary>
     public static string ChanceText(float chance) =>
@@ -90,15 +81,13 @@ public class LootDropper : MonoBehaviour
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
         // A SUMMON CARRIES NOTHING — see Rewards.PayForKill for why.
         if (health.IsSummoned) return;
+        // A SAVED CHARACTER carries something only if it is a rebel, and then it carries what one kind up carries —
+        // the rare encounter a rebel is. One that helped or left carries nothing.
+        var saved = health.savedAs;
+        if (saved != null && saved.behaviour != SavedBehaviour.Rebel) return;
+        var lootKind = saved != null ? SavedCharacterRules.LootKindOfRebel(health.kind) : health.kind;
 
         won.Clear();
-        int gold = 0;
-
-        if (Random.value <= goldDropChance)
-        {
-            int amount = Random.Range(goldMin, goldMax + 1);
-            if (amount > 0) gold = amount;
-        }
 
         // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
         foreach (var entry in lootTable)
@@ -109,7 +98,7 @@ public class LootDropper : MonoBehaviour
 
         // ITS GRADE'S MATERIALS, and the chance of an Ink or a Salt — what its kind and level say it carries.
         int level = block != null ? block.Level : 1;
-        var lines = CreatureLoot.LinesFor(health.kind);
+        var lines = CreatureLoot.LinesFor(lootKind);
         for (int i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
@@ -127,7 +116,7 @@ public class LootDropper : MonoBehaviour
             if (extra != null) won.Add(extra);
         }
 
-        Rewards.PayLoot(winner, won, gold, health);
+        Rewards.PayLoot(winner, won, 0, health);
         won.Clear();
     }
 }

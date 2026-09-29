@@ -161,6 +161,37 @@ public static class UiKit
     /// into a static field once; never call it per frame (it builds a string).</summary>
     public static string Hex(Color c) => "#" + ColorUtility.ToHtmlStringRGB(c);
 
+    /// <summary>The contrast text needs against a window's body to read comfortably (the WCAG body-text figure).</summary>
+    public const float ReadableContrast = 4.5f;
+
+    /// <summary>A colour that MEANS something (a season, a weather, a skill type) made readable as TEXT on a window:
+    /// returned unchanged when it already reads at <see cref="ReadableContrast"/> against <see cref="PanelFill"/>,
+    /// otherwise darkened — same hue, same alpha — just far enough to. Call it when the text is built or changes,
+    /// never per frame.</summary>
+    public static Color Readable(Color c)
+    {
+        float bg = Luminance(PanelFill);
+        if ((bg + 0.05f) / (Luminance(c) + 0.05f) >= ReadableContrast) return c;
+        float lo = 0f, hi = 1f;
+        for (int i = 0; i < 20; i++)
+        {
+            float k = (lo + hi) * 0.5f;
+            var d = new Color(c.r * k, c.g * k, c.b * k, c.a);
+            if ((bg + 0.05f) / (Luminance(d) + 0.05f) >= ReadableContrast) lo = k; else hi = k;
+        }
+        return new Color(c.r * lo, c.g * lo, c.b * lo, c.a);
+    }
+
+    // Relative luminance of an sRGB colour, as the contrast formula defines it.
+    static float Luminance(Color c)
+    {
+        static float Lin(float v) => v <= 0.03928f ? v / 12.92f : Mathf.Pow((v + 0.055f) / 1.055f, 2.4f);
+        return 0.2126f * Lin(c.r) + 0.7152f * Lin(c.g) + 0.0722f * Lin(c.b);
+    }
+
+    /// <summary>THE blue title bar's height, the same on every window, menu and screen whatever it carries.</summary>
+    public const float TitleBarHeight = 24f;
+
     // Corner rounding, in UI units, of a window and of a button/field — the same rounded shape, two radii.
     public const int WindowRadius = 5, ButtonRadius = 3;
 
@@ -421,56 +452,83 @@ public static class UiKit
         return content;
     }
 
+    /// <summary>THE blue title bar across the top of a window's <paramref name="body"/>, with <paramref name="title"/>
+    /// in it — every window's heading, the front screens' included. Optionally the whole bar drags
+    /// <paramref name="window"/>, and a minimise (_) and a close (X) button sit at its right-hand end, close
+    /// right-most. Returns the bar.</summary>
+    public static Image Header(Image body, string title, Image window, bool closable, bool minimizable, bool draggable)
+    {
+        const float BarHeight = TitleBarHeight, ButtonSlot = 24f;
+        var header = TitleBar(body.transform);
+        var hrt = header.rectTransform;
+        hrt.anchorMin = new Vector2(0, 1);
+        hrt.anchorMax = new Vector2(1, 1);
+        hrt.pivot = new Vector2(0.5f, 1);
+        hrt.sizeDelta = new Vector2(0, BarHeight);
+        if (draggable) header.gameObject.AddComponent<WindowDragHandle>().window = window.rectTransform;
+
+        int buttons = (closable ? 1 : 0) + (minimizable ? 1 : 0);
+        var titleT = Label("Title", header.transform, title, 13, FontStyle.Bold, TextAnchor.MiddleLeft);
+        Fill(titleT.rectTransform, new Vector2(10, 0), new Vector2(-(8 + buttons * ButtonSlot), 0));
+        titleT.color = TitleText; titleT.raycastTarget = false;
+
+        // Each button: a transparent hit area the full bar high carries the raycast; the small visible cell and its
+        // glyph sit centred inside it and catch nothing, so the clickable region can never drift off the glyph.
+        float right = 0f;
+        if (closable)
+        {
+            var close = BarButton(header.transform, "Close", "X", right, ButtonSlot, BarHeight);
+            close.gameObject.AddComponent<WindowCloseButton>().window = window.gameObject;
+            right += ButtonSlot;
+        }
+        if (minimizable)
+        {
+            var min = window.gameObject.AddComponent<WindowMinimize>();
+            min.edge = window; min.body = body; min.header = hrt;
+            var btn = BarButton(header.transform, "Minimize", "_", right, ButtonSlot, BarHeight);
+            btn.gameObject.AddComponent<WindowMinimizeButton>().target = min;
+        }
+        return header;
+    }
+
+    // One title-bar button slot, `fromRight` units in from the bar's right edge.
+    static Image BarButton(Transform bar, string name, string glyph, float fromRight, float slot, float barHeight)
+    {
+        var hit = Img(name, bar, new Color(0f, 0f, 0f, 0f));
+        hit.rectTransform.anchorMin = hit.rectTransform.anchorMax = new Vector2(1, 0.5f);
+        hit.rectTransform.pivot = new Vector2(1, 0.5f);
+        hit.rectTransform.sizeDelta = new Vector2(slot, barHeight);
+        hit.rectTransform.anchoredPosition = new Vector2(-fromRight - 2f, 0f);
+
+        var vis = Round(Img(name + "Vis", hit.transform, CloseFill), ButtonRadius);
+        vis.raycastTarget = false;
+        vis.rectTransform.anchorMin = vis.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        vis.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        vis.rectTransform.sizeDelta = new Vector2(18, 18);
+        var g = Label("Glyph", vis.transform, glyph, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
+        Fill(g.rectTransform, Vector2.zero, Vector2.zero); g.raycastTarget = false;
+        g.color = TitleText;
+        return hit;
+    }
+
     /// <summary>THE window look, put on an existing <paramref name="border"/> image however it is sized: the rounded
-    /// edge, the body, the draggable fading title bar with <paramref name="title"/> and a close button, and an empty
-    /// Content area below the bar, which is returned. Every window in the game — built at runtime or baked into the
+    /// edge, the body, the fading title bar with <paramref name="title"/> (see <see cref="Header"/> for its drag and
+    /// its buttons), and an empty Content area below the bar, which is returned. Every window in the game — built at runtime or baked into the
     /// HUD — is dressed by this, so none can drift from the rest.</summary>
-    public static RectTransform DressWindow(Image border, string title)
+    public static RectTransform DressWindow(Image border, string title, bool closable = true, bool minimizable = true,
+                                           bool draggable = true)
     {
         Round(border, WindowRadius).color = WindowEdge;
-        var rt = border.rectTransform;
 
         var fill = Round(Img("Fill", border.transform, PanelFill), WindowRadius - 1);
         Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         fill.raycastTarget = true;
 
-        // header (drag) + close
-        var header = TitleBar(fill.transform);
-        header.rectTransform.anchorMin = new Vector2(0, 1);
-        header.rectTransform.anchorMax = new Vector2(1, 1);
-        header.rectTransform.pivot = new Vector2(0.5f, 1);
-        header.rectTransform.sizeDelta = new Vector2(0, 32);
-        header.gameObject.AddComponent<WindowDragHandle>().window = rt;
-
-        var titleT = Label("Title", header.transform, title, 14, FontStyle.Bold, TextAnchor.MiddleLeft);
-        Fill(titleT.rectTransform, new Vector2(14, 0), new Vector2(-36, 0));
-        titleT.color = TitleText; titleT.raycastTarget = false;
-
-        // Close: a generous transparent hit area (full header height) carries the raycast +
-        // WindowCloseButton; the visible close cell + X are non-raycast children centered inside it.
-        // Decoupling the hit box from the small 24px visual keeps the clickable region centered on
-        // the glyph with margin on every side, so it can't drift off the icon ("had to click to the
-        // right of the X" bug).
-        var close = Img("Close", header.transform, new Color(0f, 0f, 0f, 0f));
-        close.rectTransform.anchorMin = close.rectTransform.anchorMax = new Vector2(1, 0.5f);
-        close.rectTransform.pivot = new Vector2(1, 0.5f);
-        close.rectTransform.sizeDelta = new Vector2(38, 32);
-        close.rectTransform.anchoredPosition = Vector2.zero;
-        close.gameObject.AddComponent<WindowCloseButton>().window = border.gameObject;
-
-        var closeVis = Round(Img("CloseVis", close.transform, CloseFill), ButtonRadius);
-        closeVis.raycastTarget = false;
-        closeVis.rectTransform.anchorMin = closeVis.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        closeVis.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        closeVis.rectTransform.sizeDelta = new Vector2(24, 24);
-        closeVis.rectTransform.anchoredPosition = new Vector2(-2, 0);
-        var x = Label("X", closeVis.transform, "X", 15, FontStyle.Bold, TextAnchor.MiddleCenter);
-        Fill(x.rectTransform, Vector2.zero, Vector2.zero); x.raycastTarget = false;
-        x.color = TitleText;
+        Header(fill, title, border, closable, minimizable, draggable);
 
         var content = Img("Content", fill.transform, new Color(0, 0, 0, 0));
         content.raycastTarget = false;
-        Fill(content.rectTransform, new Vector2(14, 14), new Vector2(-14, -40));
+        Fill(content.rectTransform, new Vector2(14, 14), new Vector2(-14, -(TitleBarHeight + 8f)));
         return content.rectTransform;
     }
 }
