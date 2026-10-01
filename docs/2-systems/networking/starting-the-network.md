@@ -40,10 +40,10 @@ Is the database up? Want `accepting connections`.
 pg_isready
 ```
 
-Starts the database, if that check said it was down.
+Starts the database, if that check said it was down. (On Windows it asks for administrator permission once.)
 
 ```
-brew services start postgresql@17
+tools/platform.sh db-start
 ```
 
 Starts the sign-in service. Leave that terminal open.
@@ -92,7 +92,7 @@ Opens the game for one player. Run it again for each extra player. It dials the 
 wrote into it from `settings.env` — see step 5.
 
 ```
-builds/client/unwritten.app/Contents/MacOS/unwritten &
+tools/platform.sh open-game
 ```
 
 Serves the player wiki, whose **Server Status** page reads the live numbers from the character server. Optional
@@ -154,7 +154,7 @@ tools/build-game.sh client
 tools/publish-update.py
 ```
 
-Tries the launcher on this Mac, after building and publishing. Serve the update folder and leave that terminal
+Tries the launcher on this computer, after building and publishing. Serve the update folder and leave that terminal
 open (Ctrl+C stops it):
 
 ```
@@ -164,7 +164,7 @@ cd builds/patch && python3 -m http.server 8090
 Then, in a second terminal, open the launcher:
 
 ```
-open builds/launcher/mac-arm64/unwritten.app
+tools/platform.sh open-launcher
 ```
 
 Copies the update to the rented machine, `version.txt` last.
@@ -179,25 +179,25 @@ rsync -a builds/patch/version.txt host:/srv/unwritten/patch/
 Asks the operating system whether anything is listening for players.
 
 ```
-lsof -nP -iUDP:7777
+tools/platform.sh port-info 7777
 ```
 
 Asks whether all four are listening at once.
 
 ```
-lsof -nP -iTCP:8080 -iTCP:8081 -iTCP:7788 -sTCP:LISTEN; lsof -nP -iUDP:7777
+tools/platform.sh port-info 8080 8081 7788 7777
 ```
 
-Lists every server running, and when each one started.
+Lists what is listening on each of the game's ports, and when each one started.
 
 ```
-ps -o pid=,lstart=,command= -ax | grep '[u]nwritten-server'
+tools/platform.sh port-info 7777 8080 8081
 ```
 
-This Mac's address on your wifi, for players on other machines.
+This computer's address on your wifi, for players on other machines.
 
 ```
-ipconfig getifaddr en0
+tools/platform.sh lan-address
 ```
 
 ### Stopping
@@ -205,19 +205,19 @@ ipconfig getifaddr en0
 Stops the server on its own — the common one, between changes.
 
 ```
-pkill -f 'unwritten-server.app/unwritten'
+tools/platform.sh stop-port 7777
 ```
 
 Stops the game server, the character server and the sign-in service together.
 
 ```
-pkill -f 'unwritten-server.app/unwritten'; pkill -f CharServer; pkill -f 'node .*src/server.ts'
+tools/platform.sh stop-port 7777 8081 8080
 ```
 
 Stops the database. You rarely want this.
 
 ```
-brew services stop postgresql@17
+tools/platform.sh db-stop
 ```
 
 ### GM accounts
@@ -254,22 +254,22 @@ Check whether it is already up:
 pg_isready
 ```
 
-Expect `accepting connections`. **If it says anything else**, start it:
+Expect `accepting connections`. **If it says anything else**, start it (on Windows it asks for administrator permission once):
 
 ```
-brew services start postgresql@17
+tools/platform.sh db-start
 ```
 
 Then check again with `pg_isready` — it takes a second or two. Do not go on until it says `accepting connections`; the sign-in service and the character server will not come up without it.
 
-Postgres is installed here through Homebrew as **postgresql@17**, and it is set to start by itself when you log in — so most of the time this step is just the check. You would only need the start command after stopping it by hand, or if the automatic start failed.
+Postgres 17 is installed to start by itself — through Homebrew as **postgresql@17** on the Mac, as the Windows service **postgresql-x64-17** on the PC — so most of the time this step is just the check. You would only need the start command after stopping it by hand, or if the automatic start failed.
 
 The game's data lives in a database called **unwritten** on the standard port **5432**.
 
 To stop it (you rarely want to):
 
 ```
-brew services stop postgresql@17
+tools/platform.sh db-stop
 ```
 
 ## 2. The sign-in service
@@ -299,10 +299,16 @@ Owns every character: the list on the character-select screen, creating and dele
 is also the door into the world — it decides which game server a player is sent to, and hands their whole
 character over before they get there.
 
-It is a separate program, written in C#, living in `charserver/`. It needs the .NET tools:
+It is a separate program, written in C#, living in `charserver/`. It needs the .NET 10 tools. On the Mac:
 
 ```
 brew install dotnet
+```
+
+On Windows:
+
+```
+winget install Microsoft.DotNet.SDK.10
 ```
 
 Start it. It reads the **same** database address and the **same** signing secret the sign-in service reads —
@@ -371,7 +377,7 @@ The server is a separate build of the game with no window. You only rebuild it w
 tools/build-game.sh server
 ```
 
-Takes a few minutes. Everything it makes lands in `builds/` inside this project, and git is told to ignore that folder. Add `--linux` for a build to deploy to a hosted machine; plain gives you one that runs on this Mac.
+Takes a few minutes. Everything it makes lands in `builds/` inside this project, and git is told to ignore that folder. Add `--linux` for a build to deploy to a hosted machine; plain gives you one that runs on this computer — a Mac app on the Mac, an `.exe` on Windows.
 
 The same script builds the game players run:
 
@@ -437,7 +443,7 @@ listed under *Which maps the server holds open* below.
 **Double-check it for real** — this asks the operating system, not the game:
 
 ```
-lsof -nP -iUDP:7777
+tools/platform.sh port-info 7777
 ```
 
 ## 5. The players
@@ -446,25 +452,25 @@ Open the normal game build, once per player. Each one signs in, picks a characte
 the character server on the way in.
 
 ```
-builds/client/unwritten.app/Contents/MacOS/unwritten &
+tools/platform.sh open-game
 ```
 
-Run that once for each player on this Mac. It starts the game's own program rather than the app, which is what
-lets a second copy open. `open -n builds/client/unwritten.app` works as well.
+Run it once for each player on this computer. It starts the game's own program directly, which is what lets a
+second copy open.
 
 **Where it dials.** `tools/build-game.sh client` writes two addresses into every build it makes, from
 `settings.env`: `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL` once the rented server exists, this machine's
 `ACCOUNTS_URL` and `CHAR_SERVER_URL` while those two are empty. So while you have no rented server, a fresh build
-dials this Mac by itself. Once it does, point a build at this Mac by typing both in front of it:
+dials this computer by itself. Once it does, point a build at this computer by typing both in front of it:
 
 ```
-ACCOUNTS_URL=http://127.0.0.1:8080 CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
+ACCOUNTS_URL=http://127.0.0.1:8080 CHAR_SERVER_URL=http://127.0.0.1:8081 tools/platform.sh open-game
 ```
 
 **Worked when:** each player sees the other walking around, and the server prints a line as each arrives —
 `[map] expecting <name> — their character arrived ahead of them.` That line is the character server's push
 landing, and it appears *before* the player's own connection does. **Watched happening on 2026-09-02** with two
-accounts on this Mac.
+accounts on the Mac.
 
 **If a player connects and instantly drops, over and over,** their copy has no `CHAR_SERVER_URL` — a build made
 before `settings.env` had one; rebuild it — see the troubleshooting entry below. That is the one failure this step has actually produced.
@@ -551,7 +557,7 @@ A dedicated server build already knows it is a server; `GAME_SERVER` is for runn
 **On your own wifi**, players need the host machine's local address rather than `localhost`:
 
 ```
-ipconfig getifaddr en0
+tools/platform.sh lan-address
 ```
 
 Start each player's game with `ACCOUNTS_URL` and `CHAR_SERVER_URL` pointed at that address. `GAME_SERVER_HOST`
@@ -600,7 +606,7 @@ So the `map … loaded` and `letting … go` lines in the start-up and running o
 given server is holding at any moment, and that changes through the evening.
 
 Holding a map costs the server real work, because every creature in it is thinking whether or not anyone is
-there — which is the whole reason empty ones are let go. Measured on this Mac with nobody playing: the starting
+there — which is the whole reason empty ones are let go. Measured on the Mac with nobody playing: the starting
 town alone sits near 13% of one processor core; the town plus four fields — 129 creatures — near 16%; every map
 in the world at once — 1,809 creatures — near 50%, with the server's own heartbeat starting to slip from 60 to
 53–55.
@@ -697,7 +703,7 @@ itself, the same way it reads a player's real name and body rather than the one 
 **Connections fail with `OnDeserialize failed` and players drop straight after connecting.** The server and the game are built from different versions of the code, so they disagree about the shape of the player data. Almost always a server left running from before your last change — stop it, rebuild, run it again.
 
 **A second character server refuses to start.** Same as below, and the same answer: one is already running.
-Check with `lsof -nP -iTCP:8081 -sTCP:LISTEN`, and remember a character server that is already up does not need
+Check with `tools/platform.sh port-info 8081`, and remember a character server that is already up does not need
 starting again — `curl -s http://localhost:8081/health` tells you.
 
 **A second game server refuses to start.** It says the port is already taken and quits — that is correct, and it is the message doing its job. One server is already up; stop that one first, or give the new one a different `GAME_SERVER_PORT`. A server that cannot take the port never listens to anything, so it exits rather than sitting in the process list looking alive.
@@ -754,34 +760,32 @@ without stopping leaves the old one serving; stopping without rebuilding runs th
 Stop the server on its own — this is the common one, between changes:
 
 ```
-pkill -f 'unwritten-server.app/unwritten'
+tools/platform.sh stop-port 7777
 ```
 
 Stop everything — game server, character server and sign-in service:
 
 ```
-pkill -f 'unwritten-server.app/unwritten'; pkill -f CharServer; pkill -f 'node .*src/server.ts'
+tools/platform.sh stop-port 7777 8081 8080
 ```
 
-**That middle one stops EVERY character server on this machine**, including one you started on a spare port to
-test something. There is no way to stop only one of them by name, so if you are running two, stop the one you
-mean by its port:
+Each one is stopped by the port it answers on, never by its name — so a second character server you started on a
+spare port to test something is left running. Stop that one by its own port:
 
 ```
-lsof -nP -iTCP:8091 -sTCP:LISTEN     # the port yours is on — read the PID from the second column
-kill <that PID>
+tools/platform.sh stop-port 8091
 ```
 
 And the wiki, if you started it (section 6):
 
 ```
-pkill -f 'http.server 8099'
+tools/platform.sh stop-port 8099
 ```
 
 **Stopped when:** the check below prints nothing at all.
 
 ```
-lsof -nP -iUDP:7777
+tools/platform.sh port-info 7777
 ```
 
 If it still prints a line, something is still holding the port — see the stale-server entry under *When it does
@@ -789,8 +793,8 @@ not work*.
 
 ### The full round trip after a change
 
-1. `pkill -f 'unwritten-server.app/unwritten'` — stop the old one
-2. `lsof -nP -iUDP:7777` — confirm nothing is left listening
+1. `tools/platform.sh stop-port 7777` — stop the old one
+2. `tools/platform.sh port-info 7777` — confirm nothing is left listening (it prints nothing)
 3. **In Unity, force a recompile and wait for it to finish** — the build compiles what the EDITOR has imported,
    not what is on disk, so a file you just added is invisible to it until then. Skipping this is the most
    common cause of a build failing on code that is perfectly fine. See
@@ -845,7 +849,7 @@ it** — players reach those on a different kind of connection that certificates
 is the one-time entry ticket the character server hands out.
 
 **A copy with no terminal carries its addresses.** Fill in `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL`
-in `settings.env` on the Mac you build on, then build the copies you give people: `tools/build-game.sh client`
+in `settings.env` on the computer you build on, then build the copies you give people: `tools/build-game.sh client`
 writes those two into each build, under the names `ACCOUNTS_URL` and `CHAR_SERVER_URL`, and nothing else from the
 file. **Both are needed:** signing in uses the first, and without the second nobody can enter the world at all.
 The EDITOR started from the Dock or Unity Hub reads this machine's own `ACCOUNTS_URL` and `CHAR_SERVER_URL`
@@ -911,9 +915,9 @@ The character server reads the version from that same folder (`PATCH_DIR` in the
 `settings.env`), and re-reads it when it changes, so step 4 needs no restart. **A platform left out of a publish
 keeps its old version**, so its players are told to update until it is published too.
 
-### Trying the launcher on this Mac
+### Trying the launcher on this computer
 
-No rented machine needed: this Mac serves the update folder itself. With `PATCH_URL` empty in `settings.env`, a
+No rented machine needed: this computer serves the update folder itself. With `PATCH_URL` empty in `settings.env`, a
 launcher built here looks for updates at `http://localhost:8090`, which is where step 3 serves them.
 
 1. Build the launcher:
@@ -937,7 +941,7 @@ launcher built here looks for updates at `http://localhost:8090`, which is where
 4. Open the launcher:
 
    ```
-   open builds/launcher/mac-arm64/unwritten.app
+   tools/platform.sh open-launcher
    ```
 
 **Worked when:** the News box fills, the bar downloads the whole game (about 600 MB) the first time, and **Start**

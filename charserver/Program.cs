@@ -69,7 +69,7 @@ var roster = Roster.Load(Environment.GetEnvironmentVariable("CHARACTER_MODELS_PA
         Console.Error.WriteLine($"[char] port {config.Port} is already taken — another character server is "
                                 + "running. This one is quitting rather than sitting here listening to nothing. "
                                 + "Stop the other one first, or give this one a different CHAR_SERVER_PORT.");
-        Console.Error.WriteLine($"[char] check with:  lsof -nP -iTCP:{config.Port} -sTCP:LISTEN");
+        Console.Error.WriteLine($"[char] check with:  tools/platform.sh port-info {config.Port}");
         return 1;
     }
 }

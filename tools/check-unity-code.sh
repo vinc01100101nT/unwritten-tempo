@@ -22,6 +22,9 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$REPO/tools/platform.sh"
+# Every path below ends up inside a file Unity's compiler reads, so each is written the way THIS OS's programs read it.
+REPO="$(native_path "$REPO")"
 UNITY_PROJ="$REPO/unity"
 WHICH="${1:-all}"
 
@@ -30,19 +33,10 @@ fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 2; }
 # --- locate the Unity install that matches this project -------------------------------------------------
 VER_FILE="$UNITY_PROJ/ProjectSettings/ProjectVersion.txt"
 [ -f "$VER_FILE" ] || fail "No $VER_FILE — is this the right repo?"
-VER="$(awk '/^m_EditorVersion:/{print $2}' "$VER_FILE")"
-SCRIPTING="/Applications/Unity/Hub/Editor/$VER/Unity.app/Contents/Resources/Scripting"
+# The project's exact version, or the newest installed one with a loud warning.
+SCRIPTING="$(unity_data)" || exit 2
 
-if [ ! -d "$SCRIPTING" ]; then
-  # Project's exact version isn't installed — fall back to the newest one that is, and say so loudly.
-  ALT="$(ls -d /Applications/Unity/Hub/Editor/*/Unity.app/Contents/Resources/Scripting 2>/dev/null | sort -V | tail -1)"
-  [ -n "$ALT" ] || fail "Unity $VER not installed, and no other Unity found under /Applications/Unity/Hub/Editor/."
-  printf '\033[33mWARNING: Unity %s not installed; checking against %s instead.\033[0m\n' \
-         "$VER" "$(echo "$ALT" | awk -F/ '{print $6}')"
-  SCRIPTING="$ALT"
-fi
-
-DOTNET="$SCRIPTING/NetCoreRuntime/dotnet"
+DOTNET="$SCRIPTING/NetCoreRuntime/dotnet$EXE"
 CSC="$SCRIPTING/DotNetSdkRoslyn/csc.dll"
 NETSTD="$SCRIPTING/NetStandard/ref/2.1.0/netstandard.dll"
 [ -x "$DOTNET" ] || fail "Missing Unity's dotnet runner at $DOTNET"
@@ -53,7 +47,7 @@ NETSTD="$SCRIPTING/NetStandard/ref/2.1.0/netstandard.dll"
 PKG_DIR="$UNITY_PROJ/Library/ScriptAssemblies"
 [ -d "$PKG_DIR" ] || fail "No $PKG_DIR — open the project in Unity once so it builds its package libraries, then re-run."
 
-OUT="$(mktemp -d)"
+OUT="$(native_path "$(mktemp -d)")"
 trap 'rm -rf "$OUT"' EXIT
 
 # --- shared reference list ------------------------------------------------------------------------------

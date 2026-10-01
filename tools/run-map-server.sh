@@ -14,7 +14,8 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROGRAM="${1:-$REPO/builds/server/unwritten-server.app/unwritten}"
+. "$REPO/tools/platform.sh"
+PROGRAM="${1:-$(game_program server)}"
 
 [ -f "${SETTINGS_FILE:-$REPO/settings.env}" ] || {
   echo "No settings at $REPO/settings.env — copy settings.env.example to settings.env and fill it in." >&2; exit 2; }

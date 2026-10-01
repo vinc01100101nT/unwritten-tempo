@@ -41,3 +41,6 @@ backups/
 
 # every secret and address, one per machine (settings.env.example is the committed template)
 settings.env
+
+# Python leaves these beside every script it runs; regenerated on each run, never shared
+__pycache__/

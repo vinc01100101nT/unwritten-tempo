@@ -33,11 +33,16 @@ if [ ! -f "$TARGET" ]; then
   exit 1
 fi
 
-for PY in python3 python py; do
-  if command -v "$PY" >/dev/null 2>&1; then
-    exec "$PY" "$TARGET" "$@"
-  fi
-done
+# Which Python RUNS is the OS detector's answer — a name that merely exists is not enough, because Windows ships
+# a "python3" that only prints an error.
+if [ ! -f "$REPO/tools/platform.sh" ]; then
+  echo "the guard $NAME cannot run: tools/platform.sh is missing, so no Python can be chosen" >&2
+  exit 1
+fi
+. "$REPO/tools/platform.sh"
+if PY=$(find_python); then
+  exec "$PY" "$TARGET" "$@"
+fi
 
 echo "no Python found on this machine (tried python3, python, py) — the guard $NAME cannot run" >&2
 exit 1

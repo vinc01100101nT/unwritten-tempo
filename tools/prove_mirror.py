@@ -13,11 +13,33 @@ WHAT THIS DOES INSTEAD: builds a directory of SYMLINKS pointing at the real repo
 the one file on the path being faulted with a real, modified copy — punching real directories only
 along that one path. Nothing outside the temporary directory is ever opened for writing, so no crash,
 kill, timeout or power cut can leave the project changed. It costs no disk: everything else is a link.
+
+WINDOWS: an ordinary account there may not make symlinks at all. When one is refused, a folder is linked
+with a directory junction (Windows' own folder link, which needs no special rights) and a file is copied —
+still nothing outside the temporary directory is written.
 """
 
 import os
 import shutil
 import tempfile
+
+_symlinks_refused = False
+
+
+def _link(src, dst):
+    """Link dst to src: a symlink where the OS allows one, else a junction for a folder and a copy for a file."""
+    global _symlinks_refused
+    if not _symlinks_refused:
+        try:
+            os.symlink(src, dst)
+            return
+        except OSError:
+            _symlinks_refused = True
+    if os.path.isdir(src):
+        import _winapi
+        _winapi.CreateJunction(src, dst)
+    else:
+        shutil.copy2(src, dst)
 
 
 def mirror_with_change(repo, rel_path, old, new, count=1):
@@ -37,7 +59,7 @@ def mirror_with_change(repo, rel_path, old, new, count=1):
         for name in os.listdir(here_real):
             if name == part:
                 continue
-            os.symlink(os.path.join(here_real, name), os.path.join(here_temp, name))
+            _link(os.path.join(here_real, name), os.path.join(here_temp, name))
         if last:
             with open(os.path.join(here_real, part), encoding="utf-8") as f:
                 text = f.read()
@@ -58,5 +80,13 @@ def mirror_with_change(repo, rel_path, old, new, count=1):
 
 def discard(root):
     """Throw the mirror away. Links are removed, never followed, so the real files are untouched."""
-    if root:
-        shutil.rmtree(root, ignore_errors=True)
+    if not root:
+        return
+    # Junctions are unlinked BY HAND first, so nothing below can ever walk through one into the real project.
+    for here, dirs, _files in os.walk(root):
+        for d in list(dirs):
+            path = os.path.join(here, d)
+            if getattr(os.path, "isjunction", lambda _p: False)(path):
+                os.rmdir(path)
+                dirs.remove(d)
+    shutil.rmtree(root, ignore_errors=True)

@@ -15,6 +15,7 @@
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$REPO/tools/platform.sh"
 OUT="$REPO/builds/launcher"
 # Where players' launchers download updates from: PATCH_URL in settings.env, the one file for every address.
 . "$REPO/tools/load-settings.sh"
@@ -67,8 +68,8 @@ for arch in arm64 x64; do
 </plist>
 EOF
   # Signed with no certificate, as Unity signs the game: an Apple silicon Mac will not run an unsigned program.
-  if [ "$(uname)" = "Darwin" ]; then
-    codesign --force --deep --sign - "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; STATUS=1; }
+  if [ "$PLATFORM" = mac ]; then
+    sign_mac_app "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; STATUS=1; }
   fi
 done
 

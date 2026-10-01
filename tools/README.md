@@ -2,12 +2,32 @@
 
 Dev utilities for this project.
 
+## platform.sh · platform_ask.py · start-mcp.sh
+
+**The one place that knows which computer this is** — Mac, Windows or Linux — and where things live on it. Every
+script that needs an OS-dependent answer asks it instead of checking the OS itself, so the same scripts, the same
+`.mcp.json` and the same commands in the docs work on the Mac and on the Windows PC alike.
+
+```bash
+tools/platform.sh                       # lists every question it answers
+tools/platform.sh os                    # mac | windows | linux
+tools/platform.sh unity-data            # where this project's Unity version keeps its compiler and libraries
+tools/platform.sh open-game             # start one copy of the game this computer built
+tools/platform.sh port-info 7777 8081   # what is listening, and since when (prints nothing when nothing is)
+tools/platform.sh stop-port 7777        # stop it — by port, never by name
+```
+
+A shell script loads it (`. "$REPO/tools/platform.sh"`, after setting `REPO`) and gets `PLATFORM`, `EXE` and the
+functions; a Python script asks through `platform_ask.py`; `.mcp.json` starts both of Claude's connections through
+`start-mcp.sh`. Unity's install folder is read from Unity Hub's own setting, so an editor installed on another
+drive is found without anyone typing its path. A new computer, or a new place something lives, is one edit here.
+
 ## build-game.sh
 
 Builds the **server** (no window) or the **client** (what players run), from the terminal.
 
 ```bash
-tools/build-game.sh server            # headless server for this Mac
+tools/build-game.sh server            # headless server for this computer
 tools/build-game.sh client            # the game players run
 tools/build-game.sh both
 tools/build-game.sh server --linux    # server for a Linux host — what you deploy
@@ -16,7 +36,8 @@ tools/build-game.sh server --linux    # server for a Linux host — what you dep
 Why it's needed: Unity 6 treats a dedicated server as a *variant* of a desktop build rather than its own
 target, so there is no menu item to click; and a batch-mode build can't run while the editor holds the
 project open. This drives the editor you already have running, which is the normal state here. **Unity must
-be open on this project.**
+be open on this project.** It is the only way the game is built — on a Mac it makes `unwritten.app`, on Windows
+`unwritten.exe`; there is no build menu inside the editor.
 
 Takes a few minutes. It decides pass/fail by checking the artefact actually appeared, not by trusting the
 request — the request usually times out long before the build ends, which is expected and harmless. On
@@ -28,7 +49,7 @@ Used by [Starting the Network](../docs/2-systems/networking/starting-the-network
 
 Checks the game's C# for **compile errors without opening Unity** and without forcing a refresh. ~4 seconds.
 
-Why it's needed: the project rule forbids force-refreshing Unity (each refresh blocks ~60s and often times out), so a C# edit used to go unverified until the user happened to focus the editor. Unity ships its own C# compiler inside the app bundle (`Unity.app/Contents/Resources/Scripting`) and every reference library the game needs is already on disk — in `Managed/UnityEngine/`, the .NET compatibility stand-ins, and `unity/Library/ScriptAssemblies/` for package libraries — so this runs the *same* check Unity would. It never touches the running editor.
+Why it's needed: the project rule forbids force-refreshing Unity (each refresh blocks ~60s and often times out), so a C# edit used to go unverified until the user happened to focus the editor. Unity ships its own C# compiler inside its install (`Unity.app/Contents/Resources/Scripting` on the Mac, `Editor/Data` on Windows — `tools/platform.sh unity-data` finds it) and every reference library the game needs is already on disk — in `Managed/UnityEngine/`, the .NET compatibility stand-ins, and `unity/Library/ScriptAssemblies/` for package libraries — so this runs the *same* check Unity would. It never touches the running editor.
 
 Checks both halves separately: the game (`Assets/Scripts`) and the editor tools (`Assets/Scripts/Editor`). An editor-only mistake is otherwise invisible until someone opens that window.
 
@@ -57,7 +78,7 @@ Why it's needed: the end-of-turn guard only checks the files an AI session edite
 change to one file that breaks another, or any change made by hand, used to reach a commit with nothing checked.
 
 Always runs: the compile check, the game-math check, the skill-data check, the asset-wiring sweep and the per-frame
-performance scan — 13 seconds together on this Mac. A checker's own self-test runs only when that checker is part of
+performance scan — 13 seconds together on the Mac. A checker's own self-test runs only when that checker is part of
 the commit, and adds up to a minute (34 seconds with the game-math and skill-data self-tests both in). Left out on purpose: `wiki-sync-check.py` and `check-ui-prototypes.py`, which judge documents and mock pages
 rather than whether the game works.
 
@@ -81,7 +102,8 @@ says the experience curve moved. Without this, the only thing that finds one is 
 noticing — weeks later, with no clue which change caused it.
 
 **How it runs without Unity:** the game's scripts compile to an ordinary .NET library, and Unity ships a runner
-that executes one outside the editor. Pure arithmetic runs; anything reaching the live engine throws loudly
+that executes one outside the editor (the Windows install has no such runner, so there the .NET runtime beside
+Unity's compiler runs it instead). Pure arithmetic runs; anything reaching the live engine throws loudly
 rather than quietly returning a wrong answer — which is the exact boundary wanted, since the sums are what is
 being checked. No test framework, no test assembly, no domain reload. The test sources live outside
 `unity/Assets/` so Unity never imports them and they never ship in a build.
@@ -201,8 +223,10 @@ wrong art with nothing written anywhere. The case that prompted it had all 20 bo
 wearing an ordinary creature's sprite for weeks, because the prefab baker searched one art folder and their art
 was in the other.
 
-It checks two things today: every reference in our own files resolves, and every creature's sprite folder exists
-in **either** art folder. It reports and never repairs — what to do about a break is a decision, not a sweep's
+It checks two things today: every reference in our own files resolves, and every creature's art folder reference
+resolves to a folder in **either** art folder. A creature records that folder by its guid on a line with no
+`guid:` key, which the general sweep cannot see, so it is resolved on its own. The prover picks its test creature
+from whatever exists, because a hardcoded one stopped the proof the day the roster was renamed. It reports and never repairs — what to do about a break is a decision, not a sweep's
 job. Runs in about 3.5 s and is wired into the end-of-turn gate, which shows only faults in files the session
 actually edited.
 

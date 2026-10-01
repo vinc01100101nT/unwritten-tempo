@@ -39,24 +39,18 @@ Reads prototypes/ui-tokens.json, so run tools/ui-tokens.py first if the game's c
 import base64
 import json
 import os
+import pathlib
 import re
 import subprocess
 import sys
 import tempfile
 
+from platform_ask import ask
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOKENS = os.path.join(ROOT, "prototypes", "ui-tokens.json")
 GEOMETRY = os.path.join(ROOT, "prototypes", "ui-geometry.json")
 FOLDERS = ["prototypes", "mockups"]
-
-CHROMES = [
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-]
 
 # A stack may fall back to whatever the machine has; only the FIRST family is what the page asks for.
 GENERIC = {"system-ui", "-apple-system", "blinkmacsystemfont", "sans-serif", "serif", "monospace",
@@ -131,17 +125,8 @@ PROBE = r"""
 
 
 def find_browser():
-    for p in CHROMES:
-        if os.path.exists(p):
-            return p
-    for name in ("google-chrome", "chromium", "chrome"):
-        try:
-            p = subprocess.run(["which", name], capture_output=True, text=True)
-            if p.returncode == 0 and p.stdout.strip():
-                return p.stdout.strip()
-        except OSError:
-            pass
-    return None
+    # Where the browser lives depends on the computer, and tools/platform.sh is the one place that knows.
+    return ask("browser")
 
 
 def render(browser, path):
@@ -163,8 +148,9 @@ def render(browser, path):
     try:
         p = subprocess.run(
             [browser, "--headless=new", "--disable-gpu", "--no-sandbox", "--virtual-time-budget=6000",
-             "--dump-dom", "file://" + fh.name],
-            capture_output=True, text=True, timeout=90)
+             "--dump-dom", pathlib.Path(fh.name).as_uri()],
+            # Read as UTF-8 whatever the computer's default is — Windows' default could not decode the page.
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90)
         m = re.search(r"<title>UICHECK([A-Za-z0-9+/=]*)</title>", p.stdout)
         if not m:
             return None

@@ -31,8 +31,10 @@ import json
 import os
 import plistlib
 import shutil
-import subprocess
 import sys
+
+# Which computer this is, and the Mac-only signing, both come from tools/platform.sh — never checked here.
+from platform_ask import ask, run as run_platform
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -105,12 +107,11 @@ def resign_mac(build):
     """Stamping the version changes a file inside the app, which breaks the app's signature — and a Mac refuses to
     open a downloaded app whose signature is broken. So it is signed again, the same no-certificate way Unity
     signed it, before its files are fingerprinted."""
-    if sys.platform != "darwin":
+    if ask("os") != "mac":
         fail("A Mac build must be published from a Mac, so it can be signed again after the version is stamped.", 2)
     for t in os.listdir(build):
         if t.endswith(".app"):
-            r = subprocess.run(["codesign", "--force", "--deep", "--sign", "-", os.path.join(build, t)],
-                               capture_output=True, text=True)
+            r = run_platform("sign-mac-app", os.path.join(build, t))
             if r.returncode != 0:
                 fail(f"Could not sign {t} again: {r.stderr.strip()}")
 

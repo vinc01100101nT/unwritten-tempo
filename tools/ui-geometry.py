@@ -6,7 +6,7 @@ the layout works out at the window's real size, not the number typed in the file
 screen up inside the running editor, at the size the window really is, measures every part, and
 writes the result to prototypes/ui-geometry.json for check-ui-prototypes.py to compare a mock with.
 
-Needs the Unity editor open on this project (the same live link `unity status` reports).
+Needs the Unity editor open on this project (the same live link the `unity-editor-mcp` tools use).
 
   tools/ui-geometry.py              measure every screen with a recipe below
   tools/ui-geometry.py Inventory    just this one
@@ -21,6 +21,8 @@ import re
 import subprocess
 import sys
 import tempfile
+
+from platform_ask import ask
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "prototypes", "ui-geometry.json")
@@ -102,6 +104,23 @@ RECIPES = {
 }
 
 
+def editor_result(text):
+    """The script's returned text, read from the first JSON object in the link's reply that carries one. Parsed
+    rather than pattern-matched, because the reply's layout changed between versions of the link program: one
+    put a timing field after the result, the 2026-10 one ends the object there."""
+    decoder = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch != "{":
+            continue
+        try:
+            obj, _ = decoder.raw_decode(text, i)
+        except ValueError:
+            continue
+        if isinstance(obj, dict) and isinstance(obj.get("result"), str):
+            return obj["result"]
+    return None
+
+
 def measure(name, recipe):
     code = (COMMON
             .replace("WIDTH", str(recipe["width"]))
@@ -112,16 +131,20 @@ def measure(name, recipe):
     fh.write(code)
     fh.close()
     try:
-        p = subprocess.run(["unity", "cmd", "eval_file", "--file", fh.name, "--timeout", "120"],
-                           capture_output=True, text=True, timeout=180)
+        # The link program's location and this project's folder both come from tools/platform.sh; naming the project
+        # matters on Windows, where the link cannot find the editor on its own.
+        cli = ask("unity-cli") or "unity"
+        project = ask("native-path", os.path.join(ROOT, "unity")) or os.path.join(ROOT, "unity")
+        p = subprocess.run([cli, "cmd", "--project-path", project, "eval_file", "--file", fh.name, "--timeout", "120"],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
     finally:
         os.unlink(fh.name)
 
-    m = re.search(r'"result":"(.*?)","executionTimeMs"', p.stdout, re.S)
-    if not m:
+    answer = editor_result(p.stdout)
+    if answer is None:
         err = (p.stdout + p.stderr).strip().split("\n")[0][:200]
         return None, "the editor did not answer — %s" % (err or "no result")
-    raw = m.group(1).replace("\\n", "").replace('\\"', '"')
+    raw = answer.replace("\n", "")
 
     parts, cells, cols = {}, {}, {}
     for chunk in raw.split("|"):

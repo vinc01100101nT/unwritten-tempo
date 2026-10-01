@@ -8,6 +8,8 @@ CHAR=http://127.0.0.1:8081
 # same file charserver/run.sh reads it from, so the test can never disagree with the server it is testing.
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 . "$REPO/tools/load-settings.sh"
+. "$REPO/tools/platform.sh"
+PY="$(find_python)"
 SECRET="${SERVER_SECRET:-}"
 [ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in settings.env"; exit 1; }
 EMAIL="e2e-$(date +%s)-$$@example.com"
@@ -19,7 +21,7 @@ echo "1. register + sign in (login service, Node)"
 curl -s -X POST "$LOGIN/accounts" -H 'content-type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"hunter2hunter2\"}" >/dev/null
 TOK=$(curl -s -X POST "$LOGIN/sessions" -H 'content-type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"hunter2hunter2\"}" | python3 -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
+  -d "{\"email\":\"$EMAIL\",\"password\":\"hunter2hunter2\"}" | "$PY" -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
 [ -n "$TOK" ] || fail "no access token"
 ok "token issued by Node"
 
@@ -40,10 +42,10 @@ ok "anonymous refused ($CODE)"
 
 echo "5. create a character"
 STATS='[9,5,5,1,5,5]'   # a hexagon spread: STR 9 so INT 1, the other pairs at 5
-MODEL=$(echo "$MODELS" | python3 -c 'import sys,json;print(json.load(sys.stdin)["models"][0])')
+MODEL=$(echo "$MODELS" | "$PY" -c 'import sys,json;print(json.load(sys.stdin)["models"][0])')
 NEW=$(curl -s -X POST "$CHAR/characters" -H "authorization: Bearer $TOK" -H 'content-type: application/json' \
   -d "{\"name\":\"$NAME\",\"modelName\":\"$MODEL\",\"dyeSources\":[\"#112233\"],\"dyeTargets\":[\"#445566\"],\"primary\":$STATS}")
-CID=$(echo "$NEW" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("id",""))')
+CID=$(echo "$NEW" | "$PY" -c 'import sys,json;print(json.load(sys.stdin).get("id",""))')
 [ -n "$CID" ] || fail "create: $NEW"
 ok "created $NAME ($CID)"
 
@@ -81,7 +83,7 @@ ok "player-side save write refused ($CODE)"
 curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
   -H 'content-type: application/json' -d "{\"progress\":$SAVE}" >/dev/null
 BACK=$(curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK")
-echo "$BACK" | python3 -c '
+echo "$BACK" | "$PY" -c '
 import sys,json
 d=json.load(sys.stdin); p=d["progress"]
 assert p["level"]==42, p
@@ -101,7 +103,7 @@ ok "unversioned save refused ($CODE)"
 echo "11. a save that names no body keeps the look already stored"
 curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
   -H 'content-type: application/json' -d '{"progress":{"version":9,"level":43}}' >/dev/null
-curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | python3 -c '
+curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
 d=json.load(sys.stdin)
 assert d["modelName"], "appearance was wiped by a save that did not carry it: "+json.dumps(d)
@@ -111,7 +113,7 @@ print("  ok  appearance survived a save that omitted it:",d["modelName"])'
 echo "12. recolour through the appearance route, merged not replaced"
 curl -s -X PATCH "$CHAR/characters/$CID/appearance" -H "authorization: Bearer $TOK" \
   -H 'content-type: application/json' -d '{"dyeSources":["#aabbcc"],"dyeTargets":["#ddeeff"]}' >/dev/null
-curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | python3 -c '
+curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
 d=json.load(sys.stdin)
 assert d["dyeSources"]==["#aabbcc"], d
@@ -122,7 +124,7 @@ echo "13. another account cannot see or touch it"
 E2="other-$(date +%s)-$$@example.com"
 curl -s -X POST "$LOGIN/accounts" -H 'content-type: application/json' -d "{\"email\":\"$E2\",\"password\":\"hunter2hunter2\"}" >/dev/null
 TOK2=$(curl -s -X POST "$LOGIN/sessions" -H 'content-type: application/json' \
-  -d "{\"email\":\"$E2\",\"password\":\"hunter2hunter2\"}" | python3 -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
+  -d "{\"email\":\"$E2\",\"password\":\"hunter2hunter2\"}" | "$PY" -c 'import sys,json;print(json.load(sys.stdin)["accessToken"])')
 CODE=$(curl -s -o /dev/null -w '%{http_code}' "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK2")
 [ "$CODE" = "404" ] || fail "another account got $CODE reading someone else's character (expected 404)"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$CHAR/characters/$CID" -H "authorization: Bearer $TOK2")
@@ -130,7 +132,7 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -X DELETE "$CHAR/characters/$CID" 
 ok "another account is refused (404 on read and on delete)"
 
 echo "15. the appearance route caps colours the same way creation does"
-BIG=$(python3 -c 'import json;print(json.dumps({"dyeSources":["#aabbcc"]*100,"dyeTargets":["#ddeeff"]*100}))')
+BIG=$("$PY" -c 'import json;print(json.dumps({"dyeSources":["#aabbcc"]*100,"dyeTargets":["#ddeeff"]*100}))')
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH "$CHAR/characters/$CID/appearance" \
   -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d "$BIG")
 [ "$CODE" = "400" ] || fail "appearance took 100 colour pairs (got $CODE) — the cap is missing"
@@ -139,7 +141,7 @@ ok "too many colours refused on recolour ($CODE)"
 echo "16. a colour with stray spaces is accepted and stored trimmed"
 curl -s -o /dev/null -X PATCH "$CHAR/characters/$CID/appearance" -H "authorization: Bearer $TOK" \
   -H 'content-type: application/json' -d '{"dyeSources":[" #aabbcc "],"dyeTargets":["#ddeeff "]}'
-curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | python3 -c '
+curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
 d=json.load(sys.stdin)
 assert d["dyeSources"]==["#aabbcc"], d["dyeSources"]
@@ -151,7 +153,7 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$C
   -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
   -d '{"progress":{"version":3000000000,"level":3000000000}}')
 [ "$CODE" = "200" ] || fail "a version above two billion was refused ($CODE)"
-curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | python3 -c '
+curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
 cs=json.load(sys.stdin)["characters"]
 lv=[c["level"] for c in cs if c["level"] is not None]
@@ -172,7 +174,7 @@ echo "$BODY" | grep -qi "exception\|   at \|System\." && fail "a stack trace was
 ok "no stack trace in a refusal"
 
 echo "20. health actually asks the database"
-curl -s "$CHAR/health" | python3 -c '
+curl -s "$CHAR/health" | "$PY" -c '
 import sys,json
 d=json.load(sys.stdin); assert d["ok"] is True, d
 print("  ok  health answered", d)'

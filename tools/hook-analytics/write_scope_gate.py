@@ -19,7 +19,7 @@ WHAT IT DOES NOT STOP, said out loud so nobody mistakes it for total: it guards 
 that changes the running Unity editor is not a file write, so the editor-mutating shell forms
 are refused by name below, and a fenced role is not given the editor tools that write.
 """
-import sys, os, re, json
+import sys, os, re, json, tempfile
 
 import guard_check   # sibling — the heartbeat that proves this gate really ran
 import tool_writes   # sibling — the one answer to 'which files does this call write?'
@@ -65,7 +65,9 @@ def resolve(path, cwd):
     wherever this gate happens to be running from. Resolving it against the gate's own folder
     is how every allowed write got refused the first time this was tested."""
     if os.path.isabs(path):
-        return os.path.normpath(path)
+        # abspath, not just normpath: on Windows "/tmp/x" is rooted but has no drive, and the allowed folders it is
+        # compared with are given one — the two spellings must meet before they can match.
+        return os.path.normpath(os.path.abspath(path))
     return os.path.normpath(os.path.join(cwd or REPO, path))
 
 
@@ -80,8 +82,10 @@ def inside(path_abs, prefix_abs):
 def scratchpad_roots():
     """Wherever this machine puts a session's throwaway files. Both spellings of the macOS
     temp folder count: it is reached as /tmp and reported as /private/tmp, and a path that
-    passes one spelling must not be refused for arriving in the other."""
-    return ["/tmp", "/private/tmp", os.environ.get("TMPDIR") or "/tmp"]
+    passes one spelling must not be refused for arriving in the other. The system's own temp
+    folder counts too — on Windows that is the ONLY real one (AppData/Local/Temp), and "/tmp"
+    there resolves to a folder on the current drive that nothing writes to."""
+    return ["/tmp", "/private/tmp", os.environ.get("TMPDIR") or "/tmp", tempfile.gettempdir()]
 
 
 def main():

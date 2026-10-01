@@ -16,6 +16,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 
 REPO = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 GATE = os.path.join(REPO, "tools", "hook-analytics", "write_scope_gate.py")
@@ -45,6 +46,8 @@ CASES = [
      "read-only role asking the editor whether it is up"),
     ([], ("Write", {"file_path": "/tmp/throwaway-probe.py"}), ALLOWED,
      "read-only role writing a throwaway script to the scratchpad"),
+    ([], ("Write", {"file_path": os.path.join(tempfile.gettempdir(), "throwaway-probe.py")}), ALLOWED,
+     "read-only role writing to the system's own temp folder (the only real one on Windows)"),
 
     # --- a role that may write GAME DATA ONLY ----------------------------------------------
     (["unity/Assets/3_Data"], ("Write", {"file_path": "unity/Assets/3_Data/Resources/Monsters/X.asset"}), ALLOWED,

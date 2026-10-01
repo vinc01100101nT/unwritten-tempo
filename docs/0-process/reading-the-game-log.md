@@ -23,8 +23,8 @@ people and for every agent role alike: the tester, the debugger, the reviewer, a
 | Machine | File | Run before it |
 | --- | --- | --- |
 | The game server | `logs/server.log` at the top of this repo | `logs/server-prev.log` |
-| A client build | `~/Library/Logs/DefaultCompany/unwritten/Player.log` | `Player-prev.log` |
-| The Unity editor | `~/Library/Logs/Unity/Editor.log` | — |
+| A client build | `tools/platform.sh player-log` — `~/Library/Logs/DefaultCompany/unwritten/Player.log` on the Mac, `AppData/LocalLow/DefaultCompany/unwritten/Player.log` in your user folder on Windows | `Player-prev.log` |
+| The Unity editor | `tools/platform.sh editor-log` — `~/Library/Logs/Unity/Editor.log` on the Mac, `AppData/Local/Unity/Editor/Editor.log` in your user folder on Windows | — |
 
 **The server's log is the one that knows.** Blows, deaths, passives, buffs and loot are decided on the server, so
 only its log can say what really happened. A player's machine draws what it is told and its log only says what it

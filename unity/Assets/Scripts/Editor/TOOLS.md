@@ -11,14 +11,6 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 
 ---
 
-## Top level
-
-| Menu | What | Use when |
-| --- | --- | --- |
-| **Build Game (Windows .exe)** | `npm run build` for the game. Collects enabled Build-Settings scenes (forces `Systems.unity` first), builds a StandaloneWindows64 player into `Builds/Windows/`, opens the folder. | You want a shippable `.exe` without opening the Build Profiles window. (`BuildGame.cs`) |
-
----
-
 ## Scene Setup
 
 | Menu | What | Use when |

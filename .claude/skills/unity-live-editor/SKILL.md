@@ -10,21 +10,28 @@ description: Use when working against this project's running Unity Editor — ch
 noticing, and a whole session was worked while believing a connection existed that did not. There is now ONE
 road to the editor.
 
-- **Binary:** `~/.unity/bin/unity`. `~/.zshrc` sources `~/.unity/env` to put it on the PATH, but a
-  NON-interactive shell may not load that — **use the full path when a bare `unity` is not found.** (Twice the
-  user was told it "wasn't installed" because `which unity` came back empty.)
+- **Binary:** whatever `tools/platform.sh unity-cli` answers — never type the path. On the Mac that is
+  `~/.unity/bin/unity`, which `~/.zshrc` puts on the PATH but a NON-interactive shell may not — so a bare `which
+  unity` coming back empty is NOT proof it is missing. (Twice the user was told it "wasn't installed" that way.)
+  On the Windows PC it is `AppData/Local/Unity/bin/unity.exe` in the user's folder (installed with the Unity Hub
+  update, v1.0.0-beta.11, measured 2026-10-01).
 - **In-editor half:** the `com.unity.pipeline` package in `unity/Packages/manifest.json`. Without it the CLI
   SEES the editor (project, PID, version) but cannot talk to it.
-- **As tools:** `.mcp.json` registers `unity-editor-mcp` (stdio), so the editor's ~143 commands arrive as
-  ordinary tools — no terminal needed.
+- **As tools:** `.mcp.json` registers `unity-editor-mcp` (stdio, started by `tools/start-mcp.sh`, which finds the
+  binary and the project folder on whichever computer this is), so the editor's ~143 commands arrive as ordinary
+  tools — no terminal needed.
 - **The command surface** is documented by Unity's own skill, `~/.claude/skills/unity-cli/SKILL.md`. Read that;
   don't re-derive it.
 
 ## ALWAYS check first — never assume it's up
 
 ```bash
-unity status      # a row with state `ready` = connected; an empty table = the editor isn't attached
+unity cmd --project-path <this repo>/unity editor_status   # "status":"ready" = connected
 ```
+
+**Name the project every time.** On the Windows PC a bare `unity status` prints an EMPTY table while the editor is
+open and answering — the same editor answers at once when asked by `--project-path` (measured 2026-10-01). An empty
+`unity status` there is NOT proof the editor is down.
 
 An empty table usually means the package hasn't been imported yet (Unity imports it when the user focuses the
 window). **If it's down, SAY SO** rather than working blind. Working blind while sounding certain is the exact

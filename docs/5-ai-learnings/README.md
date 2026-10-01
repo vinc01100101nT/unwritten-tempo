@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-30
+last-updated: 2026-10-01
 tags:
   - ai-learnings
 ---
@@ -43,6 +43,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | A feature you wrote is simply ABSENT at runtime — no error, nothing happens — and the code plainly has it | [The Code Adds It, but What Runs Predates It](the-code-adds-it-the-committed-artifact-doesnt-have-it.md) — a prefab, bundle or generated file was built before your line existed, or a server was STARTED before it; the program runs that, not your source. Date the artifact or the process's start time, then grep it for the thing. |
 | You run a batch in two steps (build, then patch/wire) over many files, in an app someone else is using | [Step Two Ran on Files Step One Never Rebuilt](step-two-must-read-step-ones-results.md) — step two loops over step one's SUCCESSES, never its own list, and re-checks that each file is not open in the other person's app right before writing. |
 | About to run one script that edits several files and report them all done — or a command came back "rejected" / "interrupted" | [A Script That Edits Many Files Can Stop Halfway](a-script-that-edits-many-files-can-stop-halfway.md) — a failure part-way leaves the earlier files written and the later ones untouched, and names only the file it tripped on. Write each file as its edits finish, then verify per file. |
+| A file you edited with a script from the terminal now has an invisible character where `\033` was, or a line break inside quotes — and still passes its syntax check | [Backslashes Sent Through the Terminal Arrive Changed](backslashes-sent-through-the-terminal-arrive-changed.md) — write any text containing a backslash with the editor tools; if it must be scripted, build the backslash from its number and scan for raw control bytes after. |
 | A program passed its tests in a harness, and the user's packaged build (single-file, compressed, self-contained) crashes or will not start | [Test the Packaged Form That Ships](test-the-packaged-form-that-ships.md) — run the test with the shipping build settings, and search the binary for the build machine's own library paths. |
 | About to test a start script or wrapper by swapping the program it runs for a fake | [A Fake Program Does Not Fake the Script Around It](a-fake-program-does-not-fake-the-script.md) — every other line still runs for real (log moves, deletes); read the script for its file and process side effects and run it from a scratch copy. |
 | Something is running that you need to measure, and you cannot see into it | [Observe With a Disposable Second Instance](observe-with-a-disposable-second-instance.md) — stand up a throwaway copy on its own port with its output to a file; never reason around the live one. |

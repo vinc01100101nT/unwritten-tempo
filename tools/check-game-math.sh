@@ -19,6 +19,10 @@ set -e
 
 TOOLS="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 REPO="$(dirname "$TOOLS")"
+. "$REPO/tools/platform.sh"
+# Every path below ends up inside a file Unity's compiler reads, so each is written the way THIS OS's programs read it.
+REPO="$(native_path "$REPO")"
+TOOLS="$REPO/tools"
 UNITY_PROJ="$REPO/unity"
 TESTS="$TOOLS/game-math-tests"
 
@@ -28,27 +32,26 @@ fail() { printf '\033[31m%s\033[0m\n' "$1" >&2; exit 2; }
 
 VER_FILE="$UNITY_PROJ/ProjectSettings/ProjectVersion.txt"
 [ -f "$VER_FILE" ] || fail "No $VER_FILE — is this the right repo?"
-VER="$(awk '/^m_EditorVersion:/{print $2}' "$VER_FILE")"
-SCRIPTING="/Applications/Unity/Hub/Editor/$VER/Unity.app/Contents/Resources/Scripting"
-if [ ! -d "$SCRIPTING" ]; then
-  ALT="$(ls -d /Applications/Unity/Hub/Editor/*/Unity.app/Contents/Resources/Scripting 2>/dev/null | sort -V | tail -1)"
-  [ -n "$ALT" ] || fail "Unity $VER not installed, and no other Unity found."
-  printf '\033[33mWARNING: Unity %s not installed; checking against %s instead.\033[0m\n' \
-         "$VER" "$(echo "$ALT" | awk -F/ '{print $6}')"
-  SCRIPTING="$ALT"
-fi
+# The project's exact version, or the newest installed one with a loud warning.
+SCRIPTING="$(unity_data)" || exit 2
 
-DOTNET="$SCRIPTING/NetCoreRuntime/dotnet"
+DOTNET="$SCRIPTING/NetCoreRuntime/dotnet$EXE"
 CSC="$SCRIPTING/DotNetSdkRoslyn/csc.dll"
 NETSTD="$SCRIPTING/NetStandard/ref/2.1.0/netstandard.dll"
-RUNNER="$SCRIPTING/netcorerun/netcorerun"
+# Unity's own runner for a compiled .dll. The Windows install ships without it, so there the same .NET runtime that
+# runs Unity's compiler runs the checks instead (see step 3).
+RUNNER="$SCRIPTING/netcorerun/netcorerun$EXE"
 PKG_DIR="$UNITY_PROJ/Library/ScriptAssemblies"
-for f in "$DOTNET" "$RUNNER"; do [ -x "$f" ] || fail "Missing $f"; done
+[ -x "$DOTNET" ] || fail "Missing $DOTNET"
+if [ ! -x "$RUNNER" ]; then
+  NETCORE_VER="$(ls "$SCRIPTING/NetCoreRuntime/shared/Microsoft.NETCore.App" 2>/dev/null | sort -V | tail -1)"
+  [ -n "$NETCORE_VER" ] || fail "Missing $RUNNER, and no .NET runtime beside Unity's compiler to run the checks with"
+fi
 [ -f "$CSC" ] || fail "Missing Unity's C# compiler at $CSC"
 [ -f "$NETSTD" ] || fail "Missing netstandard reference at $NETSTD"
 [ -d "$PKG_DIR" ] || fail "No $PKG_DIR — open the project in Unity once, then re-run."
 
-OUT="$(mktemp -d)"
+OUT="$(native_path "$(mktemp -d)")"
 trap 'rm -rf "$OUT"' EXIT
 
 # The same reference list and defines the compile checker uses, so what is tested is what Unity builds.
@@ -90,4 +93,10 @@ fi
 # 3. run them, with the engine libraries beside the output so the runner can load them
 cp "$SCRIPTING"/Managed/UnityEngine/*.dll "$OUT"/ 2>/dev/null || true
 cp "$PKG_DIR"/*.dll "$OUT"/ 2>/dev/null || true
-"$RUNNER" "$OUT/tests.dll"
+if [ -x "$RUNNER" ]; then
+  "$RUNNER" "$OUT/tests.dll"
+else
+  printf '{"runtimeOptions":{"tfm":"net%s","framework":{"name":"Microsoft.NETCore.App","version":"%s"}}}\n' \
+         "${NETCORE_VER%.*}" "$NETCORE_VER" > "$OUT/tests.runtimeconfig.json"
+  "$DOTNET" "$OUT/tests.dll"
+fi

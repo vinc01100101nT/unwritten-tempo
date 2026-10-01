@@ -32,7 +32,7 @@ MONSTERS = os.path.join(ua.ASSETS, "3_Data", "Resources", "Monsters")
 CREATURE_ART = [os.path.join(ua.ASSETS, "1_Authored", "Art", "Billboards", "Actor", "Monster"),
                 os.path.join(ua.ASSETS, "1_Authored", "Art", "Billboards", "Actor", "Boss")]
 
-_SHEET = re.compile(r"^\s*sheet:\s*(.*)$", re.M)
+_ART_FOLDER = re.compile(r"^\s*artFolder:\s*(\S*)\s*$", re.M)
 
 
 def broken_references(known):
@@ -54,10 +54,12 @@ def broken_references(known):
     return faults
 
 
-def creature_art():
-    """Every creature's sprite folder, in EITHER art folder — ordinary creatures and bosses alike.
-    The asset records only a folder name, never which of the two it came from, so both are searched.
-    Searching one is the bug this whole checker was written after."""
+def creature_art(known):
+    """Every creature's sprite folder must exist and sit in EITHER art folder — ordinary creatures and
+    bosses alike; searching only one is the bug this whole checker was written after. The asset
+    records the folder by its guid (`artFolder:`), which the general reference sweep below cannot see
+    because the line carries no `guid:` key — so it is resolved here. A blank one means the creature
+    has no art of its own and is skipped."""
     faults = []
     if not os.path.isdir(MONSTERS):
         return faults
@@ -67,14 +69,19 @@ def creature_art():
         path = os.path.join(MONSTERS, f)
         try:
             with open(path, encoding="utf-8", errors="ignore") as fh:
-                m = _SHEET.search(fh.read())
+                m = _ART_FOLDER.search(fh.read())
         except OSError:
             continue
-        name = (m.group(1).strip() if m else "")
-        if not name:
+        guid = (m.group(1).strip() if m else "")
+        if not guid:
             continue
-        if not any(os.path.isdir(os.path.join(d, name)) for d in CREATURE_ART):
-            faults.append((path, "names the art folder '%s', which is in neither creature art folder" % name))
+        folder = known.get(guid)
+        if not folder:
+            faults.append((path, "its art folder reference points at nothing (%s)" % guid))
+        elif not os.path.isdir(folder) or os.path.normcase(os.path.normpath(os.path.dirname(folder))) not in \
+                {os.path.normcase(os.path.normpath(d)) for d in CREATURE_ART}:
+            faults.append((path, "its art folder reference points at %s, which is not a folder in either "
+                                 "creature art folder" % ua.rel(folder)))
     return faults
 
 
@@ -91,7 +98,7 @@ def main():
                     "concluded about what is broken" % len(known) + OFF)
         return 2
 
-    faults = creature_art() + broken_references(known)
+    faults = creature_art(known) + broken_references(known)
     if not faults:
         print(GRN + "asset wiring clean" + OFF +
               " — every reference in our own files resolves, and every creature's art folder exists "

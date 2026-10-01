@@ -5,7 +5,7 @@
         Width="760" Height="500" CanResize="False"
         WindowStartupLocation="CenterScreen"
         Background="#121317"
-        FontFamily="avares://unwritten-launcher/Assets/Fonts#Inter 18pt">
+        FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed">
 
   <!-- THE RAGNAROK ONLINE PATCHER'S LAYOUT: a big news box, the buttons beside it, and the download bar across the
        bottom. Every colour is the game's own shared palette (prototypes/ui-tokens.css, read from the game's code). -->
@@ -37,7 +37,7 @@
     <!-- The name, and which version the update server is handing out. -->
     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
       <TextBlock Grid.Column="0" Text="UNWRITTEN" FontSize="30" Foreground="#c8a862"
-                 FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold"
+                 FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold"
                  VerticalAlignment="Center" />
       <TextBlock Grid.Column="1" x:Name="VersionLabel" Foreground="#a79e88" FontSize="12"
                  VerticalAlignment="Bottom" />
@@ -50,7 +50,7 @@
               Padding="14,10">
         <DockPanel>
           <TextBlock DockPanel.Dock="Top" Text="News" Foreground="#c8a862" FontSize="16" Margin="0,0,0,8"
-                     FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold" />
+                     FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold" />
           <ScrollViewer>
             <StackPanel x:Name="NewsList" Spacing="14" />
           </ScrollViewer>
@@ -61,7 +61,7 @@
       <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Bottom">
         <Button x:Name="StartButton" Content="Start" IsEnabled="False" Height="52"
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                FontFamily="avares://unwritten-launcher/Assets/Fonts#Cinzel" FontWeight="Bold" FontSize="18"
+                FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold" FontSize="18"
                 Background="#212228" Foreground="#e7e3d5" BorderBrush="#c8a862" BorderThickness="1" />
         <Button x:Name="ExitButton" Content="Exit" Height="36"
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"

@@ -14,6 +14,7 @@ USAGE:   tools/prove-asset-wiring-check.py
 EXIT:    0 = the sweep sees what it should, 1 = it is blind, or it cries wolf.
 """
 import os
+import re
 import subprocess
 import sys
 
@@ -73,21 +74,50 @@ def case(description, rel, old, new, must_name):
     return 1
 
 
+def first_creature_with_art():
+    """(file, its m_Name, its artFolder guid, the guid of a picture it uses) for the first creature that
+    has art of its own, or None. The picture is its faceset, when it has one — a real file that is not
+    a folder, for the case that needs a reference that resolves to the wrong kind of thing."""
+    for f in sorted(os.listdir(MONSTERS)):
+        if not f.endswith(".asset"):
+            continue
+        with open(os.path.join(MONSTERS, f), encoding="utf-8", errors="ignore") as fh:
+            text = fh.read()
+        art = re.search(r"^  artFolder: ([0-9a-f]{32})$", text, re.M)
+        name = re.search(r"^  m_Name: (\S+)$", text, re.M)
+        face = re.search(r"^  faceset: \{fileID: \d+, guid: ([0-9a-f]{32})", text, re.M)
+        if art and name:
+            return f, name.group(1), art.group(1), (face.group(1) if face else None)
+    return None
+
+
 def main():
     if not os.path.isdir(MONSTERS):
         print(RED + "no creature assets at %s" % MONSTERS + OFF)
         return 1
+    # The test creature is FOUND, never named: a hardcoded one broke this whole proof the day the
+    # roster was renamed and it no longer existed.
+    found = first_creature_with_art()
+    if not found:
+        print(RED + "no creature in %s has an art folder to break" % MONSTERS + OFF)
+        return 1
+    file_name, name, art, own_texture = found
+    victim = os.path.join(MONSTERS_REL, file_name)
     bad = 0
-    # A creature whose art folder name is misspelt by one letter. This is the exact shape of the
-    # fault that left every boss wearing another creature's sprite.
-    victim = os.path.join(MONSTERS_REL, "Bear.asset")
-    bad += case("a creature naming an art folder that does not exist",
-                victim, "sheet: Bear", "sheet: BearZZ", "Bear.asset")
+    # A creature whose art folder reference points at nothing. This is the shape of the fault that
+    # left every boss wearing another creature's sprite.
+    bad += case("a creature whose art folder reference points at nothing",
+                victim, "artFolder: " + art, "artFolder: " + "0" * 32, file_name)
+
+    # A creature whose art reference resolves — but to a single picture, not a creature art folder.
+    if own_texture:
+        bad += case("a creature whose art reference points at something that is not an art folder",
+                    victim, "artFolder: " + art, "artFolder: " + own_texture, file_name)
 
     # A reference to a file that is not in the project or in any installed package.
     bad += case("a reference pointing at a file that exists nowhere",
-                victim, "m_Name: Bear", "m_Name: Bear\n  probeRef: {fileID: 2800000, guid: "
-                        "deadbeefdeadbeefdeadbeefdeadbeef, type: 3}", "Bear.asset")
+                victim, "m_Name: " + name, "m_Name: " + name + "\n  probeRef: {fileID: 2800000, guid: "
+                        "deadbeefdeadbeefdeadbeefdeadbeef, type: 3}", file_name)
     print()
     if bad:
         print(RED + "%d case(s) wrong — the sweep's silence proves nothing." % bad + OFF)

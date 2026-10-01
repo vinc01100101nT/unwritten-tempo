@@ -112,14 +112,15 @@ not "when I am done with it", not left for them to find.
    taken, that is an answer — use a different port, or ask.
 
 **STOP IT BY ITS PORT, NEVER BY ITS NAME.** `pkill -f CharServer` kills EVERY character server on this machine,
-including the one the user is playing against. The safe form, always:
+including the one the user is playing against. The safe form, always — the same command on the Mac and on Windows:
 
 ```
-PID=$(lsof -nP -iTCP:<port> -sTCP:LISTEN -t); [ -n "$PID" ] && kill $PID
+tools/platform.sh stop-port <port>
 ```
 
-**And before assuming a listening process is mine, check WHEN IT STARTED** — `ps -o pid,lstart,command -p <pid>`.
-A start time later than my own last kill means it is theirs, and it stays up.
+**And before assuming a listening process is mine, check WHEN IT STARTED** — `tools/platform.sh port-info <port>`
+prints each listener's id, start time and program. A start time later than my own last kill means it is theirs, and
+it stays up.
 
 **Say in the report what I started and that it is stopped**, or say plainly that I started nothing. The report
 line is what makes this checkable rather than a good intention.
@@ -173,9 +174,9 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
   `jsonb_pretty(progress)` dumps a whole character. Full detail: `docs/1-planning/querying-the-database.md`.
 - **Did my edit reach the editor** = search the assembly it built, never the source on disk — the rule and the
   encoding trap are in the console section below, written once.
-- **WHAT ACTUALLY HAPPENED AT RUNTIME** = three different logs, and they are not interchangeable. The editor's is
-  `~/Library/Logs/Unity/Editor.log`; a client BUILD writes `~/Library/Logs/DefaultCompany/unwritten/Player.log`
-  (and `Player-prev.log` for the run before it); and the GAME SERVER writes `logs/server.log` at the top of this
+- **WHAT ACTUALLY HAPPENED AT RUNTIME** = three different logs, and they are not interchangeable. The editor's is wherever
+  `tools/platform.sh editor-log` says (`~/Library/Logs/Unity/Editor.log` on the Mac); a client BUILD writes
+  `tools/platform.sh player-log` (and `Player-prev.log` beside it for the run before); and the GAME SERVER writes `logs/server.log` at the top of this
   repo, with the run before it kept as `logs/server-prev.log`. An idle server is now SILENT — nothing writes on a
   timer — so a quiet log means nothing happened, not that logging is off. **READ THE SERVER'S OWN LOG BEFORE REASONING ABOUT
   WHAT IT DECIDED** — it already writes down why it refused a cast, turned a connection away, dropped a player or
@@ -185,7 +186,7 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
   debugger and reviewer), with every line shape in `docs/0-process/reading-the-game-log.md`. If it is missing, the server was started the old way, straight to the terminal: the run
   command in the network runbook now tees it to that file.
 - **WHAT IS ACTUALLY IN THE CLIENT BUILD, and how big** = Unity's own size report, written into
-  `~/Library/Logs/Unity/Editor.log` after every build. Search it for `Used Assets and files from the Resources
+  the editor's log (`tools/platform.sh editor-log`) after every build. Search it for `Used Assets and files from the Resources
   folder, sorted by uncompressed size`: above that line is the split by kind (textures / meshes / audio /
   levels), below it is every shipped asset in descending size. **Never add up folder sizes instead** — most of
   `Assets/` is never referenced and never ships, so the folders and the build disagree by multiples. (Measured
@@ -200,9 +201,9 @@ Escalate EFFORT/model only once the evidence is in hand and the remaining hard p
 
 ## The live link to Unity — it EXISTS; check it, then use it
 
-There is one road to the running editor and it works. **Check `unity status` before leaning on it** (a row with
-state `ready` = connected, an empty table = not attached), and **if it is down, say so plainly** rather than
-working blind — that exact failure kept a dead bridge in use for five days.
+There is one road to the running editor and it works. **Check it before leaning on it** — the `unity-editor-mcp`
+`editor_status` tool, or `unity cmd --project-path <this repo>/unity editor_status` from a terminal (`"status":"ready"` = connected) — and
+**if it is down, say so plainly** rather than working blind — that exact failure kept a dead bridge in use for five days.
 
 **Reach for it without being told.** The user should never have to say "check Unity". Any time you are about to
 state a live value, describe how something looks, run an author-time action, or take a second swing at a bug that
@@ -421,7 +422,7 @@ Never both homes, ever.
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
 - `unity/Assets/Scripts/Editor/` — one-click editor tools under `Tools ▸ unwritten ▸ …`
-- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (75 today)
+- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (73 today)
 - `tools/` — HTML/Python authoring tools (world-creator, map-painter, chatgpt extractor)
 - `tempo/` — auto-generated canvas dev server; do NOT write app code here
 
@@ -578,7 +579,7 @@ that costs a round.
   2. **Read `recompile_status` too** — it carries its own error list and survives an empty console, so it is the independent second signal when the buffer has nothing.
   3. **Attribute every error before blaming or clearing it.** An error inside a package's own code (`Library/PackageCache/…`) is Unity's, not ours; say so plainly instead of hunting our source for it.
 
-  The same ban covers the on-disk log at `~/Library/Logs/Unity/Editor.log` when the console buffer is empty:
+  The same ban covers the editor's on-disk log (`tools/platform.sh editor-log`) when the console buffer is empty:
   read its tail wholesale, do not go fishing in it with a regex.
 
   **NEVER ask the user to screenshot or describe an error. The live link exists — USE IT.** Asking them to
@@ -592,7 +593,7 @@ that costs a round.
   2. **If it reports a fault, SAY IT TO THE USER IN THE FIRST REPLY**, in plain words, before whatever else they asked for. A silent guard is the user's problem to know about, not mine to file away.
   3. **If the session-start report never arrived at all, that is itself the fault** — say so plainly instead of assuming the guards are fine. An absent report is not a clean one.
   4. **Never claim a hook is working because it is configured.** The config is a wish; the heartbeat is the evidence.
-  5. **No interpreter name is ever written into the settings file.** Every hook starts through one small launcher that picks whatever Python the machine has (`python3`, `python`, `py`), because `python` exists on Windows and not on macOS and `python3` the other way round — hardcoding either is what killed the gate. Add a new hook the same way; a settings entry naming an interpreter directly is a bug.
+  5. **No interpreter name or machine path is ever written into the settings file or `.mcp.json`.** Every hook starts through one small launcher (`tools/hooks/run-hook.sh`), and every connection through `tools/start-mcp.sh`, and both ask `tools/platform.sh` — the one place that knows which computer this is — for a Python that actually RUNS: `python` is missing on macOS, and on Windows `python3` is a shortcut that only prints an error, so merely existing proves nothing. Hardcoding either is what killed the gate. Add a new hook or connection the same way; a settings entry naming an interpreter or a path directly is a bug.
   A guard nobody can see fail is worse than no guard at all, because it buys confidence it is not paying for.
 
 - **Run it yourself through the live editor — don't hand the user a menu click.** When an author-time action can be executed against the running editor (asset mutations, one-shot fixes, an existing tool's logic), RUN IT. A menu path is for the user ONLY when the editor link genuinely can't do it (a live Scene-view interaction, Play mode, or their own judgement). Separate from the forced-recompile ban above, which stays.

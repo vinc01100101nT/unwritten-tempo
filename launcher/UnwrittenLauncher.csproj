@@ -38,8 +38,7 @@
   <!-- THE GAME'S OWN FONTS, read from where the game keeps them rather than copied, so the launcher can never
        drift from the game's look. -->
   <ItemGroup>
-    <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/Cinzel.ttf" Link="Assets/Fonts/Cinzel.ttf" />
-    <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/Inter.ttf" Link="Assets/Fonts/Inter.ttf" />
+    <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/DejaVuSansCondensed.ttf" Link="Assets/Fonts/DejaVuSansCondensed.ttf" />
   </ItemGroup>
 
 </Project>
