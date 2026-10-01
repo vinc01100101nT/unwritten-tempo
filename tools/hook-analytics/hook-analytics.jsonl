@@ -4559,3 +4559,8 @@
 {"ts": "2026-09-30T14:42:19+08:00", "session_id": "e5b694a5-0683-49b3-a4b0-c92d081e3a90", "file": "/Users/vince/Desktop/CODES/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-09-30T14:42:20+08:00", "session_id": "e5b694a5-0683-49b3-a4b0-c92d081e3a90", "file": "/Users/vince/Desktop/CODES/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-09-30T14:42:21+08:00", "session_id": "e5b694a5-0683-49b3-a4b0-c92d081e3a90", "file": "/Users/vince/Desktop/CODES/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-01T20:13:21+08:00", "session_id": "d734b2a1-accb-4eb8-9988-0a452731f172", "file": "unity/Assets/Scripts/__probe_broken.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-01T20:25:25+08:00", "session_id": "d734b2a1-accb-4eb8-9988-0a452731f172", "file": "D:\\tempo\\projects\\roguelike-mmo\\charserver\\Program.cs", "outcome": "blocked", "doc": "SERVER.md"}
+{"ts": "2026-10-01T20:25:32+08:00", "session_id": "d734b2a1-accb-4eb8-9988-0a452731f172", "file": "D:\\tempo\\projects\\roguelike-mmo\\charserver\\Program.cs", "outcome": "passed", "doc": "SERVER.md"}
+{"ts": "2026-10-01T20:26:08+08:00", "session_id": "d734b2a1-accb-4eb8-9988-0a452731f172", "file": "D:\\tempo\\projects\\roguelike-mmo\\charserver\\test-handoff.sh", "outcome": "passed", "doc": "SERVER.md"}
+{"ts": "2026-10-01T20:26:17+08:00", "session_id": "d734b2a1-accb-4eb8-9988-0a452731f172", "file": "D:\\tempo\\projects\\roguelike-mmo\\charserver\\test-handoff.sh", "outcome": "passed", "doc": "SERVER.md"}
