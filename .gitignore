@@ -44,3 +44,6 @@ settings.env
 
 # Python leaves these beside every script it runs; regenerated on each run, never shared
 __pycache__/
+
+# Addressables flips a setting in here off and back on during every build; every value matches the package default
+unity/ProjectSettings/ScriptableBuildPipeline.json
