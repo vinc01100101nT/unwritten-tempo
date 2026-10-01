@@ -105,23 +105,14 @@ public static class UIShellBuilder
     {
         // The character's name, HP, MP, levels, experience and zeny are the status box's (StatusBox, top-left).
 
-        // Minimap — top-right corner (the map's picture + player/mob blips). Sits above the gold counter.
+        // Minimap — top-right corner (the map's picture + player/mob blips).
         BuildMinimap(canvas);
 
-        // Gold counter — top-right, tucked just under the minimap; GoldCounter.cs wires it to Wallet.OnChanged.
-        var goldPanel = NewPlate("HUD_GoldPanel", canvas);
-        Anchor(goldPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
-        goldPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8));
-        goldPanel.rectTransform.sizeDelta = new Vector2(120, 26);
-        var goldLabel = NewText("HUD_Gold", goldPanel.transform, "0 z", 15, FontStyle.Bold, TextAnchor.MiddleCenter);
-        Fill(goldLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
-        goldLabel.gameObject.AddComponent<GoldCounter>();
-
-        // Calendar + weather readout — continues the top-right stack (minimap ▸ gold ▸ date/weather).
+        // Calendar + weather readout — continues the top-right stack (minimap ▸ date/weather).
         // CalendarWeatherHUD.cs wires the two text lines to GameCalendar.DateString + WeatherDirector.CurrentName.
         var calPanel = NewPlate("HUD_CalendarPanel", canvas);
         Anchor(calPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
-        calPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8 + 26 + 8));
+        calPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8));
         calPanel.rectTransform.sizeDelta = new Vector2(150, 42);
         calPanel.raycastTarget = false;   // purely informational — never eats clicks
         var calLabel = NewText("HUD_Calendar", calPanel.transform, "Spring · Day 1\nClear", 13, FontStyle.Bold, TextAnchor.MiddleCenter);

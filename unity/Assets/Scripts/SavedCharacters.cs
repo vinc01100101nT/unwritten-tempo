@@ -36,7 +36,6 @@ public static class SavedCharacters
 
         // Everything it carries over, read off the creature AS IT DIED: its level may have grown in the fight.
         var block = died.GetComponent<UnitStatBlock>();   // perf-ok: once, at the moment a creature turns back
-        var brain = died.GetComponent<MonsterAI3D>();     // perf-ok: once, at the moment a creature turns back
         var carried = new Carried
         {
             def = def,
@@ -46,7 +45,6 @@ public static class SavedCharacters
             map = died.gameObject.scene,
             hasInputs = block != null,
             inputs = block != null ? block.inputs : default,
-            xp = brain != null ? brain.xpReward : 0,
             rolledGold = CombatRng.Range(Mathf.Min(def.goldMin, def.goldMax), Mathf.Max(def.goldMin, def.goldMax) + 1),
         };
 
@@ -79,7 +77,6 @@ public static class SavedCharacters
         public Scene map;
         public bool hasInputs;
         public UnitStatInputs inputs;
-        public int xp;
         public int rolledGold;
     }
 
@@ -103,7 +100,8 @@ public static class SavedCharacters
         var brain = go.GetComponent<MonsterAI3D>();   // perf-ok: once, at the moment a creature turns back
         if (brain != null)
         {
-            brain.xpReward = behaviour == SavedBehaviour.Rebel ? c.xp : 0;
+            // A REBEL PAYS what its level and kind are worth, like any creature; the others are not a kill.
+            brain.paysExperience = behaviour == SavedBehaviour.Rebel;
             brain.SetHome(c.at);
             brain.ThinksForItself = behaviour != SavedBehaviour.NeverFights;
         }
@@ -133,7 +131,9 @@ public static class SavedCharacters
     {
         if (go == null || who == null) return;
         var anim = go.GetComponent<BillboardAnimator3D>();   // perf-ok: once, when a body becomes a character
-        if (anim != null) anim.UseSheet(who.sheet, who.crownAtScaleOne, who.paintedWidthAtScaleOne, SavedCharacterRules.DrawnWidth);
+        if (anim != null)
+            anim.UseSheet(who.sheet, who.crownAtScaleOne, who.paintedWidthAtScaleOne, SavedCharacterRules.DrawnWidth,
+                          who.footPx >= 0f && anim.cell > 0 ? who.footPx / anim.cell : SpriteSheetCache.MobFootPivotY);
         MobBody.Fit(go, kind, MobSizes.Character);
         var plate = go.GetComponent<MobNameplate>();   // perf-ok: once, when a body becomes a character
         if (plate != null) plate.displayName = who.displayName;

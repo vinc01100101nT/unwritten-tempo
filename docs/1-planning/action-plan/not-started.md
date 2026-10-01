@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-09-30
 tags:
   - planning-production
 ---
@@ -173,6 +173,12 @@ Each of these is worth doing and none of them blocks the loop above. They are he
   "the object of type Image / TextMeshProUGUI has been destroyed" errors a session, from the hover plate over a unit
   rebuilding its status icons (`HoverPlate.RebuildIcons`, line 316, from its LateUpdate). Cause not looked into yet.
   *Done when:* a play session with fights and map changes logs none of them.
+- [ ] `MT-58` **`[E]` Give flat maps' ground its own collision.** Found 2026-09-30 under RULE ONEGROUND: a map whose
+  ground is flat (no levels, no cliffs, no painted heights) is drawn by one mesh but walked on by a separate invisible
+  box, `Ground_Floor`, laid under it — 49 scenes today. The box's top sits exactly at the drawn surface, so nothing
+  plays wrong yet, but it is the second piece the rule bans. Make the drawn ground its own collider on every map, and
+  re-lay the ground of the maps that have the box (only their ground — props and doors stay).
+  *Done when:* no scene has a `Ground_Floor`, and walking and creature routes on those maps behave as before.
 
 ## Not scheduled at all
 

@@ -65,7 +65,7 @@ public class MobTableWindow : EditorWindow
             "hp"     => (a, b) => Derived(a, MonsterDefStats.Stat.HP).CompareTo(Derived(b, MonsterDefStats.Stat.HP)),
             "atk"    => (a, b) => Derived(a, MonsterDefStats.Stat.Atk).CompareTo(Derived(b, MonsterDefStats.Stat.Atk)),
             "weight" => (a, b) => a.weight.CompareTo(b.weight),
-            "xp"     => (a, b) => a.xpReward.CompareTo(b.xpReward),
+            "xp"     => (a, b) => CreatureKinds.KillExperience(a.kind, a.level).CompareTo(CreatureKinds.KillExperience(b.kind, b.level)),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
             "elemlv" => (a, b) => a.elementLevel.CompareTo(b.elementLevel),
             _        => (a, b) => string.Compare(a.id, b.id, System.StringComparison.OrdinalIgnoreCase),
@@ -269,7 +269,8 @@ public class MobTableWindow : EditorWindow
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
         int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
-        int xp       = EditorGUI.IntField(VCenter(Next(), 18), def.xpReward);
+        // What a kill pays is worked out from the level and kind, never typed (decided 2026-09-30).
+        DrawDerived(Next(), CreatureKinds.KillExperience(def.kind, def.level));
         int gMin     = EditorGUI.IntField(VCenter(Next(), 18), def.goldMin);
         int gMax     = EditorGUI.IntField(VCenter(Next(), 18), def.goldMax);
         if (EditorGUI.EndChangeCheck())
@@ -287,7 +288,7 @@ public class MobTableWindow : EditorWindow
             FitSpreadToBudget(def.level, typed, prior);
             def.str = typed[0]; def.agi = typed[1]; def.vit = typed[2];
             def.intel = typed[3]; def.dex = typed[4]; def.luk = typed[5];
-            def.element = elem; def.elementLevel = Mathf.Clamp(elemLv, 1, Elements.MaxLevel); def.weight = wt; def.xpReward = xp;
+            def.element = elem; def.elementLevel = Mathf.Clamp(elemLv, 1, Elements.MaxLevel); def.weight = wt;
             def.goldMin = gMin; def.goldMax = gMax;
             EditorUtility.SetDirty(def);
         }

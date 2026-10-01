@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.child
   displayName: Child
   sheet: {fileID: 2800000, guid: 3d1c294bd424d584097c9cce318746ca, type: 3}
+  faceset: {fileID: 2800000, guid: 0dab201acbbd49c43804d5ae29fc33be, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

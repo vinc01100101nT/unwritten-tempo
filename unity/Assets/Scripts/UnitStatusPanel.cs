@@ -6,7 +6,7 @@ using TMPro;
 
 /// <summary>
 /// THE READOUT FOR THE UNIT YOU PICKED A FIGHT WITH — top-center of the screen, showing the one wearing the target
-/// arrow (<see cref="Player3DController.AttackTarget"/>): its name, its element, its HP and MP, its live
+/// arrow (<see cref="Player3DController.AttackTarget"/>): its name (a creature's portrait on its left), its element, its HP and MP, its live
 /// buffs/debuffs, and what it is carrying. It stays up for as long as the fight does.
 ///
 /// <para><b>Merely POINTING at something is not this readout's job</b> — that is <see cref="HoverPlate"/>, which
@@ -90,7 +90,9 @@ public class UnitStatusPanel : MonoBehaviour
         readonly Canvas canvas;
         readonly RectTransform root;
         readonly CanvasGroup group;
-        readonly Image hpTrack, hpFill, mpTrack, mpFill, elementBadge;
+        readonly Image hpTrack, hpFill, mpTrack, mpFill, elementBadge, portrait;
+        // The creature's face, left of its name — see CreaturePortraits. Hidden for anyone without one.
+        bool portraitShown;
         readonly TMP_Text nameLabel, hpLabel, elementLabel;
         readonly RectTransform statesRow;
         readonly List<Cell> cells = new List<Cell>(MaxIcons);
@@ -142,6 +144,10 @@ public class UnitStatusPanel : MonoBehaviour
             mpFill  = NewBarFill(mpTrack.rectTransform, MpColor);
 
             nameLabel = NewText("Name", root, 13, TextAlignmentOptions.TopLeft, UiKit.TitleText);
+
+            portrait = NewImage("Portrait", root, Color.white);
+            portrait.preserveAspect = true;
+            portrait.gameObject.SetActive(false);
 
             elementBadge = NewImage("ElementBadge", root, new Color(0.2f, 0.15f, 0.28f, 0.90f));
             elementLabel = NewText("ElementLabel", elementBadge.rectTransform, 9, TextAlignmentOptions.Center, Color.white);
@@ -209,10 +215,16 @@ public class UnitStatusPanel : MonoBehaviour
             lastLevel = shell != null ? shell.Level : 0;
             nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
+            var face = CreaturePortraits.For(h, shell);
+            bool faceChanged = (face != null) != portraitShown;
+            portraitShown = face != null;
+            portrait.sprite = face;
+            portrait.gameObject.SetActive(portraitShown);
+
             DrawElementBadge(h);
 
             bool mana = h.MaxMP > 0;               // no pool → no bar, rather than an always-empty one
-            if (mana != hasMana) { hasMana = mana; Layout(); }
+            if (mana != hasMana || faceChanged) { hasMana = mana; Layout(); }
             mpTrack.gameObject.SetActive(hasMana);
 
             RebuildStates();
@@ -348,7 +360,9 @@ public class UnitStatusPanel : MonoBehaviour
                 y -= MpBarH + 2f;
             }
 
-            PlaceTopLeft(nameLabel.rectTransform, new Vector2(Pad, y), new Vector2(inner, NameH));
+            float face = portraitShown ? NameH + 4f : 0f;
+            if (portraitShown) PlaceTopLeft(portrait.rectTransform, new Vector2(Pad, y), new Vector2(NameH, NameH));
+            PlaceTopLeft(nameLabel.rectTransform, new Vector2(Pad + face, y), new Vector2(inner - face, NameH));
             y -= NameH + 2f;
 
             PlaceTopLeft(elementBadge.rectTransform, new Vector2(Pad, y), new Vector2(BadgeW, BadgeH));

@@ -41,12 +41,9 @@ public class PersistentPlayer3D : MonoBehaviour
     void Start() { if (!placed) PlaceInScene(); }                 // first map (no sceneLoaded for it)
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlaceInScene();
 
-    /// <summary>Teleport the avatar back to the current map's SpawnPoint (used by the death screen
-    /// on respawn). Reuses the same snap-to-terrain placement as a fresh map arrival.</summary>
-    public void Respawn() => PlaceInScene();
-
-    /// <summary>Put the player back where their save says they were. Called once, by <see cref="SaveManager"/>,
-    /// after the save arrives — which is always later than the map coming up, because it crosses a network.</summary>
+    /// <summary>Place the player again in the map they are already in, by whatever <see cref="SceneTravel"/> now
+    /// holds — where their save says they were (<see cref="SaveManager"/>, once the save arrives, which is always later
+    /// than the map coming up), or a save point / arrival point the server sent them to in this same map.</summary>
     public void ReturnToSavedPlace() => PlaceInScene();
 
     void PlaceInScene()
@@ -59,9 +56,9 @@ public class PersistentPlayer3D : MonoBehaviour
 
         if (controller != null) controller.Halt();   // don't carry a half-finished order across maps
 
-        // Where the player logged out beats where the map would put them — but only in the map they logged
-        // out of, and only once. Anything else (a door, a death, a fresh character) falls through to the
-        // spawn point exactly as before.
+        // An exact spot — where the player logged out, or the save point the server sent them to — beats where the
+        // map would put them, but only in the map it names, and only once. Anything else (a door, a fresh
+        // character, a death with no save point) falls through to an arrival point.
         if (SceneTravel.HasResume && SceneTravel.ResumeScene == MapManager.CurrentMap)
         {
             MoveTo(SceneTravel.ResumePosition);
@@ -127,7 +124,7 @@ public class PersistentPlayer3D : MonoBehaviour
     // carry one called "Start" at its exact middle, planted there by the generator with nothing checking what was
     // already standing on that spot — which is why arriving in a field dropped you through the floor and out of
     // the world. Doors name their own arrival points and are unaffected; anything that arrives without naming one
-    // (a teleport, a respawn, a new character) falls to the line below.
+    // (a teleport, a new character) falls to the lines below.
     SpawnPoint ResolveSpawn()
     {
         var all = FindObjectsByType<SpawnPoint>();
@@ -141,6 +138,12 @@ public class PersistentPlayer3D : MonoBehaviour
                 if (sp.id == SceneTravel.Target) { SceneTravel.Target = null; return sp; }
             SceneTravel.Target = null;   // id not in this map — ignore
         }
+
+        // NOBODY NAMED ONE, in the map the defaultless stand back up in: its default arrival point, so a new
+        // character and a death with no save point both come out at the same door (decided 2026-09-30).
+        if (MapManager.CurrentMap == SavePoint.DefaultMap)
+            foreach (var sp in points)
+                if (sp.id == SavePoint.DefaultSpawnId) return sp;
         return points.Count > 0 ? points[0] : null;
     }
 

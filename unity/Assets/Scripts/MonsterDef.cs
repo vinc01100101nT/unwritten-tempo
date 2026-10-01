@@ -38,6 +38,8 @@ public class MonsterDef : ScriptableObject
     [Tooltip("The folder its pictures are in. Kept by Unity's own link to the folder, so renaming or moving the " +
              "folder changes nothing here.")]
     [FolderLink] public string artFolder = "";
+    [Tooltip("Its portrait — the face drawn beside its name when you point at it or fight it. Empty = none (a shadow).")]
+    public Texture2D faceset;
     [Tooltip("Relative spawn frequency in a mixed field (commons higher). Bosses use 0.")]
     public int weight = 1;
     [Tooltip("SpriteRenderer tint (white = none).")]
@@ -96,7 +98,6 @@ public class MonsterDef : ScriptableObject
     //  old values, so there was nothing left for them to carry.)
 
     [Header("Offense")]
-    public int xpReward = 5;
     public float touchRange = 0.9f;
     public float touchInterval = 1.0f;
 
@@ -177,7 +178,6 @@ public class MonsterDef : ScriptableObject
             size = size,
             hardDefPercent = hardDefPercent,
             hardMagicDefPercent = hardMagicDefPercent,
-            xpReward = xpReward,
             touchRange = touchRange,
             touchInterval = touchInterval,
             moveSpeed = moveSpeed,

@@ -76,6 +76,9 @@ public class NetNpc : NetworkBehaviour
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
 
+    /// <summary>This person's level as the server holds it. Written once, when the shell is bound.</summary>
+    [SyncVar] int netLevel;
+
     /// <summary>How fast this person is actually walking on the ground, in units per second — 0 while they stand.
     /// TOLD rather than left for each watcher to work out, because a watcher can only measure the catch-up glide
     /// toward the positions it received, not the walk.</summary>
@@ -137,6 +140,7 @@ public class NetNpc : NetworkBehaviour
         mapName = npc != null ? npc.gameObject.scene.name : "";
         serverBrain = npc != null ? npc.GetComponent<TownNPC>() : null;
         stationKind = serverBrain != null ? (int)serverBrain.station : 0;
+        netLevel = serverBrain != null ? serverBrain.Level : 1;
         serverAgent = npc != null ? npc.GetComponent<PathAgent3D>() : null;
         if (npc != null)
         {
@@ -218,6 +222,8 @@ public class NetNpc : NetworkBehaviour
     // and a per-frame component lookup at that rate is exactly what PERFORMANCE.md bans.
     Agent3DVisual viewVisual;
 
+    readonly LevelCapAura levelAura = new LevelCapAura();
+
     // The map this machine was standing in when we last decided whether to draw this person. An INTEGER, not the
     // name: this runs on every townsperson in the world every frame, and PERFORMANCE.md bans a string compare at
     // that rate. It only ever moves when somebody walks through a door.
@@ -251,6 +257,9 @@ public class NetNpc : NetworkBehaviour
         // WHAT THE BODY IS DOING, handed over rather than guessed at. Its mover and its brain are switched off on
         // this machine, so the two things its animation used to read from both answer "nothing" forever.
         if (viewVisual != null) viewVisual.TellTravelSpeed(netSpeed);
+
+        // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
+        levelAura.Show(netLevel, view.transform);
 
         ShowWhatTheySaid();
     }
@@ -336,6 +345,7 @@ public class NetNpc : NetworkBehaviour
     void DropTheView()
     {
         if (view == null) return;
+        levelAura.Stop();
         byView.Remove(view);
         Destroy(view);
         view = null;

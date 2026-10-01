@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.lion
   displayName: Lion
   sheet: {fileID: 2800000, guid: f121fbaaf2d983b49be48fea3566ca59, type: 3}
+  faceset: {fileID: 2800000, guid: 074fa1431f30f3545bdd916ad70e9b04, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

@@ -22,10 +22,10 @@ public sealed class RingProgress
     public int Level { get; private set; } = 1;
 
     /// <summary>Ring XP banked toward the next ring level.</summary>
-    public int XP { get; private set; }
+    public double XP { get; private set; }
 
-    /// <summary>XP needed to reach the next ring level — a slightly slower curve than the character's,
-    /// so the ring is a deliberate, felt second track rather than a mirror of the level bar.</summary>
+    /// <summary>XP needed to reach the next ring level — the character's own curve (decided 2026-09-30). The ring is
+    /// paid a third of every kill's experience (<see cref="UnitStatMath.RingXpFromKill"/>) and has no cap.</summary>
     public int XPToNext => UnitStatMath.RingXpToNextFrom(Level);
 
     /// <summary>Fired on any XP or level change — drives the K-panel ring readout (level + XP bar).</summary>
@@ -38,14 +38,16 @@ public sealed class RingProgress
     /// Returns how many ring levels that gained, so the server can tell the owner's machine how many to
     /// celebrate. Server-side only: a player's machine takes the finished answer through
     /// <see cref="TakeFromServer"/>.</summary>
-    public int AddXP(int amount)
+    public int AddXP(double amount)
     {
-        if (amount <= 0) return 0;
+        if (amount <= 0.0) return 0;
         int gained = 0;
-        XP += amount;
+        // server-math: only the server pays a ring; a player's machine takes TakeFromServer's finished figure
+        XP = UnitStatMath.RoundExperience(XP + amount);
         while (XP >= XPToNext)
         {
-            XP -= XPToNext;
+            // server-math: the level-up loop runs on the server only, like the add above
+            XP = UnitStatMath.RoundExperience(XP - XPToNext);
             Level++;
             gained++;
             Passives.AddPoint();          // a ring level = one new Trio-Ring point to spend
@@ -57,10 +59,10 @@ public sealed class RingProgress
 
     /// <summary>Take the server's word for the ring's level, XP and banked points after it paid this ring, and
     /// fire the level toast once per level it says was gained. This machine works out none of it.</summary>
-    public void TakeFromServer(int level, int xp, int bankedPoints, int levelsGained)
+    public void TakeFromServer(int level, double xp, int bankedPoints, int levelsGained)
     {
         Level = Math.Max(1, level);
-        XP = Math.Max(0, xp);
+        XP = Math.Max(0.0, xp);
         Passives.SetBankedPoints(bankedPoints);
         for (int reached = Level - levelsGained + 1; reached <= Level; reached++)
             if (reached > 1) OnLeveledUp?.Invoke(reached);
@@ -86,14 +88,14 @@ public sealed class RingProgress
     public int BankedPoints => Passives.BankedPoints;
 
     // ---- save / load ----------------------------------------------------------
-    public void Capture(out int level, out int xp) { level = Level; xp = XP; }
+    public void Capture(out int level, out double xp) { level = Level; xp = XP; }
 
     /// <summary>Restore level + XP from a save. The passive ranks/banked + owned skills are restored
     /// separately (by <see cref="Character.RestoreSave"/>, via <see cref="Passives"/>/<see cref="Skills"/>).</summary>
-    public void Restore(int level, int xp)
+    public void Restore(int level, double xp)
     {
         Level = Math.Max(1, level);
-        XP = Math.Max(0, xp);
+        XP = Math.Max(0.0, xp);
         OnChanged?.Invoke();
     }
 }

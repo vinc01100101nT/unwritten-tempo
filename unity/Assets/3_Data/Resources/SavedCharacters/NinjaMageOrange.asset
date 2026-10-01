@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-mage-orange
   displayName: Ninja Mage Orange
   sheet: {fileID: 2800000, guid: 62be7822fef18924393464dcbbaa2a9b, type: 3}
+  faceset: {fileID: 2800000, guid: ed746bbd94e8cc140bf88f084b1afa13, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.golden-bandit
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

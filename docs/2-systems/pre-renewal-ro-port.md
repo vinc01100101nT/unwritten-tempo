@@ -24,6 +24,7 @@ Porting the game's combat/stat math from its custom **linear** system to authent
 - **DONE — Phase 2: HIT / FLEE / Crit authentic values**
 - **DONE — Phase 3: ATK/MATK sub-bonuses + the % DEF split + crit-bypass + crit-shield + mob-DEF authoring.** ⚠️ **The mob half was superseded by the unified stat model** (2026-08-10) and this line's original mechanism is gone: mob DEF/LUK is no longer hand-authored per archetype, and the class it named as the stamper no longer exists in the project. Today a mob's numbers are derived from its level and six primaries, and the roster is authored in the Mob Table. Fine-tuning is still ongoing playtest work. See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
 - **DONE — Phase 4: per-class HP/SP + ASPD.** Vitals are now per-class with VIT/INT as PERCENT multipliers; ASPD gains a DEX term. :warning: Notable rebalance — see Phase 4 section.
+- **BUILT, not yet played — Phase 5: the experience curve.** Ragnarok's base table and its creatures' experience, each as one formula; earning stops at level 99; the ring and weapon mastery paid a share of every kill on the same curve. See Phase 5 section.
 
 ## Phase 1 — Stat allocation (DONE)
 
@@ -66,7 +67,33 @@ The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning)
 - VIT switched from flat (×8/pt) to %, so VIT is now a *multiplier* on level-driven base HP — weaker early, scales with level (the authentic relationship). 
 - The default **Mage** is now genuinely squishy (≈17 HP at L1 vs the old 28) and has a deeper SP pool; **Swordsman** is the opposite. Early game is more fragile until you level / invest VIT. Retune via the dials above if too punishing.
 
-## Watch-outs
+## Phase 5 — Experience (BUILT 2026-09-30, not yet played)
+
+Ragnarok's base experience table is written by hand; here it is one formula fitted to it, and so is what its normal
+creatures pay by level. Both live in `UnitStatMath` and are pinned by `tools/check-game-math.sh`.
+
+- **A level's cost**, base level L to L+1 = **6.25 × L^1.23 × e^(0.098 × L + 0.021 × max(0, L − 90)²)**, rounded. The
+  last term is Ragnarok's climb from 90 to 99. Against Ragnarok's normal-class table a typical level is within 8%,
+  the worst (the levels it jumps by hand: 29, 39, 49, 59, 69, 70) within 41%, and 1 → 99 costs 409,648,693 in all,
+  1.01× Ragnarok's 405,234,427.
+- **A kill pays**, by the creature's own level = **0.31 × L² × e^(0.02 × L)**, rounded, never below 2 — the curve
+  Ragnarok's normal creatures follow. An **elite pays 10×** and a **shadow 20×** (Ragnarok's bosses pay 5–10× a normal
+  creature of their level). Nothing typed onto a creature changes it, and there is no level-gap rule, as in
+  pre-renewal. A creature that levels up mid-fight pays its new level.
+- **Kills a level takes:** 3 at level 1, 15 at 30, 49 at 50, 180 at 70, 706 at 90, 4,728 at 98 — about 26,800 from 1
+  to 99, 62% of them after 90.
+- **The cap is base level 99.** At 99 the character earns nothing more; the ring and weapon mastery still do. The
+  cap stops EARNING only: a GM's `/lvl` sets any level, and a level above 99 is kept through a sign-in.
+- **The ring is paid a third of every kill's experience, the weapon in hand two thirds** (times its grade's
+  training speed), and both climb the SAME curve. All three tracks are paid by one rule — the kill's experience
+  times the track's scale (1, ⅓, ⅔ × grade speed), kept to two decimals (the nearest hundredth, a half going up)
+  — so a kill worth 2 pays 2.00 / 0.67 / 1.33. Every track stores and shows its experience to two decimals. Beyond that: ring level R costs what base level R does, and mastery M to M+1
+  what base level M+1 does. The ring has no cap and keeps levelling after 99 — a third of a climb to 99 stands it at
+  about ring 93. Weapon mastery stops only at its grade's cap; at par, mastery 70 (the highest cap) comes around
+  base level 74.
+- **Older saves (below v16)** keep every level, and the experience inside the
+  character's level, the ring's level and every weapon's mastery keeps the same share of the way through it.
+
 
 - **Breakpoint inflation:** pre-renewal has hard breakpoints (DEX 150 = instant cast, ASPD thresholds). Stat-granting gear must be budgeted / soft-capped, or gear trivializes the breakpoints. Options: budget stat gear, soft-cap gear stat contributions, or keep a fixed cast floor.
 - **Equipment + cards complement pre-renewal:** cards are pre-renewal's native progression and map cleanly onto the game's two-layer model (flat-stat cards → flat layer; %-cards → passive-% layer; proc cards → StatusController/MultiHitBurst hooks). Card-slot count is authored per item and is not gated by anything else — a piece's own numbers come from its folds and its quality grade, and the stats written onto it with Ink.

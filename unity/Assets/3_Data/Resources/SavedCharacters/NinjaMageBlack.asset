@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-mage-black
   displayName: Ninja Mage Black
   sheet: {fileID: 2800000, guid: b9cd6bc66da221d4da378eb00c3103a4, type: 3}
+  faceset: {fileID: 2800000, guid: 747d4ba8582563a499962fc21c98e811, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.abyss-maw
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

@@ -49,7 +49,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **The mob builder does NOT stamp derived stats.** `RigBuilder25D` sets only armour percentages and presentation; `UnitStatBlock` is the single writer of `maxHealth`/`defense`/`magicDefense`/`flee`/`luk` and `attack`/`hit`/`damageSpread`. `MonsterArchetype` carries the stat block, not a snapshot of its outputs — there is no second copy to drift. The legacy `MobRoster` fallback entries carry a level + `UnitStatMath.Allocate` spread for the same reason.
 
-**The only surviving growth rate is a REWARD, not a stat.** `MonsterAI3D.XpRewardGrowthPerLevel` (0.15) scales what killing a mob is worth. Named so nobody mistakes it for a stat multiplier.
+**What a kill pays is not authored on the creature.** `CreatureKinds.KillExperience(kind, level)` works it out from the creature's level at death and its kind (see [the curve](../pre-renewal-ro-port.md)), so a creature that levels up mid-fight simply pays its new level; there is no reward growth rate and no per-creature number.
 
 **Worn gear is serialized on the component, not the dictionary.** `UnitEquipment.startingGear` is the serialized half; the live dictionary is runtime-only. Gear is equipped **lazily on first access**, not in `Awake`, so component wake order between `UnitEquipment` and `UnitStatBlock` cannot matter. Getting this wrong makes mob rings silently do nothing.
 

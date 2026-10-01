@@ -44,7 +44,10 @@ public class MonsterAI3D : MonoBehaviour
     [Range(0f, 1f)] public float damageSpread = 0.25f;
     [Tooltip("HIT (RO accuracy). Rolled against the player's FLEE on each bite; lose and the attack MISSes (white).")]
     public int hit = 8;
-    public int xpReward = 5;
+    /// <summary>Whether killing this creature pays experience at all — what it pays is its level's and its kind's
+    /// (<see cref="CreatureKinds.KillExperience"/>). Off for the training dummy and for a saved character that is not
+    /// a rebel. Set in code each time a body is given its part, so it is never saved.</summary>
+    [System.NonSerialized] public bool paysExperience = true;
     [Tooltip("UNARMED reach (world units, full size). A mob holding a weapon uses that weapon's Attack Range " +
              "instead — the same rule the player uses, so arming a mob extends its reach exactly as it would yours.")]
     public float touchRange = 0.9f;
@@ -61,10 +64,6 @@ public class MonsterAI3D : MonoBehaviour
     public int xpToFirstLevel = 20;
     // (Removed 2026-08-10: perLevelGrowth. A mob's STATS are RE-DERIVED at each level through the same formulas the
     //  player uses — there is no mob-only stat growth rate to drift.)
-
-    /// <summary>How much more XP this mob is worth per level it gains (0.15 = +15%). A payout curve, NOT a stat
-    /// multiplier — the unit model has none. Kept as one named constant so raising the reward curve is a single edit.</summary>
-    public const float XpRewardGrowthPerLevel = 0.15f;
 
     [Header("Behavior style")]
     [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
@@ -378,8 +377,10 @@ public class MonsterAI3D : MonoBehaviour
         if (Health != null)
             Health.onDeath.AddListener(() =>
             {
-                // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both.
-                Rewards.PayForKill(Rewards.WhoEarned(Health), xpReward, Health);
+                // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both. Read
+                // at the moment of death, so a creature that levelled up in the fight pays its new level.
+                if (paysExperience)
+                    Rewards.PayForKill(Rewards.WhoEarned(Health), CreatureKinds.KillExperience(Health.kind, Health.Level), Health);
             });
 
         nextWander = Time.time + Random.value;
@@ -416,10 +417,6 @@ public class MonsterAI3D : MonoBehaviour
             level++;
             if (Health != null) Health.RefillToMax();
         }
-        // The one thing that DOES still grow by a rate — and legitimately so: xpReward is a REWARD, not a stat. It
-        // says what killing this mob is worth to the player, which is a payout curve, not part of the unit model the
-        // player and mobs share. Named so it can't be mistaken for a surviving stat multiplier.
-        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * (1f + XpRewardGrowthPerLevel)));
         DamagePopup.SpawnText(transform, "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }

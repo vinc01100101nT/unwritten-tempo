@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.cavegirl
   displayName: Cavegirl
   sheet: {fileID: 2800000, guid: 5a30abbf68f86ca4ea6bd19c55fbd92c, type: 3}
+  faceset: {fileID: 2800000, guid: 807e2e756e7599142b566708ad9b75ea, type: 3}
   behaviour: 1
   group: 2
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

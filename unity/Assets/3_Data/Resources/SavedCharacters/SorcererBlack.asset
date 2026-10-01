@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.sorcerer-black
   displayName: Sorcerer Black
   sheet: {fileID: 2800000, guid: b81367cbccac6a74296454b07beb56fd, type: 3}
+  faceset: {fileID: 2800000, guid: 1650f46c2e163f04e9551da48f73816f, type: 3}
   behaviour: 1
   group: 5
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

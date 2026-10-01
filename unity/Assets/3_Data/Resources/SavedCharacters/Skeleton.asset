@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.skeleton
   displayName: Skeleton
   sheet: {fileID: 2800000, guid: 1379cb3fb46214b4a8facd1b13256e3a, type: 3}
+  faceset: {fileID: 2800000, guid: 726bcc1a687036a4da3ddd800aaf0ff7, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.9375

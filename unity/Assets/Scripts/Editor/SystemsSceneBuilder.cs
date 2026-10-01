@@ -87,7 +87,6 @@ public static class SystemsSceneBuilder
         var gameSystems = new GameObject("GameSystems");
         gameSystems.AddComponent<GameSystems>();        // global services host + frame-rate cap (60 FPS, VSync off)
         RigBuilder25D.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
-        gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
         gameSystems.AddComponent<MusicDirector>();      // persistent BGM: crossfades to each map's BgmTrack, survives map swaps
         gameSystems.AddComponent<TimeOfDay>();          // real-UTC-anchored day/night clock (2-hour cycle, 12×) + DayIndex + live tuner

@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.camouflage-red
   displayName: Camouflage Red
   sheet: {fileID: 2800000, guid: 32793363677a0074895f3b5041a750dd, type: 3}
+  faceset: {fileID: 2800000, guid: b66809bcd8cf825438d8bc0e1c319a1d, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 1

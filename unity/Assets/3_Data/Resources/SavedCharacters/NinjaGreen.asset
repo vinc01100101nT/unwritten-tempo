@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-green
   displayName: Ninja Green
   sheet: {fileID: 2800000, guid: 0977df0f4fd74a34f923bab41921687e, type: 3}
+  faceset: {fileID: 2800000, guid: 905094aadaa154240890786377c11c2b, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.autumn-stalk
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.robot-green
   displayName: Robot Green
   sheet: {fileID: 2800000, guid: ff98e50276b8d9b47bcbf75c26f1f810, type: 3}
+  faceset: {fileID: 2800000, guid: 32afec5e86208db4a979eb08b696a9c1, type: 3}
   behaviour: 2
   group: 7
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

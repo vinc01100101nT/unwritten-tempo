@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.sultan
   displayName: Sultan
   sheet: {fileID: 2800000, guid: 67bdaa764337ff948bdef03c3967813b, type: 3}
+  faceset: {fileID: 2800000, guid: ea33ed3104de54a41ada2eb423107826, type: 3}
   behaviour: 0
   group: 1
   goldTier: 3
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

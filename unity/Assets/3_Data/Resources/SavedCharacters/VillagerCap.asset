@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.villager-cap
   displayName: Villager Cap
   sheet: {fileID: 2800000, guid: c371079f32a76c54ab806dd06365de62, type: 3}
+  faceset: {fileID: 2800000, guid: 1fbae096befb4344594ba814e289f048, type: 3}
   behaviour: 0
   group: 0
   goldTier: 1
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

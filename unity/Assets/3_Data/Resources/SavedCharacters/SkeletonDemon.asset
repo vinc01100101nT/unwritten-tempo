@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.skeleton-demon
   displayName: Skeleton Demon
   sheet: {fileID: 2800000, guid: a2d2a7d469c6c0e499daec1537e5b179, type: 3}
+  faceset: {fileID: 2800000, guid: 6d63206cd8ccd6b4ba520b69ca1f5a30, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.9375

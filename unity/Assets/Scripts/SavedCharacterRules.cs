@@ -28,6 +28,9 @@ public static class SavedCharacterRules
     /// <summary>How long the aura that marks a character that has just appeared plays before it fades out.</summary>
     public const float AppearAuraSeconds = 2f;
 
+    /// <summary>How big that aura is drawn against its authored size: half.</summary>
+    public const float AppearAuraScale = 0.5f;
+
     /// <summary>Whether a creature of <paramref name="kind"/> can turn back at all. A shadow never does.</summary>
     public static bool CanTurnBack(CreatureKind kind) => kind == CreatureKind.Normal || kind == CreatureKind.Elite;
 

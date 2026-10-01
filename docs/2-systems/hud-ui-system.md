@@ -112,7 +112,7 @@ background and veil), not to any window.
 | TextDim | `#6C7380` | labels, units, secondary copy |
 | TitleText | `#22324D` | a window's title and headings |
 | ButtonText | `#222222` | a button's label |
-| TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice, the death screen |
+| TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice, the loading screen |
 | Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers |
 | Good | `#2E7D41` | a stat that went up |
 | Bad | `#B83A3A` | a stat that went down; a refusal |

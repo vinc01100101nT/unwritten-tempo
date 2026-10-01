@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.mask-frog
   displayName: Mask Frog
   sheet: {fileID: 2800000, guid: 287860b4229afd048acbce7696cbf442, type: 3}
+  faceset: {fileID: 2800000, guid: b5b96d6c8ad995f469e291c39646f9e9, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

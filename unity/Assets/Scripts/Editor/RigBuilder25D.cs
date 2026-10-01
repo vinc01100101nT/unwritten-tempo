@@ -312,15 +312,36 @@ public static class RigBuilder25D
     /// painted, in world units at scale one — the walk frames at the top of the four direction columns, feet line at
     /// <see cref="SpriteFoot"/> of a cell. What a mob's body is fitted against, and what a saved character's asset
     /// records for its sheet.</summary>
-    public static void MeasureGridSheet(Texture2D sheet, int cell, int walkFrames, ref float crown, ref float width)
+    public static void MeasureGridSheet(Texture2D sheet, int cell, int walkFrames, ref float crown, ref float width,
+                                        float footPx = -1f)
     {
         if (sheet == null || cell <= 0 || !ReadPixels(sheet, out var px, out int w, out int h)) return;
         int cols = Mathf.Max(1, w / cell), rows = Mathf.Max(1, h / cell);
         int frames = Mathf.Clamp(walkFrames, 1, rows);
+        float feet = footPx >= 0f ? footPx : SpriteFoot * cell;
         for (int c = 0; c < 4; c++)
             for (int r = 0; r < frames; r++)
                 MeasureFrame(px, w, Mathf.Min(c, cols - 1) * cell, h - (r + 1) * cell, cell, cell,
-                             SpriteFoot * cell, cell, ref crown, ref width);
+                             feet, cell, ref crown, ref width);
+    }
+
+    /// <summary>The lowest painted row across a GRID sheet's walk frames, in pixels up from the bottom of a cell — where
+    /// its feet stand. -1 when nothing is painted or the picture cannot be read.</summary>
+    public static float GridSheetFootPx(Texture2D sheet, int cell, int walkFrames)
+    {
+        if (sheet == null || cell <= 0 || !ReadPixels(sheet, out var px, out int w, out int h)) return -1f;
+        int cols = Mathf.Max(1, w / cell), rows = Mathf.Max(1, h / cell);
+        int frames = Mathf.Clamp(walkFrames, 1, rows);
+        int lowest = int.MaxValue;
+        for (int c = 0; c < Mathf.Min(4, cols); c++)
+            for (int r = 0; r < frames; r++)
+            {
+                int x0 = c * cell, y0 = h - (r + 1) * cell;
+                for (int y = y0; y < y0 + cell && y - y0 < lowest; y++)
+                    for (int x = x0; x < x0 + cell; x++)
+                        if (px[y * w + x].a != 0) { lowest = Mathf.Min(lowest, y - y0); break; }
+            }
+        return lowest == int.MaxValue ? -1f : lowest;
     }
 
     static void MeasureStrip(in BillboardAnimator3D.StripClip clip, int ppu, ref float crown, ref float width)
@@ -403,7 +424,6 @@ public static class RigBuilder25D
 
         var ai = go.AddComponent<MonsterAI3D>();
         // attack / hit / damageSpread: same story — derived, written by UnitStatBlock, not stamped here.
-        ai.xpReward       = arc.xpReward;
         ai.touchRange     = arc.touchRange;
         ai.touchInterval  = arc.touchInterval;
         ai.moveSpeed      = arc.moveSpeed;

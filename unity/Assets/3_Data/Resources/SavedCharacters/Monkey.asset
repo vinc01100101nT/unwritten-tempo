@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.monkey
   displayName: Monkey
   sheet: {fileID: 2800000, guid: 31a4178f6f5bcf54d8ae2ee2ff7395db, type: 3}
+  faceset: {fileID: 2800000, guid: 91266ba81fc48334cad98e2623413700, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

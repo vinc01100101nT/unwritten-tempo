@@ -19,6 +19,10 @@ OUT = os.path.join(os.path.dirname(__file__), "..", "unity", "Assets", "3_Data",
 
 # Every corner radius drawn anywhere: a window (5) and its body (4), a button (3) and its well (2), a speech bubble (14).
 RADII = [2, 3, 4, 5, 14]
+# A RIM: only the edge of a framed shape, so a see-through body shows the world behind it rather than an opaque edge
+# colour. Each is (outer radius, inset of the body, the body's radius) — a window edge around its body, and a button
+# or field edge around its well — so the rim's inside is exactly the body's outline.
+RIMS = [(5, 2, 4), (3, 1, 2)]
 # The title bar's top corners sit inside a window body, so they use the body's radius.
 TITLE_RADIUS = 4
 TITLE_W, TITLE_H = 16, 32
@@ -56,6 +60,20 @@ def main():
         for y in range(s - 1, -1, -1):
             rows.append([(255, 255, 255, round(255 * rounded_alpha(x + 0.5, y + 0.5, s, s, r))) for x in range(s)])
         name = "Rounded%d" % r
+        png(os.path.join(OUT, name + ".png"), s, s, rows)
+        borders[name] = (r + 1, r + 1, r + 1, r + 1)
+
+    for r, inset, inner_r in RIMS:
+        s = r * 2 + 4
+        rows = []
+        for y in range(s - 1, -1, -1):
+            row = []
+            for x in range(s):
+                outer = rounded_alpha(x + 0.5, y + 0.5, s, s, r)
+                inner = rounded_alpha(x + 0.5 - inset, y + 0.5 - inset, s - 2 * inset, s - 2 * inset, inner_r)
+                row.append((255, 255, 255, round(255 * max(0.0, outer - inner))))
+            rows.append(row)
+        name = "RoundedRim%d" % r
         png(os.path.join(OUT, name + ".png"), s, s, rows)
         borders[name] = (r + 1, r + 1, r + 1, r + 1)
 

@@ -175,13 +175,13 @@ public class SkillDraftPanel : MonoBehaviour
         var barBg = NewImage(content, UiKit.Rule);
         SetHeight(barBg.gameObject, 12);
         barBg.raycastTarget = false;
-        float frac = Mathf.Clamp01(r.XP / (float)Mathf.Max(1, r.XPToNext));
+        float frac = Mathf.Clamp01((float)(r.XP / Mathf.Max(1, r.XPToNext)));
         var fill = NewImage(barBg.transform, UiKit.Accent);
         fill.raycastTarget = false;
         var frt = fill.rectTransform;
         frt.anchorMin = new Vector2(0f, 0f); frt.anchorMax = new Vector2(frac, 1f);
         frt.offsetMin = Vector2.zero; frt.offsetMax = Vector2.zero;
-        var xpLabel = NewText(barBg.transform, $"XP {r.XP} / {r.XPToNext}", 10, FontStyle.Bold, TextAnchor.MiddleCenter);
+        var xpLabel = NewText(barBg.transform, $"XP {r.XP:0.00} / {r.XPToNext}", 10, FontStyle.Bold, TextAnchor.MiddleCenter);
         xpLabel.raycastTarget = false;
         var xrt = xpLabel.rectTransform;
         xrt.anchorMin = Vector2.zero; xrt.anchorMax = Vector2.one; xrt.offsetMin = xrt.offsetMax = Vector2.zero;

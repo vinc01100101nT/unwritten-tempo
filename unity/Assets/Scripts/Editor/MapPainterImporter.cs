@@ -149,18 +149,69 @@ public class MapPainterImporter : EditorWindow
     }
 
     // ── IMPORT ────────────────────────────────────────────────────────────────────────────────────────
+    // Set only by RebuildGroundCore: merge into this scene (not the active one) and report through the log, not dialogs.
+    Scene? _mergeInto;
+    bool _quiet;
+    string _lastProblem;
+
+    void Say(string msg)
+    {
+        if (_quiet) { _lastProblem = msg; Debug.Log("[unwritten] Import Painted Map: " + msg.Replace("\n", " ")); }
+        else EditorUtility.DisplayDialog("Import Painted Map", msg, "OK");
+    }
+
+    /// <summary>Dialog-free: lay the ground of a painted map again from its map.json, and nothing else — its props,
+    /// walls, doors and arrival points stay exactly as they are. For a change to how ground is built, so it reaches a
+    /// painted map without re-importing the rest. The scene is opened alongside whatever is open, saved and closed; the
+    /// scenes open before, and the active one, are left as they were. Returns null on success, else what went wrong.</summary>
+    public static string RebuildGroundCore(string jsonPath, string scenePath)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return "exit Play mode first";
+        if (!File.Exists(scenePath)) return "no scene at " + scenePath;
+        if (SceneManager.GetSceneByPath(scenePath).isLoaded) return scenePath + " is open in the editor; not rebuilding it behind the user's back";
+        var wasActive = SceneManager.GetActiveScene();
+        var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+        var importer = CreateInstance<MapPainterImporter>();
+        try
+        {
+            int at = -1;
+            foreach (var go in scene.GetRootGameObjects()) if (go.name.StartsWith("Ground_")) at = go.transform.GetSiblingIndex();
+            importer._jsonPath = jsonPath;
+            importer._target = Target.OpenScene;
+            importer._impGround = true; importer._impProps = false; importer._impWalls = false;
+            importer._mergeInto = scene;
+            importer._quiet = true;
+            importer.Import();
+            GameObject ground = null;
+            foreach (var go in scene.GetRootGameObjects()) if (go.name.StartsWith("Ground_")) ground = go;
+            if (ground == null) return importer._lastProblem ?? "no ground was built";
+            if (at >= 0 && ground.transform.GetSiblingIndex() != at)
+            {
+                ground.transform.SetSiblingIndex(at);   // keep the scene's order, so the file changes only where the ground is
+                EditorSceneManager.SaveScene(scene);
+            }
+            return null;
+        }
+        finally
+        {
+            DestroyImmediate(importer);
+            EditorSceneManager.CloseScene(scene, true);
+            if (wasActive.IsValid() && wasActive.isLoaded) SceneManager.SetActiveScene(wasActive);
+        }
+    }
+
     void Import()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Import Painted Map", "Exit Play mode first, then re-run.", "OK"); return; }
+        { Say("Exit Play mode first, then re-run."); return; }
 
         PaintedMap map;
         try { map = JsonUtility.FromJson<PaintedMap>(File.ReadAllText(_jsonPath)); }
         catch (System.Exception e)
-        { EditorUtility.DisplayDialog("Import Painted Map", "Couldn't parse the JSON:\n" + e.Message, "OK"); return; }
+        { Say("Couldn't parse the JSON:\n" + e.Message); return; }
 
         if (map == null || map.size == null || map.size.x <= 0 || map.size.z <= 0)
-        { EditorUtility.DisplayDialog("Import Painted Map", "The map.json is missing a valid 'size'.", "OK"); return; }
+        { Say("The map.json is missing a valid 'size'."); return; }
 
         float sizeX = map.size.x, sizeZ = map.size.z;
         float cellSize = map.cellSize > 0 ? map.cellSize : 4f;
@@ -185,7 +236,7 @@ public class MapPainterImporter : EditorWindow
 
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
-        { EditorUtility.DisplayDialog("Import Painted Map", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return; }
+        { Say("No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers."); return; }
         int mask = 1 << groundLayer;
 
         var palette = LoadPalette();
@@ -215,9 +266,9 @@ public class MapPainterImporter : EditorWindow
         Scene scene;
         if (open)
         {
-            scene = SceneManager.GetActiveScene();
+            scene = _mergeInto ?? SceneManager.GetActiveScene();
             if (!scene.IsValid() || string.IsNullOrEmpty(scene.path))
-            { EditorUtility.DisplayDialog("Import Painted Map", "Open and save a scene in Unity first, then re-run — that scene is the merge target.", "OK"); return; }
+            { Say("Open and save a scene in Unity first, then re-run — that scene is the merge target."); return; }
             scenePath = scene.path;
             safe = Sanitize(scene.name);
             ClearImported(scene, doGround, doProps, doWalls);
@@ -348,9 +399,8 @@ public class MapPainterImporter : EditorWindow
                     GroundTexFor(3, "BASE_OR_PATCH_OR_PATH_gravel_scree"));
             if (ground == null)
             {
-                EditorUtility.DisplayDialog("Import Painted Map",
-                    "Couldn't build the ground — need the 'BASE_OR_PATCH_meadow_grass' tile in Assets/1_Authored/Art/GroundTiles and the "
-                    + "'Unwritten/GroundBlend' shader.", "OK");
+                Say("Couldn't build the ground — need the 'BASE_OR_PATCH_meadow_grass' tile in Assets/1_Authored/Art/GroundTiles and the "
+                    + "'Unwritten/GroundBlend' shader.");
                 if (!open) EditorSceneManager.CloseScene(scene, true);
                 return;
             }
@@ -451,7 +501,7 @@ public class MapPainterImporter : EditorWindow
         if (missing.Count  > 0) msg += "\n\n⚠ Missing prefabs (skipped): " + string.Join(", ", missing);
         if (doGround && unmapped.Count > 0) msg += "\n\n⚠ Ground brushes not in the palette (left as base layer): " + string.Join(", ", unmapped);
         Debug.Log("[unwritten] " + msg.Replace("\n", " "));
-        EditorUtility.DisplayDialog("Import Painted Map", msg, "OK");
+        Say(msg);
     }
 
     // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Ground mesh =

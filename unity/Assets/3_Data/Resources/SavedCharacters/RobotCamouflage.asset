@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.robot-camouflage
   displayName: Robot Camouflage
   sheet: {fileID: 2800000, guid: 59d83a67c3af80146815f30c96f18426, type: 3}
+  faceset: {fileID: 2800000, guid: cab2a81509555ef41aef365b396b756e, type: 3}
   behaviour: 2
   group: 7
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 1

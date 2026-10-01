@@ -194,10 +194,13 @@ public static class GroundBlendBuilder
 
         // ── Build the subdivided plane, painting each vertex's path/dirt weight from the sampler ──────────
         // A shaped ground is drawn finer: its rounded level edges are only as round as the triangles drawing them.
-        if (bumpHeight > 0f) cell = Mathf.Min(cell, GroundBumps.DrawnSpacing);
-        // The 240-square cap never draws a shaped ground coarser than DrawnSpacing (a 64 m field needs 256).
-        int mostX = bumpHeight > 0f ? Mathf.Max(240, Mathf.CeilToInt(sizeX / GroundBumps.DrawnSpacing)) : 240;
-        int mostZ = bumpHeight > 0f ? Mathf.Max(240, Mathf.CeilToInt(sizeZ / GroundBumps.DrawnSpacing)) : 240;
+        // Cliffs are part of this same ground, so its squares are as fine as the cliff's cut line needs.
+        float finest = cliffs != null ? Mathf.Min(GroundBumps.DrawnSpacing, GroundCliffs.GridCell) : GroundBumps.DrawnSpacing;
+        bool fine = bumpHeight > 0f || cliffs != null;
+        if (fine) cell = Mathf.Min(cell, finest);
+        // The 240-square cap never draws a shaped ground coarser than that (a 64 m field needs 256).
+        int mostX = fine ? Mathf.Max(240, Mathf.CeilToInt(sizeX / finest)) : 240;
+        int mostZ = fine ? Mathf.Max(240, Mathf.CeilToInt(sizeZ / finest)) : 240;
         int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, mostX);
         int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, mostZ);
         int vcount = (nx + 1) * (nz + 1);
@@ -227,12 +230,7 @@ public static class GroundBlendBuilder
             heights = (float[])floorHeights.Clone();
         }
 
-        // Which vertices the cliffs raise. A triangle joining a raised vertex to a low one would be a steep ramp —
-        // it lies under the cliff's grass top, and where it touches that top it shows through as a dark crease — so
-        // those triangles are left out; the cliff's own surface and invisible top floor cover the gap.
-        var raised = cliffs != null ? new bool[vcount] : null;
-        // The cliff-top height at every vertex, raised or not, so the cliff's grass top can be laid exactly on the drawn
-        // high ground by interpolating it the way the ground mesh itself interpolates.
+        // The cliff-top height at every vertex: GroundCliffs shapes the one ground between it and the floor's height.
         var topHeights = cliffs != null ? new float[vcount] : null;
         int vi = 0;
         for (int j = 0; j <= nz; j++)
@@ -245,10 +243,7 @@ public static class GroundBlendBuilder
                 sample(wx, wz, out Vector4 w);
 
                 if (cliffs != null)
-                {
                     topHeights[vi] = floorHeights[vi] + cliffs.Standing(wx, wz) * (cliffs.height + topRise[vi]);
-                    if (cliffs.IsHigh(wx, wz)) { heights[vi] = topHeights[vi]; raised[vi] = true; }
-                }
                 verts[vi] = new Vector3(lx, shaped ? heights[vi] : 0f, lz);
                 norms[vi] = Vector3.up;
                 uvs[vi]   = new Vector2(wx, wz);
@@ -257,29 +252,36 @@ public static class GroundBlendBuilder
                 vi++;
             }
 
-        int row = nx + 1;
-        var tris = new int[nx * nz * 6];
-        int ti = 0;
-        bool Level(int a, int b, int c) => raised == null || (raised[a] == raised[b] && raised[b] == raised[c]);
-        for (int j = 0; j < nz; j++)
-            for (int i = 0; i < nx; i++)
-            {
-                int v0 = j * row + i, v1 = v0 + 1, v2 = v0 + row, v3 = v2 + 1;
-                // wound so the face normal points +Y (up)
-                if (Level(v0, v2, v1)) { tris[ti++] = v0; tris[ti++] = v2; tris[ti++] = v1; }
-                if (Level(v1, v2, v3)) { tris[ti++] = v1; tris[ti++] = v2; tris[ti++] = v3; }
-            }
-        if (ti < tris.Length) System.Array.Resize(ref tris, ti);
+        Mesh mesh;
+        if (cliffs != null)
+            // The cliffs are this ground, shaped: floor, foot, face, shoulder and top in one mesh (RULE ONEGROUND).
+            mesh = GroundCliffs.BuildGround(cliffs, center, sizeX, sizeZ, nx, nz, floorHeights, topHeights,
+                                            cliffs.height + GroundBumps.Highest(topRise), sample,
+                                            Sanitize(rootName) + "_ground");
+        else
+        {
+            int row = nx + 1;
+            var tris = new int[nx * nz * 6];
+            int ti = 0;
+            for (int j = 0; j < nz; j++)
+                for (int i = 0; i < nx; i++)
+                {
+                    int v0 = j * row + i, v1 = v0 + 1, v2 = v0 + row, v3 = v2 + 1;
+                    // wound so the face normal points +Y (up)
+                    tris[ti++] = v0; tris[ti++] = v2; tris[ti++] = v1;
+                    tris[ti++] = v1; tris[ti++] = v2; tris[ti++] = v3;
+                }
 
-        var mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
-        mesh.indexFormat = vcount > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
-        mesh.vertices = verts;
-        mesh.normals  = norms;
-        mesh.uv       = uvs;
-        mesh.colors   = cols;
-        mesh.triangles = tris;
-        if (shaped) mesh.RecalculateNormals();   // a mound's slopes must face the sun to read as mounds
-        mesh.RecalculateBounds();
+            mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
+            mesh.indexFormat = vcount > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+            mesh.vertices = verts;
+            mesh.normals  = norms;
+            mesh.uv       = uvs;
+            mesh.colors   = cols;
+            mesh.triangles = tris;
+            if (shaped) mesh.RecalculateNormals();   // a mound's slopes must face the sun to read as mounds
+            mesh.RecalculateBounds();
+        }
         PersistMesh(mesh, rootName);
         if (bumpy)
             Debug.Log($"[unwritten] {rootName}: {(cliffs != null ? "cliff tops" : "ground")} up to {GroundBumps.Highest(groundShape):0.000}u in " +
@@ -296,18 +298,17 @@ public static class GroundBlendBuilder
         vis.transform.position = new Vector3(center.x, 0f, center.z);   // verts are local-centred; offset to plot
         vis.AddComponent<MeshFilter>().sharedMesh = mesh;
         var mr = vis.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = mat;
-        mr.shadowCastingMode = ShadowCastingMode.Off;   // flat ground casts nothing useful — save the pass
+        // A cliff map's ground is drawn with its rock layer on (uv1.x says where), and throws the cliffs' shadow
+        // across the pass; flat ground casts nothing useful, so it saves the pass.
+        mr.sharedMaterial = cliffs != null ? MakeCliffMaterial(mat, rootName, cliffs.faceColor) ?? mat : mat;
+        mr.shadowCastingMode = cliffs != null ? ShadowCastingMode.On : ShadowCastingMode.Off;
         mr.receiveShadows = true;
 
         WorldBuildUtil.SetLayerRecursive(root, groundLayer);
         if (cliffs != null)
-        {
-            float FloorY(float x, float z) => GroundBumps.SampleGrid(floorHeights, nx, nz, dx, dz, originX, originZ, x, z);
-            float TopY(float x, float z) => GroundBumps.SampleGrid(topHeights, nx, nz, dx, dz, originX, originZ, x, z);
-            AddCliffs(root, cliffs, center, sizeX, sizeZ, mat, sample, rootName, groundLayer, FloorY, TopY,
-                      cliffs.height + GroundBumps.Highest(topRise));
-        }
+            Debug.Log($"[unwritten] {rootName}: cliffs {cliffs.height:0.##}–{cliffs.height + GroundBumps.Highest(topRise):0.##}u " +
+                      $"tall along the roads, pass {cliffs.passWidth:0.##}u wide, {cliffs.MeetingPoints.Count} meeting points, " +
+                      $"shaped into the one ground ({mesh.vertexCount} vertices).");
         if (shaped)
         {
             // Collision IS the drawn surface, as on elevated ground — a flat box would leave feet inside the mounds.
@@ -352,11 +353,10 @@ public static class GroundBlendBuilder
         var cornerMat = MakeCornerMaterial();             // single square stone dropped at every border corner (null → skip)
         const float CurbWorldPerTexture = 0.5f;           // one full curb strip spans this many world units along the edge
 
-        // Flat BORDER-RING trim: a strip of the same curb texture laid flat on the raised top along each curb edge.
-        // Width = one texture-row scaled so the stones stay SQUARE (read the texture's real aspect, so new art can't
-        // stretch them). BorderRows widens the trim in whole rows; a hair of Y-lift stops it z-fighting the top.
+        // BORDER-RING stones along each curb edge: a band of the raised top itself, drawn with the curb texture — part
+        // of the one ground, never a strip laid over it (RULE ONEGROUND). Width = one texture-row scaled so the stones
+        // stay SQUARE (read the texture's real aspect, so new art can't stretch them); BorderRows widens it in rows.
         const int   BorderRows  = 1;
-        const float BorderLift  = 0.003f;
         var   curbTex   = curbMat != null ? curbMat.GetTexture("_BaseMap") as Texture2D : null;
         float texAspect = curbTex != null ? curbTex.width / (float)curbTex.height : 6f;
         float borderWidth = BorderRows * (CurbWorldPerTexture / texAspect);   // world width of BorderRows square rows
@@ -443,101 +443,74 @@ public static class GroundBlendBuilder
         }
         void AddTriTo(List<int> t, int a, int b, int c) { t.Add(a); t.Add(b); t.Add(c); }
 
-        // Flat trim quad laid ON TOP along a curb edge: <eA,eB> are the edge endpoints on the raised top; <inward> is
-        // the unit direction into the raised cell. Runs the same world-U as the curb below (so trim + curb align) and
-        // V across the strip width. Double-sided + normal-up, into the curb submesh (same material as the vertical curb).
-        void AddBorder(Vector3 eA, Vector3 eB, Vector3 inward, float trimA = 0f, float trimB = 0f)
+        // A band of the ground beside an edge, drawn in stone: <p0> is on the edge, <inward> the unit direction into
+        // the top, <uAlong> how far along the edge (in texture repeats) a world point is. V runs across the band, one
+        // row per BorderRows, so the stones read square and flow unbroken across neighbouring cells.
+        Vector2 BandUV(Vector3 p, Vector3 p0, Vector3 inward, System.Func<float, float, float> uAlong)
+            => new Vector2(uAlong(p.x, p.z), Vector3.Dot(new Vector3(p.x - p0.x, 0f, p.z - p0.z), inward) / borderWidth * BorderRows);
+
+        // Keep the part of a flat convex polygon (XZ) on one side of a line: dot(p − p0, n) < d when <below>, else ≥ d.
+        List<Vector3> Clip(List<Vector3> poly, Vector3 p0, Vector3 n, float d, bool below)
         {
-            if (curbMat == null) return;
-            Vector3 along = (eB - eA).normalized;   // pull each end back by its trim so an outward corner frees a stone slot
-            eA += along * trimA; eB -= along * trimB;
-            Vector3 up = Vector3.up * BorderLift;
-            Vector3 oA = eA + up, oB = eB + up;
-            Vector3 iA = eA + inward * borderWidth + up, iB = eB + inward * borderWidth + up;
-            bool alongZ = Mathf.Abs(eA.x - eB.x) < 1e-4f;
-            float uA = (alongZ ? eA.z : eA.x) / CurbWorldPerTexture;
-            float uB = (alongZ ? eB.z : eB.x) / CurbWorldPerTexture;
-            int voA = Push(oA, Vector3.up, new Vector2(uA, 0f),         Color.white);
-            int voB = Push(oB, Vector3.up, new Vector2(uB, 0f),         Color.white);
-            int viA = Push(iA, Vector3.up, new Vector2(uA, BorderRows), Color.white);
-            int viB = Push(iB, Vector3.up, new Vector2(uB, BorderRows), Color.white);
-            AddTriTo(trisWall, voA, viA, voB); AddTriTo(trisWall, voB, viA, viB);
-            AddTriTo(trisWall, voA, voB, viA); AddTriTo(trisWall, voB, viB, viA);
+            var output = new List<Vector3>(poly.Count + 2);
+            float Side(Vector3 p) { float v = (p.x - p0.x) * n.x + (p.z - p0.z) * n.z - d; return below ? -v : v; }
+            for (int i = 0; i < poly.Count; i++)
+            {
+                Vector3 a = poly[i], b = poly[(i + 1) % poly.Count];
+                float sa = Side(a), sb = Side(b);
+                if (sa >= 0f) output.Add(a);
+                if ((sa >= 0f) != (sb >= 0f)) output.Add(Vector3.Lerp(a, b, sa / (sa - sb)));
+            }
+            return output;
         }
 
-        // A 45° step edge (the hypotenuse of a diagonally-cut cell): the checker CURB face + the flat border STRIP,
-        // the diagonal analogue of AddWall(isCurb)+AddBorder. UVs run ALONG the edge (absolute projection onto the edge
-        // direction) so stones stay square and tile seamlessly across colinear cut cells; V = notches on the face,
-        // rows across the strip. <A,B> = hypotenuse ends (XZ); <yTop,yBot> the step; <inward> points onto the raised top.
-        void AddDiagonalCurb(Vector3 A, Vector3 B, float yTop, float yBot, Vector3 inward, Color faceCol)
+        // A flat convex polygon at height <y> into <tris>, wound to face up, each point coloured and UV'd by the
+        // given functions (own vertices, like every piece of this ground).
+        void FlatPoly(List<Vector3> poly, float y, List<int> tris, System.Func<Vector3, Vector2> uv, System.Func<Vector3, Color> col)
         {
-            if (curbMat == null) return;
-            Vector3 dir = new Vector3(B.x - A.x, 0f, B.z - A.z).normalized;
-            float Uof(float x, float z) => (x * dir.x + z * dir.z) / CurbWorldPerTexture;   // absolute → seamless across cells
-            float vTop = (yTop - yBot) / lh;                                                 // one curb row per 0.2 notch
-            Vector3 nrm = Vector3.Cross(Vector3.up, dir);                                     // face normal (double-sided anyway)
-
-            // vertical curb face
-            Vector3 tA = new Vector3(A.x, yTop, A.z), tB = new Vector3(B.x, yTop, B.z);
-            Vector3 bA = new Vector3(A.x, yBot, A.z), bB = new Vector3(B.x, yBot, B.z);
-            int itA = Push(tA, nrm, new Vector2(Uof(A.x, A.z), vTop), faceCol);
-            int itB = Push(tB, nrm, new Vector2(Uof(B.x, B.z), vTop), faceCol);
-            int ibA = Push(bA, nrm, new Vector2(Uof(A.x, A.z), 0f),   faceCol);
-            int ibB = Push(bB, nrm, new Vector2(Uof(B.x, B.z), 0f),   faceCol);
-            AddTriTo(trisWall, itA, ibA, itB); AddTriTo(trisWall, itB, ibA, ibB);
-            AddTriTo(trisWall, itA, itB, ibA); AddTriTo(trisWall, itB, ibB, ibA);   // double-sided
-
-            // flat border strip on the raised top, offset inward by one square-row width. Lifted a hair HIGHER than
-            // the straight border's BorderLift so where the diagonal strip overlaps a straight strip at a corner it
-            // wins cleanly instead of z-fighting (the extra ~6mm is imperceptible from the 2.5D camera).
-            Vector3 up = Vector3.up * (BorderLift * 3f);
-            Vector3 oA = new Vector3(A.x, yTop, A.z) + up, oB = new Vector3(B.x, yTop, B.z) + up;
-            Vector3 iA = oA + inward * borderWidth, iB = oB + inward * borderWidth;
-            int voA = Push(oA, Vector3.up, new Vector2(Uof(oA.x, oA.z), 0f),         Color.white);
-            int voB = Push(oB, Vector3.up, new Vector2(Uof(oB.x, oB.z), 0f),         Color.white);
-            int viA = Push(iA, Vector3.up, new Vector2(Uof(iA.x, iA.z), BorderRows), Color.white);
-            int viB = Push(iB, Vector3.up, new Vector2(Uof(iB.x, iB.z), BorderRows), Color.white);
-            AddTriTo(trisWall, voA, viA, voB); AddTriTo(trisWall, voB, viA, viB);
-            AddTriTo(trisWall, voA, voB, viA); AddTriTo(trisWall, voB, viB, viA);   // double-sided
+            if (poly.Count < 3) return;
+            var at = new int[poly.Count];
+            for (int i = 0; i < poly.Count; i++)
+            {
+                var p = new Vector3(poly[i].x, y, poly[i].z);
+                at[i] = Push(p, Vector3.up, uv(p), col(p));
+            }
+            for (int i = 1; i + 1 < poly.Count; i++)
+            {
+                int a = at[0], b = at[i], c = at[i + 1];
+                if (Vector3.Cross(verts[b] - verts[a], verts[c] - verts[a]).y < 0f) { int t = b; b = c; c = t; }
+                AddTriTo(tris, a, b, c);
+            }
         }
 
-        // One flat borderWidth-square STONE dropped into a cell corner where two borders meet — the shared corner
-        // treatment for BOTH corner kinds. INWARD (concave L): the two arm strips live on different cells and meet
-        // only at a point, leaving this diagonal cell's corner bare (the old "one-block gap" / 1/3-stone sliver);
-        // OUTWARD (convex): the two perpendicular strips are trimmed back a stone so they no longer overlap here
-        // (killing their z-fight). Either way one clean square stone bridges the turn. <cornerX,cornerZ> is the cell
-        // corner; <ix,iz> step ±borderWidth inward. The whole single-stone texture maps [0,1]² onto the quad, so it
-        // always reads as one full stone regardless of where the strips' repeating grid falls.
-        void AddCornerStone(float cornerX, float cornerZ, float ix, float iz, float topY)
+        // The square stone at a corner of a vertical curb FACE: the <borderWidth>-wide end of that face, running its
+        // full height, drawn with the stone texture — the face itself, not a piece on it. <cTop> is the corner vertex on
+        // the top edge; <along> runs into the face away from the corner; <outward> is the face normal. The whole stone
+        // texture maps [0,1]²; it reads squished to the short face, as agreed.
+        void CornerFace(Vector3 cTop, Vector3 along, Vector3 outward, float height)
         {
-            if (cornerMat == null) return;
-            Vector3 up = Vector3.up * BorderLift;
-            float xa = cornerX, xb = cornerX + ix, za = cornerZ, zb = cornerZ + iz;
-            int v00 = Push(new Vector3(xa, topY, za) + up, Vector3.up, new Vector2(0f, 0f), Color.white);
-            int v10 = Push(new Vector3(xb, topY, za) + up, Vector3.up, new Vector2(1f, 0f), Color.white);
-            int v01 = Push(new Vector3(xa, topY, zb) + up, Vector3.up, new Vector2(0f, 1f), Color.white);
-            int v11 = Push(new Vector3(xb, topY, zb) + up, Vector3.up, new Vector2(1f, 1f), Color.white);
-            AddTriTo(trisCorner, v00, v01, v10); AddTriTo(trisCorner, v10, v01, v11);
-            AddTriTo(trisCorner, v00, v10, v01); AddTriTo(trisCorner, v10, v11, v01);
-        }
-
-        // The same square stone wrapped onto a VERTICAL curb FACE at an outward corner: a borderWidth-wide slice at
-        // the corner end of the face, running the full curb height, pushed a hair proud of the wall so it hides that
-        // face's cut corner stone. The wall itself stays whole underneath (it's the collider). <cTop> is the corner
-        // vertex on the top edge; <along> runs into the face away from the corner; <outward> is the face normal;
-        // <height> is the curb drop. The whole stone texture maps [0,1]²; it reads squished to the short face, as agreed.
-        void AddCornerStoneWall(Vector3 cTop, Vector3 along, Vector3 outward, float height)
-        {
-            if (cornerMat == null) return;
-            Vector3 push = outward * BorderLift, dn = Vector3.down * height;
-            Vector3 tA = cTop + push, tB = cTop + along * borderWidth + push;
+            Vector3 dn = Vector3.down * height;
+            Vector3 tA = cTop, tB = cTop + along * borderWidth;
             int itA = Push(tA,      outward, new Vector2(0f, 1f), Color.white);
             int itB = Push(tB,      outward, new Vector2(1f, 1f), Color.white);
             int ibA = Push(tA + dn, outward, new Vector2(0f, 0f), Color.white);
             int ibB = Push(tB + dn, outward, new Vector2(1f, 0f), Color.white);
             AddTriTo(trisCorner, itA, ibA, itB); AddTriTo(trisCorner, itB, ibA, ibB);
-            AddTriTo(trisCorner, itA, itB, ibA); AddTriTo(trisCorner, itB, ibB, ibA);   // double-sided
+            AddTriTo(trisCorner, itA, itB, ibA); AddTriTo(trisCorner, itB, ibB, ibA);   // double-sided, like the walls
         }
+
+        // A curb wall whose ends may be corner stones: the stone ends (<stoneA> at tA's end, <stoneB> at tB's end) are
+        // cut out of the wall and drawn as stones, the rest is the wall as usual — one face, no piece laid over it.
+        void AddCurbWall(Vector3 tA, Vector3 tB, Vector3 bA, Vector3 bB, Vector3 outward, bool isCurb, int refLevel,
+                         Color? solid, bool stoneA, bool stoneB)
+        {
+            Vector3 along = (tB - tA).normalized;
+            float height = tA.y - bA.y;
+            if (stoneA) { CornerFace(tA, along, outward, height); tA += along * borderWidth; bA += along * borderWidth; }
+            if (stoneB) { CornerFace(tB, -along, outward, height); tB -= along * borderWidth; bB -= along * borderWidth; }
+            AddWall(tA, tB, bA, bB, outward, isCurb, refLevel, solid);
+        }
+
         int LvlAt(int x, int z) => (x >= 0 && x < cols && z >= 0 && z < rows) ? levels[x, z] : 0;
 
         // Level of (x,z)'s half that owns its <edge> side (0=W 1=E 2=S 3=N): a diagonally-cut cell presents its KEPT
@@ -557,22 +530,30 @@ public static class GroundBlendBuilder
             bottomY = 0f; return false;
         }
 
-        // One raw triangle top: own verts, SOLID colour, wound so the face points up (+Y) like the quad tops.
-        void PushTri(Vector3 a, Vector3 b, Vector3 c, float y, Color col)
+        // The checker curb FACE of a 45° 1-notch step (the hypotenuse of a diagonally-cut cell). UVs run ALONG the
+        // edge (absolute projection onto the edge direction) so stones stay square and tile seamlessly across colinear
+        // cut cells; V = notches on the face. <A,B> = hypotenuse ends (XZ); <yTop,yBot> the step.
+        void AddDiagonalCurbFace(Vector3 A, Vector3 B, float yTop, float yBot, Color faceCol)
         {
-            a.y = y; b.y = y; c.y = y;
-            if (Vector3.Cross(b - a, c - a).y < 0f) { var t = b; b = c; c = t; }
-            int ia = Push(a, Vector3.up, new Vector2(a.x, a.z), col);
-            int ib = Push(b, Vector3.up, new Vector2(b.x, b.z), col);
-            int ic = Push(c, Vector3.up, new Vector2(c.x, c.z), col);
-            AddTriTo(trisTop, ia, ib, ic);
+            Vector3 dir = new Vector3(B.x - A.x, 0f, B.z - A.z).normalized;
+            float Uof(float x, float z) => (x * dir.x + z * dir.z) / CurbWorldPerTexture;   // absolute → seamless across cells
+            float vTop = (yTop - yBot) / lh;                                                 // one curb row per 0.2 notch
+            Vector3 nrm = Vector3.Cross(Vector3.up, dir);                                     // face normal (double-sided anyway)
+            Vector3 tA = new Vector3(A.x, yTop, A.z), tB = new Vector3(B.x, yTop, B.z);
+            Vector3 bA = new Vector3(A.x, yBot, A.z), bB = new Vector3(B.x, yBot, B.z);
+            int itA = Push(tA, nrm, new Vector2(Uof(A.x, A.z), vTop), faceCol);
+            int itB = Push(tB, nrm, new Vector2(Uof(B.x, B.z), vTop), faceCol);
+            int ibA = Push(bA, nrm, new Vector2(Uof(A.x, A.z), 0f),   faceCol);
+            int ibB = Push(bB, nrm, new Vector2(Uof(B.x, B.z), 0f),   faceCol);
+            AddTriTo(trisWall, itA, ibA, itB); AddTriTo(trisWall, itB, ibA, ibB);
+            AddTriTo(trisWall, itA, itB, ibA); AddTriTo(trisWall, itB, ibB, ibA);   // double-sided
         }
 
         // A diagonally-CUT cell (painter 📏 line tool): two flat half-triangles — the KEPT corner's half at the
         // cell's levels-grid notch, the cut-away half at its own underLevel — with a vertical step along the
         // hypotenuse when they differ. Both halves are coloured SOLID from their painted tile (the same hard-cut
-        // style level seams already use). Straight edges AND the 45° step get the normal checker curb + border trim
-        // (a 1-notch drop → AddDiagonalCurb; a taller cliff → plain wall), against per-edge neighbour levels.
+        // style level seams already use). A 1-notch step, on the hypotenuse or a straight edge, gets the checker curb
+        // face and a band of stones along the higher half's top; a taller one is a plain wall.
         void EmitCutCell(int cx, int cz)
         {
             int dir = cuts.dir[cx, cz];
@@ -593,20 +574,53 @@ public static class GroundBlendBuilder
                 case 3:  K = se; O = nw; A = ne; B = sw; break;
                 default: K = sw; O = ne; A = se; B = nw; break;
             }
-            PushTri(K, A, B, yK, colK);   // kept half
-            PushTri(O, A, B, yU, colU);   // cut-away half
+            bool keptHigh = Lk > Lu;
+            bool curbStep = Mathf.Abs(Lk - Lu) == 1 && curbMat != null;
+
+            // Each half's top: its triangle, with a band of stones cut out of it along each curb edge it owns — the
+            // hypotenuse's first, where two bands meet — and the rest its plain painted tile.
+            void Half(Vector3 corner, bool kept)
+            {
+                int L = kept ? Lk : Lu;
+                float y = L * lh;
+                Color col = kept ? colK : colU;
+                var rest = new List<Vector3> { corner, A, B };
+                if (curbStep && kept == keptHigh)
+                {
+                    Vector3 inward = corner - (A + B) * 0.5f; inward.y = 0f; inward.Normalize();
+                    Vector3 hd = new Vector3(B.x - A.x, 0f, B.z - A.z).normalized;
+                    float U(float x, float z) => (x * hd.x + z * hd.z) / CurbWorldPerTexture;
+                    FlatPoly(Clip(rest, A, inward, borderWidth, true), y, trisWall, p => BandUV(p, A, inward, U), _ => Color.white);
+                    rest = Clip(rest, A, inward, borderWidth, false);
+                }
+                if (curbMat != null)
+                    for (int edge = 0; edge < 4; edge++)
+                    {
+                        if (EdgeIsKept(dir, edge) != kept) continue;
+                        int nx = edge == 0 ? cx - 1 : edge == 1 ? cx + 1 : cx;
+                        int nz = edge == 2 ? cz - 1 : edge == 3 ? cz + 1 : cz;
+                        int nEdge = edge ^ 1;
+                        if (!WallB(nx, nz, nEdge, L, out _, out bool curb) || !curb) continue;
+                        Vector3 p0 = edge == 1 ? new Vector3(x1, 0f, z0) : edge == 3 ? new Vector3(x0, 0f, z1) : new Vector3(x0, 0f, z0);
+                        Vector3 inward = edge == 0 ? Vector3.right : edge == 1 ? Vector3.left : edge == 2 ? Vector3.forward : Vector3.back;
+                        System.Func<float, float, float> U = edge < 2 ? (System.Func<float, float, float>)((x, z) => z / CurbWorldPerTexture)
+                                                                      : (x, z) => x / CurbWorldPerTexture;
+                        FlatPoly(Clip(rest, p0, inward, borderWidth, true), y, trisWall, p => BandUV(p, p0, inward, U), _ => Color.white);
+                        rest = Clip(rest, p0, inward, borderWidth, false);
+                    }
+                FlatPoly(rest, y, trisTop, p => new Vector2(p.x, p.z), _ => col);
+            }
+            Half(K, true);    // kept half
+            Half(O, false);   // cut-away half
 
             if (Lk != Lu)   // step along the hypotenuse, faced from the higher half toward the lower
             {
-                bool keptHigh = Lk > Lu;
                 float yT = keptHigh ? yK : yU, yB = keptHigh ? yU : yK;
-                Vector3 raised = keptHigh ? K : O;               // the corner on the RAISED side of the diagonal
-                Vector3 mid = (A + B) * 0.5f;
-                Vector3 inward = raised - mid; inward.y = 0f; inward.Normalize();   // edge → onto the raised top
+                Vector3 raisedCorner = keptHigh ? K : O;
+                Vector3 inward = raisedCorner - (A + B) * 0.5f; inward.y = 0f; inward.Normalize();
                 Color faceCol = keptHigh ? colK : colU;
-                if (Mathf.Abs(Lk - Lu) == 1 && curbMat != null)  // 1-notch drop → checker curb + border strip
-                    AddDiagonalCurb(A, B, yT, yB, inward, faceCol);
-                else                                             // taller cliff → plain blend-textured wall
+                if (curbStep) AddDiagonalCurbFace(A, B, yT, yB, faceCol);   // 1-notch drop → checker curb
+                else                                                        // taller cliff → plain blend-textured wall
                     AddWall(new Vector3(A.x, yT, A.z), new Vector3(B.x, yT, B.z),
                             new Vector3(A.x, yB, A.z), new Vector3(B.x, yB, B.z),
                             -inward, false, paintLevels[cx, cz], faceCol);
@@ -622,7 +636,6 @@ public static class GroundBlendBuilder
                 AddWall(new Vector3(eA.x, topY, eA.z), new Vector3(eB.x, topY, eB.z),
                         new Vector3(eA.x, by, eA.z),   new Vector3(eB.x, by, eB.z),
                         outwardE, curb, paintLevels[cx, cz], kept ? colK : colU);
-                if (curb) AddBorder(new Vector3(eA.x, topY, eA.z), new Vector3(eB.x, topY, eB.z), -outwardE);
             }
             Edge(0, cx - 1, cz, 1, new Vector3(x0, 0f, z0), new Vector3(x0, 0f, z1), Vector3.left);
             Edge(1, cx + 1, cz, 0, new Vector3(x1, 0f, z0), new Vector3(x1, 0f, z1), Vector3.right);
@@ -644,116 +657,99 @@ public static class GroundBlendBuilder
                 float x0 = ox + cx * cellSize, x1 = x0 + cellSize;
                 float z0 = oz + cz * cellSize, z1 = z0 + cellSize;
 
-                // TOP: a flat sub×sub patch at topY, per-vertex coloured from the blend field (own verts per cell
-                // so nothing interpolates across a level seam — colours still match because they sample one field).
-                var idx = new int[sub + 1, sub + 1];
-                for (int j = 0; j <= sub; j++)
-                    for (int i = 0; i <= sub; i++)
-                    {
-                        float wx = Mathf.Lerp(x0, x1, i / (float)sub);
-                        float wz = Mathf.Lerp(z0, z1, j / (float)sub);
-                        Color c = raised ? raisedCol : SampleCol(wx, wz, Lp);
-                        idx[i, j] = Push(new Vector3(wx, topY, wz), Vector3.up, new Vector2(wx, wz), c);
-                    }
-                for (int j = 0; j < sub; j++)
-                    for (int i = 0; i < sub; i++)
-                    {
-                        int v0 = idx[i, j], v1 = idx[i + 1, j], v2 = idx[i, j + 1], v3 = idx[i + 1, j + 1];
-                        AddTriTo(trisTop, v0, v2, v1); AddTriTo(trisTop, v1, v2, v3);   // +Y up
-                    }
-
                 // WALLS: one per edge whose neighbour is lower (or the map border). Each boundary is owned by the
-                // HIGHER cell, so a wall is emitted exactly once. Border edges always skirt. All four are resolved up
-                // front so a border strip can be trimmed back at whichever ends land on an OUTWARD (convex) corner.
+                // HIGHER cell, so a wall is emitted exactly once. Border edges always skirt.
                 bool wW = WallB(cx - 1, cz, 1, L, out float byW, out bool curbW);   // vs the neighbour's E-facing half
                 bool wE = WallB(cx + 1, cz, 0, L, out float byE, out bool curbE);
                 bool wS = WallB(cx, cz - 1, 3, L, out float byS, out bool curbS);
                 bool wN = WallB(cx, cz + 1, 2, L, out float byN, out bool curbN);
-                float bwT = borderWidth;
-                if (wW)   // West (−X)
-                {
-                    AddWall(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1),
-                            new Vector3(x0, byW, z0),  new Vector3(x0, byW, z1),  Vector3.left, curbW, Lp,
-                            raised ? (Color?)raisedCol : null);
-                    if (curbW) AddBorder(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1), Vector3.right,
-                                         curbS ? bwT : 0f, curbN ? bwT : 0f);
-                }
-                if (wE)   // East (+X)
-                {
-                    AddWall(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1),
-                            new Vector3(x1, byE, z0),  new Vector3(x1, byE, z1),  Vector3.right, curbE, Lp,
-                            raised ? (Color?)raisedCol : null);
-                    if (curbE) AddBorder(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1), Vector3.left,
-                                         curbS ? bwT : 0f, curbN ? bwT : 0f);
-                }
-                if (wS)   // South (−Z)
-                {
-                    AddWall(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0),
-                            new Vector3(x0, byS, z0),  new Vector3(x1, byS, z0),  Vector3.back, curbS, Lp,
-                            raised ? (Color?)raisedCol : null);
-                    if (curbS) AddBorder(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0), Vector3.forward,
-                                         curbW ? bwT : 0f, curbE ? bwT : 0f);
-                }
-                if (wN)   // North (+Z)
-                {
-                    AddWall(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1),
-                            new Vector3(x0, byN, z1),  new Vector3(x1, byN, z1),  Vector3.forward, curbN, Lp,
-                            raised ? (Color?)raisedCol : null);
-                    if (curbN) AddBorder(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1), Vector3.back,
-                                         curbW ? bwT : 0f, curbE ? bwT : 0f);
-                }
-                // OUTWARD (convex) corners: on the flat top the two strips were trimmed back a stone — drop the square
-                // stone into the freed slot. On the two VERTICAL faces meeting here, wrap the same stone onto each face
-                // at the corner (a clean "corner post") so the faces' cut stones are hidden too.
-                if (curbW && curbS)
-                {
-                    AddCornerStone(x0, z0, bwT, bwT, topY);
-                    AddCornerStoneWall(new Vector3(x0, topY, z0), Vector3.forward, Vector3.left, topY - byW);
-                    AddCornerStoneWall(new Vector3(x0, topY, z0), Vector3.right,   Vector3.back, topY - byS);
-                }
-                if (curbE && curbS)
-                {
-                    AddCornerStone(x1, z0, -bwT, bwT, topY);
-                    AddCornerStoneWall(new Vector3(x1, topY, z0), Vector3.forward, Vector3.right, topY - byE);
-                    AddCornerStoneWall(new Vector3(x1, topY, z0), Vector3.left,    Vector3.back,  topY - byS);
-                }
-                if (curbW && curbN)
-                {
-                    AddCornerStone(x0, z1, bwT, -bwT, topY);
-                    AddCornerStoneWall(new Vector3(x0, topY, z1), Vector3.back,  Vector3.left,    topY - byW);
-                    AddCornerStoneWall(new Vector3(x0, topY, z1), Vector3.right, Vector3.forward, topY - byN);
-                }
-                if (curbE && curbN)
-                {
-                    AddCornerStone(x1, z1, -bwT, -bwT, topY);
-                    AddCornerStoneWall(new Vector3(x1, topY, z1), Vector3.back, Vector3.right,   topY - byE);
-                    AddCornerStoneWall(new Vector3(x1, topY, z1), Vector3.left, Vector3.forward, topY - byN);
-                }
-            }
 
-        // INWARD (concave L) corners: fill the missing corner stone so the checker border turns unbroken. The HIGHER
-        // cell (base plane L=0 or a raised feature) owns the fill when both its orthogonal neighbours toward a corner
-        // sit at its OWN level (so it has no curb/strip there) while the diagonal cell drops exactly one notch — the
-        // height at which the two arms' 1-notch curb strips exist and meet only at this point. Base-plane L=0 counts
-        // so a SUNKEN lane's concave turns (diagonal = −1) are bridged, not only raised features.
-        for (int cz = 0; cz < rows; cz++)
-            for (int cx = 0; cx < cols; cx++)
-            {
-                if (cuts != null && cuts.dir[cx, cz] != 0) continue;   // diagonal half-cells manage their own edges
-                int L = levels[cx, cz];
-                if (L < 0) continue;   // the higher side owns the stone; base plane (L=0) too, so a SUNKEN lane's
-                                       // concave turns (diagonal = L−1) get bridged — not just raised features (L>0)
-                float topY = L * lh;
-                float x0 = ox + cx * cellSize, x1 = x0 + cellSize;
-                float z0 = oz + cz * cellSize, z1 = z0 + cellSize;
-                if (LvlAt(cx - 1, cz) == L && LvlAt(cx, cz - 1) == L && LvlAt(cx - 1, cz - 1) == L - 1)
-                    AddCornerStone(x0, z0,  borderWidth,  borderWidth, topY);   // SW
-                if (LvlAt(cx + 1, cz) == L && LvlAt(cx, cz - 1) == L && LvlAt(cx + 1, cz - 1) == L - 1)
-                    AddCornerStone(x1, z0, -borderWidth,  borderWidth, topY);   // SE
-                if (LvlAt(cx - 1, cz) == L && LvlAt(cx, cz + 1) == L && LvlAt(cx - 1, cz + 1) == L - 1)
-                    AddCornerStone(x0, z1,  borderWidth, -borderWidth, topY);   // NW
-                if (LvlAt(cx + 1, cz) == L && LvlAt(cx, cz + 1) == L && LvlAt(cx + 1, cz + 1) == L - 1)
-                    AddCornerStone(x1, z1, -borderWidth, -borderWidth, topY);   // NE
+                // STONES on this cell's top, part of it: a band along each curb edge; a square stone at each OUTWARD
+                // (convex) corner where two curb edges meet (the two bands stop short of it); and a square stone at each
+                // INWARD (concave) corner — where this cell's two neighbours toward the corner sit at its own level and
+                // the diagonal one a notch lower, so the two arms' bands would otherwise meet only at a point. The
+                // higher side owns the stone; base plane L=0 counts, so a SUNKEN lane's concave turns are bridged too.
+                bool bandW = curbW && curbMat != null, bandE = curbE && curbMat != null;
+                bool bandS = curbS && curbMat != null, bandN = curbN && curbMat != null;
+                bool Inward(int dx, int dz) => L >= 0 && LvlAt(cx + dx, cz) == L && LvlAt(cx, cz + dz) == L && LvlAt(cx + dx, cz + dz) == L - 1;
+                bool sSW = cornerMat != null && ((curbW && curbS) || Inward(-1, -1));
+                bool sSE = cornerMat != null && ((curbE && curbS) || Inward(1, -1));
+                bool sNW = cornerMat != null && ((curbW && curbN) || Inward(-1, 1));
+                bool sNE = cornerMat != null && ((curbE && curbN) || Inward(1, 1));
+                float bw = borderWidth;
+
+                // TOP: a flat patch at topY on a sub×sub grid, per-vertex coloured from the blend field (own verts per
+                // cell so nothing interpolates across a level seam — colours still match because they sample one field).
+                // Where the cell has stones, the grid gains lines one band in from those edges so every square of it
+                // is wholly stone or wholly top.
+                var xs = new List<float>(sub + 3);
+                var zs = new List<float>(sub + 3);
+                for (int i = 0; i <= sub; i++) { xs.Add(Mathf.Lerp(x0, x1, i / (float)sub)); zs.Add(Mathf.Lerp(z0, z1, i / (float)sub)); }
+                void AddLine(List<float> lines, float v) { foreach (var e in lines) if (Mathf.Abs(e - v) < 1e-5f) return; lines.Add(v); }
+                if (bandW || sSW || sNW) AddLine(xs, x0 + bw);
+                if (bandE || sSE || sNE) AddLine(xs, x1 - bw);
+                if (bandS || sSW || sSE) AddLine(zs, z0 + bw);
+                if (bandN || sNW || sNE) AddLine(zs, z1 - bw);
+                xs.Sort(); zs.Sort();
+                var idx = new int[xs.Count, zs.Count];
+                for (int j = 0; j < zs.Count; j++)
+                    for (int i = 0; i < xs.Count; i++) idx[i, j] = -1;
+                int TopVertex(int i, int j)
+                {
+                    if (idx[i, j] < 0)
+                    {
+                        float wx = xs[i], wz = zs[j];
+                        Color c = raised ? raisedCol : SampleCol(wx, wz, Lp);
+                        idx[i, j] = Push(new Vector3(wx, topY, wz), Vector3.up, new Vector2(wx, wz), c);
+                    }
+                    return idx[i, j];
+                }
+                for (int j = 0; j + 1 < zs.Count; j++)
+                    for (int i = 0; i + 1 < xs.Count; i++)
+                    {
+                        float xa = xs[i], xb = xs[i + 1], za = zs[j], zb = zs[j + 1];
+                        float mx = (xa + xb) * 0.5f, mz = (za + zb) * 0.5f;
+                        bool w = mx < x0 + bw, e = mx > x1 - bw, s = mz < z0 + bw, n = mz > z1 - bw;
+                        List<int> into = null; System.Func<float, float, Vector2> uv = null;
+                        if      (sSW && w && s) { into = trisCorner; uv = (x, z) => new Vector2((x - x0) / bw, (z - z0) / bw); }
+                        else if (sSE && e && s) { into = trisCorner; uv = (x, z) => new Vector2((x1 - x) / bw, (z - z0) / bw); }
+                        else if (sNW && w && n) { into = trisCorner; uv = (x, z) => new Vector2((x - x0) / bw, (z1 - z) / bw); }
+                        else if (sNE && e && n) { into = trisCorner; uv = (x, z) => new Vector2((x1 - x) / bw, (z1 - z) / bw); }
+                        else if (bandW && w && !(curbS && s) && !(curbN && n))
+                        { into = trisWall; uv = (x, z) => new Vector2(z / CurbWorldPerTexture, (x - x0) / bw * BorderRows); }
+                        else if (bandE && e && !(curbS && s) && !(curbN && n))
+                        { into = trisWall; uv = (x, z) => new Vector2(z / CurbWorldPerTexture, (x1 - x) / bw * BorderRows); }
+                        else if (bandS && s && !(curbW && w) && !(curbE && e))
+                        { into = trisWall; uv = (x, z) => new Vector2(x / CurbWorldPerTexture, (z - z0) / bw * BorderRows); }
+                        else if (bandN && n && !(curbW && w) && !(curbE && e))
+                        { into = trisWall; uv = (x, z) => new Vector2(x / CurbWorldPerTexture, (z1 - z) / bw * BorderRows); }
+
+                        if (into == null)
+                        {
+                            int v0 = TopVertex(i, j), v1 = TopVertex(i + 1, j), v2 = TopVertex(i, j + 1), v3 = TopVertex(i + 1, j + 1);
+                            AddTriTo(trisTop, v0, v2, v1); AddTriTo(trisTop, v1, v2, v3);   // +Y up
+                        }
+                        else
+                        {
+                            int s0 = Push(new Vector3(xa, topY, za), Vector3.up, uv(xa, za), Color.white);
+                            int s1 = Push(new Vector3(xb, topY, za), Vector3.up, uv(xb, za), Color.white);
+                            int s2 = Push(new Vector3(xa, topY, zb), Vector3.up, uv(xa, zb), Color.white);
+                            int s3 = Push(new Vector3(xb, topY, zb), Vector3.up, uv(xb, zb), Color.white);
+                            AddTriTo(into, s0, s2, s1); AddTriTo(into, s1, s2, s3);
+                        }
+                    }
+
+                // The walls, with the square stone wrapped onto each face's end at an OUTWARD corner (a clean "corner
+                // post" that hides the faces' cut stones).
+                bool post = cornerMat != null;
+                if (wW) AddCurbWall(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1), new Vector3(x0, byW, z0), new Vector3(x0, byW, z1),
+                                    Vector3.left, curbW, Lp, raised ? (Color?)raisedCol : null, post && curbW && curbS, post && curbW && curbN);
+                if (wE) AddCurbWall(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1), new Vector3(x1, byE, z0), new Vector3(x1, byE, z1),
+                                    Vector3.right, curbE, Lp, raised ? (Color?)raisedCol : null, post && curbE && curbS, post && curbE && curbN);
+                if (wS) AddCurbWall(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0), new Vector3(x0, byS, z0), new Vector3(x1, byS, z0),
+                                    Vector3.back, curbS, Lp, raised ? (Color?)raisedCol : null, post && curbS && curbW, post && curbS && curbE);
+                if (wN) AddCurbWall(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1), new Vector3(x0, byN, z1), new Vector3(x1, byN, z1),
+                                    Vector3.forward, curbN, Lp, raised ? (Color?)raisedCol : null, post && curbN && curbW, post && curbN && curbE);
             }
 
         var mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
@@ -791,32 +787,6 @@ public static class GroundBlendBuilder
 
         AssetDatabase.SaveAssets();
         return root;
-    }
-
-    // The cliffs: one mesh on the Ground layer, drawn with the cliff material and collided with as it is drawn — feet
-    // stand on its grass top, bodies stop against its face, and the creatures' pathfinder reads its height. See
-    // GroundCliffs.
-    static void AddCliffs(GameObject root, GroundCliffs.Spec cliffs, Vector3 center, float sizeX, float sizeZ,
-                          Material groundMat, GroundSampler sample, string rootName, int groundLayer,
-                          System.Func<float, float, float> floorY, System.Func<float, float, float> topY, float maxRise)
-    {
-        var cliffMat = MakeCliffMaterial(groundMat, rootName, cliffs.faceColor);
-        var built = GroundCliffs.Build(cliffs, center, sizeX, sizeZ, floorY, topY, maxRise, sample);
-        PersistMesh(built.mesh, rootName, "_cliffs");
-
-        var face = new GameObject("Cliffs");
-        face.transform.SetParent(root.transform, false);
-        face.layer = groundLayer;
-        face.AddComponent<MeshFilter>().sharedMesh = built.mesh;
-        var fr = face.AddComponent<MeshRenderer>();
-        fr.sharedMaterial = cliffMat != null ? cliffMat : groundMat;
-        fr.shadowCastingMode = ShadowCastingMode.On;   // a cliff throws a real shadow across the pass
-        fr.receiveShadows = true;
-        face.AddComponent<MeshCollider>().sharedMesh = built.mesh;
-
-        Debug.Log($"[unwritten] {rootName}: cliffs {cliffs.height:0.##}–{maxRise:0.##}u tall along the roads, pass " +
-                  $"{cliffs.passWidth:0.##}u wide, {cliffs.MeetingPoints.Count} meeting points, {built.segments} traced pieces " +
-                  $"({built.mesh.vertexCount} vertices).");
     }
 
     // The cliff's material: a copy of this map's own ground material with its rock layer switched on, so the grass on

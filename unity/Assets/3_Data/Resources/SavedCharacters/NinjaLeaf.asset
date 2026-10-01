@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-leaf
   displayName: Ninja Leaf
   sheet: {fileID: 2800000, guid: 228c2c570ae20f547be6e9283c0fdda1, type: 3}
+  faceset: {fileID: 2800000, guid: 6d8cd528789a74245b452f972c6f0f24, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.elder-stalk
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

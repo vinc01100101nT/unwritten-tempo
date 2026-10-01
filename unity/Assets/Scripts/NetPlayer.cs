@@ -37,9 +37,6 @@ public class NetPlayer : NetworkBehaviour
 
     [SyncVar] public string playerName = "";
 
-    /// <summary>SERVER ONLY: when this person last called out a form (see <see cref="SkillShout"/>).</summary>
-    public readonly SkillShout.Clock ShoutClock = new SkillShout.Clock();
-
     /// <summary>WHAT THIS PERSON IS WEARING, written by the server in the same words a creature's worn set travels in
     /// (<see cref="WornList"/>). A watching machine dresses the body it built for them out of it, so the weapon in
     /// their hand is the weapon the server has them holding.
@@ -67,6 +64,10 @@ public class NetPlayer : NetworkBehaviour
     [SyncVar] int netMana;
     [SyncVar] int netMaxMana = 1;
     [SyncVar] int netMaxHealth = 1;
+
+    // THIS PERSON'S LEVEL, for every machine that draws them — their own sheet still gets it privately with their
+    // points and primaries. Written on the same beat as health, so a kill, a load and a GM dial all reach it.
+    [SyncVar] int netLevel;
 
     // HAS THE SERVER ACTUALLY SAID ANYTHING YET. Without this the pair above start at their empty values — no
     // health, out of a pool of one — and the owner believes them the instant they arrive, so every player dropped
@@ -259,14 +260,17 @@ public class NetPlayer : NetworkBehaviour
 
     /// <summary>Server-only: take this person to <paramref name="map"/>. The one way anybody changes map — a door
     /// they walked through and a GM's <c>/tp</c> both come here, so a command cannot skip the save that has to
-    /// land before they are handed to another process.</summary>
-    public void MoveToMap(string map, string spawnId)
+    /// land before they are handed to another process.
+    ///
+    /// <para>With <paramref name="toSpot"/> they arrive at <paramref name="spot"/> — a position INSIDE the map, the
+    /// same form a save's position is — instead of at an arrival point; a save point has no doorway to name.</para></summary>
+    public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default)
     {
         if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) return;
 
         // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
         // exactly as instant as it has always been.
-        if (MapHosting.Holding(map)) { TargetTravelHere(connectionToClient, map, spawnId); return; }
+        if (MapHosting.Holding(map)) { TargetTravelHere(connectionToClient, map, spawnId, toSpot, spot); return; }
 
         MarkLeaving();
         MapHosting.Want(map);
@@ -279,11 +283,11 @@ public class NetPlayer : NetworkBehaviour
         {
             if (this == null) return;
             if (!ok) { Leaving = false; TargetMoveFailed(connectionToClient, "could not save your character"); return; }
-            AskTheCharacterServerToMoveMe(map, spawnId);
+            AskTheCharacterServerToMoveMe(map, spawnId, toSpot, spot);
         });
     }
 
-    void AskTheCharacterServerToMoveMe(string map, string spawnId)
+    void AskTheCharacterServerToMoveMe(string map, string spawnId, bool toSpot, Vector3 spot)
     {
         TargetMoveStep(connectionToClient, "Finding the map…");
 
@@ -304,20 +308,50 @@ public class NetPlayer : NetworkBehaviour
             }
 
             GameLog.Info(LogCat.Server, playerName + " is moving to '" + map + "' at " + where.host + ":" + where.port);
-            TargetMoveTo(connectionToClient, where.host, where.port, where.ticket, map, spawnId);
+            TargetMoveTo(connectionToClient, where.host, where.port, where.ticket, map, spawnId, toSpot, spot);
         });
     }
 
     [TargetRpc]
-    void TargetTravelHere(NetworkConnectionToClient target, string map, string spawnId)
-        => SceneTravel.ArriveLocally(map, spawnId);
+    void TargetTravelHere(NetworkConnectionToClient target, string map, string spawnId, bool toSpot, Vector3 spot)
+    {
+        if (toSpot) SceneTravel.ArriveAtSpot(map, spot);
+        SceneTravel.ArriveLocally(map, toSpot ? null : spawnId);
+    }
 
     [TargetRpc]
     void TargetMoveStep(NetworkConnectionToClient target, string what) => LoadingScreen.SetStep(what);
 
     [TargetRpc]
-    void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map, string spawnId)
-        => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId);
+    void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map, string spawnId,
+                      bool toSpot, Vector3 spot)
+        => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId, toSpot, spot);
+
+    /// <summary>SERVER ONLY: take this person to their save point — or, when they have never set one, to
+    /// <see cref="SavePoint.DefaultMap"/>'s default arrival point.</summary>
+    public void SendToSavePoint()
+    {
+        var c = ServerCharacter;
+        if (c != null && c.HasSavePoint) MoveToMap(c.SavePointMap, null, true, c.SavePointPosition);
+        else MoveToMap(SavePoint.DefaultMap, SavePoint.DefaultSpawnId);
+    }
+
+    /// <summary>SERVER ONLY: make where this person is standing right now their save point — the GM's <c>/save</c>.
+    /// FALSE when there is nowhere to record yet: no character, or no map they have said they are in. Written down
+    /// on the next save beat like any other change.</summary>
+    public bool MakeSavePointHere()
+    {
+        var c = ServerCharacter;
+        if (!isServer || c == null || string.IsNullOrEmpty(mapName)) return false;
+        c.SetSavePoint(mapName, netPosition);
+        SaveSoon();
+        return true;
+    }
+
+    /// <summary>The map this person is standing in, as the server has it.</summary>
+    public string ServerMapName => mapName;
+    /// <summary>Where inside <see cref="ServerMapName"/> they are standing, as the server last accepted it.</summary>
+    public Vector3 ServerPositionInMap => netPosition;
 
     [TargetRpc]
     void TargetMoveFailed(NetworkConnectionToClient target, string why)
@@ -436,7 +470,15 @@ public class NetPlayer : NetworkBehaviour
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
         if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
-        if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
+        if (isOwned)
+        {
+            ReportMyPosition();
+            TakeTheServersWord();
+            // THE SMOKE AT THE LEVEL CAP, on the avatar this machine really draws for its own person.
+            var mine = PersistentPlayer3D.Instance;
+            levelAura.Show(netLevel, mine != null ? mine.transform : null);
+            return;
+        }
         if (isClient) FollowTheServer();
     }
 
@@ -574,6 +616,7 @@ public class NetPlayer : NetworkBehaviour
         {
             netMana = person.CurrentMP;
             netMaxMana = Mathf.Max(1, person.MaxMP);
+            netLevel = person.Level;
         }
         healthKnown = true;
     }
@@ -1065,6 +1108,27 @@ public class NetPlayer : NetworkBehaviour
         save.posY = netPosition.y;
         save.posZ = netPosition.z;
 
+        // WRITTEN DOWN WHILE DEAD — they chose another character, logged out, quit or dropped from the death window.
+        // They come back exactly as "Return to last saved point" would have put them: at their save point, on a
+        // tenth of their health, mana as it was, and nothing timed carried across the death.
+        if (c.IsDead)
+        {
+            if (c.HasSavePoint)
+            {
+                save.sceneName = c.SavePointMap;
+                save.posX = c.SavePointPosition.x;
+                save.posY = c.SavePointPosition.y;
+                save.posZ = c.SavePointPosition.z;
+            }
+            else
+            {
+                save.sceneName = SavePoint.DefaultMap;
+                save.arriveAtSpawnId = SavePoint.DefaultSpawnId;
+            }
+            save.currentHP = SavePoint.RespawnHealth(c.MaxHP);
+            save.timedEffects = null;
+        }
+
         needsSaving = false;
         var body = JsonUtility.ToJson(new SaveEnvelope { progress = save });
 
@@ -1305,7 +1369,7 @@ public class NetPlayer : NetworkBehaviour
     // A player's machine works out no mastery of its own: it is told what was earned, what is usable with the
     // weapon in hand, and which skills are known. Checked on the same beat as the sheet, and sent only when it
     // moved — a level is thousands of kills wide, so it moves rarely.
-    float sentPracticeTotal = -1f;
+    double sentPracticeTotal = -1.0;
     int sentLearnedCount = -1;
     // The weapon in hand and its grade decide which progress is shown and whether it is capped, so a swap resends.
     WeaponType sentHeldWeapon = (WeaponType)(-1);
@@ -1317,12 +1381,12 @@ public class NetPlayer : NetworkBehaviour
         if (ServerCombatUnit is not Character person || person == null) return;
 
         person.Mastery.Capture(out var weapons, out var points, out var skillIds, out var uses, out var known);
-        float total = 0f;
+        double total = 0.0;
         for (int i = 0; points != null && i < points.Length; i++) total += points[i];
         for (int i = 0; uses != null && i < uses.Length; i++) total += uses[i];
         var held = person.HeldWeapon;
         var grade = person.HeldQuality;
-        if (Mathf.Approximately(total, sentPracticeTotal) && known.Length == sentLearnedCount
+        if (System.Math.Abs(total - sentPracticeTotal) < 0.001 && known.Length == sentLearnedCount
             && held == sentHeldWeapon && grade == sentHeldGrade) return;
 
         sentPracticeTotal = total;
@@ -1335,9 +1399,9 @@ public class NetPlayer : NetworkBehaviour
     }
 
     [TargetRpc]
-    void TargetMastery(NetworkConnectionToClient target, int[] weapons, float[] points,
+    void TargetMastery(NetworkConnectionToClient target, int[] weapons, double[] points,
                        string[] skillIds, float[] uses, string[] known, int[] levels,
-                       int[] progWeapons, float[] into, float[] size, bool[] capped)
+                       int[] progWeapons, double[] into, double[] size, bool[] capped)
     {
         var me = Character.Instance;
         if (me == null)
@@ -1360,8 +1424,8 @@ public class NetPlayer : NetworkBehaviour
         if (masteryWaitingForACharacter == null || Character.Instance == null) return;
         var p = masteryWaitingForACharacter;
         masteryWaitingForACharacter = null;
-        Character.Instance.Mastery.Restore((int[])p[0], (float[])p[1], (string[])p[2], (float[])p[3], (string[])p[4]);
-        Character.Instance.Mastery.TakeSentProgress((int[])p[6], (float[])p[7], (float[])p[8], (bool[])p[9]);
+        Character.Instance.Mastery.Restore((int[])p[0], (double[])p[1], (string[])p[2], (float[])p[3], (string[])p[4]);
+        Character.Instance.Mastery.TakeSentProgress((int[])p[6], (double[])p[7], (double[])p[8], (bool[])p[9]);
         Character.Instance.Mastery.TakeSentLevels((int[])p[0], (int[])p[5]);
         Character.Instance.RefreshUsableSkills();
     }
@@ -2242,7 +2306,7 @@ public class NetPlayer : NetworkBehaviour
     }
 
     /// <summary>SERVER ONLY, for the places outside this object that move somebody — coming back from the dead is
-    /// granted by the world, not by this body, and the jump to a spawn point has to be forgiven the same way a
+    /// granted by the world, not by this body, and the jump to a save point has to be forgiven the same way a
     /// teleport is. Deliberately NOT reachable from a client: it is the one thing that turns the check off.</summary>
     public void ForgiveNextMoveAfterServerMove() => ForgiveNextMove();
 
@@ -2380,6 +2444,9 @@ public class NetPlayer : NetworkBehaviour
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
         WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing);
 
+        // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
+        levelAura.Show(netLevel, body.transform);
+
         // WHAT THIS PERSON IS DOING, handed over rather than worked out from where their body has been placed.
         // Without it their character walked in a fixed standing pose whenever the glide flickered, and never swung
         // at all — their damage numbers climbed over somebody standing perfectly still.
@@ -2471,6 +2538,8 @@ public class NetPlayer : NetworkBehaviour
 
     // Their bar, their ring and their casts' effects — drawn by the same code a creature's shell draws its casts with.
     readonly WatchedCast watchedCast = new WatchedCast();
+
+    readonly LevelCapAura levelAura = new LevelCapAura();
     StanceController bodyStance;   // the watched body's stance choke point, held from the moment it is built
 
     /// <summary>Start showing this person's wind-up. Called when the server says one began.
@@ -2503,6 +2572,8 @@ public class NetPlayer : NetworkBehaviour
         // is attached to, so a person who walked out of view while poisoned would otherwise leave their poison
         // hanging in the air where they were standing.
         VfxCue.ForgetAurasOn(netId);
+        // The level-cap smoke too — on a watched body, and on this machine's own avatar when this person leaves.
+        levelAura.Stop();
         // STRUCK FROM THE REGISTRY BEFORE THE BODY GOES, or a cursor scan would walk a destroyed one.
         if (bodyHealth != null) WatchedBodies.Remove(bodyHealth);
         if (body != null) byBody.Remove(body);

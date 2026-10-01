@@ -422,7 +422,7 @@ public class ProgressionWindows : MonoBehaviour
         var c = Character.Instance;
         // Nothing is drawn from placeholder zeros: the window fills in the moment the server's first sheet arrives.
         if (!c.SheetReady) return;
-        charIdentity.text = $"<color={AccentHex}>Adventurer</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
+        charIdentity.text = $"<color={AccentHex}>Adventurer</color>\nLevel {c.Level}    XP {c.XP:0.00}/{c.XPToNext}";
         charPoints.text = $"Stat Points: {c.StatPoints}";
 
         for (int i = 0; i < StatOrder.Length; i++)

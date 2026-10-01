@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-red
   displayName: Ninja Red
   sheet: {fileID: 2800000, guid: 87c74a70c574f924b9af7534d9821ef1, type: 3}
+  faceset: {fileID: 2800000, guid: 64cec4db24c3f9442b5bb6a0a3d7ca80, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.bandit-boss
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.875

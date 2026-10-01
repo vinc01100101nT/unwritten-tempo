@@ -190,15 +190,16 @@ user's five steps:
      rule (up to 45°, see [Walking and Routing](../2-systems/walking-and-routing.md)). On a cliff map the levels go on the cliff tops (see Cliffs). A map
      built before then keeps its old ground until it is built again, and the Map Painter does not carry levels, so a map
      re-imported through it comes back flat.
-   - **Cliffs** (2026-09-27, the user's request): a map with cliffs raises all the ground farther than half the pass
-     width from every road, and lines the pass with one smooth rock surface: a carved face
-     (standing well back, cut into columns and blocks about 1–2 m wide and half a metre tall each at its own depth,
-     with level ledges about 0.45 m tall, one every metre and broken off here and there, jutting forward from it almost
-     to the wall line; the face itself stays behind the wall line, at most 0.7 m back; going up, the face never leans back shallower than 50°,
-     so no part of it is a slope anyone can walk up — only the meeting points are), a rounded foot where the pass floor
-     curves up into the face (a quarter circle 0.5 m across out in front of the face, fading from the ground's colours
-     into the rock; only its lowest 15 cm is gentle enough to walk), and a rounded shoulder at the top that rolls back
-     into the grass. On a cliff map the biome's ground levels go on the cliff tops, not in the pass: the pass floor is
+   - **Cliffs** (2026-09-27, the user's request): a map with cliffs raises all the ground past a wall line about half
+     the pass width from every road, and the cliff is that same ground, shaped — one surface and one collision for the
+     pass floor, the rock face and the top, with the rock painted on it (nothing is laid over the ground, and the
+     ground has no holes; see RULE ONEGROUND in the project rules). Going across a cliff from the road: a rounded foot
+     where the pass floor curves up, starting 0.5 m in front of the wall line, gentle at the bottom and upright at the
+     top, fading from the ground's colours into the rock; a carved face standing 0.3 m behind the wall line, cut back
+     up to 0.7 m further into columns and blocks about 1–2 m wide and half a metre tall each at its own depth, with
+     level ledges about 0.45 m tall, one every metre and broken off here and there, jutting forward almost to the face's
+     line (going up, the face never leans back shallower than 50°, so no part of it is a slope anyone can walk up —
+     only the meeting points are); and a rounded shoulder at the top that rolls back into the grass. On a cliff map the biome's ground levels go on the cliff tops, not in the pass: the pass floor is
      flat, so everything in it can walk the whole pass, and each cliff stands its height plus the level of the ground
      behind it (1.5–2.7 m on `test_grassland_cliffs`), so its edge rises and falls. No stretch is straight: the
      cliff's edge wanders up to 0.8 m in toward the road and out again (an 8 m pass is 6.4–9.6 m wide), every corner —
@@ -212,9 +213,8 @@ user's five steps:
      edge): there a cliff shrinks to nothing within 1.5 m of the spot and back to full height by 10 m, and its high
      ground slopes down to meet the pass, so a player can walk up onto the top; on `test_grassland_cliffs` (3 of them)
      walking straight up measured 22.7–25.6° at the steepest. The rock and the grass fade into each other over the
-     shoulder and at the foot; the grass on top is the map's own ground. The cliff collides exactly as it is drawn:
-     feet stand on its grass top, bodies stop against its carved face, and creatures chase up and down the
-     meeting points like a player does.
+     shoulder and at the foot. Feet stand on the top, bodies stop against the carved face, and creatures chase up and
+     down the meeting points like a player does.
      Nothing is placed in the band the cliff takes up. **The face's colour:** a biome with a cliff face colour in its row draws the face in shades of that colour —
      lighter toward the top, darker and greyer toward the foot, in patches about 2.5 m and 0.8 m across, split by thin dark cracks along the borders of rock cells about 0.9 m
      across and 2 m tall, only some lengths of them cracked. Each biome's colour is the average colour of its own earthy or rocky
@@ -222,7 +222,7 @@ user's five steps:
      #A1958B (pebbles), Volcanic dark grey #3D3738 (cooled_lava), Haunted dark brown #41362D (grave_dirt), Corrupted
      near-black violet #2C2731 (blighted_soil). A biome with none draws the face with the gravel ground tile. Maps with
      cliffs: `test_grassland_cliffs` (cliffs on, from the field template's numbers) and the 16 world fields of the six
-     cliff biomes, rebuilt with all of the above on 2026-09-28.
+     cliff biomes; their ground was last laid on 2026-09-30.
      The Map Painter does not carry cliffs.
 3. **Testing in the game** — NOT DONE. Fifteen linked test maps, one per biome plus a Grassland map with cliffs,
    wait to be walked: `test_grassland_cliffs` ↔ `test_grassland` ↔ `test_forest_a` ↔ `test_highland` ↔ `test_peaks` ↔ `test_snow` ↔ `test_steppe` ↔ `test_coast` ↔ `test_desert` ↔ `test_volcanic` ↔

@@ -348,6 +348,65 @@ public class WorldCreator : EditorWindow
         return Build(w, tpl, Path.GetFileName(jsonPath), keep, false, false) ?? "ERROR: a map failed to bake — see the Console.";
     }
 
+    // One map's recipe: a clone of its type's template with the layout's own settings on it — never the template
+    // asset itself. The caller destroys the clone.
+    static MapRecipe CloneFor(MapJson m, Dictionary<string, MapRecipe> templates, out bool mapPicksRoad)
+    {
+        var clone = UnityEngine.Object.Instantiate(templates[m.type]);
+        clone.mapName = SceneName(m.id);
+        clone.sizeX = SizeX(m); clone.sizeZ = SizeZ(m);
+        clone.randomizeSeed = false;
+        clone.seed = m.seed != 0 ? m.seed : StableSeed(m.id);
+        mapPicksRoad = TryParsePathTile(m.pathTile, out var pt);
+        if (mapPicksRoad) clone.pathTile = pt;
+        if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
+        if (TryParseBiome(m.biome, out var bm)) clone.biome = bm;   // per-cell theme override (else the template's biome)
+        if (m.cliffs == "on") clone.cliffs = CliffChoice.On;         // per-map cliffs (else as the template says)
+        else if (m.cliffs == "off") clone.cliffs = CliffChoice.Off;
+        return clone;
+    }
+
+    /// <summary>Dialog-free: lay the ground of the named maps again from the layout, and nothing else — props, doors
+    /// and arrival points stay as they are (<see cref="RecipeGenerator.RebuildGround"/>). For a change to how ground is
+    /// shaped. The scenes the user has open, and the active one, are left as they were. Returns a summary, or an
+    /// error line.</summary>
+    public static string RebuildGroundCore(string jsonPath, string townRecipe, string fieldRecipe, string dungeonRecipe,
+                                           string specialRecipe, string[] mapIds)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return "ERROR: exit Play mode first.";
+        WorldJson w;
+        try { w = JsonUtility.FromJson<WorldJson>(File.ReadAllText(jsonPath)); }
+        catch (Exception e) { return "ERROR: can't read " + jsonPath + ": " + e.Message; }
+        if (w == null || w.maps == null) return "ERROR: no maps in " + jsonPath;
+        var byId = new Dictionary<string, MapJson>();
+        foreach (var m in w.maps) byId[m.id] = m;
+        var exitsByMap = ComputeExits(w, byId);
+        var done = new List<string>();
+        foreach (var id in mapIds)
+        {
+            // Loaded afresh for every map: closing the previous map's scene lets the editor unload them.
+            var tpl = new Dictionary<string, MapRecipe>
+            {
+                ["town"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(townRecipe),
+                ["field"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(fieldRecipe),
+                ["dungeon"] = AssetDatabase.LoadAssetAtPath<MapRecipe>(dungeonRecipe),
+                ["special"] = string.IsNullOrEmpty(specialRecipe) ? null : AssetDatabase.LoadAssetAtPath<MapRecipe>(specialRecipe),
+            };
+            if (!byId.TryGetValue(id, out var m)) return $"ERROR: no map '{id}' in {jsonPath} (rebuilt so far: {string.Join(", ", done)})";
+            if (!tpl.TryGetValue(m.type ?? "", out var t) || t == null) return $"ERROR: no template recipe for type '{m.type}' (map '{id}').";
+            var clone = CloneFor(m, tpl, out bool mapPicksRoad);
+            try
+            {
+                var exits = exitsByMap.TryGetValue(id, out var ex) ? ex : null;
+                string problem = RecipeGenerator.RebuildGround(clone, exits, mapPicksRoad);
+                if (problem != null) return $"ERROR: {problem} (rebuilt so far: {string.Join(", ", done)})";
+                done.Add(id);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(clone); }
+        }
+        return $"Rebuilt the ground of {done.Count} map(s): {string.Join(", ", done)}.";
+    }
+
     // The one build: PASS 1 bakes every map from its template clone, PASS 2 places the paired portals and arrival
     // points. leaveScenesOpen = the window's behaviour (each scene opened as the only scene); false = work additively
     // and close each scene again, so whatever the user had open stays open and unchanged.
@@ -372,19 +431,9 @@ public class WorldCreator : EditorWindow
                 var m = world.maps[i];
                 if (keep.Contains(m.id)) continue;
                 EditorUtility.DisplayProgressBar("Build World", $"Baking '{m.id}' ({i + 1}/{world.maps.Length})", (float)i / world.maps.Length);
-                var clone = UnityEngine.Object.Instantiate(templates[m.type]);   // never mutate the template asset
+                var clone = CloneFor(m, templates, out bool mapPicksRoad);
                 try
                 {
-                    clone.mapName = SceneName(m.id);
-                    clone.sizeX = SizeX(m); clone.sizeZ = SizeZ(m);
-                    clone.randomizeSeed = false;
-                    clone.seed = m.seed != 0 ? m.seed : StableSeed(m.id);
-                    bool mapPicksRoad = TryParsePathTile(m.pathTile, out var pt);
-                    if (mapPicksRoad) clone.pathTile = pt;
-                    if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
-                    if (TryParseBiome(m.biome, out var bm)) clone.biome = bm;   // per-cell theme override (else the template's biome)
-                    if (m.cliffs == "on") clone.cliffs = CliffChoice.On;         // per-map cliffs (else as the template says)
-                    else if (m.cliffs == "off") clone.cliffs = CliffChoice.Off;
                     var exits = exitsByMap.TryGetValue(m.id, out var ex) ? ex : null;
                     var res = RecipeGenerator.Generate(clone, exits, mapPicksRoad, leaveScenesOpen);
                     if (!res.ok)

@@ -13,7 +13,24 @@ public static class SceneTravel
     public static void ArriveLocally(string map, string spawnId)
     {
         LoadingScreen.Hide();
+
+        // THE MAP THEY ARE ALREADY IN — a save point in the map somebody died in. Loading it again would stand a
+        // second copy of the map beside the first; they are only placed.
+        if (map == MapManager.CurrentMap)
+        {
+            Target = spawnId;
+            if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
+            return;
+        }
         MapManager.Travel(map, spawnId);
+    }
+
+    /// <summary>The next arrival in <paramref name="map"/> stands at <paramref name="positionInMap"/> exactly — a save
+    /// point, sent by the server. Carried the same one-shot way a signing-in player's last position is.</summary>
+    public static void ArriveAtSpot(string map, UnityEngine.Vector3 positionInMap)
+    {
+        ResumeScene = map;
+        ResumePosition = positionInMap;
     }
 
     public static string Target;

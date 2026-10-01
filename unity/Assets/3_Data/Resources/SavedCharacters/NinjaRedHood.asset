@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-red-hood
   displayName: Ninja Red Hood
   sheet: {fileID: 2800000, guid: 61cfffef5d3bf944ba550014e4c38711, type: 3}
+  faceset: {fileID: 2800000, guid: 6b6bbcac171a512458d2c4c5ac6df561, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.gloop-king
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

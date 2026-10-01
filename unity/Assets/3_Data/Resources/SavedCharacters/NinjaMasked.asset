@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-masked
   displayName: Ninja Masked
   sheet: {fileID: 2800000, guid: 419da0d3fec51d044aa0d3149a0aa6f1, type: 3}
+  faceset: {fileID: 2800000, guid: 3ff0def93f52105408ac9ee57178fde9, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.wraithmother
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

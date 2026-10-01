@@ -13,3 +13,4 @@
 - [Overhead world UI anchors on feet-seated visual, not player root](../overhead-world-ui-anchor-feet-visual.md) — player root = WAIST (centered capsule); bubbles ride `Character3DVisual.Pose`; shared `SpeechBubble.ShowOverHead` + 1-bubble-per-owner registry.
 - [Endless fall after the server puts a player back](../fall-loop-after-server-correction.md) — the move check restores a mid-air position and the teleport kept the falling speed; `Teleport` now zeroes `vy`. Why the fall started is still unknown.
 - [One walking rule](../one-walking-rule.md) — player, creatures, townsfolk and routes all use GroundElevation.Walkable (45° slopes, 0.075 steps); the old per-cell step gate made every slope over 5.4° a wall.
+- [Invisible walls on cliff tops = folded grass sheet over a hole](../cliff-top-invisible-wall-strip-folds.md) — the old attached-cliff workaround; fixed by making the cliff part of the one ground (RULE ONEGROUND); includes the walker probe.

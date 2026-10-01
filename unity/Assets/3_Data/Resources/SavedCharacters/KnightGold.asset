@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.knight-gold
   displayName: Knight Gold
   sheet: {fileID: 2800000, guid: b9fd0739df6ecd847a3eef9618a442b8, type: 3}
+  faceset: {fileID: 2800000, guid: b7eab06ee32cf304d87d302c92cf52d7, type: 3}
   behaviour: 2
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

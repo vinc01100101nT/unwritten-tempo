@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.monkey-boxer-blue
   displayName: Monkey Boxer Blue
   sheet: {fileID: 2800000, guid: b64bf16cf54b5b84a90ee0dd34edf1db, type: 3}
+  faceset: {fileID: 2800000, guid: 26dbed21b44d8e545b7d38ec3d394d19, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

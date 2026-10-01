@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.gladiator-red
   displayName: Gladiator Red
   sheet: {fileID: 2800000, guid: 96443148e277f5b45a55d09cdd78ebc8, type: 3}
+  faceset: {fileID: 2800000, guid: 17a422256ada96e4e9239da16ceb5b9c, type: 3}
   behaviour: 2
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

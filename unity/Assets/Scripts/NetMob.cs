@@ -121,8 +121,6 @@ public class NetMob : NetworkBehaviour
         netLineAt = NetworkTime.time;
     }
 
-    /// <summary>SERVER ONLY: when this creature last called out a form (see <see cref="SkillShout"/>).</summary>
-    public readonly SkillShout.Clock ShoutClock = new SkillShout.Clock();
     public int Level => netLevel;
 
     /// <summary>WHICH BODY a live-3D creature wears, chosen once by this server before the creature is announced.
@@ -449,6 +447,9 @@ public class NetMob : NetworkBehaviour
         // A WIND-UP IN PROGRESS: its bar over the body and its ring on the ground, drawn from the shared clock.
         watchedCast.Tick(view.transform, mapName);
 
+        // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
+        levelAura.Show(netLevel, view.transform);
+
         // WHAT THE BODY IS DOING, handed over rather than guessed at. Its mover and its brain are switched off on
         // this machine, so the two things its animation used to read from both answer "nothing" forever — which is
         // why a watched creature slid about in its standing pose and never swung at anybody.
@@ -474,11 +475,19 @@ public class NetMob : NetworkBehaviour
         }
 
         // A LINE IT SAID, shown once — and only while it is still fresh, so walking up to a creature later does not
-        // replay something it said a minute ago.
+        // replay something it said a minute ago. Only a saved character speaks, so the line goes in the chat log too,
+        // under the name that character is shown by.
         if (netLineAt > 0d && netLineAt != lineShownAt)
         {
             lineShownAt = netLineAt;
-            if (NetworkTime.time - netLineAt < LineFreshSeconds) ShowCreatureCall(netLine);
+            if (NetworkTime.time - netLineAt < LineFreshSeconds)
+            {
+                var saved = SavedCharacterCatalog.Get(savedCharacter);
+                if (saved != null)
+                    ChatController.CreatureSaid(saved.displayName, view != null ? view.transform : null,
+                                                viewVisual != null ? viewVisual.Pose : null, netLine);
+                else ShowCreatureCall(netLine);
+            }
         }
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
@@ -517,6 +526,8 @@ public class NetMob : NetworkBehaviour
 
     // This creature's casts, as a watcher sees them — drawn by the same code a person's shell draws theirs with.
     readonly WatchedCast watchedCast = new WatchedCast();
+
+    readonly LevelCapAura levelAura = new LevelCapAura();
 
     /// <summary>Play a skill this creature cast, on the body this machine draws for it. Called when the server says so.</summary>
     public void ShowCast(SkillDef def, Transform aimedAt, Vector3 aimPointInMap, int seed)
@@ -665,7 +676,8 @@ public class NetMob : NetworkBehaviour
             // only arrives afterwards.
             float auraLeft = SavedCharacterRules.AppearAuraSeconds - (float)(NetworkTime.time - netSavedAt);
             if (netSavedAt > 0d && auraLeft > 0.1f)
-                Vfx.Attach(SavedCharacters.AppearAuraFor(saved.behaviour), go.transform, lifetime: auraLeft);
+                Vfx.Attach(SavedCharacters.AppearAuraFor(saved.behaviour), go.transform,
+                           scaleMult: SavedCharacterRules.AppearAuraScale, lifetime: auraLeft);
         }
 
         // AND WHAT IT WEARS. A reused body still wears the last creature's gear until told.
@@ -723,6 +735,7 @@ public class NetMob : NetworkBehaviour
         // the body it is attached to, and this body is about to be banked for the next creature to use — so a
         // poisoned creature you walked away from would hand its glow to whatever came back in its place.
         VfxCue.ForgetAurasOn(netId);
+        levelAura.Stop();
         byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
         PutBodyBack(BodyKind, view);
         view = null;

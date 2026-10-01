@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.pig
   displayName: Pig
   sheet: {fileID: 2800000, guid: fbdcfad2b5fe40a42a69e3199e5850f2, type: 3}
+  faceset: {fileID: 2800000, guid: 28acac5021342e8468932413f0ce79b9, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

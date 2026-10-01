@@ -104,6 +104,14 @@ Deliberately below Skill Mastery's own +30% ceiling: a trademark should be a rea
 reason a skill is unusable without one. The two stack additively, so a mastered skill on its trademark weapon is
 +50% at the top — a real build, reached by two different kinds of work.
 
+**Efficiency — a critical hit for a whole cast (agreed with the user on 2026-09-30).** Each time a **trademark
+skill** (§3 — any skill with a main number) fires — pressed or on its own trigger, active or passive, ultimate or not,
+whatever weapon the caster holds — the server rolls once: a flat **5%** chance, the same for every player, creature
+and skill, scaled by nothing. An efficient cast adds a further **+20 points** to that same lift for every main number
+it runs, every tick and repeat of that one cast included, so the top build above reads +70% on an efficient cast. It
+also makes the full style call ("Blossom Wind style, 21st form, Thousand Petals!!"). A skill that is not a trademark
+skill has no main number to raise and never rolls.
+
 ## 3. Which skills are trademarks
 
 **Every skill with a main number on any of its effects is a trademark skill, automatically, no exception.**
@@ -219,7 +227,10 @@ pure random defensible — and it only works because recycle exists, which is wh
   the wire. Trademarks arrived with save **v14**; the save today is **v15**, and both servers' build string is
   `unwritten-character-v15`.
 - **In a fight** the lift is added to the per-cast practice lift (`Character.SkillOutputLift` = mastery + trademark,
-  and the same on a creature in `Health`), which every main-number effect of the cast reads.
+  and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
+  `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
+  — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
+  `SkillShout.Words` picks the call from it.
 - **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
   "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:

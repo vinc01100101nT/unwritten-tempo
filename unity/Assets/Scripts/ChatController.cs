@@ -29,6 +29,7 @@ public class ChatController : MonoBehaviour
     static readonly string HintHex = UiKit.Hex(UiKit.TextDim);
 
     const float BubbleLife = 4f;   // seconds a said line floats over the player's head
+    const float BodyAlpha = 0.5f;  // how solid the window's body is — everything below its title bar
 
     GameObject root;             // the window we show/hide
     RectTransform logContent;    // vertical list of message rows
@@ -95,6 +96,15 @@ public class ChatController : MonoBehaviour
     {
         if (instance == null) return;
         Post(speaker, text, over, isSkillCall);
+    }
+
+    /// <summary>A saved character SAYING a line: the same bubble over its head a creature's call gets, and a row in the
+    /// log under its <paramref name="speaker"/> name, as anybody's said line has.</summary>
+    public static void CreatureSaid(string speaker, Transform body, IStancePose pose, string line)
+    {
+        if (instance == null || string.IsNullOrEmpty(line)) return;
+        instance.AddLine($"{SpeakerPrefix(speaker)} {Sanitize(line)}");
+        CreatureCall(body, pose, line);
     }
 
     /// <summary>A creature calling out a skill: the bubble over its head and nothing in the log. A field of armed
@@ -169,6 +179,9 @@ public class ChatController : MonoBehaviour
 
         // Lower-left of the 1280×720 reference canvas; draggable via the window header afterwards.
         var content = UiKit.Window(canvas.transform, "Chat", new Vector2(430, 250), new Vector2(-405, -205), out root);
+        // The window's body (everything the minimise button folds away) is see-through, so the world stays visible
+        // behind the chat; the title bar stays solid.
+        UiKit.SeeThroughBody(root.GetComponent<Image>(), content.parent.GetComponent<Image>(), BodyAlpha, UiKit.WindowRadius);
 
         BuildInput(content);
         BuildLog(content);
@@ -181,6 +194,7 @@ public class ChatController : MonoBehaviour
     {
         var bg = UiKit.Field(UiKit.Img("Input", content, UiKit.SlotFill));
         bg.raycastTarget = true;
+        UiKit.SeeThroughBody(bg, bg.transform.Find("Well").GetComponent<Image>(), BodyAlpha, UiKit.ButtonRadius);
         bg.rectTransform.anchorMin = new Vector2(0, 0);
         bg.rectTransform.anchorMax = new Vector2(1, 0);
         bg.rectTransform.pivot = new Vector2(0.5f, 0);
@@ -206,7 +220,8 @@ public class ChatController : MonoBehaviour
     // Scrolling message log filling the content area above the input box.
     void BuildLog(RectTransform content)
     {
-        var view = UiKit.Img("Log", content, UiKit.PanelRaise);
+        // Clear, so the log reads at the window body's own see-through shade rather than stacking a second layer on it.
+        var view = UiKit.Img("Log", content, Color.clear);
         view.raycastTarget = true;   // a graphic for the scroll wheel to land on
         UiKit.Fill(view.rectTransform, new Vector2(0, 34), new Vector2(0, 0));   // sit above the 28px input (+ gap)
         view.gameObject.AddComponent<RectMask2D>();

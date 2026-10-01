@@ -7,7 +7,7 @@ using TMPro;
 /// THE READOUT THAT FLOATS OVER WHOEVER YOU ARE POINTING AT — a creature, another person, a villager, anything
 /// carrying health. Four things, stacked, sitting just clear of their head:
 /// <list type="number">
-/// <item>their name, with their element beside it as a coloured tile with its letters</item>
+/// <item>their name — a creature's portrait on its left, its element on its right as a coloured tile with its letters</item>
 /// <item>a health bar</item>
 /// <item>a mana bar under it</item>
 /// <item>their buffs and debuffs as small icons, wrapped onto as many rows as it takes to fit</item>
@@ -62,6 +62,9 @@ public class HoverPlate : MonoBehaviour
     TextMeshProUGUI nameLabel;
     Image elementTile;
     TextMeshProUGUI elementText;
+    // The creature's face, left of its name — see CreaturePortraits. Hidden for anyone without one.
+    Image portrait;
+    bool portraitShown;
     bool elementShown;
     Element shownElement;
     readonly List<Image> iconSlots = new List<Image>(8);
@@ -176,7 +179,13 @@ public class HoverPlate : MonoBehaviour
         lastLevel = shell != null ? shell.Level : 0;
         nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
+        var face = CreaturePortraits.For(unit, shell);
+        portraitShown = face != null;
+        portrait.sprite = face;
+        portrait.gameObject.SetActive(portraitShown);
+
         DrawElement();
+        PlaceNameRow();
 
         // A unit with no mana pool gets no mana bar, rather than an empty one that looks broken.
         hasMana = unit.MaxMP > 0;
@@ -225,14 +234,17 @@ public class HoverPlate : MonoBehaviour
         PlaceNameRow();
     }
 
-    // The name and the element tile, centred together as one row. Runs when either one changes — a bind, a level, a
-    // converter — never per frame.
+    // The portrait, the name and the element tile, centred together as one row. Runs when any of them changes — a
+    // bind, a level, a converter — never per frame.
     void PlaceNameRow()
     {
         if (root == null) return;
         float nameW = nameLabel.GetPreferredValues(nameLabel.text).x;   // perf-ok: on bind / level / element change only
         float extra = elementShown ? ElementGap + IconSize : 0f;
-        float left = -(nameW + extra) * 0.5f;
+        float face = portraitShown ? NameH + ElementGap : 0f;
+        float left = -(face + nameW + extra) * 0.5f;
+        if (portraitShown) portrait.rectTransform.anchoredPosition = new Vector2(left + NameH * 0.5f, 0f);
+        left += face;
         var nrt = nameLabel.rectTransform;
         nrt.anchoredPosition = new Vector2(left + nameW * 0.5f, 0f);
         if (elementShown)
@@ -387,6 +399,11 @@ public class HoverPlate : MonoBehaviour
         elementText = NewText("Symbol", elementTile.rectTransform, 7);
         StretchFull(elementText.rectTransform);
         elementTile.gameObject.SetActive(false);
+
+        portrait = NewImage("Portrait", root, Color.white);
+        portrait.preserveAspect = true;
+        Place(portrait.rectTransform, Vector2.zero, new Vector2(NameH, NameH));
+        portrait.gameObject.SetActive(false);
 
         var hpTrack = NewImage("HpTrack", root, TrackBg);
         hpFill = NewBarFill("HpFill", hpTrack.rectTransform, HpColor(1f));

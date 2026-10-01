@@ -4,7 +4,7 @@ set -e
 CHAR=http://127.0.0.1:8081
 LOGIN=http://127.0.0.1:8080
 SECRET=test-shared-server-secret
-BUILD=unwritten-character-v15
+BUILD=unwritten-character-v16
 # The stand-in map server must never outlive this script, however it ends — a leftover one holds the
 # terminal open and answers for a map server that is not there.
 trap 'pkill -f mapstub.py 2>/dev/null; exit' EXIT INT TERM
@@ -27,7 +27,7 @@ class H(http.server.BaseHTTPRequestHandler):
             self.send_response(401); self.end_headers(); self.wfile.write(b'{}'); return
         d = json.loads(body)
         open('/private/tmp/arrival.json', 'w').write(body)
-        if d.get('build') != 'unwritten-character-v15':
+        if d.get('build') != 'unwritten-character-v16':
             self.send_response(409); self.end_headers(); self.wfile.write(b'{}'); return
         self.send_response(200); self.send_header('content-type','application/json'); self.end_headers()
         self.wfile.write(b'{"ok":true}')

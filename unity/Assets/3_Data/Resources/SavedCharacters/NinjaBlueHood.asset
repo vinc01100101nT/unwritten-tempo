@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-blue-hood
   displayName: Ninja Blue Hood
   sheet: {fileID: 2800000, guid: ab23581faabebd24fae06efe25dc06b9, type: 3}
+  faceset: {fileID: 2800000, guid: 19c56580c92296c4d9f481d1f7dbe2fa, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.great-croak
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

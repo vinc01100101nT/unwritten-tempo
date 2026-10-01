@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.monk-red
   displayName: Monk Red
   sheet: {fileID: 2800000, guid: a01b4a0a31d04334d836a6e93892b7c5, type: 3}
+  faceset: {fileID: 2800000, guid: 031fbf3f6d57c2949a80af7987e15d9d, type: 3}
   behaviour: 2
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

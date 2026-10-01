@@ -82,12 +82,12 @@ def main():
         print(RED + "the check is missing at " + CHECK + OFF)
         return 1
     bad = 0
-    # The per-level experience cost, moved by one. The running total is worked out a second way, so the
-    # two stop agreeing — which is the whole reason both are pinned.
-    bad += case("a moved experience cost is caught",
+    # The experience curve's growth, nudged by a thousandth. Every level's pinned cost moves with it, so a
+    # change to the curve that nobody meant cannot pass as "the numbers are what they were".
+    bad += case("a moved experience curve is caught",
                 "UnitStatMath.cs",
-                "public static int XpToNextFrom(int level) => 5 + 5 * Mathf.Max(1, level);",
-                "public static int XpToNextFrom(int level) => 6 + 5 * Mathf.Max(1, level);",
+                "System.Math.Exp(0.098 * L + 0.021 * wall * wall)",
+                "System.Math.Exp(0.099 * L + 0.021 * wall * wall)",
                 "UnitStatMath.cs")
     # A different file, so one blind spot cannot pass the whole prover. The accuracy ceiling is a
     # promise; raising it means a target can never dodge, and nothing on screen would say so.

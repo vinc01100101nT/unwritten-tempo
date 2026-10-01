@@ -191,6 +191,7 @@ public static class GmCommands
         Register(new GmCommand("statpts", "statpts <n>", "Grant allocatable stat points.", CmdStatPts, false, true, "sp"));
         Register(new GmCommand("heal", "heal", "Full-heal (revives if dead).", CmdHeal, false, true));
         Register(new GmCommand("revive", "revive", "Revive the player at full HP/MP.", CmdRevive, false, true));
+        Register(new GmCommand("save", "save", "Make where you stand your save point.", CmdSave, false, true));
         Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", CmdInvuln, false, true, "nodmg"));
         Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", CmdModel, false, true, "body"));
 
@@ -329,6 +330,14 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         GameNetwork.ReviveOnServer(c.Ch);
         c.Reply("Revived at full HP/MP.");
+    }
+
+    static void CmdSave(GmContext c)
+    {
+        var shell = GameNetwork.ShellFor(c.Ch);
+        if (shell == null) { c.Reply("No character."); return; }
+        if (!shell.MakeSavePointHere()) { c.Reply("You are not standing in a map yet."); return; }
+        c.Reply("Save point set: " + shell.ServerMapName + " — " + Coords.Text(shell.ServerPositionInMap));
     }
 
     static void CmdInvuln(GmContext c)
@@ -759,7 +768,7 @@ public static class GmCommands
         c.Reply($"HP {MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP)} · ATK {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk)}"
                 + $" · DEF {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}");
         c.Reply($"STR {d.str} · AGI {d.agi} · VIT {d.vit} · INT {d.intel} · DEX {d.dex} · LUK {d.luk}");
-        c.Reply($"XP {d.xpReward}");
+        c.Reply($"XP {CreatureKinds.KillExperience(d.kind, d.level)}");
 
         // WHAT IT DROPS, read from the same tables the death roll reads, in the one wording the wiki prints too.
         c.Reply("Drops: " + CreatureDrops.Line(d));

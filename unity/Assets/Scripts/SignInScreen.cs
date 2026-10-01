@@ -61,6 +61,8 @@ public class SignInScreen : MonoBehaviour
     // The panel's vertical rhythm, named once so a row can be inserted without re-typing every offset below it.
     const float RowGap = 56f;      // one labelled field to the next
     const float TitleSpace = 64f;  // the room the big title used to take above the first line
+    const float LineSpace = 42f;
+    // the room the "Sign in to continue" line used to take above the first field
     const float StatusGap = 60f;   // last field to the status line
     const float ButtonGap = 32f;   // status line to the buttons
 
@@ -79,15 +81,15 @@ public class SignInScreen : MonoBehaviour
         panelHeight += RowGap;   // the server line needs a row of its own
 #endif
         // The title is the blue bar's ("Login"); the space the old big title took comes off the top.
-        var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight - TitleSpace), "Login", out _);
+        var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight - TitleSpace - LineSpace), "Login", out _);
 
-        var line = UiKit.Label("Line", panel, "Sign in to continue", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
-        line.color = UiKit.TextDim;
-        FrontScreen.Row(line.rectTransform, -82 + TitleSpace, 20);
+        // var line = UiKit.Label("Line", panel, "Sign in to continue", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
+        // line.color = UiKit.TextDim;
+        // FrontScreen.Row(line.rectTransform, -82 + TitleSpace, 20);
 
         // Rows walk DOWN the panel from here rather than each carrying a hand-typed offset, so inserting the
         // phone's server line above them moves everything below it without a second copy of the layout.
-        float y = -124f + TitleSpace;
+        float y = -124f + TitleSpace + LineSpace;
 #if UNITY_ANDROID
         serverField = FrontScreen.Field(panel, "Server", y, false);
         serverField.text = ServerAddress.TypedHost;   // whatever this device was told last time

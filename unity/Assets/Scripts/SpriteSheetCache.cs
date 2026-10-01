@@ -26,13 +26,13 @@ public static class SpriteSheetCache
         = new Dictionary<(EntityId, int, int), Sprite[]>();
 
     // 4-direction walk columns (Down/Up/Left/Right) read from the TOP rows of each column. Used by mobs.
-    static readonly Dictionary<(EntityId tex, int cell, int frames), Sprite[][]> walk4
-        = new Dictionary<(EntityId, int, int), Sprite[][]>();
+    static readonly Dictionary<(EntityId tex, int cell, int frames, float footPivot), Sprite[][]> walk4
+        = new Dictionary<(EntityId, int, int, float), Sprite[][]>();
 
     // One whole ROW of a grid sheet's cells, feet-pivoted like the walk frames. Used for the pose rows under a
     // character sheet's walk (attack, then death / casting / release).
-    static readonly Dictionary<(EntityId tex, int cell, int row), Sprite[]> footRows
-        = new Dictionary<(EntityId, int, int), Sprite[]>();
+    static readonly Dictionary<(EntityId tex, int cell, int row, float footPivot), Sprite[]> footRows
+        = new Dictionary<(EntityId, int, int, float), Sprite[]>();
 
     // Arbitrary horizontal clips read left→right from a grid cell. Used by the row-major NinjaGreen
     // "CharacterAnimated" sheets (one direction per ROW), vs walk4's column-major mob sheets.
@@ -59,8 +59,10 @@ public static class SpriteSheetCache
     }
 
     /// <summary>The four directional walk clips [down, up, left, right], each <paramref name="walkFrames"/>
-    /// frames read down the TOP of columns 0..3 of a <paramref name="cell"/>px grid. Shared/read-only.</summary>
-    public static Sprite[][] Walk4(Texture2D sheet, int cell, int walkFrames)
+    /// frames read down the TOP of columns 0..3 of a <paramref name="cell"/>px grid, pivoted on the feet line
+    /// <paramref name="footPivot"/> of a cell up from its bottom (<see cref="MobFootPivotY"/> for a mob's sheet).
+    /// Shared/read-only.</summary>
+    public static Sprite[][] Walk4(Texture2D sheet, int cell, int walkFrames, float footPivot = MobFootPivotY)
     {
         if (sheet == null || cell <= 0)
             return new[] { System.Array.Empty<Sprite>(), System.Array.Empty<Sprite>(),
@@ -70,7 +72,7 @@ public static class SpriteSheetCache
         int rows = Mathf.Max(1, sheet.height / cell);
         int wf = Mathf.Clamp(walkFrames, 1, rows);
 
-        var key = (sheet.GetEntityId(), cell, wf);
+        var key = (sheet.GetEntityId(), cell, wf, footPivot);
         if (walk4.TryGetValue(key, out var cached)) return cached;
 
         Sprite[] Column(int c)
@@ -83,7 +85,7 @@ public static class SpriteSheetCache
                 var rect = new Rect(c * cell, sheet.height - (r + 1) * cell, cell, cell);
                 // Foot-line pivot: the sprite renders UP from the transform, which sits on the ground
                 // (feet-pivot invariant — see UnitAnchor). Mobs are the only Walk4 consumer.
-                arr[r] = Sprite.Create(sheet, rect, new Vector2(0.5f, MobFootPivotY), cell);
+                arr[r] = Sprite.Create(sheet, rect, new Vector2(0.5f, footPivot), cell);
             }
             return arr;
         }
@@ -119,17 +121,17 @@ public static class SpriteSheetCache
     /// <summary>Every cell of row <paramref name="row"/> (0 = the TOP of the sheet) of a <paramref name="cell"/>px grid,
     /// left to right, with the same feet-line pivot and size as <see cref="Walk4"/> — so a pose drawn from it stands
     /// exactly where the walk frames stand. Empty when the sheet has no such row. Shared/read-only.</summary>
-    public static Sprite[] FootRow(Texture2D sheet, int cell, int row)
+    public static Sprite[] FootRow(Texture2D sheet, int cell, int row, float footPivot = MobFootPivotY)
     {
         if (sheet == null || cell <= 0 || row < 0 || (row + 1) * cell > sheet.height) return System.Array.Empty<Sprite>();
-        var key = (sheet.GetEntityId(), cell, row);
+        var key = (sheet.GetEntityId(), cell, row, footPivot);
         if (footRows.TryGetValue(key, out var cached)) return cached;
 
         int cols = Mathf.Max(1, sheet.width / cell);
         var arr = new Sprite[cols];
         for (int c = 0; c < cols; c++)
             arr[c] = Sprite.Create(sheet, new Rect(c * cell, sheet.height - (row + 1) * cell, cell, cell),
-                                   new Vector2(0.5f, MobFootPivotY), cell);
+                                   new Vector2(0.5f, footPivot), cell);
         footRows[key] = arr;
         return arr;
     }

@@ -55,3 +55,4 @@
 - [Reproduce with GMCP, not the user](../reproduce-with-gmcp-not-the-user.md) — play a gameplay bug yourself through the text-play client; never park a recorder and ask the user to reproduce. Rebuild the client first if code changed.
 - [Wiki is deployed on Vercel](../wiki-deployed-on-vercel.md) — local wiki/ changes reach players only once deployed; static site, no polling.
 - [Built client crashes as it closes = Unity engine diagnostics](../built-game-crashes-on-quit-engine-diagnostics.md) — segfault in Unity's teardown (asset-bundle analytics after Insights is gone); fix = engine diagnostics off; our quit code cannot reach it.
+- [Explain causes without numbers](../explain-causes-without-numbers.md) — "why" answers = plain words + a picture; no metres or counts.

@@ -18,7 +18,7 @@ not dropped. Skills are learned, not rolled. Power over skills comes from practi
 trademark of the forged weapon in hand.**
 
 **How it relates to V3.** This is now what the code does. [V3](../active-skill-system-v3/README.md) still
-describes the channels, effects, triggers and the ring's curve, which V4 keeps; where the two disagree — rolled
+describes the channels, effects and triggers, which V4 keeps; where the two disagree — rolled
 weapon kits, rarity, equipment drops, the worn ring item, "skills don't level" — V4 is what runs and V3's
 passages on those points are dead. **Not yet play-tested.**
 
@@ -198,11 +198,10 @@ the endgame.
 
 ### How mastery is earned
 
-**Exactly the way your level and your ring are earned.** Every point of experience a kill pays you also goes to
-the mastery of the weapon in your hands — the same kill, the same number, paid to whoever the experience is paid
-to. Two things adjust it, both already above: the weapon's **grade sets how fast it trains** (the speed column in
-§9), and **nothing is earned while the grade's cap is reached**. Weapon mastery levels on **the ring's curve**
-(§9). A creature that cannot die (a training dummy) pays no experience, so it teaches nothing.
+**Exactly the way your level and your ring are earned.** Two thirds of the experience every kill pays you also goes
+to the mastery of the weapon in your hands — the same kill, paid to whoever the experience is paid to. Two things adjust it, both already above: the weapon's **grade sets how fast it trains** (the speed column in
+§9), and **nothing is earned while the grade's cap is reached**. Weapon mastery levels on **the character's own
+curve** (§9), and keeps levelling after the character reaches 99. A creature that cannot die (a training dummy) pays no experience, so it teaches nothing.
 
 ## 6. Skills leave the weapon
 
@@ -308,9 +307,10 @@ move once it is played. Change it here, in place, when it does.
 
 ### Mastery
 
-- **Weapon Mastery:** earned from experience (§5) on the ring's curve — level N to N+1 costs **20 + 12 × N**
-  experience (level 70 = 30,380 at 1× speed), times the grade's speed. Each level adds **+0.5%** to each of the
-  weapon's three stats (+35% each at 70).
+- **Weapon Mastery:** earned from two thirds of each kill's experience (§5), times the grade's speed, on the
+  character's own experience curve: mastery N to N+1 costs what base level N+1 does, so at par mastery 70 comes
+  around base level 74 ([the curve](../pre-renewal-ro-port.md)). Each level adds **+0.5%** to
+  each of the weapon's three stats (+35% each at 70).
 - **Skill Mastery:** level N costs **5 × N uses** (level 30 = 2,325 casts at par), each level adds **+1%** to the
   skill's output (+30% at 30). The weapon's quality speed column applies to uses too.
 - **A passive's output lift** = Weapon Mastery level × 0.5%, capped at +30% — only for a passive that belongs to the

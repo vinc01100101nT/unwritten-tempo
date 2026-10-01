@@ -11,40 +11,83 @@ using UnityEngine;
 public static class MasteryMath
 {
     // ---- what a level costs -------------------------------------------------------------------------------
-    // WEAPON MASTERY: experience, earned like the character's and the ring's — every kill's experience also goes to
-    // the weapon in hand — on the RING's curve (UnitStatMath.RingXpToNextFrom).
+    // WEAPON MASTERY: experience, earned like the character's and the ring's — TWO THIRDS of every kill's experience
+    // goes to the weapon in hand (decided 2026-09-30), times its grade's speed — on the CHARACTER's own curve: mastery
+    // M to M+1 costs what base level M+1 does (UnitStatMath.LevelCost), so mastery 0 stands where base level 1 does.
+    // It goes on earning after the character stops at 99.
     // SKILL MASTERY: uses; reaching level N costs 5 × N uses, so 2,325 to reach 30.
     public const int SkillUsesPerLevelStep = 5;
 
+    /// <summary>The scale of every kill's experience the weapon in hand is paid: two thirds, before its grade's speed.</summary>
+    public const double WeaponShareOfExperience = 2.0 / 3.0;
+
+    // No weapon grade lets mastery past 70, so nothing ever asks past it — the loops below are bounded by this, not
+    // by what a corrupt save claims.
+    const int HighestMasteryAsked = 79;
+
     /// <summary>Total experience a weapon mastery of <paramref name="level"/> has cost.</summary>
-    public static float WeaponXpFor(int level)
+    public static double WeaponXpFor(int level)
+        => level <= 0 ? 0.0 : level <= HighestMasteryAsked + 1 ? WeaponTotals[level] : CostOf(level);
+
+    static double CostOf(int level)
     {
-        float total = 0f;
-        for (int l = 0; l < level; l++) total += UnitStatMath.RingXpToNextFrom(l);
+        double total = 0.0;
+        for (int l = 1; l <= level; l++) total += UnitStatMath.LevelCost(l);
         return total;
     }
 
+    // Every mastery level's total, worked out once: a weapon's level is read whenever its stats are, and walking the
+    // curve's powers each time would be dozens of them per read.
+    static readonly double[] WeaponTotals = BuildWeaponTotals();
+
+    static double[] BuildWeaponTotals()
+    {
+        var totals = new double[HighestMasteryAsked + 2];
+        for (int l = 1; l < totals.Length; l++) totals[l] = CostOf(l);
+        return totals;
+    }
+
     /// <summary>The weapon mastery level <paramref name="xp"/> of experience buys.</summary>
-    public static int WeaponLevelFrom(float xp)
+    public static int WeaponLevelFrom(double xp)
     {
         int level = 0;
-        while (xp >= UnitStatMath.RingXpToNextFrom(level)) { xp -= UnitStatMath.RingXpToNextFrom(level); level++; }
+        while (level < HighestMasteryAsked && xp >= WeaponTotals[level + 1]) level++;
         return level;
     }
 
     /// <summary>How far <paramref name="xp"/> is into its current weapon mastery level, and how much experience that
-    /// level takes in all — "12 of 20" on the way from level 0 to 1.</summary>
-    public static void WeaponProgress(float xp, out float intoLevel, out float levelSize)
+    /// level takes in all.</summary>
+    public static void WeaponProgress(double xp, out double intoLevel, out double levelSize)
     {
         int level = WeaponLevelFrom(xp);
-        intoLevel = Mathf.Max(0f, xp - WeaponXpFor(level));
-        levelSize = UnitStatMath.RingXpToNextFrom(level);
+        double floor = WeaponXpFor(level);
+        intoLevel = UnitStatMath.RoundExperience(System.Math.Max(0.0, xp - floor));
+        levelSize = WeaponXpFor(level + 1) - floor;
     }
 
-    /// <summary>The weapon mastery experience a kill worth <paramref name="xp"/> pays: the same experience, at the
-    /// speed the weapon in hand's grade trains.</summary>
-    public static float WeaponXpFromKill(int xp, Quality heldQuality)
-        => Mathf.Max(0, xp) * CraftingMath.TrainingSpeed(heldQuality);
+    /// <summary>A weapon's mastery experience saved on the curve before 2026-09-30 (<c>20 + 12L</c> per level, from 0),
+    /// carried onto today's curve at the same level and the same share of the way through it. Read only by
+    /// <see cref="Character.RestoreSave"/> for an older save.</summary>
+    public static double CarryLegacyWeaponXp(double legacyXp)
+    {
+        if (legacyXp <= 0.0) return 0.0;
+        int level = 0;
+        double left = legacyXp;
+        while (level < HighestMasteryAsked && left >= UnitStatMath.LegacyRingXpToNextFrom(level))
+        {
+            left -= UnitStatMath.LegacyRingXpToNextFrom(level);
+            level++;
+        }
+        double share = System.Math.Min(1.0, left / UnitStatMath.LegacyRingXpToNextFrom(level));
+        double floor = WeaponXpFor(level);
+        return UnitStatMath.RoundExperience(floor + share * (WeaponXpFor(level + 1) - floor));
+    }
+
+    /// <summary>The weapon mastery experience a kill worth <paramref name="xp"/> pays: two thirds of it, at the speed the
+    /// weapon in hand's grade trains — paid by the same rule as the character and the ring
+    /// (<see cref="UnitStatMath.ShareOfKill"/>).</summary>
+    public static double WeaponXpFromKill(int xp, Quality heldQuality)
+        => UnitStatMath.ShareOfKill(xp, WeaponShareOfExperience * CraftingMath.TrainingSpeed(heldQuality));
 
     /// <summary>Total uses a skill mastery of <paramref name="level"/> has cost.</summary>
     public static float SkillUsesFor(int level)

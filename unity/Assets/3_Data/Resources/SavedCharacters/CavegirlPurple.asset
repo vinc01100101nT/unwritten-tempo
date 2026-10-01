@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.cavegirl-purple
   displayName: Cavegirl Purple
   sheet: {fileID: 2800000, guid: bcbca02c67f0b3f48ba2ab789f7635bd, type: 3}
+  faceset: {fileID: 2800000, guid: 346aafbdb347d784f9d4764179d7de6a, type: 3}
   behaviour: 2
   group: 2
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

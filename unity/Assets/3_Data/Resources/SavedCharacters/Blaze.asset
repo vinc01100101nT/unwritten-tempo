@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.blaze
   displayName: Blaze
   sheet: {fileID: 2800000, guid: 5905dc53151498c4fbb8097ec89f95b7, type: 3}
+  faceset: {fileID: 2800000, guid: 3c46037920f3eb84dbc315cbd6861193, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

@@ -138,26 +138,8 @@ public static class RecipeGenerator
         biomeTag.AddComponent<MapBiome>().biome = r.biome;
 
         Vector3 center = Vector3.zero;
-        // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
-        // With warp exits (World Creator), roads link the doorways to each other so pads sit on roads; else random routes.
-        bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
-        var paths = toExits
-            ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)
-            : r.pathStyle == PathStyle.Cardinal
-                ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
-                : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
-        // Ground = one blended mesh; the biome row chooses its base/patch/road tiles + hue, the recipe can add a tint on
-        // top and opt into hard (un-feathered) edges. The biome row also says how high its ground's mounds rise; the
-        // recipe says whether rock cliffs line the roads.
-        bool cliffsOn = r.cliffs == CliffChoice.On || (r.cliffs == CliffChoice.FollowBiome && bio.cliffs);
-        var cliffs = cliffsOn && r.cliffHeight > 0f && paths.Count > 0
-            ? new GroundCliffs.Spec(paths, r.cliffHeight, r.cliffPassWidth, seed, center, r.sizeX, r.sizeZ,
-                                    r.cliffMeetingPoints, bio.cliffFaceColor) : null;
-        var ground = GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
-                                               paths, r.pathWidth, roadTex, patchAmount, 0.8f,
-                                               bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,
-                                               r.groundStyle == GroundStyle.HardEdge, bio.bumpHeight, bio.bumpWidth,
-                                               bio.bumpLevels, bio.bumpSteepestDegrees, cliffs);
+        var ground = LayGround(scene, r, exitPointsXZ, bio, roadTex, patchAmount, safe, seed, groundLayer,
+                               out var paths, out var cliffs);
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Generate Map",
@@ -209,6 +191,80 @@ public static class RecipeGenerator
 
         Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props.");
         return (true, path, props);
+    }
+
+    // The map's roads and its ground, from the recipe and seed alone — so a rebuild of the ground lays exactly the
+    // ground the map was generated with.
+    static GameObject LayGround(Scene scene, MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ, BiomeRow bio,
+                                string roadTex, float patchAmount, string safe, int seed, int groundLayer,
+                                out List<PathRouting.Route> paths, out GroundCliffs.Spec cliffs)
+    {
+        Vector3 center = Vector3.zero;
+        // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
+        // With warp exits (World Creator), roads link the doorways to each other so pads sit on roads; else random routes.
+        bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
+        paths = toExits
+            ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)
+            : r.pathStyle == PathStyle.Cardinal
+                ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
+                : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
+        // Ground = one blended mesh; the biome row chooses its base/patch/road tiles + hue, the recipe can add a tint on
+        // top and opt into hard (un-feathered) edges. The biome row also says how high its ground's mounds rise; the
+        // recipe says whether rock cliffs line the roads.
+        bool cliffsOn = r.cliffs == CliffChoice.On || (r.cliffs == CliffChoice.FollowBiome && bio.cliffs);
+        cliffs = cliffsOn && r.cliffHeight > 0f && paths.Count > 0
+            ? new GroundCliffs.Spec(paths, r.cliffHeight, r.cliffPassWidth, seed, center, r.sizeX, r.sizeZ,
+                                    r.cliffMeetingPoints, bio.cliffFaceColor) : null;
+        return GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
+                                          paths, r.pathWidth, roadTex, patchAmount, 0.8f,
+                                          bio.baseTile.name, bio.patchTile.name, bio.tint * r.groundTint,
+                                          r.groundStyle == GroundStyle.HardEdge, bio.bumpHeight, bio.bumpWidth,
+                                          bio.bumpLevels, bio.bumpSteepestDegrees, cliffs);
+    }
+
+    /// <summary>Lay a generated map's ground again, and nothing else: the same recipe, seed and doorways that built the
+    /// map rebuild its ground in place, while its props, doors, arrival points and everything else stay exactly as they
+    /// are. For a change to how ground is shaped, so it reaches maps already built without regenerating them. The map
+    /// is opened alongside whatever is open, saved and closed again; the scenes open before, and the active one, are
+    /// left as they were. Returns null on success, else what went wrong.</summary>
+    public static string RebuildGround(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ, bool mapPicksRoad = false)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return "exit Play mode first";
+        if (r == null) return "no recipe";
+        if (r.randomizeSeed) return $"'{r.mapName}' rolls a new seed each build, so its ground cannot be laid again";
+        var bio = BiomeRowOrExplain(r.biome);
+        if (bio == null) return $"'{r.mapName}' has no usable biome row";
+        bool biomeRoad = !mapPicksRoad && bio.roadTile != null;
+        string roadTex = biomeRoad ? bio.roadTile.name : PathTexName(r.pathTile);
+        float patchAmount = bio.patchAmount >= 0f ? bio.patchAmount : r.dirtAmount;
+        string safe = Sanitize(string.IsNullOrWhiteSpace(r.mapName) ? "NewMap" : r.mapName);
+        string path = $"{ScenesDir}/{safe}.unity";
+        if (!File.Exists(path)) return $"no scene at {path}";
+        if (SceneManager.GetSceneByPath(path).isLoaded) return $"'{safe}' is open in the editor; not rebuilding it behind the user's back";
+        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
+        if (groundLayer < 0) return "no free layer slot for 'Ground'";
+
+        var wasActive = SceneManager.GetActiveScene();
+        var scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+        try
+        {
+            string rootName = $"Ground_{safe}";
+            GameObject old = null;
+            foreach (var go in scene.GetRootGameObjects()) if (go.name == rootName) old = go;
+            if (old == null) return $"'{safe}' has no {rootName}";
+            int at = old.transform.GetSiblingIndex();
+            Object.DestroyImmediate(old);
+            var ground = LayGround(scene, r, exitPointsXZ, bio, roadTex, patchAmount, safe, r.seed, groundLayer, out _, out _);
+            if (ground == null) return $"'{safe}': the ground could not be built (missing tile or shader)";
+            ground.transform.SetSiblingIndex(at);
+            if (!EditorSceneManager.SaveScene(scene)) return $"'{safe}' could not be saved";
+            return null;
+        }
+        finally
+        {
+            EditorSceneManager.CloseScene(scene, true);
+            if (wasActive.IsValid() && wasActive.isLoaded) SceneManager.SetActiveScene(wasActive);
+        }
     }
 
     // Retrofit: make the foliage in the CURRENTLY-OPEN scene sway, without re-baking it from a recipe. Handy for

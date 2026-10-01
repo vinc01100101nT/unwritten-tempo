@@ -46,7 +46,8 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol = null, string srcName = null, string srcId = null,
-                                  Vector3? aimPoint = null, ICombatUnit caster = null, StackVars vars = default)
+                                  Vector3? aimPoint = null, ICombatUnit caster = null, StackVars vars = default,
+                                  bool efficient = false)
     {
         if (effects == null || effects.Count == 0) return;
 
@@ -57,9 +58,9 @@ public static class SkillEffectApplier
         // What the caster's own practice is paying for this cast, resolved ONCE for the whole burst — looking it up
         // has no business running per hit. Restored on the way out because a passive can cast INSIDE this burst
         // (OnDamageDealt / OnKill fire synchronously below): without the restore, the inner cast's practice would go
-        // on paying for the outer cast's remaining hits.
+        // on paying for the outer cast's remaining hits. An EFFICIENT cast adds its bonus on top (SkillEfficiency).
         float prevLift = masteryLift;
-        masteryLift = ch != null ? ch.SkillOutputLift(srcId) : 0f;
+        masteryLift = SkillEfficiency.OutputLift(ch.SkillOutputLift(srcId), efficient);
         try
         {
             ApplyBurstTargets(point, radius, scope, targets, effects, singleTarget,

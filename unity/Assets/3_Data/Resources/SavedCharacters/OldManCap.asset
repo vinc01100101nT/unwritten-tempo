@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.old-man-cap
   displayName: Old Man Cap
   sheet: {fileID: 2800000, guid: 243bf69b929b6864ab64b35806d5f99c, type: 3}
+  faceset: {fileID: 2800000, guid: 03b183e75fde97645a8ee9f021a1d91c, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

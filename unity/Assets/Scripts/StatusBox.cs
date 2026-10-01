@@ -42,11 +42,12 @@ public class StatusBox : MonoBehaviour
 
     // change-detection: the text is only rewritten when a number it shows actually moves
     int lastHp = -1, lastMaxHp = -1, lastMp = -1, lastMaxMp = -1;
-    int lastCharLvl = -1, lastCharXp = -1, lastCharToNext = -1, lastRingLvl = -1, lastRingXp = -1, lastGold = -1;
+    int lastCharLvl = -1, lastCharToNext = -1, lastRingLvl = -1, lastGold = -1;
+    double lastCharXp = -1.0, lastRingXp = -1.0;
     string lastName;
     WeaponType lastMasteryWeapon = (WeaponType)(-1);
     int lastMasteryLvl = -1;
-    float lastMasteryInto = -1f, lastMasterySize = -1f;
+    double lastMasteryInto = -1.0, lastMasterySize = -1.0;
     bool lastMasteryCapped, lastMasteryKnown;
 
     void Update()
@@ -221,8 +222,8 @@ public class StatusBox : MonoBehaviour
         if (ch.Level != lastCharLvl || ch.XP != lastCharXp || ch.XPToNext != lastCharToNext)
         {
             lastCharLvl = ch.Level; lastCharXp = ch.XP; lastCharToNext = ch.XPToNext;
-            SetFill(charFill, ch.XPToNext > 0 ? ch.XP / (float)ch.XPToNext : 0f);
-            charLabel.text = $"{ch.XP} / {ch.XPToNext}";
+            SetFill(charFill, ch.XPToNext > 0 ? (float)(ch.XP / ch.XPToNext) : 0f);
+            charLabel.text = $"{ch.XP:0.00} / {ch.XPToNext}";
             charName.text = "Lv " + ch.Level;
         }
 
@@ -230,8 +231,8 @@ public class StatusBox : MonoBehaviour
         if (r.Level != lastRingLvl || r.XP != lastRingXp)
         {
             lastRingLvl = r.Level; lastRingXp = r.XP;
-            SetFill(ringFill, r.XPToNext > 0 ? r.XP / (float)r.XPToNext : 0f);
-            ringLabel.text = $"{r.XP} / {r.XPToNext}";
+            SetFill(ringFill, r.XPToNext > 0 ? (float)(r.XP / r.XPToNext) : 0f);
+            ringLabel.text = $"{r.XP:0.00} / {r.XPToNext}";
             ringName.text = "Ring Lv " + r.Level;
         }
 
@@ -249,9 +250,9 @@ public class StatusBox : MonoBehaviour
     {
         var weapon = ch.HeldWeapon;
         int level = ch.Mastery.SentLevel(weapon);
-        bool known = ch.Mastery.SentProgress(weapon, out float into, out float size, out bool capped);
+        bool known = ch.Mastery.SentProgress(weapon, out double into, out double size, out bool capped);
         if (weapon == lastMasteryWeapon && level == lastMasteryLvl && known == lastMasteryKnown
-            && Mathf.Approximately(into, lastMasteryInto) && Mathf.Approximately(size, lastMasterySize)
+            && into == lastMasteryInto && size == lastMasterySize
             && capped == lastMasteryCapped) return;
         lastMasteryWeapon = weapon; lastMasteryLvl = level; lastMasteryKnown = known;
         lastMasteryInto = into; lastMasterySize = size; lastMasteryCapped = capped;
@@ -269,8 +270,8 @@ public class StatusBox : MonoBehaviour
         }
         else
         {
-            SetFill(masteryFill, size > 0f ? into / size : 0f);
-            masteryLabel.text = $"{into:0.#} / {size:0.#}";   // perf-ok: gated by the early return above
+            SetFill(masteryFill, size > 0.0 ? (float)(into / size) : 0f);
+            masteryLabel.text = $"{into:0.00} / {size:0}";   // perf-ok: gated by the early return above
         }
     }
 

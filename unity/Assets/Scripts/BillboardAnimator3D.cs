@@ -106,6 +106,10 @@ public class BillboardAnimator3D : MonoBehaviour
     // UseSheet). Not saved: it belongs to the life, and a body only becomes a character while the game runs.
     [System.NonSerialized] float widthScale = 1f;
 
+    // Where the feet stand in a grid cell, as a fraction of it up from the bottom — the mob default, or a saved
+    // character's own measured feet line (see UseSheet). Not saved, for the same reason as the width.
+    [System.NonSerialized] float footPivot = SpriteSheetCache.MobFootPivotY;
+
     // ---- the poses under a character sheet's walk --------------------------------------------------------
     // A character's sheet carries three more rows under its four walk rows: an attack, one picture per direction;
     // a jump; and a row of single pictures — dead, casting, releasing a cast, releasing with no cast. A sheet without
@@ -130,8 +134,8 @@ public class BillboardAnimator3D : MonoBehaviour
         deadPose = castPose = releasePose = instantReleasePose = posing = null;
         holdingCast = false;
         if (sheet == null || cell <= 0 || idleStrip.sheet != null) return;
-        var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow);
-        var poses = SpriteSheetCache.FootRow(sheet, cell, PoseRow);
+        var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow, footPivot);
+        var poses = SpriteSheetCache.FootRow(sheet, cell, PoseRow, footPivot);
         if (attack.Length < 4 || poses.Length < 4) return;
         attackPoses = attack;
         deadPose = poses[0];
@@ -200,17 +204,19 @@ public class BillboardAnimator3D : MonoBehaviour
         if (sheet == null) { GameLog.Warn(LogCat.Unwritten, "BillboardAnimator3D has no sheet on " + name); return; }
         // Shared slice cache: all mobs that use the same sheet+cell share ONE set of walk frames instead
         // of each instance allocating its own identical copies in Awake.
-        var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames);
+        var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames, footPivot);
         down = dirs[0]; up = dirs[1]; left = dirs[2]; right = dirs[3];
     }
 
     /// <summary>Draw this body from a different grid <paramref name="grid"/> from now on — a creature that has turned back
     /// into the character it was drawn as. Any strip art is dropped, and the art's measured height and width come with the
     /// picture, because the body's size is fitted against them (<see cref="MobBody.Fit"/>, which the caller runs next).</summary>
-    public void UseSheet(Texture2D grid, float crown, float paintedWidth, float drawnWidth = 1f)
+    public void UseSheet(Texture2D grid, float crown, float paintedWidth, float drawnWidth = 1f,
+                         float feetPivot = SpriteSheetCache.MobFootPivotY)
     {
         if (grid == null) return;
         sheet = grid;
+        footPivot = Mathf.Clamp01(feetPivot);
         widthScale = Mathf.Max(0.05f, drawnWidth);
         idleStrip = default;
         walkStrip = default;

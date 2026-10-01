@@ -22,7 +22,10 @@ public class SaveData
     // with no trademark — nothing to migrate.
     // v15: the timed effects still running ride the save (timedEffects). Older saves carry none, which loads as
     // "nothing running" — nothing to migrate.
-    public const int CurrentVersion = 15;
+    // v16: experience on the Ragnarok curve (UnitStatMath.LevelCost), the level capped at 99, the ring at a third of
+    // it and weapon mastery at two thirds. An older save's level is kept and the experience inside each level keeps
+    // the same share of the way through it (Character.CarryOntoRagnarokCurve).
+    public const int CurrentVersion = 16;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -32,7 +35,7 @@ public class SaveData
 
     // Core progression.
     public int level = 1;
-    public int xp;
+    public double xp;   // to two decimals (v16+); an older whole number reads straight in
 
     // EVERY POINT OF EXPERIENCE THIS CHARACTER HAS EVER BEEN GIVEN (v10+), including the part already spent
     // climbing levels. `xp` above is only what is standing inside the CURRENT level — it is reset on each
@@ -60,7 +63,7 @@ public class SaveData
     // Ring of Progression vessel (v4+): its own level/XP track, separate from the character's. Pre-v4 saves
     // leave these 0 → RestoreSave derives the ring level from the points already granted (allocated + banked).
     public int ringLevel;
-    public int ringXp;
+    public double ringXp;   // to two decimals, like xp
 
     // Currency (M2 loot slice).
     public int gold;
@@ -74,7 +77,7 @@ public class SaveData
     // dictionary does not serialize. Null on an older save → nothing practised and nothing learned, which is
     // exactly where a character who has never trained stands.
     public int[]    masteryWeapons;    // (int)WeaponType
-    public float[]  masteryPoints;     // practice points, parallel to masteryWeapons
+    public double[] masteryPoints;     // practice points to two decimals, parallel to masteryWeapons
     public string[] masterySkillIds;   // SkillDef.id
     public float[]  masterySkillUses;  // uses, parallel to masterySkillIds
     public string[] learnedSkillIds;   // every skill this character knows
@@ -117,9 +120,19 @@ public class SaveData
     public string sceneName;
     public float  posX, posY, posZ;
 
+    // OR THE ARRIVAL POINT TO STAND AT in sceneName, instead of the position — written only for somebody who left
+    // while dead with no save point of their own (SavePoint.DefaultSpawnId). Empty = use the position.
+    public string arriveAtSpawnId;
+
     // The sprint pool (v8+), saved for the same reason HP and MP are: it is a current value against a
     // maximum, and coming back with it full is a small free refill.
     public float stamina = -1f;   // below zero = not recorded; the character keeps its own starting value
+
+    // WHERE THEY STAND BACK UP AFTER DYING — the map and the position inside it, set by the GM's /save. An empty
+    // map means none was ever set, which is every save written before this existed too: they come back at
+    // SavePoint.DefaultMap's default arrival point. No version bump — "not set" and "not recorded" are one fact.
+    public string savePointMap;
+    public float  savePointX, savePointY, savePointZ;
 
     // COOLDOWNS STILL RUNNING (v9+), as parallel arrays like the trio-ring walk above: the skill's id, and the
     // MOMENT it becomes ready again, counted in seconds since 1970 on the world's clock.

@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.cave-lion
   displayName: Cave Lion
   sheet: {fileID: 2800000, guid: 6746587efa4b93c42a6d31952cd5cbe1, type: 3}
+  faceset: {fileID: 2800000, guid: 8e6a731079ad5544cb5048de1dac8ad1, type: 3}
   behaviour: 1
   group: 2
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

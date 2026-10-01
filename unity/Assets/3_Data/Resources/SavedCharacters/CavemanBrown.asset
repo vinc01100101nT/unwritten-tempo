@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.caveman-brown
   displayName: Caveman Brown
   sheet: {fileID: 2800000, guid: 87a1c2a538983e64f899315fef2eef50, type: 3}
+  faceset: {fileID: 2800000, guid: 5307c94243db1374a87c360c1a5da662, type: 3}
   behaviour: 2
   group: 2
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.875

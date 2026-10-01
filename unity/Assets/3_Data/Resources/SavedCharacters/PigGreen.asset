@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.pig-green
   displayName: Pig Green
   sheet: {fileID: 2800000, guid: 38b1140a7b3b37148895891ec15bf04a, type: 3}
+  faceset: {fileID: 2800000, guid: 7392d903600b97f4897fa69634bb7752, type: 3}
   behaviour: 2
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

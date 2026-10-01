@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.old-woman
   displayName: Old Woman
   sheet: {fileID: 2800000, guid: 60da4c68e406f6245aadd86b3fa3d665, type: 3}
+  faceset: {fileID: 2800000, guid: 69a46a1f09d05214696020f3f2cc3b91, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.9375

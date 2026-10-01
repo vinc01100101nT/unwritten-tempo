@@ -465,7 +465,9 @@ public class StatusController : MonoBehaviour
         var u = Unit;
         // At full health there is nothing to restore — the same stop the mana tick below has always had. Paying into
         // a full bar still announced green digits to every screen watching, once per tick, per unit, forever.
-        if (u == null || u.CurrentHP >= u.MaxHP) { hpAccum = 0f; return; }
+        // NOTHING COMES BACK WHILE DEAD. Health and mana stay exactly where the death left them until the unit
+        // stands up again.
+        if (u == null || u.IsDead || u.CurrentHP >= u.MaxHP) { hpAccum = 0f; return; }
         // Both halves are HP per SECOND: what the unit's own VIT restores, plus whatever a timed regen change adds
         // (or, negative, takes away).
         int pay = Owed(ref hpAccum, u.HPRegenPerSecond + states.SubStatBonus(SubStat.HPRegen));
@@ -479,7 +481,7 @@ public class StatusController : MonoBehaviour
         if (Time.time < nextManaTick) return;
         nextManaTick = Time.time + UnitStates.RegenInterval;
         var u = Unit;
-        if (u == null || u.CurrentMP >= u.MaxMP) { manaAccum = 0f; return; }
+        if (u == null || u.IsDead || u.CurrentMP >= u.MaxMP) { manaAccum = 0f; return; }
         int pay = Owed(ref manaAccum, u.MPRegenPerSecond + states.SubStatBonus(SubStat.MPRegen));
         if (pay > 0) u.GainMana(pay);
     }

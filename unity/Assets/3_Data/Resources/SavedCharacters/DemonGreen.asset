@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.demon-green
   displayName: Demon Green
   sheet: {fileID: 2800000, guid: 7c78ee2d946e29648b4b985c1c3bd630, type: 3}
+  faceset: {fileID: 2800000, guid: 5976931fd9a0bfb49b6955314a409baa, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

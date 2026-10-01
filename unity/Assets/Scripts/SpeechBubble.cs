@@ -16,9 +16,9 @@ using TMPro;
 [DisallowMultipleComponent]
 public class SpeechBubble : MonoBehaviour
 {
-    // World units per UI unit the bubble was drawn at in the world. Smaller than DamagePopup's numbers — barks should
-    // be subtle, not shouty. It now only sets the bubble's fixed on-screen size (see OverheadScreenLayer.ScaleFor).
-    const float BaseScale = 0.0018f;
+    // World units per UI unit the bubble was drawn at in the world. It now only sets the bubble's fixed on-screen size
+    // (see OverheadScreenLayer.ScaleFor) — the whole bubble, text included, grows and shrinks with it.
+    const float BaseScale = 0.0027f;
     const int FontSize = 45;
     const float PadX = 14f, PadY = 7f;   // text inset inside the bubble (UI units)
 

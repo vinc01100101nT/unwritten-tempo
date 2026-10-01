@@ -11,7 +11,7 @@ using UnityEngine;
 /// </summary>
 public sealed class MasteryProgress
 {
-    readonly Dictionary<WeaponType, float> weaponPoints = new Dictionary<WeaponType, float>();
+    readonly Dictionary<WeaponType, double> weaponPoints = new Dictionary<WeaponType, double>();
     readonly Dictionary<string, float> skillUses = new Dictionary<string, float>();
     readonly HashSet<string> learned = new HashSet<string>();
 
@@ -21,8 +21,8 @@ public sealed class MasteryProgress
     // ---- weapon mastery -----------------------------------------------------------------------------------
 
     /// <summary>Mastery experience earned with <paramref name="weapon"/>, whatever is in hand now.</summary>
-    public float PointsWith(WeaponType weapon)
-        => weapon != WeaponType.None && weaponPoints.TryGetValue(weapon, out float p) ? p : 0f;
+    public double PointsWith(WeaponType weapon)
+        => weapon != WeaponType.None && weaponPoints.TryGetValue(weapon, out double p) ? p : 0.0;
 
     /// <summary>The weapon mastery level EARNED with <paramref name="weapon"/> — before any cap.</summary>
     public int EarnedLevel(WeaponType weapon) => MasteryMath.WeaponLevelFrom(PointsWith(weapon));
@@ -39,16 +39,16 @@ public sealed class MasteryProgress
 
     /// <summary>Add experience to a weapon's mastery. Refused once capped by what is in hand. Returns the levels
     /// gained.</summary>
-    public int AddXP(WeaponType weapon, float xp, Quality heldQuality)
+    public int AddXP(WeaponType weapon, double xp, Quality heldQuality)
     {
-        if (weapon == WeaponType.None || xp <= 0f) return 0;
+        if (weapon == WeaponType.None || xp <= 0.0) return 0;
         if (CappedOut(weapon, heldQuality)) return 0;
 
         int before = EarnedLevel(weapon);
-        float now = PointsWith(weapon) + xp;   // server-math: only Character.AddXP calls this, and only on the server
+        double now = UnitStatMath.RoundExperience(PointsWith(weapon) + xp);   // server-math: only Character.AddXP calls this, and only on the server
         // Never past the cap's own total, so a single huge kill cannot vault a poor weapon's limit.
-        float ceiling = MasteryMath.WeaponXpFor(CraftingMath.WeaponMasteryCap(heldQuality));
-        weaponPoints[weapon] = Mathf.Min(now, ceiling);
+        double ceiling = MasteryMath.WeaponXpFor(CraftingMath.WeaponMasteryCap(heldQuality));
+        weaponPoints[weapon] = System.Math.Min(now, ceiling);
         OnChanged?.Invoke();
         return EarnedLevel(weapon) - before;
     }
@@ -79,17 +79,17 @@ public sealed class MasteryProgress
     public int SentLevel(WeaponType weapon) => sentLevels.TryGetValue(weapon, out int l) ? l : 0;
 
     // ---- the practice toward the next level, as the server sent it ---------------------------------------
-    readonly Dictionary<WeaponType, (float into, float size, bool capped)> sentProgress =
-        new Dictionary<WeaponType, (float, float, bool)>();
+    readonly Dictionary<WeaponType, (double into, double size, bool capped)> sentProgress =
+        new Dictionary<WeaponType, (double, double, bool)>();
 
     /// <summary>SERVER: for every weapon practised, and the one in hand even if it never was, how far its practice is
     /// into the current level, how many points that level takes, and whether the weapon in hand's grade has stopped
     /// it — finished numbers for a window to draw.</summary>
     public void CaptureProgress(WeaponType held, Quality heldQuality,
-                                out int[] weapons, out float[] into, out float[] size, out bool[] capped)
+                                out int[] weapons, out double[] into, out double[] size, out bool[] capped)
     {
         int n = weaponPoints.Count + (held != WeaponType.None && !weaponPoints.ContainsKey(held) ? 1 : 0);
-        weapons = new int[n]; into = new float[n]; size = new float[n]; capped = new bool[n];
+        weapons = new int[n]; into = new double[n]; size = new double[n]; capped = new bool[n];
         int at = 0;
         foreach (var kv in weaponPoints) weapons[at++] = (int)kv.Key;
         if (at < n) weapons[at] = (int)held;
@@ -102,7 +102,7 @@ public sealed class MasteryProgress
     }
 
     /// <summary>PLAYER'S MACHINE: keep the progress the server sent, replacing the last set.</summary>
-    public void TakeSentProgress(int[] weapons, float[] into, float[] size, bool[] capped)
+    public void TakeSentProgress(int[] weapons, double[] into, double[] size, bool[] capped)
     {
         sentProgress.Clear();
         if (weapons != null && into != null && size != null && capped != null)
@@ -112,19 +112,19 @@ public sealed class MasteryProgress
     }
 
     /// <summary>The progress the server last sent for <paramref name="weapon"/>; false before any arrives.</summary>
-    public bool SentProgress(WeaponType weapon, out float into, out float size, out bool capped)
+    public bool SentProgress(WeaponType weapon, out double into, out double size, out bool capped)
     {
         if (sentProgress.TryGetValue(weapon, out var p)) { into = p.into; size = p.size; capped = p.capped; return true; }
-        into = size = 0f; capped = false;
+        into = size = 0.0; capped = false;
         return false;
     }
 
     /// <summary>Set the practice in one weapon outright, ignoring every cap — the testing door (<c>/mastery</c>),
     /// and nothing in the game calls it.</summary>
-    public void SetPractice(WeaponType weapon, float points)
+    public void SetPractice(WeaponType weapon, double points)
     {
         if (weapon == WeaponType.None) return;
-        weaponPoints[weapon] = Mathf.Max(0f, points);
+        weaponPoints[weapon] = System.Math.Max(0.0, points);
         OnChanged?.Invoke();
     }
 
@@ -194,10 +194,10 @@ public sealed class MasteryProgress
     // ---- save / load --------------------------------------------------------------------------------------
 
     /// <summary>Everything, as the flat arrays a save carries.</summary>
-    public void Capture(out int[] weapons, out float[] points, out string[] skillIds, out float[] uses, out string[] known)
+    public void Capture(out int[] weapons, out double[] points, out string[] skillIds, out float[] uses, out string[] known)
     {
         weapons = new int[weaponPoints.Count];
-        points = new float[weaponPoints.Count];
+        points = new double[weaponPoints.Count];
         int at = 0;
         foreach (var kv in weaponPoints) { weapons[at] = (int)kv.Key; points[at] = kv.Value; at++; }
 
@@ -212,7 +212,7 @@ public sealed class MasteryProgress
 
     /// <summary>Replace everything from a save. A skill id the game no longer has is dropped, so a retired skill
     /// cannot linger as something nobody can cast.</summary>
-    public void Restore(int[] weapons, float[] points, string[] skillIds, float[] uses, string[] known)
+    public void Restore(int[] weapons, double[] points, string[] skillIds, float[] uses, string[] known)
     {
         weaponPoints.Clear();
         skillUses.Clear();
@@ -222,7 +222,7 @@ public sealed class MasteryProgress
             for (int i = 0; i < weapons.Length && i < points.Length; i++)
             {
                 var w = (WeaponType)weapons[i];
-                if (w != WeaponType.None && points[i] > 0f) weaponPoints[w] = points[i];
+                if (w != WeaponType.None && points[i] > 0.0) weaponPoints[w] = points[i];
             }
 
         if (skillIds != null && uses != null)

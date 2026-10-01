@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.camouflage-green
   displayName: Camouflage Green
   sheet: {fileID: 2800000, guid: 3b6ed44742dd65f4691b8a8590eae295, type: 3}
+  faceset: {fileID: 2800000, guid: 23eddec3f648f144ea7957adab50e430, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 1

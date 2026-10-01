@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.vampire
   displayName: Vampire
   sheet: {fileID: 2800000, guid: 173fde6963b479a40994e2e4a3a11ff2, type: 3}
+  faceset: {fileID: 2800000, guid: 223be4a4927151d4c817cc2bce36529a, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

@@ -44,8 +44,7 @@ on the player's machine; the game server only says what weather it holds and whe
 ## How it works
 
 - **Reading the ground** (`WaterSurfaces`, once per map, the first time the ground is wet after a map loads): the
-  heights of every exactly-level triangle of the map's ground become the sheets (levels within 1 cm share one sheet —
-  a cliff top's grass lies 4 mm over the ground, a road's border strip 3 mm). A sheet covers the squares of a 0.5 m
+  heights of every exactly-level triangle of the map's ground become the sheets (levels within 1 cm share one sheet). A sheet covers the squares of a 0.5 m
   grid whose centre lies on one of its level triangles (`WaterPooling.MarkLevelGround`), and the two squares round
   them that its edge crosses — never a square only because its ground stands at the sheet's height. The ground's top height on a 0.5 m grid
   becomes the hollows: filling the grid from the lowest ground up, every lowest point starts a hollow and every saddle

@@ -44,6 +44,10 @@ public class TownNPC : MonoBehaviour
     /// which is the one thing that can turn a body on a machine with no screen.</summary>
     public Transform TalkTarget => talkTarget;
 
+    /// <summary>This person's level, handed over by whatever placed them (see <see cref="AmbientLife.level"/>).
+    /// Read by the server to tell every watcher; it changes nothing about how they walk or talk.</summary>
+    public int Level { get; private set; } = 1;
+
     [Header("Craft station")]
     [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith forges metal, " +
              "a loom weaves cloth, a tannery tans leather — pressing F on one opens their station instead of a " +
@@ -189,8 +193,9 @@ public class TownNPC : MonoBehaviour
 
     /// <summary>Set this townsperson up. Called by <see cref="AmbientLife"/> right after spawn so all the
     /// per-NPC randomization (home, phase offsets) lives in one place.</summary>
-    public void Init(Vector3 homePoint, float wander, bool barksOn)
+    public void Init(Vector3 homePoint, float wander, bool barksOn, int townLevel)
     {
+        Level = Mathf.Max(1, townLevel);
         home = homePoint;
         wanderRadius = Mathf.Max(0.5f, wander);
         barksEnabled = barksOn;

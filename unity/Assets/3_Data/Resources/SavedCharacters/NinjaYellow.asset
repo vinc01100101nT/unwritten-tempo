@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-yellow
   displayName: Ninja Yellow
   sheet: {fileID: 2800000, guid: 0e8f8aab73b27fa43a8d1b27887ce97d, type: 3}
+  faceset: {fileID: 2800000, guid: 68ac0e2656dcc8e4589f4b7571d8ef10, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.oni-tengu
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

@@ -305,7 +305,7 @@ public class AgentLink : MonoBehaviour
         "bag | gear | stats        detail views\n" +
         "ground                    what you are standing on, and everything solid touching you\n" +
         "say <text>                chat; a /command runs like typed\n" +
-        "revive                    press respawn when dead\n" +
+        "revive                    press Return to last saved point when dead\n" +
         "wait <secs>               let time pass (ends early on a hit)\n" +
         "log <category|all> on|off switch this game's own log lines (written to its log file)";
 
@@ -447,7 +447,7 @@ public class AgentLink : MonoBehaviour
 
     bool Hurt() => Character.Instance != null && Character.Instance.CurrentHP < hpAtStart;
     static bool Dead() => Character.Instance == null || Character.Instance.IsDead;
-    // Dying ends a command; being dead already does not, or a wait for the respawn timer could never run.
+    // Dying ends a command; being dead already does not, or a wait while dead could never run.
     bool Died() => !deadAtStart && Dead();
 
     // The two things that end a wait the moment they happen.
@@ -749,7 +749,7 @@ public class AgentLink : MonoBehaviour
     void Revive()
     {
         if (!Dead()) { Say("not dead"); return; }
-        if (!DeathScreen.PressRespawn()) { Say("respawn is not ready yet — wait a few seconds"); return; }
+        if (!SystemWindow.PressReturnToSavePoint()) { Say("there is no death window to press"); return; }
         WaitFor(() => !Dead() && !LoadingScreen.Showing ? "revived" : null, 15f, "still dead after 15s");
     }
 

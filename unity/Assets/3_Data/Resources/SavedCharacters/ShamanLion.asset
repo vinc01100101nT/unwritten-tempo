@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.shaman-lion
   displayName: Shaman Lion
   sheet: {fileID: 2800000, guid: 2acbb34128f059e49b981796e8445773, type: 3}
+  faceset: {fileID: 2800000, guid: 370e7c9525140554ebe927862e70690f, type: 3}
   behaviour: 2
   group: 2
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

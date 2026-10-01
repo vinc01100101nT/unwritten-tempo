@@ -637,9 +637,11 @@ public class GameNetwork : NetworkManager
         // onto the screen; it used to run the level-up loop itself from the two amounts above, which is the
         // player's machine deciding a level, a stat point and a full heal. The two "gained" counts say how many
         // times to play the level-up moment — a count to replay, never a number to work out.
-        public int level, xp, statPoints, levelsGained;
+        public int level, statPoints, levelsGained;
+        public double xp;   // to two decimals, like every track's experience
         public long lifetimeXp;
-        public int ringLevel, ringXp, ringBankedPoints, ringLevelsGained;
+        public int ringLevel, ringBankedPoints, ringLevelsGained;
+        public double ringXp;
     }
 
     /// <summary>A PERSON CASTING A SKILL — the whole of it, named rather than resolved. Which skill, what they
@@ -1008,22 +1010,34 @@ public class GameNetwork : NetworkManager
                              + fighter.CurrentHP + " health — nothing to do.");
             return;
         }
-        GameLog.Info(LogCat.Server, "reviving " + NameOf(fighter) + " (" + CharacterIdOf(fighter) + "), who was dead.");
-        ReviveOnServer(fighter);
+        GameLog.Info(LogCat.Server, "returning " + NameOf(fighter) + " (" + CharacterIdOf(fighter) + "), who was dead, "
+                         + "to their save point.");
+        RespawnOnServer(fighter);
     }
 
-    /// <summary>Server-only: stand <paramref name="who"/> back up. The one way the server revives a person — their
-    /// own Respawn button and a GM's <c>/revive</c> both come here.</summary>
+    /// <summary>Server-only: stand <paramref name="who"/> back up where they fell, at full HP and MP — the GM's
+    /// <c>/revive</c> and <c>/heal</c>. A player's own "Return to last saved point" is <see cref="RespawnOnServer"/>.</summary>
     public static void ReviveOnServer(Character who)
     {
         if (!NetworkServer.active || who == null) return;
         who.Revive();
+    }
 
-        // AND COMING BACK MOVES THEM. A person stands up at a spawn point, which is nowhere near where they fell —
-        // a jump the movement check would otherwise read as the largest lie it has ever seen, on every single
-        // death. Forgiven from HERE because this is the server granting it: nothing a client says can reach it.
+    /// <summary>Server-only: stand <paramref name="who"/> back up at their save point, on a tenth of their health with
+    /// their mana as it was. The one way a player comes back by their own choice — the death window's "Return to
+    /// last saved point" asks for this.</summary>
+    public static void RespawnOnServer(Character who)
+    {
+        if (!NetworkServer.active || who == null) return;
+        who.ReviveAtSavePoint();
+
         var shell = ShellFor(who);
-        if (shell != null) shell.ForgiveNextMoveAfterServerMove();
+        if (shell == null) return;
+        // AND COMING BACK MOVES THEM, nowhere near where they fell — a jump the movement check would otherwise read
+        // as the largest lie it has ever seen. Forgiven from HERE because this is the server granting it: nothing a
+        // client says can reach it.
+        shell.ForgiveNextMoveAfterServerMove();
+        shell.SendToSavePoint();
     }
 
     /// <summary>The body belonging to this character, on a server. Lets anything holding a CHARACTER reach the
@@ -2062,49 +2076,22 @@ public class GameNetwork : NetworkManager
         });
     }
 
-    /// <summary>Say a skill's NAME out loud to everybody who can see the caster — the call, not the effect.
-    ///
-    /// <para>Sent once per CAST, from where the caster's own machine says it, so the same words reach every screen at
-    /// the same moment. Not to the caster's own machine, which said it there and would otherwise say it twice.
-    /// Silent off a server, so the single-machine game is untouched.</para></summary>
-    public static void AnnounceSkillCall(ICombatUnit caster, SkillDef def)
+    /// <summary>Call out a skill as it fires, to everybody who can see the caster AND the caster themselves — in the
+    /// words <see cref="SkillShout"/> decides here, so every screen shows the same call. <paramref name="efficient"/>
+    /// is this cast's efficiency, rolled once at its release. Silent off a server, for anybody gone, and when the
+    /// shout rule says nothing.</summary>
+    public static void AnnounceSkillCall(ICombatUnit caster, SkillDef def, bool efficient)
     {
         if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null) return;
-        if (string.IsNullOrEmpty(def.displayName)) return;
         var identity = IdentityOfCaster(caster);
         if (identity == null) return;
         // A PERSON is named beside their call; a creature's call is only a bubble over its head, so it carries none.
         var shell = identity.GetComponent<NetPlayer>();
         if (shell == null && identity.GetComponent<NetMob>() == null) return;
 
-        NetworkServer.SendToReadyObservers(identity, new ChatHeard
-        {
-            speakerNetId = identity.netId,
-            speaker = shell != null ? shell.playerName : "",
-            text = def.displayName,
-            isSkillCall = true,
-        }, includeOwner: false);
-    }
-
-    /// <summary>Call out a pressed FORM of a style, to everybody who can see the caster AND the caster themselves — in
-    /// the words <see cref="SkillShout"/> decides here, so the timers live on the server and every screen shows the
-    /// same call. Silent off a server, for anybody gone, and when the shout rules say nothing.</summary>
-    public static void AnnounceFormCall(ICombatUnit caster, SkillDef def)
-    {
-        if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null) return;
-        var identity = IdentityOfCaster(caster);
-        if (identity == null) return;
-        var shell = identity.GetComponent<NetPlayer>();
-        var mob = shell == null ? identity.GetComponent<NetMob>() : null;
-        if (shell == null && mob == null) return;
-
         // A person or a shadow may make the full style call; an ordinary creature carries no style of its own.
         bool mayCallStyle = shell != null || (caster is Health beast && beast.kind == CreatureKind.Shadow);
-        bool trademark = caster is Character person
-            ? Trademarks.Empowers(person.GetEquippedInstance(EquipSlotType.Weapon), def.id)
-            : caster is Health creature && Trademarks.Empowers(creature.HeldWeaponCopy, def.id);
-        string text = SkillShout.Decide(shell != null ? shell.ShoutClock : mob.ShoutClock, def, trademark,
-                                        mayCallStyle, Time.timeAsDouble);
+        string text = SkillShout.Words(def, efficient, mayCallStyle);
         if (text == null) return;
 
         NetworkServer.SendToReadyObservers(identity, new ChatHeard
@@ -2804,6 +2791,15 @@ public class GameNetwork : NetworkManager
         string spawn = movingToSpawn;
         movingToSpawn = null;
 
+        // AN EXACT SPOT RATHER THAN A DOORWAY — a save point. Carried the way a signing-in player's last position is,
+        // so the arrival below places them there and then forgets it.
+        if (movingToSpot)
+        {
+            movingToSpot = false;
+            SceneTravel.ArriveAtSpot(map, movingToSpotAt);
+            spawn = null;
+        }
+
         // ALREADY THERE? Then put them at the doorway they arrived by and lower it now. The map can finish
         // loading before this runs, and waiting for an arrival that has already happened never ends.
         var already = UnityEngine.SceneManagement.SceneManager.GetSceneByName(map);
@@ -2829,6 +2825,10 @@ public class GameNetwork : NetworkManager
     // that. The curtain never came down because the move never stopped starting over.
     static string movingToSpawn;
 
+    // OR THE EXACT SPOT THEY ARRIVE AT, inside the map — a save point — which has no doorway to name.
+    static bool movingToSpot;
+    static Vector3 movingToSpotAt;
+
     static void OnMoveArrived(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         if (scene.name == MapManager.SystemsScene) return;
@@ -2847,13 +2847,16 @@ public class GameNetwork : NetworkManager
     /// <para>It does not walk the ordinary reconnect path: that one waits two seconds before it even asks, counts
     /// against the three tries that end in being signed out, and is written for a connection that DROPPED. This
     /// hang-up is deliberate.</para></summary>
-    public static void MoveToAnotherServer(string host, int port, string ticket, string map, string spawnId)
+    public static void MoveToAnotherServer(string host, int port, string ticket, string map, string spawnId,
+                                           bool toSpot, Vector3 spot)
     {
         if (spawned == null || string.IsNullOrEmpty(ticket)) return;
 
         LoadingScreen.SetStep("Arriving…");
         movingToMap = map;
         movingToSpawn = spawnId;
+        movingToSpot = toSpot;
+        movingToSpotAt = spot;
 
         AccountSession.EntryTicket = ticket;
 

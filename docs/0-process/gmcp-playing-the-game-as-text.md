@@ -41,7 +41,7 @@ It is a plain MCP: three tools, no special protocol. Everything interesting is i
 Every order is a thin translation from a word to the function a click or a key already calls: `move` is the
 left-click walk order, `attack` the left-click fight order, `cast` presses the hotbar slot and answers the aiming
 ring the way a click would, `say` is the chat box's own send, `equip` / `use` / `stat` / `pickup` / `talk` /
-`revive` are the bag, the character sheet, the reach key and the respawn button. The server checks an AI's
+`revive` are the bag, the character sheet, the reach key and the death window's "Return to last saved point". The server checks an AI's
 orders exactly as it checks a person's, and every number in the screen text is one the machine was already
 holding to draw. This is the project's no-client-math rule, unchanged.
 
@@ -94,7 +94,7 @@ Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 | `bag` · `gear` · `stats` | Detail views. |
 | `ground` | What you are standing on and what is touching you, as the physics engine answers it: your height, whether you are grounded or in the air, every solid below you with its map and layer, and everything solid within 1.5 m. The search starts 2 m above your head, so a line with a negative distance is something you are standing INSIDE rather than on. For hunting a fall or a stall from outside the game. |
 | `say <text>` | Chat; a `/command` runs like a typed one, waits two seconds to see whether it moved you, and if it did, answers with the new map once it has settled. Lines longer than the server's 200-character cut are split between words. |
-| `revive` | Press respawn when dead. |
+| `revive` | Press "Return to last saved point" when dead. |
 | `wait <secs>` | Let time pass; answers early on a hit. |
 | `log <category\|all> on\|off` | This client's own log categories (written to its log file). |
 | `help` | The list above. |

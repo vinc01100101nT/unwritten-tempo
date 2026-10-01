@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.samurai-blue
   displayName: Samurai Blue
   sheet: {fileID: 2800000, guid: ebcf42d2d5a148f4e89d52e8379f4229, type: 3}
+  faceset: {fileID: 2800000, guid: 290f5696b57e99d4ba10bb641bce4d76, type: 3}
   behaviour: 1
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

@@ -67,7 +67,7 @@ public class Character : MonoBehaviour, ICombatUnit
     int level = 1;
     public int Level => level;
 
-    public int XP { get; private set; }
+    public double XP { get; private set; }
 
     /// <summary>Every point of experience this character has ever been given, the part already spent on levels
     /// included. <see cref="XP"/> only holds what is standing inside the CURRENT level and is emptied on each
@@ -1011,12 +1011,14 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Used by the <c>/lvl</c> command.</summary>
     public void SetLevel(int newLevel)
     {
+        // A GM's dial ignores the cap (decided 2026-09-30): only EARNING stops at 99.
         level = Mathf.Max(1, newLevel);
         // Dialing a level in hands out no experience, so the lifetime figure would still read as whatever was
         // actually earned — 0 on a character levelled straight to 80, which reads as broken on a board that
         // ranks by it. Raised to the least a climb to this level would have cost, and never lowered, so a
         // dialed-DOWN level cannot erase experience somebody really gathered.
-        LifetimeXp = System.Math.Max(LifetimeXp, UnitStatMath.XpEarnedByLevel(level) + XP);
+        // server-math: only a GM's /lvl dials a level, and GM commands run on the server
+        LifetimeXp = System.Math.Max(LifetimeXp, UnitStatMath.XpEarnedByLevel(level) + (long)XP);
         ReconcilePointsToLevel();
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
@@ -1156,12 +1158,11 @@ public class Character : MonoBehaviour, ICombatUnit
     // Shared by the revive that happens here and the one the server's own copy performs, so the two cannot drift.
     void FinishReviving()
     {
-        // The mana pool refills HERE rather than beside the health, because health is the server's to grant and mana
-        // is not — so the two halves of standing back up happen at different moments on a player's own machine, and
-        // only this one is guaranteed to run on both.
-        CurrentMP = MaxMP;
+        // NO MANA HERE. Mana is the server's word like health is (SetManaFromServer), and standing back up at a save
+        // point keeps it exactly as it was — a refill here would draw a full bar on the player's own machine that the
+        // server never sent, and nothing would correct it until the pool next moved. The GM's full revive refills
+        // it itself, on the server, beside the health.
         ((ICombatUnit)this).BeginNewLife();
-        OnManaChanged?.Invoke();
         OnRevived?.Invoke();
         SpawnIds.PlayerGotUp(this);
     }
@@ -1523,7 +1524,7 @@ public class Character : MonoBehaviour, ICombatUnit
             // thorns: bounce a fraction back at the attacker
             Reflect(dmg, attacker);
         }
-        // Phase F: DeathScreen handles the death → respawn flow
+        // the death window (SystemWindow) handles the death → respawn flow
         if (CurrentHP == 0) RaiseDeath();
         return dmg;
     }
@@ -1624,8 +1625,8 @@ public class Character : MonoBehaviour, ICombatUnit
     // refills by the same rule the player's does — a second copy here would double-pay the player and still leave
     // mobs with a pool nothing ever filled.
 
-    /// <summary>Bring the player back to full HP after a death. The <see cref="DeathScreen"/>
-    /// calls this on respawn (and teleports the avatar to a SpawnPoint separately).</summary>
+    /// <summary>Bring the player back at full HP and MP — the GM's <c>/revive</c>. A player pressing "Return to last
+    /// saved point" comes back through <see cref="ReviveAtSavePoint"/> instead.</summary>
     public void Revive()
     {
         // COMING BACK IS THE SERVER'S TO GRANT, for the same reason dying was its to declare. A machine that stood
@@ -1634,8 +1635,36 @@ public class Character : MonoBehaviour, ICombatUnit
         if (GameNetwork.SendReviveToServer()) return;
 
         CurrentHP = MaxHP;
+        CurrentMP = MaxMP;
         OnHealthChanged?.Invoke();
-        FinishReviving();   // the shared half — nothing timed carries across a death, for any unit
+        OnManaChanged?.Invoke();
+        // the shared half — nothing timed carries across a death, for any unit
+        FinishReviving();
+    }
+
+    /// <summary>SERVER: stand this person back up on a tenth of their health, with their mana exactly as it was.
+    /// Where they stand is not decided here — see <see cref="GameNetwork.RespawnOnServer"/>.</summary>
+    public void ReviveAtSavePoint()
+    {
+        CurrentHP = SavePoint.RespawnHealth(MaxHP);
+        OnHealthChanged?.Invoke();
+        FinishReviving();
+    }
+
+    // ---- the save point: where this person stands back up after dying ----------------------------------
+
+    /// <summary>The map of this person's save point; empty when none has ever been set (they come back at
+    /// <see cref="SavePoint.DefaultMap"/>).</summary>
+    public string SavePointMap { get; private set; } = "";
+    /// <summary>Where inside <see cref="SavePointMap"/> — a position INSIDE the map, the same form a save's position is.</summary>
+    public Vector3 SavePointPosition { get; private set; }
+    public bool HasSavePoint => !string.IsNullOrEmpty(SavePointMap);
+
+    /// <summary>SERVER: make <paramref name="positionInMap"/> in <paramref name="map"/> this person's save point.</summary>
+    public void SetSavePoint(string map, Vector3 positionInMap)
+    {
+        SavePointMap = map ?? "";
+        SavePointPosition = positionInMap;
     }
 
     public void Heal(int amount)
@@ -1726,11 +1755,12 @@ public class Character : MonoBehaviour, ICombatUnit
         if (GameNetwork.TheWorldIsElsewhere) return 0;
         if (amount <= 0) return 0;
 
-        // The SAME kills feed both tracks: the character (flat stats) and the ring (its own level → passive
-        // draft points). The ring is part of the character, so nothing gates this.
-        ringLevelsGained = Ring.AddXP(amount);
-        // AND THE WEAPON IN HAND'S MASTERY, from the same experience — at the speed its grade trains, stopped at
-        // what its grade allows. A level reached opens whatever skills it unlocks.
+        // The SAME kills feed every track: the character (flat stats) and the ring (its own level → passive draft
+        // points), which is paid a THIRD of it. The ring is part of the character, so nothing gates this — not even
+        // the character's cap below: the ring goes on levelling after 99.
+        ringLevelsGained = Ring.AddXP(UnitStatMath.RingXpFromKill(amount));
+        // AND THE WEAPON IN HAND'S MASTERY, paid TWO THIRDS of the same experience — at the speed its grade trains,
+        // stopped at what its grade allows. A level reached opens whatever skills it unlocks.
         if (Mastery.AddXP(HeldWeaponType, MasteryMath.WeaponXpFromKill(amount, HeldQuality), HeldQuality) > 0)
         {
             Mastery.LearnWhatIsOpen();
@@ -1738,11 +1768,19 @@ public class Character : MonoBehaviour, ICombatUnit
         }
 
         int gained = 0;
-        XP += amount;
-        LifetimeXp += amount;
-        while (XP >= XPToNext)
+        // AT THE CAP THE CHARACTER EARNS NOTHING MORE — Ragnarok's 99. The ring and the weapon above still take theirs.
+        if (level >= UnitStatMath.MaxBaseLevel) { XP = 0; OnStatsChanged?.Invoke(); return 0; }
+        // The character's own share, by the same rule the ring's and the weapon's are paid by — all of it, to two
+        // decimals. The lifetime figure is a leaderboard's whole number, and at the character's scale of 1 the share
+        // is always whole.
+        double own = UnitStatMath.BaseXpFromKill(amount);
+        // server-math: AddXP runs on the server only (the guard at the top); the owner's machine is told the result
+        XP = UnitStatMath.RoundExperience(XP + own);
+        LifetimeXp += (long)System.Math.Round(own);
+        while (XP >= XPToNext && level < UnitStatMath.MaxBaseLevel)
         {
-            XP -= XPToNext;
+            // server-math: the level-up loop runs on the server only, like the add above
+            XP = UnitStatMath.RoundExperience(XP - XPToNext);
             level++;
             gained++;
             StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
@@ -1750,6 +1788,7 @@ public class Character : MonoBehaviour, ICombatUnit
             CurrentMP = MaxMP;                // …and refills mana
             PlayLevelUp(level);
         }
+        if (level >= UnitStatMath.MaxBaseLevel) XP = 0;
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
         return gained;
@@ -1759,13 +1798,13 @@ public class Character : MonoBehaviour, ICombatUnit
     /// the ring as they now stand, plus how many levels each track gained so the moment plays the right number
     /// of times. HP and MP are not here — the server's health report carries the level-up's full heal within a
     /// tenth of a second, through the door every other health change uses.</summary>
-    public void TakeXpFromServer(int newLevel, int xp, long lifetimeXp, int statPoints, int levelsGained,
-                                 int ringLevel, int ringXp, int ringBankedPoints, int ringLevelsGained)
+    public void TakeXpFromServer(int newLevel, double xp, long lifetimeXp, int statPoints, int levelsGained,
+                                 int ringLevel, double ringXp, int ringBankedPoints, int ringLevelsGained)
     {
         Ring.TakeFromServer(ringLevel, ringXp, ringBankedPoints, ringLevelsGained);
 
         level = Mathf.Max(1, newLevel);
-        XP = Mathf.Max(0, xp);
+        XP = System.Math.Max(0.0, xp);
         LifetimeXp = System.Math.Max(0, lifetimeXp);
         StatPoints = Mathf.Max(0, statPoints);
         for (int reached = level - levelsGained + 1; reached <= level; reached++)
@@ -1944,6 +1983,10 @@ public class Character : MonoBehaviour, ICombatUnit
         d.dyeTargets = DyeTargets;
 
         d.stamina = Stamina;
+        d.savePointMap = SavePointMap;
+        d.savePointX = SavePointPosition.x;
+        d.savePointY = SavePointPosition.y;
+        d.savePointZ = SavePointPosition.z;
         CaptureCooldowns(d);
         CaptureTimedEffects(d);
         return d;
@@ -2115,21 +2158,46 @@ public class Character : MonoBehaviour, ICombatUnit
         }
     }
 
+    // A SAVE WRITTEN ON THE CURVE BEFORE 2026-09-30 (below v16) is carried across once: every level is kept, and the
+    // experience inside the level — the character's, the ring's and every
+    // weapon's — keeps the SAME SHARE of the way through it on today's curve. Without this the old numbers would read
+    // as a sliver of a level that now costs thousands of times more, or a weapon's practice as a fraction of its first
+    // level. An unplayed character (version 0) has nothing to carry.
+    static void CarryOntoRagnarokCurve(SaveData d)
+    {
+        if (d.version <= 0 || d.version >= 16) return;
+
+        int level = Mathf.Max(1, d.level);
+        d.xp = level >= UnitStatMath.MaxBaseLevel
+            ? 0.0
+            : UnitStatMath.CarryShareOfLevel(d.xp, UnitStatMath.LegacyXpToNextFrom(level), UnitStatMath.XpToNextFrom(level));
+
+        if (d.ringLevel > 0)
+            d.ringXp = UnitStatMath.CarryShareOfLevel(d.ringXp, UnitStatMath.LegacyRingXpToNextFrom(d.ringLevel),
+                                                      UnitStatMath.RingXpToNextFrom(d.ringLevel));
+
+        if (d.masteryPoints != null)
+            for (int i = 0; i < d.masteryPoints.Length; i++)
+                d.masteryPoints[i] = MasteryMath.CarryLegacyWeaponXp(d.masteryPoints[i]);
+    }
+
     /// <summary>Apply a loaded <see cref="SaveData"/>, overwriting the current runtime progression.
     /// Stats are set first so HP/MP clamp against the restored max; a save written while dead
     /// (HP 0) revives to full rather than loading you into the death screen.</summary>
     public void RestoreSave(SaveData d)
     {
         if (d == null) return;
+        CarryOntoRagnarokCurve(d);
 
+        // NOT held to the cap: a GM may dial past 99, and that level survives a sign-in. Only earning stops at 99.
         level      = Mathf.Max(1, d.level);
-        XP         = Mathf.Max(0, d.xp);
-        // v10+ carries the lifetime figure. Anything older never recorded one and 0 is a real answer, so the
-        // VERSION decides rather than the value: below 10, it is worked out from the level curve — exactly what
-        // a character who climbed there honestly would have been given.
-        LifetimeXp = d.version >= 10
+        XP         = System.Math.Max(0.0, d.xp);
+        // v16+ carries a lifetime figure on today's curve. Anything older either never recorded one (below 10, where
+        // 0 is a real answer, so the VERSION decides rather than the value) or recorded it on the old curve — so it
+        // is worked out from the level curve: exactly what a character who climbed there honestly was given.
+        LifetimeXp = d.version >= 16
             ? System.Math.Max(0L, d.lifetimeXp)
-            : UnitStatMath.XpEarnedByLevel(level) + XP;
+            : UnitStatMath.XpEarnedByLevel(level) + (long)XP;
         StatPoints = Mathf.Max(0, d.statPoints);
         if (d.primary != null)
             for (int i = 0; i < primary.Length && i < d.primary.Length; i++)
@@ -2169,6 +2237,7 @@ public class Character : MonoBehaviour, ICombatUnit
         CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
         // Below zero means a save older than v8, which never recorded it — keep the full pool it starts with.
         SetStamina(d.stamina < 0f ? maxStamina : d.stamina);
+        SetSavePoint(d.savePointMap, new Vector3(d.savePointX, d.savePointY, d.savePointZ));
 
         RestoreCooldowns(d);
 

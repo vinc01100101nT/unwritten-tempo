@@ -7,6 +7,11 @@ using UnityEngine.UI;
 /// world through <see cref="GameRoot"/>, one keeping the account signed in and the other not; <b>Quit game</b>
 /// ends the process through <see cref="GameExit"/>.
 ///
+/// <para><b>While the player is dead, the death window takes System's place.</b> It opens by itself at the moment of
+/// death, holds <b>Return to last saved point</b> (asks the server to stand them up at their save point) and the same
+/// three ways out, and Escape opens and closes IT instead of System until they stand back up — then it closes by
+/// itself. The server alone decides the death and the return; this only watches the character's health.</para>
+///
 /// <para>Escape is shared with every other panel (they all read <see cref="Hotkeys.CancelDown"/>), so this
 /// window is deliberately LAST in line: it runs in <c>LateUpdate</c>, after every panel's <c>Update</c>, and
 /// only acts when <see cref="Hotkeys.CancelHandledThisFrame"/> is false — i.e. Escape closed nothing and
@@ -19,7 +24,11 @@ using UnityEngine.UI;
 public class SystemWindow : MonoBehaviour
 {
     GameObject root;
+    GameObject deathRoot;
     SettingsWindow settings;
+    bool wasDead;
+
+    static SystemWindow instance;
 
     void Start()
     {
@@ -27,8 +36,26 @@ public class SystemWindow : MonoBehaviour
         if (canvas == null) { enabled = false; return; }
         settings = GetComponent<SettingsWindow>();
 
-        var content = UiKit.Window(canvas.transform, "System", new Vector2(240, 220), Vector2.zero, out root);
+        instance = this;
 
+        var list = EntryList(UiKit.Window(canvas.transform, "System", new Vector2(240, 220), Vector2.zero, out root));
+        Entry(list, "Settings", OpenSettings);
+        Entry(list, "Select character", GameRoot.BackToCharacterSelect);
+        Entry(list, "Log out", () => GameRoot.LogOut());
+        Entry(list, "Quit game", () => GameExit.Quit());
+
+        var deathList = EntryList(UiKit.Window(canvas.transform, "System", new Vector2(240, 220), Vector2.zero, out deathRoot));
+        Entry(deathList, "Return to last saved point", ReturnToSavePoint);
+        Entry(deathList, "Select character", GameRoot.BackToCharacterSelect);
+        Entry(deathList, "Log out", () => GameRoot.LogOut());
+        Entry(deathList, "Quit game", () => GameExit.Quit());
+    }
+
+    void OnDestroy() { if (instance == this) instance = null; }
+
+    // A window's column of menu lines, filling its body.
+    static Transform EntryList(RectTransform content)
+    {
         var list = UiKit.Img("Entries", content, new Color(0, 0, 0, 0));
         list.raycastTarget = false;
         UiKit.Fill(list.rectTransform, Vector2.zero, Vector2.zero);
@@ -38,11 +65,7 @@ public class SystemWindow : MonoBehaviour
         vlg.childForceExpandWidth = true;
         vlg.childForceExpandHeight = false;
         vlg.childAlignment = TextAnchor.UpperCenter;
-
-        Entry(list.transform, "Settings", OpenSettings);
-        Entry(list.transform, "Select character", GameRoot.BackToCharacterSelect);
-        Entry(list.transform, "Log out", () => GameRoot.LogOut());
-        Entry(list.transform, "Quit game", () => GameExit.Quit());
+        return list.transform;
     }
 
     // One menu line. Every entry is the same height, so the list reads as a column whatever is in it.
@@ -57,18 +80,56 @@ public class SystemWindow : MonoBehaviour
         if (settings != null) settings.Open();
     }
 
+    // Only ASKS. The server stands them up and moves them, and the window closes when their health comes back.
+    static void ReturnToSavePoint()
+    {
+        var me = Character.Instance;
+        if (me != null && me.IsDead) me.Revive();
+    }
+
+    /// <summary>Press "Return to last saved point", if there is anybody dead to press it for. For a player who is not
+    /// using a mouse (AgentLink); the button itself goes through the same body.</summary>
+    public static bool PressReturnToSavePoint()
+    {
+        var me = Character.Instance;
+        if (instance == null || me == null || !me.IsDead) return false;
+        UISounds.PlayClick();
+        ReturnToSavePoint();
+        return true;
+    }
+
     void LateUpdate()
     {
         if (root == null) return;
+
+        // DYING AND STANDING BACK UP, read off the character's health each frame — a bool compare, no event to
+        // lose when the character is rebuilt for another sign-in.
+        var me = Character.Instance;
+        bool dead = me != null && me.IsDead;
+        if (dead != wasDead)
+        {
+            wasDead = dead;
+            if (dead)
+            {
+                if (settings != null && settings.IsOpen) settings.Close();
+                if (UiAnim.IsOpen(root)) UiAnim.Close(root);
+                UiAnim.Open(deathRoot);
+            }
+            else if (UiAnim.IsOpen(deathRoot)) UiAnim.Close(deathRoot);
+        }
+
         if (!Hotkeys.CancelDown()) return;
-        if (Hotkeys.CancelHandledThisFrame) return;   // a panel/aim already spent this Escape
+        // a panel/aim already spent this Escape
+        if (Hotkeys.CancelHandledThisFrame) return;
 
         Hotkeys.MarkCancelHandled();
 
         // Settings sits on top of the menu that opened it, so Escape peels it off first.
         if (settings != null && settings.IsOpen) { settings.Close(); return; }
 
-        if (UiAnim.IsOpen(root)) { UiAnim.Close(root); UISounds.PlayClose(); }
-        else { UiAnim.Open(root); UISounds.PlayOpen(); }
+        // WHILE DEAD, THE DEATH WINDOW IS WHAT ESCAPE OPENS AND CLOSES — System is not reachable until they stand up.
+        var menu = dead ? deathRoot : root;
+        if (UiAnim.IsOpen(menu)) { UiAnim.Close(menu); UISounds.PlayClose(); }
+        else { UiAnim.Open(menu); UISounds.PlayOpen(); }
     }
 }

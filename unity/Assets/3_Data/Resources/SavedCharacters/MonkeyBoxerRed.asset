@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.monkey-boxer-red
   displayName: Monkey Boxer Red
   sheet: {fileID: 2800000, guid: 8d6274de1401883478e0ef6ff41ba298, type: 3}
+  faceset: {fileID: 2800000, guid: 5f8b87fdc4474df43b96d9ed3532f12a, type: 3}
   behaviour: 2
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

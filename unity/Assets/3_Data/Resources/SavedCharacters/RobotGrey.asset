@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.robot-grey
   displayName: Robot Grey
   sheet: {fileID: 2800000, guid: 41b636e74b4252c4bafeb60b7bd68ad5, type: 3}
+  faceset: {fileID: 2800000, guid: 98ea0b643b70f87429fd22d25c31429a, type: 3}
   behaviour: 2
   group: 7
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

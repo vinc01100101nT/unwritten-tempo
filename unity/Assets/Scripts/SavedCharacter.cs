@@ -46,6 +46,8 @@ public class SavedCharacter : ScriptableObject
 
     [Tooltip("Its sprite sheet: 16px cells, one column per direction (down, up, left, right), the walk in the top rows.")]
     public Texture2D sheet;
+    [Tooltip("Its portrait — the face drawn beside its name when you point at it or fight it.")]
+    public Texture2D faceset;
 
     [Tooltip("What it does once it has turned back: stays and leaves, fights for its saver, or fights everyone.")]
     public SavedBehaviour behaviour = SavedBehaviour.NeverFights;
@@ -58,6 +60,9 @@ public class SavedCharacter : ScriptableObject
     public string eliteId = "";
 
     [Header("Measured art (written when the asset is made, from the walk frames of its sheet)")]
+    [Tooltip("How many pixels up from the bottom of a cell its feet stand — the lowest painted row of its walk frames. " +
+             "The picture is pinned to the ground there. -1 = never measured: the mobs' feet line is used.")]
+    public float footPx = -1f;
     [Tooltip("How far the tallest walk frame's crown sits above its feet line, in world units at scale one.")]
     public float crownAtScaleOne;
     [Tooltip("How wide the widest walk frame's painted part is, in world units at scale one.")]

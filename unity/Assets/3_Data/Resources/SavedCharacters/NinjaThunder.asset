@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-thunder
   displayName: Ninja Thunder
   sheet: {fileID: 2800000, guid: 571a647044ef2fd4f9afc8efb6211025, type: 3}
+  faceset: {fileID: 2800000, guid: 77632044ed9e1ce49ac5ab442c1d3e60, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.karasu
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

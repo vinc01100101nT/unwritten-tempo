@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.princess
   displayName: Princess
   sheet: {fileID: 2800000, guid: acfe8524e1458d8478d51329daf65b0e, type: 3}
+  faceset: {fileID: 2800000, guid: 62e1a4ba922dc9a46ac1183a938bc70a, type: 3}
   behaviour: 0
   group: 1
   goldTier: 3
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

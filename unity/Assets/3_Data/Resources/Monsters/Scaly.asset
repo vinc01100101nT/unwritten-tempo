@@ -18,6 +18,7 @@ MonoBehaviour:
   size: 0.3
   biome: 7
   artFolder: 463dea05eafc11b47a8f454726da08da
+  faceset: {fileID: 2800000, guid: b812ab68760bc4e419ee0a7cc1aac8a1, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   level: 37

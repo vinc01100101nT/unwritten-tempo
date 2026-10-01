@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.mask-racoon
   displayName: Mask Racoon
   sheet: {fileID: 2800000, guid: f3a3e4aa0f6c53f40a5419154653b750, type: 3}
+  faceset: {fileID: 2800000, guid: fa5f4a3b176e97b42b2faff07906f0c6, type: 3}
   behaviour: 2
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.7125
+  footPx: 0
+  crownAtScaleOne: 0.8125
   paintedWidthAtScaleOne: 1

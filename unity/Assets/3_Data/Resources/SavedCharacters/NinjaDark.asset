@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-dark
   displayName: Ninja Dark
   sheet: {fileID: 2800000, guid: 1f51b41f7de8cbc48a2be92a56920a61, type: 3}
+  faceset: {fileID: 2800000, guid: 84aa04e3ec49828438a2e833c326997a, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.venom-gloop
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

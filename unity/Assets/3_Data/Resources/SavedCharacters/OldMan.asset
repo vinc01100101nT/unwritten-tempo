@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.old-man
   displayName: Old Man
   sheet: {fileID: 2800000, guid: 2bf72989c375bd24ea4f81aad99b40ca, type: 3}
+  faceset: {fileID: 2800000, guid: 7bc0304c33e2e9f4385531cbc0e7d987, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 0.875

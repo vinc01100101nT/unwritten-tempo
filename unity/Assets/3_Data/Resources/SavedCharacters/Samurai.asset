@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.samurai
   displayName: Samurai
   sheet: {fileID: 2800000, guid: 7fbc1d88c0f580d4bb88a6a2ee688727, type: 3}
+  faceset: {fileID: 2800000, guid: b48da18d1fd04bb4d95ab9035014505c, type: 3}
   behaviour: 1
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.8375
+  footPx: 0
+  crownAtScaleOne: 0.9375
   paintedWidthAtScaleOne: 1

@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-blue
   displayName: Ninja Blue
   sheet: {fileID: 2800000, guid: dd24d58cd060a66479b315f608b2638b, type: 3}
+  faceset: {fileID: 2800000, guid: c76a90f3415ec7d4ea7ff9e644db1504, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.mossmaw
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

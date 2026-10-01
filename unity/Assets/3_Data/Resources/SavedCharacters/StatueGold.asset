@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.statue-gold
   displayName: Statue Gold
   sheet: {fileID: 2800000, guid: fbdc29502c6c8b244b0c2a296c90626b, type: 3}
+  faceset: {fileID: 2800000, guid: c382e338f42afb743982e270d536d5f3, type: 3}
   behaviour: 2
   group: 7
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

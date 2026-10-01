@@ -65,6 +65,16 @@ public static class CreatureKinds
         }
     }
 
+    /// <summary>How many kills of a normal creature of the same level one kill of this kind is worth: 10 for an elite,
+    /// 20 for a shadow (decided 2026-09-30 — Ragnarok's bosses pay 5 to 10 times a normal creature of their level).</summary>
+    public static int ExperienceMultiplier(CreatureKind k) =>
+        k == CreatureKind.Shadow ? 20 : k == CreatureKind.Elite ? 10 : 1;
+
+    /// <summary>The experience one kill of a creature of this kind and <paramref name="level"/> pays. The ONE place a
+    /// kill's worth is decided — by level and kind only, never by a number typed onto the creature.</summary>
+    public static int KillExperience(CreatureKind k, int level)
+        => (int)System.Math.Min(int.MaxValue, (long)UnitStatMath.KillXp(level) * ExperienceMultiplier(k));
+
     /// <summary>A shadow is a 3D character; the other two kinds are flat.</summary>
     public static bool Is3D(CreatureKind k) => k == CreatureKind.Shadow;
 }

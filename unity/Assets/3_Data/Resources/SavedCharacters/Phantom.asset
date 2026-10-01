@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.phantom
   displayName: Phantom
   sheet: {fileID: 2800000, guid: 914d1c0d29f1f1640bf62fe6a6893474, type: 3}
+  faceset: {fileID: 2800000, guid: 0bef0db7919fc63439b36e96cf7ec645, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

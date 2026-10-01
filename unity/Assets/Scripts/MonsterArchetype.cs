@@ -44,7 +44,6 @@ public struct MonsterArchetype
     public int hardDefPercent, hardMagicDefPercent;
 
     // Offense. `attack` / `hit` / damage spread are likewise derived from `stats`, not carried.
-    public int   xpReward;
     public float touchRange, touchInterval;
 
     // Senses / movement.

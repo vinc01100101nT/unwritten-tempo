@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// (built by <c>UIShellBuilder</c>, which assigns the clips). It plays a soft latch "open" when a
 /// panel opens (Bag/Character/Skills) and a "close" when it hides, and auto-wires every
 /// <see cref="Button"/> under the canvas to a generic "click". Other persistent UI that builds its
-/// own canvas in code (e.g. <see cref="DeathScreen"/>) reaches the click via the static helpers.
+/// own canvas in code reaches the click via the static helpers.
 ///
 /// All playback goes through the pooled <see cref="Sfx"/> player, so this adds no AudioSources of its
 /// own and is safe to call before/after scene loads (the statics no-op until an instance exists).

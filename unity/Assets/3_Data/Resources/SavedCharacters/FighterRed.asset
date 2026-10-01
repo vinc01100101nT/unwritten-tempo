@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.fighter-red
   displayName: Fighter Red
   sheet: {fileID: 2800000, guid: 76c4b7c638a9efe42a179781a2855231, type: 3}
+  faceset: {fileID: 2800000, guid: 88e667f0647dc814f863824ad41df2e6, type: 3}
   behaviour: 2
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

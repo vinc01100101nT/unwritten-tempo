@@ -72,11 +72,13 @@ moves it, soft rather than hard: Blossom Wind, Silver Rain, Night Orchid, Black 
 never names a real country's culture and never borrows another story's term. The one word outside this rule is
 their rank, **Kashira** (Japanese for a head, a chief), chosen by the user on 2026-09-30.
 
-**Calling a form.** Pressing a form calls it out over the caster's head and in the chat log: an ultimate always with
-the full call ("Blossom Wind style, 21st form, Thousand Petals!!"), the weapon's trademark form with the full call at
-most once every 30 seconds, and any other form by its name alone ("Last Petal!!") at most once every 5 seconds. People,
-the Kashira and their shadows make the full call; an ordinary creature only names the form. A form that fires on its own is never called.
-The server chooses the words and keeps the timers; other players' calls can be hidden in the settings.
+**Calling a form.** Every skill is called out over the caster's head and in the chat log each time it fires, with no
+wait between calls: by its name alone ("Last Petal!!"), and a passive only when it is efficient. An **efficient** cast —
+5% of the casts of any trademark skill, whatever weapon is held, ultimates included, raising that cast's numbers by a
+further +20% —
+makes the full call ("Blossom Wind style, 21st form, Thousand Petals!!"). People, the Kashira and their shadows make
+the full call; an ordinary creature only names the form. The server rolls the efficiency and chooses the words; other
+players' calls can be hidden in the settings.
 *The fourteen styles are LOCKED (2026-09-26). Form names are working names and can still change.*
 
 *Rule for authoring: an epithet describes a **deed**, never a name, a title, or a rank — the moment it reads like a name, it stops being unwritten.*

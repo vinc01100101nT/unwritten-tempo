@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.eskimo
   displayName: Eskimo
   sheet: {fileID: 2800000, guid: e91b83d94503de84a974b389dad54b24, type: 3}
+  faceset: {fileID: 2800000, guid: 42e1abfa4b56b9c43b9bbfaaf7b87fe7, type: 3}
   behaviour: 0
   group: 0
   goldTier: 1
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

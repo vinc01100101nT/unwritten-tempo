@@ -12,7 +12,7 @@
     },
     {
       "type": "paragraph",
-      "text": "In Unwritten, **you learn your skills by fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: every point of experience a kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. Each level it reaches opens another of the sword's skills to you, for good — the Skills window (**K**) shows how much experience the next level needs. There are no classes — the weapons you have practised are what define you, and what you are holding decides which of the skills you know you may use right now."
+      "text": "In Unwritten, **you learn your skills by fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: two thirds of the experience every kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. Each level it reaches opens another of the sword's skills to you, for good — the Skills window (**K**) shows how much experience the next level needs. There are no classes — the weapons you have practised are what define you, and what you are holding decides which of the skills you know you may use right now."
     },
     {
       "type": "heading",
@@ -37,7 +37,7 @@
     },
     {
       "type": "paragraph",
-      "text": "When you press a form, you call it out. Your ultimate is always the full call — *\"Blossom Wind style, 21st form, Thousand Petals!!\"* — and so is your weapon's trademark form, at most once every 30 seconds. Any other form is called by its name alone, *\"Last Petal!!\"*, at most once every 5 seconds. The shadows call out their forms the same way. You can hide other players' calls under **Settings ▸ Gameplay**."
+      "text": "Every skill you use is called out over your head and in the chat, every time it fires — by its name alone, *\"Last Petal!!\"*. A passive stays silent unless it is efficient. **Efficiency** is a critical hit for a whole skill: each time a trademark skill fires it has a **5%** chance to be efficient, whatever weapon you hold, and then every number it puts out that time is raised by a further **+20%** and you make the full call — *\"Blossom Wind style, 21st form, Thousand Petals!!\"*. Every trademark skill can be efficient, ultimates included; a skill that is not a trademark skill has no number to raise and never is. The shadows call out their skills the same way. You can hide other players' calls under **Settings ▸ Gameplay**."
     },
     {
       "type": "paragraph",

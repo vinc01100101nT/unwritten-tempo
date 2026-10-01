@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.villager-green
   displayName: Villager Green
   sheet: {fileID: 2800000, guid: 4ae39fbc97fb2114196ebad5c870623e, type: 3}
+  faceset: {fileID: 2800000, guid: c43bc67b435d41e4b9435f56e86ab5aa, type: 3}
   behaviour: 0
   group: 0
   goldTier: 1
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

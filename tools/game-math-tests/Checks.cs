@@ -39,29 +39,84 @@ static class Checks
     const string StatesF  = "unity/Assets/Scripts/UnitStates.cs";
     const string StatusF  = "unity/Assets/Scripts/StatusController.cs";
 
-    // ---- the experience curve, against its own closed form --------------------------------------------
-    // Two expressions of one rule: the per-level cost, and a hand-written formula for the running total. They
-    // are used in different places and nothing keeps them honest, so they are checked against each other. The
-    // total is what a save older than v10 has its lifetime experience invented from, so a wrong one silently
-    // rewrites real progress on load and the only symptom is a wrong number on a leaderboard.
+    // ---- the experience curve: Ragnarok's, one formula, three tracks -----------------------------------
+    // The running total is what a save's lifetime experience is worked out from, so a wrong one silently rewrites
+    // real progress on load. The pinned figures are the curve itself (decided 2026-09-30): moving any constant in
+    // it moves one of them. The Ragnarok figures are its own hand-written table, which the curve must stay near.
     static void ExperienceCurve()
     {
         long running = 0;
-        for (int level = 1; level <= 500; level++)
+        for (int level = 1; level <= UnitStatMath.MaxBaseLevel; level++)
         {
             long closed = UnitStatMath.XpEarnedByLevel(level);
             if (closed != running)
             {
                 Fail(StatMath, "experience earned by level " + level + " is " + closed +
                                ", but adding up each level's cost gives " + running);
-                return;   // one report, not five hundred
+                return;   // one report, not a hundred
             }
             running += UnitStatMath.XpToNextFrom(level);
         }
         That(UnitStatMath.XpEarnedByLevel(1) == 0, StatMath, "level 1 should have earned no experience");
         That(UnitStatMath.XpEarnedByLevel(0) == 0, StatMath, "level 0 should have earned no experience");
-        That(UnitStatMath.XpEarnedByLevel(int.MaxValue) > 0, StatMath,
-             "an absurd level should saturate, never go negative");
+        That(UnitStatMath.XpEarnedByLevel(int.MaxValue) == UnitStatMath.XpEarnedByLevel(UnitStatMath.MaxBaseLevel), StatMath,
+             "an absurd level should read as the cap, never run past it or go negative");
+
+        // THE CURVE ITSELF, pinned.
+        That(UnitStatMath.XpToNextFrom(1) == 7, StatMath, "level 1 no longer costs 7: " + UnitStatMath.XpToNextFrom(1));
+        That(UnitStatMath.XpToNextFrom(30) == 7755, StatMath, "level 30 no longer costs 7,755: " + UnitStatMath.XpToNextFrom(30));
+        That(UnitStatMath.XpToNextFrom(50) == 103194, StatMath, "level 50 no longer costs 103,194: " + UnitStatMath.XpToNextFrom(50));
+        That(UnitStatMath.XpToNextFrom(98) == 99941089, StatMath, "level 98 no longer costs 99,941,089: " + UnitStatMath.XpToNextFrom(98));
+        That(UnitStatMath.XpEarnedByLevel(99) == 409648693, StatMath,
+             "1 to 99 no longer costs 409,648,693 in all: " + UnitStatMath.XpEarnedByLevel(99));
+
+        // AND STILL RAGNAROK'S: within 45% of its own table at every level pinned here.
+        int[] roLevel = { 10, 30, 50, 70, 90, 98 };
+        long[] roCost = { 320, 7995, 115254, 1473746, 9738720, 99999998 };
+        for (int i = 0; i < roLevel.Length; i++)
+        {
+            double off = UnitStatMath.XpToNextFrom(roLevel[i]) / (double)roCost[i] - 1.0;
+            That(Math.Abs(off) <= 0.45, StatMath, "level " + roLevel[i] + " is " + (off * 100).ToString("0") +
+                                                  "% off Ragnarok's " + roCost[i]);
+        }
+
+        // WHAT A KILL PAYS, by level, and by kind on top.
+        That(UnitStatMath.KillXp(1) == 2, StatMath, "a level-1 kill no longer pays 2: " + UnitStatMath.KillXp(1));
+        That(UnitStatMath.KillXp(30) == 508, StatMath, "a level-30 kill no longer pays 508: " + UnitStatMath.KillXp(30));
+        That(UnitStatMath.KillXp(90) == 15191, StatMath, "a level-90 kill no longer pays 15,191: " + UnitStatMath.KillXp(90));
+        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50) == UnitStatMath.KillXp(50), StatMath,
+             "a normal creature does not pay its level's amount");
+        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50) == 10 * UnitStatMath.KillXp(50), StatMath,
+             "an elite does not pay ten times its level's amount");
+        That(CreatureKinds.KillExperience(CreatureKind.Shadow, 150) == 20 * UnitStatMath.KillXp(150), StatMath,
+             "a shadow does not pay twenty times its level's amount");
+
+        // THE RING IS PAID A THIRD OF EVERY KILL, on the character's own curve and with no cap: a third of what a
+        // climb to 99 earns stands the ring at 93, and it keeps climbing after.
+        // ONE RULE PAYS ALL THREE TRACKS — only the scale differs, and every track keeps two decimals the same way.
+        for (int xp = 0; xp <= 3000; xp += 7)
+        {
+            That(UnitStatMath.BaseXpFromKill(xp) == UnitStatMath.ShareOfKill(xp, UnitStatMath.BaseShareOfExperience), StatMath,
+                 "the character is not paid by the shared rule for a kill worth " + xp);
+            That(UnitStatMath.RingXpFromKill(xp) == UnitStatMath.ShareOfKill(xp, UnitStatMath.RingShareOfExperience), StatMath,
+                 "the ring is not paid by the shared rule for a kill worth " + xp);
+            That(MasteryMath.WeaponXpFromKill(xp, Quality.E) == UnitStatMath.ShareOfKill(xp, MasteryMath.WeaponShareOfExperience), StatMath,
+                 "a par weapon is not paid by the shared rule for a kill worth " + xp);
+        }
+        That(UnitStatMath.BaseXpFromKill(2) == 2.0 && UnitStatMath.RingXpFromKill(2) == 0.67
+             && MasteryMath.WeaponXpFromKill(2, Quality.E) == 1.33, StatMath,
+             "a kill worth 2 no longer pays 2.00 / 0.67 / 1.33 to the character, the ring and a par weapon");
+        That(UnitStatMath.RingXpFromKill(1) == 0.33, StatMath, "a third of 1 is not 0.33");
+        That(UnitStatMath.RoundExperience(0.125) == 0.13, StatMath, "a half hundredth does not round up");
+        That(UnitStatMath.RingXpFromKill(300) == 100.0, StatMath, "a kill worth 300 does not pay the ring 100");
+        for (int ring = 1; ring <= 99; ring++)
+            That(UnitStatMath.RingXpToNextFrom(ring) == UnitStatMath.XpToNextFrom(ring), StatMath,
+                 "ring " + ring + " no longer costs what base level " + ring + " does");
+        That(UnitStatMath.RingXpToNextFrom(120) == int.MaxValue, StatMath, "a ring level past a whole number's reach wraps");
+        long left = UnitStatMath.XpEarnedByLevel(99) / 3;
+        int reached = 1;
+        while (left >= UnitStatMath.RingXpToNextFrom(reached)) { left -= UnitStatMath.RingXpToNextFrom(reached); reached++; }
+        That(reached == 93, StatMath, "a third of a climb to base 99 buys ring " + reached + ", not 93");
     }
 
     // ---- the stat-point budget ------------------------------------------------------------------------
@@ -498,34 +553,32 @@ static class Checks
     // a creature far below you that still teaches, or a lift that runs past the ceiling it promised.
     static void MasteryCurve()
     {
-        // The level a pile of experience buys is exactly the level whose cost it has met, and never more.
-        // The nudge below is a WHOLE point, not a fraction: the smallest step on this curve is 20, and at the
-        // sizes it reaches (30,380 by level 70) a thousandth is smaller than the gap between two neighbouring
-        // floats and would vanish entirely, leaving the test passing without having tested anything.
-        for (int level = 0; level <= 120; level++)
+        // The level a pile of experience buys is exactly the level whose cost it has met, and never more — to the
+        // hundredth every track now counts in.
+        for (int level = 0; level <= 79; level++)
         {
-            float cost = MasteryMath.WeaponXpFor(level);
+            double cost = MasteryMath.WeaponXpFor(level);
             That(MasteryMath.WeaponLevelFrom(cost) == level, MasteryF,
                  "level " + level + " costs " + cost + " experience, which reads back as level " + MasteryMath.WeaponLevelFrom(cost));
             if (level > 0)
-                That(MasteryMath.WeaponLevelFrom(cost - 1f) == level - 1, MasteryF,
-                     "a point under level " + level + "'s cost is not level " + (level - 1));
+                That(MasteryMath.WeaponLevelFrom(cost - 0.01) == level - 1, MasteryF,
+                     "a hundredth under level " + level + "'s cost is not level " + (level - 1));
         }
         for (int level = 0; level <= 60; level++)
             That(MasteryMath.SkillLevelFrom(MasteryMath.SkillUsesFor(level)) == level, MasteryF,
                  "skill level " + level + " does not read back from its own cost in uses");
 
-        // WEAPON MASTERY RIDES THE RING'S CURVE — the design says that in one sentence, and the only thing that
-        // keeps it true is the step from N to N+1 BEING the ring's own step. Checked against the ring rather than
-        // against a copied formula, so the two cannot quietly drift apart.
-        for (int level = 0; level <= 120; level++)
-            That(Math.Abs((MasteryMath.WeaponXpFor(level + 1) - MasteryMath.WeaponXpFor(level))
-                          - UnitStatMath.RingXpToNextFrom(level)) < 0.01f, MasteryF,
-                 "weapon mastery " + level + " to " + (level + 1) + " no longer costs the ring's own step");
+        // WEAPON MASTERY IS PAID TWO THIRDS OF EVERY KILL (decided 2026-09-30), on the character's own curve: mastery M
+        // to M+1 costs what base level M+1 does. At par, mastery 70 — the highest grade's cap — comes at base 74.
+        for (int level = 0; level < 79; level++)
+            That(MasteryMath.WeaponXpFor(level + 1) - MasteryMath.WeaponXpFor(level) == UnitStatMath.LevelCost(level + 1), MasteryF,
+                 "weapon mastery " + level + " to " + (level + 1) + " no longer costs what base level " + (level + 1) + " does");
+        That(MasteryMath.WeaponXpFor(70) == 9925452.0, MasteryF,
+             "weapon mastery 70 no longer costs 9,925,452 experience: " + MasteryMath.WeaponXpFor(70));
+        That(MasteryMath.WeaponXpFromKill(300, Quality.E) == 200.0, MasteryF,
+             "a kill worth 300 does not pay a par weapon 200");
 
-        // THE PROMISED FIGURES: 30,380 experience to weapon 70 and 2,325 uses to skill 30.
-        That(Math.Abs(MasteryMath.WeaponXpFor(70) - 30380f) < 0.01f, MasteryF,
-             "weapon mastery 70 no longer costs 30,380 experience: " + MasteryMath.WeaponXpFor(70));
+        // THE PROMISED FIGURE: 2,325 uses to skill 30.
         That(Math.Abs(MasteryMath.SkillUsesFor(30) - 2325f) < 0.01f, MasteryF,
              "skill mastery 30 no longer costs 2,325 uses: " + MasteryMath.SkillUsesFor(30));
 
@@ -546,11 +599,9 @@ static class Checks
             lastSkill = skill; lastPassive = passive;
         }
 
-        // A KILL PAYS THE WEAPON EXACTLY WHAT IT PAID YOU, at the speed the grade in hand trains — E is par, so a
-        // kill worth 100 pays 100. A kill worth nothing teaches nothing, which is what makes a training dummy
+        // A KILL PAYS THE WEAPON TWO THIRDS OF WHAT IT PAID YOU, at the speed the grade in hand trains — E is par.
+        // A kill worth nothing teaches nothing, which is what makes a training dummy
         // (it pays no experience because it never dies) a dead end for mastery rather than a free ride.
-        That(Math.Abs(MasteryMath.WeaponXpFromKill(100, Quality.E) - 100f) < 0.0001f, MasteryF,
-             "a kill worth 100 experience does not pay a par weapon 100 toward its mastery");
         That(MasteryMath.WeaponXpFromKill(0, Quality.A) == 0f, MasteryF,
              "a kill worth no experience still teaches");
         That(MasteryMath.WeaponXpFromKill(-50, Quality.A) == 0f, MasteryF,
@@ -582,6 +633,21 @@ static class Checks
         pile.Refold();
         That(Math.Abs(pile.Mult - 1.3f) < 0.0001f, StatesF,
              "ten stacks of +3% (0.03 each) no longer multiply by 1.3: " + pile.Mult);
+    }
+
+    // ---- a trademark skill's efficiency ------------------------------------------------------------------
+    // Decided 2026-09-30: a flat 5% for everyone, trademark skills only (whatever weapon is held), +20 points on the cast's main numbers.
+    const string EfficiencyF = "unity/Assets/Scripts/SkillEfficiency.cs";
+
+    static void SkillEfficiencyNumbers()
+    {
+        That(SkillEfficiency.Procs(true, 0.0499f), EfficiencyF, "a roll of 0.0499 on a trademark no longer procs");
+        That(!SkillEfficiency.Procs(true, 0.05f), EfficiencyF, "a roll of 0.05 on a trademark now procs — the chance is over 5%");
+        That(!SkillEfficiency.Procs(false, 0f), EfficiencyF, "a skill that is not a trademark skill can now proc");
+        That(Math.Abs(SkillEfficiency.OutputLift(0.10f, true) - 0.30f) < 0.0001f, EfficiencyF,
+             "an efficient cast on a +10% trademark no longer lifts by +30%: " + SkillEfficiency.OutputLift(0.10f, true));
+        That(Math.Abs(SkillEfficiency.OutputLift(0.10f, false) - 0.10f) < 0.0001f, EfficiencyF,
+             "a cast that is not efficient now has its lift changed: " + SkillEfficiency.OutputLift(0.10f, false));
     }
 
     // ---- a timed effect's clock stops while its owner is away -----------------------------------------
@@ -897,7 +963,7 @@ static class Checks
         That(SavedCharacterRules.StaySeconds(SavedBehaviour.NeverFights) == 30f && SavedCharacterRules.StaySeconds(SavedBehaviour.Ally) == 30f
              && SavedCharacterRules.StaySeconds(SavedBehaviour.Rebel) == 30f, F, "every saved character stays 30s");
         That(SavedCharacterRules.DrawnWidth == 0.5f, F, "a saved character is drawn at half its picture's width");
-        That(SavedCharacterRules.AppearAuraSeconds == 2f, F, "the appear aura plays 2s before it fades");
+        That(SavedCharacterRules.AppearAuraSeconds == 2f && SavedCharacterRules.AppearAuraScale == 0.5f, F, "the appear aura plays 2s at half size before it fades");
         That(SavedCharacterRules.SideOf(SavedBehaviour.Ally) == Side.Players && SavedCharacterRules.SideOf(SavedBehaviour.Rebel) == Side.Creatures
              && SavedCharacterRules.SideOf(SavedBehaviour.NeverFights) == Side.None, F, "allies stand with the players, rebels with the creatures, the rest with nobody");
         That(Sides.Hostile(Side.Players, Side.Creatures) && !Sides.Hostile(Side.Players, Side.Players)
@@ -920,6 +986,7 @@ static class Checks
         InkRoll();
         MasteryCurve();
         BuffBonus();
+        SkillEfficiencyNumbers();
         TimedEffectPause();
         RegenPerSecond();
         WalkingRule();

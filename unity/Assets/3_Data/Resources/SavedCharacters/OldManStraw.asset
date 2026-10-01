@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.old-man-straw
   displayName: Old Man Straw
   sheet: {fileID: 2800000, guid: 344da7ba2ed18a2478b46bfa15de5cf2, type: 3}
+  faceset: {fileID: 2800000, guid: b77932d70e0526040b4cdaaba5bfe82a, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

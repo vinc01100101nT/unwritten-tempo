@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.fighter-white
   displayName: Fighter White
   sheet: {fileID: 2800000, guid: da59e5ab71e008d46ab978b613408be1, type: 3}
+  faceset: {fileID: 2800000, guid: 5110ce8bdb580f340a81ccd5358f9b51, type: 3}
   behaviour: 1
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

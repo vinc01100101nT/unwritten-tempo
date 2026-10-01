@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.egg-girl
   displayName: Egg Girl
   sheet: {fileID: 2800000, guid: 0ca4f5df193b20b4ab15883dacdbcdfd, type: 3}
+  faceset: {fileID: 2800000, guid: 4eb11a3e9cd269e41afdc57d63561844, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

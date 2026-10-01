@@ -112,6 +112,7 @@ public static class MobBiomeImporter
         def.id = "mob." + Kebab(folder);
         def.displayName = folder;
         def.artFolder = AssetDatabase.AssetPathToGUID($"{(isBoss ? BossArtDir : MonsterArtDir)}/{folder}");
+        def.faceset = AssetDatabase.LoadAssetAtPath<Texture2D>($"{(isBoss ? BossArtDir : MonsterArtDir)}/{folder}/Faceset.png");
         def.kind = isBoss ? CreatureKind.Elite : CreatureKind.Normal;
         def.biome = biome;
 
@@ -153,7 +154,6 @@ public static class MobBiomeImporter
             def.weight = 0;   // never rolled by the field spawner; placed deliberately
             def.hardDefPercent = 20 + b * 3;          // armour-sourced, still authored
             def.hardMagicDefPercent = 12 + b * 2;
-            def.xpReward = 200 * (b + 1);
             def.goldMin = 250 * (b + 1);
             def.goldMax = 500 * (b + 1);
             def.moveSpeed = 1.7f;
@@ -166,7 +166,6 @@ public static class MobBiomeImporter
         WriteStats(def, n);
         def.weight = common ? 4 : (b <= 1 ? 3 : b == 2 ? 2 : 1);
         def.hardDefPercent = b * 5;
-        def.xpReward = Mathf.RoundToInt(5f * Mathf.Pow(2f, b));
         def.goldMin = 2 * (b + 1);
         def.goldMax = 6 * (b + 1);
         def.moveSpeed = 2.4f - b * 0.1f;

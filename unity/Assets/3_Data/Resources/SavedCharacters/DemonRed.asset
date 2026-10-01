@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.demon-red
   displayName: Demon Red
   sheet: {fileID: 2800000, guid: e90b43cff2ddc474fbae55b36f515c69, type: 3}
+  faceset: {fileID: 2800000, guid: 9f201ca287a85354d8a906766f3db331, type: 3}
   behaviour: 2
   group: 6
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

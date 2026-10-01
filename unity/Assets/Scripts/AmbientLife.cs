@@ -39,6 +39,9 @@ public class AmbientLife : MonoBehaviour
     public float areaRadius = 25f;
     [Tooltip("How far each townsperson roams from its own spawn point.")]
     public float wanderRadius = 6f;
+    [Tooltip("The level of every townsperson this places. At 99 or above they wear the same smoke every unit at " +
+             "level 99 or above wears.")]
+    [Min(1)] public int level = 1;
 
     [Header("Barks")]
     [Tooltip("Reactive canned chatter when the player passes — lines vary with time of day (NpcBarks.PickTownLine).")]
@@ -88,7 +91,7 @@ public class AmbientLife : MonoBehaviour
 
         // The ONE recipe for a townsperson, shared with the machines that only watch one.
         var root = Townsperson.Build(modelName, p, gameObject.scene, null);
-        root.GetComponent<TownNPC>().Init(p, wanderRadius, barks);
+        root.GetComponent<TownNPC>().Init(p, wanderRadius, barks, level);
 
         GameNetwork.PublishNpc(root, modelName);
     }

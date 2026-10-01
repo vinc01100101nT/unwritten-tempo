@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.sorcerer-orange
   displayName: Sorcerer Orange
   sheet: {fileID: 2800000, guid: 6ad0ba4a63478d948aab6f96340ff80e, type: 3}
+  faceset: {fileID: 2800000, guid: afd574da35938ce4896dfe4984609e49, type: 3}
   behaviour: 1
   group: 5
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

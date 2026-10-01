@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-09-30
 tags:
   - ai-learnings
 ---
@@ -72,6 +72,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | A wait-loop never finishes, but the thing it is watching answers fine by hand | [A Wait-Loop Must Know Every Answer](a-wait-loop-must-know-every-answer.md) — it exits on the answers you expected, and the tool gave a different healthy one. Read the real answer first, or match on the failure state. |
 | Generated ground tiles come back too big, too busy, or with a seam, or you are about to write image-generator prompts for tiles | [Image-Generator Tiles: Sizes, Counts and Seams](image-generator-tiles-sizes-counts-seams.md) — give sizes as a fraction of the image width, give exact total counts, test every image for seams yourself, and repair a seam with a short reply, not a long prompt. |
 | A generated map or scene follows every instruction and still looks bad — flat blocks, neat evenly spaced shapes | [A Generated Scene Came Back Looking Like a Diagram](image-generator-scenes-come-back-as-diagrams.md) — exact counts and fractions are for tiles; for a scene, attach a picture that already looks right, describe mood and blending, keep only the few hard rules. |
+| An instruction gives a ratio or share ("a third", "2×") that could apply to more than one quantity — a level or its experience, a price or a rate | [Test Each Reading Against Every Phrase](test-each-reading-against-every-phrase.md) — list what the number could apply to, keep the reading that makes every other phrase in the instruction true, and ask before building if two survive. |
 | You are about to build a visual effect from a description, or the user saw it and said "not what I meant" | [A Look Agreed in Words Was Rejected on Screen](a-look-agreed-in-words-is-not-agreed.md) — words leave WHERE the look sits open; paint it over a real screenshot from the game camera and get a yes on the picture. |
 | Something placed on a picture by coordinates is in the sea, on the wrong terrain, or labelled with a biome it isn't on | [A Placement on a Picture Landed on the Wrong Terrain](check-each-placement-against-the-picture.md) — sample the terrain around every placement and look at a crop of each; never relabel terrain to fit the design. |
 | The reader keeps coming back asking "which one?" | [The Reader Keeps Asking "Which One?"](name-the-thing-never-the-position.md) — every noun is a name or a number, never a position. Number the actors and keep the numbers; a made-up name beats a correct word they must resolve. |
@@ -96,6 +97,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | You changed a setting or re-saved files, the call said success, and the files still hold the old value | [A Project Rule Overwrote the Setting You Just Wrote](a-project-rule-overwrote-your-setting.md) — an unchanged modified time means the write never happened (use a different save call); a changed one means an automatic rule (import hook, autofix, formatter) clobbered it afterwards. Verify the RESULT, never the return value. |
 | The user said "do it" to your recommendation, and mid-way you found a reason to do something else | [New Evidence After a Go Goes Back as a Question](new-evidence-after-a-go-goes-back-as-a-question.md) — do what they said and state the new fact in one line; never swap in your own alternative. |
 | You are about to describe how some OTHER product or game works, and the user is deciding their own design on it | [Check an Outside Fact Before It Becomes a Decision](check-an-outside-fact-before-it-becomes-a-decision.md) — look it up in a real source the same turn; a hedge is skimmed past and the claim gets built into the design. |
+| Something is buried, clipped or gapped only on things you reused at a new size (a rig, sprite or body) | [A Constant That Hid at One Size Shows at Another](a-constant-that-hid-at-one-size-shows-at-another.md) — list each offset and whether it is in art units or world units; measure both on a live body at the new size. |
 | You wrapped, re-parented or nested something one level deeper, and now something "cannot be opened", is "inactive", or is found as the wrong object | [Moving a Child Breaks the Code That Climbs To It](moving-a-child-breaks-code-that-climbs-to-it.md) — code walks DOWN by path, UP by `.parent` and by POSITION; search all three around the name AND the variables holding it, and replace each walk with a lookup of the thing it actually wants. |
 
 **No page cap.** A lesson that was paid for gets its own page; the index above is what keeps this skimmable, so keep each symptom line short and distinct. Merge two pages only when they genuinely share a symptom, and delete one the moment it is obsolete or has graduated into a hard rule.

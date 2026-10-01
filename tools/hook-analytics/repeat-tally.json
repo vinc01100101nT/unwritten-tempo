@@ -1,10 +1,4 @@
 {
-  "36567d40-b2f3-4279-92d5-baa2c75e691c": {
-    "counts": {
-      "build-game.sh": 1,
-      "build-game.sh client": 1
-    }
-  },
   "966fe462-842a-4f3c-9675-542a1950b59d": {
     "counts": {
       "build-game.sh server": 1
@@ -60,6 +54,11 @@
   "bcd2e086-c48f-4acf-a854-14cc8f9fec27": {
     "counts": {
       "unwritten-server.app globalgamemanagers": 1
+    }
+  },
+  "c660f476-5d5f-4023-aebc-9ab9e054d5f4": {
+    "counts": {
+      "unwritten-server.app": 1
     }
   },
   "ce1e2d28-d6de-418e-bfb1-d26ef3761083": {

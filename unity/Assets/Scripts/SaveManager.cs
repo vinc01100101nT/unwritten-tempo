@@ -170,6 +170,21 @@ public class SaveManager : MonoBehaviour
     {
         if (data == null || string.IsNullOrEmpty(data.sceneName)) return;   // a save older than this, or a fresh character
 
+        // AN ARRIVAL POINT RATHER THAN A POSITION — somebody who left while dead with no save point of their own.
+        if (!string.IsNullOrEmpty(data.arriveAtSpawnId))
+        {
+            if (data.sceneName == MapManager.CurrentMap)
+            {
+                SceneTravel.Target = data.arriveAtSpawnId;
+                if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
+            }
+            else
+            {
+                MapManager.Travel(data.sceneName, data.arriveAtSpawnId);
+            }
+            return;
+        }
+
         SceneTravel.ResumeScene = data.sceneName;
         SceneTravel.ResumePosition = new Vector3(data.posX, data.posY, data.posZ);
 

@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-eskimo
   displayName: Ninja Eskimo
   sheet: {fileID: 2800000, guid: 5215254b3e4ef09419718f8bfe10b80c, type: 3}
+  faceset: {fileID: 2800000, guid: 91554c6223109d2458049bc1143acd70, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.frost-ronin
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

@@ -184,6 +184,15 @@ MonoBehaviour:
     measuredPlaySeconds: 5.85
     measuredFadeSeconds: 0.85
     measuredLoops: 1
+  - id: aura.smoke-01
+    prefab: {fileID: 2787556212050310887, guid: f0690dca0889d454c9a3a1b1b9b7c9a9, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 9.15
+    measuredFadeSeconds: 4.15
+    measuredLoops: 1
   - id: aura.star
     prefab: {fileID: 7053385775836331393, guid: 354b6251e950209409c75ab984acf000, type: 3}
     scale: 1

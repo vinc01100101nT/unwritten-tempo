@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.noble
   displayName: Noble
   sheet: {fileID: 2800000, guid: b154663b8db950543ab9d3661adbce4b, type: 3}
+  faceset: {fileID: 2800000, guid: 4f63feba11b7ec94dac490e97830a846, type: 3}
   behaviour: 0
   group: 1
   goldTier: 3
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

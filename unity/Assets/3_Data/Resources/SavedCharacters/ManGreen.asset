@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.man-green
   displayName: Man Green
   sheet: {fileID: 2800000, guid: 3a4f01234081028428901696295bbc8b, type: 3}
+  faceset: {fileID: 2800000, guid: d303f38e6a1bebe41a082139e3c7222a, type: 3}
   behaviour: 0
   group: 0
   goldTier: 1
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

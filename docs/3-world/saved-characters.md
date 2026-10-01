@@ -114,8 +114,9 @@ them there.
 
 - **Appearing:** the character stands where the mob fell, wearing its own picture at a person's height and **half its
   picture's width**, with the name of its asset (its folder name, spaced — "Villager Red Cap"). For its first **2
-  seconds** an aura marks what it is, then fades out: the love aura for one that never fights, the star aura for an
-  ally, the debuff aura for a rebel. A never-fights character pays its saver the moment it appears.
+  seconds** an aura, drawn at half its own size, marks what it is, then fades out: the love aura for one that never
+  fights, the star aura for an ally, the debuff aura for a rebel. Its portrait shows beside its name when you point at
+  it or fight it, as every creature's does. A never-fights character pays its saver the moment it appears.
 - **Its poses**, from the three rows under its walk: the attack picture for the way it faces when it swings; while a
   skill winds up, the second picture of the last row; when the skill is let go, the third — or the fourth, for a skill
   with no wind-up; and the first picture of the last row, the dead one, as it falls. (A mob's sheet has no such rows,

@@ -37,6 +37,16 @@ retargeted/added BY HAND to the new fields — rebuilding keeps it only if `last
 after any rebuild, delete every door and arrival point naming a special map's id (28 objects in 14 scenes on
 2026-09-26); `tools/check-map-ids.py` fails on them.
 
+**RE-LAY ONLY THE GROUND (2026-09-30):** when how ground is shaped changes, don't rebuild maps — run
+`WorldCreator.RebuildGroundCore(json, town/field/dungeon/special recipe paths, mapIds)` through the live editor (it
+calls `RecipeGenerator.RebuildGround` per map: opens the scene additively, replaces only the `Ground_<id>` root from
+the same seed and doorways, saves, closes; everything else in the scene stays byte-identical). `test_grassland_cliffs`
+is not in the layout: clone `FieldRecipe`, mapName test_grassland_cliffs, 60×60, seed 707456464, biome Grassland,
+cliffs On, exits (−26,0) and (26,0), then `RecipeGenerator.RebuildGround(clone, exits)`. Before trusting a re-lay,
+build it once under a probe name and compare the grid points' vertex colours with the current ground mesh — 0
+differences proves the roads and seed match. Long runs: use the MCP `eval_file` with a big timeout (the `unity cmd
+eval` bridge gives up after 5 s).
+
 **GENERATED MAPS ARE EDITABLE (2026-06-27):** because Build World calls `RecipeGenerator.Generate`, every world map now also emits a Map Painter **sidecar** `tools/map-painter/exports/<scene>.map.json` — see [[map-painter-pipeline]]. Workflow realised: generic maps (fields) fully auto via World Creator; to hand-tweak one, Import its sidecar into the Map Painter, edit, re-bake. Fully-custom towns are still painted from scratch.
 
 **MAP IDS — ONE SOURCE (2026-09-26, the user's demand):** a town's or special place's `id` is its `name` in snake_case

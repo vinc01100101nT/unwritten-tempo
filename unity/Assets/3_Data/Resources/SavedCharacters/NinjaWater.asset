@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-water
   displayName: Ninja Water
   sheet: {fileID: 2800000, guid: 5a59fe0c0552cc84f95f4a684ee2ecb3, type: 3}
+  faceset: {fileID: 2800000, guid: 4c502024e46ff404aaaf96431d9a2ce0, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.deep-maw
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

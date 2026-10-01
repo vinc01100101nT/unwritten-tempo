@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.lion-yellow
   displayName: Lion Yellow
   sheet: {fileID: 2800000, guid: eb5f9d4f121057744b3c9d5fc6184feb, type: 3}
+  faceset: {fileID: 2800000, guid: 636624735318da24f9f948f920188e8d, type: 3}
   behaviour: 1
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

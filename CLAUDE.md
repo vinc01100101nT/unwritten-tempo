@@ -128,6 +128,29 @@ line is what makes this checkable rather than a good intention.
 user's running one along with it — which is also the "stop everything" command their own runbook prints. Their
 words afterwards: "i dont need your servers, i start them myself".)*
 
+## ⛔ RULE ONEGROUND — A MAP'S GROUND IS ONE SOLID BODY. EVERY GROUND SHAPE IS MADE BY RESHAPING IT, NEVER BY ATTACHING SOMETHING TO IT (HARD RULE — added 2026-09-30 at the user's instruction)
+
+**Everything that is ground — flat land, hills, roads, cliff faces, cliff tops, river beds, banks — is ONE set of
+points and triangles, with ONE collision.** A new ground feature is made by moving that body's points, adding points
+to it, and painting it (a rock look on a cliff face is paint on the same ground). Nothing else is ever walked on.
+
+**Banned, absolutely:**
+- A separate piece laid over, under or beside the ground to act as ground: a cap, a strip, a skirt, a sheet, a lid,
+  an "invisible floor".
+- Leaving triangles out of the ground — a hole — and covering it with anything.
+- Collision on any decoration: grass, a painted layer, an overlay, a trim.
+- Building the ground first and bolting a feature on afterwards, then patching the seam where they meet.
+
+**If the ground cannot make a shape where it is needed, add points to the ground there.** The points can go
+anywhere, so any shape is possible — a straight-up wall is two points on the same spot, one above the other. "The
+grid is too coarse" is never a reason for a second piece; it is a reason to add points.
+
+*(Scar, 2026-09-30: cliffs were a second piece attached to the ground. To hide the join, the ground was left low
+behind the rock, a strip of it was deleted, and a solid grass sheet was laid over the hole. On tight bends that sheet
+folded over itself into an upside-down layer nobody could see, and players walked into invisible walls on every cliff
+map. The user: "one solid body of any ground faces, regardless of what part of ground it is. cliff, river, ground,
+cliff faces".)*
+
 ## Bugfix confidence protocol (ALWAYS)
 
 At the END of every bugfix response, state your confidence that the bug is ALREADY fixed, as a percentage (0%–100%) on its own final line, e.g. `**Fix confidence: 75%**`. Be honest — reflect whether the fix was verified live, only reasoned about, or blocked (e.g. Unity unreachable). Do not inflate.

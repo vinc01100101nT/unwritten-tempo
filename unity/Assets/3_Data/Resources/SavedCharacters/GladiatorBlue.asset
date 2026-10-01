@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.gladiator-blue
   displayName: Gladiator Blue
   sheet: {fileID: 2800000, guid: cb44784bca1485a49b310e1d9af9447c, type: 3}
+  faceset: {fileID: 2800000, guid: 3f0eeaee31aa24a47904d5af5b3abb30, type: 3}
   behaviour: 1
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

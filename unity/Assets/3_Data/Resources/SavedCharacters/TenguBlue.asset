@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.tengu-blue
   displayName: Tengu Blue
   sheet: {fileID: 2800000, guid: 1b6f042cbd81c124fb124fd05bacde74, type: 3}
+  faceset: {fileID: 2800000, guid: 21de97e42fc36e644a8759b74bf8d0fb, type: 3}
   behaviour: 2
   group: 4
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

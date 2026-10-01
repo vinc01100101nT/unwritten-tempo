@@ -152,26 +152,102 @@ public static class UnitStatMath
         return total;
     }
 
-    /// <summary>Experience needed to climb from base level <paramref name="level"/> to the next one: <c>5 + 5L</c>.
-    /// The character's level curve lives HERE so the bar a player watches and the lifetime total below can never
-    /// disagree about what a level costs.</summary>
-    public static int XpToNextFrom(int level) => 5 + 5 * Mathf.Max(1, level);
+    // ---- THE EXPERIENCE CURVE — Ragnarok pre-renewal's, as one formula (decided 2026-09-30) ----------------------
+    // Fitted to Ragnarok's hand-written base table for a normal class: a typical level is within 8% of it, the worst
+    // (the levels Ragnarok jumps by hand — 29, 39, 49, 59, 69, 70) within 41%, and the whole of 1→99 comes to 1.01×
+    // its 405 million. The last term is Ragnarok's wall from 90 to 99. A kill pays by the creature's level on the
+    // curve Ragnarok's normal creatures follow (fitted the same way), so the kills a level takes grow as they do there:
+    // 3 at level 1, 15 at 30, 49 at 50, 180 at 70, 706 at 90, 4,728 at 98.
 
-    /// <summary>Experience needed to climb from ring level <paramref name="level"/> to the next: <c>20 + 12L</c> — a
-    /// slightly slower curve than the character's. Weapon mastery levels on this same curve (<see cref="MasteryMath"/>).</summary>
-    public static int RingXpToNextFrom(int level) => 20 + level * 12;
+    /// <summary>The highest base level — Ragnarok's. The curve past it outgrows the number a level's cost is kept in
+    /// (it passes 2.1 billion at level 104).</summary>
+    public const int MaxBaseLevel = 99;
+
+    /// <summary>Experience needed to climb from base level <paramref name="level"/> to the next:
+    /// <c>6.25 × L^1.23 × e^(0.098L + 0.021 × max(0, L − 90)²)</c>, rounded. Not held to the cap — the ring and the
+    /// weapon masteries climb the same curve and go on past 99.</summary>
+    public static double LevelCost(int level)
+    {
+        double L = Mathf.Max(1, level);
+        double wall = System.Math.Max(0.0, L - 90.0);
+        return System.Math.Round(6.25 * System.Math.Pow(L, 1.23) * System.Math.Exp(0.098 * L + 0.021 * wall * wall));
+    }
+
+    /// <summary>Experience needed to climb from base level <paramref name="level"/> to the next — <see cref="LevelCost"/>
+    /// held to the cap. The character's level curve lives HERE so the bar a player watches and the lifetime total
+    /// below can never disagree about what a level costs.</summary>
+    public static int XpToNextFrom(int level) => (int)LevelCost(Mathf.Clamp(level, 1, MaxBaseLevel));
+
+    /// <summary>The experience a kill of a creature of <paramref name="level"/> pays, before its kind multiplies it
+    /// (<see cref="CreatureKinds.KillExperience"/>): <c>0.31 × L² × e^(0.02L)</c>, rounded, never below 2.</summary>
+    public static int KillXp(int level)
+    {
+        double L = Mathf.Max(1, level);
+        double xp = System.Math.Round(0.31 * L * L * System.Math.Exp(0.02 * L));
+        return (int)System.Math.Min(int.MaxValue, System.Math.Max(2.0, xp));
+    }
 
     /// <summary>The TOTAL experience a character that legitimately climbed to <paramref name="level"/> was given
     /// on the way — every rung from 1 up to it, and none of the level they are standing in. Add the experience
-    /// held inside the current level to get a lifetime figure.</summary>
+    /// held inside the current level to get a lifetime figure. Held to the cap, so a junk level in an old row
+    /// costs at most 98 steps.</summary>
     public static long XpEarnedByLevel(int level)
     {
-        decimal L = Mathf.Max(1, level);
-        // Every rung from 1 to L-1 added up in one step. Written out rather than looped because a junk level
-        // sitting in an old row would otherwise spin this billions of times while somebody waits to load in,
-        // and worked out in decimal so an impossible level saturates instead of wrapping round to a negative.
-        decimal total = 5m * (L - 1m) + 5m * L * (L - 1m) / 2m;
-        return total > long.MaxValue ? long.MaxValue : (long)total;
+        long total = 0;
+        int top = Mathf.Clamp(level, 1, MaxBaseLevel);
+        for (int L = 1; L < top; L++) total += XpToNextFrom(L);
+        return total;
+    }
+
+    // ---- THE THREE TRACKS: one table, one share rule, only the scale differs (decided 2026-09-30) ----------------
+    // Every kill's experience is paid to the character, the ring and the weapon in hand through ShareOfKill below, and
+    // each track climbs LevelCost. Nothing else about them may differ: a track that rounds, stores or climbs its own
+    // way is the special case this rule forbids.
+
+    /// <summary>The scale of every kill's experience the character is paid: all of it.</summary>
+    public const double BaseShareOfExperience = 1.0;
+
+    /// <summary>The scale the ring is paid: a third. It goes on earning after base level 99.</summary>
+    public const double RingShareOfExperience = 1.0 / 3.0;
+
+    /// <summary>Every track holds its experience to two decimals (decided 2026-09-30): <paramref name="xp"/> rounded to
+    /// the nearest hundredth, a half going up. Applied after every change to any track's experience, so none of them
+    /// drifts into a third decimal.</summary>
+    public static double RoundExperience(double xp)
+        => System.Math.Round(xp, 2, System.MidpointRounding.AwayFromZero);
+
+    /// <summary>What one track is paid from a kill worth <paramref name="xp"/>: that experience times the track's
+    /// <paramref name="scale"/>, to two decimals. THE one rule every track is paid by.</summary>
+    public static double ShareOfKill(int xp, double scale)
+        => RoundExperience(System.Math.Max(0, xp) * System.Math.Max(0.0, scale));
+
+    /// <summary>The character experience a kill worth <paramref name="xp"/> pays.</summary>
+    public static double BaseXpFromKill(int xp) => ShareOfKill(xp, BaseShareOfExperience);
+
+    /// <summary>The ring experience a kill worth <paramref name="xp"/> pays.</summary>
+    public static double RingXpFromKill(int xp) => ShareOfKill(xp, RingShareOfExperience);
+
+    /// <summary>Experience needed to climb from ring level <paramref name="level"/> to the next — the SAME cost the
+    /// character's own level <paramref name="level"/> has (<see cref="LevelCost"/>), with no cap: the ring keeps
+    /// levelling after the character stops at 99. Past about ring 103 a level costs more than a whole number holds,
+    /// and it is held there — a wall, not a wrap.</summary>
+    public static int RingXpToNextFrom(int level) => (int)System.Math.Min(int.MaxValue, LevelCost(level));
+
+    // ---- the curves before 2026-09-30 — read ONLY to carry an older save across (Character.RestoreSave) ---------
+
+    /// <summary>The base level cost before the Ragnarok curve: <c>5 + 5L</c>.</summary>
+    public static int LegacyXpToNextFrom(int level) => 5 + 5 * Mathf.Max(1, level);
+
+    /// <summary>The ring level cost before the Ragnarok curve — and every weapon mastery's: <c>20 + 12L</c>.</summary>
+    public static int LegacyRingXpToNextFrom(int level) => 20 + level * 12;
+
+    /// <summary>How far <paramref name="xpIntoLevel"/> was through a level that cost <paramref name="oldCost"/>, carried
+    /// onto a level that now costs <paramref name="newCost"/> — the same share of the way.</summary>
+    public static double CarryShareOfLevel(double xpIntoLevel, int oldCost, int newCost)
+    {
+        if (oldCost <= 0 || newCost <= 0 || xpIntoLevel <= 0.0) return 0.0;
+        double share = System.Math.Min(1.0, xpIntoLevel / oldCost);
+        return RoundExperience(System.Math.Min(newCost - 0.01, share * newCost));
     }
 
     /// <summary>What it cost to raise ONE stat from 1 up to <paramref name="value"/> — the running integral of

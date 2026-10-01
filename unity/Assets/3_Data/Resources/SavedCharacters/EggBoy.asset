@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.egg-boy
   displayName: Egg Boy
   sheet: {fileID: 2800000, guid: 407bbdfdd1b892947bad678461421141, type: 3}
+  faceset: {fileID: 2800000, guid: 7b4fd527e5a97e64fa9875129560d296, type: 3}
   behaviour: 0
   group: 0
   goldTier: 2
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

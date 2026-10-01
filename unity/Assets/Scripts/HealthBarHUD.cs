@@ -43,6 +43,6 @@ public class HealthBarHUD : MonoBehaviour
     {
         if (ch == null) { Bind(); if (ch == null) return; }
         if (fill != null) fill.fillAmount = ch.MaxHP > 0 ? (float)ch.CurrentHP / ch.MaxHP : 0f;
-        if (label != null) label.text = $"Lv {ch.Level}    HP {ch.CurrentHP}/{ch.MaxHP}    XP {ch.XP}/{ch.XPToNext}";
+        if (label != null) label.text = $"Lv {ch.Level}    HP {ch.CurrentHP}/{ch.MaxHP}    XP {ch.XP:0.00}/{ch.XPToNext}";
     }
 }

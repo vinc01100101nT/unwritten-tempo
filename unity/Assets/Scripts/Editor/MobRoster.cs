@@ -24,7 +24,6 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(1, wStr: 3f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // fodder bruiser
             name = "Slime", weight = 4, tint = None, size = 0.3f,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // fodder: a sliver of DEF, no crit shield
-            xpReward = 5,
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -37,7 +36,6 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(2, wStr: 2f, wAgi: 5f, wVit: 1f, wInt: 1f, wDex: 2f, wLuk: 2f),   // fast + dodgy
             name = "Bat", weight = 4, tint = Cyan, size = 0.3f,
             hardDefPercent = 0, hardMagicDefPercent = 0,   // no DEF (dodges instead); lucky → some crit shield
-            xpReward = 3,
             touchRange = 0.8f, touchInterval = 0.8f,
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -50,7 +48,6 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(6, wStr: 3f, wAgi: 1f, wVit: 5f, wInt: 1f, wDex: 2f, wLuk: 1f),   // tanky
             name = "Kappa", weight = 2, tint = None, size = 1f,
             hardDefPercent = 25, hardMagicDefPercent = 8,   // TANK: % DEF cuts normal hits hard — crit builds shine here
-            xpReward = 12,
             touchRange = 1.0f, touchInterval = 1.4f,
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -65,7 +62,6 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(5, wStr: 1f, wAgi: 2f, wVit: 2f, wInt: 5f, wDex: 2f, wLuk: 1f),   // caster
             name = "Flam", weight = 2, tint = Arcane, size = 1f,
             hardDefPercent = 0, hardMagicDefPercent = 10,   // squishy to melee; a caster's own magic resist
-            xpReward = 10,
             touchRange = 3.6f, touchInterval = 1.6f,
             moveSpeed = 2.2f, aggroRadius = 7f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 3.2f, fleeHpFraction = 0f,
@@ -79,7 +75,6 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(8, wStr: 5f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // heavy hitter
             name = "Cyclope", weight = 2, tint = None, size = 2.4f,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // evasive hit-and-run: high crit shield + dodge
-            xpReward = 8,
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 3.2f, aggroRadius = 6f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0.4f,
@@ -101,7 +96,6 @@ public static class MobRoster
         // A real wall of HP + real defenses so the whole kit (multi-hit, status, crit) matters.
         hardDefPercent = 30, hardMagicDefPercent = 20,   // WALL: heavy % DEF + strong crit shield — crit/element/status all matter
 
-        xpReward = 400,
             touchRange = 1.6f, touchInterval = 1.5f,
         // Slow and relentless: wide aggro, long leash so it commits to the chase, never flees.
         moveSpeed = 1.7f, aggroRadius = 9f, leashRadius = 22f, stopDistance = 1.1f, wanderRadius = 5f,

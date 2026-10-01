@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-bomb
   displayName: Ninja Bomb
   sheet: {fileID: 2800000, guid: ce61a6a821da69a44942f110020295c8, type: 3}
+  faceset: {fileID: 2800000, guid: d3786ec1948379847b9b18c77c11d374, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.toadmaw
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.9375

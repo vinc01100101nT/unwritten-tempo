@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.ninja-gray
   displayName: Ninja Gray
   sheet: {fileID: 2800000, guid: e9064eff5306be640994c086890afe45, type: 3}
+  faceset: {fileID: 2800000, guid: d717e7f2d22727841a8862b262e7d615, type: 3}
   behaviour: 2
   group: 8
   goldTier: 0
   eliteId: mob.oculord
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 1

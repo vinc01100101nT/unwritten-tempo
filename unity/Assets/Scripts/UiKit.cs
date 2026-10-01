@@ -217,6 +217,25 @@ public static class UiKit
         return img;
     }
 
+    static readonly System.Collections.Generic.Dictionary<int, Sprite> _rims = new();
+
+    /// <summary>Make a framed shape's BODY see-through at <paramref name="alpha"/>: its <paramref name="edge"/> is
+    /// redrawn as a rim only, so nothing opaque sits under the body, and the body's colour takes the alpha. The edge
+    /// and body are the pair <see cref="DressWindow"/> (window radius) or <see cref="Framed"/> (button radius) made.</summary>
+    public static void SeeThroughBody(Image edge, Image body, float alpha, int radius)
+    {
+        if (edge == null || body == null) return;
+        if (!_rims.TryGetValue(radius, out var rim) || rim == null)
+        {
+            rim = Resources.Load<Sprite>("UI/Theme/RoundedRim" + radius);
+            if (rim == null) Debug.LogError($"[UiKit] no rim image for corner radius {radius} — run tools/ui-theme-sprites.py");
+            _rims[radius] = rim;
+        }
+        if (rim == null) return;
+        edge.sprite = rim;
+        var c = body.color; c.a = alpha; body.color = c;
+    }
+
     /// <summary>Draw <paramref name="img"/> as a text field or slot well: a thin <see cref="ButtonEdge"/> rim around a
     /// <see cref="SlotFill"/> well, rounded.</summary>
     public static Image Field(Image img) => Framed(img, ButtonEdge, SlotFill, ButtonRadius);

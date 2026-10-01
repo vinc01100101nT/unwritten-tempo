@@ -15,9 +15,11 @@ MonoBehaviour:
   id: character.knight
   displayName: Knight
   sheet: {fileID: 2800000, guid: 1283ad40ad15e8d459479f67a0d66e3e, type: 3}
+  faceset: {fileID: 2800000, guid: 5a1d47c7efef7074c9d667fbcc820d4f, type: 3}
   behaviour: 1
   group: 3
   goldTier: 0
   eliteId: 
-  crownAtScaleOne: 0.9
+  footPx: 0
+  crownAtScaleOne: 1
   paintedWidthAtScaleOne: 0.875

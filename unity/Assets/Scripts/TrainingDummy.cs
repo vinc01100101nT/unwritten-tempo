@@ -56,7 +56,8 @@ public class TrainingDummy : MonoBehaviour
             ai.wanderRadius = 0f;       // never wander — stays put as a fixed target
             ai.touchRange = 0f;         // never bite anybody
             ai.attack = 0;
-            ai.xpReward = 0;            // no free XP from the test rig
+            // no free XP from the test rig
+            ai.paysExperience = false;
         }
 
         // The stat block is the single writer of health/defence/attack on a normal creature and re-derives them

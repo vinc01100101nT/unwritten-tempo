@@ -142,9 +142,9 @@ public class SkillsWindow : MonoBehaviour
         brt.sizeDelta = new Vector2(70, 0); brt.anchoredPosition = Vector2.zero;
         // The experience toward the next level, exactly as the server sent it — this window only prints the numbers.
         string heading = weapon + " Mastery " + level;
-        if (me != null && me.Mastery.SentProgress(weapon, out float into, out float size, out bool capped))
+        if (me != null && me.Mastery.SentProgress(weapon, out double into, out double size, out bool capped))
             heading += capped ? "  ·  capped by this weapon's grade"
-                              : "  ·  " + into.ToString("0.#") + " / " + size.ToString("0.#") + " exp";
+                              : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";
         var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
         UiKit.Fill(head.rectTransform, new Vector2(80, 0), Vector2.zero);
         head.color = UiKit.TitleText; head.raycastTarget = false;

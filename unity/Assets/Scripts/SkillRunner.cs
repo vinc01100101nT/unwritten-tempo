@@ -146,6 +146,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // The same pile read the OTHER way — its stacks' summed VALUE, as one number whatever channel they use (a
     // percentage pile is already a decimal: +30% arrives as 0.3). Float, because that reading can be fractional.
     float castCarried;
+    // Whether THIS cast is efficient (SkillEfficiency) — rolled once at its release, read by every tick it runs.
+    bool castEfficient;
 
     // WHOSE RUN THIS IS. A server holds one character per person signed in, so "the player" is not a fact it can
     // read off a global — it has to be told. Bound once when the fighter is built; left unbound on a screen, where
@@ -513,27 +515,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         bool pressed = firedBy != null && firedBy.trigger == SkillTrigger.OnCast;
         if (pressed) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
 
-        // The skill call: an ACTIVE skill shouts its name the moment it actually fires — over the caster's head and in
-        // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
-        // one place every way of firing (a press, one of the skill's own automatic triggers) passes
-        // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
-        // A FORM OF A STYLE is called out differently: only when pressed, and in words the server chooses — the full
-        // style call or the plain form name, on timers (SkillShout) — so it is left entirely to the server, which says
-        // it to the caster's own machine too. Every other active skill is called exactly as before.
-        if (SkillForms.IsForm(def))
-        {
-            if (pressed) GameNetwork.AnnounceFormCall(Caster, def);
-        }
-        else if (!def.IsPassive)
-        {
-            if (Mine) ChatController.SkillCall(def.displayName);
-            // AND TO EVERY MACHINE WATCHING THE CASTER, from the one that owns the world. A skill somebody else
-            // cast used to go off in silence for everybody but them: its effect was announced, its NAME never was.
-            // Said from here — the same moment, the same words — rather than beside the effect, because a repeating
-            // skill announces its effect once per fall and would have called its own name five times over.
-            // Silent off a server, and never to the caster's own machine, which has just said it a line above.
-            GameNetwork.AnnounceSkillCall(Caster, def);
-        }
+        // THE CAST'S EFFICIENCY, rolled ONCE here by the machine that owns the world — every tick and every repeat of
+        // this cast reads the same answer. Only a trademark skill can roll, whatever weapon is in hand (SkillEfficiency).
+        castEfficient = !Watching && !CasterGone
+                     && SkillEfficiency.Procs(Trademarks.Qualifies(def), CombatRng.Value01());
+
+        // The skill call, the moment the skill actually fires — here, at the one place every way of firing (a press,
+        // one of the skill's own automatic triggers) passes through, so no entry point can forget it. The server
+        // chooses the words (SkillShout) and says them to everybody watching the caster, the caster included. Said
+        // from here rather than beside the effect, because a repeating skill announces its effect once per fall and
+        // would have called its own name five times over.
+        GameNetwork.AnnounceSkillCall(Caster, def, castEfficient);
 
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
         // keyed to this skill via OnSkillCastComplete<skill> fires.
@@ -865,7 +857,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // Both readings of the cashed pile, measured once at cast start, handed to
                                           // EVERY effect this burst runs — so a skill's damage and its lifesteal read
                                           // the SAME pile, and the first one can't spend it out from under the second.
-                                          vars: new StackVars(castStacks, castCarried));
+                                          vars: new StackVars(castStacks, castCarried),
+                                          efficient: castEfficient);
         }
         finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prevCause); }
 
