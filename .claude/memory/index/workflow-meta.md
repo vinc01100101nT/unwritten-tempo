@@ -56,3 +56,4 @@
 - [Wiki is deployed on Vercel](../wiki-deployed-on-vercel.md) — local wiki/ changes reach players only once deployed; static site, no polling.
 - [Built client crashes as it closes = Unity engine diagnostics](../built-game-crashes-on-quit-engine-diagnostics.md) — segfault in Unity's teardown (asset-bundle analytics after Insights is gone); fix = engine diagnostics off; our quit code cannot reach it.
 - [Explain causes without numbers](../explain-causes-without-numbers.md) — "why" answers = plain words + a picture; no metres or counts.
+- [Addressables report window fails the build](../addressables-report-window-fails-the-build.md) — a content build failing in 0 s after a `BuildReportVisualizer` NullReference = the per-machine "Open Addressables Report after build" preference; turned off on the Windows PC 2026-10-01, Mac unmeasured.

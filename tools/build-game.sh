@@ -155,7 +155,9 @@ EOF
 
   if [ "$kind" = "client" ]; then write_addresses "$out" || return 1; fi
 
-  printf '\033[32m%s built\033[0m  %s  (%s)\n' "$kind" "$out" "$(du -sh "$out" | cut -f1)"
+  # The size of everything the build made: on Windows the program file is tiny and its data sits beside it.
+  local measured="$out"; [ "$ext" = ".exe" ] && measured="$(dirname "$out")"
+  printf '\033[32m%s built\033[0m  %s  (%s)\n' "$kind" "$out" "$(du -sh "$measured" | cut -f1)"
   return 0
 }
 

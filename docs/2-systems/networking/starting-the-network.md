@@ -167,7 +167,7 @@ Then, in a second terminal, open the launcher:
 tools/platform.sh open-launcher
 ```
 
-Copies the update to the rented machine, `version.txt` last.
+Copies the update to the rented machine, `version.txt` last. `rsync` is not installed on the Windows PC — run this step from the Mac.
 
 ```
 rsync -a --delete --exclude version.txt builds/patch/ host:/srv/unwritten/patch/
@@ -228,10 +228,22 @@ Lets that account type chat commands. Set `false` to take it away. They must sig
 psql -d unwritten -c "update account set is_gm = true where lower(email) = lower('you@example.com');"
 ```
 
+On the Windows PC the database asks for a password, so there the same line reads it from `settings.env` (run it from the top of the project):
+
+```
+psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "update account set is_gm = true where lower(email) = lower('you@example.com');"
+```
+
 Lists who has it.
 
 ```
 psql -d unwritten -c "select email, is_gm from account order by created_at;"
+```
+
+On the Windows PC:
+
+```
+psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "select email, is_gm from account order by created_at;"
 ```
 
 ## 0. The settings file
@@ -646,6 +658,12 @@ There is no screen for this on purpose. Grant it with one line:
 psql -d unwritten -c "update account set is_gm = true where lower(email) = lower('you@example.com');"
 ```
 
+On the Windows PC the database asks for a password, so there the same line reads it from `settings.env` (run it from the top of the project):
+
+```
+psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "update account set is_gm = true where lower(email) = lower('you@example.com');"
+```
+
 Take it away again by setting `false`. Either way the person must **sign out and back in** for the change to
 reach them — the mark is read when their character is loaded, so a game already running still has the old answer.
 
@@ -653,6 +671,12 @@ Check who has it:
 
 ```
 psql -d unwritten -c "select email, is_gm from account order by created_at;"
+```
+
+On the Windows PC:
+
+```
+psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "select email, is_gm from account order by created_at;"
 ```
 
 ### Where each command actually runs
@@ -897,9 +921,10 @@ launcher, in a `game` folder; a Mac player's goes in `~/Library/Application Supp
 
 **Every update:**
 
-1. Build the game: `tools/build-game.sh client` (the Windows copy is not built by this script yet).
+1. Build the game: `tools/build-game.sh client` — run on the Mac it builds the Mac copy, run on the Windows PC it
+   builds the Windows copy.
 2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first.
-3. Publish: `tools/publish-update.py` (add `--windows <folder>` once there is a Windows build). It stamps one
+3. Publish: `tools/publish-update.py` (add `--windows <folder>` with the copy built on the Windows PC). It stamps one
    version into every build it is given, writes `builds/patch/`, and warns if a build still points at this machine.
 4. Copy `builds/patch/` to `/srv/unwritten/patch/` on the hosted machine, `version.txt` LAST — the moment it
    lands, the server demands the new version, so the files for it must already be there:
@@ -909,7 +934,7 @@ launcher, in a `game` folder; a Mac player's goes in `~/Library/Application Supp
    rsync -a builds/patch/version.txt host:/srv/unwritten/patch/
    ```
 
-   `--delete` removes the files the publish no longer needs, so the folder does not grow with every update.
+   `rsync` is not installed on the Windows PC — run this step from the Mac. `--delete` removes the files the publish no longer needs, so the folder does not grow with every update.
 
 The character server reads the version from that same folder (`PATCH_DIR` in the rented machine's
 `settings.env`), and re-reads it when it changes, so step 4 needs no restart. **A platform left out of a publish

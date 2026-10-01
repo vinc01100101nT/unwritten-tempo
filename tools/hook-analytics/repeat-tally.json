@@ -72,11 +72,15 @@
       "build-game.sh '": 2,
       "build-game.sh ','rb').read()": 3,
       "build-game.sh ','rb').read().count(bytes([27])))\"": 1,
-      "npm run migrate": 1
+      "build-game.sh client": 1,
+      "build-game.sh server": 2,
+      "npm run migrate": 1,
+      "npm start": 1
     },
     "told": [
       "build-game.sh '",
-      "build-game.sh ','rb').read()"
+      "build-game.sh ','rb').read()",
+      "build-game.sh server"
     ]
   },
   "daaf4851-9328-4bdf-83b3-e299028dc0da": {
