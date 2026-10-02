@@ -58,14 +58,17 @@ public sealed class Patcher
     }
 
     /// <summary>Where the update server is. The environment first, so it can be pointed somewhere else for a test
-    /// without touching a file; then <c>launcher.txt</c> beside the program, in the same <c>NAME=value</c> shape
-    /// the game's own settings file uses.</summary>
+    /// without touching a file; then <c>launcher.txt</c>, in the same <c>NAME=value</c> shape the game's own settings
+    /// file uses — beside the program on Windows, and in the app's <c>Contents/Resources</c> on a Mac, the one place
+    /// inside a Mac app where a file that is not a program is covered by the app's signature.</summary>
     static string? Setting(string name)
     {
         var env = Environment.GetEnvironmentVariable(name);
         if (!string.IsNullOrWhiteSpace(env)) return env.Trim();
 
         var file = Path.Combine(AppContext.BaseDirectory, "launcher.txt");
+        if (!File.Exists(file))
+            file = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources", "launcher.txt"));
         if (!File.Exists(file)) return null;
         foreach (var raw in File.ReadAllLines(file))
         {

@@ -25,6 +25,7 @@ public sealed class MapServers(Config config)
     public sealed record Registration(
         string Id,
         string Address,
+        string ArrivalsAddress,
         int Port,
         int PlayerPort,
         string[] Maps,
@@ -39,6 +40,10 @@ public sealed class MapServers(Config config)
         /// down, and everything they do is answered. The exact weight is a judgement, not a measurement, and it
         /// only has to rank processes correctly — it is never shown to anybody or used as a budget.</summary>
         public int Load => Players * 50 + Creatures;
+
+        /// <summary>Where THIS server delivers characters, asks a map up, or asks for one to be let go — the map
+        /// server's private address when it gave one, never sent to a player.</summary>
+        public string ArrivalsUrl => $"http://{ArrivalsAddress}:{Port}";
     }
 
     readonly ConcurrentDictionary<string, Registration> byId = new();
@@ -74,10 +79,12 @@ public sealed class MapServers(Config config)
                       System.Text.Encoding.UTF8.GetBytes(config.ServerSecret));
     }
 
-    public Registration Register(string id, string address, int port, int playerPort, string[] maps, string build,
-                                 int players, int creatures, string? startingMap)
+    public Registration Register(string id, string address, string? arrivalsAddress, int port, int playerPort,
+                                 string[] maps, string build, int players, int creatures, string? startingMap)
     {
-        var reg = new Registration(id, address, port, playerPort, maps ?? [], build, DateTimeOffset.UtcNow,
+        // A map server that names no private delivery address is delivered to at the address players are given.
+        string arrivals = string.IsNullOrWhiteSpace(arrivalsAddress) ? address : arrivalsAddress.Trim();
+        var reg = new Registration(id, address, arrivals, port, playerPort, maps ?? [], build, DateTimeOffset.UtcNow,
                                    players, creatures, startingMap?.Trim() ?? "");
         byId[id] = reg;
         Rebuild();
@@ -175,7 +182,7 @@ public sealed class MapServers(Config config)
 
     async Task<bool> AskToLetGoAsync(Registration to, string characterId, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"http://{to.Address}:{to.Port}/evict")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{to.ArrivalsUrl}/evict")
         {
             Content = new StringContent(JsonSerializer.Serialize(new { characterId }),
                                         System.Text.Encoding.UTF8, "application/json"),
@@ -221,7 +228,7 @@ public sealed class MapServers(Config config)
     public async Task<(HostAnswer Answer, string? Instead)> AskToHostAsync(Registration to, string map,
                                                                           CancellationToken ct = default)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"http://{to.Address}:{to.Port}/host")
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{to.ArrivalsUrl}/host")
         {
             Content = new StringContent(JsonSerializer.Serialize(new { map }),
                                         System.Text.Encoding.UTF8, "application/json"),
@@ -320,7 +327,8 @@ public sealed class MapServers(Config config)
     /// <para>The character travels as the document it is stored as — the same shape the game reads and writes,
     /// so there is no second description of a character to keep in step with the first.</para></summary>
     public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName,
-                                          JsonElement progress, bool isGm, CancellationToken ct = default)
+                                          JsonElement progress, bool isGm, int handover,
+                                          CancellationToken ct = default)
     {
         var body = JsonSerializer.Serialize(new
         {
@@ -331,10 +339,12 @@ public sealed class MapServers(Config config)
             characterName,
             isGm,
             progress,
+            // Every save of this character from that server carries this back — see Handover.
+            handover,
         });
 
         using var request = new HttpRequestMessage(HttpMethod.Post,
-            $"http://{to.Address}:{to.Port}/arriving")
+            $"{to.ArrivalsUrl}/arriving")
         {
             Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json"),
         };

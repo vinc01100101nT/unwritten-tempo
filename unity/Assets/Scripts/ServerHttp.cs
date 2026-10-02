@@ -12,8 +12,9 @@ using UnityEngine.Networking;
 /// </summary>
 public static class ServerHttp
 {
-    /// <summary>Told whether it landed, what came back, and why it did not.</summary>
-    public delegate void Reply(bool ok, string body, string error);
+    /// <summary>Told whether it landed, what came back, why it did not, and the answer's status number (0 when
+    /// nothing answered at all) — which is what tells "refused for good" apart from "try again later".</summary>
+    public delegate void Reply(bool ok, string body, string error, long status);
 
     public static void Send(string method, string url, string body, string serverSecret, Reply onDone)
     {
@@ -38,7 +39,7 @@ public static class ServerHttp
             bool ok = request.result == UnityWebRequest.Result.Success;
             string text = request.downloadHandler != null ? request.downloadHandler.text : "";
             string error = ok ? null : (request.error ?? "the other server did not answer");
-            try { onDone?.Invoke(ok, text, error); }
+            try { onDone?.Invoke(ok, text, error, request.responseCode); }
             finally { request.Dispose(); }
         };
     }

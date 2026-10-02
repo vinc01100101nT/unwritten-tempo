@@ -26,7 +26,7 @@ public static class AccountSession
     /// <c>https://</c> can be given here without a line of this changing.</para></summary>
     public static string ServerUrl =>
         ServerAddress.HasTypedHost
-            ? $"http://{ServerAddress.TypedHost}:{ServerAddress.AccountsPort}"
+            ? ServerAddress.TypedAccountsUrl
             : ServerAddress.Setting("ACCOUNTS_URL") ?? "http://localhost:8080";
 
     /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,

@@ -129,9 +129,12 @@ def check_ordered_reads(repo, out):
 
 # ---- S7  migrations applied (warn) ---------------------------------------------------------------------------
 def check_migrations_applied(repo, out):
-    env = os.path.join(repo, "accounts", ".env")
+    # settings.env at the top of the project is the one file every program reads (SERVER.md); accounts/.env is
+    # where this used to live. Reading only the old file left this check silent for every unapplied migration.
+    env = next((p for p in (os.path.join(repo, "settings.env"), os.path.join(repo, "accounts", ".env"))
+                if os.path.isfile(p)), None)
     sql_dir = os.path.join(repo, "accounts", "sql")
-    if not os.path.isfile(env) or not os.path.isdir(sql_dir):
+    if env is None or not os.path.isdir(sql_dir):
         return
     url = None
     for line in read(env).splitlines():

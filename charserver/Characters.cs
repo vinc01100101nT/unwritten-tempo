@@ -260,6 +260,12 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     {
         if (!IsId(id, out var characterId)) return Bad("invalid character id");
 
+        // NOBODY IN WHILE THIS SERVER IS STILL LEARNING WHERE EVERYONE IS — see StartupGrace.
+        int wait = StartupGrace.SecondsLeft;
+        if (wait > 0)
+            return Results.Json(new { error = $"the world is starting up — try again in {wait} seconds" },
+                                statusCode: 503);
+
         await using var conn = await db.ConnectAsync();
 
         // IS THIS THE SIGN-IN THAT IS STILL THE LIVE ONE. Signing in a second time takes over: the login service
@@ -376,9 +382,14 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         var ticket = maps.MintTicket(AccountOf(http).ToString(), characterId.ToString());
 
+        // A NEW HAND-OVER: from here, only saves carrying this number are taken for this character (see Handover).
+        // The read above is finished with first — one connection runs one command at a time.
+        await rows.DisposeAsync();
+        if (await Handover.NextAsync(conn, characterId) is not int handover) return NoSuchCharacter();
+
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
-        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, isGm, http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, isGm, handover, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

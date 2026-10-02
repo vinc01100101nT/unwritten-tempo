@@ -55,5 +55,7 @@
 - [Reproduce with GMCP, not the user](../reproduce-with-gmcp-not-the-user.md) — play a gameplay bug yourself through the text-play client; never park a recorder and ask the user to reproduce. Rebuild the client first if code changed.
 - [Wiki is deployed on Vercel](../wiki-deployed-on-vercel.md) — local wiki/ changes reach players only once deployed; static site, no polling.
 - [Built client crashes as it closes = Unity engine diagnostics](../built-game-crashes-on-quit-engine-diagnostics.md) — segfault in Unity's teardown (asset-bundle analytics after Insights is gone); fix = engine diagnostics off; our quit code cannot reach it.
-- [Explain causes without numbers](../explain-causes-without-numbers.md) — "why" answers = plain words + a picture; no metres or counts.
+- [Explain causes without numbers](../explain-causes-without-numbers.md) — "why" answers = plain words; no metres or counts; a picture only when asked.
 - [Addressables report window fails the build](../addressables-report-window-fails-the-build.md) — a content build failing in 0 s after a `BuildReportVisualizer` NullReference = the per-machine "Open Addressables Report after build" preference; turned off on the Windows PC 2026-10-01, Mac unmeasured.
+- [Plan shape: issue, why, fix, result](../plan-shape-issue-why-fix-result.md) — every plan item states the issue, why it matters, the recommended fix, and the expected result after it.
+- [LAN play: built games refuse plain HTTP off-machine](../lan-play-plain-http-blocked.md) — never put LAN IPs in ACCOUNTS_URL/CHAR_SERVER_URL (the map server is a built game too); use PUBLIC_* + `build-game.sh client --dev`.

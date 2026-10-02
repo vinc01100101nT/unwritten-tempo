@@ -7,6 +7,11 @@
 # same work with nothing to mistype.
 #
 # USAGE:  charserver/run.sh                 # every setting comes from settings.env (a terminal value wins)
+#
+# IT STARTS THE SERVER AGAIN IF IT STOPS. A crash used to leave nobody able to sign in until somebody noticed and
+# started it by hand. Now it is built once and run as a program, and started again 5 seconds after any exit —
+# except a clean one, and except exit 2, which is the server refusing to start because its port is already taken
+# (starting again cannot fix that). Ctrl+C stops it for good.
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -31,5 +36,19 @@ if [ -z "${SERVER_SECRET:-}" ] || [ "$SERVER_SECRET" = "change-me" ]; then
 fi
 export SERVER_SECRET
 
+# Which computer this is, for the program's name (".exe" on Windows).
+. "$REPO/tools/platform.sh"
+
 cd "$HERE"
-exec dotnet run "$@"
+# BUILT ONCE, into the same folder `dotnet run` always used — so a firewall permission already given to that
+# program still applies — and then run directly, so a restart does not rebuild.
+dotnet build --nologo -v quiet
+PROGRAM="$HERE/bin/Debug/net10.0/CharServer$EXE"
+
+while :; do
+  "$PROGRAM" "$@" && exit 0
+  code=$?
+  [ "$code" -eq 2 ] && exit 2
+  echo "[run] the character server stopped (exit $code) — starting it again in 5 seconds. Ctrl+C stops it." >&2
+  sleep 5
+done

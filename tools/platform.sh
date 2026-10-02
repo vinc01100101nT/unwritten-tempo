@@ -26,7 +26,10 @@
 #   editor-log | player-log the log Unity's editor writes, and the one a client build writes (Player-prev.log beside it)
 #   open-launcher           open the launcher tools/build-launcher.sh made for this computer
 #   db-start | db-stop      start or stop the local Postgres
-#   sign-mac-app <app>      sign a Mac app again without a certificate — Mac only, refuses elsewhere
+#   wal-archive-command <folder>   what Postgres runs to copy each finished change-log file into <folder>
+#   wal-restore-command <folder>   what a rebuilt Postgres runs to fetch one change-log file back out of <folder>
+#   time-offset "<YYYY-MM-DD HH:MM:SS>"   this computer's offset from UTC at that local moment, e.g. +0800
+#   sign-mac-app <app>      sign a Mac app again without a certificate — codesign on a Mac, rcodesign elsewhere
 #
 # Plain POSIX sh: Claude Code's hooks start through sh on a Mac and through Git Bash on Windows.
 
@@ -227,11 +230,48 @@ db_service() {
   esac
 }
 
+# Postgres runs these two through cmd.exe on Windows and through sh everywhere else, so each is written in that
+# shell's words. The folder must be a full path: Postgres runs them from inside its own data folder.
+#
+# Copying IN refuses to overwrite. A file already in the archive under the same name means two databases are
+# writing to one folder, or a copy went wrong — either way Postgres must hear "failed" and keep the file, never
+# have the old one silently replaced. (Measured on Windows 2026-10-02: the first copy exits 0, a second exits 1
+# and leaves the first file untouched.)
+wal_archive_command() {
+  case "$PLATFORM" in
+    windows) __d="$(cygpath -w "$1")"
+             printf 'if exist "%s\\%%f" (exit 1) else (copy /b "%%p" "%s\\%%f" >nul)\n' "$__d" "$__d" ;;
+    *)       printf "test ! -f '%s/%%f' && cp '%%p' '%s/%%f'\n" "$1" "$1" ;;
+  esac
+}
+wal_restore_command() {
+  case "$PLATFORM" in
+    windows) printf 'copy /b "%s\\%%f" "%%p" >nul\n' "$(cygpath -w "$1")" ;;
+    *)       printf "cp '%s/%%f' '%%p'\n" "$1" ;;
+  esac
+}
+
+# time_offset "YYYY-MM-DD HH:MM:SS" — this computer's offset from UTC at THAT local moment, not today's, so a time
+# on the far side of a daylight-saving change still means the instant the person typed. Refuses any other shape.
+time_offset() {
+  case "$1" in
+    [0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]\ [0-2][0-9]:[0-5][0-9]:[0-5][0-9]) ;;
+    *) return 1 ;;
+  esac
+  if [ "$PLATFORM" = mac ]; then date -j -f '%Y-%m-%d %H:%M:%S' "$1" '+%z'; else date -d "$1" '+%z'; fi
+}
+
 # Changing a file inside a Mac app breaks its signature, and a Mac will not open a downloaded app whose signature
 # is broken — so it is signed again, the same no-certificate way Unity signs it. Only a Mac can do that.
+# A MAC APP MADE ON WINDOWS IS SIGNED HERE TOO, with rcodesign (github.com/indygreg/apple-platform-rs, installed to
+# ~/.local/bin): with no certificate given it makes the same certificate-free signature `codesign --sign -` makes,
+# which is all an Apple silicon Mac needs to run a program. Without it every Mac copy had to be built on a Mac.
 sign_mac_app() {
-  [ "$PLATFORM" = mac ] || { echo "A Mac app can only be signed on a Mac." >&2; return 2; }
-  codesign --force --deep --sign - "$1"
+  if [ "$PLATFORM" = mac ]; then codesign --force --deep --sign - "$1"; return; fi
+  __rc="$(command -v rcodesign 2>/dev/null || true)"
+  [ -n "$__rc" ] || [ ! -x "$HOME/.local/bin/rcodesign$EXE" ] || __rc="$HOME/.local/bin/rcodesign$EXE"
+  [ -n "$__rc" ] || { echo "No rcodesign — install it to ~/.local/bin to sign a Mac app off a Mac." >&2; return 2; }
+  "$__rc" sign "$1"
 }
 
 # Run as a command rather than loaded: answer the question asked.
@@ -257,6 +297,9 @@ if [ "$(basename -- "$0")" = platform.sh ]; then
     open-launcher) open_launcher ;;
     db-start)     db_service start ;;
     db-stop)      db_service stop ;;
+    wal-archive-command) [ -n "${1:-}" ] || { echo "Which folder?" >&2; exit 2; }; wal_archive_command "$1" ;;
+    wal-restore-command) [ -n "${1:-}" ] || { echo "Which folder?" >&2; exit 2; }; wal_restore_command "$1" ;;
+    time-offset)  time_offset "${1:-}" || { echo "Not a moment in the shape YYYY-MM-DD HH:MM:SS: '${1:-}'" >&2; exit 2; } ;;
     sign-mac-app) sign_mac_app "$1" ;;
     *) sed -n '/^# QUESTIONS:/,/^# Plain POSIX/p' "$0" | sed '$d; s/^# \{0,1\}//' >&2; exit 2 ;;
   esac

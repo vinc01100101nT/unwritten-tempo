@@ -209,6 +209,12 @@ public class NetPlayer : NetworkBehaviour
     /// deliberately not a synced value and no client is ever told it.</summary>
     public string ServerCharacterId { get; set; }
 
+    /// <summary>SERVER ONLY: which hand-over of this character this server holds — the number the character server
+    /// stamped on it when it sent it here. Every save carries it back, and the character server refuses a save from
+    /// an older hand-over, so a server that lost touch can never roll a player back once they are elsewhere. 0 when
+    /// the character server sent none, which it then does not check.</summary>
+    public int ServerHandover { get; set; }
+
     /// <summary>SERVER ONLY: where this person was sent, taken from the character the character server pushed —
     /// so the server knows which map they are in from the moment it hands them a body, instead of waiting to be
     /// told by their machine.
@@ -293,7 +299,7 @@ public class NetPlayer : NetworkBehaviour
 
         var body = JsonUtility.ToJson(new MoveAsk { map = map, accountId = ServerAccountId ?? "", isGm = ServerIsGm });
         ServerHttp.Send("POST", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId + "/move",
-                        body, MapServerLink.ServerSecret, (ok, reply, error) =>
+                        body, MapServerLink.ServerSecret, (ok, reply, error, _) =>
         {
             if (this == null) return;
             var where = ok ? JsonUtility.FromJson<MoveReply>(reply) : null;
@@ -1034,7 +1040,6 @@ public class NetPlayer : NetworkBehaviour
 
     bool needsSaving;
     float nextSaveAt;
-    bool savingNow;
 
     // Long enough that a busy fight is one write, short enough that a machine losing power costs seconds.
     const float SecondsBetweenSaves = 15f;
@@ -1049,19 +1054,9 @@ public class NetPlayer : NetworkBehaviour
 
     void ServerSaveTick()
     {
-        if (!needsSaving || savingNow || Time.time < nextSaveAt) return;
+        if (!needsSaving || Time.time < nextSaveAt) return;
         SaveNow(null);
     }
-
-    // THE DOCUMENT WAITING ITS TURN, and everybody who asked for a write while one was already out. Only ONE
-    // document ever waits: each is a whole snapshot of the character, so a newer one already says everything an
-    // older one said. The waiters, though, all stay — the newer document carries their state too, so telling
-    // every one of them that it landed is the truth rather than a convenience.
-    string queuedBody;
-    Action<bool> queuedWaiters;
-
-    // Who is waiting on the write that is out right now.
-    Action<bool> inFlightWaiters;
 
     /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether the state
     /// captured by THIS call reached the store — the disconnect path waits on it, because a character released
@@ -1130,69 +1125,18 @@ public class NetPlayer : NetworkBehaviour
         }
 
         needsSaving = false;
-        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save });
+        // WHICH HAND-OVER THIS COPY BELONGS TO, so the character server can refuse it if the character has been
+        // sent to another server since — a late save from here must never roll that player back.
+        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save, handover = ServerHandover });
 
-        // ONE AT A TIME, STILL. Two writes in flight are two whole documents racing, and whichever lands last
-        // wins — so a slow first one arriving after a newer one silently puts the older state back.
-        //
-        // But a caller asked to WAIT is not the same as a caller refused. This used to answer "no" straight away
-        // and leave the rest to the next beat, which was wrong twice over: the caller could not tell "the write
-        // failed" from "somebody else was writing", and the person leaving had no next beat — their shell is
-        // dismissed a moment later, so their last few seconds were simply gone. Now the document above is put in
-        // the queue and sent the instant the current write returns, and this caller is told about THAT write.
-        if (savingNow)
-        {
-            queuedBody = body;
-            queuedWaiters += whenDone;
-            return;
-        }
-
-        SendTheWrite(body, whenDone);
-    }
-
-    /// <summary>Server-only: put one already-captured document on the wire to the character server, which is the
-    /// only thing that writes to the store. This machine has no database and never will — it asks, as a SERVER,
-    /// with the secret the two of them share, and not as whoever happens to be playing.</summary>
-    void SendTheWrite(string body, Action<bool> waiters)
-    {
-        savingNow = true;
-        inFlightWaiters = waiters;
-
-        ServerHttp.Send("PUT", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId
-                        + "/progress", body, MapServerLink.ServerSecret,
-            (ok, reply, error) =>
-            {
-                savingNow = false;
-                var told = inFlightWaiters;
-                inFlightWaiters = null;
-
-                if (!ok)
-                {
-                    // SAID OUT LOUD, and the character is marked as still needing writing so the next beat tries
-                    // again. A failed save that nobody hears about is a character quietly going stale.
-                    GameLog.Warn(LogCat.Server, "could not write " + playerName + " down — " + error);
-                    needsSaving = true;
-                    nextSaveAt = Time.time + SecondsBetweenSaves;
-                }
-
-                // THE ONE THAT WAS WAITING GOES NOW, and it goes BEFORE anybody is told. A waiter is free to ask
-                // for another save the moment it hears back, and starting the queued write first means such a
-                // request queues behind it rather than racing it.
-                if (queuedBody != null)
-                {
-                    var next = queuedBody;
-                    var nextWaiters = queuedWaiters;
-                    queuedBody = null;
-                    queuedWaiters = null;
-                    SendTheWrite(next, nextWaiters);
-                }
-
-                told?.Invoke(ok);
-            });
+        // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
+        // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
+        // until it lands — even after this person has logged out, or this server has restarted.
+        SaveOutbox.Submit(ServerCharacterId, body, whenDone);
     }
 
     [Serializable]
-    class SaveEnvelope { public SaveData progress; }
+    class SaveEnvelope { public SaveData progress; public int handover; }
 
 
     // ---- the other things a person changes about themselves ---------------------------------------------
@@ -1484,24 +1428,10 @@ public class NetPlayer : NetworkBehaviour
     /// yet. Every bag command below goes through it, so "is there anybody to do this to" is asked once.</summary>
     Character ServerCharacter => ServerCombatUnit as Character;
 
-    /// <summary>Is the thing at <paramref name="index"/> still the thing the asker was looking at? The two
-    /// copies are the same list in the same order, so a position is enough to name a stack — right up until the
-    /// list moves between the click and the request arriving, which two quick clicks are enough to do. The
-    /// asker therefore says WHAT it believed was there, and a request that no longer matches is dropped rather
-    /// than carried out on whatever slid into that place.</summary>
+    /// <summary>Is the thing at <paramref name="index"/> still the thing the asker was looking at? The one check,
+    /// shared with using an item: <see cref="BagStack"/>.</summary>
     bool StillTheSameStack(Character c, int index, string expectedItemId)
-    {
-        if (c == null || index < 0 || index >= c.Bag.Count) return false;
-        var e = c.Bag[index];
-        if (e == null || e.def == null) return false;
-        if (!string.IsNullOrEmpty(expectedItemId) && e.def.id != expectedItemId)
-        {
-            GameLog.Warn(LogCat.Server, "" + playerName + " asked about position " + index + " expecting '"
-                             + expectedItemId + "' but it now holds '" + e.def.id + "' — ignored.");
-            return false;
-        }
-        return true;
-    }
+        => BagStack.StillTheSame(c, index, expectedItemId, playerName);
 
     [Command]
     void CmdEquipFromBag(int index, string expectedItemId)

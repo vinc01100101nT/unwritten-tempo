@@ -886,10 +886,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// <item>SELF skill (<see cref="CastReticle.Instant"/>) → ALWAYS casts on the caster; the victim is ignored (a self
     /// buff must never be flung onto the mob).</item>
     /// </list>
-    /// No mana / cooldown / wind-up — the trigger IS the gesture. It's a real cast, so its cost/cadence knobs stay ignored.</summary>
-    public void FireAsPassive(SkillTriggerEntry entry, Transform victim, ulong chain = 0UL)
+    /// No mana / cooldown / wind-up — the trigger IS the gesture. It's a real cast, so its cost/cadence knobs stay ignored.
+    /// <para>Returns whether it actually ran, so a caller that paid for it (an item) can keep the payment when it
+    /// did not.</para></summary>
+    public bool FireAsPassive(SkillTriggerEntry entry, Transform victim, ulong chain = 0UL)
     {
-        if (def == null || def.vfx == null || entry == null || CasterGone || Caster.IsDead) return;
+        if (def == null || def.vfx == null || entry == null || CasterGone || Caster.IsDead) return false;
         firedBy = entry;        // this run's gate, its stack cost, and "was this a player cast" all read from here
         castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
 
@@ -898,7 +900,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         Transform unit = null;
         if (def.NeedsUnitPick)
         {
-            if (victim == null) return;               // single-target — needs an entity to land on
+            if (victim == null) return false;         // single-target — needs an entity to land on
             unit = victim;
         }
         Vector3 point = def.NeedsAimPoint && victim != null ? victim.position : transform.position;
@@ -906,6 +908,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         lastCtx = BuildCtx(unit, point);
         if (body != null) body.FaceWorldPoint(lastCtx.target);   // face the auto-target, like a manual cast
         PlayCycles();                                 // the full active path: VFX + ticks + effects
+        return true;
     }
 
     // ---- IHotbarSkill -------------------------------------------------------

@@ -177,15 +177,9 @@ public class ItemActionMenu
             int refine = e.instance != null ? e.instance.upgrade : 0;
             entries.Add(new Entry { label = "Refine  +" + (refine + 1), note = "planned" });
 
-            int sockets = def.cardSlots;
-            int filled = e.instance != null ? e.instance.FilledSockets : 0;
-            bool canSocket = sockets > 0 && filled < sockets && OpenCardPicker != null && e.instance != null;
-            entries.Add(new Entry
-            {
-                label = "Insert card",
-                note = sockets == 0 ? "no socket" : (filled >= sockets ? "full" : null),
-                run = canSocket ? () => OpenCardPicker(e) : (Action)null
-            });
+            // NO "INSERT CARD" WHILE CARDS HAVE NO SERVER SIDE. Slotting one changes only this machine's copy and
+            // lists every card whether owned or not, so it stays off the menu until cards are designed and the
+            // server holds them (decided 2026-10-02). The picker behind it is kept for that day.
 
             if (isWeapon)
             {

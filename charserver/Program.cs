@@ -70,7 +70,9 @@ var roster = Roster.Load(Environment.GetEnvironmentVariable("CHARACTER_MODELS_PA
                                 + "running. This one is quitting rather than sitting here listening to nothing. "
                                 + "Stop the other one first, or give this one a different CHAR_SERVER_PORT.");
         Console.Error.WriteLine($"[char] check with:  tools/platform.sh port-info {config.Port}");
-        return 1;
+        // 2, not 1: starting again cannot fix a port somebody else holds, so whatever restarts this server
+        // (charserver/run.sh, or the service on a rented machine) stops instead of trying forever.
+        return 2;
     }
 }
 
@@ -87,6 +89,9 @@ catch (Exception e)
     Console.Error.WriteLine("[char] quitting rather than listening to nothing. Check DATABASE_URL.");
     return 1;
 }
+
+// THE CLOCK FOR THE FIRST MOMENTS AFTER A START, started now rather than on the first request — see StartupGrace.
+StartupGrace.Begin();
 
 var maps = new MapServers(config);
 var gameVersion = new GameVersion(config.PatchDir);
@@ -117,9 +122,9 @@ app.MapPost("/map-servers", async (HttpContext http, MapServerRegistration? reg)
             got = reg.build ?? "",
         }, statusCode: 409);
 
-    var registered = maps.Register(reg.id, reg.address, reg.port, reg.playerPort, reg.maps ?? [], reg.build,
-                                   reg.players, reg.creatures, reg.startingMap);
-    Console.WriteLine($"[char] map server '{registered.Id}' at {registered.Address}:{registered.Port} " +
+    var registered = maps.Register(reg.id, reg.address, reg.arrivalsAddress, reg.port, reg.playerPort,
+                                   reg.maps ?? [], reg.build, reg.players, reg.creatures, reg.startingMap);
+    Console.WriteLine($"[char] map server '{registered.Id}' at {registered.ArrivalsAddress}:{registered.Port} " +
                       $"holds {registered.Maps.Length} map(s): {string.Join(", ", registered.Maps)} " +
                       $"[{registered.Players} player(s), {registered.Creatures} creature(s)]");
     return Results.Ok(new { ok = true, holding = registered.Maps.Length });
@@ -156,23 +161,38 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     bool keepsLook = progress.TryGetProperty("modelName", out var m)
                      && m.ValueKind == JsonValueKind.String && (m.GetString()?.Length ?? 0) > 0;
 
+    // WHICH HAND-OVER THIS SAVE BELONGS TO. 0 (or absent) is a map server built before hand-overs were numbered,
+    // and is not checked; anything else must be the live one, or the save is refused (see Handover).
+    int handover = body.TryGetProperty("handover", out var h) && h.ValueKind == JsonValueKind.Number
+                   && h.TryGetInt32(out var hv) ? hv : 0;
+
     await using var conn = await db.ConnectAsync();
     await using var cmd = new Npgsql.NpgsqlCommand(keepsLook
-        ? "update character set progress = $2, updated_at = now() where id = $1 and deleted_at is null returning id"
+        ? @"update character set progress = $2, updated_at = now()
+             where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id"
         : @"update character
                set progress = $2::jsonb
                             || jsonb_build_object('modelName',  progress -> 'modelName',
                                                   'dyeSources', progress -> 'dyeSources',
                                                   'dyeTargets', progress -> 'dyeTargets'),
                    updated_at = now()
-             where id = $1 and deleted_at is null returning id", conn);
+             where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id", conn);
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = characterId });
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = raw, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb });
+    cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = handover });
 
-    var wrote = await cmd.ExecuteScalarAsync();
-    return wrote is null
-        ? Results.Json(new { error = "no such character" }, statusCode: 404)
-        : Results.Ok(new { ok = true });
+    if (await cmd.ExecuteScalarAsync() is not null) return Results.Ok(new { ok = true });
+    if (handover == 0) return Results.Json(new { error = "no such character" }, statusCode: 404);
+
+    // NOT WRITTEN, AND A NUMBER WAS GIVEN: either the character is gone, or this save is from an older hand-over.
+    await using var live = new Npgsql.NpgsqlCommand(
+        "select handover from character where id = $1 and deleted_at is null", conn);
+    live.Parameters.Add(new Npgsql.NpgsqlParameter { Value = characterId });
+    if (await live.ExecuteScalarAsync() is not int current)
+        return Results.Json(new { error = "no such character" }, statusCode: 404);
+    Console.WriteLine($"[char] refused a save for character {characterId} from hand-over {handover} — "
+                      + $"they are on hand-over {current} now, so it would have rolled them back.");
+    return Results.Json(new { error = "that save is from an older hand-over", live = current }, statusCode: 409);
 });
 
 // WHERE A PLAYER GOES WHEN THEY WALK THROUGH A DOOR INTO A ZONE ANOTHER PROCESS HOLDS. Asked by the map server
@@ -213,7 +233,10 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
             return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
 
         var ticket = maps.MintTicket(body.accountId ?? "", characterId.ToString());
-        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, body.isGm,
+        // A NEW HAND-OVER: the server they are leaving can no longer write them down (see Handover).
+        if (await Handover.NextAsync(conn, characterId) is not int handover)
+            return Results.Json(new { error = "no such character" }, statusCode: 404);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, body.isGm, handover,
                                               http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
@@ -256,6 +279,7 @@ return 0;
 // `players` and `creatures` are how busy that process says it is — the two numbers a zone is placed by. An older
 // map server that does not send them registers as idle, which is honest: it has not told us otherwise.
 record MapServerRegistration(string? id, string? address, int port, int playerPort, string[]? maps, string? build,
-                             int players = 0, int creatures = 0, string? startingMap = null);
+                             int players = 0, int creatures = 0, string? startingMap = null,
+                             string? arrivalsAddress = null);
 record SpendBody(string? ticket);
 record MoveBody(string? map, string? accountId, bool isGm);

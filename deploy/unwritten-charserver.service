@@ -1,0 +1,27 @@
+# THE CHARACTER SERVER ON THE RENTED MACHINE, started when the machine boots and kept running.
+#
+# charserver/run.sh already starts the server again 5 seconds after it stops. This unit adds the two things a
+# script cannot do for itself: starting it at boot, and starting the script again if the script itself dies.
+# Exit 2 is the server refusing to start because its port is already taken — starting again cannot fix that, so
+# it is not retried.
+#
+# INSTALL (Debian/Ubuntu), with the project at /srv/unwritten:
+#   sudo cp deploy/unwritten-charserver.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now unwritten-charserver
+#
+# SEE IT:   systemctl status unwritten-charserver      journalctl -u unwritten-charserver -f
+[Unit]
+Description=unwritten character server
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/srv/unwritten
+ExecStart=/srv/unwritten/charserver/run.sh
+Restart=on-failure
+RestartSec=5
+RestartPreventExitStatus=2
+
+[Install]
+WantedBy=multi-user.target

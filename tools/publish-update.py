@@ -10,6 +10,11 @@ WHAT IT WRITES, into --out (default builds/patch):
   news.json                    the launcher's news box, copied from launcher/news.json.
   <platform>/manifest.json     every game file: its path, size, fingerprint, and whether it is a program.
   <platform>/files/<sha256>    each file's contents, under its fingerprint.
+  index.html                   the download page (launcher/download.html), so opening this folder's address in a
+                               browser offers the launcher.
+  download/unwritten-windows.zip   the Windows launcher with the launcher.txt naming this server, zipped, from
+                               builds/launcher/windows when one has been built. One download: the launcher fetches
+                               the game itself on its first run.
 
 THE SAME VERSION GOES INTO THE GAME. Before listing a build, its settings file (StreamingAssets/server.txt) gets
 GAME_VERSION=<version>, which the game sends to the character server with every request. So a platform left out
@@ -19,7 +24,7 @@ version.txt is written LAST, after every manifest, so the server never demands a
 hand out. A file is uploaded once and kept while the newest or the previous manifest still names it, so a player
 halfway through downloading the previous update is not left pointing at nothing.
 
-USAGE:   tools/publish-update.py                        # the Mac build in builds/client
+USAGE:   tools/publish-update.py                        # builds/client, as the platform of THIS computer
          tools/publish-update.py --windows builds/client-windows --mac builds/client
          tools/publish-update.py --out /some/folder --version 2026.10.01-1200
 EXIT:    0 = published, 1 = something is wrong (each named), 2 = setup problem.
@@ -32,9 +37,10 @@ import os
 import plistlib
 import shutil
 import sys
+import zipfile
 
 # Which computer this is, and the Mac-only signing, both come from tools/platform.sh — never checked here.
-from platform_ask import ask, run as run_platform
+from platform_ask import run as run_platform
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -106,9 +112,7 @@ def start_program(build, platform):
 def resign_mac(build):
     """Stamping the version changes a file inside the app, which breaks the app's signature — and a Mac refuses to
     open a downloaded app whose signature is broken. So it is signed again, the same no-certificate way Unity
-    signed it, before its files are fingerprinted."""
-    if ask("os") != "mac":
-        fail("A Mac build must be published from a Mac, so it can be signed again after the version is stamped.", 2)
+    signed it, before its files are fingerprinted. Off a Mac, tools/platform.sh signs with rcodesign instead."""
     for t in os.listdir(build):
         if t.endswith(".app"):
             r = run_platform("sign-mac-app", os.path.join(build, t))
@@ -169,6 +173,53 @@ def publish_platform(platform, build, out):
           f"({uploaded_bytes / 1e6:.1f} MB); {removed} no longer needed, removed.")
 
 
+def publish_download_page(out):
+    """The page a browser gets at the update folder's address, and the launcher it offers. Players download only
+    the launcher; its first run downloads the game from this same folder."""
+    shutil.copyfile(os.path.join(REPO, "launcher", "download.html"), os.path.join(out, "index.html"))
+    # ZIPPED WITH launcher.txt, because that file beside the program is how the launcher knows which server to
+    # download from — the program alone would look for updates on the player's own computer and find nothing.
+    folder = os.path.join(REPO, "builds", "launcher", "windows")
+    if not os.path.isfile(os.path.join(folder, "unwritten-launcher.exe")):
+        print("\033[33mNo Windows launcher at builds/launcher/windows — the download page's button will find "
+              "nothing. Run tools/build-launcher.sh, then publish again.\033[0m", file=sys.stderr)
+        return
+    if not os.path.isfile(os.path.join(folder, "launcher.txt")):
+        print("\033[33mThe Windows launcher has no launcher.txt, so it will look for updates on the player's own "
+              "computer. Set PATCH_URL in settings.env, run tools/build-launcher.sh, then publish again.\033[0m",
+              file=sys.stderr)
+    os.makedirs(os.path.join(out, "download"), exist_ok=True)
+    target = os.path.join(out, "download", "unwritten-windows.zip")
+    with zipfile.ZipFile(target + ".part", "w", zipfile.ZIP_DEFLATED) as z:
+        for name in ("unwritten-launcher.exe", "launcher.txt"):
+            path = os.path.join(folder, name)
+            if os.path.isfile(path):
+                z.write(path, "unwritten/" + name)
+    os.replace(target + ".part", target)
+
+    # AND THE TWO MAC LAUNCHERS, one per kind of Mac chip. A .app is a folder, so it travels zipped — and the zip
+    # carries each file's "may run" permission itself, because a zip made on Windows has none to copy and a Mac will
+    # not start a program that lacks it.
+    for arch in ("arm64", "x64"):
+        app = os.path.join(REPO, "builds", "launcher", "mac-" + arch, "unwritten.app")
+        if not os.path.isdir(app):
+            continue
+        target = os.path.join(out, "download", "unwritten-mac-" + arch + ".zip")
+        with zipfile.ZipFile(target + ".part", "w", zipfile.ZIP_DEFLATED) as z:
+            for root, _, files in os.walk(app):
+                for name in sorted(files):
+                    path = os.path.join(root, name)
+                    rel = os.path.relpath(path, os.path.dirname(app)).replace(os.sep, "/")
+                    info = zipfile.ZipInfo.from_file(path, rel)
+                    runs = os.path.basename(os.path.dirname(path)) == "MacOS" and name != "launcher.txt"
+                    info.external_attr = ((0o100755 if runs else 0o100644) & 0xFFFF) << 16
+                    info.create_system = 3
+                    info.compress_type = zipfile.ZIP_DEFLATED
+                    with open(path, "rb") as f:
+                        z.writestr(info, f.read())
+        os.replace(target + ".part", target)
+
+
 def main():
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -179,8 +230,13 @@ def main():
     ap.add_argument("--version", default=now.strftime("%Y.%m.%d-%H%M"))
     args = ap.parse_args()
 
+    # builds/client holds whatever tools/build-game.sh made on THIS computer, so with no flag it is published as
+    # this computer's platform. It used to be published as a Mac build everywhere, which on Windows fails.
     if not args.mac and not args.windows:
-        args.mac = os.path.join(REPO, "builds", "client")
+        if sys.platform.startswith("win"):
+            args.windows = os.path.join(REPO, "builds", "client")
+        else:
+            args.mac = os.path.join(REPO, "builds", "client")
     version = args.version.strip()
     if not version or any(c.isspace() for c in version):
         fail("The version must be one word with no spaces.", 2)
@@ -202,6 +258,7 @@ def main():
         publish_platform(platform, build, out)
 
     shutil.copyfile(args.news, os.path.join(out, "news.json"))
+    publish_download_page(out)
     with open(os.path.join(out, "version.txt.part"), "w", encoding="utf-8") as f:
         f.write(version + "\n")
     os.replace(os.path.join(out, "version.txt.part"), os.path.join(out, "version.txt"))

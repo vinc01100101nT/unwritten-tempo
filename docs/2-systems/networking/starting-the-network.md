@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-10-02
 tags:
   - planning-production
 ---
@@ -137,6 +137,30 @@ how many characters it read back **out of the file**, so a backup that saved not
 tools/backup-database.sh
 ```
 
+Turns on copying every finished change-log file into the archive folder, at least once a minute. It changes
+nothing until Postgres restarts, and prints the restart command. Run it again after the restart: it says whether
+files are arriving.
+
+```
+tools/backup-start-archiving.sh
+```
+
+Takes a full copy of the database, checks every file in it, keeps the newest three, and deletes archived
+change-log files older than the oldest copy kept.
+
+```
+tools/backup-full-copy.sh
+```
+
+Rebuilds a spare database on port 5433 as it was at a moment, checks it, prints how long that took, then stops
+the spare and deletes it. It never connects to the live database.
+
+```
+tools/backup-rehearse-restore.sh "2026-10-02 14:30:30"
+```
+
+Each of the three says what it would do, and changes nothing, with `--dry-run` after it.
+
 ### Handing out an update
 
 The full explanation is [Handing out updates](#handing-out-updates), at the end of this page.
@@ -154,14 +178,15 @@ tools/build-game.sh client
 tools/publish-update.py
 ```
 
-Tries the launcher on this computer, after building and publishing. Serve the update folder and leave that terminal
-open (Ctrl+C stops it):
+Serves the update folder — the download page, the launcher and every update — to this computer and every device
+on your Wi-Fi. Leave that terminal open (Ctrl+C stops it). Another device opens `http://<this computer's
+address>:8090` in a browser and downloads the launcher from there:
 
 ```
-cd builds/patch && python3 -m http.server 8090
+tools/serve-updates.sh
 ```
 
-Then, in a second terminal, open the launcher:
+Then, to try the launcher on this computer too, in a second terminal:
 
 ```
 tools/platform.sh open-launcher
@@ -338,6 +363,16 @@ front of it still wins.
 ```
 charserver/run.sh
 ```
+
+It builds the server once and runs it, and **starts it again 5 seconds after it stops** — after a crash, nobody has
+to notice and start it by hand. Two exits are not restarted: a clean stop, and the server refusing to start because
+its port is already taken (another one is running). Ctrl+C stops it for good. On the rented machine
+`deploy/unwritten-charserver.service` starts it at boot.
+
+For **40 seconds after it starts it lets nobody enter the world** ("the world is starting up — try again in N
+seconds"). Which game server holds whom lives only in its memory, so a fresh one knows none — and a game server
+holding saves it could not send during an outage does not report in until those saves have landed. Letting
+somebody in sooner could read their character before their newest save arrived.
 
 Leave that terminal open. In another:
 
@@ -555,6 +590,7 @@ it carries the two addresses in its own settings file, written there by `tools/b
 | `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. | empty — `http://localhost:8090` |
 | `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. | `0.0.0.0` — every address |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
+| `MAP_SERVER_ARRIVALS_ADDRESS` | Where the character server delivers characters to this game server — a delivery carries a whole character, an entry ticket and the shared server secret as plain text, so on a rented machine this is a private network address, or `127.0.0.1` when both run on one machine. The game server then listens for deliveries on that address only. Set on the GAME server. | empty — the same as `MAP_SERVER_ADDRESS`, which is right only on a desk or a home network |
 | `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | `127.0.0.1` |
 | `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the wiki, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | `http://127.0.0.1:8099` |
 
@@ -572,7 +608,12 @@ A dedicated server build already knows it is a server; `GAME_SERVER` is for runn
 tools/platform.sh lan-address
 ```
 
-Start each player's game with `ACCOUNTS_URL` and `CHAR_SERVER_URL` pointed at that address. `GAME_SERVER_HOST`
+Set `MAP_SERVER_ADDRESS` to that address, so the character server sends other devices to it rather than to
+`127.0.0.1`. Keep `ACCOUNTS_URL` and `CHAR_SERVER_URL` on `localhost` — this computer's own servers use those — and
+put that address in `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL`, which only go into game builds. Then build
+the copies for other devices with **`tools/build-game.sh client --dev`**: a game refuses plain (unencrypted) web
+traffic to any machine but its own, and only a development build is allowed it. Never hand a `--dev` copy to a
+player. `GAME_SERVER_HOST`
 is now only a fallback — the character server tells each player which machine and which port to go to, so a
 build aimed at one host still ends up wherever it is sent.
 
@@ -755,14 +796,18 @@ your character to it — that game server is gone, or its arrivals door (7788) i
 believing a game server that has said nothing for two minutes, so a crashed one clears itself.
 
 **Everything works but nothing is saved.** The game server writes through the character server. If the
-character server is down, the world keeps playing and stops being written down — its log says so each time.
+character server is down, the world keeps playing and nothing is lost: every save that cannot land is kept — on
+disk too, one file per character, in an `unsent-saves-<port>` folder in the game server's data folder — and tried
+again every 15 seconds until it lands, even after that player has logged out or the game server has restarted.
+Its log says "could not write character … down yet" each time, and "not telling the character server about this
+map server until N waiting save(s) have landed" while any are waiting. A save refused for good (the character was
+deleted, or the save is too large) is kept in a `refused` folder inside it for a person to look at.
 
 **A player connects and immediately reconnects, over and over, and the server says "refused a connection nobody announced — no good ticket."** The game had no `CHAR_SERVER_URL`, so it never asked the character server to let it in and dialled the world with no ticket — and a map server refuses every connection it was not told to expect. **Watched happening on 2026-09-02**, from launching a build that carried no address with `open`, which passes it none of the terminal's settings. A build made by `tools/build-game.sh` now carries the address from `settings.env`; rebuild an older one, or start it the way *The players* above says. The game now says this out loud and stops instead of retrying, so if you see the old silent loop you are running a build from before that.
 
-**You restarted the character server and now nobody can enter.** Expected, and it fixes itself: a fresh
-character server starts knowing about no game servers at all. The game server says hello again on its own
-beat — **up to 30 seconds** — and entering works from then on. Watched on 2026-09-02: refused immediately
-after the restart, working once the beat landed. Restart the game server too if you would rather not wait.
+**You restarted the character server and now nobody can enter.** Expected, and it fixes itself: for its first
+**40 seconds** a fresh character server lets nobody in and says so, while every game server says hello again on its
+own beat (up to 30 seconds, sooner once any waiting saves have landed). Entering works from then on.
 
 **Somebody cannot come back after leaving.** They should be able to; if they are refused as already playing,
 that is a bug and the game server's log will name the character.
@@ -880,22 +925,89 @@ The EDITOR started from the Dock or Unity Hub reads this machine's own `ACCOUNTS
 straight from `settings.env`, so it keeps talking to the servers on your desk.
 
 **The rented machine has its own `settings.env`**, made from `settings.env.example` the same way: its own
-secrets, `BIND_HOST=127.0.0.1`, `MAP_SERVER_ADDRESS` set to its public address, `PATCH_DIR`, and the same three
+secrets, `BIND_HOST=127.0.0.1`, `MAP_SERVER_ADDRESS` set to its public address, `MAP_SERVER_ARRIVALS_ADDRESS` set
+to `127.0.0.1` (or the private address, once game servers run on other machines), `PATCH_DIR`, and the same three
 public addresses and `CERT_EMAIL` the front door serves. Everything on that machine — both services, the world
-server, the backup and the front door — reads it.
+server, the backups and the front door — reads it.
 
 **Back the database up on a schedule.** It is the only thing here that exists nowhere else — the code is in git
-and every build can be rebuilt, but a lost database is lost players. On the hosted machine, once a day:
+and every build can be rebuilt, but a lost database is lost players. Two kinds of backup run side by side, and
+each works without the other:
+
+- **The daily copy** (`tools/backup-database.sh`): the whole database in one file at 04:10, the last 14 kept. It
+  puts the database back as it was at 04:10 that day.
+- **The continuous copy**: Postgres copies every finished change-log file into the folder `WAL_ARCHIVE_DIR` names,
+  at least once a minute, and `tools/backup-full-copy.sh` takes a full copy into `BASE_BACKUP_DIR` once a week.
+  Together they rebuild the database as it was at any second from the oldest kept full copy until about a
+  minute ago — at least the last 14 days, with three weekly copies kept.
+
+Turning the continuous copy on, once, in this order:
+
+1. `tools/backup-start-archiving.sh` — writes the settings. Nothing changes yet.
+2. In a quiet hour, restart Postgres. Every player is disconnected for a few seconds.
+
+   ```
+   tools/platform.sh db-stop
+   tools/platform.sh db-start
+   ```
+
+3. `tools/backup-start-archiving.sh` again. Want `Archiving is on.`, and once anything has changed in the
+   database, a newest file ending `and it is in the folder`. The account Postgres runs as must be able to write
+   to the archive folder: on Linux that is usually `postgres`; on the PC it is the service's Windows account.
+4. `tools/backup-full-copy.sh` — the first full copy. Nothing before it can be rebuilt from the archive.
+
+On the hosted machine, put the two folders in its `settings.env` (`WAL_ARCHIVE_DIR=/var/backups/unwritten/wal`,
+`BASE_BACKUP_DIR=/var/backups/unwritten/base`) and run both copies from cron — the daily one every day at 04:10,
+the full one every Sunday at 04:30:
 
 ```
 10 4 * * * BACKUP_DIR=/var/backups/unwritten /srv/unwritten/tools/backup-database.sh >> /var/log/unwritten-backup.log 2>&1
+30 4 * * 0 /srv/unwritten/tools/backup-full-copy.sh >> /var/log/unwritten-backup.log 2>&1
 ```
 
-To put one back — this destroys what is in the database now, so read it twice:
+**Watch the archive folder's size.** Each archived file is 16 MB, even when Postgres closes it after a minute
+nearly empty, so every minute in which anything changed costs 16 MB: up to about 23 GB a day while players are
+on, kept until the oldest full copy is deleted — up to three weeks.
+
+To put the daily copy back — this destroys what is in the database now, so read it twice:
 
 ```
 pg_restore --clean --if-exists -d "$DATABASE_URL" /var/backups/unwritten/unwritten-2026-09-08-0410.dump
 ```
+
+Rebuilding the live database itself from the continuous copy is not scripted yet. The monthly rehearsal below
+proves the full copies and the archive can rebuild it, and how long that takes.
+
+**Rehearse a restore once a month.** It needs a full copy taken before the moment you note, and touches only a
+spare database on port 5433 (`RESTORE_REHEARSAL_PORT` to change it).
+
+1. Note the time, T:
+
+   ```
+   date '+%Y-%m-%d %H:%M:%S'
+   ```
+
+2. Raise one test character's level, and keep playing it for the next 2 minutes. A rebuild can only stop at a
+   moment if the database changed again after it, and a minute later that change has reached the archive.
+3. Rebuild to 30 seconds after T. In the `last changed` list it prints, the test character has its new level.
+
+   ```
+   tools/backup-rehearse-restore.sh "<T plus 30 seconds>"
+   ```
+
+4. Rebuild to 30 seconds before T. The test character has its old level.
+
+   ```
+   tools/backup-rehearse-restore.sh "<T minus 30 seconds>"
+   ```
+
+5. Write down the date and the `took` line it printed, below.
+
+Rehearsals so far: none.
+
+**Off-site storage comes later.** Until it exists, both kinds of backup sit on the same disk as the database,
+so a dead disk takes them with it. Copying them to storage at a different company from the host is the next
+step once there is a live database; no storage bucket exists yet.
 
 When the world later runs on more than one machine, the character server and the world servers still speak
 plain text to each other. That is fine only while they share a private network, which every host offers within
@@ -916,16 +1028,37 @@ tools/build-launcher.sh
 ```
 
 It writes `builds/launcher/windows/unwritten-launcher.exe` and a Mac `unwritten.app` each for Apple silicon and
-Intel (about 100 MB each, about 41 MB zipped — offer them zipped). Those are what the download page offers. A Windows player's game goes beside the
-launcher, in a `game` folder; a Mac player's goes in `~/Library/Application Support/unwritten/game`.
+Intel (about 100 MB each, about 41 MB zipped). With each it writes `launcher.txt`, which is how the launcher knows
+which server to download from; a launcher without it looks on the player's own computer and finds nothing. It sits
+beside the Windows program, and in the Mac app's `Contents/Resources` — a non-program file in `Contents/MacOS` is not
+covered by the app's signature, and a Mac then refuses the app as "damaged". A
+Windows player's game goes beside the launcher, in a `game` folder; a Mac player's goes in
+`~/Library/Application Support/unwritten/game`.
+
+**The download page.** Publishing also writes `index.html` into the update folder — the page a browser gets at the
+update server's address — and zips the Windows launcher with its `launcher.txt` into
+`download/unwritten-windows.zip`, which the page's button offers. A player downloads only that zip; the launcher's
+first run downloads the whole game, about 850 MB. It also zips the two Mac launchers (Apple chip and Intel) into
+`download/unwritten-mac-arm64.zip` and `download/unwritten-mac-x64.zip`, keeping the permission that lets the program
+start. The page reads the version and the news from the same folder the launcher does.
+
+**Everything Mac can be made on the Windows PC.** A Mac only runs a signed program; off a Mac, `tools/platform.sh`
+signs with `rcodesign` (installed to `~/.local/bin`), the same certificate-free signature a Mac makes. The launcher
+build signs the Mac launchers, and publishing signs the Mac game again after stamping its version. A Mac that has
+never seen the game asks once: **System Settings ▸ Privacy & Security ▸ Open Anyway**. The macOS build profile builds
+for both Intel and Apple-chip Macs; a Mac game built with no profile active comes out Intel-only, which an Apple-chip
+Mac runs through Apple's translation layer.
 
 **Every update:**
 
-1. Build the game: `tools/build-game.sh client` — run on the Mac it builds the Mac copy, run on the Windows PC it
-   builds the Windows copy.
+1. Build the game: `tools/build-game.sh client` builds this computer's own copy; add `--mac` for the Mac copy on any
+   computer, into `builds/mac/`. It switches the editor to the macOS build profile for the build and back afterwards.
+   Unity needs its Mac build module installed, and the editor restarted after installing it.
 2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first.
-3. Publish: `tools/publish-update.py` (add `--windows <folder>` with the copy built on the Windows PC). It stamps one
-   version into every build it is given, writes `builds/patch/`, and warns if a build still points at this machine.
+3. Publish: `tools/publish-update.py`. With no option it publishes `builds/client` as the platform of the computer
+   it runs on; add `--windows <folder>` and `--mac <folder>` to publish both at once. It stamps one version into
+   every build it is given, writes `builds/patch/` with the download page, and warns if a build still points at
+   this machine.
 4. Copy `builds/patch/` to `/srv/unwritten/patch/` on the hosted machine, `version.txt` LAST — the moment it
    lands, the server demands the new version, so the files for it must already be there:
 
@@ -940,10 +1073,12 @@ The character server reads the version from that same folder (`PATCH_DIR` in the
 `settings.env`), and re-reads it when it changes, so step 4 needs no restart. **A platform left out of a publish
 keeps its old version**, so its players are told to update until it is published too.
 
-### Trying the launcher on this computer
+### Trying the launcher on this computer and your Wi-Fi
 
-No rented machine needed: this computer serves the update folder itself. With `PATCH_URL` empty in `settings.env`, a
-launcher built here looks for updates at `http://localhost:8090`, which is where step 3 serves them.
+No rented machine needed: this computer serves the update folder itself, to its own launcher and to every device on
+the same Wi-Fi. With `PATCH_URL` empty in `settings.env`, a launcher built here looks for updates at
+`http://localhost:8090` — which only this computer can use. For other devices, set
+`PATCH_URL=http://<this computer's address>:8090` (`tools/platform.sh lan-address` prints the address).
 
 1. Build the launcher:
 
@@ -951,30 +1086,35 @@ launcher built here looks for updates at `http://localhost:8090`, which is where
    tools/build-launcher.sh
    ```
 
-2. Publish your latest game build as an update. This stamps a version into `builds/client` itself:
+2. Build the game. For other devices on the Wi-Fi it must be a development build — see *On your own wifi* above:
+
+   ```
+   tools/build-game.sh client --dev
+   ```
+
+3. Publish it as an update. This stamps a version into `builds/client` itself and writes the download page:
 
    ```
    tools/publish-update.py
    ```
 
-3. Serve the update folder, and leave this terminal open:
+4. Serve the update folder, and leave this terminal open:
 
    ```
-   cd builds/patch && python3 -m http.server 8090
+   tools/serve-updates.sh
    ```
 
-4. Open the launcher:
+5. On another device, open `http://<this computer's address>:8090`, press **Download for Windows**, unzip it, and
+   run `unwritten-launcher.exe` from the `unwritten` folder. On this computer: `tools/platform.sh open-launcher`.
 
-   ```
-   tools/platform.sh open-launcher
-   ```
-
-**Worked when:** the News box fills, the bar downloads the whole game (about 600 MB) the first time, and **Start**
+**Worked when:** the News box fills, the bar downloads the whole game (about 850 MB) the first time, and **Start**
 lights up and opens the game. Open it again and it downloads nothing; publish again and it downloads only what
-changed. **"Could not reach the update server"** means step 3 is not running.
+changed. **"Could not reach the update server"** means step 4 is not running, or the launcher was built with a
+PATCH_URL the device cannot reach.
 
-**Stop the folder server** with Ctrl+C in its terminal. The launcher keeps the game it downloaded in
-`~/Library/Application Support/unwritten/`; delete that folder to try a first install again.
+**Stop the folder server** with Ctrl+C in its terminal. The launcher keeps the game it downloaded in a `game` folder
+beside itself on Windows, and in `~/Library/Application Support/unwritten/` on a Mac; delete that to try a first
+install again.
 
 ---
 

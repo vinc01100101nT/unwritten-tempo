@@ -65,6 +65,18 @@ public static class ServerAddress
     /// <summary>True when a host has been typed on this device.</summary>
     public static bool HasTypedHost => !string.IsNullOrEmpty(TypedHost);
 
+    /// <summary>The sign-in service's address from what was typed. A bare machine name or number is reached the
+    /// way it always was, in plain text on the sign-in port; a WHOLE address (<c>https://accounts.example.com</c>)
+    /// is used exactly as typed, which is the only way a phone can reach a sign-in service behind the encrypting
+    /// front door.</summary>
+    public static string TypedAccountsUrl =>
+        TypedHost.Contains("://") ? TypedHost.TrimEnd('/') : "http://" + TypedHost + ":" + AccountsPort;
+
+    /// <summary>Just the machine from what was typed — the part a game connection dials — whether a bare name or
+    /// a whole address was typed.</summary>
+    public static string TypedMachine =>
+        TypedHost.Contains("://") && Uri.TryCreate(TypedHost, UriKind.Absolute, out var u) ? u.Host : TypedHost;
+
     /// <summary>What this copy was told for <paramref name="name"/>, or null when nobody has said.
     ///
     /// <para>The ENVIRONMENT is asked first, so every way of aiming a build that worked before still wins and a

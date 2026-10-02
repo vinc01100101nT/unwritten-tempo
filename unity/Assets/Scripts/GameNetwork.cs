@@ -206,7 +206,7 @@ public class GameNetwork : NetworkManager
         Transport.active = kcp;
 
         spawned.networkAddress = ServerAddress.HasTypedHost
-            ? ServerAddress.TypedHost
+            ? ServerAddress.TypedMachine
             : Environment.GetEnvironmentVariable(HostEnvVar) ?? DefaultHost;
 
         // The body every connected player is seen as. Loaded by NAME from Resources so both halves resolve
@@ -1069,9 +1069,19 @@ public class GameNetwork : NetworkManager
             var s = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
             if (s != null && s.ServerCharacterId == characterId) { shell = s; holding = conn; break; }
         }
-        // NOT HERE. Every server is asked, because none of them is written down as holding anybody — so most
-        // answer this, at once, and that is the ordinary case rather than a failure.
-        if (shell == null) { done?.Invoke(); return; }
+        // NOT PLAYING HERE — but a save of theirs may still be waiting: they logged out while the character server
+        // could not be reached. It is sent, and landed, before this is answered, so whoever takes over reads it.
+        // Most servers asked have nothing waiting either, and answer at once.
+        if (shell == null)
+        {
+            SaveOutbox.Flush(characterId, ok =>
+            {
+                if (!ok) GameLog.Warn(LogCat.Server, "a waiting save for character " + characterId + " could not be "
+                                          + "sent before letting go — whoever takes over starts from the stored copy.");
+                done?.Invoke();
+            });
+            return;
+        }
 
         // NOTHING MORE FROM THEM. Said before the write, so what is written is the last thing they actually did
         // rather than something accepted while the write was in the air.
@@ -2024,30 +2034,30 @@ public class GameNetwork : NetworkManager
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return; }
 
-        // WHAT IS ACTUALLY THERE. The message says where in the bag, and the item is read off the bag the SERVER
-        // holds — so a request to drink something the person does not own resolves to nothing, and there is no
-        // item name on the wire for anybody to substitute.
-        if (msg.bagIndex < 0 || msg.bagIndex >= caster.Bag.Count) return;
+        // WHAT IS ACTUALLY THERE, AND STILL THE ONE THEY MEANT. The message says where in the bag, and the item is
+        // read off the bag the SERVER holds — so a request to drink something the person does not own resolves to
+        // nothing. The same check every other bag request answers to.
+        var shell = ShellFor(conn);
+        if (!BagStack.StillTheSame(caster, msg.bagIndex, msg.expectedItemId,
+                                   shell != null ? shell.playerName : "connection " + conn.connectionId)) return;
         var entryInBag = caster.Bag[msg.bagIndex];
-        var item = entryInBag != null ? entryInBag.def : null;
-        if (item == null || !item.IsUsable) return;
-        // AND STILL THE ONE THEY MEANT. Without this, a second click landing inside the first one's round trip
-        // drinks whatever moved into that position.
-        if (!string.IsNullOrEmpty(msg.expectedItemId) && item.id != msg.expectedItemId) return;
+        var item = entryInBag.def;
+        if (!item.IsUsable) return;
 
         // THE ITEM NAMES THE SKILL, and the server reads that off the item it holds — never off the message.
         var runner = PlayerFighter.RunnerFor(caster, item.useSkillId);
         var entry = runner != null && runner.def != null ? runner.def.ItemUseEntry : null;
         if (entry == null) return;
 
-        runner.FireAsPassive(entry, null);
+        // AN EFFECT THAT DID NOT RUN COSTS NOTHING. The drinker died between the press and its arrival, or the
+        // skill has nothing to play: the potion stays in the bag rather than vanishing for no effect.
+        if (!runner.FireAsPassive(entry, null)) return;
 
         // AND IT IS SPENT HERE, where it was drunk. The bag belongs to the server now, so a stack reduced only on
         // the drinker's own machine would be put straight back the next time the server said what they were
         // carrying — a potion that heals you and is never used up.
         if (--entryInBag.count <= 0) caster.Bag.RemoveAt(msg.bagIndex);
 
-        var shell = ShellFor(conn);
         shell?.PushBagToOwner();
         // A drunk potion is a change like any other. Without this it was written down only if something ELSE
         // happened to dirty the character, so a server restart handed the potions back.
@@ -2614,6 +2624,7 @@ public class GameNetwork : NetworkManager
         // fetched: this server never asks the character store for anything, which is the whole point of the
         // character server announcing somebody before sending them.
         PlayerFighter.BuildFrom(np, announced);
+        if (np != null) np.ServerHandover = announced.handover;
 
         GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone")
                   + " (" + (np != null && !string.IsNullOrEmpty(np.ServerCharacterId) ? np.ServerCharacterId : "no player id")
@@ -2645,6 +2656,9 @@ public class GameNetwork : NetworkManager
     {
         foreach (var conn in NetworkServer.connections.Values)
             ShellFor(conn)?.SaveNow(null);
+        // AND KEPT ON DISK until they land: the process may end before the writes above come back, and whatever
+        // has not landed by then is sent by the next start instead of being lost.
+        SaveOutbox.WriteAllToDisk();
         GameLog.Info(LogCat.Server, "stopping — asked for a write for every player still here.");
         shellByConnection.Clear();   // nothing about the world that just ended survives into the next one
         base.OnStopServer();
@@ -2720,8 +2734,8 @@ public class GameNetwork : NetworkManager
             // very next line without touching what is already on its way.
             leaving.SaveNow(ok =>
             {
-                if (!ok) GameLog.Error(LogCat.Server, "" + whoLeft + " left and their character could NOT be "
-                                        + "written down. Their last few seconds are lost.");
+                if (!ok) GameLog.Warn(LogCat.Server, "" + whoLeft + " left and their character could not be "
+                                        + "written down yet — kept, and tried again until it lands.");
                 // Said again for the case the line above cannot cover: if anything else released the body
                 // first, the name still has to come free — but only while it is still THIS shell's, because a
                 // slow write can land long after the character has been handed to a newer connection.

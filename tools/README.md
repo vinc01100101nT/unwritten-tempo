@@ -31,6 +31,7 @@ tools/build-game.sh server            # headless server for this computer
 tools/build-game.sh client            # the game players run
 tools/build-game.sh both
 tools/build-game.sh server --linux    # server for a Linux host — what you deploy
+tools/build-game.sh client --dev      # a development build, for devices on your own Wi-Fi
 ```
 
 Why it's needed: Unity 6 treats a dedicated server as a *variant* of a desktop build rather than its own
@@ -42,6 +43,15 @@ be open on this project.** It is the only way the game is built — on a Mac it 
 Takes a few minutes. It decides pass/fail by checking the artefact actually appeared, not by trusting the
 request — the request usually times out long before the build ends, which is expected and harmless. On
 success it prints the exact command to run what it built.
+
+Used by [Starting the Network](../docs/2-systems/networking/starting-the-network.md).
+
+## serve-updates.sh
+
+Serves the update folder (`builds/patch`) — the download page, the zipped launcher and every published update — to
+this computer and every device on the same network, until Ctrl+C. Another device opens
+`http://<this computer's address>:8090` in a browser and downloads the launcher; the launcher then downloads the
+game. Needs something published first (`tools/publish-update.py`).
 
 Used by [Starting the Network](../docs/2-systems/networking/starting-the-network.md).
 
@@ -327,6 +337,33 @@ was on, a unit named without a spawn_id, and a spawn_id handed out twice. Both n
 while playing, and both say so when the log has no hit lines. `server_log_lines.py` holds the line shapes both read,
 so a line whose wording changes in the game is changed there once.
 Line shapes and everything else: [Reading the Game Log](../docs/0-process/reading-the-game-log.md).
+
+## backup-start-archiving.sh · backup-full-copy.sh · backup-rehearse-restore.sh
+
+Rebuild the database as it was at any moment, not only as it was at the daily copy (`backup-database.sh`, which
+stays as it is, beside these).
+
+```bash
+tools/backup-start-archiving.sh                        # turn on copying every finished change-log file; prints the restart it needs
+tools/backup-full-copy.sh                              # weekly: full copy, every file checked, newest 3 kept, old change-log files cleared
+tools/backup-rehearse-restore.sh "2026-10-02 14:30:30" # rebuild a spare on port 5433 at that moment, check it, time it, throw it away
+```
+
+Each takes `--dry-run`, which says what it would do and changes nothing. The first never restarts Postgres — a
+restart drops every player, so it prints the command instead — and is safe to run twice; once archiving is
+running it reports whether files are arriving. The full copy is checked by unpacking it and comparing every file
+against the list Postgres wrote with it. The rehearsal never connects to the live database: it starts its own
+spare on another port, answering this computer only, with archiving off, and stops it by that port when done,
+whether it worked or not.
+
+All three were run end to end on 2026-10-02 against a throwaway Postgres on this PC: a level raised after a noted
+moment was present when rebuilt to after it and absent when rebuilt to before it, a planted file of the same
+name was left untouched by the archive copy, and a damaged copy was refused by the check. The Mac's date
+handling in `time-offset` has not been run.
+
+Settings: `WAL_ARCHIVE_DIR`, `BASE_BACKUP_DIR`, `BASE_BACKUP_KEEP`, `RESTORE_REHEARSAL_PORT` — see
+`settings.env.example`. The order to run them, and the monthly rehearsal:
+[Starting the Network](../docs/2-systems/networking/starting-the-network.md).
 
 ## extract_chatgpt_share.py
 

@@ -14,7 +14,20 @@
 #         tools/build-game.sh client            # the game players run
 #         tools/build-game.sh both
 #         tools/build-game.sh server --linux    # server for a Linux host (what you deploy)
+#         tools/build-game.sh client --mac --dev   # the Mac game, made on this computer, into builds/mac/
+#
+# --mac MAKES THE MAC GAME ON ANY COMPUTER, into builds/mac/ so it never overwrites this computer's own build. The
+# editor is switched to building for the Mac for the length of the build and switched back afterwards, because the
+# creatures and models are built separately and only for the platform the editor is switched to — a Mac game built
+# with Windows content would start with none of them. The Mac app is then signed without a certificate
+# (tools/platform.sh), which an Apple silicon Mac needs before it runs anything.
 #         tools/build-game.sh server --out /some/where
+#         tools/build-game.sh client --dev        # a development build, for testing on your own Wi-Fi
+#
+# --dev MAKES A DEVELOPMENT BUILD. The game refuses plain (unencrypted) web traffic to any machine but the one it runs
+# on, so a copy that signs in to this PC from another device on the Wi-Fi is refused. The project allows plain web
+# traffic in development builds only, so a --dev copy can test on your own network while every copy handed to a
+# player still refuses it. Never hand a --dev copy to a player.
 #
 # EXIT: 0 = built, 1 = build failed, 2 = setup problem (editor not running, etc).
 
@@ -33,6 +46,7 @@ fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 2; }
 
 WHICH="${1:-}"
 shift || true
+BUILD_OPTIONS="None"
 case "$WHICH" in
   server|client|both) ;;
   *) fail "Say what to build: server | client | both
@@ -42,12 +56,15 @@ esac
 while [ $# -gt 0 ]; do
   case "$1" in
     --linux) TARGET="StandaloneLinux64"; shift ;;
+    --mac)   TARGET="StandaloneOSX"; MAC_OUT=1; shift ;;
     --out)   OUT_ROOT="${2:-}"; shift 2 ;;
+    --dev)   BUILD_OPTIONS="Development"; shift ;;
     *) fail "Unknown option: $1" ;;
   esac
 done
 
 UNITY_CLI="$(unity_cli)" || fail "No Unity command-line link on this computer — the build runs through it."
+[ -z "${MAC_OUT:-}" ] || [ "$OUT_ROOT" != "$REPO/builds" ] || OUT_ROOT="$REPO/builds/mac"
 OUT_ROOT="$(native_path "$OUT_ROOT")"
 
 # Every request names THIS project. On Windows the link's own list of open editors comes back empty while the
@@ -101,7 +118,7 @@ var opts = new UnityEditor.BuildPlayerOptions
     locationPathName = "$out",
     target = UnityEditor.BuildTarget.$TARGET,
     subtarget = (int)UnityEditor.StandaloneBuildSubtarget.$subtarget,
-    options = UnityEditor.BuildOptions.None
+    options = UnityEditor.BuildOptions.$BUILD_OPTIONS
 };
 var r = UnityEditor.BuildPipeline.BuildPlayer(opts);
 UnityEngine.Debug.Log("[build-game] " + r.summary.result + " errors=" + r.summary.totalErrors);
@@ -176,11 +193,67 @@ write_addresses() {
   printf 'ACCOUNTS_URL=%s\nCHAR_SERVER_URL=%s\n' "$accounts" "$characters" >> "$file.tmp"
   mv "$file.tmp" "$file"
   # A file inside a Mac app just changed, which breaks its signature: sign it again (tools/platform.sh explains why).
-  if [ "$PLATFORM" = mac ] && [ "${build%.app}" != "$build" ]; then
+  if [ "${build%.app}" != "$build" ]; then
     sign_mac_app "$build" >/dev/null 2>&1 || { printf '\033[31mCould not sign %s again.\033[0m\n' "$build" >&2; return 1; }
   fi
   printf 'the build dials  %s  and  %s\n' "$accounts" "$characters"
 }
+
+# SWITCH THE EDITOR TO ANOTHER PLATFORM, AND WAIT UNTIL IT HAS. The creatures and models are built only for the
+# platform the editor is switched to, so building for another one means switching first.
+#
+# THE PLATFORM IS THE ACTIVE BUILD PROFILE'S. This project keeps one per platform in Assets/Settings/Build Profiles,
+# and while one is active, switching the platform any other way is undone on the next reload — MEASURED 2026-10-02:
+# the switch to Mac reported success, and after the reload the editor was back on Windows with the Windows profile
+# still active. So the PROFILE is switched, by name.
+#
+# Its own request, asked only while the editor is free and asked again if it did not take: a request sent while the
+# editor is compiling is dropped ("main thread operation timed out"), and a switch only finishes after the request
+# that asked for it has returned.
+PROFILES="Assets/Settings/Build Profiles"
+profile_for() {
+  case "$1" in
+    StandaloneOSX)       echo "$PROFILES/macOS.asset" ;;
+    StandaloneWindows64) echo "$PROFILES/Windows.asset" ;;
+    *)                   echo "" ;;
+  esac
+}
+editor_profile() {
+  "${UNITY_CMD[@]}" eval --code 'var a = UnityEditor.Build.Profile.BuildProfile.GetActiveBuildProfile(); return a != null ? UnityEditor.AssetDatabase.GetAssetPath(a) : "";' 2>/dev/null \
+    | grep -o '"result":"[^"]*"' | cut -d'"' -f4
+}
+editor_target() {
+  "${UNITY_CMD[@]}" eval --code 'return UnityEditor.EditorUserBuildSettings.activeBuildTarget.ToString();' 2>/dev/null \
+    | grep -o '"result":"[A-Za-z0-9]*"' | cut -d'"' -f4
+}
+editor_ready() { "${UNITY_CMD[@]}" editor_status 2>/dev/null | grep -q '"status":"ready"'; }
+switch_profile_to() {
+  local want="$1" i   # $2 = the platform that profile builds for
+  for i in $(seq 1 60); do
+    if editor_ready; then
+      # Landed when the editor is on that profile's platform. Measured 2026-10-02: once switched, the editor can
+      # report no active profile at all while sitting on the right platform — so the platform is what is read.
+      [ "$(editor_target)" = "$2" ] && return 0
+      printf '\033[36mSwitching the editor to %s …\033[0m\n' "$want" >&2
+      "${UNITY_CMD[@]}" eval --timeout 900 --code "UnityEditor.Build.Profile.BuildProfile.SetActiveBuildProfile(UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEditor.Build.Profile.BuildProfile>(\"$want\")); return \"asked\";" >/dev/null 2>&1
+    fi
+    sleep 20
+  done
+  printf '\033[31mThe editor did not switch to %s.\033[0m\n' "$want" >&2
+  return 1
+}
+
+# WHERE THE EDITOR STARTED, so it is switched back there afterwards however the build went.
+HOME_TARGET="$(editor_target)"
+HOME_PROFILE="$(editor_profile)"
+[ -n "$HOME_PROFILE" ] || HOME_PROFILE="$(profile_for "$HOME_TARGET")"
+SWITCHED=""
+if [ -n "$HOME_TARGET" ] && [ "$HOME_TARGET" != "$TARGET" ]; then
+  WANT_PROFILE="$(profile_for "$TARGET")"
+  [ -n "$WANT_PROFILE" ] || fail "There is no build profile here for $TARGET to switch the editor to."
+  SWITCHED=1
+  switch_profile_to "$WANT_PROFILE" "$TARGET" || { switch_profile_to "$HOME_PROFILE" "$HOME_TARGET"; exit 1; }
+fi
 
 STATUS=0
 case "$WHICH" in
@@ -188,6 +261,11 @@ case "$WHICH" in
   client) build_one client || STATUS=1 ;;
   both)   build_one server || STATUS=1; build_one client || STATUS=1 ;;
 esac
+
+# AND BACK to where the editor was, whether or not the build worked.
+if [ -n "$SWITCHED" ]; then
+  switch_profile_to "$HOME_PROFILE" "$HOME_TARGET" || STATUS=1
+fi
 
 if [ "$STATUS" -eq 0 ]; then
   echo

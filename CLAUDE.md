@@ -224,8 +224,8 @@ narrow place, and that is enforced by a refusal rather than by their good intent
 eighth, `sprint-manager`, may write exactly two files — the action plan and the wiki Roadmap page —
 fenced by that same gate.
 
-**FOUR of them are spawned WITHOUT asking, the moment their situation arrives.** This section is
-what authorises that; the default everywhere else is still to do the work here.
+**FOUR of them are spawned WITHOUT asking, the moment their situation arrives.** Everywhere else,
+whether to spawn one is my call, weighed as described below.
 
 - **`debugger` — the moment a fix FAILS.** A bug that survived one attempt has a cause this
   session's model of the system is missing, so the next move is never a second reasoned fix. Hand
@@ -240,13 +240,14 @@ what authorises that; the default everywhere else is still to do the work here.
 - **`sprint-manager` — ANY task tracking**: ticking a task done, and moving an entry on the wiki
   Roadmap. The rule is **RULE TRACKING** below.
 
-**Everything else is spawned only when the user asks for it BY NAME.**
+**Everything else is my call** (the global rule "I manage the whole task, and spawning sub-agents is
+my call"): spawn one when it is more efficient than doing the work here, after weighing that it starts
+cold without this conversation's context.
 
-- **`analyzer`** answers questions about where the project stands. It is deliberately NOT automatic:
-  most such questions are faster answered here, and it starts cold knowing nothing of the
-  conversation.
+- **`analyzer`** answers questions about where the project stands. Most such questions are faster
+  answered here, because it starts cold knowing nothing of the conversation.
 - **`doc-keeper`** revises docs and the wiki. Writing a doc is usually part of the work in hand,
-  not a job to hand off.
+  so it is usually faster here.
 - **`reviewer` and `tester` stay exactly as their own sections below say** — the user's words are the
   only thing that starts either, and neither is ever offered. Nothing here loosens that.
 

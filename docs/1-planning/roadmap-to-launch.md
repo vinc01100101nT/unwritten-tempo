@@ -57,7 +57,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 **Loot attaches when creatures are rebuilt, not when the game runs.** Editing a drop list and then play-testing without rebuilding shows nothing, and looks exactly like a bug.
 
-**Cards are free, and named after creatures that do not exist.** The socket screen loads every card in the game and offers all four to anyone with an empty socket, regardless of what they own. The four names are Ragnarok Online creatures; none of our 86 goes by any of them. Cards also cannot be carried — a drop list can only name an item, and the bag can only hold an item, and a card is neither.
+**Cards do not exist yet, and cannot be slotted.** No cards are in the game, and "Insert card" is off the item menu until slotting has a server side — it used to change only the player's own copy, and offered every card to anyone with an empty socket, whatever they owned. Cards also cannot be carried — a drop list can only name an item, and the bag can only hold an item, and a card is neither.
 
 **Bosses are defined but unreachable.** None is placed in any map. All 34 creature spawn points are set to pick any ordinary creature. Each dungeon has exactly one spawn point, so a boss cannot simply be added to it without removing that dungeon's ordinary creatures. The two shortcuts also mislead: asking for "a boss" gives a different random one on every respawn, and the one-click placement tool always places the first boss in the list.
 

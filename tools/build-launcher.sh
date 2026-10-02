@@ -51,7 +51,11 @@ for arch in arm64 x64; do
   rm -rf "$OUT/mac-$arch"; mkdir -p "$app/Contents/MacOS"
   cp -R "$staging/." "$app/Contents/MacOS/"
   rm -rf "$staging"
-  settings "$app/Contents/MacOS"
+  # IN Resources, NOT BESIDE THE PROGRAM. A Mac treats everything in MacOS/ as code that must carry its own
+  # signature, so a text file there is never sealed — MEASURED 2026-10-02: a Mac refused the launcher as "damaged",
+  # codesign saying "a sealed resource is missing or invalid". In Resources it is sealed like any other resource.
+  mkdir -p "$app/Contents/Resources"
+  settings "$app/Contents/Resources"
   cat > "$app/Contents/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -68,9 +72,8 @@ for arch in arm64 x64; do
 </plist>
 EOF
   # Signed with no certificate, as Unity signs the game: an Apple silicon Mac will not run an unsigned program.
-  if [ "$PLATFORM" = mac ]; then
-    sign_mac_app "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; STATUS=1; }
-  fi
+  # On any computer — tools/platform.sh signs off a Mac too.
+  sign_mac_app "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; STATUS=1; }
 done
 
 if [ "$STATUS" -eq 0 ]; then

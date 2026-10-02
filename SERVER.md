@@ -56,7 +56,7 @@ checker at the bottom is what makes them stick.
 
 | Need | Use | Why |
 | --- | --- | --- |
-| A setting both servers must agree on — or any secret or address | **`settings.env`** at the top of the project, read by the sign-in service, `charserver/run.sh`, `tools/run-map-server.sh`, the backup, the front door, and the game and launcher builds; a shell script loads it with `tools/load-settings.sh` | One file, one value; a different value on either side is a bug, not a configuration. |
+| A setting both servers must agree on — or any secret or address | **`settings.env`** at the top of the project, read by the sign-in service, `charserver/run.sh`, `tools/run-map-server.sh`, the backups, the front door, and the game and launcher builds; a shell script loads it with `tools/load-settings.sh` | One file, one value; a different value on either side is a bug, not a configuration. |
 | Writing a character's progress | **`PUT /server/characters/{id}/progress` on the character server, with `x-server-secret`** | The only write. The player-facing `PUT` returns 405 on the character server and 404 on the sign-in service. |
 | Reading a character in the world | **The announcement** (`/arriving` on the map server, sent BY the character server) | The character travels with the ticket; the map server never fetches it. |
 | Every user value in SQL | **`$1`, `$2` …** — never pasted | Both services do this without exception; keep it that way. |

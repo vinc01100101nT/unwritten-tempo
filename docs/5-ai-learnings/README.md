@@ -106,6 +106,8 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 **No page cap.** A lesson that was paid for gets its own page; the index above is what keeps this skimmable, so keep each symptom line short and distinct. Merge two pages only when they genuinely share a symptom, and delete one the moment it is obsolete or has graduated into a hard rule.
 
 ---
+| A running Unity editor refuses to build for another platform ("Unable to build with the current configuration"), or its platform switch reverts a minute later | [A Build for Another Platform Refuses, or the Switch Will Not Stick](build-for-another-platform-in-a-running-editor.md) — a newly installed module needs an editor restart; an active build profile undoes other switches; switch in its own request, only while the editor is ready. |
+| A Mac refuses an app you built or signed yourself as "damaged", with no "Open Anyway" | [A Mac Says an App You Built Is "Damaged"](mac-app-damaged-unsealed-file.md) — its signature does not cover a file; a non-program file in `Contents/MacOS` is never sealed — keep it in `Contents/Resources` and check the sealed-file list before shipping. |
 
 ## Related
 

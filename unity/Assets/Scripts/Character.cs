@@ -312,24 +312,29 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>MAY THIS CHARACTER RUN THIS SKILL — the one question, asked by the server before any cast and by
     /// every window that offers one. A skill must be LEARNED, and the weapon it belongs to must be in hand. A
-    /// skill that belongs to no weapon (what a consumable runs) is nobody's to learn and always passes.</summary>
+    /// skill that belongs to no weapon is nobody's to learn and passes — unless an ITEM runs it: what an item runs
+    /// only ever happens by using the item (which takes it from the bag), never by a press, whatever triggers its
+    /// data is given.</summary>
     public bool MayUse(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return false;
         var def = SkillCatalog.Get(skillId);
         if (def == null) return false;
+        if (def.ItemUseEntry != null) return false;
         if (def.weaponType == WeaponType.None) return true;
         return Mastery.HasLearned(skillId) && HeldWeaponType == def.weaponType;
     }
 
     /// <summary>MAY THIS SKILL GO ON THE BAR. The same question as
     /// <see cref="MayUse"/> WITHOUT the weapon in hand, because a bar is arranged for a weapon you are about to
-    /// hold as often as for the one you hold now — what stops it firing is the cast's own test.</summary>
+    /// hold as often as for the one you hold now — what stops it firing is the cast's own test. What an item runs
+    /// never goes on the bar, for the reason <see cref="MayUse"/> gives.</summary>
     public bool MayBind(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return false;
         var def = SkillCatalog.Get(skillId);
         if (def == null) return false;
+        if (def.ItemUseEntry != null) return false;
         return def.weaponType == WeaponType.None || Mastery.HasLearned(skillId);
     }
 

@@ -39,6 +39,14 @@ public class MapServerLink : MonoBehaviour
         }
     }
 
+    /// <summary>WHERE THE CHARACTER SERVER DELIVERS CHARACTERS TO THIS SERVER — a different address from the one
+    /// players are given (<c>MAP_SERVER_ADDRESS</c>). A delivery carries a whole character, an entry ticket and the
+    /// shared server secret as plain text, so it must never cross the open internet: on a rented machine this is a
+    /// private network address, or 127.0.0.1 when the character server runs on the same machine. Empty means the
+    /// player address is used for both, which is right only on a desk or a home network.</summary>
+    public static string ArrivalsAddress =>
+        Environment.GetEnvironmentVariable("MAP_SERVER_ARRIVALS_ADDRESS") ?? "";
+
     /// <summary>WHAT THIS SERVER UNDERSTANDS A CHARACTER TO BE. The character server refuses to hand players to
     /// a map server that does not say exactly this.
     ///
@@ -70,6 +78,7 @@ public class MapServerLink : MonoBehaviour
         public string characterName;
         public bool isGm;
         public SaveData progress;
+        public int handover;
         public float expiresAt;
     }
 
@@ -108,6 +117,9 @@ public class MapServerLink : MonoBehaviour
             names.Add(System.IO.Path.GetFileNameWithoutExtension(
                 UnityEngine.SceneManagement.SceneUtility.GetScenePathByBuildIndex(i)));
         mapsInBuild = names;
+        // SAVES A PREVIOUS RUN COULD NOT SEND go back in the queue before anything else, so they are sent before
+        // this server tells the character server it exists.
+        SaveOutbox.LoadFromDisk();
         var root = FindFirstObjectByType<GameRoot>();   // perf-ok: once, as the server starts
         startingMap = root != null ? root.firstMap : "";
 
@@ -132,29 +144,25 @@ public class MapServerLink : MonoBehaviour
 
     void StartListening()
     {
-        try
+        // ONLY THE DELIVERY ADDRESS, when one is set, so nothing outside that network can even reach this door.
+        if (!string.IsNullOrEmpty(ArrivalsAddress))
         {
-            listener = new HttpListener();
-            listener.Prefixes.Add($"http://+:{ArrivalsPort}/");
-            listener.Start();
-        }
-        catch (Exception e)
-        {
-            // A narrower address, for a machine that will not hand out the wildcard one (a Mac asks for
-            // permission it cannot ask for without a window).
             try
             {
                 listener = new HttpListener();
-                listener.Prefixes.Add($"http://127.0.0.1:{ArrivalsPort}/");
+                listener.Prefixes.Add($"http://{ArrivalsAddress}:{ArrivalsPort}/");
                 listener.Start();
             }
-            catch (Exception inner)
+            catch (Exception e)
             {
-                GameLog.Error(LogCat.Map, "could not listen for arrivals on " + ArrivalsPort + " — " + e.Message
-                               + " / " + inner.Message + ". Nobody will be able to enter the world.");
-                return;
+                listener = null;
+                GameLog.Warn(LogCat.Map, "could not listen for arrivals only on " + ArrivalsAddress + " — " + e.Message
+                                 + ". Listening on every address instead; block port " + ArrivalsPort
+                                 + " from outside with the firewall.");
             }
         }
+
+        if (listener == null && !ListenOnEveryAddress()) return;
 
         listening = new Thread(Listen) { IsBackground = true };
         listening.Start();
@@ -167,6 +175,37 @@ public class MapServerLink : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => MapsChanged();
         UnityEngine.SceneManagement.SceneManager.sceneUnloaded += _ => MapsChanged();
         RegisterWithCharacterServer();
+    }
+
+    /// <summary>The arrival door on every address — or, on a machine that will not hand out the wildcard one, on
+    /// 127.0.0.1. False (and said) when neither could be opened.</summary>
+    bool ListenOnEveryAddress()
+    {
+        try
+        {
+            listener = new HttpListener();
+            listener.Prefixes.Add($"http://+:{ArrivalsPort}/");
+            listener.Start();
+            return true;
+        }
+        catch (Exception e)
+        {
+            // A narrower address, for a machine that will not hand out the wildcard one (a Mac asks for
+            // permission it cannot ask for without a window).
+            try
+            {
+                listener = new HttpListener();
+                listener.Prefixes.Add($"http://127.0.0.1:{ArrivalsPort}/");
+                listener.Start();
+                return true;
+            }
+            catch (Exception inner)
+            {
+                GameLog.Error(LogCat.Map, "could not listen for arrivals on " + ArrivalsPort + " — " + e.Message
+                               + " / " + inner.Message + ". Nobody will be able to enter the world.");
+                return false;
+            }
+        }
     }
 
     void Listen()
@@ -256,6 +295,7 @@ public class MapServerLink : MonoBehaviour
                 characterName = msg.characterName,
                 isGm = msg.isGm,
                 progress = msg.progress,
+                handover = msg.handover,
             }, ctx));
         }
 
@@ -285,6 +325,8 @@ public class MapServerLink : MonoBehaviour
 
     void Update()
     {
+        SaveOutbox.Tick();
+        if (registrationOwed && !SaveOutbox.HasFailed) RegisterWithCharacterServer();   // perf-ok: once, when the last waiting save lands
         Heartbeat();
         BringUpWhatWasAskedFor();
         LetGoOfWhoWasAskedFor();
@@ -432,9 +474,25 @@ public class MapServerLink : MonoBehaviour
         RegisterWithCharacterServer();
     }
 
+    // Set when a registration was held back because a save was still waiting; sent the moment none is.
+    bool registrationOwed;
+
     void RegisterWithCharacterServer()
     {
-        var maps = new List<string>();
+        // NOT WHILE A SAVE IS STILL WAITING. The character server places people only on servers it knows, so a
+        // server that has not registered yet cannot be handed anybody — and nobody can be read from an older copy
+        // than the one this server is still trying to send. Said once, then sent as soon as the saves land.
+        if (SaveOutbox.HasFailed)
+        {
+            if (!registrationOwed)
+                GameLog.Warn(LogCat.Map, "not telling the character server about this map server until "
+                                 + SaveOutbox.FailedCount + " waiting save(s) have landed.");
+            registrationOwed = true;
+            return;
+        }
+        registrationOwed = false;
+
+        var maps = new List<string>();   // perf-ok: a 30-second beat or a map change, never every frame
         for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
         {
             var s = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
@@ -445,12 +503,13 @@ public class MapServerLink : MonoBehaviour
         {
             id = ServerId,
             address = Environment.GetEnvironmentVariable("MAP_SERVER_ADDRESS") ?? "127.0.0.1",
+            arrivalsAddress = ArrivalsAddress,
             port = ArrivalsPort,
             // AND THE DOOR PLAYERS USE, which is not this one. The character server hands this second number to
             // a player and the first to itself; one number for both would send somebody to knock at the door
             // meant for the character server, where nothing is listening for them.
             playerPort = GameNetwork.PlayerPort,
-            maps = maps.ToArray(),
+            maps = maps.ToArray(),   // perf-ok: same beat as above
             build = CharacterBuild,
             startingMap = startingMap,
             // HOW BUSY THIS ONE IS, so the character server can put a zone on the quietest process instead of
@@ -460,7 +519,7 @@ public class MapServerLink : MonoBehaviour
             creatures = MonsterAI3D.Active != null ? MonsterAI3D.Active.Count : 0,
         });
 
-        ServerHttp.Send("POST", CharacterServerUrl + "/map-servers", body, ServerSecret, (ok, reply, error) =>
+        ServerHttp.Send("POST", CharacterServerUrl + "/map-servers", body, ServerSecret, (ok, reply, error, _) =>
         {
             // SAID WHEN IT CHANGES, NOT ON EVERY BEAT. This registration repeats on a timer, and writing the same
             // "holds 1 map(s)" each time filled an idle server's log with a line every half minute — which made a quiet
@@ -519,6 +578,8 @@ public class MapServerLink : MonoBehaviour
     {
         public string id;
         public string address;
+        // Where the character server delivers characters to; empty means the address above.
+        public string arrivalsAddress;
         public int port;
         public int playerPort;
         public string[] maps;
@@ -544,5 +605,7 @@ public class MapServerLink : MonoBehaviour
         public string characterName;
         public bool isGm;
         public SaveData progress;
+        // Which hand-over this is — every save of this character from here carries it back.
+        public int handover;
     }
 }
