@@ -183,11 +183,13 @@ public static class SkillTooltip
             {
                 sb.Append("<size=120%><b>").Append(def.displayName).Append("</b></size>");
                 if (def.IsUltimate) sb.Append("  <color=").Append(UltimateHex).Append("><b>ULTIMATE</b></color>");
+                else if (KindTag(def) != null) sb.Append("  <color=").Append(Chip).Append("><b>").Append(KindTag(def)).Append("</b></color>");
             }
             else
             {
                 sb.Append(Hl(def.displayName));
                 if (def.IsUltimate) sb.Append("  ").Append(Hl("ULTIMATE"));
+                else if (KindTag(def) != null) sb.Append("  ").Append(KindTag(def));
             }
             sb.Append('\n');
 
@@ -222,6 +224,9 @@ public static class SkillTooltip
             var lines = EffectLines(def);
             for (int i = 0; i < lines.Count; i++) sb.Append("\n• ").Append(lines[i]);
 
+            // What it takes to learn it and what its levels move — only a skill that belongs to a weapon has either.
+            if (def.weaponType != WeaponType.None) LevelSection(def, d);
+
             return sb.ToString();
         }
         finally { dialect = prev; }
@@ -233,17 +238,16 @@ public static class SkillTooltip
     /// <summary>Every effect line this skill would show, in order — the same lines the hover card bullets. Returns a
     /// SHARED list: read it or copy it before the next call. Assumes the dialect is already set by the caller.
     ///
-    /// <para>Each line states the effect's BASE number. What the character's weapon trademark and practice add on
-    /// top is said underneath, one line each, on every effect that has a main number — the same effects the fight
-    /// raises (<see cref="EffectScaling.Boostable"/>), so the card and the fight cannot disagree about which.</para></summary>
+    /// <para>Each line states the effect's BASE number. What the character's weapon trademark adds on top is said
+    /// underneath, on every effect that has a main number — the same effects the fight raises
+    /// (<see cref="EffectScaling.Boostable"/>), so the card and the fight cannot disagree about which. What the skill's
+    /// own LEVEL adds is the card's level section, number by number (<see cref="Build(SkillDef, Dialect)"/>).</para></summary>
     public static System.Collections.Generic.List<string> EffectLines(SkillDef def)
     {
         effectLines.Clear();
         if (def == null || def.bindings == null) return effectLines;
         var ch = Character.Instance;
         float trademark = ch != null ? ch.TrademarkLift(def.id) : 0f;
-        float mastery = ch != null ? ch.MasteryLift(def.id) : 0f;
-        string masteryLabel = def.IsPassive ? "Weapon mastery" : "Skill mastery";
         for (int i = 0; i < def.bindings.Count; i++)
         {
             var b = def.bindings[i];
@@ -253,13 +257,8 @@ public static class SkillTooltip
                 var e = b.effects[k];
                 string line = DescribeEffect(e);
                 if (string.IsNullOrEmpty(line)) continue;
-                if (EffectScaling.Boostable(e))
-                {
-                    if (trademark > 0f)
-                        line += "\n   Trademark skill bonus " + MainNumberWord(e) + ": +" + Pct(trademark);
-                    if (mastery > 0f)
-                        line += "\n   " + masteryLabel + ": +" + Pct(mastery);
-                }
+                if (EffectScaling.Boostable(e) && trademark > 0f)
+                    line += "\n   Trademark skill bonus " + MainNumberWord(e) + ": +" + Pct(trademark);
                 effectLines.Add(line);
             }
         }
@@ -492,4 +491,103 @@ public static class SkillTooltip
              + (e.stacking ? " per stack" : "")
              + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
     }
+
+    // PASSIVE or ACTIVE beside the name (an ultimate already says ULTIMATE). Nothing for what an item runs: it is
+    // neither pressed from the bar nor fired by a moment of the fight.
+    static string KindTag(SkillDef def)
+        => def.ItemUseEntry != null ? null : def.IsPassive ? "PASSIVE" : "ACTIVE";
+
+    // ---- learning and levels ----------------------------------------------------------------------------------
+
+    // What it takes to learn a weapon skill, how far it can go, and every number its level moves. In the game the
+    // numbers are the server's finished values (MasteryProgress.SentView) and the "met" colours compare what the
+    // server sent; with no character (the wiki, an editor tool) only the fixed facts are written.
+    static void LevelSection(SkillDef def, Dialect d)
+    {
+        var ch = Character.Instance;
+        var mastery = ch != null ? ch.Mastery : null;
+        int opensAt = Mathf.Max(1, def.masteryLevel);
+        sb.Append('\n');
+        sb.Append("\nRequires ").Append(Met(def.weaponType + " Mastery " + opensAt,
+                                            mastery != null ? mastery.SentLevel(def.weaponType) >= opensAt : (bool?)null, d));
+        if (!string.IsNullOrEmpty(def.needsSkillId))
+            sb.Append("\nRequires ").Append(Met(NameOf(def.needsSkillId),
+                                                mastery != null ? mastery.HasLearned(def.needsSkillId) : (bool?)null, d));
+
+        int top = Mathf.Max(1, def.maxLevel);
+        int level = mastery != null ? mastery.LevelOf(def.id) : 0;
+        bool hasView = false;
+        SkillLevelView view = default;
+        if (mastery == null) sb.Append("\nMax level ").Append(Hl(top.ToString()));
+        else
+        {
+            hasView = mastery.SentView(def.id, out view);
+            sb.Append("\nSkill level ").Append(Hl(level.ToString())).Append(" / ").Append(top);
+            if (hasView && level > view.usable) sb.Append("  ").Append(Chipped(view.usable + " count with this weapon"));
+        }
+
+        bool any = false;
+        int channel = 0;
+        for (int b = 0; def.bindings != null && b < def.bindings.Count; b++)
+        {
+            var binding = def.bindings[b];
+            if (binding == null || binding.effects == null) continue;
+            for (int k = 0; k < binding.effects.Count; k++)
+            {
+                var e = binding.effects[k];
+                if (!SkillLevelNumbers.MainNumber(e, out var number, out bool whole)) continue;
+                if (!any)
+                {
+                    sb.Append("\nEach level: ").Append(Hl("+" + Mathf.RoundToInt(MasteryMath.SkillLevelPercent * 100f) + "%"))
+                      .Append(" to");
+                    any = true;
+                }
+                string word = MainNumberWord(e) ?? "";
+                if (word.Length > 0) word = char.ToUpper(word[0]) + word.Substring(1);
+                bool perStack = e.stacking && (e.kind == SkillEffectKind.SubStatBuff || e.kind == SkillEffectKind.SubStatDebuff);
+                sb.Append("\n   ").Append(word).Append(perStack ? " per stack" : "");
+                if (hasView && channel < view.now.Length && channel < view.next.Length)
+                {
+                    string now = level >= 1 ? Hl(LevelNumber(e, number, whole, view.now[channel])) : Chipped("—");
+                    sb.Append(": ").Append(now);
+                    if (level < top) sb.Append(" → ").Append(Hl(LevelNumber(e, number, whole, view.next[channel])));
+                    else sb.Append("  ").Append(Chipped("max"));
+                }
+                channel++;
+            }
+        }
+        if (!any) sb.Append('\n').Append(Chipped("No number on this skill grows with its level."));
+    }
+
+    // A requirement, coloured met or not when there is a character to judge it against.
+    static string Met(string what, bool? met, Dialect d)
+    {
+        if (met == null || d != Dialect.RichText) return Hl(what);
+        string hex = UiKit.Hex(met.Value ? UiKit.Good : UiKit.Bad);
+        return "<color=" + hex + "><b>" + what + "</b></color>";
+    }
+
+    // One finished number in the units its effect is written in everywhere else on the card.
+    static string LevelNumber(SkillEffect e, ScaledNumber authored, bool whole, float v)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:
+            case SkillEffectKind.Execute:
+                return v.ToString("0.##") + "×";
+            case SkillEffectKind.Status:
+                return v.ToString("0.#") + "/tick";
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff:
+                return SubStats.IsPercent(e.subStat) ? FinePct(v) : v.ToString("0.##");
+            case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.ReduceOutgoingDamage:
+                return FinePct(v);
+            default:
+                return whole && !authored.useStacks ? Mathf.RoundToInt(v).ToString() : v.ToString("0.##") + "×";
+        }
+    }
+
+    // A percentage to one decimal — a level moves a 3% buff to 3.2%, which a whole-number percent would hide.
+    static string FinePct(float f01) => (f01 * 100f).ToString("0.#") + "%";
 }

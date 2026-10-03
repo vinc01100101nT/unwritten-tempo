@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: 
   archetype: 0
   family: 0

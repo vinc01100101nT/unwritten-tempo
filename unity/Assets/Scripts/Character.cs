@@ -263,8 +263,8 @@ public class Character : MonoBehaviour, ICombatUnit
     /// % multiplier folded into the effective-stat getters below (see <see cref="PassivePercent"/>).</summary>
     public PassiveRanks Passives => Ring.Passives;
 
-    /// <summary>WHAT THIS CHARACTER HAS PRACTISED — a mastery per weapon type and per skill, and the skills those
-    /// have opened. Part of the character, like the ring, and permanent; the weapon in hand only caps what may be
+    /// <summary>WHAT THIS CHARACTER HAS PRACTISED AND LEARNED — a mastery per weapon type, and the level bought in
+    /// every skill. Part of the character, like the ring, and permanent; the weapon in hand only caps what may be
     /// used and earned.</summary>
     public MasteryProgress Mastery { get; } = new MasteryProgress();
 
@@ -333,8 +333,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (def == null || def.weaponType == WeaponType.None) return null;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         if (!Mastery.HasLearned(skillId))
-            return name + " is not learned yet — " + def.weaponType + " Mastery " + Mathf.Max(1, def.masteryLevel)
-                   + " opens it (yours is " + Mastery.EarnedLevel(def.weaponType) + ").";
+            return name + " is not learned yet — spend a " + def.weaponType + " mastery point on it in the Skills window.";
         if (HeldWeaponType != def.weaponType)
             return name + " needs a " + def.weaponType + " in hand.";
         return null;
@@ -348,23 +347,21 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Reads the same choke as every effective-stat getter.</summary>
     public float RingBonus(StatId stat) => PassivePercent(stat);
 
-    /// <summary>Everything lifting <paramref name="skillId"/>'s main numbers, added to the ring's term: this
-    /// character's practice with it, plus the trademark of the weapon in hand when that weapon empowers it.
+    /// <summary>Everything lifting <paramref name="skillId"/>'s main numbers, added to the ring's term: the level this
+    /// character bought in it, plus the trademark of the weapon in hand when that weapon empowers it.
     ///
     /// <para>Resolved ONCE per cast by the applier, never per hit.</para></summary>
     public float SkillOutputLift(string skillId) => MasteryLift(skillId) + TrademarkLift(skillId);
 
-    /// <summary>The lift this character's own practice puts on <paramref name="skillId"/>'s main numbers. An ACTIVE
-    /// rides its own skill mastery; a PASSIVE cannot be pressed, so it earns none of its own and rides the weapon's
-    /// mastery instead — but only a passive that belongs to the weapon in hand, so a potion gets nothing. Both stop
-    /// at +30%.</summary>
+    /// <summary>The lift the level this character bought in <paramref name="skillId"/> puts on its main numbers — the
+    /// same for an active, a passive and an ultimate: +5% a level after the first, counting only the levels the weapon
+    /// in hand's grade allows, and only while that skill's weapon is in hand, so a potion's skill gets nothing.</summary>
     public float MasteryLift(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return 0f;
         var def = SkillCatalog.Get(skillId);
-        if (def != null && def.IsPassive)
-            return def.RidesWeaponMastery(HeldWeaponType) ? MasteryMath.PassiveLift(WeaponMasteryLevel) : 0f;
-        return MasteryMath.SkillLift(Mastery.UsableSkillLevel(skillId, HeldQuality));
+        if (def == null || !def.RidesWeaponMastery(HeldWeaponType)) return 0f;
+        return MasteryMath.SkillLevelLift(Mastery.UsableSkillLevel(skillId, HeldQuality));
     }
 
     /// <summary>What the weapon in hand's trademark adds to <paramref name="skillId"/>'s main numbers — the finished
@@ -1717,12 +1714,8 @@ public class Character : MonoBehaviour, ICombatUnit
         // the character's cap below: the ring goes on levelling after 99.
         ringLevelsGained = Ring.AddXP(UnitStatMath.RingXpFromKill(amount));
         // AND THE WEAPON IN HAND'S MASTERY, paid TWO THIRDS of the same experience — at the speed its grade trains,
-        // stopped at what its grade allows. A level reached opens whatever skills it unlocks.
-        if (Mastery.AddXP(HeldWeaponType, MasteryMath.WeaponXpFromKill(amount, HeldQuality), HeldQuality) > 0)
-        {
-            Mastery.LearnWhatIsOpen();
-            RefreshUsableSkills();
-        }
+        // stopped at what its grade allows. Each level reached is one more mastery point to spend in the Skills window.
+        Mastery.AddXP(HeldWeaponType, MasteryMath.WeaponXpFromKill(amount, HeldQuality), HeldQuality);
 
         int gained = 0;
         // AT THE CAP THE CHARACTER EARNS NOTHING MORE — Ragnarok's 99. The ring and the weapon above still take theirs.
@@ -1929,8 +1922,7 @@ public class Character : MonoBehaviour, ICombatUnit
         Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Gold;
         d.hotbarBindings = Hotbar.Capture();
-        Mastery.Capture(out d.masteryWeapons, out d.masteryPoints,
-                        out d.masterySkillIds, out d.masterySkillUses, out d.learnedSkillIds);
+        Mastery.Capture(out d.masteryWeapons, out d.masteryPoints, out d.skillLevelIds, out d.skillLevels);
         CaptureEquipment(d);
         CaptureBag(d);
 
@@ -2174,10 +2166,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // MASTERY BEFORE THE BAR. Nothing here re-checks the bar against what was learned — a save's bar was
         // already checked when it was arranged — but what the character can USE is built from both, and reading
         // them in this order is what makes the first rebuild right.
-        Mastery.Restore(d.masteryWeapons, d.masteryPoints, d.masterySkillIds, d.masterySkillUses, d.learnedSkillIds);
-        // AND WHAT THE MASTERY NOW OPENS. A skill added to the game since this character last played, or one whose
-        // level was retuned below where they already stand, is learned here rather than being unreachable.
-        Mastery.LearnWhatIsOpen();
+        Mastery.Restore(d.masteryWeapons, d.masteryPoints, d.skillLevelIds, d.skillLevels);
         // AND THE BAR IS HELD TO WHAT WAS LEARNED. A save arranged under an older rule — the weapon kit, which put
         // four skills on the bar that nobody had to learn — kept those keys on screen while the server refused
         // every press of them, and said nothing. The same test a bind command passes.

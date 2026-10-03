@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: Clears up to 3 harmful effects.
   archetype: 3
   family: 0

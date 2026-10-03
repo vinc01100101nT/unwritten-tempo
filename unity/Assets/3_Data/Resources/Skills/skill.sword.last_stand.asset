@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 40
   needsSkillId: skill.sword.brace
   published: 1
+  maxLevel: 5
   description: 'Cornered, you hold the line.
 
     Dropping to low HP arms 5 more

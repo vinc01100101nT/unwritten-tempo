@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -12,7 +12,7 @@ tags:
 
 ## What the Ring is
 
-The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). Since [V4](gameplay-system-v4/README.md) it is **part of the character, not an item**: there is no ring to wear and no ring slot, and what it has earned always counts. **The Ring is the larger half of what scales a skill's power**; a character's own **practice** adds a second, smaller lift on top (up to +30%, added to the ring's term, never multiplied) — Skill Mastery on an active, Weapon Mastery on a passive. The ring reaches every channel; practice reaches only a skill's output, never a duration. See the Channels Catalog for the split.
+The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). Since [V4](gameplay-system-v4/README.md) it is **part of the character, not an item**: there is no ring to wear and no ring slot, and what it has earned always counts. **The Ring is the larger half of what scales a skill's power**; the **level** a character has bought in the skill with mastery points adds a second lift on top (+5% a level after the first — +45% at level 10 — added to the ring's term, never multiplied), the same for an active, a passive and an ultimate. The ring reaches every channel; a skill's level reaches only its main numbers, never a duration. See the Channels Catalog for the split.
 
 ## The ten Ring stats — BUILT
 
@@ -63,7 +63,7 @@ passive%(stat) = Cap × R / (R + K)      (R = ranks invested)
 
 The Ring does exactly one thing to skills: **multiply their numbers.** It adds no new behaviors. `Character.RingBonus(StatId)` returns the passive %, and `SkillEffectApplier.AffinityMult` multiplies each skill effect's output by it, weighted per-effect (`affinity` lists).
 
-- **Skills don't level** — a skill's power comes entirely from your Ring stats.
+- **The Ring is the larger part of a skill's power.** The skill's own level, bought with weapon mastery points ([V4 §7](gameplay-system-v4/README.md)), adds a smaller lift to the ring's term.
 - **Role is locked by which stat scales what:** healing scales off **MP**; damage scales off **Attack / Magic Attack**. A support who invested MP hits like wet paper with a damage weapon; a damage build heals for crumbs with a staff. **Swapping weapons swaps your skills, never your power** — that stays bound to your Ring.
 - **Ring behavioral "voices"** (auto-firing new behaviors from ring investment) are **deferred** to a later version (per V3). The Ring is numbers-only for now.
 
@@ -86,7 +86,7 @@ A separate design direction once explored making the Ring a **tradeable in-world
 - [Active Skill System — V3](active-skill-system-v3/README.md) — the design doc that makes the Ring scaling-only and locks roles through it.
 - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md) — which ring stat each channel scales off, by default.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — mobs on the same ring curve, and the sub-stats the ring lifts.
-- [Gameplay System — V4](gameplay-system-v4/README.md) — what made the ring part of the character, and the practice that now lifts a skill's output.
+- [Gameplay System — V4](gameplay-system-v4/README.md) — what made the ring part of the character, and the skill levels that now lift a skill's output.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](pre-renewal-ro-port.md) — the flat stat layer this percentage layer sits on top of.
 - [HUD/UI System — Design & Relay](hud-ui-system.md) — the draft panel and character sheet that show it.
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the tradeable-ring lore direction, still uncommitted.

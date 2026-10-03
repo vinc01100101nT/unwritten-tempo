@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 9
   needsSkillId: 
   published: 1
+  maxLevel: 1
   description: 'Take it now, pay it later.
 
     Arms 5 charges for 4s. Each holds

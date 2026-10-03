@@ -113,6 +113,19 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     GameObject ghost;
     static readonly List<RaycastResult> raycastBuf = new List<RaycastResult>(16);
 
+    /// <summary>True while any skill is being dragged out of the Skills window — that window holds its redraws
+    /// until the drag ends, because a redraw destroys the very row the drag started from.</summary>
+    public static bool AnyDragging { get; private set; }
+
+    // A row destroyed mid-drag never hears the drag end, so the ghost it made would stay on screen.
+    void OnDisable()
+    {
+        if (ghost == null) return;
+        Destroy(ghost);
+        ghost = null;
+        AnyDragging = false;
+    }
+
     public void OnBeginDrag(PointerEventData e)
     {
         if (string.IsNullOrEmpty(skillId)) return;
@@ -126,6 +139,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
         img.raycastTarget = false;
         ((RectTransform)ghost.transform).sizeDelta = new Vector2(44, 44);
+        AnyDragging = true;
         Position(e);
     }
 
@@ -134,6 +148,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnEndDrag(PointerEventData e)
     {
         if (ghost != null) { Destroy(ghost); ghost = null; }
+        AnyDragging = false;
         if (string.IsNullOrEmpty(skillId) || Character.Instance == null || EventSystem.current == null) return;
 
         raycastBuf.Clear();

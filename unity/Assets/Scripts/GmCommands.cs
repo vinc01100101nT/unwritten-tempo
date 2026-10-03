@@ -205,8 +205,12 @@ public static class GmCommands
             "Put a Raw, unfolded weapon base in your bag. Type = sword/bow/… (default: a random weapon base). " +
             "Fold it and quench it at a smith.", CmdWeapon, false, true, "drop"));
         Register(new GmCommand("mastery", "mastery [weapon] <n>",
-            "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands), and learn " +
-            "whatever that opens. No arguments reports what you have practised.", CmdMastery, false, true));
+            "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands) — one mastery " +
+            "point per level, to spend in the Skills window. No arguments reports what you have practised.",
+            CmdMastery, false, true));
+        Register(new GmCommand("resetskills", "resetskills [weapon|all]",
+            "Take back every mastery point spent on a weapon's skills (default: the one in your hands; all = every " +
+            "weapon), so they can be spent again.", CmdResetSkills, false, true));
         Register(new GmCommand("station", "station <smith|loom|tannery|none>",
             "Testing: make the nearest townsperson work at a station, so their station window opens on F. Lasts " +
             "until the world is reloaded.", CmdStation, false, true));
@@ -439,7 +443,7 @@ public static class GmCommands
     }
 
     // Testing door for the mastery tracks: a level is thousands of kills wide, and a play-test cannot fight
-    // them. Sets the practice to exactly what that level costs and learns whatever it opens.
+    // them. Sets the practice to exactly what that level costs; the points it gives are spent in the Skills window.
     static void CmdMastery(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
@@ -455,7 +459,7 @@ public static class GmCommands
                 int lvl = c.Ch.Mastery.EarnedLevel(w);
                 if (lvl <= 0) continue;
                 if (any) sb.Append(", ");
-                sb.Append(w).Append(' ').Append(lvl);
+                sb.Append(w).Append(' ').Append(lvl).Append(" (").Append(c.Ch.Mastery.PointsLeft(w)).Append(" points left)");
                 any = true;
             }
             if (!any) sb.Append("nothing yet");
@@ -480,10 +484,33 @@ public static class GmCommands
         if (level < 0) { c.Reply("mastery [weapon] <n>"); return; }
 
         c.Ch.Mastery.SetPractice(weapon, MasteryMath.WeaponXpFor(level));
-        int learned = c.Ch.Mastery.LearnWhatIsOpen();
+        GameNetwork.SaveSoonFor(c.Ch);
+        c.Reply($"{weapon} mastery {c.Ch.Mastery.EarnedLevel(weapon)} — {c.Ch.Mastery.PointsLeft(weapon)} mastery " +
+                $"point(s) left to spend, {c.Ch.WeaponMasteryLevel} usable with what you are holding.");
+    }
+
+    // The only way to take spent mastery points back, until the game has a refund of its own.
+    static void CmdResetSkills(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        var weapon = c.Ch.HeldWeapon;
+        if (c.ArgCount > 0)
+        {
+            var a = c.Arg(0);
+            if (string.Equals(a, "all", StringComparison.OrdinalIgnoreCase)) weapon = WeaponType.None;
+            else if (!Enum.TryParse(a, true, out weapon) || weapon == WeaponType.None)
+            {
+                c.Reply($"Don't know '{a}' — expected a weapon type or 'all'.");
+                return;
+            }
+        }
+        else if (weapon == WeaponType.None) { c.Reply("Hold a weapon, or name one (or 'all')."); return; }
+
+        int back = c.Ch.Mastery.ResetPoints(weapon);
         c.Ch.RefreshUsableSkills();
-        c.Reply($"{weapon} mastery {c.Ch.Mastery.EarnedLevel(weapon)} — {learned} new skill(s) learned, " +
-                $"{c.Ch.WeaponMasteryLevel} usable with what you are holding.");
+        GameNetwork.SaveSoonFor(c.Ch);
+        c.Reply(back == 0 ? "No points were spent there."
+                          : $"{back} mastery point(s) back on {(weapon == WeaponType.None ? "every weapon" : weapon.ToString())}.");
     }
 
     static void CmdClearBag(GmContext c)

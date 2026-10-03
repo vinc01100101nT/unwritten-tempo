@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 27
   needsSkillId: 
   published: 1
+  maxLevel: 10
   description: 'Wind up and commit.
 
     A slow, telegraphed heavy blow for 200%

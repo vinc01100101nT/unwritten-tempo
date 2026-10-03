@@ -108,7 +108,7 @@
           "state": "done",
           "when": "21 Sep 2026",
           "title": "Skills are learned",
-          "text": "Weapons no longer carry skills: you **learn them by fighting** with a weapon, and each skill grows as you use it. Press **K** for the new Skills window. The ring is now part of you, shown in the Character window."
+          "text": "Weapons no longer carry skills. Every level of a **weapon mastery** gives you one **mastery point**; spend points in the **Skills window (K)** to learn a skill and raise its level. Each level after the first adds **5%** to the skill's numbers that grow, and a skill goes up to level 10, 5 or 1. The ring is now part of you, shown in the Character window."
         },
         {
           "state": "done",

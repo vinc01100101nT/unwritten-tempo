@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 17
   needsSkillId: skill.sword.momentum
   published: 1
+  maxLevel: 5
   description: 'Stay on one foe.
 
     Every basic attack grants extra Rising Breeze equal

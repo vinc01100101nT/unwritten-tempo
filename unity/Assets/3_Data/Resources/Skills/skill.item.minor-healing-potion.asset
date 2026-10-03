@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: Restores 30 HP at once.
   archetype: 3
   family: 0

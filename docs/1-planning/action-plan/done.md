@@ -130,15 +130,6 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
     Every cost, every roll and every grade is the server's; the window draws what it is told.
     *Done when:* a sword is forged from copper, folded five times, quenched, and written on — each step paid for.
 
-  - [DONE] `ST-39-E` **`[E]` Weapon Mastery.** Earned by the share of a creature you took down with that weapon,
-    scaled by the fight's challenge and the weapon's grade, capped by that grade. It raises three stats that fit
-    the weapon and unlocks its skills. Creatures have one too, authored as their level.
-    *Done when:* a kill with a sword raises Sword Mastery and nothing else, and a skill opens at its level.
-
-  - [DONE] `ST-39-F` **`[E]` Skill Mastery.** Earned per completed press, lifts that skill's own output up to +30%.
-    A passive rides the weapon's mastery instead, since nobody presses one.
-    *Done when:* pressing one skill repeatedly raises the number on its own card and no other.
-
 ---
 
 ## Week 4 — Killing things pays you

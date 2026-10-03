@@ -15,8 +15,6 @@ public static class MasteryMath
     // goes to the weapon in hand (decided 2026-09-30), times its grade's speed — on the CHARACTER's own curve: mastery
     // M to M+1 costs what base level M+1 does (UnitStatMath.LevelCost), so mastery 0 stands where base level 1 does.
     // It goes on earning after the character stops at 99.
-    // SKILL MASTERY: uses; reaching level N costs 5 × N uses, so 2,325 to reach 30.
-    public const int SkillUsesPerLevelStep = 5;
 
     /// <summary>The scale of every kill's experience the weapon in hand is paid: two thirds, before its grade's speed.</summary>
     public const double WeaponShareOfExperience = 2.0 / 3.0;
@@ -89,42 +87,26 @@ public static class MasteryMath
     public static double WeaponXpFromKill(int xp, Quality heldQuality)
         => UnitStatMath.ShareOfKill(xp, WeaponShareOfExperience * CraftingMath.TrainingSpeed(heldQuality));
 
-    /// <summary>Total uses a skill mastery of <paramref name="level"/> has cost.</summary>
-    public static float SkillUsesFor(int level)
-        => level <= 0 ? 0f : SkillUsesPerLevelStep * level * (level + 1) * 0.5f;
-
-    /// <summary>The skill mastery level <paramref name="uses"/> buys.</summary>
-    public static int SkillLevelFrom(float uses)
-    {
-        float steps = uses / SkillUsesPerLevelStep;
-        if (steps < 1f) return 0;
-        // L(L+1)/2 <= steps  →  L = floor((sqrt(8s+1) − 1) / 2)
-        return Mathf.FloorToInt((Mathf.Sqrt(8f * steps + 1f) - 1f) * 0.5f);
-    }
-
     // ---- what a level is worth ----------------------------------------------------------------------------
     /// <summary>What ONE weapon mastery level adds to each of that weapon's three stats — +0.5%, so a level-70
     /// mastery is +35% on each.</summary>
     public const float WeaponPercentPerLevel = 0.005f;
 
-    /// <summary>What ONE skill mastery level adds to that skill's output — +1%, so level 30 is +30%.</summary>
-    public const float SkillPercentPerLevel = 0.01f;
-
-    /// <summary>The most any mastery may lift a skill's output, whichever mastery it comes from.</summary>
-    public const float MaxSkillLift = 0.30f;
-
     /// <summary>The percentage a weapon mastery of <paramref name="level"/> adds to each of its stats.</summary>
     public static float WeaponPercent(int level) => Mathf.Max(0, level) * WeaponPercentPerLevel;
 
-    /// <summary>The lift a skill mastery of <paramref name="level"/> puts on that skill's output.</summary>
-    public static float SkillLift(int level) => Mathf.Min(MaxSkillLift, Mathf.Max(0, level) * SkillPercentPerLevel);
+    // ---- skill levels, bought with mastery points ---------------------------------------------------------
+    // A skill is learned and raised by SPENDING mastery points on it (decided 2026-10-03): one point per weapon
+    // mastery level, one point per skill level. Practice no longer raises a skill.
 
-    /// <summary>What a PASSIVE's output is lifted by. A passive cannot be used on purpose, so it earns no skill
-    /// mastery of its own and rides the weapon's instead — half a percent a level, to the same ceiling.</summary>
-    public static float PassiveLift(int weaponMasteryLevel)
-        => Mathf.Min(MaxSkillLift, Mathf.Max(0, weaponMasteryLevel) * WeaponPercentPerLevel);
+    /// <summary>The mastery points a weapon mastery of <paramref name="weaponLevel"/> has given — one per level.</summary>
+    public static int SkillPointsFor(int weaponLevel) => Mathf.Max(0, weaponLevel);
 
-    /// <summary>What one completed press of a skill is worth toward that skill's mastery — one use, at the speed
-    /// the weapon in hand trains.</summary>
-    public static float PracticeFromUse(Quality weaponQuality) => CraftingMath.TrainingSpeed(weaponQuality);
+    /// <summary>What every skill level after the first adds to each number the fight raises — +5%, so a skill at
+    /// level 10 is +45% and one at level 5 is +20%.</summary>
+    public const float SkillLevelPercent = 0.05f;
+
+    /// <summary>The lift a skill at <paramref name="level"/> puts on its output. Level 1 is the skill exactly as
+    /// authored; 0 is not learned, and lifts nothing.</summary>
+    public static float SkillLevelLift(int level) => Mathf.Max(0, level - 1) * SkillLevelPercent;
 }

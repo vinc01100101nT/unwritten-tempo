@@ -2,20 +2,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// WHAT A CHARACTER HAS PRACTISED — one mastery per weapon type, one per skill, and the skills they have learned
-/// because of them. It is PART OF THE CHARACTER and permanent: the weapon in hand caps what may be USED and what
-/// may be EARNED, but nothing ever takes away what was earned before.
+/// WHAT A CHARACTER HAS PRACTISED AND LEARNED — one mastery per weapon type, and the level of every skill they have
+/// spent mastery points on. It is PART OF THE CHARACTER and permanent: the weapon in hand caps what may be USED and
+/// what may be EARNED, but nothing in play takes away what was earned or bought.
 ///
-/// <para>A plain C# class, like the ring: <see cref="Character"/> owns one. Levels are DERIVED from the practice
-/// (<see cref="MasteryMath"/>), never stored beside it, so the two can never disagree.</para>
+/// <para>A plain C# class, like the ring: <see cref="Character"/> owns one. Mastery levels are DERIVED from the
+/// practice, and the points a weapon has left are DERIVED from its level and what was spent (<see cref="MasteryMath"/>),
+/// never stored beside them, so none of them can disagree.</para>
 /// </summary>
 public sealed class MasteryProgress
 {
     readonly Dictionary<WeaponType, double> weaponPoints = new Dictionary<WeaponType, double>();
-    readonly Dictionary<string, float> skillUses = new Dictionary<string, float>();
-    readonly HashSet<string> learned = new HashSet<string>();
+    // Skill id → the level bought. Only skills with a level of 1 or more have an entry: an entry IS "learned".
+    readonly Dictionary<string, int> skillLevels = new Dictionary<string, int>(32);
 
-    /// <summary>Raised whenever practice or the learned set changes, so a window can redraw.</summary>
+    /// <summary>Raised whenever practice or a skill level changes, so a window can redraw.</summary>
     public event System.Action OnChanged;
 
     // ---- weapon mastery -----------------------------------------------------------------------------------
@@ -128,95 +129,238 @@ public sealed class MasteryProgress
         OnChanged?.Invoke();
     }
 
-    // ---- skill mastery ------------------------------------------------------------------------------------
+    // ---- skill levels, bought with mastery points ----------------------------------------------------------
 
-    /// <summary>Uses recorded for one skill.</summary>
-    public float UsesOf(string skillId)
-        => !string.IsNullOrEmpty(skillId) && skillUses.TryGetValue(skillId, out float u) ? u : 0f;
+    /// <summary>The level bought in <paramref name="skillId"/> — 0 when it is not learned.</summary>
+    public int LevelOf(string skillId)
+        => !string.IsNullOrEmpty(skillId) && skillLevels.TryGetValue(skillId, out int l) ? l : 0;
 
-    /// <summary>The skill mastery level EARNED for one skill — before any cap.</summary>
-    public int EarnedSkillLevel(string skillId) => MasteryMath.SkillLevelFrom(UsesOf(skillId));
-
-    /// <summary>The skill mastery level in use, held to what the weapon in hand allows.</summary>
-    public int UsableSkillLevel(string skillId, Quality heldQuality)
-        => Mathf.Min(EarnedSkillLevel(skillId), CraftingMath.SkillMasteryCap(heldQuality));
-
-    /// <summary>Record one completed press. Refused once capped by what is in hand.</summary>
-    public void AddUse(string skillId, float uses, Quality heldQuality)
-    {
-        if (string.IsNullOrEmpty(skillId) || uses <= 0f) return;
-        int cap = CraftingMath.SkillMasteryCap(heldQuality);
-        if (EarnedSkillLevel(skillId) >= cap) return;
-        skillUses[skillId] = Mathf.Min(UsesOf(skillId) + uses, MasteryMath.SkillUsesFor(cap));
-        OnChanged?.Invoke();
-    }
-
-    // ---- what has been learned ----------------------------------------------------------------------------
-
-    /// <summary>True when this character has learned <paramref name="skillId"/>.</summary>
-    public bool HasLearned(string skillId) => !string.IsNullOrEmpty(skillId) && learned.Contains(skillId);
+    /// <summary>True when this character has learned <paramref name="skillId"/> — at least one point is in it.</summary>
+    public bool HasLearned(string skillId) => LevelOf(skillId) >= 1;
 
     /// <summary>How many skills are known.</summary>
-    public int LearnedCount => learned.Count;
+    public int LearnedCount => skillLevels.Count;
 
-    /// <summary>Learn one skill outright. Used by the server when a mastery level opens it, and by a save.</summary>
-    public bool Learn(string skillId)
+    /// <summary>Changes every time a skill level does, so a sender can tell "nothing was bought" from "the same
+    /// number of skills, different levels".</summary>
+    public int LevelsVersion { get; private set; }
+
+    /// <summary>The level of <paramref name="skillId"/> that counts while a weapon of <paramref name="heldQuality"/>
+    /// is held — what was bought, held to what that grade lets count (<see cref="CraftingMath.SkillLevelCap"/>).</summary>
+    public int UsableSkillLevel(string skillId, Quality heldQuality)
     {
-        if (string.IsNullOrEmpty(skillId) || !learned.Add(skillId)) return false;
+        int bought = LevelOf(skillId);
+        if (bought <= 0) return 0;
+        var def = SkillCatalog.Get(skillId);
+        return def != null ? Mathf.Min(bought, CraftingMath.SkillLevelCap(heldQuality, def.maxLevel)) : 0;
+    }
+
+    /// <summary>The mastery points already spent on <paramref name="weapon"/>'s skills.</summary>
+    public int PointsSpentOn(WeaponType weapon)
+    {
+        int spent = 0;
+        foreach (var kv in skillLevels)
+        {
+            var def = SkillCatalog.Get(kv.Key);
+            if (def != null && def.weaponType == weapon) spent += kv.Value;
+        }
+        return spent;
+    }
+
+    /// <summary>SERVER: the mastery points <paramref name="weapon"/> still has to spend — one per mastery level
+    /// earned, less what is already in its skills.</summary>
+    public int PointsLeft(WeaponType weapon)
+        => weapon == WeaponType.None ? 0 : Mathf.Max(0, MasteryMath.SkillPointsFor(EarnedLevel(weapon)) - PointsSpentOn(weapon));
+
+    /// <summary>SERVER: spend one mastery point on <paramref name="skillId"/>, raising it a level — learning it when it
+    /// was at 0. Refused, with the reason in one sentence for the player, when the skill belongs to no weapon, is
+    /// already at its highest level, opens at a mastery level not reached yet, needs a skill not learned yet, or its
+    /// weapon has no point left.</summary>
+    public bool TrySpend(string skillId, out string why)
+    {
+        why = null;
+        // THE SERVER SPENDS, never the machine whose world is elsewhere: it asks, and wears what comes back.
+        if (GameNetwork.TheWorldIsElsewhere) return false;
+        var def = SkillCatalog.Get(skillId);
+        if (def == null || def.weaponType == WeaponType.None || def.maxLevel <= 0)
+        {
+            why = "That skill cannot be learned.";
+            return false;
+        }
+        string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
+        int level = LevelOf(skillId);
+        if (level >= def.maxLevel)
+        {
+            why = name + " is already at its highest level.";
+            return false;
+        }
+        int opensAt = Mathf.Max(1, def.masteryLevel);
+        if (EarnedLevel(def.weaponType) < opensAt)
+        {
+            why = name + " opens at " + def.weaponType + " Mastery " + opensAt + ".";
+            return false;
+        }
+        if (!string.IsNullOrEmpty(def.needsSkillId) && !HasLearned(def.needsSkillId))
+        {
+            var need = SkillCatalog.Get(def.needsSkillId);
+            why = name + " needs " + (need != null ? need.displayName : def.needsSkillId) + " first.";
+            return false;
+        }
+        if (PointsLeft(def.weaponType) <= 0)
+        {
+            why = "No " + def.weaponType + " mastery points left.";
+            return false;
+        }
+
+        skillLevels[def.id] = level + 1;
+        LevelsVersion++;
         OnChanged?.Invoke();
         return true;
     }
 
-    /// <summary>Learn everything this character's masteries now open, in the catalog's own order so a skill that
-    /// needs another is always reached after it. Returns how many were newly learned.</summary>
-    public int LearnWhatIsOpen()
+    /// <summary>SERVER: take back every point spent on <paramref name="weapon"/>'s skills (every weapon's, when it is
+    /// <see cref="WeaponType.None"/>), so they can be spent again. The testing door (<c>/resetskills</c>) — nothing in
+    /// the game calls it. Returns how many points came back.</summary>
+    public int ResetPoints(WeaponType weapon)
     {
-        int gained = 0;
-        var all = SkillCatalog.All;
-        // Two passes, because a skill may need one that is opened by the same call.
-        for (int pass = 0; pass < 2; pass++)
-            for (int i = 0; i < all.Count; i++)
-            {
-                var def = all[i];
-                if (def == null || string.IsNullOrEmpty(def.id) || learned.Contains(def.id)) continue;
-                if (def.weaponType == WeaponType.None) continue;
-                // AN UNWRITTEN LEVEL IS LEVEL ONE — the same reading the skill's own tooltip, the creature's
-                // list and the Skills window give it, so a pool authored without one is not learned by everybody.
-                if (EarnedLevel(def.weaponType) < Mathf.Max(1, def.masteryLevel)) continue;
-                if (!string.IsNullOrEmpty(def.needsSkillId) && !learned.Contains(def.needsSkillId)) continue;
-                learned.Add(def.id);
-                gained++;
-            }
-        if (gained > 0) OnChanged?.Invoke();
-        return gained;
+        int back = 0;
+        resetScratch.Clear();
+        foreach (var kv in skillLevels)
+        {
+            var def = SkillCatalog.Get(kv.Key);
+            if (weapon != WeaponType.None && (def == null || def.weaponType != weapon)) continue;
+            resetScratch.Add(kv.Key);
+            back += kv.Value;
+        }
+        for (int i = 0; i < resetScratch.Count; i++) skillLevels.Remove(resetScratch[i]);
+        if (resetScratch.Count > 0)
+        {
+            LevelsVersion++;
+            OnChanged?.Invoke();
+        }
+        return back;
     }
+    readonly List<string> resetScratch = new List<string>(16);
+
+    // ---- the points left, as the server sent them -----------------------------------------------------------
+    // A player's machine works out no points of its own (CLAUDE.md, RULE NOCLIENTMATH): the server sends each
+    // weapon's points left beside its level, and the Skills window draws that number as it arrived.
+    readonly Dictionary<WeaponType, int> sentPointsLeft = new Dictionary<WeaponType, int>();
+
+    /// <summary>SERVER: the points left of each weapon in <paramref name="weapons"/>, in the same order, to send.</summary>
+    public int[] PointsLeft(int[] weapons)
+    {
+        var left = new int[weapons != null ? weapons.Length : 0];
+        for (int i = 0; i < left.Length; i++) left[i] = PointsLeft((WeaponType)weapons[i]);
+        return left;
+    }
+
+    /// <summary>PLAYER'S MACHINE: keep the points left the server sent, replacing the last set.</summary>
+    public void TakeSentPointsLeft(int[] weapons, int[] left)
+    {
+        sentPointsLeft.Clear();
+        if (weapons != null && left != null)
+            for (int i = 0; i < weapons.Length && i < left.Length; i++) sentPointsLeft[(WeaponType)weapons[i]] = left[i];
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>The points left the server last sent for <paramref name="weapon"/> — 0 before any arrives.</summary>
+    public int SentPointsLeft(WeaponType weapon) => sentPointsLeft.TryGetValue(weapon, out int l) ? l : 0;
+
+    // ---- what each level is worth, as the server sent it ----------------------------------------------------
+    // The hover card shows every growing number now and at the next level. Those are game numbers, so the server
+    // works them out (SkillLevelNumbers) and this machine only keeps and draws them.
+    readonly Dictionary<string, SkillLevelView> sentViews = new Dictionary<string, SkillLevelView>(32);
+
+    /// <summary>SERVER: for every skill that belongs to a weapon, the level that counts and its raised numbers now and
+    /// at the next level bought, as <paramref name="owner"/> would land them — finished values for the hover card,
+    /// flattened with a count per skill. A skill of the weapon in hand counts only the levels that weapon's grade
+    /// allows and carries its trademark's lift; any other weapon's skill shows every level bought, since which of that
+    /// weapon's grades will be held is not known. An unlearned skill's "now" is its numbers at level 1 and its next
+    /// level is level 1; a skill the grade holds back shows the same numbers in both.</summary>
+    public void CaptureViews(Character owner, out string[] ids, out int[] usable, out int[] counts,
+                             out float[] now, out float[] next)
+    {
+        var held = owner != null ? owner.HeldWeapon : WeaponType.None;
+        var heldQuality = owner != null ? owner.HeldQuality : Quality.Raw;
+        viewIds.Clear(); viewUsable.Clear(); viewCounts.Clear(); viewNow.Clear(); viewNext.Clear();
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var def = all[i];
+            if (def == null || string.IsNullOrEmpty(def.id) || def.weaponType == WeaponType.None) continue;
+            bool inHand = def.weaponType == held;
+            int cap = inHand ? CraftingMath.SkillLevelCap(heldQuality, def.maxLevel) : def.maxLevel;
+            int bought = LevelOf(def.id);
+            int counting = Mathf.Min(bought, cap);
+            int countingNext = Mathf.Min(Mathf.Min(bought + 1, def.maxLevel), cap);
+            float trademark = inHand && owner != null ? owner.TrademarkLift(def.id) : 0f;
+            int before = viewNow.Count;
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(counting) + trademark, viewNow);
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(countingNext) + trademark, viewNext);
+            viewIds.Add(def.id);
+            viewUsable.Add(counting);
+            viewCounts.Add(viewNow.Count - before);
+        }
+        ids = viewIds.ToArray();
+        usable = viewUsable.ToArray();
+        counts = viewCounts.ToArray();
+        now = viewNow.ToArray();
+        next = viewNext.ToArray();
+    }
+    readonly List<string> viewIds = new List<string>(32);
+    readonly List<int> viewUsable = new List<int>(32), viewCounts = new List<int>(32);
+    readonly List<float> viewNow = new List<float>(48), viewNext = new List<float>(48);
+
+    /// <summary>PLAYER'S MACHINE: keep what the server sent about every weapon skill — its usable level with the weapon
+    /// in hand, and its growing numbers now and at the next level, flattened with a count per skill.</summary>
+    public void TakeSentViews(string[] ids, int[] usable, int[] counts, float[] now, float[] next)
+    {
+        sentViews.Clear();
+        if (ids != null && usable != null && counts != null && now != null && next != null)
+        {
+            int at = 0;
+            for (int i = 0; i < ids.Length && i < usable.Length && i < counts.Length; i++)
+            {
+                int c = counts[i];
+                if (c < 0 || at + c > now.Length || at + c > next.Length) break;
+                var v = new SkillLevelView { usable = usable[i], now = new float[c], next = new float[c] };
+                System.Array.Copy(now, at, v.now, 0, c);
+                System.Array.Copy(next, at, v.next, 0, c);
+                sentViews[ids[i]] = v;
+                at += c;
+            }
+        }
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>What the server last sent about <paramref name="skillId"/>; false before any arrives.</summary>
+    public bool SentView(string skillId, out SkillLevelView view)
+        => sentViews.TryGetValue(skillId ?? "", out view);
 
     // ---- save / load --------------------------------------------------------------------------------------
 
     /// <summary>Everything, as the flat arrays a save carries.</summary>
-    public void Capture(out int[] weapons, out double[] points, out string[] skillIds, out float[] uses, out string[] known)
+    public void Capture(out int[] weapons, out double[] points, out string[] skillIds, out int[] levels)
     {
         weapons = new int[weaponPoints.Count];
         points = new double[weaponPoints.Count];
         int at = 0;
         foreach (var kv in weaponPoints) { weapons[at] = (int)kv.Key; points[at] = kv.Value; at++; }
 
-        skillIds = new string[skillUses.Count];
-        uses = new float[skillUses.Count];
+        skillIds = new string[skillLevels.Count];
+        levels = new int[skillLevels.Count];
         at = 0;
-        foreach (var kv in skillUses) { skillIds[at] = kv.Key; uses[at] = kv.Value; at++; }
-
-        known = new string[learned.Count];
-        learned.CopyTo(known);
+        foreach (var kv in skillLevels) { skillIds[at] = kv.Key; levels[at] = kv.Value; at++; }
     }
 
-    /// <summary>Replace everything from a save. A skill id the game no longer has is dropped, so a retired skill
-    /// cannot linger as something nobody can cast.</summary>
-    public void Restore(int[] weapons, double[] points, string[] skillIds, float[] uses, string[] known)
+    /// <summary>Replace everything from a save. A skill id the game no longer has, or one that belongs to no weapon,
+    /// is dropped, and a level above the skill's highest is held to it — so a retired or retuned skill can never
+    /// linger as something nobody can cast, or count for more than it can be bought to.</summary>
+    public void Restore(int[] weapons, double[] points, string[] skillIds, int[] levels)
     {
         weaponPoints.Clear();
-        skillUses.Clear();
-        learned.Clear();
+        skillLevels.Clear();
 
         if (weapons != null && points != null)
             for (int i = 0; i < weapons.Length && i < points.Length; i++)
@@ -225,15 +369,25 @@ public sealed class MasteryProgress
                 if (w != WeaponType.None && points[i] > 0.0) weaponPoints[w] = points[i];
             }
 
-        if (skillIds != null && uses != null)
-            for (int i = 0; i < skillIds.Length && i < uses.Length; i++)
-                if (!string.IsNullOrEmpty(skillIds[i]) && SkillCatalog.IsKnown(skillIds[i]) && uses[i] > 0f)
-                    skillUses[skillIds[i]] = uses[i];
+        if (skillIds != null && levels != null)
+            for (int i = 0; i < skillIds.Length && i < levels.Length; i++)
+            {
+                var def = string.IsNullOrEmpty(skillIds[i]) ? null : SkillCatalog.Get(skillIds[i]);
+                if (def == null || def.weaponType == WeaponType.None) continue;
+                int level = Mathf.Min(levels[i], def.maxLevel);
+                if (level >= 1) skillLevels[def.id] = level;
+            }
 
-        if (known != null)
-            for (int i = 0; i < known.Length; i++)
-                if (!string.IsNullOrEmpty(known[i]) && SkillCatalog.IsKnown(known[i])) learned.Add(known[i]);
-
+        LevelsVersion++;
         OnChanged?.Invoke();
     }
+}
+
+/// <summary>What the server told this machine about one skill's levels: the level that counts with the weapon in
+/// hand, and each growing number (in the order <see cref="SkillLevelNumbers"/> lists them) now and at the next level.</summary>
+public struct SkillLevelView
+{
+    public int usable;
+    public float[] now;
+    public float[] next;
 }

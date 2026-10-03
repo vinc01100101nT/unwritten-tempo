@@ -302,7 +302,8 @@ public class AgentLink : MonoBehaviour
         "talk <n#>                 talk to a townsperson\n" +
         "use <bag#|name> | equip <bag#> | unequip <slot>\n" +
         "stat <STR|AGI|VIT|INT|DEX|LUK>  spend a stat point\n" +
-        "bag | gear | stats        detail views\n" +
+        "learn <skill name|id>     spend a mastery point on a skill (learns it, or raises it a level)\n" +
+        "bag | gear | stats | skills  detail views (skills = the weapon in hand's skills, levels and points)\n" +
         "ground                    what you are standing on, and everything solid touching you\n" +
         "say <text>                chat; a /command runs like typed\n" +
         "revive                    press Return to last saved point when dead\n" +
@@ -334,6 +335,8 @@ public class AgentLink : MonoBehaviour
             case "equip": EquipItem(rest); return;
             case "unequip": UnequipSlot(rest); return;
             case "stat": SpendStat(rest); return;
+            case "learn": LearnSkill(rest); return;
+            case "skills": Text(SkillsText); return;
             case "ground": Text(GroundText); return;
             case "bag": Text(BagText); return;
             case "gear": Text(GearText); return;
@@ -1181,6 +1184,55 @@ public class AgentLink : MonoBehaviour
             if (kv.Value.upgrade > 0) sb.Append('+').Append(kv.Value.upgrade).Append(' ');
             sb.Append(kv.Value.def.displayName);
             if (kv.Value.quality != Quality.Raw) sb.Append(" [").Append(kv.Value.quality).Append(']');
+        }
+        return sb.ToString();
+    }
+
+    // A mastery point spent the way the Skills window's + spends one: asked of the server, which answers with the
+    // whole picture or a line saying why not.
+    void LearnSkill(string which)
+    {
+        var def = FindWeaponSkill(which);
+        if (def == null) { Say("no weapon skill called '" + which + "' — try: skills"); return; }
+        var net = GameNetwork.MyPlayer;
+        if (net == null) { Say("not in the world"); return; }
+        net.AskToSpendSkillPoint(def.id);
+        float until = Time.unscaledTime + 0.6f;
+        WaitFor(() => Time.unscaledTime > until ? "" : null, 2f, "");
+        Text(SkillsText);
+    }
+
+    static SkillDef FindWeaponSkill(string which)
+    {
+        if (string.IsNullOrEmpty(which)) return null;
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var d = all[i];
+            if (d == null || d.weaponType == WeaponType.None) continue;
+            if (string.Equals(d.id, which, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(d.displayName, which, StringComparison.OrdinalIgnoreCase)) return d;
+        }
+        return null;
+    }
+
+    string SkillsText()
+    {
+        var me = Character.Instance;
+        if (me == null) return "not in the world";
+        var w = me.HeldWeapon;
+        if (w == WeaponType.None) return "skills: hold a weapon";
+        var sb = new StringBuilder("skills ").Append(w).Append(" mastery ").Append(me.Mastery.SentLevel(w))
+            .Append(" | points left ").Append(me.Mastery.SentPointsLeft(w));
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var d = all[i];
+            if (d == null || d.weaponType != w) continue;
+            sb.Append("\n  ").Append(d.displayName).Append(" ").Append(me.Mastery.LevelOf(d.id)).Append('/')
+              .Append(Mathf.Max(1, d.maxLevel)).Append(" (opens at ").Append(Mathf.Max(1, d.masteryLevel)).Append(')');
+            if (me.Mastery.SentView(d.id, out var view) && me.Mastery.LevelOf(d.id) > view.usable)
+                sb.Append(" counts as ").Append(view.usable);
         }
         return sb.ToString();
     }

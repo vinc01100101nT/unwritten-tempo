@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -24,12 +24,13 @@ tags:
 
 ## The model in one paragraph
 
-A **weapon** grants skills — **rolled per copy** at the drop (`WeaponSkillRoll` → `EquipmentInstance.skillIds`), never
-listed on the shared asset, because two Swords off one def carry different kits. A **skill** is a `SkillDef` asset (authored in the Skill Composer)
+A **weapon** carries no skills: a character buys each skill with that weapon's mastery points and may use it only
+while holding that weapon type (`MasteryProgress`, [V4 §5–§7](../gameplay-system-v4/README.md)). A **skill** is a `SkillDef` asset (authored in the Skill Composer)
 that binds VFX ticks to a list of `SkillEffect`s. Each `SkillEffect` owns its **numbers** (the V3 *channels*:
 `damageMult`, `amount`, `seconds`, `magnitude`, `hitCount`, `chance`, binding `radius`, plus `SkillDef`
 cost/cooldown/castTime/range) **and** its **behavior** (the `SkillEffectKind`). The **ring** does exactly one thing to
-all of this: **scale it**, via per-effect **affinity** weight-lists. There is no separate mutation/affix/voice engine —
+all of this: **scale it**, via per-effect **affinity** weight-lists; the skill's own level adds a lift to that term
+(`Character.MasteryLift`). There is no separate mutation/affix/voice engine —
 every behavior is a `SkillEffect` running through the one `SkillEffectApplier`.
 
 ## How V3 maps to live code
@@ -37,7 +38,7 @@ every behavior is a `SkillEffect` running through the one `SkillEffectApplier`.
 | V3 concept | Code |
 | --- | --- |
 | **Channels** (the numbers) | fields on `SkillEffect` + `SkillDef`, each a `ScaledNumber` |
-| **Ring = numeric scaling only** | `affinity` / `durationAffinity` / `hitCountAffinity` / `chanceAffinity` (`List<StatWeight>`) → `SkillEffectApplier.AffinityMult` reads `Character.RingBonus(StatId)` (0 when no ring worn) |
+| **Ring = numeric scaling only** | `affinity` / `durationAffinity` / `hitCountAffinity` / `chanceAffinity` (`List<StatWeight>`) → `SkillEffectApplier.AffinityMult` reads `Character.RingBonus(StatId)` (the ring is part of the character and always counts) |
 | **Role-lock** (Heal→MP, Damage→Atk/MAtk) | the `affinity` weights authored on each effect — data, per skill. Per-channel scaling **defaults** locked in *Skill Numbers & Balance Baseline* |
 | **Damage type as data** | `DamageType {Physical, Magic, Crit}` on each `SkillEffect` (Physical = ATK vs armour, Magic = MATK/unmissable/no-crit, Crit = forced-crit) |
 | **Effects authored on skills** | `SkillEffectKind` + the `SkillEffectApplier` handlers |
@@ -230,9 +231,11 @@ no allocation.
 
 ## Standing facts
 
-- **A weapon's kit is per-copy**, rolled at the drop onto the `EquipmentInstance`; equipping fills the bar via `HotbarBindings.SetWeaponKit`, unequipping clears it. There is deliberately **no def-level kit field** — don't re-add one.
-- **Skills don't level.** Power comes from the ring (affinity). Skills come from the equipped weapon, plus the Grimoire
-  (**H**) for testing.
+- **A weapon carries no skills.** A character learns a skill by spending one of that weapon's mastery points on it in
+  the Skills window (K), and raises it a level with each further point; the server decides every spend
+  (`NetPlayer.CmdSpendSkillPoint` → `MasteryProgress.TrySpend`).
+- **Skills level.** Power comes from the ring (affinity) plus +5% a level after the first
+  (`MasteryMath.SkillLevelLift`), counting only the levels the held weapon's grade allows.
 - Multi-hit cascade, per-hit proc chance, and self-vs-mob effect routing all run through the one applier.
 - The composer is the ONLY writer of skill data; the tooltip, the wiki and the docs export are all readers. See §0 of the
   V3 design doc.

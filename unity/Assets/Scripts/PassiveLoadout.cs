@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 /// <summary>
 /// WHICH passive skills are live on a character — the ONE rule every passive is judged by, so no fire-site can
-/// forget it. A passive is live the moment it is LEARNED (its weapon's mastery reached its level), and it fires
-/// only while a weapon of its type is in hand — the same rule an active plays by. Nothing is ticked, chosen or
-/// saved: what the character has learned already says it all.
+/// forget it. A passive is live the moment it is LEARNED (a mastery point spent on it), and it fires only while a
+/// weapon of its type is in hand — the same rule an active plays by. Nothing else is ticked, chosen or saved: the
+/// level the character bought in it already says it all.
 ///
 /// <para>Owned by <see cref="Character"/> as <c>PassiveSkills</c>. The gate itself is applied in exactly one place —
 /// <see cref="PassiveEvents.Fire"/> — so a passive that isn't live simply never dispatches, whatever raised its

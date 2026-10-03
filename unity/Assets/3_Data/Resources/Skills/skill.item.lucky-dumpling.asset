@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: Raises crit chance by 5% for 120s.
   archetype: 3
   family: 0

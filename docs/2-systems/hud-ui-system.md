@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -16,10 +16,10 @@ Tracking issue: **VIN-22**.
 
 - **Camera** — RO-style 2.5D: true 3D world with billboard sprites, ¾ overhead/isometric-ish framing via a shared `CameraRig`. HUD assumes a fixed overhead view + feet-Y depth sorting. (Ragnarok bucket, not FFXIV/Albion.)
 - **Combat** — RO-style hybrid: click-to-move + click/point target, skills fired from the hotbar by key or click. Already have multi-hit bursts, status (stun/DoT), 10 elements, leech/reflect. No action-cam reticle.
-- **Skill count** — skills belong to a *weapon*, not a class, and are LEARNED by practising it: each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
+- **Skill count** — skills belong to a *weapon*, not a class, and are bought with that weapon's mastery points (one per mastery level) in the **Skills** window (K): each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. The window draws one weapon as a timeline of mastery 0–70 with a + button on each skill. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
 - **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + what a crafted piece carries: its **quality grade**, its **folds**, the stats **Ink** has written on it, and its card sockets. All of it is live and all of it persists.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
-  - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). *It used to name Bash / Charge / Caster as what it was wired to — those hand-written skills are gone; the bar is arranged by the player from what they have learned.*
+  - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). The bar is arranged by the player from what they have learned.
   - `StatPanel` (RO stat allocation)
   - pooled `DamagePopup`, `SpriteSheetCache`
   - skill icons from a Ninja Adventure UI set; shell baked via the **Build UI Shell** editor command

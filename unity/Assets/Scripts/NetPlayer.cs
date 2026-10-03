@@ -464,6 +464,10 @@ public class NetPlayer : NetworkBehaviour
             InventoryStore.Instance?.Notify();
         }
 
+        // …and the mastery, held for the same reason — a server resends it only when it changes, so one parked and
+        // never handed over would leave the Skills window empty until the next kill.
+        GiveWaitingMasteryToTheCharacter();
+
         // …and the character sheet, held for the same reason.
         if (sheetWaiting && Character.Instance != null)
         {
@@ -1326,56 +1330,72 @@ public class NetPlayer : NetworkBehaviour
         TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar));
     }
 
-    // ---- what they have practised ------------------------------------------------------------------------
+    // ---- what they have practised and learned ---------------------------------------------------------------
     //
-    // A player's machine works out no mastery of its own: it is told what was earned, what is usable with the
-    // weapon in hand, and which skills are known. Checked on the same beat as the sheet, and sent only when it
-    // moved — a level is thousands of kills wide, so it moves rarely.
+    // A player's machine works out no mastery of its own: it is told what was earned, how many points each weapon
+    // has left, the level bought in every skill, and — for the hover card — every growing number now and at the next
+    // level. Checked on the same beat as the sheet, and sent only when it moved: a mastery level is thousands of kills
+    // wide, and a skill level moves only when a point is spent.
     double sentPracticeTotal = -1.0;
-    int sentLearnedCount = -1;
-    // The weapon in hand and its grade decide which progress is shown and whether it is capped, so a swap resends.
+    int sentLevelsVersion = -1;
+    // The weapon in hand and its grade decide which progress is shown, whether it is capped, and how many of each
+    // skill's levels count, so a swap resends.
     WeaponType sentHeldWeapon = (WeaponType)(-1);
     Quality sentHeldGrade;
+    // The card's numbers also carry the ring's investment and the trademark of the exact weapon in hand.
+    int sentRingRanks = -1;
+    string sentTrademark = "";
 
     void PushMyMastery()
     {
         if (connectionToClient == null) return;
         if (ServerCombatUnit is not Character person || person == null) return;
 
-        person.Mastery.Capture(out var weapons, out var points, out var skillIds, out var uses, out var known);
+        person.Mastery.Capture(out var weapons, out var points, out var skillIds, out var levels);
         double total = 0.0;
         for (int i = 0; points != null && i < points.Length; i++) total += points[i];
-        for (int i = 0; uses != null && i < uses.Length; i++) total += uses[i];
         var held = person.HeldWeapon;
         var grade = person.HeldQuality;
-        if (System.Math.Abs(total - sentPracticeTotal) < 0.001 && known.Length == sentLearnedCount
-            && held == sentHeldWeapon && grade == sentHeldGrade) return;
+        int version = person.Mastery.LevelsVersion;
+        int ringRanks = person.Passives.TotalRanks();
+        var heldPiece = person.GetEquippedInstance(EquipSlotType.Weapon);
+        string trademark = heldPiece != null ? heldPiece.trademarkSkillId ?? "" : "";
+        // The card's numbers move only with a level bought, the weapon in hand or a ring pick — never with a kill's
+        // practice — so a kill resends the small arrays and leaves them out.
+        bool withViews = version != sentLevelsVersion || held != sentHeldWeapon || grade != sentHeldGrade
+                         || ringRanks != sentRingRanks || trademark != sentTrademark;
+        if (System.Math.Abs(total - sentPracticeTotal) < 0.001 && !withViews) return;
 
         sentPracticeTotal = total;
-        sentLearnedCount = known.Length;
+        sentLevelsVersion = version;
         sentHeldWeapon = held;
         sentHeldGrade = grade;
+        sentRingRanks = ringRanks;
+        sentTrademark = trademark;
         person.Mastery.CaptureProgress(held, grade, out var progWeapons, out var into, out var size, out var capped);
-        TargetMastery(connectionToClient, weapons, points, skillIds, uses, known, person.Mastery.EarnedLevels(weapons),
-                      progWeapons, into, size, capped);
+        string[] viewIds = null; int[] usable = null, counts = null; float[] now = null, next = null;
+        if (withViews) person.Mastery.CaptureViews(person, out viewIds, out usable, out counts, out now, out next);
+        TargetMastery(connectionToClient, weapons, points, skillIds, levels, person.Mastery.EarnedLevels(weapons),
+                      person.Mastery.PointsLeft(weapons), progWeapons, into, size, capped,
+                      withViews, viewIds, usable, counts, now, next);
     }
 
     [TargetRpc]
     void TargetMastery(NetworkConnectionToClient target, int[] weapons, double[] points,
-                       string[] skillIds, float[] uses, string[] known, int[] levels,
-                       int[] progWeapons, double[] into, double[] size, bool[] capped)
+                       string[] skillIds, int[] skillLevels, int[] levels, int[] pointsLeft,
+                       int[] progWeapons, double[] into, double[] size, bool[] capped,
+                       bool withViews, string[] viewIds, int[] usable, int[] counts, float[] now, float[] next)
     {
-        var me = Character.Instance;
-        if (me == null)
-        {
-            masteryWaitingForACharacter = new object[] { weapons, points, skillIds, uses, known, levels,
-                                                         progWeapons, into, size, capped };
-            return;
-        }
-        me.Mastery.Restore(weapons, points, skillIds, uses, known);
-        me.Mastery.TakeSentProgress(progWeapons, into, size, capped);
-        me.Mastery.TakeSentLevels(weapons, levels);
-        me.RefreshUsableSkills();
+        var p = new object[] { weapons, points, skillIds, skillLevels, levels, pointsLeft,
+                               progWeapons, into, size, capped, withViews, viewIds, usable, counts, now, next };
+        // A delivery still parked keeps the card's numbers it carried when a later one arrives without any.
+        if (!withViews && masteryWaitingForACharacter != null && (bool)masteryWaitingForACharacter[10])
+            for (int i = 10; i < p.Length; i++) p[i] = masteryWaitingForACharacter[i];
+        // THE NEWEST DELIVERY IS THE ONLY ONE THAT COUNTS. Whatever was parked is now older than this, so it is
+        // dropped here — handed over later, it would put back levels and points that are no longer true.
+        masteryWaitingForACharacter = null;
+        if (Character.Instance == null) { masteryWaitingForACharacter = p; return; }
+        TakeMastery(p);
     }
 
     // The same parking the sheet and the bag do: what arrives before this machine has built its character.
@@ -1386,10 +1406,49 @@ public class NetPlayer : NetworkBehaviour
         if (masteryWaitingForACharacter == null || Character.Instance == null) return;
         var p = masteryWaitingForACharacter;
         masteryWaitingForACharacter = null;
-        Character.Instance.Mastery.Restore((int[])p[0], (double[])p[1], (string[])p[2], (float[])p[3], (string[])p[4]);
-        Character.Instance.Mastery.TakeSentProgress((int[])p[6], (double[])p[7], (double[])p[8], (bool[])p[9]);
-        Character.Instance.Mastery.TakeSentLevels((int[])p[0], (int[])p[5]);
-        Character.Instance.RefreshUsableSkills();
+        TakeMastery(p);
+    }
+
+    // ONE way in for what the server sent, parked or not, so the two paths can never take it differently.
+    static void TakeMastery(object[] p)
+    {
+        var me = Character.Instance;
+        var weapons = (int[])p[0];
+        me.Mastery.Restore(weapons, (double[])p[1], (string[])p[2], (int[])p[3]);
+        me.Mastery.TakeSentLevels(weapons, (int[])p[4]);
+        me.Mastery.TakeSentPointsLeft(weapons, (int[])p[5]);
+        me.Mastery.TakeSentProgress((int[])p[6], (double[])p[7], (double[])p[8], (bool[])p[9]);
+        if ((bool)p[10]) me.Mastery.TakeSentViews((string[])p[11], (int[])p[12], (int[])p[13], (float[])p[14], (float[])p[15]);
+        me.RefreshUsableSkills();
+    }
+
+    /// <summary>Client-side: ask the server to spend one mastery point on <paramref name="skillId"/>. The server
+    /// decides; what comes back is the whole mastery picture, or a line saying why not.</summary>
+    public void AskToSpendSkillPoint(string skillId) => CmdSpendSkillPoint(skillId);
+
+    float nextRefusalLine;
+
+    [Command]
+    void CmdSpendSkillPoint(string skillId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null || string.IsNullOrEmpty(skillId) || skillId.Length > 128) return;
+        if (!c.Mastery.TrySpend(skillId, out string why))
+        {
+            // One reason a second at most: a client clicking a grey + in a loop must not turn into a chat flood.
+            if (connectionToClient != null && !string.IsNullOrEmpty(why) && Time.unscaledTime >= nextRefusalLine)
+            {
+                nextRefusalLine = Time.unscaledTime + 1f;
+                TargetTold(connectionToClient, why);
+            }
+            return;
+        }
+        // A skill bought for the first time may be a passive, which only runs once the list of what this character
+        // can use is rebuilt — the same rebuild a bar change makes.
+        c.RefreshUsableSkills();
+        SaveSoon();
+        PushMyMastery();
     }
 
     // WHAT ARRIVED BEFORE THERE WAS ANYBODY TO GIVE IT TO. The bag can land before this machine has built its

@@ -2196,17 +2196,18 @@ public class SkillComposerWindow : EditorWindow
     // one stat's slider pulls the budget out of the OTHER stats proportionally, so the total can never be a stale/wrong
     // number. LOCK a stat to freeze it: it holds its value while you drag the others, and only the remaining unlocked
     // stats absorb the change (a dragged stat is clamped to the budget the locks leave free). The % is a read-only label.
-    // WHAT PRACTICE DOES TO THIS NUMBER, stated where the ring rows are — so nothing lifts an effect without the
-    // composer saying so. Worded from the live constants, and from which mastery the skill rides: an active has its
-    // own Skill Mastery; a passive cannot be pressed, so it rides the weapon's.
+    // WHAT THE SKILL'S LEVEL DOES TO THIS NUMBER, stated where the ring rows are — so nothing lifts an effect without
+    // the composer saying so. Worded from the live constant and the skill's own max level: every level after the
+    // first adds the same share, for an active, a passive and an ultimate alike.
     void DrawPracticeLine(SkillEffect ef)
     {
         if (!EffectScaling.Boostable(ef)) return;
-        bool passive = sel != null && sel.IsPassive;
-        float perLevel = passive ? MasteryMath.WeaponPercentPerLevel : MasteryMath.SkillPercentPerLevel;
-        string line = (passive ? "raised by Weapon Mastery" : "raised by Skill Mastery") + ": +"
-                      + (perLevel * 100f).ToString("0.#") + "% a level, up to +"
-                      + (MasteryMath.MaxSkillLift * 100f).ToString("0") + "%";
+        int top = sel != null ? Mathf.Max(1, sel.maxLevel) : 1;
+        string line = top <= 1
+            ? "would be raised by the skill's level, but its max level is 1 — raise the max level for this to grow"
+            : "raised by the skill's level: +" + (MasteryMath.SkillLevelPercent * 100f).ToString("0.#")
+              + "% a level after the first, up to +" + (MasteryMath.SkillLevelLift(top) * 100f).ToString("0")
+              + "% at level " + top;
         EditorGUILayout.BeginHorizontal();
         GUILayout.Space(8);
         var prev = GUI.color;

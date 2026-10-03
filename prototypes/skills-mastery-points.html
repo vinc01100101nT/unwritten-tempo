@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sword Skills Layout</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  :root {
+    --ground: #0D0E10;   /* the page backdrop, outside every window */
+    /* The sword's colour, read from the weapon colour table the Skill Composer writes: r 1, g 0.0575, b 0. */
+    --weapon: #FF0F00;
+    /* The tooltip's ULTIMATE tag: the game's pink (1, 0.549, 0.878) darkened by its own readable-on-panel rule. */
+    --ultimate: #A3598F;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); font-family: var(--font-ui);
+    display: flex; flex-direction: column; align-items: center; padding: 32px 16px 48px; gap: 28px;
+  }
+
+  /* ---- the window, as the game's window builder dresses it ---- */
+  .window {
+    width: 760px; max-width: 100%; height: 560px; background: var(--window-edge); border-radius: 5px; padding: 1px;
+    display: flex; flex-direction: column; user-select: none;
+  }
+  .body { flex: 1; background: var(--panel-fill); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+  .titlebar {
+    height: 24px; flex: none; display: flex; align-items: center; padding: 0 2px 0 10px;
+    background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+  }
+  .titlebar .title { flex: 1; font-size: 13px; font-weight: bold; color: var(--title-text); }
+  .barbtn {
+    width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+    color: var(--title-text); font-size: 12px; font-weight: bold; display: grid; place-items: center;
+  }
+  .content { flex: 1; display: flex; flex-direction: column; padding: 8px; min-height: 0; }
+
+  .topbar { height: 30px; flex: none; display: flex; align-items: center; gap: 10px; }
+  .btn {
+    background: var(--button-fill); border: 1px solid var(--button-edge); border-radius: 3px;
+    color: var(--button-text); font-family: var(--font-ui); font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .btn:hover:not(:disabled) { background: var(--hover); }
+  .back { width: 70px; height: 30px; }
+  .heading { flex: 1; text-align: right; font-size: 15px; font-weight: bold; color: var(--title-text); white-space: nowrap; }
+  .points { font-size: 13px; font-weight: bold; color: var(--text-main); white-space: nowrap; }
+  .points b { color: var(--title-text); }
+
+  .scroll { flex: 1; overflow: auto; min-height: 0; margin-top: 8px; }
+  .track { position: relative; }
+
+  /* ---- the mastery line along the top: the levels, and how far this character has filled it ---- */
+  .ruler { position: sticky; top: 0; z-index: 2; height: 34px; background: var(--panel-fill); }
+  .ruler .bar { position: absolute; top: 22px; height: 4px; background: var(--rule); }
+  .ruler .fill { position: absolute; top: 22px; height: 4px; background: var(--weapon); }
+  .ruler .tick { position: absolute; top: 2px; font-size: 11px; font-weight: bold; color: var(--text-dim); transform: translateX(-50%); }
+  .ruler .tick.reached { color: var(--title-text); }
+  .ruler .notch { position: absolute; top: 18px; width: 1px; height: 12px; background: var(--rule); }
+  .guide { position: absolute; top: 34px; width: 1px; background: var(--rule); opacity: 0.6; }
+  .now { position: absolute; top: 18px; width: 2px; background: var(--weapon); z-index: 1; }
+
+  /* ---- one skill, its left edge sitting on the mastery level that opens it ----
+     Three looks: out of reach (mastery too low) is faint; in reach but no point in it is solid but grey; a skill
+     with a point in it wears the weapon's colour. */
+  .node {
+    position: absolute; width: 92px; height: 44px; background: var(--panel-raise); border-radius: 3px;
+    display: grid; grid-template-columns: 22px 1fr; grid-template-rows: 22px 14px; column-gap: 4px; row-gap: 2px;
+    padding: 3px 4px; z-index: 1;
+  }
+  .node:hover { background: var(--hover); }
+  .node.unreached { opacity: 0.3; }
+  .tile {
+    width: 22px; height: 22px; border-radius: 3px; background: var(--rule);
+    color: var(--text-dim); font-size: 12px; font-weight: bold; display: grid; place-items: center;
+  }
+  .node.learned .tile { background: var(--weapon); color: var(--text-on-dim); }
+  .name { font-size: 11px; font-weight: bold; line-height: 11px; color: var(--text-dim); overflow: hidden; }
+  .node.learned .name { color: var(--text-main); }
+  .foot { grid-column: 1 / span 2; display: flex; align-items: center; justify-content: flex-end; gap: 4px;
+          font-size: 11px; font-weight: bold; color: var(--text-dim); white-space: nowrap; }
+  .node.learned .foot { color: var(--text-main); }
+  .plus { width: 15px; height: 15px; padding: 0; font-size: 12px; line-height: 12px; }
+  .plus:disabled { color: var(--text-dim); cursor: default; }
+
+  .wire { position: absolute; background: var(--rule); z-index: 0; }
+  .wire.on { background: var(--weapon); }
+
+  /* ---- the skill's hover card, as the game frames it: a window-edge rim round the panel colour ---- */
+  #card {
+    position: fixed; width: 288px; padding: 8px 10px; border: 1px solid var(--window-edge); border-radius: 5px;
+    background: var(--panel-fill); color: var(--text-main); font-size: 12px; line-height: 1.35;
+    pointer-events: none; z-index: 10; display: none;
+  }
+  #card .t { font-size: 14px; font-weight: bold; }
+  #card .ult { color: var(--ultimate); font-weight: bold; margin-left: 8px; }
+  #card .tag { color: var(--text-dim); font-weight: bold; margin-left: 8px; }
+  #card .chip { color: var(--text-dim); }
+  #card .n { color: var(--accent); font-weight: bold; }
+  #card .desc { font-style: italic; margin-top: 2px; white-space: pre-line; }
+  #card .sep { height: 1px; background: var(--rule); margin: 7px 0; }
+  #card .ok { color: var(--good); font-weight: bold; }
+  #card .no { color: var(--bad); font-weight: bold; }
+  #card table { width: 100%; border-collapse: collapse; margin-top: 3px; }
+  #card th { text-align: left; font-weight: bold; color: var(--text-dim); padding: 0 0 2px; }
+  #card th.r, #card td.r { text-align: right; white-space: nowrap; padding-left: 8px; }
+  #card td { padding: 1px 0; vertical-align: top; }
+  #card .quiet { color: var(--text-dim); }
+
+  /* ---- for the reader, clear of the window ---- */
+  .controls { color: #C9CDD6; font-size: 13px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .controls input { width: 180px; }
+  .controls button { font: inherit; padding: 3px 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<section class="window" data-mocks="Skills">
+  <div class="body">
+    <div class="titlebar"><span class="title">Skills</span><span class="barbtn">_</span><span class="barbtn">X</span></div>
+    <div class="content">
+      <div class="topbar">
+        <button class="btn back">Back</button>
+        <span class="points" id="points"></span>
+        <span class="heading" id="heading"></span>
+      </div>
+      <div class="scroll" id="scroll"><div class="track" id="track"></div></div>
+    </div>
+  </div>
+</section>
+
+<div id="card" data-mocks="Skill Tooltip"></div>
+
+<div class="controls">
+  <label for="mastery">Sword mastery level</label>
+  <input type="range" id="mastery" min="0" max="70" value="30" />
+  <span id="mastery-out"></span>
+  <button id="reset">Reset points</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // The 22 sword skills as authored: in-game name, two letters, the mastery level that opens them, the skill that
+  // must be learned first, and whether it is an ultimate.
+  const SKILLS = {
+    lunge:            ["Piercing Gust",    "Pg",  1, null],
+    lock_blades:      ["Crossed Branches", "Cb",  7, "lunge"],
+    parry:            ["Bending Reed",     "Br",  1, null],
+    composure:        ["Eye of the Storm", "Es", 11, "parry"],
+    opening:          ["Parting Clouds",   "Pc", 25, "parry"],
+    momentum:         ["Rising Breeze",    "Rb",  3, null],
+    flow:             ["Tailwind",         "Tw", 17, "momentum"],
+    deathblow:        ["Last Petal",       "Lp", 30, "momentum", true],
+    guard_stance:     ["Still Air",        "Sa",  5, null],
+    unwavering:       ["Deep Roots",       "Dr", 21, "guard_stance"],
+    brace:            ["Held Breath",      "Hb",  9, null],
+    last_stand:       ["Bare Branch",      "Bb", 40, "brace"],
+    retribution:      ["Returning Wind",   "Rw", 45, "brace", true],
+    challenge:        ["Howling Wind",     "Hw", 13, null],
+    offbeat:          ["Scattered Petals", "Sc", 15, null],
+    disarm:           ["Stripped Bough",   "St", 19, null],
+    onslaught:        ["Petal Storm",      "Ps", 23, null],
+    committed_strike: ["Single Petal",     "Sp", 27, null],
+    pressure:         ["Headwind",         "Hd", 33, null],
+    overclock:        ["Squall",           "Sq", 36, null],
+    blade_dance:      ["Thousand Petals",  "Tp", 60, null, true],
+    encore:           ["Second Bloom",     "Sb", 65, "blade_dance"],
+  };
+
+  // What each card says, read from the skill files: mana, cooldown, cast time (null = a passive, which has no press),
+  // the authored description, and every number the fight raises with practice — the same effects it raises today.
+  // Each channel: [what it is, authored number, how it is written, and a note when the pile adds to it].
+  //   "pct-atk" 1 = 100% Attack · "pct" 0.3 = 30% · "flat" as is · "count" a whole number, rounded like the fight does
+  const INFO = {
+    lunge: [8, 5, 0, "Close the distance.\nDashes to the target and strikes for 100% Attack. With Crossed Branches, casting it also arms 5 charges.",
+      [["Physical damage", 1, "pct-atk"]]],
+    lock_blades: [null, null, null, "No escape.\nCasting Piercing Gust arms 5 charges, each +2 basic attack range for 5s. Every basic attack you start spends one to lunge at the target again.",
+      [["Basic attack range per charge", 2, "flat"]]],
+    parry: [8, 5, 0, "Read the hit and punish it.\nFully negates the next incoming hit within 3 seconds.", []],
+    composure: [null, null, null, "A read pays for the next one.\nAfter a parry, MP returns at 2 per second for 4s.",
+      [["MP regen", 2, "flat"]]],
+    opening: [null, null, null, "Find the weakness.\nA parry has a 50% chance to charge your next attack with +200% damage, within 5s — spent whether it hits or misses.",
+      [["Damage bonus", 2, "pct"]]],
+    momentum: [null, null, null, "Every hit adds up.\nEach basic attack that lands grants a stack: +3% damage each, 5s apiece.",
+      [["Damage buff per stack", 0.03, "pct"]]],
+    flow: [null, null, null, "Stay on one foe.\nEvery basic attack grants extra Rising Breeze equal to a third of your unbroken run of hits on that target.",
+      [["Rising Breeze stacks added", 1, "share"]]],
+    deathblow: [40, 60, 1, "Everything, in one swing.\nOne massive blow for 600% Attack, +40% per Rising Breeze stack, and spends them all.",
+      [["Physical damage", 6, "pct-atk", "plus the per-stack part, raised the same"]]],
+    guard_stance: [12, 9, 0, "Weather it.\nTake 50% less damage for 6 seconds.",
+      [["Damage reduction", 0.5, "pct"]]],
+    unwavering: [null, null, null, "Stand your ground.\nAfter casting Still Air, nothing stops you for 6s — no flinch, stun, freeze, silence, knockback or pull.", []],
+    brace: [12, 7, 0, "Take it now, pay it later.\nArms 5 charges for 4s. Each holds back one incoming hit and banks the damage instead of paying it in health; the whole bill lands at once when the window ends.", []],
+    last_stand: [null, null, null, "Cornered, you hold the line.\nDropping to low HP arms 5 more Held Breath charges.",
+      [["Held Breath charges added", 5, "count"]]],
+    retribution: [40, 45, 0, "Answer all of it at once.\nCashes the damage Held Breath banked: five strikes, each landing 100% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
+      [["Physical damage", 1, "pct-atk", "plus the banked part, raised the same"]]],
+    challenge: [12, 8, 0, "Force one enemy to fight you.\nTaunted for 5s: locked onto you, no skills, no pause between swings.", []],
+    offbeat: [12, 8, 0, "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 30% for 5s.",
+      [["Physical damage", 1, "pct-atk"], ["Attack speed debuff", 0.3, "pct"]]],
+    disarm: [12, 9, 0, "Blunt their swing.\nA strike for 100% Attack; their next attack lands 40% weaker, within 6s.",
+      [["Physical damage", 1, "pct-atk"], ["Damage cut", 0.4, "pct"]]],
+    onslaught: [12, 8, 0, "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them as real basic attacks, two per swing — so every blow feeds Rising Breeze.",
+      [["Damage buff per stack", 0.01, "pct"], ["Physical damage", 1, "pct-atk"]]],
+    committed_strike: [16, 8, 1.2, "Wind up and commit.\nA slow, telegraphed heavy blow for 200% Attack.",
+      [["Physical damage", 2, "pct-atk"]]],
+    pressure: [null, null, null, "Never let them recover.\nEvery hit cuts the target's HP regen by 3 a second for 5s, and the cuts stack.",
+      [["HP regen debuff per stack", 3, "flat"]]],
+    overclock: [12, 12, 0, "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you take double damage for the first 3.",
+      [["Attack speed buff", 0.3, "pct"], ["Damage reduction drawback (on you)", 1, "pct"]]],
+    blade_dance: [40, 45, 0, "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 100% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
+      [["Physical damage", 1, "pct-atk"], ["Damage buff per charge", 0.01, "pct"]]],
+    encore: [null, null, null, "The dance goes on.\nA kill during Thousand Petals adds 7 more dance charges.",
+      [["Thousand Petals charges added", 7, "count"]]],
+  };
+
+  const TOP_MASTERY = 70, PER_LEVEL = 0.05;
+  // How far each skill goes. 10: what grows is mostly damage. 5: what grows is a defensive or utility percentage, or
+  // a charge count. 1: nothing on the skill grows.
+  const TOP_LEVEL = {
+    lunge: 10, onslaught: 10, committed_strike: 10, momentum: 10, deathblow: 10, retribution: 10, blade_dance: 10,
+    guard_stance: 5, overclock: 5, opening: 5, composure: 5, lock_blades: 5, flow: 5, pressure: 5, last_stand: 5,
+    encore: 5, disarm: 5, offbeat: 5,
+    parry: 1, brace: 1, challenge: 1, unwavering: 1,
+  };
+  const maxOf = id => TOP_LEVEL[id];
+
+  const PX = 20, LEFT = 14, NODE_W = 92, NODE_H = 44, LANE = 50, RULER = 34;
+  const X = lv => LEFT + lv * PX;
+
+  const kids = {};
+  Object.keys(SKILLS).forEach(id => { const p = SKILLS[id][3]; if (p) (kids[p] = kids[p] || []).push(id); });
+  Object.values(kids).forEach(list => list.sort((a, b) => SKILLS[a][2] - SKILLS[b][2]));
+  const span = id => { const k = kids[id] || []; return k.length ? k.reduce((n, c) => n + span(c), 0) : 1; };
+
+  // LANES. A skill that others need starts a family, and its family keeps its own lanes so every wire stays inside
+  // them. Skills nobody needs and that need nothing share lanes, packed left to right wherever they fit.
+  const lane = {};
+  const blocks = [];
+  const familyRoots = Object.keys(SKILLS).filter(id => !SKILLS[id][3] && kids[id]);
+  const loners = Object.keys(SKILLS).filter(id => !SKILLS[id][3] && !kids[id]).sort((a, b) => SKILLS[a][2] - SKILLS[b][2]);
+  familyRoots.forEach(id => blocks.push({ start: SKILLS[id][2], root: id }));
+  if (loners.length) blocks.push({ start: SKILLS[loners[0]][2], loners });
+  blocks.sort((a, b) => a.start - b.start);
+
+  let laneCount = 0;
+  function seat(id, at) {
+    lane[id] = at;
+    let r = at;
+    (kids[id] || []).forEach(c => { seat(c, r); r += span(c); });
+  }
+  blocks.forEach(b => {
+    if (b.root) { seat(b.root, laneCount); laneCount += span(b.root); return; }
+    const ends = [];
+    b.loners.forEach(id => {
+      const x = X(SKILLS[id][2]);
+      let i = ends.findIndex(e => e + 6 <= x);
+      if (i < 0) { i = ends.length; ends.push(0); }
+      ends[i] = x + NODE_W;
+      lane[id] = laneCount + i;
+    });
+    laneCount += ends.length;
+  });
+
+  const level = {};
+  Object.keys(SKILLS).forEach(id => level[id] = 0);
+  // A character part-way in, so the page opens showing every look a skill can have.
+  Object.assign(level, { lunge: 3, parry: 1, momentum: 4, flow: 1, brace: 1 });
+
+  const $ = id => document.getElementById(id);
+  const masteryInput = $("mastery");
+  const mastery = () => +masteryInput.value;
+  const spent = () => Object.values(level).reduce((a, b) => a + b, 0);
+  const available = () => mastery() - spent();
+
+  function canRaise(id) {
+    const [, , need, parent] = SKILLS[id];
+    return available() > 0 && mastery() >= need && level[id] < maxOf(id) && (!parent || level[parent] >= 1);
+  }
+
+  // ---- the card ----------------------------------------------------------------------------------------------
+
+  // Level 1 is the skill as authored; every level after it adds PER_LEVEL to each raised number.
+  const lift = lv => Math.max(0, lv - 1) * PER_LEVEL;
+  function show(base, how, lv) {
+    if (lv < 1) return '<span class="quiet">—</span>';
+    const v = base * (1 + lift(lv));
+    switch (how) {
+      case "pct-atk": return '<span class="n">' + Math.round(v * 100) + '%</span> Attack';
+      case "pct":     return '<span class="n">' + +(v * 100).toFixed(1) + '%</span>';
+      case "count":   return '<span class="n">' + Math.round(v) + '</span>';
+      case "share":   return '<span class="n">+' + Math.round(lift(lv) * 100) + '%</span>';
+      default:        return '<span class="n">' + +v.toFixed(2) + '</span>';
+    }
+  }
+
+  function cardHtml(id) {
+    const [name, , need, parent, ult] = SKILLS[id];
+    const [mp, cd, cast, desc, channels] = INFO[id];
+    const lv = level[id];
+    let h = '<div><span class="t">' + name + '</span>' + (ult ? '<span class="ult">ULTIMATE</span>' : '<span class="tag">' + (mp == null ? 'PASSIVE' : 'ACTIVE') + '</span>') + '</div>';
+    if (mp != null)
+      h += '<div><span class="chip">MP </span><span class="n">' + mp + '</span>  <span class="chip">CD </span><span class="n">' + cd + 's</span>  ' +
+           (cast > 0 ? '<span class="chip">Cast </span><span class="n">' + cast + 's</span>' : '<span class="chip">Instant</span>') + '</div>';
+    h += '<div class="desc">' + desc + '</div>';
+    h += '<div class="sep"></div>';
+    const metM = mastery() >= need;
+    h += '<div>Requires <span class="' + (metM ? 'ok' : 'no') + '">Sword Mastery ' + need + '</span></div>';
+    if (parent) {
+      const metP = level[parent] >= 1;
+      h += '<div>Requires <span class="' + (metP ? 'ok' : 'no') + '">' + SKILLS[parent][0] + '</span></div>';
+    }
+    h += '<div>Skill level <span class="n">' + lv + '</span> / ' + maxOf(id) + '</div>';
+    h += '<div class="sep"></div>';
+    if (!channels.length) {
+      h += '<div class="quiet">No number on this skill grows with its level.</div>';
+      return h;
+    }
+    h += '<div>Each level: <span class="n">+' + Math.round(PER_LEVEL * 100) + '%</span> to</div>';
+    const top = maxOf(id), next = Math.min(top, lv + 1);
+    h += '<table><tr><th></th><th class="r">Now</th><th class="r">' + (lv >= top ? 'Max' : 'Level ' + next) + '</th></tr>';
+    channels.forEach(([what, base, how, note]) => {
+      h += '<tr><td>' + what + (note ? '<br><span class="quiet">' + note + '</span>' : '') + '</td>' +
+           '<td class="r">' + show(base, how, lv) + '</td>' +
+           '<td class="r">' + (lv >= top ? '<span class="quiet">—</span>' : show(base, how, next)) + '</td></tr>';
+    });
+    return h + '</table>';
+  }
+
+  const card = $("card");
+  let cardFor = null, cardAnchor = null;
+  function placeCard() {
+    if (!cardFor || !cardAnchor) { card.style.display = "none"; return; }
+    card.innerHTML = cardHtml(cardFor);
+    card.style.display = "block";
+    const r = cardAnchor.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    let x = r.right + 10, y = r.top + r.height / 2 - h / 2;
+    if (x + w > window.innerWidth - 8) x = r.left - 10 - w;
+    y = Math.max(8, Math.min(y, window.innerHeight - h - 8));
+    card.style.left = x + "px"; card.style.top = y + "px";
+  }
+
+  // ---- the window --------------------------------------------------------------------------------------------
+
+  function el(parent, cls, x, y, w, h) {
+    const d = document.createElement("div");
+    d.className = cls;
+    if (x != null) d.style.left = x + "px";
+    if (y != null) d.style.top = y + "px";
+    if (w != null) d.style.width = w + "px";
+    if (h != null) d.style.height = h + "px";
+    parent.appendChild(d);
+    return d;
+  }
+
+  const laneY = i => RULER + 6 + i * LANE;
+  const nodes = {};
+
+  function draw() {
+    $("heading").textContent = "Sword Mastery " + mastery();
+    $("points").innerHTML = "Mastery Points <b>" + available() + "</b>";
+    $("mastery-out").textContent = mastery();
+
+    const track = $("track");
+    track.innerHTML = "";
+    const width = X(TOP_MASTERY) + NODE_W + LEFT, height = laneY(laneCount);
+    track.style.width = width + "px";
+    track.style.height = height + "px";
+
+    for (let lv = 10; lv <= TOP_MASTERY; lv += 10) el(track, "guide", X(lv), null, null, height - RULER);
+    const ruler = el(track, "ruler", 0, null, width);
+    el(ruler, "bar", X(0), null, X(TOP_MASTERY) - X(0));
+    if (mastery() > 0) el(ruler, "fill", X(0), null, X(mastery()) - X(0));
+    for (let lv = 0; lv <= TOP_MASTERY; lv += 5) {
+      el(ruler, "notch", X(lv));
+      const t = el(ruler, "tick" + (mastery() >= lv ? " reached" : ""), X(lv));
+      t.textContent = lv;
+    }
+    el(track, "now", X(mastery()) - 1, null, null, height - 18);
+
+    Object.keys(SKILLS).forEach(id => {
+      const p = SKILLS[id][3];
+      if (!p) return;
+      const on = level[p] >= 1;
+      const px = X(SKILLS[p][2]) + NODE_W, py = laneY(lane[p]) + NODE_H / 2;
+      const cx = X(SKILLS[id][2]), cy = laneY(lane[id]) + NODE_H / 2;
+      const elbow = px + 4;
+      el(track, "wire" + (on ? " on" : ""), px, py - 1, elbow - px + 1, 3);
+      if (cy !== py) el(track, "wire" + (on ? " on" : ""), elbow - 1, Math.min(py, cy) - 1, 3, Math.abs(cy - py) + 3);
+      el(track, "wire" + (on ? " on" : ""), elbow, cy - 1, cx - elbow, 3);
+    });
+
+    Object.keys(SKILLS).forEach(id => {
+      const [name, sym, need] = SKILLS[id];
+      const cls = "node" + (level[id] >= 1 ? " learned" : "") + (mastery() < need ? " unreached" : "");
+      const n = el(track, cls, X(need), laneY(lane[id]));
+      n.innerHTML =
+        '<div class="tile">' + sym + '</div>' +
+        '<div class="name">' + name + '</div>' +
+        '<div class="foot"><span>' + level[id] + '/' + maxOf(id) + '</span>' +
+        '<button class="btn plus"' + (canRaise(id) ? '' : ' disabled') + '>+</button></div>';
+      n.querySelector(".plus").addEventListener("click", () => { if (canRaise(id)) { level[id]++; draw(); } });
+      n.addEventListener("mouseenter", () => { cardFor = id; cardAnchor = n; placeCard(); });
+      n.addEventListener("mouseleave", () => { cardFor = null; placeCard(); });
+      nodes[id] = n;
+    });
+    if (cardFor) { cardAnchor = nodes[cardFor]; placeCard(); }
+  }
+
+  masteryInput.addEventListener("input", () => {
+    if (available() < 0) Object.keys(level).forEach(id => level[id] = 0);
+    draw();
+  });
+  $("reset").addEventListener("click", () => { Object.keys(level).forEach(id => level[id] = 0); draw(); });
+  $("scroll").addEventListener("scroll", placeCard);
+  window.addEventListener("resize", placeCard);
+
+  draw();
+  // The page opens with one card already up, the way hovering a skill shows it.
+  cardFor = "momentum"; cardAnchor = nodes.momentum; placeCard();
+})();
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: 'A soothing tide.
 
     Restores 7.5 HP a second for 6s and washes

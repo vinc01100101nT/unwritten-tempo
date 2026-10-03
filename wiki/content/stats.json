@@ -223,7 +223,7 @@
     },
     {
       "type": "paragraph",
-      "text": "The Ring is a **closed loop of ten percentage-based passive stats** that you build up as you level. It is part of your character — nothing to wear, nothing to lose — and a separate layer from your weapons: **practising a weapon teaches your skills**, and the **Ring scales their power**. Your progress on the Ring is saved with your character."
+      "text": "The Ring is a **closed loop of ten percentage-based passive stats** that you build up as you level. It is part of your character — nothing to wear, nothing to lose — and a separate layer from your weapons: **a weapon's mastery points buy your skills**, and the **Ring scales their power**. Your progress on the Ring is saved with your character."
     },
     {
       "type": "heading",
@@ -282,7 +282,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Most of a skill's power is your Ring** — and that scaling is role-bound: **healing scales off MP**, **damage scales off Attack / Magic Attack**. So a support who invested MP hits like wet paper with a damage weapon, and a damage build heals for crumbs with a staff. A skill's own mastery adds to that as you use it (see *Skills*), but the weight of it stays bound to the stats you chose. **Changing weapons changes which skills you may use — never the stats behind them.**"
+      "text": "**Most of a skill's power is your Ring** — and that scaling is role-bound: **healing scales off MP**, **damage scales off Attack / Magic Attack**. So a support who invested MP hits like wet paper with a damage weapon, and a damage build heals for crumbs with a staff. A skill's own level adds to that (see *Skills*), but the weight of it stays bound to the stats you chose. **Changing weapons changes which skills you may use — never the stats behind them.**"
     },
     {
       "type": "paragraph",

@@ -4,30 +4,38 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// The <b>Skills</b> window (K) — the skills a character has learned, by weapon. It opens on a list of weapons that
-/// have skills ("Sword Skills"); picking one shows that weapon's skills on one vertical line, lowest mastery level at
-/// the bottom, each beside the mastery level that opens it. The line fills from the bottom up to the weapon mastery
-/// the server last sent, so it shows how far the next skill still is. A skill not learned yet is grey and does
-/// nothing; a learned active can be dragged onto the hotbar. Hovering any skill shows the shared skill card.
+/// The <b>Skills</b> window (K) — where a character learns and raises skills with mastery points, by weapon. It
+/// opens on a list of weapons that have skills ("Sword Skills"); picking one shows that weapon's skills on a
+/// TIMELINE of weapon mastery, 0 on the left to the highest mastery any grade allows on the right. Each skill's left
+/// edge sits on the mastery level that opens it, a skill and every skill that needs it share rows joined by wires,
+/// and a line marks the mastery the server last sent.
+///
+/// <para>Three looks: a skill the mastery has not reached is faint; one in reach with no point in it is solid but
+/// grey; one with a point in it wears its weapon's colour. Its <b>+</b> asks the server to spend one point on it —
+/// the server decides and sends the whole picture back. A learned active can be dragged onto the hotbar; hovering
+/// any skill shows the shared skill card.</para>
 ///
 /// <para>Built in code on the persistent GameUICanvas; the K toggle lives here so changing the key needs no
-/// re-bake.</para>
+/// re-bake. Every number it shows is one the server sent.</para>
 /// </summary>
 public class SkillsWindow : MonoBehaviour
 {
     const KeyCode ToggleKey = KeyCode.K;
 
-    const float RowH = 46f, LinePad = 18f, LevelColW = 44f, LineX = 58f, LineW = 4f, NodeSize = 12f, TileX = 76f, TileSize = 36f;
+    // The timeline: pixels per mastery level, the left margin, one skill's box, one row, the ruler's height.
+    const float Px = 20f, Left = 14f, NodeW = 92f, NodeH = 44f, Lane = 50f, RulerH = 34f, TileSize = 22f;
+    const float Unreached = 0.3f;
 
     static readonly Color LineBg     = UiKit.Rule;
     static readonly Color LockedTile = UiKit.Rule;
     static readonly Color LockedText = UiKit.TextDim;
-    static readonly Color RowBg      = UiKit.PanelRaise;
+    static readonly Color NodeBg     = UiKit.PanelRaise;
 
     GameObject root;
     RectTransform content;          // the window's fixed Content node; each view is rebuilt into it
     WeaponType shownWeapon;         // None = the weapon list
     ScrollRect scroll;
+    RectTransform rulerTrack;       // the ruler's strip, moved sideways with the timeline
     bool built;
 
     Character watched;
@@ -37,9 +45,13 @@ public class SkillsWindow : MonoBehaviour
         WatchMastery();
         if (!built) { TryBuild(); return; }
         HandleHotkey();
+        // ONE redraw per frame, however many parts of one server message changed: a delivery updates the levels,
+        // the points, the progress and the card's numbers one after another, and each says so.
+        if (redrawDue && !SkillDragSource.AnyDragging && root != null && UiAnim.IsOpen(root)) { redrawDue = false; Show(shownWeapon); }
     }
+    bool redrawDue;
 
-    // Mastery arrives from the server whenever practice or the learned set changes, so an open line redraws.
+    // Mastery arrives from the server whenever practice or a skill level changes, so an open timeline redraws.
     void WatchMastery()
     {
         var c = Character.Instance;
@@ -51,7 +63,7 @@ public class SkillsWindow : MonoBehaviour
 
     void OnDestroy() { if (watched != null) watched.Mastery.OnChanged -= OnMasteryChanged; }
 
-    void OnMasteryChanged() { if (built && root != null && UiAnim.IsOpen(root)) Show(shownWeapon); }
+    void OnMasteryChanged() => redrawDue = true;
 
     void HandleHotkey()
     {
@@ -75,7 +87,7 @@ public class SkillsWindow : MonoBehaviour
     {
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
-        content = UiKit.Window(canvas.transform, "Skills", new Vector2(380, 560), Vector2.zero, out root);
+        content = UiKit.Window(canvas.transform, "Skills", new Vector2(760, 560), Vector2.zero, out root);
         built = true;   // starts hidden (UiKit.Window inactivates the root); a view is built on open
     }
 
@@ -85,11 +97,14 @@ public class SkillsWindow : MonoBehaviour
     {
         if (content == null) return;
         SkillHoverCard.Hide();
+        // A redraw of the same timeline (a point spent, a level reached) keeps where it was scrolled to.
+        Vector2 keep = weapon == shownWeapon && scroll != null ? scroll.normalizedPosition : new Vector2(-1f, -1f);
         for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
         scroll = null;
+        rulerTrack = null;
         shownWeapon = weapon;
         if (weapon == WeaponType.None) BuildWeaponList();
-        else BuildLine(weapon);
+        else BuildTimeline(weapon, keep);
     }
 
     // Every weapon that has at least one skill in the game, in enum order.
@@ -126,13 +141,16 @@ public class SkillsWindow : MonoBehaviour
         }
     }
 
-    void BuildLine(WeaponType weapon)
+    void BuildTimeline(WeaponType weapon, Vector2 keepScroll)
     {
         var me = Character.Instance;
-        int level = me != null ? me.Mastery.SentLevel(weapon) : 0;
+        var mastery = me != null ? me.Mastery : null;
+        int level = mastery != null ? mastery.SentLevel(weapon) : 0;
+        int pointsLeft = mastery != null ? mastery.SentPointsLeft(weapon) : 0;
+        int topMastery = CraftingMath.WeaponMasteryCap(CraftingMath.Best);
         Color weaponColor = WeaponColors.Load()?.Lookup(weapon) ?? SkillSymbol.NoWeapon;
 
-        // Top bar: back to the weapon list, and the mastery the line is filled to.
+        // Top bar: back to the weapon list, the points left to spend, and the mastery the timeline is filled to.
         var bar = NewRect("TopBar", content);
         bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
         bar.sizeDelta = new Vector2(0, 30); bar.anchoredPosition = Vector2.zero;
@@ -140,122 +158,212 @@ public class SkillsWindow : MonoBehaviour
         var brt = (RectTransform)back.transform;
         brt.anchorMin = new Vector2(0, 0); brt.anchorMax = new Vector2(0, 1); brt.pivot = new Vector2(0, 0.5f);
         brt.sizeDelta = new Vector2(70, 0); brt.anchoredPosition = Vector2.zero;
+        var points = UiKit.Label("Points", bar, "Mastery Points <color=" + UiKit.Hex(UiKit.TitleText) + ">" + pointsLeft + "</color>",
+                                 13, FontStyle.Bold, TextAnchor.MiddleLeft);
+        points.richText = true; points.raycastTarget = false;
+        var prt = points.rectTransform;
+        prt.anchorMin = new Vector2(0, 0); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 0.5f);
+        prt.sizeDelta = new Vector2(220, 0); prt.anchoredPosition = new Vector2(82, 0);
         // The experience toward the next level, exactly as the server sent it — this window only prints the numbers.
         string heading = weapon + " Mastery " + level;
-        if (me != null && me.Mastery.SentProgress(weapon, out double into, out double size, out bool capped))
+        if (mastery != null && mastery.SentProgress(weapon, out double into, out double size, out bool capped))
             heading += capped ? "  ·  capped by this weapon's grade"
                               : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";
         var head = UiKit.Label("Mastery", bar, heading, 15, FontStyle.Bold, TextAnchor.MiddleRight);
-        UiKit.Fill(head.rectTransform, new Vector2(80, 0), Vector2.zero);
+        UiKit.Fill(head.rectTransform, new Vector2(310, 0), Vector2.zero);
         head.color = UiKit.TitleText; head.raycastTarget = false;
 
-        // The line itself scrolls: 22 sword skills are taller than the window.
-        var viewport = UiKit.Img("LineViewport", content, new Color(0, 0, 0, 0)).rectTransform;
-        UiKit.Fill(viewport, Vector2.zero, new Vector2(0, -38));
-        var scrollContent = UiKit.ScrollColumn(viewport);
-        scroll = viewport.GetComponent<ScrollRect>();
-        var svlg = scrollContent.gameObject.AddComponent<VerticalLayoutGroup>();
-        svlg.childControlWidth = svlg.childControlHeight = true;
-        svlg.childForceExpandWidth = true; svlg.childForceExpandHeight = false;
-
-        // Lowest level first; the list is drawn bottom-up so the line fills upward.
+        // This weapon's skills, and the row each sits on.
         var skills = new List<SkillDef>();
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
             if (all[i] != null && all[i].weaponType == weapon) skills.Add(all[i]);
-        skills.Sort((a, b) =>
+        int n = skills.Count;
+        var opens = new int[n];
+        var parent = new int[n];
+        var rows = new int[n];
+        for (int i = 0; i < n; i++)
         {
-            int la = Mathf.Max(1, a.masteryLevel), lb = Mathf.Max(1, b.masteryLevel);
-            return la != lb ? la.CompareTo(lb) : string.CompareOrdinal(a.id, b.id);
-        });
+            // AN UNWRITTEN LEVEL IS LEVEL ONE — the same reading the server's spend and the skill card give it.
+            opens[i] = Mathf.Max(1, skills[i].masteryLevel);
+            parent[i] = skills.FindIndex(s => s.id == skills[i].needsSkillId);
+        }
+        int rowCount = SkillTreeLayout.Rows(opens, parent, (NodeW + 6f) / Px, rows);
 
-        float treeH = LinePad * 2f + skills.Count * RowH;
-        var tree = NewRect("Tree", scrollContent);
-        var tle = tree.gameObject.AddComponent<LayoutElement>();
-        tle.minHeight = tle.preferredHeight = treeH;
+        float trackW = X(topMastery) + NodeW + Left;
+        float trackH = RowY(rowCount) + 6f;
 
-        float NodeY(int i) => LinePad + i * RowH + RowH * 0.5f;
+        // The ruler: its own strip above the timeline, so it stays in view while the rows scroll down, and moved
+        // sideways with them.
+        var rulerView = UiKit.Img("RulerView", content, new Color(0, 0, 0, 0)).rectTransform;
+        rulerView.anchorMin = new Vector2(0, 1); rulerView.anchorMax = new Vector2(1, 1); rulerView.pivot = new Vector2(0.5f, 1);
+        rulerView.sizeDelta = new Vector2(0, RulerH); rulerView.anchoredPosition = new Vector2(0, -38);
+        rulerView.gameObject.AddComponent<RectMask2D>();
+        rulerView.GetComponent<Image>().raycastTarget = false;
+        rulerTrack = NewRect("Ruler", rulerView);
+        TopLeft(rulerTrack, 0, 0, trackW, RulerH);
+        Box(rulerTrack, "Line", LineBg, X(0), 22, X(topMastery) - X(0), 4);
+        if (level > 0) Box(rulerTrack, "Filled", weaponColor, X(0), 22, X(Mathf.Min(level, topMastery)) - X(0), 4);
+        for (int lv = 0; lv <= topMastery; lv += 5)
+        {
+            Box(rulerTrack, "Notch", LineBg, X(lv), 18, 1, 12);
+            var t = UiKit.Label("Tick", rulerTrack, lv.ToString(), 11, FontStyle.Bold, TextAnchor.UpperCenter);
+            t.color = level >= lv ? UiKit.TitleText : LockedText; t.raycastTarget = false;
+            TopLeft(t.rectTransform, X(lv) - 20, 2, 40, 14);
+        }
 
-        // The empty line, from the bottom (mastery 0) to the top skill.
-        float lineTop = skills.Count > 0 ? NodeY(skills.Count - 1) : LinePad;
-        BottomBar(tree, LineBg, LinePad, lineTop - LinePad);
+        // The timeline itself, scrolling both ways.
+        var viewport = UiKit.Img("TimelineView", content, new Color(0, 0, 0, 0)).rectTransform;
+        UiKit.Fill(viewport, new Vector2(0, 14), new Vector2(0, -(38 + RulerH)));
+        viewport.gameObject.AddComponent<RectMask2D>();
+        scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.horizontal = scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 22f;
+        var track = NewRect("Track", viewport);
+        TopLeft(track, 0, 0, trackW, trackH);
+        scroll.viewport = viewport;
+        scroll.content = track;
+        scroll.horizontalScrollbar = NewScrollbar();
+        scroll.horizontalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+        var follow = rulerTrack;
+        scroll.onValueChanged.AddListener(_ => { if (follow != null) follow.anchoredPosition = new Vector2(track.anchoredPosition.x, follow.anchoredPosition.y); });
 
-        // The filled part, up to the weapon mastery the server sent.
-        var needs = new int[skills.Count];
-        for (int i = 0; i < needs.Length; i++) needs[i] = Mathf.Max(1, skills[i].masteryLevel);
-        float fillTop = SkillLineLayout.FillTop(level, needs, LinePad, NodeY(0), RowH);
-        if (fillTop > LinePad) BottomBar(tree, weaponColor, LinePad, fillTop - LinePad);
+        for (int lv = 10; lv <= topMastery; lv += 10)
+        {
+            var g = Box(track, "Guide", LineBg, X(lv), 0, 1, trackH);
+            var gc = g.color; gc.a = 0.6f; g.color = gc;
+        }
+        Box(track, "Now", weaponColor, X(Mathf.Min(level, topMastery)) - 1, 0, 2, trackH);
 
-        for (int i = 0; i < skills.Count; i++) BuildRow(tree, skills[i], NodeY(i), weaponColor);
+        // Wires first, so the skills sit on top of them.
+        for (int i = 0; i < n; i++)
+        {
+            int p = parent[i];
+            if (p < 0) continue;
+            bool on = mastery != null && mastery.HasLearned(skills[p].id);
+            Color c = on ? weaponColor : LineBg;
+            float px = X(opens[p]) + NodeW, py = RowY(rows[p]) + NodeH * 0.5f;
+            float cx = X(opens[i]), cy = RowY(rows[i]) + NodeH * 0.5f;
+            float elbow = px + 4f;
+            Box(track, "Wire", c, px, py - 1, elbow - px + 1, 3);
+            if (!Mathf.Approximately(cy, py)) Box(track, "Wire", c, elbow - 1, Mathf.Min(py, cy) - 1, 3, Mathf.Abs(cy - py) + 3);
+            Box(track, "Wire", c, elbow, cy - 1, Mathf.Max(0f, cx - elbow), 3);
+        }
 
-        // Open at the bottom, where the line starts.
-        LayoutRebuilder.ForceRebuildLayoutImmediate(scrollContent);
-        scroll.verticalNormalizedPosition = 0f;
+        for (int i = 0; i < n; i++)
+            BuildNode(track, skills[i], X(opens[i]), RowY(rows[i]), opens[i], parent[i] >= 0 ? skills[parent[i]] : null,
+                      weaponColor, level, pointsLeft, mastery);
+
+        // Where it opens: a redraw keeps its place; a fresh look puts the mastery line a third of the way across.
+        LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        if (keepScroll.x >= 0f) scroll.normalizedPosition = keepScroll;
+        else
+        {
+            float view = viewport.rect.width;
+            float want = X(Mathf.Min(level, topMastery)) - view / 3f;   // server-math: a scroll position in pixels, worked from the level the server sent
+            scroll.horizontalNormalizedPosition = trackW > view ? Mathf.Clamp01(want / (trackW - view)) : 0f;
+            scroll.verticalNormalizedPosition = 1f;
+        }
+        rulerTrack.anchoredPosition = new Vector2(track.anchoredPosition.x, 0f);
     }
 
-    void BuildRow(RectTransform tree, SkillDef def, float y, Color weaponColor)
+    void BuildNode(RectTransform track, SkillDef def, float x, float y, int opensAt, SkillDef needs,
+                   Color weaponColor, int masteryLevel, int pointsLeft, MasteryProgress mastery)
     {
-        var me = Character.Instance;
-        bool learned = me != null && me.Mastery.HasLearned(def.id);
-        int need = Mathf.Max(1, def.masteryLevel);
+        int bought = mastery != null ? mastery.LevelOf(def.id) : 0;
+        int top = Mathf.Max(1, def.maxLevel);
+        bool learned = bought >= 1;
+        bool reached = masteryLevel >= opensAt;
+        // Every part of this test compares numbers the server sent; the server asks it again before spending.
+        bool canRaise = mastery != null && reached && bought < top && pointsLeft > 0
+                        && (needs == null || mastery.HasLearned(needs.id));
 
-        // The mastery level that opens this skill, left of the line.
-        var lvl = UiKit.Label("Level", tree, "Lv " + need, 13, FontStyle.Bold, TextAnchor.MiddleRight);
-        var lrt = lvl.rectTransform;
-        lrt.anchorMin = lrt.anchorMax = new Vector2(0, 0); lrt.pivot = new Vector2(0, 0.5f);
-        lrt.sizeDelta = new Vector2(LevelColW, RowH); lrt.anchoredPosition = new Vector2(0, y);
-        lvl.color = learned ? UiKit.TitleText : LockedText; lvl.raycastTarget = false;
+        var node = UiKit.Round(UiKit.Img("Skill_" + def.id, track, NodeBg), 3);
+        TopLeft(node.rectTransform, x, y, NodeW, NodeH);
+        node.raycastTarget = true;
+        if (!reached) node.gameObject.AddComponent<CanvasGroup>().alpha = Unreached;
 
-        // The node on the line.
-        var node = UiKit.Img("Node", tree, learned ? weaponColor : LockedTile);
-        node.raycastTarget = false;
-        var nrt = node.rectTransform;
-        nrt.anchorMin = nrt.anchorMax = new Vector2(0, 0); nrt.pivot = new Vector2(0.5f, 0.5f);
-        nrt.sizeDelta = new Vector2(NodeSize, NodeSize); nrt.anchoredPosition = new Vector2(LineX, y);
-
-        // The skill: its two letters on its weapon's colour and its name — grey until it is learned.
-        var row = UiKit.Img("Skill_" + def.id, tree, RowBg);
-        var rrt = row.rectTransform;
-        rrt.anchorMin = new Vector2(0, 0); rrt.anchorMax = new Vector2(1, 0); rrt.pivot = new Vector2(0, 0.5f);
-        rrt.sizeDelta = new Vector2(-TileX, RowH - 6f); rrt.anchoredPosition = new Vector2(TileX - 4f, y);
-        row.raycastTarget = true;
-
-        var tile = UiKit.Img("Tile", row.transform, learned ? SkillSymbol.ColorFor(def) : LockedTile);
+        var tile = UiKit.Round(UiKit.Img("Tile", node.transform, learned ? SkillSymbol.ColorFor(def) : LockedTile), 3);
         tile.raycastTarget = false;
-        var trt = tile.rectTransform;
-        trt.anchorMin = trt.anchorMax = new Vector2(0, 0.5f); trt.pivot = new Vector2(0, 0.5f);
-        trt.sizeDelta = new Vector2(TileSize, TileSize); trt.anchoredPosition = new Vector2(4f, 0);
-        var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 15, FontStyle.Bold, TextAnchor.MiddleCenter);
+        TopLeft(tile.rectTransform, 4, 3, TileSize, TileSize);
+        var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
         UiKit.Fill(sym.rectTransform, Vector2.zero, Vector2.zero);
-        sym.color = learned ? Color.white : LockedText; sym.raycastTarget = false;
+        sym.color = learned ? UiKit.TextOnDim : LockedText; sym.raycastTarget = false;
 
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
-        var title = UiKit.Label("Name", row.transform, name, 14, FontStyle.Bold, TextAnchor.MiddleLeft);
-        UiKit.Fill(title.rectTransform, new Vector2(TileSize + 14f, 0), new Vector2(-6f, 0));
-        title.color = !learned ? LockedText : def.tint == default ? UiKit.TextMain : UiKit.Readable(def.tint);
+        var title = UiKit.Label("Name", node.transform, name, 11, FontStyle.Bold, TextAnchor.UpperLeft);
+        title.lineSpacing = -12f;
+        title.color = learned ? (def.tint == default ? UiKit.TextMain : UiKit.Readable(def.tint)) : LockedText;
         title.raycastTarget = false;
+        TopLeft(title.rectTransform, 4 + TileSize + 4, 3, NodeW - TileSize - 12, 24);
 
-        SkillHoverCard.Attach(row.transform, def, beside: true);
+        var lvl = UiKit.Label("Level", node.transform, bought + "/" + top, 11, FontStyle.Bold, TextAnchor.MiddleRight);
+        lvl.color = learned ? UiKit.TextMain : LockedText; lvl.raycastTarget = false;
+        TopLeft(lvl.rectTransform, 4, 27, NodeW - 8 - 19, 14);
+
+        string id = def.id;
+        var plus = UiKit.Btn("+", node.transform, () =>
+        {
+            var net = GameNetwork.MyPlayer;
+            if (net == null) return;
+            UISounds.PlayClick();
+            net.AskToSpendSkillPoint(id);
+        });
+        TopLeft((RectTransform)plus.transform, NodeW - 4 - 15, 27, 15, 15);
+        var plusText = plus.GetComponentInChildren<TextMeshProUGUI>();
+        if (plusText != null) { plusText.fontSize = 12; plusText.fontStyle = FontStyles.Bold; if (!canRaise) plusText.color = LockedText; }
+        plus.interactable = canRaise;
+
+        SkillHoverCard.Attach(node.transform, def, beside: true);
 
         // A learned ACTIVE goes on the hotbar by dragging it there. A passive takes no slot, and a skill not learned
         // yet would be a key the server refuses.
         if (learned && !def.IsPassive)
         {
-            var drag = row.gameObject.AddComponent<SkillDragSource>();
+            var drag = node.gameObject.AddComponent<SkillDragSource>();
             drag.skillId = def.id; drag.tint = SkillSymbol.ColorFor(def);
         }
     }
 
     // ---- helpers ----------------------------------------------------------------------------------------
 
-    // A vertical bar on the line, from `bottom` up `height`, measured from the tree's bottom edge.
-    static void BottomBar(RectTransform tree, Color color, float bottom, float height)
+    static float X(int masteryLevel) => Left + masteryLevel * Px;
+    static float RowY(int row) => 6f + row * Lane;
+
+    // A plain coloured box, placed from the top-left of its parent in pixels.
+    static Image Box(RectTransform parent, string name, Color color, float x, float y, float w, float h)
     {
-        var bar = UiKit.Img("Line", tree, color);
-        bar.raycastTarget = false;
-        var rt = bar.rectTransform;
-        rt.anchorMin = rt.anchorMax = new Vector2(0, 0); rt.pivot = new Vector2(0.5f, 0);
-        rt.sizeDelta = new Vector2(LineW, Mathf.Max(0f, height)); rt.anchoredPosition = new Vector2(LineX, bottom);
+        var img = UiKit.Img(name, parent, color);
+        img.raycastTarget = false;
+        TopLeft(img.rectTransform, x, y, w, h);
+        return img;
+    }
+
+    static void TopLeft(RectTransform rt, float x, float y, float w, float h)
+    {
+        rt.anchorMin = rt.anchorMax = new Vector2(0, 1);
+        rt.pivot = new Vector2(0, 1);
+        rt.sizeDelta = new Vector2(w, h);
+        rt.anchoredPosition = new Vector2(x, -y);
+    }
+
+    // The thin bar along the timeline's bottom edge that shows, and drags, where along the mastery levels it is.
+    Scrollbar NewScrollbar()
+    {
+        var track = UiKit.Round(UiKit.Img("HorizontalScroll", content, LineBg), 3);
+        var rt = track.rectTransform;
+        rt.anchorMin = new Vector2(0, 0); rt.anchorMax = new Vector2(1, 0); rt.pivot = new Vector2(0.5f, 0);
+        rt.sizeDelta = new Vector2(0, 8); rt.anchoredPosition = new Vector2(0, 2);
+        var area = NewRect("Area", rt);
+        UiKit.Fill(area, Vector2.zero, Vector2.zero);
+        var handle = UiKit.Round(UiKit.Img("Handle", area, UiKit.WindowEdge), 3);
+        UiKit.Fill(handle.rectTransform, Vector2.zero, Vector2.zero);
+        var bar = track.gameObject.AddComponent<Scrollbar>();
+        bar.handleRect = handle.rectTransform;
+        bar.targetGraphic = handle;
+        bar.direction = Scrollbar.Direction.LeftToRight;
+        return bar;
     }
 
     static RectTransform NewRect(string name, Transform parent)

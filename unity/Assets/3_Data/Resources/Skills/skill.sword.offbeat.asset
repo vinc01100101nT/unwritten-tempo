@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 15
   needsSkillId: 
   published: 1
+  maxLevel: 5
   description: 'Break their rhythm.
 
     A strike for 100% Attack; their attack speed

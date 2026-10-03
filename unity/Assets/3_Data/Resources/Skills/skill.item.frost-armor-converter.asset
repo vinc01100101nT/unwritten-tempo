@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: Your armor is Water (level 1) for 5:00.
   archetype: 3
   family: 0

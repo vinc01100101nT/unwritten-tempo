@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 21
   needsSkillId: skill.sword.guard_stance
   published: 1
+  maxLevel: 1
   description: "Stand your ground.\nAfter casting Still Air, nothing stops you
     for 6s \u2014 no flinch, stun, freeze, silence, knockback or pull."
   archetype: 2

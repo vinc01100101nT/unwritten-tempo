@@ -169,8 +169,8 @@ public interface ICombatUnit : IDamageable
     /// <summary>The percentage this unit's ring adds to <paramref name="stat"/> (0.32 = +32%).</summary>
     float RingBonus(StatId stat);
 
-    /// <summary>What this unit's own practice adds to <paramref name="skillId"/>'s output, on top of the ring's
-    /// term — Skill Mastery's job.</summary>
+    /// <summary>What this unit's level in <paramref name="skillId"/>, and its weapon's trademark, add to that skill's
+    /// output, on top of the ring's term.</summary>
     float SkillOutputLift(string skillId);
 
     /// <summary>This unit's own level — what decides how challenging a fight with it was.</summary>
@@ -179,8 +179,8 @@ public interface ICombatUnit : IDamageable
     /// <summary>The weapon type in this unit's hands, or <see cref="WeaponType.None"/> when they are empty.</summary>
     WeaponType HeldWeapon { get; }
 
-    /// <summary>The GRADE of the weapon in this unit's hands — what caps and prices practice with it. Raw with
-    /// empty hands, which is the lowest there is.</summary>
+    /// <summary>The GRADE of the weapon in this unit's hands — what caps its weapon mastery and how many of each
+    /// skill's levels count. Raw with empty hands, which is the lowest there is.</summary>
     Quality HeldQuality { get; }
 
     /// <summary>Seconds between this unit's swings at its current attack speed.</summary>

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -17,7 +17,7 @@ tags:
 
 > **Pillar** (2026-07-22, supersedes V2's hybrid weapon-affix + ring-voice model): give every system **one job**. A skill's numbers, a skill's effects, the ring's scaling, and enemy matchup each live in exactly one layer with no overlap. This is a **big** simplification of V2 — kept as its own doc because the changes are large; V2 stays intact as the record of where we came from.
 >
-> - **Weapon** = grants skills (+ weapon identity: damage type, animation). *Family is a composing guide, not stamped on the weapon — see §5.*
+> - **Weapon** = decides which skills may be learned and used (+ weapon identity: damage type, animation). *Family is a composing guide, not stamped on the weapon — see §5.*
 > - **Skill** = its own numbers (the **Channels**, §1) **+** its own natural effects (the **Effects**, §2).
 > - **Ring** = **numeric scaling only**, and the per-skill scaling weights are what lock roles.
 > - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier and no mob-only multiplier — so an effect never has to ask what kind of thing it hit. See the companion *Unified Unit Stats*.
@@ -66,9 +66,9 @@ fit together — stays authored, and lives around the generated cards rather tha
 
 A channel is a **stat-agnostic numeric output** — the common language every other system references. A skill exposes **only the channels it owns**. Channels split into two tiers by who owns them. *(Live view: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects**.)*
 
-**Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the RARITY of the weapon that granted the skill. Both columns below were read off the applier on 2026-09-09.
+**Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the skill's own LEVEL, bought with weapon mastery points (a forged weapon's trademark raises the same channels — [V4](../gameplay-system-v4/README.md)). Which channels each one moves is `EffectScaling` in `SkillEffect.cs`.
 
-| Channel | Meaning | Unit | Ring-scales? | Practice-scales? |
+| Channel | Meaning | Unit | Ring-scales? | Level-scales? |
 | --- | --- | --- | --- | --- |
 | damage | Direct damage — base power × ATK/MATK × affinity | mult | yes | yes |
 | hits | Strikes per landing; each is a proc trigger | int | yes (own affinity list) | no |
@@ -84,9 +84,9 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | modifier_stacks | What AddStacks hands another skill's pile | int | yes (affinity list) | yes — it is this skill's main number |
 | execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw | base roll scales; this is raw |
 | proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | yes (own affinity list) | no — clamped to 100%, so a lift saturates then does nothing |
-| duration | Effect window length | sec | yes (own affinity list) | **NEVER** — practice must not hold a longer stun |
+| duration | Effect window length | sec | yes (own affinity list) | **NEVER** — a skill's level must not hold a longer stun |
 
-**The practice lift, in full** (V4): a character's own practice adds up to **+30%** to the ring's affinity term on the channels marked above — **Skill Mastery** on an active, at +1% a level to 30, and **Weapon Mastery** on a passive, at +0.5% a level to the same ceiling. It is **added** to that term, never multiplied onto the finished number: multiplying would pay out more the more ring a player had already built, so the same practice would be worth far more to a veteran. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless skill at full practice is still ×1.30. The grade of the weapon in hand caps how far that practice goes — see [V4 §9](../gameplay-system-v4/README.md).
+**The skill-level lift, in full** (V4): every level a character has bought in a skill after the first adds **+5%** to the ring's affinity term on the channels marked above — level 5 is +20%, level 10 is +45% — the same for an active, a passive and an ultimate. It is **added** to that term, never multiplied onto the finished number: multiplying would pay out more the more ring a player had already built, so the same level would be worth far more to a veteran. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless 10-level skill at level 10 is still ×1.45. The grade of the weapon in hand limits how many of the levels count — see [V4 §7 and §9](../gameplay-system-v4/README.md).
 
 **Retired channels — folded into `sub_stat_magnitude` when the sub-stat collapse landed:** `dmg_reduction` (Guard), `dmg_taken_frac` (Vulnerability), `heal_per_tick` (Regen), `slow_amount`, `accuracy_loss`, `move_mult` (Haste), `leech_frac`, `reflect_frac`, `buff_mult`. Do not reintroduce any of them as its own channel — see the note under the Effects catalog.
 
@@ -109,7 +109,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 ## 2. Effects Catalog — LOCKED (the behaviors, "what happens?")
 
-Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and cap how far practice with them goes** (§1), so there is still nothing to "fold": the ring and practice both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
+Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and limit how many of their levels count** (§1), so there is still nothing to "fold": the ring and a skill's level both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
 **This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-09-23). It is the full set — there is no effect a skill can author that is not here.
 
@@ -192,7 +192,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
 
 - **OnCast** — a normal active the player presses (default). Takes a hotbar slot; uses the cost / cadence / aim of §Tier B.
-- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, and nothing switches it on: a passive is live the moment its weapon's mastery learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
+- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, and nothing switches it on: a passive is live the moment a mastery point learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 
@@ -207,7 +207,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 | System | Single responsibility |
 | --- | --- |
-| Weapon | Decides which skills may be learned and used, and caps the practice behind them (see **[Gameplay System V4](../gameplay-system-v4/README.md)**); defines weapon identity |
+| Weapon | Decides which skills may be learned and used, and limits how many of their levels count (see **[Gameplay System V4](../gameplay-system-v4/README.md)**); defines weapon identity |
 | Channels (§1) | The skill's numeric outputs ("how much?") |
 | Effects (§2) | The skill's natural behaviors ("what happens?") |
 | Trigger (§6) | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler) |
@@ -224,13 +224,13 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 ## Related
 
-- [Gameplay System — V4](../gameplay-system-v4/README.md) — the agreed next design: crafted gear, quality grades, weapon and skill mastery. Not built.
+- [Gameplay System — V4](../gameplay-system-v4/README.md) — built: crafted gear, quality grades, weapon mastery, and skill levels bought with mastery points.
 - [Implementation Notes](implementation-notes.md) — how this design is actually wired today (this doc wins on intent, that one on code).
 - [Unified Unit Stats](unified-unit-stats.md) — the unit half: one stat model, so an effect never asks what it hit.
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — what a state IS, and the stacks/charges/gate rules.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the "how much" half, and the locked scaling defaults.
 - [Weapon Roster — 14 Identities](weapon-roster-12-identities.md) — the fourteen identity sentences every skill must reinforce.
-- [Weapon Crafting & Economy](weapon-crafting-economy.md) — how a weapon's rolled kit comes to exist. Design only.
+- [Weapon Crafting & Economy](weapon-crafting-economy.md) — the rolled-kit economy design; the game does not use it (V4 replaced it).
 - [Sword — Skill Roster](sword-skill-roster.md) — the one fully-authored pool.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the scaling layer §3 hands the numbers to.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — the combat maths under the channels.

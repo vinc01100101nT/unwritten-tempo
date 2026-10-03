@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 65
   needsSkillId: skill.sword.blade_dance
   published: 1
+  maxLevel: 5
   description: 'The dance goes on.
 
     A kill during Thousand Petals adds 7 more dance

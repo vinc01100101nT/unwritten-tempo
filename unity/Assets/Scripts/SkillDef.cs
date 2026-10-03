@@ -456,19 +456,25 @@ public class SkillDef : ScriptableObject
     [Tooltip("Two letters that stand for this skill on a tile, the way Au stands for gold: \"Committed Strike\" " +
              "becomes \"Cs\". Blank = the tile shows the skill's whole name instead.")]
     public string symbol = "";
-    [Tooltip("WHICH weapon this skill belongs to. It is learned by mastering that weapon and may only be used " +
-             "while holding one. Also the middle segment of the id: skill.sword.<name>. None = belongs to no " +
+    [Tooltip("WHICH weapon this skill belongs to. It is learned with that weapon's mastery points and may only be " +
+             "used while holding one. Also the middle segment of the id: skill.sword.<name>. None = belongs to no " +
              "weapon, so nobody can learn it.")]
     public WeaponType weaponType = WeaponType.None;
-    [Tooltip("The mastery level in that weapon at which this skill is learned. 1 = known as soon as the first " +
-             "level is reached. 0 means the same as 1.")]
+    [Tooltip("The mastery level in that weapon from which a mastery point can be spent on this skill — where it " +
+             "sits on the Skills window's timeline. It learns nothing by itself. 0 means the same as 1.")]
     public int masteryLevel = 1;
-    [Tooltip("A skill that must be learned FIRST, by id — so a skill that rides another can never be held " +
-             "without it (Crossed Branches needs Piercing Gust). Empty = nothing comes first.")]
+    [Tooltip("A skill that must be learned FIRST (at least one point in it), by id — ONLY when this skill literally " +
+             "uses it: spends its stacks, adds to its pile, fires on its cast or on a moment it causes (Crossed " +
+             "Branches needs Piercing Gust). Never because it pairs well. Empty = nothing comes first.")]
     public string needsSkillId = "";
     [Tooltip("PUBLISHED = a forge may roll this as a weapon's trademark, and a creature may draw it as its extra " +
-             "skill. Unpublished or not, it is learned by mastering its weapon.")]
+             "skill. Unpublished or not, it is learned with its weapon's mastery points.")]
     public bool published = false;
+    [Tooltip("The highest level mastery points can raise this skill to. Every level after the first adds the same " +
+             "+5% to each number the fight raises. 10 when what grows is mostly damage; 5 when it is a defensive or " +
+             "utility percentage or a charge count; 1 when nothing on the skill grows. 0 = never set, which the " +
+             "skill-data check refuses on any skill that belongs to a weapon.")]
+    [Min(0)] public int maxLevel = 0;
 
     [Header("Codex (hover tooltip)")]
     [TextArea(2, 4)]

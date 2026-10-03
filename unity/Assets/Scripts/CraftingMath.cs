@@ -38,7 +38,7 @@ public static class CraftingMath
 
     // ---- the trademark ------------------------------------------------------------------------------------
     /// <summary>What a weapon's trademark adds to every main number of its skill, by the weapon's grade — +5% at
-    /// Raw to +20% at A. Added to the skill's practice lift, never multiplied onto it.</summary>
+    /// Raw to +20% at A. Added to the skill's level lift, never multiplied onto it.</summary>
     public static float TrademarkLift(Quality q) => TrademarkLifts[Index(q)];
 
     /// <summary>Each ULTIMATE's chance, in percent, of being the trademark a forge rolls. The ordinary skills share
@@ -68,10 +68,17 @@ public static class CraftingMath
     /// <summary>The highest Weapon Mastery level a weapon of this grade lets its wielder use — and earn.</summary>
     public static int WeaponMasteryCap(Quality q) => WeaponCaps[Index(q)];
 
-    /// <summary>The highest Skill Mastery level a weapon of this grade lets its wielder use — and earn.</summary>
-    public static int SkillMasteryCap(Quality q) => SkillCaps[Index(q)];
+    /// <summary>How many of a skill's levels count while a weapon of this grade is held: the grade's share of the
+    /// table's top, applied to the skill's own <paramref name="maxLevel"/> and rounded UP — so every grade lets a
+    /// learned skill count at level 1, and only the best grade lets every level count. A 10-level skill counts
+    /// 2 / 3 / 4 / 6 / 7 / 9 / 10 from Raw to A.</summary>
+    public static int SkillLevelCap(Quality q, int maxLevel)
+    {
+        int top = SkillCaps[SkillCaps.Length - 1];
+        return (System.Math.Max(0, maxLevel) * SkillCaps[Index(q)] + top - 1) / top;
+    }
 
-    /// <summary>How fast a weapon of this grade trains both masteries (1 = par).</summary>
+    /// <summary>How fast a weapon of this grade trains its weapon mastery (1 = par).</summary>
     public static float TrainingSpeed(Quality q) => Speeds[Index(q)];
 
     /// <summary>Which material band this grade folds with: Raw folds with band 1, A with band 7. Also the

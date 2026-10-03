@@ -42,6 +42,22 @@ Every task carries:
 
 ---
 
+## Week 3 — A full wardrobe exists
+
+**Goal:** every place on the body has something you can make, and a reason to keep working on the one you made.
+
+  - [ON-GOING] `ST-39-E` **`[E]` Weapon Mastery.** Earned by the share of a creature you took down with that weapon,
+    scaled by the fight's challenge and the weapon's grade, capped by that grade. It raises three stats that fit
+    the weapon and gives one mastery point per level, spent in the Skills window to learn and level its skills. Creatures have one too, authored as their level.
+    *Done when:* a kill with a sword raises Sword Mastery and nothing else, and a skill can be bought once its level is reached.
+
+  - [ON-GOING] `ST-39-F` **`[E]` Skill levels.** The first mastery point spent on a skill learns it and each further point raises it
+    a level, up to its max level (10, 5 or 1); every level after the first adds +5% to its main numbers, active, passive or ultimate
+    alike, and the weapon held's grade limits how many levels count. Pressing a skill does not train it.
+    *Done when:* spending a point on one skill raises the number on its own card and no other.
+
+---
+
 ## Week 5 — The world opens
 
 **Goal:** you can walk from the first town to any map in the game. The three-region world is laid out and generated

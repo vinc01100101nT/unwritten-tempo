@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 3
   needsSkillId: 
   published: 1
+  maxLevel: 10
   description: 'Every hit adds up.
 
     Each basic attack that lands grants a stack:

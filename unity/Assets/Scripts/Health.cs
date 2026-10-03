@@ -195,17 +195,20 @@ public class Health : MonoBehaviour, ICombatUnit
 
     public float RingBonus(StatId stat) { var s = StatBlock; return s != null ? s.RingBonus(stat) : 0f; }
 
-    /// <summary>What this creature's own practice adds to a skill's output. A creature presses nothing on purpose,
-    /// so every skill it runs rides its WEAPON mastery — the same rule a player's passives follow, held to the same
-    /// cap by the grade of what it is holding, and only for a skill that weapon actually owns.</summary>
+    /// <summary>What lifts a skill's output for this creature: its level in that skill, plus its weapon's trademark.
+    /// A creature's mastery still decides WHICH of its weapon's skills it knows (<see cref="KitOf"/>), but it spends no
+    /// points, so every skill it knows sits at <see cref="CreatureSkillLevel"/> — the skill exactly as authored — until
+    /// each kind of creature is given a build of its own (decided with the user 2026-10-03).</summary>
     public float SkillOutputLift(string skillId)
     {
-        var s = StatBlock;
-        if (s == null) return 0f;
+        if (StatBlock == null) return 0f;
         var def = SkillCatalog.Get(skillId);
-        float mastery = def != null && def.RidesWeaponMastery(HeldWeapon) ? MasteryMath.PassiveLift(s.UsableMastery) : 0f;
-        return mastery + TrademarkLift(skillId);
+        float level = def != null && def.RidesWeaponMastery(HeldWeapon) ? MasteryMath.SkillLevelLift(CreatureSkillLevel) : 0f;
+        return level + TrademarkLift(skillId);
     }
+
+    /// <summary>The level every skill a creature knows sits at: 1, the skill as authored, with no points spent.</summary>
+    public const int CreatureSkillLevel = 1;
 
     /// <summary>What the weapon this creature holds adds to <paramref name="skillId"/> through its trademark — the
     /// same rule a player's weapon follows, so a creature carrying a trademark weapon is dangerous the same way.</summary>
@@ -301,8 +304,8 @@ public class Health : MonoBehaviour, ICombatUnit
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
     /// <summary>The skills this creature casts — everything its WEAPON MASTERY has opened for the weapon in its
-    /// hands, plus its extra skills (see <see cref="ExtraSkillIds"/>). The same rule a player follows: a skill
-    /// belongs to a weapon and is known once that weapon is practised to its level. Rebuilt the moment either
+    /// hands, plus its extra skills (see <see cref="ExtraSkillIds"/>). A creature spends no mastery points, so it
+    /// knows every skill of its weapon that its mastery has reached (each at level 1). Rebuilt the moment either
     /// changes, which is every new life. Null on a watched copy, which decides nothing, and on anything that is not a creature the server thinks
     /// for.</summary>
     public UnitSkills Skills
@@ -378,8 +381,8 @@ public class Health : MonoBehaviour, ICombatUnit
 
     // What its held weapon's mastery has opened, plus its extra skills, IN THE CATALOG'S ORDER — a skill's
     // position is its identity to the passive brake, so the list must not depend on where each came from. The same
-    // rule a person's list keeps, and the same unlock table: a creature practised to level 30 with a sword knows
-    // every sword skill up to 30, and one that has never picked a sword up knows none of them.
+    // rule a person's list keeps, read off the same opening levels: a creature practised to level 30 with a sword
+    // knows every sword skill that opens by 30, and one that has never picked a sword up knows none of them.
     System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear, List<string> extra)
     {
         kitScratch.Clear();

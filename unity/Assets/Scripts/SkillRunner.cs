@@ -538,17 +538,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (pressed)
         {
             PassiveEvents.Fire(Caster, SkillTrigger.OnSkillCastComplete, def.id);
-            // AND IT COUNTS AS PRACTICE. One completed press is one use of that skill, at the speed the weapon in
-            // hand trains — which is why a run started by a trigger is not counted: nobody pressed it.
-            // THE SERVER'S, like every other number: a player's machine records nothing.
-            // A SKILL THAT BELONGS TO A WEAPON, and that weapon in hand. What a potion runs belongs to nobody,
-            // so drinking one is not practice at anything and must not fill the record with it.
-            if (GameServer.IsServer && Caster is Character who
-                && def.weaponType != WeaponType.None && who.HeldWeapon == def.weaponType)
-            {
-                who.Mastery.AddUse(def.id, MasteryMath.PracticeFromUse(who.HeldQuality), who.HeldQuality);
-                GameNetwork.SaveSoonFor(who);
-            }
         }
 
         // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays

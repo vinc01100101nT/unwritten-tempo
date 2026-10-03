@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 45
   needsSkillId: skill.sword.brace
   published: 1
+  maxLevel: 10
   description: 'Answer all of it at once.
 
     Cashes the damage Held Breath banked: five

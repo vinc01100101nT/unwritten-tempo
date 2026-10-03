@@ -150,7 +150,7 @@ map, and the map generator no longer puts any there.
   shadows can be seen in the game.
 - **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
   trademark on the weapon — each roll made the way a station makes it.
-- **Weapon mastery equals its level, capped at 70 by its A-grade weapon**, so the Sword shadow knows every sword skill.
+- **Weapon mastery equals its level, capped at 70 by its A-grade weapon**, so the Sword shadow knows every sword skill — each at level 1, since a creature spends no mastery points.
 - **Ring ranks:** 40 in each of the three stats its weapon's mastery raises. The Fist shadow uses the fist's
   placeholder row (Attack Speed, Attack, Evasion); the Kick shadow has none, because the kick has no mastery row yet.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are

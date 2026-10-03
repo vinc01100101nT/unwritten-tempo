@@ -18,7 +18,7 @@
       "type": "list",
       "ordered": true,
       "items": [
-        "**Your weapons** — the skills you have learned by practising them: the actives you press, and the passives that fire on their own.",
+        "**Your weapons** — the skills you have bought with each weapon's mastery points: the actives you press, and the passives that fire on their own.",
         "**Your ring build** — where you pour your stat growth."
       ]
     },
@@ -33,7 +33,7 @@
     },
     {
       "type": "paragraph",
-      "text": "The weapon type in your hand decides which of the **skills you have learned** you may use. Practise a staff and you learn its spells; practise a bow and you learn its shots — and swapping to a weapon you have practised swaps you onto its skills. The weapon's type (sword, staff, bow, dagger…) also sets your attack feel and animation — but it does **not** gate what you're allowed to be. Each of the fourteen weapon types fights the way one of the **Fourteen Kashira** fought, so choosing a weapon is choosing whose story you're finishing. See **Weapons & Equipment**, **Skills**, and **The World of Unwritten**."
+      "text": "The weapon type in your hand decides which of the **skills you have learned** you may use. Master a staff and spend its points on its spells; master a bow and spend its points on its shots — and swapping to a weapon whose skills you have bought swaps you onto them. The weapon's type (sword, staff, bow, dagger…) also sets your attack feel and animation — but it does **not** gate what you're allowed to be. Each of the fourteen weapon types fights the way one of the **Fourteen Kashira** fought, so choosing a weapon is choosing whose story you're finishing. See **Weapons & Equipment**, **Skills**, and **The World of Unwritten**."
     },
     {
       "type": "heading",

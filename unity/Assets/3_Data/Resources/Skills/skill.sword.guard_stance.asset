@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 5
   needsSkillId: 
   published: 1
+  maxLevel: 5
   description: 'Weather it.
 
     Take 50% less damage for 6 seconds.'

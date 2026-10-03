@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name."
 owner: vince
-last-updated: 2026-09-26
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -33,7 +33,7 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
 ## 2. What "empowers" means
 
 **A percentage added to that one skill's output, and nothing else.** No new mechanism: the game already has a
-per-skill lift hook that Skill Mastery uses — `Character.SkillOutputLift(skillId)`, resolved once per burst and
+per-skill lift hook that the skill's level uses — `Character.SkillOutputLift(skillId)`, resolved once per burst and
 **added** to the ring's term rather than multiplied (`SkillEffectApplier.OutputMult`). A weapon's trademark adds
 one more term there.
 
@@ -43,16 +43,16 @@ is bigger** — the user's own example.
 
 ### Main numbers only — decided 2026-09-21
 
-**Skill Mastery and a trademark lift an effect's MAIN number and nothing else — every main number, no
+**A skill's level and a trademark lift an effect's MAIN number and nothing else — every main number, no
 exception.** Every other channel — chance, duration, number of hits, seconds added — is moved by the ring alone.
 There is ONE list of which effects have a main number (`EffectScaling.Boostable`); the ring's **boosts …** row,
-the Skill Composer's green **raised by Skill Mastery** line and the fight all read it, and a trademark rides the
+the Skill Composer's green **raised by the skill's level** line and the fight all read it, and a trademark rides the
 same line.
 
 **Every effect of the skill that has a main number is lifted — never just one.** The lift is resolved once per
 cast and handed to every effect that cast applies (`SkillEffectApplier.ApplyBurst`), and each main-number effect
-reads it. Thousand Petals carries a strike and a damage buff: mastery and a Thousand Petals sword raise both. Squall carries a +30%
-Attack Speed buff and a take-double-damage self-debuff: mastery and a Squall sword raise both, as the rule says.
+reads it. Thousand Petals carries a strike and a damage buff: its level and a Thousand Petals sword raise both. Squall carries a +30%
+Attack Speed buff and a take-double-damage self-debuff: its level and a Squall sword raise both, as the rule says.
 
 | The main number | Takes the lift? |
 | --- | --- |
@@ -71,9 +71,9 @@ Attack Speed buff and a take-double-damage self-debuff: mastery and a Squall swo
 
 **An EMPTY channel changes nothing about this.** Clearing every stat out of *boosts DAMAGE* means "the ring does
 not scale this skill" — it does not mean "nothing scales it". An empty affinity list answers **×1**, and the
-mastery and trademark lifts are ADDED to that, so a Thousand Petals with no stats on its damage channel still gets
-×1.30 from a maxed Skill Mastery and ×1.50 with an A-grade Thousand Petals sword beside it. The one thing to know is the
-consequence: with the channel empty, mastery and the weapon become the *only* things that scale that skill, so
+level and trademark lifts are ADDED to that, so a Thousand Petals with no stats on its damage channel still gets
+×1.45 at its max level 10 and ×1.65 with an A-grade Thousand Petals sword beside it. The one thing to know is the
+consequence: with the channel empty, the skill's level and the weapon become the *only* things that scale that skill, so
 it lands the same for every build.
 
 **So a Thousand Petals sword lifts Thousand Petals' damage, not its number of hits.** That is deliberate, and worth keeping:
@@ -85,7 +85,7 @@ it lands the same for every build.
   of five is 5.75, which rounds to six, a 20% jump at one threshold. A Raw trademark would read as broken and a
   C one as a windfall, with no honest reading in between.
 
-Duration is excluded for the same reason it is excluded from Skill Mastery: a longer buff is a different kind of
+Duration is excluded for the same reason it is excluded from a skill's level: a longer buff is a different kind of
 power from a bigger one, and the design pays for one of them only.
 
 **It scales with the weapon's grade**, so the name and the grade pull in the same direction:
@@ -100,15 +100,15 @@ power from a bigger one, and the design pays for one of them only.
 | B | +18% |
 | A | **+20%** |
 
-Deliberately below Skill Mastery's own +30% ceiling: a trademark should be a reason to want a weapon, never a
-reason a skill is unusable without one. The two stack additively, so a mastered skill on its trademark weapon is
-+50% at the top — a real build, reached by two different kinds of work.
+Deliberately below a 10-level skill's own +45% at its max level: a trademark should be a reason to want a weapon,
+never a reason a skill is unusable without one. The two stack additively, so a 10-level skill at level 10 on its
+A-grade trademark weapon is +65% at the top — a real build, reached by two different kinds of work.
 
 **Efficiency — a critical hit for a whole cast (agreed with the user on 2026-09-30).** Each time a **trademark
 skill** (§3 — any skill with a main number) fires — pressed or on its own trigger, active or passive, ultimate or not,
 whatever weapon the caster holds — the server rolls once: a flat **5%** chance, the same for every player, creature
 and skill, scaled by nothing. An efficient cast adds a further **+20 points** to that same lift for every main number
-it runs, every tick and repeat of that one cast included, so the top build above reads +70% on an efficient cast. It
+it runs, every tick and repeat of that one cast included, so the top build above reads +85% on an efficient cast. It
 also makes the full style call ("Blossom Wind style, 21st form, Thousand Petals!!"). A skill that is not a trademark
 skill has no main number to raise and never rolls.
 
@@ -216,7 +216,7 @@ pure random defensible — and it only works because recycle exists, which is wh
   names to keep in step with the skills. Rename a skill and every weapon carrying it is renamed with it.
 - **Everything else is read from the skill as it is now** (`Trademarks`): whether it can be a trademark
   (`Trademarks.Qualifies` — it belongs to a weapon and `EffectScaling.HasMainNumber`), which of its effects the
-  weapon raises (`EffectScaling.Boostable`, the same list mastery and the ring read), and what the weapon's card
+  weapon raises (`EffectScaling.Boostable`, the same list the skill's level and the ring read), and what the weapon's card
   lists. Change a skill's effects and every weapon carrying it follows at once.
 - **The forge rolls only PUBLISHED skills** of the weapon's type (`Trademarks.Rollable`): publishing is what lets a
   skill be rolled onto a weapon. The roll is server-side, through `CombatRng`, weighted by
@@ -224,9 +224,9 @@ pure random defensible — and it only works because recycle exists, which is wh
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire. Trademarks arrived with save **v14**; the save today is **v15**, and both servers' build string is
-  `unwritten-character-v15`.
-- **In a fight** the lift is added to the per-cast practice lift (`Character.SkillOutputLift` = mastery + trademark,
+  the wire. Trademarks arrived with save **v14**; the save today is **v17**, and both servers' build string is
+  `unwritten-character-v17`.
+- **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
   — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
@@ -234,7 +234,7 @@ pure random defensible — and it only works because recycle exists, which is wh
 - **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
   "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
-  +20%" and "Skill mastery: +12%" (a passive: "Weapon mastery") on their own lines, each only when it is above zero.
+  +20%" on its own line, only when the weapon in hand empowers that skill.
 - **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`).
 
 ## 7. Armour

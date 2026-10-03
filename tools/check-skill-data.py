@@ -162,6 +162,24 @@ def parse_converter_piles(source):
     return m.group(1), m.group(2)
 
 
+def parse_boostable(source):
+    """The effect kinds the fight raises with a skill's level — the case labels of EffectScaling.Boostable that
+    return true. Status is raised only for a damage-over-time ailment, which StatusController.IsDot names."""
+    body = _body_of(source, r"public static bool Boostable\(SkillEffect e\)", "EffectScaling.Boostable")
+    head = body.split("return true;")[0]
+    kinds = set(re.findall(r"case SkillEffectKind\.(\w+):", head))
+    if not kinds:
+        die("Could not read which effect kinds EffectScaling.Boostable raises — this checker is blind to levels.")
+    return kinds
+
+
+def parse_dot_ailments(source):
+    m = re.search(r"public static bool IsDot\(Ailment a\)\s*=>\s*([^;]+);", source)
+    if not m:
+        die("Could not read StatusController.IsDot — this checker cannot tell which ailments grow with a level.")
+    return set(re.findall(r"Ailment\.(\w+)", m.group(1)))
+
+
 def parse_pile_for_stat(source):
     """Which pile each sub-stat lives in, read out of the one C# function that owns it."""
     body = _body_of(source, r"public static StateId PileFor\s*\([^)]*\)\s*\{",
@@ -383,6 +401,8 @@ def main():
     armor_pile, weapon_pile = parse_converter_piles(effect_src)
     armor_slot = parse_enum(read(os.path.join(SCRIPTS, "Item.cs")), "EquipSlotType")["Armor"]
     later_piles = parse_later_piles(effect_src)
+    boostable = parse_boostable(effect_src)
+    dot_ailments = parse_dot_ailments(read(os.path.join(SCRIPTS, "StatusController.cs")))
 
     kind_name = {v: k for k, v in kinds.items()}
     state_name = {v: k for k, v in states.items()}
@@ -542,6 +562,75 @@ def main():
             warn(s, "is saved under a different name than its id, so it is easy to lose track of.")
         if as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) == weapons.get("None", 0):
             warn(s, "is published for loot but belongs to no weapon, so no weapon can ever roll it.")
+
+        # ---- learning: how far it can be raised, and what it needs first ------------------------------
+        # The skill-tree rules (decided 2026-10-03): a skill that belongs to a weapon is learned and raised with
+        # mastery points up to its max level — 1 when nothing on it grows, so no point is ever spent on nothing —
+        # and it may only need another skill that it literally USES.
+        def grows(skill):
+            for b in skill.get("bindings") or []:
+                for e in b.get("effects") or []:
+                    kind = kind_name.get(as_int(e.get("kind")), "")
+                    if kind in boostable:
+                        return True
+                    if kind == "Status" and ail_name.get(as_int(e.get("ailment"))) in dot_ailments:
+                        return True
+            return False
+
+        if as_int(s.get("weaponType")) != weapons.get("None", 0):
+            top = as_int(s.get("maxLevel"))
+            if top < 1:
+                problem(s, "belongs to a weapon but has no max level, so no mastery point can ever be spent on it.")
+            elif top > 10:
+                problem(s, "can be raised to level %d — the highest any skill goes is 10." % top)
+            elif top > 1 and not grows(s):
+                problem(s, "can be raised to level %d, but nothing on it grows with its level, so every point past "
+                           "the first would do nothing. Its max level must be 1." % top)
+
+        need = str(s.get("needsSkillId", "")).strip()
+        if need:
+            def uses(skill, parent_id):
+                for e in entries_of(skill):
+                    if parent_id in (str(e.get("triggerSkillId", "")).strip(), str(e.get("requireSkillId", "")).strip()):
+                        return True
+                for b in skill.get("bindings") or []:
+                    for e in b.get("effects") or []:
+                        if str(e.get("modifierSkillId", "")).strip() == parent_id:
+                            return True
+                # A moment the parent is the source of: a skill that answers a parry needs a skill that parries.
+                parent = (by_id.get(parent_id) or [None])[0]
+                trig = {v: k for k, v in triggers.items()}
+                answers = {trig.get(as_int(e.get("trigger")), "") for e in entries_of(skill)}
+                parent_kinds = {kind_name.get(as_int(e.get("kind")), "")
+                                for b in (parent or {}).get("bindings") or [] for e in b.get("effects") or []}
+                return "OnParry" in answers and "Parry" in parent_kinds
+
+            parent = (by_id.get(need) or [None])[0]
+            # Walk up the chain of requirements: a skill that comes back round to itself can never be learned.
+            seen_chain, at, loops = {sid}, need, False
+            while at:
+                if at in seen_chain:
+                    loops = True
+                    break
+                seen_chain.add(at)
+                row = (by_id.get(at) or [None])[0]
+                at = str(row.get("needsSkillId", "")).strip() if row else ""
+            if need not in by_id:
+                problem(s, "needs a skill that does not exist (%s), so it can never be learned." % need)
+            elif loops:
+                problem(s, "needs %s, whose own requirements lead back round to this skill — neither can ever be "
+                           "learned first." % name_of(need))
+            elif as_int(parent.get("weaponType")) != as_int(s.get("weaponType")):
+                problem(s, "needs %s, which belongs to a different weapon — the points that learn it can never be "
+                           "spent on the same tree." % name_of(need))
+            elif max(1, as_int(s.get("masteryLevel"), 1)) < max(1, as_int(parent.get("masteryLevel"), 1)):
+                problem(s, "opens at mastery %d but needs %s, which opens at %d — it sits before the skill it needs "
+                           "on the timeline." % (max(1, as_int(s.get("masteryLevel"), 1)), name_of(need),
+                                                 max(1, as_int(parent.get("masteryLevel"), 1))))
+            elif not uses(s, need):
+                problem(s, "needs %s, but nothing in it uses %s. A requirement must be something the skill literally "
+                           "uses — its stacks, its pile, its cast or a moment it causes (the skill-tree rule)."
+                        % (name_of(need), name_of(need)))
 
 
         # ---- triggers and their gates -------------------------------------------------

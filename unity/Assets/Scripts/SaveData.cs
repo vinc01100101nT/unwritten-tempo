@@ -25,7 +25,10 @@ public class SaveData
     // v16: experience on the Ragnarok curve (UnitStatMath.LevelCost), the level capped at 99, the ring at a third of
     // it and weapon mastery at two thirds. An older save's level is kept and the experience inside each level keeps
     // the same share of the way through it (Character.CarryOntoRagnarokCurve).
-    public const int CurrentVersion = 16;
+    // v17: skills are learned and raised by spending mastery points (skillLevelIds / skillLevels). An older save's
+    // practised uses and automatically learned skills are not read: every point its masteries earned is there to
+    // spend again (decided 2026-10-03 — reset and refund).
+    public const int CurrentVersion = 17;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -73,14 +76,13 @@ public class SaveData
 
 
 
-    // Mastery (v13+): what this character has practised, and what that has opened. Parallel arrays, because a
-    // dictionary does not serialize. Null on an older save → nothing practised and nothing learned, which is
-    // exactly where a character who has never trained stands.
+    // Mastery (v13+): what this character has practised, and (v17+) the level bought in every skill learned.
+    // Parallel arrays, because a dictionary does not serialize. Null on an older save → nothing practised and
+    // nothing bought, which is exactly where a character who has never trained stands.
     public int[]    masteryWeapons;    // (int)WeaponType
-    public double[] masteryPoints;     // practice points to two decimals, parallel to masteryWeapons
-    public string[] masterySkillIds;   // SkillDef.id
-    public float[]  masterySkillUses;  // uses, parallel to masterySkillIds
-    public string[] learnedSkillIds;   // every skill this character knows
+    public double[] masteryPoints;     // mastery EXPERIENCE to two decimals (not the points spent on skills), parallel to masteryWeapons
+    public string[] skillLevelIds;     // SkillDef.id of every skill learned
+    public int[]    skillLevels;       // the level bought, parallel to skillLevelIds
 
     // Equipped gear (v6+): parallel arrays, one entry per occupied slot. Owned by Character. Null on a pre-v6
     // save → nothing equipped.

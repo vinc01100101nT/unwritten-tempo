@@ -162,7 +162,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each weapon type has a deep pool of skills, but **a weapon carries none of them**. You learn a skill by practising that kind of weapon, and it is yours for good — what you hold only decides which of the ones you know you may use right now. See *Skills* for how they are learned."
+      "text": "Each weapon type has a deep pool of skills, but **a weapon carries none of them**. You learn a skill by spending that kind of weapon's mastery points on it, and it is yours for good — what you hold only decides which of the ones you know you may use right now. See *Skills* for how they are learned."
     },
     {
       "type": "heading",
@@ -247,7 +247,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack — or its armour's material stats — are made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
+      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack — or its armour's material stats — are made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go, and how many of a skill's levels count; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
     },
     {
       "type": "table",
@@ -256,7 +256,8 @@
         "Folds it allows",
         "Lift on the fold total",
         "Stats it can carry",
-        "Weapon mastery it allows"
+        "Weapon mastery it allows",
+        "Skill levels that count (10-level / 5-level skill)"
       ],
       "rows": [
         [
@@ -264,49 +265,56 @@
           "+5",
           "—",
           "—",
-          "10"
+          "10",
+          "2 / 1"
         ],
         [
           "**F**",
           "+10",
           "—",
           "1",
-          "20"
+          "20",
+          "3 / 2"
         ],
         [
           "**E**",
           "+15",
           "+5%",
           "2",
-          "30"
+          "30",
+          "4 / 2"
         ],
         [
           "**D**",
           "+20",
           "+10%",
           "3",
-          "40"
+          "40",
+          "6 / 3"
         ],
         [
           "**C**",
           "+25",
           "+15%",
           "4",
-          "50"
+          "50",
+          "7 / 4"
         ],
         [
           "**B**",
           "+30",
           "+22%",
           "5",
-          "60"
+          "60",
+          "9 / 5"
         ],
         [
           "**A**",
           "+35",
           "+30%",
           "6",
-          "70"
+          "70",
+          "10 / 5"
         ]
       ]
     },
@@ -317,7 +325,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**A weapon carries no skills.** You learn them yourself, by fighting with that kind of weapon: every skill names the **mastery level** at which it opens, and some name a skill you must know first. What you have learned is yours for good — the weapon in your hands only decides which of them you may use, and how much further you can still learn."
+      "text": "**A weapon carries no skills.** You learn them yourself: fighting with that kind of weapon raises its mastery, every mastery level gives one point, and you spend points on its skills. Every skill names the **mastery level** at which it can be bought, and some name a skill that needs a point first. What you have learned is yours for good — the weapon in your hands only decides which of them you may use, how far its mastery can still grow, and how many of each skill's levels count."
     },
     {
       "type": "paragraph",
@@ -325,7 +333,7 @@
     },
     {
       "type": "paragraph",
-      "text": "So two people holding the same sword do not have the same skills: they have the skills they each practised for."
+      "text": "So two people holding the same sword do not have the same skills: they have the skills they each chose."
     },
     {
       "type": "heading",

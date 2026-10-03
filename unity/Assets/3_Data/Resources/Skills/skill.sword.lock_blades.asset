@@ -19,6 +19,7 @@ MonoBehaviour:
   masteryLevel: 7
   needsSkillId: skill.sword.lunge
   published: 1
+  maxLevel: 5
   description: 'No escape.
 
     Casting Piercing Gust arms 5 charges, each +2 basic attack

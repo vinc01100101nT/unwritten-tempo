@@ -1,7 +1,7 @@
 ---
 status: implemented 2026-08-10 (roster re-tune pending)
 owner: vince
-last-updated: 2026-10-02
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -204,8 +204,8 @@ This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `
 `CombatAuthority.NoteHPAdded` is the ONE door: it draws the green digits, fires the cue and raises the `OnHPAdded` event, which carries only WHO and HOW MUCH. Any healing source added later is covered for free. The cue was renamed from `OnReceiveHeal` (same int, so authored libraries keep their binding) because a cue must name the moment, not the source.
 
 **One deliberate exception left:** `Character.LeechHeal` still adds HP silently, so multi-hit life steal doesn't spam numbers.
-- **Gear defines the skill kit.** A weapon's identity is its skill roster, so a mob holding a weapon casts that weapon's rolled skills: an active or the ultimate in place of a swing when one is off cooldown, affordable and in reach (the ultimate first, otherwise one at random), and its passives on their own triggers. It pays MP and waits out cooldowns exactly as a player does, and its skills land on people, never on other mobs. Every cooldown starts ready on a new life.
-- **One extra skill slot, apart from the weapon.** Every mob also carries one extra skill, cast by exactly the same rules as its weapon's kit. Each life it is drawn at random from every published skill — any weapon's, ultimates and passives included — skipping any skill its weapon already carries. `/summon` can name a skill id instead (any skill, published or not), and that mob keeps it for every life. Only Sword skills are published today, so the extra slot is how a mob holding a Bow or nothing casts anything. Per-biome hand-written extra skills are planned, not built.
+- **Gear defines the skill kit.** A weapon's identity is its skill roster, so a mob holding a weapon casts every skill of that weapon type its weapon mastery has reached (capped by its weapon's grade), each at level 1, since a creature spends no mastery points: an active or the ultimate in place of a swing when one is off cooldown, affordable and in reach (the ultimate first, otherwise one at random), and its passives on their own triggers. It pays MP and waits out cooldowns exactly as a player does, and its skills land on people, never on other mobs. Every cooldown starts ready on a new life.
+- **One extra skill slot, apart from the weapon.** Every mob also carries one extra skill, cast by exactly the same rules as its weapon's skills. Each life it is drawn at random from every published skill — any weapon's, ultimates and passives included — skipping any skill its weapon already carries. `/summon` can name a skill id instead (any skill, published or not), and that mob keeps it for every life. Only Sword skills are published today, so the extra slot is how a mob holding a Bow or nothing casts anything. Per-biome hand-written extra skills are planned, not built.
 ---
 
 ## Related

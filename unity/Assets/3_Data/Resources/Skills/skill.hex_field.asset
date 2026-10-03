@@ -18,6 +18,7 @@ MonoBehaviour:
   masteryLevel: 1
   needsSkillId: 
   published: 0
+  maxLevel: 1
   description: Curse the ground so enemies inside are slowed and take extra damage.
   archetype: 4
   family: 1

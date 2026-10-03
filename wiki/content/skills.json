@@ -8,11 +8,11 @@
     {
       "type": "heading",
       "level": 2,
-      "text": "Practice grants your skills"
+      "text": "Mastery points buy your skills"
     },
     {
       "type": "paragraph",
-      "text": "In Unwritten, **you learn your skills by fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: two thirds of the experience every kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. Each level it reaches opens another of the sword's skills to you, for good — the Skills window (**K**) shows how much experience the next level needs. There are no classes — the weapons you have practised are what define you, and what you are holding decides which of the skills you know you may use right now."
+      "text": "In Unwritten, **your skills come from fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: two thirds of the experience every kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. **Every Sword Mastery level gives you one Mastery Point for the sword**, and you spend it in the Skills window (**K**): press **+** on a skill, and the first point **learns** it, each point after that raises it one level. What you learn is yours for good. The window also shows how much experience the next mastery level needs. There are no classes — the skills you chose are what define you, and what you are holding decides which of them you may use right now."
     },
     {
       "type": "heading",
@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills. You do not find them and no weapon carries them: every skill names the **mastery level** in its weapon at which you learn it, and some name a skill you must know first. Practise a sword and its pool opens to you, one skill at a time, in the order the weapon teaches them."
+      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills. You do not find them and no weapon carries them: every skill names the **mastery level** in its weapon at which you can buy it, and some name a skill that needs **at least one point** first — only when the skill really uses that other one (its stacks, its pile, its cast, or a moment it causes). The Skills window draws a weapon as a line from mastery **0** to **70**: each skill sits where it opens, a skill and the ones that need it share a row joined by lines, a skill still out of reach is faint, one you can buy is grey, and one you have bought wears the weapon's colour."
     },
     {
       "type": "paragraph",
@@ -41,20 +41,20 @@
     },
     {
       "type": "paragraph",
-      "text": "So two people holding the same sword need not play alike at all: they have the skills they each practised for. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
+      "text": "**You cannot have everything.** A weapon's mastery stops at **70**, so you get at most 70 points for it — and the sword's skills can take **129** levels between them. So two people holding the same sword need not play alike at all: they have the skills they each chose. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Skills level with use — your Ring and your weapon power them"
+      "text": "Skill levels, your Ring and your weapon power them"
     },
     {
       "type": "paragraph",
-      "text": "Three things make a skill strong. **Your Ring stats scale it** (see *Stats & the Ring*) — a heal only pays off if you invested MP, a damage skill only hits hard if you invested Attack or Magic Attack. **Each active skill has its own mastery**, honed by pressing it: every level adds **+1%**, up to **+30%**. A passive cannot be pressed, so it rides your **Weapon Mastery** instead, at half a percent a level to the same ceiling — but only a passive of the weapon in your hands; a potion gets none. The weapon in your hands caps both, and a better weapon trains them faster. And **a forged weapon's trademark** raises one skill of its type by **+5%** to **+20%**, by its grade (see *Weapons*)."
+      "text": "Three things make a skill strong. **Your Ring stats scale it** (see *Stats & the Ring*) — a heal only pays off if you invested MP, a damage skill only hits hard if you invested Attack or Magic Attack. **Its level** — every level after the first adds **+5%**: level 1 is the skill as it comes, level 5 is **+20%**, level 10 is **+45%**. Actives, passives and ultimates all grow the same way, but only while their weapon is in your hands; a potion gets none. A skill goes up to level **10** when what grows is mostly damage, **5** when it is a defensive or utility percentage or a number of charges, and stays at **1** when nothing on it grows. The weapon in your hands decides how many of those levels count: a 10-level skill counts **2** of them with a Raw weapon, then 3, 4, 6, 7, 9, and all **10** at A; a 5-level skill counts 1, 2, 2, 3, 4, 5 and 5. Levels you bought are never lost. And **a forged weapon's trademark** raises one skill of its type by **+5%** to **+20%**, by its grade (see *Weapons*)."
     },
     {
       "type": "paragraph",
-      "text": "Mastery and a trademark raise a skill's **main numbers** — every one of them, on every effect: the damage it deals, the heal, the shield, the damage an ailment ticks for, how big a buff or debuff is, and how many stacks it adds. A skill with a strike and a damage buff has both raised. They never raise a chance, a duration or the number of hits — only your Ring moves those. A skill's card shows each effect's base number, with the trademark bonus and the mastery bonus each on its own line underneath."
+      "text": "A skill's level and a trademark raise its **main numbers** — every one of them, on every effect: the damage it deals, the heal, the shield, the damage an ailment ticks for, how big a buff or debuff is, and how many stacks it adds. A skill with a strike and a damage buff has both raised. They never raise a chance, a duration or the number of hits — only your Ring moves those. A skill's card says **PASSIVE**, **ACTIVE** or **ULTIMATE** beside its name, lists what it requires (green when you have it, red when you don't), shows **Skill level N / max**, and gives every growing number now and at the next level — what an ordinary cast lands, with your Ring and the trademark of the weapon you hold already counted in; for a weapon you are not holding it counts every level you bought. The trademark bonus also gets its own line under each effect."
     },
     {
       "type": "heading",
@@ -83,7 +83,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it works on its own from the moment you learn it, as long as its weapon is in your hands: it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
+      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it works on its own from the moment you spend a point on it, as long as its weapon is in your hands: it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
     },
     {
       "type": "list",
@@ -133,7 +133,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and each opens deep into that weapon's mastery: the sword's arrive at **30**, **45** and **60**."
+      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and each opens deep into that weapon's mastery: the sword's open at **30**, **45** and **60**."
     },
     {
       "type": "quote",

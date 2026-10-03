@@ -403,8 +403,8 @@ static class Checks
                  upper + " holds fewer written stats than " + lower);
             That(CraftingMath.WeaponMasteryCap(upper) > CraftingMath.WeaponMasteryCap(lower), CraftF,
                  upper + " caps weapon mastery no higher than " + lower);
-            That(CraftingMath.SkillMasteryCap(upper) > CraftingMath.SkillMasteryCap(lower), CraftF,
-                 upper + " caps skill mastery no higher than " + lower);
+            That(CraftingMath.SkillLevelCap(upper, 10) >= CraftingMath.SkillLevelCap(lower, 10), CraftF,
+                 upper + " lets fewer of a skill's levels count than " + lower);
             That(CraftingMath.TrainingSpeed(upper) > CraftingMath.TrainingSpeed(lower), CraftF,
                  upper + " trains no faster than " + lower);
             That(CraftingMath.Band(upper) == CraftingMath.Band(lower) + 1, CraftF,
@@ -564,9 +564,6 @@ static class Checks
                 That(MasteryMath.WeaponLevelFrom(cost - 0.01) == level - 1, MasteryF,
                      "a hundredth under level " + level + "'s cost is not level " + (level - 1));
         }
-        for (int level = 0; level <= 60; level++)
-            That(MasteryMath.SkillLevelFrom(MasteryMath.SkillUsesFor(level)) == level, MasteryF,
-                 "skill level " + level + " does not read back from its own cost in uses");
 
         // WEAPON MASTERY IS PAID TWO THIRDS OF EVERY KILL (decided 2026-09-30), on the character's own curve: mastery M
         // to M+1 costs what base level M+1 does. At par, mastery 70 — the highest grade's cap — comes at base 74.
@@ -578,25 +575,34 @@ static class Checks
         That(MasteryMath.WeaponXpFromKill(300, Quality.E) == 200.0, MasteryF,
              "a kill worth 300 does not pay a par weapon 200");
 
-        // THE PROMISED FIGURE: 2,325 uses to skill 30.
-        That(Math.Abs(MasteryMath.SkillUsesFor(30) - 2325f) < 0.01f, MasteryF,
-             "skill mastery 30 no longer costs 2,325 uses: " + MasteryMath.SkillUsesFor(30));
 
         // AND WHAT THOSE LEVELS ARE WORTH: half a percent a level on each of the weapon's three stats, so 35% at 70.
         That(Math.Abs(MasteryMath.WeaponPercent(70) - 0.35f) < 0.0001f, MasteryF,
              "weapon mastery 70 no longer adds 35% to each of its stats: " + MasteryMath.WeaponPercent(70));
 
-        // Neither lift ever passes the ceiling, and both rise with the level.
-        float lastSkill = -1f, lastPassive = -1f;
-        for (int level = 0; level <= 200; level++)
+        // SKILL LEVELS (decided 2026-10-03): one mastery point per weapon mastery level, and every skill level after
+        // the first adds +5% — level 1 is the skill as authored, level 10 is +45%, level 5 +20%.
+        That(MasteryMath.SkillPointsFor(70) == 70 && MasteryMath.SkillPointsFor(0) == 0 && MasteryMath.SkillPointsFor(-3) == 0,
+             MasteryF, "a weapon mastery level no longer gives exactly one mastery point");
+        That(MasteryMath.SkillLevelLift(0) == 0f && MasteryMath.SkillLevelLift(1) == 0f, MasteryF,
+             "an unlearned or level-1 skill is lifted at all");
+        That(Math.Abs(MasteryMath.SkillLevelLift(10) - 0.45f) < 0.0001f, MasteryF,
+             "a level-10 skill is no longer +45%: " + MasteryMath.SkillLevelLift(10));
+        That(Math.Abs(MasteryMath.SkillLevelLift(5) - 0.20f) < 0.0001f, MasteryF,
+             "a level-5 skill is no longer +20%: " + MasteryMath.SkillLevelLift(5));
+
+        // THE GRADE TABLE, SCALED TO EACH SKILL'S OWN MAX: a 10-level skill counts 2/3/4/6/7/9/10 from Raw to A, a
+        // 5-level one 1/2/2/3/4/5/5, and a 1-level skill always counts — every grade lets a learned skill be used.
+        int[] tenLevel = { 2, 3, 4, 6, 7, 9, 10 };
+        int[] fiveLevel = { 1, 2, 2, 3, 4, 5, 5 };
+        for (int g = 0; g <= (int)Quality.A; g++)
         {
-            float skill = MasteryMath.SkillLift(level);
-            float passive = MasteryMath.PassiveLift(level);
-            That(skill <= MasteryMath.MaxSkillLift + 0.0001f, MasteryF, "skill mastery " + level + " lifts " + skill);
-            That(passive <= MasteryMath.MaxSkillLift + 0.0001f, MasteryF, "a passive at mastery " + level + " lifts " + passive);
-            That(skill >= lastSkill, MasteryF, "the skill lift falls at level " + level);
-            That(passive >= lastPassive, MasteryF, "the passive lift falls at level " + level);
-            lastSkill = skill; lastPassive = passive;
+            var q = (Quality)g;
+            That(CraftingMath.SkillLevelCap(q, 10) == tenLevel[g], MasteryF,
+                 q + " lets " + CraftingMath.SkillLevelCap(q, 10) + " levels of a 10-level skill count, not " + tenLevel[g]);
+            That(CraftingMath.SkillLevelCap(q, 5) == fiveLevel[g], MasteryF,
+                 q + " lets " + CraftingMath.SkillLevelCap(q, 5) + " levels of a 5-level skill count, not " + fiveLevel[g]);
+            That(CraftingMath.SkillLevelCap(q, 1) == 1, MasteryF, q + " does not let a 1-level skill count");
         }
 
         // A KILL PAYS THE WEAPON TWO THIRDS OF WHAT IT PAID YOU, at the speed the grade in hand trains — E is par.
@@ -609,11 +615,6 @@ static class Checks
         That(MasteryMath.WeaponXpFromKill(100, Quality.A) > MasteryMath.WeaponXpFromKill(100, Quality.Raw), MasteryF,
              "a fine weapon trains no faster than a raw one");
 
-        // ONE COMPLETED PRESS IS ONE USE, at that same grade speed — so par is exactly one, whatever it was aimed at.
-        That(Math.Abs(MasteryMath.PracticeFromUse(Quality.E) - 1f) < 0.0001f, MasteryF,
-             "one press of a skill with a par weapon is not worth one use");
-        That(MasteryMath.PracticeFromUse(Quality.A) > MasteryMath.PracticeFromUse(Quality.Raw), MasteryF,
-             "a fine weapon hones a skill no faster than a raw one");
     }
 
     // ---- a buff's number is a bonus, stacking or not --------------------------------------------------

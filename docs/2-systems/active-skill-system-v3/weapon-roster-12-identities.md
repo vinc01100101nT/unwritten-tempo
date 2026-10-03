@@ -31,7 +31,7 @@ Locked 2026-07-27 after a diversity pass. This is the **canonical weapon lineup*
 
 Each weapon is what the artist kept of one of **the Fourteen Kashira** — the champions he imagined to fight Chaos, from before his paranoia turned them into the fourteen shadows. They were never put on the page, so they have no names. The epithet and the identity sentence are the same statement in two registers: the identity is the litmus test for skills, the epithet is the flavor it must sound like. A skill that doesn't fit the epithet doesn't fit the weapon. Full lore in `../story-setting-canon.md`.
 
-**The rolled kit is diegetic:** a dropped weapon remembers its wielder in fragments, so whichever skills it carries are *which memories surfaced*. Write drop/kit-roll flavor text in those terms, never as "randomized stats."
+**Learning is diegetic:** a weapon remembers its Kashira in fragments, and the skills a player buys with its mastery are *which memories they chose to draw out*. Write that flavor in those terms.
 
 ## 2. Full identity map
 
@@ -94,7 +94,7 @@ Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Ma
 
 ## 6. Authoring plan & open items
 
-- **Grid = 14 weapons, each with its own skill POOL** — the pool holds 3 ultimates + however many normals that weapon's identity naturally supports (pool size is **not fixed** — a weapon can have as few or as many normals as make sense; author the ones that reinforce §1, no filler to hit a quota). **Since [V4](../gameplay-system-v4/README.md), a weapon carries no skills at all:** every skill in a pool names the **mastery level** in that weapon at which a character learns it, and the skill that must come before it. A learned skill may only be used while holding that weapon.
+- **Grid = 14 weapons, each with its own skill POOL** — the pool holds 3 ultimates + however many normals that weapon's identity naturally supports (pool size is **not fixed** — a weapon can have as few or as many normals as make sense; author the ones that reinforce §1, no filler to hit a quota). **Since [V4](../gameplay-system-v4/README.md), a weapon carries no skills at all:** every skill in a pool names the **mastery level** in that weapon at which a character can buy it with that weapon's mastery points, the skill it needs first (only when it literally uses that skill), and its max level. The tree rules are the `skill-tree` skill. A learned skill may only be used while holding that weapon.
 - **Scaling role-lock is load-bearing** (Heal→MP, Damage→Atk/MAtk) — self-check affinity weights on every skill.
 - **Universal-but-specialized rule (authoring heuristic, from the Sword pass)** — *every ult should have at least one normal that **specializes** in it while still benefiting the other two ults*, building a shared spine so ult-builds aren't siloed. The specialization must be **asymmetric** (one ult gains most, or it's filler); cap at **\~1 per ult**; keep the other normals **sharply single-purpose**; and **not every normal must be build-optimal** (deliberate "trash-ish" slots are fine — players discover their build). It's a **heuristic, not a law** — don't force the resource→specialist→ult shape onto weapons whose identity resists it. See the **Sword — Skill Roster** doc for the worked example.
 - **Sword is authored** — see **Sword — Skill Roster**. The other 13 pools start fresh; author each straight from its one-sentence identity (§1) + the channels/effects/scaling rules in the V3 docs.

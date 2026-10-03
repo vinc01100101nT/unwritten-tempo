@@ -1,7 +1,7 @@
 ---
-status: "BUILD PLAN — all six slices landed 2026-09-20. Kept as the record of what each slice touched and what was decided."
+status: "BUILD PLAN — all six slices landed 2026-09-20; slice 6 was rebuilt as skill levels bought with mastery points on 2026-10-03. Kept as the record of what each slice touched and what was decided."
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-10-03
 tags:
   - systems-combat-design
 ---
@@ -9,14 +9,14 @@ tags:
 # Gameplay System V4 — Implementation Plan
 
 Companion to [the V4 design](README.md), which is the contract. This page says HOW it was built: six slices,
-smallest risk first. **All six landed on 2026-09-20 and none has been play-tested.**
+smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill levels on 2026-10-03) and none has been play-tested.**
 
 **Where the build differed from this plan**, decided while building:
 - The weapon kit's removal (slice 3) and learned skills (slice 5) shipped together, so no session ever ran with
   the kit gone and nothing to replace it.
 - One save version bump covered both slices: **v14** carries a forged weapon's trademark ([Weapon Names &
-  Trademarks](weapon-names-and-trademarks.md)). The save today is **v15** (timed effects ride it) and both sides'
-  build string is **unwritten-character-v15**.
+  Trademarks](weapon-names-and-trademarks.md)). The save today is **v17** (skill levels bought with mastery points ride
+  it) and both sides' build string is **unwritten-character-v17**.
 - Open question 1 was taken as recommended — the server writes a copy's finished attack, magic attack, defence
   and magic defence onto it, and a player's machine only adds them.
 - Open question 2 was NOT taken as written: instead of the bag wire carrying costs for every copy, a station asks
@@ -29,8 +29,9 @@ smallest risk first. **All six landed on 2026-09-20 and none has been play-teste
 - The item's own flat bonus fields and the armour roll ranges were DELETED rather than left unread: a crafted
   piece is its folds, its grade and its Ink, and a number on the design that nothing reads is a lie.
 - Two testing doors were added that the plan did not ask for: `/station` marks the nearest villager as a smith,
-  loom or tannery (no station is authored in a scene yet), and `/mastery` sets a weapon mastery level, because a
-  level is thousands of kills wide and a play-test cannot fight them.
+  loom or tannery (no station is authored in a scene yet), and `/mastery [weapon] <n>` sets a weapon mastery level (it learns
+  nothing — the points it gives are spent in the Skills window), because a level is thousands of kills wide and a
+  play-test cannot fight them. `/resetskills [weapon|all]` takes back the points spent on a weapon's skills.
 - Ten defects found in the 2026-09-20 play-test and by review were fixed on 2026-09-21: the HUD prefab rebuilt with
   the station window; a save's bar held to what is learned and a refused press said in chat; `/item` taking a
   quoted two-word name; Magic Defence and Crit Damage inks no longer dropped on decode; worn gear keeping its fold
@@ -54,8 +55,8 @@ smallest risk first. **All six landed on 2026-09-20 and none has been play-teste
     copy of the same twenty lines.
   - **One rule for what raises a skill's numbers** (the user's decision, 2026-09-21): the composer and the fight
     had separate lists and disagreed — the composer called a sub-stat change and an outgoing-damage boost or cut
-    fixed while the fight raised them by Skill Mastery. `EffectScaling.Boostable` is now the only list: every
-    number on it gets a "boosts …" ring row in the composer AND is raised by practice, no exception; the
+    fixed while the fight raised them. `EffectScaling.Boostable` is now the only list: every
+    number on it gets a "boosts …" ring row in the composer AND is raised by the skill's level, no exception; the
     fight, the tooltip and the composer all read it. Replayed against all 57 saved effects: no combat number moved,
     because no saved skill names ring stats on the newly offered rows.
   - **The fold cap became a real quench gate** (the user's decision, 2026-09-21, after watching a +0 sword
@@ -79,11 +80,11 @@ as slices land and as the open questions at the bottom are answered.
 **Slice 4 — Forge, Fold, Quench, Ink at a station in town.** Standing next to the smith (metal), loom (cloth) or tannery (leather) and pressing F opens the station's window. Forge: pick a design, pay the base materials and gold, receive a Raw +0 piece. Fold: pay 1 unit of the grade's band material + 50 gold × band number; the piece goes up one fold, never past its grade's cap. Quench: pay 10 units of the band + 500 gold × band number, optionally one Salt; the grade goes up one, stays, or (from E and above) drops one, using the §9 odds; folds go to +0 either way; a drop removes the last Ink stat. Ink: choose an empty or occupied stat slot on the piece; one random stat from the eighteen lands with the tier's number; the Ink is spent.
 *Check:* with 12 Copper and 1,200 gold, Forge a sword (Raw +0), Fold it five times (Raw +5, sixth fold refused), Quench it (F +0 with 80% odds, else Raw +0), Ink it with a Watery Ink (one stat, +2 attack or +16 HP etc., or +3 of a primary), hover it: the tooltip lists the grade, the folds and the stat. Walk away from the station and press F where no station is: nothing crafting-related opens. *Failure:* any of it works from the bag or away from the station; a fold goes past the cap; a quench jumps two grades; an Ink lands the same stat twice.
 
-**Slice 5 — Weapon Mastery.** Each weapon type has a mastery. Fighting with a sword earns Sword Mastery exactly the way the character's level and the ring are earned: two thirds of the experience every kill pays also goes to the mastery of the weapon in hand, times the grade's training speed, never past the grade's cap, on the character's own curve ([the curve](../pre-renewal-ro-port.md)). Every level adds +0.5% to the three stats in the design's §5 table, added to the ring's percentage. Skills are learned by reaching a Sword Mastery level, in the §9 table order, and each skill that needs another skill first only appears after it. A learned skill is usable only while holding that weapon type. Rolled weapon kits are gone: a weapon carries no skills.
-*Check:* a fresh character holding a Raw sword kills creatures worth 5 experience each — each kill adds 2.5 mastery experience (5 × 0.5 Raw speed); the eighth kill reaches 20 and Sword Mastery 1, and Piercing Gust and Bending Reed appear in the character skill window; the sheet's Attack Speed, Attack and HP each rise by +0.5%. A training dummy gives 0. With Sword Mastery 10 and a Raw sword, kills earn nothing more until an F sword is held. *Failure:* a kill with a bow raises Sword Mastery; the sheet number does not move; a skill appears before its level or before the skill it needs.
+**Slice 5 — Weapon Mastery.** Each weapon type has a mastery. Fighting with a sword earns Sword Mastery exactly the way the character's level and the ring are earned: two thirds of the experience every kill pays also goes to the mastery of the weapon in hand, times the grade's training speed, never past the grade's cap, on the character's own curve ([the curve](../pre-renewal-ro-port.md)). Every level adds +0.5% to the three stats in the design's §5 table, added to the ring's percentage. Each mastery level gives one mastery point for that weapon, spent in the Skills window (K): a skill can be bought once the mastery has reached its level (the §9 table) and the skill it needs, if any, has a point. A learned skill is usable only while holding that weapon type. Rolled weapon kits are gone: a weapon carries no skills.
+*Check:* a fresh character holding a Raw sword kills creatures worth 5 experience each — each kill adds 2.5 mastery experience (5 × 0.5 Raw speed); the eighth kill reaches 20 and Sword Mastery 1, and the Skills window shows one point to spend, which can buy Piercing Gust or Bending Reed; the sheet's Attack Speed, Attack and HP each rise by +0.5%. A training dummy gives 0. With Sword Mastery 10 and a Raw sword, kills earn nothing more until an F sword is held. *Failure:* a kill with a bow raises Sword Mastery; the sheet number does not move; a skill can be bought before its level or before the skill it needs.
 
-**Slice 6 — Skill Mastery.** Each active skill has its own mastery, honed per completed press: level N costs 5 × N uses, scaled by the weapon's quality speed, capped by the weapon's quality. Each level adds +1% to that skill's output, added to the ring's term the way rarity's lift used to be. A passive's output lift is Weapon Mastery level × 0.5%, capped at +30%.
-*Check:* press Piercing Gust five times at a dummy with a Raw sword (×0.5 speed): Piercing Gust mastery shows 2.5 uses; ten presses = 5 uses = level 1, and Piercing Gust's tooltip damage rises 1% over its level-0 number. A Raw sword caps Piercing Gust mastery at 4. *Failure:* a passive-triggered Piercing Gust counts as a use; the tooltip number does not change; the cap is not honoured.
+**Slice 6 — Skill levels.** Each further point spent on a learned skill raises it one level, up to its max level (10, 5 or 1 — the design's §7). Every level after the first adds +5% to each of that skill's main numbers, the same for actives, passives and ultimates, added to the ring's term the way rarity's lift used to be. The grade of the weapon held limits how many levels count. Pressing a skill does not train it.
+*Check:* with Sword Mastery 3 and a Raw sword, spend three points on Piercing Gust: its card reads "Skill level 3 / 10" and says only 2 count with this weapon (a Raw sword lets 2 of a 10-level skill's levels count), and its damage now and at the next level show the same number. Press it twenty times: its level does not move. *Failure:* a point is spent without the mastery or the needed skill; pressing raises the level; the grade limit is not honoured.
 
 ## Part 2 — How it gets built
 
@@ -97,7 +98,7 @@ as slices land and as the open questions at the bottom are answered.
 
 **Where the ring percentage enters**: `Character.PassivePercent` gated on `RingEquipped` (Character.cs:281-290) feeding `Lift` (Character.cs:309) and every getter (Character.cs:400-579); mob side `UnitStatBlock.RingPercent` gated on `Gear.RingEquipped` (UnitStatBlock.cs:58-70). Skills read it through `ICombatUnit.RingBonus` (ICombatUnit.cs:170) into `AffinityMult` (SkillEffectApplier.cs:920-934). **Weapon Mastery adds at exactly these two `Lift` sites and nowhere else** (V4 §5: "added to the ring's bonus, never multiplied").
 
-**Where rarity's skill lift enters**: `ICombatUnit.SkillRarityLift(skillId)` (ICombatUnit.cs:174) — `Character.cs:300` and `Health.cs:148-153` both call `Rarities.LiftFor` (Rarity.cs:91-99); the applier resolves it once per burst (SkillEffectApplier.cs:44, 61-68) and adds it in `OutputMult = AffinityMult + rarityLift` (SkillEffectApplier.cs:1025-1026); the tooltip reads the same hook (SkillTooltip.cs:232). **Skill Mastery replaces this one hook**, same signature shape, same add.
+**Where rarity's skill lift enters**: `ICombatUnit.SkillRarityLift(skillId)` (ICombatUnit.cs:174) — `Character.cs:300` and `Health.cs:148-153` both call `Rarities.LiftFor` (Rarity.cs:91-99); the applier resolves it once per burst (SkillEffectApplier.cs:44, 61-68) and adds it in `OutputMult = AffinityMult + rarityLift` (SkillEffectApplier.cs:1025-1026); the tooltip reads the same hook (SkillTooltip.cs:232). **The hook is now `ICombatUnit.SkillOutputLift`** — the skill-level lift plus the trademark — same signature shape, same add.
 
 **The server decides everything**: casts are owned/validated at `GameNetwork.Owns` (GameNetwork.cs:2320-2331 — bar, ult, or weapon kit); the bar and passives are set by `CmdSetHotbar`/`CmdSetPassives` with no learned-set check (NetPlayer.cs:1157-1185); the sheet is derived server-side and pushed (NetPlayer.cs:589-624 → Character.SetSheetFromServer, Character.cs:121-134); GM commands with `changesTheWorld` run on the server (GmCommand.cs:24-27; GameNetwork.cs:2469-2479). Kill credit is `Health.LastAttacker` written at the damage door (CombatAuthority.cs:73-77 for blows, 248-251 for ticks); **there is no per-attacker damage tally today** (Rewards.cs:51-58 says so in its own comment).
 
@@ -165,33 +166,33 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 #### Slice 5 — Weapon Mastery, learned skills, the character skill window (V4 §5, §6, §9)
 
-**Storage:** on `Character`, one mastery-experience total per `WeaponType` (to two decimals — each kill's share is kept by the same rule as the character's and the ring's) and the learned-skill set. Level is DERIVED from that experience by a static function on the character's own curve (`MasteryMath.WeaponLevelFrom`; [the curve](../pre-renewal-ro-port.md)) — one owner. Save: two new parallel arrays (`weaponMasteryTypes[]`, `weaponMasteryPoints[]`) + `learnedSkillIds[]` → `CurrentVersion` 13, `CharacterBuild` v13 (can be folded into Slice 3's bump if built together). Wire to the owner: a new `TargetMastery(...)` RPC in the shape of `TargetStatsChanged` (NetPlayer.cs:1149-1155), carrying finished values (per weapon type: level, experience into the level, the level's size, capped-by-held-weapon; the learned ids). The sheet already carries the finished stat numbers (NetPlayer.cs:589-624).
+**Storage:** on `Character`, one mastery-experience total per `WeaponType` (to two decimals — each kill's share is kept by the same rule as the character's and the ring's) and the bought skill levels. Level is DERIVED from that experience by a static function on the character's own curve (`MasteryMath.WeaponLevelFrom`; [the curve](../pre-renewal-ro-port.md)) — one owner. Save: two new parallel arrays (`masteryWeapons[]`, and `masteryPoints[]` — the mastery experience, not the points a player spends) → `CurrentVersion` 13, `CharacterBuild` v13 (folded into Slice 3's bump); the bought skill levels are Slice 6's arrays. Wire to the owner: a new `TargetMastery(...)` RPC in the shape of `TargetStatsChanged` (NetPlayer.cs:1149-1155), carrying finished values (per weapon type: level, experience into the level, the level's size, capped-by-held-weapon; the learned ids). The sheet already carries the finished stat numbers (NetPlayer.cs:589-624).
 
 **Earning (server only):** `Character.AddXP` — the one door every kill's experience (and `/xp`) comes through — pays the same amount to the held weapon's mastery (`MasteryProgress.AddXP`), times the grade's speed (`MasteryMath.WeaponXpFromKill`), refused once the grade's cap is reached. Only whoever is paid the experience earns it. Creatures do not earn.
 
 **Applying to stats:** `Character.Lift`/`PassivePercent` (Character.cs:285, 309) and `UnitStatBlock.Lift`/`RingPercent` (UnitStatBlock.cs:58-70) each add `mastery percent for (held weapon type, stat)` — a static function over the §5 table (weapon type → three `StatId`s) and the usable level (min(earned level, cap for held grade)). Applies to mobs from an authored mastery on `MonsterDef` — parallel arrays like `ringRankStats/ringRankValues` (MonsterDef.cs:63-67), copied to `UnitStatBlock` like those are (UnitStatBlock.cs:37-38). Creatures do not EARN (a respawn is a fresh creature, MobRespawn.cs:111-116).
 
-**Learning and the gate:** `SkillDef` gains two authored fields — the mastery level that unlocks it, and the skill it needs first (V4 §9 sword table). Written for all 22 sword assets in the same change. `weaponType` (SkillDef.cs:462) already says which mastery. The learned set is granted by the server when a level is reached (open question 10). `GameNetwork.Owns` (GameNetwork.cs:2320-2331) becomes: on the bar/ult AND learned AND `weaponType` matches the held weapon (or `None`). `CmdSetHotbar`/`CmdSetPassives` (NetPlayer.cs:1157-1185) refuse ids not learned. `UsableSkills` (Character.cs:1139-1177) drops the kit source; `PassiveLoadout.IsActive` (PassiveLoadout.cs:62-63) adds the learned + held-type test; `PassiveEvents.Fire` keeps reading `PassiveIsOn` (PassiveEvents.cs:114). Creatures: `Health.PassiveIsOn` is "everything" (Health.cs:307) — their list becomes the unlock table of their held weapon type up to their authored mastery level plus the extra slot (open question 11).
+**Learning and the gate:** `SkillDef` carries the mastery level that opens it (`masteryLevel`), the skill it needs first (`needsSkillId`) and how far it levels (`maxLevel`) (V4 §9 sword table), written for all 22 sword assets. `weaponType` already says which mastery. A skill is learned only when the player spends a point on it: `NetPlayer.CmdSpendSkillPoint` → `MasteryProgress.TrySpend`, which only the server runs (open question 10). `GameNetwork.Owns` (GameNetwork.cs:2320-2331) becomes: on the bar/ult AND learned AND `weaponType` matches the held weapon (or `None`). `CmdSetHotbar`/`CmdSetPassives` (NetPlayer.cs:1157-1185) refuse ids not learned. `UsableSkills` (Character.cs:1139-1177) drops the kit source; `PassiveLoadout.IsActive` (PassiveLoadout.cs:62-63) adds the learned + held-type test; `PassiveEvents.Fire` keeps reading `PassiveIsOn` (PassiveEvents.cs:114). Creatures: `Health.PassiveIsOn` is "everything" (Health.cs:307) — their list becomes every skill of their held weapon type up to their authored mastery level plus the extra slot (open question 11).
 
-**The window:** the Skills window (SkillsWindow.cs, key K) is the character skill window: learned skills to drag onto the bar, unlearned ones shown at their level. The Grimoire (J), the old list of every skill in the game, was deleted on 2026-09-21. `published` (SkillDef.cs:465) loses its kit reader but keeps `ExtraSkillRoll` (ExtraSkillRoll.cs:30) and the composer dimming (SkillComposerWindow.cs:242-261); its tooltip text ("eligible to be rolled onto a dropped weapon") must be rewritten.
+**The window:** the Skills window (SkillsWindow.cs, key K) is the character skill window: one weapon at a time as a timeline of mastery 0–70, a + button on each skill to spend a point, learned skills to drag onto the bar. Its tree rules are the `skill-tree` skill. The Grimoire (J), the old list of every skill in the game, was deleted on 2026-09-21. `published` (SkillDef.cs:465) loses its kit reader but keeps `ExtraSkillRoll` (ExtraSkillRoll.cs:30) and the composer dimming (SkillComposerWindow.cs:242-261); its tooltip text ("eligible to be rolled onto a dropped weapon") must be rewritten.
 
 **Touches but does not alter (none of these was ever agreed):** the hotbar stays 4 numbered slots + 1 ult (HotbarBindings.cs:12-15 justifies four by the kit size, which no longer exists — the number stays until the user says otherwise); passives are never ticked — every learned passive is live while its weapon is in hand (decided 2026-09-21); the training dummy earns nothing because it never loses health it keeps; the challenge scale uses the CHARACTER's level — for a creature killing a creature nothing is paid (Rewards.cs:33-35 already pays only a `Character`).
 
 **Rebuild:** game server yes; **character server yes** (save shape).
 
-#### Slice 6 — Skill Mastery and the passive's lift (V4 §7, §9)
+#### Slice 6 — Skill levels (V4 §7, §9)
 
-**Storage:** per active skill id, a use count; level derived (5 × N per level). Save: two parallel arrays (`skillMasteryIds[]`, `skillMasteryUses[]`) — bump version/build again or fold into Slice 5's bump. Wire: the same `TargetMastery` RPC carries per-skill level/uses/cap.
+**Storage:** per learned skill id, the level bought. Save: two parallel arrays (`skillLevelIds[]`, `skillLevels[]`, SaveData.cs:84-85), save **v17**; an older save's automatically learned skills are not read, so every point its masteries earned is there to spend again.
 
-**Earning (server only):** at `SkillRunner`'s completed-cast site, the `if (pressed)` branch (SkillRunner.cs:539-540) — one press = one use, scaled by the held grade's speed and capped by its grade cap (static function). A trigger-started run does not count (SkillRunner.cs:534-538). Passives never earn (V4 §7).
+**Spending (server only):** `CmdSpendSkillPoint` → `MasteryProgress.TrySpend` refuses a skill of no weapon, a skill at its max level, a skill whose mastery level is not reached, a skill whose needed skill has no point, and a spend with no point left. Nothing is earned per press.
 
-**Applying:** `ICombatUnit.SkillRarityLift(skillId)` (ICombatUnit.cs:174) is renamed to the mastery lift and both implementations change source: `Character.cs:300` → active: skill mastery level × 1% (capped by held grade); passive: weapon mastery level × 0.5% capped at 30%; `Health.cs:148-153` → the creature's authored values by the same rule. `OutputMult` (SkillEffectApplier.cs:1025-1026) and `SkillTooltip.cs:232` are untouched in shape.
+**Applying:** `Character.MasteryLift(skillId)` = `MasteryMath.SkillLevelLift(Mastery.UsableSkillLevel(skillId, HeldQuality))` — +5% a level after the first, counting only the levels the held grade allows (`CraftingMath.SkillLevelCap`), and only while the skill's weapon is in hand. A creature spends no points: `Health` lifts every skill it knows at `CreatureSkillLevel` = 1, which is no lift. `OutputMult` and the tooltip are untouched in shape.
 
-**Deletes:** the `Rarities.LiftFor` call sites named above; the "+0% Common … +30% Legendary" sentences in V3 README §1 (docs/2-systems/active-skill-system-v3/README.md:69, 88) and implementation-notes ("Skills don't level", :234-235), and ring-system-trio-ring.md:15.
+**Deletes:** the `Rarities.LiftFor` call sites named above; the "+0% Common … +30% Legendary" sentences in V3 README §1 and implementation-notes ("Skills don't level"), and ring-system-trio-ring.md:15.
 
-**Touches but does not alter:** which channels take the lift (output only, never duration/proc chance/hit count/cleanse count/shove speed — already how `OutputMult` vs `AffinityMult` are wired at SkillEffectApplier.cs:944-1035); the lift is ADDED to the ring term (SkillEffectApplier.cs:1026); the tooltip's describer (SkillTooltip.cs:232) reads the local player's lift.
+**Touches but does not alter:** which channels take the lift (output only, never duration/proc chance/hit count/cleanse count/shove speed — `EffectScaling.Boostable`); the lift is ADDED to the ring term; the tooltip's describer reads the local player's finished values.
 
-**Rebuild:** game server yes; character server yes if the save shape moved in this slice.
+**Rebuild:** game server yes; character server yes (save shape).
 
 ### Docs and wiki that state the old rules (RULE NOSTALE — rewrite in place in the slice that changes each)
 
@@ -217,7 +218,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 - **Two players in one world:** `PassiveLoadout`'s owner rule (PassiveLoadout.cs:24-29) — every new check must read the OWNER character, never `Character.Instance`.
 - **Perf:** the tally write is per hit (CombatAuthority.Land is the per-hit path per PERFORMANCE.md's checker, :88-90) — fixed-size, no dictionary, no string; the mastery percent lookup runs inside `Lift`, which runs inside every stat getter the server derives twice a second per player (NetPlayer.cs:582-583) — a table index, no search.
 
-**Behaviours that stay exactly as they are (carried forward, never agreed — the user should see them):** the bar is 4 + ult; every learned passive live, no limit (2026-09-21); `RandomItemChance = 30%` of one random non-worn item per kill; killer = last unit to cost health (Rewards.cs:13-14, 58) for XP and loot; killer-only pickup window; creatures dress themselves at random in every empty place (UnitEquipment.cs:57); the creature's one extra random skill (ExtraSkillRoll.cs:14); the ring's caps and draft (its curve is now the character's, paid a third of each kill); a level-up's full heal; mana/cooldown as the throttle on skill uses.
+**Behaviours that stay exactly as they are (carried forward, never agreed — the user should see them):** the bar is 4 + ult; every learned passive live, no limit (2026-09-21); `RandomItemChance = 30%` of one random non-worn item per kill; killer = last unit to cost health (Rewards.cs:13-14, 58) for XP and loot; killer-only pickup window; creatures dress themselves at random in every empty place (UnitEquipment.cs:57); the creature's one extra random skill (ExtraSkillRoll.cs:14); the ring's caps and draft (its curve is now the character's, paid a third of each kill); a level-up's full heal.
 
 ## Part 4 — Open questions, each with the planner's recommendation
 
@@ -230,8 +231,8 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 7. **What creatures wear.** Settled 2026-09-22: no random wardrobe — a creature wears exactly its authored pieces, at the grade, folds and Ink authored on its own catalog entry ([Mob Roster](../../3-world/mob-roster.md), Gear state).
 8. **Starter gear.** Today weapons and armour are never seeded (Character.cs:1938-1943). *Recommend:* seed nothing wearable — V4 says gear is made — and let the first sword be forged.
 9. **Existing copies on old saves.** *Recommend:* every pre-V4 copy loads as Raw, folds 0, no Ink — not keeping `upgrade` as folds, because those refines were bought under the +3 attack rule.
-10. **Learning: automatic or an action.** *Recommend:* automatic — the server adds the skill to the learned set the moment the mastery level is reached; the window shows it as new.
-11. **What skills a creature has.** *Recommend:* the unlock table of its held weapon type up to its authored weapon-mastery level, plus the existing one extra random skill.
+10. **Learning: automatic or an action.** Settled 2026-10-03: an action — each mastery level gives one point, and the player spends it in the Skills window; nothing is learned automatically.
+11. **What skills a creature has.** Settled: every skill of its held weapon type up to its authored weapon-mastery level, plus the existing one extra random skill, each at level 1 until each kind of creature gets its own build.
 12. **The window's name.** Settled: it is the **Skills** window, on **K**; the Grimoire is deleted (2026-09-21).
 13. **Passives on weapon swap.** Settled 2026-09-21: nothing is ticked any more — every learned passive is live, and one whose weapon type is not held simply does not fire.
 14. **Rounding of the quality lift** (e.g. +35 × 1.30 = 45.5). *Recommend:* round half up in the static function — never `Mathf.RoundToInt`, which rounds .5 to even.
