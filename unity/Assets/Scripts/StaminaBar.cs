@@ -12,7 +12,7 @@ using UnityEngine.UI;
 /// </summary>
 public class StaminaBar : MonoBehaviour
 {
-    const float BarWidth = 300f, BarHeight = 12f, YAboveUlt = 124f;
+    const float BarWidth = 300f, BarHeight = 12f;
     static readonly Color TrackColor = new Color(0.06f, 0.05f, 0.08f, 0.92f);
     static readonly Color FillColor  = Color.white;
 
@@ -57,7 +57,8 @@ public class StaminaBar : MonoBehaviour
         holder = (RectTransform)go.transform;
         holder.SetParent(canvas.transform, false);
         holder.anchorMin = holder.anchorMax = holder.pivot = new Vector2(0.5f, 0f);
-        holder.anchoredPosition = new Vector2(0f, YAboveUlt);
+        // Above the hotbar and its passive row, from the bar's own numbers (HotbarPanel owns where it sits).
+        holder.anchoredPosition = new Vector2(0f, HotbarPanel.TopOfStack);
         holder.sizeDelta = new Vector2(BarWidth, BarHeight);
 
         var track = UiKit.Img("Track", holder, TrackColor);

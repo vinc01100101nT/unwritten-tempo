@@ -21,6 +21,10 @@ using UnityEngine;
 /// with how many players on this server have a save waiting — and it survives this server crashing during an
 /// outage: a server that starts finds the files and sends them before it tells the character server it exists.</para>
 ///
+/// <para><b>Two documents per character, each on its own.</b> The character's progress, and its hotbar, which has a
+/// row of its own in the character store so the 15-second progress save never rewrites it. They queue, retry and
+/// land independently; a hand-over waits for both (<see cref="Flush"/>).</para>
+///
 /// <para><b>A save refused for good is not retried.</b> A character that no longer exists, a save too large, or a
 /// malformed one is kept in a file for a person to look at, never resent forever. A save from an older hand-over
 /// (the character has since been sent to another server) is refused by the character server so it cannot roll
@@ -42,6 +46,13 @@ public static class SaveOutbox
     }
 
     static readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
+
+    // The hotbar's entries are filed under the character id plus this, which also names its file on disk, so the two
+    // documents of one character can never be mistaken for each other.
+    const string HotbarSuffix = ".hotbar";
+
+    static string IdOf(string key) => key.EndsWith(HotbarSuffix) ? key.Substring(0, key.Length - HotbarSuffix.Length) : key;
+    static string PathOf(string key) => key.EndsWith(HotbarSuffix) ? "/hotbar" : "/progress";
     static int failedCount;
 
     // The same beat a player's own save runs on: often enough that an outage ends in seconds once the character
@@ -65,6 +76,13 @@ public static class SaveOutbox
     /// newer one sent in its place) reached the store on its first attempt. A save that fails is still kept and
     /// tried again — the caller is simply told it has not landed yet.</summary>
     public static void Submit(string characterId, string body, Action<bool> whenDone)
+        => SubmitKey(characterId, body, whenDone);
+
+    /// <summary>Send this character's newest HOTBAR, the same way a save is sent — kept, retried and landed on its own.</summary>
+    public static void SubmitHotbar(string characterId, string body, Action<bool> whenDone)
+        => SubmitKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, body, whenDone);
+
+    static void SubmitKey(string characterId, string body, Action<bool> whenDone)
     {
         if (string.IsNullOrEmpty(characterId) || body == null) { whenDone?.Invoke(false); return; }
         if (!entries.TryGetValue(characterId, out var e)) { e = new Entry(); entries[characterId] = e; }
@@ -86,6 +104,26 @@ public static class SaveOutbox
     /// yes, when nothing is waiting. Asked before a character is let go to another machine, so the one taking
     /// over reads the newest copy rather than one this server never managed to send.</summary>
     public static void Flush(string characterId, Action<bool> whenDone)
+    {
+        // BOTH DOCUMENTS, and the answer only once both have answered: whoever takes over reads the bar and the
+        // progress together, so neither may still be in the air.
+        bool progressOk = false, hotbarOk = false;
+        int waiting = 2;
+        void One(bool ok, bool isHotbar)
+        {
+            if (isHotbar) hotbarOk = ok; else progressOk = ok;
+            if (--waiting == 0) whenDone?.Invoke(progressOk && hotbarOk);
+        }
+        FlushKey(characterId, ok => One(ok, false));
+        FlushKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, ok => One(ok, true));
+    }
+
+    /// <summary>Make sure the hotbar waiting for this character, if any, has landed, then say so — yes at once when
+    /// nothing is waiting.</summary>
+    public static void FlushHotbar(string characterId, Action<bool> whenDone)
+        => FlushKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, whenDone);
+
+    static void FlushKey(string characterId, Action<bool> whenDone)
     {
         if (string.IsNullOrEmpty(characterId) || !entries.TryGetValue(characterId, out var e)
             || (e.body == null && !e.inFlight))
@@ -120,7 +158,7 @@ public static class SaveOutbox
     {
         e.inFlight = true;
         string sending = e.body;
-        ServerHttp.Send("PUT", MapServerLink.CharacterServerUrl + "/server/characters/" + characterId + "/progress",
+        ServerHttp.Send("PUT", MapServerLink.CharacterServerUrl + "/server/characters/" + IdOf(characterId) + PathOf(characterId),
                         sending, MapServerLink.ServerSecret,
             (ok, reply, error, status) => Landed(characterId, e, sending, ok, reply, error, status));
     }

@@ -460,7 +460,7 @@ public class GroundDrop : MonoBehaviour
     /// whenever maps come and go. Words placed once and left would stay where the drop used to be on screen.</para></summary>
     internal static void TickNames()
     {
-        bool wanted = Hotkeys.Held(KeyCode.LeftAlt) || Hotkeys.Held(KeyCode.RightAlt);
+        bool wanted = Hotkeys.Held(GameKeys.ShowDrops) || Hotkeys.Held(GameKeys.ShowDropsAlt);
         if (wanted != namesWanted)
         {
             namesWanted = wanted;

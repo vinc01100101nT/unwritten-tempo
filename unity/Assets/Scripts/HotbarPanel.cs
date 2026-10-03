@@ -3,35 +3,41 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
 /// <summary>
-/// Drives the on-screen action bar (the <c>HUD_Hotbar</c> holder baked by <see cref="UIShellBuilder"/>) and
-/// is the CENTRAL key router for active skills. The bar has nine slots (keys 1–9); each shows the skill the
-/// player has BOUND to it (<see cref="HotbarBindings"/>) — symbol, hotkey glyph, MP cost, cooldown sweep,
-/// countdown — or reads as an empty slot. The class system is gone: any UNLOCKED skill can be dragged or
-/// clicked onto any slot in the Skills (K) menu; this panel decorates the slots, fires the bound skill on its
-/// slot key or a click, and accepts drops (each cell is a <see cref="HotbarSlotTarget"/>).
+/// Drives the on-screen action bar (the <c>HUD_Hotbar</c> holder baked by <see cref="UIShellBuilder"/>) and is the
+/// CENTRAL key router for it. Three rows of nine slots (<see cref="HotbarBindings"/>): the first row answers F1–F9,
+/// the second 1–9, the third whatever keys the player gave it in Settings (<see cref="GameKeys.HotbarKey"/>). Each slot
+/// shows what was put there — a skill (symbol, MP cost, cooldown sweep and countdown, the shared cooldown included for
+/// ultimates), a usable item (its name and how many are carried), one exact piece of gear (its name), or nothing.
+/// Anything can be dragged onto any slot from the Skills (K) window or the bag; a slot is pressed by its key or a click.
 ///
-/// Lives on the persistent GameUICanvas. Builds once (retries until the player + holder exist), refreshes the
-/// cheap per-frame bits, and fully rebuilds when bindings change (<see cref="RebuildRequested"/>).
+/// <para>Pressing a skill casts it; an item is used through the bag's own door (<see cref="ItemUse"/>); a piece of gear
+/// is equipped through the bag's own equip. The server decides all three. A passive on the bar is only there to be
+/// seen — it works whether or not it sits on the bar, so pressing it does nothing.</para>
+///
+/// Lives on the persistent GameUICanvas. Builds once (retries until the player + holder exist), refreshes the cheap
+/// per-frame bits, and fully rebuilds when the bar or the bag changes (<see cref="RebuildRequested"/>).
 /// </summary>
 public class HotbarPanel : MonoBehaviour
 {
-    // One decorated cell. Cached colour/cooldown state lets Refresh skip work (and string allocs) when
-    // nothing visible changed — important since Refresh runs every frame.
+    // What a slot holds, so a press knows which door to use.
+    enum Kind { Empty, Skill, Item, Gear }
+
+    // One decorated cell. Cached colour/cooldown state lets Refresh skip work (and string allocs) when nothing visible
+    // changed — important since Refresh runs every frame.
     class Slot
     {
-        public int index;               // 0..8 → key (index+1)
-        public IHotbarSkill skill;      // the bound skill (null = empty slot)
+        public int index;
+        public Kind kind;
+        public IHotbarSkill skill;      // Kind.Skill
+        public string itemId;           // Kind.Item
+        public string copyId;           // Kind.Gear
         public Image cell, cooldown;
         public TMP_Text mp, label, cdNum;
         public GameObject hideOnCd;     // the center label to hide while counting down
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
-        public bool isUlt;              // the dedicated ULT cell (the R seat) — same cooldown rules as keys 1–9
         public Color weaponColor = CellReady;   // the cell's own colour; affordability DIMS this, never replaces it
     }
 
@@ -40,15 +46,17 @@ public class HotbarPanel : MonoBehaviour
     /// <summary>A cell you cannot afford: its OWN colour, darkened. Dimming rather than replacing is what keeps the
     /// weapon readable when the skill is greyed out.</summary>
     static Color Dim(Color c) => new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.5f, c.a);
-    static readonly Color CellDim    = new Color(0.5f, 0.5f, 0.55f, 1f);
     static readonly Color CellEmpty  = new Color(0.32f, 0.32f, 0.37f, 0.6f);   // unbound slot
     static readonly Color KeyColor   = UiKit.TextOnDim;
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);
-    static readonly Color UltKeyColor    = new Color(1f, 0.55f, 0.95f);   // ult slot's "R" glyph — distinct from 1–9
 
-    // Pre-baked second strings so the countdown repaint never allocates (cooldowns are short).
+    // An item's or a piece's name on a tile: as large as fits, never below a size that can still be read, and cut with
+    // "…" once even that does not fit the square.
+    const float NameMinSize = 9f, NameMaxSize = 12f;
+
+    // Pre-baked second strings so the countdown repaint never allocates (the shared cooldown runs to 40).
     static readonly string[] Secs = BuildSecs();
     static string[] BuildSecs() { var a = new string[61]; for (int i = 0; i < a.Length; i++) a[i] = i.ToString(); return a; }
 
@@ -59,7 +67,6 @@ public class HotbarPanel : MonoBehaviour
     Player3DController player;
     Transform holder;
     readonly List<Slot> slots = new List<Slot>();
-    Slot ult;                       // the dedicated ULT cell (last child), built + refreshed separately
     bool built;
     bool cellsEnsured;
 
@@ -81,29 +88,47 @@ public class HotbarPanel : MonoBehaviour
         Refresh();
     }
 
-    // Central key router: pressing a slot's number key fires whatever skill is bound there. Number keys aren't
-    // blocked by mouse-over-UI the way the old per-skill mouse path was, so hovering the bar doesn't swallow the key.
+    // Central key router: each slot's key presses that slot. Keys aren't blocked by mouse-over-UI, so hovering the bar
+    // doesn't swallow them.
     void HandleHotkeys()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
         for (int i = 0; i < slots.Count; i++)
         {
-            if (!SlotKeyDown(i)) continue;
-            var s = slots[i];
-            if (s.skill != null && s.skill.Activate()) UISounds.PlayClick();
+            var key = GameKeys.HotbarKey(slots[i].index);
+            if (key != KeyCode.None && Hotkeys.Down(key)) Press(slots[i]);
         }
-        // Dedicated ULT key (R) — fires the one equipped ultimate (charge-gated inside Activate).
-        if (ult != null && ult.skill != null && Hotkeys.Down(KeyCode.R) && ult.skill.Activate()) UISounds.PlayClick();
     }
 
-    /// <summary>True when active skills may fire — a bound skill just works; whether it is learned and its weapon is
-    /// in hand is the cast's own test.</summary>
-    static bool SkillsEnabled => Character.Instance != null;
+    // ONE press, from a key or a click, so the two can never do different things.
+    static void Press(Slot s)
+    {
+        var me = Character.Instance;
+        if (s == null || me == null) return;
+        switch (s.kind)
+        {
+            case Kind.Skill:
+                if (s.skill != null && s.skill.Activate()) UISounds.PlayClick();
+                return;
+            case Kind.Item:
+            {
+                // Through the bag's own door, by where the stack sits in the bag — the server reads it there.
+                var stack = me.CarriedStack(s.itemId);
+                if (stack != null && ItemUse.Use(stack.def, me.Bag.IndexOf(stack))) UISounds.PlayClick();
+                return;
+            }
+            case Kind.Gear:
+            {
+                if (!me.FindCopy(s.copyId, out _, out bool worn)) return;
+                if (worn) { BattleNotice.Warn("Already equipped"); return; }
+                var net = GameNetwork.MyPlayer;
+                if (net != null) { net.AskToEquipCopy(s.copyId); UISounds.PlayClick(); }
+                return;
+            }
+        }
+    }
 
-    static bool SlotKeyDown(int i) => Hotkeys.DigitDown(i);
-
-    /// <summary>Tear down the decorated cells and rebuild from the player's current bindings. Safe before
-    /// the first build.</summary>
+    /// <summary>Tear down the decorated cells and rebuild from the player's current bar. Safe before the first build.</summary>
     public void Rebuild()
     {
         if (holder != null)
@@ -111,13 +136,14 @@ public class HotbarPanel : MonoBehaviour
             {
                 var cell = holder.GetChild(i);
                 for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
-                var btn = cell.GetComponent<Button>();       if (btn != null) Destroy(btn);
-                var trig = cell.GetComponent<HoverRelay>();  if (trig != null) Destroy(trig);
+                // THE BUTTON AND THE HOVER STAY, and are re-pointed when the cell is built again. Destroying them here
+                // and building in the same frame would hand the new cell the component already on its way out — a
+                // cell that can no longer be clicked until the next rebuild.
+                HoverRelay.Set(cell.gameObject, null, null);
             }
         slots.Clear();
-        ult = null;      // the ult cell is torn down with the rest — rebuilt in TryBuild
         SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating
-        built = false;   // Update() will TryBuild() again next frame, reading the new bindings
+        built = false;   // Update() will TryBuild() again next frame, reading the new bar
     }
 
     void TryBuild()
@@ -126,7 +152,7 @@ public class HotbarPanel : MonoBehaviour
         if (player == null) return;
         if (holder == null) holder = FindByName("HUD_Hotbar");
         if (holder == null) return;
-        if (Character.Instance == null) return;   // need the bindings
+        if (Character.Instance == null) return;   // need the bar
 
         if (whiteSprite == null)
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
@@ -141,19 +167,24 @@ public class HotbarPanel : MonoBehaviour
             var cell = holder.GetChild(i).GetComponent<Image>();
             if (cell != null) slots.Add(BuildSlot(cell, i));
         }
-        // The dedicated ULT cell is the extra child past the nine numbered slots (added by EnsureCells).
-        ult = null;
-        if (holder.childCount > HotbarBindings.SlotCount)
-        {
-            var ultCell = holder.GetChild(HotbarBindings.SlotCount).GetComponent<Image>();
-            if (ultCell != null) ult = BuildUltSlot(ultCell);
-        }
         RefreshPassiveRow();
         built = slots.Count > 0;
     }
 
-    // The shell bakes 6 cells; the bar now needs 9. Clone the (pristine) first cell up to nine and widen the
-    // holder — so already-baked scenes get the full bar with no editor re-bake. Runs once.
+    const float CellSize = 48f, CellGap = 6f;
+
+    // WHERE THE BAR SITS, bottom-centre, and how tall it is — owned here, so everything stacked above it (the passive
+    // row, the stamina gauge) is placed from the same numbers rather than from a height typed for a one-row bar.
+    const float BarBottom = 42f;
+    static float BarHeight => HotbarBindings.Rows * (CellSize + CellGap) - CellGap;
+
+    /// <summary>The height above the screen's bottom edge where the bar and its passive row end — the first free line
+    /// for anything that stacks above them.</summary>
+    public static float TopOfStack => BarBottom + BarHeight + 4f + PassiveCellSize + 6f;
+
+    // The shell bakes a row of cells; the bar is three rows of nine. Lay the holder out as that grid and clone the
+    // (pristine) first cell up to 27, at runtime — so an already-baked scene gets the full bar with no editor re-bake.
+    // Runs once.
     void EnsureCells()
     {
         if (cellsEnsured || holder == null) return;
@@ -161,44 +192,47 @@ public class HotbarPanel : MonoBehaviour
         int have = holder.childCount;
         if (have == 0) return;
         var template = holder.GetChild(0).gameObject;
-        // Four numbered slots + one dedicated ult cell = SlotCount + 1 cells total.
-        int wanted = HotbarBindings.SlotCount + 1;
+        int wanted = HotbarBindings.SlotCount;
 
-        // AND ANY CELL PAST THAT GOES. A scene baked when the bar was nine long still has those children, and
-        // leaving them switched on drew five empty squares nothing could ever fill or answer. Switched off
-        // first, because a Destroy does not take effect until the end of the frame and they would draw once more.
         for (int i = have - 1; i >= wanted; i--)
         {
             var extra = holder.GetChild(i).gameObject;
             extra.SetActive(false);
             Destroy(extra);
         }
-
-        // THE CELL AT THE END IS THE ULT, whether it was baked as a numbered one or cloned as one just now. A
-        // scene baked with nine identical cells has no cell that calls itself the ult, so it is named here.
-        if (have > HotbarBindings.SlotCount)
-            holder.GetChild(HotbarBindings.SlotCount).gameObject.name = "UltSlot";
         for (int i = have; i < wanted; i++)
         {
             var clone = Instantiate(template, holder);
-            clone.name = i < HotbarBindings.SlotCount ? "Hotslot" : "UltSlot";
+            clone.name = "Hotslot";
             for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
             var b = clone.GetComponent<Button>();         if (b != null) Destroy(b);
             var t = clone.GetComponent<HoverRelay>();      if (t != null) Destroy(t);
             var s = clone.GetComponent<HotbarSlotTarget>();if (s != null) Destroy(s);
             var d = clone.GetComponent<HotbarSlotDragSource>(); if (d != null) Destroy(d);
         }
-        // THE ULT IS THE BIG ONE. It is the seat a weapon only fills at its best, so it reads as a different
-        // kind of thing at a glance rather than as a sixth number key.
-        if (holder.childCount > HotbarBindings.SlotCount
-            && holder.GetChild(HotbarBindings.SlotCount) is RectTransform ultRT)
-            ultRT.sizeDelta = new Vector2(UltCellSize, UltCellSize);
+        // EVERY CELL THE SAME SIZE: a scene baked when the ult had a bigger seat of its own still carries that size.
+        for (int i = 0; i < holder.childCount && i < wanted; i++)
+            if (holder.GetChild(i) is RectTransform crt) crt.sizeDelta = new Vector2(CellSize, CellSize);
+
+        // A GRID OF NINE ACROSS, first row on top. The baked row layout is replaced, at runtime only.
+        var row = holder.GetComponent<HorizontalLayoutGroup>();
+        if (row != null) DestroyImmediate(row);
+        var grid = holder.GetComponent<GridLayoutGroup>() ?? holder.gameObject.AddComponent<GridLayoutGroup>();
+        grid.cellSize = new Vector2(CellSize, CellSize);
+        grid.spacing = new Vector2(CellGap, CellGap);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = HotbarBindings.PerRow;
+        grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+        grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+        grid.childAlignment = TextAnchor.MiddleCenter;
 
         if (holder is RectTransform rt)
-            rt.sizeDelta = new Vector2(HotbarBindings.SlotCount * 54 + UltCellSize + 6, UltCellSize);
+        {
+            rt.sizeDelta = new Vector2(HotbarBindings.PerRow * (CellSize + CellGap) - CellGap, BarHeight);
+            rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, BarBottom);
+        }
     }
 
-    const int UltCellSize = 64;
     const int PassiveCellSize = 30;
 
     // The read-only row of passives, above the bar. Built the same way the extra bar cells are — at runtime, from
@@ -222,7 +256,9 @@ public class HotbarPanel : MonoBehaviour
             passiveRow.anchorMin = barRT.anchorMin;
             passiveRow.anchorMax = barRT.anchorMax;
             passiveRow.pivot = barRT.pivot;
-            passiveRow.anchoredPosition = barRT.anchoredPosition + new Vector2(0f, barRT.sizeDelta.y * 0.5f + PassiveCellSize * 0.5f + 4f);
+            // Just above the bar's top edge, whatever pivot the bar was baked with.
+            passiveRow.anchoredPosition = new Vector2(barRT.anchoredPosition.x,
+                barRT.anchoredPosition.y + (1f - barRT.pivot.y) * barRT.sizeDelta.y + 4f + passiveRow.pivot.y * PassiveCellSize);
         }
         passiveRow.sizeDelta = new Vector2(0f, PassiveCellSize);
 
@@ -286,11 +322,11 @@ public class HotbarPanel : MonoBehaviour
 
     Slot BuildSlot(Image cell, int index)
     {
-        string id = Character.Instance.Hotbar.Get(index);
-        var skill = PlayerSkills.ById(id);
-        var s = new Slot { index = index, skill = skill, cell = cell };
+        var me = Character.Instance;
+        string entry = me.Hotbar.Get(index);
+        var s = new Slot { index = index, cell = cell };
 
-        // Every cell is a drop target (drag a skill from the K menu onto it) and a button (click = fire bound).
+        // Every cell is a drop target (drag a skill, an item or a piece onto it) and a button (click = press it).
         var target = cell.gameObject.GetComponent<HotbarSlotTarget>() ?? cell.gameObject.AddComponent<HotbarSlotTarget>();
         target.slotIndex = index;
         cell.raycastTarget = true;
@@ -298,27 +334,51 @@ public class HotbarPanel : MonoBehaviour
         var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
         btn.transition = Selectable.Transition.None;
         btn.targetGraphic = cell;
+        btn.onClick.RemoveAllListeners();
         var captured = s;
-        btn.onClick.AddListener(() => { if (SkillsEnabled && captured.skill != null && captured.skill.Activate()) UISounds.PlayClick(); });
+        btn.onClick.AddListener(() => Press(captured));
 
-        // Hotkey glyph (top-left) — the SLOT's key, always shown (bound or empty).
-        var key = NewText("Key", cell.transform, (index + 1).ToString(), 12, FontStyle.Bold, TextAnchor.UpperLeft, KeyColor);
-        Stretch(key.rectTransform, 4, 2);
+        // The slot's key (top-left), always shown — the third row's only once the player has given it one.
+        var key = NewText("Key", cell.transform, GameKeys.Label(GameKeys.HotbarKey(index)), 11, FontStyle.Bold,
+                          TextAnchor.UpperLeft, KeyColor);
+        Stretch(key.rectTransform, 3, 2);
 
-        if (skill == null)
+        string skillId = HotbarEntry.SkillOf(entry);
+        if (skillId.Length > 0) BuildSkill(s, skillId);
+        else if (HotbarEntry.IsItem(entry, out string itemId)) BuildItem(s, itemId);
+        else if (HotbarEntry.IsGear(entry, out string copyId)) BuildGear(s, copyId);
+
+        if (s.kind == Kind.Empty)
         {
-            cell.color = CellEmpty;   // dim, no symbol/mp → reads as an open slot
-            var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();   // an emptied cell isn't draggable
-            if (staleDrag != null) Destroy(staleDrag);
+            cell.color = CellEmpty;   // dim, nothing drawable on it → reads as an open slot
+            // SOMETHING THAT CANNOT BE DRAWN YET still sits in the slot, so it can still be dragged off; only a truly
+            // empty cell has nothing to drag.
+            var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();
+            if (string.IsNullOrEmpty(entry)) { if (staleDrag != null) Destroy(staleDrag); }
+            else
+            {
+                var keep = staleDrag != null ? staleDrag : cell.gameObject.AddComponent<HotbarSlotDragSource>();
+                keep.slotIndex = index;
+                keep.tint = CellEmpty;
+            }
             return s;
         }
 
-        // Drag this filled slot onto another to rearrange the bar (a plain click still fires the skill).
+        // Drag this filled slot onto another to rearrange the bar, or off the bar to empty it (a click still presses).
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = index;
-        drag.tint = skill.Tint;
+        drag.tint = s.kind == Kind.Skill && s.skill != null ? s.skill.Tint : UiKit.Accent;
+        key.transform.SetAsLastSibling();
+        return s;
+    }
 
-        cell.color = CellReady;
+    void BuildSkill(Slot s, string skillId)
+    {
+        var skill = PlayerSkills.ById(skillId);
+        if (skill == null) return;
+        s.kind = Kind.Skill;
+        s.skill = skill;
+        var cell = s.cell;
 
         // Radial cooldown shade.
         s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
@@ -332,141 +392,118 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.cooldown.rectTransform, 3, 3);
 
         // The symbol IS the face of the slot — two letters on the weapon's colour, the way Au stands for gold.
-        {
-            s.weaponColor = skill.SymbolColor;
-            cell.color = s.weaponColor;
-            s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            Stretch(s.label.rectTransform, 2, 2);
-            s.hideOnCd = s.label.gameObject;
-        }
+        s.weaponColor = skill.SymbolColor;
+        cell.color = s.weaponColor;
+        s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+        Stretch(s.label.rectTransform, 2, 2);
+        s.hideOnCd = s.label.gameObject;
 
-        // MP cost (bottom-right). Always on top.
-        s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
-        Stretch(s.mp.rectTransform, 2, 3);
+        // MP cost (bottom-right) for a skill that is pressed; a passive costs nothing and is never pressed.
+        if (skill.ManaCost > 0)
+        {
+            s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
+            Stretch(s.mp.rectTransform, 2, 3);
+        }
 
         // Countdown number (center), shown only while on cooldown.
         s.cdNum = NewText("CdNum", cell.transform, "", 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
         Stretch(s.cdNum.rectTransform, 2, 2);
         s.cdNum.gameObject.SetActive(false);
 
-        // Skill-info hover card (tags, cost, description, effects).
+        // Skill-info hover card (tags, cost, description, effects, levels).
         if (skill is SkillRunner sr && sr.def != null) SkillHoverCard.Attach(cell.transform, sr.def);
-
-        return s;
     }
 
-    // The dedicated ULT cell: display + fire only (its binding is separate from keys 1–9, so no drop-target/drag).
-    // The tier picks the SLOT and nothing else — it shades and counts down exactly like keys 1–9, through the same
-    // RefreshSlot body, because an ultimate is an ordinary skill sitting in a reserved seat.
-    Slot BuildUltSlot(Image cell)
+    void BuildItem(Slot s, string itemId)
     {
-        string id = Character.Instance.Hotbar.Ult;
-        var skill = PlayerSkills.ById(id);
-        var s = new Slot { index = -1, skill = skill, cell = cell, isUlt = true };
+        var stack = Character.Instance.CarriedStack(itemId);
+        if (stack == null) return;
+        s.kind = Kind.Item;
+        s.itemId = itemId;
+        s.cell.color = UiKit.SlotFill;
+        NameOnTile(s.cell.transform, stack.def.displayName);
+        // How many are carried (bottom-right), exactly as the bag the server sent says.
+        var count = NewText("Count", s.cell.transform, stack.count.ToString(), 11, FontStyle.Bold, TextAnchor.LowerRight,
+                            UiKit.TitleText);
+        Stretch(count.rectTransform, 3, 2);
+    }
 
-        var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
-        btn.transition = Selectable.Transition.None;
-        btn.targetGraphic = cell;
-        btn.onClick.RemoveAllListeners();
-        var captured = s;
-        btn.onClick.AddListener(() => { if (SkillsEnabled && captured.skill != null && captured.skill.Activate()) UISounds.PlayClick(); });
-        cell.raycastTarget = true;
+    void BuildGear(Slot s, string copyId)
+    {
+        var me = Character.Instance;
+        if (!me.FindCopy(copyId, out int bagIndex, out bool worn)) return;
+        Item def = null;
+        if (!worn) def = me.Bag[bagIndex].def;
+        else
+            foreach (var kv in me.Gear.Worn)
+                if (kv.Value != null && kv.Value.copyId == copyId) { def = kv.Value.def; break; }
+        if (def == null) return;
+        s.kind = Kind.Gear;
+        s.copyId = copyId;
+        s.cell.color = UiKit.SlotFill;
+        NameOnTile(s.cell.transform, def.displayName);
+    }
 
-        // Drop target for the dedicated ULT slot — sentinel slotIndex −1 tells HotbarBindings.BindFromDrag this
-        // is the ult cell (only an Ultimate-tier skill may land here). This is what lets you DRAG an ult onto R.
-        var ultTarget = cell.gameObject.GetComponent<HotbarSlotTarget>() ?? cell.gameObject.AddComponent<HotbarSlotTarget>();
-        ultTarget.slotIndex = -1;
-
-        var key = NewText("Key", cell.transform, "R", 12, FontStyle.Bold, TextAnchor.UpperLeft, UltKeyColor);
-        Stretch(key.rectTransform, 4, 2);
-
-        if (skill == null)
-        {
-            cell.color = CellEmpty;
-            var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();   // an emptied ult cell isn't draggable
-            if (staleDrag != null) Destroy(staleDrag);
-            return s;
-        }
-
-        // Drag the equipped ult OFF the cell to remove it (sentinel slotIndex −1 → HotbarBindings.ClearUlt).
-        var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
-        drag.slotIndex = -1;
-        drag.tint = skill.Tint;
-
-        cell.color = CellReady;
-        // Radial cooldown shade — the same one keys 1–9 get, built the same way round.
-        s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
-        s.cooldown.sprite = whiteSprite;
-        s.cooldown.type = Image.Type.Filled;
-        s.cooldown.fillMethod = Image.FillMethod.Radial360;
-        s.cooldown.fillOrigin = (int)Image.Origin360.Top;
-        s.cooldown.fillClockwise = true;
-        s.cooldown.fillAmount = 0f;
-        s.cooldown.raycastTarget = false;
-        Stretch(s.cooldown.rectTransform, 3, 3);
-
-        {
-            s.weaponColor = skill.SymbolColor;
-            cell.color = s.weaponColor;
-            s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            Stretch(s.label.rectTransform, 2, 2);
-            s.hideOnCd = s.label.gameObject;
-        }
-
-        s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
-        Stretch(s.mp.rectTransform, 2, 3);
-
-        // Countdown number (center), shown only while on cooldown — same as every other cell.
-        s.cdNum = NewText("CdNum", cell.transform, "", 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-        Stretch(s.cdNum.rectTransform, 2, 2);
-        s.cdNum.gameObject.SetActive(false);
-
-        if (skill is SkillRunner sr2 && sr2.def != null) SkillHoverCard.Attach(cell.transform, sr2.def);
-        return s;
+    // A name on a light tile: largest size that fits between NameMinSize and NameMaxSize, then cut with "…".
+    void NameOnTile(Transform cell, string name)
+    {
+        var t = UiKit.MakeText("Name", cell, name, NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: true);
+        t.color = UiKit.TextMain;
+        t.raycastTarget = false;
+        t.richText = false;
+        t.enableAutoSizing = true;
+        t.fontSizeMin = NameMinSize;
+        t.fontSizeMax = NameMaxSize;
+        t.overflowMode = TextOverflowModes.Ellipsis;
+        t.rectTransform.anchorMin = Vector2.zero;
+        t.rectTransform.anchorMax = Vector2.one;
+        t.rectTransform.offsetMin = new Vector2(3, 12);
+        t.rectTransform.offsetMax = new Vector2(-3, -12);
     }
 
     void Refresh()
     {
-        bool ringOn = SkillsEnabled;   // hoist once: no ring → the whole bar reads as suppressed
+        bool ringOn = SkillsEnabled;   // hoist once: no character → the whole bar reads as suppressed
         for (int i = 0; i < slots.Count; i++) RefreshSlot(slots[i], ringOn);
-        RefreshSlot(ult, ringOn);      // the ult cell is a slot like any other — one body, so it can't drift
     }
 
-    // ONE per-cell repaint for every hotbar cell, the ult included. Kept as a single body on purpose: the ult
-    // differs only in which seat it occupies, so any cooldown/affordability rule written here applies everywhere.
+    /// <summary>True when skills may fire — a bound skill just works; whether it is learned and its weapon is in hand
+    /// is the cast's own test.</summary>
+    static bool SkillsEnabled => Character.Instance != null;
+
+    // ONE per-cell repaint for every skill cell. An ultimate's countdown already shows the shared cooldown when that
+    // is the longer of the two (SkillRunner.CooldownRemaining), so no cell needs a rule of its own.
     void RefreshSlot(Slot s, bool ringOn)
     {
+        if (s == null || s.kind != Kind.Skill || s.skill == null || s.cooldown == null) return;
+
+        float frac = s.skill.CooldownFraction01;
+        s.cooldown.fillAmount = frac;
+
+        sbyte onCd = (sbyte)(frac > 0.0001f ? 1 : 0);
+        if (onCd != s.lastOnCd)
         {
-            if (s == null || s.skill == null || s.cooldown == null) return;   // empty slot — nothing live to refresh
-
-            float frac = s.skill.CooldownFraction01;
-            s.cooldown.fillAmount = frac;
-
-            sbyte onCd = (sbyte)(frac > 0.0001f ? 1 : 0);
-            if (onCd != s.lastOnCd)
+            if (s.hideOnCd != null) s.hideOnCd.SetActive(onCd == 0);
+            s.cdNum.gameObject.SetActive(onCd == 1);
+            s.lastOnCd = onCd;
+            s.lastSecs = -1;
+        }
+        if (onCd == 1)
+        {
+            int secs = Mathf.CeilToInt(s.skill.CooldownRemaining);
+            if (secs != s.lastSecs)
             {
-                if (s.hideOnCd != null) s.hideOnCd.SetActive(onCd == 0);
-                s.cdNum.gameObject.SetActive(onCd == 1);
-                s.lastOnCd = onCd;
-                s.lastSecs = -1;
+                s.cdNum.text = (secs >= 0 && secs < Secs.Length) ? Secs[secs] : secs.ToString();
+                s.lastSecs = secs;
             }
-            if (onCd == 1)
-            {
-                int secs = Mathf.CeilToInt(s.skill.CooldownRemaining);
-                if (secs != s.lastSecs)
-                {
-                    s.cdNum.text = (secs >= 0 && secs < Secs.Length) ? Secs[secs] : secs.ToString();
-                    s.lastSecs = secs;
-                }
-            }
+        }
 
-            sbyte aff = (sbyte)(s.skill.Affordable && ringOn ? 1 : 0);
-            if (aff != s.lastAff)
-            {
-                s.cell.color = aff == 1 ? s.weaponColor : Dim(s.weaponColor);
-                if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
-                s.lastAff = aff;
-            }
+        sbyte aff = (sbyte)(s.skill.Affordable && ringOn ? 1 : 0);
+        if (aff != s.lastAff)
+        {
+            s.cell.color = aff == 1 ? s.weaponColor : Dim(s.weaponColor);
+            if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
+            s.lastAff = aff;
         }
     }
 

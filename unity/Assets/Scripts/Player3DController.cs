@@ -397,7 +397,7 @@ public partial class Player3DController : MonoBehaviour
     // idle = fast, walk = normal, everything else (run/attack/etc.) = slow.
     void UpdateSprintAndStamina(bool moving)
     {
-        if (Hotkeys.Down(KeyCode.V)) sprintToggled = !sprintToggled;   // the ONE sprint input site
+        if (Hotkeys.Down(GameKeys.SprintToggle)) sprintToggled = !sprintToggled;   // the ONE sprint input site
 
         var ch = Character.Instance;
         float stam = ch != null ? ch.Stamina : 0f;
@@ -559,19 +559,6 @@ public partial class Player3DController : MonoBehaviour
     Vector3 ReadWasd()
     {
         float x = 0f, z = 0f;
-#if UNITY_ANDROID
-        // The on-screen stick feeds the same camera-relative direction the keys do, so everything downstream —
-        // the gears, the facing, the stance, the footsteps — is the desktop's code untouched. The one difference
-        // is that a stick is analog: its LENGTH is kept, so a half-push walks at half speed, where four keys can
-        // only ever say "full speed" and must be normalized.
-        Vector2 stick = TouchControls.MoveAxis;
-        if (stick.sqrMagnitude > 1e-4f)
-        {
-            Vector3 tdir = CameraRig.ForwardXZ * stick.y + CameraRig.RightXZ * stick.x; tdir.y = 0f;
-            float len = Mathf.Min(stick.magnitude, 1f);
-            return tdir.sqrMagnitude > 1e-4f ? tdir.normalized * len : Vector3.zero;
-        }
-#endif
         if (HeldW()) z += 1f;
         if (HeldS()) z -= 1f;
         if (HeldD()) x += 1f;
@@ -1200,7 +1187,7 @@ public partial class Player3DController : MonoBehaviour
     }
 
     // Pointer reads route through PointerInput — the ONE gate for the mouse, the way Hotkeys is the one gate for
-    // keys. It is also where a finger answers instead on a phone, so nothing here has to know about touch.
+    // keys.
     static Vector2 MousePos() => PointerInput.Position;
 
     static bool LeftDown() => PointerInput.PrimaryDown;
@@ -1211,20 +1198,20 @@ public partial class Player3DController : MonoBehaviour
 
     // All key reads route through Hotkeys — the ONE input choke point (typing guard + the new-or-legacy
     // backend dance live there, not per key here). Esc uses CancelDown: cancel must work while typing.
-    static bool KeyA()   => Hotkeys.Down(KeyCode.A);
-    static bool KeyT()   => Hotkeys.Down(KeyCode.T);
-    static bool KeyS()   => Hotkeys.Down(KeyCode.S);
+    static bool KeyA()   => Hotkeys.Down(GameKeys.MoveLeft);
+    static bool KeyT()   => Hotkeys.Down(GameKeys.AutoPilot);
+    static bool KeyS()   => Hotkeys.Down(GameKeys.MoveBack);
     static bool KeyEsc() => Hotkeys.CancelDown();
 
     // WASD movement uses HELD reads, not the edge reads above, so motion continues while the key is down.
-    static bool HeldW() => Hotkeys.Held(KeyCode.W);
-    static bool HeldA() => Hotkeys.Held(KeyCode.A);
-    static bool HeldS() => Hotkeys.Held(KeyCode.S);
-    static bool HeldD() => Hotkeys.Held(KeyCode.D);
+    static bool HeldW() => Hotkeys.Held(GameKeys.MoveForward);
+    static bool HeldA() => Hotkeys.Held(GameKeys.MoveLeft);
+    static bool HeldS() => Hotkeys.Held(GameKeys.MoveBack);
+    static bool HeldD() => Hotkeys.Held(GameKeys.MoveRight);
 
     // Shift = walk (held). Either Shift key downshifts run → walk. (Typing-guarded now like the rest —
     // harmless, since Shift only modifies movement and the movement keys are already suppressed.)
-    static bool HeldShift() => Hotkeys.Held(KeyCode.LeftShift) || Hotkeys.Held(KeyCode.RightShift);
+    static bool HeldShift() => Hotkeys.Held(GameKeys.Walk) || Hotkeys.Held(GameKeys.WalkAlt);
 
     void OnDrawGizmosSelected()
     {

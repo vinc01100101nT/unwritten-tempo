@@ -257,8 +257,7 @@ public class GroundTargeter : MonoBehaviour
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
-    // The one pointer gate (mouse on the desktop, a finger on a phone). Aiming confirms on RELEASE there, so a
-    // drag can slide the reticle before it commits.
+    // The one pointer gate for the mouse.
     static bool LeftDown() => PointerInput.PrimaryDown;
 
     static bool EscDown() => Hotkeys.CancelDown();

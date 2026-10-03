@@ -329,6 +329,7 @@ public class Health : MonoBehaviour, ICombatUnit
                 var runners = skills.Runners;
                 for (int i = 0; i < runners.Length; i++)
                     if (runners[i] != null && runners[i]) runners[i].ForgetCooldown();
+                skills.ForgetSharedUltimate();
             }
             return skills;
         }

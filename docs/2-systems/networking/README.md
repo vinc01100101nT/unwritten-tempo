@@ -55,8 +55,8 @@ flowchart LR
 being sent to the character server, which is the only thing that writes.
 
 **Two roads that never cross.** A *person's* token reaches their own characters and nothing else. The two
-*servers* recognise each other by a shared secret, which registers a map server, receives a pushed character and
-writes a save back — and cannot read anybody's character list. Each is refused on the other's road.
+*servers* recognise each other by a shared secret, which registers a map server, receives a pushed character,
+writes a save back and writes a changed hotbar back — and cannot read anybody's character list. Each is refused on the other's road.
 
 **A player's own machine cannot write a character at all.** It used to be able to, refused only while it happened
 to have a body — which left every moment between bodies open. That door is gone: a character's progress is

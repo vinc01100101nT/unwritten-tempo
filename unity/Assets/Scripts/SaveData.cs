@@ -28,7 +28,11 @@ public class SaveData
     // v17: skills are learned and raised by spending mastery points (skillLevelIds / skillLevels). An older save's
     // practised uses and automatically learned skills are not read: every point its masteries earned is there to
     // spend again (decided 2026-10-03 — reset and refund).
-    public const int CurrentVersion = 17;
+    // v18: the hotbar is three rows of nine and lives in a row of its own in the character store, written only when
+    // it changes — `hotbarBindings` below is read once from an older save to carry its bar across and never written
+    // again. Every piece of gear carries its own id (equipCopyIds / bagCopyIds), and the moment every ultimate is
+    // ready again rides the save (sharedUltimateDueAt).
+    public const int CurrentVersion = 18;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -71,8 +75,12 @@ public class SaveData
     // Currency (M2 loot slice).
     public int gold;
 
-    // Hotbar layout (v3+): slot → bound skill id ("" = empty), nine entries (keys 1–9). Null on an older save.
+    // THE OLD HOTBAR (v3–v17): numbered skill ids followed by the ultimate. Read ONCE, by the server, to carry a
+    // bar saved before v18 into the bar's own row (HotbarBindings.RestoreLegacy); never written from v18 on.
     public string[] hotbarBindings;
+
+    // v18: when every ultimate is ready again after one was cast (the shared cooldown), as epoch seconds; 0 = ready.
+    public double sharedUltimateDueAt;
 
 
 
@@ -94,6 +102,7 @@ public class SaveData
     // (EquipmentInstance.EncodeRoll). A pre-v12 save has the old rolled-armour text here, which does not read as a
     // grade, so every piece on it loads Raw with nothing written — see RestoreEquipment.
     public string[] equipRolls;
+    public string[] equipCopyIds;   // v18+: each worn piece's own id (EquipmentInstance.copyId), parallel to equipSlots
 
     // Bag (v6+): parallel arrays, one entry per stack. Owned by the CHARACTER, alongside its worn gear, and
     // written and read by Character itself. NULL means the save predates bags being stored at all, and that
@@ -105,6 +114,7 @@ public class SaveData
     public int[]    bagRefines;
     public string[] bagCards;
     public string[] bagRolls;       // v12+: per-copy grade + written stats (see equipRolls)
+    public string[] bagCopyIds;     // v18+: each piece's own id ("" for a stack), parallel to bagItemIds
 
     // Appearance (v8+). A player changes their body and their colours in the game, exactly as they change
     // everything else here, so this is where it lives. It used to sit in its own columns beside the save on

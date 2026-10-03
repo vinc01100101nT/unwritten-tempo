@@ -181,7 +181,7 @@ one moment it is needed.
 ### The fix I recommend
 
 Send the database's change log to storage at a different company from the host, at least once a minute, so the
-database can be rebuilt as it was at any moment (decision 11).
+database can be rebuilt as it was at any moment (decision 10).
 
 1. A storage bucket at another company, with a key that can add files but never delete them. *Waits for the
    rented machine.*
@@ -240,15 +240,14 @@ All taken as recommended, on 2026-10-02.
    copy.
 9. Plain web traffic is allowed in development builds only, and the build script has a development-build option
    for testing on your own Wi-Fi. Copies handed to players keep refusing it.
-10. The phone's typed sign-in address may be a whole address (`https://…`), used exactly as typed.
 
 **Backups**
 
-11. Self-run database with change-log sending.
-12. The storage company is chosen when the rented machine is — any one outside the host with the common storage
+10. Self-run database with change-log sending.
+11. The storage company is chosen when the rented machine is — any one outside the host with the common storage
     interface.
-13. A restore reaches back 14 days.
-14. Each monthly restore rehearsal is recorded in the network runbook.
+12. A restore reaches back 14 days.
+13. Each monthly restore rehearsal is recorded in the network runbook.
 
 ## Related
 

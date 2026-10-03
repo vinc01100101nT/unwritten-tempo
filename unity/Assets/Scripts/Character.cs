@@ -314,14 +314,73 @@ public class Character : MonoBehaviour, ICombatUnit
         return def.weaponType == WeaponType.None || Mastery.HasLearned(skillId);
     }
 
-    /// <summary>Blank, in place, every id in <paramref name="ids"/> this character may not bind
-    /// (<see cref="MayBind"/>). The one rule a bar is held to wherever it arrives
-    /// from — a bind command, or a save arranged under an older rule.</summary>
-    public void KeepOnlyBindable(string[] ids)
+    /// <summary>Blank, in place, every entry in <paramref name="entries"/> this character may not keep on the bar: a
+    /// skill it may not bind (<see cref="MayBind"/>), an item it does not carry or cannot use, or a piece of gear it
+    /// neither carries nor wears. The one rule a bar is held to wherever it arrives from — a rearrangement, the
+    /// stored row, or a bar carried over from an older save.</summary>
+    public void KeepOnlyBindable(string[] entries)
     {
-        if (ids == null) return;
-        for (int i = 0; i < ids.Length; i++)
-            if (!string.IsNullOrEmpty(ids[i]) && !MayBind(ids[i])) ids[i] = "";
+        if (entries == null) return;
+        for (int i = 0; i < entries.Length; i++)
+            if (!string.IsNullOrEmpty(entries[i]) && !MayKeepOnBar(entries[i])) entries[i] = "";
+    }
+
+    /// <summary>May this one bar entry stay on the bar — the per-entry test behind <see cref="KeepOnlyBindable"/>.</summary>
+    public bool MayKeepOnBar(string entry)
+    {
+        if (string.IsNullOrEmpty(entry)) return true;
+        if (HotbarEntry.IsItem(entry, out string itemId)) return CarriedStack(itemId) != null;
+        if (HotbarEntry.IsGear(entry, out string copyId)) return FindCopy(copyId, out _, out _);
+        return MayBind(entry);
+    }
+
+    /// <summary>The bag's stack of usable item <paramref name="itemId"/>, or null when none is carried.</summary>
+    public BagEntry CarriedStack(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId)) return null;
+        for (int i = 0; i < bag.Count; i++)
+        {
+            var e = bag[i];
+            if (e != null && e.def != null && !e.IsEquip && e.def.IsUsable && e.def.id == itemId && e.count > 0) return e;
+        }
+        return null;
+    }
+
+    /// <summary>Find the piece of gear with copy id <paramref name="copyId"/>: in the bag (its position in
+    /// <paramref name="bagIndex"/>, <paramref name="worn"/> false) or on the body (<paramref name="worn"/> true).</summary>
+    public bool FindCopy(string copyId, out int bagIndex, out bool worn)
+    {
+        bagIndex = -1;
+        worn = false;
+        if (string.IsNullOrEmpty(copyId)) return false;
+        for (int i = 0; i < bag.Count; i++)
+        {
+            var inst = bag[i] != null ? bag[i].instance : null;
+            if (inst == null) continue;
+            inst.EnsureCopyId();
+            if (inst.copyId == copyId) { bagIndex = i; return true; }
+        }
+        foreach (var kv in Gear.Worn)
+        {
+            if (kv.Value == null) continue;
+            kv.Value.EnsureCopyId();
+            if (kv.Value.copyId == copyId) { worn = true; return true; }
+        }
+        return false;
+    }
+
+    /// <summary>SERVER: take off the bar every item no longer carried and every piece no longer owned — an item used
+    /// up, a piece recycled or dropped. Returns true when the bar changed.</summary>
+    public bool PruneHotbar()
+    {
+        bool changed = false;
+        for (int i = 0; i < HotbarBindings.SlotCount; i++)
+        {
+            var entry = Hotbar.Get(i);
+            if (string.IsNullOrEmpty(entry) || HotbarEntry.SkillOf(entry).Length > 0) continue;
+            if (!MayKeepOnBar(entry)) changed |= Hotbar.Clear(i);
+        }
+        return changed;
     }
 
     /// <summary>Why <paramref name="skillId"/> may not be used right now, as one sentence for the player, or null
@@ -390,6 +449,9 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The hotbar layout — which unlocked skill is bound to each of the nine slots (keys 1–9).
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
+
+    /// <summary>SERVER: a bar saved before v18 (inside the save), held until the bar's own row has been written once.</summary>
+    public string[] LegacyHotbar { get; set; }
 
     /// <summary>Which PASSIVE skills are live — every one learned, while its weapon is in hand.
     /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it.
@@ -1185,10 +1247,9 @@ public class Character : MonoBehaviour, ICombatUnit
 
         for (int i = 0; i < HotbarBindings.SlotCount; i++)
         {
-            var id = Hotbar.Get(i);
+            var id = Hotbar.SkillAt(i);
             if (!string.IsNullOrEmpty(id)) usableIds.Add(id);
         }
-        if (!string.IsNullOrEmpty(Hotbar.Ult)) usableIds.Add(Hotbar.Ult);
 
         // EVERY LEARNED PASSIVE — a passive is live the moment it is learned (PassiveLoadout).
         PassiveSkills.CollectLearned(usableIds);
@@ -1921,7 +1982,9 @@ public class Character : MonoBehaviour, ICombatUnit
         d.hasLeader    = Passives.HasLeader;
         Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Gold;
-        d.hotbarBindings = Hotbar.Capture();
+        d.hotbarBindings = LegacyHotbar;
+        d.sharedUltimateDueAt = Skills.SharedUltimateDueAtUtc > WorldClock.UtcNow
+                                ? WorldClock.ToEpochSeconds(Skills.SharedUltimateDueAtUtc) : 0.0;
         Mastery.Capture(out d.masteryWeapons, out d.masteryPoints, out d.skillLevelIds, out d.skillLevels);
         CaptureEquipment(d);
         CaptureBag(d);
@@ -1954,6 +2017,7 @@ public class Character : MonoBehaviour, ICombatUnit
         var refines = new List<int>();
         var cards = new List<string>();
         var rolls = new List<string>();
+        var copies = new List<string>();
         foreach (var e in bag)
         {
             if (e == null || e.def == null) continue;
@@ -1961,17 +2025,20 @@ public class Character : MonoBehaviour, ICombatUnit
             counts.Add(Mathf.Max(1, e.count));
             if (e.IsEquip && e.instance != null)
             {
+                e.instance.EnsureCopyId();
                 refines.Add(e.instance.upgrade);
                 cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
                 rolls.Add(e.instance.EncodeRoll());
+                copies.Add(e.instance.copyId);
             }
-            else { refines.Add(0); cards.Add(""); rolls.Add(""); }
+            else { refines.Add(0); cards.Add(""); rolls.Add(""); copies.Add(""); }
         }
         d.bagItemIds = ids.ToArray();
         d.bagCounts = counts.ToArray();
         d.bagRefines = refines.ToArray();
         d.bagCards = cards.ToArray();
         d.bagRolls = rolls.ToArray();
+        d.bagCopyIds = copies.ToArray();
     }
 
     // Unknown item ids are dropped, so an asset removed from the game cannot stop a character loading.
@@ -2008,6 +2075,7 @@ public class Character : MonoBehaviour, ICombatUnit
                 // written, which is what a piece that has never been forged is.
                 if (d.bagRolls != null && i < d.bagRolls.Length) entry.instance.DecodeRoll(d.bagRolls[i]);
                 else entry.instance.Recompute();
+                if (d.bagCopyIds != null && i < d.bagCopyIds.Length) entry.instance.copyId = d.bagCopyIds[i] ?? "";
             }
             bag.Add(entry);
         }
@@ -2036,16 +2104,17 @@ public class Character : MonoBehaviour, ICombatUnit
     /// it beside the bag — equipping moves an item between the two in one decision, and sending only one half
     /// leaves the item apparently nowhere.</summary>
     public void CaptureWornInto(out int[] slots, out string[] ids, out int[] refines,
-                                out string[] cards, out string[] rolls)
+                                out string[] cards, out string[] rolls, out string[] copyIds)
     {
         var d = new SaveData();
         CaptureEquipment(d);
         slots = d.equipSlots; ids = d.equipItemIds; refines = d.equipRefines;
-        cards = d.equipCards; rolls = d.equipRolls;
+        cards = d.equipCards; rolls = d.equipRolls; copyIds = d.equipCopyIds;
     }
 
     /// <summary>Wear exactly this, replacing whatever was worn.</summary>
-    public void RestoreWornFrom(int[] slots, string[] ids, int[] refines, string[] cards, string[] rolls)
+    public void RestoreWornFrom(int[] slots, string[] ids, int[] refines, string[] cards, string[] rolls,
+                                string[] copyIds)
     {
         if (slots == null || ids == null) return;
         // STAMPED CURRENT, because the restore reads the fold count only from a save of the current shape — and
@@ -2054,7 +2123,7 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             version = SaveData.CurrentVersion,
             equipSlots = slots, equipItemIds = ids, equipRefines = refines,
-            equipCards = cards, equipRolls = rolls,
+            equipCards = cards, equipRolls = rolls, equipCopyIds = copyIds,
         });
         // AND EVERYTHING THAT SHOWS THE GEAR IS TOLD, exactly as an equip made here would tell it (SetEquipped). Gear
         // the server sends used to be written in silently, so the weapon in hand, the stat sheet and the health bar
@@ -2070,9 +2139,12 @@ public class Character : MonoBehaviour, ICombatUnit
         var refines = new List<int>();
         var cards = new List<string>();
         var rolls = new List<string>();
+        var copies = new List<string>();
         foreach (var kv in Gear.Worn)
         {
             var inst = kv.Value;
+            inst.EnsureCopyId();
+            copies.Add(inst.copyId);
             slots.Add((int)kv.Key);
             ids.Add(inst.def.id);
             refines.Add(inst.upgrade);
@@ -2084,6 +2156,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.equipRefines = refines.ToArray();
         d.equipCards   = cards.ToArray();
         d.equipRolls    = rolls.ToArray();
+        d.equipCopyIds  = copies.ToArray();
     }
 
     // Rebuild the equip dictionary from the saved arrays.
@@ -2107,6 +2180,7 @@ public class Character : MonoBehaviour, ICombatUnit
                 // text, which does not read as a grade, so the piece loads Raw with nothing written on it.
                 if (d.equipRolls != null && i < d.equipRolls.Length) inst.DecodeRoll(d.equipRolls[i]);
                 else inst.Recompute();
+                if (d.equipCopyIds != null && i < d.equipCopyIds.Length) inst.copyId = d.equipCopyIds[i] ?? "";
                 Gear.Equip(slot, inst);
             }
         }
@@ -2167,13 +2241,19 @@ public class Character : MonoBehaviour, ICombatUnit
         // already checked when it was arranged — but what the character can USE is built from both, and reading
         // them in this order is what makes the first rebuild right.
         Mastery.Restore(d.masteryWeapons, d.masteryPoints, d.skillLevelIds, d.skillLevels);
-        // AND THE BAR IS HELD TO WHAT WAS LEARNED. A save arranged under an older rule — the weapon kit, which put
-        // four skills on the bar that nobody had to learn — kept those keys on screen while the server refused
-        // every press of them, and said nothing. The same test a bind command passes.
-        KeepOnlyBindable(d.hotbarBindings);
-        Hotbar.Restore(d.hotbarBindings);
-        RestoreEquipment(d);         // v6+: rebuild worn gear from the save
-        RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
+        // THE BAR IS NOT IN THE SAVE (v18): it has a row of its own, laid on by the server that receives the
+        // character (PlayerFighter) and sent to the player with their bag. An older save's bar is held, and written
+        // back with every save, until the bar's own row has landed — a hand-over in between must not lose it.
+        LegacyHotbar = d.hotbarBindings;
+        Skills.ResumeSharedUltimate(d.sharedUltimateDueAt > 0.0 ? WorldClock.FromEpochSeconds(d.sharedUltimateDueAt)
+                                                                : System.DateTime.MinValue);
+        // WORN GEAR AND THE BAG come from the save only where the world is: a player's machine is sent both by the
+        // server (with each piece's id), and a stored copy read afterwards would put back an older bag without them.
+        if (!GameNetwork.TheWorldIsElsewhere)
+        {
+            RestoreEquipment(d);         // v6+: rebuild worn gear from the save
+            RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
+        }
 
         // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave
         // whatever the character already wears rather than stripping it to nothing.

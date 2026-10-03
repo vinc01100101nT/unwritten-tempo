@@ -95,13 +95,12 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | Channel | Meaning | Owner |
 | --- | --- | --- |
 | cost | Mana cost | SkillDef.manaCost |
-| cooldown | Reuse delay | SkillDef.cooldown |
+| cooldown | Reuse delay. An Ultimate-tier skill also waits on the **shared cooldown**: casting any ultimate starts 40 s on every ultimate the unit has, on top of each one's own, for players and creatures alike | SkillDef.cooldown · SharedCooldown.UltimateSeconds |
 | cast_time | Wind-up before firing (DEX shortens it) | SkillDef.castTime |
 | range | Max aim distance | SkillDef.castRange |
 | radius | AoE / hit width | SkillTickBinding.radius |
 | projectiles / spread | Fan copies of THIS tick's carrier + cone angle | SkillTickBinding.projectileCount / projectileSpread |
 | cycle | Whole-effect repeat count + interval | SkillDef.repeatCount / repeatInterval |
-| charge_cost | Ult charge to cast (Ultimate tier only) | SkillDef.chargeCost |
 
 **Reserved — not built yet** (author only when a skill needs them): **Interval** (DoT tick cadence — hardcoded in `StatusController`), **Limit** (max stacks / summons — no system), **Speed** (projectile travel — lives in the VFX carrier), **Resource** (non-MP gain / drain).
 
@@ -191,8 +190,8 @@ For these to fire, each skill still carries a **damage type as real data** — *
 
 A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
 
-- **OnCast** — a normal active the player presses (default). Takes a hotbar slot; uses the cost / cadence / aim of §Tier B.
-- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, and nothing switches it on: a passive is live the moment a mastery point learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
+- **OnCast** — a normal active the player presses (default), from whichever hotbar slot they put it in; uses the cost / cadence / aim of §Tier B.
+- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It may sit in a hotbar slot only as a tile to watch — pressing it does nothing, and it works whether or not it is on the bar — and nothing switches it on: a passive is live the moment a mastery point learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 

@@ -15,8 +15,9 @@ smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill le
 - The weapon kit's removal (slice 3) and learned skills (slice 5) shipped together, so no session ever ran with
   the kit gone and nothing to replace it.
 - One save version bump covered both slices: **v14** carries a forged weapon's trademark ([Weapon Names &
-  Trademarks](weapon-names-and-trademarks.md)). The save today is **v17** (skill levels bought with mastery points ride
-  it) and both sides' build string is **unwritten-character-v17**.
+  Trademarks](weapon-names-and-trademarks.md)). The save today is **v18** (skill levels bought with mastery points ride
+  it since v17; since v18 the hotbar lives in a row of its own and every piece of gear carries its own id) and both
+  sides' build string is **unwritten-character-v18**.
 - Open question 1 was taken as recommended — the server writes a copy's finished attack, magic attack, defence
   and magic defence onto it, and a player's machine only adds them.
 - Open question 2 was NOT taken as written: instead of the bag wire carrying costs for every copy, a station asks
@@ -176,7 +177,7 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 **The window:** the Skills window (SkillsWindow.cs, key K) is the character skill window: one weapon at a time as a timeline of mastery 0–70, a + button on each skill to spend a point, learned skills to drag onto the bar. Its tree rules are the `skill-tree` skill. The Grimoire (J), the old list of every skill in the game, was deleted on 2026-09-21. `published` (SkillDef.cs:465) loses its kit reader but keeps `ExtraSkillRoll` (ExtraSkillRoll.cs:30) and the composer dimming (SkillComposerWindow.cs:242-261); its tooltip text ("eligible to be rolled onto a dropped weapon") must be rewritten.
 
-**Touches but does not alter (none of these was ever agreed):** the hotbar stays 4 numbered slots + 1 ult (HotbarBindings.cs:12-15 justifies four by the kit size, which no longer exists — the number stays until the user says otherwise); passives are never ticked — every learned passive is live while its weapon is in hand (decided 2026-09-21); the training dummy earns nothing because it never loses health it keeps; the challenge scale uses the CHARACTER's level — for a creature killing a creature nothing is paid (Rewards.cs:33-35 already pays only a `Character`).
+**Touches but does not alter (none of these was ever agreed):** the hotbar's layout was not part of V4 — the user set it on 2026-10-03 as three rows of nine, any slot holding a skill, an item or a piece of gear, with no separate ultimate seat ([HUD/UI System](../hud-ui-system.md)); passives are never ticked — every learned passive is live while its weapon is in hand (decided 2026-09-21); the training dummy earns nothing because it never loses health it keeps; the challenge scale uses the CHARACTER's level — for a creature killing a creature nothing is paid (Rewards.cs:33-35 already pays only a `Character`).
 
 **Rebuild:** game server yes; **character server yes** (save shape).
 
@@ -218,7 +219,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 - **Two players in one world:** `PassiveLoadout`'s owner rule (PassiveLoadout.cs:24-29) — every new check must read the OWNER character, never `Character.Instance`.
 - **Perf:** the tally write is per hit (CombatAuthority.Land is the per-hit path per PERFORMANCE.md's checker, :88-90) — fixed-size, no dictionary, no string; the mastery percent lookup runs inside `Lift`, which runs inside every stat getter the server derives twice a second per player (NetPlayer.cs:582-583) — a table index, no search.
 
-**Behaviours that stay exactly as they are (carried forward, never agreed — the user should see them):** the bar is 4 + ult; every learned passive live, no limit (2026-09-21); `RandomItemChance = 30%` of one random non-worn item per kill; killer = last unit to cost health (Rewards.cs:13-14, 58) for XP and loot; killer-only pickup window; creatures dress themselves at random in every empty place (UnitEquipment.cs:57); the creature's one extra random skill (ExtraSkillRoll.cs:14); the ring's caps and draft (its curve is now the character's, paid a third of each kill); a level-up's full heal.
+**Behaviours that stay exactly as they are (carried forward, never agreed — the user should see them):** the hotbar's layout (set separately on 2026-10-03: three rows of nine, no ultimate seat); every learned passive live, no limit (2026-09-21); `RandomItemChance = 30%` of one random non-worn item per kill; killer = last unit to cost health (Rewards.cs:13-14, 58) for XP and loot; killer-only pickup window; creatures dress themselves at random in every empty place (UnitEquipment.cs:57); the creature's one extra random skill (ExtraSkillRoll.cs:14); the ring's caps and draft (its curve is now the character's, paid a third of each kill); a level-up's full heal.
 
 ## Part 4 — Open questions, each with the planner's recommendation
 

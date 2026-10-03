@@ -70,7 +70,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 ## Verifying changes here without Unity
 
-Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor tools) in about four seconds without opening Unity, and reports only real errors. For authored skill data, `tools/check-skill-data.py` proves the assets are sane. Authoring maths (the budget curve, the allocator, the ring percentages) should be **replayed in a throwaway script against the real constants** before being trusted — that's how the "untouched stats get crushed" bug in the budget guard was caught pre-ship.
+Run `tools/check-unity-code.sh` — it type-checks three passes (the game, the editor tools, and the game as a shipped PC build sees it) in about eight seconds without opening Unity, and reports only real errors. For authored skill data, `tools/check-skill-data.py` proves the assets are sane. Authoring maths (the budget curve, the allocator, the ring percentages) should be **replayed in a throwaway script against the real constants** before being trusted — that's how the "untouched stats get crushed" bug in the budget guard was caught pre-ship.
 
 ## Still open
 

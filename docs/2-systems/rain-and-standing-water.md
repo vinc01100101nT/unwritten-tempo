@@ -99,7 +99,7 @@ the 39 world fields have it (all rebuilt 2026-09-28).
 - Refilling the lakes: under 2 ms, a few times during each 3-second rise and about three times a second while
   draining; the glide in between is one small sum per lake per frame.
 - Each mirror draws the whole world again, every frame, and only water within 9 m of the middle of the view gets one;
-  the sky-only mirror draws just the sky at half size. **Not yet measured in the game** — compare the frame time (F3)
+  the sky-only mirror draws just the sky at half size. **Not yet measured in the game** — compare the frame time (F10)
   in clear weather and in a storm at the same spot.
 
 ## Watching it

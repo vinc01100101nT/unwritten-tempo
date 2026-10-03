@@ -10,7 +10,7 @@ metadata:
 - **One path:** `UiKit.Header(body, title, window, closable, minimizable, draggable)`, called by `UiKit.DressWindow` (in-game windows, default close+minimise+drag) and `FrontScreen.Panel(canvas, size, title, out window)` (Login, Your Characters, Character Creation: no buttons, no drag). A menu strip uses `UiKit.TitleBar` at `TitleBarHeight`.
 - **Minimise** (`WindowMinimize` + `WindowMinimizeButton`) = only the blue bar stays, still draggable; restore re-enables exactly what was on. The user explicitly rejected a separate "fold" — minimise IS that.
 - **Status box** (`StatusBox`, added by `UIShellBuilder`): top-left default, draggable, `WindowFrame` persistKey "Status", minimise but NO close. Bar = name + HP + MP; body = Lv / Ring Lv / [weapon] Mastery Lv bars + zeny + a +/− toggle beside the zeny for 9 window buttons. Removed: `XpBarHUD`, `CharacterUIBinder`, HUD_HealthBar/HUD_ManaBar.
-- **Window buttons open windows through their existing keys:** `Hotkeys.PressOnScreen(key)` — one-frame presses answered for the whole NEXT frame, started by `VirtualPressClock` on every platform. The phone tray (`TouchControls.PressVirtual`) forwards to it; there is one mechanism. Before this, virtual presses only existed on Android.
+- **Window buttons open windows through their existing keys:** `Hotkeys.PressOnScreen(key)` — one-frame presses answered for the whole NEXT frame, started by `VirtualPressClock`. The keys themselves come from `GameKeys` (the one list of every key, 2026-10-03). The phone version and its touch tray were deleted on 2026-10-03 — the game is PC-only.
 - **Open:** zeny also still shows in the top-right gold panel (not asked to remove).
 
 Relates to [[hud-progression-windows]].

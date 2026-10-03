@@ -267,12 +267,12 @@ public partial class Player3DController
     /// ends — including a death-cancel (see the dead branch in the main controller).</summary>
     void SetDashInvuln(bool on) { if (Character.Instance != null) Character.Instance.Invulnerable = on; }
 
-    static bool KeyJump() => Hotkeys.Down(KeyCode.Space);
+    static bool KeyJump() => Hotkeys.Down(GameKeys.Jump);
 
     static bool KeyDash()
     {
         // Don't dash while a modifier is held (Alt = OS/Unity menu accelerators, Ctrl/Shift for combos).
-        if (Hotkeys.Held(KeyCode.LeftAlt) || Hotkeys.Held(KeyCode.RightAlt)) return false;
-        return Hotkeys.Down(KeyCode.E);
+        if (Hotkeys.Held(GameKeys.ShowDrops) || Hotkeys.Held(GameKeys.ShowDropsAlt)) return false;
+        return Hotkeys.Down(GameKeys.Dash);
     }
 }

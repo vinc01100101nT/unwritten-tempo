@@ -224,8 +224,8 @@ pure random defensible — and it only works because recycle exists, which is wh
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire. Trademarks arrived with save **v14**; the save today is **v17**, and both servers' build string is
-  `unwritten-character-v17`.
+  the wire. Trademarks arrived with save **v14**; the save today is **v18**, and both servers' build string is
+  `unwritten-character-v18`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`

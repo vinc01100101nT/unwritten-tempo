@@ -149,10 +149,10 @@ public class ChatController : MonoBehaviour
 
     void HandleKeys()
     {
-        bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+        bool enter = Input.GetKeyDown(GameKeys.Chat) || Input.GetKeyDown(GameKeys.ChatAlt);
         // Chat is the one opener that reads the key directly rather than through Hotkeys (it does its own typing
         // check, just below), so an on-screen button's press has to be admitted here too.
-        enter = enter || Hotkeys.PressedOnScreen(KeyCode.Return);
+        enter = enter || Hotkeys.PressedOnScreen(GameKeys.Chat);
         // Open + focus on Enter — but only when NOT already typing (a submit press has Hotkeys.Typing == true,
         // so this branch is skipped and the InputField's own submit handles it instead).
         if (enter && !Hotkeys.Typing)
@@ -256,7 +256,7 @@ public class ChatController : MonoBehaviour
     void OnEndEdit(string value)
     {
         // onEndEdit also fires on focus-loss; only act on an actual Enter press.
-        if (!(Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))) return;
+        if (!(Input.GetKeyDown(GameKeys.Chat) || Input.GetKeyDown(GameKeys.ChatAlt))) return;
 
         var text = value != null ? value.Trim() : "";
         input.text = "";

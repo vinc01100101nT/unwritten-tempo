@@ -168,9 +168,11 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
   empty", "did that binding save", "what is equipped" in seconds, and it is the truth the game loads:
   ```bash
   psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -A -t -c \
-    "select name, updated_at, progress->'hotbarBindings', progress->'equipItemIds' \
-     from character where deleted_at is null order by updated_at desc limit 5;"
+    "select c.name, c.updated_at, h.slots, c.progress->'equipItemIds' \
+     from character c left join character_hotbar h on h.character_id = c.id \
+     where c.deleted_at is null order by c.updated_at desc limit 5;"
   ```
+  The hotbar (save v18+) is its own row in `character_hotbar`, not in the progress document.
   `jsonb_pretty(progress)` dumps a whole character. Full detail: `docs/1-planning/querying-the-database.md`.
 - **Did my edit reach the editor** = search the assembly it built, never the source on disk — the rule and the
   encoding trap are in the console section below, written once.

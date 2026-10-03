@@ -58,7 +58,7 @@ public class PlayerInteractor : MonoBehaviour
         }
 
         // Not talking: F reaches for whatever is nearest — a thing on the floor, or a townsperson.
-        if (Hotkeys.Down(KeyCode.F)) ReachForTheNearestThing();
+        if (Hotkeys.Down(GameKeys.Interact)) ReachForTheNearestThing();
     }
 
     /// <summary>What the reach key does: pick up the nearest thing lying on the ground, or start a chat with the

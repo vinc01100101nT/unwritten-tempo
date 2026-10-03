@@ -122,6 +122,38 @@ public static class GameSettings
         set => SetVolume(ref music, MusicVolumeKey, value);
     }
 
+    // ---- the hotbar's third row: the player's own keys ----------------------------------------------------------
+    // One key per slot, KeyCode.None until chosen. Kept on this device like every other setting here, because which
+    // keys suit a person depends on the keyboard in front of them.
+    const string RowThreeKeyPrefix = "set_hotbar_row3_key_";
+    static KeyCode[] rowThree;
+
+    /// <summary>The key third-row slot <paramref name="column"/> (0–8) answers to, or <see cref="KeyCode.None"/>.</summary>
+    public static KeyCode HotbarRowThreeKey(int column)
+    {
+        if (column < 0 || column >= HotbarBindings.PerRow) return KeyCode.None;
+        if (rowThree == null)
+        {
+            rowThree = new KeyCode[HotbarBindings.PerRow];
+            for (int c = 0; c < rowThree.Length; c++)
+                rowThree[c] = (KeyCode)PlayerPrefs.GetInt(RowThreeKeyPrefix + c, (int)KeyCode.None);
+        }
+        return rowThree[column];
+    }
+
+    /// <summary>Give third-row slot <paramref name="column"/> a key. Refused (false) for a key the game already uses
+    /// or another slot holds (<see cref="GameKeys.IsFree"/>); <see cref="KeyCode.None"/> clears it.</summary>
+    public static bool SetHotbarRowThreeKey(int column, KeyCode key)
+    {
+        if (column < 0 || column >= HotbarBindings.PerRow) return false;
+        if (key != KeyCode.None && !GameKeys.IsFree(key, column)) return false;
+        HotbarRowThreeKey(column);
+        rowThree[column] = key;
+        PlayerPrefs.SetInt(RowThreeKeyPrefix + column, (int)key);
+        PlayerPrefs.Save();
+        return true;
+    }
+
     /// <summary>Push the three volumes onto the systems that play sound. Called whenever one changes, and by
     /// each audio system as it comes online, so a system that spawns late still starts at the saved level.
     /// Master rides <see cref="AudioListener.volume"/> — Unity's one global multiplier over every

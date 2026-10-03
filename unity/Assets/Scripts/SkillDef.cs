@@ -55,7 +55,8 @@ public enum PlayerFaction { Ally, Enemy }
 public enum CastReticle { Instant, Ground, Unit }
 
 /// <summary>The SCALE of a skill (orthogonal to its category/role). An Ultimate is a normal skill stamped with
-/// this tier — it fires from a dedicated slot, gated by a charge meter that fills in combat. Zero new architecture.</summary>
+/// this tier — it sits in any hotbar slot like every other skill, and every ultimate a unit has shares one cooldown
+/// after any of them is cast (<see cref="SharedCooldown"/>). Zero new architecture.</summary>
 public enum SkillTier { Base, Ultimate }
 
 /// <summary>The battlefield-role archetype (the skill's TAG) — the coherence family from the design doc. Drives the
@@ -576,16 +577,16 @@ public class SkillDef : ScriptableObject
     public float castRange = 11f;
 
     [Header("Ultimate (tier, not a category)")]
-    [Tooltip("Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot. The tier changes " +
-             "WHERE it sits, nothing else: an ult pays mana and rides its own cooldown exactly like every other skill.")]
+    [Tooltip("Base = a normal skill. Ultimate = sits in any hotbar slot like any other skill, pays mana and rides its " +
+             "own cooldown — and casting it also starts the 40-second shared cooldown every ultimate waits on.")]
     public SkillTier tier = SkillTier.Base;
-    /// <summary>True when this skill occupies the dedicated ULT slot rather than riding keys 1–9.</summary>
+    /// <summary>True when this skill is an ultimate — held by the shared cooldown (<see cref="SharedCooldown"/>).</summary>
     public bool IsUltimate => tier == SkillTier.Ultimate;
 
-    /// <summary>True when this skill has NO OnCast trigger — it takes no hotbar slot and only ever runs through
-    /// <see cref="PassiveEvents"/> when one of its other triggers fires. A skill that HAS an OnCast entry is an active
-    /// even if it also answers other triggers: it still wants a slot, still pays MP, and the drop roll still files it
-    /// as an active.</summary>
+    /// <summary>True when this skill has NO OnCast trigger — it is never pressed (on the hotbar it is only a tile to
+    /// watch) and only ever runs through <see cref="PassiveEvents"/> when one of its other triggers fires. A skill that
+    /// HAS an OnCast entry is an active even if it also answers other triggers: it is pressed from a slot, pays MP, and
+    /// the drop roll still files it as an active.</summary>
     public bool IsPassive => CastEntry == null;
 
     /// <summary>True when Weapon Mastery may raise this skill's main numbers while <paramref name="held"/> is in hand:

@@ -195,6 +195,57 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     return Results.Json(new { error = "that save is from an older hand-over", live = current }, statusCode: 409);
 });
 
+// WHERE A MAP SERVER WRITES A CHARACTER'S HOTBAR DOWN — only when a slot changes, so the progress save above no
+// longer rewrites the bar every time it runs. Guarded exactly as that door is: the SERVER secret, and the same
+// hand-over rule, so a map server the character has already left cannot put an old bar back.
+const int MaxHotbarSlots = 64;
+const int MaxHotbarSlotLength = 160;
+app.MapPut("/server/characters/{id}/hotbar", async (HttpContext http, string id, JsonElement body) =>
+{
+    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+    if (!Guid.TryParseExact(id, "D", out var characterId))
+        return Results.Json(new { error = "invalid character id" }, statusCode: 400);
+    if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty("slots", out var slots)
+        || slots.ValueKind != JsonValueKind.Array)
+        return Results.Json(new { error = "send { slots: [ … ] }" }, statusCode: 400);
+    if (slots.GetArrayLength() > MaxHotbarSlots)
+        return Results.Json(new { error = $"a hotbar has at most {MaxHotbarSlots} slots" }, statusCode: 400);
+    foreach (var slot in slots.EnumerateArray())
+        if (slot.ValueKind != JsonValueKind.String || (slot.GetString()?.Length ?? 0) > MaxHotbarSlotLength)
+            return Results.Json(new { error = $"every slot is a string of at most {MaxHotbarSlotLength} characters" },
+                                statusCode: 400);
+
+    // The same numbering the progress door reads: 0 (or absent) is not checked, anything else must be the live one.
+    int handover = body.TryGetProperty("handover", out var h) && h.ValueKind == JsonValueKind.Number
+                   && h.TryGetInt32(out var hv) ? hv : 0;
+
+    await using var conn = await db.ConnectAsync();
+    // Written only when the character exists, is not deleted, and (when a number was given) is on that hand-over —
+    // the select finds no row otherwise, so nothing is inserted and nothing is updated.
+    await using var cmd = new NpgsqlCommand(
+        @"insert into character_hotbar (character_id, slots, updated_at)
+          select id, $2, now() from character
+           where id = $1 and deleted_at is null and ($3 = 0 or handover = $3)
+          on conflict (character_id) do update set slots = excluded.slots, updated_at = now()
+          returning character_id", conn);
+    cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+    cmd.Parameters.Add(new NpgsqlParameter { Value = slots.GetRawText(), NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb });
+    cmd.Parameters.Add(new NpgsqlParameter { Value = handover });
+
+    if (await cmd.ExecuteScalarAsync() is not null) return Results.Ok(new { ok = true });
+    if (handover == 0) return Results.Json(new { error = "no such character" }, statusCode: 404);
+
+    // NOT WRITTEN, AND A NUMBER WAS GIVEN: either the character is gone, or this bar is from an older hand-over.
+    await using var live = new NpgsqlCommand(
+        "select handover from character where id = $1 and deleted_at is null", conn);
+    live.Parameters.Add(new NpgsqlParameter { Value = characterId });
+    if (await live.ExecuteScalarAsync() is not int current)
+        return Results.Json(new { error = "no such character" }, statusCode: 404);
+    Console.WriteLine($"[char] refused a hotbar for character {characterId} from hand-over {handover} — "
+                      + $"they are on hand-over {current} now, so it would have rolled them back.");
+    return Results.Json(new { error = "that hotbar is from an older hand-over", live = current }, statusCode: 409);
+});
+
 // WHERE A PLAYER GOES WHEN THEY WALK THROUGH A DOOR INTO A ZONE ANOTHER PROCESS HOLDS. Asked by the map server
 // they are LEAVING, never by the player: only that server knows whether it has finished writing them down, and
 // only it can put them back where they were if this fails. Reached with the SERVER secret.
@@ -210,20 +261,26 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
         return Results.Json(new { error = "send { map: … }" }, statusCode: 400);
 
     await using var conn = await db.ConnectAsync();
+    // The hotbar rides in the same read: its own row, and none at all for a character that never had one written.
     await using var read = new NpgsqlCommand(
-        "select id, name, progress from character where id = $1 and deleted_at is null", conn);
+        @"select c.id, c.name, c.progress, h.slots
+            from character c left join character_hotbar h on h.character_id = c.id
+           where c.id = $1 and c.deleted_at is null", conn);
     read.Parameters.Add(new NpgsqlParameter { Value = characterId });
 
     string name;
     JsonDocument progress;
+    JsonDocument? hotbar;
     await using (var rows = await read.ExecuteReaderAsync())
     {
         if (!await rows.ReadAsync()) return Results.Json(new { error = "no such character" }, statusCode: 404);
         name = rows.GetString(1);
         progress = JsonDocument.Parse(rows.GetString(2));
+        hotbar = rows.IsDBNull(3) ? null : JsonDocument.Parse(rows.GetString(3));
     }
 
     using (progress)
+    using (hotbar)
     {
         // SOMEBODY MUST BE HOLDING IT BEFORE ANYBODY IS SENT TO IT. Nobody is given a list of zones at start-up,
         // so a zone nobody is standing in is held by nobody — the ordinary state, not a fault. This puts it on
@@ -236,8 +293,8 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
         // A NEW HAND-OVER: the server they are leaving can no longer write them down (see Handover).
         if (await Handover.NextAsync(conn, characterId) is not int handover)
             return Results.Json(new { error = "no such character" }, statusCode: 404);
-        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, body.isGm, handover,
-                                              http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, hotbar?.RootElement,
+                                              body.isGm, handover, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
 

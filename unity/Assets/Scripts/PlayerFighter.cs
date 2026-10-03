@@ -33,10 +33,10 @@ public static class PlayerFighter
     public static bool BuildFrom(NetPlayer shell, MapServerLink.Expected announced)
     {
         if (announced == null) return false;
-        return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.isGm);
+        return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar, announced.isGm);
     }
 
-    static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, bool isGm)
+    static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar, bool isGm)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -112,6 +112,29 @@ public static class PlayerFighter
             shell.SaveSoon();
         }
 
+        // THEIR BAR, from its own row — after the save, because what may stay on it is held to the skills they have
+        // learned and the things they carry. A character whose bar has never been written to that row carries the
+        // old one inside its save (before v18): it is laid into the new rows once and then written to its row.
+        if (hotbar != null && hotbar.Length > 0)
+        {
+            var slots = (string[])hotbar.Clone();
+            character.KeepOnlyBindable(slots);
+            character.Hotbar.Restore(slots);
+            shell.HotbarAlreadyStored();
+        }
+        else if (pushed != null && pushed.hotbarBindings != null && pushed.hotbarBindings.Length > 0)
+        {
+            character.Hotbar.RestoreLegacy(pushed.hotbarBindings);
+            var slots = character.Hotbar.Capture();
+            character.KeepOnlyBindable(slots);
+            character.Hotbar.Restore(slots);
+            shell.SaveHotbarSoon();
+        }
+
+        // AND THE SHARED COOLDOWN, if one was still running when they left, reaches their screen.
+        if (character.Skills.SharedUltimateRemaining > 0f)
+            GameNetwork.TellOwnerCooldownStarted(character, SharedCooldown.UltimateKey, character.Skills.SharedUltimateDueAtUtc);
+
         // AND NOW THEY GET THEIR SKILLS, NOT BEFORE. A character carries only the skills it can USE — its bar, its
         // learned passives, whatever its bag can run — and NONE of that exists until the save
         // above has been laid onto them. Bound any earlier and the answer is an empty list, which is a person
@@ -121,7 +144,7 @@ public static class PlayerFighter
 
         // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
         // empty and only ever learns what it is carrying from here.
-        shell.PushBagToOwner();
+        shell.PushBagToOwner(alsoTheBar: true);
 
         // ANYTHING THAT CHANGES THEM IS WORTH WRITING DOWN. Levelling, spending a point, gear — all of it now
         // happens on the server, so the server is what notices. Subscribed AFTER the load is asked for, but the

@@ -30,7 +30,6 @@ public class Minimap : MonoBehaviour
     public float maxViewRadius = 60f;
     [Tooltip("How much one press of + or - zooms.")]
     public float zoomStep = 1.5f;
-    public KeyCode toggleKey = KeyCode.M;
 
     [Header("Blip colours")]
     public Color playerColor = new Color(0.35f, 1f, 0.45f, 1f);
@@ -170,7 +169,7 @@ public class Minimap : MonoBehaviour
     {
         if (view == null) return;
 
-        if (Hotkeys.Down(toggleKey)) UiAnim.Toggle(Panel);
+        if (Hotkeys.Down(GameKeys.Minimap)) UiAnim.Toggle(Panel);
         if (!Panel.activeInHierarchy) return;
 
         // Re-acquire the persistent player after a scene swap.

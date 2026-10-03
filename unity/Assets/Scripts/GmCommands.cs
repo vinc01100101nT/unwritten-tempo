@@ -562,12 +562,13 @@ public static class GmCommands
         var id = c.Arg(0);
         if (id == null) { c.Reply("Usage: /bind <skillId>"); return; }
         if (c.Ch == null) { c.Reply("No character."); return; }
-        if (!c.Ch.Hotbar.AutoBind(id)) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
+        if (!c.Ch.MayBind(id) || c.Ch.Hotbar.BindToFirstEmpty(id) < 0)
+        { c.Reply($"Couldn't bind '{id}' (unknown, not learned, already bound, or bar full)."); return; }
         // Bound HERE, so their machine is handed the bar the server now holds — the same push a weapon swap uses,
         // which also rebuilds the skills behind the bar on both sides and redraws it.
         var shell = GameNetwork.ShellFor(c.Ch);
-        if (shell != null) { shell.PushBagToOwner(alsoTheBar: true); shell.SaveSoon(); }
-        c.Reply($"Bound {id} (ultimates → ult slot).");
+        if (shell != null) { shell.PushBagToOwner(alsoTheBar: true); shell.SaveHotbarSoon(); }
+        c.Reply($"Bound {id}.");
     }
 
     static void CmdKill(GmContext c)

@@ -21,6 +21,8 @@ public struct BagWire
     public int[] refines;
     public string[] cards;
     public string[] rolls;
+    /// <summary>Each piece of gear's own id ("" for a stack) — what a hotbar slot names to mean exactly that piece.</summary>
+    public string[] copyIds;
 
     /// <summary>Which of these were picked up since the person last looked. Rebuilt on arrival, so without
     /// carrying it the "new" marker could never appear on anything.</summary>
@@ -42,21 +44,19 @@ public struct BagWire
     public int[] wornRefines;
     public string[] wornCards;
     public string[] wornRolls;
+    public string[] wornCopyIds;
 
-    // ---- and the BAR the server just rewrote ----------------------------------------------------------
+    // ---- and the BAR, when the server changed it --------------------------------------------------------
     //
-    // Changing weapons replaces somebody's whole bar, and the server is where that is decided. It used to be decided there and nowhere else: the new weapon appeared on the body
-    // while the keys kept the old weapon's skills, so pressing one asked for a skill the server no longer agreed
-    // was theirs. Sending WHAT THE SERVER DECIDED, rather than having the other machine work the same rule out a
-    // second time, is what keeps one answer to "what is on my bar".
+    // The server changes somebody's bar in three cases: it arrives with them on a map server, an item on it is used up,
+    // or a piece of gear on it is no longer theirs (both are taken off the bar on the same push that tells them). Sending
+    // WHAT THE SERVER DECIDED, rather than having the other machine work the same rule out a second time, is what keeps
+    // one answer to "what is on my bar".
     //
-    // IT IS NULL ON AN ORDINARY BAG CHANGE — picking something up, drinking a potion, tidying the bag — and
-    // is filled in only by a push that follows a weapon going on or coming off. That is deliberate: a bar sent
-    // with every bag change would undo an arrangement the player made a moment earlier, if the two crossed in
-    // flight. A null array costs one byte and arrives as null, so "the server did not touch your bar" and "your
-    // bar is empty" cannot be mistaken for each other.
-    //
-    // Same arrays as the save, like everything above.
+    // IT IS NULL ON EVERY OTHER BAG CHANGE — picking something up, drinking a potion that leaves some behind, tidying
+    // the bag. That is deliberate: a bar sent with every bag change would undo an arrangement the player made a moment
+    // earlier, if the two crossed in flight. A null array costs one byte and arrives as null, so "the server did not
+    // touch your bar" and "your bar is empty" cannot be mistaken for each other.
 
     public string[] hotbarBindings;
 
@@ -69,7 +69,7 @@ public struct BagWire
         if (c == null) { wire.itemIds = new string[0]; return wire; }
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
-                          out wire.wornCards, out wire.wornRolls);
+                          out wire.wornCards, out wire.wornRolls, out wire.wornCopyIds);
 
         if (alsoTheBar)
         {
@@ -86,6 +86,7 @@ public struct BagWire
         wire.refines = new int[n];
         wire.cards = new string[n];
         wire.rolls = new string[n];
+        wire.copyIds = new string[n];
         wire.isNew = new bool[n];
 
         int at = 0;
@@ -98,15 +99,18 @@ public struct BagWire
             wire.isNew[at] = e.isNew;
             if (e.IsEquip && e.instance != null)
             {
+                e.instance.EnsureCopyId();
                 wire.refines[at] = e.instance.upgrade;
                 wire.cards[at] = ItemCatalog.EncodeCards(e.instance.cards);
                 wire.rolls[at] = e.instance.EncodeRoll();
+                wire.copyIds[at] = e.instance.copyId;
             }
             else
             {
                 wire.refines[at] = 0;
                 wire.cards[at] = "";
                 wire.rolls[at] = "";
+                wire.copyIds[at] = "";
             }
             at++;
         }
@@ -137,12 +141,13 @@ public struct BagWire
                     entry.instance = new EquipmentInstance(def, At(refines, i, 0));
                     ItemCatalog.DecodeCards(At(cards, i, ""), entry.instance.cards);
                     entry.instance.DecodeRoll(At(rolls, i, ""));
+                    entry.instance.copyId = At(copyIds, i, "") ?? "";
                 }
                 c.Bag.Add(entry);
             }
         }
 
-        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRolls);
+        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRolls, wornCopyIds);
         c.SetGold(gold);
 
         // THE BAR LAST, AFTER THE GEAR.

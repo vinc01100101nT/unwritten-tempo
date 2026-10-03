@@ -25,9 +25,9 @@ public class StatusBox : MonoBehaviour
     // and is opened directly.
     static readonly (string label, KeyCode key)[] Windows =
     {
-        ("Inventory", KeyCode.B), ("Character", KeyCode.C), ("Skills", KeyCode.K),
-        ("Calendar", KeyCode.L), ("World Map", KeyCode.N), ("Minimap", KeyCode.M),
-        ("Chat", KeyCode.Return), ("Settings", KeyCode.None), ("System", KeyCode.Escape),
+        ("Inventory", GameKeys.Inventory), ("Character", GameKeys.CharacterWindow), ("Skills", GameKeys.Skills),
+        ("Calendar", GameKeys.Calendar), ("World Map", GameKeys.WorldMap), ("Minimap", GameKeys.Minimap),
+        ("Chat", GameKeys.Chat), ("Settings", KeyCode.None), ("System", GameKeys.System),
     };
 
     Character ch;
@@ -172,7 +172,7 @@ public class StatusBox : MonoBehaviour
         window.sizeDelta = new Vector2(Width, show ? expandedHeight : collapsedHeight);
     }
 
-    // Opens a window through the key that already opens it — the same one-shot press the phone's tray uses — so the
+    // Opens a window through the key that already opens it — a one-shot press of that key — so the
     // status box adds no second way into any window.
     void Open(string label, KeyCode key)
     {

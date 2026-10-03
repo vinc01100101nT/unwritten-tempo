@@ -20,7 +20,6 @@ using TMPro;
 /// </summary>
 public class SkillsWindow : MonoBehaviour
 {
-    const KeyCode ToggleKey = KeyCode.K;
 
     // The timeline: pixels per mastery level, the left margin, one skill's box, one row, the ruler's height.
     const float Px = 20f, Left = 14f, NodeW = 92f, NodeH = 44f, Lane = 50f, RulerH = 34f, TileSize = 22f;
@@ -68,7 +67,7 @@ public class SkillsWindow : MonoBehaviour
     void HandleHotkey()
     {
         if (root == null) return;
-        if (Hotkeys.Down(ToggleKey))
+        if (Hotkeys.Down(GameKeys.Skills))
         {
             bool open = UiAnim.Toggle(root);
             if (open) { Show(WeaponType.None); UISounds.PlayOpen(); }
@@ -317,9 +316,9 @@ public class SkillsWindow : MonoBehaviour
 
         SkillHoverCard.Attach(node.transform, def, beside: true);
 
-        // A learned ACTIVE goes on the hotbar by dragging it there. A passive takes no slot, and a skill not learned
-        // yet would be a key the server refuses.
-        if (learned && !def.IsPassive)
+        // A learned skill goes on the hotbar by dragging it there — a passive too, as a tile to watch (it works whether
+        // or not it is on the bar). A skill not learned yet would be a slot the server refuses.
+        if (learned)
         {
             var drag = node.gameObject.AddComponent<SkillDragSource>();
             drag.skillId = def.id; drag.tint = SkillSymbol.ColorFor(def);

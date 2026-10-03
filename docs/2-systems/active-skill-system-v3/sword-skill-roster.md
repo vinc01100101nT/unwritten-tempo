@@ -45,7 +45,7 @@ Sword's spine: **Rising Breeze → Last Petal · Held Breath → Returning Wind 
 
 ## Ultimates — THREE, as composed (re-confirmed 2026-08-24 off the assets)
 
-All three are authored `tier = Ultimate` and priced as ultimates (**40 MP**, long cooldown, no charge meter — see **Skill Numbers & Balance Baseline**, cost & cooldown rules).
+All three are authored `tier = Ultimate` and priced as ultimates (**40 MP**, long cooldown, no charge meter — see **Skill Numbers & Balance Baseline**, cost & cooldown rules). Casting any of them also starts the **40 s shared cooldown** on every ultimate, on top of each one's own.
 
 | Ult | Payoff | Effect | Numbers (as composed) | Specialist feeder |
 | --- | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ Two are **spine partners** (carry an ult); the rest are single-purpose texture.
 
 - **The bill comes due when the window ends** — everything banked lands at once as a single **true-damage** hit (its own purple number). Held Breath DELAYS damage, it never prevents it.
 - **What's banked is what would really have cost HP:** the damage-reduction pile (in either direction) and Shield all apply *before* the hit is recorded, and a parried hit never lands at all, so it banks nothing. Poison/bleed/burn ticks bypass it entirely.
-- **Its only escape is Returning Wind** (below). Cashing the pile erases the debt — that IS Returning Wind's perk. With the ult uncharged, bracing is a bet you will lose.
+- **Its only escape is Returning Wind** (below). Cashing the pile erases the debt — that IS Returning Wind's perk. With Returning Wind still cooling down — on its own cooldown or the shared cooldown — bracing is a bet you will lose.
 - **The cooldown deliberately exceeds the window** (7s vs 4s), so a second cast can't chain-postpone the bill forever.
 - *Engine note: two states — the armed charges (spend down, can hit zero) and the debt (must outlive them). Bending Reed's exact shape, one word apart: a parry **erases** the hit, a brace **postpones** it.*
 

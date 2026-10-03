@@ -162,7 +162,7 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 | Menu | What | Use when |
 | --- | --- | --- |
-| **Attach Data Skills To Player (Systems scene)** | Adds a `SkillRunner` per catalog skill onto the player (so `IHotbarSkill` shows them on the bar). Skips skills already attached. Needs **Systems.unity open** (the player lives there). Mostly redundant now — `Player3DController` auto-attaches composed skills on Awake. | Force-attaching data skills without pressing Play. (`SkillDefTools.cs`) |
+| **Attach Data Skills To Player (Systems scene)** | Adds a `SkillRunner` per catalog skill onto the player (the runner a skill on the hotbar casts through). Skips skills already attached. Needs **Systems.unity open** (the player lives there). Mostly redundant now — `Player3DController` auto-attaches composed skills on Awake. | Force-attaching data skills without pressing Play. (`SkillDefTools.cs`) |
 
 ---
 

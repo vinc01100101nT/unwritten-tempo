@@ -208,16 +208,6 @@ public class CameraFollow3D : MonoBehaviour
         Vector2 delta = mouse - lastMouse;
         lastMouse = mouse;
         bool orbiting = RightHeld();
-#if UNITY_ANDROID
-        // A phone orbits with a one-finger drag, and that gesture reports its OWN travel. Taking a difference of
-        // pointer positions here would fold in the jump from wherever the last finger happened to lift, so the
-        // camera would snap the instant a new drag began.
-        if (TouchControls.HasTouch)
-        {
-            delta = TouchControls.OrbitDelta;
-            orbiting = delta.sqrMagnitude > 0f;
-        }
-#endif
 
         if (orbiting)
         {
@@ -233,8 +223,8 @@ public class CameraFollow3D : MonoBehaviour
     }
 
     // ---- input helpers -----------------------------------------------------------
-    // All three route through PointerInput, the one gate for the mouse (and, on a phone, for the finger that
-    // answers in its place). The backend dance and the scroll-sign normalisation live there, not here.
+    // All three route through PointerInput, the one gate for the mouse. The backend dance and the scroll-sign
+    // normalisation live there, not here.
     static float ScrollAmount() => PointerInput.ScrollAmount;
     static Vector2 MousePos() => PointerInput.Position;
     static bool RightHeld() => PointerInput.SecondaryHeld;

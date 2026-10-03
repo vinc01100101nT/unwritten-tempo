@@ -51,11 +51,11 @@ So combat is **single-to-low-double-digit** for a long time. Skill numbers are *
 
 ⚠️ **One value has not been migrated to this convention: war_banner is authored** `1.3`**.** Under the "0.3 = +30%" rule that reads as **+130% damage**, not the +30% the old multiplier-style number meant. It is the only skill still carrying the pre-collapse encoding. *Left as-is deliberately — changing it is a balance decision, not a doc fix.*
 
-## Ultimate budget & charge economy
+## Ultimate budget & the shared cooldown
 
-- An ult is marked `tier = 1`. `chargeCost` ≈ **5000** (meteor) — normals leave the field at an unused 100. Sword carries **three** (Last Petal, Returning Wind, Thousand Petals), so "one per weapon" is a guideline the composed pool has already outgrown, not a rule.
+- An ult is authored `tier = Ultimate`. Sword carries **three** (Last Petal, Returning Wind, Thousand Petals), so "one per weapon" is a guideline the composed pool has already outgrown, not a rule.
 - An ult should *read* as **\~6–10× a normal's single hit** and/or a big multi-hit, plus a signature effect — not just "a slightly bigger skill."
-- :warning: **To measure:** the charge-**gain** rate (how fast 5000 builds in a fight) isn't captured here. Tune it so an ult lands roughly **once per meaningful fight**.
+- **The shared cooldown paces them together:** casting any ultimate, of any weapon, starts **40 s** on every ultimate the unit has, on top of each one's own 45–60 s cooldown, so a unit carrying several still chooses which to spend. Players and creatures follow the same rule.
 
 ## Scaling-weight DEFAULTS — LOCKED (closes V3's "Still open")
 
@@ -103,7 +103,7 @@ One number, four steps. A skill sits in the step matching what it delivers, and 
 | Reaction | 8 | short, small, meant to be used often — a gap-closer, a single parry |
 | Standard | 12 | the ordinary active: a normal buff, a burst, a guard |
 | Heavy | 16 | the biggest non-ultimate — a long wind-up strike, or a skill arming two piles at once |
-| Ultimate | 40 | one per weapon |
+| Ultimate | 40 | the three in each weapon's pool |
 
 ### Rule 3 — cooldown is set by the DURATION, never by feel
 
@@ -144,7 +144,7 @@ A duration is **seconds**; charges are **a number of uses**. A skill may carry b
 
 **Sword has THREE ultimates** — Last Petal, Returning Wind and Thousand Petals, all authored `tier = Ultimate`. The pricing follows the assets, since the composed skill is the source of truth for what a skill IS; the roster and the wiki both describe three.
 
-**Rule 3 is a rule about ACTIVES.** Its whole purpose is to keep a *press* meaningful — an effect that outlives its cooldown stops being a decision the player makes. A passive is never pressed, so there is no decision for the rule to protect and nothing for it to govern: a passive that grants a 4–6s state with no cooldown is the design working, not a gap in it. A passive's limiter is its trigger and the build slot it occupies.
+**Rule 3 is a rule about ACTIVES.** Its whole purpose is to keep a *press* meaningful — an effect that outlives its cooldown stops being a decision the player makes. A passive is never pressed, so there is no decision for the rule to protect and nothing for it to govern: a passive that grants a 4–6s state with no cooldown is the design working, not a gap in it. A passive's limiter is its trigger and the mastery points it costs.
 
 **Resolved 2026-08-24 — Parting Clouds rolls 50%.** The asset's chance is the authority; the roster doc and the wiki were the stale side and now say a successful parry has a **50% chance** to grant the +200% charge.
 
@@ -152,7 +152,6 @@ A duration is **seconds**; charges are **a number of uses**. A skill may carry b
 
 ## Open / to measure before mass-tuning
 
-- **Charge-gain rate** (sets ult cadence) — measure in a real fight.
 - **Real mob HP curve** — `Health.maxHealth` defaults to 3 in code but every mob overrides it per-prefab; pull actual per-tier/biome values when tuning damage against them.
 
 ---

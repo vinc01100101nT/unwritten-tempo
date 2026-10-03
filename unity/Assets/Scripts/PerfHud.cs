@@ -25,7 +25,7 @@ using UnityEngine.InputSystem;
 ///
 /// Compiled ONLY into the editor / development builds (a release player carries zero overhead). Self-boots
 /// with no scene wiring, its own overlay canvas on top of everything and non-interactive (no raycaster, so it
-/// never eats game clicks). Toggle with F3; reset the peak with F4.
+/// never eats game clicks). Toggle with F10; reset the peak with F11 (GameKeys).
 /// </summary>
 public class PerfHud : MonoBehaviour
 {
@@ -56,10 +56,10 @@ public class PerfHud : MonoBehaviour
     void OnDisable() => gcRecorder.Dispose();
 
     static PerfHud sInstance;
-    static bool sHidden;   // externally suppressed (e.g. hidden during an NPC dialogue) — ANDed with the F3 `show` state
+    static bool sHidden;   // externally suppressed (e.g. hidden during an NPC dialogue) — ANDed with the F10 `show` state
 
     /// <summary>Hide/show the perf overlay from outside (e.g. while an NPC conversation hides the HUD). Restores to
-    /// whatever the F3 toggle last left it when un-hidden.</summary>
+    /// whatever the F10 toggle last left it when un-hidden.</summary>
     public static void SetHidden(bool h) { sHidden = h; if (sInstance != null) sInstance.Apply(); }
 
     void Apply() { if (canvasGo != null) canvasGo.SetActive(show && !sHidden); }
@@ -87,8 +87,8 @@ public class PerfHud : MonoBehaviour
         secTimer += Time.unscaledDeltaTime;
         if (secTimer >= 1f) { gcPerSec = secAccum; secAccum = 0; secTimer = 0f; }   // roll up to bytes/sec
 
-        if (Pressed(KeyCode.F3)) { show = !show; Apply(); }
-        if (Pressed(KeyCode.F4)) peakFrame = 0;
+        if (Pressed(GameKeys.PerformanceOverlay)) { show = !show; Apply(); }
+        if (Pressed(GameKeys.PerformancePeakReset)) peakFrame = 0;
 
         // Rewrite the label only 4×/sec (a uGUI text assignment allocates + rebuilds its mesh, so we keep it
         // off the per-frame path); the canvas itself renders every frame allocation-free.
@@ -103,7 +103,7 @@ public class PerfHud : MonoBehaviour
         int mobs = MonsterAI3D.Active != null ? MonsterAI3D.Active.Count : 0;
         float fps = avgMs > 0.0001f ? 1000f / avgMs : 0f;
         sb.Clear();
-        sb.Append("PERF  (F3 hide  F4 reset)\n");
+        sb.Append("PERF  (F10 hide  F11 reset)\n");
         sb.Append("FPS  ").Append(Mathf.RoundToInt(fps)).Append("   ").Append(avgMs.ToString("0.0")).Append(" ms\n");
         sb.Append("GC/s ").Append(Bytes(gcPerSec)).Append('\n');
         sb.Append("peak ").Append(Bytes(peakFrame)).Append(" /frame\n");

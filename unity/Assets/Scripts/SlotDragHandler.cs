@@ -65,10 +65,26 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         ItemTooltip.Suppressed = false;
         if (ghost != null) { Destroy(ghost); ghost = null; }
 
+        // LET GO OVER THE HOTBAR: a usable item goes on it by kind, a piece of gear as that exact piece.
+        if (HotbarSlotTarget.SlotUnder(e) >= 0)
+        {
+            HotbarSlotTarget.DropOnto(e, BarEntryFor(slot != null ? slot.boundEntry : null));
+            return;
+        }
+
         var target = SlotUnder(e);
         if (target == null && NothingUnder(e)) { DropIntoTheWorld(e); return; }
         ResolveDrop(target);
         // Reorder Notify()s the store → ProgressionWindows.RefreshAll re-renders.
+    }
+
+    /// <summary>What a bag row stands for on the hotbar: one exact piece of gear (worn or carried), a usable item by its
+    /// kind, or nothing — a material or a quest item has nothing to press.</summary>
+    static string BarEntryFor(BagEntry entry)
+    {
+        if (entry == null || entry.def == null) return "";
+        if (entry.IsEquip) return entry.instance != null ? HotbarEntry.Gear(entry.instance.copyId) : "";
+        return entry.def.IsUsable ? HotbarEntry.Item(entry.def.id) : "";
     }
 
     /// <summary>Let go over the world: put it down where you are standing, through the same door the right-click

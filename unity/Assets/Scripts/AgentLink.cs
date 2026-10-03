@@ -297,7 +297,7 @@ public class AgentLink : MonoBehaviour
         "attack <m#>               fight a mob (ends when it or you die, your HP drops under 30%, or 30s)\n" +
         "auto on|off [secs]        the auto-pilot fights nearby mobs; answers after secs (default 10)\n" +
         "stop                      drop every order\n" +
-        "cast <slot|R|name> [id | x y]  press a hotbar skill, aimed at a unit or a spot\n" +
+        "cast <slot 1-27|name> [id | x y]  press a hotbar skill, aimed at a unit or a spot\n" +
         "pickup <g#>               walk to a floor item and take it\n" +
         "talk <n#>                 talk to a townsperson\n" +
         "use <bag#|name> | equip <bag#> | unequip <slot>\n" +
@@ -534,7 +534,7 @@ public class AgentLink : MonoBehaviour
     void Cast(string[] parts)
     {
         if (Dead() || Rig() == null) { Say("cannot cast now"); return; }
-        if (parts.Length < 2) { Say("usage: cast <slot|R|name> [id | x y]"); return; }
+        if (parts.Length < 2) { Say("usage: cast <slot 1-27|name> [id | x y]"); return; }
         var skill = FindHotbarSkill(parts[1], out string label);
         if (skill == null) { Say("no hotbar skill '" + parts[1] + "'"); return; }
 
@@ -584,13 +584,12 @@ public class AgentLink : MonoBehaviour
         var me = Character.Instance;
         if (me == null) return null;
         string id = null;
-        if (key.Equals("R", StringComparison.OrdinalIgnoreCase)) id = me.Hotbar.Ult;
-        else if (int.TryParse(key, out int slot) && HotbarBindings.IsValidSlot(slot - 1)) id = me.Hotbar.Get(slot - 1);
+        if (int.TryParse(key, out int slot) && HotbarBindings.IsValidSlot(slot - 1)) id = me.Hotbar.SkillAt(slot - 1);
         else
         {
-            for (int i = -1; i < HotbarBindings.SlotCount && id == null; i++)
+            for (int i = 0; i < HotbarBindings.SlotCount && id == null; i++)
             {
-                string candidate = i < 0 ? me.Hotbar.Ult : me.Hotbar.Get(i);
+                string candidate = me.Hotbar.SkillAt(i);
                 if (string.IsNullOrEmpty(candidate)) continue;
                 string name = SkillName(candidate);
                 if (name.StartsWith(key, StringComparison.OrdinalIgnoreCase)) id = candidate;
@@ -938,7 +937,6 @@ public class AgentLink : MonoBehaviour
 
         section.Append("hotbar");
         for (int i = 0; i < HotbarBindings.SlotCount; i++) AppendSlot(section, (i + 1).ToString(), me.Hotbar.Get(i));   // perf-ok: once per answer
-        AppendSlot(section, "R", me.Hotbar.Ult);
         section.Append('\n');
         AppendSection(sb, "hotbar", full);
 
@@ -966,6 +964,22 @@ public class AgentLink : MonoBehaviour
     {
         sb.Append(" | ").Append(key).Append(' ');
         if (string.IsNullOrEmpty(skillId)) { sb.Append('-'); return; }
+        var me = Character.Instance;
+        if (HotbarEntry.IsItem(skillId, out string itemId))
+        {
+            var stack = me != null ? me.CarriedStack(itemId) : null;
+            sb.Append(stack != null ? stack.def.displayName + " x" + stack.count : itemId);
+            return;
+        }
+        if (HotbarEntry.IsGear(skillId, out string copyId))
+        {
+            int bagIndex = -1;
+            bool worn = false;
+            bool found = me != null && me.FindCopy(copyId, out bagIndex, out worn);
+            var piece = found && !worn ? me.Bag[bagIndex].instance : null;
+            sb.Append(piece != null && piece.def != null ? piece.def.displayName : found ? "worn piece" : copyId);
+            return;
+        }
         var skill = PlayerSkills.ById(skillId);
         sb.Append(SkillName(skillId));
         if (skill == null) return;

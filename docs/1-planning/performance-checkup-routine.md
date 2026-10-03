@@ -15,7 +15,7 @@ tags:
 1. **Start the server first** — there is no offline game any more, so pressing Play with nothing running gets me nowhere. See [Starting the Network](starting-the-network.md).
 2. Open chat and type `**/perf-checkup**`
 3. In Unity, open a **field** map, press **Play**, sign in → gather a bunch of mobs → press **T** (the auto-pilot AI)
-4. Look at the **PerfHud** box (top-left of the game view, toggle with **F3**)
+4. Look at the **PerfHud** box (top-left of the game view, toggle with **F10**)
 5. Tell the AI what the `**GC/s**` and `**peak**` numbers say
 6. If they're ~0 → 🎉 done. If they spiked → the AI walks me through the Profiler and fixes it.
 
@@ -51,7 +51,7 @@ In the AI chat, type `**/perf-checkup**`. The AI reads the rules + history and t
 
 **3. Read the PerfHud overlay** (top-left corner of the Game view)
 
-- It shows up automatically in Play. Press **F3** to hide/show it, **F4** to reset the peak.
+- It shows up automatically in Play. Press **F10** to hide/show it, **F11** to reset the peak.
 - Watch these two lines during the fight:
   - `**GC/s**` — how much garbage is being made per second.
   - `**peak**` — the worst single frame.

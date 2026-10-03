@@ -50,7 +50,7 @@ public class CalendarPanel : MonoBehaviour
         if (!built) { TryBuild(); return; }
 
         // L = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
-        if (Hotkeys.Down(KeyCode.L))
+        if (Hotkeys.Down(GameKeys.Calendar))
         {
             bool open = UiAnim.Toggle(panel);
             if (open) UISounds.PlayOpen(); else UISounds.PlayClose();

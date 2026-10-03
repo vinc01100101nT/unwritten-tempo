@@ -73,7 +73,6 @@ SCREEN_NAMES = {
     "BattleNotice.cs": "Battle Notice",
     "ReconnectNotice.cs": "Reconnect Notice",
     "AutoCombatIndicator.cs": "Auto Combat Indicator",
-    "TouchHud.cs": "Touch Controls",
 }
 
 

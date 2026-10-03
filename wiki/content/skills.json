@@ -79,11 +79,11 @@
     },
     {
       "type": "paragraph",
-      "text": "Most skills are **active**: they take a hotbar slot, and you press them. They cost mana and use the cooldown, cast time, range, and area above."
+      "text": "Most skills are **active**: you drag them from the Skills window (**K**) onto your hotbar and press them. They cost mana and use the cooldown, cast time, range, and area above. Your hotbar is **three rows of nine**, the same whatever weapon you hold: the top row answers **F1–F9**, the second **1–9**, and the third whatever keys you give it in **Settings ▸ Keys**. A slot can also hold a usable item from your bag, or one exact piece of gear — pressing it equips that piece. Drag a slot onto another to swap them, or off the bar to empty it. A skill of a weapon you are not holding stays on the bar but cannot be cast until you hold that weapon."
     },
     {
       "type": "paragraph",
-      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it works on its own from the moment you spend a point on it, as long as its weapon is in your hands: it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
+      "text": "Some are **passive**. A passive is **never pressed** — it works on its own from the moment you spend a point on it, as long as its weapon is in your hands, whether or not it sits on your hotbar (one placed there is only a tile to watch): it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
     },
     {
       "type": "list",
@@ -133,7 +133,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and each opens deep into that weapon's mastery: the sword's open at **30**, **45** and **60**."
+      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and each opens deep into that weapon's mastery: the sword's open at **30**, **45** and **60**. **Shared cooldown:** casting any ultimate, of any weapon, starts a **40-second** cooldown on every ultimate, on top of each one's own cooldown — so you can carry several, but you choose which to spend. An ultimate's tile counts down whichever wait is longer. Creatures follow the same rule."
     },
     {
       "type": "quote",

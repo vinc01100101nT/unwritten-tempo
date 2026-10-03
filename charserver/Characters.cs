@@ -298,9 +298,12 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // the same order a door already uses: write, wait, then hand over.
         await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
 
+        // The hotbar is read in the same query — it has its own row (see 008_character_hotbar.sql), and a
+        // character that has never had one written has none, so it is a LEFT join and may come back null.
         await using var cmd = new NpgsqlCommand(
-            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
+            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm, h.slots
                 from character c join account a on a.id = c.account_id
+                left join character_hotbar h on h.character_id = c.id
                where c.id = $1 and c.account_id = $2 and c.deleted_at is null", conn);
         cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
         cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
@@ -309,6 +312,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         if (!await rows.ReadAsync()) return NoSuchCharacter();
 
         using var progress = JsonDocument.Parse(rows.GetString(2));
+        using var hotbar = rows.IsDBNull(6) ? null : JsonDocument.Parse(rows.GetString(6));
         string name = rows.GetString(1);
         bool isGm = rows.GetBoolean(5);
         var sent = progress.RootElement;
@@ -389,7 +393,8 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
-        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, isGm, handover, http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, hotbar?.RootElement, isGm, handover,
+                                              http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

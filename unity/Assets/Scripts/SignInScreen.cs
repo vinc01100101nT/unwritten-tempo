@@ -18,11 +18,6 @@ public class SignInScreen : MonoBehaviour
 {
     TMP_InputField accountField;
     TMP_InputField passwordField;
-#if UNITY_ANDROID
-    // Only a phone asks: Android carries no environment variables, so the address a desktop build reads from
-    // one has to be typed here instead. See ServerAddress.
-    TMP_InputField serverField;
-#endif
     TextMeshProUGUI status;
     Button enterButton;
     Button createButton;
@@ -77,9 +72,6 @@ public class SignInScreen : MonoBehaviour
         var canvas = FrontScreen.Canvas(transform);
 
         float panelHeight = 330f;
-#if UNITY_ANDROID
-        panelHeight += RowGap;   // the server line needs a row of its own
-#endif
         // The title is the blue bar's ("Login"); the space the old big title took comes off the top.
         var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight - TitleSpace - LineSpace), "Login", out _);
 
@@ -87,14 +79,9 @@ public class SignInScreen : MonoBehaviour
         // line.color = UiKit.TextDim;
         // FrontScreen.Row(line.rectTransform, -82 + TitleSpace, 20);
 
-        // Rows walk DOWN the panel from here rather than each carrying a hand-typed offset, so inserting the
-        // phone's server line above them moves everything below it without a second copy of the layout.
+        // Rows walk DOWN the panel from here rather than each carrying a hand-typed offset, so inserting a row
+        // moves everything below it without a second copy of the layout.
         float y = -124f + TitleSpace + LineSpace;
-#if UNITY_ANDROID
-        serverField = FrontScreen.Field(panel, "Server", y, false);
-        serverField.text = ServerAddress.TypedHost;   // whatever this device was told last time
-        y -= RowGap;
-#endif
         accountField = FrontScreen.Field(panel, "Account", y, false);
         y -= RowGap;
         passwordField = FrontScreen.Field(panel, "Password", y, true);
@@ -120,7 +107,7 @@ public class SignInScreen : MonoBehaviour
     void Update()
     {
         // Enter moves down the form and then submits, which is what hands on a keyboard expect.
-        if (!Input.GetKeyDown(KeyCode.Return) && !Input.GetKeyDown(KeyCode.KeypadEnter)) return;
+        if (!Input.GetKeyDown(GameKeys.Chat) && !Input.GetKeyDown(GameKeys.ChatAlt)) return;
 
         // ...unless a BUTTON holds the keyboard, which Tab now makes possible: pressing it belongs to the button,
         // and answering here as well would run the button AND a sign-in off one press.
@@ -140,12 +127,6 @@ public class SignInScreen : MonoBehaviour
         string email = accountField.text.Trim();
         string password = passwordField.text;
 
-#if UNITY_ANDROID
-        // Remembered before anything dials, because both the account service and the world read it from there.
-        string host = serverField.text.Trim();
-        if (host.Length == 0) { Say("Fill in the server, account and password."); return; }
-        ServerAddress.TypedHost = host;
-#endif
         if (email.Length == 0 || password.Length == 0) { Say("Fill in both lines."); return; }
         if (signUpFirst && password.Length < 8) { Say("A new password needs at least 8 characters."); return; }
 

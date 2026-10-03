@@ -16,10 +16,10 @@ Tracking issue: **VIN-22**.
 
 - **Camera** — RO-style 2.5D: true 3D world with billboard sprites, ¾ overhead/isometric-ish framing via a shared `CameraRig`. HUD assumes a fixed overhead view + feet-Y depth sorting. (Ragnarok bucket, not FFXIV/Albion.)
 - **Combat** — RO-style hybrid: click-to-move + click/point target, skills fired from the hotbar by key or click. Already have multi-hit bursts, status (stun/DoT), 10 elements, leech/reflect. No action-cam reticle.
-- **Skill count** — skills belong to a *weapon*, not a class, and are bought with that weapon's mastery points (one per mastery level) in the **Skills** window (K): each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. The window draws one weapon as a timeline of mastery 0–70 with a + button on each skill. **The bar is four numbered slots plus the ultimate**, and above them a read-only row of four smaller squares shows the passives that are running. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
+- **Skill count** — skills belong to a *weapon*, not a class, and are bought with that weapon's mastery points (one per mastery level) in the **Skills** window (K): each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. The window draws one weapon as a timeline of mastery 0–70 with a + button on each skill. **The bar is three rows of nine slots**, one bar per character whatever weapon is held: row 1 answers F1–F9, row 2 the number keys 1–9, row 3 the keys the player assigns in **Settings ▸ Keys**. Any slot holds a skill (active, passive or ultimate), a usable item, or one exact piece of gear; there is no separate ultimate seat. Above the bar a read-only row of smaller squares shows every passive that is live right now, one square each. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
 - **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + what a crafted piece carries: its **quality grade**, its **folds**, the stats **Ink** has written on it, and its card sockets. All of it is live and all of it persists.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
-  - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). The bar is arranged by the player from what they have learned.
+  - `HotbarPanel` + `IHotbarSkill` (a slot is pressed by its key or a click). The player fills the bar by dragging from the Skills window (K) or the bag; dragging a slot onto another swaps them, dragging it off the bar empties it.
   - `StatPanel` (RO stat allocation)
   - pooled `DamagePopup`, `SpriteSheetCache`
   - skill icons from a Ninja Adventure UI set; shell baked via the **Build UI Shell** editor command
@@ -74,8 +74,8 @@ Top-left by default, draggable by its bar, and it remembers where it was left. I
 name, HP and MP. Its body shows **Lv**, **Ring Lv** and **[held weapon] Mastery Lv**, each with its experience bar
 (the mastery row only while a weapon is held), then the zeny with a + beside it that shows or hides a button for
 every HUD window: Inventory, Character, Skills, Calendar, World Map, Minimap, Chat, Settings, System. Each button
-opens its window by the key that already opens it (`Hotkeys.PressOnScreen`) — the same one-frame press the
-phone's tray uses — so it adds no second way into any window. It replaced the experience strip along the bottom of
+opens its window by the key that already opens it (`Hotkeys.PressOnScreen`, a one-frame press of that key from
+the screen), so it adds no second way into any window. It replaced the experience strip along the bottom of
 the screen and the health and mana bars at the bottom left.
 
 ## Design tokens — read off the code 2026-09-28
@@ -173,7 +173,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 - [Active Skill System — V3](active-skill-system-v3/README.md) — what the hotbar, skill book and tooltips are showing.
 - [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md) — the Character sheet's live state readout.
-- [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — where a hotbar kit comes from.
+- [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — where each weapon's skill pool comes from.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — what the draft panel drafts.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — every number the character sheet prints.
 - [Networking — Implementation Notes](networking/implementation-notes.md) — the sign-in door and the reconnect notice now in front of all of it.

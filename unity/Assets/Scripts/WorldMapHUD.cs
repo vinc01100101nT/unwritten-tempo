@@ -7,7 +7,7 @@ using TMPro;
 /// <summary>
 /// Full-screen world-map overlay: the map fills the screen at its own aspect. Shows the baked <see cref="WorldAtlas"/> — the world-map picture exported from the
 /// world creator, as it is (or, without one, a top-down snapshot of every map) — with a pulsing "you are here" marker
-/// over the map you're currently in, placed by that map's rectangle plus the player's position in it. Toggle with <see cref="toggleKey"/>
+/// over the map you're currently in, placed by that map's rectangle plus the player's position in it. Toggle with <see cref="GameKeys.WorldMap"/>
 /// (default <b>N</b>; <b>M</b> is the corner minimap). Esc closes. The wheel zooms toward the cursor, a zoomed map drags
 /// with the mouse, and a location button — shown only while zoomed in and not already centred on you — brings the view
 /// back to your character. Every open starts at the whole map.
@@ -18,7 +18,6 @@ using TMPro;
 /// </summary>
 public class WorldMapHUD : MonoBehaviour
 {
-    public KeyCode toggleKey = KeyCode.N;
     [Tooltip("How far in the wheel can zoom; 1 is the whole map filling the screen.")]
     public float maxZoom = 4f;
     [Tooltip("How much one wheel notch zooms.")]
@@ -65,7 +64,7 @@ public class WorldMapHUD : MonoBehaviour
 
     void Update()
     {
-        if (Hotkeys.Down(toggleKey)) Toggle();
+        if (Hotkeys.Down(GameKeys.WorldMap)) Toggle();
         if (panel == null || !panel.activeSelf) return;
         if (Hotkeys.CancelDown()) { panel.SetActive(false); Hotkeys.MarkCancelHandled(); return; }
         UpdateMarker();
@@ -230,7 +229,7 @@ public class WorldMapHUD : MonoBehaviour
         Top(title.rectTransform, 36f, 420f);
         whereLabel = NewText("Where", panel.transform, "", 20, TextAnchor.LowerCenter);
         Bottom(whereLabel.rectTransform, 64f, 420f);
-        var hint = NewText("Hint", panel.transform, $"[{toggleKey}] / [Esc] to close", 16, TextAnchor.LowerCenter);
+        var hint = NewText("Hint", panel.transform, $"[{GameKeys.Label(GameKeys.WorldMap)}] / [Esc] to close", 16, TextAnchor.LowerCenter);
         hint.color = new Color(UiKit.TextOnDim.r, UiKit.TextOnDim.g, UiKit.TextOnDim.b, 0.6f);
         Bottom(hint.rectTransform, 34f, 420f);
 

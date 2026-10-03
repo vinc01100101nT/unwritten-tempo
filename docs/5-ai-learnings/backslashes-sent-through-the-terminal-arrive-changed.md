@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-10-01
+last-updated: 2026-10-03
 tags:
   - ai-learnings
 ---
@@ -32,10 +32,19 @@ count of byte 27 in each file found it. Repairing it took five more commands, on
 made it worse, and the repeat alarm fired on the session. Exactly which layer rewrites the backslashes was NOT
 measured; a quoted heredoc delimiter, which should stop the shell from touching them, did not prevent it.
 
+2026-10-03, the same thing from the other side: edit scripts piped to `py - <<'PYEOF'` that searched for C# text
+containing `\n` (inside string literals) failed to find it about six times in one session, because the `\n` in the
+script arrived as a real line break. Nothing was damaged only because every script asserted that its search text
+occurred exactly once before replacing — each failure cost a re-run. Writing the script to a file with the Write
+tool and then running `py <file>` worked first time, every time.
+
 ## How to apply
 
 1. Any edit whose new text contains a `\` goes through the editor's Edit or Write tool.
-2. If it must be scripted, write the backslash as `chr(92)` (Python) and keep everything else plain text.
+2. If it must be scripted, write the SCRIPT itself with the Write tool and run it as a file (`py path/to/edit.py`) —
+   never pipe it through a heredoc. Make every replacement assert its search text occurs exactly once, so a mangled
+   search string fails loudly instead of writing nothing or the wrong thing. Inside a terminal-typed script, write a
+   backslash as `chr(92)`.
 3. After ANY scripted edit, scan every file it touched — not only the one you meant:
    ```bash
    python -c "import sys;[print(f, open(f,'rb').read().count(bytes([27]))) for f in sys.argv[1:]]" <files>

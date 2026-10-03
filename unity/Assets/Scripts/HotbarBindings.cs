@@ -1,43 +1,63 @@
 using System.Collections.Generic;
 
 /// <summary>
-/// The player's HOTBAR layout — which active skill (by stable id) sits in each of the nine slots (keys 1–9).
-/// Class-agnostic: any known skill (see <see cref="SkillCatalog"/>) can be bound to any slot, by drag or
-/// click, in the Skills (K) menu. A skill occupies at most ONE slot — binding it somewhere new vacates its
-/// old slot. Pure data, owned by <see cref="Character"/>, persisted via <see cref="Capture"/>/<see cref="Restore"/>.
-/// The central key router + the visual bar both read this (see <see cref="HotbarPanel"/>).
+/// What one hotbar slot holds, as the one string it is saved and sent as: "" for nothing, a skill's own id, an item
+/// as "item:&lt;item id&gt;", or one exact piece of gear as "gear:&lt;copy id&gt;". The kinds are told apart by these
+/// prefixes and nothing else, so every reader asks here rather than guessing from the text.
+/// </summary>
+public static class HotbarEntry
+{
+    public const string ItemPrefix = "item:";
+    public const string GearPrefix = "gear:";
+
+    public static string Item(string itemId) => string.IsNullOrEmpty(itemId) ? "" : ItemPrefix + itemId;
+    public static string Gear(string copyId) => string.IsNullOrEmpty(copyId) ? "" : GearPrefix + copyId;
+
+    public static bool IsItem(string entry, out string itemId) => Strip(entry, ItemPrefix, out itemId);
+    public static bool IsGear(string entry, out string copyId) => Strip(entry, GearPrefix, out copyId);
+
+    /// <summary>The skill id this entry holds, or "" when it holds an item, gear or nothing.</summary>
+    public static string SkillOf(string entry)
+        => string.IsNullOrEmpty(entry) || entry.StartsWith(ItemPrefix, System.StringComparison.Ordinal)
+                                      || entry.StartsWith(GearPrefix, System.StringComparison.Ordinal) ? "" : entry;
+
+    static bool Strip(string entry, string prefix, out string rest)
+    {
+        rest = "";
+        if (string.IsNullOrEmpty(entry) || !entry.StartsWith(prefix, System.StringComparison.Ordinal)) return false;
+        rest = entry.Substring(prefix.Length);
+        return rest.Length > 0;
+    }
+}
+
+/// <summary>
+/// The player's HOTBAR — three rows of nine slots, any of which holds a skill, a usable item or one exact piece of
+/// gear (<see cref="HotbarEntry"/>). Row 1 answers F1–F9, row 2 the number keys 1–9, and row 3 whatever keys the
+/// player assigns in Settings (<see cref="GameKeys"/>). One bar per character, whatever weapon is in hand: a skill of
+/// another weapon simply cannot be cast until that weapon is held.
+///
+/// <para>One slot per thing: putting a skill, item or piece somewhere new vacates its old slot. Ultimates sit in any
+/// slot like everything else — the rule that keeps them apart is their shared cooldown, not a seat of their own.
+/// Pure data, owned by <see cref="Character"/>; the server decides what may stay on it
+/// (<see cref="Character.KeepOnlyBindable"/>) and keeps it in a row of its own in the character store, written only
+/// when it changes.</para>
 /// </summary>
 public sealed class HotbarBindings
 {
-    // FOUR, BECAUSE FOUR IS ALL A WEAPON CAN EVER GRANT. The richest weapon in the game rolls four numbered
-    // skills plus its ultimate (see WeaponSkillRoll.ActiveMax), so a bar of nine was five slots that nothing could
-    // ever fill — and every one of them was a skill this character had to carry the possibility of.
-    public const int SlotCount = 4;   // keys 1–4
+    public const int Rows = 3, PerRow = 9;
+    public const int SlotCount = Rows * PerRow;
 
-    // slot → skill id ("" = empty). Fixed-length; never reallocated after construction.
+    /// <summary>The row (0 = the F-key row, 1 = the number row, 2 = the player's own keys) slot
+    /// <paramref name="slot"/> sits in.</summary>
+    public static int RowOf(int slot) => slot / PerRow;
+
+    /// <summary>Where slot <paramref name="slot"/> sits in its row, 0..8.</summary>
+    public static int ColumnOf(int slot) => slot % PerRow;
+
     readonly string[] slots = new string[SlotCount];
 
-    // The ONE equipped Ultimate (its own dedicated slot, separate from keys 1–9). "" = no ult equipped.
-    string ultSkillId = "";
-
-    /// <summary>The skill id in the dedicated ULT slot ("" = none).</summary>
-    public string Ult => ultSkillId ?? "";
-
-    /// <summary>Equip an ultimate into the dedicated slot (replaces whatever was there). Returns true if it changed.</summary>
-    public bool BindUlt(string id)
-    {
-        if (string.IsNullOrEmpty(id) || ultSkillId == id) return false;
-        ultSkillId = id;
-        return true;
-    }
-
-    /// <summary>Clear the ult slot. Returns true if it had something.</summary>
-    public bool ClearUlt()
-    {
-        if (string.IsNullOrEmpty(ultSkillId)) return false;
-        ultSkillId = "";
-        return true;
-    }
+    /// <summary>Changes on every change, so the server can tell a bar that needs writing down from one that does not.</summary>
+    public int Version { get; private set; }
 
     public HotbarBindings()
     {
@@ -46,20 +66,24 @@ public sealed class HotbarBindings
 
     public static bool IsValidSlot(int slot) => slot >= 0 && slot < SlotCount;
 
-    /// <summary>The skill id bound to <paramref name="slot"/>, or "" if empty / out of range.</summary>
+    /// <summary>What slot <paramref name="slot"/> holds, "" when empty or out of range.</summary>
     public string Get(int slot) => IsValidSlot(slot) ? slots[slot] : "";
+
+    /// <summary>The skill in slot <paramref name="slot"/>, "" when it holds no skill.</summary>
+    public string SkillAt(int slot) => HotbarEntry.SkillOf(Get(slot));
 
     public bool IsEmpty(int slot) => string.IsNullOrEmpty(Get(slot));
 
-    /// <summary>The slot a skill currently occupies, or −1 if unbound.</summary>
-    public int SlotOf(string id)
+    /// <summary>The slot an entry currently occupies, or −1.</summary>
+    public int SlotOf(string entry)
     {
-        if (string.IsNullOrEmpty(id)) return -1;
-        for (int i = 0; i < slots.Length; i++) if (slots[i] == id) return i;
+        if (string.IsNullOrEmpty(entry)) return -1;
+        for (int i = 0; i < slots.Length; i++) if (slots[i] == entry) return i;
         return -1;
     }
 
-    public bool IsBound(string id) => SlotOf(id) >= 0;
+    /// <summary>Is this skill anywhere on the bar.</summary>
+    public bool IsBound(string skillId) => !string.IsNullOrEmpty(HotbarEntry.SkillOf(skillId)) && SlotOf(skillId) >= 0;
 
     public int FirstEmptySlot()
     {
@@ -67,107 +91,89 @@ public sealed class HotbarBindings
         return -1;
     }
 
-    /// <summary>Bind <paramref name="id"/> to <paramref name="slot"/>. The skill is removed from any slot it
-    /// already occupied (one slot per skill), and whatever was in this slot is replaced (becomes unbound).
-    /// Returns true if anything changed.</summary>
-    public bool Bind(int slot, string id)
+    /// <summary>Put <paramref name="entry"/> in <paramref name="slot"/>, moving it out of any slot it was in and
+    /// replacing whatever was there. Returns true if anything changed.</summary>
+    public bool Bind(int slot, string entry)
     {
-        if (!IsValidSlot(slot) || string.IsNullOrEmpty(id)) return false;
-        int old = SlotOf(id);
-        if (old == slot) return false;                 // already here — no-op
-        if (old >= 0) slots[old] = "";                 // vacate its previous slot (move, not duplicate)
-        slots[slot] = id;
+        if (!IsValidSlot(slot) || string.IsNullOrEmpty(entry)) return false;
+        int old = SlotOf(entry);
+        if (old == slot) return false;
+        if (old >= 0) slots[old] = "";
+        slots[slot] = entry;
+        Version++;
         return true;
     }
 
-    /// <summary>Drop-binding from a drag: routes by the skill's TIER so an Ultimate always lands in the
-    /// dedicated ULT slot and a base skill never can. <paramref name="slot"/> &lt; 0 means the ULT cell was the
-    /// drop target. THE single place the tier→slot rule lives, so drag and click-to-bind agree. Returns true if
-    /// anything changed.</summary>
-    public bool BindFromDrag(int slot, string id)
+    /// <summary>Put <paramref name="entry"/> in the first empty slot. Returns the slot, or −1 when it is already on
+    /// the bar or the bar is full.</summary>
+    public int BindToFirstEmpty(string entry)
     {
-        if (string.IsNullOrEmpty(id)) return false;
-        var def = SkillCatalog.Get(id);
-        bool isUlt = def != null && def.IsUltimate;
-        if (isUlt) return BindUlt(id);          // ultimates always route to the dedicated slot, never keys 1–9
-        if (slot < 0) return false;             // a base skill can't sit in the ULT cell
-        return Bind(slot, id);
-    }
-
-    /// <summary>Auto-place a freshly learned skill: an Ultimate goes to the dedicated ULT slot, everything else
-    /// to the first empty numbered slot. The single entry point every unlock/grant path calls, so an ultimate
-    /// never lands on keys 1–9. Returns true if it bound anywhere (false = already bound / bar full).</summary>
-    public bool AutoBind(string id)
-    {
-        if (string.IsNullOrEmpty(id)) return false;
-        var def = SkillCatalog.Get(id);
-        if (def != null && def.IsUltimate) return BindUlt(id);
-        return BindToFirstEmpty(id) >= 0;
-    }
-
-    /// <summary>Bind to the first empty slot (the click-to-bind / auto-bind-on-unlock path). No-op if the
-    /// skill is already bound or the bar is full. Returns the slot used, or −1.</summary>
-    public int BindToFirstEmpty(string id)
-    {
-        if (string.IsNullOrEmpty(id) || IsBound(id)) return -1;
+        if (string.IsNullOrEmpty(entry) || SlotOf(entry) >= 0) return -1;
         int slot = FirstEmptySlot();
         if (slot < 0) return -1;
-        slots[slot] = id;
+        slots[slot] = entry;
+        Version++;
         return slot;
     }
 
-    /// <summary>Swap the contents of two slots (drag-to-rearrange on the bar). Moving a skill onto an empty
-    /// slot just relocates it (the empty "" rides back). No-op for an invalid or identical pair.</summary>
+    /// <summary>Swap two slots (drag to rearrange); onto an empty slot is a move.</summary>
     public bool Swap(int a, int b)
     {
         if (!IsValidSlot(a) || !IsValidSlot(b) || a == b) return false;
+        if (slots[a] == slots[b]) return false;
         var t = slots[a]; slots[a] = slots[b]; slots[b] = t;
+        Version++;
         return true;
     }
 
-    /// <summary>Clear a slot (unbind whatever is there). Returns true if it had something.</summary>
+    /// <summary>Empty a slot. Returns true if it held something.</summary>
     public bool Clear(int slot)
     {
         if (!IsValidSlot(slot) || string.IsNullOrEmpty(slots[slot])) return false;
         slots[slot] = "";
-        return true;
-    }
-
-    /// <summary>Drop a skill from the bar entirely (by id), wherever it sits.</summary>
-    public bool Unbind(string id)
-    {
-        int slot = SlotOf(id);
-        if (slot < 0) return false;
-        slots[slot] = "";
+        Version++;
         return true;
     }
 
     // ---- save / load ----------------------------------------------------------
-    // The ult id rides as one extra trailing element (index SlotCount), so the save shape stays a flat string[]
-    // and older length-9 saves simply load with no ult.
+
+    /// <summary>All 27 slots, in order.</summary>
     public string[] Capture()
     {
-        var arr = new string[slots.Length + 1];
+        var arr = new string[slots.Length];
         System.Array.Copy(slots, arr, slots.Length);
-        arr[slots.Length] = ultSkillId ?? "";
         return arr;
     }
 
+    /// <summary>Replace every slot. A skill the game no longer has is dropped; whether an item or a piece is still
+    /// owned is the server's question (<see cref="Character.KeepOnlyBindable"/>), asked before this.</summary>
     public void Restore(string[] saved)
     {
         for (int i = 0; i < slots.Length; i++)
         {
-            var id = (saved != null && i < saved.Length && saved[i] != null) ? saved[i] : "";
-            // Drop ids that are no longer a known skill (e.g. retired legacy skills from an old save) so a
-            // stale binding can't linger as a dead slot — the pool is the composed SkillCatalog now.
-            slots[i] = SkillCatalog.IsKnown(id) ? id : "";
+            var entry = saved != null && i < saved.Length && saved[i] != null ? saved[i] : "";
+            string skill = HotbarEntry.SkillOf(entry);
+            slots[i] = skill.Length > 0 && !SkillCatalog.IsKnown(skill) ? "" : entry;
         }
-        // THE LAST ELEMENT, NOT A FIXED POSITION. Capture always appends the ult after however many numbered
-        // slots there were, so a save written when the bar was longer keeps its ult at the end of a longer array.
-        // Reading a fixed index instead made every character saved before the bar shrank load one of their old
-        // numbered skills as their ultimate.
-        string ult = (saved != null && saved.Length > slots.Length && saved[saved.Length - 1] != null)
-                     ? saved[saved.Length - 1] : "";
-        ultSkillId = SkillCatalog.IsKnown(ult) ? ult : "";
+        Version++;
+    }
+
+    /// <summary>Lay down a bar saved before the bar had three rows (before save v18), read exactly the way the old bar
+    /// read it: its first four numbered skills and, as the LAST entry, the ultimate in its own seat — whatever length the
+    /// array was saved at. The four keep their keys (the number row's 1–4) and the ultimate goes beside them, on 5.</summary>
+    public void RestoreLegacy(string[] old)
+    {
+        const int OldNumbered = 4;
+        for (int i = 0; i < slots.Length; i++) slots[i] = "";
+        if (old != null && old.Length > 0)
+        {
+            int numbered = System.Math.Min(OldNumbered, old.Length - 1);
+            for (int i = 0; i < numbered; i++)
+                if (SkillCatalog.IsKnown(old[i]) && SlotOf(old[i]) < 0) slots[PerRow + i] = old[i];
+            string ult = old[old.Length - 1];
+            if (SkillCatalog.IsKnown(ult) && SlotOf(ult) < 0 && string.IsNullOrEmpty(slots[PerRow + 4]))
+                slots[PerRow + 4] = ult;
+        }
+        Version++;
     }
 }

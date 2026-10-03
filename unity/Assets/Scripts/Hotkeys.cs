@@ -24,7 +24,7 @@ using UnityEngine.InputSystem;
 public static class Hotkeys
 {
     // ---- on-screen buttons that stand in for a key --------------------------------------------------------------
-    // The phone's tray and the status box's window buttons "press" a key rather than calling each window: every
+    // The status box's window buttons "press" a key rather than calling each window: every
     // window already listens for its key here, so a button needs no second way in. A press made during one frame is
     // answered for the WHOLE of the next frame, then gone — so every reader sees it exactly once, whichever order the
     // scripts that read keys run in. Started each frame by VirtualPressClock, on every platform.
@@ -94,9 +94,6 @@ public static class Hotkeys
     public static bool Held(KeyCode key)
     {
         if (NoKeyboard || Typing) return false;
-#if UNITY_ANDROID
-        if (TouchControls.VirtualHeld(key)) return true;
-#endif
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -114,7 +111,7 @@ public static class Hotkeys
     public static bool CancelDown()
     {
         if (NoKeyboard) return false;
-        // The Android Back gesture already arrives here as Escape; this adds the on-screen route to the same door.
+        // The status box's System button presses Escape on screen; it reaches the same door as the key.
         if (PressedOnScreen(KeyCode.Escape)) return true;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
@@ -172,8 +169,37 @@ public static class Hotkeys
         if (k >= KeyCode.A && k <= KeyCode.Z) return Key.A + (k - KeyCode.A);
         if (k >= KeyCode.Alpha1 && k <= KeyCode.Alpha9) return Key.Digit1 + (k - KeyCode.Alpha1);
         if (k >= KeyCode.F1 && k <= KeyCode.F12) return Key.F1 + (k - KeyCode.F1);
+        if (k >= KeyCode.Keypad0 && k <= KeyCode.Keypad9) return Key.Numpad0 + (k - KeyCode.Keypad0);
         switch (k)
         {
+            // Every key the hotbar's third row may be given (GameKeys) is mapped, so a player's own key is read the
+            // same way as every built-in one.
+            case KeyCode.BackQuote:      return Key.Backquote;
+            case KeyCode.Minus:          return Key.Minus;
+            case KeyCode.Equals:         return Key.Equals;
+            case KeyCode.Backslash:      return Key.Backslash;
+            case KeyCode.Semicolon:      return Key.Semicolon;
+            case KeyCode.Quote:          return Key.Quote;
+            case KeyCode.Comma:          return Key.Comma;
+            case KeyCode.Period:         return Key.Period;
+            case KeyCode.Slash:          return Key.Slash;
+            case KeyCode.CapsLock:       return Key.CapsLock;
+            case KeyCode.Insert:         return Key.Insert;
+            case KeyCode.Delete:         return Key.Delete;
+            case KeyCode.Home:           return Key.Home;
+            case KeyCode.End:            return Key.End;
+            case KeyCode.PageUp:         return Key.PageUp;
+            case KeyCode.PageDown:       return Key.PageDown;
+            case KeyCode.UpArrow:        return Key.UpArrow;
+            case KeyCode.DownArrow:      return Key.DownArrow;
+            case KeyCode.LeftArrow:      return Key.LeftArrow;
+            case KeyCode.RightArrow:     return Key.RightArrow;
+            case KeyCode.KeypadEnter:    return Key.NumpadEnter;
+            case KeyCode.KeypadPeriod:   return Key.NumpadPeriod;
+            case KeyCode.KeypadDivide:   return Key.NumpadDivide;
+            case KeyCode.KeypadMultiply: return Key.NumpadMultiply;
+            case KeyCode.KeypadMinus:    return Key.NumpadMinus;
+            case KeyCode.KeypadPlus:     return Key.NumpadPlus;
             case KeyCode.Alpha0:       return Key.Digit0;
             case KeyCode.Space:        return Key.Space;
             case KeyCode.Escape:       return Key.Escape;
@@ -191,16 +217,4 @@ public static class Hotkeys
         }
     }
 #endif
-
-    /// <summary>Digit 1–9 for hotbar slot <paramref name="i"/> (0-based) pressed this frame. Suppressed while typing.</summary>
-    public static bool DigitDown(int i)
-    {
-        if (i < 0 || i > 8 || NoKeyboard || Typing) return false;
-        if (PressedOnScreen((KeyCode)((int)KeyCode.Alpha1 + i))) return true;
-#if ENABLE_INPUT_SYSTEM
-        var kb = Keyboard.current;
-        if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;
-#endif
-        return Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i));
-    }
 }

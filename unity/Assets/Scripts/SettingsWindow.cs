@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// The <b>Settings</b> window, opened from <see cref="SystemWindow"/>. Three tabs — Gameplay, Sound,
-/// Graphics — each showing its own page; one page is visible at a time.
+/// The <b>Settings</b> window, opened from <see cref="SystemWindow"/>. Four tabs — Gameplay, Sound,
+/// Graphics, Keys — each showing its own page; one page is visible at a time. Keys is where the hotbar's third row
+/// gets its keys: each slot's button opens a list of the keys the game does not already use (<see cref="GameKeys"/>).
 ///
 /// <para>Every option here reads and writes <see cref="GameSettings"/>, which owns the values and persists
 /// them; this window only draws them.</para>
@@ -50,6 +51,7 @@ public class SettingsWindow : MonoBehaviour
         var gameplay = AddTab(tabRow.transform, "Gameplay", body.transform);
         var sound = AddTab(tabRow.transform, "Sound", body.transform);
         var graphics = AddTab(tabRow.transform, "Graphics", body.transform);
+        var keys = AddTab(tabRow.transform, "Keys", body.transform);
 
         // Tick boxes only need 20 points at the right edge, so their names get the wide column (a slider's
         // track would start at 45%).
@@ -83,7 +85,79 @@ public class SettingsWindow : MonoBehaviour
         var smooth = UiKit.Checkbox(Row(graphics, "Smooth camera follow"), GameSettings.SmoothCameraFollow);
         smooth.onValueChanged.AddListener(v => GameSettings.SmoothCameraFollow = v);
 
+        BuildKeysPage(keys, body.transform);
+
         Select(0);
+    }
+
+    // ---- the hotbar's third row ---------------------------------------------------------------------------------
+
+    readonly TMPro.TMP_Text[] keyLabels = new TMPro.TMP_Text[HotbarBindings.PerRow];
+    GameObject picker;
+    RectTransform pickerList;
+    readonly List<KeyCode> freeKeys = new List<KeyCode>();
+
+    void BuildKeysPage(Transform page, Transform pageParent)
+    {
+        var vlg = page.GetComponent<VerticalLayoutGroup>();
+        if (vlg != null) vlg.spacing = 3;
+        for (int c = 0; c < HotbarBindings.PerRow; c++)
+        {
+            int column = c;
+            var row = Row(page, "Row 3 · Slot " + (c + 1), 0.6f);
+            row.GetComponent<LayoutElement>().preferredHeight = 24;
+            var btn = UiKit.Btn(KeyName(column), row, () => OpenPicker(column));
+            var rt = (RectTransform)btn.transform;
+            rt.anchorMin = new Vector2(0.6f, 0f); rt.anchorMax = new Vector2(1f, 1f);
+            rt.offsetMin = Vector2.zero; rt.offsetMax = new Vector2(-4f, 0f);
+            keyLabels[column] = btn.GetComponentInChildren<TMPro.TMP_Text>();
+        }
+
+        // The list a slot's button opens, laid over the pages; built empty, filled each time it opens.
+        var panel = UiKit.Img("KeyPicker", pageParent, UiKit.PanelRaise);
+        UiKit.Fill(panel.rectTransform, Vector2.zero, Vector2.zero);
+        picker = panel.gameObject;
+        var view = UiKit.Img("List", panel.transform, new Color(0, 0, 0, 0)).rectTransform;
+        UiKit.Fill(view, new Vector2(4, 36), new Vector2(-4, -4));
+        pickerList = UiKit.ScrollColumn(view);
+        var grid = pickerList.gameObject.AddComponent<GridLayoutGroup>();
+        grid.cellSize = new Vector2(64, 26);
+        grid.spacing = new Vector2(4, 4);
+        var cancel = UiKit.Btn("Cancel", panel.transform, () => picker.SetActive(false));
+        var crt = (RectTransform)cancel.transform;
+        crt.anchorMin = crt.anchorMax = new Vector2(1f, 0f); crt.pivot = new Vector2(1f, 0f);
+        crt.sizeDelta = new Vector2(90, 28); crt.anchoredPosition = new Vector2(-4, 4);
+        picker.SetActive(false);
+    }
+
+    static string KeyName(int column)
+    {
+        var key = GameSettings.HotbarRowThreeKey(column);
+        return key == KeyCode.None ? "None" : GameKeys.Label(key);
+    }
+
+    // Fill the list with "None" and every key this slot may take right now, then show it.
+    void OpenPicker(int column)
+    {
+        for (int i = pickerList.childCount - 1; i >= 0; i--) Destroy(pickerList.GetChild(i).gameObject);
+        AddChoice(column, KeyCode.None);
+        GameKeys.FreeKeys(column, freeKeys);
+        for (int i = 0; i < freeKeys.Count; i++) AddChoice(column, freeKeys[i]);
+        picker.SetActive(true);
+        picker.transform.SetAsLastSibling();
+    }
+
+    void AddChoice(int column, KeyCode key)
+    {
+        UiKit.Btn(key == KeyCode.None ? "None" : GameKeys.Label(key), pickerList, () =>
+        {
+            if (GameSettings.SetHotbarRowThreeKey(column, key))
+            {
+                keyLabels[column].text = KeyName(column);
+                HotbarPanel.RebuildRequested?.Invoke();
+            }
+            picker.SetActive(false);
+        });
     }
 
     // A tab button plus the page it shows. Returns the page's build target.
@@ -109,6 +183,7 @@ public class SettingsWindow : MonoBehaviour
 
     void Select(int index)
     {
+        if (picker != null) picker.SetActive(false);
         for (int i = 0; i < pages.Count; i++)
         {
             pages[i].SetActive(i == index);

@@ -56,7 +56,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v17";
+    public const string CharacterBuild = "unwritten-character-v18";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -78,6 +78,8 @@ public class MapServerLink : MonoBehaviour
         public string characterName;
         public bool isGm;
         public SaveData progress;
+        // The bar's own row, as the character server stored it; null or empty when the character has none yet.
+        public string[] hotbar;
         public int handover;
         public float expiresAt;
     }
@@ -295,6 +297,7 @@ public class MapServerLink : MonoBehaviour
                 characterName = msg.characterName,
                 isGm = msg.isGm,
                 progress = msg.progress,
+                hotbar = msg.hotbar,
                 handover = msg.handover,
             }, ctx));
         }
@@ -605,6 +608,8 @@ public class MapServerLink : MonoBehaviour
         public string characterName;
         public bool isGm;
         public SaveData progress;
+        // The bar's own row (v18), or null when none has been written yet.
+        public string[] hotbar;
         // Which hand-over this is — every save of this character from here carries it back.
         public int handover;
     }

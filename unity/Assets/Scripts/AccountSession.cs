@@ -18,16 +18,12 @@ using UnityEngine;
 public static class AccountSession
 {
     /// <summary>Where the account service lives. Overridden by the ACCOUNTS_URL environment variable so a
-    /// build can point at a real host without a rebuild — and, ahead of that, by a host typed on the device
-    /// (<see cref="ServerAddress"/>), which is the only route a phone has since Android carries no environment.
+    /// build can point at a real host without a rebuild.
     ///
     /// <para>A copy handed to a player has neither, and is aimed by the settings file it was built with — the
     /// same one setting, read by <see cref="ServerAddress.Setting"/>, which is why a whole address including
     /// <c>https://</c> can be given here without a line of this changing.</para></summary>
-    public static string ServerUrl =>
-        ServerAddress.HasTypedHost
-            ? ServerAddress.TypedAccountsUrl
-            : ServerAddress.Setting("ACCOUNTS_URL") ?? "http://localhost:8080";
+    public static string ServerUrl => ServerAddress.Setting("ACCOUNTS_URL") ?? "http://localhost:" + ServerAddress.AccountsPort;
 
     /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,
     /// as opposed to signing in, which stays with the account service above.

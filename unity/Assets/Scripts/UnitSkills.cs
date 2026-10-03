@@ -26,6 +26,38 @@ public class UnitSkills
     readonly Dictionary<string, int> slotById = new Dictionary<string, int>(16);
     int[][] slotsByTrigger;
 
+    // ---- the shared cooldown (SharedCooldown) -----------------------------------------------------------------
+    // BOTH, TOGETHER, the way a runner keeps its own cooldown: the moment survives a save or a move to another server,
+    // and the float beside it is what the per-frame gate and the hotbar read, because a date is too dear at that rate.
+    System.DateTime sharedUltimateDueAtUtc = System.DateTime.MinValue;
+    float sharedUltimateNextUse;
+
+    /// <summary>When every ultimate this unit has is ready again after one was cast; MinValue = ready.</summary>
+    public System.DateTime SharedUltimateDueAtUtc => sharedUltimateDueAtUtc;
+
+    /// <summary>Seconds until every ultimate is ready again; 0 when they are.</summary>
+    public float SharedUltimateRemaining => Mathf.Max(0f, sharedUltimateNextUse - Time.time);
+
+    /// <summary>Put the shared moment back exactly where it was — a save loaded, a character arrived, or the owner told
+    /// by the server. A moment already past simply reads as ready.</summary>
+    public void ResumeSharedUltimate(System.DateTime dueAtUtc)
+    {
+        sharedUltimateDueAtUtc = dueAtUtc;
+        sharedUltimateNextUse = dueAtUtc == System.DateTime.MinValue ? 0f : Time.time + WorldClock.SecondsUntil(dueAtUtc);
+    }
+
+    /// <summary>SERVER: an ultimate was just cast — every ultimate waits <see cref="SharedCooldown.UltimateSeconds"/>
+    /// from now. Returns the moment, for the owner to be told.</summary>
+    public System.DateTime StartSharedUltimate()
+    {
+        var due = WorldClock.UtcNow.AddSeconds(SharedCooldown.UltimateSeconds);
+        if (due > sharedUltimateDueAtUtc) ResumeSharedUltimate(due);
+        return sharedUltimateDueAtUtc;
+    }
+
+    /// <summary>Every ultimate ready now — a creature starting a new life, the same moment its own cooldowns are forgotten.</summary>
+    public void ForgetSharedUltimate() => ResumeSharedUltimate(System.DateTime.MinValue);
+
     /// <summary>The runner at each position, null until that skill is first used.</summary>
     public SkillRunner[] Runners => runners;
 

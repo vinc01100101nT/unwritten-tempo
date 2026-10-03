@@ -57,7 +57,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Character (C) window
         canvasGO.AddComponent<SkillsWindow>();             // Skills (K): the skills you have learned, by weapon, on a mastery line
         canvasGO.AddComponent<CraftStationPanel>();        // the smith / loom / tannery window, opened by reaching one
-        canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
+        canvasGO.AddComponent<HotbarPanel>();              // draws HUD_Hotbar's 27 slots from the player's bar
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
         canvasGO.AddComponent<StatusBox>();                // top-left: name, HP, MP, levels + experience, zeny, window buttons
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
@@ -123,12 +123,14 @@ public static class UIShellBuilder
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 42);
-        holder.rectTransform.sizeDelta = new Vector2(5 * 54, 54);   // four bindable slots (keys 1–4) + the ult
-        var h = holder.gameObject.AddComponent<HorizontalLayoutGroup>();
-        h.spacing = 6;
-        h.childAlignment = TextAnchor.MiddleCenter;
-        h.childControlWidth = h.childControlHeight = false;
-        h.childForceExpandWidth = h.childForceExpandHeight = false;
+        // Three rows of nine (HotbarBindings), first row on top — the same grid HotbarPanel lays out at runtime.
+        holder.rectTransform.sizeDelta = new Vector2(HotbarBindings.PerRow * 54 - 6, HotbarBindings.Rows * 54 - 6);
+        var grid = holder.gameObject.AddComponent<GridLayoutGroup>();
+        grid.cellSize = new Vector2(48, 48);
+        grid.spacing = new Vector2(6, 6);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = HotbarBindings.PerRow;
+        grid.childAlignment = TextAnchor.MiddleCenter;
         for (int i = 0; i < HotbarBindings.SlotCount; i++)
             UiKit.Round(NewColor("Hotslot", holder.transform, UiKit.ButtonEdge), UiKit.ButtonRadius).rectTransform.sizeDelta = new Vector2(48, 48);
     }

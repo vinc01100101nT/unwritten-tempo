@@ -69,7 +69,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             if (def.IsPassive) return CastBlock.Passive;
             if (CasterGone || Caster.IsDead) return CastBlock.CasterGone;
             if (castRoutine != null) return CastBlock.WindingUp;
-            if (Time.time < nextUse) return CastBlock.Cooldown;
+            if (Time.time < nextUse || SharedHeld) return CastBlock.Cooldown;
             var gate = Status;
             if (gate != null && gate.Silenced) return CastBlock.Silenced;
             if (gate != null && gate.CannotStartSkill) return CastBlock.CannotStart;
@@ -165,7 +165,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         boundCaster = c;
         // Only a PERSON carries cooldowns that outlived a process — a creature's life starts every skill ready.
         if (c is Character person && def != null && person.TakePendingCooldown(def.id, out var dueAtUtc))
+        {
             ResumeCooldown(dueAtUtc);
+            // AND THE OWNER IS TOLD, so a cooldown carried across a relog or a door shows on their bar instead of
+            // reading as ready until a press is refused. Says nothing off a server.
+            GameNetwork.TellOwnerCooldownStarted(c, def.id, dueAtUtc);
+        }
     }
 
     /// <summary>The unit this run belongs to — a person or a creature — and the one every roll, gate and cost reads.</summary>
@@ -233,6 +238,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (gate != null && gate.CannotStartSkill) return Refused("stunned, frozen, already casting, or mid-jump");
         if (castRoutine != null) return Refused("already winding up a cast");
         if (Time.time < nextUse) return Refused("still on cooldown");
+        if (SharedHeld) return Refused("every ultimate shares a cooldown, and it is still running");
         // A PRESS THE SERVER HAS NOT ANSWERED YET. This machine starts no cooldown, so without this a second press
         // inside the round trip would send a second cast and play its picture again. Tied to the connection it was
         // sent on, so a press lost to a dropped connection can never lock the skill for the next one.
@@ -755,6 +761,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // stopped by one of them looked from every seat exactly like a cast that was never sent.
         if (CasterGone || Caster.IsDead) return Refused("the caster is gone or dead");
         if (Time.time < nextUse) return Refused("still on cooldown");
+        if (SharedHeld) return Refused("every ultimate shares a cooldown, and it is still running");
         // The stack gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
         if (!StateGate.IsMet(def.CastEntry, CasterStates))
@@ -782,8 +789,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         dueAtUtc = WorldClock.UtcNow.AddSeconds(lastDuration);
         nextUse = Time.time + lastDuration;
         GameNetwork.TellOwnerCooldownStarted(Caster, def.id, dueAtUtc);
+        // AN ULTIMATE ALSO STARTS THE SHARED COOLDOWN: every ultimate this unit has waits on one moment from here.
+        if (def.IsUltimate && Caster.Skills != null)
+            GameNetwork.TellOwnerCooldownStarted(Caster, SharedCooldown.UltimateKey, Caster.Skills.StartSharedUltimate());
         return true;
     }
+
+    // Is this an ultimate still held by the shared cooldown (SharedCooldown)?
+    bool SharedHeld => def != null && def.IsUltimate && !CasterGone && Caster.Skills != null
+                       && Caster.Skills.SharedUltimateRemaining > 0f;
 
     // The heart of the code/data split: each tick the sequence raises, resolve its binding and apply — through the
     // ONE shared combat path. Unbound ticks (pure-visual beats) are ignored. Skills DON'T level — power comes from
@@ -908,7 +922,18 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public Color SymbolColor => SkillSymbol.ColorFor(def);
     public int ManaCost => def != null ? def.manaCost : 0;
     public bool Affordable => !CasterGone && def != null && Caster.CurrentMP >= def.manaCost;
-    public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
-    public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
+    // An ultimate shows whichever is longer: its own cooldown or the shared one — the one that actually holds it.
+    float SharedRemaining => def != null && def.IsUltimate && !CasterGone && Caster.Skills != null
+                             ? Caster.Skills.SharedUltimateRemaining : 0f;
+    public float CooldownRemaining => Mathf.Max(Mathf.Max(0f, nextUse - Time.time), SharedRemaining);
+    public float CooldownFraction01
+    {
+        get
+        {
+            float own = Mathf.Max(0f, nextUse - Time.time), shared = SharedRemaining;
+            if (shared > own) return Mathf.Clamp01(shared / SharedCooldown.UltimateSeconds);
+            return lastDuration <= 0.001f ? 0f : Mathf.Clamp01(own / lastDuration);
+        }
+    }
     public Color Tint => def != null ? def.tint : Color.white;
 }

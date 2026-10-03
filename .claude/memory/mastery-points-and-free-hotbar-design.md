@@ -1,13 +1,13 @@
 ---
 name: mastery-points-and-free-hotbar-design
-description: Agreed 2026-10-03; the SKILL half is BUILT (unplayed), the hotbar half is not — mastery points buy skill levels (global +5%/level, max 1/5/10), a requirement is ONLY what a skill literally uses, 27-slot free hotbar, all ults share one 40s cooldown.
+description: Agreed 2026-10-03; BOTH halves BUILT 2026-10-03 (unplayed) — mastery points buy skill levels (global +5%/level, max 1/5/10), a requirement is ONLY what a skill literally uses, 27-slot free hotbar, all ults share one 40s cooldown.
 metadata:
   type: project
 ---
 
-Agreed with the user on 2026-10-03. The skill half (points, levels, max levels, grade cap, timeline Skills window, card
-section, /resetskills) was BUILT the same day and is unplayed; the hotbar half is still only a plan. Clickable
-prototype: `prototypes/skills-mastery-points.html`.
+Agreed with the user on 2026-10-03 and BUILT the same day (both halves unplayed): the skill half (points, levels, max
+levels, grade cap, timeline Skills window, card section, /resetskills) and the hotbar half (below). Clickable
+prototype of the Skills window: `prototypes/skills-mastery-points.html`.
 
 - **Hotbar:** 3 rows × 9 slots, any kind in any slot — active, passive, ult or item. One bar per character, not per
   weapon (storage measured: ~1 KB/character as one row). **Every ultimate, of any weapon, shares ONE 40-second
@@ -32,6 +32,12 @@ caps counted levels by the old skill-cap table scaled to each max (10-level: 2/3
 mastery-gated kit but every skill sits at level 1 until per-creature builds (user: "we will allocate it later per mob");
 no player refund yet — `/resetskills` is the only way back.
 
-**Still parked for the user** (hotbar plan): passive cap moot now; keys for rows 2–3 (proposed Ctrl+1–9, row 3 click
-only); shared 40s ult lock on top of each ult's own cooldown (proposed); gear on the bar needs a per-copy id; refund
-cost; Squall's self-drawback also grows with level under the current Boostable rule.
+**Hotbar as built:** rows F1–F9 / 1–9 / player-chosen in Settings ▸ Keys (only keys `GameKeys` does not use are
+offered; kept per device). Item tiles: name at a readable minimum then "…", count, gone at 0 (server prunes). Gear tiles
+name one exact piece by its copy id; every equip prints "Equipped <name>." in chat. The 40s **shared cooldown** (the
+player-facing name the user chose) runs on top of each ult's own, for creatures too. Bar lives in its own row
+(`character_hotbar`, migration 008), written only on change; save v18, build string v18. Old bars → row 2 (1–4, ult on 5).
+The game went **PC-only** the same day: every phone/touch/Android path was deleted at the user's instruction.
+
+**Still open for the user:** a refund for spent mastery points (and its cost); Squall's self-drawback also grows with
+level under the current Boostable rule.

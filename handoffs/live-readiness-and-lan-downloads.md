@@ -32,8 +32,7 @@ server, saves with no number / the live number / an older number / an unknown ch
 404 and the stored level was right.
 
 **Encryption, code half** — `MAP_SERVER_ARRIVALS_ADDRESS` (map server sends it, character server delivers there,
-map server listens only there when set); Unity insecure HTTP = development builds only; `build-game.sh --dev`;
-`ServerAddress.TypedAccountsUrl` lets a phone type a whole `https://` address.
+map server listens only there when set); Unity insecure HTTP = development builds only; `build-game.sh --dev`.
 
 **Backups** (built by a helper, spot-checked) — `tools/backup-start-archiving.sh`, `backup-full-copy.sh`,
 `backup-rehearse-restore.sh`, four new settings in `settings.env.example`. Rehearsed by the helper on a throwaway

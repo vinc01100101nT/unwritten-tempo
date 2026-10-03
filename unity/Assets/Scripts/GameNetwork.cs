@@ -205,9 +205,7 @@ public class GameNetwork : NetworkManager
         spawned.transport = kcp;
         Transport.active = kcp;
 
-        spawned.networkAddress = ServerAddress.HasTypedHost
-            ? ServerAddress.TypedMachine
-            : Environment.GetEnvironmentVariable(HostEnvVar) ?? DefaultHost;
+        spawned.networkAddress = Environment.GetEnvironmentVariable(HostEnvVar) ?? DefaultHost;
 
         // The body every connected player is seen as. Loaded by NAME from Resources so both halves resolve
         // the same asset with no scene wiring — the same way the skill and monster catalogs already load.
@@ -969,6 +967,13 @@ public class GameNetwork : NetworkManager
     static void OnCooldownStarted(CooldownStarted msg)
     {
         var me = Character.Instance;
+        // The SHARED cooldown travels in the same message under its own name: it belongs to the character, not to
+        // any one skill.
+        if (me != null && msg.skillId == SharedCooldown.UltimateKey)
+        {
+            me.Skills.ResumeSharedUltimate(WorldClock.FromEpochSeconds(msg.endsAtEpochSeconds));
+            return;
+        }
         var runner = me != null ? me.RunnerById(msg.skillId) : null;
         if (runner != null) runner.ResumeCooldown(WorldClock.FromEpochSeconds(msg.endsAtEpochSeconds));
     }
@@ -2409,7 +2414,7 @@ public class GameNetwork : NetworkManager
         if (caster == null || string.IsNullOrEmpty(skillId)) return false;
 
         // ON THEIR BAR, LEARNED, AND THE RIGHT WEAPON IN HAND — all three, on the server, whatever a window said.
-        bool onTheirBar = caster.Hotbar != null && (caster.Hotbar.IsBound(skillId) || caster.Hotbar.Ult == skillId);
+        bool onTheirBar = caster.Hotbar != null && caster.Hotbar.IsBound(skillId);
         if (!onTheirBar) return false;
         return caster.MayUse(skillId);
     }

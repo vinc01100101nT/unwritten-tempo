@@ -1062,9 +1062,50 @@ public class NetPlayer : NetworkBehaviour
 
     void ServerSaveTick()
     {
-        if (!needsSaving || Time.time < nextSaveAt) return;
-        SaveNow(null);
+        if (needsSaving && Time.time >= nextSaveAt) { SaveNow(null); return; }
+        if (needsHotbarSaving && Time.time >= nextHotbarSaveAt) SaveHotbarNow(null);
     }
+
+    // ---- the hotbar's own row --------------------------------------------------------------------------------
+    // The bar is written ONLY when it changed, and on its own — a rearrangement never rewrites the whole character,
+    // and the 15-second save never rewrites the bar. The same beat, so a player dragging slots about is one write.
+    bool needsHotbarSaving;
+    float nextHotbarSaveAt;
+    int hotbarVersionWritten = -1;
+
+    /// <summary>Server-only: the bar changed and should be written to its row before long.</summary>
+    public void SaveHotbarSoon()
+    {
+        if (!isServer) return;
+        if (!needsHotbarSaving) nextHotbarSaveAt = Time.time + SecondsBetweenSaves;
+        needsHotbarSaving = true;
+    }
+
+    // Write the bar now if it changed since it was last written; answers yes at once when it did not.
+    void SaveHotbarNow(Action<bool> whenDone)
+    {
+        needsHotbarSaving = false;
+        var c = ServerCharacter;
+        if (c == null || string.IsNullOrEmpty(ServerCharacterId)) { whenDone?.Invoke(true); return; }
+        // UNCHANGED SINCE IT WAS LAST SENT — but that send may still be in the air, or waiting to be tried again. The
+        // answer waits for it, because whoever takes the character over reads the bar's row as it stands.
+        if (c.Hotbar.Version == hotbarVersionWritten) { SaveOutbox.FlushHotbar(ServerCharacterId, whenDone); return; }
+        hotbarVersionWritten = c.Hotbar.Version;
+        var body = JsonUtility.ToJson(new HotbarEnvelope { slots = c.Hotbar.Capture(), handover = ServerHandover });
+        // Once a bar has landed in its own row, the old bar the save still carries (before v18) is never read again.
+        SaveOutbox.SubmitHotbar(ServerCharacterId, body, ok =>
+        {
+            if (ok && c != null) c.LegacyHotbar = null;
+            whenDone?.Invoke(ok);
+        });
+    }
+
+    [Serializable]
+    class HotbarEnvelope { public string[] slots; public int handover; }
+
+    /// <summary>Server-only: the bar as it stands is what the store already holds — set when the bar arrives with the
+    /// character, so an unchanged bar is never written back.</summary>
+    public void HotbarAlreadyStored() { if (ServerCharacter != null) hotbarVersionWritten = ServerCharacter.Hotbar.Version; }
 
     /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether the state
     /// captured by THIS call reached the store — the disconnect path waits on it, because a character released
@@ -1140,7 +1181,17 @@ public class NetPlayer : NetworkBehaviour
         // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
         // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
         // until it lands — even after this person has logged out, or this server has restarted.
-        SaveOutbox.Submit(ServerCharacterId, body, whenDone);
+        // AND THE BAR, IF IT CHANGED, in the same breath — and the answer waits for both, because a hand-over reads
+        // the two rows together.
+        bool progressOk = false, hotbarOk = false;
+        int waiting = 2;
+        void One(bool ok, bool isHotbar)
+        {
+            if (isHotbar) hotbarOk = ok; else progressOk = ok;
+            if (--waiting == 0) whenDone?.Invoke(progressOk && hotbarOk);
+        }
+        SaveOutbox.Submit(ServerCharacterId, body, ok => One(ok, false));
+        SaveHotbarNow(ok => One(ok, true));
     }
 
     [Serializable]
@@ -1270,15 +1321,19 @@ public class NetPlayer : NetworkBehaviour
         // NOTHING THEY MAY NOT USE. A bar is the player's to arrange, but what may go on it is the server's
         // answer — and it is the SAME question a cast asks (Character.MayUse), so a skill that belongs to no
         // weapon, which nobody learns, can still be bound and still fires.
+        if (bindings.Length != HotbarBindings.SlotCount) return;
         c.KeepOnlyBindable(bindings);
         c.Hotbar.Restore(bindings);
+        // AND THE BAR THE SERVER NOW HOLDS GOES BACK, so a bar the server sent while this was in the air (an item used
+        // up) cannot leave the player's screen showing something the server no longer has.
+        PushBagToOwner(alsoTheBar: true);
         // AND THE SKILLS BEHIND THE NEW BAR. What a character can use is built from three places — the bar, their
         // learned passives and their bag — and a skill only gets something to run it when that list is
         // rebuilt. Storing the bar without this left the server agreeing the skill was theirs and holding nothing to
         // cast it with, so the press was refused: their own machine spent the mana and the cooldown and the skill did
         // nothing. Their machine has always done this on the very same change (HotbarCommit.Now); this side never was.
         c.RefreshUsableSkills();
-        SaveSoon();
+        SaveHotbarSoon();
     }
 
     /// <summary>Client-side: tell the server this person spent a point / rearranged their bar. Silently does
@@ -1322,6 +1377,8 @@ public class NetPlayer : NetworkBehaviour
         bagPushOwed = false;
         barPushOwed = false;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
+        // AN ITEM USED UP OR A PIECE GIVEN AWAY LEAVES THE BAR, on the same push that tells them it is gone.
+        if (fighter.PruneHotbar()) { alsoTheBar = true; SaveHotbarSoon(); }
         // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the three places
         // that list is built from — so a potion picked up mid-session had nothing behind it here and drinking it
         // did nothing at all. This is the one place every change the server makes to a bag passes through, which
@@ -1516,12 +1573,29 @@ public class NetPlayer : NetworkBehaviour
         if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
+        EquipFromBagAt(c, index);
+    }
+
+    /// <summary>Client-side: equip exactly the piece of gear with this id — what a hotbar gear slot asks for. The server
+    /// finds the piece by its id, wherever it sits in the bag now, so a second press can never put on another copy of
+    /// the same item.</summary>
+    public void AskToEquipCopy(string copyId) => CmdEquipCopy(copyId);
+
+    [Command]
+    void CmdEquipCopy(string copyId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null || string.IsNullOrEmpty(copyId) || copyId.Length > 64) return;
+        if (!c.FindCopy(copyId, out int index, out bool worn) || worn) return;
+        EquipFromBagAt(c, index);
+    }
+
+    // THE ONE EQUIP from the bag, whichever way the piece was named.
+    void EquipFromBagAt(Character c, int index)
+    {
         var e = c.Bag[index];
         if (e == null || !e.IsEquip || e.instance == null) return;
-
-        // A WEAPON CHANGE IS ALSO A BAR CHANGE, so the bar this side is about to rewrite travels back with the
-        // gear. Any other slot leaves the bar alone and must not send one.
-        bool theirBarChanges = e.def.slot == EquipSlotType.Weapon;
 
         var prev = c.GetEquippedInstance(e.def.slot);
         c.SetEquipped(e.def.slot, e.instance);
@@ -1531,8 +1605,10 @@ public class NetPlayer : NetworkBehaviour
         // have been carrying all day, on every single equip.
         if (prev != null && prev.def != null)
             c.Bag.Add(new BagEntry { def = prev.def, count = 1, instance = prev });
-        PushBagToOwner(theirBarChanges);
+        PushBagToOwner();
         SaveSoon();
+        // SAID IN CHAT, every time, so a person pressing a gear slot in a fight knows the swap really happened.
+        if (connectionToClient != null) TargetTold(connectionToClient, "Equipped " + e.def.displayName + ".");
     }
 
     [Command]

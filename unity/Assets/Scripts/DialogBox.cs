@@ -133,6 +133,6 @@ public class DialogBox : MonoBehaviour
 
     void Update()
     {
-        if (IsOpen && Hotkeys.Down(KeyCode.RightArrow)) Advance();
+        if (IsOpen && Hotkeys.Down(GameKeys.DialogNext)) Advance();
     }
 }

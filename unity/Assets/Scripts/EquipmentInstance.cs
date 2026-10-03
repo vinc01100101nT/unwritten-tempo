@@ -13,6 +13,21 @@ public class EquipmentInstance
 {
     [Tooltip("The shared item definition this is an instance of.")]
     public Item def;
+
+    [Tooltip("This one copy's own id, unique among every piece in the game — what a hotbar slot names so it equips " +
+             "exactly this piece and not another of the same kind. Given by the server the first time the copy is " +
+             "saved or sent (EnsureCopyId); empty until then.")]
+    public string copyId = "";
+
+    /// <summary>SERVER: give this copy its id if it has none yet. Called wherever a copy leaves the server — saved or
+    /// sent — so every piece anybody can see has one, and no creature's gear pays for one it never needs. A player's
+    /// machine never makes one: it only ever wears the id the server sent.</summary>
+    public void EnsureCopyId()
+    {
+        if (!string.IsNullOrEmpty(copyId)) return;
+        if (!GameServer.IsServer && Application.isPlaying) return;
+        copyId = System.Guid.NewGuid().ToString("N");
+    }
     [Tooltip("How many times this copy has been FOLDED (+N). A fold is the piece's one unit of work: it raises the " +
              "piece's own attack or defence, and a quench spends every fold it has.")]
     public int upgrade;

@@ -87,7 +87,7 @@ Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 | `attack <m#>` | Fight a monster until it or you die, your HP drops below 30%, or 30 s. |
 | `auto on\|off [secs]` | The auto-pilot fights nearby monsters; answers after `secs` (default 10). |
 | `stop` | Drop every order. |
-| `cast <slot\|R\|name> [m#\|p#\|me \| x y]` | Press a hotbar skill, aimed at a creature, a player, yourself, or a spot. |
+| `cast <slot 1-27\|name> [m#\|p#\|me \| x y]` | Press a hotbar skill, aimed at a creature, a player, yourself, or a spot. Slots count 1–9 along the F-key row, 10–18 along the number row, 19–27 along the third row. |
 | `pickup <g#>` · `talk <n#>` | Reach for a floor item — `picked up …` only when the bag gained it, else `… is gone from the floor` (a kill's drops vanish after 60 s); talk to a villager (returns their lines). |
 | `use <bag#\|name>` · `equip <bag#>` · `unequip <slot>` | The bag's own use and equip. |
 | `stat <STR\|AGI\|VIT\|INT\|DEX\|LUK>` | Spend one stat point. |
@@ -102,7 +102,7 @@ Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 ## The screen
 
 One short block: the map; your name, level, HP, MP, XP, gold, position, current order, stat points and target;
-each hotbar slot with **ready**, **cd** *N*s or **noMP**; your states with seconds left and stacks; the nearest
+each of the 27 hotbar slots — a skill with its mana cost and **ready**, **cd** *N*s or **noMP**, an item by name with how many are carried, a piece of gear by name, or `-` when empty; your states with seconds left and stacks; the nearest
 monsters (up to 10, within 25 m) with HP and distance — never their states, because the server sends a machine only
 its own player's states; players, villagers, floor items and doors within 15 m; an open dialogue; and **since
 last** — every chat line, warning, and floating number since the previous command, named after the head it was

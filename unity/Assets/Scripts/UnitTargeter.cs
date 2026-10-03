@@ -217,9 +217,7 @@ public class UnitTargeter : MonoBehaviour
     static float PlanarDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
     static bool PointerOverUI() => UiBlock.PointerOverUI();
 
-    // The one pointer gate (mouse on the desktop, a finger on a phone). Aiming confirms on RELEASE there, so a
-    // drag can slide the pick before it commits; the right-button bail-out simply never fires on a phone, where
-    // the hardware Back gesture reaches the same Cancel through Escape.
+    // The one pointer gate for the mouse.
     static Vector2 MousePos() => PointerInput.Position;
 
     static bool LeftDown() => PointerInput.PrimaryDown;

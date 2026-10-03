@@ -6,19 +6,10 @@ using UnityEngine;
 /// <summary>
 /// THE one owner of "which machine is the server on" for a build that cannot be told by its environment.
 ///
-/// <para>Desktop builds are aimed with environment variables — <c>ACCOUNTS_URL</c> for the account service and
-/// <c>GAME_SERVER_HOST</c> for the world — which is why neither of those needs a rebuild to move. <b>Android has
-/// no environment variables to set</b>, so a phone would read neither and fall back to localhost, which on a
-/// phone means the phone itself: it would dial nothing and fail with no explanation.</para>
+/// <para>Builds are aimed with environment variables — <c>ACCOUNTS_URL</c> for the account service and
+/// <c>GAME_SERVER_HOST</c> for the world — which is why neither of those needs a rebuild to move.</para>
 ///
-/// <para>So a phone is told once, by hand, on the sign-in screen, and the answer is remembered on the device.
-/// Both halves of the connection read it from here rather than each keeping a copy, so the account service and
-/// the world can never end up pointed at two different machines.</para>
-///
-/// <para>Empty on the desktop, always — nothing types into it there, so both env-var paths behave exactly as
-/// they did before this existed.</para>
-///
-/// <para><b>And anything started WITHOUT A TERMINAL is told by a file</b> — see <see cref="Setting"/>. A copy
+/// <para><b>Anything started WITHOUT A TERMINAL is told by a file</b> — see <see cref="Setting"/>. A copy
 /// handed to a player who double-clicks it reads the addresses tools/build-game.sh wrote into the build; the
 /// EDITOR opened from the Dock or Unity Hub reads them from the project's settings.env, the file the servers
 /// start from. Neither receives the settings a shell would have exported, so both would otherwise have no
@@ -27,55 +18,15 @@ using UnityEngine;
 /// </summary>
 public static class ServerAddress
 {
-    const string HostKey = "server_host";
-
     /// <summary>The file a handed-out copy carries its addresses in, sitting in the build's StreamingAssets
     /// folder. Lines are <c>NAME=value</c> using the SAME names as the environment settings, so there is one
     /// vocabulary for "where the servers are" rather than two.</summary>
     const string SettingsFileName = "server.txt";
 
-    /// <summary>The port the account service listens on. Matches the default URL the desktop falls back to.</summary>
+    /// <summary>The port the account service listens on — the one a build with no address of its own dials.</summary>
     public const int AccountsPort = 8080;
 
-    static string typed;
-    static bool loaded;
-
     static Dictionary<string, string> shipped;
-
-    /// <summary>The machine typed on this device, or empty when nobody has said. Overrides the environment on
-    /// the builds that have one, which only matters on a phone, where there is none to override.</summary>
-    public static string TypedHost
-    {
-        get
-        {
-            if (!loaded) { typed = PlayerPrefs.GetString(HostKey, ""); loaded = true; }
-            return typed;
-        }
-        set
-        {
-            typed = (value ?? "").Trim();
-            loaded = true;
-            PlayerPrefs.SetString(HostKey, typed);
-            // Written through immediately, unlike the volume-style settings that deliberately do not: this is
-            // typed once and a test build that is force-closed must not come back having forgotten its server.
-            PlayerPrefs.Save();
-        }
-    }
-
-    /// <summary>True when a host has been typed on this device.</summary>
-    public static bool HasTypedHost => !string.IsNullOrEmpty(TypedHost);
-
-    /// <summary>The sign-in service's address from what was typed. A bare machine name or number is reached the
-    /// way it always was, in plain text on the sign-in port; a WHOLE address (<c>https://accounts.example.com</c>)
-    /// is used exactly as typed, which is the only way a phone can reach a sign-in service behind the encrypting
-    /// front door.</summary>
-    public static string TypedAccountsUrl =>
-        TypedHost.Contains("://") ? TypedHost.TrimEnd('/') : "http://" + TypedHost + ":" + AccountsPort;
-
-    /// <summary>Just the machine from what was typed — the part a game connection dials — whether a bare name or
-    /// a whole address was typed.</summary>
-    public static string TypedMachine =>
-        TypedHost.Contains("://") && Uri.TryCreate(TypedHost, UriKind.Absolute, out var u) ? u.Host : TypedHost;
 
     /// <summary>What this copy was told for <paramref name="name"/>, or null when nobody has said.
     ///
@@ -96,11 +47,6 @@ public static class ServerAddress
     static Dictionary<string, string> ReadShippedSettings()
     {
         var found = new Dictionary<string, string>(StringComparer.Ordinal);
-
-        // ANDROID KEEPS ITS StreamingAssets INSIDE THE PACKAGE, where it is not a file and cannot be opened this
-        // way. A phone is aimed by the address typed on its sign-in screen instead, which is the whole reason
-        // TypedHost above exists, so there is nothing to fall back to here and nothing lost by not trying.
-        if (Application.platform == RuntimePlatform.Android) return found;
 
         try
         {

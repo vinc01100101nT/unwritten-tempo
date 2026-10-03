@@ -155,7 +155,7 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
   - [ ] `ST-35-A` **`[D]` First decide:** the card roster, and which creature drops each card.
 
-- [ ] `MT-36` **`[E]` Settle the two trust gaps.** Both are written down in the networking notes under a heading calling them deliberate limits: a phone can sign in but cannot enter the world; and a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. Most already carry a reason — what is missing is a decision about whether they stay that way once strangers play together. — **unestimated until played**
+- [ ] `MT-36` **`[E]` Settle the fair-targeting gap.** It is written down in the networking notes under a heading calling it a deliberate limit: a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly. What is missing is a decision about whether it stays that way once strangers play together. — **unestimated until played**
 
 - [ ] `MT-37` **`[E]` Give the eight orphan skills a weapon, or delete them.** Two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink belong to no weapon — and a skill is learned only by spending its weapon's mastery points on it, so nothing in the game can teach them. Give each one a weapon's pool, a mastery level and a max level, or delete it. — **1–2 days**
 

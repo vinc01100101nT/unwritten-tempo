@@ -54,17 +54,22 @@ psql "$DATABASE_URL" -c "select count(*) from account"
 
 ## What is in there
 
-Three tables you will actually query, and one rule that explains most of the queries below: **appearance is
+Four tables you will actually query, and one rule that explains most of the queries below: **appearance is
 identity, progress is progress.** (A fourth, `schema_migration`, is bookkeeping the migrator owns — it just
 records which `.sql` files this database has already run.)
 
-- **`account`** — `id`, `email`, `password_hash`, `created_at`. Nothing else. There is no display name here.
-- **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`. That is
-  the whole table: **everything about a character except its name lives inside the single `progress` JSON
-  document** — level, XP, gear, gold, hotbar, AND the body and its recolour (`modelName`, `dyeSources`,
-  `dyeTargets`). A player changes their look in-game exactly as they change everything else, so it belongs with
+- **`account`** — `id`, `email`, `password_hash`, `created_at`, `is_gm`, `session_id` (the one live sign-in). There is no display name here.
+- **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`, and
+  `handover` (which hand-over to a map server the latest save belongs to). **Everything about a character except
+  its name and its hotbar lives inside the single `progress` JSON document** — level, XP, gear, gold, AND the body
+  and its recolour (`modelName`, `dyeSources`, `dyeTargets`). A player changes their look in-game exactly as they change everything else, so it belongs with
   the rest of what they change; keeping it in columns as well meant two homes for one fact that could disagree.
   Reach into the document with `->>` for a value and `->` for an array or object.
+- **`character_hotbar`** — `character_id`, `slots`, `updated_at`. The hotbar, one row per character, written only
+  when a slot changes. `slots` is a JSON array of 27 strings, three rows of nine, top row first: `""` for an empty
+  slot, a skill's id, `item:<item id>` for a usable item, or `gear:<copy id>` for one exact piece of gear. A save
+  from before version 18 still carries its old bar as `hotbarBindings` inside `progress`; the server reads that once
+  to fill this row and never writes it again.
 - **`refresh_token`** — `token_hash`, `account_id`, `expires_at`, `revoked_at`. Live sessions, hashed.
 
 Two things about `character` that will bite you if you forget them:
@@ -120,6 +125,20 @@ select id, name, progress->>'modelName', created_at
   from character
  where lower(name) = lower('Ashwalker')
    and deleted_at is null;
+```
+
+### One character's hotbar
+
+The bar is not in `progress`; join its own row. No row means none has been written for that character yet — the
+character server then hands the map server no bar, and a save from before version 18 has its old bar read from
+`progress` instead.
+
+```sql
+select h.slots, h.updated_at
+  from character_hotbar h
+  join character c on c.id = h.character_id
+ where lower(c.name) = lower('Ashwalker')
+   and c.deleted_at is null;
 ```
 
 ### Names that start with something

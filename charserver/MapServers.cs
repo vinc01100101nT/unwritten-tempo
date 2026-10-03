@@ -64,7 +64,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v17";
+    public const string CharacterBuild = "unwritten-character-v18";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -325,9 +325,12 @@ public sealed class MapServers(Config config)
     /// announcement. TRUE when the map server took it.
     ///
     /// <para>The character travels as the document it is stored as — the same shape the game reads and writes,
-    /// so there is no second description of a character to keep in step with the first.</para></summary>
+    /// so there is no second description of a character to keep in step with the first.</para>
+    ///
+    /// <para>The hotbar travels beside it, not inside it: it has its own row, written only when a slot changes.
+    /// <paramref name="hotbar"/> is that stored array, or null when the character has never had one written.</para></summary>
     public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName,
-                                          JsonElement progress, bool isGm, int handover,
+                                          JsonElement progress, JsonElement? hotbar, bool isGm, int handover,
                                           CancellationToken ct = default)
     {
         var body = JsonSerializer.Serialize(new
@@ -339,6 +342,7 @@ public sealed class MapServers(Config config)
             characterName,
             isGm,
             progress,
+            hotbar,
             // Every save of this character from that server carries this back — see Handover.
             handover,
         });

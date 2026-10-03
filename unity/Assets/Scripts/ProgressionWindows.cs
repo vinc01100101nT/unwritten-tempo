@@ -100,14 +100,14 @@ public class ProgressionWindows : MonoBehaviour
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
         //   B = Bag (what you carry AND what you wear, one list) · C = Character, the Ring of Progression included
         //   (K = Skills, owned by SkillsWindow). V is the Sprint key (Player3DController).
-        if (Hotkeys.Down(KeyCode.B))
+        if (Hotkeys.Down(GameKeys.Inventory))
         {
             bool open = UiAnim.Toggle(invRoot);
             // A right-click menu floats on the HUD canvas, not inside the window, so closing the bag has to take
             // it down explicitly or it outlives the thing it was opened from.
             if (!open) bagList.Close();
         }
-        if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
+        if (Hotkeys.Down(GameKeys.CharacterWindow)) UiAnim.Toggle(charRoot);
         if (Hotkeys.CancelDown() && AnyWindowOpen())
         {
             if (cardDialog != null) UiAnim.Close(cardDialog);

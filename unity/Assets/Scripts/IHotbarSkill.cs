@@ -6,8 +6,8 @@ using UnityEngine;
 /// <see cref="HotbarPanel"/> can render a slot for it — key, MP cost,
 /// a cooldown sweep — and fire it on click, WITHOUT the hotbar knowing the concrete type.
 ///
-/// This is the legibility layer for the kit: add a new active component that implements this
-/// interface and it appears on the bar automatically (slot order = <see cref="SlotOrder"/>).
+/// A skill reaches a slot by being put there — dragged from the Skills window — and the panel finds the runner that
+/// casts it through this interface.
 /// </summary>
 public interface IHotbarSkill
 {
