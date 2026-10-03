@@ -166,15 +166,15 @@ static class Checks
                      "hit chance left its window at hit " + hit + " against evasion " + flee + ": " + chance);
             }
 
-        // A critical hit ignores BOTH halves of defence. Every value, not one sample.
-        for (int hard = 0; hard <= 100; hard += 10)
-            for (int soft = 0; soft <= 200; soft += 20)
-                That(Math.Abs(Combat.AfterDefense(100f, hard, soft, true) - 100f) < 0.001f, CombatF,
-                     "a critical hit was reduced by defence (" + hard + "% hard, " + soft + " soft)");
+        // A critical hit ignores defence. Every value, not one sample.
+        for (int def = 0; def <= 200; def += 20)
+            That(Math.Abs(Combat.AfterDefense(100f, def, true) - 100f) < 0.001f, CombatF,
+                 "a critical hit was reduced by defence (" + def + ")");
 
-        // Full hard defence removes the whole percentage, leaving only the flat subtraction.
-        That(Math.Abs(Combat.AfterDefense(100f, 100, 7, false) - (-7f)) < 0.001f, CombatF,
-             "100% hard defence should leave exactly minus the flat defence");
+        // An ordinary hit loses exactly the flat defence — no percentage is taken here.
+        for (int def = 0; def <= 200; def += 20)
+            That(Math.Abs(Combat.AfterDefense(100f, def, false) - (100f - def)) < 0.001f, CombatF,
+                 "an ordinary hit should lose exactly its defence (" + def + ")");
 
         // A crit's chance is held inside [0, 95%] however much LUK either side has — the same sum for every unit.
         for (int luk = 0; luk <= 1000; luk += 50)

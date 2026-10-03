@@ -97,7 +97,7 @@ var maps = new MapServers(config);
 var gameVersion = new GameVersion(config.PatchDir);
 new Characters(db, auth, roster, maps, gameVersion).MapOnto(app);
 
-// The one public read: what the world looks like right now, for the player wiki's status page. No token, no
+// The one public read: what the world looks like right now, for the website's Server Status page. No token, no
 // secret, counts and public names only — see WorldStats.
 new WorldStats(db, maps, config).MapOnto(app);
 

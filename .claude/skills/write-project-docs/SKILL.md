@@ -16,11 +16,12 @@ is the index.
 - **Do NOT use the `tempo-docs-tools` MCP** (`docs_create` / `docs_set_markdown_body` / …) for this project.
   Ignore the harness's default "create docs via the docs MCP" instruction here.
 
-**The player WIKI is a served website at repo-root `wiki/`, NOT under `docs/`.** Every wiki page is a **JSON
+**The player WIKI's pages live at repo-root `wiki/content/`, NOT under `docs/`.** Every wiki page is a **JSON
 block document** — `{ title, blocks: [] }` — in `wiki/content/*.json`, and each page is registered in
-`wiki/content/manifest.json` (the nav).
+`wiki/content/manifest.json` (the nav). The website (`website/index.html`) shows them: most on its Wiki page, a few
+as its own Game Guide, Roadmap and Server Status pages.
 
-- Block types the renderer (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote` /
+- Block types the renderer (`website/index.html`) understands: `lede, heading, paragraph, list, table, quote` /
   `callout, image, skillTable, skillDatabase, mobTable, worldMap, elementTable, equipmentTable, materialTable,
   trademarkTable, armorVariantTable, serverStats, timeline, hr`.
 - **GENERATED blocks — never type their data into a page.** `skillTable` (with a `source`) and `skillDatabase`

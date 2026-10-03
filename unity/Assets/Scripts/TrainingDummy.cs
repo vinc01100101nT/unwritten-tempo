@@ -42,20 +42,17 @@ public class TrainingDummy : MonoBehaviour
             // A body built while the game runs has ALREADY woken, so its current health is still the creature's own
             // figure against a 10,000,000 maximum, which reads as an empty bar. Filled here so both callers start it full.
             health.RefillToMax();
-            health.defense = 0;           // measure raw weapon/skill output, not post-mitigation
+            // Measure raw weapon/skill output, not post-mitigation: no defence and no dodge.
+            health.defense = 0;
             health.magicDefense = 0;
-            health.flee = 15;             // RO FLEE: low DEX misses it a fair bit (red MISS), accuracy climbs as you add DEX
+            health.flee = 0;
         }
 
         var ai = go.GetComponent<MonsterAI3D>();
         if (ai != null)
         {
-            ai.moveSpeed = 0f;
-            ai.aggroRadius = 0f;        // never chase
-            ai.leashRadius = 0f;
-            ai.wanderRadius = 0f;       // never wander — stays put as a fixed target
-            ai.touchRange = 0f;         // never bite anybody
-            ai.attack = 0;
+            // A fixed target: it never chases, wanders or bites — the same switch a saved character that never fights uses.
+            ai.ThinksForItself = false;
             // no free XP from the test rig
             ai.paysExperience = false;
         }

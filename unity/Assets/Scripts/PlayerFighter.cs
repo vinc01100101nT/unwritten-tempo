@@ -130,6 +130,10 @@ public static class PlayerFighter
         character.OnLeveledUp += _ => shell.SaveSoon();
         character.OnStatsChanged += shell.SaveSoon;
         character.OnGoldChanged += _ => shell.SaveSoon();
+        // AND EVERY PURSE CHANGE REACHES THEIR SCREEN, whatever made it. The bag carries the purse, and each place that
+        // changed the gold used to have to remember to send it — the GM's /gold did not, so the window, the bag and the
+        // status bar never moved. Sent once per frame however many changes asked (NetPlayer.PushBagToOwner).
+        character.OnGoldChanged += _ => shell.PushBagToOwner();
         // Timed effects ride the save now, so a buff starting or ending is worth writing down too — otherwise a crash
         // would bring back whatever the last save happened to catch. SaveSoon only marks; the write is still once a beat.
         character.States.OnChanged += shell.SaveSoon;

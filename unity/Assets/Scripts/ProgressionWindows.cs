@@ -451,13 +451,11 @@ public class ProgressionWindows : MonoBehaviour
         var b = c.BaseDerived;
         var d = c.DerivedWithStates;
         var pc = PlayerBody();
-        // Hard DEF/M.DEF ride their DEF line as a "+N%" suffix — they're the same defence read two ways (flat
-        // subtraction, then a percentage), so pairing them beats giving each its own row.
         charDerived.text =
             $"<color={DimHex}>DERIVED</color>\n" +
             $"MELEE ATK  {b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}    RANGED ATK {b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
             $"M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
-            $"DEF   {b.def}{Hard(b.hardDefPct)}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Hard(b.hardMdefPct)}{Delta(d.mdef - b.mdef)}\n" +
+            $"DEF   {b.def}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Delta(d.mdef - b.mdef)}\n" +
             $"HIT   {b.hit}{Delta(d.hit - b.hit)}    FLEE {b.flee}{Delta(d.flee - b.flee)}\n" +
             $"CRIT  {Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +
             $"ASPD  ×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}    CAST ×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
@@ -470,8 +468,6 @@ public class ProgressionWindows : MonoBehaviour
     }
 
     static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";
-    static string Hard(int pct) => pct > 0 ? $" <color={DimHex}>+{pct}%</color>" : "";
-
     // Sprint/run gear lives on the player's BODY, not the character sheet — surfaced here because it's a speed the
     // player feels. Shown as the real run speed so it reads next to MOVE.
     static string Gait(Player3DController pc) => pc == null ? "" : $"    RUN {pc.CurrentRunSpeed:0.0}";

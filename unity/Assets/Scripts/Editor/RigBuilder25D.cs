@@ -406,7 +406,7 @@ public static class RigBuilder25D
         go.AddComponent<Billboard>();
 
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
-        agent.moveSpeed = arc.moveSpeed; agent.agentRadius = MobBody.RoutingRadius;
+        agent.agentRadius = MobBody.RoutingRadius;
         var cc = go.GetComponent<CharacterController>();
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, 0.5f, 0f);   // capsule STACKS UP from the feet pivot (bottom at y=0)
         GroundElevation.ApplyWalkRules(cc);   // the one step + slope every body walks by
@@ -414,22 +414,15 @@ public static class RigBuilder25D
         if (crowd >= 0) go.layer = crowd;
 
         var mh = go.AddComponent<Health>();
-        // NOTE: maxHealth / defense / magicDefense / flee / luk are deliberately NOT stamped here — UnitStatBlock
-        // below is their single writer, deriving them from level + primaries + gear (and again on every level-up).
-        // Setting them here too would be a second source for the same numbers, free to drift the moment the two
-        // disagree. Only the ARMOUR-sourced percentages and presentation stay authored.
-        mh.hardDefPercent      = arc.hardDefPercent;         // pre-renewal HARD DEF % (applied first; a crit ignores it)
-        mh.hardMagicDefPercent = arc.hardMagicDefPercent;    // pre-renewal HARD MDEF %
+        // NOTE: no combat number is stamped here — UnitStatBlock below is the single writer of every one, deriving
+        // them from level + primaries + gear (and again on every level-up). Only presentation and the element stay.
         mh.element      = arc.element;                        // armor PROPERTY — what the player's spells/melee hit
 
         var ai = go.AddComponent<MonsterAI3D>();
-        // attack / hit / damageSpread: same story — derived, written by UnitStatBlock, not stamped here.
-        ai.touchRange     = arc.touchRange;
-        ai.touchInterval  = arc.touchInterval;
-        ai.moveSpeed      = arc.moveSpeed;
+        // attack / hit / damageSpread: same story — derived, written by UnitStatBlock. Speed, reach and swing timing
+        // are the shared character spec's, read live, so none of them is stamped either.
         ai.aggroRadius    = arc.aggroRadius;
         ai.leashRadius    = arc.leashRadius;
-        ai.stopDistance   = arc.stopDistance;
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded

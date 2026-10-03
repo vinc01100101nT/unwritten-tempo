@@ -15,15 +15,15 @@ Porting the game's combat/stat math from its custom **linear** system to authent
 ## Decisions locked
 
 - **Model:** pre-renewal (not renewal). Rationale: the codebase is already linear/pre-renewal in spirit, the player-base nostalgia leans pre-renewal, and it's simpler to tune.
-- **Combat fidelity:** **authentic % DEF + per-class HP/SP tables** (chosen by the dev). Applies to Phase 3 (DEF split) and Phase 4 (HP/SP + ASPD).
-- **Approach:** phased, smallest-blast-radius first. No big-bang — the game is balanced around the current combat, so swapping % DEF + HP tables in one commit would desync every mob/number with no stable baseline.
+- **Combat fidelity:** defence subtracts **flat** (no percentage defence), and every unit's HP/SP comes from **one shared level curve** with VIT/INT as percent multipliers. Applies to Phase 3 (defence) and Phase 4 (HP/SP + ASPD).
+- **Approach:** phased, smallest-blast-radius first. No big-bang — the game is balanced around the current combat, so swapping the defence and HP formulas in one commit would desync every mob/number with no stable baseline.
 
 ## Phase status
 
 - **DONE — Phase 1: stat-allocation cost curve**
 - **DONE — Phase 2: HIT / FLEE / Crit authentic values**
-- **DONE — Phase 3: ATK/MATK sub-bonuses + the % DEF split + crit-bypass + crit-shield + mob-DEF authoring.** ⚠️ **The mob half was superseded by the unified stat model** (2026-08-10) and this line's original mechanism is gone: mob DEF/LUK is no longer hand-authored per archetype, and the class it named as the stamper no longer exists in the project. Today a mob's numbers are derived from its level and six primaries, and the roster is authored in the Mob Table. Fine-tuning is still ongoing playtest work. See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
-- **DONE — Phase 4: per-class HP/SP + ASPD.** Vitals are now per-class with VIT/INT as PERCENT multipliers; ASPD gains a DEX term. :warning: Notable rebalance — see Phase 4 section.
+- **DONE — Phase 3: ATK/MATK sub-bonuses + flat defence + crit-bypass + crit-shield.** A mob's numbers, defence included, are derived from its level and six primaries exactly as a player's are, and the roster is authored in the Mob Table. Fine-tuning is still ongoing playtest work. See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
+- **DONE — Phase 4: HP/SP + ASPD.** Vitals come from one level curve shared by every unit, with VIT/INT as PERCENT multipliers; ASPD gains a DEX term. :warning: Notable rebalance — see Phase 4 section.
 - **BUILT, not yet played — Phase 5: the experience curve.** Ragnarok's base table and its creatures' experience, each as one formula; earning stops at level 99; the ring and weapon mastery paid a share of every kill on the same curve. See Phase 5 section.
 
 ## Phase 1 — Stat allocation (DONE)
@@ -44,28 +44,24 @@ Porting the game's combat/stat math from its custom **linear** system to authent
 - Crit damage = **×1.40**
 - Code: `Character.cs` Hit/Flee getters + `CritPerLuk`, `BaseCritMultiplier`, `LukPerHit`, `LukPerFlee` constants.
 
-## Phase 3 — ATK/MATK + DEF split (DONE)
+## Phase 3 — ATK/MATK + defence (DONE)
 
-The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning) — the "TODO, HIGH" this section used to carry contradicted the status list above it and was the stale half. **Verified in code 2026-08-30**; every line below is a thing that exists.
+The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning).
 
 - **Status ATK bonus — DONE, in this game's own shape.** Melee attack = STR + STR's jump (plus DEX/LUK contributions); ranged attack mirrors it with DEX leading; MATK = INT + INT's jump. The jump is `UnitStatMath.StatJumpBonus` = ⌊stat/10⌋² + 3×⌊stat/10⌋ — RO's plain square plus a step, so the early jumps are felt — and VIT, AGI and LUK carry one too (defence, evasion, crit damage).
-- **DEF split (authentic) — DONE.** damage = `ATK × (1 − hardDef/100) − softDef`, where hard DEF = % reduction, soft DEF = flat (from VIT). Same split for MATK vs MDEF. Lives in `Combat.AfterDefense`.
-- **Crit semantics — DONE.** A crit **ignores FLEE** (guaranteed hit) AND **ignores both hard + soft DEF**; `Combat.Missed` skips the miss roll on a crit and `AfterDefense` returns the raw attack. Element/race/size modifiers still apply. All three wiring tasks are in: the `crit` flag reaches the damage call, the miss roll is skipped, and the DEF step is skipped whole.
+- **Defence — DONE, flat only.** damage = `ATK − DEF`, where DEF is worked out from VIT, level and what is worn. Same for MATK vs MDEF (from INT). Lives in `Combat.AfterDefense(atk, defense, crit)`. There is no percentage defence; the only percentage cut on an incoming hit is the damage-reduction sub-stat (the Bulwark armour word and timed states such as Guard), applied afterwards in `UnitMitigation.Landed`.
+- **Crit semantics — DONE.** A crit **ignores FLEE** (guaranteed hit) AND **ignores defence**; `Combat.Missed` skips the miss roll on a crit and `AfterDefense` returns the raw attack. Element/race/size modifiers still apply. All three wiring tasks are in: the `crit` flag reaches the damage call, the miss roll is skipped, and the defence step is skipped whole.
 - **Crit shield — DONE.** Target LUK lowers attacker crit chance (`UnitStatMath.CritShieldPerLuk`, 0.3%/pt), and mobs carry LUK because they carry all six primaries now.
 - **Mob-stat pass — DONE, by a different route than planned.** Rather than hand-shaping DEF/VIT/LUK per mob, the whole roster was reset onto the player's own stat model, every creature on its point budget — today 98 creatures, levels 1 to 170 (see [Mob Roster](../3-world/mob-roster.md)). See [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md).
-- **Retuning pass — STILL OPEN.** % DEF, the skill passive-% layer and cast breakpoints all interact, and this needs play rather than code.
+- **Retuning pass — STILL OPEN.** Flat defence, the damage-reduction sub-stat, the skill passive-% layer and cast breakpoints all interact, and this needs play rather than code.
 
 ## Phase 4 — HP/SP + ASPD (DONE)
 
-- **HP/SP per class:** the level-driven base curve is scaled by a class factor, then VIT/INT scale it as a PERCENT (authentic — they multiply, not add flat). `MaxHP = round((baseMaxHP + hpPerLevel×(lvl−1)) × classHP × (1 + VIT×0.02)) + equipFlat`; SP analogous with INT×0.015. Class factors: **Swordsman HP 1.4 / SP 0.7**, **Mage HP 0.85 / SP 1.7** (`Character.VitalsFor`).
-- **ASPD:** AGI is primary, **DEX adds ¼** (`DexAspdShare`). Kept as the game's speed-MULTIPLIER model, not the RO 0–200 scale (that would require rewriting the attacker's cooldown — out of proportion).
-- **Class-switch clamp:** `Character.ReconcileVitals()` re-clamps HP/MP on a class change (wired into `Player3DController.SetClass`).
-- **Tuning dials** (consts in `Character.cs`): `VitHpPercent`, `IntSpPercent`, `DexAspdShare`, and the factors in `VitalsFor`.
+- **HP/SP — one curve for every unit:** the level-driven base curve is the same for the player and every creature (`UnitStatInputs.Default`: HP 20 + 6 per level, SP 10 + 3 per level), and VIT/INT scale it as a PERCENT (authentic — they multiply, not add flat). `MaxHP = round((20 + 6×(lvl−1)) × (1 + VIT×0.02)) + equipFlat`; SP analogous with INT×0.015. There are no classes and no per-unit curve.
+- **ASPD:** AGI is primary, **DEX adds ¼** (`DexAspdShare`). Kept as the game's speed-MULTIPLIER model, not the RO 0–200 scale. The base swing interval every unit multiplies is one shared value (`CharacterSpec.swingInterval`, 0.6 s).
+- **Tuning dials:** `VitHpPercent`, `IntSpPercent`, `DexAspdShare` (consts in `UnitStatMath`), and the curve in `UnitStatInputs.Default`.
 
-:warning: **Notable rebalance — expected, by design:**
-
-- VIT switched from flat (×8/pt) to %, so VIT is now a *multiplier* on level-driven base HP — weaker early, scales with level (the authentic relationship). 
-- The default **Mage** is now genuinely squishy (≈17 HP at L1 vs the old 28) and has a deeper SP pool; **Swordsman** is the opposite. Early game is more fragile until you level / invest VIT. Retune via the dials above if too punishing.
+:warning: **Notable rebalance — expected, by design:** VIT is a *multiplier* on level-driven base HP, not flat — weaker early, scales with level (the authentic relationship). Early game is fragile until you level / invest VIT. Retune via the dials above if too punishing.
 
 ## Phase 5 — Experience (BUILT 2026-09-30, not yet played)
 

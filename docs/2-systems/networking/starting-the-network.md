@@ -19,8 +19,8 @@ How to get the game running with more than one player. Follow it top to bottom; 
 
 Then you open the game, once per player.
 
-There is an optional fifth thing, the **player wiki** — a website with a live Server Status page. Nothing in the
-game needs it and it is section 6 below.
+There is an optional fifth thing, the **website** — the game's site, with the player wiki inside it and a live
+Server Status page. Nothing in the game needs it; the download server serves it, and it is section 6 below.
 
 The character server is the newest of the four and the one most likely to be forgotten. **Without it nobody can
 enter the world at all** — a player is no longer told an address by their own build; they ask the character
@@ -95,11 +95,13 @@ wrote into it from `settings.env` — see step 5.
 tools/platform.sh open-game
 ```
 
-Serves the player wiki, whose **Server Status** page reads the live numbers from the character server. Optional
-— nothing in the game needs it. Then open `http://127.0.0.1:8099/#status`.
+Serves the website — the wiki and the **Server Status** page, which reads the live numbers from the character
+server — from the update folder. Optional — nothing in the game needs it. The first line copies the site and the
+wiki's pages into the update folder; then open `http://127.0.0.1:8090/#status`.
 
 ```
-cd wiki && python3 -m http.server 8099 --bind 127.0.0.1
+tools/publish-update.py --site-only
+tools/serve-updates.sh
 ```
 
 Proves the public status door answers. Want `playersOnline`, `servers` and `topPlayers`.
@@ -171,14 +173,15 @@ Builds the launcher players download — once, and again only when the launcher 
 tools/build-launcher.sh
 ```
 
-Builds the game, then publishes it as an update into `builds/patch/`. Write any news in `launcher/news.json` first.
+Builds the Windows game and the Mac game, then publishes both as one update into `builds/patch/`. Write any news in
+`launcher/news.json` first. Add `--dev` for devices on your own Wi-Fi, and `--server` to rebuild the map server too
+(stop it first).
 
 ```
-tools/build-game.sh client
-tools/publish-update.py
+tools/build-and-publish.sh --dev
 ```
 
-Serves the update folder — the download page, the launcher and every update — to this computer and every device
+Serves the update folder — the website with its Download page, the launcher and every update — to this computer and every device
 on your Wi-Fi. Leave that terminal open (Ctrl+C stops it). Another device opens `http://<this computer's
 address>:8090` in a browser and downloads the launcher from there:
 
@@ -409,8 +412,8 @@ curl -s http://localhost:8081/stats
 `servers` is an empty list and `playersOnline` is 0, which is the honest answer rather than a fault.
 
 It works the answer out at most once every 5 seconds and hands everyone the same copy, so a status page open
-on a thousand screens costs this server exactly what one screen costs. It is read by the player wiki's **Server
-Status** page — section 6 below.
+on a thousand screens costs this server exactly what one screen costs. It is read by the website's **Server
+Status** page and the status box on its Home page — section 6 below.
 
 ## 4. The game server
 
@@ -524,43 +527,54 @@ before `settings.env` had one; rebuild it — see the troubleshooting entry belo
 
 ---
 
-## 6. The player wiki
+## 6. The website
 
 Optional — nothing in the game needs it, and none of the five steps above wait for it.
 
-The wiki is a folder of files with no program behind it, so it needs something to hand those files to a
-browser. Python's built-in one is enough and needs nothing installed:
+The website is the game's site: Home, News, Game Guide, Wiki, Roadmap, Server Status, Media and Download. It is a
+folder of files with no program behind it, served by the same download server that hands out the launcher and the
+updates, from the same folder. Its page is `website/index.html`; its wiki pages are the files in `wiki/content/`, and
+its news is the launcher's own `launcher/news.json`. Publishing copies all of them into the update folder — a full
+game publish does it, and so does this, which copies the site alone and touches nothing else:
 
 ```
-cd wiki && python3 -m http.server 8099 --bind 127.0.0.1
+tools/publish-update.py --site-only
+tools/serve-updates.sh
 ```
 
-Leave that terminal open, then open `http://127.0.0.1:8099` in a browser.
+Leave that terminal open, then open `http://127.0.0.1:8090` in a browser. Run the first line again after any
+wiki edit; the server needs no restart.
 
-**Worked when:** the wiki loads with its left-hand list of pages.
+**Worked when:** the Home page loads, and the Wiki page shows its left-hand list of pages.
 
-`--bind 127.0.0.1` keeps it on this machine only. Drop it and anyone on your network can read it — which is
-what you want on a hosted machine and not on a laptop in a cafe.
+The download server answers every device on your network, so the site does too — another device opens
+`http://<this computer's address>:8090`.
 
 ### The Server Status page
 
-`http://127.0.0.1:8099/#status` shows how many players are in the world right now, which maps are standing on
+`http://127.0.0.1:8090/#status` shows how many players are in the world right now, which maps are standing on
 which game-server process, and who has earned the most experience. It reads those numbers from the character
-server's public door (section 3 above) and asks again every 5 seconds while you have it open.
+server's public door (section 3 above) and asks again every 5 seconds while you have it open. The Home page's
+status box reads the same numbers.
+
+**It asks the address written in `wiki/content/server-status.json`**, which is `http://127.0.0.1:8081/stats` — the
+character server on THIS computer. Another device opening the site asks its own computer instead and shows that it
+cannot reach the server, until that address is changed to one the device can reach.
 
 **Two of those numbers cannot be fresher than the game makes them**, however often the page asks: a level
 reaches the database within 15 seconds of being earned, and a game server reports how many players it is
 holding every 30 seconds. So a level appears within about 20 seconds of a level-up, and a player count within
 about 35 seconds of somebody arriving.
 
-**A browser treats the wiki and the character server as two different sites**, because they answer on two
-different ports — so it refuses to hand the page that reply unless the character server names the wiki's
-address as allowed. It allows `http://127.0.0.1:8099` unless told otherwise. Serve the wiki from anywhere else
-and the character server must be started with that address in `WIKI_ORIGINS`. Setting it REPLACES that default
-rather than adding to it, so list every address that needs to read it, separated by commas:
+**A browser treats the website and the character server as two different sites**, because they answer on two
+different ports — so it refuses to hand the page that reply unless the character server names the website's
+address as allowed. Unless told otherwise it allows the download server's own address: the one in `PATCH_URL`,
+plus `http://127.0.0.1` and `http://localhost` on that same port (8090 when `PATCH_URL` is empty). Serve the site
+from anywhere else and the character server must be started with that address in `WIKI_ORIGINS`. Setting it
+REPLACES that default rather than adding to it, so list every address that needs to read it, separated by commas:
 
 ```
-WIKI_ORIGINS=http://wiki.example.com
+WIKI_ORIGINS=https://play.example.com
 ```
 
 in `settings.env`, then restart the character server.
@@ -592,7 +606,7 @@ it carries the two addresses in its own settings file, written there by `tools/b
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ARRIVALS_ADDRESS` | Where the character server delivers characters to this game server — a delivery carries a whole character, an entry ticket and the shared server secret as plain text, so on a rented machine this is a private network address, or `127.0.0.1` when both run on one machine. The game server then listens for deliveries on that address only. Set on the GAME server. | empty — the same as `MAP_SERVER_ADDRESS`, which is right only on a desk or a home network |
 | `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | `127.0.0.1` |
-| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the wiki, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | `http://127.0.0.1:8099` |
+| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the website, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | the download server's address: `PATCH_URL`, plus `http://127.0.0.1` and `http://localhost` on its port (8090 when `PATCH_URL` is empty) |
 
 **There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
 server is now told nothing about zones when it starts: the character server decides which server a zone is
@@ -845,12 +859,6 @@ spare port to test something is left running. Stop that one by its own port:
 tools/platform.sh stop-port 8091
 ```
 
-And the wiki, if you started it (section 6):
-
-```
-tools/platform.sh stop-port 8099
-```
-
 **Stopped when:** the check below prints nothing at all.
 
 ```
@@ -1035,12 +1043,12 @@ covered by the app's signature, and a Mac then refuses the app as "damaged". A
 Windows player's game goes beside the launcher, in a `game` folder; a Mac player's goes in
 `~/Library/Application Support/unwritten/game`.
 
-**The download page.** Publishing also writes `index.html` into the update folder — the page a browser gets at the
-update server's address — and zips the Windows launcher with its `launcher.txt` into
-`download/unwritten-windows.zip`, which the page's button offers. A player downloads only that zip; the launcher's
+**The website and its Download page.** Publishing also writes the website into the update folder (section 6) —
+the page a browser gets at the update server's address — and zips the Windows launcher with its `launcher.txt` into
+`download/unwritten-windows.zip`, which the Download page's button offers. A player downloads only that zip; the launcher's
 first run downloads the whole game, about 850 MB. It also zips the two Mac launchers (Apple chip and Intel) into
 `download/unwritten-mac-arm64.zip` and `download/unwritten-mac-x64.zip`, keeping the permission that lets the program
-start. The page reads the version and the news from the same folder the launcher does.
+start. The site reads the version and the news from the same folder the launcher does.
 
 **Everything Mac can be made on the Windows PC.** A Mac only runs a signed program; off a Mac, `tools/platform.sh`
 signs with `rcodesign` (installed to `~/.local/bin`), the same certificate-free signature a Mac makes. The launcher
@@ -1057,7 +1065,7 @@ Mac runs through Apple's translation layer.
 2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first.
 3. Publish: `tools/publish-update.py`. With no option it publishes `builds/client` as the platform of the computer
    it runs on; add `--windows <folder>` and `--mac <folder>` to publish both at once. It stamps one version into
-   every build it is given, writes `builds/patch/` with the download page, and warns if a build still points at
+   every build it is given, writes `builds/patch/` with the website, and warns if a build still points at
    this machine.
 4. Copy `builds/patch/` to `/srv/unwritten/patch/` on the hosted machine, `version.txt` LAST — the moment it
    lands, the server demands the new version, so the files for it must already be there:
@@ -1092,7 +1100,7 @@ the same Wi-Fi. With `PATCH_URL` empty in `settings.env`, a launcher built here 
    tools/build-game.sh client --dev
    ```
 
-3. Publish it as an update. This stamps a version into `builds/client` itself and writes the download page:
+3. Publish it as an update. This stamps a version into `builds/client` itself and writes the website:
 
    ```
    tools/publish-update.py

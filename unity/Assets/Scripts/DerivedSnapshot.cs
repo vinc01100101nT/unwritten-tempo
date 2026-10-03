@@ -17,7 +17,7 @@ public struct DerivedSnapshot
         a.meleeMin == b.meleeMin && a.meleeMax == b.meleeMax && a.rangedMin == b.rangedMin && a.rangedMax == b.rangedMax &&
         a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
         a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
-        a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
+        a.barrierHP == b.barrierHP &&
         UnityEngine.Mathf.Approximately(a.critChance, b.critChance) && UnityEngine.Mathf.Approximately(a.critMult, b.critMult) &&
         UnityEngine.Mathf.Approximately(a.aspdMult, b.aspdMult) && UnityEngine.Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
         UnityEngine.Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
@@ -37,10 +37,9 @@ public struct DerivedSnapshot
     public float critMult;     // e.g. 1.4 = 140%
     public float aspdMult;     // >1 = faster
     public float castTimeMult; // the one cast-speed value: 1 = full wind-up, 0 = instant cast. LOWER is faster.
-    public int hardDefPct, hardMdefPct;   // flat % of incoming damage ignored, on top of the DEF subtraction
     public float guardCutPct;  // 0..1 incoming-damage cut while Guard is up (a state; 0 at rest)
     public float lifeStealPct; // fraction of damage dealt returned as HP
-    public float reflectPct;   // permanent thorns + any timed reflect window
+    public float reflectPct;   // worn words + any timed reflect window
     public float manaLeechPct; // fraction of damage dealt returned as MP (a state; 0 at rest)
     public int barrierHP;      // remaining Shield pool (a state; 0 at rest)
     public float basicAttackRange;   // how far a basic attack reaches, in world units — gear alone on the baseline

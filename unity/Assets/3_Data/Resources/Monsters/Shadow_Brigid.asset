@@ -38,15 +38,9 @@ MonoBehaviour:
   ringRankStats: 030000000600000004000000
   ringRankValues: 280000002800000028000000
   weaponMasteryLevel: 120
-  hardDefPercent: 30
-  hardMagicDefPercent: 20
   xpReward: 2000
-  touchRange: 0.9
-  touchInterval: 1
-  moveSpeed: 2.3000002
   aggroRadius: 8
   leashRadius: 14
-  stopDistance: 0.7
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0

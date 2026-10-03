@@ -52,20 +52,19 @@ public static class Combat
     public static float BlockChance(float itemChance, float wornExtra) => Mathf.Clamp(itemChance + wornExtra, 0f, 0.95f);
 
     /// <summary>
-    /// Pre-renewal damage after DEF — the one place the split lives, shared by both directions
-    /// (player→mob in <see cref="Health"/>, mob→player in <see cref="Character"/>) so they never drift.
-    /// <b>Hard DEF</b> (<paramref name="hardDefPercent"/>, 0–100) is a PERCENT reduction applied first;
-    /// <b>soft DEF</b> (<paramref name="softDef"/>) then subtracts FLAT:
-    /// <c>dmg = atk × (1 − hard/100) − soft</c>.
-    /// A <paramref name="crit"/> hit <b>ignores BOTH</b> (RO: criticals bypass DEF and VIT-DEF; they also
-    /// bypass FLEE, which the caller handles by skipping the accuracy roll). Returns the pre-element value
-    /// (the caller applies the element modifier and the final <c>max(1, …)</c>); can be negative if soft DEF
-    /// exceeds the post-hard damage, which the caller's clamp turns into the 1-damage floor.
+    /// Damage after defence — the one place it lives, shared by both directions (player→mob in
+    /// <see cref="Health"/>, mob→player in <see cref="Character"/>) so they never drift. Defence
+    /// (<paramref name="defense"/>, worked out from VIT, level and what is worn) subtracts FLAT:
+    /// <c>dmg = atk − defense</c>. A <paramref name="crit"/> hit <b>ignores it</b> (criticals bypass defence;
+    /// they also bypass FLEE, which the caller handles by skipping the accuracy roll). A percentage cut is not
+    /// this function's business: worn words and timed states carry it as the damage-reduction sub-stat, which
+    /// <see cref="UnitMitigation.Landed"/> applies. Returns the pre-element value (the caller applies the element
+    /// modifier and the final <c>max(1, …)</c>); can be negative if defence exceeds the attack, which the caller's
+    /// clamp turns into the 1-damage floor.
     /// </summary>
-    public static float AfterDefense(float atk, int hardDefPercent, int softDef, bool crit)
+    public static float AfterDefense(float atk, int defense, bool crit)
     {
         if (crit) return atk;   // critical: no DEF at all
-        float afterHard = atk * (1f - Mathf.Clamp(hardDefPercent, 0, 100) / 100f);
-        return afterHard - softDef;
+        return atk - defense;
     }
 }

@@ -1,7 +1,7 @@
 ---
 status: implemented 2026-08-10 (roster re-tune pending)
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-10-02
 tags:
   - systems-combat-design
 ---
@@ -105,9 +105,9 @@ With tier and the throttle gone there is no single number to turn when playtesti
 
 ### What stays on `MonsterDef`
 
-Behaviour is not stats and does not unify: `moveSpeed`, `aggroRadius`, `leashRadius`, `stopDistance`, wander knobs, `preferredRange`, `fleeHpFraction`, `touchRange`, `touchInterval`, on-hit ailment, loot, sheet/tint/scale.
+Only behaviour and inputs: level, the six primaries, worn gear and its state, ring ranks, weapon mastery, `aggroRadius`, `leashRadius`, wander knobs, `preferredRange`, `fleeHpFraction`, element, on-hit ailment, loot, sheet/tint/size.
 
-**One open question:** move speed is arguably a shared stat (the movement-speed sub-stat pile already multiplies it on both sides through `UnitStates.MoveMult`), but it's stored on the mover today, not in either stat block. Recommend leaving it where it is for this pass and revisiting once the block is in.
+**No sub-stat is ever typed onto a unit** — not on a creature, not on the player. Movement speed, bare-handed reach and the base swing interval are one shared value each on `CharacterSpec`, read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear exactly as a person moves, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `swingInterval` (0.6 s) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
 
 ## Migration — reset to a level template
 
@@ -181,13 +181,14 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 
 | Stat | Where it comes from |
 | --- | --- |
-| Movement speed | `CharacterSpec.moveSpeed` (2), × `UnitStates.MoveMult` |
+| Movement speed | `CharacterSpec` gear speeds (run gear 1.5, walk gear 0.6 world units/s), the same for every person and creature, × `UnitStates.MoveMult` |
+| Attack reach | `CharacterSpec.unarmedReach` (0.5) bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
+| Base swing interval | `CharacterSpec.swingInterval` (0.6 s) for every unit, divided by attack speed |
 | Mana leech | 0; a timed sub-stat change only |
-| Life steal | `Character.lifeStealPct` (0) + a timed LifeSteal change |
-| Damage reflect | `Character.reflectPct` (0) + a timed Reflect change |
+| Life steal | worn words + a timed LifeSteal change; nothing typed |
+| Damage reflect | worn words + a timed Reflect change; nothing typed |
 | Damage dealt | **not a character stat** — a per-hit multiplier applied while the hit is built (`UnitOffense.Dealt`) |
-| Damage reduction | **not a character stat** — the timed DamageReduction pile, read per incoming hit |
-| Hard defence % / hard magic defence % | authored per mob on `Health`; on the player `baseHardDefPercent` is 0 with no item source (dev slider only) |
+| Damage reduction | **not a character stat** — the DamageReduction sub-stat (the worn Bulwark word + timed states such as Guard), read per incoming hit by `UnitMitigation.Landed`. It is the ONLY percentage cut on a hit; defence itself subtracts flat |
 | Max stamina | flat 100 on `Character`; drain/refill rates on `Player3DController`, player-only |
 | Block chance | the equipped off-hand `Item.blockChance` |
 | Element (what the unit is hit as) | a person: Neutral level 1, or an Armor Converter's element at level 1 while one runs; a mob: its authored element and level (`MonsterDef.element` / `elementLevel`), or a converter's |

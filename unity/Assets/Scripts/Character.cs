@@ -18,38 +18,14 @@ public class Character : MonoBehaviour, ICombatUnit
 {
     public static Character Instance { get; private set; }
 
-    [Header("Base stats (level 1)")]
-    public int baseMaxHP = 20;
-    public int baseAttack = 4;
-    public int baseDefense = 1;
+    // NO SUB-STAT IS TYPED HERE. The level curve is the one every unit shares (UnitStatInputs.Default), the mana
+    // trickle is the one constant every unit gets (UnitStatMath.BaseMpRegenPerSecond), and lifesteal and reflect come
+    // only from what is worn and what is running — never from a number typed onto the character.
 
-    [Header("Magic base stats (level 1)")]
-    public int baseMaxMP = 10;
-    public int baseMagicAttack = 3;
-    public int baseMagicDefense = 1;
-    [Tooltip("Mana regenerated per second.")]
-    public float mpRegenPerSecond = UnitStatMath.BaseMpRegenPerSecond;
-
-    [Header("Element & cards (RO)")]
-    [Range(0f, 1f)]
-    [Tooltip("Lifesteal: fraction of damage you DEAL that silently heals you. The mechanical core of a leech card.")]
-    public float lifeStealPct = 0f;
-    [Range(0f, 1f)]
-    [Tooltip("Damage reflect: fraction of damage you TAKE returned to the attacker. A thorns card.")]
-    public float reflectPct = 0f;
-
-    /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage — the permanent
-    /// card value plus whatever a timed sub-stat window is adding. Floored at 0 so a debuff cannot turn dealing damage
-    /// into taking it.</summary>
-    public float LifeStealPct => Mathf.Max(0f, lifeStealPct + SubBonus(SubStat.LifeSteal));
-
-    [Header("Growth per level")]
-    public int hpPerLevel = 6;
-    public int attackPerLevel = 1;
-    public int defensePerLevel = 1;
-    public int mpPerLevel = 3;
-    public int magicAttackPerLevel = 1;
-    public int magicDefensePerLevel = 1;
+    /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage — whatever worn
+    /// words and timed sub-stat windows are adding. Floored at 0 so a debuff cannot turn dealing damage into taking
+    /// it.</summary>
+    public float LifeStealPct => Mathf.Max(0f, SubBonus(SubStat.LifeSteal));
 
     [Header("Stat distribution (pre-renewal RO)")]
     [Tooltip("Status points available at the start (base level 1) — the classic pre-renewal grant.")]
@@ -487,18 +463,17 @@ public class Character : MonoBehaviour, ICombatUnit
     // Every derived stat below is computed by UnitStatMath — the SHARED formulas mobs run too (design doc
     // "Unified Unit Stats"). This class supplies the three inputs and owns nothing about the arithmetic:
     // its level+primaries+curve (Inputs), its aggregated gear (equipBonuses), and its ring % per channel.
-    UnitStatInputs Inputs => new UnitStatInputs
+    UnitStatInputs Inputs
     {
-        level = Level,
-        str = P(PrimaryStat.STR), agi = P(PrimaryStat.AGI), vit = P(PrimaryStat.VIT),
-        intel = P(PrimaryStat.INT), dex = P(PrimaryStat.DEX), luk = P(PrimaryStat.LUK),
-        baseMaxHP = baseMaxHP, hpPerLevel = hpPerLevel,
-        baseAttack = baseAttack, attackPerLevel = attackPerLevel,
-        baseDefense = baseDefense, defensePerLevel = defensePerLevel,
-        baseMaxMP = baseMaxMP, mpPerLevel = mpPerLevel,
-        baseMagicAttack = baseMagicAttack, magicAttackPerLevel = magicAttackPerLevel,
-        baseMagicDefense = baseMagicDefense, magicDefensePerLevel = magicDefensePerLevel,
-    };
+        get
+        {
+            // The curve is the one every unit shares — a creature reads the very same Default.
+            var u = UnitStatInputs.Default(Level);
+            u.str = P(PrimaryStat.STR); u.agi = P(PrimaryStat.AGI); u.vit = P(PrimaryStat.VIT);
+            u.intel = P(PrimaryStat.INT); u.dex = P(PrimaryStat.DEX); u.luk = P(PrimaryStat.LUK);
+            return u;
+        }
+    }
 
     // Each stat's lift is ONE number handed to the shared formula: what the ring invested, plus whatever a timed
     // sub-stat buff or debuff is adding right now. Folding the two together here — rather than teaching every formula
@@ -526,22 +501,10 @@ public class Character : MonoBehaviour, ICombatUnit
     public int Defense => Told ? toldCurrent.def : UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
 
     public int MaxMP        => Told ? toldMaxMP : UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
-    public float MPRegenPerSecond => mpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
+    public float MPRegenPerSecond => UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
     public int MagicAttack  => Told ? toldCurrent.matkMax : UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
     // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
     public int MagicDefense => Told ? toldCurrent.mdef : UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
-
-    // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
-    // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
-    // source yet so it defaults to 0 (damage taken is unchanged) — armor hard-DEF plugs into these later.
-    [Tooltip("Pre-renewal HARD DEF %: percent reduction on incoming PHYSICAL damage (0–100), applied before soft Defense.")]
-    public int baseHardDefPercent = 0;
-    [Tooltip("Pre-renewal HARD MDEF %: percent reduction on incoming MAGIC damage (0–100), applied before soft MagicDefense.")]
-    public int baseHardMagicDefPercent = 0;
-    /// <summary>Player physical hard-DEF % (a flat percent reduction applied before soft <see cref="Defense"/>).</summary>
-    public int HardDefPercent => Mathf.Clamp(baseHardDefPercent, 0, 100);
-    /// <summary>Player magic hard-DEF % (a flat percent reduction applied before soft <see cref="MagicDefense"/>).</summary>
-    public int HardMagicDefPercent => Mathf.Clamp(baseHardMagicDefPercent, 0, 100);
 
     // The damage window each hit rolls within. MAX = the full Attack/MagicAttack above; MIN is a
     // fraction of it raised by DEX (physical) / INT (magic). See MinDmgFloorFraction / MinFractionPerStat.
@@ -569,15 +532,6 @@ public class Character : MonoBehaviour, ICombatUnit
     /// object, which is the persistent stats holder and must never collect body-level components.</para>
     public Transform Body => Avatar();
 
-    /// <summary>How far this character reaches with nothing in their hands. The weapon's own range wins whenever one
-    /// is equipped (<see cref="MeleeReachFullSize"/>); this is the bare-fisted distance.</summary>
-    [Header("Reach & cadence")]
-    [Tooltip("Bare-handed reach, in world units. A weapon's own attackRange replaces it while one is equipped.")]
-    public float unarmedReach = 0.5f;
-
-    [Tooltip("Seconds between ordinary swings before attack-speed is applied.")]
-    public float swingInterval = 0.6f;
-
     /// <summary>The player's FULL-SIZE melee reach — the equipped weapon's range, or their bare-handed reach —
     /// unscaled so the caller can blend it against whatever body it is measuring to.
     ///
@@ -592,7 +546,7 @@ public class Character : MonoBehaviour, ICombatUnit
         => Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange));
 
     /// <summary>Gear alone, with nothing a skill is lending — see <see cref="ICombatUnit.EquippedReachFullSize"/>.</summary>
-    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), unarmedReach);
+    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), CharacterSpec.Active.unarmedReach);
 
     /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, buffs included.
     ///
@@ -602,7 +556,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>Owned HERE for the same reason reach is (see <see cref="MeleeReachFullSize"/>): a cadence is a fact about
     /// the character, and it has to have an answer on a machine where that character has no body standing in a
     /// scene.</para></summary>
-    public float SwingTime => UnitOffense.AttackInterval(swingInterval, AttackSpeedMult);
+    public float SwingTime => UnitOffense.AttackInterval(CharacterSpec.Active.swingInterval, AttackSpeedMult);
 
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;
@@ -760,7 +714,6 @@ public class Character : MonoBehaviour, ICombatUnit
         moveSpeed = 100,
         critChance = CritChance01, critMult = CritMultiplier,
         aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
-        hardDefPct = HardDefPercent, hardMdefPct = HardMagicDefPercent,
         guardCutPct = DamageCutNow, lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
         basicAttackRange = ReachNow,
@@ -777,7 +730,7 @@ public class Character : MonoBehaviour, ICombatUnit
     float ManaLeechPctNow => ignoreStates ? 0f : States.ManaLeechPct;
     int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
     // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
-    float ReflectPctNow   => reflectPct + (ignoreStates ? 0f : States.ReflectBonus);
+    float ReflectPctNow   => ignoreStates ? 0f : States.ReflectBonus;
 
     /// <summary>The pure preview: derived stats AS IF <paramref name="hypothetical"/> were equipped
     /// in <paramref name="slot"/> (pass null to preview UN-equipping it), WITHOUT mutating the
@@ -1331,8 +1284,8 @@ public class Character : MonoBehaviour, ICombatUnit
     // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects) — now stored in
     // the unified state store. The combat sinks read the fraction via States and see 0 once the window lapses.
 
-    /// <summary>The live extra damage-reflect fraction from a skill window (0 when inactive), added on top of the
-    /// permanent thorns-card <c>reflectPct</c> where incoming damage is bounced back.</summary>
+    /// <summary>The live damage-reflect fraction from worn words and timed skill windows (0 when none) — what
+    /// incoming damage is bounced back at.</summary>
     public float ActiveReflectBonus => States.ReflectBonus;
 
     // Absorb pool (Shield skill): a timed barrier that eats incoming HIT damage before it reaches CurrentHP. Bypassed by
@@ -1457,7 +1410,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // Element property: the incoming attack's element vs what we are hit as scales the damage (RO chart).
         float mod = ElementModifier(attackElement);
-        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit), mod);
+        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerAttack, Defense, crit), mod);
         // our armor fully resists this element
         if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // read LAST of the negations, so a charge is only ever spent on a hit that would really have landed (a miss /
@@ -1465,7 +1418,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both, exactly as it does on a mob.
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit) * mod);
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, Defense, crit) * mod);
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
@@ -1576,13 +1529,13 @@ public class Character : MonoBehaviour, ICombatUnit
         if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, MonsterMagicColor, true, false, -1);
 
         float mod = ElementModifier(attackElement);
-        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false), mod);
+        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, MagicDefense, false), mod);
         // armour already nullified it — nothing to parry, so no charge is spent
         if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // the read catches magic too: Parry is a timing skill, not a physical block
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod);
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, MagicDefense, false) * mod);
         return LandOnMe(dmg, attacker, MonsterMagicColor, true, false, -1);
     }
 
@@ -1606,8 +1559,7 @@ public class Character : MonoBehaviour, ICombatUnit
     // damage (bypasses its defense, can't itself be reflected — TakeTrueDamage never calls back here).
     void Reflect(int dmgTaken, ICombatUnit attacker)
     {
-        // permanent thorns card + a timed skill reflect window
-        float pct = reflectPct + ActiveReflectBonus;
+        float pct = ActiveReflectBonus;
         if (pct <= 0f || dmgTaken <= 0 || PlayerUnits.Gone(attacker) || attacker.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
         if (r > 0) CombatAuthority.ApplyTrue(attacker, r, ReflectColor, "reflect");
@@ -2112,6 +2064,11 @@ public class Character : MonoBehaviour, ICombatUnit
             equipSlots = slots, equipItemIds = ids, equipRefines = refines,
             equipCards = cards, equipRolls = rolls,
         });
+        // AND EVERYTHING THAT SHOWS THE GEAR IS TOLD, exactly as an equip made here would tell it (SetEquipped). Gear
+        // the server sends used to be written in silently, so the weapon in hand, the stat sheet and the health bar
+        // kept showing what was worn before — a weapon swap changed nothing on the player's screen.
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
     }
 
     void CaptureEquipment(SaveData d)

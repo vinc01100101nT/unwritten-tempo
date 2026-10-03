@@ -4,11 +4,13 @@
 checks, saves surviving a character server outage, the code half of encryption, continuous backups), and let other
 devices on the home Wi-Fi download the game from a page on the Windows PC instead of copying builds by hand.
 
-**Status: IN PROGRESS — everything is built and committed; almost none of it has been PLAY-TESTED.** Compile checks,
-server checks and one scripted test of the hand-over check passed; nobody has played any of it. A Mac has opened the
-signed launcher only as far as macOS's "could not verify … free of malware" prompt (the expected one); nobody has yet
-got past it, downloaded the game, or played on a Mac. **Don't trust a prior "it works" for anything not listed as
-measured below.**
+**Status: IN PROGRESS — built, partly play-tested; one bug open.** Played on 2026-10-02 over the Wi-Fi from a
+Mac and from this PC: signing in, entering the world and character creation work on both, and the Mac launcher
+downloads and starts the game. Fixed after play-testing and **not yet re-played**: the gold window after `/gold`,
+and the weapon in hand after a weapon swap (version `2026.10.02-1221`). **Open: the ink outline and paper look are
+missing in the world in built games** (they show in the character-creation preview). The rest of the batch (outage,
+crash restart, item checks, backups) has not been played. **Don't trust a prior "it works" for anything not listed
+as measured below.**
 
 ## What's done
 
@@ -37,37 +39,60 @@ map server listens only there when set); Unity insecure HTTP = development build
 `backup-rehearse-restore.sh`, four new settings in `settings.env.example`. Rehearsed by the helper on a throwaway
 Postgres; **never run against this PC's database** (archiving is still off here).
 
-**Wi-Fi downloads** — `launcher/download.html` (the page, with detailed Mac steps), `tools/serve-updates.sh`,
-`publish-update.py` writes the page and zips the Windows and two Mac launchers into `download/`, and publishes this
+**Wi-Fi downloads** — the website's Download page (`website/index.html`, with detailed Mac steps), `tools/serve-updates.sh`,
+`publish-update.py` writes the website and zips the Windows and two Mac launchers into `download/`, and publishes this
 computer's platform by default. Mac on the Windows PC: Unity Mac Build Support (Mono) installed, `rcodesign` 0.29.0
 in `~/.local/bin` (fingerprint checked), `platform.sh sign-mac-app` uses it off a Mac, `build-game.sh --mac` switches
 the editor to the macOS build profile and back. The Mac launcher's `launcher.txt` now lives in
 `Contents/Resources` (it made the Mac call the app "damaged" in `Contents/MacOS`); `Patcher.cs` reads it there.
 
+**Found by play-testing, fixed (2026-10-02, after the first commit):**
+- **Shaders looked up by name were never in any build** — `InkScreen` (ink), `HandDrawnGrade` (paper/grade) and
+  `AtlasRecolor` (character colours, `CharacterDye3D`) were neither in Always Included Shaders nor used by any shipped
+  material, in any commit; every built game's `Player.log` said "Shader 'Unwritten/InkScreen' not found". Added all
+  three to `GraphicsSettings.asset`; proven present in both new builds. The other 14 `Shader.Find` names were already
+  covered. Memory: `shader-find-missing-in-builds`.
+- **A server-side gold change never reached the screen** (`GmCommands.CmdGold` sent nothing). General fix:
+  `PlayerFighter` subscribes the character's `OnGoldChanged` to `NetPlayer.PushBagToOwner`, which now only marks the
+  bag owed; `SendOwedBag` sends it once per frame from `Update`, so the 14 existing explicit pushes and the new one
+  coalesce.
+- **Gear sent by the server was written in silently** (`Character.RestoreWornFrom` → `RestoreEquipment` fired no
+  event), so `WeaponSocket`, the stat sheet and the bars never redrew. It now raises `OnStatsChanged` and
+  `OnHealthChanged`, as `SetEquipped` does. No health clamp on the player's machine (that would be client maths).
+- **Mac:** the game needs macOS's Local Network permission (it was on); every new signed version adds another
+  "unwritten" line to that list because a certificate-free signature is identified by its fingerprint — harmless, no
+  supported way to remove them; a real fix is an Apple developer account. The Mac game is now built through the
+  macOS build profile, so it is Intel + Apple chip.
+- **`tools/build-and-publish.sh`** — Windows game, Mac game, publish, in one command (`--dev`, `--server`). Written,
+  syntax-checked, **never run end to end**.
+
 **This PC's state:** `settings.env` (never committed) has `MAP_SERVER_ADDRESS=192.168.1.8`,
 `PUBLIC_ACCOUNTS_URL`/`PUBLIC_CHAR_SERVER_URL` = `http://192.168.1.8:8080`/`8081`, `PATCH_URL=http://192.168.1.8:8090`.
-Builds: `builds/client` (Windows, development), `builds/mac/client` (Mac, development, **Intel-only** — built with no
-build profile active), `builds/server`, `builds/launcher/*`, published as version `2026.10.02-1049` in
-`builds/patch` (all git-ignored).
+Builds: `builds/client` (Windows, development), `builds/mac/client` (Mac, development, Intel + Apple chip),
+`builds/server`, `builds/launcher/*`, published as version `2026.10.02-1221` in `builds/patch` (all git-ignored).
+The website's Download page carries step-by-step Mac instructions (Open Anyway, the `xattr` line).
 
 ## Uncommitted working-tree changes
 
-None after this session's final commit: everything listed under "What's done", the docs (plan, runbook, notes,
-roadmap, action plan MT-35/MT-36, two new learnings pages), the rule-file changes and the memories went into one
-commit pushed to `main` at the end of the session. Re-measure with `git status` before trusting this line.
+Everything up to the first push is in commit `b6a3ca18` on `main`. **Uncommitted at the end of the session**
+(measured 13:01): `Character.cs`, `NetPlayer.cs`, `PlayerFighter.cs` (gold and gear fixes), `GraphicsSettings.asset`
+(three shaders), `tools/build-and-publish.sh` (new), `tools/README.md`, the runbook, the networking notes, `ASSETS.md` (rule 12:
+shaders looked up by name), two memory files, the hook tally.
+Re-measure with `git status` before trusting this.
 
 ## What's left
 
-1. **Play-test the whole batch** — the checklist is in the session's final report and in the plan's "expected
-   result" sections: start the character server with `charserver/run.sh` (new code), the map server, sign in within
-   40 s (refused, then let in), potions/equip/drop/reorder, outage test (Ctrl+C the character server, loot, log out,
-   restart → loot kept), crash test (Task Manager ▸ End task CharServer.exe → restarts in 5 s), a Wi-Fi device.
-2. **Mac:** get past the "could not verify" prompt (Open Anyway, or the `xattr` line on the page), confirm the
-   launcher downloads the game and the game runs. Then rebuild the Mac game through the macOS profile so it is
-   Intel + Apple chip.
-3. **Backups:** compress archived change-log files before going live (16 MB each even when nearly empty — about
-   23 GB on a busy day); daily partial copies; failure alert; off-site bucket (waits for hosting).
-4. **Hosting** (waits on buying a domain): the encrypting front door, certificates, closing the plain doors.
+1. **Re-play gold and weapon swap** on version 1221 (`/gold 1000` moves the bag and status bar; a weapon swap changes
+   the weapon in hand).
+2. **Ink outline in the world, built games only.** No cause found. Measured: the shader is in the build (the
+   preview shows it); depth texture is on in every quality level (all use `UniversalRP.asset`); the ink quad is a
+   separate root object on layer TransparentFX that `GameRoot.Quiet` switches off at sign-in and `Wake` / the
+   component's own `LateUpdate` switch back on. Not yet known: whether it is missing on Windows too (asked, not
+   answered), and what the running game shows. Next: ask that question, then look at a running Windows build.
+3. **Play-test the rest of the batch** — outage, crash restart, item checks (see the plan's "expected result").
+4. **Backups:** compress archived files, daily partial copies, alert, off-site (waits for hosting).
+5. **Hosting / domain:** the front door, certificates, closing plain doors; the main website (it already
+   lives in the update folder, so the same web server serves the site and the update files).
 
 ## Dead ends (all resolved — kept so they are not repeated)
 
@@ -83,8 +108,8 @@ cover; the Mac did not complain about it, so it was left alone.
 
 ## Next single step
 
-Run the play-test checklist on this PC (step 1 above); if the outage test loses loot, read `logs/server.log` for
-"could not write character … down yet" and the character server's window for "refused a save … from hand-over".
+Ask whether the in-world ink is missing on Windows as well as the Mac; if on Windows, run the Windows build with
+permission and read `HandDrawnFX`'s state in the world (instance, quad active, camera).
 
 ## How to resume
 

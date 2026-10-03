@@ -1,0 +1,1179 @@
+<!doctype html>
+<!--
+  THE WEBSITE: Home, News, Game Guide, Wiki, Roadmap, Server Status, Media, Download.
+
+  tools/publish-update.py copies this page into the update folder as index.html, beside everything it reads, so the
+  download server (tools/serve-updates.sh) serves the whole site from one address:
+
+    ui-tokens.css + fonts/   the game's own colours and fonts, written by tools/ui-tokens.py
+    content/                 the wiki's pages (wiki/content) — JSON block documents listed in content/manifest.json
+    assets/                  the wiki's pictures (wiki/assets)
+    version.txt, news.json   the launcher's own files, so the page can never say something different from what the
+                             launcher downloads
+    download/                the launchers
+
+  This page holds no game text of its own: every page body is read from content/ at load time. The wiki pages the
+  site shows as its own pages (the Game Guide, Roadmap, Server Status) are named in GUIDE and SITE_PAGES below; every
+  other page in the manifest is a Wiki page. Boxes marked IMAGE ART HERE are reserved for art made later.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unwritten</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--panel-raise); color: var(--text-main); font: 15px/1.55 var(--font-ui); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- header + nav ---------- */
+  header.top { background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+               border-bottom: 2px solid var(--window-edge); }
+  header.top .wrap { display: flex; align-items: center; gap: 18px; min-height: 76px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
+  .logo { width: 210px; height: 60px; flex: none; }
+  nav.main { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+  nav.main a { color: var(--title-text); font-weight: 700; padding: 8px 12px; border-radius: 3px; border: 1px solid transparent; }
+  nav.main a:hover { text-decoration: none; background: var(--hover); border-color: var(--accent); }
+  nav.main a.on { background: var(--slot-fill); border-color: var(--window-edge); }
+  .btn { display: inline-block; padding: 10px 22px; border-radius: 3px; font-weight: 700; cursor: pointer;
+         background: var(--button-fill); border: 1px solid var(--button-edge); color: var(--button-text); }
+  .btn:hover { background: var(--hover); border-color: var(--accent); text-decoration: none; }
+  .btn.big { background: var(--accent); border-color: var(--window-edge); color: var(--text-on-dim); font-size: 17px; padding: 12px 28px; }
+  .btn.big:hover { background: var(--window-edge); }
+
+  /* ---------- the game's window, used for every box on the site ---------- */
+  .win { background: var(--window-edge); padding: 2px; border-radius: 5px; margin-bottom: 18px; }
+  .win > .fill { background: var(--panel-fill); border-radius: 4px; overflow: hidden; }
+  .win .head { min-height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 4px 12px;
+               background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+               color: var(--title-text); font-weight: 700; font-size: 14px; }
+  .win .head a { font-weight: 400; font-size: 13px; }
+  .win .body { padding: 14px 16px; }
+
+  /* ---------- reserved art box ---------- */
+  .art { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+         gap: 4px; padding: 12px; border: 2px dashed var(--window-edge); border-radius: 4px; color: var(--title-text);
+         background: repeating-linear-gradient(45deg, var(--hover) 0 14px, var(--panel-raise) 14px 28px); overflow: hidden; }
+  .art .here { font: 16px var(--font-pixel); letter-spacing: 1px; color: var(--accent); }
+  .art .kind { font-weight: 700; font-size: 14px; }
+  .art .size { font-size: 12px; color: var(--text-dim); }
+  .art .desc { font-size: 12px; color: var(--text-dim); max-width: 46ch; }
+  .art.tiny .desc, .art.tiny .size { display: none; }
+  .art.tiny .here { font-size: 11px; }
+  .art.tiny .kind { font-size: 11px; }
+
+  /* ---------- home ---------- */
+  .hero { position: relative; height: 440px; margin: 0 0 18px; }
+  .hero .art { height: 100%; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; justify-content: flex-start; padding-top: 40px; }
+  .hero .over { position: absolute; left: 0; right: 0; bottom: 28px; text-align: center; padding: 0 16px; }
+  .hero .over .tag { display: inline-block; background: var(--panel-fill); border: 2px solid var(--window-edge); border-radius: 5px;
+                     padding: 10px 18px; margin-bottom: 14px; max-width: 760px; color: var(--title-text); }
+  .cols3 { display: grid; grid-template-columns: 270px 1fr 250px; gap: 18px; align-items: start; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .dl-cols { grid-template-columns: 2fr 1fr; }
+  .cols3 > *, .cols2 > *, .withside > *, .kashira > * { min-width: 0; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tile { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; padding: 8px 4px; text-align: center; }
+  .tile .n { font: 20px var(--font-pixel); color: var(--title-text); }
+  .tile .k { font-size: 11px; color: var(--text-dim); line-height: 1.2; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--text-dim); margin-right: 6px; }
+  .dot.up { background: var(--good); }
+  .dot.down { background: var(--bad); }
+  .board { list-style: none; margin: 0; padding: 0; }
+  .board li { display: flex; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .board li:last-child { border-bottom: 0; }
+  .board .d { flex: none; width: 92px; color: var(--text-dim); font-size: 13px; }
+  .board .t { flex: 1; color: var(--text-main); font-weight: 700; }
+  .board .t .x { display: block; font-weight: 400; color: var(--text-dim); }
+  .board li:hover { background: var(--hover); }
+  .board .empty { color: var(--text-dim); font-style: italic; }
+  .linklist { list-style: none; margin: 0; padding: 0; }
+  .linklist li { padding: 5px 0; border-bottom: 1px solid var(--rule); }
+  .linklist li:last-child { border-bottom: 0; }
+  .side-banners .art { height: 120px; margin-bottom: 10px; }
+
+  /* Kashira showcase (Ragnarok's job page, by weapon) */
+  .kashira { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .kashira .standing { height: 460px; }
+  .kashira .who .ep { font-size: 22px; font-weight: 700; color: var(--title-text); margin: 4px 0; }
+  .kashira .who .wp { font: 14px var(--font-pixel); color: var(--accent); letter-spacing: 1px; }
+  .kashira .who .deed { font-style: italic; color: var(--text-dim); border-left: 3px solid var(--rule); padding-left: 10px; margin: 10px 0 16px; }
+  .picker { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .picker button { padding: 0; border: 2px solid var(--rule); border-radius: 4px; background: var(--slot-fill); cursor: pointer;
+                   font: 11px var(--font-ui); color: var(--text-main); }
+  .picker button .art { height: 56px; border: 0; border-radius: 0; padding: 2px; }
+  .picker button span { display: block; padding: 3px 0; }
+  .picker button.on, .picker button:hover { border-color: var(--accent); background: var(--hover); }
+
+  .biomes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .biomes .card { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+  .biomes .card .art { height: 150px; border-width: 0 0 2px 0; border-radius: 0; }
+  .biomes .card .mob { height: 96px; }
+  .biomes .card .txt { padding: 8px 10px; font-size: 13px; flex: 1; }
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .shots .art { height: 150px; }
+
+  /* ---------- article text (wiki, guide, roadmap, status) ---------- */
+  .doc h1 { font-size: 26px; color: var(--title-text); margin: 0 0 6px; }
+  .doc h2 { font-size: 19px; color: var(--title-text); margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--rule); }
+  .doc h3 { font-size: 16px; color: var(--title-text); margin: 18px 0 6px; }
+  .doc p, .doc li { color: var(--text-main); }
+  .doc .lede { font-size: 17px; color: var(--text-dim); }
+  .doc blockquote { margin: 12px 0; padding: 8px 14px; background: var(--panel-raise); border-left: 3px solid var(--window-edge); color: var(--text-dim); }
+  .doc blockquote p { margin: 4px 0; }
+  .doc table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  .doc th { text-align: left; background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); color: var(--title-text); }
+  .doc th, .doc td { border: 1px solid var(--rule); padding: 6px 8px; vertical-align: top; }
+  .doc td { background: var(--slot-fill); }
+  .doc td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .doc hr { border: 0; border-top: 1px solid var(--rule); margin: 20px 0; }
+  .doc code { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px; font-size: 13px; }
+  .doc .tablewrap { overflow-x: auto; }
+  .doc .doc-art { height: 240px; margin: 14px 0; }
+  .doc figure.fig { margin: 16px 0; text-align: center; }
+  .doc figure.fig img { max-width: 100%; border: 1px solid var(--rule); border-radius: 4px; }
+  .doc figure.fig figcaption { font-size: 13px; color: var(--text-dim); font-style: italic; margin-top: 6px; }
+  .doc .loading { color: var(--text-dim); font-style: italic; padding: 30px 0; }
+  /* A database table is wider and far taller than the page, so it scrolls inside its own box, which keeps the
+     sideways scrollbar on screen, with the column names pinned to the top of that box. */
+  .doc .dbscroll { overflow: auto; max-height: 80vh; margin: 12px 0; border: 1px solid var(--rule); border-radius: 4px; }
+  .doc .dbscroll table { margin: 0; font-size: 13px; width: max-content; }
+  .doc .dbscroll thead th { position: sticky; top: 0; z-index: 1; }
+  .doc .dbscroll th, .doc .dbscroll td { white-space: nowrap; border-width: 0 0 1px 0; }
+  /* A table cell ignores min-width, so the long columns get a fixed width to wrap inside. */
+  .doc .dbscroll td.long { white-space: normal; width: 22em; }
+  .doc .dbscroll ul { margin: 0; padding-left: 1.1em; }
+  .doc .dbscroll li { margin: 0; }
+  .doc .sym { display: inline-block; min-width: 2.4em; margin-right: 6px; padding: 0 4px; border: 1px solid; border-radius: 3px; text-align: center; font-weight: 700; }
+  .doc .xscroll { overflow-x: auto; margin: 8px 0 22px; }
+  .doc .xscroll table { margin: 0; font-size: 13px; width: auto; }
+  .doc .xscroll th, .doc .xscroll td { white-space: nowrap; text-align: right; }
+  .doc .xscroll th:first-child, .doc .xscroll td:first-child { text-align: left; }
+  /* world map: the picture with every map outlined where the game places it */
+  .doc .worldmap { position: relative; margin: 12px 0; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; line-height: 0; }
+  .doc .worldmap img { display: block; width: 100%; height: auto; }
+  .doc .worldmap .zone { position: absolute; border: 1px solid var(--slot-fill); border-radius: 2px; cursor: pointer; }
+  .doc .worldmap .zone:hover, .doc .worldmap .zone.on { border-color: var(--accent); background: var(--hover); opacity: .55; }
+  .zonecard { position: fixed; z-index: 20; width: 280px; background: var(--panel-fill); border: 2px solid var(--window-edge); border-radius: 5px;
+              padding: 10px 12px; font-size: 13px; line-height: 1.45; color: var(--text-main); pointer-events: none; }
+  .zonecard[hidden] { display: none; }
+  .zonecard .zname { font-size: 16px; font-weight: 700; color: var(--title-text); }
+  .zonecard .ztype { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+  .zonecard img { display: block; width: 100%; margin: 8px 0; border: 1px solid var(--rule); border-radius: 3px; }
+  .zonecard ul { margin: 4px 0 0; padding-left: 16px; }
+  /* skill cards */
+  .doc .skill-sub { font-style: italic; color: var(--text-dim); margin: 0 0 12px; }
+  .skillgrid { display: grid; gap: 10px; margin: 12px 0 22px; }
+  .skillcard { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: start;
+               background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; padding: 12px 14px; }
+  .skillcard .icon { width: 56px; height: 56px; border-radius: 4px; background: var(--panel-raise); border: 1px solid var(--rule);
+                     display: flex; align-items: center; justify-content: center; color: var(--title-text); font-size: 22px; font-weight: 700; overflow: hidden; }
+  .skillcard .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .skillcard .body { min-width: 0; }
+  .skillcard .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .skillcard .name { font-size: 16px; font-weight: 700; color: var(--title-text); }
+  .skillcard .cost { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--accent); }
+  .skillcard .flavor { font-style: italic; color: var(--text-dim); font-size: 14px; margin: 2px 0 4px; }
+  .skillcard .effect { font-size: 14px; }
+  .skillcard ul.effect { margin: 0; padding-left: 1.1em; }
+  /* live server numbers */
+  .livestats .tiles { max-width: 520px; margin: 12px 0; }
+  .livestats .asof { font-size: 12px; color: var(--text-dim); font-style: italic; }
+  .livestats .down { background: var(--panel-raise); border-left: 3px solid var(--bad); padding: 10px 14px; color: var(--text-dim); }
+
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 3px solid var(--rule); }
+  .timeline li { position: relative; margin: 0 0 16px; padding-left: 12px; }
+  .timeline li::before { content: ""; position: absolute; left: -27px; top: 5px; width: 13px; height: 13px; border-radius: 50%;
+                         background: var(--slot-fill); border: 3px solid var(--rule); }
+  .timeline li.now::before { border-color: var(--accent); background: var(--accent); }
+  .timeline li.done::before { border-color: var(--good); background: var(--good); }
+  .timeline .when { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+  .timeline .ttl { font-weight: 700; color: var(--title-text); }
+  .timeline li.now .when { color: var(--accent); font-weight: 700; }
+
+  /* wiki + guide layout: side menu + page */
+  .withside { display: grid; grid-template-columns: 240px 1fr; gap: 18px; align-items: start; }
+  .sidemenu .grp { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 4px; }
+  .sidemenu .grp:first-child { margin-top: 0; }
+  .sidemenu a { display: block; padding: 5px 8px; border-radius: 3px; color: var(--text-main); }
+  .sidemenu a:hover { background: var(--hover); text-decoration: none; }
+  .sidemenu a.on { background: var(--hover); color: var(--title-text); font-weight: 700; border-left: 3px solid var(--accent); }
+  .sidemenu .tagged { font-size: 11px; color: var(--text-dim); font-style: italic; margin-left: 4px; }
+  .wikihome { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .gallery .art { height: 190px; }
+  .gallery .art.wide { grid-column: span 3; height: 320px; }
+
+  .dl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 6px; }
+  .dl-grid .opt { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; padding: 14px; text-align: center; }
+  .dl-grid .opt .art { height: 70px; margin-bottom: 10px; }
+  .dl code { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; padding: 2px 6px; font-size: 13px; word-break: break-all; }
+  .version { color: var(--text-dim); font-size: 13px; }
+  .pagehead { height: 180px; margin-bottom: 18px; }
+  .pagehead .art { height: 100%; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
+
+  footer { background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); border-top: 2px solid var(--window-edge);
+           color: var(--title-text); font-size: 13px; padding: 18px 0; margin-top: 26px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  html { scroll-behavior: smooth; }
+  .hero { overflow: hidden; }
+  .hero > .art { will-change: transform; }
+
+  /* ---------- sticky columns: held just under the top bar while the longer column beside them scrolls ----------
+     --header-h is the top bar's current height, kept up to date by the page script. Only on a screen tall enough
+     to show a whole held column; on a short one the column would hide its own bottom. */
+  :root { --header-h: 76px; }
+  @media (min-width: 961px) and (min-height: 760px) {
+    .cols3 > :first-child, .cols3 > .side-banners, .dl-cols > :last-child {
+      position: sticky; top: calc(var(--header-h) + 12px); transition: top .2s;
+    }
+    .withside > :first-child {
+      position: sticky; top: calc(var(--header-h) + 12px); transition: top .2s;
+      max-height: calc(100vh - var(--header-h) - 24px); overflow-y: auto;
+    }
+  }
+
+  .page { display: none; }
+  .page.on { display: block; animation: pageIn .25s ease-out; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- pinned top bar: shorter, with a line under it, once the page is scrolled ---------- */
+  header.top { position: sticky; top: 0; z-index: 50; transition: box-shadow .2s; }
+  header.top .wrap { transition: min-height .2s, padding .2s; }
+  header.top .logo { transition: height .2s, width .2s; }
+  header.top.shrunk { box-shadow: 0 2px 0 var(--rule); }
+  header.top.shrunk .wrap { min-height: 60px; padding-top: 4px; padding-bottom: 4px; }
+  header.top.shrunk .logo { height: 48px; width: 168px; }
+
+  /* ---------- motion ---------- */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .4s ease-out, transform .4s ease-out; }
+  .reveal.in { opacity: 1; transform: none; }
+  .btn { transition: transform .15s, background .15s; }
+  .btn:hover { transform: translateY(-2px); }
+  nav.main a { position: relative; }
+  nav.main a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 2px; background: var(--accent);
+                      transform: scaleX(0); transform-origin: left; transition: transform .2s; }
+  nav.main a:hover::after, nav.main a.on::after { transform: scaleX(1); }
+  /* The stripes of a reserved art box drift while the pointer is over it. 39.6px is one stripe period measured
+     sideways for 28px stripes at 45 degrees, so the loop has no visible jump. */
+  .art:hover { animation: stripes 1.6s linear infinite; }
+  @keyframes stripes { to { background-position: 39.6px 0; } }
+  .swap { animation: swapIn .3s ease-out; }
+  @keyframes swapIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+  .dot.up { animation: pulse 2s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--good); } 100% { box-shadow: 0 0 0 7px transparent; } }
+
+  /* book pages drifting across the Home banner */
+  .floatpages { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .floatpage { position: absolute; left: -80px; width: 46px; height: 60px; border: 1px solid var(--rule); border-radius: 2px;
+               background: repeating-linear-gradient(var(--slot-fill) 0 9px, var(--rule) 9px 10px); opacity: .9;
+               animation: drift linear infinite; }
+  @keyframes drift {
+    0% { transform: translate(0, 0) rotate(-10deg); }
+    50% { transform: translate(55vw, -40px) rotate(14deg); }
+    100% { transform: translate(110vw, 10px) rotate(-6deg); }
+  }
+
+  /* ---------- floating components ---------- */
+  .fab { position: fixed; z-index: 60; opacity: 0; pointer-events: none; transform: translateY(12px);
+         transition: opacity .2s, transform .2s; }
+  .fab.show { opacity: 1; pointer-events: auto; transform: none; }
+  #fab-download { right: 20px; bottom: 20px; }
+  #fab-top { right: 20px; bottom: 84px; width: 44px; height: 44px; border-radius: 50%; padding: 0; font-size: 20px; line-height: 42px; text-align: center; }
+  /* The mascot sits in the empty margin beside the page, so it is shown only on a screen wide enough to have one:
+     the 1180px page plus 150px either side. On anything narrower it would cover text. */
+  #mascot { position: fixed; z-index: 60; left: 20px; bottom: 20px; width: 120px; animation: bob 3s ease-in-out infinite; }
+  @media (max-width: 1479px) { #mascot { display: none; } }
+  #mascot .art { height: 140px; padding: 6px; }
+  #mascot .art .here { font-size: 10px; }
+  #mascot .art .kind { font-size: 11px; }
+  #mascot .art .size, #mascot .art .desc { display: none; }
+  #mascot .hide { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; border-radius: 50%; padding: 0; z-index: 1;
+                  font: 700 13px/20px var(--font-ui); cursor: pointer; background: var(--close-fill); border: 1px solid var(--window-edge); color: var(--title-text); }
+  #mascot[hidden] { display: none; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+  @media (max-width: 960px) {
+    .cols3, .cols2, .dl-cols, .kashira, .withside { grid-template-columns: 1fr; }
+    nav.main { order: 3; flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; }
+    nav.main a { white-space: nowrap; }
+    header.top .wrap { justify-content: space-between; }
+    .biomes { grid-template-columns: repeat(2, 1fr); }
+    .shots, .gallery, .dl-grid { grid-template-columns: 1fr 1fr; }
+    .gallery .art.wide { grid-column: span 2; }
+    .picker { grid-template-columns: repeat(4, 1fr); }
+    .hero { height: 360px; }
+    .kashira .standing { height: 340px; }
+  }
+  @media (max-width: 560px) {
+    .biomes, .shots, .gallery, .dl-grid { grid-template-columns: 1fr; }
+    .gallery .art.wide { grid-column: span 1; }
+    .logo { width: 160px; }
+    .hero .art .desc { display: none; }
+    header.top.shrunk .wrap { min-height: 0; }
+    header.top.shrunk .logo { height: 40px; width: 140px; }
+  }
+  /* A visitor whose computer asks for less motion gets none: every animation and transition stops, and anything
+     that would have faded in is simply there. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+    .floatpages { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="#home" class="logo"><div class="art tiny" style="height:100%" data-kind="Game logo (light-theme version)" data-size="420 × 120, transparent background"></div></a>
+    <nav class="main" id="nav">
+      <a href="#home">Home</a>
+      <a href="#news">News</a>
+      <a href="#guide">Game Guide</a>
+      <a href="#wiki">Wiki</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#status">Server Status</a>
+      <a href="#media">Media</a>
+    </nav>
+    <a class="btn big" href="#download">Download</a>
+  </div>
+</header>
+
+<!-- ================= HOME ================= -->
+<section class="page" id="p-home">
+  <div class="hero">
+    <div class="art" data-kind="Main key art banner" data-size="1920 × 600"
+         data-desc="The headline picture of the game: colourless charcoal heroes facing flat paper monsters torn from the artist's book. Dense and busy, like a Ragnarok Online poster; the tagline sits on its own panel over it."></div>
+    <div class="floatpages" aria-hidden="true">
+      <div class="floatpage" style="top:12%;animation-duration:26s;animation-delay:-3s"></div>
+      <div class="floatpage" style="top:38%;animation-duration:34s;animation-delay:-17s;width:36px;height:48px"></div>
+      <div class="floatpage" style="top:22%;animation-duration:30s;animation-delay:-9s;width:56px;height:72px"></div>
+      <div class="floatpage" style="top:58%;animation-duration:38s;animation-delay:-25s"></div>
+      <div class="floatpage" style="top:8%;animation-duration:42s;animation-delay:-33s;width:32px;height:42px"></div>
+    </div>
+    <div class="over">
+      <div class="tag" id="home-tagline"></div><br>
+      <a class="btn big" href="#download">Download the game</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="cols3">
+      <div>
+        <div class="win"><div class="fill">
+          <div class="head">Play now</div>
+          <div class="body" style="text-align:center">
+            <a class="btn big" href="#download" style="display:block">Download</a>
+            <p class="version" style="margin:8px 0 0">Windows · Mac (Apple chip) · Mac (Intel)</p>
+          </div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">Server Status <a href="#status">more</a></div>
+          <div class="body">
+            <p style="margin:0 0 8px" id="home-status-line"><span class="dot"></span>Asking the server…</p>
+            <div class="tiles">
+              <div class="tile"><div class="n" id="home-players">—</div><div class="k">Players online</div></div>
+              <div class="tile"><div class="n" id="home-maps">—</div><div class="k">Maps standing</div></div>
+              <div class="tile"><div class="n" id="home-procs">—</div><div class="k">World processes</div></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">Quick links</div>
+          <div class="body">
+            <ul class="linklist">
+              <li><a href="#guide/start">Getting Started</a></li>
+              <li><a href="#guide/playstyles">Playstyles &amp; Builds</a></li>
+              <li><a href="#wiki/stats">Stats &amp; the Ring</a></li>
+              <li><a href="#wiki/database-monsters">Monster database</a></li>
+              <li><a href="#roadmap">What is coming next</a></li>
+            </ul>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <div class="win"><div class="fill">
+          <div class="head">News <a href="#news">more</a></div>
+          <div class="body"><ul class="board" id="home-news"></ul></div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">What is Unwritten?</div>
+          <div class="body doc">
+            <div class="art doc-art" data-kind="Story illustration" data-size="1200 × 500"
+                 data-desc="The artist's open book: one page drawn and peaceful, the facing page torn and twisted by Chaos into monsters."></div>
+            <div id="home-what"></div>
+            <p><a href="#guide/world">Read the full story &rarr;</a></p>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="side-banners">
+        <div class="art" data-kind="Event banner" data-size="500 × 240" data-desc="Current event or update headline."></div>
+        <div class="art" data-kind="Event banner" data-size="500 × 240" data-desc="Second event or a new-weapon announcement."></div>
+        <div class="art" data-kind="Promo banner" data-size="500 × 240" data-desc="&ldquo;Read the Wiki&rdquo; or a community link."></div>
+        <div class="art" style="height:300px" data-kind="Mascot standing art" data-size="500 × 600"
+             data-desc="A small chibi-style character waving, like Ragnarok's Poring corner of the page."></div>
+      </div>
+    </div>
+
+    <div class="win"><div class="fill">
+      <div class="head">The Fourteen Kashira — choose a weapon</div>
+      <div class="body">
+        <div class="kashira">
+          <div class="art standing" id="k-art" data-kind="Character standing art" data-size="900 × 1200, transparent background"></div>
+          <div class="who">
+            <div class="wp" id="k-weapon"></div>
+            <div class="ep" id="k-epithet"></div>
+            <div class="deed" id="k-deed"></div>
+            <p id="k-intro"></p>
+            <div class="picker" id="k-picker"></div>
+            <p style="margin-top:14px"><a href="#guide/playstyles">How weapons and your Ring make your playstyle &rarr;</a></p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="win"><div class="fill">
+      <div class="head">The World <a href="#guide/maps">more</a></div>
+      <div class="body"><div class="biomes" id="home-biomes"></div></div>
+    </div></div>
+
+    <div class="win"><div class="fill">
+      <div class="head">Screenshots <a href="#media">more</a></div>
+      <div class="body"><div class="shots">
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A fight in the field, skills going off."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A town with townsfolk."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="Hills and rock cliffs along a road."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A group taking on an elite."></div>
+      </div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= NEWS ================= -->
+<section class="page" id="p-news">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — News" data-size="1920 × 360" data-desc="A town notice board covered in pinned paper."></div></div>
+  <div class="wrap">
+    <div class="win"><div class="fill">
+      <div class="head">News</div>
+      <div class="body"><ul class="board" id="news-list"></ul></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= GAME GUIDE (wiki pages shown as the site's own) ================= -->
+<section class="page" id="p-guide">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Game Guide" data-size="1920 × 360" data-desc="A charcoal hero opening a large book."></div></div>
+  <div class="wrap">
+    <div class="withside">
+      <div class="win"><div class="fill"><div class="head">Game Guide</div><div class="body sidemenu" id="guide-menu"></div></div></div>
+      <div class="win"><div class="fill"><div class="head" id="guide-title"></div><div class="body doc" id="guide-body"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WIKI ================= -->
+<section class="page" id="p-wiki">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Wiki" data-size="1920 × 360" data-desc="A library of loose pages and open books."></div></div>
+  <div class="wrap">
+    <div class="withside">
+      <div class="win"><div class="fill"><div class="head">Wiki</div><div class="body sidemenu" id="wiki-menu"></div></div></div>
+      <div class="win"><div class="fill"><div class="head" id="wiki-title"></div><div class="body doc" id="wiki-body"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ROADMAP ================= -->
+<section class="page" id="p-roadmap">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Roadmap" data-size="1920 × 360" data-desc="A road winding over hills toward a far city."></div></div>
+  <div class="wrap">
+    <div class="win"><div class="fill"><div class="head">Roadmap</div><div class="body doc" id="roadmap-body"></div></div></div>
+  </div>
+</section>
+
+<!-- ================= SERVER STATUS ================= -->
+<section class="page" id="p-status">
+  <div class="wrap" style="padding-top:18px">
+    <div class="win"><div class="fill"><div class="head">Server Status</div><div class="body doc" id="status-body"></div></div></div>
+  </div>
+</section>
+
+<!-- ================= MEDIA ================= -->
+<section class="page" id="p-media">
+  <div class="wrap" style="padding-top:18px">
+    <div class="win"><div class="fill"><div class="head">Wallpapers</div><div class="body"><div class="gallery">
+      <div class="art wide" data-kind="Wallpaper — key art" data-size="2560 × 1440" data-desc="The main key art without any text, for desktops."></div>
+      <div class="art" data-kind="Wallpaper — a Kashira" data-size="2560 × 1440" data-desc="One of the fourteen weapons, with its epithet."></div>
+      <div class="art" data-kind="Wallpaper — a shadow" data-size="2560 × 1440" data-desc="One of the fourteen shadows, dark against a torn page."></div>
+      <div class="art" data-kind="Wallpaper — phone" data-size="1080 × 2340" data-desc="A tall version of the key art."></div>
+    </div></div></div></div>
+    <div class="win"><div class="fill"><div class="head">Concept art</div><div class="body"><div class="gallery">
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="A flat paper monster, Grassland."></div>
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="A flat paper monster, Snow."></div>
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="An elite, larger and more torn."></div>
+      <div class="art" data-kind="Character concept sheet" data-size="1600 × 1000" data-desc="An unwritten hero from front, side and back, charcoal with a hint of colour."></div>
+      <div class="art" data-kind="Town concept art" data-size="1600 × 1000" data-desc="The first town."></div>
+      <div class="art" data-kind="Item art sheet" data-size="1600 × 1000" data-desc="Weapons and armour laid out like an item catalogue."></div>
+    </div></div></div></div>
+    <div class="win"><div class="fill"><div class="head">Screenshots</div><div class="body"><div class="gallery">
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= DOWNLOAD ================= -->
+<section class="page" id="p-download">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Download" data-size="1920 × 360" data-desc="A hero stepping out of a book page into the world."></div></div>
+  <div class="wrap">
+    <div class="cols2 dl-cols">
+      <div class="win"><div class="fill"><div class="head">Download</div>
+        <div class="body dl">
+          <p>Download the launcher and run it. It downloads the game the first time, keeps it up to date after that, and
+          starts it when you press Start.</p>
+          <div class="dl-grid">
+            <div class="opt"><div class="art tiny" data-kind="Windows icon"></div><a class="btn big" href="download/unwritten-windows.zip" download>Download for Windows</a></div>
+            <div class="opt"><div class="art tiny" data-kind="Mac icon"></div><a class="btn big" href="download/unwritten-mac-arm64.zip" download>Download for Mac (Apple chip)</a></div>
+            <div class="opt"><div class="art tiny" data-kind="Mac icon"></div><a class="btn big" href="download/unwritten-mac-x64.zip" download>Download for Mac (Intel)</a></div>
+          </div>
+          <div class="version" id="version"></div>
+
+          <h3>Windows</h3>
+          <p>Unzip it, open the <b>unwritten</b> folder, and run <b>unwritten-launcher.exe</b>. The game is downloaded into
+          that same folder.</p>
+
+          <h3>Mac</h3>
+          <p>Not sure which chip your Mac has? Open the Apple menu (top left) &#9656; <b>About This Mac</b>. "Chip: Apple M…"
+          means Apple chip; "Processor: Intel…" means Intel.</p>
+          <ol>
+            <li>Open your <b>Downloads</b> folder and double-click the zip. It unzips into <b>unwritten</b>.</li>
+            <li>Double-click <b>unwritten</b>. The first time, the Mac says it could not verify that "unwritten" is free of
+              malware, because the game is not yet registered with Apple. Press <b>Done</b> — not Move to Trash.</li>
+            <li>Open <b>System Settings</b> &#9656; <b>Privacy &amp; Security</b>.</li>
+            <li>Scroll down to the <b>Security</b> section. A line says "unwritten" was blocked, with an <b>Open Anyway</b>
+              button. Press it, and enter your Mac password.</li>
+            <li>Double-click <b>unwritten</b> again and press <b>Open</b>. From then on it opens normally. It downloads the
+              game the first time, then press <b>Start</b>.</li>
+          </ol>
+          <p>If no <b>Open Anyway</b> button appears: open <b>Terminal</b> (Applications &#9656; Utilities &#9656; Terminal),
+          paste this line, press Return, then double-click <b>unwritten</b> again:</p>
+          <p><code>xattr -dr com.apple.quarantine ~/Downloads/unwritten.app</code></p>
+        </div>
+      </div></div>
+      <div>
+        <div class="art" style="height:260px;margin-bottom:18px" data-kind="Launcher screenshot" data-size="1000 × 640"
+             data-desc="The launcher window with its Start button, so players know what they will see."></div>
+        <div class="win"><div class="fill"><div class="head">News</div><div class="body"><ul class="board" id="dl-news"></ul></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>Unwritten</span><span><a href="#download">Download</a> · <a href="#wiki">Wiki</a> · <a href="#roadmap">Roadmap</a></span></div></footer>
+
+<button class="btn fab" id="fab-top" aria-label="Back to top">&uarr;</button>
+<a class="btn big fab" id="fab-download" href="#download">Download</a>
+<div id="mascot">
+  <button class="hide" aria-label="Hide">&times;</button>
+  <div class="art" data-kind="Floating mascot" data-size="240 × 280, transparent background"
+       data-desc="A small chibi-style monster that bobs in the corner of every page, like Ragnarok's Poring."></div>
+</div>
+
+<script>
+// Wiki pages the site shows as its own pages, by manifest id. Every other manifest page is a Wiki page.
+const GUIDE = ['world', 'playstyles', 'maps', 'start'];
+const SITE_PAGES = { home: 'home', roadmap: 'roadmap', status: 'status' };
+const NOT_IN_WIKI = new Set([...GUIDE, ...Object.values(SITE_PAGES)]);
+
+// ---- inline markdown (bold / italic / code / links) used inside block text fields ----
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function inline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\*([^*]+)\*/g, '<i>$1</i>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+}
+const strip = s => String(s).replace(/\*/g, '');
+
+async function getJson(path, fallback) {
+  try {
+    const res = await fetch(path, { cache: 'no-store' });
+    return res.ok ? await res.json() : fallback;
+  } catch (e) { return fallback; }
+}
+
+// ---- generated data: written by the game's editor into content/*.generated.json, read fresh on every page visit ----
+let SKILLS = null, MOBS = null, WORLD = null, ELEMENTS = null, ITEMS = null;
+const uses = (doc, types) => (doc.blocks || []).some(b => b && types.includes(b.type));
+async function ensureGenerated(doc) {
+  SKILLS = MOBS = WORLD = ELEMENTS = ITEMS = null;
+  if ((doc.blocks || []).some(b => b && ((b.type === 'skillTable' && b.source) || b.type === 'skillDatabase')))
+    SKILLS = await getJson('content/skills.generated.json', { skills: [] });
+  if (uses(doc, ['mobTable', 'worldMap'])) MOBS = await getJson('content/monsters.generated.json', { creatures: [] });
+  if (uses(doc, ['worldMap'])) WORLD = await getJson('content/world.generated.json', { maps: [] });
+  if (uses(doc, ['elementTable'])) ELEMENTS = await getJson('content/elements.generated.json', { levels: [] });
+  if (uses(doc, ['equipmentTable', 'materialTable', 'trademarkTable', 'armorVariantTable']))
+    ITEMS = await getJson('content/items.generated.json', { items: [] });
+}
+
+function mobTable() {
+  const all = (MOBS && MOBS.creatures) || [];
+  if (!all.length) return '<p><em>No creatures exported yet — run the Mob Table\'s Save All in the editor.</em></p>';
+  const where = m => (m.homes || []).length ? m.homes.map(h => `${esc(h.name)} ×${h.count}`).join(', ') : '—';
+  return '<div class="dbscroll"><table><thead><tr>' +
+    ['Name', 'Lv', 'Locations', 'Kind', 'Element', 'Size', 'Biome', 'HP', 'ATK', 'DEF', 'FLEE', 'XP', 'Drops'].map(h => `<th>${h}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    all.map(m => '<tr>' +
+      `<td><b>${esc(m.name || m.id)}</b></td><td>${m.level}</td><td class="long">${where(m)}</td><td>${esc(m.kind)}</td>` +
+      `<td>${esc(m.element)} ${m.elementLevel}</td><td>${esc(m.size)}</td><td>${esc(m.biome)}</td>` +
+      `<td>${m.hp}</td><td>${m.atk}</td><td>${m.def}</td><td>${m.flee}</td><td>${m.xp}</td>` +
+      `<td class="long">${esc(m.drops || '')}</td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+
+function worldMap() {
+  const maps = (WORLD && WORLD.maps) || [];
+  if (!maps.length) return '<p><em>No world map exported yet — bake the world map in the editor.</em></p>';
+  const pct = v => (v * 100).toFixed(3) + '%';
+  return `<div class="worldmap"><img src="${esc(WORLD.picture)}" alt="World map">` +
+    maps.map(z => `<a class="zone" data-zone="${esc(z.id)}" style="left:${pct(z.left)};top:${pct(z.top)};` +
+      `width:${pct(z.width)};height:${pct(z.height)}" aria-label="${esc(z.name)}"></a>`).join('') +
+    '</div><div class="zonecard" hidden></div>';
+}
+// Every creature placed on each map, strongest last, read off the creature export's homes.
+function livesOn() {
+  const by = {};
+  ((MOBS && MOBS.creatures) || []).forEach(m => (m.homes || []).forEach(h => {
+    (by[h.map] = by[h.map] || []).push({ name: m.name || m.id, level: m.level, count: h.count });
+  }));
+  Object.values(by).forEach(l => l.sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)));
+  return by;
+}
+function wireWorldMap(root) {
+  const box = root.querySelector('.worldmap'); if (!box) return;
+  const card = root.querySelector('.zonecard');
+  const byId = {}; ((WORLD && WORLD.maps) || []).forEach(z => byId[z.id] = z);
+  const lives = livesOn();
+  const fill = z => {
+    const who = lives[z.id] || [];
+    card.innerHTML = `<div class="zname">${esc(z.name)}</div><div class="ztype">${esc(z.type || '')}</div>` +
+      (z.preview ? `<img src="${esc(z.preview)}" alt="${esc(z.name)} from above">` : '') +
+      '<b>Monsters</b>' + (who.length
+        ? '<ul>' + who.map(c => `<li>${esc(c.name)} — Lv ${c.level} ×${c.count}</li>`).join('') + '</ul>'
+        : '<div>—</div>');
+  };
+  const place = (x, y) => {
+    const r = card.getBoundingClientRect(), pad = 14;
+    let left = x + pad, top = y + pad;
+    if (left + r.width > innerWidth - 8) left = x - r.width - pad;
+    if (top + r.height > innerHeight - 8) top = Math.max(8, innerHeight - r.height - 8);
+    card.style.left = Math.max(8, left) + 'px'; card.style.top = top + 'px';
+  };
+  let shown = null;
+  const show = (el, x, y) => {
+    if (shown !== el) { if (shown) shown.classList.remove('on'); shown = el; el.classList.add('on'); fill(byId[el.dataset.zone]); card.hidden = false; }
+    place(x, y);
+  };
+  const hide = () => { if (shown) shown.classList.remove('on'); shown = null; card.hidden = true; };
+  box.querySelectorAll('.zone').forEach(el => {
+    el.addEventListener('mousemove', e => show(el, e.clientX, e.clientY));
+    el.addEventListener('mouseleave', hide);
+    // A touch screen has no hover: a tap shows the card, a second tap on the same map hides it.
+    el.addEventListener('click', e => { e.preventDefault(); if (shown === el) hide(); else show(el, e.clientX, e.clientY); });
+  });
+}
+
+function elementTable() {
+  const levels = (ELEMENTS && ELEMENTS.levels) || [], names = (ELEMENTS && ELEMENTS.elements) || [];
+  if (!levels.length) return '<p><em>No element chart exported yet — open the editor once to write it.</em></p>';
+  return levels.map(l => `<h2>Level ${l.level}</h2><div class="xscroll"><table><thead><tr><th>Attack ↓</th>` +
+    names.map(n => `<th>${esc(n)}</th>`).join('') + '</tr></thead><tbody>' +
+    l.rows.map(r => `<tr><td><b>${esc(r.attack)}</b></td>` + r.percent.map(p => `<td>${p}%</td>`).join('') + '</tr>').join('') +
+    '</tbody></table></div>').join('');
+}
+
+const dash = v => (v === undefined || v === null || v === '' || v === 0) ? '—' : v;
+const descCell = d => d ? String(d).split('\n').filter(x => x.trim()).map(x => `<div>${inline(x)}</div>`).join('') : '—';
+function itemRows(headers, list, row) {
+  if (!list.length) return '<p><em>No items exported yet — run the item export in the editor.</em></p>';
+  return '<div class="dbscroll"><table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>' +
+    list.map(it => '<tr>' + row(it) + '</tr>').join('') + '</tbody></table></div>';
+}
+function equipmentTable() {
+  const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Weapon' || it.type === 'Armor')
+    .sort((a, b) => a.slotOrder - b.slotOrder || a.name.localeCompare(b.name));
+  return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Forge cost', 'Card slots', 'Block chance', 'Weight', 'Sells for'], list, it =>
+    `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>` +
+    `<td>${esc(dash(it.weaponType))}</td><td>${dash(it.reach)}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
+    `<td>${it.forgeUnits > 0 ? `${it.forgeUnits} ${esc(it.forgeMaterial)} + ${it.forgeGold} gold` : '—'}</td>` +
+    `<td>${dash(it.cardSlots)}</td><td>${esc(dash(it.blockChance))}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+}
+function materialTable() {
+  const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Material')
+    .sort((a, b) => a.materialKindOrder - b.materialKindOrder || a.materialStep - b.materialStep || a.name.localeCompare(b.name));
+  // Who drops it, grouped by the chance and count they drop it at, likeliest first — the way /whodrops answers.
+  const droppers = it => {
+    const groups = {};
+    (it.droppedBy || []).forEach(s => { const k = s.chance + (s.count !== '1' ? ' ×' + s.count : ''); (groups[k] = groups[k] || []).push(s); });
+    const keys = Object.keys(groups).sort((a, b) => parseFloat(b) - parseFloat(a));
+    return keys.length ? keys.map(k => `<div><b>${esc(k)}</b> — ` +
+      groups[k].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name)).map(s => esc(s.name)).join(', ') + '</div>').join('') : '—';
+  };
+  return itemRows(['Name', 'Description', 'Kind', 'Band / Tier', 'Merges into', 'Dropped by', 'Weight', 'Sells for'], list, it =>
+    `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.materialKind)}</td>` +
+    `<td>${it.materialKind === 'Ink' || it.materialKind === 'Salt' ? 'Tier' : 'Band'} ${it.materialStep}</td>` +
+    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+}
+// Every trademark a forge can roll, and what it raises at each grade.
+function trademarkTable() {
+  const grades = (ITEMS && ITEMS.grades) || [], list = (ITEMS && ITEMS.trademarks) || [];
+  return itemRows(['Name', 'Weapon', 'Chance'].concat(grades), list, t =>
+    `<td><b>${esc(t.name)}</b></td><td>${esc(t.weapon)}</td><td>${esc(t.chance)}</td>` +
+    (t.byGrade || []).map(g => `<td>${(g.lines || []).length ? g.lines.map(l => `<div>${esc(l)}</div>`).join('') : '—'}</td>`).join(''));
+}
+// Every armour word, the slot that rolls it, the pieces worn there, and what it does at each grade.
+function armorVariantTable() {
+  const grades = (ITEMS && ITEMS.grades) || [];
+  const list = ((ITEMS && ITEMS.words) || []).slice().sort((a, b) => a.slotOrder - b.slotOrder || a.name.localeCompare(b.name));
+  const pieces = slot => ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Armor' && it.slot === slot).map(it => esc(it.name)).join(', ') || '—';
+  return itemRows(['Variant', 'Slot', 'Pieces', 'Chance'].concat(grades), list, w =>
+    `<td><b>${esc(w.name)}</b></td><td>${esc(w.slot)}</td><td class="long">${pieces(w.slot)}</td><td>${esc(w.chance)}</td>` +
+    (w.byGrade || []).map(g => `<td>${esc(g)}</td>`).join(''));
+}
+
+// Which bucket a generated skill belongs to. The three are mutually exclusive and come straight from the asset.
+function skillGroup(s) { return s.ultimate ? 'ultimate' : (s.passive ? 'passive' : 'active'); }
+// Every exported skill as one table row: the same numbers, description and effect lines the cards print.
+function skillDatabase() {
+  const all = ((SKILLS && SKILLS.skills) || []).slice();
+  if (!all.length) return '<p><em>No skills exported yet — run the Skill Composer\'s export.</em></p>';
+  const order = { ultimate: 0, active: 1, passive: 2 }, label = { ultimate: 'Ultimate', active: 'Active', passive: 'Passive' };
+  const colors = SKILLS.weaponColors || {};
+  all.sort((a, b) => a.weapon.localeCompare(b.weapon) || order[skillGroup(a)] - order[skillGroup(b)] || (a.name || '').localeCompare(b.name || ''));
+  const sym = s => { const c = colors[s.weapon]; const tint = c ? ` style="color:${esc(c)};border-color:${esc(c)}"` : '';
+                     return s.symbol ? `<span class="sym"${tint}>${esc(s.symbol)}</span>` : ''; };
+  return '<div class="dbscroll"><table><thead><tr>' +
+    ['Name', 'Description', 'Weapon', 'Form', 'Type', 'Trigger', 'MP', 'CD', 'Cast', 'Range', 'Effects'].map(h => `<th>${h}</th>`).join('') +
+    '</tr></thead><tbody>' +
+    all.map(s => '<tr>' +
+      `<td>${sym(s)}<b>${esc(s.name || s.id)}</b></td>` +
+      `<td class="long">${descCell(s.description)}</td>` +
+      `<td>${esc(s.weapon)}</td><td>${esc(s.form || '—')}</td>` +
+      `<td>${label[skillGroup(s)]}</td><td>${inline(s.trigger || '—')}</td>` +
+      `<td>${s.manaCost}</td><td>${s.cooldown}s</td><td>${s.castTime > 0 ? s.castTime + 's' : 'Instant'}</td>` +
+      `<td>${s.castRange > 0 ? s.castRange : '—'}</td>` +
+      `<td class="long">${(s.effects || []).length ? '<ul>' + s.effects.map(e => `<li>${inline(e)}</li>`).join('') + '</ul>' : '—'}</td>` +
+      '</tr>').join('') + '</tbody></table></div>';
+}
+function skillIcon(s) {
+  if (s.icon) return `<span class="icon"><img src="${esc(s.icon)}" alt="${esc(s.name || '')}"></span>`;
+  // A skill's two-letter symbol, worn in its weapon's colour — the same pair the game puts on a tile.
+  const sym = (s.symbol || '').trim();
+  const tint = s.color ? ` style="color:${esc(s.color)};border-color:${esc(s.color)}"` : '';
+  return `<span class="icon"${tint}>${esc(sym || (s.name || '?').trim().slice(0, 1))}</span>`;
+}
+function skillTable(b) {
+  let h = b.subtitle ? `<p class="skill-sub">${inline(b.subtitle)}</p>` : '';
+  let list = b.skills || [];
+  if (b.source) {
+    const all = (SKILLS && SKILLS.skills) || [];
+    list = all.filter(s => s.weapon === b.source && (!b.group || skillGroup(s) === b.group))
+      .map(s => ({ name: s.name, form: s.form, symbol: s.symbol, color: (SKILLS.weaponColors || {})[s.weapon], cost: s.cost,
+                   flavor: s.description, effects: s.effects || [], trigger: s.trigger, trademark: s.trademark, unpublished: !s.published }));
+    if (!list.length) return h + `<p class="skill-sub"><em>No ${esc(b.group || '')} skills exported for ${esc(b.source)} yet — run the Skill Composer's export.</em></p>`;
+  }
+  h += '<div class="skillgrid">';
+  list.forEach(s => {
+    h += '<div class="skillcard">' + skillIcon(s) + '<div class="body">' +
+      `<div class="head"><span class="name">${inline(s.name || '')}</span>` +
+      (s.unpublished ? '<span class="cost"><em>not in the game yet</em></span>' : (s.cost ? `<span class="cost">${inline(s.cost)}</span>` : '')) + '</div>' +
+      (s.form ? `<div class="flavor"><em>${inline(s.form)}</em></div>` : '') +
+      (s.trigger ? `<div class="flavor"><b>${inline(s.trigger)}</b></div>` : '') +
+      (s.trademark ? `<div class="flavor">Trademark weapon: <b>${inline(s.trademark)}</b></div>` : '') +
+      (s.flavor ? String(s.flavor).split('\n').filter(x => x.trim()).map(x => `<div class="flavor">${inline(x)}</div>`).join('') : '') +
+      (s.effects && s.effects.length
+        ? '<ul class="effect">' + s.effects.map(e => `<li>${inline(e)}</li>`).join('') + '</ul>'
+        : (s.effect ? `<div class="effect">${inline(s.effect)}</div>` : '')) +
+      '</div></div>';
+  });
+  return h + '</div>';
+}
+
+function block(b) {
+  switch (b && b.type) {
+    case 'lede': return `<p class="lede">${inline(b.text)}</p>`;
+    case 'heading': { const n = Math.min(6, Math.max(2, b.level || 2)); return `<h${n}>${inline(b.text)}</h${n}>`; }
+    case 'paragraph': return `<p>${inline(b.text)}</p>`;
+    case 'hr': return '<hr>';
+    case 'quote':
+    case 'callout': { const t = Array.isArray(b.text) ? b.text : [b.text]; return '<blockquote>' + t.map(x => `<p>${inline(x)}</p>`).join('') + '</blockquote>'; }
+    case 'list': { const tag = b.ordered ? 'ol' : 'ul'; return `<${tag}>` + (b.items || []).map(x => `<li>${inline(x)}</li>`).join('') + `</${tag}>`; }
+    case 'table': return '<div class="tablewrap"><table><thead><tr>' + (b.headers || []).map(h => `<th>${inline(h)}</th>`).join('') + '</tr></thead><tbody>' +
+      (b.rows || []).map(r => '<tr>' + r.map(c => `<td>${inline(c)}</td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
+    case 'image': return `<figure class="fig"><img src="${esc(b.src)}" alt="${esc(b.alt || '')}">` + (b.caption ? `<figcaption>${inline(b.caption)}</figcaption>` : '') + '</figure>';
+    case 'skillTable': return skillTable(b);
+    case 'skillDatabase': return skillDatabase();
+    case 'mobTable': return mobTable();
+    case 'worldMap': return worldMap();
+    case 'elementTable': return elementTable();
+    case 'equipmentTable': return equipmentTable();
+    case 'materialTable': return materialTable();
+    case 'trademarkTable': return trademarkTable();
+    case 'armorVariantTable': return armorVariantTable();
+    case 'serverStats': return `<div class="livestats" data-from="${esc(b.from || '')}"><p class="loading">Asking the server…</p></div>`;
+    // Items draw in array order; an unknown state falls back to planned so a typo never draws a finished dot.
+    case 'timeline': return '<ul class="timeline">' + (b.items || []).map(it => {
+      const st = ['done', 'now', 'planned'].includes(it.state) ? it.state : 'planned';
+      return `<li class="${st}"><div class="when">${inline(String(it.when || ''))}</div>` +
+        (it.title ? `<div class="ttl">${inline(String(it.title))}</div>` : '') +
+        (it.text ? `<div>${inline(String(it.text))}</div>` : '') + '</li>';
+    }).join('') + '</ul>';
+    default: return '';
+  }
+}
+const render = blocks => (blocks || []).map(block).join('');
+
+// ---- live server numbers ---------------------------------------------------------------------------------------
+// The character server works its answer out once every 5 seconds and hands everyone the same copy, so asking
+// faster than that cannot produce a newer number. Where to ask is the serverStats block's own "from" address on the
+// Server Status page — the one place it is written.
+const ASK_EVERY_MS = 5000;
+let statsTimer = null;
+function stopLiveStats() { if (statsTimer) { clearInterval(statsTimer); statsTimer = null; } }
+const num = n => (n === null || n === undefined) ? '—' : Number(n).toLocaleString();
+const ago = s => s < 60 ? s + 's ago' : (m => m + (m === 1 ? ' min ago' : ' mins ago'))(Math.floor(s / 60));
+
+function statsHtml(d) {
+  let h = '<div class="tiles">' +
+    `<div class="tile"><div class="n">${num(d.playersOnline)}</div><div class="k">Players online</div></div>` +
+    `<div class="tile"><div class="n">${num(d.mapsOnline)}</div><div class="k">Maps standing</div></div>` +
+    `<div class="tile"><div class="n">${num((d.servers || []).length)}</div><div class="k">World processes</div></div></div>`;
+  const servers = d.servers || [];
+  h += '<h2>Where the world is running</h2>';
+  h += servers.length
+    ? '<div class="tablewrap"><table><thead><tr><th>Process</th><th>Maps it is holding</th><th>Players</th><th>Creatures</th><th>Last heard</th></tr></thead><tbody>' +
+      servers.map(s => '<tr>' + `<td>${esc(s.id || '')}</td>` +
+        `<td>${(s.maps || []).length ? s.maps.map(esc).join(', ') : '<em>none yet</em>'}</td>` +
+        `<td class="num">${num(s.players)}</td><td class="num">${num(s.creatures)}</td>` +
+        `<td class="num">${ago(s.lastHeardSecondsAgo || 0)}</td></tr>`).join('') + '</tbody></table></div>'
+    : '<p><em>No world process is running right now, so nobody can be online.</em></p>';
+  const top = d.topPlayers || [];
+  h += '<h2>Most experienced adventurers</h2>';
+  h += top.length
+    ? '<div class="tablewrap"><table><thead><tr><th>#</th><th>Name</th><th>Level</th><th>Experience earned</th></tr></thead><tbody>' +
+      top.map(p => '<tr>' + `<td class="num">${num(p.rank)}</td><td>${esc(p.name || '')}</td><td class="num">${num(p.level)}</td>` +
+        // A character last saved before the game began recording a lifetime total has none: shown as such, not as 0.
+        `<td class="num">${p.lifetimeXp === null || p.lifetimeXp === undefined ? '<em>not recorded</em>' : num(p.lifetimeXp)}</td></tr>`).join('') +
+      '</tbody></table></div>'
+    : '<p><em>Nobody has been played yet.</em></p>';
+  return h + '<p class="asof">Re-read every 5 seconds. A level reaches the database within 15 seconds of being earned, and a world process reports its player count every 30, so those two can be that far behind.</p>';
+}
+const UNREACHABLE = '<b>Cannot reach the character server.</b> It may be stopped, or it may not be allowing this page to read it (its WIKI_ORIGINS setting).';
+
+async function askStats(from) {
+  const res = await fetch(from, { cache: 'no-store' });
+  if (!res.ok) throw new Error('the server answered ' + res.status);
+  return res.json();
+}
+async function fillStatusBox(box) {
+  const from = box.dataset.from;
+  if (!from) { box.innerHTML = '<p class="down">This page was not told where to read the numbers from.</p>'; return; }
+  try { box.innerHTML = statsHtml(await askStats(from)); }
+  catch (e) { box.innerHTML = `<p class="down">${UNREACHABLE}</p>`; }
+}
+async function fillHomeTiles(from) {
+  const line = document.getElementById('home-status-line');
+  const set = (p, m, s) => { document.getElementById('home-players').textContent = p; document.getElementById('home-maps').textContent = m; document.getElementById('home-procs').textContent = s; };
+  try {
+    const d = await askStats(from);
+    set(num(d.playersOnline), num(d.mapsOnline), num((d.servers || []).length));
+    line.innerHTML = '<span class="dot up"></span>' + ((d.servers || []).length ? 'The world is up' : 'No world process is running');
+  } catch (e) {
+    set('—', '—', '—');
+    line.innerHTML = '<span class="dot down"></span>Cannot reach the character server';
+  }
+}
+function startLiveStats(fn) { stopLiveStats(); fn(); statsTimer = setInterval(fn, ASK_EVERY_MS); }
+
+// ---- reserved art boxes ----
+function fillArt(root) {
+  root.querySelectorAll('.art').forEach(a => {
+    if (a.dataset.done) return;
+    a.dataset.done = 1;
+    a.innerHTML = '<div class="here">IMAGE ART HERE</div>' +
+      `<div class="kind">${esc(a.dataset.kind || '')}</div>` +
+      (a.dataset.size ? `<div class="size">${esc(a.dataset.size)}</div>` : '') +
+      (a.dataset.desc ? `<div class="desc">${a.dataset.desc}</div>` : '');
+  });
+}
+
+// ---- the site ----------------------------------------------------------------------------------------------------
+let MANIFEST = { groups: [] };
+const PAGES = {};
+const pageDoc = p => getJson('content/' + p.file, null);
+const statusFrom = async () => {
+  const doc = PAGES[SITE_PAGES.status] && await pageDoc(PAGES[SITE_PAGES.status]);
+  const b = doc && (doc.blocks || []).find(x => x.type === 'serverStats');
+  return b ? b.from : '';
+};
+
+function newsBoard(items, n, withText) {
+  if (!items.length) return '<li class="empty">No news yet.</li>';
+  return items.slice(0, n).map(x => `<li><span class="d">${esc(x.date)}</span><span class="t">${esc(x.title)}` +
+    (withText ? `<span class="x">${esc(x.text)}</span>` : '') + '</span></li>').join('');
+}
+
+async function showDoc(id, titleEl, bodyEl, art) {
+  const p = PAGES[id];
+  bodyEl.innerHTML = '<div class="loading">Loading…</div>';
+  const doc = p && await pageDoc(p);
+  if (!doc) { titleEl.textContent = 'Page not found'; bodyEl.innerHTML = `<p>${esc(p ? p.file : id)} could not be read.</p>`; return; }
+  await ensureGenerated(doc);
+  titleEl.textContent = p.title;
+  bodyEl.innerHTML = (art || '') + `<h1>${inline(doc.title || p.title)}</h1>` + render(doc.blocks);
+  fillArt(bodyEl);
+  wireWorldMap(bodyEl);
+  const boxes = Array.from(bodyEl.querySelectorAll('.livestats'));
+  if (boxes.length) startLiveStats(() => boxes.forEach(fillStatusBox));
+}
+
+async function buildHome() {
+  const home = PAGES[SITE_PAGES.home] && await pageDoc(PAGES[SITE_PAGES.home]);
+  if (home) {
+    const blocks = home.blocks || [];
+    const lead = blocks.find(b => b.type === 'paragraph');
+    if (lead) { const t = lead.text; document.getElementById('home-tagline').innerHTML = '<b>Unwritten</b> — ' + inline(t.slice(t.indexOf('— ') + 2).replace(/\*$/, '')); }
+    const i = blocks.findIndex(b => b.type === 'heading' && b.text === 'What is Unwritten?');
+    const j = blocks.findIndex((b, k) => k > i && b.type === 'heading');
+    if (i >= 0) document.getElementById('home-what').innerHTML = render(blocks.slice(i + 1, j < 0 ? undefined : j));
+  }
+
+  const world = PAGES.world && await pageDoc(PAGES.world);
+  const wb = (world && world.blocks) || [];
+  const kTable = wb.find(b => b.type === 'table');
+  const kHead = wb.findIndex(b => b.type === 'heading' && b.text === 'The Fourteen Kashira');
+  if (kHead >= 0 && wb[kHead + 1]) document.getElementById('k-intro').innerHTML = inline(wb[kHead + 1].text);
+  const picker = document.getElementById('k-picker');
+  const pick = n => {
+    const r = kTable.rows[n];
+    [...picker.children].forEach((b, k) => b.classList.toggle('on', k === n));
+    replay(document.getElementById('k-art'), 'swap');
+    replay(document.querySelector('.kashira .who'), 'swap');
+    document.getElementById('k-weapon').textContent = strip(r[0]).toUpperCase();
+    document.getElementById('k-epithet').innerHTML = inline(r[1]);
+    document.getElementById('k-deed').innerHTML = inline(r[2]);
+    const a = document.getElementById('k-art');
+    a.dataset.done = '';
+    a.dataset.desc = `An unwritten hero — charcoal body, a first hint of colour — holding a ${esc(strip(r[0]).toLowerCase())}, posed the way ${esc(strip(r[1]))} fought. One picture per weapon, fourteen in all.`;
+    fillArt(a.parentElement);
+  };
+  if (kTable) {
+    kTable.rows.forEach((r, n) => {
+      const b = document.createElement('button');
+      b.innerHTML = `<div class="art tiny" data-kind="Weapon icon"></div><span>${esc(strip(r[0]))}</span>`;
+      b.onclick = () => pick(n);
+      picker.append(b);
+    });
+    fillArt(picker);
+    pick(0);
+  }
+
+  const maps = PAGES.maps && await pageDoc(PAGES.maps);
+  const biomes = maps && (maps.blocks || []).find(b => b.type === 'list');
+  if (biomes) {
+    const box = document.getElementById('home-biomes');
+    box.innerHTML = biomes.items.map(it => {
+      const name = strip(it.split('—')[0]).trim();
+      return `<div class="card"><div class="art" data-kind="Biome landscape art" data-size="800 × 500" data-desc="${esc(name)}."></div>` +
+        `<div class="txt">${inline(it)}</div><div class="art mob tiny" data-kind="${esc(name)} monster art"></div></div>`;
+    }).join('');
+    fillArt(box);
+    watchReveal(box);
+  }
+}
+
+// ---- motion: boxes rise in as they scroll into view; the top bar, the floating buttons and the mascot follow the scroll ----
+const REVEAL = '.win, .biomes .card, .shots .art, .gallery .art, .side-banners .art';
+const revealer = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+  // Boxes that arrive together appear one after another, 80 ms apart.
+  entries.filter(e => e.isIntersecting).forEach((e, i) => {
+    e.target.style.transitionDelay = (i * 80) + 'ms';
+    e.target.classList.add('in');
+    revealer.unobserve(e.target);
+  });
+}, { threshold: 0.08 }) : null;
+function watchReveal(root) {
+  root.querySelectorAll(REVEAL).forEach(el => {
+    if (el.classList.contains('reveal')) return;
+    if (!revealer) return;
+    el.classList.add('reveal');
+    revealer.observe(el);
+  });
+}
+// Starts a one-shot animation again on an element that already ran it.
+function replay(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+const header = document.querySelector('header.top');
+const fabTop = document.getElementById('fab-top'), fabDownload = document.getElementById('fab-download');
+const hero = document.querySelector('#p-home .hero'), heroArt = hero.querySelector(':scope > .art');
+const lessMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let scrollQueued = false;
+// The sticky columns sit just under the top bar, so they need its height — which changes as it shrinks.
+function measureHeader() { document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px'); }
+function onScroll() {
+  scrollQueued = false;
+  const y = window.scrollY, page = (location.hash.slice(1) || 'home').split('/')[0];
+  header.classList.toggle('shrunk', y > 80);
+  fabTop.classList.toggle('show', y > window.innerHeight);
+  const past = page === 'home' ? y > hero.offsetTop + hero.offsetHeight : y > 300;
+  fabDownload.classList.toggle('show', page !== 'download' && past);
+  // The Home banner's picture scrolls at 65% of the page's speed, so it seems to sit further back.
+  if (page === 'home' && !lessMotion.matches && y < hero.offsetTop + hero.offsetHeight)
+    heroArt.style.transform = `translateY(${Math.round(y * 0.35)}px)`;
+}
+addEventListener('scroll', () => { if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(onScroll); } }, { passive: true });
+header.addEventListener('transitionend', measureHeader);
+addEventListener('resize', measureHeader);
+measureHeader();
+fabTop.addEventListener('click', () => { stopWheel(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+// ---- smooth mouse wheel ----------------------------------------------------------------------------------------
+// A browser moves the page a whole wheel notch in one frame, and the page's smooth-scroll style does not apply to
+// the wheel. So a mouse wheel's notch is taken here instead: it moves a target, and every frame the page closes 14%
+// of the gap to it (scaled to the real frame time), so it glides and settles. A touchpad's small, frequent steps are
+// left to the browser, which already glides them; so is a wheel over a box that scrolls by itself (a database table,
+// a long side menu), ctrl + wheel (zoom), and every visitor who asks their computer for less motion.
+const wheel = { current: 0, target: 0, running: false, last: 0 };
+const maxScroll = () => document.documentElement.scrollHeight - window.innerHeight;
+function stopWheel() { wheel.running = false; }
+function scrollsItself(el, dy) {
+  for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    const oy = getComputedStyle(el).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1)
+      if (dy > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0) return true;
+  }
+  return false;
+}
+function wheelFrame(now) {
+  if (!wheel.running) return;
+  const dt = Math.min(64, now - (wheel.last || now)); wheel.last = now;
+  const gap = wheel.target - wheel.current;
+  if (Math.abs(gap) < 0.5) { wheel.current = wheel.target; wheel.running = false; }
+  else wheel.current += gap * (1 - Math.pow(1 - 0.14, dt / 16.67));
+  window.scrollTo({ top: wheel.current, behavior: 'instant' });
+  if (wheel.running) requestAnimationFrame(wheelFrame);
+}
+addEventListener('wheel', e => {
+  if (e.ctrlKey || lessMotion.matches || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+  const dy = e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? window.innerHeight : 1);
+  if (e.deltaMode === 0 && Math.abs(dy) < 50 && !wheel.running) return;
+  if (scrollsItself(e.target, dy)) return;
+  e.preventDefault();
+  if (!wheel.running) { wheel.current = wheel.target = window.scrollY; wheel.last = 0; }
+  wheel.target = Math.max(0, Math.min(maxScroll(), wheel.target + dy));
+  if (!wheel.running) { wheel.running = true; requestAnimationFrame(wheelFrame); }
+}, { passive: false });
+// Dragging the scroll bar or pressing a key mid-glide takes the page back from the wheel.
+addEventListener('scroll', () => { if (wheel.running && Math.abs(window.scrollY - wheel.current) > 3) stopWheel(); }, { passive: true });
+addEventListener('keydown', stopWheel);
+addEventListener('mousedown', stopWheel);
+
+const mascot = document.getElementById('mascot');
+try { if (sessionStorage.getItem('mascot-hidden')) mascot.hidden = true; } catch (e) {}
+mascot.querySelector('.hide').addEventListener('click', () => {
+  mascot.hidden = true;
+  try { sessionStorage.setItem('mascot-hidden', '1'); } catch (e) {}
+});
+
+function buildMenus() {
+  document.getElementById('guide-menu').innerHTML = GUIDE.filter(id => PAGES[id])
+    .map(id => `<a href="#guide/${id}" data-id="${id}">${esc(PAGES[id].title)}</a>`).join('');
+  const groups = MANIFEST.groups.map(g => ({ title: g.title, pages: g.pages.filter(p => !NOT_IN_WIKI.has(p.id)) })).filter(g => g.pages.length);
+  document.getElementById('wiki-menu').innerHTML = '<a href="#wiki" data-id="">Wiki home</a>' +
+    groups.map(g => `<div class="grp">${esc(g.title)}</div>` + g.pages.map(p =>
+      `<a href="#wiki/${p.id}" data-id="${p.id}">${esc(p.title)}${p.tag ? ` <span class="tagged">${esc(p.tag)}</span>` : ''}</a>`).join('')).join('');
+  return groups;
+}
+
+let WIKI_GROUPS = [];
+function showWikiHome() {
+  document.getElementById('wiki-title').textContent = 'Wiki';
+  document.getElementById('wiki-body').innerHTML = '<div class="wikihome">' + WIKI_GROUPS.map(g =>
+    `<div><h3>${esc(g.title)}</h3><ul>${g.pages.map(p => `<li><a href="#wiki/${p.id}">${esc(p.title)}</a></li>`).join('')}</ul></div>`).join('') + '</div>';
+}
+
+let NEWS = [];
+async function route() {
+  const [name, sub] = (location.hash.slice(1) || 'home').split('/');
+  const id = document.getElementById('p-' + name) ? name : 'home';
+  stopLiveStats();
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+  // A new page opens at its top at once; smooth scrolling is for movement within a page.
+  stopWheel();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  onScroll();
+  // Read once per visit to Home, never on a timer: only the Server Status page keeps asking while it is open.
+  if (id === 'home') { const from = await statusFrom(); if (from) fillHomeTiles(from); }
+  if (id === 'guide') {
+    const g = GUIDE.includes(sub) && PAGES[sub] ? sub : GUIDE.find(x => PAGES[x]);
+    document.querySelectorAll('#guide-menu a').forEach(a => a.classList.toggle('on', a.dataset.id === g));
+    if (g) await showDoc(g, document.getElementById('guide-title'), document.getElementById('guide-body'),
+      `<div class="art doc-art" data-kind="Guide illustration" data-size="1200 × 500" data-desc="A picture for &ldquo;${esc(PAGES[g].title)}&rdquo;."></div>`);
+  }
+  if (id === 'wiki') {
+    const w = sub && PAGES[sub] && !NOT_IN_WIKI.has(sub) ? sub : '';
+    document.querySelectorAll('#wiki-menu a').forEach(a => a.classList.toggle('on', a.dataset.id === w));
+    if (w) await showDoc(w, document.getElementById('wiki-title'), document.getElementById('wiki-body'));
+    else showWikiHome();
+  }
+  if (id === 'roadmap' && PAGES[SITE_PAGES.roadmap]) {
+    const doc = await pageDoc(PAGES[SITE_PAGES.roadmap]);
+    document.getElementById('roadmap-body').innerHTML = doc ? render(doc.blocks) : '<p>The roadmap could not be read.</p>';
+  }
+  if (id === 'status' && PAGES[SITE_PAGES.status]) {
+    const doc = await pageDoc(PAGES[SITE_PAGES.status]);
+    const body = document.getElementById('status-body');
+    body.innerHTML = doc ? render(doc.blocks) : '<p>The status page could not be read.</p>';
+    const boxes = Array.from(body.querySelectorAll('.livestats'));
+    if (boxes.length) startLiveStats(() => boxes.forEach(fillStatusBox));
+  }
+}
+
+async function boot() {
+  fillArt(document);
+  watchReveal(document);
+  MANIFEST = await getJson('content/manifest.json', { groups: [] });
+  MANIFEST.groups.forEach(g => g.pages.forEach(p => PAGES[p.id] = p));
+  WIKI_GROUPS = buildMenus();
+
+  // The launcher's own files: the version it downloads and the news it shows.
+  NEWS = await getJson('news.json', []);
+  if (!Array.isArray(NEWS)) NEWS = [];
+  document.getElementById('home-news').innerHTML = newsBoard(NEWS, 6, false);
+  document.getElementById('news-list').innerHTML = newsBoard(NEWS, 99, true);
+  document.getElementById('dl-news').innerHTML = newsBoard(NEWS, 4, false);
+  fetch('version.txt', { cache: 'no-store' }).then(r => r.ok ? r.text() : '').then(v => {
+    if (v.trim()) document.getElementById('version').textContent = 'Version ' + v.trim();
+  }).catch(() => {});
+
+  await buildHome();
+  addEventListener('hashchange', route);
+  route();
+}
+boot();
+</script>
+</body>
+</html>

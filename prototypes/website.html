@@ -1,0 +1,596 @@
+<!doctype html>
+<!--
+  PROTOTYPE of the main website: Home, News, Game Guide, Wiki, Roadmap, Server Status, Media, Download.
+  Colours and fonts come only from ui-tokens.css (the game's own light theme). Every text taken from the wiki is
+  the wiki's own JSON, embedded below by a one-off copy — the Game Guide, Roadmap, Server Status and Wiki pages
+  are drawn from it, never retyped. Boxes marked IMAGE ART HERE are reserved for art made later.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unwritten</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--panel-raise); color: var(--text-main); font: 15px/1.55 var(--font-ui); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- header + nav ---------- */
+  header.top { background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+               border-bottom: 2px solid var(--window-edge); }
+  header.top .wrap { display: flex; align-items: center; gap: 18px; min-height: 76px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
+  .logo { width: 210px; height: 60px; flex: none; }
+  nav.main { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+  nav.main a { color: var(--title-text); font-weight: 700; padding: 8px 12px; border-radius: 3px; border: 1px solid transparent; }
+  nav.main a:hover { text-decoration: none; background: var(--hover); border-color: var(--accent); }
+  nav.main a.on { background: var(--slot-fill); border-color: var(--window-edge); }
+  .btn { display: inline-block; padding: 10px 22px; border-radius: 3px; font-weight: 700; cursor: pointer;
+         background: var(--button-fill); border: 1px solid var(--button-edge); color: var(--button-text); }
+  .btn:hover { background: var(--hover); border-color: var(--accent); text-decoration: none; }
+  .btn.big { background: var(--accent); border-color: var(--window-edge); color: var(--text-on-dim); font-size: 17px; padding: 12px 28px; }
+  .btn.big:hover { background: var(--window-edge); }
+
+  /* ---------- the game's window, used for every box on the site ---------- */
+  .win { background: var(--window-edge); padding: 2px; border-radius: 5px; margin-bottom: 18px; }
+  .win > .fill { background: var(--panel-fill); border-radius: 4px; overflow: hidden; }
+  .win .head { min-height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 4px 12px;
+               background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
+               color: var(--title-text); font-weight: 700; font-size: 14px; }
+  .win .head a { font-weight: 400; font-size: 13px; }
+  .win .body { padding: 14px 16px; }
+
+  /* ---------- reserved art box ---------- */
+  .art { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+         gap: 4px; padding: 12px; border: 2px dashed var(--window-edge); border-radius: 4px; color: var(--title-text);
+         background: repeating-linear-gradient(45deg, var(--hover) 0 14px, var(--panel-raise) 14px 28px); overflow: hidden; }
+  .art .here { font: 16px var(--font-pixel); letter-spacing: 1px; color: var(--accent); }
+  .art .kind { font-weight: 700; font-size: 14px; }
+  .art .size { font-size: 12px; color: var(--text-dim); }
+  .art .desc { font-size: 12px; color: var(--text-dim); max-width: 46ch; }
+  .art.tiny .desc, .art.tiny .size { display: none; }
+  .art.tiny .here { font-size: 11px; }
+  .art.tiny .kind { font-size: 11px; }
+
+  /* ---------- home ---------- */
+  .hero { position: relative; height: 440px; margin: 0 0 18px; }
+  .hero .art { height: 100%; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; justify-content: flex-start; padding-top: 40px; }
+  .hero .over { position: absolute; left: 0; right: 0; bottom: 28px; text-align: center; padding: 0 16px; }
+  .hero .over .tag { display: inline-block; background: var(--panel-fill); border: 2px solid var(--window-edge); border-radius: 5px;
+                     padding: 10px 18px; margin-bottom: 14px; max-width: 760px; color: var(--title-text); }
+  .cols3 { display: grid; grid-template-columns: 270px 1fr 250px; gap: 18px; align-items: start; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .dl-cols { grid-template-columns: 2fr 1fr; }
+  .cols3 > *, .cols2 > *, .withside > *, .kashira > * { min-width: 0; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tile { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; padding: 8px 4px; text-align: center; }
+  .tile .n { font: 20px var(--font-pixel); color: var(--title-text); }
+  .tile .k { font-size: 11px; color: var(--text-dim); line-height: 1.2; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--good); margin-right: 6px; }
+  .board { list-style: none; margin: 0; padding: 0; }
+  .board li { display: flex; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .board li:last-child { border-bottom: 0; }
+  .board .d { flex: none; width: 92px; color: var(--text-dim); font-size: 13px; }
+  .board .t { flex: 1; color: var(--text-main); font-weight: 700; }
+  .board li:hover { background: var(--hover); }
+  .linklist { list-style: none; margin: 0; padding: 0; }
+  .linklist li { padding: 5px 0; border-bottom: 1px solid var(--rule); }
+  .linklist li:last-child { border-bottom: 0; }
+  .side-banners .art { height: 120px; margin-bottom: 10px; }
+
+  /* Kashira showcase (Ragnarok's job page, by weapon) */
+  .kashira { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .kashira .standing { height: 460px; }
+  .kashira .who .ep { font-size: 22px; font-weight: 700; color: var(--title-text); margin: 4px 0; }
+  .kashira .who .wp { font: 14px var(--font-pixel); color: var(--accent); letter-spacing: 1px; }
+  .kashira .who .deed { font-style: italic; color: var(--text-dim); border-left: 3px solid var(--rule); padding-left: 10px; margin: 10px 0 16px; }
+  .picker { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .picker button { padding: 0; border: 2px solid var(--rule); border-radius: 4px; background: var(--slot-fill); cursor: pointer;
+                   font: 11px var(--font-ui); color: var(--text-main); }
+  .picker button .art { height: 56px; border: 0; border-radius: 0; padding: 2px; }
+  .picker button span { display: block; padding: 3px 0; }
+  .picker button.on, .picker button:hover { border-color: var(--accent); background: var(--hover); }
+
+  .biomes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .biomes .card { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+  .biomes .card .art { height: 150px; border-width: 0 0 2px 0; border-radius: 0; }
+  .biomes .card .mob { height: 96px; }
+  .biomes .card .txt { padding: 8px 10px; font-size: 13px; flex: 1; }
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .shots .art { height: 150px; }
+
+  /* ---------- article text (wiki + guide) ---------- */
+  .doc h1 { font-size: 26px; color: var(--title-text); margin: 0 0 6px; }
+  .doc h2 { font-size: 19px; color: var(--title-text); margin: 26px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--rule); }
+  .doc h3 { font-size: 16px; color: var(--title-text); margin: 18px 0 6px; }
+  .doc p, .doc li { color: var(--text-main); }
+  .doc .lede { font-size: 17px; color: var(--text-dim); }
+  .doc blockquote { margin: 12px 0; padding: 8px 14px; background: var(--panel-raise); border-left: 3px solid var(--window-edge); color: var(--text-dim); }
+  .doc .callout { margin: 12px 0; padding: 10px 14px; background: var(--hover); border: 1px solid var(--accent); border-radius: 4px; }
+  .doc table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  .doc th { text-align: left; background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); color: var(--title-text); }
+  .doc th, .doc td { border: 1px solid var(--rule); padding: 6px 8px; vertical-align: top; }
+  .doc td { background: var(--slot-fill); }
+  .doc hr { border: 0; border-top: 1px solid var(--rule); margin: 20px 0; }
+  .doc .tablewrap { overflow-x: auto; }
+  .doc .moved { padding: 14px; border: 1px dashed var(--window-edge); border-radius: 4px; color: var(--text-dim); background: var(--panel-raise); }
+  .doc .doc-art { height: 240px; margin: 14px 0; }
+
+  .timeline { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 3px solid var(--rule); }
+  .timeline li { position: relative; margin: 0 0 16px; padding-left: 12px; }
+  .timeline li::before { content: ""; position: absolute; left: -27px; top: 5px; width: 13px; height: 13px; border-radius: 50%;
+                         background: var(--slot-fill); border: 3px solid var(--rule); }
+  .timeline li.now::before { border-color: var(--accent); background: var(--accent); }
+  .timeline li.done::before { border-color: var(--good); background: var(--good); }
+  .timeline .when { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
+  .timeline .ttl { font-weight: 700; color: var(--title-text); }
+  .timeline li.now .when { color: var(--accent); font-weight: 700; }
+
+  /* wiki + guide layout: side menu + page */
+  .withside { display: grid; grid-template-columns: 240px 1fr; gap: 18px; align-items: start; }
+  .sidemenu .grp { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 4px; }
+  .sidemenu .grp:first-child { margin-top: 0; }
+  .sidemenu a { display: block; padding: 5px 8px; border-radius: 3px; color: var(--text-main); }
+  .sidemenu a:hover { background: var(--hover); text-decoration: none; }
+  .sidemenu a.on { background: var(--hover); color: var(--title-text); font-weight: 700; border-left: 3px solid var(--accent); }
+  .wikihome { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .gallery .art { height: 190px; }
+  .gallery .art.wide { grid-column: span 3; height: 320px; }
+
+  .dl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 6px; }
+  .dl-grid .opt { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 4px; padding: 14px; text-align: center; }
+  .dl-grid .opt .art { height: 70px; margin-bottom: 10px; }
+  code { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; padding: 2px 6px; font-size: 13px; word-break: break-all; }
+  .version { color: var(--text-dim); font-size: 13px; }
+  .pagehead { height: 180px; margin-bottom: 18px; }
+  .pagehead .art { height: 100%; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; }
+
+  footer { background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); border-top: 2px solid var(--window-edge);
+           color: var(--title-text); font-size: 13px; padding: 18px 0; margin-top: 26px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  .page { display: none; }
+  .page.on { display: block; }
+
+  @media (max-width: 960px) {
+    .cols3, .cols2, .dl-cols, .kashira, .withside { grid-template-columns: 1fr; }
+    nav.main { order: 3; flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; }
+    nav.main a { white-space: nowrap; }
+    header.top .wrap { justify-content: space-between; }
+    .biomes { grid-template-columns: repeat(2, 1fr); }
+    .shots, .gallery, .dl-grid { grid-template-columns: 1fr 1fr; }
+    .gallery .art.wide { grid-column: span 2; }
+    .picker { grid-template-columns: repeat(4, 1fr); }
+    .hero { height: 360px; }
+    .kashira .standing { height: 340px; }
+  }
+  @media (max-width: 560px) {
+    .biomes, .shots, .gallery, .dl-grid { grid-template-columns: 1fr; }
+    .gallery .art.wide { grid-column: span 1; }
+    .logo { width: 160px; }
+    .hero .art .desc { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="#home" class="logo"><div class="art tiny" style="height:100%" data-kind="Game logo (light-theme version)" data-size="420 × 120, transparent background"></div></a>
+    <nav class="main" id="nav">
+      <a href="#home">Home</a>
+      <a href="#news">News</a>
+      <a href="#guide">Game Guide</a>
+      <a href="#wiki">Wiki</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#status">Server Status</a>
+      <a href="#media">Media</a>
+    </nav>
+    <a class="btn big" href="#download">Download</a>
+  </div>
+</header>
+
+<!-- ================= HOME ================= -->
+<section class="page" id="p-home">
+  <div class="hero">
+    <div class="art" data-kind="Main key art banner" data-size="1920 × 600"
+         data-desc="The headline picture of the game: colourless charcoal heroes facing flat paper monsters torn from the artist's book. Dense and busy, like a Ragnarok Online poster; the tagline sits on its own panel over it."></div>
+    <div class="over">
+      <div class="tag" id="home-tagline"></div><br>
+      <a class="btn big" href="#download">Download the game</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="cols3">
+      <div>
+        <div class="win"><div class="fill">
+          <div class="head">Play now</div>
+          <div class="body" style="text-align:center">
+            <a class="btn big" href="#download" style="display:block">Download</a>
+            <p class="version" style="margin:8px 0 0">Windows · Mac (Apple chip) · Mac (Intel)</p>
+          </div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">Server Status <a href="#status">more</a></div>
+          <div class="body">
+            <p style="margin:0 0 8px"><span class="dot"></span>Read live from the character server</p>
+            <div class="tiles">
+              <div class="tile"><div class="n">—</div><div class="k">Players online</div></div>
+              <div class="tile"><div class="n">—</div><div class="k">Maps standing</div></div>
+              <div class="tile"><div class="n">—</div><div class="k">World processes</div></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">Quick links</div>
+          <div class="body">
+            <ul class="linklist">
+              <li><a href="#guide/start">Getting Started</a></li>
+              <li><a href="#guide/playstyles">Playstyles &amp; Builds</a></li>
+              <li><a href="#wiki/stats">Stats &amp; the Ring</a></li>
+              <li><a href="#wiki/database-monsters">Monster database</a></li>
+              <li><a href="#roadmap">What is coming next</a></li>
+            </ul>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <div class="win"><div class="fill">
+          <div class="head">News <a href="#news">more</a></div>
+          <div class="body"><ul class="board" id="home-news"></ul></div>
+        </div></div>
+        <div class="win"><div class="fill">
+          <div class="head">What is Unwritten?</div>
+          <div class="body doc">
+            <div class="art doc-art" data-kind="Story illustration" data-size="1200 × 500"
+                 data-desc="The artist's open book: one page drawn and peaceful, the facing page torn and twisted by Chaos into monsters."></div>
+            <div id="home-what"></div>
+            <p><a href="#guide/world">Read the full story &rarr;</a></p>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="side-banners">
+        <div class="art" data-kind="Event banner" data-size="500 × 240" data-desc="Current event or update headline."></div>
+        <div class="art" data-kind="Event banner" data-size="500 × 240" data-desc="Second event or a new-weapon announcement."></div>
+        <div class="art" data-kind="Promo banner" data-size="500 × 240" data-desc="&ldquo;Read the Wiki&rdquo; or a community link."></div>
+        <div class="art" style="height:300px" data-kind="Mascot standing art" data-size="500 × 600"
+             data-desc="A small chibi-style character waving, like Ragnarok's Poring corner of the page."></div>
+      </div>
+    </div>
+
+    <div class="win"><div class="fill">
+      <div class="head">The Fourteen Kashira — choose a weapon</div>
+      <div class="body">
+        <div class="kashira">
+          <div class="art standing" id="k-art" data-kind="Character standing art" data-size="900 × 1200, transparent background"></div>
+          <div class="who">
+            <div class="wp" id="k-weapon"></div>
+            <div class="ep" id="k-epithet"></div>
+            <div class="deed" id="k-deed"></div>
+            <p id="k-intro"></p>
+            <div class="picker" id="k-picker"></div>
+            <p style="margin-top:14px"><a href="#guide/playstyles">How weapons and your Ring make your playstyle &rarr;</a></p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="win"><div class="fill">
+      <div class="head">The World <a href="#guide/maps">more</a></div>
+      <div class="body"><div class="biomes" id="home-biomes"></div></div>
+    </div></div>
+
+    <div class="win"><div class="fill">
+      <div class="head">Screenshots <a href="#media">more</a></div>
+      <div class="body"><div class="shots">
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A fight in the field, skills going off."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A town with townsfolk."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="Hills and rock cliffs along a road."></div>
+        <div class="art" data-kind="In-game screenshot" data-size="1280 × 720" data-desc="A group taking on an elite."></div>
+      </div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= NEWS ================= -->
+<section class="page" id="p-news">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — News" data-size="1920 × 360" data-desc="A town notice board covered in pinned paper."></div></div>
+  <div class="wrap">
+    <div class="win"><div class="fill">
+      <div class="head">News</div>
+      <div class="body"><ul class="board" id="news-list"></ul></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= GAME GUIDE (moved out of the wiki) ================= -->
+<section class="page" id="p-guide">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Game Guide" data-size="1920 × 360" data-desc="A charcoal hero opening a large book."></div></div>
+  <div class="wrap">
+    <div class="withside">
+      <div class="win"><div class="fill"><div class="head">Game Guide</div><div class="body sidemenu" id="guide-menu"></div></div></div>
+      <div class="win"><div class="fill"><div class="head" id="guide-title"></div><div class="body doc" id="guide-body"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WIKI (the merged wiki) ================= -->
+<section class="page" id="p-wiki">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Wiki" data-size="1920 × 360" data-desc="A library of loose pages and open books."></div></div>
+  <div class="wrap">
+    <div class="withside">
+      <div class="win"><div class="fill"><div class="head">Wiki</div><div class="body sidemenu" id="wiki-menu"></div></div></div>
+      <div class="win"><div class="fill"><div class="head" id="wiki-title"></div><div class="body doc" id="wiki-body"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ROADMAP ================= -->
+<section class="page" id="p-roadmap">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Roadmap" data-size="1920 × 360" data-desc="A road winding over hills toward a far city."></div></div>
+  <div class="wrap">
+    <div class="win"><div class="fill"><div class="head">Roadmap</div><div class="body doc" id="roadmap-body"></div></div></div>
+  </div>
+</section>
+
+<!-- ================= SERVER STATUS ================= -->
+<section class="page" id="p-status">
+  <div class="wrap" style="padding-top:18px">
+    <div class="win"><div class="fill"><div class="head">Server Status</div>
+      <div class="body doc">
+        <div id="status-lede"></div>
+        <div class="tiles" style="max-width:520px;margin:12px 0">
+          <div class="tile"><div class="n">—</div><div class="k">Players online</div></div>
+          <div class="tile"><div class="n">—</div><div class="k">Maps standing</div></div>
+          <div class="tile"><div class="n">—</div><div class="k">World processes</div></div>
+        </div>
+        <h2>Where the world is running</h2>
+        <div class="tablewrap"><table><thead><tr><th>Process</th><th>Maps it is holding</th><th>Players</th><th>Creatures</th><th>Last heard</th></tr></thead>
+          <tbody><tr><td colspan="5"><em>Filled live from the character server.</em></td></tr></tbody></table></div>
+        <h2>Most experienced adventurers</h2>
+        <div class="tablewrap"><table><thead><tr><th>#</th><th>Name</th><th>Level</th><th>Experience earned</th></tr></thead>
+          <tbody><tr><td colspan="4"><em>Filled live from the character server.</em></td></tr></tbody></table></div>
+        <div id="status-rest"></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= MEDIA ================= -->
+<section class="page" id="p-media">
+  <div class="wrap" style="padding-top:18px">
+    <div class="win"><div class="fill"><div class="head">Wallpapers</div><div class="body"><div class="gallery">
+      <div class="art wide" data-kind="Wallpaper — key art" data-size="2560 × 1440" data-desc="The main key art without any text, for desktops."></div>
+      <div class="art" data-kind="Wallpaper — a Kashira" data-size="2560 × 1440" data-desc="One of the fourteen weapons, with its epithet."></div>
+      <div class="art" data-kind="Wallpaper — a shadow" data-size="2560 × 1440" data-desc="One of the fourteen shadows, dark against a torn page."></div>
+      <div class="art" data-kind="Wallpaper — phone" data-size="1080 × 2340" data-desc="A tall version of the key art."></div>
+    </div></div></div></div>
+    <div class="win"><div class="fill"><div class="head">Concept art</div><div class="body"><div class="gallery">
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="A flat paper monster, Grassland."></div>
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="A flat paper monster, Snow."></div>
+      <div class="art" data-kind="Monster art" data-size="1000 × 1000" data-desc="An elite, larger and more torn."></div>
+      <div class="art" data-kind="Character concept sheet" data-size="1600 × 1000" data-desc="An unwritten hero from front, side and back, charcoal with a hint of colour."></div>
+      <div class="art" data-kind="Town concept art" data-size="1600 × 1000" data-desc="The first town."></div>
+      <div class="art" data-kind="Item art sheet" data-size="1600 × 1000" data-desc="Weapons and armour laid out like an item catalogue."></div>
+    </div></div></div></div>
+    <div class="win"><div class="fill"><div class="head">Screenshots</div><div class="body"><div class="gallery">
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+      <div class="art" data-kind="In-game screenshot" data-size="1920 × 1080"></div>
+    </div></div></div></div>
+  </div>
+</section>
+
+<!-- ================= DOWNLOAD (the existing download page, same words) ================= -->
+<section class="page" id="p-download">
+  <div class="pagehead"><div class="art" data-kind="Page header banner — Download" data-size="1920 × 360" data-desc="A hero stepping out of a book page into the world."></div></div>
+  <div class="wrap">
+    <div class="cols2 dl-cols">
+      <div class="win"><div class="fill"><div class="head">Download</div>
+        <div class="body">
+          <p>Download the launcher and run it. It downloads the game the first time, keeps it up to date after that, and
+          starts it when you press Start.</p>
+          <div class="dl-grid">
+            <div class="opt"><div class="art tiny" data-kind="Windows icon"></div><a class="btn big" href="download/unwritten-windows.zip" download>Download for Windows</a></div>
+            <div class="opt"><div class="art tiny" data-kind="Mac icon"></div><a class="btn big" href="download/unwritten-mac-arm64.zip" download>Download for Mac (Apple chip)</a></div>
+            <div class="opt"><div class="art tiny" data-kind="Mac icon"></div><a class="btn big" href="download/unwritten-mac-x64.zip" download>Download for Mac (Intel)</a></div>
+          </div>
+          <div class="version" id="version">Version —</div>
+
+          <h3>Windows</h3>
+          <p>Unzip it, open the <b>unwritten</b> folder, and run <b>unwritten-launcher.exe</b>. The game is downloaded into
+          that same folder.</p>
+
+          <h3>Mac</h3>
+          <p>Not sure which chip your Mac has? Open the Apple menu (top left) &#9656; <b>About This Mac</b>. "Chip: Apple M…"
+          means Apple chip; "Processor: Intel…" means Intel.</p>
+          <ol>
+            <li>Open your <b>Downloads</b> folder and double-click the zip. It unzips into <b>unwritten</b>.</li>
+            <li>Double-click <b>unwritten</b>. The first time, the Mac says it could not verify that "unwritten" is free of
+              malware, because the game is not yet registered with Apple. Press <b>Done</b> — not Move to Trash.</li>
+            <li>Open <b>System Settings</b> &#9656; <b>Privacy &amp; Security</b>.</li>
+            <li>Scroll down to the <b>Security</b> section. A line says "unwritten" was blocked, with an <b>Open Anyway</b>
+              button. Press it, and enter your Mac password.</li>
+            <li>Double-click <b>unwritten</b> again and press <b>Open</b>. From then on it opens normally. It downloads the
+              game the first time, then press <b>Start</b>.</li>
+          </ol>
+          <p>If no <b>Open Anyway</b> button appears: open <b>Terminal</b> (Applications &#9656; Utilities &#9656; Terminal),
+          paste this line, press Return, then double-click <b>unwritten</b> again:</p>
+          <p><code>xattr -dr com.apple.quarantine ~/Downloads/unwritten.app</code></p>
+        </div>
+      </div></div>
+      <div>
+        <div class="art" style="height:260px;margin-bottom:18px" data-kind="Launcher screenshot" data-size="1000 × 640"
+             data-desc="The launcher window with its Start button, so players know what they will see."></div>
+        <div class="win"><div class="fill"><div class="head">News</div><div class="body"><ul class="board" id="dl-news"></ul></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>Unwritten</span><span><a href="#download">Download</a> · <a href="#wiki">Wiki</a> · <a href="#roadmap">Roadmap</a></span></div></footer>
+
+<script id="wiki-data" type="application/json">{"manifest": {"groups": [{"title": "Live", "pages": [{"id": "status", "title": "Server Status", "file": "server-status.json"}]}, {"title": "Lore & World", "pages": [{"id": "home", "title": "Home", "file": "home.json"}, {"id": "world", "title": "The World of Unwritten", "file": "world.json"}, {"id": "start", "title": "Getting Started", "file": "getting-started.json"}, {"id": "maps", "title": "World & Maps", "file": "world-maps.json"}]}, {"title": "Your Character", "pages": [{"id": "playstyles", "title": "Playstyles & Builds", "file": "playstyles.json"}, {"id": "stats", "title": "Stats & the Ring", "file": "stats.json"}, {"id": "skills", "title": "Skills", "file": "skills.json"}]}, {"title": "Combat", "pages": [{"id": "combat", "title": "Combat Mechanics", "file": "combat.json"}, {"id": "weapons", "title": "Weapons & Equipment", "file": "weapons.json"}, {"id": "sword", "title": "The Sword", "file": "sword.json"}, {"id": "crafting", "title": "Crafting & Recycling", "file": "crafting.json"}, {"id": "cards", "title": "Cards", "file": "cards.json"}]}, {"title": "Monsters", "pages": [{"id": "monsters", "title": "Monsters", "file": "monsters.json"}]}, {"title": "Database", "pages": [{"id": "database-monsters", "title": "Monsters", "file": "database-monsters.json"}, {"id": "database-skills", "title": "Skills", "file": "database-skills.json"}, {"id": "database-equipment", "title": "Equipment", "file": "database-equipment.json"}, {"id": "database-materials", "title": "Materials", "file": "database-materials.json"}, {"id": "database-world-map", "title": "World Map", "file": "database-world-map.json"}, {"id": "database-elements", "title": "Elements", "file": "database-elements.json"}]}, {"title": "Development", "pages": [{"id": "roadmap", "title": "Roadmap", "file": "roadmap.json"}]}]}, "pages": {"server-status.json": {"title": "Server Status", "blocks": [{"type": "lede", "text": "Who is playing right now, which parts of the world are standing, and who has earned the most."}, {"type": "serverStats", "from": "http://127.0.0.1:8081/stats", "note": "Where these numbers are read from. The character server is the only thing that sees every world process at once, so it is the only thing that can answer this. Change this address when the wiki is served from somewhere other than this machine — and add that address to the character server's WIKI_ORIGINS, or a browser will refuse the read."}, {"type": "heading", "level": 2, "text": "What these numbers mean"}, {"type": "list", "items": ["**Players online** counts characters standing in the world — not people sitting at the character-select screen.", "**Maps standing** counts the parts of the world currently loaded. A map with nobody in it can be put back to sleep, so this number moves on its own.", "**World processes** are the separate programs the world is split across. Each one holds whichever maps it was given, and a character can only be in one place at a time.", "**Experience earned** is every point a character has ever gained, the part already spent on levels included — not the progress showing on their level bar."]}, {"type": "callout", "text": "A process that has said nothing for two minutes is dropped from this list. It has either stopped or lost its connection, and the players it was holding are no longer reachable there. The page re-reads every 5 seconds; a level takes up to 15 seconds to reach the database after it is earned, and a player count up to 30."}]}, "home.json": {"title": "Unwritten Wiki", "blocks": [{"type": "paragraph", "text": "*The official guide to **Unwritten** — a 2.5D MMORPG where you restore the corrupted pages of an artist's unfinished book and write your own color into it.*"}, {"type": "quote", "text": ["**Status:** Living wiki, in active development. Pages reflect the current design; anything marked *planned* or *in tuning* isn't final yet. Numbers and rosters are still being balanced before launch."]}, {"type": "heading", "level": 2, "text": "What is Unwritten?"}, {"type": "paragraph", "text": "An artist wrote a gentle story in a book and drew its pictures himself. Then unwanted thoughts took shape in his mind as **Chaos**, and Chaos **corrupted the pages** — the drawings on them twisted into **monsters**. The fourteen champions he imagined to stop it sealed it away, but his fear that Chaos had infected them turned them into the **fourteen shadows**."}, {"type": "paragraph", "text": "You are one of the **unwritten** — real in the artist's mind but not yet on the page: a charcoal body with no color. You restore the corrupted pages and face the shadows, and as you are written in, your **color arrives**. That gradual arrival of self *is* your progression."}, {"type": "paragraph", "text": "The look of the game is the story: the flat, papery monsters **are** the corrupted pages; the 3D-but-colorless heroes **are** the people not yet written."}, {"type": "heading", "level": 2, "text": "Contents"}, {"type": "heading", "level": 3, "text": "Lore & World"}, {"type": "list", "items": ["**The World of Unwritten** — the setting, the Fourteen Kashira, and why everything looks the way it does", "**Getting Started** — your first steps as one of the unwritten *(work in progress)*", "**World & Maps** — biomes and where the corrupted pages are"]}, {"type": "heading", "level": 3, "text": "Your Character"}, {"type": "list", "items": ["**Playstyles & Builds** — how weapon + ring define your character (no fixed classes)", "**Stats & the Ring** — how you grow, and the ring that carries your life's work", "**Skills** — actives, passives, and where they come from"]}, {"type": "heading", "level": 3, "text": "Combat"}, {"type": "list", "items": ["**Combat Mechanics** — damage types, elements, and matchups", "**Weapons & Equipment** — gear, weapon types, folds, the quality ladder and trademarks", "**The Sword** — how the first fully-authored weapon plays, and how its builds fit together", "**Crafting & Recycling** — forge, fold, quench, write stats with Ink, and recycle", "**Cards** — monster-matchup specialization *(planned feature)*"]}, {"type": "heading", "level": 3, "text": "Monsters"}, {"type": "list", "items": ["**Monsters** — the corrupted pages you hunt"]}, {"type": "heading", "level": 3, "text": "Database"}, {"type": "list", "items": ["**Monsters** — every monster's numbers and where it lives", "**Skills** — every skill's numbers and effects", "**Equipment** — every weapon and piece of armour, what it costs to forge, every trademark and every armour variant", "**Materials** — every crafting material and every monster that drops it", "**World Map** — every map, its view from above, and the monsters on it", "**Elements** — the element chart at levels 1 to 4"]}, {"type": "heading", "level": 3, "text": "Development"}, {"type": "list", "items": ["**Roadmap** — one timeline of what has been built and what is coming next"]}, {"type": "hr"}, {"type": "paragraph", "text": "*The Database pages are written by the game from its own data; every other page is authored from the game's design canon. Sections labeled \"planned,\" \"design intent,\" or \"in tuning\" are not final and will be updated as the design locks.*"}]}, "world.json": {"title": "The World of Unwritten", "blocks": [{"type": "paragraph", "text": "*The setting, the artist's unfinished book, and why the world looks the way it does.*"}, {"type": "heading", "level": 2, "text": "The artist and the book"}, {"type": "paragraph", "text": "An artist wrote a story in a book and drew its pictures himself — a gentle, peaceful story. Everything he finished is on the page, **drawn flat**. Everyone he has only imagined so far is **unwritten**: real in his mind, not yet on the page."}, {"type": "paragraph", "text": "But unwanted thoughts kept breaking into his mind, and the pictures there grew chaotic. Those thoughts took one shape and one name: **Chaos**. Chaos lives only inside the artist's mind, and it has tried again and again to wreck his peace and his book. It never erases what he wrote — it **corrupts** it."}, {"type": "paragraph", "text": "The world is called *Unwritten* for the people still waiting to be written — and you are one of them."}, {"type": "heading", "level": 2, "text": "The Fourteen, and the fear"}, {"type": "paragraph", "text": "To fight Chaos the artist imagined fourteen champions, the **Fourteen Kashira**. Together they sealed it away — but not before it **corrupted pages of the book**, twisting the characters drawn on them into monsters."}, {"type": "paragraph", "text": "After the battles the artist grew **paranoid**: what if Chaos had infected the Fourteen before it was sealed? He thought it until, in his mind, it became true. Chaos's power spread evenly through the fourteen, and they turned — the **fourteen shadows**. Now only the unwritten stand with him. You are one of them, and your task is to end that fear: restore the corrupted pages, and in the end face the shadows."}, {"type": "heading", "level": 2, "text": "The world is its art"}, {"type": "paragraph", "text": "Nothing about how Unwritten looks is arbitrary. The visual style *is* the story:"}, {"type": "list", "items": ["**The flat, papery monsters are corrupted pages.** They are literally paper — drawings Chaos twisted. Their flatness isn't an art choice; it's what they are.", "**The colorless, charcoal heroes are the unwritten.** The body is 3D and fully present, but the artist hasn't put them on the page yet — no color, no self. A faint trace of identity is already there: a hint of colored hair, an inked eye.", "**Beating a monster restores its page.** What it drops is what the page gives back."]}, {"type": "heading", "level": 2, "text": "Winning your color"}, {"type": "paragraph", "text": "Progression in Unwritten is the story of **getting your color.** The more of you is written — growing stronger, journeying further, uncovering story, mastering a weapon — the more **color returns to you**, identity arriving for the first time. A fully realized hero is one the artist has written a great deal of."}, {"type": "heading", "level": 2, "text": "The Fourteen Kashira"}, {"type": "paragraph", "text": "The Fourteen Kashira were never put on the page, so they have **no names** — only epithets, and **fourteen weapons**. They sealed Chaos away; then the artist's fear turned them into the fourteen shadows."}, {"type": "list", "items": ["**Each of the fourteen weapons is one of them.** A weapon is what the artist kept of a Kashira from before the fear took them. How the weapon fights *is* how that Kashira fought.", "**They are known only by epithet, never by name** — the Shield is *The One Who Stood*, the Dagger is *The Late Arrival*. The missing name is the point, and it is also the reward.", "**A weapon teaches its wielder's skills in fragments.** You learn them by fighting with that kind of weapon, a few at a time as your mastery grows — and a weapon forged by a smith carries one of them more strongly than the rest: its **trademark**, the skill it is named for.", "**Remembering who they really were frees the artist.** Every Kashira you come to know through their weapon proves to him that Chaos never truly had them. Master whichever weapons you like — nobody has to learn all fourteen.", "**Carrying one bleeds their identity into you** — this is the charcoal-to-color return. You are not recovering *the* truth; you are finishing *a* story.", "**Naming a Kashira is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — fourteen names to write, fourteen journeys to finish."]}, {"type": "table", "headers": ["Weapon", "Epithet", "The deed nobody recorded"], "rows": [["**Sword**", "The One Who Answered", "Met every challenge alone, one at a time, and never lost the exchange."], ["**Greatsword**", "The One Who Cleared the Road", "Walked ahead of the others so there would be a path behind."], ["**Axe**", "The One Who Never Stopped", "Would not be turned, would not defend, only pressed forward."], ["**Warhammer**", "The One Who Said No", "Whatever the enemy meant to do, it did not get to."], ["**Spear**", "The One Who Moved the Line", "Decided where everyone stood, on both sides."], ["**Shield**", "The One Who Stood", "Took what was meant for the other thirteen."], ["**Bow**", "The One Who Kept Distance", "Was never where the blow landed, and never out of range."], ["**Dagger**", "The Late Arrival", "Was not in the fight until it was already ending."], ["**Firearm**", "The One Who Fired Once", "Needed one shot; waited as long as that took."], ["**Staff**", "The One Who Burned the Field", "Unmade the ground the enemy was standing on."], ["**Wand**", "The One Who Brought Them Back", "Is the reason the other thirteen were still standing."], ["**Scythe**", "The One Who Waited", "Did nothing quickly, and nothing survived it."], ["**Fist**", "*not yet told*", "*not yet told*"], ["**Kick**", "*not yet told*", "*not yet told*"]]}, {"type": "heading", "level": 2, "text": "The great powers of the world"}, {"type": "list", "items": ["**Chaos** — the unwanted thoughts in the artist's mind, sealed away by the Fourteen. It never erases; it corrupts.", "**The fourteen shadows** — the Kashira, turned by the artist's fear. Chaos's power is split evenly between them.", "**The corrupted pages** — the monsters of the world, and the reason to keep walking."]}, {"type": "hr"}, {"type": "paragraph", "text": "*Canon reference: this page is drawn from the game's canon lore. Story beats and the codex you write as you play will be expanded as they are designed.*"}]}, "getting-started.json": {"title": "Getting Started", "blocks": [{"type": "paragraph", "text": "*Your first steps as one of the unwritten. (This page grows as the early game is finalized.)*"}, {"type": "heading", "level": 2, "text": "You begin unwritten"}, {"type": "paragraph", "text": "You wake with no color — real in the artist's mind, but not yet on the page. Your goal from the first minute is the goal of the whole game: **restore the corrupted pages** (the monsters), and be written in, color and all."}, {"type": "heading", "level": 2, "text": "The loop, in one breath"}, {"type": "list", "ordered": true, "items": ["**Fight monsters** — each one is a corrupted page. Defeating it restores the page.", "**Level up** — every level lets you draft a point of growth on your **Ring** (see *Stats & the Ring*).", "**Practise a weapon** — fighting with a kind of weapon teaches you its **skills**, and the weapon type in your hands decides which of them you may use.", "**Grow into a role** — where you invest your ring points quietly commits you to a role (a bruiser, a mage, a healer…).", "**Get your color** — as you progress, identity arrives in your charcoal body for the first time."]}, {"type": "heading", "level": 2, "text": "What decides your power"}, {"type": "list", "items": ["**Your Ring** — your stat growth and the heart of your build. See **Stats & the Ring**.", "**Your weapons** — the skills you learned by practising them, how far your mastery goes, and the **trademark** of the forged weapon you hold. See **Skills** and **Weapons & Equipment**.", "**Your gear & cards** — armor and (planned) cards that specialize you. See **Weapons & Equipment** and **Cards**."]}, {"type": "quote", "text": ["*This page is a stub — the exact opening flow (starting choices, first zone, tutorial beats) is still being finalized.*"]}]}, "world-maps.json": {"title": "World & Maps", "blocks": [{"type": "paragraph", "text": "*Where the pages fell.*"}, {"type": "heading", "level": 2, "text": "A world of scattered pages"}, {"type": "paragraph", "text": "The pages that should have carried the rest of the record fell everywhere — so the whole world is a hunting ground. Zones are built from **biomes**, each with its own look, ground, and the monster families that settled there."}, {"type": "heading", "level": 2, "text": "The biomes"}, {"type": "list", "items": ["**Grassland** — the gentle starting country.", "**Snow** — frozen highlands.", "**Desert** — arid wastes.", "**Volcanic** — scorched, fiery ground.", "**Corrupted** — where the blankness runs deepest; the most twisted pages gather here."]}, {"type": "paragraph", "text": "Each biome carries a **themed set of monsters**, drawn by level, so a zone's danger and its inhabitants match its biome automatically."}, {"type": "heading", "text": "The lie of the land"}, {"type": "paragraph", "text": "The fields are not flat. Their ground rises and falls in **broad levels joined by slopes**, so there is always higher ground to climb and lower ground to look down on."}, {"type": "paragraph", "text": "Some roads run through a **pass between rock cliffs**. You cannot climb a cliff face — but here and there a cliff runs out and its high ground **slopes down to meet the road**, and there you can walk up onto the top."}, {"type": "paragraph", "text": "Monsters walk exactly the ground you walk: any slope you can climb, they can climb after you, and a cliff that stops you stops them too."}, {"type": "quote", "text": ["*Status: the biome framework is in place. The specific map list, layouts, and named zones are still being built.*"]}]}, "playstyles.json": {"title": "Playstyles & Builds", "blocks": [{"type": "paragraph", "text": "*Unwritten has **no fixed classes.** You are what you wield and where you invest.*"}, {"type": "heading", "level": 2, "text": "Two levers, not a class"}, {"type": "paragraph", "text": "There are no Swordsmen or Mages to pick from. Instead, your gameplay identity emerges from two things you fully control:"}, {"type": "list", "ordered": true, "items": ["**Your weapons** — the skills you have learned by practising them: the actives you press, and the passives that fire on their own.", "**Your ring build** — where you pour your stat growth."]}, {"type": "paragraph", "text": "Change either and your character plays differently. Nothing boxes you into a preset template."}, {"type": "heading", "level": 2, "text": "Your weapon = your abilities"}, {"type": "paragraph", "text": "The weapon type in your hand decides which of the **skills you have learned** you may use. Practise a staff and you learn its spells; practise a bow and you learn its shots — and swapping to a weapon you have practised swaps you onto its skills. The weapon's type (sword, staff, bow, dagger…) also sets your attack feel and animation — but it does **not** gate what you're allowed to be. Each of the fourteen weapon types fights the way one of the **Fourteen Kashira** fought, so choosing a weapon is choosing whose story you're finishing. See **Weapons & Equipment**, **Skills**, and **The World of Unwritten**."}, {"type": "heading", "level": 2, "text": "Your ring = your role"}, {"type": "paragraph", "text": "Your power scales off your **ring stats**, and that scaling is role-bound: **healing grows with MP**, **damage grows with Attack / Magic Attack**. Because ring investment is slow to change, it's what truly commits you to a role — a healer is someone who poured into MP, a damage-dealer someone who poured into Attack. See **Stats & the Ring**."}, {"type": "heading", "level": 2, "text": "Your playstyle = weapon × ring"}, {"type": "paragraph", "text": "Put the two together and you get your character:"}, {"type": "list", "items": ["The **weapon** is the fast, swappable half — change which of your learned skills you use by changing what you hold.", "The **ring** is the slow, committed half — your accumulated power and role."]}, {"type": "paragraph", "text": "A staff in the hands of an MP build heals and casts; the same staff on an Attack build barely tickles. That interplay is the whole build system."}, {"type": "heading", "level": 2, "text": "Example playstyles *(emergent, not presets)*"}, {"type": "list", "items": ["**Front-line bruiser** — a melee weapon + an Attack / HP / Defense ring", "**Ranged damage** — a bow + an Attack / Accuracy ring", "**Battle-mage** — a staff + a Magic Attack ring", "**Healer / support** — a support weapon + an MP ring"]}, {"type": "paragraph", "text": "These are just illustrations of what the two levers can produce — you can rebuild toward any of them by changing your weapon and steering your ring; none of them is a locked class."}, {"type": "quote", "text": ["*This replaces an earlier \"classes\" concept that is no longer part of the design. Identity in Unwritten is weapon + ring, full stop.*"]}]}, "stats.json": {"title": "Stats & the Ring", "blocks": [{"type": "paragraph", "text": "*How you grow — the six base stats, and the Ring that scales your power.*"}, {"type": "heading", "level": 2, "text": "Primary stats"}, {"type": "paragraph", "text": "Six base stats you allocate as you level — **anyone can raise any of them** (there are no classes):"}, {"type": "list", "items": ["**STR** — melee attack power", "**AGI** — attack speed and dodge", "**VIT** — health and defense", "**INT** — magic power and mana", "**DEX** — ranged attack power, accuracy and cast speed", "**LUK** — critical chance and luck"]}, {"type": "paragraph", "text": "**You choose your starting stats when you create a character**, by pulling the corners of a hexagon. Opposite stats — STR and INT, AGI and LUK, VIT and DEX — always add up to 10, so raising one lowers its partner, and every shape spends all your starting points. After that you get points to spend as you level, and **each point into a stat costs more the higher that stat already is** — every block of ten gets pricier. So a lopsided build is genuinely expensive: going all-in on one stat buys fewer total points than spreading out. What you can afford is fixed by your level; nothing else grants stat points."}, {"type": "heading", "level": 3, "text": "What each point actually buys"}, {"type": "paragraph", "text": "Every stat feeds several numbers at once — that spread is what makes a build. On top of that, **every time a stat reaches a multiple of 10 — gear included — it jumps one number up**: +4 at 10, +6 at 20, +22 at 100, each jump bigger than the last. Your character sheet shows the next jump beside each stat. The exact per-point values:"}, {"type": "table", "headers": ["Stat", "Every point gives you"], "rows": [["**STR**", "+1 MELEE ATK and +½ RANGED ATK. STR's jump goes to MELEE ATK."], ["**AGI**", "+1 FLEE (dodge), and +0.5% attack speed. AGI's jump goes to FLEE."], ["**VIT**", "+2% max HP, +⅓ DEF, and health regeneration worth 0.02% of your max HP every second. VIT's jump goes to DEF."], ["**INT**", "+1 M.ATK, +1.5% max MP, +⅓ M.DEF, mana regeneration worth 0.02% of your max MP every second, and steadier magic damage. INT's jump goes to M.ATK."], ["**DEX**", "+1 RANGED ATK, +1 HIT (accuracy), +½ MELEE ATK, +0.125% attack speed, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**. DEX's jump goes to RANGED ATK."], ["**LUK**", "+0.3% crit chance, +0.2% crit damage, +¼ MELEE ATK, +¼ RANGED ATK, +¼ M.ATK, +⅓ HIT, +⅕ FLEE — and it works defensively too: your LUK lowers an attacker's crit chance against you by 0.3% per point. LUK's jump goes to crit damage, counted in percent."]]}, {"type": "callout", "text": "**Nothing in combat can change these six.** No buff, debuff, potion or ailment touches a primary stat — they come from your points and your gear alone. What skills move instead is the list below."}, {"type": "heading", "level": 3, "text": "Every number on your sheet, and what feeds it"}, {"type": "paragraph", "text": "These are the numbers combat actually reads. A buff or debuff can move any of them for a while; your primaries and your gear set where they sit at rest."}, {"type": "table", "headers": ["Number", "Fed by"], "rows": [["**MELEE ATK**", "STR (plus its jump), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or firearm, or nothing at all"], ["**RANGED ATK**", "DEX (plus its jump), STR÷2, LUK÷4, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow or firearm"], ["**M.ATK**", "INT (plus its jump), LUK÷4, your level, your gear, the Magic Attack ring stat"], ["**DEF**", "VIT÷3 (plus VIT's jump), your level, your gear, the Defense ring stat"], ["**M.DEF**", "INT÷3, your level, your gear — the *same* Defense ring stat, there is no separate magic node"], ["**Max HP**", "a level curve raised 2% per VIT, your gear, the HP ring stat"], ["**Max MP**", "a level curve raised 1.5% per INT, your gear, the MP ring stat"], ["**HIT** (accuracy)", "your level + DEX + LUK÷3, accuracy written on your gear, the Accuracy ring stat"], ["**FLEE** (dodge)", "your level + AGI (plus its jump) + LUK÷5, evasion on your gear (Ink, and leather armour's folds), the Evasion ring stat"], ["**Attack speed**", "AGI at 0.5% a point, DEX at a quarter of that, your gear, the Attack Speed ring stat — **hard-capped at 3× normal**"], ["**Cast wind-up**", "DEX alone decides it, reaching instant at 150; the Cast Speed ring stat shortens whatever is left"], ["**Crit chance**", "LUK at 0.3% a point, your gear, the Critical ring stat — **capped at 95%**"], ["**Crit damage**", "starts at 140%, plus 0.2% a point of LUK, plus LUK's jump in percent, plus the *same* Critical ring stat"], ["**HP regen**", "VIT — 0.02% of your max HP each second"], ["**MP regen**", "1.5 a second flat, plus 0.02% of your max MP each second from INT"], ["**Damage spread**", "a swing rolls between a floor and its maximum. The floor starts at 55% and closes as DEX (physical) or INT (magic) rises, hitting full around 38 points — so investment both raises *and* steadies your damage."]]}, {"type": "heading", "level": 3, "text": "Numbers your stats don't touch"}, {"type": "paragraph", "text": "A few things come from somewhere other than your six stats. They're real numbers that matter in a fight — they just aren't bought with points."}, {"type": "table", "headers": ["Number", "Where it comes from"], "rows": [["**Move speed**", "your character's own speed, multiplied by whatever is slowing or hastening you"], ["**Block chance**", "the off-hand you have equipped — the item, not you — plus a **Guarding** word on it"], ["**Element**", "Neutral, unless an Armor Converter is running — then its element, at level 1. Incoming attacks are scaled against it"], ["**Stamina**", "a flat pool of 100. Sprinting drains 25 a second; it refills at 30 standing still, 18 walking, and 8 doing anything else"], ["**Life steal · MP leech · Reflect**", "0 at rest — they exist only while a card or a skill grants them"], ["**Flat damage cut**", "a percentage taken off a hit *before* DEF subtracts its flat amount. Monsters can be built with it; you have none yet"]]}, {"type": "heading", "level": 3, "text": "How regeneration works"}, {"type": "paragraph", "text": "HP and MP both tick back up on their own, several times a second, and the fraction is never lost — a rate too small to pay a whole point this tick is carried to the next, so 0.3 a second really is 0.3 a second."}, {"type": "paragraph", "text": "A debuff can **stop** your regeneration but can never reverse it. Push a regen rate below zero and it simply pays nothing — it will not drain you, and it will not heal an enemy you cast it on."}, {"type": "callout", "text": "Any time your HP goes up — a potion, a heal, natural regeneration, anything added later — you'll see the same **green number** float over your head. Monsters get it too, so you can always see when something is healing itself."}, {"type": "heading", "level": 2, "text": "The Ring — your growth engine"}, {"type": "paragraph", "text": "The Ring is a **closed loop of ten percentage-based passive stats** that you build up as you level. It is part of your character — nothing to wear, nothing to lose — and a separate layer from your weapons: **practising a weapon teaches your skills**, and the **Ring scales their power**. Your progress on the Ring is saved with your character."}, {"type": "heading", "level": 3, "text": "The ten Ring stats"}, {"type": "paragraph", "text": "Going clockwise around the loop:"}, {"type": "paragraph", "text": "**Defense → HP → Attack → Accuracy → Cast Speed → Magic Attack → MP → Evasion → Critical → Attack Speed →** *(back to Defense)*"}, {"type": "paragraph", "text": "The two **poles sit dead-opposite: Defense (top) and Magic Attack (bottom)**, with the survival stats bridging them — so drifting from a physical toward a magic build naturally carries you across the defenses in between."}, {"type": "paragraph", "text": "Two stats do double duty: **Defense** raises both your physical *and* magic defense (there is no separate magic-defense stat), and **Critical** raises both your crit rate *and* your crit damage."}, {"type": "heading", "level": 3, "text": "The draft — a steering wheel"}, {"type": "paragraph", "text": "Every level-up you pick **one of four** options:"}, {"type": "list", "items": ["**Three known** — your current stat plus its **two neighbors** on the ring (a sliding window of three).", "**One wildcard** — a random stat from elsewhere on the ring."]}, {"type": "paragraph", "text": "Picking the center keeps stacking that stat; picking a neighbor slides your window that way; the wildcard jumps you across the ring."}, {"type": "heading", "level": 3, "text": "Percentage growth with a soft cap"}, {"type": "paragraph", "text": "Ring stats give **percentage multipliers**, not flat points, so they never go obsolete as your gear grows. Growth follows a **soft cap**: most stats climb toward a **+80% ceiling**, while **Critical caps at +50%** and **Evasion at +60%** (both would break combat if left uncapped). Because each extra rank is worth a little less, the math **rewards spreading out** — though single-stacking is always allowed."}, {"type": "heading", "level": 2, "text": "Your Ring locks your role"}, {"type": "paragraph", "text": "**Most of a skill's power is your Ring** — and that scaling is role-bound: **healing scales off MP**, **damage scales off Attack / Magic Attack**. So a support who invested MP hits like wet paper with a damage weapon, and a damage build heals for crumbs with a staff. A skill's own mastery adds to that as you use it (see *Skills*), but the weight of it stays bound to the stats you chose. **Changing weapons changes which skills you may use — never the stats behind them.**"}, {"type": "paragraph", "text": "*(Ring upgrades that add whole new behaviors from investment are a planned future addition — for now the Ring only scales numbers.)*"}, {"type": "heading", "level": 2, "text": "Monsters use this exact system"}, {"type": "paragraph", "text": "Everything on this page describes **monsters too**. They have the same six stats, the same formulas behind them, the same rising cost per point, and the same level-based budget — a level 20 monster carries what a level 20 player could have bought. They wear real equipment, and a monster can carry Ring investment of its own that scales it on this same soft-cap curve."}, {"type": "callout", "text": "There is no difficulty multiplier anywhere. A monster is hard because of its level, its stats, and its gear — the same three things that make you hard. See *Monsters*."}, {"type": "heading", "level": 2, "text": "Reading your character sheet"}, {"type": "paragraph", "text": "Press **C** to open your character sheet. It lists every number that decides how you fight, and it updates **live** — buffs and debuffs appear the moment they land and vanish when they run out."}, {"type": "paragraph", "text": "The big number is always **your own stat**. Anything a buff or debuff is doing to it sits in **parentheses** right after it:"}, {"type": "list", "items": ["**Green** — something is helping you, e.g. `MELEE ATK 120-140 (+24)`", "**Red** — something is hurting you, e.g. `HIT 82 (-30)` while blinded", "**No parentheses** — nothing is affecting that stat right now"]}, {"type": "callout", "text": "The sheet reads from the same numbers combat does, so what you see is exactly what you hit for — never an estimate."}, {"type": "paragraph", "text": "What you'll find on it:"}, {"type": "table", "headers": ["Group", "Stats"], "rows": [["Offense", "MELEE ATK · RANGED ATK · M.ATK · CRIT chance and crit damage · HIT"], ["Defense", "DEF and M.DEF (plus their flat damage cut) · FLEE · GUARD · BARRIER"], ["Speed", "ASPD (attack speed) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"], ["Sustain", "LEECH (HP from damage) · MP LEECH · REFLECT"], ["Resources", "HP · MP · Stamina · Ult charge"]]}]}, "skills.json": {"title": "Skills", "blocks": [{"type": "paragraph", "text": "*How your abilities work, and where they come from.*"}, {"type": "heading", "level": 2, "text": "Practice grants your skills"}, {"type": "paragraph", "text": "In Unwritten, **you learn your skills by fighting with a kind of weapon.** Fight with a sword and Sword Mastery grows: two thirds of the experience every kill gives you also goes to the mastery of the weapon in your hands, faster with a better weapon. Each level it reaches opens another of the sword's skills to you, for good — the Skills window (**K**) shows how much experience the next level needs. There are no classes — the weapons you have practised are what define you, and what you are holding decides which of the skills you know you may use right now."}, {"type": "heading", "level": 2, "text": "Every weapon type has its own pool"}, {"type": "paragraph", "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills. You do not find them and no weapon carries them: every skill names the **mastery level** in its weapon at which you learn it, and some name a skill you must know first. Practise a sword and its pool opens to you, one skill at a time, in the order the weapon teaches them."}, {"type": "paragraph", "text": "**Your ultimates point at your build.** Each weapon's three ultimates steer toward a different playstyle — and toward which Ring stats to invest in — and they sit deep enough in the mastery that reaching one is a statement about how you have been fighting."}, {"type": "heading", "text": "Styles, forms and calling them out"}, {"type": "paragraph", "text": "Every weapon fights in a **style**, and each of its skills is one numbered **form** of that style, counted in the order the weapon teaches them — the sword's style is **Blossom Wind**, and its first form is **Piercing Gust**. A skill's card says which form it is."}, {"type": "paragraph", "text": "Every skill you use is called out over your head and in the chat, every time it fires — by its name alone, *\"Last Petal!!\"*. A passive stays silent unless it is efficient. **Efficiency** is a critical hit for a whole skill: each time a trademark skill fires it has a **5%** chance to be efficient, whatever weapon you hold, and then every number it puts out that time is raised by a further **+20%** and you make the full call — *\"Blossom Wind style, 21st form, Thousand Petals!!\"*. Every trademark skill can be efficient, ultimates included; a skill that is not a trademark skill has no number to raise and never is. The shadows call out their skills the same way. You can hide other players' calls under **Settings ▸ Gameplay**."}, {"type": "paragraph", "text": "So two people holding the same sword need not play alike at all: they have the skills they each practised for. Every skill in a weapon's pool reinforces that weapon's identity, so however far you take it, it still plays like that weapon."}, {"type": "heading", "level": 2, "text": "Skills level with use — your Ring and your weapon power them"}, {"type": "paragraph", "text": "Three things make a skill strong. **Your Ring stats scale it** (see *Stats & the Ring*) — a heal only pays off if you invested MP, a damage skill only hits hard if you invested Attack or Magic Attack. **Each active skill has its own mastery**, honed by pressing it: every level adds **+1%**, up to **+30%**. A passive cannot be pressed, so it rides your **Weapon Mastery** instead, at half a percent a level to the same ceiling — but only a passive of the weapon in your hands; a potion gets none. The weapon in your hands caps both, and a better weapon trains them faster. And **a forged weapon's trademark** raises one skill of its type by **+5%** to **+20%**, by its grade (see *Weapons*)."}, {"type": "paragraph", "text": "Mastery and a trademark raise a skill's **main numbers** — every one of them, on every effect: the damage it deals, the heal, the shield, the damage an ailment ticks for, how big a buff or debuff is, and how many stacks it adds. A skill with a strike and a damage buff has both raised. They never raise a chance, a duration or the number of hits — only your Ring moves those. A skill's card shows each effect's base number, with the trademark bonus and the mastery bonus each on its own line underneath."}, {"type": "heading", "level": 2, "text": "What a skill is made of"}, {"type": "paragraph", "text": "Every skill combines two things:"}, {"type": "list", "items": ["**Its numbers** — how much damage, how many hits, how long it lasts, its mana cost, cooldown, cast time, range, and area.", "**Its effects** — what it actually *does*."]}, {"type": "heading", "level": 2, "text": "Active and passive skills"}, {"type": "paragraph", "text": "Most skills are **active**: they take a hotbar slot, and you press them. They cost mana and use the cooldown, cast time, range, and area above."}, {"type": "paragraph", "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it works on its own from the moment you learn it, as long as its weapon is in your hands: it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"}, {"type": "list", "items": ["**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Crossed Branches off Piercing Gust, Deep Roots off Still Air.", "**When a basic attack of yours lands.** Rising Breeze and Tailwind ride this one.", "**When you begin a basic attack.**", "**When a hit of yours deals damage.**", "**When you kill something.** Second Bloom rides this one.", "**When you drop to low health.**", "**When you take damage.**", "**When you successfully parry.** Parting Clouds rides this one."]}, {"type": "paragraph", "text": "A passive **fires as a full skill** — the same visuals and the same effects an active would play. Only the trigger is different. It aims itself, too: a skill that needs a target lands on whatever set it off, and a skill that targets you always lands on you."}, {"type": "heading", "level": 2, "text": "What skills can do"}, {"type": "paragraph", "text": "Skills are built from a catalog of effects. The common ones:"}, {"type": "list", "items": ["**Damage** — direct harm. A multi-hit strike splits one total across its hits.", "**Heal** — restore health now.", "**Shield** — raise an absorbing barrier that soaks a set amount of damage, then lapses.", "**Raise a stat / lower a stat** — the workhorse. One effect moves one number on the sheet for a while: your damage, attack speed, cast speed, move speed, health or mana regeneration, accuracy, evasion, attack, defense, crit, max health or mana, life steal, mana leech, reflect, or how much damage you take. Everything that used to be a separate Haste, Guard, Regen or Buff is this one effect now.", "**Status ailments** — Burn, Poison, and Bleed (damage over time), plus Stun, Freeze, and Silence.", "**Parry charges** — each charge erases one incoming hit outright, then is spent.", "**Brace charges** — each charge holds back one incoming hit and banks the damage instead; the whole debt lands when the window ends.", "**Damage charges** — charges that make your next attacks land harder (or an enemy's land softer). One charge, one attack, spent whether it hits or misses.", "**Immunity to being stopped** — a window where nothing flinches, stuns, freezes, silences, shoves or interrupts you.", "**Taunt** — force monsters to attack you.", "**Knockback / Pull** — shove enemies away or drag them in.", "**Cleanse** — strip debuffs off yourself.", "**Execute** — bonus damage that grows huge against low-health enemies.", "**Dash / Teleport** — close distance in a rush, or blink to a target spot.", "**Feed another skill** — add stacks to another skill's pile, or give that pile more time. This is how Second Bloom keeps Thousand Petals going, and how Tailwind feeds Rising Breeze."]}, {"type": "paragraph", "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and each opens deep into that weapon's mastery: the sword's arrive at **30**, **45** and **60**."}, {"type": "quote", "text": ["*Status: the skill framework above is in place. Exact numbers, cooldowns, and each weapon's skill pool are still being tuned and drafted.*"]}]}, "combat.json": {"title": "Combat Mechanics", "blocks": [{"type": "paragraph", "text": "*Damage types, elements, and matchups. Unwritten uses a pre-Renewal Ragnarok-style combat model.*"}, {"type": "heading", "level": 2, "text": "The three damage types"}, {"type": "paragraph", "text": "Every hit is one of three types, and each behaves differently:"}, {"type": "list", "items": ["**Physical** — uses your **Attack** against the target's **Defense**. Can miss, can crit.", "**Magic** — uses your **Magic Attack** against **Magic Defense**. **Never misses**, and **cannot crit**.", "**Critical** — a forced critical hit that **ignores Defense**."]}, {"type": "heading", "level": 2, "text": "Three always-on rules"}, {"type": "paragraph", "text": "These are hard rules the combat math always honors:"}, {"type": "list", "ordered": true, "items": ["**Critical hits ignore Defense** — armor doesn't save you from a crit.", "**Magic never misses** — accuracy and dodge don't apply to spells.", "**Tanks resist mages** — high Defense and HP hold up well against the magic arc, so a durable build is the natural answer to casters."]}, {"type": "heading", "level": 2, "text": "The archetype triangle *(design intent)*"}, {"type": "paragraph", "text": "Builds are meant to settle into a rock-paper-scissors of three archetypes:"}, {"type": "list", "items": ["**AGI / LUK (crit)** beats **STR / VIT (tank)** — crit partly bypasses Defense.", "**STR / VIT (tank)** beats **INT / DEX (mage)** — HP and Magic Defense soak the burst.", "**INT / DEX (mage)** beats **AGI / LUK (crit)** — magic ignores dodge."]}, {"type": "quote", "text": ["These are intended tendencies (not absolute counters), and the exact numbers are still being tuned."]}, {"type": "heading", "level": 2, "text": "Elements"}, {"type": "paragraph", "text": "Every monster has an **element**, and it works both ways: its ordinary attacks land as that element, and it is hit as that element. Element against element changes the damage — the classic Ragnarok matchup web. You are **Neutral** until a converter says otherwise. The elements are:"}, {"type": "paragraph", "text": "**Neutral · Water · Earth · Fire · Wind · Poison · Holy · Dark · Ghost · Undead**"}, {"type": "paragraph", "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Dark. A skill keeps its own element — a fire bolt is Fire whoever casts it; only ordinary attacks take the attacker's element."}, {"type": "paragraph", "text": "A monster's element has a **level, 1 to 4**. The higher the level, the more it shrugs off what it resists and the harder it falls to what it is weak to. At **level 3 and 4** a monster can **heal** from the element it resists most — hit a level-4 Fire creature with Fire and it regains health instead of losing it."}, {"type": "paragraph", "text": "**Converters** change your element for **5:00**. An *Elemental Converter* makes your ordinary attacks land as its element; an *Armor Converter* makes you hit as its element, at level 1. A new converter replaces the old one of the same kind, and one of each can run together. There are four of each — **Flame** (Fire), **Frost** (Water), **Seismic** (Earth) and **Lightning** (Wind) — and each drops from monsters of its own element."}, {"type": "heading", "level": 2, "text": "Monster sizes *(planned matchup)*"}, {"type": "paragraph", "text": "Monsters come in **Small, Medium and Large** sizes (see *Monsters*), and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"}, {"type": "heading", "level": 2, "text": "Status ailments"}, {"type": "paragraph", "text": "Skills can inflict lasting conditions:"}, {"type": "list", "items": ["**Damage over time:** Burn, Poison, Bleed", "**Control:** Stun, Freeze, Silence"]}, {"type": "paragraph", "text": "Those six are the whole list. **Weakening isn't an ailment** — being slowed, blinded, or made to take extra damage is the same thing as any buff, just pointed the other way: one number on your sheet moved down for a while. Move speed, accuracy and damage taken are ordinary stats, so a skill lowers them exactly the way another skill raises them."}, {"type": "heading", "level": 2, "text": "Buffs, debuffs & stacks"}, {"type": "paragraph", "text": "Anything lasting that sits on you or an enemy is a **state** — buffs and debuffs work the same way underneath. Your own states show as icons on the right edge of the screen, counting down; a monster's show above its health bar."}, {"type": "paragraph", "text": "Some states **stack**. Each stack carries its own strength and its own timer, and the total is simply the sum — ten stacks of +3% attack is +30% attack. When a stack expires, only that one drops; the rest keep running. An icon shows its count when it's holding more than one."}, {"type": "paragraph", "text": "**Death clears everything.** Nothing timed survives dying — no buff, no debuff, no banked damage, no charges. That holds for you and for monsters alike, so nothing comes back still carrying what killed it. Logging out or travelling does **not** clear them: they wait, paused, and carry on with the time they had left when you come back."}, {"type": "heading", "level": 3, "text": "Taunt"}, {"type": "paragraph", "text": "A taunted enemy is doing three things at once, for as long as it lasts:"}, {"type": "list", "items": ["**Locked onto whoever taunted it** — a ranged enemy loses its standoff and closes in instead of kiting.", "**It cannot use skills.** Only its ordinary swings.", "**No pause between swings.** Its swing *rate* is untouched — the taunt removes the gaps, it doesn't make it faster."]}, {"type": "paragraph", "text": "Its **passives still fire**. A taunt takes away choices, and a passive isn't one. These rules belong to the taunt itself, so they hold for whatever it lands on."}, {"type": "heading", "level": 3, "text": "Charges"}, {"type": "paragraph", "text": "A few skills hand you a burst of **charges** at once — several stacks sharing one window, spent one at a time. Casting a skill might grant 5 charges, and each qualifying hit spends one until they're gone or the window closes."}, {"type": "paragraph", "text": "**A charge is spent on use, and never refunded.** Whatever happens afterwards — the swing was cancelled, the dash hit a wall, the target died mid-cast — the charge is gone. That's deliberate: if cancelling gave charges back, cancel-spam would be free."}, {"type": "paragraph", "text": "The four kinds of charge you'll meet:"}, {"type": "list", "items": ["**Parry charges** — each one erases a whole incoming hit. No damage, no defense math, then the charge is gone.", "**Brace charges** — each one holds a hit back instead of erasing it. The damage is banked, and the whole bill lands at once when the window ends.", "**Attack charges** — each one makes a single outgoing attack land harder, and is spent **whether it hits or misses** (the charge paid for making the attack, not for landing it). The bonus applies *before* the target's armor, so it's worth more against tanky foes. There's a mirror version that makes an attack land softer.", "**Skill charges** — a count a skill spends as it runs, like each strike of a long combo."]}, {"type": "paragraph", "text": "Some charge piles are sized by **how fast you swing** rather than by a fixed number, so a faster character genuinely gets more of them."}, {"type": "heading", "level": 3, "text": "Combo skills"}, {"type": "paragraph", "text": "Some skills **require** a state before they'll do anything. If you don't have it, the skill simply doesn't fire — no animation, no cooldown, no mana spent. Skills that cash in a state always calculate their power from what you're carrying **before** spending it, so a finisher gets full value from every stack it consumes."}, {"type": "callout", "text": "A skill that triggers off your hits can never chain into itself, so a combo can't spiral out of control — its charges are its budget, and that's the ceiling."}, {"type": "quote", "text": ["*Status: the model and rules above are set; specific numbers and the size matchup are in tuning.*"]}]}, "weapons.json": {"title": "Weapons & Equipment", "blocks": [{"type": "paragraph", "text": "*Gear that shapes your skills, your defense, and your look.*"}, {"type": "heading", "level": 2, "text": "Weapons decide which skills you may use"}, {"type": "paragraph", "text": "Your weapon is more than a stat stick — its **type** decides which of the skills you have learned you may use right now (see *Skills*), and a forged weapon raises one of those skills through its **trademark** (below). Every weapon is a real 3D object your character holds."}, {"type": "heading", "level": 2, "text": "The weapon roster"}, {"type": "paragraph", "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is what the artist kept of one of the **Fourteen Kashira**, and how the weapon fights *is* how that Kashira fought. None of them was ever named — only described by the deed they are remembered for. They fall into four families:"}, {"type": "heading", "level": 3, "text": "Might — physical power, up close"}, {"type": "table", "headers": ["Weapon", "Kashira", "What it's for"], "rows": [["**Greatsword**", "The One Who Cleared the Road", "Delete whole groups with huge cleaves."], ["**Warhammer**", "The One Who Said No", "Deny enemies their turn — stun and knock them back."], ["**Spear**", "The One Who Moved the Line", "Reposition the fight — pull enemies in and impale them."], ["**Shield**", "The One Who Stood", "Protect your allies by absorbing all the attention. *(off-hand — pair it with a one-handed weapon)*"]]}, {"type": "heading", "level": 3, "text": "Finesse — precision & mobility"}, {"type": "table", "headers": ["Weapon", "Kashira", "What it's for"], "rows": [["**Bow**", "The One Who Kept Distance", "Win through mobility and spacing — kite and never get touched."], ["**Dagger**", "The Late Arrival", "Eliminate weakened targets, then vanish."]]}, {"type": "heading", "level": 3, "text": "Arcane — magic"}, {"type": "table", "headers": ["Weapon", "Kashira", "What it's for"], "rows": [["**Staff**", "The One Who Burned the Field", "Dominate whole areas with destructive magic."], ["**Wand**", "The One Who Brought Them Back", "Keep your allies alive."]]}, {"type": "heading", "level": 3, "text": "Hybrid — two families in one"}, {"type": "table", "headers": ["Weapon", "Families", "Kashira", "What it's for"], "rows": [["**Sword**", "Might + Finesse", "The One Who Answered", "Win duels with precise single-target bursts and timed defense."], ["**Axe**", "Might + Finesse", "The One Who Never Stopped", "Snowball through relentless aggression."], ["**Kick**", "Might + Finesse", "*not yet told*", "*not yet in the game*"], ["**Fist**", "Might + Arcane", "*not yet told*", "*not yet in the game*"], ["**Scythe**", "Might + Arcane", "The One Who Waited", "Slowly overwhelm enemies with stacking curses."], ["**Firearm**", "Finesse + Arcane", "The One Who Fired Once", "Land one devastating shot, then reload. The only weapon whose magic can crit."]]}, {"type": "paragraph", "text": "Each weapon type has a deep pool of skills, but **a weapon carries none of them**. You learn a skill by practising that kind of weapon, and it is yours for good — what you hold only decides which of the ones you know you may use right now. See *Skills* for how they are learned."}, {"type": "heading", "level": 2, "text": "Equipment slots"}, {"type": "paragraph", "text": "Beyond your weapon, you wear:"}, {"type": "list", "items": ["**Head**, **Body**, **Off-hand**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**"]}, {"type": "table", "headers": ["Slot", "Metal (Smith)", "Leather (Tannery)", "Cloth (Loom)"], "rows": [["**Head**", "Iron Helm", "Leather Cap", "Padded Hood"], ["**Body**", "Chainmail", "Leather Jerkin", "Padded Vest"], ["**Off-hand**", "Iron Kite Shield", "Leather Buckler", "Padded Shield"], ["**Garment**", "Chain Mantle", "Hide Cloak", "Traveller's Cloak"], ["**Shoes**", "Iron Sabatons", "Leather Boots", "Woven Shoes"]]}, {"type": "paragraph", "text": "Every armour piece rolls **one word** when it is forged, from its own slot's words, and wears it in its name — *+15 Fleet Iron Sabatons [C]*. A word does one thing, grows with the piece's grade, and never changes. No word appears on two slots, so you can never wear the same word twice."}, {"type": "table", "headers": ["Slot", "Word", "What it does"], "rows": [["Head", "**Ironblood**", "Fewer critical hits land on you"], ["Head", "**Steadfast**", "Stuns, freezes, silences and ailments on you end sooner"], ["Head", "**Wellspring**", "Mana regenerates faster"], ["Body", "**Bulwark**", "Damage taken is cut"], ["Body", "**Sanguine**", "Damage dealt heals you"], ["Body", "**Fierce**", "All damage dealt is higher"], ["Off-hand", "**Thornclad**", "Damage taken is sent back"], ["Off-hand", "**Guarding**", "Blocks more often"], ["Off-hand", "**Longreach**", "Ordinary attacks reach further"], ["Garment", "**Emberward · Tideward · Stoneward · Galeward**", "Less damage from Fire · Water · Earth · Wind"], ["Shoes", "**Fleet**", "You move faster"], ["Shoes", "**Tireless**", "Sprint drains stamina slower"]]}, {"type": "paragraph", "text": "There is no ring slot: your **Ring** is part of you, not something you wear (see *Stats & the Ring*)."}, {"type": "paragraph", "text": "Each piece adds what its **folds** and its **quality** make it worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*)."}, {"type": "heading", "text": "Folds (+N)"}, {"type": "paragraph", "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds to what the piece is worth: **attack** on a weapon (a staff gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour, an off-hand or a garment add."}, {"type": "paragraph", "text": "That fold total is then **lifted by the grade** — nothing at Raw and F, rising to **+30% at A**. So an A-grade piece at its full thirty-five folds carries 46 attack, where the same thirty-five folds on an E-grade piece carry 37."}, {"type": "paragraph", "text": "**A quench spends every fold**, whichever way it goes. Folds are not lost work: half of what a finished piece cost comes back if you recycle it (see *Crafting & Recycling*)."}, {"type": "heading", "level": 2, "text": "Quality"}, {"type": "paragraph", "text": "Every piece you make carries a **quality grade**. A freshly forged piece is **Raw**; above that the ladder runs **F, E, D, C, B, A**, and A is the best there is. Quality is decided by the **quench** — the one moment of luck in a whole piece's making — and it moves one rung at a time, up or down, never in a jump."}, {"type": "paragraph", "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack — or its armour's material stats — are made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."}, {"type": "table", "headers": ["Quality", "Folds it allows", "Lift on the fold total", "Stats it can carry", "Weapon mastery it allows"], "rows": [["**Raw**", "+5", "—", "—", "10"], ["**F**", "+10", "—", "1", "20"], ["**E**", "+15", "+5%", "2", "30"], ["**D**", "+20", "+10%", "3", "40"], ["**C**", "+25", "+15%", "4", "50"], ["**B**", "+30", "+22%", "5", "60"], ["**A**", "+35", "+30%", "6", "70"]]}, {"type": "heading", "level": 2, "text": "Where a weapon's skills come from"}, {"type": "paragraph", "text": "**A weapon carries no skills.** You learn them yourself, by fighting with that kind of weapon: every skill names the **mastery level** at which it opens, and some name a skill you must know first. What you have learned is yours for good — the weapon in your hands only decides which of them you may use, and how much further you can still learn."}, {"type": "paragraph", "text": "**A forged weapon has a trademark.** At the forge it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +15 at grade C it reads **+15 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: each ultimate one time in twenty, the others sharing the rest evenly. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Hover the weapon to see which skill and which numbers; hover the skill to see the bonus on its own line."}, {"type": "paragraph", "text": "So two people holding the same sword do not have the same skills: they have the skills they each practised for."}, {"type": "heading", "level": 2, "text": "Cards"}, {"type": "paragraph", "text": "Some gear has **card slots**. Cards are not in the game yet — see **Cards**."}, {"type": "quote", "text": ["*Status: the 14-weapon roster is locked in design. Fist and Kick are not in the game yet, and neither is the Firearm's magic crit; the other twelve weapons' one-line identities are locked. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"]}]}, "sword.json": {"title": "The Sword", "blocks": [{"type": "lede", "text": "A duelist's weapon — win fights one opponent at a time through precise single-target bursts and timed defense. Precision here is **timing**, not luck: no crits, no armor-piercing — just reading the fight and hitting the beat."}, {"type": "quote", "text": ["*The Sword is the trace left by **The One Who Answered** — the Kashira who met every challenge alone, one at a time, and never lost the exchange. Every Sword skill is a fragment of how they fought.*"]}, {"type": "callout", "text": "**Status:** the Sword's pool is complete — every skill is built and in the game. Numbers are still in tuning."}, {"type": "paragraph", "text": "You learn these by practising the sword: each opens at the **Sword Mastery** level it names, and some need another skill first. A forged sword is also named for one of them — its **trademark** — and raises every number that skill puts out while you hold it (see *Weapons & Equipment*). Every Sword skill, with its numbers and effects, is listed in *Database ▸ Skills*."}, {"type": "heading", "level": 2, "text": "Ultimates"}, {"type": "paragraph", "text": "Three, opening at Sword Mastery 30, 45 and 60. 40 MP, and a long cooldown rather than a charge meter."}, {"type": "heading", "level": 2, "text": "Passive skills"}, {"type": "paragraph", "text": "No button, no mana, no cooldown — each one fires on a moment in the fight."}, {"type": "heading", "level": 2, "text": "How the builds fit together"}, {"type": "list", "items": ["**Last Petal** — swing to build Rising Breeze, keep **Tailwind** running by staying on one target, then cash it all in one blow. Squall stacks it faster at the cost of a fragile window.", "**Returning Wind** — Held Breath to bank the hits you were going to take, then release. **Howling Wind** stops them walking away from the bank; **Bare Branch** hands you more charges exactly when you're about to die. Squall's doubled incoming damage doubles the bank, turning its drawback into the payoff.", "**Thousand Petals** — Squall first: attack speed buys more dance charges, more parries and a faster beat. **Second Bloom** keeps it going on every kill. The doubled damage taken is real — the Parry charges are your only cover."]}]}, "crafting.json": {"title": "Crafting & Recycling", "blocks": [{"type": "paragraph", "text": "*Turn what creatures drop into the gear you want.*"}, {"type": "heading", "level": 2, "text": "Every drop is a starting point"}, {"type": "paragraph", "text": "**Nothing you wear is ever found.** Creatures give up materials, never equipment — so a sword exists because you made one. You forge it at a smith, fold it with the metal of its own grade, and quench it when it will fold no further."}, {"type": "paragraph", "text": "**The quench is the gamble, and it is the only one.** It moves the piece's quality one rung up, leaves it where it is, or knocks it one rung down — and it spends **every fold** either way. That is why a B-grade piece at its full thirty folds is a real decision: going for A means putting all thirty on the fire. **Salt** shifts the odds your way and is used up whichever way it goes."}, {"type": "heading", "text": "The four things a station does"}, {"type": "list", "items": ["**Forge** — pay a design's base materials and gold, and take a **Raw +0** piece. A weapon rolls one thing, once — its **trademark** — and an armour piece rolls one **word** from its slot (see *Weapons & Equipment*); nothing else about a piece is ever rolled.", "**Fold** — 1 unit of your grade's band material and gold. Each fold raises a weapon's attack by one; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.", "**Quench** — 10 units of the band and more gold. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.", "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced."]}, {"type": "paragraph", "text": "**What a piece is called.** A weapon goes by the name of its trademark skill, its folds and its grade — **+15 Thousand Petals [C]**. Anything else goes by its grade, its folds and what it is — **B +12 Padded Vest**. The bag lists every piece by that title, and its search finds it."}, {"type": "heading", "text": "Where a piece is made"}, {"type": "paragraph", "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. Each craft's material comes in **seven bands, one per grade** — Copper to Adamant, Burlap to Brocade, Rawhide to Wyrmhide — and a piece folds only with the band of its own grade. Band materials never merge into each other; the better ones drop from stronger creatures, so climbing the grades walks you across the world."}, {"type": "heading", "text": "Ink and Salt"}, {"type": "paragraph", "text": "**Ink** comes in five tiers — Watery, Thin, Faint, Clear, Sharp — and the tier sets how big the number is. One Ink writes **one** stat, drawn from eighteen: twelve sub-stats and the six primaries, which are far rarer and worth far more. A stat already on the piece cannot roll again. There is no failure outcome: a poor roll is the failure, and the Ink is spent. **Your grade decides how many stats the piece can carry**, from none at Raw to six at A."}, {"type": "paragraph", "text": "**Salt** comes in three — Coarse, Fine, Pure — and does one thing: it shifts a quench's odds toward going up. It is used up whichever way the quench goes, it never makes success certain, and it never removes the chance of dropping a grade."}, {"type": "paragraph", "text": "**Ten of one tier merge into one of the next**, for Ink and Salt both, with nothing to fail. Surplus low tiers are never trash."}, {"type": "heading", "text": "Recycling — half of it comes back"}, {"type": "paragraph", "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back: the forge bill, every quench it successfully climbed, the folds standing on it now, and the Ink for the stats written on it."}, {"type": "paragraph", "text": "**Quenches that failed are not counted** — nothing anywhere remembers them — and Salt never comes back. Each material is halved on its own and rounded down, so a single unit does not survive the trip."}, {"type": "quote", "text": ["*Status: forging, folding, quenching, Ink, merging, recycling and weapon trademarks are all built. The costs, the odds, the Ink values and the trademark bonuses are first numbers, to be tuned in play.*"]}]}, "cards.json": {"title": "Cards", "blocks": [{"type": "paragraph", "text": "*Monster-matchup specialization. **(Planned feature — not yet in the game.)***"}, {"type": "heading", "level": 2, "text": "What cards will be"}, {"type": "paragraph", "text": "Cards are a Ragnarok-style progression axis, separate from your Ring and your gear stats. A card slots into a piece of equipment and grants **bonuses or resistances against specific enemy categories or damage types** — for example, extra damage to a monster family, or resistance to an element."}, {"type": "paragraph", "text": "The guiding rules for the design:"}, {"type": "list", "items": ["**Cards only affect combat outcomes against tagged enemies** — they never change your skills.", "They're meant to be **matchup flavor, not raw power** — a way to specialize for what you're fighting, not a second power-stacking track.", "Slot count is set per piece of gear, not by its quality (see *Weapons & Equipment*)."]}, {"type": "heading", "level": 2, "text": "Status"}, {"type": "paragraph", "text": "Cards are **deferred**. They depend on a monster-category/tagging system that hasn't been built yet, and they'll arrive together with it. This page will fill in with the real card list once the feature lands."}]}, "monsters.json": {"title": "Monsters", "blocks": [{"type": "paragraph", "text": "*The corrupted pages you hunt.*"}, {"type": "heading", "level": 2, "text": "What monsters are"}, {"type": "paragraph", "text": "Every monster in Unwritten is a **corrupted page** — a drawing from the artist's book that Chaos twisted into hostile form. That's why they appear **flat and papery**: their two-dimensional look isn't a style choice — it's what they *are*. To defeat one is to **restore its page**. Point at one, or fight it, and its **portrait** shows beside its name."}, {"type": "heading", "level": 2, "text": "How monsters are organized"}, {"type": "list", "items": ["**By biome** — each biome (Grassland, Snow, Desert, Volcanic, Corrupted) has its own family of monsters. See *World & Maps*.", "**By level** — every monster has a level, exactly like you do. That single number is what makes it dangerous; there is no separate difficulty rating. Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in field after field.", "**By kind** — most monsters are ordinary. A few in each area are **elites**: stronger, and they keep calling ordinary monsters to their side. Stronger still are the fourteen **shadows**, one for each weapon, each with a name of its own and gear at the highest grade — they call elites, and they are meant to take a whole guild to bring down. Anything a summoner calls gives nothing when it dies, and vanishes when its summoner does.", "**By element** — a monster's element grows stronger with its kind: ordinary monsters are **level 1**, elites **level 2**, shadows **level 3**. Where a monster lives says what it probably is: the plains are mostly Neutral, the forests and hills Earth, the sea and snow Water, the volcano Fire, and the dark lands overseas Poison, Holy, Dark, Ghost and Undead. The shadows between them carry all ten elements, and a converter only answers the four it comes in — Water, Earth, Fire and Wind (see *Combat Mechanics*).", "**By size** — every monster has a size of its own, set by what it is: a mouse barely reaches your ankle, a raccoon your knee, a bear stands taller than you and a giant squid towers four times your height. Every size falls into one of three groups — **Small, Medium or Large**. A Medium monster stands about as tall as you; a Small one under two-thirds of your height, a Large one more than one and a half times it. A bigger monster also reaches further with its blows — and you reach it from further away. Most ordinary monsters are Small or Medium; most elites are Large; every shadow is exactly your size. The size group is also meant to interact with your weapon type (see *Combat Mechanics*)."]}, {"type": "heading", "level": 2, "text": "Monsters play by your rules"}, {"type": "paragraph", "text": "A monster is not built from a different set of numbers than you are. It has the **same six stats**, grown by the **same formulas**, and — this is the part that matters — it gets the **same number of stat points its level allows**. A level 20 monster is carrying exactly what a level 20 player could have bought. Nothing is inflated behind the scenes and nothing is quietly weakened."}, {"type": "list", "items": ["**It wears real equipment** — the same gear you can wear, in the same slots. A monster's strength is its level, its stats, and its kit.", "**It can carry Ring investment** — scaling it on the same soft-cap curve yours uses. A monster with a Ring behind it is a genuinely different fight.", "**Its stats are visible in its numbers** — a monster that hits hard has the attack to prove it. There is no hidden multiplier making things tougher."]}, {"type": "callout", "text": "Because a monster is built like a character, anything a skill can do to you it can do to a monster — and the reverse. A monster can be slowed, shielded, guarded, drained, or pulled off its feet just as you can."}, {"type": "heading", "level": 2, "text": "Drops — materials, never gear"}, {"type": "paragraph", "text": "A monster **keeps what it wears** — its gear dies with it, because gear is made, not taken off a corpse. What it gives up is **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."}, {"type": "list", "items": ["**Materials** — the metal, cloth and leather of the monster's own grade, which rises with its level, and now and then an **Ink** or a **Salt**. Elites drop far more, and rarer Inks and Salts; shadows more again. No stats of their own; they feed **Crafting & Recycling**.", "**Consumables** — potions and food, now and then; a monster with an element also drops the **converters** of its own element."]}, {"type": "heading", "level": 2, "text": "Pages that turn back"}, {"type": "paragraph", "text": "A beaten monster sometimes turns back into the character the artist really drew on its page — about **3 kills in 20**, for ordinary monsters and elites; a shadow never does. The monster's own drops still fall. The character says a line — for its first 2 seconds an aura shows which kind it is: hearts for one that never fights, stars for an ally, a dark haze for a rebel — and it stays for 30 seconds, doing one of three things:"}, {"type": "list", "items": ["**Some never fight.** They thank you, stay a while and leave — and saving one is the only way to earn **gold**: the monster's own gold range, times more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans).", "**Some fight beside you** against monsters and rebels, then say goodbye. You cannot hit them, and what they beat counts as yours.", "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. A rebel carries **more and rarer loot** — as if it were one kind stronger — and the experience of the monster it came from. An elite always turns into the same ninja, and every ninja rebels."]}, {"type": "heading", "level": 2, "text": "Elites & the shadows"}, {"type": "list", "items": ["**Elites** are the strongest corrupted pages of an area, and they keep calling ordinary monsters to their side.", "**The shadows** are the Fourteen Kashira, turned by the artist's fear — the strongest creatures in the world, levels 105 to 170, one for each weapon."]}, {"type": "quote", "text": ["*Status: the monster structure is set and the full roster is now built on the level-and-stats model above — ordinary monsters and elites from level 1 to 99, shadows from 105 to 170. Individual names, kits, and art are still being finished, and the per-monster listing will appear here.*"]}]}, "database-monsters.json": {"title": "Monsters", "blocks": [{"type": "mobTable"}]}, "database-skills.json": {"title": "Skills", "blocks": [{"type": "skillDatabase"}]}, "database-equipment.json": {"title": "Equipment", "blocks": [{"type": "equipmentTable"}, {"type": "heading", "level": 2, "text": "Trademark weapons"}, {"type": "trademarkTable"}, {"type": "heading", "level": 2, "text": "Armor variants"}, {"type": "armorVariantTable"}]}, "database-materials.json": {"title": "Materials", "blocks": [{"type": "materialTable"}]}, "database-world-map.json": {"title": "World Map", "blocks": [{"type": "worldMap"}]}, "database-elements.json": {"title": "Elements", "blocks": [{"type": "paragraph", "text": "Rows are the attack's element, columns the defender's element. The level is the defender's element level. Below 0% the hit heals the defender."}, {"type": "elementTable"}]}, "roadmap.json": {"title": "Roadmap", "blocks": [{"type": "lede", "text": "Everything built so far and everything coming next, on one line. What is coming sits at the top; scroll down to go back in time."}, {"type": "timeline", "items": [{"state": "planned", "when": "Not scheduled", "title": "Ideas for later", "text": "Class advancement, trading, parties, guilds, an auction house, and player-versus-player."}, {"state": "planned", "when": "Further out", "title": "Cards", "text": "Earned from the monsters they are tied to."}, {"state": "planned", "when": "Further out", "title": "More weapons", "text": "The sword is the first with a full set of skills; the bow is next."}, {"state": "planned", "when": "Planned", "title": "A stranger can start it", "text": "A title screen, and a start that shows a new player what to do."}, {"state": "planned", "when": "Planned", "title": "Gold has a use", "text": "A shop: sell what you find, and buy what you need."}, {"state": "planned", "when": "Planned", "title": "A quest can be finished", "text": "Go where you were sent, come back, and get paid."}, {"state": "planned", "when": "Planned", "title": "A quest can be given", "text": "Townsfolk ask you for help, and the game remembers what you agreed to."}, {"state": "planned", "when": "Planned", "title": "The world has people", "text": "Townsfolk with their own names and their own things to say."}, {"state": "planned", "when": "Planned", "title": "Strangers can play it", "text": "The play-test: download the game, make your own account, and play it online before the official release."}, {"state": "planned", "when": "Planned", "title": "Dungeons have a destination", "text": "Every elite has its place in the world, and every shadow stands on an end-game map — each worth the walk."}, {"state": "planned", "when": "Planned", "title": "The world opens", "text": "Walk from the first town to every map in the world."}, {"state": "now", "when": "Now", "title": "Killing things pays you", "text": "Monsters drop the materials you forge with, plus consumables; saving a character that never fights pays coin. Pick up what falls and turn it into gear."}, {"state": "done", "when": "27 Sep 2026", "title": "Fields with hills and cliffs", "text": "The fields now rise and fall in **hills and levels**. **Rock cliffs** line some roads, with slopes where you can climb up onto the high ground, and monsters can **chase you up any slope you can walk**."}, {"state": "done", "when": "23 Sep 2026", "title": "Checking the foundations", "text": "Making sure everything already in the game works as it should, before the milestones above begin."}, {"state": "done", "when": "23 Sep 2026", "title": "A full wardrobe exists", "text": "Make gear for every part of your body — forge it, fold it, quench it for a better grade, write stats on it with **Ink**, or **take it apart** for half of what went into it."}, {"state": "done", "when": "22 Sep 2026", "title": "Elites and shadows", "text": "Every monster is now a **normal**, an **elite** or a **shadow**. Fourteen shadows, levels 105 to 170, each call an elite to their side."}, {"state": "done", "when": "21 Sep 2026", "title": "Skills are learned", "text": "Weapons no longer carry skills: you **learn them by fighting** with a weapon, and each skill grows as you use it. Press **K** for the new Skills window. The ring is now part of you, shown in the Character window."}, {"state": "done", "when": "17 Sep 2026", "title": "GMCP — an AI can play", "text": "An AI can now **play the game as a real player**, with no window: it reads the screen as text and gives the same orders a click gives. Three players — one person and two AIs — met in town and talked in chat."}, {"state": "done", "when": "12 Sep 2026", "title": "Elite looks", "text": "Every **elite** has its own look."}, {"state": "done", "when": "10 Sep 2026", "title": "Dropped things stay put", "text": "Things you drop **stay on the ground**, and townsfolk are shared by everyone online."}, {"state": "done", "when": "7 Sep 2026", "title": "Walk into range", "text": "Cast a skill from too far away and you **walk into range** first."}, {"state": "done", "when": "5 Sep 2026", "title": "Several servers", "text": "The world runs across **several servers**, and one account can only be signed in once."}, {"state": "done", "when": "2 Sep 2026", "title": "Skills online", "text": "Every **skill** is decided by the online world, not by your own computer."}, {"state": "done", "when": "27–31 Aug 2026", "title": "Monsters and fights online", "text": "The online world takes charge of **monsters and fights**."}, {"state": "done", "when": "26 Aug 2026", "title": "Sign in, and consumables", "text": "**Sign in**: your character now lives online, and two players in the same town can see each other move. **11 consumable items** arrive, each with its own effect."}, {"state": "done", "when": "24 Aug 2026", "title": "The Sword is complete", "text": "**22 skills** for the sword."}, {"state": "done", "when": "20 Aug 2026", "title": "Flinch and footing", "text": "A big enough blow **staggers** whoever takes it."}, {"state": "done", "when": "13 Aug 2026", "title": "Same rules for everyone", "text": "Monsters hit you by **the same rules** you hit them: critical first, then whether it lands, then the damage."}, {"state": "done", "when": "11 Aug 2026", "title": "Shared stats and Parry", "text": "Monsters and players are built from **the same stats**. **Parry** arrives."}, {"state": "done", "when": "7 Aug 2026", "title": "Character sheet", "text": "The full **character sheet**."}, {"state": "done", "when": "27 Jul 2026", "title": "This wiki", "text": "This **wiki** opens."}, {"state": "done", "when": "21 Jul 2026", "title": "Townsfolk you can talk to", "text": "Talk to townsfolk in a **dialogue box**."}, {"state": "done", "when": "13 Jul 2026", "title": "Character colours", "text": "Choose how your **outfit** looks."}, {"state": "done", "when": "4 Jul 2026", "title": "Fully 3D characters", "text": "Your character becomes a **fully 3D figure**."}, {"state": "done", "when": "3 Jul 2026", "title": "Music and ambience", "text": "Every map gets its own **music and ambient sound**."}, {"state": "done", "when": "23 Jun 2026", "title": "World map", "text": "The **world map**."}, {"state": "done", "when": "22 Jun 2026", "title": "Doorways and calendar", "text": "**Doorways** between maps, and a **calendar** that decides the weather."}, {"state": "done", "when": "21 Jun 2026", "title": "Weather", "text": "**Rain** that leaves the ground wet and reflective, and **snow**."}, {"state": "done", "when": "17 Jun 2026", "title": "Day and night", "text": "The sun sets and rises."}, {"state": "done", "when": "16 Jun 2026", "title": "The 2.5D look", "text": "A 3D town, a follow camera, **click to move**, monsters that wander and chase you, and **click-to-attack** combat."}, {"state": "done", "when": "12 Jun 2026", "title": "The beginning", "text": "Work on Unwritten begins."}]}]}}}</script>
+<script>
+const W = JSON.parse(document.getElementById('wiki-data').textContent);
+const page = file => W.pages[file];
+
+/* Wiki pages that move OUT of the wiki onto the main site — everything else stays in the Wiki section. */
+const GUIDE = [
+  ['world', 'world.json'], ['playstyles', 'playstyles.json'], ['maps', 'world-maps.json'], ['start', 'getting-started.json'],
+];
+const MOVED = new Set(['home', 'world', 'playstyles', 'maps', 'start', 'roadmap', 'status']);
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>');
+const strip = s => String(s).replace(/\*/g, '');
+
+function block(b) {
+  switch (b.type) {
+    case 'paragraph': return `<p>${inline(b.text)}</p>`;
+    case 'lede': return `<p class="lede">${inline(b.text)}</p>`;
+    case 'heading': { const l = Math.min(Math.max(b.level || 2, 2), 3); return `<h${l}>${inline(b.text)}</h${l}>`; }
+    case 'list': { const t = b.ordered ? 'ol' : 'ul'; return `<${t}>${b.items.map(i => `<li>${inline(i)}</li>`).join('')}</${t}>`; }
+    case 'quote': return `<blockquote>${[].concat(b.text).map(t => `<p>${inline(t)}</p>`).join('')}</blockquote>`;
+    case 'callout': return `<div class="callout">${inline(b.text)}</div>`;
+    case 'hr': return '<hr>';
+    case 'table': return `<div class="tablewrap"><table><thead><tr>${b.headers.map(h => `<th>${inline(h)}</th>`).join('')}</tr></thead>` +
+      `<tbody>${b.rows.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    case 'timeline': return `<ul class="timeline">${b.items.map(i =>
+      `<li class="${i.state}"><div class="when">${esc(i.when)}</div><div class="ttl">${inline(i.title)}</div><div>${inline(i.text)}</div></li>`).join('')}</ul>`;
+    default: return `<div class="moved">This part is drawn by the wiki's own database view (<b>${esc(b.type)}</b>) and moves over unchanged.</div>`;
+  }
+}
+const render = blocks => blocks.map(block).join('');
+
+/* reserved art boxes */
+function fillArt(root) {
+  root.querySelectorAll('.art').forEach(a => {
+    if (a.dataset.done) return;
+    a.dataset.done = 1;
+    a.innerHTML = '<div class="here">IMAGE ART HERE</div>' +
+      `<div class="kind">${esc(a.dataset.kind || '')}</div>` +
+      (a.dataset.size ? `<div class="size">${esc(a.dataset.size)}</div>` : '') +
+      (a.dataset.desc ? `<div class="desc">${a.dataset.desc}</div>` : '');
+  });
+}
+
+/* ---------- home ---------- */
+const home = page('home.json').blocks;
+{ const t = home[0].text; document.getElementById('home-tagline').innerHTML = '<b>Unwritten</b> — ' + inline(t.slice(t.indexOf('— ') + 2).replace(/\*$/, '')); }
+{
+  const i = home.findIndex(b => b.type === 'heading' && b.text === 'What is Unwritten?');
+  const j = home.findIndex((b, k) => k > i && b.type === 'heading');
+  document.getElementById('home-what').innerHTML = render(home.slice(i + 1, j));
+}
+
+const world = page('world.json').blocks;
+const kTable = world.find(b => b.type === 'table');
+const kIntro = world[world.findIndex(b => b.type === 'heading' && b.text === 'The Fourteen Kashira') + 1];
+document.getElementById('k-intro').innerHTML = inline(kIntro.text);
+const picker = document.getElementById('k-picker');
+kTable.rows.forEach((r, n) => {
+  const b = document.createElement('button');
+  b.innerHTML = `<div class="art tiny" data-kind="Weapon icon"></div><span>${esc(strip(r[0]))}</span>`;
+  b.onclick = () => pickKashira(n);
+  picker.append(b);
+});
+function pickKashira(n) {
+  const r = kTable.rows[n];
+  [...picker.children].forEach((b, k) => b.classList.toggle('on', k === n));
+  document.getElementById('k-weapon').textContent = strip(r[0]).toUpperCase();
+  document.getElementById('k-epithet').innerHTML = inline(r[1]);
+  document.getElementById('k-deed').innerHTML = inline(r[2]);
+  const a = document.getElementById('k-art');
+  a.dataset.done = '';
+  a.dataset.desc = `An unwritten hero — charcoal body, a first hint of colour — holding a ${esc(strip(r[0]).toLowerCase())}, posed the way ${esc(strip(r[1]))} fought. One picture per weapon, fourteen in all.`;
+  fillArt(a.parentElement);
+}
+
+const biomeList = page('world-maps.json').blocks.find(b => b.type === 'list');
+document.getElementById('home-biomes').innerHTML = biomeList.items.map(it => {
+  const name = strip(it.split('—')[0]).trim();
+  return `<div class="card"><div class="art" data-kind="Biome landscape art" data-size="800 × 500" data-desc="${esc(name)}."></div>` +
+    `<div class="txt">${inline(it)}</div>` +
+    `<div class="art mob tiny" data-kind="${esc(name)} monster art"></div></div>`;
+}).join('');
+
+/* News: real entries come from the launcher's news file (the same file the download page reads today).
+   The prototype shows the Roadmap's finished steps in their place. */
+const roadmap = page('roadmap.json').blocks.find(b => b.type === 'timeline').items;
+const news = roadmap.filter(i => i.state === 'done').map(i => ({ date: i.when, title: strip(i.title), text: strip(i.text) }));
+const board = (n, withText) => news.slice(0, n).map(x =>
+  `<li><span class="d">${esc(x.date)}</span><span class="t">${esc(x.title)}${withText ? `<br><span style="font-weight:400;color:var(--text-dim)">${esc(x.text)}</span>` : ''}</span></li>`).join('');
+document.getElementById('home-news').innerHTML = board(6);
+document.getElementById('news-list').innerHTML = board(99, true);
+document.getElementById('dl-news').innerHTML = board(4);
+
+/* ---------- guide ---------- */
+const titleOf = id => { for (const g of W.manifest.groups) for (const p of g.pages) if (p.id === id) return p; };
+document.getElementById('guide-menu').innerHTML = GUIDE.map(([id]) => `<a href="#guide/${id}" data-id="${id}">${esc(titleOf(id).title)}</a>`).join('');
+function showGuide(id) {
+  const hit = GUIDE.find(g => g[0] === id) || GUIDE[0];
+  document.querySelectorAll('#guide-menu a').forEach(a => a.classList.toggle('on', a.dataset.id === hit[0]));
+  document.getElementById('guide-title').textContent = titleOf(hit[0]).title;
+  document.getElementById('guide-body').innerHTML =
+    `<div class="art doc-art" data-kind="Guide illustration" data-size="1200 × 500" data-desc="A picture for &ldquo;${esc(titleOf(hit[0]).title)}&rdquo;."></div>` +
+    render(page(hit[1]).blocks);
+  fillArt(document.getElementById('guide-body'));
+}
+
+/* ---------- wiki ---------- */
+const wikiGroups = W.manifest.groups.map(g => ({ title: g.title, pages: g.pages.filter(p => !MOVED.has(p.id)) })).filter(g => g.pages.length);
+document.getElementById('wiki-menu').innerHTML = '<a href="#wiki" data-id="">Wiki home</a>' +
+  wikiGroups.map(g => `<div class="grp">${esc(g.title)}</div>` + g.pages.map(p => `<a href="#wiki/${p.id}" data-id="${p.id}">${esc(p.title)}</a>`).join('')).join('');
+function showWiki(id) {
+  document.querySelectorAll('#wiki-menu a').forEach(a => a.classList.toggle('on', a.dataset.id === (id || '')));
+  const body = document.getElementById('wiki-body');
+  const p = id && titleOf(id);
+  if (!p || MOVED.has(id)) {
+    document.getElementById('wiki-title').textContent = 'Wiki';
+    body.innerHTML = '<div class="wikihome">' + wikiGroups.map(g =>
+      `<div><h3>${esc(g.title)}</h3><ul>${g.pages.map(x => `<li><a href="#wiki/${x.id}">${esc(x.title)}</a></li>`).join('')}</ul></div>`).join('') + '</div>';
+    return;
+  }
+  document.getElementById('wiki-title').textContent = p.title;
+  body.innerHTML = `<h1>${esc(page(p.file).title)}</h1>` + render(page(p.file).blocks);
+}
+
+/* ---------- roadmap + status ---------- */
+document.getElementById('roadmap-body').innerHTML = render(page('roadmap.json').blocks);
+{
+  const s = page('server-status.json').blocks;
+  document.getElementById('status-lede').innerHTML = render(s.filter(b => b.type === 'lede'));
+  document.getElementById('status-rest').innerHTML = render(s.filter(b => b.type !== 'lede' && b.type !== 'serverStats'));
+}
+
+/* the download page reads the launcher's own version file, exactly as today */
+fetch('version.txt').then(r => r.ok ? r.text() : '').then(v => {
+  if (v.trim()) document.getElementById('version').textContent = 'Version ' + v.trim();
+}).catch(() => {});
+
+/* ---------- pages ---------- */
+function route() {
+  const [name, sub] = (location.hash.slice(1) || 'home').split('/');
+  const id = document.getElementById('p-' + name) ? name : 'home';
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+  if (id === 'guide') showGuide(sub);
+  if (id === 'wiki') showWiki(sub);
+  window.scrollTo(0, 0);
+}
+fillArt(document);
+pickKashira(0);
+addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

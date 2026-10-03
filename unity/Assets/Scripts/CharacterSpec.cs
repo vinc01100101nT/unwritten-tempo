@@ -135,6 +135,14 @@ public class CharacterSpec : ScriptableObject
              "moment — instead of right at the end.")]
     [Range(0.1f, 1f)] public float hitTiming = 0.70f;
 
+    // WHY THESE TWO LIVE HERE: every fighter — a person or a creature — swings bare-handed by the same rule, so the
+    // reach and the cadence have ONE home. Creatures used to carry their own typed copy of both.
+    [Tooltip("Bare-handed reach, in world units at full size. A weapon's own attack range replaces it while one is " +
+             "held — for a person and a creature alike.")]
+    public float unarmedReach = 0.5f;
+    [Tooltip("Seconds between ordinary swings before attack speed is applied — for a person and a creature alike.")]
+    public float swingInterval = 0.6f;
+
     [Tooltip("How far inside reach a fighter stops walking in: it stops at reach divided by this, then stays put " +
              "until the target moves past its full reach, and chases again. Stops the stand-vs-chase decision " +
              "flickering against somebody hovering at the edge of reach, which otherwise machine-guns the footsteps " +

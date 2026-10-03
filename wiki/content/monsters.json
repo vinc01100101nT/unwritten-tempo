@@ -22,7 +22,7 @@
   {
    "type": "list",
    "items": [
-    "**By biome** — each biome (Grassland, Snow, Desert, Volcanic, Corrupted) has its own family of monsters. See *World & Maps*.",
+    "**By biome** — each of the fourteen biomes has creatures of its own, and the biome decides which element most of them carry. See *World & Maps*.",
     "**By level** — every monster has a level, exactly like you do. That single number is what makes it dangerous; there is no separate difficulty rating. Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in field after field.",
     "**By kind** — most monsters are ordinary. A few in each area are **elites**: stronger, and they keep calling ordinary monsters to their side. Stronger still are the fourteen **shadows**, one for each weapon, each with a name of its own and gear at the highest grade — they call elites, and they are meant to take a whole guild to bring down. Anything a summoner calls gives nothing when it dies, and vanishes when its summoner does.",
     "**By element** — a monster's element grows stronger with its kind: ordinary monsters are **level 1**, elites **level 2**, shadows **level 3**. Where a monster lives says what it probably is: the plains are mostly Neutral, the forests and hills Earth, the sea and snow Water, the volcano Fire, and the dark lands overseas Poison, Holy, Dark, Ghost and Undead. The shadows between them carry all ten elements, and a converter only answers the four it comes in — Water, Earth, Fire and Wind (see *Combat Mechanics*).",

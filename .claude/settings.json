@@ -1,5 +1,4 @@
 {
-  "showThinkingSummaries": true,
   "permissions": {
     "allow": [
       "Bash(git rm *)"

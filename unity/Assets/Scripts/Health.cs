@@ -10,33 +10,28 @@ using System.Collections.Generic;
 [RequireComponent(typeof(SpriteRenderer))]
 public class Health : MonoBehaviour, ICombatUnit
 {
-    [Tooltip("Starting / maximum hit points.")]
-    public int maxHealth = 3;
+    // NOTHING BELOW IS TYPED. Every one of these is written by UnitStatBlock from the creature's level, primaries,
+    // gear and ring — so none of them is saved, and none of them can be typed into a body by hand.
 
-    [Tooltip("SOFT DEF (pre-renewal): a FLAT subtraction from incoming physical damage. Damage dealt is always ≥ 1.")]
-    public int defense = 0;
+    /// <summary>Maximum hit points.</summary>
+    [System.NonSerialized] public int maxHealth = 3;
 
-    [Tooltip("SOFT MDEF (pre-renewal): a FLAT subtraction from incoming magic damage. Damage dealt is always ≥ 1.")]
-    public int magicDefense = 0;
+    /// <summary>Defence: a FLAT subtraction from incoming physical damage. Damage dealt is always ≥ 1.</summary>
+    [System.NonSerialized] public int defense = 0;
 
-    [Tooltip("HARD DEF % (pre-renewal): a PERCENT reduction (0–100) on incoming physical damage, applied BEFORE the " +
-             "flat soft 'defense'. A CRIT ignores it (and soft DEF, and FLEE). This is a tanky mob's main mitigation.")]
-    [Range(0, 100)] public int hardDefPercent = 0;
+    /// <summary>Magic defence: a FLAT subtraction from incoming magic damage. Damage dealt is always ≥ 1.</summary>
+    [System.NonSerialized] public int magicDefense = 0;
 
-    [Tooltip("HARD MDEF % (pre-renewal): a PERCENT reduction (0–100) on incoming magic damage, before the flat 'magicDefense'.")]
-    [Range(0, 100)] public int hardMagicDefPercent = 0;
+    /// <summary>LUK — the crit shield: each point lowers an attacker's crit chance against this unit (0.3%/pt).</summary>
+    [System.NonSerialized] public int luk = 0;
 
-    [Tooltip("LUK — pre-renewal CRIT SHIELD: each point lowers an attacker's crit chance against this unit (0.3%/pt).")]
-    public int luk = 0;
-
-    [Tooltip("Health restored per second with no skill running — derived from VIT by UnitStatBlock, like every other " +
-             "stat here. Authored directly only on a mob that carries no stat block.")]
-    public float hpRegenPerSecond = 0f;
+    /// <summary>Health restored per second with no skill running.</summary>
+    [System.NonSerialized] public float hpRegenPerSecond = 0f;
     public float HPRegenPerSecond => hpRegenPerSecond;
 
-    [Tooltip("FLEE (RO evasion). A physical attacker's HIT is rolled against this; when it loses, the hit " +
-             "MISSes (red) and deals no damage. Magic can't be evaded. Higher = dodges more. See Combat.")]
-    public int flee = 0;
+    /// <summary>FLEE (evasion). A physical attacker's HIT is rolled against this; when it loses, the hit MISSes and
+    /// deals no damage. Magic can't be evaded. See <see cref="Combat"/>.</summary>
+    [System.NonSerialized] public int flee = 0;
 
     [Tooltip("Armor PROPERTY (RO element). An attack's element is checked against this via Elements.Modifier — " +
              "so a Fire attack on an Earth mob does extra, on a Water mob is resisted, etc. Neutral = no interaction.")]
@@ -165,7 +160,7 @@ public class Health : MonoBehaviour, ICombatUnit
         get
         {
             var b = Brain;
-            return b != null ? WeaponReach.For(b.Equipment, b.touchRange) : 0.5f;   // no brain (the spike): sane default
+            return WeaponReach.For(b != null ? b.Equipment : null, CharacterSpec.Active.unarmedReach);
         }
     }
 
@@ -563,7 +558,7 @@ public class Health : MonoBehaviour, ICombatUnit
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit), mod, false, attacker);
+            return HealedByElement(Combat.AfterDefense(attackerAttack, defense, crit), mod, false, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
@@ -572,7 +567,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
-        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
+        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, defense, crit) * mod);
         int before = Current;
         SubtractHealth(dmg);
         PassiveEvents.HitLanded(this, before, attacker);
@@ -596,7 +591,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit), mod, true, attacker);
+            return HealedByElement(Combat.AfterDefense(attackerMagic, magicDefense, crit), mod, true, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
@@ -604,7 +599,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, magicDefense, crit) * mod);
         int before = Current;
         SubtractHealth(dmg);
         PassiveEvents.HitLanded(this, before, attacker);
@@ -627,7 +622,7 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit), mod, true, attacker);
+            return HealedByElement(Combat.AfterDefense(attackerMagic, magicDefense, crit), mod, true, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
@@ -635,7 +630,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, magicDefense, crit) * mod);
         bool wasAlive = !IsDead;
         int before = Current;
         SubtractHealth(dmg);
@@ -662,7 +657,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
-            return HealedByElement(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit), mod, false, attacker);
+            return HealedByElement(Combat.AfterDefense(attackerAttack, defense, crit), mod, false, attacker);
         if (mod == 0f)
         {
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
@@ -670,7 +665,7 @@ public class Health : MonoBehaviour, ICombatUnit
         }
         if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
+        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, defense, crit) * mod);
         bool wasAlive = !IsDead;
         int before = Current;
         SubtractHealth(dmg);
@@ -722,8 +717,8 @@ public class Health : MonoBehaviour, ICombatUnit
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
         float afterDefence = info.isMagic
-            ? Combat.AfterDefense(info.amount, hardMagicDefPercent, magicDefense, info.isCrit)
-            : Combat.AfterDefense(info.amount, hardDefPercent, defense, info.isCrit);
+            ? Combat.AfterDefense(info.amount, magicDefense, info.isCrit)
+            : Combat.AfterDefense(info.amount, defense, info.isCrit);
         int shown = Mathf.Max(1, Mathf.RoundToInt(afterDefence * mod));
         // The same impact sound and cue a live beat plays, so a flurry sounds to the end of its count.
         Show(new ShownBlow(shown, mod, info.isCrit, info.isMagic, flash: false), info.attacker);

@@ -20,7 +20,7 @@
 - [Class system = kit + attack + affinity](../class-system-design.md) — kit identity NOT stat locks; doc q171yxv1de9zce12zhzrssr59188ws6t.
 - [RO-style multi-hit + status (stun)](../combat-multihit-status.md) — `MultiHitBurst.Run` + `MonsterAI3D.Stun`.
 - [Multi-hit SFX cut off at death](../multihit-sfx-onhit-cue-gated.md) — audible per-hit sound is the `OnHitBySkill` VfxCue (was gated by `wasAlive`); fix = ungate in `TakeMagicDamageOverkill`. The VfxCue is the only combat-sound path.
-- [RO combat fundamentals](../ro-combat-fundamentals.md) — `Element.cs`, `StatusController.cs` (DoT+CC), lifeSteal/reflectPct.
+- [RO combat fundamentals](../ro-combat-fundamentals.md) — `Element.cs`, `StatusController.cs` (DoT+CC), the leech/reflect sub-stats.
 - [Trio-ring entries are "affixes" not "passives"](../affix-not-passive-terminology.md) — affix = % stat-modifier; passive = triggered.
 - [Phase G skill: TRIO-RING %-passive MVP](../skill-system-mechanical-model.md) — 3 Trio + 1 wildcard, soft-cap DR; doc q17as16xh2gt1g058kemazjar588tvc8.
 - [RO-style stat distribution](../stat-distribution-system.md) — STR/AGI/VIT/INT/DEX/LUK; flat layer under skill %; StatPanel.

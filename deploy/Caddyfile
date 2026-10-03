@@ -57,16 +57,13 @@
 	file_server
 }
 
-# THE PLAYER WIKI, if you serve it. Its Server Status page reads the character server from a browser, and a
-# browser refuses that unless the character server was told this exact address — including the https:// and
-# with no trailing slash. It refuses SILENTLY, with nothing in the browser's console, so a status page that
-# has simply gone blank is almost always this. Set it in settings.env:
-#     WIKI_ORIGINS=https://wiki.example.com
-#
-# wiki.example.com {
-# 	root * /srv/unwritten/wiki
-# 	file_server
-# }
+# THE WEBSITE is served by the block above: publishing writes it into the update folder beside the updates. Its
+# Server Status page reads the character server from a browser, and a browser refuses that unless the character
+# server allows this exact address — including the https:// and with no trailing slash. It allows PATCH_URL's
+# address by default; served from any other address, set it in settings.env:
+#     WIKI_ORIGINS=https://play.example.com
+# The refusal is SILENT, with nothing in the browser's console, so a status page that says it cannot reach the
+# character server while the server answers is almost always this.
 
 # DELIBERATELY NOT HERE: the world servers. Players reach those on a different kind of connection that
 # certificates do not cover, and its protection is the one-time entry ticket the character server hands out.

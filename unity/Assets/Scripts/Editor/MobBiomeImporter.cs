@@ -136,11 +136,8 @@ public static class MobBiomeImporter
     {
         def.element = BiomeElement(biome);
         def.tint = Color.white;
-        def.touchRange = 0.9f;
-        def.touchInterval = 1.0f;
         def.aggroRadius = 6f;
         def.leashRadius = 11f;
-        def.stopDistance = 0.7f;
         def.wanderRadius = 3f;
 
         int b = Mathf.Clamp(band, 1, 4) - 1;
@@ -152,11 +149,8 @@ public static class MobBiomeImporter
             var u = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 1f, wVit: 4f, wInt: 1f, wDex: 2f, wLuk: 1f);
             WriteStats(def, u);
             def.weight = 0;   // never rolled by the field spawner; placed deliberately
-            def.hardDefPercent = 20 + b * 3;          // armour-sourced, still authored
-            def.hardMagicDefPercent = 12 + b * 2;
             def.goldMin = 250 * (b + 1);
             def.goldMax = 500 * (b + 1);
-            def.moveSpeed = 1.7f;
             return;
         }
 
@@ -165,10 +159,8 @@ public static class MobBiomeImporter
         var n = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 2f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f);
         WriteStats(def, n);
         def.weight = common ? 4 : (b <= 1 ? 3 : b == 2 ? 2 : 1);
-        def.hardDefPercent = b * 5;
         def.goldMin = 2 * (b + 1);
         def.goldMax = 6 * (b + 1);
-        def.moveSpeed = 2.4f - b * 0.1f;
     }
 
     static void WriteStats(MonsterDef def, in UnitStatInputs u)

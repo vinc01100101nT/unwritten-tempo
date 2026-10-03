@@ -156,7 +156,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8410cc1e7179c544bb2d21ae58f3124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PathAgent3D
-  moveSpeed: 2.1000001
   agentRadius: 0.3
   arriveRadius: 0.1
   repathInterval: 0.35
@@ -181,14 +180,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10ce3323c7a546645a038dd42e862dad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 3
-  defense: 0
-  magicDefense: 0
-  hardDefPercent: 10
-  hardMagicDefPercent: 0
-  luk: 0
-  hpRegenPerSecond: 0
-  flee: 0
   element: 3
   onDeath:
     m_PersistentCalls:
@@ -205,23 +196,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91daf49f1328f2144a3439af8486ab68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterAI3D
-  moveSpeed: 2.1000001
   aggroRadius: 6
   leashRadius: 11
-  stopDistance: 0.7
   wanderRadius: 3
   wanderPauseMin: 1
   wanderPauseMax: 3
-  attack: 3
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  damageSpread: 0.25
-  hit: 8
   xpReward: 20
-  touchRange: 0.9
-  touchInterval: 1
   level: 1
   xpPerDamageDealt: 1
   xpToFirstLevel: 20

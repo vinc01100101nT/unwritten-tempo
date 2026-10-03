@@ -46,9 +46,16 @@ success it prints the exact command to run what it built.
 
 Used by [Starting the Network](../docs/2-systems/networking/starting-the-network.md).
 
+## build-and-publish.sh
+
+Builds the Windows game and the Mac game, then publishes both as one update: `tools/build-game.sh client`,
+`tools/build-game.sh client --mac` and `tools/publish-update.py` in order, stopping at the first that fails so a
+half-built update is never published. `--dev` makes development builds (what devices on your own Wi-Fi need);
+`--server` also rebuilds the map server first, which must be stopped beforehand.
+
 ## serve-updates.sh
 
-Serves the update folder (`builds/patch`) — the download page, the zipped launcher and every published update — to
+Serves the update folder (`builds/patch`) — the website with its Download page, the zipped launcher and every published update — to
 this computer and every device on the same network, until Ctrl+C. Another device opens
 `http://<this computer's address>:8090` in a browser and downloads the launcher; the launcher then downloads the
 game. Needs something published first (`tools/publish-update.py`).

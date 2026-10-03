@@ -1,5 +1,5 @@
 #!/bin/sh
-# Serve the update folder — the download page, the launcher, and every game update — to this computer AND to
+# Serve the update folder — the website with its Download page, the launcher, and every game update — to this computer AND to
 # every device on the same network, until Ctrl+C.
 #
 # WHY THIS EXISTS: copying a game build to each device by hand is the slow way to test with other people. The

@@ -5,6 +5,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 Keep the always-on list SHORT (~10). A line earns its place only if it changes what I do on almost ANY task; a fact that matters only inside one area belongs in that area's sub-index, and a rule already enforced by a check or written in CLAUDE.md does not need a second home here.
 
 ## Top-level (always-on)
+- [Clock command on Windows](clock-command-on-windows.md) — `TZ=Asia/Manila date` silently prints UTC here; the GMT+8 reply timestamps use `TZ=UTC-8 date`.
 - [THE FIVE — anti-invention protocol](the-five-anti-invention.md) — an invention disguises itself as continuity: the contract must list what STAYS, a meaning-branch is a design decision, a question gets an answer NOT an edit, every report ends with "new words I introduced", ask once then decide.
 - [Never widen a snapshot into a verdict](never-widen-a-snapshot-into-a-verdict.md) — today's files prove today only; if the user tested it working, believe them and hunt what CHANGED — never say "it never worked / can't be done".
 - [Changes MUST persist in repo, not runtime](changes-must-persist-in-repo.md) — bake in code/saved asset + read back; never leave a change in bare execute_code/runtime state.
@@ -18,6 +19,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 - [The game is ALWAYS ONLINE](the-game-is-always-online.md) — no offline/single-machine mode exists; never build, fix or offer a "no server" path. The dead no-server branches still in the code are not evidence it is supported.
 - [The world is a SANDBOX](sandbox-world-no-linear-progression.md) — HARD LAW 2026-09-26: no linear progression; creatures live wherever they make sense, maps mix levels and elements, a creature's properties are its own.
+- [No typed sub-stats on ANY unit](no-typed-sub-stats-on-any-unit.md) — HARD LAW 2026-10-02: every sub-stat (defence, armour cut, speed, reach, swing timing, regen, leech…) is computed from level/primaries/gear/ring/shared spec; a typeable field is a bug.
 - [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.
 - [Copy the existing mechanism](copy-the-existing-mechanism.md) — a new track (mastery, an XP bar) is earned and shown exactly like XP/ring already are; never a bespoke formula or special case.
 - [Scaling fixes are NEVER deferred](scaling-fixes-are-never-deferred.md) — "you don't have many players yet" is an invalid reason, always; anything whose cost multiplies by player count gets fixed the day it is found.

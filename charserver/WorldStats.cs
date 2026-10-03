@@ -5,10 +5,10 @@ namespace CharServer;
 
 /// <summary>
 /// The one PUBLIC read of what the world looks like right now — how many people are playing, which maps are
-/// standing and on which process, and who has earned the most. The player wiki draws its status page from this
-/// and nothing else does.
+/// standing and on which process, and who has earned the most. The website draws its Server Status page and the
+/// Home page's status box from this, and nothing else does.
 ///
-/// <para><b>No token and no secret, on purpose</b>, because a wiki page is opened by anybody. That is why it
+/// <para><b>No token and no secret, on purpose</b>, because a web page is opened by anybody. That is why it
 /// answers with counts and public names ONLY: never an account, never an address a player could be reached at,
 /// never anybody's position. Everything else this server knows stays behind sign-in or the shared server
 /// secret, exactly as before.</para>
@@ -43,7 +43,7 @@ public sealed class WorldStats(Db db, MapServers maps, Config config)
         {
             var body = await CurrentAsync(http.RequestAborted);
 
-            // ONLY THIS ROUTE IS OPENED TO A BROWSER PAGE. The wiki is served from its own address, so a browser
+            // ONLY THIS ROUTE IS OPENED TO A BROWSER PAGE. The website is served from its own address, so a browser
             // treats it as a different site and refuses to hand it this reply unless the reply says otherwise —
             // silently, with nothing in the console. Named here rather than switched on for the whole server so
             // that opening the status page cannot also open the doors a player's token is meant to guard.

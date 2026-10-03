@@ -25,7 +25,7 @@ public sealed class Config
     /// <summary>A save document larger than this is a bug or an attack, not a character.</summary>
     public required int MaxProgressBytes { get; init; }
 
-    /// <summary>The addresses a BROWSER PAGE is allowed to read the public status from — the player wiki, which
+    /// <summary>The addresses a BROWSER PAGE is allowed to read the public status from — the website, which
     /// is served from its own address and is therefore a different site as far as a browser is concerned. Only
     /// the status route is opened to them; every other route is untouched. Several may be given, separated by
     /// commas. An address that is not listed is refused by the browser, silently, with nothing in its console —
@@ -53,7 +53,8 @@ public sealed class Config
             MaxProgressBytes = OptionalInt("MAX_PROGRESS_BYTES", 256 * 1024),
             ServerSecret = Required("SERVER_SECRET"),
             PatchDir = Environment.GetEnvironmentVariable("PATCH_DIR"),
-            WikiOrigins = Origins(Environment.GetEnvironmentVariable("WIKI_ORIGINS") ?? "http://127.0.0.1:8099"),
+            WikiOrigins = Origins(Environment.GetEnvironmentVariable("WIKI_ORIGINS")
+                                  ?? WebsiteOrigins(Environment.GetEnvironmentVariable("PATCH_URL"))),
         };
     }
 
@@ -64,6 +65,24 @@ public sealed class Config
             throw new InvalidOperationException(
                 $"Missing required environment variable {name}. It must be the SAME value the login service uses.");
         return v;
+    }
+
+    /// <summary>Where the website is served from when nobody says otherwise: the download server, which serves the
+    /// site from the same folder as the updates. Its address is PATCH_URL; this computer's own two names for that
+    /// port are added because a browser on this computer sends whichever one was typed. With no PATCH_URL the port
+    /// is 8090, the download server's own default (tools/serve-updates.sh).</summary>
+    static string WebsiteOrigins(string? patchUrl)
+    {
+        var port = 8090;
+        var origins = new List<string>();
+        if (Uri.TryCreate(patchUrl, UriKind.Absolute, out var uri))
+        {
+            port = uri.Port;
+            origins.Add(uri.GetLeftPart(UriPartial.Authority));
+        }
+        origins.Add($"http://127.0.0.1:{port}");
+        origins.Add($"http://localhost:{port}");
+        return string.Join(',', origins);
     }
 
     /// <summary>Split a comma-separated list of addresses, dropping any trailing slash so that the value here

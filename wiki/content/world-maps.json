@@ -12,7 +12,7 @@
     },
     {
       "type": "paragraph",
-      "text": "The pages that should have carried the rest of the record fell everywhere — so the whole world is a hunting ground. Zones are built from **biomes**, each with its own look, ground, and the monster families that settled there."
+      "text": "The pages that should have carried the rest of the record fell everywhere — so the whole world is a hunting ground. Every map belongs to a **biome**, with its own look, its own ground and creatures of its own."
     },
     {
       "type": "heading",
@@ -22,16 +22,25 @@
     {
       "type": "list",
       "items": [
-        "**Grassland** — the gentle starting country.",
-        "**Snow** — frozen highlands.",
-        "**Desert** — arid wastes.",
-        "**Volcanic** — scorched, fiery ground.",
-        "**Corrupted** — where the blankness runs deepest; the most twisted pages gather here."
+        "**Grassland** — open meadows with a few trees and plenty of flowers: the gentle starting country around Lastline. Most of its creatures are Neutral.",
+        "**Forest** — fallen leaves, ferns and mushrooms under the trees. Mostly Earth.",
+        "**Highland** — a near-treeless moor of short turf and boulders. Mostly Earth.",
+        "**Peaks** — above the treeline: bare gravel, snow and boulders. Mostly Wind.",
+        "**Snow** — a snowy pine forest, its ground always white. Mostly Water.",
+        "**Steppe** — golden tussocks with sun-baked ground between them. Mostly Wind.",
+        "**Coast** — sand, wet sand and shore pebbles, scattered with rocks. Mostly Water.",
+        "**Desert** — open orange dunes with a few stones. Mostly Fire.",
+        "**Volcanic** — black ash, glowing lava cracks and boulder fields. Mostly Fire.",
+        "**Swamp** — reedy marsh and mud under willows, water always standing in its hollows. Mostly Poison.",
+        "**Sacred** — an open birch meadow in flower, high among the clouds. Mostly Holy.",
+        "**Haunted** — withered grass, grave dirt and old dark cobbles among dead stumps. Mostly Undead.",
+        "**Mist** — pale moss and grey silt under willows, always in fog. Mostly Ghost.",
+        "**Corrupted** — where the blankness runs deepest; the most twisted pages gather here, on withered violet grass and purple-black soil. Mostly Dark."
       ]
     },
     {
       "type": "paragraph",
-      "text": "Each biome carries a **themed set of monsters**, drawn by level, so a zone's danger and its inhabitants match its biome automatically."
+      "text": "A biome decides which element **most** of its creatures carry — a majority, never a rule: a snow field is mostly Water, but some of its creatures are Earth, Dark or Wind. Every map names the creatures that live on it."
     },
     {
       "type": "heading",
@@ -52,7 +61,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the biome framework is in place. The specific map list, layouts, and named zones are still being built.*"
+        "*Status: all fourteen biomes are in the game, and the world's maps are built and joined to one another by doors. Some biomes are still waiting for props of their own — palm trees, cacti, dead trees, reeds — and the towns for their buildings.*"
       ]
     }
   ]

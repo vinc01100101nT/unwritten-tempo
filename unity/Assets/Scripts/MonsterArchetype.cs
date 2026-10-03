@@ -38,16 +38,11 @@ public struct MonsterArchetype
     // How practised it is with what it holds — the creature's half of Weapon Mastery, authored rather than trained.
     public int weaponMasteryLevel;
 
-    // ARMOUR-sourced survivability, still authored: pre-renewal HARD DEF (% reduction, applied first — a crit
-    // ignores it). Everything else defensive (maxHealth / defense / magicDefense / flee / luk) is DERIVED from
-    // `stats` by UnitStatBlock on the spawned mob, so it isn't carried here — one owner, no snapshot to drift.
-    public int hardDefPercent, hardMagicDefPercent;
+    // No sub-stat is carried here: health, defence, evasion, attack, accuracy and spread are DERIVED from `stats` by
+    // UnitStatBlock on the spawned mob, and speed, reach and swing timing are the shared character spec's.
 
-    // Offense. `attack` / `hit` / damage spread are likewise derived from `stats`, not carried.
-    public float touchRange, touchInterval;
-
-    // Senses / movement.
-    public float moveSpeed, aggroRadius, leashRadius, stopDistance, wanderRadius;
+    // Senses.
+    public float aggroRadius, leashRadius, wanderRadius;
 
     // Behavior style (see MonsterAI3D): 0 preferredRange = melee; fleeHpFraction 0 = never flee.
     public float preferredRange, fleeHpFraction;

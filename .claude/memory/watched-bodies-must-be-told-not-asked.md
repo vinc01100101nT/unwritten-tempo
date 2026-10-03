@@ -31,9 +31,8 @@ frame (the user's explicit call — never skip, however little is left).
 **Gotchas paid for:**
 - `agent != null` is the wrong question; `agent.isActiveAndEnabled` is the right one.
 - The beat must be a number the SERVER holds. Never a clip length — the map server is headless.
-- The map server needs the RIG but not the model: the capsule, routing footprint, `UsesCharacterGears` and the
-  declared body height all change what a creature IS (gears decide melee reach; body height decides where a
-  projectile aims and therefore when it lands). Strip only the model.
+- The map server needs the RIG but not the model: the capsule, routing footprint and the declared body height all
+  change what a creature IS (body height decides where a projectile aims and therefore when it lands). Strip only the model.
 - A person stops REPORTING when they stop walking, so a server-derived speed sticks at its last value — zero it
   after two report intervals of silence.
 

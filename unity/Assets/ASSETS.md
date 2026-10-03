@@ -57,6 +57,12 @@ checker at the bottom is what makes them stick without anybody remembering.
     arrive about 1254 wide), but must be seamless and carry no border. Why: tiles blended on one ground must match
     in sharpness and format, and a second copy or a second lookup is how the duplicate stones tile shipped twice.
     Enforced, not advised: the asset-rules check fails any tile that breaks it, and it runs before every commit.
+12. **A shader the code looks up by name is in Always Included Shaders.** `Shader.Find` returns nothing in a built game
+    unless the shader is on Project Settings ▸ Graphics ▸ Always Included Shaders or a material the build ships uses
+    it — and the editor always finds it, so the feature works in Play mode and silently does nothing in every build.
+    The ink outline, the paper grade and character colours (`InkScreen`, `HandDrawnGrade`, `AtlasRecolor`) were
+    missing from every build until 2026-10-02, each build's log saying "not found". Adding a `Shader.Find` means
+    adding the shader to that list in the same change. Not yet checked automatically.
 
 ---
 

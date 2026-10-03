@@ -72,6 +72,7 @@ The folders match the sections below, so the file tree and this index say the sa
 ## Art & animation pipeline
 
 - [GPT Concept Prompts — Paste-Me](4-art/gpt-concept-prompts.md) — props + weapons image-generation prompt sets.
+- [Website Art Prompts — Paste-Me](4-art/website-art-prompts.md) — one prompt per art box on the website, as Ragnarok-style anime illustration caught mid-moment, plus the character reference sheets they attach.
 - [Mixamo Animation Integration — Workflow](4-art/mixamo-animation-workflow.md) — no-code animation import.
 
 ## AI learnings & improvements
@@ -80,4 +81,4 @@ The folders match the sections below, so the file tree and this index say the sa
 
 ## Player wiki
 
-- [Unwritten Wiki](../wiki/) — the player-facing guide (lore, character, combat, monsters). It's a **served website** at repo-root `wiki/` (viewer `index.html` + `content/*.json` JSON block documents, nav in `content/manifest.json`) — NOT under `docs/`. Edit wiki pages there, not here. Run `python3 tools/wiki-sync-check.py` (or `/sync-wiki`) to find pages that have fallen behind their design docs.
+- [Unwritten Wiki](../wiki/) — the player-facing guide (lore, character, combat, monsters). Its pages are `content/*.json` JSON block documents at repo-root `wiki/` (nav in `content/manifest.json`) — NOT under `docs/` — shown by the website (`website/index.html`, served by the download server). Edit wiki pages there, not here. Run `python3 tools/wiki-sync-check.py` (or `/sync-wiki`) to find pages that have fallen behind their design docs.

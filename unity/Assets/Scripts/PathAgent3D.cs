@@ -15,7 +15,9 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PathAgent3D : MonoBehaviour
 {
-    public float moveSpeed = 3f;
+    /// <summary>The live travel speed — written every frame by whoever drives this walker (a creature's brain from the
+    /// character gears, a townsperson from the walk gear). Never typed, so never saved.</summary>
+    [System.NonSerialized] public float moveSpeed = 3f;
     public float agentRadius = 0.35f;
     public float arriveRadius = 0.1f;
     /// <summary>Fall rate — READ from the world's one owner, the same constant the player's controller applies.</summary>

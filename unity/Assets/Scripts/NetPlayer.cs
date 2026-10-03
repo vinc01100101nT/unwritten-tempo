@@ -449,7 +449,11 @@ public class NetPlayer : NetworkBehaviour
 
     void Update()
     {
-        if (isServer) ServerSaveTick();
+        if (isServer)
+        {
+            ServerSaveTick();
+            SendOwedBag();
+        }
 
         // The bag that arrived too early, handed over the moment there is somebody to hand it to.
         if (bagWaitingForACharacter.HasValue && Character.Instance != null)
@@ -1299,6 +1303,20 @@ public class NetPlayer : NetworkBehaviour
     public void PushBagToOwner(bool alsoTheBar = false)
     {
         if (!isServer) return;
+        // OWED, AND SENT ONCE THIS FRAME. A purse change now asks for this by itself (PlayerFighter subscribes it to
+        // the character's gold), so a kill that also pushes the bag the old way would otherwise send it twice.
+        bagPushOwed = true;
+        barPushOwed |= alsoTheBar;
+    }
+
+    bool bagPushOwed, barPushOwed;
+
+    void SendOwedBag()
+    {
+        if (!bagPushOwed) return;
+        bool alsoTheBar = barPushOwed;
+        bagPushOwed = false;
+        barPushOwed = false;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
         // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the three places
         // that list is built from — so a potion picked up mid-session had nothing behind it here and drinking it

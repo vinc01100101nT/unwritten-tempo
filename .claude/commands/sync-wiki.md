@@ -40,7 +40,7 @@ When it's genuinely ambiguous, ask the user rather than guessing.
 Read the current page JSON first and preserve its structure and tone. Then apply the change.
 
 - Wiki pages are **JSON block documents**: `{ title, blocks: [] }`. Block types the renderer
-  (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote`/`callout, image,
+  (`website/index.html`) understands: `lede, heading, paragraph, list, table, quote`/`callout, image,
   skillTable, serverStats, hr`. Inline `**bold**` / `*italic*` / `` `code` `` / `[links]()` work in any text field.
 - Skills render as cards via a `skillTable` block (`skills:[{name,icon,cost,flavor,effect}]`).
 - **Voice**: skill text reads as an in-game tooltip — declarative rules, bold numbers, no article prose and

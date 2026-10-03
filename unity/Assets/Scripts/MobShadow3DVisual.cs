@@ -212,12 +212,6 @@ public class MobShadow3DVisual : Agent3DVisual
         UnitBody.Set(gameObject, CharacterSpec.Active.bodyHeight);
 
         PointTheFreezeSwitchAt(null);
-
-        // Travel at the shared CHARACTER gear speeds, not the mob dial. Without this a character-sized body moves
-        // at the mob scale (0.30x) and visibly shuffles — and it is not only a look: the same answer decides how
-        // far this creature can reach, so a server that skipped it would run creatures that fight differently from
-        // the ones on screen.
-        if (brain != null) brain.UsesCharacterGears = true;
     }
 
     // Which of this unit's parts stop when the player is far away. Every mob already HAS the switch (the brain

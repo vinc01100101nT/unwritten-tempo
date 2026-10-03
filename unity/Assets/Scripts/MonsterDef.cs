@@ -86,26 +86,13 @@ public class MonsterDef : ScriptableObject
              "its passives do. 0 = never picked the thing up.")]
     public int weaponMasteryLevel;
 
-    [Header("Survivability (armour-sourced; not derived from primaries)")]
-    [Tooltip("Pre-renewal HARD DEF % (applied first; a crit ignores it). Comes from armour, so it stays authored.")]
-    public int hardDefPercent = 0;
-    [Tooltip("Pre-renewal HARD MDEF %.")]
-    public int hardMagicDefPercent = 0;
+    // NO SUB-STAT IS TYPED ON A CREATURE. Health, attack, defence, accuracy, evasion, speed, reach and swing timing
+    // are all worked out from the level, primaries, gear and ring above, or read from the one shared character spec
+    // — exactly as a person's are. A number typed here would be a second answer that could disagree with the formulas.
 
-    // (Removed 2026-08-10: the hand-authored maxHealth/attack/defense/magicDefense/hit/flee/damageSpread fields.
-    //  Every one of them is now DERIVED in ToArchetype through UnitStatMath from the level + primaries above, so
-    //  storing them was a second copy that could disagree with the formulas. The reset migration doesn't preserve
-    //  old values, so there was nothing left for them to carry.)
-
-    [Header("Offense")]
-    public float touchRange = 0.9f;
-    public float touchInterval = 1.0f;
-
-    [Header("Senses / movement")]
-    public float moveSpeed = 2.2f;
+    [Header("Senses")]
     public float aggroRadius = 6f;
     public float leashRadius = 10f;
-    public float stopDistance = 0.7f;
     public float wanderRadius = 3f;
 
     [Header("Behavior style")]
@@ -176,14 +163,8 @@ public class MonsterDef : ScriptableObject
             tint = tint,
             kind = kind,
             size = size,
-            hardDefPercent = hardDefPercent,
-            hardMagicDefPercent = hardMagicDefPercent,
-            touchRange = touchRange,
-            touchInterval = touchInterval,
-            moveSpeed = moveSpeed,
             aggroRadius = aggroRadius,
             leashRadius = leashRadius,
-            stopDistance = stopDistance,
             wanderRadius = wanderRadius,
             preferredRange = preferredRange,
             fleeHpFraction = fleeHpFraction,

@@ -10,8 +10,10 @@ WHAT IT WRITES, into --out (default builds/patch):
   news.json                    the launcher's news box, copied from launcher/news.json.
   <platform>/manifest.json     every game file: its path, size, fingerprint, and whether it is a program.
   <platform>/files/<sha256>    each file's contents, under its fingerprint.
-  index.html                   the download page (launcher/download.html), so opening this folder's address in a
-                               browser offers the launcher.
+  index.html + its files       the website (website/index.html), so opening this folder's address in a browser
+                               shows the site and its Download page offers the launcher. Beside it: ui-tokens.css
+                               and fonts/ (the game's own colours and fonts, from prototypes/ui-tokens.css),
+                               content/ and assets/ (the wiki's pages and pictures, copied from wiki/), favicon.ico.
   download/unwritten-windows.zip   the Windows launcher with the launcher.txt naming this server, zipped, from
                                builds/launcher/windows when one has been built. One download: the launcher fetches
                                the game itself on its first run.
@@ -24,7 +26,11 @@ version.txt is written LAST, after every manifest, so the server never demands a
 hand out. A file is uploaded once and kept while the newest or the previous manifest still names it, so a player
 halfway through downloading the previous update is not left pointing at nothing.
 
+--site-only refreshes the website, its wiki pages and news.json and touches nothing else — no build is read, no
+version is written — so a wiki edit reaches the site without publishing the game again.
+
 USAGE:   tools/publish-update.py                        # builds/client, as the platform of THIS computer
+         tools/publish-update.py --site-only            # the website, wiki pages and news only
          tools/publish-update.py --windows builds/client-windows --mac builds/client
          tools/publish-update.py --out /some/folder --version 2026.10.01-1200
 EXIT:    0 = published, 1 = something is wrong (each named), 2 = setup problem.
@@ -35,6 +41,7 @@ import hashlib
 import json
 import os
 import plistlib
+import re
 import shutil
 import sys
 import zipfile
@@ -173,15 +180,39 @@ def publish_platform(platform, build, out):
           f"({uploaded_bytes / 1e6:.1f} MB); {removed} no longer needed, removed.")
 
 
-def publish_download_page(out):
-    """The page a browser gets at the update folder's address, and the launcher it offers. Players download only
-    the launcher; its first run downloads the game from this same folder."""
-    shutil.copyfile(os.path.join(REPO, "launcher", "download.html"), os.path.join(out, "index.html"))
+def publish_site(out):
+    """The website a browser gets at the update folder's address, and everything it reads."""
+    shutil.copyfile(os.path.join(REPO, "website", "index.html"), os.path.join(out, "index.html"))
+    shutil.copyfile(os.path.join(REPO, "wiki", "favicon.ico"), os.path.join(out, "favicon.ico"))
+
+    # The colour sheet points at the game's font files inside the Unity project, which the site does not ship; the
+    # fonts it names are copied beside it and the sheet is pointed at those copies. Which fonts, read from the sheet.
+    with open(os.path.join(REPO, "prototypes", "ui-tokens.css"), encoding="utf-8") as f:
+        css = f.read()
+    os.makedirs(os.path.join(out, "fonts"), exist_ok=True)
+    for src in set(re.findall(r'url\("([^"]+)"\)', css)):
+        name = os.path.basename(src)
+        shutil.copyfile(os.path.normpath(os.path.join(REPO, "prototypes", src)), os.path.join(out, "fonts", name))
+        css = css.replace(f'url("{src}")', f'url("fonts/{name}")')
+    with open(os.path.join(out, "ui-tokens.css"), "w", encoding="utf-8") as f:
+        f.write(css)
+
+    # The wiki's pages and pictures, replaced whole so a page deleted from the wiki leaves the site too.
+    for folder in ("content", "assets"):
+        target = os.path.join(out, folder)
+        if os.path.isdir(target):
+            shutil.rmtree(target)
+        shutil.copytree(os.path.join(REPO, "wiki", folder), target)
+
+
+def publish_launchers(out):
+    """The launcher the Download page offers. Players download only the launcher; its first run downloads the game
+    from this same folder."""
     # ZIPPED WITH launcher.txt, because that file beside the program is how the launcher knows which server to
     # download from — the program alone would look for updates on the player's own computer and find nothing.
     folder = os.path.join(REPO, "builds", "launcher", "windows")
     if not os.path.isfile(os.path.join(folder, "unwritten-launcher.exe")):
-        print("\033[33mNo Windows launcher at builds/launcher/windows — the download page's button will find "
+        print("\033[33mNo Windows launcher at builds/launcher/windows — the Download page's button will find "
               "nothing. Run tools/build-launcher.sh, then publish again.\033[0m", file=sys.stderr)
         return
     if not os.path.isfile(os.path.join(folder, "launcher.txt")):
@@ -228,7 +259,23 @@ def main():
     ap.add_argument("--out", default=os.path.join(REPO, "builds", "patch"))
     ap.add_argument("--news", default=os.path.join(REPO, "launcher", "news.json"))
     ap.add_argument("--version", default=now.strftime("%Y.%m.%d-%H%M"))
+    ap.add_argument("--site-only", action="store_true",
+                    help="refresh the website, its wiki pages and news.json only — no build, no new version")
     args = ap.parse_args()
+
+    with open(args.news, encoding="utf-8") as f:
+        news = json.load(f)
+    if not isinstance(news, list) or any(set(n) != {"date", "title", "text"} for n in news):
+        fail(f"{args.news}: must be a list of {{\"date\", \"title\", \"text\"}}.")
+
+    out = os.path.abspath(args.out)
+    os.makedirs(out, exist_ok=True)
+
+    if args.site_only:
+        shutil.copyfile(args.news, os.path.join(out, "news.json"))
+        publish_site(out)
+        print(f"\033[32mPublished the website\033[0m to {out}")
+        return
 
     # builds/client holds whatever tools/build-game.sh made on THIS computer, so with no flag it is published as
     # this computer's platform. It used to be published as a Mac build everywhere, which on Windows fails.
@@ -241,14 +288,6 @@ def main():
     if not version or any(c.isspace() for c in version):
         fail("The version must be one word with no spaces.", 2)
 
-    with open(args.news, encoding="utf-8") as f:
-        news = json.load(f)
-    if not isinstance(news, list) or any(set(n) != {"date", "title", "text"} for n in news):
-        fail(f"{args.news}: must be a list of {{\"date\", \"title\", \"text\"}}.")
-
-    out = os.path.abspath(args.out)
-    os.makedirs(out, exist_ok=True)
-
     for platform, build in (("mac", args.mac), ("windows", args.windows)):
         if not build:
             continue
@@ -258,7 +297,8 @@ def main():
         publish_platform(platform, build, out)
 
     shutil.copyfile(args.news, os.path.join(out, "news.json"))
-    publish_download_page(out)
+    publish_site(out)
+    publish_launchers(out)
     with open(os.path.join(out, "version.txt.part"), "w", encoding="utf-8") as f:
         f.write(version + "\n")
     os.replace(os.path.join(out, "version.txt.part"), os.path.join(out, "version.txt"))

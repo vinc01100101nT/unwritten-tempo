@@ -202,8 +202,8 @@ had it (0 of 401 broken).
    - **Every door uses the plain cylinder pad**: 122 warnings "No Hovl portal prefab found in Assets/0_Raw/Hovl
      Studio/…/Portals/" during the build. Pre-existing; the portal effect asset is missing.
    - **The shadow places** (14 special maps) are in the layout, not generated.
-   - **The player wiki's World & Maps page** still lists five biomes and says nothing of the three regions. Left
-     alone while the design is a proposal.
+   - **The player wiki's World & Maps page** lists all fourteen biomes (updated 2026-10-02) but says nothing of the
+     three regions. Left alone while the region design is a proposal.
    - **Fist and Kick** exist only in the docs: the code's weapon types have `Knuckle` (fist) but no kick, and no
      shadow, mastery or skill exists for either. The Firearm's magic crit is decided, not built (the game blocks
      every magic crit today).
