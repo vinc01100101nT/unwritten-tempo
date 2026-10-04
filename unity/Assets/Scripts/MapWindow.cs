@@ -32,14 +32,32 @@ public class MapWindow : MonoBehaviour
     [Tooltip("Seconds the location button takes to glide the view back to you. It starts fast and slows to a stop.")]
     public float locateSeconds = 0.4f;
 
+    // INSTALLED EVERY TIME THE SYSTEMS SCENE COMES UP, not once per launch. Leaving the world ("Select character",
+    // "Log out") reloads that scene, which takes this window and the screen layer it draws on down with it — and a
+    // window installed only at launch never came back, so M did nothing until the game was restarted.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        if (FindAnyObjectByType<MapWindow>() != null) return;          // already installed this session
+        Install();
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == MapManager.SystemsScene) Install();
+    }
+
+    static void Install()
+    {
+        var systems = SceneManager.GetSceneByName(MapManager.SystemsScene);
+        // ALREADY HERE ONLY IF IT LIVES IN THIS SYSTEMS SCENE. The one from the scene just reloaded is still being
+        // torn down when the new scene arrives, so "is there one at all" says yes and the window never comes back.
+        foreach (var existing in FindObjectsByType<MapWindow>(FindObjectsInactive.Include))
+            if (existing != null && (existing.gameObject.scene == systems || !systems.IsValid())) return;
         if (Resources.Load<WorldAtlas>("WorldAtlas") == null) return;   // no world baked yet
 
         var go = new GameObject("MapWindow");
-        var systems = SceneManager.GetSceneByName(MapManager.SystemsScene);
         if (systems.IsValid() && systems.isLoaded) SceneManager.MoveGameObjectToScene(go, systems);
         else DontDestroyOnLoad(go);
         go.AddComponent<MapWindow>();

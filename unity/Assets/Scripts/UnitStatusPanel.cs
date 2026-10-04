@@ -67,7 +67,7 @@ public class UnitStatusPanel : MonoBehaviour
 
     void OnDestroy()
     {
-        target?.Unbind();
+        target?.Release();
     }
 
     void Update()
@@ -203,6 +203,17 @@ public class UnitStatusPanel : MonoBehaviour
         }
 
         public void Unbind() => Bind(null);
+
+        /// <summary>Let go of the unit WITHOUT touching the screen — for the moment this goes away. The panel lives on
+        /// the main screen layer, which a scene reload tears down first, so a redraw here would reach rows that are
+        /// already gone.</summary>
+        public void Release()
+        {
+            if (subscribed != null) subscribed.OnChanged -= MarkStatesDirty;
+            subscribed = null;
+            tracked = null;
+            NetPlayer.PointAt(null);
+        }
 
         /// <summary>Draw the whole readout <paramref name="scale"/> times its laid-out size, growing down from its top edge.</summary>
         public void ScaleBy(float scale) => root.localScale = new Vector3(scale, scale, 1f);

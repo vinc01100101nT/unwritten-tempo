@@ -204,6 +204,23 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (ServerCombatUnit is Character fighter && fighter != null) fighter.BindMap(mapName);
     }
 
+    // THIS BODY IS FILED UNDER THE MAP ITS PERSON IS IN — the one way it happens, on arrival and on every map change.
+    // The server decides who is told about whom by asking which map each is in before it measures any distance, and
+    // the answer it reads is the scene the object actually sits in — not the name on the wire. A person whose body
+    // stayed in another map would walk into a town nobody there could see, and see none of its townsfolk.
+    // A MAP THIS SERVER IS NOT HOLDING IS SAID OUT LOUD, because the alternative is the quietest failure in this whole
+    // layer. Putting a body in a map only works for a map that is actually open here; for any other it does nothing,
+    // with no error — and the body is then left filed under the map it was in, at the new map's coordinates.
+    void FileBodyInto(string map)
+    {
+        var into = SceneManager.GetSceneByName(map);
+        if (!into.IsValid() || !into.isLoaded)
+            GameLog.Warn(LogCat.Server, "" + playerName + " is in '" + map
+                             + "', which this server is not holding — they will be filed under '"
+                             + gameObject.scene.name + "' and seen by the wrong people. Add it to the map list.");
+        MapManager.PutInMap(gameObject, into);
+    }
+
     /// <summary>SERVER ONLY: which character this connection is playing. Held so that the name can be released
     /// again when they leave — a character being played is a fact about the server, not about the wire, so it is
     /// deliberately not a synced value and no client is ever told it.</summary>
@@ -222,10 +239,20 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <para>Waiting was the bug: for the first second or so of a session the server had no map for them, so a
     /// save in that window was refused to avoid erasing where they were standing — and walking through a door in
     /// that window aborted the move, because a move begins by writing them down. The server put them there; it
-    /// does not need to be told.</para></summary>
+    /// does not need to be told.</para>
+    ///
+    /// <para>AND THE BODY IS FILED INTO THAT MAP, here, in the same breath. A new body is made in whichever map this
+    /// server happened to make current last, and the move into the right one used to wait for the player's machine
+    /// to name its map — which never moved it, because the name already matched. The body then stayed in the wrong
+    /// map: once a field had been opened and let go, everybody arriving with a save was filed somewhere else, saw no
+    /// townsfolk, and was seen by nobody in the town.</para></summary>
     public void SetMapOnArrival(string map)
     {
-        if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName)) mapName = map;
+        if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName))
+        {
+            mapName = map;
+            FileBodyInto(map);
+        }
         BindMapToFighter();
     }
 
@@ -2303,28 +2330,20 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // The end of this method forgives the next move, because walking through a door is a jump no checker could
         // tell from a lie. A client that simply repeats its map before every step would therefore be forgiven
         // before every step — which is the whole movement check switched off, by a client, for free.
-        if (map == mapName) return;
+        // THE BODY IS STILL FILED, though, if it is not in that map yet: a map that was not open here the moment they
+        // arrived is open by the time their machine says where it is. Filing forgives nothing.
+        if (map == mapName)
+        {
+            if (gameObject.scene.name != map) FileBodyInto(map);
+            return;
+        }
 
         mapName = map;
         // Where the followed quest's step happens is told from where they stand: a new map can mean a new next door, and
         // a different nearest smith to mark.
         SendQuests(true);
 
-        // AND THIS BODY MOVES HOUSE WITH THEM. The server decides who is told about whom by asking which map
-        // each is in before it measures any distance, and the answer it reads is the scene the object actually
-        // sits in — not the name on the wire. A person whose body stayed in the map they started in would walk
-        // into a town nobody there could see them arrive in, and go on being visible to the map they left.
-        // A MAP THIS SERVER IS NOT HOLDING IS SAID OUT LOUD, because the alternative is the quietest failure in
-        // this whole layer. Putting a body in a map only works for a map that is actually open here; for any other
-        // it does nothing, with no error — and the body is then left filed under the map they LEFT, at the new
-        // map's coordinates. The watcher lists are built map first, so that person and the people they walked away
-        // from go on seeing each other, at positions that mean nothing, indefinitely.
-        var into = SceneManager.GetSceneByName(map);
-        if (!into.IsValid() || !into.isLoaded)
-            GameLog.Warn(LogCat.Server, "" + playerName + " says they are in '" + map
-                             + "', which this server is not holding — they will be filed under '"
-                             + gameObject.scene.name + "' and seen by the wrong people. Add it to the map list.");
-        MapManager.PutInMap(gameObject, into);
+        FileBodyInto(map);
 
         // AND THE FIGHTER IS TOLD TOO. It is the thing creatures actually look at, and it has no body in any map of
         // its own to be found in — so if this is not pushed across, every creature goes on hunting the whole world.

@@ -4902,3 +4902,10 @@
 {"ts": "2026-10-04T22:24:12+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\QuestLog.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-04T22:25:37+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\QuestsWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-04T22:27:39+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\QuestLog.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:03:45+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "census.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:10:50+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:10:55+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:11:06+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:12:51+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\MapWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:14:41+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\MapWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-04T23:16:30+08:00", "session_id": "bc571848-6027-42d4-891e-df021205133e", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

@@ -1,9 +1,4 @@
 {
-  "aa7a442e-d125-4102-9efd-4664e3bb389e": {
-    "counts": {
-      "npm run typecheck": 1
-    }
-  },
   "b6f716f6-6077-4ede-8e0e-96850e637db3": {
     "counts": {
       "check-perf-hotpaths.py 2>&1": 19,
@@ -39,6 +34,11 @@
   "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
     "counts": {
       "editor_play": 1
+    }
+  },
+  "bc571848-6027-42d4-891e-df021205133e": {
+    "counts": {
+      "editor_play \\": 1
     }
   },
   "bcd2e086-c48f-4acf-a854-14cc8f9fec27": {
