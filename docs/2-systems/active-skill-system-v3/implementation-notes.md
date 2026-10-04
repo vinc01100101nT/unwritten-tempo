@@ -152,7 +152,7 @@ ignores it. This is the **single** rule for stack-sized numbers — damage does 
 A skill carries a list of `SkillTriggerEntry`. `OnCast` (serialized 0, so every existing asset stays valid) is a normal
 pressed active; anything else is a passive moment. A passive is **authored exactly like an active** — same VFX, ticks and
 effects — and when its trigger fires it **runs as a full skill cast**, with no mana, cooldown or wind-up, because the
-trigger is the gesture. It may sit on the hotbar as a tile to watch, but pressing it does nothing and it runs whether or not it is there.
+trigger is the gesture. It never goes on the hotbar: the Skills window does not drag one and the server refuses one in a slot.
 
 **Aim is auto-resolved from the trigger**, matching how the skill was authored: a single-target reticle lands on the
 triggering entity; a ground/AoE/projectile reticle casts at the victim's location (or the caster's spot when the moment

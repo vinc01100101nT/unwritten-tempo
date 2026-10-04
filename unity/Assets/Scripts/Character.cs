@@ -311,6 +311,8 @@ public class Character : MonoBehaviour, ICombatUnit
         var def = SkillCatalog.Get(skillId);
         if (def == null) return false;
         if (def.ItemUseEntry != null) return false;
+        // A passive is never pressed, so it has no place on the bar — and a bar saved with one loses it on load.
+        if (def.IsPassive) return false;
         return def.weaponType == WeaponType.None || Mastery.HasLearned(skillId);
     }
 

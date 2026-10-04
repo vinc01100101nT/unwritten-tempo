@@ -9,6 +9,10 @@ public enum QuestCategory { Tutorial = 0, MainStory = 1, SideQuest = 2 }
 /// creatures defeated while the step is the current one.</summary>
 public enum QuestObjectiveKind { TalkTo = 0, Have = 1, FoldedTo = 2, Wear = 3, Kill = 4 }
 
+/// <summary>What a tutorial needs before Play starts it, as its owner is told it: the gold and the items its steps cost
+/// (worked out from the items, never typed), and the level the quest names.</summary>
+public enum QuestRequirementKind { Gold = 0, Item = 1, Level = 2 }
+
 /// <summary>Which part of the screen a guide hint points at. The station kinds always mean the station that works the
 /// step's item, and the item ones always mean the step's item — neither is typed twice.</summary>
 public enum GuideSpot
@@ -85,7 +89,7 @@ public class QuestDef : ScriptableObject
         [Tooltip("The line the Quests window shows for this step.")]
         public string text = "";
         public Objective objective = new Objective();
-        [Tooltip("In order. The guide shows the LAST one whose spot is on screen right now.")]
+        [Tooltip("Tutorials only. In order. The guide shows the LAST one whose spot is on screen right now.")]
         public Hint[] hints = Array.Empty<Hint>();
     }
 
@@ -105,6 +109,9 @@ public class QuestDef : ScriptableObject
     [TextArea] public string offerText = "";
     [Tooltip("Paid once, the moment the last step is done.")]
     public Reward reward = new Reward();
+    [Tooltip("Tutorials only: the character level Play needs. 0 = none. The gold and items it needs are never typed: " +
+             "they are what its steps cost, worked out from the items.")]
+    [Min(0)] public int levelNeeded;
     public Step[] steps = Array.Empty<Step>();
 
     /// <summary>The position of <paramref name="stepId"/> in this quest, or -1.</summary>

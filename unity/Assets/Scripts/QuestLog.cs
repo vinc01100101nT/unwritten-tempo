@@ -25,6 +25,34 @@ public struct QuestOpenWire
     public int have;
     public int need;
     public bool tracked;
+    /// <summary>Whether its current step happens somewhere the arrows can lead — what decides whether the Quests window
+    /// offers "Show path" for it.</summary>
+    public bool hasPath;
+}
+
+/// <summary>One thing a tutorial needs before Play starts it, as its owner is told it — finished numbers: what is still
+/// needed from the step it is on to its end, and whether the character has it right now.</summary>
+[Serializable]
+public struct QuestNeedWire
+{
+    public string questId;
+    public QuestRequirementKind kind;
+    public string itemId;
+    public int amount;
+    public bool met;
+}
+
+/// <summary>Why Play did or did not start a tutorial.</summary>
+public enum QuestPlay { Ignored = 0, Started = 1, AlreadyPlaying = 2, NotMet = 3 }
+
+/// <summary>A kill that counted toward a quest, as its owner is told it: the creature, and the step's count after it.</summary>
+[Serializable]
+public struct QuestKillWire
+{
+    public string questId;
+    public string creatureId;
+    public int have;
+    public int need;
 }
 
 /// <summary>Where the followed quest's step happens and whether it can be done now — decided on the server.</summary>
@@ -73,6 +101,9 @@ public sealed class QuestLog
     // Quests that finished since the server last asked — their rewards are owed (see TakeJustFinished).
     readonly List<QuestDef> justFinished = new List<QuestDef>(2);
 
+    // Kills counted since the owner was last told, one per quest carrying its latest count (see TakeKills).
+    readonly List<QuestKillWire> killsUntold = new List<QuestKillWire>(2);
+
     readonly Dictionary<string, Record> records = new Dictionary<string, Record>();
     int stamp, acked;
 
@@ -108,8 +139,9 @@ public sealed class QuestLog
     }
 
     /// <summary>Give every quest marked "given automatically" that this character has never had. A quest given while
-    /// nothing is being followed becomes the one followed. True when anything was given.</summary>
-    public bool GiveAutomatic()
+    /// nothing is being followed becomes the one followed — a tutorial only when its requirements are met, the same test
+    /// Play makes. True when anything was given.</summary>
+    public bool GiveAutomatic(Character c)
     {
         bool any = false;
         foreach (var def in QuestCatalog.All)
@@ -117,16 +149,19 @@ public sealed class QuestLog
             if (!def.givenAutomatically || records.ContainsKey(def.id)) continue;
             var r = new Record { questId = def.id, stepId = def.steps[0].id };
             records[def.id] = r;
-            if (Followed() == null) r.tracked = true;
+            if (Followed() == null && (def.category != QuestCategory.Tutorial || NeedsMet(r, def, c))) r.tracked = true;
             Touch(r);
             any = true;
         }
         return any;
     }
 
+    // A quest the catalog no longer has (suspended or retired) is never the followed one: it is shown nowhere, so it
+    // could not be turned off, and it would stop every new quest being followed.
     Record Followed()
     {
-        foreach (var r in records.Values) if (r.tracked && !r.finished) return r;
+        foreach (var r in records.Values)
+            if (r.tracked && !r.finished && QuestCatalog.Get(r.questId) != null) return r;
         return null;
     }
 
@@ -199,6 +234,7 @@ public sealed class QuestLog
             r.progress++;
             Touch(r);
             counted = true;
+            TellKill(new QuestKillWire { questId = r.questId, creatureId = creatureId, have = r.progress, need = o.count });
         }
         return counted;
     }
@@ -215,6 +251,24 @@ public sealed class QuestLog
         if (Followed() == null) r.tracked = true;
         Touch(r);
         return true;
+    }
+
+    // ONE LINE PER QUEST however many of its kills land before the owner is next told: the latest count replaces the last.
+    void TellKill(QuestKillWire k)
+    {
+        for (int i = 0; i < killsUntold.Count; i++)
+            if (killsUntold[i].questId == k.questId) { killsUntold[i] = k; return; }
+        killsUntold.Add(k);
+    }
+
+    /// <summary>The kills counted since this was last asked, for the owner's screen — null when none. Emptied by the
+    /// asking.</summary>
+    public QuestKillWire[] TakeKills()
+    {
+        if (killsUntold.Count == 0) return null;
+        var told = killsUntold.ToArray();
+        killsUntold.Clear();
+        return told;
     }
 
     /// <summary>The quests finished since this was last asked, whose rewards are owed now — each once, ever, because a
@@ -274,16 +328,43 @@ public sealed class QuestLog
     }
 
     /// <summary>Follow <paramref name="questId"/> — only one of this character's own open, playable quests, and only
-    /// when it is not already the one followed. True when anything changed.</summary>
+    /// when it is not already the one followed — or, given no id, follow nothing (a tutorial's Stop). It names the result wanted, never
+    /// "switch", so the same ask twice changes nothing the second time. True when anything changed.
+    /// A tutorial is never followed this way — only <see cref="Play"/> starts one, because only Play checks what it needs.</summary>
     public bool Track(string questId)
     {
-        if (string.IsNullOrEmpty(questId) || !records.TryGetValue(questId, out var pick) || pick.finished
-            || pick.tracked || QuestCatalog.Get(questId) == null) return false;
+        Record pick = null;
+        if (!string.IsNullOrEmpty(questId))
+        {
+            var def = QuestCatalog.Get(questId);
+            if (def == null || def.category == QuestCategory.Tutorial || !records.TryGetValue(questId, out pick)
+                || pick.finished || pick.tracked) return false;
+        }
+        return Follow(pick);
+    }
+
+    /// <summary>PLAY a tutorial: follow it — its guide and its path — but only when the character has what the rest of
+    /// it needs right now (<see cref="CollectNeeds"/>). Only an open tutorial the character holds. Checked at the press
+    /// only: what is spent afterwards is the guide's to explain.</summary>
+    public QuestPlay Play(string questId, Character c)
+    {
+        var def = QuestCatalog.Get(questId);
+        if (def == null || def.category != QuestCategory.Tutorial || !records.TryGetValue(questId, out var r) || r.finished)
+            return QuestPlay.Ignored;
+        if (r.tracked) return QuestPlay.AlreadyPlaying;
+        if (!NeedsMet(r, def, c)) return QuestPlay.NotMet;
+        Follow(r);
+        return QuestPlay.Started;
+    }
+
+    // Follow `pick` and nothing else — or, given nothing, follow nothing. True when anything changed.
+    bool Follow(Record pick)
+    {
+        bool changed = false;
         foreach (var r in records.Values)
-            if (r.tracked) { r.tracked = false; Touch(r); }
-        pick.tracked = true;
-        Touch(pick);
-        return true;
+            if (r.tracked && r != pick) { r.tracked = false; Touch(r); changed = true; }
+        if (pick != null && !pick.tracked) { pick.tracked = true; Touch(pick); changed = true; }
+        return changed;
     }
 
     /// <summary>The records changed since the last save that landed, and the number to acknowledge once this one does.
@@ -309,7 +390,7 @@ public sealed class QuestLog
     }
 
     /// <summary>Every open quest of a playable kind, as its owner is shown it.</summary>
-    public QuestOpenWire[] Snapshot(Character c)
+    public QuestOpenWire[] Snapshot(Character c, string map)
     {
         var list = new List<QuestOpenWire>();
         bool heldRead = false;
@@ -320,6 +401,7 @@ public sealed class QuestLog
             if (def == null) continue;
             var w = new QuestOpenWire { questId = r.questId, stepId = r.stepId, tracked = r.tracked };
             int i = def.IndexOf(r.stepId);
+            if (i >= 0) w.hasPath = HasPlace(def.steps[i].objective, map);
             if (i >= 0 && def.steps[i].objective.kind == QuestObjectiveKind.Kill)
             {
                 w.need = def.steps[i].objective.count;
@@ -338,10 +420,19 @@ public sealed class QuestLog
     }
 
     /// <summary>Where the followed quest's step happens, seen from <paramref name="map"/>, and whether it can be done now.</summary>
-    public QuestTargetWire Target(Character c, string map)
+    public QuestTargetWire Target(Character c, string map) => TargetOf(Followed(), c, map);
+
+    /// <summary>THE QUEST THE GUIDE TEACHES: the followed quest when it is a tutorial — a tutorial plays by being
+    /// followed, so its guide and its path are one choice — and nothing otherwise. Only tutorials carry hints.</summary>
+    public static QuestTargetWire GuideOf(QuestTargetWire followed)
+    {
+        var def = followed.any ? QuestCatalog.Get(followed.questId) : null;
+        return def != null && def.category == QuestCategory.Tutorial ? followed : default;
+    }
+
+    QuestTargetWire TargetOf(Record r, Character c, string map)
     {
         var t = new QuestTargetWire();
-        var r = Followed();
         var def = r != null ? QuestCatalog.Get(r.questId) : null;
         int i = def != null ? def.IndexOf(r.stepId) : -1;
         if (i < 0) return t;
@@ -385,6 +476,158 @@ public sealed class QuestLog
             if (person.map != map) t.nextMap = WorldRoutes.NextMap(map, person.map, out _) ?? "";
         }
         return t;
+    }
+
+    // ---- what a tutorial needs ---------------------------------------------------------------------------------------
+    // THE PIECES A QUEST HAS YOU FORGE AND FOLD, read once per quest from the items' own costs — item data never changes
+    // while the server runs — so the bill is never typed twice and never drifts from what the smith charges.
+    sealed class Piece
+    {
+        public string itemId;
+        public Item material;
+        public int forgeMaterial, forgeGold, folds, foldMaterialEach, foldGoldEach;
+        public int lastStep;   // the last step that needs this piece: once past it, nothing of it is owed
+    }
+
+    static readonly Dictionary<string, List<Piece>> piecesOf = new Dictionary<string, List<Piece>>();
+
+    static List<Piece> PiecesOf(QuestDef def)
+    {
+        if (piecesOf.TryGetValue(def.id, out var list)) return list;
+        list = new List<Piece>();
+        for (int i = 0; i < def.steps.Length; i++)
+        {
+            var o = def.steps[i].objective;
+            if (o.kind != QuestObjectiveKind.Have && o.kind != QuestObjectiveKind.FoldedTo) continue;
+            var item = ItemCatalog.Resolve(o.itemId);
+            if (item == null || item.forgeMaterialCost <= 0) continue;
+            Piece p = null;
+            foreach (var q in list) if (q.itemId == o.itemId) { p = q; break; }
+            if (p == null)
+            {
+                // A forged piece starts Raw, and Raw folds with the same band of material it was forged from.
+                p = new Piece
+                {
+                    itemId = o.itemId, material = MaterialCatalog.Band(item.madeOf, CraftingMath.Band(Quality.Raw)),
+                    forgeMaterial = item.forgeMaterialCost, forgeGold = item.forgeGoldCost,
+                    foldMaterialEach = CraftingMath.FoldMaterialCost, foldGoldEach = CraftingMath.FoldGoldCost(Quality.Raw),
+                };
+                list.Add(p);
+            }
+            if (o.kind == QuestObjectiveKind.FoldedTo) p.folds = Mathf.Max(p.folds, o.folds);
+            p.lastStep = i;
+        }
+        piecesOf[def.id] = list;
+        return list;
+    }
+
+    // Reused for every count — no allocation per push.
+    readonly List<QuestNeedWire> needs = new List<QuestNeedWire>(8);
+    readonly List<(Item material, int amount)> materialScratch = new List<(Item, int)>(4);
+
+    /// <summary>Work out what every open tutorial still needs and whether this character has it, and return a number
+    /// that changes whenever any of it does — what tells the shell the window's list is out of date. Read the result
+    /// with <see cref="NeedsSnapshot"/>.</summary>
+    public int CollectNeeds(Character c)
+    {
+        needs.Clear();
+        if (c == null) return 0;
+        bool heldRead = false;
+        foreach (var r in records.Values)
+        {
+            if (r.finished) continue;
+            var def = QuestCatalog.Get(r.questId);
+            if (def == null || def.category != QuestCategory.Tutorial) continue;
+            if (!heldRead) { ReadHeld(c); heldRead = true; }
+            AddNeeds(r, def, c);
+        }
+        int hash = needs.Count;
+        foreach (var n in needs)
+            hash = hash * 31 + (n.questId.GetHashCode() ^ (int)n.kind * 7919 ^ (n.itemId ?? "").GetHashCode()
+                                ^ n.amount * 104729 ^ (n.met ? 1 : 0));
+        return hash;
+    }
+
+    /// <summary>The list <see cref="CollectNeeds"/> last worked out, for sending.</summary>
+    public QuestNeedWire[] NeedsSnapshot() => needs.ToArray();
+
+    // Does this character have, right now, everything the rest of this tutorial needs?
+    bool NeedsMet(Record r, QuestDef def, Character c)
+    {
+        if (c == null) return false;
+        needs.Clear();
+        ReadHeld(c);
+        AddNeeds(r, def, c);
+        foreach (var n in needs) if (!n.met) return false;
+        return true;
+    }
+
+    // What is STILL needed from the step `r` is on to the quest's end: a piece already held is not forged again, folds
+    // already made are not paid again, and a piece no step ahead needs costs nothing. Then the level the quest names.
+    // Expects `held` read.
+    void AddNeeds(Record r, QuestDef def, Character c)
+    {
+        int at = def.IndexOf(r.stepId);
+        if (at < 0) at = 0;
+        int gold = 0, level = def.levelNeeded;
+        materialScratch.Clear();
+        foreach (var p in PiecesOf(def))
+        {
+            if (p.lastStep < at) continue;
+            bool have = QuestMath.Met(QuestObjectiveKind.Have, p.itemId, 1, held);
+            int foldsDone = QuestMath.Met(QuestObjectiveKind.FoldedTo, p.itemId, p.folds, held)
+                ? p.folds : QuestMath.BestFolds(p.itemId, held);
+            int material = 0;
+            QuestMath.AddForgedPiece(have ? 0 : p.forgeMaterial, have ? 0 : p.forgeGold, Mathf.Max(0, p.folds - foldsDone),
+                                     p.foldMaterialEach, p.foldGoldEach, ref material, ref gold);
+            AddMaterial(p.material, material);
+        }
+        foreach (var (material, amount) in materialScratch)
+            needs.Add(new QuestNeedWire { questId = r.questId, kind = QuestRequirementKind.Item, itemId = material.id,
+                                          amount = amount, met = Count(c, material) >= amount });
+        if (gold > 0)
+            needs.Add(new QuestNeedWire { questId = r.questId, kind = QuestRequirementKind.Gold, itemId = "",
+                                          amount = gold, met = c.Gold >= gold });
+        if (level > 0)
+            needs.Add(new QuestNeedWire { questId = r.questId, kind = QuestRequirementKind.Level, itemId = "",
+                                          amount = level, met = c.Level >= level });
+    }
+
+    void AddMaterial(Item material, int amount)
+    {
+        if (material == null || amount <= 0) return;
+        for (int i = 0; i < materialScratch.Count; i++)
+            if (materialScratch[i].material == material)
+            {
+                materialScratch[i] = (material, materialScratch[i].amount + amount);
+                return;
+            }
+        materialScratch.Add((material, amount));
+    }
+
+    // WHETHER A STEP HAPPENS SOMEWHERE, seen from `map` — the same lookups Target uses, kept per question because they
+    // walk the world's spawn and townsfolk lists, which never change while the server runs, and every open quest of
+    // every player asks on every push.
+    static readonly Dictionary<(QuestObjectiveKind, string, string, string), bool> placeKnown =
+        new Dictionary<(QuestObjectiveKind, string, string, string), bool>();
+
+    static bool HasPlace(QuestDef.Objective o, string map)
+    {
+        switch (o.kind)
+        {
+            case QuestObjectiveKind.Wear: return false;
+            case QuestObjectiveKind.TalkTo: return WorldTownsfolkIds.Find(o.townspersonId) != null;
+        }
+        var key = o.kind == QuestObjectiveKind.Kill ? (o.kind, o.creatureId, o.map, map) : (o.kind, o.itemId, "", map);
+        if (placeKnown.TryGetValue(key, out bool known)) return known;
+        if (o.kind == QuestObjectiveKind.Kill) known = NearestSpawnOf(o.creatureId, o.map, map, out _, out _);
+        else
+        {
+            var item = ItemCatalog.Resolve(o.itemId);
+            known = item != null && WorldTownsfolkIds.WorkingAt(CraftStations.For(item), map) != null;
+        }
+        placeKnown[key] = known;
+        return known;
     }
 
     // Where to hunt a creature: the map the step names, or else the nearest, counted in doors from `map`, that places it.

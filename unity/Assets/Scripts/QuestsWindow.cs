@@ -8,7 +8,11 @@ using UnityEngine.UI;
 ///
 /// <para><b>It works nothing out.</b> Which quests are open, which step each is on and how far a fold step has got all
 /// arrive from the server (<see cref="QuestStore"/>); the titles and step lines are read from the same quest data the
-/// server judges against. Choosing a quest only ASKS to follow it — the ground arrows then lead to its step.</para>
+/// server judges against. Choosing a quest only shows its steps. A tutorial has Play — Stop while it plays — which ASKS
+/// the server to start it (its guide and its path), and shows what it still needs, as the server worked it out. Any
+/// other quest has "Show path", which only ASKS to follow it — or, pressed again, to follow nothing; it is there only
+/// while the server says the quest's current step happens somewhere (or while it is followed, so it can be turned off).
+/// One path at a time, whatever kind of quest it belongs to.</para>
 /// </summary>
 public class QuestsWindow : MonoBehaviour
 {
@@ -47,7 +51,7 @@ public class QuestsWindow : MonoBehaviour
     {
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) { enabled = false; return; }
-        var content = UiKit.Window(canvas.transform, "Quests", new Vector2(520, 420), Vector2.zero, out root);
+        var content = UiKit.Window(canvas.transform, "Quests", new Vector2(560, 420), Vector2.zero, out root);
 
         var tabRow = UiKit.TabRow(content);
         for (int i = 0; i < TabNames.Length; i++)
@@ -59,15 +63,17 @@ public class QuestsWindow : MonoBehaviour
         var left = UiKit.Img("List", content, UiKit.SlotFill);
         var lrt = left.rectTransform;
         lrt.anchorMin = new Vector2(0, 0); lrt.anchorMax = new Vector2(0, 1); lrt.pivot = new Vector2(0, 1);
-        lrt.offsetMin = new Vector2(0, 0); lrt.offsetMax = new Vector2(190, -34);
+        lrt.offsetMin = new Vector2(0, 0); lrt.offsetMax = new Vector2(ListWidth, -34);
         listContent = Column(lrt, 2);
 
         var right = UiKit.Img("Detail", content, new Color(0, 0, 0, 0));
         var rrt = right.rectTransform;
         rrt.anchorMin = new Vector2(0, 0); rrt.anchorMax = new Vector2(1, 1); rrt.pivot = new Vector2(0, 1);
-        rrt.offsetMin = new Vector2(196, 0); rrt.offsetMax = new Vector2(0, -34);
+        rrt.offsetMin = new Vector2(ListWidth + 6, 0); rrt.offsetMax = new Vector2(0, -34);
         detailContent = Column(rrt, 4);
     }
+
+    const float ListWidth = 230f, ShowPathWidth = 78f, PlayWidth = 52f;
 
     static RectTransform Column(RectTransform viewport, int spacing)
     {
@@ -102,18 +108,36 @@ public class QuestsWindow : MonoBehaviour
         Clear(listContent);
         Clear(detailContent);
 
-        // The open quests of this tab, as the server listed them. The followed one is chosen when nothing else is.
+        // The open quests of this tab, as the server listed them. With nothing chosen, the followed one is shown, or
+        // else the first.
         var category = TabCategories[tab];
+        if (chosen == null)
+            foreach (var open in QuestStore.Open)
+            {
+                var def = QuestCatalog.Get(open.questId);
+                if (def == null || def.category != category) continue;
+                if (chosen == null || open.tracked) chosen = def.id;
+                if (open.tracked) break;
+            }
         QuestDef shown = null;
         QuestOpenWire shownWire = default;
         foreach (var open in QuestStore.Open)
         {
             var def = QuestCatalog.Get(open.questId);
             if (def == null || def.category != category) continue;
-            if (chosen == null && open.tracked) chosen = def.id;
-            var row = UiKit.Btn(def.title, listContent, () => Choose(def.id));
-            row.gameObject.AddComponent<LayoutElement>().preferredHeight = 26;
+            var line = new GameObject("Quest", typeof(RectTransform));
+            line.transform.SetParent(listContent, false);
+            line.AddComponent<LayoutElement>().preferredHeight = 26;
+            var row = UiKit.Btn(def.title, line.transform, () => Choose(def.id));
+            var rowRt = (RectTransform)row.transform;
+            rowRt.anchorMin = Vector2.zero; rowRt.anchorMax = Vector2.one;
+            rowRt.offsetMin = Vector2.zero;
+            bool tutorial = def.category == QuestCategory.Tutorial, showPath = !tutorial && (open.tracked || open.hasPath);
+            rowRt.offsetMax = new Vector2(tutorial ? -PlayWidth : showPath ? -ShowPathWidth : 0f, 0f);
             UiKit.MarkTab(row, def.id == chosen);
+            // EVERY open tutorial has Play or Stop, whatever step it is on — one with nothing to lead to still has a guide.
+            if (tutorial) PlayButton(line.transform, def.id, open.tracked);
+            else if (showPath) ShowPathButton(line.transform, def.id, open.tracked);
             if (def.id == chosen) { shown = def; shownWire = open; }
         }
         if (listContent.childCount == 0) { Text(listContent, "No quests here yet.", 12, UiKit.TextDim); return; }
@@ -123,6 +147,7 @@ public class QuestsWindow : MonoBehaviour
         if (!string.IsNullOrEmpty(shown.description)) Text(detailContent, shown.description, 12, UiKit.TextMain, FontStyle.Normal, 4);
         string reward = RewardLine(shown.reward);
         if (reward != null) Text(detailContent, reward, 12, UiKit.TitleText, FontStyle.Bold, 2);
+        if (shown.category == QuestCategory.Tutorial) Requirements(shown.id);
         int now = shown.IndexOf(shownWire.stepId);
         for (int i = 0; i < shown.steps.Length; i++)
         {
@@ -133,6 +158,48 @@ public class QuestsWindow : MonoBehaviour
             Text(detailContent, line, 12, done ? UiKit.Good : current ? UiKit.TextMain : UiKit.TextDim,
                  current ? FontStyle.Bold : FontStyle.Normal);
         }
+    }
+
+    // WHAT THIS TUTORIAL STILL NEEDS before Play starts it — each line the server's number and the server's yes or no.
+    void Requirements(string questId)
+    {
+        bool any = false;
+        foreach (var n in QuestStore.Needs)
+        {
+            if (n.questId != questId) continue;
+            if (!any) { Text(detailContent, "Requirements", 12, UiKit.TitleText, FontStyle.Bold); any = true; }
+            Text(detailContent, (n.met ? "✔  " : "     ") + NeedText(n), 12, n.met ? UiKit.Good : UiKit.Bad);
+        }
+        if (!any) Text(detailContent, "Requirements: none", 12, UiKit.TitleText, FontStyle.Bold);
+    }
+
+    static string NeedText(QuestNeedWire n)
+    {
+        switch (n.kind)
+        {
+            case QuestRequirementKind.Gold: return n.amount.ToString("N0") + " gold";
+            case QuestRequirementKind.Level: return "Level " + n.amount;
+            default:
+                var item = ItemCatalog.Resolve(n.itemId);
+                return n.amount + " " + (item != null ? item.displayName : n.itemId);
+        }
+    }
+
+    // Play, or Stop while this tutorial plays. Play only ASKS — the server checks what it needs and says so if it is
+    // short; Stop asks to follow nothing, which ends its guide and its path.
+    static void PlayButton(Transform line, string questId, bool playing)
+    {
+        var button = UiKit.Btn(playing ? "Stop" : "Play", line, () =>
+        {
+            UISounds.PlayClick();
+            var me = GameNetwork.MyPlayer;
+            if (me == null) return;
+            if (playing) me.AskToTrackQuest(""); else me.AskToPlayTutorial(questId);
+        });
+        var rt = (RectTransform)button.transform;
+        rt.anchorMin = new Vector2(1f, 0f); rt.anchorMax = new Vector2(1f, 1f); rt.pivot = new Vector2(1f, 0.5f);
+        rt.sizeDelta = new Vector2(PlayWidth - 4f, 0f);
+        rt.anchoredPosition = Vector2.zero;
     }
 
     // "Reward: 25 experience, 300 gold, 5 Minor Healing Potion" — the quest data's own numbers, as written.
@@ -155,9 +222,28 @@ public class QuestsWindow : MonoBehaviour
     {
         chosen = questId;
         UISounds.PlayClick();
-        // ONLY ASKED. The server decides whether it may be followed, and the arrows follow its answer.
-        GameNetwork.MyPlayer?.AskToTrackQuest(questId);
         Redraw();
+    }
+
+    // "Show path" and its round button, at the right end of a quest's row. At most one is on: the quest the server says
+    // is followed. Pressing it ASKS for the result wanted — follow this one, or follow nothing — and the list redraws
+    // from the server's answer.
+    static void ShowPathButton(Transform line, string questId, bool on)
+    {
+        var label = UiKit.Label("ShowPath", line, "Show path", 10, FontStyle.Normal, TextAnchor.MiddleRight);
+        label.color = UiKit.TextDim;
+        label.raycastTarget = false;
+        var lrt = label.rectTransform;
+        lrt.anchorMin = new Vector2(1f, 0f); lrt.anchorMax = new Vector2(1f, 1f); lrt.pivot = new Vector2(1f, 0.5f);
+        lrt.sizeDelta = new Vector2(ShowPathWidth - 26f, 0f);
+        lrt.anchoredPosition = new Vector2(-24f, 0f);
+
+        var radio = UiKit.RadioButton(line, on);
+        radio.onValueChanged.AddListener(want =>
+        {
+            UISounds.PlayClick();
+            GameNetwork.MyPlayer?.AskToTrackQuest(want ? questId : "");
+        });
     }
 
     static void Clear(RectTransform t)

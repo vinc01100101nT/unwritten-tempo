@@ -83,7 +83,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Some are **passive**. A passive is **never pressed** — it works on its own from the moment you spend a point on it, as long as its weapon is in your hands, whether or not it sits on your hotbar (one placed there is only a tile to watch): it waits for a specific moment in the fight and fires. The small squares above your hotbar show every passive running. The moment it waits for is part of the skill:"
+      "text": "Some are **passive**. A passive is **never pressed** — it works on its own from the moment you spend a point on it, as long as its weapon is in your hands, and it never goes on your hotbar: it waits for a specific moment in the fight and fires. The moment it waits for is part of the skill:"
     },
     {
       "type": "list",

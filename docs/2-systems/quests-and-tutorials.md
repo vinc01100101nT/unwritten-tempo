@@ -11,17 +11,51 @@ tags:
 A **quest** is an ordered list of steps. A character holds a record of every quest it has ever been given: which
 step it is on, how far along that step is, whether it is finished, and whether it is the one being followed. The **Quests window** (J, or the
 Quests button in the status box) lists the open ones under three tabs — **Tutorial**, **Main Story**, **Side
-Quests**. Choosing a quest follows it: **arrows on the ground** lead to where its current step happens, and at that
-place the **guide** darkens the whole screen except the one part to press next, with an arrow and a short text.
+Quests**. Choosing a quest shows its steps. A **tutorial** has a **Play** button (**Stop** while it plays): playing it
+turns on its **guide** — at the place a step is worked, the whole screen dark except the one part to press next, with
+an arrow and a short text — and its path. Any other quest has a **Show path** button. A path is **arrows on the
+ground** to where the step happens, and the same whole route drawn on the minimap and in the Map window's zone view
+(M).
+
+## Play, Show path and requirements
+
+- **One path, whatever kind of quest.** At most one quest is followed. A playing tutorial is the followed one, so its
+  path is on. Pressing a side or main quest's Show path moves the path to it, and the tutorial stops playing;
+  pressing the Show path that is already on follows nothing. Stop follows nothing too — no arrows, no guide.
+- **Only a tutorial has hints**, so the guide only ever teaches the tutorial that is playing.
+- **Play checks requirements, on the server, at the press only.** If the character lacks any of them, Play does
+  nothing and says "Requirements are not met" over their head. What is spent after Play started is the guide's to
+  explain ("you are carrying too little to pay").
+- **A tutorial's requirements are what the rest of it still needs**, from the step it is on to its end:
+  - The forging and folding its steps name, worked out from the items' own costs. A piece already held is not
+    forged again, folds already made are not paid again, and a piece no step ahead needs costs nothing. For "Your
+    First Gear" from its start that is 24 Copper and 1,900 gold, the starter kit exactly.
+  - The character level the quest names, if any. Gold and items are never typed on a quest: they are only ever what
+    its steps cost.
+  - Each tutorial shows its list in the Quests window, every line green when the character has it and red when not —
+    the server's numbers and the server's yes or no, refreshed when the bag, the purse or the level changes.
+- **Every open tutorial has Play or Stop**, whatever step it is on — a step with nowhere to lead to still has a guide.
+  Show path on any other quest shows only while the server says its current step happens somewhere the arrows can
+  lead (or while it is followed, so it can be turned off).
+- **A quest given or accepted while nothing is followed becomes the one followed** — a tutorial only when its
+  requirements are met, so a brand-new character's crafting tutorial plays on its own. A quest the game no longer has
+  is never the followed one.
+
+## Kill counts
+
+Every kill that counts toward a quest is said over your head, in the same stacking lines as "No MP", in the quest
+marks' yellow: the creature's name and the step's count after it — "Plopling 3 / 10", up to "Plopling 10 / 10". The
+numbers are the server's. Kills that land in the same moment make one line per quest, carrying the latest count.
 
 ## What decides what
 
 - **The game server decides everything.** Which quests a character has, which step each is on, when a step is done,
   where the followed step happens and whether it can be done right now. A player's machine is told the answers and
-  draws them; choosing a quest to follow is the only thing it asks for, and the server ignores a quest that is not
-  one of that character's own open ones.
+  draws them; which quest to follow, which tutorial to play, or neither is the only thing it asks for, and the
+  server ignores a quest that is not one of that character's own open ones — and plays no tutorial whose requirements
+  are not met.
 - **The route on the ground** is the one thing worked out on the player's machine: the arrows follow the same
-  route-finder the character walks by. It decides nothing (user's decision 2026-10-04, as part of movement's
+  route-finder the character walks by, and the minimap and the zone view draw that one route, whole. It decides nothing (user's decision 2026-10-04, as part of movement's
   exception). Where the target is, and which door leads toward it when it is on another map, come from the server.
 
 ## How a step is finished
@@ -49,8 +83,7 @@ place the **guide** darkens the whole screen except the one part to press next, 
 - **Offered by a townsperson:** pressing F on them shows their offer in the conversation box, with **Accept** on its
   last line. The server takes it only from within reach of that person, and only if the character has never had it.
   The giver is never a station worker or a shopkeeper — those open a window, not a conversation.
-- A quest is one or the other, never both. A quest given while nothing is followed becomes the one followed. Quests
-  cannot be skipped or abandoned.
+- A quest is one or the other, never both. Quests cannot be skipped or abandoned.
 
 ## Marks over townspeople
 
@@ -114,8 +147,9 @@ row, the Fold button) and the bag's rows. A quest with a fault — an item the g
 lists, two steps with one id — is **suspended**: nobody is given it or shown it until the data is fixed.
 `tools/check-quest-data.py` catches all of these before they ship, and also: a Kill step for a creature the world
 spawn list places nowhere (it could never be finished); an offered quest with no offer text; a giver who keeps a
-station or a shop; and **a rewarded quest with any step judged on holding something** — one lent item would finish
-it, and pay it, for every character it passes through.
+station or a shop; **a rewarded quest with any step judged on holding something** — one lent item would finish
+it, and pay it, for every character it passes through; **hints or a level needed on a quest that is not a tutorial**;
+and a tutorial's fold step asking for more folds than a Raw piece takes (5), whose bill would need a quench.
 
 ## Not built yet
 

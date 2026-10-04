@@ -9,7 +9,10 @@ using UnityEngine.UI;
 ///
 /// On top of it, the billboards (player + mobs) are edge-on from straight above, so units are shown as projected UI
 /// <b>blips</b> (green = player, red = mobs from <see cref="MonsterAI3D.Active"/>), centred on the player and scaled by
-/// <see cref="viewRadius"/>. Fixed-north, like the classic RO minimap.
+/// <see cref="viewRadius"/>. Fixed-north, like the classic RO minimap. Always shown — there is no key to hide it.
+///
+/// Under the dots, the followed quest's whole route is drawn as the same arrows the ground shows
+/// (<see cref="QuestArrows.Marks"/>), placed each frame like the dots so they slide with the map.
 ///
 /// Built onto the persistent HUD by <see cref="UIShellBuilder"/>, so it survives map swaps with the rest of the UI.
 /// Performance (HARD constraint — see PERFORMANCE.md): a map change loads one picture; every other frame only moves a
@@ -50,6 +53,13 @@ public class Minimap : MonoBehaviour
     int shownVersion = -1;
     MinimapCatalog.Entry shown;
     Texture2D picture;
+    string pictureMap;
+
+    // The route's arrows, in a layer under every dot, each drawn with the ground arrow's own picture.
+    RectTransform routeRoot;
+    readonly List<Image> routePool = new List<Image>();
+    Sprite routeSprite;
+    const float RouteMarkSize = 12f;
 
     readonly List<Image> pool = new List<Image>();
     Sprite dotSprite;
@@ -77,6 +87,14 @@ public class Minimap : MonoBehaviour
         arrowSprite = BuildArrowSprite();   // the player marker — rotated to its facing each frame
         BuildCoordLabel();
         BuildZoomButtons();
+
+        routeSprite = Resources.Load<Sprite>("Guide/GroundArrow");
+        routeRoot = new GameObject("Route", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor }
+            .GetComponent<RectTransform>();
+        routeRoot.SetParent(blipRoot, false);
+        routeRoot.SetAsFirstSibling();
+        routeRoot.anchorMin = Vector2.zero; routeRoot.anchorMax = Vector2.one;
+        routeRoot.offsetMin = routeRoot.offsetMax = Vector2.zero;
     }
 
     // + and - in the map's top-right corner. Built while the game runs, never saved into the scene. The map stays
@@ -160,7 +178,7 @@ public class Minimap : MonoBehaviour
 
     void OnDestroy()
     {
-        if (picture != null) Resources.UnloadAsset(picture);
+        MinimapCatalog.ReleasePicture(pictureMap);
     }
 
     GameObject Panel => view.transform.parent.gameObject;   // the themed HUD_Minimap frame
@@ -169,7 +187,6 @@ public class Minimap : MonoBehaviour
     {
         if (view == null) return;
 
-        if (Hotkeys.Down(GameKeys.Minimap)) UiAnim.Toggle(Panel);
         if (!Panel.activeInHierarchy) return;
 
         // Re-acquire the persistent player after a scene swap.
@@ -182,6 +199,7 @@ public class Minimap : MonoBehaviour
 
         ShowBackdrop();
 
+        PlaceRoute();
         PlaceBlips();
         if (coordLabel != null) RefreshCoords();
     }
@@ -209,10 +227,12 @@ public class Minimap : MonoBehaviour
     // and says so once, so the missing picture is found rather than guessed at.
     void SwapPicture(string map)
     {
-        if (picture != null) { Resources.UnloadAsset(picture); picture = null; }
+        MinimapCatalog.ReleasePicture(pictureMap);
+        picture = null;
+        pictureMap = null;
         var catalog = MinimapCatalog.Instance;
         shown = catalog != null ? catalog.Find(map) : null;
-        if (shown != null) picture = MinimapCatalog.LoadPicture(map);
+        if (shown != null) { picture = MinimapCatalog.AcquirePicture(map); if (picture != null) pictureMap = map; }
         if (picture == null)
         {
             shown = null;
@@ -222,6 +242,49 @@ public class Minimap : MonoBehaviour
         }
         view.texture = picture;
         view.enabled = picture != null;
+    }
+
+    // ---- the route ---------------------------------------------------------------
+    // Every mark inside the shown square, re-placed each frame from the player's spot — the picture slides under the
+    // dots by its texture window, so anything drawn over it must move each frame too. No allocation: a pool, grown once.
+    void PlaceRoute()
+    {
+        if (routeRoot == null) return;
+        var marks = QuestArrows.Marks;
+        Vector2 half = blipRoot.rect.size * 0.5f;
+        Vector3 c = player.position;
+        float r2 = viewRadius * viewRadius;
+        int used = 0;
+        for (int i = 0; i < marks.Count; i++)
+        {
+            var m = marks[i];
+            float dx = m.x - c.x, dz = m.y - c.z;
+            if (dx * dx + dz * dz > r2 || !Project(dx, dz, half, out Vector2 sp)) continue;
+            var img = RouteMark(used++);
+            img.rectTransform.anchoredPosition = sp;
+            img.rectTransform.localRotation = Quaternion.Euler(0f, 0f, m.z);
+        }
+        for (int i = used; i < routePool.Count; i++)
+            if (routePool[i].enabled) routePool[i].enabled = false;
+    }
+
+    Image RouteMark(int i)
+    {
+        while (routePool.Count <= i)
+        {
+            var go = new GameObject("RouteMark", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
+            go.transform.SetParent(routeRoot, false);
+            var img = go.GetComponent<Image>();
+            img.sprite = routeSprite;
+            img.raycastTarget = false;
+            var rt = img.rectTransform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(RouteMarkSize, RouteMarkSize);
+            routePool.Add(img);
+        }
+        var mark = routePool[i];
+        if (!mark.enabled) mark.enabled = true;
+        return mark;
     }
 
     // ---- blips -----------------------------------------------------------------

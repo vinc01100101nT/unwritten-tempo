@@ -16,7 +16,7 @@ Tracking issue: **VIN-22**.
 
 - **Camera** — RO-style 2.5D: true 3D world with billboard sprites, ¾ overhead/isometric-ish framing via a shared `CameraRig`. HUD assumes a fixed overhead view + feet-Y depth sorting. (Ragnarok bucket, not FFXIV/Albion.)
 - **Combat** — RO-style hybrid: click-to-move + click/point target, skills fired from the hotbar by key or click. Already have multi-hit bursts, status (stun/DoT), 10 elements, leech/reflect. No action-cam reticle.
-- **Skill count** — skills belong to a *weapon*, not a class, and are bought with that weapon's mastery points (one per mastery level) in the **Skills** window (K): each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. The window draws one weapon as a timeline of mastery 0–70 with a + button on each skill. **The bar is three rows of nine slots**, one bar per character whatever weapon is held: row 1 answers F1–F9, row 2 the number keys 1–9, row 3 the keys the player assigns in **Settings ▸ Keys**. Any slot holds a skill (active, passive or ultimate), a usable item, or one exact piece of gear; there is no separate ultimate seat. Above the bar a read-only row of smaller squares shows every passive that is live right now, one square each. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
+- **Skill count** — skills belong to a *weapon*, not a class, and are bought with that weapon's mastery points (one per mastery level) in the **Skills** window (K): each names the mastery level at which it opens, out of that weapon's pool — the Sword pool alone is 22 composed skills. The window draws one weapon as a timeline of mastery 0–70 with a + button on each skill. **The bar is three rows of nine slots**, one bar per character whatever weapon is held: row 1 answers F1–F9, row 2 the number keys 1–9, row 3 the keys the player assigns in **Settings ▸ Keys**. Any slot holds an active skill or an ultimate, a usable item, or one exact piece of gear; there is no separate ultimate seat. A passive never goes on the bar: it is never pressed. See [Weapon Roster — 14 Identities](active-skill-system-v3/weapon-roster-12-identities.md).
 - **Stats** — classic RO STR/AGI/VIT/INT/DEX/LUK as the flat layer + a soft-capped % skill-multiplier layer + what a crafted piece carries: its **quality grade**, its **folds**, the stats **Ink** has written on it, and its card sockets. All of it is live and all of it persists.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
   - `HotbarPanel` + `IHotbarSkill` (a slot is pressed by its key or a click). The player fills the bar by dragging from the Skills window (K) or the bag; dragging a slot onto another swaps them, dragging it off the bar empties it.
@@ -38,7 +38,7 @@ Tracking issue: **VIN-22**.
 Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
 value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the world map and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button) and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## The theme rule
 
@@ -73,7 +73,7 @@ own Close / Cancel below.
 Top-left by default, draggable by its bar, and it remembers where it was left. Its bar carries the character's
 name, HP and MP. Its body shows **Lv**, **Ring Lv** and **[held weapon] Mastery Lv**, each with its experience bar
 (the mastery row only while a weapon is held), then the zeny with a + beside it that shows or hides a button for
-every HUD window: Inventory, Character, Skills, Quests, Calendar, World Map, Minimap, Chat, Settings, System. Each button
+every HUD window: Inventory, Character, Skills, Quests, Calendar, Map, Chat, Settings, System. Each button
 opens its window by the key that already opens it (`Hotkeys.PressOnScreen`, a one-frame press of that key from
 the screen), so it adds no second way into any window. It replaced the experience strip along the bottom of
 the screen and the health and mana bars at the bottom left.

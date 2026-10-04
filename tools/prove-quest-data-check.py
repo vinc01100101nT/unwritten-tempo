@@ -105,6 +105,18 @@ def main():
                    "is used twice")
     bad += planted("a hint pointing at a spot that does not exist", r"^    - spot: (\d+)$",
                    lambda m: "    - spot: %s\n" % m.group(1), lambda m: "    - spot: 99\n", "not a real one")
+    bad += planted("a tutorial fold step asking for more folds than a Raw piece takes", r"^      folds: 2$",
+                   lambda m: "      folds: 2\n", lambda m: "      folds: 9\n", "more than a Raw piece takes")
+    side = next((rel for rel, text in texts.items() if re.search(r"^  category: 2$", text, re.M)
+                 and "    hints: []\n" in text), None)
+    if side is None:
+        print(RED + " WRONG" + OFF + " a side quest with a hint — no side quest to plant it in, so this proves nothing")
+        bad += 1
+    else:
+        bad += case("a side quest with a hint", side, "    hints: []\n",
+                    "    hints:\n    - spot: 0\n      text: planted\n", "only a tutorial's guide shows them")
+        bad += case("a side quest needing a level", side, "  steps:\n",
+                    "  levelNeeded: 5\n  steps:\n", "only a tutorial has Play")
     bad += planted("a quest with no id", r"^  id: ", lambda m: "  id: ", lambda m: "  id_gone: ", "has no quest id")
 
     code_after, out_after = run()

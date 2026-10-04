@@ -56,7 +56,7 @@ SCREEN_NAMES = {
     "CalendarPanel.cs": "Calendar",
     "CalendarWeatherHUD.cs": "Calendar",
     "ChatController.cs": "Chat",
-    "WorldMapHUD.cs": "World Map",
+    "MapWindow.cs": "Map",
     "Minimap.cs": "Minimap",
     "BuffBarPanel.cs": "Buff Bar",
     "StateInfoCard.cs": "Buff Bar",

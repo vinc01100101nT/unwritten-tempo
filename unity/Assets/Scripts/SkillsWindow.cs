@@ -316,9 +316,9 @@ public class SkillsWindow : MonoBehaviour
 
         SkillHoverCard.Attach(node.transform, def, beside: true);
 
-        // A learned skill goes on the hotbar by dragging it there — a passive too, as a tile to watch (it works whether
-        // or not it is on the bar). A skill not learned yet would be a slot the server refuses.
-        if (learned)
+        // A learned skill goes on the hotbar by dragging it there. A passive is never pressed, so it does not drag (the
+        // server refuses one on the bar too); a skill not learned yet would be a slot the server refuses.
+        if (learned && !def.IsPassive)
         {
             var drag = node.gameObject.AddComponent<SkillDragSource>();
             drag.skillId = def.id; drag.tint = SkillSymbol.ColorFor(def);

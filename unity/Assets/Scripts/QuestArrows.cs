@@ -12,22 +12,79 @@ using UnityEngine;
 /// (decided by the user 2026-10-04, as part of movement's exception).</para>
 ///
 /// <para><b>Cheap by design.</b> A fixed pool of flat arrows, made once; a new route at most twice a second and only
-/// after the player has moved or the target changed; ground heights read only when a route is made, never per frame.
-/// Gone while talking, near the target, and with nothing followed.</para>
+/// after the player has moved, or at once when the place it leads to changed; ground heights read only when a route
+/// is made, never per frame. Gone while talking, near the target, and with nothing followed.</para>
+///
+/// <para><b>One route, three drawings.</b> The ground shows the first stretch of it; the minimap and the Map window's
+/// zone view draw the whole of it from <see cref="Route"/>, which is empty whenever the ground shows nothing.</para>
 /// </summary>
 public class QuestArrows : MonoBehaviour
 {
     const int Pool = 24;
-    const float Spacing = 1.6f, FirstAhead = 1.4f, ArrowSize = 0.9f, LiftAboveGround = 0.06f;
+    const float Spacing = 1.6f, FirstAhead = 1.4f, ArrowSize = 0.6f, LiftAboveGround = 0.06f;
     const float CloseEnough = 3.2f, RerouteEvery = 0.5f, RerouteAfterMoving = 1.2f, RouteRadius = 0.35f;
 
     readonly SpriteRenderer[] arrows = new SpriteRenderer[Pool];
-    readonly List<Vector2> route = new List<Vector2>(64);
+    static readonly List<Vector2> route = new List<Vector2>(64);
+
+    /// <summary>The whole route the arrows follow, on the ground of the map the player stands in (X and Z), starting
+    /// where the player stood when it was made and ending at the goal. Empty when nothing is shown.</summary>
+    public static IReadOnlyList<Vector2> Route => route;
+
+    /// <summary>Goes up every time <see cref="Route"/> changes, emptied included — a drawing redraws when it moved.</summary>
+    public static int RouteVersion { get; private set; }
+
+    /// <summary>Where the route starts — the player's spot when it was made.</summary>
+    public static Vector2 RouteStart { get; private set; }
+
+    /// <summary>THE ROUTE AS MAP ARROWS — one every <see cref="MapMarkSpacing"/> metres along the whole of it, for a
+    /// map seen from straight above with north up: x and y are the ground's X and Z, z is the turn (degrees) that
+    /// points an upward arrow along the route. Worked out once per route, never per frame. Empty when nothing is shown.</summary>
+    public static IReadOnlyList<Vector3> Marks
+    {
+        get
+        {
+            if (marksVersion != RouteVersion) LayMarks();
+            return marks;
+        }
+    }
+
+    /// <summary>The gap between two arrows on a map, in metres on the ground.</summary>
+    public const float MapMarkSpacing = 2.5f;
+
+    static readonly List<Vector3> marks = new List<Vector3>(128);
+    static int marksVersion = -1;
+
+    static void LayMarks()
+    {
+        marksVersion = RouteVersion;
+        marks.Clear();
+        if (route.Count == 0) return;
+        Vector2 prev = RouteStart;
+        float offset = MapMarkSpacing * 0.5f;
+        for (int r = 0; r < route.Count; r++)
+        {
+            Vector2 next = route[r], seg = next - prev;
+            float len = seg.magnitude;
+            if (len < 0.001f) { prev = next; continue; }
+            Vector2 dir = seg / len;
+            float turn = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+            float along = offset;
+            for (; along <= len; along += MapMarkSpacing)
+            {
+                Vector2 at = prev + dir * along;
+                marks.Add(new Vector3(at.x, at.y, turn));
+            }
+            offset = along - len;
+            prev = next;
+        }
+    }
     Transform host;
     int shownCount;
     float nextReroute;
-    Vector3 routedFrom;
-    int routedVersion = -1, routedMapVersion = -1;
+    Vector3 routedFrom, routedGoal;
+    int routedMapVersion = -1;
+    bool routeShown;
     Transform player;
 
     void Start()
@@ -49,24 +106,42 @@ public class QuestArrows : MonoBehaviour
         }
     }
 
-    void OnDestroy() { if (host != null) Destroy(host.gameObject); }
+    void OnDestroy()
+    {
+        if (host != null) Destroy(host.gameObject);
+        route.Clear();
+        RouteVersion++;
+    }
 
     void LateUpdate()
     {
         if (host == null) return;
-        if (!Goal(out var goal)) { Show(0); return; }
+        if (!Goal(out var goal)) { Hide(); return; }
         var me = player.position;
         var flat = goal - me; flat.y = 0f;
-        if (flat.sqrMagnitude <= CloseEnough * CloseEnough) { Show(0); return; }
+        if (flat.sqrMagnitude <= CloseEnough * CloseEnough) { Hide(); return; }
 
-        bool targetMoved = routedVersion != QuestStore.Version || routedMapVersion != MapManager.MapVersion;
+        // A NEW PLACE TO LEAD TO is routed at once; a new quest list that leads to the same place is not, so a burst of
+        // kills — one list each — never runs a route search each.
+        bool targetMoved = !routeShown || routedMapVersion != MapManager.MapVersion
+                           || (goal - routedGoal).sqrMagnitude > 0.01f;
         bool walked = (me - routedFrom).sqrMagnitude > RerouteAfterMoving * RerouteAfterMoving;
         if (!targetMoved && (!walked || Time.unscaledTime < nextReroute)) return;
-        routedVersion = QuestStore.Version;
+        routedGoal = goal;
         routedMapVersion = MapManager.MapVersion;
         routedFrom = me;
         nextReroute = Time.unscaledTime + RerouteEvery;
         Lay(me, goal);
+    }
+
+    // Nothing to show: the arrows go, and so does the route the maps draw.
+    void Hide()
+    {
+        Show(0);
+        if (!routeShown) return;
+        routeShown = false;
+        route.Clear();
+        RouteVersion++;
     }
 
     // Where the arrows lead right now, in this machine's world — or false for nothing to show.
@@ -94,13 +169,16 @@ public class QuestArrows : MonoBehaviour
 
     void Lay(Vector3 from, Vector3 goal)
     {
-        // THE ROUTE: around walls and props when one is found; straight at the goal when the search gives up (a far
-        // goal runs out of search before it is reached) — the arrows still point the right way, and the next re-route,
-        // a few steps on, finds more of the way.
+        // THE ROUTE: around walls and props. A search that runs out before the goal gives the way to the nearest point it
+        // reached, and the next re-route, a few steps on, finds more of it; only when no step of a route is found at all
+        // does it point straight at the goal, so the arrows still face the right way.
         route.Clear();
         if (!Pathfinder3D.FindPath(new Vector2(from.x, from.z), new Vector2(goal.x, goal.z), RouteRadius, route)
             || route.Count == 0)
             route.Add(new Vector2(goal.x, goal.z));
+        RouteStart = new Vector2(from.x, from.z);
+        routeShown = true;
+        RouteVersion++;
 
         int placed = 0;
         Vector2 prev = new Vector2(from.x, from.z);

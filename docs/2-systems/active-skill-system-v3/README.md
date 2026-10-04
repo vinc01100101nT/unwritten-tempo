@@ -191,7 +191,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
 
 - **OnCast** — a normal active the player presses (default), from whichever hotbar slot they put it in; uses the cost / cadence / aim of §Tier B.
-- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It may sit in a hotbar slot only as a tile to watch — pressing it does nothing, and it works whether or not it is on the bar — and nothing switches it on: a passive is live the moment a mastery point learns it, and fires while a weapon of its type is in hand (2026-09-21). A read-only row of smaller squares above the bar lists every passive live right now, one square each.
+- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It never goes on the hotbar — the Skills window will not drag one and the server refuses one in a slot — and nothing switches it on: a passive is live the moment a mastery point learns it, and fires while a weapon of its type is in hand (2026-09-21).
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 

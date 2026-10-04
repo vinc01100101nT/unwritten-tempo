@@ -3,8 +3,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// THE TUTORIAL GUIDE: the whole screen dark except the one part to press next, an arrow pointing at it, and a short
-/// text. It decides nothing — which quest is followed, which step it is on and whether that step can be done now all
-/// come from the server (<see cref="QuestStore"/>); the step's hints come from the quest's data; the parts of the screen
+/// text. It decides nothing — which quest it teaches, which step it is on and whether that step can be done now all
+/// come from the server (<see cref="QuestStore.Guide"/>): it teaches the tutorial that is playing, and nothing else; the step's hints come from the quest's data; the parts of the screen
 /// are found by the names their windows gave them (<see cref="GuideMarker"/>).
 ///
 /// <para><b>Which hint shows:</b> the last of the step's hints whose part is on screen right now. Going back a page, or
@@ -147,7 +147,7 @@ public class GuideOverlay : MonoBehaviour
     bool Decide(out GuideMarker target, out string text, out bool costs)
     {
         target = null; text = null; costs = false;
-        var t = QuestStore.Target;
+        var t = QuestStore.Guide;
         if (!t.any) return false;
         var me = Character.Instance;
         if (me == null || me.IsDead || GameNetwork.MyPlayer == null) return false;

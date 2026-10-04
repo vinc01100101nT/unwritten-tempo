@@ -56,6 +56,15 @@ public static class QuestMath
         return false;
     }
 
+    /// <summary>Add one piece a quest has you forge and fold to its bill: the forge's material and gold once, then each
+    /// fold's.</summary>
+    public static void AddForgedPiece(int forgeMaterial, int forgeGold, int folds, int foldMaterialEach, int foldGoldEach,
+                                      ref int material, ref int gold)
+    {
+        material += forgeMaterial + folds * foldMaterialEach;
+        gold += forgeGold + folds * foldGoldEach;
+    }
+
     /// <summary>Can a bill of <paramref name="needMaterial"/> material and <paramref name="needGold"/> gold be paid.</summary>
     public static bool CanPay(int haveMaterial, int needMaterial, int haveGold, int needGold)
         => haveMaterial >= needMaterial && haveGold >= needGold;

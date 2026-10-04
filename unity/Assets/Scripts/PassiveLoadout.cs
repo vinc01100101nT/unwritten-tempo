@@ -43,16 +43,4 @@ public class PassiveLoadout
             if (def != null && def.IsPassive && owner.Mastery.HasLearned(def.id)) into.Add(def.id);
         }
     }
-
-    /// <summary>Every passive live right now — the exact list the row of passive slots draws, in the catalog's
-    /// order.</summary>
-    public void CollectActive(List<string> into)
-    {
-        if (into == null) return;
-        into.Clear();
-        if (owner == null) return;
-        var all = SkillCatalog.All;
-        for (int i = 0; i < all.Count; i++)
-            if (IsActive(all[i]) && all[i].IsPassive) into.Add(all[i].id);
-    }
 }

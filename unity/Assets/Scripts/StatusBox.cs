@@ -26,7 +26,7 @@ public class StatusBox : MonoBehaviour
     static readonly (string label, KeyCode key)[] Windows =
     {
         ("Inventory", GameKeys.Inventory), ("Character", GameKeys.CharacterWindow), ("Skills", GameKeys.Skills),
-        ("Quests", GameKeys.Quests), ("Calendar", GameKeys.Calendar), ("World Map", GameKeys.WorldMap), ("Minimap", GameKeys.Minimap),
+        ("Quests", GameKeys.Quests), ("Calendar", GameKeys.Calendar), ("Map", GameKeys.Map),
         ("Chat", GameKeys.Chat), ("Settings", KeyCode.None), ("System", GameKeys.System),
     };
 

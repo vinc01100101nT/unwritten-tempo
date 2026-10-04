@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 /// Bakes the <see cref="WorldAtlas"/> the world-map HUD shows. Opens each generated map scene, snapshots it
 /// straight down (fixed-north top-down render, same as the minimap), and composites every thumbnail into ONE
 /// image by the map's <b>world-space rectangle</b> — free placement, any size (no grid). Writes the PNG +
-/// a <see cref="WorldAtlas"/> asset into <c>Resources/</c> so <see cref="WorldMapHUD"/> can load it with no
+/// a <see cref="WorldAtlas"/> asset into <c>Resources/</c> so <see cref="MapWindow"/> can load it with no
 /// scene wiring.
 ///
 /// Driven from the World Creator window, which holds each map's scene name + world rect + type. The whole world

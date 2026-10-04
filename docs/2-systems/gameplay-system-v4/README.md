@@ -218,8 +218,8 @@ curve** (§9), and keeps levelling after the character reaches 99. A creature th
   skill window** by spending that weapon's mastery points, and can use a learned skill only while holding that
   weapon type.
 - **A learned passive works on its own.** Nothing switches it on and there is no limit on how many: the moment a
-  point learns it, it fires on its trigger while a weapon of its type is in hand. The row above the
-  hotbar shows every passive live right now.
+  point learns it, it fires on its trigger while a weapon of its type is in hand. A passive never goes on
+  the hotbar.
 
 ### A forged weapon's trademark
 

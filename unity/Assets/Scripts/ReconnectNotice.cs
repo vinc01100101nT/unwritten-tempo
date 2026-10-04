@@ -44,8 +44,12 @@ public static class ReconnectNotice
 
         var scaler = go.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = 0.5f;
+        // SIZED LIKE THE MAIN SCREEN LAYER — laid out as if every screen were 1280 wide — while staying on a layer of
+        // its own, because it must cover everything, the hidden HUD included.
+        var hud = UiKit.HudCanvas != null ? UiKit.HudCanvas.GetComponent<CanvasScaler>() : null;
+        scaler.referenceResolution = hud != null ? hud.referenceResolution : new Vector2(1280, 720);
+        scaler.screenMatchMode = hud != null ? hud.screenMatchMode : CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = hud != null ? hud.matchWidthOrHeight : 0f;
         UiKit.ApplyTextCrispness(scaler);
 
         // The dim. Deliberately partial — the world reads through it, so it is plainly still there.
@@ -56,13 +60,13 @@ public static class ReconnectNotice
         veilRect.offsetMin = Vector2.zero;
         veilRect.offsetMax = Vector2.zero;
 
-        var label = UiKit.Label("Message", go.transform, Message, 22,
+        var label = UiKit.Label("Message", go.transform, Message, 15,
                                 FontStyle.Normal, TextAnchor.MiddleCenter);
         label.color = UiKit.TextOnDim;
         var labelRect = label.rectTransform;
         labelRect.anchorMin = new Vector2(0.5f, 0.5f);
         labelRect.anchorMax = new Vector2(0.5f, 0.5f);
-        labelRect.sizeDelta = new Vector2(420, 40);
+        labelRect.sizeDelta = new Vector2(280, 27);
         labelRect.anchoredPosition = Vector2.zero;
 
         root = go;

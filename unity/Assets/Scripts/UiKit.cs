@@ -304,6 +304,23 @@ public static class UiKit
     /// </summary>
     public const float UiTextDensity = 3f;
 
+    /// <summary>THE MAIN SCREEN LAYER — the one canvas the hotbar, chat and windows are drawn on, scaled with the
+    /// screen's width from 1280×720. Placed in the Systems scene by the editor; null when it is not there. Looked up
+    /// once and kept.</summary>
+    public static Canvas HudCanvas
+    {
+        get
+        {
+            if (hudCanvas == null)
+            {
+                var go = GameObject.Find("GameUICanvas") ?? GameObject.Find("GameUICanvas(Clone)");
+                if (go != null) hudCanvas = go.GetComponent<Canvas>();
+            }
+            return hudCanvas;
+        }
+    }
+    static Canvas hudCanvas;
+
     /// <summary>Apply the shared HUD text density to a canvas's scaler. Call on every UI CanvasScaler.</summary>
     public static void ApplyTextCrispness(CanvasScaler scaler)
     {
@@ -417,18 +434,27 @@ public static class UiKit
 
     /// <summary>A 20×20 tick box, anchored to the RIGHT edge of <paramref name="parent"/> — the shared
     /// on/off control for option rows. Returns the Toggle so the caller wires onValueChanged.</summary>
-    public static Toggle Checkbox(Transform parent, bool on)
+    public static Toggle Checkbox(Transform parent, bool on) => Tickable("Checkbox", parent, on, ButtonRadius);
+
+    /// <summary>A round <see cref="Checkbox"/> — one of a set where at most one is on. The set's rule is the caller's;
+    /// this only draws the button. Round because its corners are the theme's largest radius, larger than the button.</summary>
+    public static Toggle RadioButton(Transform parent, bool on) => Tickable("Radio", parent, on, RoundRadius);
+
+    // The speech bubble's corner — the largest the theme draws, which turns a 20-pixel square into a circle.
+    const int RoundRadius = 14;
+
+    static Toggle Tickable(string name, Transform parent, bool on, int radius)
     {
-        var box = Round(Img("Checkbox", parent, ButtonEdge), ButtonRadius);
+        var box = Round(Img(name, parent, ButtonEdge), radius);
         var brt = box.rectTransform;
         brt.anchorMin = brt.anchorMax = new Vector2(1f, 0.5f);
         brt.pivot = new Vector2(1f, 0.5f);
         brt.sizeDelta = new Vector2(20f, 20f);
 
-        var well = Round(Img("Well", box.transform, SlotFill), ButtonRadius);
+        var well = Round(Img("Well", box.transform, SlotFill), radius);
         well.raycastTarget = false;
         Fill(well.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        var tick = Round(Img("Tick", box.transform, Accent), ButtonRadius);
+        var tick = Round(Img("Tick", box.transform, Accent), radius);
         tick.raycastTarget = false;
         Fill(tick.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
 

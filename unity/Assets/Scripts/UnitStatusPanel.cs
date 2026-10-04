@@ -19,7 +19,7 @@ using TMPro;
 ///
 /// <para>Reads through <see cref="ICombatUnit"/> (HP, MP, state store), so nothing here is mob-specific. Rebuilds its
 /// state icons only when that unit's state SET changes (its store's OnChanged), and rewrites a number only when the
-/// number moves — no per-frame allocation. Self-builds its canvas on Awake; added to GameSystems by
+/// number moves — no per-frame allocation. Builds itself on the main screen layer (<see cref="UiKit.HudCanvas"/>) on Awake; added to GameSystems by
 /// <c>SystemsSceneBuilder</c>.</para>
 /// </summary>
 public class UnitStatusPanel : MonoBehaviour
@@ -48,16 +48,21 @@ public class UnitStatusPanel : MonoBehaviour
     Panel target;   // top-center: the unit this person is fighting
     Player3DController player;
 
+    // ON THE MAIN SCREEN LAYER, so it grows with the screen exactly like the hotbar and the windows, and drawn this
+    // much larger than its own numbers say: its 13-point name then reads at the size of the name floating over a
+    // creature at the camera's default zoom — measured 22.7 px on a 1920-wide screen and 30.3 px on a 2560-wide one,
+    // against 22.5 and 30 here.
+    const float PanelScale = 15f / 13f;
+
     void Awake()
     {
-        var cvGO   = new GameObject("UnitStatusCanvas") { hideFlags = HideFlags.DontSaveInEditor };
-        var canvas = cvGO.AddComponent<Canvas>();
-        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 60;   // above the HUD
+        var canvas = UiKit.HudCanvas;
+        if (canvas == null) { Debug.LogWarning("[UnitStatusPanel] no main screen layer in this scene — no target panel."); enabled = false; return; }
 
         // Its icons answer the mouse, because the unit being described stays put while you reach for one — it is
         // whoever you are fighting, not whoever the cursor happens to be resting on.
         target = new Panel(canvas, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), 260f, true);
+        target.ScaleBy(PanelScale);
     }
 
     void OnDestroy()
@@ -133,6 +138,8 @@ public class UnitStatusPanel : MonoBehaviour
             root.sizeDelta = new Vector2(width, 0f);
 
             group = root.gameObject.AddComponent<CanvasGroup>();
+            // Below every window and menu on the same layer: it is part of the screen, not something opened.
+            root.SetAsFirstSibling();
             group.alpha = 0f;
             // Only the state icons are raycast targets, so even on the hoverable panel the mouse still reaches the
             // world through the bars, the name and the background.
@@ -196,6 +203,9 @@ public class UnitStatusPanel : MonoBehaviour
         }
 
         public void Unbind() => Bind(null);
+
+        /// <summary>Draw the whole readout <paramref name="scale"/> times its laid-out size, growing down from its top edge.</summary>
+        public void ScaleBy(float scale) => root.localScale = new Vector3(scale, scale, 1f);
 
         void Bind(Health h)
         {

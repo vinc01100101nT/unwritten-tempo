@@ -63,8 +63,6 @@ public sealed class UnitPlate
     TextMeshProUGUI markLabel;
     string shownMark = "";
     const float MarkH = 18f;
-    // The same yellow the health bar passes through: a mark reads as "look here", in a colour the plate already uses.
-    static readonly Color MarkColor = new Color(0.95f, 0.80f, 0.20f);
     Image elementTile;
     TextMeshProUGUI elementText;
     // The creature's face, left of its name — see CreaturePortraits. Hidden for anyone without one.
@@ -261,7 +259,7 @@ public sealed class UnitPlate
 
         markLabel = NewText("QuestMark", root, 16);
         markLabel.fontStyle = FontStyles.Bold;
-        markLabel.color = MarkColor;
+        markLabel.color = QuestMarks.Color;
         markLabel.fontSharedMaterial = UiKit.WorldNameMaterial();
         Place(markLabel.rectTransform, new Vector2(0f, MarkH + 2f), new Vector2(MarkH * 2f, MarkH));
         markLabel.gameObject.SetActive(false);

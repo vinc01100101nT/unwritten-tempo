@@ -151,7 +151,7 @@ public static class PlayerFighter
         // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest given to everybody
         // that this character has never had is given now, and anything already true moves it on at once.
         character.Quests.Load(quests);
-        character.Quests.GiveAutomatic();
+        character.Quests.GiveAutomatic(character);
         character.Quests.Advance(character);
         // Pays anything that finished on arrival, saves, and tells them — always, since they have just arrived.
         shell.QuestsMoved();
@@ -161,6 +161,8 @@ public static class PlayerFighter
         // load itself arrives later still and calls these, which is harmless: the first save simply writes back
         // what was just read.
         character.OnLeveledUp += _ => shell.SaveSoon();
+        // A tutorial can need a level, so a new level is worth a fresh quest list.
+        character.OnLeveledUp += _ => shell.QuestsMayHaveMoved();
         character.OnStatsChanged += shell.SaveSoon;
         character.OnGoldChanged += _ => shell.SaveSoon();
         // AND EVERY PURSE CHANGE REACHES THEIR SCREEN, whatever made it. The bag carries the purse, and each place that

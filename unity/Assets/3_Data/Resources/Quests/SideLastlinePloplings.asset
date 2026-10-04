@@ -53,6 +53,4 @@ MonoBehaviour:
       creatureId: 
       count: 1
       map: 
-    hints:
-    - spot: 0
-      text: Follow the arrows back to Torvald and press F beside him.
+    hints: []

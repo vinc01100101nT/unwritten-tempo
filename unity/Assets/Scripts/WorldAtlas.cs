@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// The baked world-map image + free-form layout, loaded at runtime by <see cref="WorldMapHUD"/>.
+/// The baked world-map image + free-form layout, loaded at runtime by <see cref="MapWindow"/>.
 /// Produced by the editor "Bake World Map" step (in <c>WorldCreator</c> via <c>WorldAtlasBaker</c>): either the
 /// painted world-map picture the layout was drawn on (one picture pixel = one world unit), or one top-down snapshot
 /// per map composited into a single <see cref="atlas"/> texture by each map's world-space rectangle.

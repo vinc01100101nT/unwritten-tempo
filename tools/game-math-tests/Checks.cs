@@ -991,6 +991,15 @@ static class Checks
         That(!QuestMath.Met(QuestObjectiveKind.TalkTo, "item.sword", 1, bag), QuestF, "a talk step is never met by holding something");
         That(QuestMath.CanPay(8, 8, 800, 800) && !QuestMath.CanPay(7, 8, 800, 800) && !QuestMath.CanPay(8, 8, 799, 800),
              QuestF, "a bill is paid only when both the material and the gold cover it");
+        int copper = 0, gold = 0;
+        QuestMath.AddForgedPiece(8, 800, 2, 1, 50, ref copper, ref gold);
+        That(copper == 10 && gold == 900, QuestF, "a Sword forged and folded twice costs 10 Copper and 900 gold");
+        QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
+        QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
+        That(copper == 24 && gold == 1900, QuestF, "the crafting tutorial's whole bill is the starter kit: 24 Copper, 1,900 gold");
+        int c2 = 0, g2 = 0;
+        QuestMath.AddForgedPiece(0, 0, 1, 1, 50, ref c2, ref g2);
+        That(c2 == 1 && g2 == 50, QuestF, "a piece already forged owes only the folds still missing");
 
         var doors = new Dictionary<string, List<string>>
         {

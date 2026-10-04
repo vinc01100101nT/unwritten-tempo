@@ -383,6 +383,14 @@
         0.0
       ]
     },
+    "Map": {
+      "#000000": [
+        0.8
+      ],
+      "#FFEB40": [
+        1.0
+      ]
+    },
     "Minimap": {
       "#59FF73": [
         1.0
@@ -466,6 +474,16 @@
     "PropLight": {
       "#FFB85C": [
         1.0
+      ]
+    },
+    "QuestStore": {
+      "#F2CC33": [
+        1.0
+      ]
+    },
+    "QuestsWindow": {
+      "#000000": [
+        0.0
       ]
     },
     "RainOverlay": {
@@ -780,14 +798,6 @@
       "#99B8F2": [
         1.0
       ]
-    },
-    "World Map": {
-      "#000000": [
-        0.8
-      ],
-      "#FFEB40": [
-        1.0
-      ]
     }
   },
   "screen_names": [
@@ -805,6 +815,7 @@
     "Hotbar",
     "Inventory",
     "Item Tooltip",
+    "Map",
     "Minimap",
     "Mob Nameplate",
     "Reconnect Notice",
@@ -818,7 +829,6 @@
     "System Menu",
     "Unit Status",
     "Wardrobe",
-    "World Map",
     "Xp Bar"
   ]
 }

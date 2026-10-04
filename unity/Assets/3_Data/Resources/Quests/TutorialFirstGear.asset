@@ -28,7 +28,7 @@ MonoBehaviour:
       folds: 1
     hints:
     - spot: 0
-      text: Follow the arrows to Gunnar the Smith and press F beside him.
+      text: Go to Gunnar the Smith and press F beside him.
   - id: forge-sword
     text: Forge a Sword.
     objective:

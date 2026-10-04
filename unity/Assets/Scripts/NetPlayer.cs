@@ -2453,6 +2453,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     int questsVersionSent = -1;
     QuestTargetWire questTargetSent;
+    int questNeedsSent;
 
     /// <summary>Server-only: send the owner their open quests and where the followed one's step happens. Sent whole on
     /// arrival and whenever either changed; open quests only — a finished one is never shown again.</summary>
@@ -2463,32 +2464,64 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (!isServer || connectionToClient == null) return;
         if (ServerCombatUnit is not Character c || c == null) return;
         var target = c.Quests.Target(c, mapName);
-        if (!always && c.Quests.Version == questsVersionSent && SameTarget(target, questTargetSent)) return;
+        // What each tutorial still needs moves with the purse and the bag, not with the quests — so it is part of the test.
+        int needs = c.Quests.CollectNeeds(c);
+        if (!always && c.Quests.Version == questsVersionSent && SameTarget(target, questTargetSent)
+            && needs == questNeedsSent) return;
         questsVersionSent = c.Quests.Version;
         questTargetSent = target;
-        TargetQuestsChanged(connectionToClient, c.Quests.Snapshot(c), target, c.Quests.Offers(mapName),
-                            c.Quests.OngoingAt(mapName));
+        questNeedsSent = needs;
+        // The kills counted since the last list ride IN it — one message a frame however many fell, one line per quest.
+        TargetQuestsChanged(connectionToClient, c.Quests.Snapshot(c, mapName), target, QuestLog.GuideOf(target),
+                            c.Quests.NeedsSnapshot(), c.Quests.Offers(mapName), c.Quests.OngoingAt(mapName),
+                            c.Quests.TakeKills());
     }
 
     static bool SameTarget(QuestTargetWire a, QuestTargetWire b) =>
         a.any == b.any && a.questId == b.questId && a.stepId == b.stepId && a.map == b.map && a.at == b.at
         && a.nextMap == b.nextMap && a.station == b.station && a.block == b.block;
 
-    // Asked BY a player: follow one of their OWN open quests. Anything else — a quest they do not hold, a finished one,
-    // the one already followed — is ignored, so a made-up id learns nothing about where a quest it never had happens.
+    // Asked BY a player: follow one of their OWN open quests, or — with no id — follow nothing. Anything else — a quest
+    // they do not hold, a finished one, the one already followed — is ignored, so a made-up id learns nothing about
+    // where a quest it never had happens. The answer goes with the next once-a-frame list, so asking many times in a
+    // frame costs one list.
     [Command]
     void CmdTrackQuest(string questId)
     {
         if (Leaving || ServerCombatUnit is not Character c || c == null) return;
-        if (c.Quests.Track(questId)) { SaveSoon(); PushQuestsToOwner(); }
+        if (c.Quests.Track(questId)) { SaveSoon(); questsPushOwed = true; }
     }
 
     public void AskToTrackQuest(string questId) { if (isOwned) CmdTrackQuest(questId); }
 
+    /// <summary>Server-only: something a quest list shows may have moved (a new level) — send a fresh one this frame.</summary>
+    public void QuestsMayHaveMoved() => questsPushOwed = true;
+
+    // Asked BY a player: PLAY one of their own open tutorials. The server checks what it needs; only a refusal for that
+    // reason is said, and pressing Play on the one already playing is a quiet yes.
+    [Command]
+    void CmdPlayTutorial(string questId)
+    {
+        if (Leaving || ServerCombatUnit is not Character c || c == null) return;
+        switch (c.Quests.Play(questId, c))
+        {
+            case QuestPlay.Started: SaveSoon(); questsPushOwed = true; break;
+            case QuestPlay.NotMet: TargetRequirementsNotMet(connectionToClient); break;
+        }
+    }
+
+    public void AskToPlayTutorial(string questId) { if (isOwned) CmdPlayTutorial(questId); }
+
     [TargetRpc]
-    void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, string[] offers,
-                             string[] ongoingAt) =>
-        QuestStore.Receive(open, target, offers, ongoingAt);
+    void TargetRequirementsNotMet(NetworkConnection _) => BattleNotice.Warn("Requirements are not met");
+
+    [TargetRpc]
+    void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide,
+                             QuestNeedWire[] needs, string[] offers, string[] ongoingAt, QuestKillWire[] kills)
+    {
+        QuestStore.Receive(open, target, guide, needs, offers, ongoingAt);
+        QuestKillNotice.Show(kills);
+    }
 
     [Command]
     void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)

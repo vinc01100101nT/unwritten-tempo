@@ -13,8 +13,8 @@ using TMPro;
 /// Anything can be dragged onto any slot from the Skills (K) window or the bag; a slot is pressed by its key or a click.
 ///
 /// <para>Pressing a skill casts it; an item is used through the bag's own door (<see cref="ItemUse"/>); a piece of gear
-/// is equipped through the bag's own equip. The server decides all three. A passive on the bar is only there to be
-/// seen — it works whether or not it sits on the bar, so pressing it does nothing.</para>
+/// is equipped through the bag's own equip. The server decides all three. A passive never
+/// goes on the bar: it is never pressed, so the Skills window will not drag one and the server refuses one.</para>
 ///
 /// Lives on the persistent GameUICanvas. Builds once (retries until the player + holder exist), refreshes the cheap
 /// per-frame bits, and fully rebuilds when the bar or the bag changes (<see cref="RebuildRequested"/>).
@@ -161,7 +161,6 @@ public class HotbarPanel : MonoBehaviour
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
         EnsureCells();
-        EnsurePassiveRow();
 
         slots.Clear();
         int n = Mathf.Min(HotbarBindings.SlotCount, holder.childCount);
@@ -170,20 +169,19 @@ public class HotbarPanel : MonoBehaviour
             var cell = holder.GetChild(i).GetComponent<Image>();
             if (cell != null) slots.Add(BuildSlot(cell, i));
         }
-        RefreshPassiveRow();
         built = slots.Count > 0;
     }
 
     const float CellSize = 48f, CellGap = 6f;
 
-    // WHERE THE BAR SITS, bottom-centre, and how tall it is — owned here, so everything stacked above it (the passive
-    // row, the stamina gauge) is placed from the same numbers rather than from a height typed for a one-row bar.
+    // WHERE THE BAR SITS, bottom-centre, and how tall it is — owned here, so everything stacked above it (the stamina
+    // gauge) is placed from the same numbers rather than from a height typed for a one-row bar.
     const float BarBottom = 42f;
     static float BarHeight => HotbarBindings.Rows * (CellSize + CellGap) - CellGap;
 
-    /// <summary>The height above the screen's bottom edge where the bar and its passive row end — the first free line
-    /// for anything that stacks above them.</summary>
-    public static float TopOfStack => BarBottom + BarHeight + 4f + PassiveCellSize + 6f;
+    /// <summary>The height above the screen's bottom edge where the bar ends — the first free line
+    /// for anything that stacks above it.</summary>
+    public static float TopOfStack => BarBottom + BarHeight + 6f;
 
     // The shell bakes a row of cells; the bar is three rows of nine. Lay the holder out as that grid and clone the
     // (pristine) first cell up to 27, at runtime — so an already-baked scene gets the full bar with no editor re-bake.
@@ -234,93 +232,6 @@ public class HotbarPanel : MonoBehaviour
             rt.sizeDelta = new Vector2(HotbarBindings.PerRow * (CellSize + CellGap) - CellGap, BarHeight);
             rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, BarBottom);
         }
-    }
-
-    const int PassiveCellSize = 30;
-
-    // The read-only row of passives, above the bar. Built the same way the extra bar cells are — at runtime, from
-    // the bar's own first cell — so a scene baked before this existed grows the row without being re-baked.
-    RectTransform passiveRow;
-    readonly List<Image> passiveCells = new List<Image>();
-    readonly List<string> activePassives = new List<string>();
-
-    void EnsurePassiveRow()
-    {
-        if (passiveRow != null || holder == null || holder.childCount == 0) return;
-
-        var rowGO = new GameObject("HUD_HotbarPassives", typeof(RectTransform));
-        passiveRow = (RectTransform)rowGO.transform;
-        passiveRow.SetParent(holder.parent, false);
-
-        // Anchored to the same place as the bar and lifted clear of it, so the two move together.
-        var barRT = holder as RectTransform;
-        if (barRT != null)
-        {
-            passiveRow.anchorMin = barRT.anchorMin;
-            passiveRow.anchorMax = barRT.anchorMax;
-            passiveRow.pivot = barRT.pivot;
-            // Just above the bar's top edge, whatever pivot the bar was baked with.
-            passiveRow.anchoredPosition = new Vector2(barRT.anchoredPosition.x,
-                barRT.anchoredPosition.y + (1f - barRT.pivot.y) * barRT.sizeDelta.y + 4f + passiveRow.pivot.y * PassiveCellSize);
-        }
-        passiveRow.sizeDelta = new Vector2(0f, PassiveCellSize);
-
-        var lay = rowGO.AddComponent<HorizontalLayoutGroup>();
-        lay.spacing = 4;
-        lay.childAlignment = TextAnchor.MiddleCenter;
-        lay.childControlWidth = lay.childControlHeight = false;
-        lay.childForceExpandWidth = lay.childForceExpandHeight = false;
-    }
-
-    // Cell i of the passive row, grown on demand from the bar's own first cell — only when the row gets longer, so
-    // never on a steady frame.
-    Image PassiveCell(int i)
-    {
-        while (passiveCells.Count <= i)
-        {
-            var clone = Instantiate(holder.GetChild(0).gameObject, passiveRow);
-            clone.name = "PassiveSlot";
-            for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
-            // NOTHING ON A PASSIVE CELL IS TOUCHABLE. It is a readout of what is running, not a place to put
-            // anything: a passive fires on its own trigger and has no key, so a click could only ever do nothing.
-            var b = clone.GetComponent<Button>();               if (b != null) Destroy(b);
-            var t = clone.GetComponent<HoverRelay>();            if (t != null) Destroy(t);
-            var st = clone.GetComponent<HotbarSlotTarget>();     if (st != null) Destroy(st);
-            var d = clone.GetComponent<HotbarSlotDragSource>();  if (d != null) Destroy(d);
-            if (clone.transform is RectTransform crt) crt.sizeDelta = new Vector2(PassiveCellSize, PassiveCellSize);
-            var img = clone.GetComponent<Image>();
-            img.raycastTarget = false;
-            passiveCells.Add(img);
-        }
-        return passiveCells[i];
-    }
-
-    // Fill the row from what is actually running: every learned passive of the weapon in hand. The row grows a cell
-    // for each one, so no passive that fires is ever missing from it.
-    void RefreshPassiveRow()
-    {
-        if (passiveRow == null || Character.Instance == null) return;
-
-        var me = Character.Instance;
-        me.PassiveSkills.CollectActive(activePassives);
-        passiveRow.sizeDelta = new Vector2(activePassives.Count * (PassiveCellSize + 4), PassiveCellSize);
-
-        for (int i = 0; i < activePassives.Count; i++)
-        {
-            var cell = PassiveCell(i);
-            cell.gameObject.SetActive(true);
-            for (int c = cell.transform.childCount - 1; c >= 0; c--) Destroy(cell.transform.GetChild(c).gameObject);
-
-            var def = SkillCatalog.Get(activePassives[i]);
-            if (def == null) { cell.color = CellEmpty; continue; }
-
-            cell.color = SkillSymbol.ColorFor(def);
-            var label = NewText("Label", cell.transform, def.Symbol, 11, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
-            Stretch(label.rectTransform, 1, 1);
-            label.raycastTarget = false;
-        }
-        for (int i = activePassives.Count; i < passiveCells.Count; i++)
-            if (passiveCells[i] != null) passiveCells[i].gameObject.SetActive(false);
     }
 
     Slot BuildSlot(Image cell, int index)
@@ -403,7 +314,7 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.label.rectTransform, 2, 2);
         s.hideOnCd = s.label.gameObject;
 
-        // MP cost (bottom-right) for a skill that is pressed; a passive costs nothing and is never pressed.
+        // MP cost (bottom-right) for a skill that costs mana.
         if (skill.ManaCost > 0)
         {
             s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);

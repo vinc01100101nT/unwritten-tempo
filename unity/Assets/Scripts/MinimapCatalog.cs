@@ -36,10 +36,32 @@ public class MinimapCatalog : ScriptableObject
         return null;
     }
 
-    /// <summary>The picture of <paramref name="map"/>, loaded now. Unload it with <see cref="Resources.UnloadAsset"/>
-    /// when leaving the map.</summary>
-    public static Texture2D LoadPicture(string map) =>
-        string.IsNullOrEmpty(map) ? null : Resources.Load<Texture2D>(PictureFolder + "/" + map);
+    // THE ONE OWNER OF MAP PICTURES. The minimap and the Map window can be drawing the same picture at once, and an
+    // unload by either would pull it out from under the other — so neither loads or unloads one itself: each takes a
+    // picture here and gives it back, and a picture is let go only when nobody is still drawing it.
+    static readonly Dictionary<string, (Texture2D picture, int users)> held = new Dictionary<string, (Texture2D, int)>();
+
+    /// <summary>Take the picture of <paramref name="map"/> to draw, loading it if nobody holds it yet. Null when the map
+    /// has none. Every picture taken is given back with <see cref="ReleasePicture"/>.</summary>
+    public static Texture2D AcquirePicture(string map)
+    {
+        if (string.IsNullOrEmpty(map)) return null;
+        if (held.TryGetValue(map, out var h)) { held[map] = (h.picture, h.users + 1); return h.picture; }
+        var picture = Resources.Load<Texture2D>(PictureFolder + "/" + map);
+        if (picture == null) return null;
+        held[map] = (picture, 1);
+        return picture;
+    }
+
+    /// <summary>Give back the picture of <paramref name="map"/> taken with <see cref="AcquirePicture"/>; the last one
+    /// to give it back lets it go.</summary>
+    public static void ReleasePicture(string map)
+    {
+        if (string.IsNullOrEmpty(map) || !held.TryGetValue(map, out var h)) return;
+        if (h.users > 1) { held[map] = (h.picture, h.users - 1); return; }
+        held.Remove(map);
+        if (h.picture != null) Resources.UnloadAsset(h.picture);
+    }
 
     static MinimapCatalog loaded;
     static bool looked;

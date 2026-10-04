@@ -855,7 +855,7 @@ public partial class Player3DController : MonoBehaviour
 
     void OnDestroy()
     {
-        if (autoIndicator != null) Destroy(autoIndicator.gameObject);   // its own canvas — clean it up
+        if (autoIndicator != null) Destroy(autoIndicator.gameObject);
     }
 
     void Stop()

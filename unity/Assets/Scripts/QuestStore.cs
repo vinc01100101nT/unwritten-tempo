@@ -10,8 +10,16 @@ public static class QuestStore
     /// <summary>The open quests, as the server sent them.</summary>
     public static QuestOpenWire[] Open { get; private set; } = Array.Empty<QuestOpenWire>();
 
-    /// <summary>Where the followed quest's step happens and whether it can be done now.</summary>
+    /// <summary>Where the followed quest's step happens — what the arrows and the maps' route lead to.</summary>
     public static QuestTargetWire Target { get; private set; }
+
+    /// <summary>The quest the guide teaches, its step and whether it can be done now — the playing tutorial, or
+    /// nothing. The server's answer.</summary>
+    public static QuestTargetWire Guide { get; private set; }
+
+    /// <summary>What each open tutorial still needs before Play starts it, and whether the character has it — the
+    /// server's finished numbers.</summary>
+    public static QuestNeedWire[] Needs { get; private set; } = Array.Empty<QuestNeedWire>();
 
     /// <summary>Quests somebody offers that this character can accept, by id — the server's answer.</summary>
     public static string[] Offers { get; private set; } = Array.Empty<string>();
@@ -34,10 +42,13 @@ public static class QuestStore
 
     public static void PressedLitSpot() => awaitingUntil = Time.unscaledTime + LongestWait;
 
-    public static void Receive(QuestOpenWire[] open, QuestTargetWire target, string[] offers, string[] ongoingAt)
+    public static void Receive(QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide, QuestNeedWire[] needs,
+                               string[] offers, string[] ongoingAt)
     {
         Open = open ?? Array.Empty<QuestOpenWire>();
         Target = target;
+        Guide = guide;
+        Needs = needs ?? Array.Empty<QuestNeedWire>();
         Offers = offers ?? Array.Empty<string>();
         OngoingAt = ongoingAt ?? Array.Empty<string>();
         awaitingUntil = 0f;
@@ -55,6 +66,24 @@ public static class QuestStore
 }
 
 /// <summary>
+/// A KILL THAT COUNTED, said over the player's head in the same stacking lines as "No MP": the creature's name and the
+/// step's count, exactly as the server sent them — "Plopling 3 / 10". One line per quest per message.
+/// </summary>
+public static class QuestKillNotice
+{
+    public static void Show(QuestKillWire[] kills)
+    {
+        if (kills == null) return;
+        foreach (var k in kills)
+        {
+            var creature = MonsterCatalog.Get(k.creatureId);
+            string name = creature != null && !string.IsNullOrEmpty(creature.displayName) ? creature.displayName : k.creatureId;
+            BattleNotice.Warn(name + " " + k.have + " / " + k.need, QuestMarks.Color);
+        }
+    }
+}
+
+/// <summary>
 /// WHICH MARK FLOATS OVER WHICH TOWNSPERSON — read off the server's lists, never worked out. "!" over somebody who offers
 /// a quest this character can accept; "?" over somebody where one of its open quests' current step happens. When both
 /// are true, "?" wins: the quest already under way is the one to finish first.
@@ -63,6 +92,11 @@ public static class QuestMarks
 {
     public const string Offer = "!";
     public const string Ongoing = "?";
+
+    /// <summary>The colour of everything that is about a quest on the world: the marks over townspeople and the kill
+    /// counts over the player. The same yellow the health bar passes through — it reads as "look here", in a colour
+    /// the plate already uses.</summary>
+    public static readonly Color Color = new Color(0.95f, 0.80f, 0.20f);
 
     static readonly System.Collections.Generic.Dictionary<string, string> marks =
         new System.Collections.Generic.Dictionary<string, string>();

@@ -27,7 +27,6 @@ public class PlayerInteractor : MonoBehaviour
 
     Player3DController player;
     TownNPC partner;
-    Canvas gameHud;
 
     void Awake() { player = GetComponent<Player3DController>(); }
 
@@ -184,11 +183,7 @@ public class PlayerInteractor : MonoBehaviour
     // Hide/show the whole game HUD (one canvas) + the perf overlay for a clean cinematic.
     void HideHud(bool hide)
     {
-        if (gameHud == null)
-        {
-            var go = GameObject.Find("GameUICanvas") ?? GameObject.Find("GameUICanvas(Clone)");
-            if (go != null) gameHud = go.GetComponent<Canvas>();
-        }
+        var gameHud = UiKit.HudCanvas;
         if (gameHud != null) gameHud.enabled = !hide;
         // PerfHud compiles out of non-development builds entirely, so the call must go with it — the same
         // condition the class itself carries. Without this the game does not build for release OR for a server.

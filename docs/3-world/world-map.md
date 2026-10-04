@@ -40,7 +40,7 @@ so a region has a feel, not a lock.
   names are made is under Cities and towns.
 
 **The map in use for now** is a GPT painting (1536×1024); it can be replaced. The zones are laid out on it in the
-world creator, and the in-game world map (N) shows that tool's PNG export exactly as exported — the painting with
+world creator, and the in-game world map (M, then World map) shows that tool's PNG export exactly as exported — the painting with
 every map's box, its name and the lines of every door between maps on it — kept in the project as `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
 The clean painting and the layout sit beside the tool: `tools/world-creator/worlds/wm1.png` and `world-regions.json`.
 
@@ -75,7 +75,7 @@ its shadow's style, its weapon and its setting. Each city and town has a three-l
 the town you walk to it from and numbered — Lastline Field 1, `lst_fild01`. A **dungeon** whose entrance is in one of a
 town's fields takes that town's code and a floor number — Old Oak Dungeon 1, `olk_dun01`; only a dungeon with no town
 near it would get a name of its own, and today there is none. Lastline keeps `lastline`, and a special place's id is its
-name (`aurora_steps`). The world map (N) shows these names.
+name (`aurora_steps`). The world map (M, then World map) shows these names.
 
 **The Sacred biome looks like a place up among the clouds** (rebuilt 2026-09-26, not yet seen in play): patchy white
 clouds float over every Sacred map at treetop height and drift slowly across it, with the ground showing through the
@@ -191,7 +191,7 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
   near their level, and the first five dungeons' bottom floors each hold their own. Every creature, every map and the rules are in
   [Creatures and Where They Live](biome-mob-families.md); the fourteen shadows' elements are in the table above.
   Cities and towns have none.
-- **The in-game world map (N)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
+- **The in-game world map (M, then World map)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
 
 ## Still open
 

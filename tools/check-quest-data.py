@@ -41,6 +41,7 @@ TOWNSFOLK = os.path.join(ASSETS, "3_Data", "Resources", "WorldTownsfolk.asset")
 MONSTERS = os.path.join(ASSETS, "3_Data", "Resources", "Monsters")
 SPAWNS = os.path.join(ASSETS, "3_Data", "Resources", "WorldSpawns.asset")
 QUEST_DEF = os.path.join(ASSETS, "Scripts", "QuestDef.cs")
+CRAFTING_MATH = os.path.join(ASSETS, "Scripts", "CraftingMath.cs")
 RED, GRN, OFF = "\033[31m", "\033[32m", "\033[0m"
 
 
@@ -137,6 +138,14 @@ def main():
         print(RED + "could not read the quest enums out of QuestDef.cs — fix this checker, it is now blind" + OFF)
         return 2
     station_spots = {v for v, n in spots.items() if n.startswith("Station")}
+    categories = enum_values(cs, "QuestCategory")
+    tutorial = next((v for v, n in (categories or {}).items() if n == "Tutorial"), None)
+    caps = re.search(r"FoldCaps\s*=\s*\{\s*(\d+)", read(CRAFTING_MATH)) if os.path.isfile(CRAFTING_MATH) else None
+    if tutorial is None or not caps:
+        print(RED + "could not read the quest categories or the Raw fold cap — fix this checker, "
+              "it is now blind" + OFF)
+        return 2
+    raw_fold_cap = int(caps.group(1))
 
     items = {}
     for f in os.listdir(ITEMS):
@@ -209,6 +218,9 @@ def main():
                 if k in ("Have", "FoldedTo", "Wear"):
                     faults.append("%s: pays a reward but step '%s' is judged on holding something — one lent item would "
                                   "finish it, and pay it, for every character it passes through" % (where, st.get("id")))
+        is_tutorial = str(q.get("category", "0")).strip() == str(tutorial)
+        if int(q.get("levelNeeded", "0") or 0) > 0 and not is_tutorial:
+            faults.append("%s: needs a level, but only a tutorial has Play, the one thing that checks it" % where)
         if giver and not (q.get("offerText") or "").strip():
             faults.append("%s: is offered by '%s' but has no offer text" % (where, giver))
         if not isinstance(steps, list) or not steps:
@@ -253,7 +265,13 @@ def main():
                     faults.append("%s: names item '%s', which the game does not have" % (sw, item))
                 if kind == "FoldedTo" and int(o.get("folds", "0") or 0) < 1:
                     faults.append("%s: asks for fewer than one fold" % sw)
+                if kind == "FoldedTo" and is_tutorial and int(o.get("folds", "0") or 0) > raw_fold_cap:
+                    faults.append("%s: asks for %s folds, more than a Raw piece takes (%d) — its bill, worked out at Raw, "
+                                  "would be wrong and the step would need a quench" % (sw, o.get("folds"), raw_fold_cap))
             hints = s.get("hints") or []
+            if hints and not is_tutorial:
+                faults.append("%s: has hints, but only a tutorial's guide shows them — two quests' hints would collide"
+                              % sw)
             for h in hints if isinstance(hints, list) else []:
                 try:
                     spot = int(h.get("spot", "0"))

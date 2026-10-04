@@ -32,8 +32,9 @@ public static class GameKeys
     public const KeyCode CharacterWindow = KeyCode.C;
     public const KeyCode Skills = KeyCode.K;
     public const KeyCode Calendar = KeyCode.L;
-    public const KeyCode WorldMap = KeyCode.N;
-    public const KeyCode Minimap = KeyCode.M;
+    /// <summary>The Map window: the zone you stand in, and the world map behind a button. The minimap has no key — it is
+    /// always shown.</summary>
+    public const KeyCode Map = KeyCode.M;
     public const KeyCode Quests = KeyCode.J;
     public const KeyCode Chat = KeyCode.Return, ChatAlt = KeyCode.KeypadEnter;
     public const KeyCode System = KeyCode.Escape;
@@ -63,7 +64,7 @@ public static class GameKeys
     static readonly KeyCode[] Fixed =
     {
         MoveForward, MoveLeft, MoveBack, MoveRight, Jump, Dash, SprintToggle, Walk, WalkAlt, Interact, AutoPilot,
-        ShowDrops, ShowDropsAlt, Inventory, CharacterWindow, Skills, Calendar, WorldMap, Minimap, Quests, Chat, ChatAlt,
+        ShowDrops, ShowDropsAlt, Inventory, CharacterWindow, Skills, Calendar, Map, Quests, Chat, ChatAlt,
         System, DialogNext, PerformanceOverlay, PerformancePeakReset,
     };
 
