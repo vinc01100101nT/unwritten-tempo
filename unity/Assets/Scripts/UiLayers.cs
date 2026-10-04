@@ -29,14 +29,18 @@ public static class UiLayers
         /// <summary>Something raised BY a window and belonging to it: the right-click menu, a dialog.</summary>
         Menu = 1,
 
+        /// <summary>The tutorial guide's darkness, with its one lit spot, arrow and text — above every window and its
+        /// menus, so nothing opened later can cover the spot it asks you to press.</summary>
+        Guide = 2,
+
         /// <summary>Explains whatever is under the cursor, and is never interacted with.</summary>
-        Tooltip = 2,
+        Tooltip = 3,
 
         /// <summary>The icon that follows the cursor mid-drag. Above everything it might be dropped on.</summary>
-        DragGhost = 3,
+        DragGhost = 4,
 
         /// <summary>Covers the whole screen while the world is not ready. Above all of it.</summary>
-        Loading = 4,
+        Loading = 5,
     }
 
     struct Entry

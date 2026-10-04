@@ -64,7 +64,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v18";
+    public const string CharacterBuild = "unwritten-character-v19";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -94,8 +94,35 @@ public sealed class MapServers(Config config)
     public bool Forget(string id)
     {
         bool gone = byId.TryRemove(id, out _);
+        lastSaid.TryRemove(id, out _);
         if (gone) Rebuild();
         return gone;
+    }
+
+    // WHAT WAS LAST SAID ABOUT EACH MAP SERVER'S CHECK-IN. A map server checks in every 30 seconds; writing the same
+    // line each time filled an idle log with nothing new. Said again only when it differs. Removed with the
+    // registration, on both of the paths that forget one.
+    readonly ConcurrentDictionary<string, string> lastSaid = new();
+
+    /// <summary>Say a check-in — only after the address characters are delivered to has been tried, because that
+    /// address is where this server sends every player's character, and printing it untried made a dead address
+    /// look like a working one. Said only when what is true about it changed.</summary>
+    public async Task SayCheckIn(Registration reg)
+    {
+        var holds = $"holds {reg.Maps.Length} map(s): {string.Join(", ", reg.Maps)} "
+                    + $"[{reg.Players} player(s), {reg.Creatures} creature(s)]";
+        var answers = await Addresses.Answers(reg.ArrivalsAddress, reg.Port);
+        var line = answers
+            ? $"[char] map server '{reg.Id}' answers at {reg.ArrivalsAddress}:{reg.Port} and {holds}"
+            : $"[char] map server '{reg.Id}' does not answer at {reg.ArrivalsAddress}:{reg.Port} — "
+              + $"nobody can be handed to it. It {holds}";
+
+        // Forgotten while it was being tried: saying it now would bring back a line for a server that is gone.
+        if (!byId.ContainsKey(reg.Id)) return;
+        if (lastSaid.TryGetValue(reg.Id, out var last) && last == line) return;
+        lastSaid[reg.Id] = line;
+        if (answers) Console.WriteLine(line);
+        else Addresses.WriteRed(line);
     }
 
     void Rebuild()
@@ -139,6 +166,7 @@ public sealed class MapServers(Config config)
         foreach (var id in gone)
         {
             byId.TryRemove(id, out _);
+            lastSaid.TryRemove(id, out _);
             foreach (var held in heldBy)
                 if (held.Value == id) heldBy.TryRemove(held.Key, out _);
             Console.WriteLine($"[char] map server '{id}' has said nothing for {TrustedFor.TotalMinutes:0} minutes — forgotten.");
@@ -330,7 +358,8 @@ public sealed class MapServers(Config config)
     /// <para>The hotbar travels beside it, not inside it: it has its own row, written only when a slot changes.
     /// <paramref name="hotbar"/> is that stored array, or null when the character has never had one written.</para></summary>
     public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName,
-                                          JsonElement progress, JsonElement? hotbar, bool isGm, int handover,
+                                          JsonElement progress, JsonElement? hotbar, JsonElement quests, bool isGm,
+                                          int handover,
                                           CancellationToken ct = default)
     {
         var body = JsonSerializer.Serialize(new
@@ -343,6 +372,8 @@ public sealed class MapServers(Config config)
             isGm,
             progress,
             hotbar,
+            // Every quest row the character has, open and finished (see QuestRows) — a finished quest is never given again.
+            quests,
             // Every save of this character from that server carries this back — see Handover.
             handover,
         });

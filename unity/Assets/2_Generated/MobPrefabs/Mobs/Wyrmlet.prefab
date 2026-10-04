@@ -266,7 +266,6 @@ MonoBehaviour:
     magicDefensePerLevel: 1
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 34
 --- !u!114 &3738705075038914509
 MonoBehaviour:
   m_ObjectHideFlags: 0

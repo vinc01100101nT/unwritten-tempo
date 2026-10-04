@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { config } from "./config.ts";
 import { accountRoutes } from "./routes/accounts.ts";
 import { closeDb, pool } from "./db.ts";
+import { reportAddresses } from "./addresses.ts";
 
 export async function buildServer() {
   // bodyLimit: nothing this service takes is bigger than a sign-in body. Characters — the list, a save, the
@@ -76,7 +77,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
 
   const app = await buildServer();
+  // FASTIFY'S OWN "listening at" LINES ARE HELD BACK: it prints every address the adapters list, untried — a
+  // dead adapter's address included. The report below prints only the ones that answered.
+  const level = app.log.level;
+  app.log.level = "warn";
   await app.listen({ port: config.port, host });
+  app.log.level = level;
+
+  // The address players' copies dial: the same choice tools/build-game.sh makes when it writes it into a build.
+  const given = process.env.PUBLIC_ACCOUNTS_URL
+    ? { setting: "PUBLIC_ACCOUNTS_URL", url: process.env.PUBLIC_ACCOUNTS_URL }
+    : process.env.ACCOUNTS_URL ? { setting: "ACCOUNTS_URL", url: process.env.ACCOUNTS_URL } : null;
+  await reportAddresses("[accounts]", config.port, given);
 
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, async () => {

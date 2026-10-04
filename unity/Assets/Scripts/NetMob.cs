@@ -17,7 +17,7 @@ using UnityEngine;
 /// disagreed with everyone else's about where it stood and whether it was alive, which is exactly the
 /// disagreement this whole layer exists to prevent.</para>
 /// </summary>
-public class NetMob : NetworkBehaviour
+public class NetMob : NetworkBehaviour, IWatchedShell
 {
     /// <summary>Every mob shell alive on this machine, found by the BODY it drew. A dictionary rather than a
     /// list because this is read on the per-hit path — every swing at a mob asks it — and PERFORMANCE.md's

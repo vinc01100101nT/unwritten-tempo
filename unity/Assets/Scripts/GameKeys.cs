@@ -34,6 +34,7 @@ public static class GameKeys
     public const KeyCode Calendar = KeyCode.L;
     public const KeyCode WorldMap = KeyCode.N;
     public const KeyCode Minimap = KeyCode.M;
+    public const KeyCode Quests = KeyCode.J;
     public const KeyCode Chat = KeyCode.Return, ChatAlt = KeyCode.KeypadEnter;
     public const KeyCode System = KeyCode.Escape;
     public const KeyCode DialogNext = KeyCode.RightArrow;
@@ -62,9 +63,18 @@ public static class GameKeys
     static readonly KeyCode[] Fixed =
     {
         MoveForward, MoveLeft, MoveBack, MoveRight, Jump, Dash, SprintToggle, Walk, WalkAlt, Interact, AutoPilot,
-        ShowDrops, ShowDropsAlt, Inventory, CharacterWindow, Skills, Calendar, WorldMap, Minimap, Chat, ChatAlt, System,
-        DialogNext, PerformanceOverlay, PerformancePeakReset,
+        ShowDrops, ShowDropsAlt, Inventory, CharacterWindow, Skills, Calendar, WorldMap, Minimap, Quests, Chat, ChatAlt,
+        System, DialogNext, PerformanceOverlay, PerformancePeakReset,
     };
+
+    /// <summary>Is <paramref name="key"/> one of the fixed keys above? A third-row key kept on this device from before
+    /// a fixed key took that letter is dropped when it is read (<see cref="GameSettings.HotbarRowThreeKey"/>), or both
+    /// would fire.</summary>
+    public static bool IsFixed(KeyCode key)
+    {
+        for (int i = 0; i < Fixed.Length; i++) if (Fixed[i] == key) return true;
+        return false;
+    }
 
     // Keys that are never offered for the third row: the modifiers (they would fire with every combination) and
     // the mouse.

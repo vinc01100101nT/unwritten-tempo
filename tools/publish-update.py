@@ -13,7 +13,9 @@ WHAT IT WRITES, into --out (default builds/patch):
   index.html + its files       the website (website/index.html), so opening this folder's address in a browser
                                shows the site and its Download page offers the launcher. Beside it: ui-tokens.css
                                and fonts/ (the game's own colours and fonts, from prototypes/ui-tokens.css),
-                               content/ and assets/ (the wiki's pages and pictures, copied from wiki/), favicon.ico.
+                               content/ and assets/ (the wiki's pages and pictures, copied from wiki/), favicon.ico,
+                               and site.json (the character server's address the status page reads, from
+                               settings.env).
   download/unwritten-windows.zip   the Windows launcher with the launcher.txt naming this server, zipped, from
                                builds/launcher/windows when one has been built. One download: the launcher fetches
                                the game itself on its first run.
@@ -48,6 +50,7 @@ import zipfile
 
 # Which computer this is, and the Mac-only signing, both come from tools/platform.sh — never checked here.
 from platform_ask import run as run_platform
+from settings_ask import setting
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -203,6 +206,15 @@ def publish_site(out):
         if os.path.isdir(target):
             shutil.rmtree(target)
         shutil.copytree(os.path.join(REPO, "wiki", folder), target)
+
+    # The character server the status page reads, as players reach it — the rule tools/build-game.sh writes into the
+    # game: the public address once there is one, this machine's until then.
+    char_server = setting("PUBLIC_CHAR_SERVER_URL") or setting("CHAR_SERVER_URL")
+    if not char_server:
+        print("\033[31mNo PUBLIC_CHAR_SERVER_URL or CHAR_SERVER_URL in settings.env — the website's server status "
+              "will say it cannot reach the character server.\033[0m", file=sys.stderr)
+    with open(os.path.join(out, "site.json"), "w", encoding="utf-8") as f:
+        json.dump({"charServerUrl": char_server}, f)
 
 
 def publish_launchers(out):

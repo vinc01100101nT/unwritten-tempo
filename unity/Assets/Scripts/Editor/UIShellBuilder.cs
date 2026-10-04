@@ -57,6 +57,10 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Character (C) window
         canvasGO.AddComponent<SkillsWindow>();             // Skills (K): the skills you have learned, by weapon, on a mastery line
         canvasGO.AddComponent<CraftStationPanel>();        // the smith / loom / tannery window, opened by reaching one
+        canvasGO.AddComponent<ShopPanel>();                // a shopkeeper's window, opened by reaching one
+        canvasGO.AddComponent<QuestsWindow>();             // Quests (J): open quests by tab; choosing one follows it
+        canvasGO.AddComponent<GuideOverlay>();             // the tutorial guide: everything dark but the next button
+        canvasGO.AddComponent<QuestArrows>();              // the arrows on the ground to the followed quest's step
         canvasGO.AddComponent<HotbarPanel>();              // draws HUD_Hotbar's 27 slots from the player's bar
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
         canvasGO.AddComponent<StatusBox>();                // top-left: name, HP, MP, levels + experience, zeny, window buttons

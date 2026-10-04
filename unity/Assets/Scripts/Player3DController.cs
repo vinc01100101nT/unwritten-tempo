@@ -134,6 +134,13 @@ public partial class Player3DController : MonoBehaviour
     /// Read by quick cast (<see cref="UnitTargeter"/>) so a pressed skill can fire at it without a reticle.</summary>
     public Health AttackTarget => attackTarget != null && !attackTarget.IsDead ? attackTarget : null;
 
+    /// <summary>Another person this player clicked to see their details — the one wearing the target arrow when
+    /// nobody is being fought — or null. Selecting somebody is not fighting them: nothing acts on this but the target
+    /// panel (<see cref="UnitStatusPanel"/>). Let go the same way a fight is: a ground click, an attack, a stop, or
+    /// the person leaving.</summary>
+    public Health SelectedPerson => selectedPerson != null && !selectedPerson.IsDead ? selectedPerson : null;
+    Health selectedPerson;
+
     enum Order { Idle, Move, AttackMove, Attack, AutoPilot, MoveIntoRange }
     Order order = Order.Idle;
     Vector3 movePoint;
@@ -544,10 +551,12 @@ public partial class Player3DController : MonoBehaviour
             }
             else
             {
-                // Plain click: a mob → target-lock + attack it (shows the target indicator); else a ground move
-                // (which clears any lock via ClearCombat).
+                // Plain click: a mob → target-lock + attack it (shows the target indicator); another person → select
+                // them, which shows their details and goes nowhere; else a ground move (which clears any lock or
+                // selection via ClearCombat).
                 var mob = MonsterUnderCursor(cam);
                 if (mob != null) BeginAttack(mob, false);
+                else if (PersonUnderCursor(cam, out var person)) SelectPerson(person);
                 else if (GroundPoint(cam, out var gp)) BeginMove(gp);
             }
         }
@@ -571,6 +580,13 @@ public partial class Player3DController : MonoBehaviour
     // ---- per-order behavior (returns the horizontal step direction) -----------
     Vector3 Tick()
     {
+        // A SELECTED PERSON WHO DIED is let go, arrow and all, the way a dead attack target is.
+        if (selectedPerson != null && selectedPerson.IsDead)
+        {
+            selectedPerson = null;
+            if (targetMarker != null && attackTarget == null) targetMarker.Follow(null);
+        }
+
         switch (order)
         {
             case Order.Move:
@@ -741,8 +757,25 @@ public partial class Player3DController : MonoBehaviour
         if (attacker != null) attacker.Cancel();
         DropTheWait();   // same rule as ClearCombat: a new order calls off a held skill
         order = Order.Attack; attackTarget = mob; resumeAttackMove = resume;
+        selectedPerson = null;
         routing = false; path.Clear();
         if (targetMarker != null) targetMarker.Follow(mob != null ? mob.transform : null);
+    }
+
+    // The person stays where they are and so does this player: selecting is looking, not an order.
+    void SelectPerson(Health person)
+    {
+        selectedPerson = person;
+        if (targetMarker != null) targetMarker.Follow(person.transform);
+    }
+
+    // ANOTHER PERSON under the cursor — the unit pick, kept only when the body it found is somebody's.
+    static bool PersonUnderCursor(Camera cam, out Health person)
+    {
+        person = UnitUnderCursor(cam);
+        if (person != null && NetPlayer.ShellForBody(person.gameObject) != null) return true;
+        person = null;
+        return false;
     }
 
     /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
@@ -829,6 +862,7 @@ public partial class Player3DController : MonoBehaviour
     {
         AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
+        selectedPerson = null;
         DropTheWait();
         dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
@@ -951,6 +985,7 @@ public partial class Player3DController : MonoBehaviour
     {
         if (attacker != null) attacker.Cancel();
         attackTarget = null; resumeAttackMove = false;
+        selectedPerson = null;
         // A NEW ORDER CALLS OFF A HELD SKILL. Every order that starts by clearing combat is the player saying to do
         // something else instead, and a skill still waiting to fire behind that would go off during it.
         DropTheWait();

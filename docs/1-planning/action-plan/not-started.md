@@ -94,18 +94,6 @@ to 11–15 days, so it is two to three weeks of work.
 
 - [ ] `MT-22` **`[D]` Decide how big a quest can be.** Kill / fetch / travel only, or chains and branches. *Recommendation: the three simple kinds only. A chain is a second system and it can come after the first quest is proven.* — **0.5 days**
 
-- [ ] `MT-23` **`[E]` Sketch how a quest is stored.** What the saved character has to remember: which quests are open, how far along, which are finished. — **1 day**
-  *Done when:* you can describe in one paragraph what a save gains, and it survives a restart in a throwaway test.
-
----
-
-## Week 8 — A quest can be given
-
-**Goal:** somebody asks you for something and the game remembers being asked. There is no quest system of any kind today — only a category an item can be filed under, which does nothing except stop that item being dropped.
-
-- [ ] `MT-24` **`[E]` Build the smallest quest system that works.** One person asks, the game remembers you were asked, remembers your progress, lets you hand it in. No branching, no chains, no journal beyond a list. — **4–5 days**
-  *Done when:* you can accept a quest, close the game entirely, come back, and find your progress still counted.
-
 ---
 
 ## Week 9 — A quest can be finished
@@ -122,26 +110,12 @@ to 11–15 days, so it is two to three weeks of work.
 
 ---
 
-## Week 10 — Gold has a use
-
-**Goal:** you can spend the money you have been collecting. The furthest character in the database has 4,396 gold and nothing in the game to spend it on.
-
-- [ ] `MT-28` **`[E]` Build a shop screen.** Buy and sell, against one shopkeeper. Every item already has a sell value; **none has a buy price, so that is one more number per item** and a place to put it. — **4–5 days**
-  *Done when:* you can sell a piece of loot for gold, buy a potion back, and both the gold and the bag survive a restart.
-
-- [ ] `MT-29` **`[A]` Stock the first shops.** What each town sells. — **1 day**
-  *Done when:* every town with a shopkeeper sells a list you chose, not a list the game made up.
-
----
-
 ## Week 11 — A stranger can start it
 
 **Goal:** someone who has never seen the game can open it and know what to do. Today the first thing a player meets is a sign-in box.
 
 - [ ] `MT-30` **`[E]` Title screen and new-game flow.** — **3–4 days**
   *Done when:* launching the game shows a title, and a brand-new player reaches their first fight without being told anything by you.
-
-- [ ] `MT-31` **`[D]` Decide how much the game explains itself.** A real tutorial, or a first quest that teaches by being done. *Recommendation: the first quest. It costs one quest instead of a system, and it is already being built in Week 9.* — **0.5 days**
 
 ---
 
@@ -169,10 +143,6 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 
 ---
 
-- [ ] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons.** Seen 2026-09-28 in play: hundreds of
-  "the object of type Image / TextMeshProUGUI has been destroyed" errors a session, from the hover plate over a unit
-  rebuilding its status icons (`HoverPlate.RebuildIcons`, line 316, from its LateUpdate). Cause not looked into yet.
-  *Done when:* a play session with fights and map changes logs none of them.
 - [ ] `MT-58` **`[E]` Give flat maps' ground its own collision.** Found 2026-09-30 under RULE ONEGROUND: a map whose
   ground is flat (no levels, no cliffs, no painted heights) is drawn by one mesh but walked on by a separate invisible
   box, `Ground_Floor`, laid under it — 49 scenes today. The box's top sits exactly at the drawn surface, so nothing

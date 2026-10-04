@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
-# Start the three servers — the sign-in service, the character server and the map server — each in its own Windows
-# Terminal window, laid out in three corners of the screen. Double-click this file.
+# Start the three servers — the sign-in service, the character server and the map server — and the website, each in
+# its own Windows Terminal window, one in each corner of the screen. Double-click this file.
+# restart-servers.sh restarts them later, inside these same windows.
 #
-# WHY THIS EXISTS: starting them meant opening three terminals, typing three commands and dragging three windows
-# into place, every time. This is the same three commands with nothing to type.
+# WHY THIS EXISTS: starting them meant opening four terminals, typing four commands and dragging four windows into
+# place, every time. This is the same four commands with nothing to type.
 #
 # THE LAYOUT: each window is exactly one quarter of the screen (the screen minus the taskbar, measured when you run
 # this) — the same rectangle Windows gives a window snapped into a corner.
 #   ACCOUNT SERVICE  top-left        CHAR SERVER  top-right
-#   (left free for your own window)  MAP SERVER   bottom-right
+#   WEBSITE          bottom-left     MAP SERVER   bottom-right
 #
-# WHAT RUNS IN EACH: exactly what you would type by hand, inside a Command Prompt that stays open if the server stops,
-# so its last words stay readable:   npm start (in accounts/)  ·  sh charserver/run.sh  ·  sh tools/run-map-server.sh
+# WHAT RUNS IN EACH: exactly what you would type by hand —   npm start (in accounts/)  ·  sh charserver/run.sh  ·
+# sh tools/run-map-server.sh  ·  sh tools/serve-updates.sh   — inside a Command Prompt that stays open when the server
+# stops, so its last words stay readable. The map server waits in its window until the character server answers, so
+# it never tries to register with nobody there.
+#
+# HOW A RESTART HAPPENS IN THE SAME WINDOW: each window runs its server in a loop. When the server stops, the loop
+# looks for a restart request (a file restart-servers.sh writes into logs/windows/) and, if there is one, runs the
+# same command again; if there is none — you pressed Ctrl+C yourself — it ends, leaving the prompt, as before. Each
+# window also writes its own process id there, which is how restart-servers.sh finds it to press Ctrl+C in it.
 #
 # A SERVER THAT IS ALREADY RUNNING IS LEFT ALONE: if its port is taken, its window is not opened and nothing is
-# stopped. The map server waits in its window until the character server answers, so it never tries to register
-# with nobody there.
+# stopped.
 #
 # Windows only — the layout is Windows Terminal's.
 set -euo pipefail
@@ -24,16 +31,52 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$REPO/tools/platform.sh"
 . "$REPO/tools/load-settings.sh"
 
-ACCOUNTS_PORT="${PORT:-8080}"
-CHAR_PORT="${CHAR_SERVER_PORT:-8081}"
-MAP_PORT="${MAP_SERVER_ARRIVALS_PORT:-7788}"
+# Every port comes from settings.env and nowhere else; a missing one is said, never guessed.
+for __setting in PORT CHAR_SERVER_PORT MAP_SERVER_ARRIVALS_PORT PATCH_URL; do
+  [ -n "${!__setting:-}" ] || { printf '%s is not set in %s/settings.env.\n' "$__setting" "$REPO" >&2
+                                read -r -p "Press Enter to close." _ || true; exit 2; }
+done
+ACCOUNTS_PORT="$PORT"
+CHAR_PORT="$CHAR_SERVER_PORT"
+MAP_PORT="$MAP_SERVER_ARRIVALS_PORT"
+WEBSITE_PORT="$(patch_port)"
+WINDOW_STATE="$REPO/logs/windows"
 
-# Run inside the MAP SERVER window: wait for the character server, then start the map server in this same window.
-if [ "${1:-}" = map-after-char-server ]; then
-  echo "Waiting for the character server to answer on port $CHAR_PORT ..."
-  until curl -s --max-time 2 "http://127.0.0.1:$CHAR_PORT/health" | grep -q '"ok":true'; do sleep 2; done
-  echo "The character server answered. Starting the map server."
-  exec "$REPO/tools/run-map-server.sh"
+# THE ONE LIST OF WINDOWS — name (what restart-servers.sh is given) | title | corner | port. Opened, and restarted, in
+# this order: the character server stops before the map server is asked to, so the map server always registers with
+# the character server that is coming up, never with the one going away.
+SERVERS="account|ACCOUNT SERVICE|top-left|$ACCOUNTS_PORT
+char|CHAR SERVER|top-right|$CHAR_PORT
+map|MAP SERVER|bottom-right|$MAP_PORT
+website|WEBSITE|bottom-left|$WEBSITE_PORT"
+
+# What each window runs. In a subshell, so Ctrl+C stops it exactly as it would when typed by hand.
+run_server() (
+  case "$1" in
+    account) cd "$REPO/accounts" && npm start ;;
+    char)    cd "$REPO" && sh charserver/run.sh ;;
+    map)     echo "Waiting for the character server to answer on port $CHAR_PORT ..."
+             until curl -s --max-time 2 "http://127.0.0.1:$CHAR_PORT/health" | grep -q '"ok":true'; do sleep 2; done
+             echo "The character server answered. Starting the map server."
+             cd "$REPO" && sh tools/run-map-server.sh ;;
+    website) cd "$REPO" && sh tools/serve-updates.sh ;;
+  esac
+)
+
+# Run inside each server window: the server, again and again for as long as restarts are asked for.
+if [ "${1:-}" = window ]; then
+  NAME="$2"
+  mkdir -p "$WINDOW_STATE"
+  cat "/proc/$$/winpid" > "$WINDOW_STATE/$NAME.pid"
+  trap 'rm -f "$WINDOW_STATE/$NAME.pid" "$WINDOW_STATE/$NAME.restart"' EXIT
+  trap ':' INT   # Ctrl+C reaches every program in the window; this loop must outlive it to decide what comes next
+  while :; do
+    rm -f "$WINDOW_STATE/$NAME.restart"
+    run_server "$NAME" || true
+    [ -f "$WINDOW_STATE/$NAME.restart" ] || break
+    printf '\n===== restarting =====\n\n'
+  done
+  exit 0
 fi
 
 finish() {
@@ -43,20 +86,90 @@ finish() {
 NOTES=""
 trap finish EXIT
 
-[ "$PLATFORM" = windows ] || { NOTES="This script lays out Windows Terminal windows, so it only runs on Windows.\n"; exit 1; }
+[ "$PLATFORM" = windows ] || { NOTES="This script drives Windows Terminal windows, so it only runs on Windows.\n"; exit 1; }
+
+# Run by restart-servers.sh: press Ctrl+C in each named window (all of them when none is named) after asking it to
+# start again.
+if [ "${1:-}" = restart ]; then
+  shift
+  NAMES="$(printf '%s\n' "$SERVERS" | cut -d'|' -f1 | tr '\n' ' ')"
+  for asked in "$@"; do
+    case " $NAMES " in *" $asked "*) ;; *) NOTES="There is no window called '$asked'. The windows are: $NAMES\n"; exit 2 ;; esac
+  done
+
+  CTRLC="$(mktemp --suffix=.ps1)"
+  RESULT="$(mktemp)"
+  trap 'rm -f "$CTRLC" "$RESULT"; finish' EXIT
+  cat > "$CTRLC" <<'PS1'
+# Presses Ctrl+C in the window whose loop has this process id — but only if that process is still that loop, since a
+# closed window's id can be handed to some other program later.
+param([int]$TargetPid, [string]$Name)
+$p = Get-CimInstance Win32_Process -Filter "ProcessId=$TargetPid"
+if (-not $p -or $p.CommandLine -notlike "*start-servers.sh*window $Name*") { Write-Output 'gone'; exit }
+Add-Type @"
+using System; using System.Runtime.InteropServices;
+public static class Con {
+  [DllImport("kernel32.dll")] static extern bool FreeConsole();
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool AttachConsole(uint pid);
+  [DllImport("kernel32.dll")] static extern bool SetConsoleCtrlHandler(IntPtr h, bool add);
+  [DllImport("kernel32.dll", SetLastError=true)] static extern bool GenerateConsoleCtrlEvent(uint ev, uint group);
+  // A program can only press Ctrl+C in the window it is attached to, so this leaves its own, joins that one, and
+  // ignores the Ctrl+C itself — it reaches every program attached to the window, this one included.
+  public static string Send(uint pid) {
+    FreeConsole();
+    if (!AttachConsole(pid)) return "could not reach its window (error " + Marshal.GetLastWin32Error() + ")";
+    SetConsoleCtrlHandler(IntPtr.Zero, true);
+    bool sent = GenerateConsoleCtrlEvent(0, 0);
+    int error = Marshal.GetLastWin32Error();
+    System.Threading.Thread.Sleep(500);
+    FreeConsole();
+    return sent ? "sent" : "could not press Ctrl+C in its window (error " + error + ")";
+  }
+}
+"@
+# Its own output leaves with the window it left, so the answer goes in a file.
+[Con]::Send([uint32]$TargetPid) | Set-Content -Path $env:CTRLC_RESULT
+PS1
+
+  while IFS='|' read -r name title corner port; do
+    if [ $# -gt 0 ]; then case " $* " in *" $name "*) ;; *) continue ;; esac; fi
+    pid="$(cat "$WINDOW_STATE/$name.pid" 2>/dev/null || true)"
+    if [ -z "$pid" ]; then NOTES="$NOTES$title has no window opened by start-servers.sh — left alone.\n"; continue; fi
+    touch "$WINDOW_STATE/$name.restart"
+    # The programs listening now. "Stopped" means these are gone — not that the port is free, because the window
+    # starts the server again straight away and a fast one is listening on the same port again within a second.
+    before="$(port_pids "$port" | tr '\n' ' ')"
+    : > "$RESULT"
+    out="$(CTRLC_RESULT="$(cygpath -w "$RESULT")" powershell.exe -NoProfile -ExecutionPolicy Bypass \
+      -File "$(cygpath -w "$CTRLC")" -TargetPid "$pid" -Name "$name" 2>&1 | tr -d '\r')" || true
+    [ "$out" = gone ] || out="$(tr -d '\r' < "$RESULT")${out:+ $out}"
+    case "$out" in
+      sent) ;;
+      gone) rm -f "$WINDOW_STATE/$name.pid" "$WINDOW_STATE/$name.restart"
+            NOTES="$NOTES$title's window from start-servers.sh is closed — left alone.\n"; continue ;;
+      *)    rm -f "$WINDOW_STATE/$name.restart"; NOTES="$NOTES$title: $out\n"; continue ;;
+    esac
+    echo "$title: Ctrl+C pressed, waiting for it to stop ..."
+    still_up() { for p in $(port_pids "$port"); do case " $before " in *" $p "*) return 0 ;; esac; done; return 1; }
+    for _ in $(seq 60); do still_up || break; sleep 0.5; done
+    if still_up; then
+      NOTES="$NOTES$title had not stopped 30 seconds after Ctrl+C. It starts again by itself once it does.\n"
+    else
+      echo "$title: stopped, starting again in its window."
+    fi
+  done <<< "$SERVERS"
+  exit 0
+fi
 
 # One line per window to open:  title|corner|starting folder|command
 WINDOWS=""
-queue() {   # queue <title> <corner> <port> <folder> <command>
-  if [ -n "$(port_pids "$3")" ]; then
-    NOTES="$NOTES$1 is already running (port $3 is taken) — left alone, no window opened.\n"
+while IFS='|' read -r name title corner port; do
+  if [ -n "$(port_pids "$port")" ]; then
+    NOTES="$NOTES$title is already running (port $port is taken) — left alone, no window opened.\n"
   else
-    WINDOWS="$WINDOWS$1|$2|$(cygpath -w "$4")|$5"$'\n'
+    WINDOWS="$WINDOWS$title|$corner|$(cygpath -w "$REPO")|sh start-servers.sh window $name"$'\n'
   fi
-}
-queue "ACCOUNT SERVICE" top-left     "$ACCOUNTS_PORT" "$REPO/accounts" "npm start"
-queue "CHAR SERVER"     top-right    "$CHAR_PORT"     "$REPO"          "sh charserver/run.sh"
-queue "MAP SERVER"      bottom-right "$MAP_PORT"      "$REPO"          "sh start-servers.sh map-after-char-server"
+done <<< "$SERVERS"
 [ -n "$WINDOWS" ] || exit 0
 
 # Opening and placing the windows needs Windows' own window calls, which only PowerShell can make from here. The
@@ -106,6 +219,7 @@ $midY = $area.T + [int](($area.B - $area.T) / 2)
 $corners = @{
   'top-left'     = @($area.L, $area.T, $midX,   $midY)
   'top-right'    = @($midX,   $area.T, $area.R, $midY)
+  'bottom-left'  = @($area.L, $midY,   $midX,   $area.B)
   'bottom-right' = @($midX,   $midY,   $area.R, $area.B)
 }
 

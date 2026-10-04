@@ -37,10 +37,14 @@ public static class SaveOutbox
         // The newest document not yet landed — the one on the wire, or the one waiting to be tried again.
         public string body;
         public Action<bool> waiters;
+        // Told once THIS document — or a newer one that replaced it — is done with for good: landed, refused as from
+        // an older hand-over, or refused for good and kept in a file. Never on a failure that will be tried again.
+        public Action settled;
         public bool inFlight;
         // A newer document captured while one was on the wire; it goes the instant that one returns.
         public string nextBody;
         public Action<bool> nextWaiters;
+        public Action nextSettled;
         public bool failed;
         public float retryAt;
     }
@@ -76,13 +80,20 @@ public static class SaveOutbox
     /// newer one sent in its place) reached the store on its first attempt. A save that fails is still kept and
     /// tried again — the caller is simply told it has not landed yet.</summary>
     public static void Submit(string characterId, string body, Action<bool> whenDone)
-        => SubmitKey(characterId, body, whenDone);
+        => SubmitKey(characterId, body, whenDone, null);
+
+    /// <summary>The same, and <paramref name="whenSettled"/> is told when this document — or a newer one sent in its
+    /// place — is done with for good, on whichever attempt. What a save carrying "everything changed since the last one
+    /// landed" needs: it may forget those changes only then. A newer document always carries everything an older one
+    /// did, so both are told when the newer one settles.</summary>
+    public static void Submit(string characterId, string body, Action<bool> whenDone, Action whenSettled)
+        => SubmitKey(characterId, body, whenDone, whenSettled);
 
     /// <summary>Send this character's newest HOTBAR, the same way a save is sent — kept, retried and landed on its own.</summary>
     public static void SubmitHotbar(string characterId, string body, Action<bool> whenDone)
-        => SubmitKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, body, whenDone);
+        => SubmitKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, body, whenDone, null);
 
-    static void SubmitKey(string characterId, string body, Action<bool> whenDone)
+    static void SubmitKey(string characterId, string body, Action<bool> whenDone, Action whenSettled)
     {
         if (string.IsNullOrEmpty(characterId) || body == null) { whenDone?.Invoke(false); return; }
         if (!entries.TryGetValue(characterId, out var e)) { e = new Entry(); entries[characterId] = e; }
@@ -91,12 +102,15 @@ public static class SaveOutbox
         {
             e.nextBody = body;
             e.nextWaiters += whenDone;
+            e.nextSettled += whenSettled;
             return;
         }
 
-        // A newer document replaces one that was waiting to be tried again: it says everything the old one did.
+        // A newer document replaces one that was waiting to be tried again: it says everything the old one did — so
+        // whoever was waiting for the old one to settle is told when this one does.
         e.body = body;
         e.waiters += whenDone;
+        e.settled += whenSettled;
         Send(characterId, e);
     }
 
@@ -168,11 +182,14 @@ public static class SaveOutbox
         e.inFlight = false;
         var told = e.waiters;
         e.waiters = null;
+        // Settled unless it failed in a way that is tried again — then it stays with the body that will be retried.
+        Action settledNow = null;
 
         if (ok)
         {
             e.body = null;
             Recovered(characterId, e);
+            settledNow = e.settled; e.settled = null;
         }
         else if (status == 409)
         {
@@ -182,6 +199,7 @@ public static class SaveOutbox
                              + "handed to another server since. Dropped so it cannot roll them back. " + reply);
             e.body = null;
             Recovered(characterId, e);
+            settledNow = e.settled; e.settled = null;
         }
         else if (status == 400 || status == 404 || status == 413)
         {
@@ -191,6 +209,9 @@ public static class SaveOutbox
                               + status + " " + reply + ") — kept in " + kept + " for a person to look at.");
             e.body = null;
             Recovered(characterId, e);
+            // SETTLED TOO: what it carried is in that file for a person, and sending it again would be refused the
+            // same way for ever — the very loop a save of "everything changed since" would otherwise never leave.
+            settledNow = e.settled; e.settled = null;
         }
         else
         {
@@ -208,11 +229,15 @@ public static class SaveOutbox
         {
             e.body = e.nextBody;
             e.waiters = e.nextWaiters;
+            // A body that failed and is being replaced hands its settle-waiters to the newer one, which carries all of it.
+            e.settled += e.nextSettled;
             e.nextBody = null;
             e.nextWaiters = null;
+            e.nextSettled = null;
             Send(characterId, e);
         }
 
+        settledNow?.Invoke();
         told?.Invoke(ok);
 
         if (e.body == null && !e.inFlight && e.waiters == null) entries.Remove(characterId);

@@ -32,10 +32,9 @@ MonoBehaviour:
   gearQuality: 5
   gearFolds: 30
   gearInkTier: 5
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  weaponMasteryLevel: 99
-  xpReward: 800
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3

@@ -129,7 +129,7 @@ public class SaveManager : MonoBehaviour
                 // NOBODY HAS PLAYED THIS CHARACTER YET, and there is no world — so their starter goods are given
                 // here. IN a world the server does this instead, and doing it here as well was a race: whichever
                 // landed last won, and half the time a new player saw a bag the server had never heard of.
-                character.SeedBag();
+                character.GiveStarterKit();
                 InventoryStore.Instance?.Notify();
             }
 

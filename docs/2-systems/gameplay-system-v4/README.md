@@ -198,8 +198,11 @@ the endgame.
 - **Quality also sets how fast mastery grows.** A better weapon trains faster; a poor one trains slower.
 - **While capped, no mastery is earned.** If a character's mastery has reached what the weapon allows, fighting
   with it teaches them nothing more.
-- **Creatures have masteries too**, written into their data. A creature's mastery decides which of its weapon's
-  skills it knows, but it spends no points (Still open, below).
+- **Creatures follow the same mastery rules, in the same store as a player's** (decided 2026-10-04). A creature has
+  mastery in ONE weapon only and knows only the skills it has bought with that mastery's points; nothing is opened
+  for free. Its weapon and its mastery level are set on its catalog entry (the Mob Table: the weapon with its gear,
+  the mastery in its own column) and put on it when it is made. **Every creature's mastery is 0 today, and nothing spends a creature's
+  points, so no creature casts a skill** (which weapon, mastery and skills each gets: Still open, below).
 
 ### How mastery is earned
 
@@ -399,14 +402,11 @@ skill.
 - **Skill trees for the other thirteen weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
   until their pools exist.
-- **Which townspeople are stations** — no smith, loom or tannery is authored in the town scene yet; `/station`
-  makes the nearest villager one for a play-test.
-- **Creature masteries are authored as the creature's LEVEL** (a level-20 creature has Weapon Mastery 20), so a
-  creature knows every skill of the weapon it holds up to what its weapon's grade allows. It spends no points, so
-  every skill it knows sits at **level 1** (no growth) until each kind of creature gets its own build. A
-  normal or an elite wears Raw pieces, which cap that mastery at 10 exactly as they cap a player's — so the most it
-  knows with a sword is the six skills a Raw sword reaches. A shadow's A-grade weapon allows 70, so the Sword shadow
-  knows every sword skill, the ultimates included. **This is a first guess and is expected to need balancing.**
+- **Which townspeople are stations** — Lastline has one of each, standing at the doors of the four houses around
+  the fountain: Gunnar the Smith, Odette the Weaver (loom), Rook the Tanner (tannery), beside Fenwick the Tool Dealer's
+  shop. They are rows of the townsfolk list (`WorldTownsfolk`), not objects in the scene. `/station` still makes the
+  nearest villager one for a play-test. Which stations other towns get is to be planned.
+- **Which weapon each creature carries, how much mastery it has in it, and which skills it buys** — to be planned.
 
 ## What V4 replaced in V3
 

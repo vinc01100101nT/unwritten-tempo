@@ -57,6 +57,30 @@ public class NetNpc : NetworkBehaviour
     /// people wearing two different faces.</para></summary>
     [SyncVar] public string modelName = "";
 
+    /// <summary>WHO THIS PERSON IS — their name from the townsfolk list (<see cref="WorldTownsfolk"/>), shown over their
+    /// head and when you talk to them. Chosen once by the server before anybody is told this person exists.</summary>
+    [SyncVar] public string personName = "";
+
+    /// <summary>WHAT THIS PERSON IS, in a few words, shown under their name — from the same row of the townsfolk list.</summary>
+    [SyncVar] public string personDescription = "";
+
+    /// <summary>THE SHOP THIS PERSON KEEPS, by its id in <see cref="WorldShops"/>, or empty. It has to cross for the same
+    /// reason the station does: the body a player presses F on is a copy, and a copy that did not know would open a
+    /// conversation with a shopkeeper.</summary>
+    [SyncVar] public string shopId = "";
+
+    /// <summary>WHO THIS PERSON IS TO A QUEST — their stable id in the townsfolk list. It crosses so a player's machine
+    /// can draw the quest mark over the right head and offer the right quest when F is pressed on them.</summary>
+    [SyncVar] public string personId = "";
+
+    /// <summary>Every townsperson's body this machine has drawn, with the shell that speaks for it — a plain list, filed
+    /// when a body is built and struck when it is dropped, so a readout walks the people on screen without searching
+    /// the scene.</summary>
+    public static readonly System.Collections.Generic.List<NetNpc> Shown = new System.Collections.Generic.List<NetNpc>(16);
+
+    /// <summary>The body this machine drew for this person, or null while it has none.</summary>
+    public GameObject View => view;
+
     /// <summary>WHAT THIS PERSON WORKS AT, as the server says — a smith, a loom, a tannery, or nothing. It has to
     /// cross, because the body a player presses F on is a copy this machine built, and a copy that did not know
     /// would open a conversation with a smith. Written when the shell is bound and whenever the role changes.</summary>
@@ -141,6 +165,10 @@ public class NetNpc : NetworkBehaviour
         serverBrain = npc != null ? npc.GetComponent<TownNPC>() : null;
         stationKind = serverBrain != null ? (int)serverBrain.station : 0;
         netLevel = serverBrain != null ? serverBrain.Level : 1;
+        personName = serverBrain != null ? serverBrain.DisplayName ?? "" : "";
+        personDescription = serverBrain != null ? serverBrain.Description ?? "" : "";
+        shopId = serverBrain != null ? serverBrain.Shop ?? "" : "";
+        personId = serverBrain != null ? serverBrain.PersonId ?? "" : "";
         serverAgent = npc != null ? npc.GetComponent<PathAgent3D>() : null;
         if (npc != null)
         {
@@ -294,7 +322,7 @@ public class NetNpc : NetworkBehaviour
                                  + "' — a townsperson will be invisible.");
                 return;
             }
-            AdoptView(Townsperson.Build(wanted, MapManager.InWorld(netPosition, mapName),
+            AdoptView(Townsperson.Build(wanted, personName, MapManager.InWorld(netPosition, mapName),
                                         MapManager.CurrentScene, model));
         });
     }
@@ -315,6 +343,10 @@ public class NetNpc : NetworkBehaviour
         {
             brain.BecomeAWatchedCopy();
             brain.station = (CraftStation)stationKind;
+            brain.DisplayName = personName;
+            brain.Description = personDescription;
+            brain.Shop = shopId;
+            brain.PersonId = personId;
         }
 
         view = go;
@@ -322,6 +354,7 @@ public class NetNpc : NetworkBehaviour
         viewVisual = go.GetComponent<Agent3DVisual>();
         // So pressing F next to this body finds the person the server owns.
         byView[go] = this;
+        Shown.Add(this);
 
         // The body belongs to the WORLD, not to the map this machine happens to be standing in when it arrives.
         // Travelling unloads the map you left, and everything built into it goes with it.
@@ -347,6 +380,7 @@ public class NetNpc : NetworkBehaviour
         if (view == null) return;
         levelAura.Stop();
         byView.Remove(view);
+        Shown.Remove(this);
         Destroy(view);
         view = null;
         viewVisual = null;

@@ -226,7 +226,7 @@ public static class GmCommands
                                + "enormous health that never fights back, for measuring what your build actually does. "
                                + "The server owns it, so everybody can see and hit the same one.", CmdDummy,
                                anyoneMayRun: false, changesTheWorld: true));
-        Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level] [skill id]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Give a skill id to make it every summoned creature's extra skill, for every life, instead of a random one — any skill, published or not.", CmdSummon,
+        Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns.", CmdSummon,
                                anyoneMayRun: false, changesTheWorld: true));
         // ANY PLAYER MAY ASK THESE, and the SERVER answers both: a creature's numbers are worked out on the machine that
         // owns the world, never on a player's, so these ride the server's door although they change nothing.
@@ -667,7 +667,7 @@ public static class GmCommands
     // Spawning is async (Addressables loads the prefab), so we count completions and reply once all land.
     static void CmdSummon(GmContext c)
     {
-        const string usage = "Usage: /summon <count> <normal|elite|shadow|creature> [level] [skill id]";
+        const string usage = "Usage: /summon <count> <normal|elite|shadow|creature> [level]";
         if (!TryAskersMap(c, out var askerMap)) return;
         if (!c.TryInt(0, out var count) || count <= 0) { c.Reply(usage); return; }
         count = Mathf.Clamp(count, 1, 50);
@@ -688,19 +688,15 @@ public static class GmCommands
                 break;
         }
 
-        // Optional trailing modifiers, order-free because each is told apart by its shape:
-        //   a LEVEL    — re-stats the summoned creature at that level (see the re-stat block below), up to the
-        //                highest level any creature has (the top shadow);
-        //   a SKILL ID — any id in the skill catalog, made the creature's extra skill for every life it lives.
+        // Optional trailing LEVEL — re-stats the summoned creature at that level (see the re-stat block below), up to
+        // the highest level any creature has (the top shadow).
         // A shadow is a 3D character because it is a shadow — MobSpawner decides that from its kind.
         int level = 0;
-        string extraSkillId = null;
         for (int i = 2; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, MonsterCatalog.HighestLevel); continue; }
-            if (SkillCatalog.IsKnown(a)) { extraSkillId = a; continue; }
-            c.Reply(a.StartsWith("skill.") ? $"No skill with the id '{a}'. {usage}" : usage); return;
+            c.Reply(usage); return;
         }
 
         var defs = new List<MonsterDef>(count);
@@ -740,7 +736,6 @@ public static class GmCommands
                                 UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value,
                                 UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value));
                     }
-                    if (extraSkillId != null) { var health = go.GetComponent<Health>(); if (health != null) health.PinExtraSkill(extraSkillId); }
                     // Born on the server → every connected player gets to see it. Without this a summoned creature
                     // existed only on the machine that typed the command — the same way a pooled respawn goes
                     // invisible to everyone but the server if its fresh shell is skipped.
@@ -755,7 +750,6 @@ public static class GmCommands
                     reply?.Invoke($"Summoned {spawned} " +
                                   (named != null ? named.displayName : "random " + kind.ToString().ToLowerInvariant() + " creature(s)") +
                                   (level > 0 ? $" at level {level}" : "") +
-                                  (extraSkillId != null ? $" with extra skill {extraSkillId}" : "") +
                                   (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
             });
         }
@@ -877,7 +871,7 @@ public static class GmCommands
         if (it.element != Element.Neutral) head.Append(" · ").Append(it.element);
         c.Reply(head.ToString());
 
-        var facts = new StringBuilder($"Weight {it.weight} · Sells for {it.zeny} zeny");
+        var facts = new StringBuilder($"Weight {it.weight} · " + (it.CanBeSold ? $"Sells for {it.zeny} zeny" : Item.CannotBeSoldText));
         if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
         if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
         // A band material's step is its BAND, an Ink's or a Salt's its TIER — the words the item's own field uses.

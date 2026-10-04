@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quests and Tutorial Guide</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #1b1d21; font-family: var(--font-ui); }
+  .note { color: #e8e8e8; font: 13px system-ui, sans-serif; margin: 0 0 10px; max-width: 1280px; }
+  .reader { display: flex; gap: 10px; align-items: center; margin: 12px 0 28px; color: #e8e8e8; font: 13px system-ui, sans-serif; }
+  .reader button { font: inherit; padding: 3px 10px; cursor: pointer; }
+  /* A stand-in for the game view, at its real 1280×720, so every window is drawn at the size the game draws it. */
+  .screen { position: relative; width: 1280px; height: 720px; overflow: hidden;
+            background: linear-gradient(160deg, #4d6b45, #3a5237 60%, #2f4430); }
+
+  /* ---- a window, as the game's window builder dresses it ---- */
+  .window { position: absolute; background: var(--window-edge); border-radius: 5px; padding: 1px; user-select: none; }
+  .wbody { height: 100%; background: var(--panel-fill); border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; }
+  .titlebar { height: 24px; flex: none; display: flex; align-items: center; padding: 0 2px 0 10px;
+              background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  .titlebar .title { flex: 1; font-size: 13px; font-weight: bold; color: var(--title-text); }
+  .barbtn { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+            color: var(--title-text); font-size: 12px; font-weight: bold; display: grid; place-items: center; }
+  .btn { background: var(--button-edge); border-radius: 3px; padding: 1px; cursor: pointer; }
+  .btn > span { display: flex; align-items: center; justify-content: center; height: 100%; border-radius: 2px;
+                background: var(--button-fill); color: var(--button-text); font-size: 14px; }
+  .btn:hover > span { background: var(--hover); }
+
+  /* ---- the station window: 420 × 460, rows 30 tall, 5 apart, 6 in from the edge ---- */
+  #station { left: 220px; top: 120px; width: 420px; height: 460px; }
+  #station .rows { padding: 6px; display: flex; flex-direction: column; gap: 5px; overflow: auto; }
+  #station .btn { height: 30px; }
+  #station .line { font-size: 14px; color: var(--text-main); min-height: 22px; display: flex; align-items: center; }
+  #station .line.head { font-size: 18px; color: var(--title-text); min-height: 22px; }
+  #station .line.sub { font-size: 12px; color: var(--text-dim); }
+
+  /* ---- the Quests window ---- */
+  #quests { left: 380px; top: 130px; width: 520px; height: 420px; }
+  #quests .content { flex: 1; display: flex; flex-direction: column; padding: 6px; gap: 6px; min-height: 0; }
+  #quests .tabs { height: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  #quests .tab { height: 28px; }
+  #quests .tab.on { background: var(--accent); }
+  #quests .tab.on > span { background: var(--hover); }
+  #quests .split { flex: 1; display: grid; grid-template-columns: 190px 1fr; gap: 6px; min-height: 0; }
+  #quests .list { background: var(--slot-fill); border: 1px solid var(--rule); border-radius: 3px; overflow: auto; }
+  #quests .q { height: 26px; padding: 0 8px; display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; }
+  #quests .q:hover { background: var(--hover); }
+  #quests .q.on { background: var(--panel-raise); font-weight: bold; }
+  #quests .empty { padding: 8px; font-size: 12px; color: var(--text-dim); }
+  #quests .detail { overflow: auto; padding: 2px 4px; }
+  #quests .qt { font-size: 15px; font-weight: bold; color: var(--title-text); margin: 2px 0 4px; }
+  #quests .qd { font-size: 12px; color: var(--text-main); line-height: 1.35; margin-bottom: 8px; }
+  #quests .rule { height: 1px; background: var(--rule); margin: 6px 0; }
+  #quests .step { display: grid; grid-template-columns: 18px 1fr auto; gap: 4px; font-size: 12px; line-height: 20px; color: var(--text-dim); }
+  #quests .step .tick { color: var(--good); font-weight: bold; }
+  #quests .step.now { color: var(--text-main); font-weight: bold; }
+  #quests .step .count { color: var(--text-main); font-weight: normal; }
+
+  /* ---- the guide: everything dark but the one spot, an arrow, and a short text ---- */
+  #guide { position: absolute; inset: 0; pointer-events: none; }
+  #guide .dark { position: absolute; background: rgba(0, 0, 0, 0.62); pointer-events: auto; }
+  #guide .frame { position: absolute; border: 2px solid var(--accent); border-radius: 4px; }
+  #guide .arrow { position: absolute; width: 0; height: 0; border-top: 12px solid transparent; border-bottom: 12px solid transparent;
+                  border-right: 18px solid var(--accent); }
+  #guide .tip { position: absolute; width: 230px; padding: 8px 10px; background: var(--panel-fill); border: 1px solid var(--window-edge);
+                border-radius: 5px; font-size: 13px; line-height: 1.35; color: var(--text-main); }
+  #guide .tip b { color: var(--title-text); }
+  #guide.textonly .dark, #guide.textonly .frame, #guide.textonly .arrow { display: none; }
+</style>
+</head>
+<body>
+
+<p class="note">1 — The Quests window (J, or the Quests button in the status box). Click a tab or a quest. Selecting a quest is what lights the ground arrows to its next step.</p>
+<div class="screen" id="screen1">
+  <section class="window" id="quests" data-mocks="Quests">
+    <div class="wbody">
+      <div class="titlebar"><span class="title">Quests</span><span class="barbtn">_</span><span class="barbtn">X</span></div>
+      <div class="content">
+        <div class="tabs" id="tabs"></div>
+        <div class="split">
+          <div class="list" id="qlist"></div>
+          <div class="detail" id="qdetail"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<p class="note" style="margin-top:28px">2 — At Gunnar the Smith. Click the lit spot to do what the guide asks; nothing else under the dark can be clicked.</p>
+<div class="screen" id="screen2">
+  <section class="window" id="station" data-mocks="Station">
+    <div class="wbody">
+      <div class="titlebar"><span class="title">Station</span><span class="barbtn">X</span></div>
+      <div class="rows" id="srows"></div>
+    </div>
+  </section>
+  <div id="guide" data-mocks="Tutorial Guide">
+    <div class="dark" id="dT"></div><div class="dark" id="dB"></div><div class="dark" id="dL"></div><div class="dark" id="dR"></div>
+    <div class="frame" id="frame"></div><div class="arrow" id="arrow"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+</div>
+<div class="reader"><button id="restart">Start the tutorial again</button><span id="where"></span></div>
+
+<script>
+// ---------------- the tutorial, as its quest data would hold it ----------------
+const WORK = [
+  { id: "sword", name: "Sword", copper: 8, gold: 800, word: "" },
+  { id: "chainmail", name: "Chainmail", copper: 5, gold: 400, word: "Bulwark" },
+  { id: "shield", name: "Iron Kite Shield", copper: 5, gold: 400, word: "Guarding" },
+];
+const FORGE_LIST = [
+  { id: "bow", name: "Bow", copper: 8, gold: 800 }, { id: "mantle", name: "Chain Mantle", copper: 5, gold: 400 },
+  { id: "chainmail", name: "Chainmail", copper: 5, gold: 400 }, { id: "helm", name: "Iron Helm", copper: 5, gold: 400 },
+  { id: "shield", name: "Iron Kite Shield", copper: 5, gold: 400 }, { id: "sabatons", name: "Iron Sabatons", copper: 5, gold: 400 },
+  { id: "sword", name: "Sword", copper: 8, gold: 800 },
+];
+const STEPS = [
+  { text: "Talk to Gunnar the Smith." },
+  ...WORK.flatMap(w => [
+    { text: `Forge ${/^[AEIOU]/.test(w.name) ? "an" : "a"} ${w.name}.`, forge: w.id },
+    { text: `Fold your ${w.name} twice.`, fold: w.id },
+  ]),
+  ...WORK.map(w => ({ text: `Wear your ${w.name}.`, wear: w.id })),
+];
+const QUESTS = {
+  Tutorial: [{ title: "Your First Gear",
+               desc: "Gunnar the Smith makes gear from Copper and gold. You carry just enough for a sword, a chainmail and a shield — and the folds that make them stronger." }],
+  "Main Story": [], "Side Quests": [],
+};
+
+// ---------------- what the server would say about this character ----------------
+let bag, page, picked;
+function reset() { bag = {}; page = "menu"; picked = null; drawStation(); drawQuests(); }
+function stepNow() {
+  for (let i = 1; i < STEPS.length; i++) {
+    const s = STEPS[i];
+    if (s.forge && !bag[s.forge]) return i;
+    if (s.fold && !(bag[s.fold] && bag[s.fold].folds >= 2)) return i;
+    if (s.wear) return i;
+  }
+  return STEPS.length;
+}
+
+// ---------------- the Quests window ----------------
+let tab = "Tutorial", sel = 0;
+function drawQuests() {
+  const tabs = document.getElementById("tabs"); tabs.innerHTML = "";
+  for (const t of Object.keys(QUESTS)) {
+    const b = el("div", "btn tab" + (t === tab ? " on" : ""), `<span>${t}</span>`);
+    b.onclick = () => { tab = t; sel = 0; drawQuests(); };
+    tabs.append(b);
+  }
+  const list = document.getElementById("qlist"), detail = document.getElementById("qdetail");
+  list.innerHTML = ""; detail.innerHTML = "";
+  const qs = QUESTS[tab];
+  if (!qs.length) { list.append(el("div", "empty", "No quests here yet.")); return; }
+  qs.forEach((q, i) => { const r = el("div", "q" + (i === sel ? " on" : ""), q.title); r.onclick = () => { sel = i; drawQuests(); }; list.append(r); });
+  const q = qs[sel], now = stepNow();
+  detail.append(el("div", "qt", q.title), el("div", "qd", q.desc), el("div", "rule"));
+  STEPS.forEach((s, i) => {
+    const done = i < now, cur = i === now;
+    let count = "";
+    if (cur && s.fold) count = `${bag[s.fold] ? bag[s.fold].folds : 0} / 2`;
+    detail.append(el("div", "step" + (cur ? " now" : ""), `<span class="tick">${done ? "✔" : ""}</span><span>${s.text}</span><span class="count">${count}</span>`));
+  });
+}
+
+// ---------------- the station window, as it builds its rows ----------------
+function drawStation() {
+  const rows = document.getElementById("srows"); rows.innerHTML = "";
+  const line = (t, c) => rows.append(el("div", "line " + (c || ""), t));
+  const row = (t, spot, fn) => { const b = el("div", "btn", `<span>${t}</span>`); b.dataset.spot = spot; b.onclick = fn; rows.append(b); };
+  if (page === "menu") {
+    line("Smith", "head");
+    for (const p of ["Forge", "Fold", "Quench", "Ink", "Recycle"]) row(p, "page:" + p, () => { page = p; drawAll(); });
+  } else {
+    line("Smith  ·  " + page, "head");
+    row("← Back", "back", () => { page = "menu"; drawAll(); });
+    if (page === "Forge") {
+      for (const f of FORGE_LIST)
+        row(`${f.name}   ${f.copper} Copper · ${f.gold}g`, "forge:" + f.id, () => { if (!bag[f.id]) bag[f.id] = { folds: 0, word: (WORK.find(w => w.id === f.id) || {}).word || "" }; drawAll(); });
+    } else {
+      const mine = WORK.filter(w => bag[w.id]);
+      if (!mine.length) line("You are carrying nothing this station works on.", "sub");
+      for (const w of mine) row((picked === w.id ? "> " : "") + title(w), "piece:" + w.id, () => { picked = w.id; drawAll(); });
+      if (picked && page === "Fold") {
+        const w = WORK.find(x => x.id === picked);
+        line(`${title(w)}   ${bag[picked].folds} of 5 folds`);
+        row("Fold   1 Copper · 50g", "fold:" + picked, () => { bag[picked].folds++; drawAll(); });
+      }
+    }
+  }
+}
+function title(w) { const p = bag[w.id], f = p.folds ? "+" + p.folds + " " : "";
+  return p.word ? `${f}${p.word} ${w.name} [Raw]` : `Raw${p.folds ? " +" + p.folds : ""} ${w.name}`; }
+
+// ---------------- the guide: the furthest hint whose spot is on screen ----------------
+function hintsFor(i) {
+  const s = STEPS[i];
+  if (!s) return [];
+  if (s.forge) return [
+    { spot: "back", text: "Go back to the station's list." },
+    { spot: "page:Forge", text: "<b>Forge</b> makes a new piece from Copper and gold." },
+    { spot: "forge:" + s.forge, text: "Forge it here. What it costs is on the row." },
+  ];
+  if (s.fold) return [
+    { spot: "back", text: "Go back to the station's list." },
+    { spot: "page:Fold", text: "<b>Fold</b> makes a piece stronger, one fold at a time." },
+    { spot: "piece:" + s.fold, text: "Pick the piece to fold." },
+    { spot: "fold:" + s.fold, text: "Fold it. Each fold costs Copper and gold." },
+  ];
+  if (s.wear) return [{ spot: null, text: "Open your bag with <b>B</b> and double-click a piece to wear it." }];
+  return [];
+}
+function drawGuide() {
+  const g = document.getElementById("guide"), tip = document.getElementById("tip");
+  const scr = document.getElementById("screen2").getBoundingClientRect();
+  const hints = hintsFor(stepNow());
+  let shown = null, target = null;
+  for (const h of hints) {
+    const t = h.spot ? document.querySelector(`[data-spot="${h.spot}"]`) : null;
+    if (t) { shown = h; target = t; } else if (!h.spot && !shown) shown = h;
+  }
+  document.getElementById("where").textContent = "Step " + (stepNow() + 1) + " of " + STEPS.length + ": " + (STEPS[stepNow()] || { text: "done" }).text;
+  if (!shown) { g.style.display = "none"; return; }
+  g.style.display = "";
+  tip.innerHTML = shown.text;
+  if (!target) { g.classList.add("textonly"); place(tip, 1280 / 2 - 115, 600); return; }
+  g.classList.remove("textonly");
+  const r = target.getBoundingClientRect(), x = r.left - scr.left - 3, y = r.top - scr.top - 3, w = r.width + 6, h = r.height + 6;
+  box("dT", 0, 0, 1280, y); box("dB", 0, y + h, 1280, 720 - y - h); box("dL", 0, y, x, h); box("dR", x + w, y, 1280 - x - w, h);
+  box("frame", x, y, w, h);
+  place(document.getElementById("arrow"), x + w + 8, y + h / 2 - 12);
+  place(tip, x + w + 30, Math.max(8, y + h / 2 - 26));
+}
+function box(id, x, y, w, h) { const e = document.getElementById(id); Object.assign(e.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" }); }
+function place(e, x, y) { e.style.left = x + "px"; e.style.top = y + "px"; }
+
+function drawAll() { drawStation(); drawQuests(); drawGuide(); }
+function el(tag, cls, html) { const e = document.createElement(tag); e.className = cls; e.innerHTML = html || ""; return e; }
+document.getElementById("restart").onclick = () => { reset(); drawGuide(); };
+reset(); drawGuide();
+</script>
+</body>
+</html>

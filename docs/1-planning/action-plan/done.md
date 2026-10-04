@@ -172,6 +172,14 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 
 ---
 
+## Week 11 — A stranger can start it
+
+**Goal:** someone who has never seen the game can open it and know what to do. Today the first thing a player meets is a sign-in box.
+
+- [DONE] `MT-31` **`[D]` Decide how much the game explains itself.** Decided 2026-10-04: a tutorial is a quest in the Quests window's Tutorial tab, given to every character, and its steps are taught by the guide (the screen dark except the next button, an arrow, a short text) and by arrows on the ground. The first is crafting: forge, fold and wear a sword, a chainmail and a shield at Gunnar. — **0.5 days**
+
+---
+
 ## Backlog — real work, deliberately not in the weeks above
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.

@@ -128,7 +128,7 @@ them there.
   the experience, the loot and the chance to turn back.
 - **A rebel** stays until it is beaten or its 30 seconds are up. It never summons, even as an elite's ninja.
 - **The same creature, redrawn:** a saved character is a body of the very mob that fell, so it keeps that mob's stats,
-  gear, element and extra skills at the level it had when it died; only its picture, its size, its side and what it pays
+  gear, element and bought skills at the level it had when it died; only its picture, its size, its side and what it pays
   change.
 
 ## Still open

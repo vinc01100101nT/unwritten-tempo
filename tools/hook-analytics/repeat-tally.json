@@ -1,12 +1,7 @@
 {
-  "72ea384d-c573-4bea-bc6b-65255aa36c50": {
+  "aa7a442e-d125-4102-9efd-4664e3bb389e": {
     "counts": {
-      "npm run migrate": 1
-    }
-  },
-  "a37e24ce-511d-435d-8b56-b728ef073780": {
-    "counts": {
-      "unwritten-server.app": 1
+      "npm run typecheck": 1
     }
   },
   "b6f716f6-6077-4ede-8e0e-96850e637db3": {
@@ -66,6 +61,11 @@
       "check-perf-hotpaths.py 2>&1",
       "check-unity-code.sh 2>&1"
     ]
+  },
+  "d620a2f5-7cd2-4f15-840c-2dfff515140a": {
+    "counts": {
+      "npm run migrate": 1
+    }
   },
   "d734b2a1-accb-4eb8-9988-0a452731f172": {
     "counts": {

@@ -25,6 +25,7 @@ MonoBehaviour:
   cardSlots: 0
   weight: 7
   zeny: 40
+  buyPrice: 80
   bonusHP: 0
   bonusAttack: 0
   bonusDefense: 0

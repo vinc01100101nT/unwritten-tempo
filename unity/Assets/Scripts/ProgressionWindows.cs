@@ -158,15 +158,7 @@ public class ProgressionWindows : MonoBehaviour
         var content = UiKit.Window(canvas, "Inventory", new Vector2(742, 528), new Vector2(0, 0), out invRoot);
 
         // tabs
-        var tabRow = UiKit.Img("Tabs", content, new Color(0, 0, 0, 0));
-        tabRow.rectTransform.anchorMin = new Vector2(0, 1);
-        tabRow.rectTransform.anchorMax = new Vector2(1, 1);
-        tabRow.rectTransform.pivot = new Vector2(0.5f, 1);
-        tabRow.rectTransform.sizeDelta = new Vector2(0, 28);
-        tabRow.raycastTarget = false;
-        var hl = tabRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hl.spacing = 4; hl.childControlWidth = hl.childControlHeight = true;
-        hl.childForceExpandWidth = true; hl.childForceExpandHeight = true;
+        var tabRow = UiKit.TabRow(content);
 
         AddTab(tabRow.transform, "All", false, default);
         AddTab(tabRow.transform, "Equip", true, ItemCategory.Equip);

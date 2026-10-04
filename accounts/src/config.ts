@@ -16,15 +16,24 @@ function optionalInt(name: string, fallback: number): number {
   return n;
 }
 
-export const config = {
-  port: optionalInt("PORT", 8080),
+function requiredInt(name: string): number {
+  const v = required(name);
+  const n = Number(v);
+  if (!Number.isInteger(n)) throw new Error(`${name} must be a whole number, got "${v}".`);
+  return n;
+}
 
-  // WHICH ADDRESSES THIS ANSWERS ON. The default answers on all of them, which is what a machine on your own
+// Addresses and ports have no default here: settings.env is the one place they are written, so a value typed in
+// this file could only ever disagree with it.
+export const config = {
+  port: requiredInt("PORT"),
+
+  // WHICH ADDRESSES THIS ANSWERS ON. 0.0.0.0 answers on all of them, which is what a machine on your own
   // desk needs. On a hosted machine set this to 127.0.0.1: the encrypting proxy sits on the same machine and
   // reaches it there, and nothing on the internet can then reach this service unencrypted — a password sent
   // to the open port would travel readable, and no amount of certificate on the proxy prevents that while a
   // second, plain door stands open beside it.
-  bindHost: process.env.BIND_HOST || "0.0.0.0",
+  bindHost: required("BIND_HOST"),
 
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),

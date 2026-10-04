@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 106a9e95425d80943adccfcbc2e2d493, type: 3}
+  m_Name: SideLastlinePloplings
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDef
+  id: side.lastline.ploplings
+  title: Ploplings at the West Gate
+  category: 2
+  description: Torvald wants the Ploplings in the field west of Lastline thinned
+    out.
+  givenAutomatically: 0
+  offeredBy: torvald
+  offerText: 'Ploplings again. They come bouncing through the west gate every morning
+    and nobody does a thing about it.
+
+
+    Go out to the field west of town and
+    put down ten of them. Come back and tell me, and I''ll make it worth your while.'
+  reward:
+    gold: 300
+    experience: 25
+    items:
+    - itemId: item.minor-healing-potion
+      count: 5
+  steps:
+  - id: kill-ploplings
+    text: Defeat 10 Ploplings in the field west of Lastline.
+    objective:
+      kind: 4
+      townspersonId: 
+      itemId: 
+      folds: 1
+      creatureId: mob.plopling
+      count: 10
+      map: lst_fild01
+    hints: []
+  - id: report-torvald
+    text: Tell Torvald the Ploplings are dealt with.
+    objective:
+      kind: 0
+      townspersonId: torvald
+      itemId: 
+      folds: 1
+      creatureId: 
+      count: 1
+      map: 
+    hints:
+    - spot: 0
+      text: Follow the arrows back to Torvald and press F beside him.

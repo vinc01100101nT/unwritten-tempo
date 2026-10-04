@@ -513,6 +513,9 @@ public class WorldCreator : EditorWindow
             // A painted picture needs no scene opened, so it is baked either way.
             bool baked = picture != null || leaveScenesOpen;
             if (baked) BakeWorldMap(CollectEntries(world), picture, false);
+            // THE DOORS BETWEEN MAPS go into the atlas every time, from this same layout — the game finds its way
+            // between maps by them (quest arrows), so they must never be a bake behind the maps.
+            WorldAtlasBaker.WriteLinks(LinksOf(world));
 
             string summary = $"Generated {built} maps and {portalCount} portals from {sourceName}"
                            + (baked ? ", and baked the world map" : " (the world map is NOT re-baked)")
@@ -541,7 +544,15 @@ public class WorldCreator : EditorWindow
         if (pic == null) return "ERROR: no picture at " + picturePath;
         var entries = CollectEntries(w);
         WorldAtlasBaker.BakePainted(entries, pic, false);
+        WorldAtlasBaker.WriteLinks(LinksOf(w));
         return $"Baked the world map: {pic.name} with {entries.Count} maps.";
+    }
+
+    /// <summary>The layout's portal pairs, as the atlas keeps them.</summary>
+    static IEnumerable<(string a, string b)> LinksOf(WorldJson world)
+    {
+        if (world?.portals == null) yield break;
+        foreach (var p in world.portals) if (p != null) yield return (p.a, p.b);
     }
 
     struct PortalSpec { public string name, target, targetType, spawnId, edge; public float offset; }

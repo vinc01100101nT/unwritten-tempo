@@ -971,6 +971,37 @@ static class Checks
              && !Sides.Hostile(Side.None, Side.Creatures) && !Sides.Hostile(Side.Players, Side.None), S, "only the two opposite sides fight; nobody fights one who stands with nobody");
     }
 
+    // ---- quest steps: judged on what the character holds (decided 2026-10-04) ----------------------------------
+    // A wrong answer here is silent: a step that never finishes looks like a player who has not done it yet, and one
+    // that finishes too early skips a lesson nobody notices was skipped.
+    const string QuestF = "unity/Assets/Scripts/QuestMath.cs";
+    const string RoutesF = "unity/Assets/Scripts/WorldRoutes.cs";
+
+    static void QuestSteps()
+    {
+        var bag = new List<QuestHeld> { new QuestHeld { itemId = "item.sword", folds = 1, quality = Quality.Raw } };
+        That(QuestMath.Met(QuestObjectiveKind.Have, "item.sword", 1, bag), QuestF, "a sword in the bag is 'have a sword'");
+        That(!QuestMath.Met(QuestObjectiveKind.FoldedTo, "item.sword", 2, bag), QuestF, "one fold is not 'folded twice'");
+        That(!QuestMath.Met(QuestObjectiveKind.Wear, "item.sword", 1, bag), QuestF, "a sword in the bag is not a sword worn");
+        var worn = new List<QuestHeld> { new QuestHeld { itemId = "item.sword", folds = 0, quality = Quality.F, worn = true } };
+        That(QuestMath.Met(QuestObjectiveKind.Have, "item.sword", 1, worn), QuestF, "a worn sword still counts as 'have a sword'");
+        That(QuestMath.Met(QuestObjectiveKind.FoldedTo, "item.sword", 2, worn), QuestF, "a sword above Raw counts as folded (a quench spends its folds)");
+        That(QuestMath.Met(QuestObjectiveKind.Wear, "item.sword", 1, worn), QuestF, "a worn sword is a sword worn");
+        That(!QuestMath.InBag("item.sword", worn), QuestF, "a worn sword is not in the bag, where a station works");
+        That(!QuestMath.Met(QuestObjectiveKind.TalkTo, "item.sword", 1, bag), QuestF, "a talk step is never met by holding something");
+        That(QuestMath.CanPay(8, 8, 800, 800) && !QuestMath.CanPay(7, 8, 800, 800) && !QuestMath.CanPay(8, 8, 799, 800),
+             QuestF, "a bill is paid only when both the material and the gold cover it");
+
+        var doors = new Dictionary<string, List<string>>
+        {
+            ["a"] = new List<string> { "b", "c" }, ["b"] = new List<string> { "a", "d" },
+            ["c"] = new List<string> { "a" }, ["d"] = new List<string> { "b" },
+        };
+        That(WorldRoutes.NextFrom(doors, "a", "d", out int n) == "b" && n == 2, RoutesF, "a to d goes through b, two doors");
+        That(WorldRoutes.NextFrom(doors, "a", "a", out n) == "a" && n == 0, RoutesF, "the same map is no doors away");
+        That(WorldRoutes.NextFrom(doors, "a", "z", out n) == null && n == -1, RoutesF, "a map with no way to it has no next map");
+    }
+
     static int Main()
     {
         ExperienceCurve();
@@ -993,6 +1024,7 @@ static class Checks
         WalkingRule();
         WaterRules();
         SavedCharacterNumbers();
+        QuestSteps();
 
         if (failures == 0)
         {

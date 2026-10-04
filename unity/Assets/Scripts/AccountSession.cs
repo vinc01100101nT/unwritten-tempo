@@ -17,13 +17,13 @@ using UnityEngine;
 /// </summary>
 public static class AccountSession
 {
-    /// <summary>Where the account service lives. Overridden by the ACCOUNTS_URL environment variable so a
-    /// build can point at a real host without a rebuild.
+    /// <summary>Where the account service lives: ACCOUNTS_URL, from the environment so a build can point at a
+    /// real host without a rebuild. Empty when nobody set it — there is no address written here to fall back on.
     ///
     /// <para>A copy handed to a player has neither, and is aimed by the settings file it was built with — the
     /// same one setting, read by <see cref="ServerAddress.Setting"/>, which is why a whole address including
     /// <c>https://</c> can be given here without a line of this changing.</para></summary>
-    public static string ServerUrl => ServerAddress.Setting("ACCOUNTS_URL") ?? "http://localhost:" + ServerAddress.AccountsPort;
+    public static string ServerUrl => ServerAddress.Setting("ACCOUNTS_URL") ?? "";
 
     /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,
     /// as opposed to signing in, which stays with the account service above.

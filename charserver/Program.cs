@@ -12,6 +12,9 @@ var config = Config.FromEnvironment();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls($"http://{config.BindHost}:{config.Port}");
+// The host's own start-up lines are held back: "Now listening on: http://0.0.0.0:8081" is an address nobody can
+// open. Addresses (below, once started) prints the ones that answered instead. Its other three lines go with it.
+builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
 
 // NOBODY IS TOLD HOW THIS SERVER IS BUILT. Left as the scaffolding made it, an unhandled fault answers the
 // caller with the exception and its stack — which anyone can reach, without a token, by sending a malformed
@@ -124,9 +127,8 @@ app.MapPost("/map-servers", async (HttpContext http, MapServerRegistration? reg)
 
     var registered = maps.Register(reg.id, reg.address, reg.arrivalsAddress, reg.port, reg.playerPort,
                                    reg.maps ?? [], reg.build, reg.players, reg.creatures, reg.startingMap);
-    Console.WriteLine($"[char] map server '{registered.Id}' at {registered.ArrivalsAddress}:{registered.Port} " +
-                      $"holds {registered.Maps.Length} map(s): {string.Join(", ", registered.Maps)} " +
-                      $"[{registered.Players} player(s), {registered.Creatures} creature(s)]");
+    // Answered at once; the check-in is said after its address has been tried, which can take a second.
+    _ = maps.SayCheckIn(registered);
     return Results.Ok(new { ok = true, holding = registered.Maps.Length });
 });
 
@@ -166,7 +168,13 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     int handover = body.TryGetProperty("handover", out var h) && h.ValueKind == JsonValueKind.Number
                    && h.TryGetInt32(out var hv) ? hv : 0;
 
+    // THE QUEST ROWS THAT CHANGED, riding beside the progress so the two land together or not at all (see
+    // 009_character_quest.sql). Absent or empty is the ordinary case: nothing about any quest moved.
+    var questCheck = QuestRows.Check(body, handover);
+    if (!questCheck.Ok) return Results.Json(new { error = questCheck.Reason }, statusCode: 400);
+
     await using var conn = await db.ConnectAsync();
+    await using var tx = await conn.BeginTransactionAsync();
     await using var cmd = new Npgsql.NpgsqlCommand(keepsLook
         ? @"update character set progress = $2, updated_at = now()
              where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id"
@@ -176,12 +184,19 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
                                                   'dyeSources', progress -> 'dyeSources',
                                                   'dyeTargets', progress -> 'dyeTargets'),
                    updated_at = now()
-             where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id", conn);
+             where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id", conn, tx);
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = characterId });
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = raw, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb });
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = handover });
 
-    if (await cmd.ExecuteScalarAsync() is not null) return Results.Ok(new { ok = true });
+    if (await cmd.ExecuteScalarAsync() is not null)
+    {
+        // Only once the progress itself was taken: the same character, the same hand-over, the same transaction.
+        if (questCheck.Rows is { } questRows) await QuestRows.WriteAsync(conn, tx, characterId, questRows);
+        await tx.CommitAsync();
+        return Results.Ok(new { ok = true });
+    }
+    await tx.RollbackAsync();
     if (handover == 0) return Results.Json(new { error = "no such character" }, statusCode: 404);
 
     // NOT WRITTEN, AND A NUMBER WAS GIVEN: either the character is gone, or this save is from an older hand-over.
@@ -260,10 +275,24 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
     if (body is null || string.IsNullOrWhiteSpace(body.map))
         return Results.Json(new { error = "send { map: … }" }, statusCode: 400);
 
+    // SOMEBODY MUST BE HOLDING IT BEFORE ANYBODY IS SENT TO IT. Nobody is given a list of zones at start-up, so a
+    // zone nobody is standing in is held by nobody — the ordinary state, not a fault. This puts it on the quietest
+    // process and waits for it to actually stand up. Asked first: if it cannot come up, nothing below has happened and
+    // the server they are leaving can still write them down.
+    var to = (await maps.EnsureHeldAsync(body.map, http.RequestAborted)).Server;
+    if (to is null)
+        return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
+
     await using var conn = await db.ConnectAsync();
+    // A NEW HAND-OVER, BEFORE THE READ: the server they are leaving can no longer write them down (see Handover), so
+    // nothing it sends after this lands between the read and the announcement.
+    if (await Handover.NextAsync(conn, characterId) is not int handover)
+        return Results.Json(new { error = "no such character" }, statusCode: 404);
+
     // The hotbar rides in the same read: its own row, and none at all for a character that never had one written.
+    // The quest rows come as one sub-selected JSON array (see QuestRows).
     await using var read = new NpgsqlCommand(
-        @"select c.id, c.name, c.progress, h.slots
+        @"select c.id, c.name, c.progress, h.slots, " + QuestRows.ReadAsJson + @"
             from character c left join character_hotbar h on h.character_id = c.id
            where c.id = $1 and c.deleted_at is null", conn);
     read.Parameters.Add(new NpgsqlParameter { Value = characterId });
@@ -271,30 +300,23 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
     string name;
     JsonDocument progress;
     JsonDocument? hotbar;
+    JsonDocument quests;
     await using (var rows = await read.ExecuteReaderAsync())
     {
         if (!await rows.ReadAsync()) return Results.Json(new { error = "no such character" }, statusCode: 404);
         name = rows.GetString(1);
         progress = JsonDocument.Parse(rows.GetString(2));
         hotbar = rows.IsDBNull(3) ? null : JsonDocument.Parse(rows.GetString(3));
+        quests = JsonDocument.Parse(rows.GetString(4));
     }
 
     using (progress)
     using (hotbar)
+    using (quests)
     {
-        // SOMEBODY MUST BE HOLDING IT BEFORE ANYBODY IS SENT TO IT. Nobody is given a list of zones at start-up,
-        // so a zone nobody is standing in is held by nobody — the ordinary state, not a fault. This puts it on
-        // the quietest process and waits for it to actually stand up.
-        var to = (await maps.EnsureHeldAsync(body.map, http.RequestAborted)).Server;
-        if (to is null)
-            return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
-
         var ticket = maps.MintTicket(body.accountId ?? "", characterId.ToString());
-        // A NEW HAND-OVER: the server they are leaving can no longer write them down (see Handover).
-        if (await Handover.NextAsync(conn, characterId) is not int handover)
-            return Results.Json(new { error = "no such character" }, statusCode: 404);
         bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, hotbar?.RootElement,
-                                              body.isGm, handover, http.RequestAborted);
+                                              quests.RootElement, body.isGm, handover, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
 
@@ -326,7 +348,14 @@ app.MapGet("/health", async () =>
     }
 });
 
-Console.WriteLine($"[char] listening on {config.Port}, {roster.Models.Count} character models, database reachable.");
+Console.WriteLine($"[char] {roster.Models.Count} character models, database reachable.");
+// SAID ONCE THE PORT IS REALLY OPEN, and only for the addresses that answered — see Addresses. The address players'
+// copies dial is the same choice tools/build-game.sh makes when it writes it into a build.
+var givenSetting = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PUBLIC_CHAR_SERVER_URL"))
+    ? "PUBLIC_CHAR_SERVER_URL"
+    : !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CHAR_SERVER_URL")) ? "CHAR_SERVER_URL" : null;
+app.Lifetime.ApplicationStarted.Register(() => _ = Addresses.ReportAndWatch(
+    config.Port, givenSetting, givenSetting is null ? null : Environment.GetEnvironmentVariable(givenSetting)));
 Console.WriteLine(gameVersion.IsOn
     ? $"[char] game version check ON — players need version '{gameVersion.Current ?? "(none published yet)"}' from {config.PatchDir}"
     : "[char] game version check off — PATCH_DIR is not set, so no copy is turned away for being out of date.");

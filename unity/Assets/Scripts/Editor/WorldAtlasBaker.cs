@@ -189,6 +189,20 @@ public static class WorldAtlasBaker
         return AssetDatabase.LoadAssetAtPath<Texture2D>(AtlasPngPath);
     }
 
+    /// <summary>Write the doors between maps — the layout's portal pairs — into the world atlas, replacing what was there.
+    /// What the game finds its way between maps by (<see cref="WorldRoutes"/>); run with every bake, from the same
+    /// layout, so the two never differ. <c>tools/check-map-ids.py</c> fails when they do.</summary>
+    public static void WriteLinks(IEnumerable<(string a, string b)> pairs)
+    {
+        var asset = AssetDatabase.LoadAssetAtPath<WorldAtlas>(AtlasAssetPath);
+        if (asset == null) return;
+        asset.links.Clear();
+        foreach (var (a, b) in pairs)
+            if (!string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b)) asset.links.Add(new WorldAtlas.Link { a = a, b = b });
+        EditorUtility.SetDirty(asset);
+        AssetDatabase.SaveAssets();
+    }
+
     static void WriteAsset(Texture2D texture, List<Entry> entries, float minX, float minY, float worldW, float worldH, float ppu)
     {
         var asset = AssetDatabase.LoadAssetAtPath<WorldAtlas>(AtlasAssetPath);

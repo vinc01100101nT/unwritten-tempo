@@ -37,7 +37,6 @@ MonoBehaviour:
   gearInkTier: 5
   ringRankStats: 000000000900000002000000
   ringRankValues: 280000002800000028000000
-  weaponMasteryLevel: 160
   xpReward: 2000
   aggroRadius: 8
   leashRadius: 14

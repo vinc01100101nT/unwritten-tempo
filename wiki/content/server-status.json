@@ -4,8 +4,7 @@
     { "type": "lede", "text": "Who is playing right now, which parts of the world are standing, and who has earned the most." },
     {
       "type": "serverStats",
-      "from": "http://127.0.0.1:8081/stats",
-      "note": "Where these numbers are read from. The character server is the only thing that sees every world process at once, so it is the only thing that can answer this. Change this address when the wiki is served from somewhere other than this machine — and add that address to the character server's WIKI_ORIGINS, or a browser will refuse the read."
+      "note": "Read from the character server, the only thing that sees every world process at once. Its address is never typed here: publishing writes PUBLIC_CHAR_SERVER_URL from settings.env (CHAR_SERVER_URL while that is empty) into the site, and the character server lets the site read it when the site's address is PATCH_URL or is listed in WIKI_ORIGINS."
     },
     { "type": "heading", "level": 2, "text": "What these numbers mean" },
     {

@@ -127,8 +127,16 @@ public class Item : ScriptableObject
     public int cardSlots;
     [Tooltip("Display-only weight (v1). Real encumbrance lands with the loot loop.")]
     public int weight;
-    [Tooltip("Sell value in zeny.")]
+    [Tooltip("Sell value in zeny — what a shop pays for one. 0 = it cannot be sold to an NPC, whatever kind of item it is.")]
     public int zeny;
+
+    /// <summary>Can a shop buy this: its sell value is above 0. The one rule, for every kind of item.</summary>
+    public bool CanBeSold => zeny > 0;
+
+    /// <summary>What every readout says in place of a sell value of 0.</summary>
+    public const string CannotBeSoldText = "Cannot be sold to NPC";
+    [Tooltip("What a shop charges for one, in gold. 0 = no shop sells it — a shop that lists it anyway leaves it out.")]
+    [Min(0)] public int buyPrice;
 
     // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds
     // and its quality, worked out by the server when it is forged, folded or quenched, plus whatever Ink has

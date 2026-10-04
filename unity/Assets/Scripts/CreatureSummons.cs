@@ -35,11 +35,14 @@ public class CreatureSummons : MonoBehaviour
         if (health != null) health.onDeath.AddListener(DismissAll);
     }
 
-    /// <summary>Is everything this summoner may have out, out? True for a summoner that has nothing it could call.</summary>
+    /// <summary>Is everything this summoner may have out, out? True for a summoner that has nothing it could call, and for
+    /// one that may not summon at all this life — itself a summon, or turned back into a saved character — so it never
+    /// picks the skill even when it has bought it.</summary>
     public bool AtMax
     {
         get
         {
+            if (MayNotSummon) return true;
             EnsurePicks();
             if (picks.Count == 0) return true;
             int max = 0, have = 0;
@@ -48,10 +51,13 @@ public class CreatureSummons : MonoBehaviour
         }
     }
 
+    // A summoned creature never summons, and neither does a saved character, whatever either has bought.
+    bool MayNotSummon => health == null || health.IsSummoned || health.IsSavedCharacter;
+
     /// <summary>Top every group back up to its share. What one cast of the summon skill does.</summary>
     public void SummonNow()
     {
-        if (!GameServer.IsServer || health == null || health.IsDead || health.IsSummoned) return;
+        if (!GameServer.IsServer || health == null || health.IsDead || MayNotSummon) return;
         EnsurePicks();
         for (int g = 0; g < picks.Count; g++)
         {

@@ -15,8 +15,8 @@ public sealed class Config
     public required string JwtSecret { get; init; }
     public required int Port { get; init; }
 
-    /// <summary>Which addresses this answers on. The default answers on all of them, which is what a machine on
-    /// your own desk needs. On a hosted machine set BIND_HOST to 127.0.0.1: the encrypting proxy sits on the same
+    /// <summary>Which addresses this answers on (BIND_HOST). 0.0.0.0 answers on all of them, which is what a machine
+    /// on your own desk needs. On a hosted machine set BIND_HOST to 127.0.0.1: the encrypting proxy sits on the same
     /// machine and reaches it there, and nothing on the internet can then reach this server unencrypted — a
     /// character's save sent to the open port would travel readable, and a certificate on the proxy does not
     /// prevent that while a second, plain door stands open beside it.</summary>
@@ -48,8 +48,10 @@ public sealed class Config
         {
             DatabaseUrl = Required("DATABASE_URL"),
             JwtSecret = Required("JWT_SECRET"),
-            Port = OptionalInt("CHAR_SERVER_PORT", 8081),
-            BindHost = Environment.GetEnvironmentVariable("BIND_HOST") ?? "0.0.0.0",
+            // Addresses and ports have no default here: settings.env is the one place they are written, so a value
+            // typed in this file could only ever disagree with it.
+            Port = RequiredInt("CHAR_SERVER_PORT"),
+            BindHost = Required("BIND_HOST"),
             MaxProgressBytes = OptionalInt("MAX_PROGRESS_BYTES", 256 * 1024),
             ServerSecret = Required("SERVER_SECRET"),
             PatchDir = Environment.GetEnvironmentVariable("PATCH_DIR"),
@@ -69,20 +71,13 @@ public sealed class Config
 
     /// <summary>Where the website is served from when nobody says otherwise: the download server, which serves the
     /// site from the same folder as the updates. Its address is PATCH_URL; this computer's own two names for that
-    /// port are added because a browser on this computer sends whichever one was typed. With no PATCH_URL the port
-    /// is 8090, the download server's own default (tools/serve-updates.sh).</summary>
+    /// port are added because a browser on this computer sends whichever one was typed. With no PATCH_URL there is
+    /// no website, and no page is let in.</summary>
     static string WebsiteOrigins(string? patchUrl)
     {
-        var port = 8090;
-        var origins = new List<string>();
-        if (Uri.TryCreate(patchUrl, UriKind.Absolute, out var uri))
-        {
-            port = uri.Port;
-            origins.Add(uri.GetLeftPart(UriPartial.Authority));
-        }
-        origins.Add($"http://127.0.0.1:{port}");
-        origins.Add($"http://localhost:{port}");
-        return string.Join(',', origins);
+        if (!Uri.TryCreate(patchUrl, UriKind.Absolute, out var uri)) return "";
+        return string.Join(',', uri.GetLeftPart(UriPartial.Authority),
+                           $"http://127.0.0.1:{uri.Port}", $"http://localhost:{uri.Port}");
     }
 
     /// <summary>Split a comma-separated list of addresses, dropping any trailing slash so that the value here
@@ -93,6 +88,14 @@ public sealed class Config
         foreach (var one in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             set.Add(one.TrimEnd('/'));
         return set;
+    }
+
+    static int RequiredInt(string name)
+    {
+        var v = Required(name);
+        if (!int.TryParse(v, out var n))
+            throw new InvalidOperationException($"{name} must be a whole number, got \"{v}\".");
+        return n;
     }
 
     static int OptionalInt(string name, int fallback)

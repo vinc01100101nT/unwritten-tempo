@@ -26,9 +26,6 @@ public class GameNetwork : NetworkManager
     /// <summary>The port both sides use. One value, read the same way on both, so they cannot disagree.</summary>
     public const string PortEnvVar = "GAME_SERVER_PORT";
 
-    const string DefaultHost = "localhost";
-    const ushort DefaultPort = 7777;
-
     /// <summary>How far away a player is still told about a thing, in world units. See where it is used for why 60.</summary>
     const int VisibleRange = 60;
 
@@ -172,6 +169,15 @@ public class GameNetwork : NetworkManager
         if (shell != null) shell.stationKind = station;
     }
 
+    /// <summary>Ask the server to accept <paramref name="questId"/> from the townsperson whose body is
+    /// <paramref name="npcBody"/>. The server decides; this only asks.</summary>
+    public static void TellServerAcceptQuest(GameObject npcBody, string questId)
+    {
+        var shell = NetNpc.ShellForView(npcBody);
+        if (shell == null) return;
+        MyPlayer?.AskToAcceptQuest(questId, shell.netId);
+    }
+
     /// <summary>Ask the server to start, or stop, a conversation with the townsperson whose body is
     /// <paramref name="npcBody"/>. Called on the machine of the person pressing F; silent with no world, where the
     /// townsperson is this machine's own and stops on its own.</summary>
@@ -205,7 +211,8 @@ public class GameNetwork : NetworkManager
         spawned.transport = kcp;
         Transport.active = kcp;
 
-        spawned.networkAddress = Environment.GetEnvironmentVariable(HostEnvVar) ?? DefaultHost;
+        // A client is told where to dial by the character server; this is only where it starts.
+        spawned.networkAddress = ServerAddress.Setting(HostEnvVar) ?? "";
 
         // The body every connected player is seen as. Loaded by NAME from Resources so both halves resolve
         // the same asset with no scene wiring — the same way the skill and monster catalogs already load.
@@ -268,6 +275,14 @@ public class GameNetwork : NetworkManager
             var interest = go.AddComponent<SceneDistanceInterestManagement>();
             interest.visRange = VisibleRange;
 
+            if (kcp.port == 0)
+            {
+                GameLog.Error(LogCat.Server, Shout(PortEnvVar + " is not set in settings.env, so this server has no "
+                                     + "port for players to connect on. It is quitting."));
+                Stop();
+                return;
+            }
+
             // IS ANYBODY ALREADY THERE. Asked BEFORE listening, because the failure it prevents is silent: the
             // wire layer throws when the port is taken, so the "listening" line below never runs and this copy
             // goes on standing in the process list having bound nothing at all. It looks alive, it answers
@@ -289,7 +304,7 @@ public class GameNetwork : NetworkManager
 
             spawned.StartServer();
             GameLog.ApplyStartSetting();
-            GameLog.Info(LogCat.Server, "listening for players on port " + kcp.port);
+            ReachableAddresses.ReportAndWatch(kcp.port, MapServerLink.PlayerAddress);
             // Said here, on the server, because the server's log is the one a play-test actually reads.
             GameLog.AnnounceToTesters();
         }
@@ -392,10 +407,12 @@ public class GameNetwork : NetworkManager
     /// to be able to tell somebody where to knock.</summary>
     public static ushort PlayerPort => PortFromEnvironment();
 
+    /// <summary>GAME_SERVER_PORT from settings.env, or 0 when it is not set — no port is written here to fall back
+    /// on. A server refuses to start without it; a client is told its port by the character server.</summary>
     static ushort PortFromEnvironment()
     {
-        string raw = Environment.GetEnvironmentVariable(PortEnvVar);
-        return ushort.TryParse(raw, out ushort p) && p != 0 ? p : DefaultPort;
+        string raw = ServerAddress.Setting(PortEnvVar);
+        return ushort.TryParse(raw, out ushort p) ? p : (ushort)0;
     }
 
     /// <summary>Can a server actually take this port? Answered by BINDING it exactly the way the wire layer is
@@ -439,7 +456,7 @@ public class GameNetwork : NetworkManager
     ///
     /// <para>Reserved for a line the reader MUST not miss. Colouring anything else would spend the one thing that
     /// makes this work — that almost nothing else is red.</para></summary>
-    static string Shout(string line) => "\u001b[31m" + line + "\u001b[0m";
+    internal static string Shout(string line) => "\u001b[31m" + line + "\u001b[0m";
 
     /// <summary>Give up and go, reporting a failure. Ending the process is the same act however it was asked
     /// for, so it is written once in <see cref="GameExit"/> and this only says WHY it is ending.</summary>
@@ -1421,6 +1438,14 @@ public class GameNetwork : NetworkManager
             return mobShell != null ? mobShell.netIdentity : null;
         }
         return null;
+    }
+
+    /// <summary>Server-only: the shell of the player playing <paramref name="fighter"/>, found through the fighter's own
+    /// identity — one lookup, not a walk over every connection, because a kill asks it.</summary>
+    public static NetPlayer ShellOfFighter(Character fighter)
+    {
+        var identity = IdentityOfFighter(fighter);
+        return identity != null ? identity.GetComponent<NetPlayer>() : null;   // perf-ok: on a quest kill, never per frame
     }
 
     static NetworkIdentity IdentityOfFighter(Character fighter)
@@ -2628,8 +2653,10 @@ public class GameNetwork : NetworkManager
         // AND A CHARACTER TO GO WITH THE BODY — the one that was PUSHED here, already in hand. Nothing is
         // fetched: this server never asks the character store for anything, which is the whole point of the
         // character server announcing somebody before sending them.
-        PlayerFighter.BuildFrom(np, announced);
+        // THE HAND-OVER NUMBER FIRST: building them can already ask for a save (a new character's kit, a quest given on
+        // arrival), and a save carrying 0 would be taken unchecked.
         if (np != null) np.ServerHandover = announced.handover;
+        PlayerFighter.BuildFrom(np, announced);
 
         GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone")
                   + " (" + (np != null && !string.IsNullOrEmpty(np.ServerCharacterId) ? np.ServerCharacterId : "no player id")
@@ -2665,6 +2692,7 @@ public class GameNetwork : NetworkManager
         // has not landed by then is sent by the next start instead of being lost.
         SaveOutbox.WriteAllToDisk();
         GameLog.Info(LogCat.Server, "stopping — asked for a write for every player still here.");
+        ReachableAddresses.Stop();
         shellByConnection.Clear();   // nothing about the world that just ended survives into the next one
         base.OnStopServer();
     }

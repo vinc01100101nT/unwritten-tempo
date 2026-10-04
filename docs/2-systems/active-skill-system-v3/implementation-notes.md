@@ -68,13 +68,13 @@ speed and cast speed are all picked from the `subStat` dropdown rather than bein
 Immune To Disables and the outgoing-damage charges stayed as their own kinds because none of them moves a sub-stat —
 they are windows, pools and charges. **Do not re-add a per-stat verb**; that is the DRY violation this collapse removed.
 
-`seconds` **means one thing: ongoing-CONDITION duration.** Instant and movement kinds keep it 0, so the tray/nameplate
+`seconds` **means one thing: ongoing-CONDITION duration.** Instant and movement kinds keep it 0, so the tray/target-panel
 rule "duration &gt; 0 ⇒ show an icon" is exact and needs no kind checks.
 
 ## The unified state store
 
 ONE `UnitStates` per unit — player and mob alike — holding every buff, debuff and ailment, and serving as the single
-source for BOTH gameplay queries AND display (player buff tray + mob nameplate icons). It absorbed the old scattered
+source for BOTH gameplay queries AND display (player buff tray + the target panel's icons). It absorbed the old scattered
 ailment arrays, the eight hand-written buff windows on `Character`, and the separate mob vulnerability field; all of
 those are deleted.
 
@@ -93,8 +93,11 @@ the tray the other, so a move-speed buff sped the player up while showing no ico
 player's store **lazily from `Character.Instance.States`** for this reason. Mobs are one GameObject and were always
 fine. See memory `player-two-gameobjects-one-store`.
 
-*Where a mob's icons show:* on the plate over the unit you are pointing at, damaged or not. No unit draws a plate
-under its feet — every creature, elite, shadow, person and villager reads through that one hover plate.
+*Where another unit's icons show:* only on the target panel at the top of the screen, for the unit you clicked — a
+creature you are fighting or a person you selected — damaged or not. While a unit is on that panel the server keeps
+this machine told about its states, so the icons stay live. No floating plate draws icons: the plate over the
+creature you point at and the plates kept up over you and every other player show a name, health and mana only.
+Your own icons are on the tray.
 
 ## Stacks, charges and the gate
 

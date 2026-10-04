@@ -76,6 +76,8 @@ public class HotbarPanel : MonoBehaviour
         // Ensure the buff bar exists even on a GameUICanvas built BEFORE it was added to the shell (so it appears
         // without a Build UI Shell rebuild). Idempotent — skips if the shell already added one.
         if (GetComponent<BuffBarPanel>() == null) gameObject.AddComponent<BuffBarPanel>();
+        // The shop window — added the same way, so a HUD built before shops existed still has one. Idempotent.
+        if (GetComponent<ShopPanel>() == null) gameObject.AddComponent<ShopPanel>();
         // The stamina gauge — added the same way so it appears without a shell rebuild. Idempotent.
         if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
         TryBuild();
@@ -143,6 +145,7 @@ public class HotbarPanel : MonoBehaviour
             }
         slots.Clear();
         SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating
+        ItemTooltip.HideTip();
         built = false;   // Update() will TryBuild() again next frame, reading the new bar
     }
 
@@ -368,6 +371,8 @@ public class HotbarPanel : MonoBehaviour
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = index;
         drag.tint = s.kind == Kind.Skill && s.skill != null ? s.skill.Tint : UiKit.Accent;
+        // An item or a piece sits on a white tile, where the white key letter would vanish; it takes the name's colour.
+        if (s.kind == Kind.Item || s.kind == Kind.Gear) key.color = UiKit.TextMain;
         key.transform.SetAsLastSibling();
         return s;
     }
@@ -426,22 +431,28 @@ public class HotbarPanel : MonoBehaviour
         var count = NewText("Count", s.cell.transform, stack.count.ToString(), 11, FontStyle.Bold, TextAnchor.LowerRight,
                             UiKit.TitleText);
         Stretch(count.rectTransform, 3, 2);
+        var def = stack.def;
+        HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowFor(def), ItemTooltip.HideTip);
     }
 
     void BuildGear(Slot s, string copyId)
     {
         var me = Character.Instance;
         if (!me.FindCopy(copyId, out int bagIndex, out bool worn)) return;
-        Item def = null;
-        if (!worn) def = me.Bag[bagIndex].def;
+        EquipmentInstance inst = null;
+        if (!worn) inst = me.Bag[bagIndex].instance;
         else
             foreach (var kv in me.Gear.Worn)
-                if (kv.Value != null && kv.Value.copyId == copyId) { def = kv.Value.def; break; }
-        if (def == null) return;
+                if (kv.Value != null && kv.Value.copyId == copyId) { inst = kv.Value; break; }
+        if (inst == null || inst.def == null) return;
         s.kind = Kind.Gear;
         s.copyId = copyId;
         s.cell.color = UiKit.SlotFill;
-        NameOnTile(s.cell.transform, def.displayName);
+        // The copy's own name, exactly as its bag row reads ("+15 Petal Storm [C]"), not the bare design's.
+        NameOnTile(s.cell.transform, ItemTooltip.CopyTitle(inst));
+        // The same tooltip its row shows: in the bag, the equip preview; worn, the plain card.
+        if (worn) HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowFor(inst), ItemTooltip.HideTip);
+        else HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowForPreview(inst, inst.def.slot), ItemTooltip.HideTip);
     }
 
     // A name on a light tile: largest size that fits between NameMinSize and NameMaxSize, then cut with "…".

@@ -22,6 +22,16 @@ public class PersistentPlayer3D : MonoBehaviour
     Player3DController controller;
     bool placed;
 
+    /// <summary>True once this body stands where its arrival put it: in a map, with no other map on its way and its
+    /// saved spot already applied. Until then its position is a leftover — the sign-in screen's origin, or the map
+    /// being left — and must not be reported to the server as where this person is. A map's arrival places the body
+    /// in the same moment the map becomes current, so "in a map, nothing on its way" already means "placed".</summary>
+    public bool HasArrived =>
+        !string.IsNullOrEmpty(MapManager.CurrentMap)
+        && MapManager.ArrivingAt == null
+        && !SceneTravel.HasResume
+        && (SaveManager.Instance == null || SaveManager.Instance.Initialized);
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }

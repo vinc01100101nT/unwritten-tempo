@@ -718,7 +718,7 @@ function equipmentTable() {
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>` +
     `<td>${esc(dash(it.weaponType))}</td><td>${dash(it.reach)}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
     `<td>${it.forgeUnits > 0 ? `${it.forgeUnits} ${esc(it.forgeMaterial)} + ${it.forgeGold} gold` : '—'}</td>` +
-    `<td>${dash(it.cardSlots)}</td><td>${esc(dash(it.blockChance))}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+    `<td>${dash(it.cardSlots)}</td><td>${esc(dash(it.blockChance))}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
 }
 function materialTable() {
   const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Material')
@@ -734,7 +734,7 @@ function materialTable() {
   return itemRows(['Name', 'Description', 'Kind', 'Band / Tier', 'Merges into', 'Dropped by', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.materialKind)}</td>` +
     `<td>${it.materialKind === 'Ink' || it.materialKind === 'Salt' ? 'Tier' : 'Band'} ${it.materialStep}</td>` +
-    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny} zeny</td>`);
+    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
 }
 // Every trademark a forge can roll, and what it raises at each grade.
 function trademarkTable() {
@@ -832,7 +832,7 @@ function block(b) {
     case 'materialTable': return materialTable();
     case 'trademarkTable': return trademarkTable();
     case 'armorVariantTable': return armorVariantTable();
-    case 'serverStats': return `<div class="livestats" data-from="${esc(b.from || '')}"><p class="loading">Asking the server…</p></div>`;
+    case 'serverStats': return '<div class="livestats"><p class="loading">Asking the server…</p></div>';
     // Items draw in array order; an unknown state falls back to planned so a typo never draws a finished dot.
     case 'timeline': return '<ul class="timeline">' + (b.items || []).map(it => {
       const st = ['done', 'now', 'planned'].includes(it.state) ? it.state : 'planned';
@@ -887,8 +887,14 @@ async function askStats(from) {
   if (!res.ok) throw new Error('the server answered ' + res.status);
   return res.json();
 }
+// The character server's address is written into site.json by tools/publish-update.py, from settings.env — never typed
+// into a page, because the same page is opened from this machine, from another one over the network, and from the
+// rented server, and each needs the address players are given.
+let statsAddress;
+const statusFrom = () => statsAddress ??= getJson('site.json', {})
+  .then(s => s.charServerUrl ? s.charServerUrl.replace(/\/+$/, '') + '/stats' : '');
 async function fillStatusBox(box) {
-  const from = box.dataset.from;
+  const from = await statusFrom();
   if (!from) { box.innerHTML = '<p class="down">This page was not told where to read the numbers from.</p>'; return; }
   try { box.innerHTML = statsHtml(await askStats(from)); }
   catch (e) { box.innerHTML = `<p class="down">${UNREACHABLE}</p>`; }
@@ -923,11 +929,6 @@ function fillArt(root) {
 let MANIFEST = { groups: [] };
 const PAGES = {};
 const pageDoc = p => getJson('content/' + p.file, null);
-const statusFrom = async () => {
-  const doc = PAGES[SITE_PAGES.status] && await pageDoc(PAGES[SITE_PAGES.status]);
-  const b = doc && (doc.blocks || []).find(x => x.type === 'serverStats');
-  return b ? b.from : '';
-};
 
 function newsBoard(items, n, withText) {
   if (!items.length) return '<li class="empty">No news yet.</li>';

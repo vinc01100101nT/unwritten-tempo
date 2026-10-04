@@ -6,9 +6,11 @@
 # launcher already downloads the game and every later update from this folder, so a device only needs the launcher
 # once — and opening this computer's address in its browser offers it.
 #
-# USAGE:  tools/serve-updates.sh            # port 8090, or the port in PATCH_URL from settings.env
+# USAGE:  tools/serve-updates.sh            # on the port PATCH_URL in settings.env names
 #
-# THEN, on another device:  open http://<this computer's address>:<port>  (the address: tools/platform.sh lan-address)
+# THEN, on another device:  open one of the addresses it prints. It prints only the addresses that answered when it
+# tried them from this computer, and says in red when PATCH_URL — the address players are given — does not answer.
+# Printed again whenever this computer's addresses change. (tools/serve-folder.py does the serving and the testing.)
 #
 # The launcher must have been built with PATCH_URL set to that same address (tools/build-launcher.sh reads it from
 # settings.env), and the game published into the folder (tools/publish-update.py). Windows may ask once to let
@@ -23,12 +25,5 @@ FOLDER="$REPO/builds/patch"
 [ -f "$FOLDER/version.txt" ] || {
   echo "Nothing published yet in $FOLDER — run tools/publish-update.py first." >&2; exit 2; }
 
-PORT=8090
-case "${PATCH_URL:-}" in
-  *:[0-9]*) PORT="${PATCH_URL##*:}"; PORT="${PORT%%/*}" ;;
-esac
-
-echo "Serving $FOLDER on port $PORT to every device on this network — open http://$(lan_address):$PORT"
-echo "Ctrl+C stops it."
-cd "$FOLDER"
-exec "$(find_python)" -m http.server "$PORT" --bind 0.0.0.0
+PORT="$(patch_port)" || { echo "PATCH_URL is not set in settings.env — it names the address and port to serve on." >&2; exit 2; }
+exec "$(find_python)" "$(native_path "$REPO/tools/serve-folder.py")" "$(native_path "$FOLDER")" "$PORT" PATCH_URL

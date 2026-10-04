@@ -40,6 +40,14 @@ public static class MobSpawner
                                 prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
     }
 
+    static bool SamePieces(Item[] a, Item[] b)
+    {
+        int na = a != null ? a.Length : 0, nb = b != null ? b.Length : 0;
+        if (na != nb) return false;
+        for (int i = 0; i < na; i++) if (a[i] != b[i]) return false;
+        return true;
+    }
+
     static GameObject Clone(GameObject prefab, Vector3 foot, Scene map, MonsterDef def)
     {
         var go = UnityEngine.Object.Instantiate(prefab, foot, Quaternion.identity);
@@ -50,6 +58,7 @@ public static class MobSpawner
         if (health != null)
         {
             health.kind = def.kind;
+            health.creatureId = def.id;
             // ITS ELEMENT AND LEVEL, from its data, on every machine — so the server and a watching copy can never
             // disagree about what a hit on it does. The prefab's baked element is only the baker's copy of this.
             health.element = def.element;
@@ -66,16 +75,29 @@ public static class MobSpawner
         if (GameServer.IsServer)
         {
             var gear = go.GetComponent<UnitEquipment>();   // perf-ok: once per creature made
+            var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
+            bool rederive = false;
+            // The pieces themselves too, not only their settings: the weapon picked in the table is worn without a re-bake.
             if (gear != null && (gear.gearQuality != def.gearQuality || gear.gearFolds != def.gearFolds ||
-                                 gear.gearInkTier != def.gearInkTier))
+                                 gear.gearInkTier != def.gearInkTier || !SamePieces(gear.startingGear, def.startingGear)))
             {
+                gear.startingGear = def.startingGear ?? Array.Empty<Item>();
                 gear.gearQuality = def.gearQuality;
                 gear.gearFolds = def.gearFolds;
                 gear.gearInkTier = def.gearInkTier;
                 gear.ReseatForNewLife();
-                var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
-                if (block != null) block.Rederive(healToFull: true);
+                rederive = true;
             }
+            // ITS WEAPON MASTERY, from its catalog entry, onto the one weapon it holds — in the same store a player's
+            // mastery lives in, so it lifts that weapon's stats by the player's own rule. A creature never earns, so
+            // this is the only thing that ever writes it.
+            var held = def.Weapon;
+            if (health != null && held != null && def.MasteryOnWeapon > 0)
+            {
+                health.Mastery.SetPractice(held.weaponType, MasteryMath.WeaponXpFor(def.MasteryOnWeapon));
+                rederive = true;
+            }
+            if (rederive && block != null) block.Rederive(healToFull: true);
         }
         // ITS SIZE, from its data, on every machine — how tall it stands, its body, and the melee reach both read it, so
         // the server and a watching copy can never disagree about where a blow reaches. The prefab's baked size is only

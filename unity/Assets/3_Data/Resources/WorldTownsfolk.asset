@@ -1,0 +1,171 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e513828bb0d44b26a913e1cd046db283, type: 3}
+  m_Name: WorldTownsfolk
+  m_EditorClassIdentifier: Assembly-CSharp::WorldTownsfolk
+  rows:
+  - id: marta
+    name: Marta
+    description: Soup Peddler
+    model: Chef_Female
+    map: lastline
+    home: {x: -10.83, y: 0, z: -0.5}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: bram
+    name: Bram
+    description: Retired Town Gossip
+    model: OldClassy_Male
+    map: lastline
+    home: {x: 10.58, y: 0, z: -0.5}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: elowen
+    name: Elowen
+    description: Wandering Herbalist
+    model: Elf
+    map: lastline
+    home: {x: 0.0, y: 0, z: 8.31}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: haru
+    name: Haru
+    description: Tea Brewer
+    model: Kimono_Male
+    map: lastline
+    home: {x: 0.0, y: 0, z: -9.95}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: sena
+    name: Sena
+    description: South Gate Lantern Keeper
+    model: Kimono_Female
+    map: lastline
+    home: {x: 0.0, y: 0, z: -21.66}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: alder
+    name: Alder
+    description: Town Physician
+    model: Doctor_Male_Old
+    map: lastline
+    home: {x: 0.0, y: 0, z: 19.9}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: ilse
+    name: Ilse
+    description: Cobblestone Mender
+    model: Worker_Female
+    map: lastline
+    home: {x: 17.51, y: 0, z: -5.54}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: torvald
+    name: Torvald
+    description: Off-Duty Raider
+    model: Viking_Male
+    map: lastline
+    home: {x: 17.51, y: 0, z: 9.57}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: mags
+    name: Mags
+    description: Retired Smuggler
+    model: Pirate_Female
+    map: lastline
+    home: {x: -17.38, y: 0, z: 9.57}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: pip
+    name: Pip
+    description: Errand Runner
+    model: Casual_Male
+    map: lastline
+    home: {x: 15.62, y: 0, z: 20.28}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: wren
+    name: Wren
+    description: Fortune Teller
+    model: Witch
+    map: lastline
+    home: {x: 9.32, y: 0, z: -23.17}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: edmund
+    name: Edmund
+    description: Tax Collector
+    model: Suit_Male
+    map: lastline
+    home: {x: -9.57, y: 0, z: 20.91}
+    wanderRadius: 6
+    level: 1
+    barks: 1
+  - id: gunnar
+    name: Gunnar
+    description: Smith
+    model: Worker_Male
+    map: lastline
+    home: {x: -2.42, y: 0, z: -2.59}
+    wanderRadius: 0
+    facing: 41.0
+    station: 1
+    shop: 
+    level: 1
+    barks: 1
+  - id: odette
+    name: Odette
+    description: Weaver
+    model: OldClassy_Female
+    map: lastline
+    home: {x: -2.49, y: 0, z: 3.31}
+    wanderRadius: 0
+    facing: 47.0
+    station: 2
+    shop: 
+    level: 1
+    barks: 1
+  - id: rook
+    name: Rook
+    description: Tanner
+    model: Pirate_Male
+    map: lastline
+    home: {x: 4.19, y: 0, z: 1.64}
+    wanderRadius: 0
+    facing: 130.7
+    station: 3
+    shop: 
+    level: 1
+    barks: 1
+  - id: fenwick
+    name: Fenwick
+    description: Tool Dealer
+    model: Casual3_Male
+    map: lastline
+    home: {x: 3.06, y: 0, z: -2.18}
+    wanderRadius: 0
+    facing: -41.0
+    station: 0
+    shop: tool-dealer
+    level: 1
+    barks: 1

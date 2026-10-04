@@ -47,19 +47,22 @@ public static class MapManager
     /// <summary>Portal travel: load the target map additively. The map being left goes on its own, through
     /// <see cref="LetGoOfEveryOtherMap"/> — the ONE rule that decides how many maps a machine holds, so a door
     /// does not get a second answer of its own.</summary>
-    public static void Travel(string targetScene, string spawnId)
-    {
-        if (string.IsNullOrEmpty(targetScene)) return;
-        SceneTravel.Target = spawnId;                     // PersistentPlayer3D reads this on arrival
-        SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
-    }
+    public static void Travel(string targetScene, string spawnId) => StartLoading(targetScene, spawnId);
 
     /// <summary>Boot a map with nothing to unload (the first map under Systems).</summary>
-    public static void LoadMap(string sceneName, string spawnId)
+    public static void LoadMap(string sceneName, string spawnId) => StartLoading(sceneName, spawnId);
+
+    /// <summary>The map this machine has asked for and is still waiting on, or null. While it is set, the map named
+    /// by <see cref="CurrentMap"/> is about to be left, so nothing standing in it is where it will end up.</summary>
+    public static string ArrivingAt { get; private set; }
+
+    static void StartLoading(string sceneName, string spawnId)
     {
         if (string.IsNullOrEmpty(sceneName)) return;
-        SceneTravel.Target = spawnId;
-        SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        SceneTravel.Target = spawnId;                     // PersistentPlayer3D reads this on arrival
+        ArrivingAt = sceneName;
+        // A map that cannot be loaded at all is never going to arrive, so nothing may go on waiting for it.
+        if (SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive) == null) ArrivingAt = null;
     }
 
     /// <summary>Park <paramref name="go"/> in the scene that is never unloaded, so a map swap cannot take it.
@@ -107,6 +110,8 @@ public static class MapManager
         ParkAwayFromTheOthers(scene);
         // AND ITS CREATURES, from the one world list, now that the map is standing where it will stay. Server only.
         WorldSpawner.Populate(scene);
+        // AND ITS PEOPLE, from the one townsfolk list, the same way. Server only.
+        WorldTownsfolk.Populate(scene);
         // ONE map on a machine somebody plays on, and this is the moment it is decided — every way a map can
         // arrive comes through here, including a map already open at boot that is adopted rather than loaded.
         LetGoOfEveryOtherMap(scene);
@@ -118,6 +123,7 @@ public static class MapManager
             CurrentMap = scene.name;
             MapVersion++;
         }
+        if (ArrivingAt == scene.name) ArrivingAt = null;
         StripForeignGlobals(scene);
     }
 
@@ -129,6 +135,7 @@ public static class MapManager
     {
         parked.Remove(scene.name);
         WorldSpawner.Forget(scene);
+        WorldTownsfolk.Forget(scene);
     }
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)

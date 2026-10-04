@@ -357,6 +357,34 @@ public static class UiKit
         return btn;
     }
 
+    /// <summary>THE ONE ROW OF TABS every tabbed window uses — the bag, Settings and Quests: a strip
+    /// <paramref name="height"/> tall across the top of <paramref name="parent"/>, its buttons sharing the width.
+    /// Add the tabs with <see cref="Btn"/>; show which is chosen with <see cref="MarkTab"/>.</summary>
+    public static RectTransform TabRow(RectTransform parent, float height = 28f)
+    {
+        var row = Img("Tabs", parent, new Color(0, 0, 0, 0));
+        var rt = row.rectTransform;
+        rt.anchorMin = new Vector2(0, 1);
+        rt.anchorMax = new Vector2(1, 1);
+        rt.pivot = new Vector2(0.5f, 1);
+        rt.sizeDelta = new Vector2(0, height);
+        row.raycastTarget = false;
+        var hl = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hl.spacing = 4;
+        hl.childControlWidth = hl.childControlHeight = true;
+        hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+        return rt;
+    }
+
+    /// <summary>Show whether a tab made by <see cref="Btn"/> is the chosen one: its edge in the accent colour when it
+    /// is, the ordinary button edge when it is not.</summary>
+    public static void MarkTab(Button tab, bool chosen)
+    {
+        if (tab == null) return;
+        var edge = tab.GetComponent<Image>();
+        if (edge != null) edge.color = chosen ? Accent : ButtonEdge;
+    }
+
     /// <summary>Turn a window's fixed "Content" node into a clipped vertical scroll (wheel and drag) and return the
     /// inner node to build rows into. Idempotent: a second call returns the same inner node. THE one scroll
     /// column every list window uses — the Skills window and the station window alike — so a long list can never run

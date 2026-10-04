@@ -49,6 +49,14 @@ public static class Rewards
         // On a server the character being paid is not the one on that player's screen, so their machine has to be
         // told or the kill quietly earns them nothing. Does nothing anywhere else.
         GameNetwork.TellOwnerTheyEarned(character, xp, 0, levelsGained, ringLevelsGained);
+
+        // AND ANY QUEST COUNTING THIS CREATURE — the same kill, paid to the same person, through this same door.
+        // A SAVED CHARACTER is not the creature whose body it wears — the same exclusion SavedCharacters makes.
+        if (victim != null && !victim.IsSavedCharacter && character.Quests.CountKill(victim.creatureId))
+        {
+            character.Quests.Advance(character);
+            GameNetwork.ShellOfFighter(character)?.QuestsMoved();
+        }
     }
 
     /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the

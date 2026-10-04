@@ -123,6 +123,9 @@ public class MobTableWindow : EditorWindow
         // Worn gear + the ring's ranks, at a glance. Both are EDITED in the expander row (click ▸) — a spreadsheet
         // row can't hold 12 slots and 10 rank sliders without becoming unreadable.
         new Col("gear",  "gear",   120),
+        // Its mastery in the ONE weapon it holds (picked with the rest of its gear, under ▸) — a creature has mastery
+        // in one weapon only.
+        new Col("mastery", null,   56),
         // DERIVED readouts (read-only): what UnitStatMath actually produces from the block on the left, so a
         // designer edits the cause and immediately sees the effect. Never editable — these have no storage.
         new Col("=HP",   "hp",     52),
@@ -261,6 +264,10 @@ public class MobTableWindow : EditorWindow
         int luk      = EditorGUI.IntField(VCenter(Next(), 18), def.luk);
         DrawPoints(Next(), def);
         DrawGearSummary(Next(), def);
+        bool holds   = def.Weapon != null;
+        EditorGUI.BeginDisabledGroup(!holds);
+        int mastery  = EditorGUI.IntField(VCenter(Next(), 18), def.MasteryOnWeapon);
+        EditorGUI.EndDisabledGroup();
         // Derived readouts — computed live from the block just edited, never stored and never editable.
         DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.HP));
         DrawDerived(Next(), Derived(def, MonsterDefStats.Stat.Atk));
@@ -290,6 +297,8 @@ public class MobTableWindow : EditorWindow
             def.intel = typed[3]; def.dex = typed[4]; def.luk = typed[5];
             def.element = elem; def.elementLevel = Mathf.Clamp(elemLv, 1, Elements.MaxLevel); def.weight = wt;
             def.goldMin = gMin; def.goldMax = gMax;
+            // Never above what the best grade lets count, since no weapon could use more.
+            def.weaponMastery = holds ? Mathf.Clamp(mastery, 0, CraftingMath.WeaponMasteryCap(Quality.A)) : 0;
             EditorUtility.SetDirty(def);
         }
 
@@ -446,6 +455,8 @@ public class MobTableWindow : EditorWindow
             var gear = new List<Item>();
             foreach (var kv in worn) if (kv.Value != null) gear.Add(kv.Value);
             def.startingGear = gear.ToArray();
+            // No weapon, no mastery: it is mastery IN a weapon, so it cannot outlive the weapon it belongs to.
+            if (def.Weapon == null) def.weaponMastery = 0;
             def.gearQuality = quality;
             def.gearFolds = Mathf.Clamp(folds, 0, CraftingMath.FoldCap(quality));
             def.gearInkTier = inkTier;

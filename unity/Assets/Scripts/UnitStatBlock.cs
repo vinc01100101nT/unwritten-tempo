@@ -37,10 +37,6 @@ public class UnitStatBlock : MonoBehaviour
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
     public int[] ringRankValues = System.Array.Empty<int>();
 
-    [Tooltip("How practised this unit is with the weapon it holds — the creature's half of Weapon Mastery. Raises " +
-             "that weapon's three stats by 0.5% a level, exactly as a player's does, and lifts what its passives do.")]
-    public int weaponMasteryLevel;
-
     PassiveRanks ranks;
     /// <summary>This unit's ring ranks, built once from the authored arrays. Same type the player's ring uses, so the
     /// soft-cap curve, the per-stat percentages and any future rebalance are shared rather than mirrored.</summary>
@@ -72,27 +68,17 @@ public class UnitStatBlock : MonoBehaviour
         return RingPercent(ringNode) + MasteryPercent(ringNode) + sub;
     }
 
-    /// <summary>What this creature's weapon mastery adds to one ring stat — the same table and the same half a
-    /// percent a level a player gets, so a creature that has practised is dangerous in the same way.</summary>
+    /// <summary>What this creature's weapon mastery adds to one ring stat — the player's own rule
+    /// (<see cref="Character"/>'s MasteryPercent), read off the same store (<see cref="Health.Mastery"/>): the held
+    /// weapon's earned level, held to what that weapon's grade allows. The level comes from the creature's catalog
+    /// entry (<see cref="MonsterDef.weaponMastery"/>).</summary>
     public float MasteryPercent(StatId stat)
     {
-        if (weaponMasteryLevel <= 0) return 0f;
-        var held = Gear != null ? Gear.WeaponType : WeaponType.None;
+        if (health == null) return 0f;
+        var weapon = Gear != null ? Gear.Get(EquipSlotType.Weapon) : null;
+        var held = weapon != null && weapon.def != null ? weapon.def.weaponType : WeaponType.None;
         if (held == WeaponType.None || !WeaponMasteryStats.Raises(held, stat)) return 0f;
-        return MasteryMath.WeaponPercent(UsableMastery);
-    }
-
-    /// <summary>The mastery level this unit can actually USE — what it was authored with, held to what the grade
-    /// of the weapon in its hands allows. The same cap a player is held to, so a creature with a Raw blade is no
-    /// more practised with it than a person would be.</summary>
-    public int UsableMastery
-    {
-        get
-        {
-            var weapon = Gear != null ? Gear.Get(EquipSlotType.Weapon) : null;
-            var grade = weapon != null ? weapon.quality : Quality.Raw;
-            return Mathf.Min(weaponMasteryLevel, CraftingMath.WeaponMasteryCap(grade));
-        }
+        return MasteryMath.WeaponPercent(health.Mastery.UsableLevel(held, weapon.quality));
     }
 
     // A mob's derived numbers are STAMPED onto its components rather than read live the way the player's are, so a

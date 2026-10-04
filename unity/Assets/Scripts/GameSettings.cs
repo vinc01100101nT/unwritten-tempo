@@ -136,7 +136,11 @@ public static class GameSettings
         {
             rowThree = new KeyCode[HotbarBindings.PerRow];
             for (int c = 0; c < rowThree.Length; c++)
+            {
                 rowThree[c] = (KeyCode)PlayerPrefs.GetInt(RowThreeKeyPrefix + c, (int)KeyCode.None);
+                // A KEY THE GAME HAS SINCE TAKEN is let go, so one press never fires a slot and a window together.
+                if (GameKeys.IsFixed(rowThree[c])) rowThree[c] = KeyCode.None;
+            }
         }
         return rowThree[column];
     }

@@ -53,8 +53,11 @@ before any game code runs, has no time and no category.
 
 | Category | Shape |
 | --- | --- |
-| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (townsfolk carry their model name in the brackets) |
+| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (a townsperson's name is `Townsfolk_<their name>`, and their model name is in the brackets) |
 | `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read this map's rows from the world spawn list as it loaded it |
+| `spawn` | `map '<map>' given <n> townsperson(s).` — the server read this map's people from the townsfolk list as it loaded it |
+| `spawn` | `townsperson '<name>' in '<map>' has no model — left out.` — a row of the townsfolk list names no body, so that person was not made |
+| `server` | `<player> bought <n> <item id> from '<shop>' for <g> gold` / `<player> sold <n> <item id> to '<shop>' for <g> gold` — a shop deal the server let through |
 | `spawn` | `<map> <name> #<n> came back` — a creature that died is alive again, same body, same number |
 | `spawn` | `<map> <name> #<n> (<player id>) entered` — a player is now in this map |
 | `spawn` | `<map> <name> #<n> got up [HP <now>/<max>]` — a player who died is standing again, same number |

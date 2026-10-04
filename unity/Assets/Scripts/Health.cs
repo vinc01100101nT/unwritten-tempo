@@ -45,21 +45,23 @@ public class Health : MonoBehaviour, ICombatUnit
     public UnityEngine.Events.UnityEvent onDeath;
 
     /// <summary>Which kind of creature this is — copied from its creature data by <see cref="MobSpawner"/>, the one door
-    /// every creature is made through, so it can never disagree with that data. Sets its extra skill slots, whether it
-    /// summons, what it wears and what it drops (<see cref="CreatureKinds"/>).</summary>
+    /// every creature is made through, so it can never disagree with that data. Sets how many summons it may keep out,
+    /// what it wears and what it drops (<see cref="CreatureKinds"/>).</summary>
     [System.NonSerialized] public CreatureKind kind = CreatureKind.Normal;
+
+    /// <summary>SERVER: which creature this is, by its catalog id (e.g. "mob.plopling") — copied from its data by
+    /// <see cref="MobSpawner"/>, like <see cref="kind"/>. What a quest step "defeat N of …" counts.</summary>
+    [System.NonSerialized] public string creatureId = "";
 
     /// <summary>Called up by another creature's summon skill, for this life. A summoned creature never summons, pays no
     /// experience and drops nothing, and it goes when its summoner goes (see <see cref="SummonedCreature"/>).</summary>
     public bool IsSummoned => summonedBy != null;
     [System.NonSerialized] SummonedCreature summonedBy;
 
-    /// <summary>Mark this creature as <paramref name="by"/>'s summon for this life. Its skills are rebuilt, because a
-    /// summoned creature carries no summon skill of its own.</summary>
+    /// <summary>Mark this creature as <paramref name="by"/>'s summon for this life.</summary>
     public void SetSummonedBy(SummonedCreature by)
     {
         summonedBy = by;
-        extraVersion++;
     }
 
     /// <summary>Which side of the fight this creature stands on (see <see cref="Sides"/>). The creatures' side unless a
@@ -83,14 +85,12 @@ public class Health : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>Make this creature, for this life, the character <paramref name="character"/> — standing on
-    /// <paramref name="standsOn"/> and fighting for <paramref name="fightsFor"/>. Its skills are rebuilt, because a saved
-    /// character carries no summon skill of its own.</summary>
+    /// <paramref name="standsOn"/> and fighting for <paramref name="fightsFor"/>.</summary>
     public void BecomeSaved(SavedCharacter character, Side standsOn, ICombatUnit fightsFor)
     {
         savedAs = character;
         owner = fightsFor;
         SetSide(standsOn);
-        extraVersion++;
     }
 
     void OnDestroy() => Sides.Filed(this, Side.None);
@@ -195,20 +195,28 @@ public class Health : MonoBehaviour, ICombatUnit
 
     public float RingBonus(StatId stat) { var s = StatBlock; return s != null ? s.RingBonus(stat) : 0f; }
 
-    /// <summary>What lifts a skill's output for this creature: its level in that skill, plus its weapon's trademark.
-    /// A creature's mastery still decides WHICH of its weapon's skills it knows (<see cref="KitOf"/>), but it spends no
-    /// points, so every skill it knows sits at <see cref="CreatureSkillLevel"/> — the skill exactly as authored — until
-    /// each kind of creature is given a build of its own (decided with the user 2026-10-03).</summary>
+    /// <summary>What lifts a skill's output for this creature: the level it bought in that skill, counting only the
+    /// levels the grade of the weapon in its hands allows, plus that weapon's trademark — the player's own rule
+    /// (<see cref="Character.MasteryLift"/>), read off the same kind of store.</summary>
     public float SkillOutputLift(string skillId)
     {
         if (StatBlock == null) return 0f;
         var def = SkillCatalog.Get(skillId);
-        float level = def != null && def.RidesWeaponMastery(HeldWeapon) ? MasteryMath.SkillLevelLift(CreatureSkillLevel) : 0f;
+        var held = HeldWeaponCopy;
+        float level = def != null && def.RidesWeaponMastery(HeldWeapon)
+            ? MasteryMath.SkillLevelLift(Mastery.UsableSkillLevel(skillId, held != null ? held.quality : Quality.Raw))
+            : 0f;
         return level + TrademarkLift(skillId);
     }
 
-    /// <summary>The level every skill a creature knows sits at: 1, the skill as authored, with no points spent.</summary>
-    public const int CreatureSkillLevel = 1;
+    /// <summary>THE ONE HOME of this creature's weapon mastery and of its skills: the mastery it has with a weapon, and
+    /// the skill levels it has bought with that mastery's points — the same store a player's live in, read by the same
+    /// rules (decided by the user 2026-10-04: "the source should only come from one thing, the allocated skill points").
+    /// A creature has mastery in ONE weapon only: the one its catalog entry hands it, at the level the entry sets, put
+    /// here when the creature is made (<see cref="MobSpawner"/>). Nothing spends a creature's points yet, so no
+    /// creature has a skill.</summary>
+    public MasteryProgress Mastery => mastery ??= new MasteryProgress();
+    MasteryProgress mastery;
 
     /// <summary>What the weapon this creature holds adds to <paramref name="skillId"/> through its trademark — the
     /// same rule a player's weapon follows, so a creature carrying a trademark weapon is dangerous the same way.</summary>
@@ -303,11 +311,11 @@ public class Health : MonoBehaviour, ICombatUnit
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
-    /// <summary>The skills this creature casts — everything its WEAPON MASTERY has opened for the weapon in its
-    /// hands, plus its extra skills (see <see cref="ExtraSkillIds"/>). A creature spends no mastery points, so it
-    /// knows every skill of its weapon that its mastery has reached (each at level 1). Rebuilt the moment either
-    /// changes, which is every new life. Null on a watched copy, which decides nothing, and on anything that is not a creature the server thinks
-    /// for.</summary>
+    /// <summary>The skills this creature casts — every skill it has bought a level in (<see cref="Mastery"/>) that it may
+    /// use right now, by the player's own rule (<see cref="Character.MayUse"/>): never what an item runs, and a weapon's
+    /// skill only with that weapon in its hands. Nothing else gives a creature a skill. Rebuilt the moment what it wears
+    /// or what it has bought changes; a respawn re-seats what it wears, so every new life starts off cooldown. Null on
+    /// a watched copy, which decides nothing, and on anything that is not a creature the server thinks for.</summary>
     public UnitSkills Skills
     {
         get
@@ -316,14 +324,14 @@ public class Health : MonoBehaviour, ICombatUnit
             if (brain == null || IsWatchedCopy || GameNetwork.TheWorldIsElsewhere || !Application.isPlaying) return null;
             var gear = brain.Equipment;
             if (gear == null) return null;
-            if (!extraRolled) RollExtraSkillsForNewLife();
             int worn = gear.Version;
-            if (worn != skillsBuiltFor || extraVersion != extraBuiltFor)
+            int bought = Mastery.LevelsVersion;
+            if (worn != skillsBuiltFor || bought != levelsBuiltFor)
             {
                 skillsBuiltFor = worn;
-                extraBuiltFor = extraVersion;
+                levelsBuiltFor = bought;
                 skills ??= new UnitSkills(this);
-                skills.Bind(gameObject, KitOf(gear, extraSkillIds));
+                skills.Bind(gameObject, KitOf(gear));
                 // A NEW WEAPON IS A NEW LIFE, so nothing from the last one is still cooling down. Only a respawn
                 // re-seats what a creature wears, and a respawn is a fresh creature.
                 var runners = skills.Runners;
@@ -336,77 +344,32 @@ public class Health : MonoBehaviour, ICombatUnit
     }
     UnitSkills skills;
     int skillsBuiltFor = -1;
+    int levelsBuiltFor = -1;
 
-    /// <summary>This creature's EXTRA skills — slots of their own, apart from its weapon's kit, as many as its kind has
-    /// (<see cref="CreatureKinds.ExtraSkillSlots"/>). Empty on a watched copy, which rolls nothing.</summary>
-    public IReadOnlyList<string> ExtraSkillIds => extraSkillIds;
-    readonly List<string> extraSkillIds = new List<string>(CreatureKinds.MostExtraSkillSlots);
-    // A skill somebody named for this creature (a summon). Kept through every later life instead of a random roll.
-    string pinnedExtraSkillId;
-    bool extraRolled;
-    int extraVersion;
-    int extraBuiltFor = -1;
-
-    /// <summary>Decide this life's extra skills: the named one if this creature was given one, otherwise a fresh
-    /// random roll. Called by <c>MobRespawn.Reactivate</c> after the new weapon is seated, so the roll can skip what
-    /// that weapon already carries; the first life rolls on its first look at <see cref="Skills"/>.</summary>
-    public void RollExtraSkillsForNewLife()
-    {
-        if (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere || !Application.isPlaying) return;
-        extraRolled = true;
-        // A training dummy is an instrument that never fights back, so it carries nothing extra — the same exclusion
-        // its random gear has. perf-ok: once per life.
-        if (GetComponent<TrainingDummy>() != null) extraSkillIds.Clear();
-        else if (!string.IsNullOrEmpty(pinnedExtraSkillId))
-        {
-            extraSkillIds.Clear();
-            extraSkillIds.Add(pinnedExtraSkillId);
-        }
-        else
-        {
-            ExtraSkillRoll.Roll(extraSkillIds, CreatureKinds.ExtraSkillSlots(kind));
-        }
-        extraVersion++;
-    }
-
-    /// <summary>Give this creature <paramref name="skillId"/> as its extra skill, for this life and every later one.
-    /// Any skill in the catalog, published or not — the caller checks it exists.</summary>
-    public void PinExtraSkill(string skillId)
-    {
-        pinnedExtraSkillId = skillId;
-        RollExtraSkillsForNewLife();
-    }
-
-    // Reused: filled only when what the creature wears changes.
+    // Reused: filled only when what the creature wears or has bought changes.
     static readonly System.Collections.Generic.List<SkillDef> kitScratch = new System.Collections.Generic.List<SkillDef>(9);
 
-    // What its held weapon's mastery has opened, plus its extra skills, IN THE CATALOG'S ORDER — a skill's
-    // position is its identity to the passive brake, so the list must not depend on where each came from. The same
-    // rule a person's list keeps, read off the same opening levels: a creature practised to level 30 with a sword
-    // knows every sword skill that opens by 30, and one that has never picked a sword up knows none of them.
-    System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear, List<string> extra)
+    // What it has bought and may use, IN THE CATALOG'S ORDER — a skill's position is its identity to the passive brake,
+    // so the list must not depend on the order the levels were bought in.
+    System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear)
     {
         kitScratch.Clear();
+        if (Mastery.LearnedCount == 0) return kitScratch;
         var held = gear != null ? gear.WeaponType : WeaponType.None;
-        var block = StatBlock;
-        int mastery = block != null ? block.UsableMastery : 0;
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
         {
             var def = all[i];
-            if (def == null || string.IsNullOrEmpty(def.id)) continue;
-            bool byMastery = held != WeaponType.None && def.weaponType == held
-                             && Mathf.Max(1, def.masteryLevel) <= mastery;
-            // THE SUMMON SKILL, in a slot of its own on top of the extra ones — for a kind that summons, and never for a
-            // creature that was itself summoned, or that turned back into a saved character.
-            bool summon = def.id == CreatureKinds.SummonSkillId && CreatureKinds.Summons(kind) && !IsSummoned && savedAs == null;
-            if (byMastery || summon || extra.Contains(def.id)) kitScratch.Add(def);
+            if (def == null || string.IsNullOrEmpty(def.id) || def.ItemUseEntry != null) continue;
+            if (!Mastery.HasLearned(def.id)) continue;
+            if (def.weaponType != WeaponType.None && def.weaponType != held) continue;
+            kitScratch.Add(def);
         }
         return kitScratch;
     }
 
-    /// <summary>A creature's list is its weapon's kit plus its extra skills and nothing else, so every passive on it is
-    /// live — the same rule that makes a person's weapon-granted passives always on.</summary>
+    /// <summary>A creature's list holds only what it has bought and may use right now, so every passive on it is live —
+    /// the same answer a person's loadout gives for a passive they have learned with its weapon in hand.</summary>
     public bool PassiveIsOn(SkillDef def) => def != null;
 
     public float CastTimeMult => Block != null ? Block.CastTimeMult : 1f;

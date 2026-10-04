@@ -33,10 +33,12 @@ public static class PlayerFighter
     public static bool BuildFrom(NetPlayer shell, MapServerLink.Expected announced)
     {
         if (announced == null) return false;
-        return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar, announced.isGm);
+        return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar,
+                     announced.quests, announced.isGm);
     }
 
-    static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar, bool isGm)
+    static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar,
+                      QuestRowWire[] quests, bool isGm)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -96,7 +98,7 @@ public static class PlayerFighter
             // NEVER PLAYED, so their starter goods are given HERE — by the thing that owns bags now. It used to
             // be their own machine that decided this, and the two raced: whichever landed last won, so a new
             // player either saw a bag the server did not have (every use silently ignored) or none at all.
-            character.SeedBag();
+            character.GiveStarterKit();
             // THE STATS CHOSEN AT CREATION, checked here against the one rule before any of them is used. A spread
             // the hexagon cannot make leaves the character on the default start (all 1, the full starting pool).
             if (pushed != null && pushed.primary != null && !character.StartWithCreationStats(pushed.primary))
@@ -145,6 +147,14 @@ public static class PlayerFighter
         // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
         // empty and only ever learns what it is carrying from here.
         shell.PushBagToOwner(alsoTheBar: true);
+
+        // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest given to everybody
+        // that this character has never had is given now, and anything already true moves it on at once.
+        character.Quests.Load(quests);
+        character.Quests.GiveAutomatic();
+        character.Quests.Advance(character);
+        // Pays anything that finished on arrival, saves, and tells them — always, since they have just arrived.
+        shell.QuestsMoved();
 
         // ANYTHING THAT CHANGES THEM IS WORTH WRITING DOWN. Levelling, spending a point, gear — all of it now
         // happens on the server, so the server is what notices. Subscribed AFTER the load is asked for, but the

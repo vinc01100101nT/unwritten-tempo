@@ -41,13 +41,21 @@ export SERVER_SECRET
 
 cd "$HERE"
 # BUILT ONCE, into the same folder `dotnet run` always used — so a firewall permission already given to that
-# program still applies — and then run directly, so a restart does not rebuild.
+# program still applies — and then run directly, so starting it again after a crash does not rebuild. Ctrl+C ends
+# this script, so a restart from restart-servers.sh runs it afresh and does rebuild.
 dotnet build --nologo -v quiet
 PROGRAM="$HERE/bin/Debug/net10.0/CharServer$EXE"
+
+# Ctrl+C has to be told apart from a crash by the shell itself: on Windows the server leaves with an ordinary exit
+# code, not by the signal, so the shell would otherwise take it for a crash and launch the SAME program again — and a
+# restart from restart-servers.sh would keep running the old build and never reach the rebuild above.
+STOPPED=
+trap 'STOPPED=1' INT
 
 while :; do
   "$PROGRAM" "$@" && exit 0
   code=$?
+  [ -n "$STOPPED" ] && exit 130
   [ "$code" -eq 2 ] && exit 2
   echo "[run] the character server stopped (exit $code) — starting it again in 5 seconds. Ctrl+C stops it." >&2
   sleep 5

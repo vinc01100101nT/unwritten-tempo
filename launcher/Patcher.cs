@@ -44,8 +44,7 @@ public sealed class Patcher
 
     public Patcher()
     {
-        PatchUrl = Setting("PATCH_URL") ?? "http://localhost:8090";
-        PatchUrl = PatchUrl.TrimEnd('/');
+        PatchUrl = (Setting("PATCH_URL") ?? "").TrimEnd('/');
         Platform = OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "mac" : "linux";
 
         // WINDOWS keeps the game beside the launcher, where the player unzipped it — the way Ragnarok Online's
@@ -91,6 +90,8 @@ public sealed class Patcher
     public async Task UpdateAsync(Action<string, double> progress, CancellationToken cancel)
     {
         if (Platform == "linux") throw new InvalidOperationException("This launcher runs on Windows and Mac only.");
+        if (PatchUrl.Length == 0)
+            throw new InvalidOperationException("This launcher was built without an update address (PATCH_URL).");
 
         progress("Checking for updates…", 0);
         manifest = JsonSerializer.Deserialize<Manifest>(

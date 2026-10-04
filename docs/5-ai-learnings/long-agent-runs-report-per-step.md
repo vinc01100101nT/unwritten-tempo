@@ -38,6 +38,11 @@ On the asking half, the correction came from the user directly: *"can you just a
 than you reading its entire transcript. it already has context itself."* They were right, and the answer it wrote
 was better than anything the transcript would have given.
 
+**It happened again on 2026-10-04, with this page already written.** A red-team helper, briefed to save one
+ranked report for the end, was cut off by a session limit; nothing came back. Instead of messaging it to resume, a
+second helper was spawned from scratch with the same brief, and the first run's whole read of the codebase was
+thrown away. The user had to ask whether the first one had been wasted. It had.
+
 ## And when one dies mid-edit, the tree is the first thing to check
 
 A helper that is writing code when it is killed leaves **half a change behind**. It is not a lost run, it is a

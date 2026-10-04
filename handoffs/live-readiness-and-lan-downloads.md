@@ -26,7 +26,7 @@ ticks it, holds registration while a save has failed; `GameNetwork.SaveAndDrop` 
 no longer connected; `ServerHttp.Reply` now carries the status number. Character server: migration
 `007_character_handover.sql` (APPLIED to this PC's database), `Handover.cs` (numbering + `StartupGrace` 40 s entry
 refusal), `Characters.EnterAsync` / move route bump the number and send it, the progress route refuses an older one
-(409). `charserver/run.sh` builds once and restarts the server 5 s after any exit except 0 and 2 (port taken);
+(409). `charserver/run.sh` builds once and restarts the server 5 s after any exit except 0, 2 (port taken) and Ctrl+C;
 `deploy/unwritten-charserver.service` for the rented machine. **Measured:** on a scratch database with a spare
 server, saves with no number / the live number / an older number / an unknown character returned 200 / 200 / 409 /
 404 and the stored level was right.

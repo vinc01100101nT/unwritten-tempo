@@ -45,7 +45,7 @@ public class InventoryStore : MonoBehaviour
         // Should one arrive anyway, it replaces the whole list rather than adding to it, so the worst this can
         // do is be overwritten.
         if (!AccountSession.IsActive && Character.Instance != null && Character.Instance.Bag.Count == 0)
-            Character.Instance.SeedBag();
+            Character.Instance.GiveStarterKit();
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }

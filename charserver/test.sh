@@ -2,13 +2,13 @@
 # End-to-end: sign in through the Node login service, then do EVERYTHING else against the C# char server.
 # Proves the two share one secret and one database, and that the ported endpoints behave.
 set -e
-LOGIN=http://127.0.0.1:8080
-CHAR=http://127.0.0.1:8081
 # A save is written only through the server-to-server door, with the secret both servers share. Read from the
 # same file charserver/run.sh reads it from, so the test can never disagree with the server it is testing.
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 . "$REPO/tools/load-settings.sh"
 . "$REPO/tools/platform.sh"
+LOGIN="${ACCOUNTS_URL:?ACCOUNTS_URL is not set in settings.env}"
+CHAR="${CHAR_SERVER_URL:?CHAR_SERVER_URL is not set in settings.env}"
 PY="$(find_python)"
 SECRET="${SERVER_SECRET:-}"
 [ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in settings.env"; exit 1; }

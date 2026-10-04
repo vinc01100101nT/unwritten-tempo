@@ -11,10 +11,15 @@ tags:
 > **Never append. Always update in place.** This page states only what has been AGREED. Anything still being
 > decided lives in **Still open** at the bottom and nowhere else.
 
-Every creature in the game is one of three kinds: **normal**, **elite** or **shadow**. The kind decides how many
-extra skill slots it has, what it wears, whether it summons, where it lives and what it drops. How strong it is
-still comes from its **level** and its stats through the same formulas a player's do — the kind never carries a
-stat multiplier.
+Every creature in the game is one of three kinds: **normal**, **elite** or **shadow**. The kind decides what it
+wears, how many summons it may keep out, where it lives and what it drops. How strong it is still comes from its
+**level** and its stats through the same formulas a player's do — the kind never carries a stat multiplier.
+
+**A creature's weapon mastery and skills live in the same store as a player's and follow the same rules** (decided
+2026-10-04): mastery in ONE weapon only, and only the skills it has bought with that mastery's points. Nothing is
+opened for free or drawn at random. Its weapon and its mastery in it are set per creature in the **Mob Table**
+(the weapon with the rest of its gear under ▸, the mastery in its own column) and put on it when it is made; **every creature's mastery is 0 today**. Nothing
+spends a creature's points yet, so **no creature casts a skill**, summoning included.
 
 This is decided before the world shape on purpose: the world is laid out around the creatures' level ladder, and
 the ladder is set here.
@@ -32,11 +37,10 @@ map, and the map generator no longer puts any there.
 | --- | --- | --- | --- |
 | How many | the rest of the roster | 18 | 14, one per weapon type |
 | Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 170**, one every 5 levels |
-| Extra skill slots | 1 | 2 | 4 |
 | Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
-| Weapon mastery | its level | its level | its level |
-| Summons | nothing | normals | elites |
+| Weapon mastery | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today |
+| Summons, once it has bought the summon skill | nothing | normals | elites |
 | Lives | every map it belongs in, from one end of the world to the other | the fields of its home biome near its level, and one on each dungeon's bottom floor | each at its own place, a special map away from where players level |
 | Comes back after | **5 seconds** plus up to 3 | **30 minutes to 3 hours** | **4 to 6 hours** |
 | Looks | flat | flat | a 3D character |
@@ -81,7 +85,7 @@ map, and the map generator no longer puts any there.
 
 ## Normal
 
-- The creatures that fill the field. One extra skill slot, and whatever pieces are authored for it — from **Raw +0**
+- The creatures that fill the field, wearing whatever pieces are authored for them — from **Raw +0**
   at level 1 to **E +15** at level 99 (see Gear state).
 - **Each of the 66 normals has its own home biome, element and level**, set from what it is (2026-09-26): critters
   low, large beasts higher. It lives in every map where it belongs, not in one. The full table is
@@ -93,8 +97,8 @@ map, and the map generator no longer puts any there.
 - The stronger creatures of each area. The 18 creatures that were bosses are the 18 elites.
 - **Each elite has its own home biome, element and level** (8 to 99), and at least one elite calls each biome home;
   the table is [Creatures and Where They Live](biome-mob-families.md).
-- Two extra skill slots, whatever pieces are authored for them — from **D +0** at level 6 to **B +30** at level 99
-  (see Gear state) — and they **summon normals**: the three nearest their level at or below it, from their own home
+- Whatever pieces are authored for them — from **D +0** at level 6 to **B +30** at level 99 (see Gear state) — and,
+  once they have bought the summon skill, they **summon normals**: the three nearest their level at or below it, from their own home
   biome first.
 - **They drop much more folding material, and the rarer Inks and Salts** (see Drops).
 
@@ -145,26 +149,25 @@ map, and the map generator no longer puts any there.
 
   The four lowest elites (8 to 22) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
   not share its element or place.
-- Four extra skill slots, a complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
+- A complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
   shadows can be seen in the game.
 - **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
   trademark on the weapon — each roll made the way a station makes it.
-- **Weapon mastery equals its level, capped at 70 by its A-grade weapon**, so the Sword shadow knows every sword skill — each at level 1, since a creature spends no mastery points.
+- **Weapon mastery: 0 today**, set in the Mob Table like every creature's.
 - **Ring ranks:** 40 in each of the three stats its weapon's mastery raises. The Fist shadow uses the fist's
   placeholder row (Attack Speed, Attack, Evasion); the Kick shadow has none, because the kick has no mastery row yet.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
 - **All fourteen exist.** Only **Blossom Wind** (the Sword shadow) holds a weapon; the other thirteen fight with
-  basic attacks, their four extra skills and summon until their weapon's skills exist, and then each is handed its
-  weapon.
+  basic attacks until their weapon's skills exist, and then each is handed its weapon.
 - They carry their name and an always-visible health bar.
 
 ## Summoning
 
-- **Summoning is a skill.** It has a cooldown like any other, and the summoner uses it **every time it is
-  ready**.
+- **Summoning is a skill**, so a creature summons only once it has bought it — none has yet. It has a cooldown like
+  any other, and the summoner uses it **every time it is ready**.
 - **Each summoner has a fixed maximum number of summons.** When it is at its maximum, it does not summon, even
   with the skill ready.
 - **Summoned creatures always follow their summoner**, staying within a range of it.

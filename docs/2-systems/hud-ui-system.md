@@ -51,8 +51,8 @@ rich text reads its tint with `UiKit.Hex(...)`. Changing the look of the whole g
 **What keeps its own colours, deliberately:** the floating combat numbers (damage, MISS, parry — anything
 `DamagePopup` draws); colours that MEAN something — health red/yellow/green, mana blue, a skill's or weapon's
 colour, an element's tint, a weather's tint, a season's tint, the minimap's dots, the dye swatches; and the
-things drawn straight over the world with a black edge (the name over whoever you point at, their health plate,
-the cast bar), which stay light text on the world. **A meaning colour drawn as TEXT on a window goes through
+things drawn straight over the world with a black edge (the name and health plate over the creature you point at
+and over every person, the cast bar), which stay light text on the world. **A meaning colour drawn as TEXT on a window goes through
 `UiKit.Readable`**, which darkens it — same hue — only as far as it must go to read at 4.5 : 1 on the window body.
 
 ## Window headings
@@ -73,7 +73,7 @@ own Close / Cancel below.
 Top-left by default, draggable by its bar, and it remembers where it was left. Its bar carries the character's
 name, HP and MP. Its body shows **Lv**, **Ring Lv** and **[held weapon] Mastery Lv**, each with its experience bar
 (the mastery row only while a weapon is held), then the zeny with a + beside it that shows or hides a button for
-every HUD window: Inventory, Character, Skills, Calendar, World Map, Minimap, Chat, Settings, System. Each button
+every HUD window: Inventory, Character, Skills, Quests, Calendar, World Map, Minimap, Chat, Settings, System. Each button
 opens its window by the key that already opens it (`Hotkeys.PressOnScreen`, a one-frame press of that key from
 the screen), so it adds no second way into any window. It replaced the experience strip along the bottom of
 the screen and the health and mana bars at the bottom left.

@@ -220,13 +220,13 @@ checker are the **`unity-live-editor` skill**.
 
 ## Agent roles — WHEN to spawn one without being asked
 
-Eight roles live in `.claude/agents/`. Five of them cannot write at all, or can write only one
+Nine roles live in `.claude/agents/`. Six of them cannot write at all, or can write only one
 narrow place, and that is enforced by a refusal rather than by their good intentions — the gate is
-`tools/hook-analytics/write_scope_gate.py`, proven by `tools/prove-write-scope-gate.py`. The
-eighth, `sprint-manager`, may write exactly two files — the action plan and the wiki Roadmap page —
+`tools/hook-analytics/write_scope_gate.py`, proven by `tools/prove-write-scope-gate.py`.
+`sprint-manager` may write exactly two files — the action plan and the wiki Roadmap page —
 fenced by that same gate.
 
-**FOUR of them are spawned WITHOUT asking, the moment their situation arrives.** Everywhere else,
+**FIVE of them are spawned WITHOUT asking, the moment their situation arrives.** Everywhere else,
 whether to spawn one is my call, weighed as described below.
 
 - **`debugger` — the moment a fix FAILS.** A bug that survived one attempt has a cause this
@@ -239,6 +239,14 @@ whether to spawn one is my call, weighed as described below.
 - **`planner` — a feature whose SHAPE is not obvious.** A system, not a change: a loot spine, a
   quest system, a new screen. Not for anything a paragraph of contract bullets already settles —
   spawning one to plan a one-liner is a slower way to start.
+- **`red-team` — right after a plan for systems-level work, BEFORE any code** (added 2026-10-04 at the
+  user's instruction). Anything that saves data, crosses the network, or adds a new screen: the plan —
+  the planner's, or one written here — is handed to the red team, which only reads, and attacks it for
+  ways it loses or duplicates data, traps a player, lets a client cheat, or fails at full size. Its
+  findings are fixed in the plan before building, and listed in the report as issue → fix. Never for a
+  small change. *(Why: on the quest system its first run found seven holes the plan carried — split
+  saves that could duplicate rewards, a guide that trapped players at every other station, a worn
+  sword the tutorial could never fold — every one citing the code, none invented.)*
 - **`sprint-manager` — ANY task tracking**: ticking a task done, and moving an entry on the wiki
   Roadmap. The rule is **RULE TRACKING** below.
 
@@ -455,7 +463,7 @@ When an editor tool writes assets, its output path must point at the correct buc
 
 ---
 
-## ⛔ RULE NOSTALE — NEVER APPEND TO A DOC. ALWAYS UPDATE IT IN PLACE. NOT ONE STALE STRING MAY SURVIVE (HARD-PINNED, ranks with THE FIVE)
+## ⛔ RULE NOSTALE — NEVER APPEND TO A DOC. ALWAYS UPDATE IT IN PLACE. NOT ONE STALE STRING MAY SURVIVE (HARD-PINNED, ranks with THE FOUR)
 
 Every doc in this repo — `docs/`, the wiki pages, a README, a handoff, a learnings page, a design note, a spec,
 a PRD — states what is TRUE NOW and nothing else. Revising one means **finding every sentence that says the old
@@ -490,7 +498,7 @@ contradicting it — a stale verb and a wrong count among them. The user was fur
 
 ---
 
-## ⛔ THE FIVE — the anti-invention protocol (HARD-PINNED, read before every build)
+## ⛔ THE FOUR — the anti-invention protocol (HARD-PINNED, read before every build)
 
 These exist because a full day was lost on 2026-08-21 to inventions that did not *feel* like inventions. The
 "don't invent" rules were already in force and were broken anyway, because **an invention disguises itself as
@@ -516,13 +524,7 @@ Mechanical, no interpretation. "Why is this confusing?", "what does X mean?", "i
 a proposal — never an edit. Editing on a question was done TWICE in one afternoon while this rule's softer
 sibling was already in the global file.
 
-**4. Every report ends with "New words I introduced".**
-A flat list of every user-visible string written this session — labels, headers, tooltips, enum members, doc
-titles — that was NOT already in the codebase or in the user's own message. Empty list = say "none". Ten seconds
-to write; it turns coined vocabulary into something the user can veto BEFORE it reaches their screen.
-*(Scar: "banked ×" — a term invented on the spot and pushed into the composer as though it were theirs.)*
-
-**5. Ask AT MOST ONCE per task, then decide and move.**
+**4. Ask AT MOST ONCE per task, then decide and move.**
 One question, batched, covering everything genuinely ambiguous. After that, ambiguity gets MY decision, labelled
 plainly as mine, and the work continues. The day's real cost was not a wrong build — it was eight rounds of
 questions about one skill while nothing got built. A decision the user can correct in one line beats a question
@@ -555,6 +557,7 @@ that costs a round.
   tools/check-asset-rules.py    # after any import setting / prefab / project setting / package edit — ASSETS.md as tests
   tools/check-biome-table.py    # after any Biome Table / biome list edit, or a test map rebuild — every biome's look is whole
   tools/check-map-ids.py        # after any world layout, scene, door or map rename — every map id agrees with the layout
+  tools/check-quest-data.py     # after any quest asset or townsfolk edit — every quest can still be finished
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s

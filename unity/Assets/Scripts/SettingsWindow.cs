@@ -16,10 +16,8 @@ using UnityEngine.UI;
 /// </summary>
 public class SettingsWindow : MonoBehaviour
 {
-    static readonly Color TabIdle = UiKit.ButtonEdge;
-
     GameObject root;
-    readonly List<Image> tabBorders = new List<Image>();
+    readonly List<Button> tabs = new List<Button>();
     readonly List<GameObject> pages = new List<GameObject>();
 
     public bool IsOpen => UiAnim.IsOpen(root);
@@ -33,16 +31,7 @@ public class SettingsWindow : MonoBehaviour
 
         var content = UiKit.Window(canvas.transform, "Settings", new Vector2(460, 340), Vector2.zero, out root);
 
-        var tabRow = UiKit.Img("Tabs", content, new Color(0, 0, 0, 0));
-        tabRow.rectTransform.anchorMin = new Vector2(0, 1);
-        tabRow.rectTransform.anchorMax = new Vector2(1, 1);
-        tabRow.rectTransform.pivot = new Vector2(0.5f, 1);
-        tabRow.rectTransform.sizeDelta = new Vector2(0, 28);
-        tabRow.raycastTarget = false;
-        var hl = tabRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        hl.spacing = 4;
-        hl.childControlWidth = hl.childControlHeight = true;
-        hl.childForceExpandWidth = hl.childForceExpandHeight = true;
+        var tabRow = UiKit.TabRow(content);
 
         var body = UiKit.Img("Pages", content, new Color(0, 0, 0, 0));
         body.raycastTarget = false;
@@ -165,7 +154,7 @@ public class SettingsWindow : MonoBehaviour
     {
         int index = pages.Count;
         var btn = UiKit.Btn(label, tabRow, () => Select(index));
-        tabBorders.Add(btn.GetComponent<Image>());
+        tabs.Add(btn);
 
         var page = UiKit.Img("Page_" + label, pageParent, new Color(0, 0, 0, 0));
         page.raycastTarget = false;
@@ -187,7 +176,7 @@ public class SettingsWindow : MonoBehaviour
         for (int i = 0; i < pages.Count; i++)
         {
             pages[i].SetActive(i == index);
-            if (tabBorders[i] != null) tabBorders[i].color = i == index ? UiKit.Accent : TabIdle;
+            UiKit.MarkTab(tabs[i], i == index);
         }
     }
 

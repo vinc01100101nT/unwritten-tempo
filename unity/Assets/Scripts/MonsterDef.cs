@@ -19,7 +19,7 @@ public class MonsterDef : ScriptableObject
     [Tooltip("In-game name shown on the nameplate (the display name; can be renamed freely without breaking references).")]
     public string displayName = "Monster";
     [Tooltip("Normal fills the field and is drawn into a map's mix. Elite and Shadow are never drawn into a mix — a " +
-             "row of the world spawn list names them. The kind sets extra skill slots, summoning, gear, respawn and drops " +
+             "row of the world spawn list names them. The kind sets how many summons it keeps, gear, respawn and drops " +
              "(see CreatureKinds); strength still comes from level and stats alone.")]
     public CreatureKind kind = CreatureKind.Normal;
     [Tooltip("Body size: how many times a character's height it stands, 1 being a character. Its melee reach counts " +
@@ -74,6 +74,10 @@ public class MonsterDef : ScriptableObject
     [Tooltip("Which Ink writes the stats on every piece this creature wears — 1 Watery, 2 Thin, 3 Faint, 4 Clear, " +
              "5 Sharp. WHICH stats are written is rolled fresh each life, exactly as a station rolls one.")]
     [Range(1, 5)] public int gearInkTier = 1;
+    [Tooltip("This creature's Weapon Mastery in the ONE weapon it holds — the same mastery a player earns, put on that " +
+             "weapon when the creature is made. It raises that weapon's three stats by 0.5% a level, counting only " +
+             "what the weapon's grade allows. A creature has mastery in one weapon only, so with no weapon it is 0.")]
+    public int weaponMastery;
     [Tooltip("Which stats this creature's ring has invested in. Parallel to Ring Rank Values. The ring is part of "+
              "the creature, so these always count — nothing has to be worn.")]
     public StatId[] ringRankStats = System.Array.Empty<StatId>();
@@ -81,10 +85,22 @@ public class MonsterDef : ScriptableObject
              "uses (SkillRing.Percent), so a mob's ring is worth exactly what a player's ring of equal ranks is worth.")]
     public int[] ringRankValues = System.Array.Empty<int>();
 
-    [Tooltip("How practised this creature is with the weapon it holds — the same Weapon Mastery a player earns, " +
-             "authored rather than trained. It raises that weapon's three stats by 0.5% a level and lifts what " +
-             "its passives do. 0 = never picked the thing up.")]
-    public int weaponMasteryLevel;
+    /// <summary>The weapon this creature holds: the last weapon piece in its gear, which is the one it wears (one piece
+    /// per slot, the last one authored for a slot wins). Null when its hands are empty.</summary>
+    public Item Weapon
+    {
+        get
+        {
+            Item held = null;
+            if (startingGear != null)
+                for (int i = 0; i < startingGear.Length; i++)
+                    if (startingGear[i] != null && startingGear[i].slot == EquipSlotType.Weapon) held = startingGear[i];
+            return held;
+        }
+    }
+
+    /// <summary>The mastery that actually goes on its weapon: what is authored, or 0 with no weapon to put it on.</summary>
+    public int MasteryOnWeapon => Weapon != null ? UnityEngine.Mathf.Max(0, weaponMastery) : 0;
 
     // NO SUB-STAT IS TYPED ON A CREATURE. Health, attack, defence, accuracy, evasion, speed, reach and swing timing
     // are all worked out from the level, primaries, gear and ring above, or read from the one shared character spec
@@ -156,7 +172,6 @@ public class MonsterDef : ScriptableObject
             gearInkTier = gearInkTier,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
-            weaponMasteryLevel = weaponMasteryLevel,
             name = string.IsNullOrEmpty(displayName) ? name : displayName,
             artFolder = artFolder,
             weight = weight,

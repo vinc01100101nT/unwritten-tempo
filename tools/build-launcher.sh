@@ -2,13 +2,13 @@
 # Build the LAUNCHER players download: a program that fetches what changed since their last update, then starts
 # the game (the source is launcher/, the update folder it reads is made by tools/publish-update.py).
 #
-# USAGE:  tools/build-launcher.sh      # downloads from PATCH_URL in settings.env (http://localhost:8090 if empty)
+# USAGE:  tools/build-launcher.sh      # downloads from PATCH_URL in settings.env; refuses to build without it
 #         PATCH_URL=https://patch.example.com tools/build-launcher.sh   # a value typed here wins
 #
 # WRITES: builds/launcher/windows/unwritten-launcher.exe
 #         builds/launcher/mac-arm64/unwritten.app      (Apple silicon Macs)
 #         builds/launcher/mac-x64/unwritten.app        (Intel Macs)
-# Each carries a launcher.txt naming the update server, when PATCH_URL is set.
+# Each carries a launcher.txt naming the update server.
 #
 # EXIT: 0 = built, 1 = a build failed, 2 = setup problem.
 
@@ -21,11 +21,11 @@ OUT="$REPO/builds/launcher"
 . "$REPO/tools/load-settings.sh"
 PATCH_URL="${PATCH_URL:-}"
 [ $# -eq 0 ] || { printf 'This takes no options; set PATCH_URL in settings.env.\n' >&2; exit 2; }
+[ -n "$PATCH_URL" ] || { printf 'PATCH_URL is empty in settings.env, so a launcher would not know where updates are.\n' >&2; exit 2; }
 
 command -v dotnet >/dev/null || { echo "dotnet is not installed." >&2; exit 2; }
 
 settings() {
-  [ -n "$PATCH_URL" ] || return 0
   printf '# Where this launcher downloads updates from.\nPATCH_URL=%s\n' "$PATCH_URL" > "$1/launcher.txt"
 }
 
@@ -80,6 +80,5 @@ if [ "$STATUS" -eq 0 ]; then
   for f in "$OUT/windows/unwritten-launcher.exe" "$OUT/mac-arm64/unwritten.app" "$OUT/mac-x64/unwritten.app"; do
     printf '\033[32mbuilt\033[0m  %s  (%s)\n' "$f" "$(du -sh "$f" | cut -f1)"
   done
-  [ -n "$PATCH_URL" ] || echo "PATCH_URL is empty in settings.env: these launchers look for updates at http://localhost:8090."
 fi
 exit "$STATUS"

@@ -63,12 +63,19 @@ def beat(name, session=""):
     """Called BY a hook, at the top of its own run, before any early-out: 'I ran.' Written at
     the top on purpose — a hook that runs and decides to say nothing has still run, and that
     is exactly the case a heartbeat has to tell apart from a hook that never fired at all."""
+    # ONE WRITER AT A TIME. Every stamp is read-add-write, and hooks fire back to back, so two at
+    # once each read the diary, add themselves, and the slower one writes back a copy missing the
+    # other. (Measured 2026-10-04: the diary held three guards; the session-start guard and the
+    # write-scope gate had both been rubbed out, and this guard was then reported as never having
+    # run — while running fine by hand.)
+    lock = _take_diary_lock()
+    if lock is None:
+        return                          # could not get it in time: skip one stamp, never clobber
+    tmp = HEARTBEAT + ".%d.tmp" % os.getpid()
     try:
-        try:
-            with io.open(HEARTBEAT, encoding="utf-8") as f:
-                seen = json.load(f)
-        except (OSError, ValueError):
-            seen = {}
+        seen = _read_diary()
+        if seen is None:
+            return                      # there but unreadable: writing now would erase every other guard
         # Keep the RECENT sessions, not just the last one. A single "who ran me last" slot is
         # overwritten by any test run of the hook, and the next end-of-turn check then compares the
         # test's fake id against the real one and reports a working guard as dead. (Measured: the
@@ -83,12 +90,83 @@ def beat(name, session=""):
         # the end of a turn, and a plain "open for writing" empties the file first — a guard reading
         # it in that instant sees nothing and reports every other guard as dead. (Measured: exactly
         # that, at 10:31:22, on a gate that was running perfectly.)
-        tmp = HEARTBEAT + ".%d.tmp" % os.getpid()
         with io.open(tmp, "w", encoding="utf-8") as f:
             json.dump(seen, f, indent=2, sort_keys=True)
-        os.replace(tmp, HEARTBEAT)
+        _retry(lambda: os.replace(tmp, HEARTBEAT))
     except OSError:
         pass                            # a guard must never fail because its diary is unwritable
+    finally:
+        # A move that failed leaves its copy behind; one was found sitting there from the night before.
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        _release_diary_lock(lock)
+
+
+# How long a stamp waits for another to finish, and when a lock is old enough to be a leftover from
+# a killed hook rather than a stamp in progress. (My numbers, not measured ones: a stamp takes a few
+# milliseconds, and every hook here has a timeout of ten seconds or more.)
+LOCK_WAIT_SECONDS = 2.0
+LOCK_STALE_SECONDS = 10.0
+
+
+def _retry(action, tries=20, pause=0.05):
+    """Windows refuses to read or replace a file another process has open for that instant, so a
+    refusal is retried briefly before it is believed."""
+    import time
+    for i in range(tries):
+        try:
+            return action()
+        except PermissionError:
+            if i == tries - 1:
+                raise
+            time.sleep(pause)
+
+
+def _read_diary():
+    """The diary as a dict, {} when there is none yet, or None when it exists but cannot be read —
+    and None must never be written back as though it were an empty diary."""
+    def read():
+        with io.open(HEARTBEAT, encoding="utf-8") as f:
+            return json.load(f)
+    try:
+        seen = _retry(read)
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError):
+        return None
+    return seen if isinstance(seen, dict) else None
+
+
+def _take_diary_lock():
+    import time
+    path = HEARTBEAT + ".lock"
+    deadline = time.time() + LOCK_WAIT_SECONDS
+    while True:
+        try:
+            os.close(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+            return path
+        except FileExistsError:
+            try:
+                if time.time() - os.path.getmtime(path) > LOCK_STALE_SECONDS:
+                    os.remove(path)
+                    continue
+            except OSError:
+                pass
+            if time.time() > deadline:
+                return None
+            time.sleep(0.02)
+        except OSError:
+            return None
+
+
+def _release_diary_lock(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 def _heartbeats():

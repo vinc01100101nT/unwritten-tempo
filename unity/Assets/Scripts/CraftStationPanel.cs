@@ -33,7 +33,15 @@ public class CraftStationPanel : MonoBehaviour
 
     static readonly Color Sub = UiKit.TextDim;
 
-    void Awake() => Instance = this;
+    void Awake()
+    {
+        Instance = this;
+        // THE QUESTS WINDOW, ITS GUIDE AND ITS ARROWS live on this same canvas; a HUD built before they existed is given
+        // them here, so no shell rebuild is needed (the same move the shop window made).
+        if (GetComponent<QuestsWindow>() == null) gameObject.AddComponent<QuestsWindow>();
+        if (GetComponent<GuideOverlay>() == null) gameObject.AddComponent<GuideOverlay>();
+        if (GetComponent<QuestArrows>() == null) gameObject.AddComponent<QuestArrows>();
+    }
     void OnDestroy() { if (Instance == this) Instance = null; }
 
     /// <summary>Open the window for <paramref name="which"/> station. Called when a player reaches a townsperson
@@ -53,6 +61,9 @@ public class CraftStationPanel : MonoBehaviour
 
     /// <summary>True while it is on screen.</summary>
     public static bool IsOpen => Instance != null && Instance.root != null && UiAnim.IsOpen(Instance.root);
+
+    /// <summary>Which station's window is on screen, or None — what the tutorial guide checks before lighting a row.</summary>
+    public static CraftStation OpenStation => IsOpen ? Instance.station : CraftStation.None;
 
     /// <summary>What the server said a craft did, or why it refused. Shown until the next one, or until the window
     /// is next opened. The chat carries the same sentence, so closing the window loses nothing.</summary>
@@ -135,8 +146,8 @@ public class CraftStationPanel : MonoBehaviour
         if (page == Page.Menu)
         {
             Line(CraftStations.Label(station), 18, UiKit.TitleText);
-            Row("Forge", () => Open(Page.Forge));
-            Row("Fold", () => Open(Page.Fold));
+            Row("Forge", () => Open(Page.Forge), GuideSpot.StationForgePage);
+            Row("Fold", () => Open(Page.Fold), GuideSpot.StationFoldPage);
             Row("Quench", () => Open(Page.Quench));
             Row("Ink", () => Open(Page.Ink));
             Row("Recycle", () => Open(Page.Recycle));
@@ -144,7 +155,7 @@ public class CraftStationPanel : MonoBehaviour
         }
 
         Line(CraftStations.Label(station) + "  ·  " + PageWord(page), 18, UiKit.TitleText);
-        Row("← Back", () => Open(Page.Menu));
+        Row("← Back", () => Open(Page.Menu), GuideSpot.StationBack);
 
         if (page == Page.Forge) { ForgePage(); return; }
 
@@ -157,7 +168,7 @@ public class CraftStationPanel : MonoBehaviour
             if (CraftStations.For(e.def) != station) continue;
             workable++;
             int at = i;
-            Row((at == picked ? "> " : "") + ItemTooltip.CopyTitle(e.instance), () => Pick(at));
+            Row((at == picked ? "> " : "") + ItemTooltip.CopyTitle(e.instance), () => Pick(at), GuideSpot.StationPieceRow, e.def.id);
         }
         if (workable == 0) { Line("You are carrying nothing this station works on.", 12, Sub); return; }
 
@@ -211,7 +222,8 @@ public class CraftStationPanel : MonoBehaviour
             var band1 = MaterialCatalog.Band(d.madeOf, 1);
             string forgeMaterial = band1 != null ? band1.displayName : "material";
             Row(d.displayName + "   " + d.forgeMaterialCost + " " + forgeMaterial + " · " + d.forgeGoldCost + "g",
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToForge(d.id); });
+                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToForge(d.id); },
+                GuideSpot.StationForgeRow, d.id);
         }
         if (forgeable == 0) Line("Nothing here is made of this.", 12, Sub);
     }
@@ -227,7 +239,8 @@ public class CraftStationPanel : MonoBehaviour
         string itemId = inst.def.id;
         if (offer.canFold)
             Row("Fold   " + offer.foldMaterialCost + " " + BandMaterialName() + " · " + offer.foldGoldCost + "g",
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToFold(picked, itemId); });
+                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToFold(picked, itemId); },
+                GuideSpot.StationFoldButton, itemId);
         else
             Line("Folded as far as this grade allows. Quench it to go further.", 12, Sub);
     }
@@ -354,10 +367,12 @@ public class CraftStationPanel : MonoBehaviour
     // One button line. Under this window's vertical layout a control with no stated height is given none, so
     // every button was drawn at zero height on top of the next — the 2026-09-21 screenshot. The same shape the
     // System window's entries use.
-    void Row(string label, System.Action onClick)
+    void Row(string label, System.Action onClick, GuideSpot spot = GuideSpot.None, string itemId = "")
     {
         var btn = UiKit.Btn(label, content, onClick);
         btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 30;
+        // What the tutorial guide may point at, named for it here where the row is made (see GuideMarker).
+        GuideMarker.Put(btn.gameObject, spot, itemId, station);
     }
 
     // One line of text, `rows` lines tall — a sentence from the server needs room to wrap.

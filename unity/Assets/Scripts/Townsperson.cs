@@ -15,12 +15,13 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class Townsperson
 {
-    /// <summary>Build one at <paramref name="at"/>, in <paramref name="map"/>. Hand over a
-    /// <paramref name="model"/> on a machine that draws people, and null on one that does not.
+    /// <summary>Build <paramref name="personName"/> at <paramref name="at"/>, in <paramref name="map"/>, wearing
+    /// <paramref name="modelName"/>. Hand over a <paramref name="model"/> on a machine that draws people, and null on
+    /// one that does not.
     ///
     /// <para>The model goes on FIRST when there is one: the animation driver and the brain added below both
     /// resolve the body's pieces as they wake, and a body handed over after them is one neither ever finds.</para></summary>
-    public static GameObject Build(string modelName, Vector3 at, Scene map, GameObject model)
+    public static GameObject Build(string modelName, string personName, Vector3 at, Scene map, GameObject model)
     {
         var spec = CharacterSpec.Active;
 
@@ -28,7 +29,8 @@ public static class Townsperson
         // transform is scaled down to character size (~0.1) — MEASURED, its move came out 0 at scale 0.098 but works
         // at scale 1. So (the same split the player uses) the unscaled root carries the controller and the brain,
         // and the scaled visual model rides it as a child.
-        var root = new GameObject("Townsfolk_" + modelName);
+        // Named for the person, so the server's log and the hierarchy say who it is.
+        var root = new GameObject("Townsfolk_" + (string.IsNullOrEmpty(personName) ? modelName : personName));
         // A runtime spawn — never bake a stray copy into a saved scene.
         root.hideFlags = HideFlags.DontSaveInEditor;
         // The town that made them is the town they live in — never whichever map was loaded last.

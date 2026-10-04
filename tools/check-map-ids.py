@@ -115,6 +115,16 @@ def main():
     for a in sorted(idset - set(atlas)):
         faults.append("world map: is missing '%s' (re-bake the world map)" % a)
 
+    # 4b. The doors between maps the game finds its way by (WorldAtlas.links) are exactly the layout's portal pairs.
+    atlas_text = read(ATLAS)
+    pairs = re.findall(r"^\s*- a: (.+)\r?\n\s+b: (.+)$", atlas_text, re.M)
+    have = {frozenset((a.strip(), b.strip())) for a, b in pairs}
+    want = {frozenset((p.get("a"), p.get("b"))) for p in layout.get("portals", []) if p.get("a") and p.get("b")}
+    for pair in sorted(have - want, key=sorted):
+        faults.append("world map: has a door between %s that the layout does not (re-bake the world map)" % " and ".join(sorted(pair)))
+    for pair in sorted(want - have, key=sorted):
+        faults.append("world map: is missing the door between %s (re-bake the world map)" % " and ".join(sorted(pair)))
+
     # 5. Map Painter files: file name == saved name.
     if os.path.isdir(SIDECARS):
         for f in sorted(os.listdir(SIDECARS)):

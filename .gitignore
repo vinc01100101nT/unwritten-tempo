@@ -35,6 +35,7 @@ builds/
 
 # the guards heartbeat — a local record of which hooks actually ran on THIS machine
 tools/hook-analytics/hook-heartbeat.json
+tools/hook-analytics/hook-heartbeat.json.*
 
 # database backups (tools/backup-database.sh) — the live data, never in git
 backups/

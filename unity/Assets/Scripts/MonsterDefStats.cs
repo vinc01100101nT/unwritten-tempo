@@ -6,7 +6,7 @@
 /// what it gives is what the creature will actually have, not a parallel estimate. Worn gear and the ring are folded in
 /// the way a spawned creature folds them in: one piece per slot (the last one authored for a slot wins, as
 /// <see cref="UnitEquipment"/> seats them), gear primaries added to the inputs, the weapon held picking melee or ranged
-/// attack, and the ring's percentages counting only while a ring is worn. No sub-stat buffs: this is a creature at rest.
+/// attack, the ring's percentages, and the weapon mastery on the weapon held. No sub-stat buffs: this is a creature at rest.
 /// Its worn pieces' written stats are left out too — which stats Ink lands on is rolled fresh every life, so nothing
 /// could show them without inventing a roll.</para>
 /// </summary>
@@ -54,7 +54,10 @@ public static class MonsterDefStats
 
         bool hasRanks = def.ringRankStats != null && def.ringRankValues != null && def.ringRankStats.Length > 0;
         if (hasRanks) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
-        float Ring(StatId stat) => hasRanks ? ringScratch.Percent(stat) : 0f;
+        // Its weapon mastery lifts the same stat channels the ring does, by the player's rule (UnitStatBlock.Lift).
+        int mastery = UnityEngine.Mathf.Min(def.MasteryOnWeapon, CraftingMath.WeaponMasteryCap(def.gearQuality));
+        float Ring(StatId stat) => (hasRanks ? ringScratch.Percent(stat) : 0f)
+            + (held != WeaponType.None && WeaponMasteryStats.Raises(held, stat) ? MasteryMath.WeaponPercent(mastery) : 0f);
 
         var u = def.StatInputs.WithGear(gear);
         switch (which)

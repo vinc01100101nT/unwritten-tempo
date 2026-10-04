@@ -121,12 +121,7 @@ public class MobRespawn : MonoBehaviour
         // Fresh GEAR first, then the level: the re-derive below reads the worn set, so the new copies must be seated
         // before it runs. Re-derived unconditionally, because ResetToSpawnLevel only re-derives when the level moved.
         var gear = mob.GetComponent<UnitEquipment>(); if (gear != null) gear.ReseatForNewLife();
-        // Its extra skills are re-rolled with the weapon — after it, so the roll can skip what the new weapon carries.
         var health = mob.GetComponent<Health>();
-        if (health != null)
-        {
-            health.RollExtraSkillsForNewLife();
-        }
         var block = mob.GetComponent<UnitStatBlock>();
         if (block != null) { block.ResetToSpawnLevel(); if (gear != null) block.Rederive(healToFull: true); }
         var brain = mob.GetComponent<MonsterAI3D>(); if (brain != null) brain.ResetCombatXp();   // and its banked XP

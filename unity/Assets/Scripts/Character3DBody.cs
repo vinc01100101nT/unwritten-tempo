@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// The ONE way to build a live-3D character body under a root object: clone a rigged Quaternius model, fit it to a
 /// world height, swap it onto the shared Humanoid controller, and attach the pose sink + stance choke point the
-/// player uses. Every live-3D unit is built through here — the player's townsfolk (<see cref="AmbientLife"/>) and
+/// player uses. Every live-3D unit is built through here — the townsfolk (<see cref="Townsperson"/>) and
 /// the 3D shadow mobs (<see cref="MobShadow3DVisual"/>) — so there is exactly one recipe for "a character body",
 /// not one per unit type that must be hand-synced.
 ///

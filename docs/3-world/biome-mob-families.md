@@ -37,8 +37,8 @@ there.
    one up to 15 levels stronger. A visitor keeps a quarter of a resident's share. No map starts below level 9 with a
    stronger visitor, so the fields beside Lastline stay safe.
 6. **Elites** have a home biome, element and level too. Each stands in the fields of its home biome within 12 levels
-   of its own; a dungeon's bottom floor holds the elite named for it. **An elite summons the normals of its own home
-   biome** nearest its level at or below it, and only reaches outside its biome when its biome has too few.
+   of its own; a dungeon's bottom floor holds the elite named for it. **Once it has bought the summon skill, an elite summons the
+   normals of its own home biome** nearest its level at or below it, and only reaches outside its biome when its biome has too few.
 7. **Drops are unchanged**: what a creature drops still follows its own level (the material grade bands in the
    [Mob Roster](mob-roster.md)), so grade-C quench material still comes only from creatures of levels 57–70, wherever
    they live.
@@ -210,7 +210,7 @@ Levels is the range the map was laid out for; creatures are listed with their ow
 - **Every map holds 3 to 7 kinds and 2 to 4 elements, and the biome's main element is the most common (or tied) in 51
   of the 61.** The roster has 66 normals for 61 maps across 14 biomes, and Peaks and Sacred have only two natives
   each; creatures made for the thinner biomes are what closes the rest.
-- **The shadows still summon by rank**: the highest shadow calls the highest elite, whatever either one is (the
+- **A shadow's summons still go by rank**: the highest shadow calls the highest elite, whatever either one is (the
   Blossom Wind shadow calls the drowned squid of Kharnel Dungeon 4).
 - **Experience and gold ranges were not changed** when creatures moved level, so a creature moved from level 40 to 63
   still pays the experience it paid at 40, and a character saved from it is paid from the same gold range.

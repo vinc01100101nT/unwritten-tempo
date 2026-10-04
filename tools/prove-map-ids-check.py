@@ -101,6 +101,13 @@ def main():
                 "spawnId: %s\n" % spawn, "spawnId: %s_old\n" % spawn, "does not have")
     bad += case("the in-game world map listing a map the layout does not have", ATLAS, "- scene: %s\n" % scene,
                 "- scene: %s_old\n" % scene, "not in the layout (re-bake")
+    door = re.search(r"^\s*- a: (.+)\r?\n\s+b: (.+)$", read(ATLAS), re.M)
+    if door is None:
+        print(RED + " WRONG" + OFF + " the world map has no doors between maps at all, so the door check proves nothing")
+        bad += 1
+    else:
+        bad += case("the in-game world map's doors disagreeing with the layout's portals", ATLAS,
+                    "  b: %s" % door.group(2).strip(), "  b: %s_old" % door.group(2).strip(), "door between")
     bad += case("a Map Painter file whose saved name differs", sidecar, '"name": "%s"' % scene,
                 '"name": "%s_old"' % scene, "says its name is")
     bad += case("the starting map naming no scene", SYSTEMS, first, first + "_old", "starting map:")

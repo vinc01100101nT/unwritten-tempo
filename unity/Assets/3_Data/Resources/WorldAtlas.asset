@@ -559,3 +559,204 @@ MonoBehaviour:
     w: 40
     h: 40
     type: dungeon
+  links:
+  - a: lastline
+    b: lst_fild01
+  - a: lst_fild01
+    b: old_oak
+  - a: old_oak
+    b: prl_fild01
+  - a: old_oak
+    b: olk_fild01
+  - a: olk_fild01
+    b: olk_dun01
+  - a: olk_dun01
+    b: olk_dun02
+  - a: lastline
+    b: lst_fild02
+  - a: lst_fild02
+    b: gemmara
+  - a: gemmara
+    b: gmr_fild01
+  - a: gmr_fild01
+    b: pluvenne
+  - a: pluvenne
+    b: plv_fild01
+  - a: plv_fild01
+    b: lst_fild03
+  - a: lst_fild03
+    b: lastline
+  - a: gemmara
+    b: hlt_fild02
+  - a: hlt_fild02
+    b: hilt
+  - a: hilt
+    b: hlt_fild01
+  - a: hlt_fild02
+    b: hlt_dun01
+  - a: hlt_dun01
+    b: hlt_dun02
+  - a: hlt_dun02
+    b: hlt_dun03
+  - a: lastline
+    b: hrw_fild01
+  - a: hrw_fild01
+    b: harrowen
+  - a: prl_fild01
+    b: parley
+  - a: parley
+    b: prl_fild02
+  - a: prl_fild02
+    b: tornel
+  - a: harrowen
+    b: tornel
+  - a: tornel
+    b: trn_fild01
+  - a: prl_fild02
+    b: pennaryl
+  - a: pennaryl
+    b: pnr_fild01
+  - a: pnr_fild01
+    b: vlm_fild01
+  - a: vlm_fild01
+    b: trn_fild01
+  - a: vlm_fild01
+    b: velmora
+  - a: velmora
+    b: vlm_fild02
+  - a: vlm_fild02
+    b: brm_fild02
+  - a: velmora
+    b: vlm_fild03
+  - a: vlm_fild02
+    b: vlm_dun01
+  - a: vlm_dun01
+    b: vlm_dun02
+  - a: vlm_dun02
+    b: vlm_dun03
+  - a: brm_fild02
+    b: brimstone
+  - a: brimstone
+    b: brm_fild01
+  - a: cindrel
+    b: cdl_fild01
+  - a: cindrel
+    b: cdl_fild02
+  - a: cdl_fild02
+    b: cdl_dun01
+  - a: cdl_dun01
+    b: cdl_dun02
+  - a: cdl_dun02
+    b: cdl_dun03
+  - a: luminhal
+    b: lmh_fild01
+  - a: kharnel
+    b: khn_fild02
+  - a: kharnel
+    b: khn_fild01
+  - a: khn_fild01
+    b: khn_dun01
+  - a: khn_dun01
+    b: khn_dun02
+  - a: khn_dun02
+    b: khn_dun03
+  - a: khn_dun03
+    b: khn_dun04
+  - a: khn_fild03
+    b: khn_fild04
+  - a: khn_fild04
+    b: khn_fild05
+  - a: khn_fild05
+    b: khn_fild07
+  - a: khn_fild07
+    b: khn_fild06
+  - a: halcyra
+    b: hcr_fild01
+  - a: halcyra
+    b: hcr_fild02
+  - a: pluvenne
+    b: luminhal
+  - a: harrowen
+    b: kharnel
+  - a: brimstone
+    b: khn_fild02
+  - a: kharnel
+    b: khn_fild03
+  - a: luminhal
+    b: cdl_fild02
+  - a: cindrel
+    b: hcr_fild01
+  - a: lst_fild01
+    b: last_bridge
+  - a: hcr_fild02
+    b: hill_of_the_flame
+  - a: parley
+    b: thousand_gates
+  - a: gmr_fild01
+    b: iron_gate
+  - a: khn_fild04
+    b: masked_ballroom
+  - a: cdl_fild01
+    b: burning_keel
+  - a: brm_fild01
+    b: everburning_plain
+  - a: vlm_fild01
+    b: sky_cairn
+  - a: plv_fild01
+    b: tide_temple
+  - a: khn_fild07
+    b: dusk_tower
+  - a: khn_fild06
+    b: walking_road
+  - a: khn_fild02
+    b: drowned_chapel
+  - a: lmh_fild01
+    b: aurora_steps
+  - a: prl_fild02
+    b: unmarked_path
+  - a: gmr_fild02
+    b: lst_fild02
+  - a: gmr_fild02
+    b: gemmara
+  - a: lst_fild04
+    b: lst_fild01
+  - a: lst_fild04
+    b: lst_fild03
+  - a: hrw_fild02
+    b: hrw_fild01
+  - a: hrw_fild02
+    b: lst_fild04
+  - a: lst_fild05
+    b: lst_fild04
+  - a: lst_fild05
+    b: lst_dun01
+  - a: lst_dun01
+    b: lst_dun02
+  - a: pnr_fild02
+    b: vlm_fild03
+  - a: pnr_fild02
+    b: pnr_fild01
+  - a: brm_fild03
+    b: brm_fild02
+  - a: brm_fild03
+    b: brimstone
+  - a: khn_fild08
+    b: kharnel
+  - a: khn_fild08
+    b: khn_fild01
+  - a: khn_fild09
+    b: khn_fild04
+  - a: khn_fild09
+    b: khn_dun05
+  - a: khn_dun05
+    b: khn_dun06
+  - a: khn_fild10
+    b: khn_fild05
+  - a: khn_fild10
+    b: khn_fild06
+  - a: khn_fild07
+    b: khn_dun07
+  - a: khn_dun07
+    b: khn_dun08
+  - a: khn_dun08
+    b: khn_dun09

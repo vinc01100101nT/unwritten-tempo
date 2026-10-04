@@ -57,6 +57,7 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Action Alarms](2-systems/networking/action-alarms.md) — how a body says what it is DOING across the wire: which action, when it began, how long it lasts, so a swing, a walk and a damage number can never disagree. **Played and working**; a fight with two people in it is the part still unwatched.
   - [Readiness Audit](2-systems/networking/readiness-audit.md) — the July survey that chose the shape. Historical; kept for the reasoning.
 - [HUD/UI System — Design & Relay](2-systems/hud-ui-system.md) — the HUD/UI workstream.
+- [Quests and Tutorials](2-systems/quests-and-tutorials.md) — the Quests window, ground arrows, the tutorial guide, and how quest progress is saved.
 
 ## World & content
 

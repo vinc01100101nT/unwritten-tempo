@@ -65,6 +65,7 @@ public class InventoryList
         public ItemSlot slot;
         public TMP_Text[] cells;
         public BagEntry entry;
+        public GuideMarker guide;
     }
 
     readonly List<Row> rows = new List<Row>(RowPool);
@@ -396,6 +397,12 @@ public class InventoryList
             var e = view[i];
             if (!row.go.activeSelf) row.go.SetActive(true);
             row.entry = e;
+
+            // WHAT THE TUTORIAL GUIDE MAY POINT AT: a piece you could put on. A worn row is not one — a double-click on
+            // it does nothing — so it carries no spot.
+            if (row.guide == null) row.guide = row.go.AddComponent<GuideMarker>();
+            row.guide.spot = e.worn || e.def == null ? GuideSpot.None : GuideSpot.BagRow;
+            row.guide.itemId = e.def != null ? e.def.id : "";
 
             // The slot carries the DATA and the interactions; the cells carry the reading.
             if (e.instance != null) row.slot.SetInstance(e.instance);

@@ -298,10 +298,26 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // the same order a door already uses: write, wait, then hand over.
         await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
 
+        // A NEW HAND-OVER, BEFORE THE READ: from here, only saves carrying this number are taken (see Handover). Raised
+        // after the read, a late save from a server that did not let go in time landed between the two — the progress
+        // healed on the next save, but quest rows written as changes would have stayed from the old server's timeline.
+        // Only for this account's own character: anybody else's number is not this request's to move.
+        int handover;
+        await using (var own = new NpgsqlCommand(
+            @"update character set handover = handover + 1
+               where id = $1 and account_id = $2 and deleted_at is null returning handover", conn))
+        {
+            own.Parameters.Add(new NpgsqlParameter { Value = characterId });
+            own.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+            if (await own.ExecuteScalarAsync() is not int raised) return NoSuchCharacter();
+            handover = raised;
+        }
+
         // The hotbar is read in the same query — it has its own row (see 008_character_hotbar.sql), and a
-        // character that has never had one written has none, so it is a LEFT join and may come back null.
+        // character that has never had one written has none, so it is a LEFT join and may come back null. The quest
+        // rows come as one sub-selected JSON array (see QuestRows), never a join, so the progress is read once.
         await using var cmd = new NpgsqlCommand(
-            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm, h.slots
+            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm, h.slots, " + QuestRows.ReadAsJson + @"
                 from character c join account a on a.id = c.account_id
                 left join character_hotbar h on h.character_id = c.id
                where c.id = $1 and c.account_id = $2 and c.deleted_at is null", conn);
@@ -313,6 +329,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         using var progress = JsonDocument.Parse(rows.GetString(2));
         using var hotbar = rows.IsDBNull(6) ? null : JsonDocument.Parse(rows.GetString(6));
+        using var quests = JsonDocument.Parse(rows.GetString(7));
         string name = rows.GetString(1);
         bool isGm = rows.GetBoolean(5);
         var sent = progress.RootElement;
@@ -386,15 +403,12 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         var ticket = maps.MintTicket(AccountOf(http).ToString(), characterId.ToString());
 
-        // A NEW HAND-OVER: from here, only saves carrying this number are taken for this character (see Handover).
-        // The read above is finished with first — one connection runs one command at a time.
         await rows.DisposeAsync();
-        if (await Handover.NextAsync(conn, characterId) is not int handover) return NoSuchCharacter();
 
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
-        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, hotbar?.RootElement, isGm, handover,
-                                              http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, hotbar?.RootElement, quests.RootElement, isGm,
+                                              handover, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

@@ -5,13 +5,17 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// THE READOUT FOR THE UNIT YOU PICKED A FIGHT WITH — top-center of the screen, showing the one wearing the target
-/// arrow (<see cref="Player3DController.AttackTarget"/>): its name (a creature's portrait on its left), its element, its HP and MP, its live
-/// buffs/debuffs, and what it is carrying. It stays up for as long as the fight does.
+/// THE READOUT FOR THE UNIT YOU CLICKED — top-center of the screen, showing the one wearing the target arrow: the
+/// creature you are fighting (<see cref="Player3DController.AttackTarget"/>), or else the person you selected
+/// (<see cref="Player3DController.SelectedPerson"/>). Its name (a creature's portrait on its left), its element, its HP
+/// and MP, its live buffs/debuffs, and what it is carrying. It stays up until that fight or selection ends.
+///
+/// <para><b>The only place another unit's buffs and debuffs are drawn.</b> While a unit is shown here the server is
+/// asked to keep this machine told about it (<see cref="NetPlayer.PointAt"/>), so its icons stay live however long you
+/// look at it — and nothing is sent about units nobody has selected.</para>
 ///
 /// <para><b>Merely POINTING at something is not this readout's job</b> — that is <see cref="HoverPlate"/>, which
-/// floats over whoever is under the cursor. This one answers a different question: not "what am I looking at" but
-/// "what am I fighting", which is why it is the one that lists the unit's gear.</para>
+/// floats a name and bars over whichever creature is under the cursor.</para>
 ///
 /// <para>Reads through <see cref="ICombatUnit"/> (HP, MP, state store), so nothing here is mob-specific. Rebuilds its
 /// state icons only when that unit's state SET changes (its store's OnChanged), and rewrites a number only when the
@@ -66,7 +70,7 @@ public class UnitStatusPanel : MonoBehaviour
         if (player == null && PersistentPlayer3D.Instance != null)
             player = PersistentPlayer3D.Instance.GetComponentInChildren<Player3DController>();
 
-        target.Track(player != null ? player.AttackTarget : null);
+        target.Track(player != null ? (player.AttackTarget ?? player.SelectedPerson) : null);
     }
 
     // ── one unit's readout ────────────────────────────────────────────────────
@@ -99,10 +103,13 @@ public class UnitStatusPanel : MonoBehaviour
         readonly List<UnitStates.State> shown = new List<UnitStates.State>(MaxIcons);
 
         // WHAT THE UNIT WEARS: one row per piece, its grade and folds then its name, exactly
-        // as the server wrote them (NetMob.WornText). Rebuilt only when that text changes.
+        // as the server wrote them (IWatchedShell.WornText). Rebuilt only when that text changes.
         readonly List<TMP_Text> gearRows = new List<TMP_Text>(MaxGearRows);
         readonly List<WornList.Entry> gearEntries = new List<WornList.Entry>(MaxGearRows);
-        NetMob shell;
+        // What the server says about the unit beyond its health — a creature's shell or a person's.
+        IWatchedShell shell;
+        // The creature's own shell, for the one thing only a creature has: its face.
+        NetMob creature;
         string shownWorn;
         // The name without its level, and the level drawn beside it — rewritten only when the server's level changes.
         string baseName;
@@ -198,7 +205,10 @@ public class UnitStatusPanel : MonoBehaviour
             tracked = h;
             lastHP = lastMP = int.MinValue;
             // The shell speaking for this body, found once per bind — a dictionary probe, never per frame.
-            shell = h != null ? (NetMob.ShellForView(h.gameObject) ?? NetMob.ShellForServerMob(h.gameObject)) : null;
+            creature = h != null ? (NetMob.ShellForView(h.gameObject) ?? NetMob.ShellForServerMob(h.gameObject)) : null;
+            shell = creature != null ? (IWatchedShell)creature : (h != null ? NetPlayer.ShellForBody(h.gameObject) : null);
+            // AND THE SERVER IS TOLD WHO THIS IS, so it keeps sending their buffs for as long as they are shown here.
+            NetPlayer.PointAt(h != null ? h.gameObject : null);
             RebuildGear();
             statesDirty = true;
 
@@ -208,14 +218,11 @@ public class UnitStatusPanel : MonoBehaviour
             subscribed = h.States;
             if (subscribed != null) subscribed.OnChanged += MarkStatesDirty;
 
-            var plate = h.GetComponent<MobNameplate>();
-            baseName = plate != null && !string.IsNullOrEmpty(plate.displayName)
-                ? plate.displayName
-                : (h.name.StartsWith("Monster_") ? h.name.Substring("Monster_".Length) : h.name);
+            baseName = UnitLabel.Of(h);
             lastLevel = shell != null ? shell.Level : 0;
             nameLabel.text = UnitLabel.WithLevel(baseName, lastLevel);
 
-            var face = CreaturePortraits.For(h, shell);
+            var face = CreaturePortraits.For(h, creature);
             bool faceChanged = (face != null) != portraitShown;
             portraitShown = face != null;
             portrait.sprite = face;

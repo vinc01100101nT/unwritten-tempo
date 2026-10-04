@@ -433,8 +433,11 @@ public class ItemTooltip : MonoBehaviour
         // Weight and value on their own lines — packed on one row they read as cramped.
         if (item.weight > 0)
             sb.Append("\n" + DimTag + "Weight ").Append(item.weight).Append("</color>");
-        if (item.zeny > 0)
+        // A SELL VALUE OF 0 IS NOT SHOWN AS A 0: it means no shop will buy it, and it says so.
+        if (item.CanBeSold)
             sb.Append("\n" + DimTag + "Value ").Append(item.zeny).Append("z</color>");
+        else
+            sb.Append("\n" + DimTag).Append(Item.CannotBeSoldText).Append("</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
             sb.Append("\n\n" + MainTag).Append(item.description).Append("</color>");
     }

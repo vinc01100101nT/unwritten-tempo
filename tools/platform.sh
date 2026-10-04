@@ -182,6 +182,18 @@ stop_port() {
   done
 }
 
+# The port the update folder (the website, the launcher and the game updates) is served on: the one PATCH_URL in
+# settings.env names — written in it, or its scheme's own (80, or 443 for https) when it names none. Fails when
+# PATCH_URL is empty. Load settings.env before asking.
+patch_port() {
+  [ -n "${PATCH_URL:-}" ] || return 1
+  __authority="${PATCH_URL#*://}"; __authority="${__authority%%/*}"
+  case "$__authority" in
+    *:[0-9]*) echo "${__authority##*:}" ;;
+    *)        case "$PATCH_URL" in https://*) echo 443 ;; *) echo 80 ;; esac ;;
+  esac
+}
+
 # This computer's address on the local network, for players on other machines.
 lan_address() {
   case "$PLATFORM" in

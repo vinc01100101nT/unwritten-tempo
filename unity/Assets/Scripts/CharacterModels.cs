@@ -8,7 +8,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 /// <summary>
 /// THE runtime roster of rigged character models — the one place that knows a model by NAME and can hand back the
 /// asset for it in a build. Every live-3D character is drawn from here: the player, the townsfolk
-/// (<see cref="AmbientLife"/>) and the 3D shadow mobs (<see cref="MobShadow3DVisual"/>).
+/// (<see cref="Townsperson"/>) and the 3D shadow mobs (<see cref="MobShadow3DVisual"/>).
 ///
 /// <para><b>Why by name and not by reference.</b> The cast used to be direct object links on
 /// <see cref="CharacterSpec"/>, which meant loading that one settings asset dragged EVERY model in the cast into

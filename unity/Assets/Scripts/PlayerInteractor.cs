@@ -43,6 +43,7 @@ public class PlayerInteractor : MonoBehaviour
             {
                 if (cancelled) Hotkeys.MarkCancelHandled();
                 if (atStation) { CraftStationPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
+                else if (atShop) { ShopPanel.CloseIt(); UISounds.PlayClose(); EndTalk(); }
                 else if (DialogBox.Instance != null) DialogBox.Instance.Close();   // fires onClosed → EndTalk
                 else EndTalk();
                 return;
@@ -50,6 +51,7 @@ public class PlayerInteractor : MonoBehaviour
             // THE WINDOW'S OWN X closes a station the same way Esc does: the window is gone, so the interaction
             // ends — camera back, townsperson released.
             if (atStation && !CraftStationPanel.IsOpen) { EndTalk(); return; }
+            if (atShop && !ShopPanel.IsOpen) { EndTalk(); return; }
 
             // Keep both turned to each other and the camera framed on the side (they're frozen, but track anyway).
             player.FaceWorldPoint(partner.transform.position);
@@ -100,7 +102,9 @@ public class PlayerInteractor : MonoBehaviour
 
         partner = npc;
         Talking = true;
-        atStation = npc.station != CraftStation.None;
+        // ONE SERVICE PER PERSON: somebody who keeps a shop opens it; otherwise one who works a station opens that.
+        atShop = !string.IsNullOrEmpty(npc.Shop);
+        atStation = !atShop && npc.station != CraftStation.None;
         // THE TOWNSPERSON IS THE SERVER'S TO STOP, not this machine's. The body in front of you is a copy of
         // somebody the world owns, so asking here is what makes them halt and turn on EVERY screen — including the
         // screens of the other people standing in the square, who would otherwise watch them stroll away mid-chat.
@@ -116,13 +120,52 @@ public class PlayerInteractor : MonoBehaviour
             CraftStationPanel.OpenFor(npc.station);
             return;
         }
+        if (atShop)
+        {
+            ShopPanel.OpenFor(npc.Shop, string.IsNullOrEmpty(npc.Description) ? npc.SpeakerName
+                                                                              : npc.SpeakerName + " · " + npc.Description);
+            return;
+        }
         HideHud(true);
+        // A QUEST THIS PERSON OFFERS, which the server says this character can take: their offer, and Accept on its last
+        // line. The server decides whether it is accepted; the box only asks.
+        var offered = QuestOfferedBy(npc.PersonId);
+        if (offered != null)
+        {
+            var body = npc.gameObject;
+            DialogBox.Open(npc.SpeakerName, OfferLines(offered), EndTalk, "Accept",
+                           () => GameNetwork.TellServerAcceptQuest(body, offered.id));
+            return;
+        }
         // The box drives NEXT/CLOSE + Right-Arrow itself; when it closes it calls EndTalk to unwind the cinematic.
         DialogBox.Open(npc.SpeakerName, npc.DialogueLines(), EndTalk);
     }
 
-    // True while the interaction in progress is a station rather than a conversation.
+    // The first quest the server listed as offered by this person and open to this character, or null.
+    static QuestDef QuestOfferedBy(string personId)
+    {
+        if (string.IsNullOrEmpty(personId)) return null;
+        foreach (var questId in QuestStore.Offers)
+        {
+            var def = QuestCatalog.Get(questId);
+            if (def != null && def.offeredBy == personId) return def;
+        }
+        return null;
+    }
+
+    // The offer as conversation lines: each paragraph of the quest's offer text is one line; the title when it has none.
+    static string[] OfferLines(QuestDef def)
+    {
+        var text = string.IsNullOrWhiteSpace(def.offerText) ? def.title : def.offerText;
+        var parts = text.Split(new[] { "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries);
+        var kept = new System.Collections.Generic.List<string>(parts.Length);
+        foreach (var p in parts) if (!string.IsNullOrWhiteSpace(p)) kept.Add(p.Trim());
+        return kept.Count > 0 ? kept.ToArray() : new[] { string.IsNullOrWhiteSpace(def.title) ? "…" : def.title };
+    }
+
+    // True while the interaction in progress is a station, or a shop, rather than a conversation.
     bool atStation;
+    bool atShop;
 
     // Invoked as the DialogBox's onClosed (natural CLOSE / past-last-line) AND on Esc/despawn via DialogBox.Close.
     // Idempotent: unwinds the cinematic once.
@@ -133,6 +176,7 @@ public class PlayerInteractor : MonoBehaviour
         if (partner != null) GameNetwork.TellServerTalkingTo(partner.gameObject, false);
         partner = null;
         atStation = false;
+        atShop = false;
         if (CameraFollow3D.Main != null) CameraFollow3D.Main.ExitCinematic();
         HideHud(false);
     }

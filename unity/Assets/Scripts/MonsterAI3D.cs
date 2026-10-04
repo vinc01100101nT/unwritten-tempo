@@ -736,7 +736,7 @@ public class MonsterAI3D : MonoBehaviour
     static readonly System.Text.StringBuilder castNote = new System.Text.StringBuilder(256);
 
     /// <summary>THE AUTO-PILOT AI'S CHOICE OF SKILL — the same idea by the same name as the one that fights for a
-    /// person when they press T, here steering a creature. Cast one of this creature's own skills — its weapon's kit or its extra skills — at its prey
+    /// person when they press T, here steering a creature. Cast one of this creature's own skills — the ones it has bought (see Health.Skills) — at its prey
     /// if any is ready: off cooldown, affordable, not refused by silence, a taunt or a missing pile, and inside that
     /// skill's OWN cast range. False when nothing was cast, so the ordinary swing happens instead.
     ///

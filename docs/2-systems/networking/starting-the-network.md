@@ -182,8 +182,9 @@ tools/build-and-publish.sh --dev
 ```
 
 Serves the update folder — the website with its Download page, the launcher and every update — to this computer and every device
-on your Wi-Fi. Leave that terminal open (Ctrl+C stops it). Another device opens `http://<this computer's
-address>:8090` in a browser and downloads the launcher from there:
+on your Wi-Fi. Leave that terminal open (Ctrl+C stops it). It prints only the addresses that answered when it tried
+them from this computer, and a red line when `PATCH_URL` — the address players are given — does not answer. Another
+device opens one of the printed addresses in a browser and downloads the launcher from there:
 
 ```
 tools/serve-updates.sh
@@ -331,7 +332,10 @@ That one line confirms both of the first two steps at once: the health check ask
 - **Nothing printed** → the service is not running. Look at its terminal for the reason.
 - **An error instead** → the service is up but cannot reach the database. Go back to step 1.
 
-It listens on **port 8080**. It signs people in and does nothing else — the characters moved out of it.
+It listens on **port 8080**. It signs people in and does nothing else — the characters moved out of it. At start it
+prints every address it answered at when it tried itself, and a red line when the address game copies are built to
+dial (`PUBLIC_ACCOUNTS_URL`, or `ACCOUNTS_URL` when that is empty) does not answer — said again whenever this
+computer's addresses change.
 
 ## 3. The character server
 
@@ -368,8 +372,9 @@ charserver/run.sh
 ```
 
 It builds the server once and runs it, and **starts it again 5 seconds after it stops** — after a crash, nobody has
-to notice and start it by hand. Two exits are not restarted: a clean stop, and the server refusing to start because
-its port is already taken (another one is running). Ctrl+C stops it for good. On the rented machine
+to notice and start it by hand. Three stops are not restarted: a clean stop, the server refusing to start because
+its port is already taken (another one is running), and Ctrl+C, which stops it for good. Because Ctrl+C ends the
+script, `restart-servers.sh` runs it again from the top, and that rebuilds the server first. On the rented machine
 `deploy/unwritten-charserver.service` starts it at boot.
 
 For **40 seconds after it starts it lets nobody enter the world** ("the world is starting up — try again in N
@@ -386,7 +391,9 @@ curl -s http://localhost:8081/health
 **Worked when:** it answers `{"ok":true,"models":52}` or similar. That check asks the database every time, so
 `ok` means it can actually serve a character rather than merely being alive.
 
-It listens on **port 8081**.
+It listens on **port 8081**. At start it prints every address it answered at when it tried itself, and a red line
+when the address game copies are built to dial (`PUBLIC_CHAR_SERVER_URL`, or `CHAR_SERVER_URL` when that is empty)
+does not answer — said again whenever this computer's addresses change.
 
 **`SERVER_SECRET` is how the two servers recognise each other.** It is NOT a player's sign-in token and the two
 are never interchangeable: a person signing in must not be able to register a game server or read somebody
@@ -458,13 +465,20 @@ server will not hand players to a game server it cannot recognise.
 
 ```
 [map] listening for arrivals on 7788 as 'YourMac-1a2b3c4d'
-[server] listening for players on port 7777
+[server] listening for players on UDP port 7777 at:
+[server]   127.0.0.1:7777      Loopback Pseudo-Interface 1
+[server]   192.168.1.12:7777   Ethernet
+[server] MAP_SERVER_ADDRESS 192.168.1.12 is one of this computer's addresses — that is the address players are sent to.
 [server] world up — loading map 'lastline'
 [server] map 'lastline' loaded — 15 root objects, active scene is now 'lastline'
 [map] the character server knows this map server holds 1 map(s).
 ```
 
-The `listening for players` line means it is reachable. The `loaded` line means the world is actually up, not just
+The `listening for players` lines list every address this computer holds right now — nothing else is printed as
+an address. **A red `MAP_SERVER_ADDRESS … is not one of this computer's addresses` line means players are being
+sent somewhere this computer is not** (Tailscale not connected, the Wi-Fi address changed): fix the network or the
+setting before anyone tries to join. Both are said again whenever this computer's addresses change, so an adapter
+that comes up later is reported when it does. The `loaded` line means the world is actually up, not just
 requested. **The last line is the one people forget to read** — until the character server knows this server is
 there, nobody can be sent here. It says `0 map(s)` first and then the real number; that is correct, the map comes
 up after the link does.
@@ -475,13 +489,19 @@ while people play: the character server tells it to bring a zone up when somebod
 go again once nobody has been in it for forty-five seconds. So this list is a snapshot, and it changes all
 evening. See *Which maps a server holds open* below.
 
-The character server's own terminal says the same thing from its side, with how busy that server is:
+The character server's own terminal says the same thing from its side, with how busy that server is — but only
+after it has tried the address it will hand characters to, and only when something in the line changed (a map, a
+count, the address answering or not), so an idle server checking in every 30 seconds writes nothing:
 
 ```
-[char] map server 'YourMac-1a2b3c4d' at 127.0.0.1:7788 holds 1 map(s): lastline [0 player(s), 15 creature(s)]
+[char] map server 'YourMac-1a2b3c4d' answers at 127.0.0.1:7788 and holds 1 map(s): lastline [0 player(s), 15 creature(s)]
 ```
 
-Those two numbers are what it weighs when it decides which server a new zone should be brought up on.
+The player and creature counts are what it weighs when it decides which server a new zone should be brought up on.
+
+**A red `map server '…' does not answer at …` line means nobody can enter that server**: the character server
+delivers every arriving character to that address, and nothing answered there. Usually `MAP_SERVER_ADDRESS` names
+a network that is not up (Tailscale not connected).
 
 **Two doors, two ports.** Players connect on **7777**. The character server pushes characters in on **7788**.
 They are different conversations and neither port does the other's job.
@@ -547,8 +567,8 @@ wiki edit; the server needs no restart.
 
 **Worked when:** the Home page loads, and the Wiki page shows its left-hand list of pages.
 
-The download server answers every device on your network, so the site does too — another device opens
-`http://<this computer's address>:8090`.
+The download server listens on every address of this computer, so the site does too — another device opens one of
+the addresses it printed as answering.
 
 ### The Server Status page
 
@@ -557,9 +577,11 @@ which game-server process, and who has earned the most experience. It reads thos
 server's public door (section 3 above) and asks again every 5 seconds while you have it open. The Home page's
 status box reads the same numbers.
 
-**It asks the address written in `wiki/content/server-status.json`**, which is `http://127.0.0.1:8081/stats` — the
-character server on THIS computer. Another device opening the site asks its own computer instead and shows that it
-cannot reach the server, until that address is changed to one the device can reach.
+**It asks the character server address in `settings.env`** — `PUBLIC_CHAR_SERVER_URL`, or `CHAR_SERVER_URL`
+while that is empty, the same address the game is built with. `tools/publish-update.py` writes it into `site.json`
+beside the website every time it publishes, so no page carries an address of its own. Another device can read the
+numbers only when that address is one the device can reach: on your Wi-Fi or Tailscale, put this computer's address
+in `PUBLIC_CHAR_SERVER_URL` and publish the site again (`tools/publish-update.py --site-only`).
 
 **Two of those numbers cannot be fresher than the game makes them**, however often the page asks: a level
 reaches the database within 15 seconds of being earned, and a game server reports how many players it is
@@ -569,7 +591,7 @@ about 35 seconds of somebody arriving.
 **A browser treats the website and the character server as two different sites**, because they answer on two
 different ports — so it refuses to hand the page that reply unless the character server names the website's
 address as allowed. Unless told otherwise it allows the download server's own address: the one in `PATCH_URL`,
-plus `http://127.0.0.1` and `http://localhost` on that same port (8090 when `PATCH_URL` is empty). Serve the site
+plus `http://127.0.0.1` and `http://localhost` on that same port (none at all when `PATCH_URL` is empty). Serve the site
 from anywhere else and the character server must be started with that address in `WIKI_ORIGINS`. Setting it
 REPLACES that default rather than adding to it, so list every address that needs to read it, separated by commas:
 
@@ -596,23 +618,24 @@ it carries the two addresses in its own settings file, written there by `tools/b
 | Setting | What it does | Default |
 | --- | --- | --- |
 | `GAME_SERVER` | Makes this copy BE the server. Any value except `0` or `false` counts as on. | off |
-| `GAME_SERVER_HOST` | Which machine a player's game dials. | `localhost` |
-| `GAME_SERVER_PORT` | The port both sides use. Must match. | `7777` |
-| `ACCOUNTS_URL` | Where the sign-in service lives. A whole address, so `https://…` needs nothing else changed. | `http://localhost:8080` |
-| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. Every build carries it, written in by `tools/build-game.sh`. | `http://localhost:8081` on a server; on a player's build, whatever the build carries |
+| `GAME_SERVER_HOST` | Which machine a player's game dials before the character server names one. | none — the character server always names it |
+| `GAME_SERVER_PORT` | The port the game server listens on for players. A player's game is told it by the character server. | none — the game server stops without it |
+| `ACCOUNTS_URL` | Where the sign-in service lives. A whole address, so `https://…` needs nothing else changed. | none — a game with no address cannot sign in |
+| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. Every build carries it, written in by `tools/build-game.sh`. | none on a server — it stops without it; on a player's build, whatever the build carries |
 | `PUBLIC_ACCOUNTS_URL`, `PUBLIC_CHAR_SERVER_URL` | The two addresses written into every game build instead of the two above, once the rented server exists — and the names the encrypting front door answers to. | empty — builds carry this machine's addresses |
-| `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. | empty — `http://localhost:8090` |
-| `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. | `0.0.0.0` — every address |
+| `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. Also where this computer serves the website. | none — the launcher build, the website server and `start-servers.sh` stop without it |
+| `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. `0.0.0.0` is every address, which a desk needs. | none — both stop without it |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ARRIVALS_ADDRESS` | Where the character server delivers characters to this game server — a delivery carries a whole character, an entry ticket and the shared server secret as plain text, so on a rented machine this is a private network address, or `127.0.0.1` when both run on one machine. The game server then listens for deliveries on that address only. Set on the GAME server. | empty — the same as `MAP_SERVER_ADDRESS`, which is right only on a desk or a home network |
-| `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | `127.0.0.1` |
-| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the website, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | the download server's address: `PATCH_URL`, plus `http://127.0.0.1` and `http://localhost` on its port (8090 when `PATCH_URL` is empty) |
+| `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | none — the game server stops without it |
+| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the website, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | the download server's address: `PATCH_URL`, plus `http://127.0.0.1` and `http://localhost` on its port (none at all when `PATCH_URL` is empty) |
+| `MAP_SERVER_ARRIVALS_PORT` | The door the character server pushes characters in on. Not the port players use. | none — the game server stops without it |
+| `PORT`, `CHAR_SERVER_PORT` | The ports the sign-in service and the character server listen on. | none — each stops without its own |
 
 **There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
 server is now told nothing about zones when it starts: the character server decides which server a zone is
 brought up on, at the moment somebody wants it, and each server lets a zone go again once nobody has been in it.
 Nothing to configure, and nothing to keep in step between machines.
-| `MAP_SERVER_ARRIVALS_PORT` | The door the character server pushes characters in on. Not the port players use. | `7788` |
 
 A dedicated server build already knows it is a server; `GAME_SERVER` is for running an ordinary build, or the editor, as one.
 
@@ -627,9 +650,8 @@ Set `MAP_SERVER_ADDRESS` to that address, so the character server sends other de
 put that address in `PUBLIC_ACCOUNTS_URL` and `PUBLIC_CHAR_SERVER_URL`, which only go into game builds. Then build
 the copies for other devices with **`tools/build-game.sh client --dev`**: a game refuses plain (unencrypted) web
 traffic to any machine but its own, and only a development build is allowed it. Never hand a `--dev` copy to a
-player. `GAME_SERVER_HOST`
-is now only a fallback — the character server tells each player which machine and which port to go to, so a
-build aimed at one host still ends up wherever it is sent.
+player. The character server tells each player which machine and which port to go to, so `GAME_SERVER_HOST`
+is not needed at all.
 
 ---
 
@@ -1084,8 +1106,8 @@ keeps its old version**, so its players are told to update until it is published
 ### Trying the launcher on this computer and your Wi-Fi
 
 No rented machine needed: this computer serves the update folder itself, to its own launcher and to every device on
-the same Wi-Fi. With `PATCH_URL` empty in `settings.env`, a launcher built here looks for updates at
-`http://localhost:8090` — which only this computer can use. For other devices, set
+the same Wi-Fi. `PATCH_URL` in `settings.env` is required — the launcher build refuses to run without it.
+`http://localhost:8090` works only for this computer; for other devices, set
 `PATCH_URL=http://<this computer's address>:8090` (`tools/platform.sh lan-address` prints the address).
 
 1. Build the launcher:
@@ -1112,7 +1134,7 @@ the same Wi-Fi. With `PATCH_URL` empty in `settings.env`, a launcher built here 
    tools/serve-updates.sh
    ```
 
-5. On another device, open `http://<this computer's address>:8090`, press **Download for Windows**, unzip it, and
+5. On another device, open one of the addresses step 4 printed, press **Download for Windows**, unzip it, and
    run `unwritten-launcher.exe` from the `unwritten` folder. On this computer: `tools/platform.sh open-launcher`.
 
 **Worked when:** the News box fills, the bar downloads the whole game (about 850 MB) the first time, and **Start**

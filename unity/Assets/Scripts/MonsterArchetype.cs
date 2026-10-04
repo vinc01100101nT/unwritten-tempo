@@ -35,9 +35,6 @@ public struct MonsterArchetype
     public StatId[] ringRankStats;
     public int[] ringRankValues;
 
-    // How practised it is with what it holds — the creature's half of Weapon Mastery, authored rather than trained.
-    public int weaponMasteryLevel;
-
     // No sub-stat is carried here: health, defence, evasion, attack, accuracy and spread are DERIVED from `stats` by
     // UnitStatBlock on the spawned mob, and speed, reach and swing timing are the shared character spec's.
 

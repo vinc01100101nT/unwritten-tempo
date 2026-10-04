@@ -5,6 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: dc29f1e3-014e-4f28-81af-65199a08afda
+  modified: 2026-10-04T06:54:29.521Z
 ---
 
 **Every skill, every stat, every state, every effect that applies to the player MUST also apply to mobs. The ONLY
@@ -27,3 +28,10 @@ rule.
 - A per-rig split is allowed ONLY for the mechanism (player mover vs mob pathing agent), never for the capability
   — both sides implement the same named method.
 - Stances (`StanceController` / `Character3DPose`) are the one carve-out; do not generalize those.
+- **It runs the other way too — a mob gets NOTHING a player cannot get the same way.** Ruled 2026-10-04: a mob's
+  skills come ONLY from levels bought with mastery points (`Health.Mastery`, the same `MasteryProgress` a player
+  has); the random per-life skill, the weapon-mastery-opens-everything kit and the automatic summon skill were all
+  removed. Never add a free grant to a mob (a roll, a kind bonus, a GM pin) — give it points to spend instead.
+  Its weapon MASTERY lives in that same store too, and a mob has mastery in ONE weapon only — never high levels in
+  two. The user sets both in the Mob Table — the weapon in the ▸ gear section, the mastery in its own column (`MonsterDef.weaponMastery`, put into the store
+  by `MobSpawner` when the mob is made). Every mob is at 0 mastery and 0 skills until the user plans them.

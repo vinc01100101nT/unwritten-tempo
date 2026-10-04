@@ -29,7 +29,7 @@ using UnityEngine.SceneManagement;
 /// camera that can afford it. Nothing here should be read as "the server decides movement", because it does
 /// not — it decides whether to believe it.</para>
 /// </summary>
-public class NetPlayer : NetworkBehaviour
+public class NetPlayer : NetworkBehaviour, IWatchedShell
 {
     // ---- what the server holds and every client receives ------------------------------------------------
     // Identity is set ONCE when the body is spawned and never changes; position changes constantly. They are
@@ -442,10 +442,24 @@ public class NetPlayer : NetworkBehaviour
         if (watchedBody == null) return null;
         var mob = NetMob.ShellForView(watchedBody);
         if (mob != null) return mob.netIdentity;
-        for (var t = watchedBody.transform; t != null; t = t.parent)
-            if (byBody.TryGetValue(t.gameObject, out var person) && person != null) return person.netIdentity;
+        var person = ShellForBody(watchedBody);
+        return person != null ? person.netIdentity : null;
+    }
+
+    /// <summary>The person whose body this machine drew as <paramref name="watchedBody"/>, or null when it is not
+    /// another person's body — the mirror of <see cref="NetMob.ShellForView"/>.</summary>
+    public static NetPlayer ShellForBody(GameObject watchedBody)
+    {
+        for (var t = watchedBody != null ? watchedBody.transform : null; t != null; t = t.parent)
+            if (byBody.TryGetValue(t.gameObject, out var person) && person != null) return person;
         return null;
     }
+
+    /// <summary>This person's level, as the server has it.</summary>
+    public int Level => netLevel;
+
+    /// <summary>What this person wears, in the server's words — the same text that dresses their body here.</summary>
+    public string WornText => worn;
 
     void Update()
     {
@@ -453,6 +467,7 @@ public class NetPlayer : NetworkBehaviour
         {
             ServerSaveTick();
             SendOwedBag();
+            if (questsPushOwed) { questsPushOwed = false; SendQuests(true); }
         }
 
         // The bag that arrived too early, handed over the moment there is somebody to hand it to.
@@ -777,18 +792,18 @@ public class NetPlayer : NetworkBehaviour
         me.States.MirrorFromServer(states);
     }
 
-    // ---- WHAT IS RUNNING ON SOMEBODY YOU ARE POINTING AT ---------------------------------------------------
+    // ---- WHAT IS RUNNING ON THE UNIT YOU HAVE SELECTED ------------------------------------------------------
     //
     // A person's own buffs go only to them (above), because only they need to know how long their own window has
-    // left. But a watcher pointing AT somebody has to be able to see what is on them, and a single answer sent
-    // once would be a lie two seconds later. So this is a SUBSCRIPTION with a scope: while your cursor rests on
-    // one unit, the server tells you about that unit's buffs — once straight away, and again on every change —
-    // and the moment you look away it stops. Nothing is sent about anybody nobody is looking at, so the cost is
+    // left. But a watcher who has selected somebody has to be able to see what is on them, and a single answer sent
+    // once would be a lie two seconds later. So this is a SUBSCRIPTION with a scope: while one unit is on your target
+    // panel, the server tells you about that unit's buffs — once straight away, and again on every change — and the
+    // moment the panel lets it go it stops. Nothing is sent about anybody nobody is looking at, so the cost is
     // one watcher times one unit, not everybody times everybody.
     //
     // It serves a creature and a person identically, because what is being watched is only ever "a unit".
 
-    // THE UNIT THIS CONNECTION IS POINTING AT, and the store being listened to on its behalf. Server-side only.
+    // THE UNIT THIS CONNECTION HAS SELECTED, and the store being listened to on its behalf. Server-side only.
     UnitStates pointedAtStates;
     NetworkIdentity pointedAt;
 
@@ -804,11 +819,13 @@ public class NetPlayer : NetworkBehaviour
     // not a hundred. The server ignores a repeat as well; this simply stops it ever being asked.
     NetworkIdentity lastPointedSent;
 
-    /// <summary>Tell the server which unit the person at this keyboard is pointing at, naming it by the drawn body
-    /// under their cursor — or nothing at all. Safe to call every frame: it sends only when the answer changes.
+    /// <summary>Tell the server which unit's details the person at this keyboard has up — the one on their target
+    /// panel (<see cref="UnitStatusPanel"/>), named by the body this machine drew for it — or nothing at all. The server
+    /// then keeps sending that unit's buffs and debuffs. Safe to call every frame: it sends only when the answer
+    /// changes.
     ///
-    /// <para>Takes a plain object rather than a network handle so the thing that follows the cursor — a piece of
-    /// screen furniture — does not have to know anything about the wire.</para></summary>
+    /// <para>Takes a plain object rather than a network handle so the readout — a piece of screen furniture — does not
+    /// have to know anything about the wire.</para></summary>
     public static void PointAt(GameObject watchedBody)
     {
         if (Mine == null) return;
@@ -818,8 +835,8 @@ public class NetPlayer : NetworkBehaviour
         Mine.CmdPointAt(shell);
     }
 
-    /// <summary>Point at a unit, or at nothing. Called by the thing that follows the cursor; the answer comes back
-    /// on <see cref="TargetPointedAtStates"/> and keeps coming until this is called again.</summary>
+    /// <summary>Point at a unit, or at nothing. Called by the target panel; the answer comes back on
+    /// <see cref="TargetPointedAtStates"/> and keeps coming until this is called again.</summary>
     [Command]
     public void CmdPointAt(NetworkIdentity who)
     {
@@ -851,8 +868,8 @@ public class NetPlayer : NetworkBehaviour
         TargetPointedAtStates(connectionToClient, pointedAt, statesScratch);
     }
 
-    /// <summary>What is running on the unit you are pointing at. Written onto the copy of that unit THIS machine
-    /// drew, which is where every readout already looks.</summary>
+    /// <summary>What is running on the unit you have selected. Written onto the copy of that unit THIS machine drew,
+    /// which is where every readout already looks.</summary>
     [TargetRpc]
     void TargetPointedAtStates(NetworkConnectionToClient target, NetworkIdentity who,
                                System.Collections.Generic.List<UnitStates.Mirrored> states)
@@ -991,7 +1008,10 @@ public class NetPlayer : NetworkBehaviour
         nextReport = Time.time + ReportInterval;
 
         var me = PersistentPlayer3D.Instance;
-        if (me == null) return;   // the avatar is not up yet (still loading a map)
+        // NOT UNTIL THE BODY HAS ARRIVED. Before that it is still standing at the sign-in screen's origin or in the map
+        // being left, and the server takes the first report after joining as read — so one sent early became the place
+        // it held, and the real arrival a moment later was refused as an impossible jump and dragged back to it.
+        if (me == null || !me.HasArrived) return;
 
         // WHICH MAP, sent on the same beat as the position but only when it CHANGES — a person walks through a door
         // a few times an hour, and the name is the one piece of this report that is not a number.
@@ -1176,7 +1196,10 @@ public class NetPlayer : NetworkBehaviour
         needsSaving = false;
         // WHICH HAND-OVER THIS COPY BELONGS TO, so the character server can refuse it if the character has been
         // sent to another server since — a late save from here must never roll that player back.
-        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save, handover = ServerHandover });
+        // AND EVERY QUEST RECORD THAT CHANGED since the last save that landed — in this same document, so the character
+        // server writes the bag and the quest that judged it in one transaction, together or not at all.
+        var quests = c.Quests.CapturePending(out int questsUpTo);
+        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save, quests = quests, handover = ServerHandover });
 
         // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
         // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
@@ -1190,12 +1213,14 @@ public class NetPlayer : NetworkBehaviour
             if (isHotbar) hotbarOk = ok; else progressOk = ok;
             if (--waiting == 0) whenDone?.Invoke(progressOk && hotbarOk);
         }
-        SaveOutbox.Submit(ServerCharacterId, body, ok => One(ok, false));
+        // Once this document is done with — on whichever attempt — the quest records it carried are no longer owed.
+        var questLog = c.Quests;
+        SaveOutbox.Submit(ServerCharacterId, body, ok => One(ok, false), () => questLog.Acknowledge(questsUpTo));
         SaveHotbarNow(ok => One(ok, true));
     }
 
     [Serializable]
-    class SaveEnvelope { public SaveData progress; public int handover; }
+    class SaveEnvelope { public SaveData progress; public QuestRowWire[] quests; public int handover; }
 
 
     // ---- the other things a person changes about themselves ---------------------------------------------
@@ -1385,6 +1410,11 @@ public class NetPlayer : NetworkBehaviour
         // is why the rebuild sits here rather than at each of them.
         fighter.RefreshUsableSkills();
         TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar));
+        // AND EVERY QUEST STEP JUDGED ON WHAT THEY HOLD, here for the same reason: this is the one place every bag
+        // change passes through. What they can pay for moves with the purse, so the followed step's answer is
+        // re-sent whenever it changed even when no step moved.
+        if (fighter.Quests.Advance(fighter)) QuestsMoved();
+        else SendQuests(false);
     }
 
     // ---- what they have practised and learned ---------------------------------------------------------------
@@ -2095,6 +2125,88 @@ public class NetPlayer : NetworkBehaviour
     // would refuse a pick-up it had just offered, to anybody who reached while still moving.
     const float ReachSlack = 0.6f;
 
+    // ---- shops: buying and selling ----------------------------------------------------------------------
+    //
+    // BOTH HAPPEN HERE, on the server, and nowhere else. The shop window asks; the price of one is the item's own
+    // number and the total is worked out here, never on the asker's machine. The asker must be standing at a keeper of
+    // that very shop, which is checked here rather than trusted from the window.
+
+    // True when this asker stands within reach of somebody who keeps `shopId`.
+    bool AtTheShop(string shopId)
+        => TownNPC.NearestShop(transform.position, StationReach + ReachSlack, shopId) != null;
+
+    /// <summary>Buy <paramref name="howMany"/> of <paramref name="itemId"/> from shop <paramref name="shopId"/>.
+    /// Refused unless the asker is at that shop, the shop sells it, and they can pay for all of them.</summary>
+    [Command]
+    void CmdBuy(string shopId, string itemId, int howMany)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        var shop = WorldShops.Find(shopId);
+        var def = ItemCatalog.Resolve(itemId);
+        if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
+        if (!WorldShops.Sells(shop, def)) { ShopSaid("That is not for sale here.", false); return; }
+
+        int count = Mathf.Clamp(howMany, 1, MostInOneDeal);
+        long cost = (long)def.buyPrice * count;
+        if (cost > c.Gold) { ShopSaid("Needs " + cost + " gold — you have " + c.Gold + ".", false); return; }
+
+        c.AddGold(-(int)cost);
+        c.TakeIntoBag(def, count);
+        GameLog.Info(LogCat.Server, playerName + " bought " + count + " " + def.id + " from '" + shopId + "' for " + cost + " gold");
+        PushBagToOwner();
+        SaveSoon();
+        ShopSaid("Bought " + count + " " + def.displayName + " for " + cost + " gold.", true);
+    }
+
+    /// <summary>Sell <paramref name="howMany"/> of the stack at bag position <paramref name="index"/> to shop
+    /// <paramref name="shopId"/>. Refused unless the asker is at that shop and the shop buys that kind of thing.</summary>
+    [Command]
+    void CmdSell(string shopId, int index, string expectedItemId, int howMany)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var shop = WorldShops.Find(shopId);
+        if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
+        var e = c.Bag[index];
+        if (!WorldShops.Buys(shop, e)) { ShopSaid("They will not buy that.", false); return; }
+
+        int count = Mathf.Clamp(howMany, 1, e.count);
+        long pay = (long)e.def.zeny * count;
+        var def = e.def;
+        string what = e.instance != null ? ItemTooltip.CopyTitle(e.instance) : count + " " + def.displayName;
+        if (count >= e.count) c.Bag.RemoveAt(index);
+        else e.count -= count;
+        c.AddGold((int)Mathf.Min(pay, int.MaxValue));
+        GameLog.Info(LogCat.Server, playerName + " sold " + count + " " + def.id + " to '" + shopId + "' for " + pay + " gold");
+        // The bar too: a stack sold to the last one leaves nothing for its hotbar slot to use.
+        PushBagToOwner(alsoTheBar: true);
+        SaveSoon();
+        ShopSaid("Sold " + what + " for " + pay + " gold.", true);
+    }
+
+    // The most of one thing a single press may buy. A guard on the number a window sends, not a design limit: a
+    // count is the asker's to choose, and an absurd one must not turn into an absurd sum.
+    const int MostInOneDeal = 999;
+
+    void ShopSaid(string line, bool ok)
+    {
+        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
+        TargetShopResult(connectionToClient, line, ok);
+    }
+
+    [TargetRpc]
+    void TargetShopResult(NetworkConnectionToClient target, string line, bool ok)
+    {
+        ChatController.GameSaid(line, ok);
+        ShopPanel.ShowResult(line, ok);
+    }
+
+    public void AskToBuy(string shopId, string itemId, int howMany) => CmdBuy(shopId, itemId, howMany);
+    public void AskToSell(string shopId, int index, string itemId, int howMany) => CmdSell(shopId, index, itemId, howMany);
+
     [Command]
     void CmdDropFromBag(int index, string expectedItemId, int howMany)
     {
@@ -2194,6 +2306,9 @@ public class NetPlayer : NetworkBehaviour
         if (map == mapName) return;
 
         mapName = map;
+        // Where the followed quest's step happens is told from where they stand: a new map can mean a new next door, and
+        // a different nearest smith to mark.
+        SendQuests(true);
 
         // AND THIS BODY MOVES HOUSE WITH THEM. The server decides who is told about whom by asking which map
         // each is in before it measures any distance, and the answer it reads is the scene the object actually
@@ -2264,7 +2379,116 @@ public class NetPlayer : NetworkBehaviour
     {
         if (Leaving) return;
         GameNetwork.SetNpcTalkedTo(npcNetId, talking ? transform : null);
+        if (talking) QuestTalkedTo(npcNetId);
     }
+
+    // A CONVERSATION THAT COUNTS FOR A QUEST is one held within reach — measured here, on the server's own positions,
+    // the same reach a station or a shop is held to. Who they spoke to is the townsperson's id, never a name.
+    void QuestTalkedTo(uint npcNetId)
+    {
+        if (ServerCombatUnit is not Character c || c == null) return;
+        var npc = TownspersonWithinReach(npcNetId);
+        if (npc == null || string.IsNullOrEmpty(npc.PersonId)) return;
+        if (c.Quests.Advance(c, npc.PersonId)) QuestsMoved();
+    }
+
+    // The townsperson a player asked about, on the SERVER, when they are within reach of the asker — or null. The same
+    // reach a conversation, a station or a shop is held to.
+    TownNPC TownspersonWithinReach(uint npcNetId)
+    {
+        if (!NetworkServer.spawned.TryGetValue(npcNetId, out var identity) || identity == null) return null;
+        var shell = identity.GetComponent<NetNpc>();
+        var npc = shell != null && shell.ServerNpc != null ? shell.ServerNpc.GetComponent<TownNPC>() : null;
+        if (npc == null) return null;
+        var d = npc.transform.position - transform.position;
+        d.y = 0f;
+        float reach = StationReach + ReachSlack;   // server-math: a helper only [Command] bodies call, run only on the server
+        return d.sqrMagnitude <= reach * reach ? npc : null;
+    }
+
+    /// <summary>Server-only: something moved this character's quests. Pays every quest that just finished — in this
+    /// same frame, so the reward and the finished record go out in the same save — then saves soon and tells them.</summary>
+    public void QuestsMoved()
+    {
+        if (ServerCombatUnit is not Character c || c == null) return;
+        if (c.Quests.TakeJustFinished(finishedScratch) > 0)
+            foreach (var def in finishedScratch) QuestRewards.Pay(c, def, this);
+        SaveSoon();
+        // SENT ONCE A FRAME, however many kills counted in it — an area blow that fells seven is one message.
+        questsPushOwed = true;
+    }
+
+    bool questsPushOwed;
+
+    readonly System.Collections.Generic.List<QuestDef> finishedScratch = new System.Collections.Generic.List<QuestDef>(2);
+
+    // Asked BY a player: take the quest the townsperson in front of them offers. Only a quest that person offers, only
+    // within reach of them, only one this character has never had — anything else is ignored.
+    [Command]
+    void CmdAcceptQuest(string questId, uint npcNetId)
+    {
+        if (Leaving || ServerCombatUnit is not Character c || c == null) return;
+        var npc = TownspersonWithinReach(npcNetId);
+        if (npc == null || string.IsNullOrEmpty(npc.PersonId)) return;
+        if (!c.Quests.Accept(questId, npc.PersonId)) return;
+        c.Quests.Advance(c);
+        QuestsMoved();
+    }
+
+    public void AskToAcceptQuest(string questId, uint npcNetId) { if (isOwned) CmdAcceptQuest(questId, npcNetId); }
+
+    /// <summary>Server-only: a line for this player's chat about their quests — a reward paid, say.</summary>
+    public void TellQuestLine(string line) { if (isServer && connectionToClient != null) TargetQuestLine(connectionToClient, line); }
+
+    // In the chat, and — since handing a quest in is a conversation, with the chat hidden behind it — in the open
+    // conversation box too.
+    [TargetRpc]
+    void TargetQuestLine(NetworkConnection _, string line)
+    {
+        ChatController.GameSaid(line, true);
+        DialogBox.Interject(line);
+    }
+
+    // ---- quests: what the owner is told, and the one thing they may ask ---------------------------------------------
+
+    int questsVersionSent = -1;
+    QuestTargetWire questTargetSent;
+
+    /// <summary>Server-only: send the owner their open quests and where the followed one's step happens. Sent whole on
+    /// arrival and whenever either changed; open quests only — a finished one is never shown again.</summary>
+    public void PushQuestsToOwner() => SendQuests(true);
+
+    void SendQuests(bool always)
+    {
+        if (!isServer || connectionToClient == null) return;
+        if (ServerCombatUnit is not Character c || c == null) return;
+        var target = c.Quests.Target(c, mapName);
+        if (!always && c.Quests.Version == questsVersionSent && SameTarget(target, questTargetSent)) return;
+        questsVersionSent = c.Quests.Version;
+        questTargetSent = target;
+        TargetQuestsChanged(connectionToClient, c.Quests.Snapshot(c), target, c.Quests.Offers(mapName),
+                            c.Quests.OngoingAt(mapName));
+    }
+
+    static bool SameTarget(QuestTargetWire a, QuestTargetWire b) =>
+        a.any == b.any && a.questId == b.questId && a.stepId == b.stepId && a.map == b.map && a.at == b.at
+        && a.nextMap == b.nextMap && a.station == b.station && a.block == b.block;
+
+    // Asked BY a player: follow one of their OWN open quests. Anything else — a quest they do not hold, a finished one,
+    // the one already followed — is ignored, so a made-up id learns nothing about where a quest it never had happens.
+    [Command]
+    void CmdTrackQuest(string questId)
+    {
+        if (Leaving || ServerCombatUnit is not Character c || c == null) return;
+        if (c.Quests.Track(questId)) { SaveSoon(); PushQuestsToOwner(); }
+    }
+
+    public void AskToTrackQuest(string questId) { if (isOwned) CmdTrackQuest(questId); }
+
+    [TargetRpc]
+    void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, string[] offers,
+                             string[] ongoingAt) =>
+        QuestStore.Receive(open, target, offers, ongoingAt);
 
     [Command]
     void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)

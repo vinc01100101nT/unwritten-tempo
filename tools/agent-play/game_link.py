@@ -24,6 +24,8 @@ import sys
 import time
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(REPO, "tools"))
+from settings_ask import setting  # noqa: E402
 CLIENT = os.path.join(REPO, "builds", "client", "unwritten.app", "Contents", "MacOS", "unwritten")
 PORT = int(os.environ.get("AGENT_PORT", "7790"))
 END = "<<END>>"
@@ -54,7 +56,10 @@ def launch(port=PORT):
     LOG = _log(port)
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     env = dict(os.environ)
-    env.setdefault("CHAR_SERVER_URL", "http://127.0.0.1:8081")
+    if not env.get("CHAR_SERVER_URL"):
+        env["CHAR_SERVER_URL"] = setting("CHAR_SERVER_URL")
+    if not env["CHAR_SERVER_URL"]:
+        return "CHAR_SERVER_URL is not set in settings.env — the client would have no character server to ask"
     proc = subprocess.Popen(
         [CLIENT, "-batchmode", "-nographics", "-agent-port", str(port), "-logFile", LOG],
         env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)

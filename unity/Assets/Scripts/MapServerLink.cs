@@ -19,9 +19,8 @@ using UnityEngine;
 /// </summary>
 public class MapServerLink : MonoBehaviour
 {
-    /// <summary>Where the character server lives, from the environment like every other address here.</summary>
-    public static string CharacterServerUrl =>
-        Environment.GetEnvironmentVariable("CHAR_SERVER_URL") ?? "http://localhost:8081";
+    /// <summary>Where the character server lives — the same one setting a player's copy reads, from settings.env.</summary>
+    public static string CharacterServerUrl => AccountSession.CharacterServerUrl;
 
     /// <summary>What this server proves it is a server with. NOT a player's token and never interchangeable
     /// with one. The character server refuses everything on this road without it.</summary>
@@ -34,10 +33,15 @@ public class MapServerLink : MonoBehaviour
     {
         get
         {
-            var raw = Environment.GetEnvironmentVariable("MAP_SERVER_ARRIVALS_PORT");
-            return int.TryParse(raw, out var n) ? n : 7788;
+            var raw = ServerAddress.Setting("MAP_SERVER_ARRIVALS_PORT");
+            return int.TryParse(raw, out var n) && n > 0 ? n : 0;
         }
     }
+
+    /// <summary>The address players are sent to for this server (<c>MAP_SERVER_ADDRESS</c>) — told to the character
+    /// server, and checked against this computer's own addresses at start-up (<see cref="ReachableAddresses"/>).</summary>
+    public static string PlayerAddress =>
+        ServerAddress.Setting("MAP_SERVER_ADDRESS") ?? "";
 
     /// <summary>WHERE THE CHARACTER SERVER DELIVERS CHARACTERS TO THIS SERVER — a different address from the one
     /// players are given (<c>MAP_SERVER_ADDRESS</c>). A delivery carries a whole character, an entry ticket and the
@@ -56,7 +60,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v18";
+    public const string CharacterBuild = "unwritten-character-v19";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -80,6 +84,8 @@ public class MapServerLink : MonoBehaviour
         public SaveData progress;
         // The bar's own row, as the character server stored it; null or empty when the character has none yet.
         public string[] hotbar;
+        // Every quest record the character has, open and finished (v19); empty for one that has never had any.
+        public QuestRowWire[] quests;
         public int handover;
         public float expiresAt;
     }
@@ -109,6 +115,18 @@ public class MapServerLink : MonoBehaviour
         {
             GameLog.Error(LogCat.Map, "SERVER_SECRET is not set, so the character server will refuse this map server "
                            + "and nobody will be able to enter the world. Set the same value on both.");
+            return;
+        }
+
+        // NO ADDRESS OR PORT IS WRITTEN HERE TO FALL BACK ON: settings.env is the one place they live.
+        var missing = string.IsNullOrEmpty(CharacterServerUrl) ? "CHAR_SERVER_URL"
+                    : string.IsNullOrEmpty(PlayerAddress) ? "MAP_SERVER_ADDRESS"
+                    : ArrivalsPort == 0 ? "MAP_SERVER_ARRIVALS_PORT"
+                    : null;
+        if (missing != null)
+        {
+            GameLog.Error(LogCat.Map, missing + " is not set in settings.env, so nobody will be able to enter the world "
+                           + "on this map server.");
             return;
         }
 
@@ -298,6 +316,7 @@ public class MapServerLink : MonoBehaviour
                 isGm = msg.isGm,
                 progress = msg.progress,
                 hotbar = msg.hotbar,
+                quests = msg.quests,
                 handover = msg.handover,
             }, ctx));
         }
@@ -505,7 +524,7 @@ public class MapServerLink : MonoBehaviour
         var body = JsonUtility.ToJson(new Registration
         {
             id = ServerId,
-            address = Environment.GetEnvironmentVariable("MAP_SERVER_ADDRESS") ?? "127.0.0.1",
+            address = PlayerAddress,
             arrivalsAddress = ArrivalsAddress,
             port = ArrivalsPort,
             // AND THE DOOR PLAYERS USE, which is not this one. The character server hands this second number to
@@ -610,6 +629,8 @@ public class MapServerLink : MonoBehaviour
         public SaveData progress;
         // The bar's own row (v18), or null when none has been written yet.
         public string[] hotbar;
+        // Every quest record (v19).
+        public QuestRowWire[] quests;
         // Which hand-over this is — every save of this character from here carries it back.
         public int handover;
     }

@@ -1,20 +1,19 @@
 using UnityEngine;
 
 /// <summary>
-/// WHICH OF THE THREE KINDS OF CREATURE this is. The kind decides how many extra skill slots it carries, whether it
-/// summons, how long it takes to come back, what it drops and whether it is a 3D character. How strong
-/// it is never comes from here — that is its level and its stats, through the same formulas a player's go through.
+/// WHICH OF THE THREE KINDS OF CREATURE this is. The kind decides how many summons it may keep out, how long it takes
+/// to come back, what it drops and whether it is a 3D character. How strong it is never comes from here — that is its level and its stats, through the same formulas a player's go through.
 ///
 /// <para>Serialized by int on every creature asset, so order is load-bearing: append, never insert.</para>
 /// </summary>
 public enum CreatureKind
 {
-    /// <summary>Fills the field. One extra skill slot.</summary>
+    /// <summary>Fills the field. Keeps no summons.</summary>
     Normal,
-    /// <summary>The stronger creatures of an area. Two extra skill slots, summons normals.</summary>
+    /// <summary>The stronger creatures of an area. Its summons, once it has bought the summon skill, are normals.</summary>
     Elite,
-    /// <summary>The strongest creatures in the game: a 3D character, one per weapon type, levels 105 to 170. Four extra
-    /// skill slots and summons elites.</summary>
+    /// <summary>The strongest creatures in the game: a 3D character, one per weapon type, levels 105 to 170. Its
+    /// summons, once it has bought the summon skill, are elites.</summary>
     Shadow,
 }
 
@@ -25,26 +24,18 @@ public enum CreatureKind
 /// </summary>
 public static class CreatureKinds
 {
-    /// <summary>The skill every summoner casts. It is never published, so no creature rolls it as an extra skill and no
-    /// forge rolls it as a trademark; a summoner is handed it in a slot of its own (see <see cref="Summons"/>).</summary>
+    /// <summary>The skill a summoner casts. It is never published, so no forge rolls it as a trademark. Like every
+    /// skill, a creature casts it only once it has bought a level in it (<see cref="Health.Mastery"/>).</summary>
     public const string SummonSkillId = "skill.summon";
 
     /// <summary>How far a summoned creature may stray from its summoner before it gives up its target and walks back.</summary>
     public const float SummonFollowRange = 8f;
 
-    /// <summary>The most extra skill slots any kind has — what a list sized once for every kind needs.</summary>
-    public const int MostExtraSkillSlots = 4;
-
-    /// <summary>Extra skill slots — skills of its own, apart from what its weapon's mastery has opened. The summon skill
-    /// is NOT one of these; it has a slot of its own.</summary>
-    public static int ExtraSkillSlots(CreatureKind k) =>
-        k == CreatureKind.Shadow ? 4 : k == CreatureKind.Elite ? 2 : 1;
-
-    /// <summary>How many summons this kind keeps out at once. Zero means it does not summon.</summary>
+    /// <summary>How many summons this kind keeps out at once. Zero means it does not summon, whatever it has bought.</summary>
     public static int MaxSummons(CreatureKind k) =>
         k == CreatureKind.Shadow ? 5 : k == CreatureKind.Elite ? 10 : 0;
 
-    /// <summary>Does this kind summon at all?</summary>
+    /// <summary>May this kind keep summons out at all? It still casts the summon skill only once it has bought it.</summary>
     public static bool Summons(CreatureKind k) => MaxSummons(k) > 0;
 
     /// <summary>An elite's summons are split across the three normals nearest its level at or below it, in these

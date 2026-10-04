@@ -32,6 +32,14 @@ public class WorldAtlas : ScriptableObject
 
     public List<Entry> maps = new List<Entry>();
 
+    /// <summary>One door between two maps, either way through — the world layout's portal pairs, copied here by the bake
+    /// so the game can find its way between maps (<see cref="WorldRoutes"/>). The layout stays the one owner;
+    /// <c>tools/check-map-ids.py</c> fails the moment this copy disagrees with it.</summary>
+    [System.Serializable]
+    public class Link { public string a, b; }
+
+    public List<Link> links = new List<Link>();
+
     public Entry Find(string sceneName)
     {
         for (int i = 0; i < maps.Count; i++)

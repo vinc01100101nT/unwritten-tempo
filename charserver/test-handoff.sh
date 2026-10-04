@@ -7,10 +7,14 @@ PY="$(find_python)"
 # A scratch folder this script and the Python stand-in both name: the OS's own temp folder, written its way.
 SCRATCH="$(native_path "${TMPDIR:-/tmp}")"
 export SCRATCH
-CHAR=http://127.0.0.1:8081
-LOGIN=http://127.0.0.1:8080
-SECRET=test-shared-server-secret
-BUILD=unwritten-character-v18
+# Every address and the shared secret from settings.env, the file the servers under test start from; the build string
+# from the one line that defines it, so neither can go stale here.
+. "$REPO/tools/load-settings.sh"
+CHAR="${CHAR_SERVER_URL:?CHAR_SERVER_URL is not set in settings.env}"
+LOGIN="${ACCOUNTS_URL:?ACCOUNTS_URL is not set in settings.env}"
+SECRET="${SERVER_SECRET:?SERVER_SECRET is not set in settings.env}"
+BUILD="$(sed -n 's/.*CharacterBuild = "\([^"]*\)".*/\1/p' "$REPO/charserver/MapServers.cs")"
+[ -n "$BUILD" ] || { echo "FAIL: could not read CharacterBuild from charserver/MapServers.cs"; exit 1; }
 # The stand-in map server must never outlive this script, however it ends — a leftover one holds the
 # terminal open and answers for a map server that is not there.
 trap 'kill $STUB 2>/dev/null; exit' EXIT INT TERM

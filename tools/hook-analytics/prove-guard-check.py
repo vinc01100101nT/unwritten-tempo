@@ -77,8 +77,10 @@ FRESH = {"check-before-done.py": ago(0)}
 
 CASES = [
     # (name, settings-or-raw, heartbeats, must_be_caught)
+    # A name that exists on NO machine. It used to be `python`, which is missing on the Mac but present
+    # on Windows — so on Windows this planted fault was a healthy hook and the case always failed.
     ("a program that does not exist on this machine",
-     hooks('python "$CLAUDE_PROJECT_DIR/tools/check-before-done.py"'), FRESH, True),
+     hooks('no-such-program-anywhere "$CLAUDE_PROJECT_DIR/tools/check-before-done.py"'), FRESH, True),
     ("a script the command points at is gone",
      hooks('python3 "$CLAUDE_PROJECT_DIR/tools/no-such-file.py"'), FRESH, True),
     ("an absolute path that is not executable",

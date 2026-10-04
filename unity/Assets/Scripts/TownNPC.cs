@@ -28,7 +28,7 @@ using UnityEngine;
 [RequireComponent(typeof(PathAgent3D))]
 public class TownNPC : MonoBehaviour
 {
-    // ---- configured by AmbientLife at spawn (see Init) ----
+    // ---- configured by WorldTownsfolk at spawn (see Init) ----
     Vector3 home;
     float wanderRadius = 6f;
     bool barksEnabled;
@@ -44,7 +44,7 @@ public class TownNPC : MonoBehaviour
     /// which is the one thing that can turn a body on a machine with no screen.</summary>
     public Transform TalkTarget => talkTarget;
 
-    /// <summary>This person's level, handed over by whatever placed them (see <see cref="AmbientLife.level"/>).
+    /// <summary>This person's level, handed over by whatever placed them (see <see cref="WorldTownsfolk.Row.level"/>).
     /// Read by the server to tell every watcher; it changes nothing about how they walk or talk.</summary>
     public int Level { get; private set; } = 1;
 
@@ -143,6 +143,22 @@ public class TownNPC : MonoBehaviour
     /// <summary>The nearest townsperson who works at <paramref name="wanted"/>, or null. Separate from
     /// <see cref="Nearest"/> because a craft asks a different question: not "who is closest" but "is the station I
     /// need within reach" — and an ordinary villager standing closer must not answer it.</summary>
+    /// <summary>The nearest keeper of shop <paramref name="shopId"/> within <paramref name="maxDist"/>, or null.</summary>
+    public static TownNPC NearestShop(Vector3 pos, float maxDist, string shopId)
+    {
+        if (string.IsNullOrEmpty(shopId)) return null;
+        TownNPC best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Active.Count; i++)
+        {
+            var n = Active[i];
+            if (n == null || n.Shop != shopId) continue;
+            float d = (n.transform.position - pos).sqrMagnitude;
+            if (d <= bestSq) { bestSq = d; best = n; }
+        }
+        return best;
+    }
+
     public static TownNPC NearestStation(Vector3 pos, float maxDist, CraftStation wanted)
     {
         TownNPC best = null;
@@ -191,13 +207,21 @@ public class TownNPC : MonoBehaviour
         (visualDriver as Agent3DVisual)?.ReseatAfterMove();
     }
 
-    /// <summary>Set this townsperson up. Called by <see cref="AmbientLife"/> right after spawn so all the
+    /// <summary>Set this townsperson up. Called by <see cref="WorldTownsfolk"/> right after spawn so all the
     /// per-NPC randomization (home, phase offsets) lives in one place.</summary>
-    public void Init(Vector3 homePoint, float wander, bool barksOn, int townLevel)
+    public void Init(Vector3 homePoint, float wander, bool barksOn, int townLevel, string personName, string description,
+                     CraftStation workStation, string shopId)
     {
         Level = Mathf.Max(1, townLevel);
+        DisplayName = personName;
+        Description = description;
+        station = workStation;
+        Shop = shopId ?? "";
         home = homePoint;
-        wanderRadius = Mathf.Max(0.5f, wander);
+        // 0 = stands at home: a shopkeeper at their door. Anything above is a stroll, never shorter than half a metre.
+        Stands = wander <= 0f;
+        wanderRadius = Stands ? 0f : Mathf.Max(0.5f, wander);
+        StandFacing = transform.forward;
         barksEnabled = barksOn;
 
         // Desync the herd: random first-step delay + random LOD phase, so a freshly spawned crowd doesn't all
@@ -227,7 +251,12 @@ public class TownNPC : MonoBehaviour
         // one. The pause is timed from ARRIVAL (not departure): when the agent reports Arrived we start the linger
         // clock once, stand Idle through it, then set off again — so the pause always happens no matter how long the
         // walk took. Same verb the mobs use.
-        if (agent.Arrived)
+        if (Stands)
+        {
+            // NOBODY TO STROLL TO. Somebody who stands only walks back to their spot if a crowd shoved them off it.
+            if (agent.Arrived && (transform.position - home).sqrMagnitude > 0.25f) WanderTo(home);
+        }
+        else if (agent.Arrived)
         {
             if (!paused)
             {
@@ -284,7 +313,31 @@ public class TownNPC : MonoBehaviour
     public string[] DialogueLines() => NpcBarks.PickTownConversation();
 
     /// <summary>Name shown in the dialog box's speaker slot.</summary>
-    public string SpeakerName => "Villager";
+    public string SpeakerName => string.IsNullOrEmpty(DisplayName) ? "Villager" : DisplayName;
+
+    /// <summary>This person's name from the townsfolk list (<see cref="WorldTownsfolk"/>) — set by whatever placed them
+    /// on the server, and by the shell that speaks for them on a watching machine. Empty for somebody unnamed.</summary>
+    public string DisplayName { get; set; }
+
+    /// <summary>This person's stable id in the townsfolk list (<see cref="WorldTownsfolk.Row.id"/>) — what a quest step
+    /// "talk to …" and a quest's giver name. Set on the server when they are placed, and copied onto every watching
+    /// machine's copy (<see cref="NetNpc.personId"/>). Empty for anybody not placed from that list.</summary>
+    public string PersonId { get; set; } = "";
+
+    /// <summary>What this person is, in a few words, shown under their name (<see cref="WorldTownsfolk.Row.description"/>).
+    /// Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine; empty for
+    /// somebody with none.</summary>
+    public string Description { get; set; }
+
+    /// <summary>The shop this person keeps, by its id in <see cref="WorldShops"/>, or empty. Pressing F on them opens
+    /// it. Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine.</summary>
+    public string Shop { get; set; } = "";
+
+    /// <summary>True for somebody who stands at their home and never strolls — a shopkeeper at their door.</summary>
+    public bool Stands { get; private set; }
+
+    /// <summary>Which way somebody who stands looks while nobody is talking to them: the way they were placed.</summary>
+    public Vector3 StandFacing { get; private set; }
 
     // Issue a new stroll target and (re)arm the stuck watchdog: a time budget to reach it + a progress baseline.
     void WanderTo(Vector3 target)

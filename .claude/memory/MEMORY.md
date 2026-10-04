@@ -6,8 +6,9 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 
 ## Top-level (always-on)
 - [Clock command on Windows](clock-command-on-windows.md) — `TZ=Asia/Manila date` silently prints UTC here; the GMT+8 reply timestamps use `TZ=UTC-8 date`.
-- [THE FIVE — anti-invention protocol](the-five-anti-invention.md) — an invention disguises itself as continuity: the contract must list what STAYS, a meaning-branch is a design decision, a question gets an answer NOT an edit, every report ends with "new words I introduced", ask once then decide.
+- [THE FOUR — anti-invention protocol](the-five-anti-invention.md) — an invention disguises itself as continuity: the contract must list what STAYS, a meaning-branch is a design decision, a question gets an answer NOT an edit, ask once then decide. No "new words" report section (removed 2026-10-04).
 - [Never widen a snapshot into a verdict](never-widen-a-snapshot-into-a-verdict.md) — today's files prove today only; if the user tested it working, believe them and hunt what CHANGED — never say "it never worked / can't be done".
+- [Delete scaffolding EVERY response](delete-scaffolding-every-response.md) — probes, before-copies, copied checkers, /tmp files: delete once the edit is verified, same reply; never carry them over.
 - [Changes MUST persist in repo, not runtime](changes-must-persist-in-repo.md) — bake in code/saved asset + read back; never leave a change in bare execute_code/runtime state.
 - [Never blame recompilation](assume-compiled-never-blame-recompile.md) — user ALWAYS recompiles; treat code as live+running, diagnose runtime, never suspect stale compile.
 - [Find-or-create hides duplicates; fix the CLASS not the instance](find-or-create-hides-duplicates.md) — `GetComponent ?? AddComponent` can't fail so it silently forks a "single source"; one broken member of a uniform system = check ALL members before fixing.

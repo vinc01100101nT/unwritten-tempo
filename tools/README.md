@@ -22,6 +22,13 @@ functions; a Python script asks through `platform_ask.py`; `.mcp.json` starts bo
 `start-mcp.sh`. Unity's install folder is read from Unity Hub's own setting, so an editor installed on another
 drive is found without anyone typing its path. A new computer, or a new place something lives, is one edit here.
 
+## load-settings.sh · settings_ask.py
+
+**The one reader of `settings.env`**, the file holding every secret, address and port. A shell script sources
+`load-settings.sh` (after setting `REPO`); a Python script asks through `settings_ask.py`
+(`setting("PATCH_URL")`), which runs that same loader, so both read the file the same way and a value typed in the
+terminal wins in both. No program carries an address or port of its own: a missing one stops it with its name.
+
 ## build-game.sh
 
 Builds the **server** (no window) or the **client** (what players run), from the terminal.
@@ -53,12 +60,15 @@ Builds the Windows game and the Mac game, then publishes both as one update: `to
 half-built update is never published. `--dev` makes development builds (what devices on your own Wi-Fi need);
 `--server` also rebuilds the map server first, which must be stopped beforehand.
 
-## serve-updates.sh
+## serve-updates.sh · serve-folder.py
 
-Serves the update folder (`builds/patch`) — the website with its Download page, the zipped launcher and every published update — to
-this computer and every device on the same network, until Ctrl+C. Another device opens
-`http://<this computer's address>:8090` in a browser and downloads the launcher; the launcher then downloads the
-game. Needs something published first (`tools/publish-update.py`).
+Serves the update folder (`builds/patch`) — the website with its Download page, the zipped launcher and every published update — on
+every address of this computer, until Ctrl+C. It prints only the addresses that answered when it tried them from this
+computer, and a red line when `PATCH_URL` — the address players are given — does not answer; both are printed again
+whenever this computer's addresses change. Another device opens one of the printed addresses in a browser and
+downloads the launcher; the launcher then downloads the game. Needs something published first
+(`tools/publish-update.py`). `serve-folder.py` does the serving and the trying; the script only finds the folder and
+the port.
 
 Used by [Starting the Network](../docs/2-systems/networking/starting-the-network.md).
 

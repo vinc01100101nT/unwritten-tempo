@@ -196,7 +196,7 @@ public class MobShadow3DVisual : Agent3DVisual
         // --- Rebuild the root as a CHARACTER's root, not a sprite's. ---
         // THIS is what every earlier size fix got wrong. A billboard mob's root carries the SPRITE's authored scale
         // (e.g. 0.742) times the mob-size dial, and a CharacterController sized to match. A live-3D character needs
-        // an UNSCALED root — exactly how AmbientLife builds a townsperson, which is the only live-3D AI character in
+        // an UNSCALED root — exactly how Townsperson builds a townsperson, which is the only live-3D AI character in
         // this game that has always been the right size. Hanging a character off the billboard's scaled root meant
         // every scale I computed was fighting a scale I'd left in place.
         transform.localScale = Vector3.one;

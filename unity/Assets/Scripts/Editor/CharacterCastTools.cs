@@ -1,22 +1,21 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// One-click setup for the ambient-life layer: refreshes the shared <see cref="CharacterSpec"/>'s CAST (creating the
-/// asset if it doesn't exist yet), then drops an <see cref="AmbientLife"/> director into the open scene and points its
-/// ground mask at the Ground layer. After running it, just press Play — wandering live-3D townsfolk appear and chatter.
+/// One click to refresh the shared <see cref="CharacterSpec"/>'s CAST (creating the asset if it doesn't exist yet) from
+/// the rigged models on disk, and point it at the shared Humanoid controller. Run it after adding a character model.
+/// Which townsperson lives where is not this tool's business: that is the townsfolk list (<see cref="WorldTownsfolk"/>).
 ///
-/// <para>The cast lives on the spec, not on the director, because the SAME models feed the shadow mobs. It is split in
-/// two: CIVILIANS (townsfolk) and FIGHTERS — soldiers, knights, goblins and zombies — which is the pool a Shadow of the
-/// Past draws from. Animals (Cow/Pug), the untextured BaseCharacter, and accessory-only meshes (hats/hair/helmets) are
-/// in neither: they'd walk wrong on the human controller or aren't full bodies.</para>
+/// <para>The cast is split in two: CIVILIANS (the bodies townsfolk wear) and FIGHTERS — soldiers, knights, goblins and
+/// zombies — which is the pool a Shadow of the Past draws from. Animals (Cow/Pug), the untextured BaseCharacter, and
+/// accessory-only meshes (hats/hair/helmets) are in neither: they'd walk wrong on the human controller or aren't full
+/// bodies.</para>
 ///
-/// Idempotent: re-running re-uses the existing spec and director (re-wiring the cast) instead of stacking duplicates.
+/// Idempotent: re-running re-uses the existing spec instead of making a second one.
 /// </summary>
-public static class AmbientLifeTools
+public static class CharacterCastTools
 {
     const string ModelsDir = "Assets/1_Authored/Art/Characters/Models";
     const string ControllerPath = "Assets/1_Authored/Art/Characters/Animators/HumanoidPlayerController.controller";
@@ -27,8 +26,8 @@ public static class AmbientLifeTools
     static readonly string[] FighterTokens = { "Soldier", "Knight", "Goblin", "Zombie" };
     static readonly string[] ExcludeTokens = { "Cow", "Pug", "BaseCharacter", "_Hat", "_Hair", "Helmet" };
 
-    [MenuItem("Tools/unwritten/World/Add Ambient Townsfolk")]
-    public static void AddAmbientTownsfolk()
+    [MenuItem("Tools/unwritten/World/Refresh Character Cast")]
+    public static void RefreshCharacterCast()
     {
         var spec = LoadOrCreateSpec();
         var civilians = new List<string>();
@@ -44,11 +43,8 @@ public static class AmbientLifeTools
         AssetDatabase.SaveAssets();
         CharacterSpec.Reload();
 
-        var existing = Object.FindAnyObjectByType<AmbientLife>();
-        var al = existing != null ? existing : new GameObject("AmbientLife").AddComponent<AmbientLife>();
-
         if (civilians.Count == 0 || controller == null)
-            EditorUtility.DisplayDialog("Ambient Townsfolk",
+            EditorUtility.DisplayDialog("Character Cast",
                 (civilians.Count == 0
                     ? "No civilian character models found in " + ModelsDir + ".\n"
                     : "") +
@@ -56,21 +52,10 @@ public static class AmbientLifeTools
                     ? "The shared Humanoid controller wasn't found at " + ControllerPath + " — build the 3D player " +
                       "first (Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model), which creates it.\n"
                     : "") +
-                "\nThe director was still added — assign the missing field(s) on the CharacterSpec asset by hand.", "OK");
-
-        int ground = LayerMask.NameToLayer("Ground");
-        if (ground >= 0) al.groundMask = 1 << ground;
-
-        if (existing == null)
-            al.transform.position = SceneCenter(ground);
-
-        EditorUtility.SetDirty(al);
-        EditorSceneManager.MarkSceneDirty(al.gameObject.scene);
-        Selection.activeGameObject = al.gameObject;
-        EditorGUIUtility.PingObject(al.gameObject);
+                "\nAssign the missing field(s) on the CharacterSpec asset by hand.", "OK");
 
         Debug.Log($"[unwritten] Character cast wired on {SpecPath} — {civilians.Count} civilians, {fighters.Count} " +
-                  $"fighters. Spawning {al.count} live-3D townsfolk at Play; shadow mobs draw from the fighters.");
+                  $"fighters. Townsfolk wear the civilians; shadow mobs draw from the fighters.");
     }
 
     static CharacterSpec LoadOrCreateSpec()
@@ -113,24 +98,5 @@ public static class AmbientLifeTools
         foreach (var tok in tokens)
             if (name.IndexOf(tok, System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
         return false;
-    }
-
-    // Centre on the map: average of any SpawnPoints, else the world origin — ground-snapped so the director's
-    // fallback height is sane.
-    static Vector3 SceneCenter(int groundLayer)
-    {
-        Vector3 c = Vector3.zero;
-        var spawns = Object.FindObjectsByType<SpawnPoint>();
-        if (spawns != null && spawns.Length > 0)
-        {
-            c = Vector3.zero;
-            foreach (var s in spawns) c += s.transform.position;
-            c /= spawns.Length;
-        }
-
-        int mask = groundLayer >= 0 ? (1 << groundLayer) : Physics.DefaultRaycastLayers;
-        if (Physics.Raycast(c + Vector3.up * 50f, Vector3.down, out var hit, 100f, mask, QueryTriggerInteraction.Ignore))
-            c.y = hit.point.y;
-        return c;
     }
 }

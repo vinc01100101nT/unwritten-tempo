@@ -42,11 +42,11 @@
 }
 
 {$PUBLIC_ACCOUNTS_URL} {
-	reverse_proxy 127.0.0.1:{$PORT:8080}
+	reverse_proxy 127.0.0.1:{$PORT}
 }
 
 {$PUBLIC_CHAR_SERVER_URL} {
-	reverse_proxy 127.0.0.1:{$CHAR_SERVER_PORT:8081}
+	reverse_proxy 127.0.0.1:{$CHAR_SERVER_PORT}
 }
 
 # THE UPDATE FOLDER the launcher downloads from — tools/publish-update.py writes it; copy it here. Plain files,

@@ -37,6 +37,8 @@ public class TownNPC3DVisual : Agent3DVisual
     /// <para>SOMEBODY IN CONVERSATION looks at whoever is speaking to them, and goes on looking there while they
     /// stand still — which the base answer cannot do, because it only turns a body that is walking.</para>
     ///
+    /// <para>SOMEBODY WHO STANDS faces the way they were placed while nobody talks to them.</para>
+    ///
     /// <para>OTHERWISE the shared answer: the line they just walked.</para></summary>
     protected override void DescribeSelf(ref CharacterBrain.Intent it)
     {
@@ -52,7 +54,13 @@ public class TownNPC3DVisual : Agent3DVisual
         // SOMEBODY IN CONVERSATION looks at whoever is speaking to them, and goes on looking there while they stand
         // still — which the travel line cannot do, because it only turns a body that is walking.
         var speaker = brain != null ? brain.TalkTarget : null;
-        if (speaker == null) return;
+        if (speaker == null)
+        {
+            // SOMEBODY WHO STANDS looks the way they were placed — a shopkeeper faces the square, not their door —
+            // once nobody is talking to them and they are not walking back to their spot.
+            if (brain != null && brain.Stands && (agent == null || !agent.Moving)) it.facing = brain.StandFacing;
+            return;
+        }
 
         Vector3 toSpeaker = speaker.position - transform.position;
         toSpeaker.y = 0f;

@@ -36,7 +36,8 @@ as its own Game Guide, Roadmap and Server Status pages.
   `planned` (hollow dot), `now` (highlighted) or `done` (filled). Items render in array order, top to bottom —
   the Roadmap page puts upcoming first, then `now`, then finished work newest to oldest.
 - `serverStats` is the only LIVE block: it renders an empty box that JavaScript fills from the character
-  server's public `/stats` and refreshes every 30s. It carries `from` (the address to read). Every other page is
+  server's public `/stats` and refreshes every 5s. It carries no address: the page reads the character server's
+  address from `site.json`, which `tools/publish-update.py` writes from `settings.env`. Every other page is
   served off disk — hand-written text, or the generated files above.
 - Inline `**bold**` / `*italic*` / `` `code` `` / `[links]()` work inside any text field.
 - **Never create `wiki/content/*.md`** — the markdown renderer was removed. The old `docs/wiki/` copy was
@@ -56,7 +57,7 @@ article and not a person casually explaining mechanics. This was rejected three 
   **never an invented number**.
 - **Cut designer and stress-tester meta-commentary** — "no cap", "deliberate", rationale clauses. A player never
   assumed a cap existed. If another skill's tooltip already explains a mechanic, don't re-explain it here.
-- **No raw HTML** — `<br>` prints literally in the wiki renderer. Use separate columns instead of line breaks.
+- **No raw HTML** — `<br>` prints literally on the website, which escapes every page's text. Use separate columns instead of line breaks.
 
 Ground the format against the real in-game renderer `unity/Assets/Scripts/SkillTooltip.cs` (flavor italic +
 bulleted effect lines + the `MP/CD/Cast/Range` cost line), and against the finished Sword pool in

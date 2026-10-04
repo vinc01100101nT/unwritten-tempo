@@ -23,9 +23,6 @@ public static class ServerAddress
     /// vocabulary for "where the servers are" rather than two.</summary>
     const string SettingsFileName = "server.txt";
 
-    /// <summary>The port the account service listens on — the one a build with no address of its own dials.</summary>
-    public const int AccountsPort = 8080;
-
     static Dictionary<string, string> shipped;
 
     /// <summary>What this copy was told for <paramref name="name"/>, or null when nobody has said.

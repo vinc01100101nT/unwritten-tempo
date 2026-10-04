@@ -22,6 +22,10 @@ PROGRAM="${1:-$(game_program server)}"
 . "$REPO/tools/load-settings.sh"
 
 [ -n "${SERVER_SECRET:-}" ] || { echo "SERVER_SECRET is not set in settings.env — the character server would refuse this server." >&2; exit 2; }
+for __setting in CHAR_SERVER_URL MAP_SERVER_ADDRESS MAP_SERVER_ARRIVALS_PORT GAME_SERVER_PORT; do
+  eval "__value=\${$__setting:-}"
+  [ -n "$__value" ] || { echo "$__setting is not set in settings.env — this server has no default for it." >&2; exit 2; }
+done
 [ -x "$PROGRAM" ] || { echo "No server program at $PROGRAM — build it with: tools/build-game.sh server" >&2; exit 2; }
 
 cd "$REPO"

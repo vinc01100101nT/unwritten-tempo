@@ -450,6 +450,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
+    /// <summary>SERVER: this character's quests — every record, and which step each open one is on. A player's machine
+    /// never holds one; it is told the open ones (<see cref="QuestStore"/>).</summary>
+    public QuestLog Quests { get; } = new QuestLog();
+
     /// <summary>SERVER: a bar saved before v18 (inside the save), held until the bar's own row has been written once.</summary>
     public string[] LegacyHotbar { get; set; }
 
@@ -2051,7 +2055,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // and must not be handed a fresh set of goods every time they log in.
         if (d.bagItemIds == null)
         {
-            SeedBag();
+            GiveStarterKit();
             return;
         }
 
@@ -2081,22 +2085,18 @@ public class Character : MonoBehaviour, ICombatUnit
         }
     }
 
-    /// <summary>The goods a character starts life with. Public so the bag window can hand them to somebody who
-    /// arrived before their save did — it is the same set either way, decided in one place.</summary>
-    public void SeedBag()
+    /// <summary>The goods and the gold a character starts life with — exactly <see cref="StarterKit"/>, which decides
+    /// both in one place. Nothing wearable: gear is made, never handed out, so the kit is the bill for forging it.</summary>
+    public void GiveStarterKit()
     {
         bag.Clear();
-        foreach (var def in Resources.LoadAll<Item>("Items"))
+        foreach (var (itemId, count) in StarterKit.Items)
         {
+            var def = ItemCatalog.Resolve(itemId);
             if (def == null) continue;
-            // NOTHING WEARABLE IS SEEDED. Gear is made, never handed out: a character's first weapon and first
-            // armour are forged at a station, so a starter piece would be a second way to come by one.
-            if (def.slot != EquipSlotType.None) continue;
-            // AND NO MATERIAL EITHER. Materials are earned from creatures, band by band; the moment they became
-            // items this line handed every new character one of each, Adamant and Sharp Ink included.
-            if (def.materialKind != MaterialKind.None) continue;
-            bag.Add(new BagEntry { def = def, count = def.IsUsable ? 5 : 1 });
+            bag.Add(new BagEntry { def = def, count = count });
         }
+        SetGold(StarterKit.Gold);
     }
 
     // Allocates a few small lists — fine, this runs only on save, not a hot path.

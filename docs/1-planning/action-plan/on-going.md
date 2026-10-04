@@ -113,6 +113,36 @@ needed to open it; they arrive as updates while it runs, which gives testers a r
 
 ---
 
+## Week 7 — The world has people
+
+**Goal:** you can talk to somebody with a name who says the same thing twice. Today every villager in the game returns the same hardcoded name, "Villager", and speaks randomly chosen ambient lines.
+
+- [ON-GOING] `MT-23` **`[E]` Store a character's quests.** Built 2026-10-04 ([Quests and Tutorials](../../2-systems/quests-and-tutorials.md)): one row per quest ever given in `character_quest` — the step it is on, whether it is followed, whether it is finished — written inside the progress save in one transaction, so the bag and the quest that judged it land together. — **1 day**
+  *Done when:* a character logged out halfway through a quest comes back on the same step, after a restart of both servers.
+
+---
+
+## Week 8 — A quest can be given
+
+**Goal:** somebody asks you for something and the game remembers being asked.
+
+- [ON-GOING] `MT-24` **`[E]` Build the quest system.** Built 2026-10-04: quests as data assets with ordered steps (talk to someone; have, fold or wear an item), judged on the server; the Quests window (J) with Tutorial / Main Story / Side Quests tabs; following a quest lights arrows on the ground to its step; the tutorial guide darkens the screen except the next button. No branching, no chains, no rewards yet. — **4–5 days**
+  *Done when:* a new character is given the crafting tutorial, the arrows lead to Gunnar, the guide walks forge, fold and wear to the end, and progress survives closing the game.
+
+---
+
+## Week 10 — Gold has a use
+
+**Goal:** you can spend the money you have been collecting. The furthest character in the database has 4,396 gold and nothing in the game to spend it on.
+
+- [ON-GOING] `MT-28` **`[E]` Build a shop screen.** Buy and sell, against one shopkeeper. Every item has a sell value and now a buy price (0 = no shop sells it); what each shop sells is the shops list, and a shopkeeper is a townsperson whose row names a shop. Built 2026-10-04: Fenwick the Tool Dealer in Lastline sells potions one or ten at a time and buys anything whose sell value is above 0 — the one rule, for every kind of item; a sell value of 0 means it cannot be sold to an NPC and every readout says so instead of showing a 0 — not yet play-tested. — **4–5 days**
+  *Done when:* you can sell a piece of loot for gold, buy a potion back, and both the gold and the bag survive a restart.
+
+- [ON-GOING] `MT-29` **`[A]` Stock the first shops.** What each town sells. Lastline's tool dealer sells the four potions (Minor Healing, Healing, Greater Healing, Antidote) at twice what each sells for — prices chosen 2026-10-04, yours to change. — **1 day**
+  *Done when:* every town with a shopkeeper sells a list you chose, not a list the game made up.
+
+---
+
 ## Backlog — real work, deliberately not in the weeks above
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
@@ -141,6 +171,13 @@ Each of these is worth doing and none of them blocks the loop above. They are he
   who is whose enemy, ready for player-versus-player. — **built**
   *Done when:* in play a kill turns back about 3 times in 20, each kind behaves as described, gold arrives only from a
   never-fights character, and two players see the same character, line and aura.
+
+- [ON-GOING] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons.** Seen 2026-09-28 in play: hundreds of
+  "the object of type Image / TextMeshProUGUI has been destroyed" errors a session, from the hover plate over a unit
+  rebuilding its status icons. Cause, found 2026-10-04: a map change destroys the shared canvas the plate hangs on,
+  and the rebuilt plate kept its list of the old, destroyed icon tiles. Built: a rebuilt plate (`UnitPlate`) starts
+  from nothing — not yet play-tested.
+  *Done when:* a play session with fights and map changes logs none of them.
 
 ---
 
