@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.squeak
   displayName: Squeak
   kind: 0
-  size: 0.12
+  size: 0.3
   biome: 0
   artFolder: da34aa945188dfc4dba08a70635576e2
   faceset: {fileID: 2800000, guid: af5ea984c02fa0644848bd2087ad1f27, type: 3}

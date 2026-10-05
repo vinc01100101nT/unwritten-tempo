@@ -13601,24 +13601,9 @@
             ]
         },
         {
-            "name": "Fleet",
-            "slot": "Shoes",
-            "chance": "50%",
-            "slotOrder": 5,
-            "byGrade": [
-                "Movement speed: +2%",
-                "Movement speed: +3%",
-                "Movement speed: +4%",
-                "Movement speed: +5%",
-                "Movement speed: +6%",
-                "Movement speed: +8%",
-                "Movement speed: +10%"
-            ]
-        },
-        {
             "name": "Tireless",
             "slot": "Shoes",
-            "chance": "50%",
+            "chance": "100%",
             "slotOrder": 5,
             "byGrade": [
                 "Sprint drains stamina: 5% slower",

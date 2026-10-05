@@ -19,9 +19,19 @@ public static class LoadingScreen
     static TMPro.TMP_Text stepLabel;
     static Image barFill;
     static string step = "";
+    static CanvasGroup group;
+    static LoadingScreenFade fade;
 
-    /// <summary>True while the curtain is up.</summary>
-    public static bool Showing => root != null && root.gameObject.activeSelf;
+    // The map the player was standing in when the curtain went up. Lowering it in a DIFFERENT map fades the new one
+    // in; lowering it in the same map — a door within one map, or a move that was refused — just takes it away.
+    static string shownInMap;
+
+    /// <summary>How long the new map takes to fade in from behind the curtain, in seconds.</summary>
+    public const float FadeInSeconds = 0.3f;
+
+    /// <summary>True while the curtain is up. False once it has started fading away: the new map is already being
+    /// shown and played in by then.</summary>
+    public static bool Showing => root != null && root.gameObject.activeSelf && (fade == null || !fade.enabled);
 
     /// <summary>Raise the curtain and say what is happening. Called the moment a portal is touched, before any
     /// asking begins — the player has already committed by walking into it, and the world they are leaving must
@@ -30,6 +40,11 @@ public static class LoadingScreen
     {
         Build();
         if (root == null) return;
+        // A curtain still fading from the last door comes straight back up, whole.
+        if (fade != null) fade.enabled = false;
+        group.alpha = 1f;
+        group.blocksRaycasts = true;
+        shownInMap = MapManager.CurrentMap;
         root.gameObject.SetActive(true);
         UiLayers.Raise(root, UiLayers.Layer.Loading);
         SetStep(firstStep);
@@ -57,11 +72,51 @@ public static class LoadingScreen
     }
 
     /// <summary>Lower the curtain. Called when the player has a body on the far side, or when the move failed
-    /// and they are standing where they started.</summary>
+    /// and they are standing where they started. Landing in a different map fades that map in over
+    /// <see cref="FadeInSeconds"/>; anything else takes the curtain away at once.</summary>
     public static void Hide()
     {
         step = "";
-        if (root != null) root.gameObject.SetActive(false);
+        if (root == null) return;
+        bool landedElsewhere = Showing && !string.IsNullOrEmpty(MapManager.CurrentMap)
+                               && MapManager.CurrentMap != shownInMap;
+        if (landedElsewhere && fade != null)
+        {
+            // Clicks reach the new map from the first frame of the fade, not the last.
+            group.blocksRaycasts = false;
+            fade.enabled = true;
+            return;
+        }
+        if (fade != null) fade.enabled = false;
+        root.gameObject.SetActive(false);
+    }
+
+    /// <summary>Lower the curtain the moment the next map has loaded, with the player already standing in it.
+    /// Signed up for ONE arrival and taken straight off again, so a later ordinary door cannot lower a curtain
+    /// that is not up.</summary>
+    public static void HideWhenMapArrives()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMapArrived;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnMapArrived;
+    }
+
+    // Signed up after the map's own housekeeping and the player's placement, which both sign up at start-up — so by
+    // now the map is the current one and the player and camera already stand in it.
+    static void OnMapArrived(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (scene.name == MapManager.SystemsScene) return;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMapArrived;
+        Hide();
+    }
+
+    // One frame of the fade, driven by LoadingScreenFade while it runs. Done: the curtain is put away.
+    internal static void StepFade(float seconds)
+    {
+        if (group == null) return;
+        group.alpha = Mathf.Max(0f, group.alpha - seconds / FadeInSeconds);
+        if (group.alpha > 0f) return;
+        fade.enabled = false;
+        root.gameObject.SetActive(false);
     }
 
     static void Build()
@@ -101,6 +156,18 @@ public static class LoadingScreen
         barFill.fillAmount = 0f;
         barFill.raycastTarget = false;
 
+        group = root.gameObject.AddComponent<CanvasGroup>();
+        fade = root.gameObject.AddComponent<LoadingScreenFade>();
+        fade.enabled = false;
+
         root.gameObject.SetActive(false);
     }
+}
+
+/// <summary>Ticks <see cref="LoadingScreen"/>'s fade-in, and only while one is running — switched off the rest of
+/// the time, so it costs nothing between doors.</summary>
+public sealed class LoadingScreenFade : MonoBehaviour
+{
+    // Unscaled: a fade is screen time, not game time.
+    void Update() => LoadingScreen.StepFade(Time.unscaledDeltaTime);
 }

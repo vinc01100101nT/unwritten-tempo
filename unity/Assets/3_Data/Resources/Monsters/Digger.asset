@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.digger
   displayName: Digger
   kind: 0
-  size: 0.2
+  size: 0.3
   biome: 7
   artFolder: 819a7959d6b9517419c7b42b69d2a63e
   faceset: {fileID: 2800000, guid: bb897ecada9c91043a1586d931a6380e, type: 3}

@@ -181,7 +181,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 
 | Stat | Where it comes from |
 | --- | --- |
-| Movement speed | `CharacterSpec` gear speeds (run gear 1.5, walk gear 0.6 world units/s), the same for every person and creature, × `UnitStates.MoveMult` |
+| Movement speed | `CharacterSpec` gear speeds (sprint 2.4, run gear 1.2, walk gear 0.48 world units/s — one movement speed, no gait term), the same for every person and creature, × `UnitStates.MoveMult` — which carries timed movement-speed effects and worn shoes' folds (+2% a fold) |
 | Attack reach | `CharacterSpec.unarmedReach` (0.5) bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
 | Base swing interval | `CharacterSpec.swingInterval` (0.6 s) for every unit, divided by attack speed |
 | Mana leech | 0; a timed sub-stat change only |

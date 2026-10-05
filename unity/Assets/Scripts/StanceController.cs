@@ -121,6 +121,25 @@ public class StanceController : MonoBehaviour
     // townsperson and every creature — they read the shared baseline below exactly as they always have.
     float toldGait;
 
+    // How fast this body is travelling over the ground right now, handed over every frame by the shared brain.
+    float groundSpeed;
+
+    /// <summary>How fast this body is travelling over the ground, in units per second — set every frame by
+    /// <see cref="CharacterBrain.Apply"/>, the one place every kind of body is driven from.</summary>
+    public void SetGroundSpeed(float unitsPerSecond) { groundSpeed = Mathf.Max(0f, unitsPerSecond); }
+
+    /// <summary>THE LEGS OF A WALK, RUN OR SPRINT ARE LOCKED TO THE GROUND: the clip plays at the body's real ground
+    /// speed divided by how fast that clip walks on this body, so a planted foot stays still at any speed — bare feet,
+    /// shoes, a buff or a slow. Only a live-3D body whose clip has been measured can answer; anything else (a flat
+    /// billboard, a clip never measured) keeps the movement-paced rule every other clip uses.</summary>
+    bool TryGroundLocked(StanceBinding b, out float playback)
+    {
+        playback = 1f;
+        if (!(pose is Character3DPose body) || !body.TryClipSpeed(b, out float clipSpeed)) return false;
+        playback = StrideMath.LockedPlayback(groundSpeed, clipSpeed);
+        return true;
+    }
+
     /// <summary>The owning machine's word on this body's leg cadence. The watched-body mirror of
     /// <see cref="SetGaitSource"/>: one hands over the live owner, the other hands over its answer.</summary>
     public void TellGait(float gaitMult) { toldGait = gaitMult > 0f ? gaitMult : 0f; }
@@ -474,6 +493,7 @@ public class StanceController : MonoBehaviour
             float n = pose.NaturalDuration(b.action, b.clip);
             if (window > 0.01f && n > 0.01f) m *= n / window;
         }
+        else if (StanceCatalog.IsWalkCycle(b.id) && TryGroundLocked(b, out float locked)) m *= locked;
         else if (b.speedSource == StanceSpeedSource.MoveGait) m *= GaitFor(b.id);
         return Mathf.Max(0.01f, m);
     }

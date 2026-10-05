@@ -124,13 +124,30 @@ public class StanceBinding
              "the FitWindow time-rescale. 0 = no rooting (the player moves for the whole roll).")]
     [Min(0)] public int rootFromFrame = 0;
 
-    [Tooltip("WALK/RUN only: every foot-plant in the cycle — ONE entry per footfall (as many as the cycle has), each " +
-             "carrying the FRAME the foot goes flat AND which foot it is. FootstepTracker fires a footstep (SFX + " +
-             "puddle ripple + snow print) each time the animation crosses a plant's frame (turned into a 0→1 phase = " +
-             "frame ÷ the clip's frame count), and offsets the print to that foot's side. The foot is AUTHORED (not " +
-             "guessed by alternation) so the very first plant of the cycle lands on the correct side. This binding is " +
-             "the SINGLE OWNER of where feet land; FootstepTracker only reads it.")]
+    [Tooltip("WALK/RUN/SPRINT only, MEASURED from the clip when it is picked in the Stance Composer — never typed: every " +
+             "foot-plant in the cycle, ONE entry per footfall, each carrying the FRAME the foot lands AND which foot it " +
+             "is. FootstepTracker fires a footstep (SFX + puddle ripple + snow print) each time the animation crosses a " +
+             "plant's frame (turned into a 0→1 phase = frame ÷ the clip's frame count), and offsets the print to that " +
+             "foot's side. This binding is the SINGLE OWNER of where feet land; FootstepTracker only reads it.")]
     public List<FootPlant> footPlants = new List<FootPlant>();
+
+    [Tooltip("WALK/RUN/SPRINT only, MEASURED with the foot-plants — never typed: how fast this clip walks on each body " +
+             "model at normal playback, in that model's own unscaled units a second. The legs play at the body's real " +
+             "ground speed divided by this (times its world scale), so a planted foot stays still.")]
+    public List<BodyStride> bodyStrides = new List<BodyStride>();
+
+    [Tooltip("WALK/RUN/SPRINT only, MEASURED with the foot-plants: the middle of every body's clip speed divided by its " +
+             "Humanoid scale. Used only for a body added after the clip was last measured, which is also reported.")]
+    public float speedPerHumanScale;
+}
+
+/// <summary>How fast one locomotion clip walks on one body model: the model's Humanoid avatar name and the clip's
+/// walking speed on it, in the model's own unscaled units a second.</summary>
+[System.Serializable]
+public class BodyStride
+{
+    public string avatar = "";
+    public float speed;
 }
 
 /// <summary>One foot-plant in a walk/run cycle: the clip FRAME the foot goes flat, and WHICH foot it is. Authoring the

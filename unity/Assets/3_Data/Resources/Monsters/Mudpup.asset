@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mudpup
   displayName: Mudpup
   kind: 0
-  size: 0.25
+  size: 0.3
   biome: 1
   artFolder: eba6cb66fd9377045b60ca3388eaea4f
   faceset: {fileID: 2800000, guid: d1fadbab936d96a4790ae53708d45a5e, type: 3}

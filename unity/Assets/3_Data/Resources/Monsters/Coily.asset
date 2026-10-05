@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.coily
   displayName: Coily
   kind: 0
-  size: 0.25
+  size: 0.3
   biome: 6
   artFolder: 7e633155d028c1d409ed5704f4478dc0
   faceset: {fileID: 2800000, guid: bb12527d9f9546f4ca7927f826b35358, type: 3}

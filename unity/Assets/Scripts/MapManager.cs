@@ -133,13 +133,67 @@ public static class MapManager
     // saying so.
     static void OnSceneUnloaded(Scene scene)
     {
+        DestroyWhatOutlivedItsScene("closed");
         parked.Remove(scene.name);
         WorldSpawner.Forget(scene);
         WorldTownsfolk.Forget(scene);
     }
 
+    /// <summary>A THING MADE DURING PLAY GOES WITH THE SCENE IT STANDS IN, exactly as a thing authored into that scene
+    /// does.
+    ///
+    /// <para>Everything made during Play carries a do-not-save flag, so it can never be baked into a scene file — and
+    /// Unity never destroys an object carrying that flag when its scene closes. It is left standing in no scene at
+    /// all, still drawn and still running. MEASURED 2026-10-05 in a client build: after Select character the old
+    /// character's body stood exactly where it was left, and one more copy was added on every switch; a plain object
+    /// made beside it in the same scene was destroyed, a flagged one was not. Every owner already rebuilds its object
+    /// when it finds it gone, because each was written believing a scene change destroys it.</para>
+    ///
+    /// <para>The engine's own hidden objects and the editor's previews are hidden from the hierarchy and are left
+    /// alone, as are assets.</para>
+    ///
+    /// <para><b>Asked when a scene closes AND when one opens.</b> A scene let go on its own (a map behind a door)
+    /// has already turned its leftovers out when it reports closing. A scene replaced wholesale (Select character
+    /// reloading Systems) has not: while it reports closing, its things still name it as their scene. MEASURED in
+    /// the same build — asked only on closing, each switch removed the PREVIOUS switch's leftovers and left its
+    /// own. They are out by the time the new scene reports opening.</para></summary>
+    static void DestroyWhatOutlivedItsScene(string when)
+    {
+        if (!Application.isPlaying) return;
+        if (sweptFrame != Time.frameCount) { sweptFrame = Time.frameCount; sweptThisFrame.Clear(); }
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        // perf-ok: once per scene unload — and the only search that sees objects carrying a do-not-save flag.
+        var all = Resources.FindObjectsOfTypeAll<GameObject>();
+        int destroyed = 0;
+        names.Clear();
+        for (int i = 0; i < all.Length; i++)
+        {
+            var go = all[i];
+            if (go == null || go.transform.parent != null || go.scene.IsValid()) continue;
+            var flags = go.hideFlags;
+            if ((flags & HideFlags.DontSaveInEditor) == 0) continue;
+            if ((flags & HideFlags.HideInHierarchy) != 0) continue;
+#if UNITY_EDITOR
+            if (UnityEditor.EditorUtility.IsPersistent(go)) continue;
+#endif
+            // Destroy waits for the end of the frame, so a second ask in the same frame would count it again.
+            if (!sweptThisFrame.Add(go.GetInstanceID())) continue;
+            Object.Destroy(go);
+            if (destroyed < 24) names.Append(destroyed == 0 ? "" : ", ").Append(go.name);
+            destroyed++;
+        }
+        if (destroyed > 0)
+            GameLog.Info(LogCat.Map, "a scene " + when + " — " + destroyed + " thing(s) made during play went with it ("
+                                     + clock.ElapsedMilliseconds + " ms, " + all.Length + " objects looked at): " + names);
+    }
+
+    static readonly System.Text.StringBuilder names = new System.Text.StringBuilder();
+    static int sweptFrame = -1;
+    static readonly System.Collections.Generic.HashSet<int> sweptThisFrame = new System.Collections.Generic.HashSet<int>();
+
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        DestroyWhatOutlivedItsScene("opened");
         Activate(scene);
         // A map arriving is the one thing a server operator needs to see in the log: it is the difference
         // between "asked for the town" and "the town is up". Server-only — a player sees the map instead.

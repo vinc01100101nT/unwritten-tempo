@@ -34,15 +34,19 @@ FIXTURE = [
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat",
     "unity/Assets/1_Authored/Prefabs/Props/Materials/Plant (wind).mat.meta",
     "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
-    "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
+    "unity/Assets/3_Data/Resources/WorldMap/world-map.png.meta",
     "unity/Assets/1_Authored/Prefabs/Props/Plants/Grass1.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD1.prefab",
     "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Rock1.prefab",
     "unity/Assets/Scripts/UnitStatBlock.cs",
     "unity/Assets/Scripts/UnitStatBlock.cs.meta",
-    "unity/Assets/2_Generated/MobPrefabs/Mobs/TenguRed.prefab",
+    "unity/Assets/2_Generated/MobPrefabs/Mobs/Adder.prefab",
+    "unity/Assets/3_Data/Resources/CharacterDyeParts.asset",
 ]
+
+# A character model the saved outfit-parts table DOES list. Only its name is read, so the copy is an empty file.
+LISTED_MODEL = "unity/Assets/1_Authored/Art/Characters/Models/Chef_Female.fbx"
 
 
 def build_copy(root):
@@ -54,6 +58,9 @@ def build_copy(root):
         dst = os.path.join(root, relp)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copy2(src, dst)
+    listed = os.path.join(root, LISTED_MODEL)
+    os.makedirs(os.path.dirname(listed), exist_ok=True)
+    open(listed, "wb").close()
 
 
 def run(root):
@@ -96,7 +103,7 @@ def main():
              "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
              lambda t: t.replace("  alphaUsage: 0\n", "  alphaUsage: 1\n", 1)),
             ("uncompressed texture outside the authored folder",
-             "unity/Assets/3_Data/Resources/WorldMap/atlas.png.meta",
+             "unity/Assets/3_Data/Resources/WorldMap/world-map.png.meta",
              lambda t: re.sub(r"(buildTarget: DefaultTexturePlatform\n(?:.*\n){3}    textureCompression: )1", r"\g<1>0", t, 1)),
             ("readable texture",
              "unity/Assets/1_Authored/Art/GroundTiles/BASE_OR_PATCH_OR_PATH_soil.png.meta",
@@ -129,7 +136,7 @@ def main():
              "unity/Packages/manifest.json",
              lambda t: t.replace('"dependencies": {', '"dependencies": {\n    "com.example.nobody-uses-this": "1.0.0",', 1)),
             ("baked component missing a declared field (the level-1 creatures)",
-             "unity/Assets/2_Generated/MobPrefabs/Mobs/TenguRed.prefab",
+             "unity/Assets/2_Generated/MobPrefabs/Mobs/Adder.prefab",
              lambda t: re.sub(r"^  inputs:\n(?:    .*\n)+", "", t, count=1, flags=re.M)),
         ]
         for name, relp, fn in cases:
@@ -162,6 +169,20 @@ def main():
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+        # A character model added with no saved outfit parts: nobody wearing it could change its colours.
+        root = tempfile.mkdtemp(prefix="asset-rules-case-")
+        try:
+            shutil.copytree(base, root, dirs_exist_ok=True)
+            open(os.path.join(root, os.path.dirname(LISTED_MODEL), "Unbaked_Model.fbx"), "wb").close()
+            code, out = run(root)
+            named = code == 1 and "Unbaked_Model.fbx" in out and "Chef_Female.fbx" not in out
+            print((GRN + "caught  " if named else RED + "MISSED  ") + "a character model with no saved outfit parts" + OFF)
+            if not named:
+                failures += 1
+                print(out)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
         # The one rule that must only WARN: an unwired family is debt, not a red turn.
         code, out = run(base)
         lod_quiet = code == 0
@@ -171,7 +192,7 @@ def main():
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
-    total = len(cases) + 3   # every planted fault, the stray tile-folder file, the sound copy, the warn-only LOD case
+    total = len(cases) + 4   # every planted fault, the stray tile-folder file, the unbaked model, the sound copy, the warn-only LOD case
     if failures:
         print(RED + "%d of %d case(s) failed — the asset-rules checker is blind somewhere." % (failures, total) + OFF)
         return 1

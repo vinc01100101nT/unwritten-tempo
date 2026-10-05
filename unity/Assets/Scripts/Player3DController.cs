@@ -26,37 +26,25 @@ public partial class Player3DController : MonoBehaviour
     // TRAVEL, GAIT and the gear fractions all come from the shared CharacterSpec, so the player, the townsfolk and the
     // shadow mobs cannot disagree about how fast a character travels or how quickly its legs churn. Tune them there.
 
-    /// <summary>TRAVEL speed: base ground translation before unit scale. Moving this changes speed WITHOUT scaling the
-    /// animation — <see cref="GaitSpeedMult"/> divides it back out so the legs keep their baked cadence.</summary>
-    public float moveSpeed => CharacterSpec.Active.moveSpeed;
-    /// <summary>GAIT speed: the baseline that scales movement AND animation together, so legs and footsteps churn
-    /// with it. Stacks multiplicatively with live Slow/Haste.</summary>
+    /// <summary>The playback baseline for the clips paced by movement OTHER than walk, run and sprint, which are locked
+    /// to the ground instead. Stacks multiplicatively with live Slow/Haste. Travel never reads it.</summary>
     public float gaitSpeed => CharacterSpec.Active.gaitSpeed;
-    /// <summary>The player's CURRENT run speed in world units/sec — the same hand-tuned baseline the walk uses, scaled
-    /// by <see cref="UnitScale.ForPlayer"/>, the <see cref="gaitSpeed"/> baseline, and the live Slow/Haste move buff
-    /// (but NOT the Shift-walk slowdown). The dodge roll (E) reads this so it's always exactly 2× the current run.</summary>
-    public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed * (status != null ? status.MoveMult : 1f);
-    /// <summary>Run speed WITHOUT the movement gate (<see cref="StatusController.MoveMult"/> drops to 0 under an
+    /// <summary>The player's CURRENT full (sprint) speed in world units/sec — the shared movement speed scaled by
+    /// <see cref="UnitScale.ForPlayer"/> and the live movement-speed sub-stat (shoes, Slow, Haste), but NOT the gear.
+    /// The dodge roll (E) reads this so it's always exactly 2× the current full speed.</summary>
+    public float CurrentRunSpeed => RawRunSpeed * (status != null ? status.MoveMult : 1f);
+    /// <summary>Full speed WITHOUT the movement gate (<see cref="StatusController.MoveMult"/> drops to 0 under an
     /// aftercast root and to &lt;1 under Slow). A skill glide captures its speed from THIS so its own
     /// release-animation lock can't zero it — the glide is a fixed A→B move, not gated locomotion.</summary>
-    public float RawRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed;
-    /// <summary>Travel speed of the RUN gear — the default jog you move at with no modifier held. THE single owner
-    /// of that composition (base × unit scale × gear tier × gait), so anything that must move "like the player"
-    /// reads this instead of re-deriving the multiplier chain and drifting from it. A chasing 3D shadow mob runs
-    /// at exactly this, because a shadow is a player-sized unit and must stride like one.</summary>
-    public float RunGearSpeed => moveSpeed * UnitScale.ForPlayer * runSpeedMult * gaitSpeed;
-    /// <summary>Travel speed of the WALK gear (Shift held) — the strolling pace. Same single-owner rule as
-    /// <see cref="RunGearSpeed"/>; the ambient townsfolk and a wandering shadow both move at exactly this.</summary>
-    public float WalkGearSpeed => moveSpeed * UnitScale.ForPlayer * walkSpeedMult * gaitSpeed;
+    public float RawRunSpeed => CharacterSpec.Active.FullSpeed;
     /// <summary>Speed fraction while holding Shift to walk — the shared walk gear.</summary>
     public float walkSpeedMult => CharacterSpec.Active.walkGearMult;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
-    /// <summary>Live ratio of the player's ACTUAL move speed to its tuned baseline (1 = normal, &gt;1 = sped up by a
-    /// buff, &lt;1 = slowed). The single knob that binds gait to movement speed: the footstep cadence divides by it
-    /// and the stance visual multiplies the Walk/Run clip fps by it, so a speed buff makes the steps and the run/walk
-    /// animation visibly faster (and a Slow ailment slower) without touching the hand-tuned baselines.</summary>
+    /// <summary>The playback multiplier for the clips paced by movement OTHER than walk, run and sprint (idle, the
+    /// jump, the skill releases): the gait baseline × the live movement-speed sub-stat × the gear. Walk, run and sprint
+    /// legs are locked to the ground instead (<see cref="StanceController"/>).</summary>
     public float GaitSpeedMult { get; private set; } = 1f;
 
     // ── Sprint (V) + stamina ──────────────────────────────────────────────────
@@ -387,11 +375,11 @@ public partial class Player3DController : MonoBehaviour
         WalkingSlow = moving && HeldShift() && !Sprinting;   // Shift = walk (unless sprinting); read by the stance visual
         // THREE gears: Sprint = full (old run), Run = runSpeedMult (jog), Walk = walkSpeedMult.
         float travelTier = Sprinting ? 1f : (WalkingSlow ? walkSpeedMult : runSpeedMult);
-        float baseSpeed = moveSpeed * UnitScale.ForPlayer * travelTier;                           // TRAVEL baseline per gear
-        float gait = gaitSpeed * (status != null ? status.MoveMult : 1f);                        // GAIT baseline × live Slow/Haste — animation-scaling
-        float spd = baseSpeed * gait;
-        // Animation cadence per gear: Sprint & Walk keep the full gait feel; Run jogs (legs churn at runSpeedMult so the
-        // half-speed travel doesn't foot-skate). Buffs/Slows ride on top via `gait`. Drives Walk/Run fps + footsteps.
+        float liveMove = status != null ? status.MoveMult : 1f;
+        float spd = CharacterSpec.Active.FullSpeed * travelTier * liveMove;
+        // The playback of the OTHER clips paced by movement (idle, jump, skill releases): the gait baseline × live
+        // movement speed × gear. Walk, run and sprint never read it — their legs are locked to the ground.
+        float gait = gaitSpeed * liveMove;
         float animTier = (Sprinting || WalkingSlow) ? 1f : runSpeedMult;
         GaitSpeedMult = gait * animTier;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)

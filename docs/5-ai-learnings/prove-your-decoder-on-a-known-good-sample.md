@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-21
+last-updated: 2026-10-05
 tags:
   - ai-learnings
 ---
@@ -78,8 +78,25 @@ your next attack with **+200% damage**" decoded as *AddStacks* is a contradictio
 cross-check of a decoded value against the thing's own description, before building a table on it, would have
 caught all three.
 
+### The same failure, 2026-10-04: a census whose filter removed the very thing it was counting
+
+The user's old character stayed standing after Select character. A census in the editor counted every character
+body after five switches and found exactly one each time — reported as "no leftover body ever appeared". It
+listed only objects whose scene was valid. The leftover was precisely an object in NO scene: Unity never
+destroys an object carrying a do-not-save flag when its scene closes. The filter deleted the answer before the
+count was taken.
+
+It cost a full round and a request to the user to reproduce it on two machines. The next census dropped the
+filter, PRINTED the scene of each object instead, and planted a known case: two plain objects made side by side,
+one flagged and one not. After one switch the flagged one was still there with no scene, and the plain one was
+gone. That one control settled the cause.
+
 ## How to apply
 
+- **Never filter a census on the property the bug might be about — print it instead.** "Only objects in a valid
+  scene", "only active ones", "only ones in the registry": each is a guess that the bug does not live there.
+- **Plant a known case of the suspected state** (an object made exactly the suspect way) and check the census
+  sees it before trusting a count of zero.
 - **Find the known-good twin first.** The same file from a working build, a previous version, a second machine,
   a record you can verify another way. If no good sample exists, you cannot yet report what a bad one means.
 - **Run the decoder on BOTH and print them side by side.** Do not eyeball one in isolation — the whole point is

@@ -20,6 +20,16 @@ public static class SpriteSheetCache
     // SINGLE OWNER of this value: RigBuilder25D.SpriteFoot (editor/build side) reads it from here.
     public const float MobFootPivotY = 0.1f;
 
+    /// <summary>A grid cell's pivot with the picture raised <paramref name="liftAtScaleOne"/> world units at scale one
+    /// above the feet line <paramref name="footPivot"/>. A grid cell is cut at one world unit per cell, so the lift IS
+    /// the fraction of a cell the pivot moves down by.</summary>
+    public static float LiftedPivot(float footPivot, float liftAtScaleOne) => footPivot - liftAtScaleOne;
+
+    /// <summary>A strip frame's feet line in pixels with the picture raised <paramref name="liftAtScaleOne"/> world
+    /// units at scale one, for art drawn at <paramref name="ppu"/> pixels per unit.</summary>
+    public static int LiftedFootPx(int footPx, float liftAtScaleOne, int ppu) =>
+        footPx - Mathf.RoundToInt(liftAtScaleOne * ppu);
+
     // Horizontal strip: N square frames along the BOTTOM row (y = 0). Used by slash/bolt/smoke FX and
     // the player's 4 attack poses (which are a 1-row strip).
     static readonly Dictionary<(EntityId tex, int size, int count), Sprite[]> strips

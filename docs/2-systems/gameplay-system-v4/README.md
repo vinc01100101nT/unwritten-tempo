@@ -303,8 +303,8 @@ move once it is played. Change it here, in place, when it does.
 - **Per fold:** a weapon gains **+1 attack** (or +1 magic attack for a Staff / Wand / Scythe). An armour piece's
   **material** decides what a fold buys and its **slot** how much: metal **+0.5 defence and +4 HP**, leather
   **+0.25% attack speed and +0.25 evasion**, cloth **+0.5 magic defence and +2 MP** on body, off-hand and garment;
-  head and shoes take half. Quality lifts that fold total by the column above. The full table is in
-  [Crafting Tables](crafting-tables.md).
+  head and shoes take half. Quality lifts that fold total by the column above. Shoes also gain **+2% movement
+  speed** a fold, whatever their material, with no lift. The full table is in [Crafting Tables](crafting-tables.md).
 - **Fold cost:** 1 unit of the grade's band material + 50 gold × band number. **Quench cost:** 10 units of the
   band + 500 gold × band number, and optionally one Salt.
 

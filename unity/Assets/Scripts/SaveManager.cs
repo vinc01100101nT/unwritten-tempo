@@ -62,6 +62,9 @@ public class SaveManager : MonoBehaviour
             loading = false;
             character = null;
             Loaded = null;
+            // AND WHERE THEY WERE GOING BACK TO goes with them, or the next character would be stood on that spot.
+            if (walkBackOwed != null && string.IsNullOrEmpty(walkBackOwed.arriveAtSpawnId)) SceneTravel.ForgetResume();
+            walkBackOwed = null;
             return;
         }
 
@@ -83,6 +86,7 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
+        if (walkBackOwed != null) TryWalkBack();
     }
 
     void BeginLoad()
@@ -163,12 +167,44 @@ public class SaveManager : MonoBehaviour
         ProfileStore.Current.SaveAppearance(character.DyeModel, character.DyeSources, character.DyeTargets);
     }
 
-    /// <summary>Stand the player where their save says they were. The save always arrives AFTER the map has
-    /// come up, so this either moves them within the map they are already in, or sends them to the one they
-    /// logged out of and lets the arrival place them.</summary>
-    static void ReturnToWhereWeLeftOff(SaveData data)
+    // The save whose place the player has not been put back to yet, because no map was up when it arrived.
+    SaveData walkBackOwed;
+
+    /// <summary>Stand the player where their save says they were.
+    ///
+    /// <para><b>The save can arrive BEFORE the map.</b> It is read the moment a character is chosen, and the map
+    /// only loads once the server has let them in — so this cannot act on whatever map name is lying around. After
+    /// Select character the last map's name is still the current one while nothing is loaded under it: acting on
+    /// it put them "back" onto empty space, used up the spot, and the real arrival a moment later stood them at
+    /// the map's arrival point. Sending them to the saved map instead loaded it a second time beside the one the
+    /// sign-in was already loading, and the second arrival did the same.</para>
+    ///
+    /// <para>So the exact spot is handed to the arrival, which stands them on it as the map lands; anything still
+    /// to do waits here until a map is actually up.</para></summary>
+    void ReturnToWhereWeLeftOff(SaveData data)
     {
         if (data == null || string.IsNullOrEmpty(data.sceneName)) return;   // a save older than this, or a fresh character
+
+        // AN ARRIVAL POINT RATHER THAN A POSITION has nothing to hand over: every map load names its own arrival
+        // point, which would overwrite this one. It waits for the map instead.
+        if (string.IsNullOrEmpty(data.arriveAtSpawnId))
+        {
+            SceneTravel.ResumeScene = data.sceneName;
+            SceneTravel.ResumePosition = new Vector3(data.posX, data.posY, data.posZ);
+        }
+        walkBackOwed = data;
+        TryWalkBack();
+    }
+
+    // A map is loaded, current, and nothing else is on its way.
+    static bool MapIsUp =>
+        !string.IsNullOrEmpty(MapManager.CurrentMap) && MapManager.CurrentScene.isLoaded && MapManager.ArrivingAt == null;
+
+    void TryWalkBack()
+    {
+        if (walkBackOwed == null || !MapIsUp) return;
+        var data = walkBackOwed;
+        walkBackOwed = null;
 
         // AN ARRIVAL POINT RATHER THAN A POSITION — somebody who left while dead with no save point of their own.
         if (!string.IsNullOrEmpty(data.arriveAtSpawnId))
@@ -185,16 +221,16 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        SceneTravel.ResumeScene = data.sceneName;
-        SceneTravel.ResumePosition = new Vector3(data.posX, data.posY, data.posZ);
+        // The arrival already stood them on it.
+        if (!SceneTravel.HasResume) return;
 
-        if (data.sceneName == MapManager.CurrentMap)
+        if (SceneTravel.ResumeScene == MapManager.CurrentMap)
         {
             if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
         }
         else
         {
-            MapManager.Travel(data.sceneName, null);   // the arrival reads the resume point and clears it
+            MapManager.Travel(SceneTravel.ResumeScene, null);   // the arrival reads the resume point and clears it
         }
     }
 

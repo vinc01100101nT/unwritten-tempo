@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.grubble
   displayName: Grubble
   kind: 0
-  size: 0.15
+  size: 0.3
   biome: 4
   artFolder: c9664ae77de347e408bf3ee98233d479
   faceset: {fileID: 2800000, guid: 871c5dc5e31e744489ce488a20c1c4dd, type: 3}

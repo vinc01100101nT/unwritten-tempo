@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Emberhoot
   kind: 0
   size: 0.35
+  flies: 1
   biome: 9
   artFolder: c144a05867ec7be48ab314b20d4ef807
   faceset: {fileID: 2800000, guid: 505f99c66574b1b42a6bfa9d55374be1, type: 3}

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.adder
   displayName: Adder
   kind: 0
-  size: 0.25
+  size: 0.3
   biome: 2
   artFolder: 3ada79b7aeda0e744baacd850ea88d13
   faceset: {fileID: 2800000, guid: 89df8bafe47f89b4a8b7f9cb054a44ab, type: 3}

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.crawlet
   displayName: Crawlet
   kind: 0
-  size: 0.15
+  size: 0.3
   biome: 6
   artFolder: 649e841555aff094ba432b9e1d4a7c38
   faceset: {fileID: 2800000, guid: 6b709ce552a6aaa4eb90a43e7e761f72, type: 3}

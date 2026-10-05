@@ -19,7 +19,7 @@ the own player) and nobody in the town saw them.
 matches still re-files a body that is not yet in that map.
 
 **Gotchas:**
-- A fresh game-server build is needed; the editor alone cannot prove it against a running server.
+- Verified by the user on 2026-10-04 after a game-server rebuild: the townsfolk are back after Select character.
 - Never-played characters mask the bug, because their map name is empty until the client reports it.
 - Driving entry through the live editor too fast after `BackToCharacterSelect` sends two entry requests: "taken over",
   then "Multiple NetworkManagers". That is a test artifact, not this bug.

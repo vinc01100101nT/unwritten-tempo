@@ -115,7 +115,11 @@ public class StatusBox : MonoBehaviour
         {
             var b = UiKit.Btn(label, windowButtons.transform, () => Open(label, key));
             var t = b.GetComponentInChildren<TMP_Text>();
-            if (t != null) t.fontSize = 12;
+            if (t != null)
+            {
+                t.fontSize = 12;
+                if (key != KeyCode.None) t.text = $"{label} [{GameKeys.Label(key)}]";
+            }
         }
         windowButtons.SetActive(false);
 

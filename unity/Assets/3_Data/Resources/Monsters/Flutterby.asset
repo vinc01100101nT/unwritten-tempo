@@ -15,7 +15,8 @@ MonoBehaviour:
   id: mob.flutterby
   displayName: Flutterby
   kind: 0
-  size: 0.15
+  size: 0.3
+  flies: 1
   biome: 0
   artFolder: 8a06df029347f884fbef5ef91cc5e2c2
   faceset: {fileID: 2800000, guid: 1f1fc810c6590d94aa2e64ee92ab17ba, type: 3}

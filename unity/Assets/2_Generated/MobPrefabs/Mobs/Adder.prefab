@@ -41,7 +41,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.090833336, y: 0.090833336, z: 0.090833336}
+  m_LocalScale: {x: 0.109000005, y: 0.109000005, z: 0.109000005}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -205,7 +205,6 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  xpReward: 40
   level: 1
   xpPerDamageDealt: 1
   xpToFirstLevel: 20
@@ -214,7 +213,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
-  size: 0.25
+  size: 0.3
   simulateRadius: 28
 --- !u!114 &7089245998256105771
 MonoBehaviour:
@@ -384,5 +383,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03982509fe23a4527b60fd12c772f4c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
-  halfHeight: 0.040875
-  halfWidth: 0.045416668
+  halfHeight: 0.04905
+  halfWidth: 0.054500002
+  lift: 0

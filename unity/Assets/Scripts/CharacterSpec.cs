@@ -162,22 +162,27 @@ public class CharacterSpec : ScriptableObject
     // ---- travel + gait ------------------------------------------------------------------------------------------------
 
     [Header("Travel + gait")]
-    [Tooltip("Base ground translation before unit scale (world units). Changing this moves a character faster WITHOUT " +
-             "scaling the animation.")]
-    public float moveSpeed = 2f;
-    [Tooltip("Baseline that scales movement AND animation together, so legs and footsteps churn with it.")]
+    [Tooltip("THE movement speed: how fast a bare-footed character sprints, in world units a second before unit scale. " +
+             "Every gear travels a fraction of it, and the walk, run and sprint legs follow whatever speed results — " +
+             "they are locked to the ground, so nothing else needs changing with it.")]
+    public float moveSpeed = 2.4f;
+    [Tooltip("Playback baseline for every clip paced by movement OTHER than walk, run and sprint (idle, the jump, the " +
+             "skill releases, the slide). It no longer touches how fast anyone travels.")]
     public float gaitSpeed = 1.5f;
     [Tooltip("Walk gear as a fraction of full speed — the strolling pace. Townsfolk and a wandering shadow use this.")]
     public float walkGearMult = 0.2f;
     [Tooltip("Run gear as a fraction of full speed — the default jog. A chasing shadow uses this.")]
     [Range(0.1f, 1f)] public float runGearMult = 0.5f;
 
-    /// <summary>Travel speed of the WALK gear. THE single owner of that composition (base x unit scale x gear x gait),
-    /// so nothing re-derives the chain and drifts from it.</summary>
-    public float WalkGearSpeed => moveSpeed * UnitScale.ForPlayer * walkGearMult * gaitSpeed;
+    /// <summary>Travel speed of the SPRINT gear — full speed. THE single owner of that composition (base x unit scale),
+    /// so nothing re-derives the chain and drifts from it; every other gear is a fraction of it.</summary>
+    public float FullSpeed => moveSpeed * UnitScale.ForPlayer;
 
-    /// <summary>Travel speed of the RUN gear — same single-owner rule as <see cref="WalkGearSpeed"/>.</summary>
-    public float RunGearSpeed => moveSpeed * UnitScale.ForPlayer * runGearMult * gaitSpeed;
+    /// <summary>Travel speed of the WALK gear.</summary>
+    public float WalkGearSpeed => FullSpeed * walkGearMult;
+
+    /// <summary>Travel speed of the RUN gear.</summary>
+    public float RunGearSpeed => FullSpeed * runGearMult;
 
     /// <summary>Ground speed at which a character switches from the Walk clip to the Run clip: midway between the two
     /// gears, so every character changes gear at the same pace.</summary>

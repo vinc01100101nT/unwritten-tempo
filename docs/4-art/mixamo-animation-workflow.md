@@ -45,6 +45,10 @@ How to add a new Mixamo animation to the live-3D player and NPCs. **No coding re
 2. Find (or add) the stance that should play this animation.
 3. Set that stance's **clip name** to the **exact file name** from Step 2 (no `.fbx`).
    - Example: file `Cast.fbx` → clip name `Cast`.
+4. For **Walk**, **Run** or **Sprint**, picking the clip is all there is: the composer measures it on every character body —
+   the frames each foot lands (shown on the row's step button) and how fast the clip walks — and the legs then play at
+   the character's real ground speed, so a planted foot never slides. After adding a new body, click that row's step
+   button to measure again.
 
 > The clip name is the contract that links everything: **file name = stance clip name = animation state name.** If they don't match, the animation won't play.
 

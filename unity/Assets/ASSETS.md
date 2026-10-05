@@ -60,9 +60,15 @@ checker at the bottom is what makes them stick without anybody remembering.
 12. **A shader the code looks up by name is in Always Included Shaders.** `Shader.Find` returns nothing in a built game
     unless the shader is on Project Settings ▸ Graphics ▸ Always Included Shaders or a material the build ships uses
     it — and the editor always finds it, so the feature works in Play mode and silently does nothing in every build.
-    The ink outline, the paper grade and character colours (`InkScreen`, `HandDrawnGrade`, `AtlasRecolor`) were
-    missing from every build until 2026-10-02, each build's log saying "not found". Adding a `Shader.Find` means
-    adding the shader to that list in the same change. Not yet checked automatically.
+    The ink outline, the paper grade and the old character-colour shader (`InkScreen`, `HandDrawnGrade`, and one
+    since removed) were missing from every build until 2026-10-02, each build's log saying "not found". Adding a
+    `Shader.Find` means adding the shader to that list in the same change. Not yet checked automatically.
+13. **Every character model has its outfit parts saved.** Which colours of a model can be recoloured is worked out
+    once in the editor and saved (`CharacterDyePartsBaker.BakeAll()`, run through the live editor link, writes
+    `3_Data/Resources/CharacterDyeParts.asset`). Working it out in game read the whole texture back from the
+    graphics card and froze the game for 18.7 ms the first time each model appeared. A model with no entry offers
+    no colour choices and is never recoloured. Enforced: the asset-rules check fails any `.fbx` in
+    `1_Authored/Art/Characters/Models` the table does not list.
 
 ---
 
@@ -99,7 +105,7 @@ checker at the bottom is what makes them stick without anybody remembering.
 ```bash
 tools/check-asset-rules.py          # every rule above, on the whole project; --all also lists the debt (WARN)
 tools/check-editor-writes.py        # editor code that writes with no click
-tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — it plants 19 faults and expects each named
+tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — 20 cases: each planted fault named, the sound copy quiet
 ```
 
 They run by themselves at the end of any turn that edited a texture or model setting, a prefab, a project setting
@@ -119,4 +125,5 @@ turn. Everything else on this page is a FAIL.
 - [ ] A new decimated copy: wired into its family's `LODGroup`.
 - [ ] A new baked component field: its type is serializable, and every prefab that carries it has been re-baked.
 - [ ] A new package: one line in `tools/packages-in-use.txt` saying what uses it.
+- [ ] A new or changed character model: `CharacterDyePartsBaker.BakeAll()` re-run, so its outfit parts are saved.
 - [ ] A changed pin (shadow map, skinning, bone weights): the checker and this page changed together, with the reason.

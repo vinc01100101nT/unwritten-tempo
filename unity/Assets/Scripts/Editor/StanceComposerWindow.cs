@@ -131,6 +131,9 @@ public class StanceComposerWindow : EditorWindow
             "Speed source = where the LIVE fps multiplier is read from (the stance never stores the stat): AttackSpeed/" +
             "CastSpeed read Character.Instance; MoveGait reads move speed; FitWindow fits the clip to a runtime window " +
             "(Attack = swing time, Roll = dash length); Baked = the action's authored fps. × mult is a constant on top.\n\n" +
+            "Walk / Run / Sprint have no speed source: picking their clip measures it on every body — the frames each foot " +
+            "lands (the step button) and how fast the clip walks — and their legs play at the body's real ground speed, so " +
+            "a planted foot stays still. Click the step button to measure again after adding a body.\n\n" +
             "Jump timing (the button on the Jump row): crouchEnd / airborneFreeze, authored in clip FRAMES. 0→crouchEnd the player is " +
             "rooted (crouch/push-off); crouchEnd→airborneFreeze plays then FREEZES for the whole airborne time; on landing " +
             "it plays airborneFreeze→end (rooted) as the landing tail. The Fall stance (ledge walk-off) reuses airborneFreeze.",
@@ -215,14 +218,20 @@ public class StanceComposerWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             EditorGUILayout.LabelField(id.ToString(), GUILayout.Width(80));
+            string clipBefore = b.clip ?? "";
             ClipField(b);
+            bool walkCycle = StanceCatalog.IsWalkCycle(id);
+            // Picking a walk, run or sprint clip IS the measuring click: its steps and strides are read from the clip.
+            if (walkCycle && (b.clip ?? "") != clipBefore) MeasureSteps(b);
             // Jump owns two clip timestamps (crouchEnd / airborneFreeze); Roll owns one (rootFromFrame) — each edited via a
             // small button beside the 3D clip dropdown. A same-width blank keeps every other row's columns aligned.
             if (id == StanceId.Jump) JumpTimingButton(b);
             else if (id == StanceId.Roll) RollRootButton(b);
-            else if (id == StanceId.Walk || id == StanceId.Run || id == StanceId.Sprint) StepFramesButton(b);
+            else if (walkCycle) StepFramesButton(b);
             else GUILayout.Space(94);
-            b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
+            // A walk cycle's legs are locked to the ground, so no speed source applies to it; a blank keeps columns aligned.
+            if (walkCycle) GUILayout.Space(110);
+            else b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
             b.speedMult = EditorGUILayout.FloatField(b.speedMult, GUILayout.Width(55));
             b.priority = EditorGUILayout.IntField(b.priority, GUILayout.Width(55));
             // Reset this row to its built-in default (StanceDefaults) — for rows saved before the defaults existed.
@@ -233,6 +242,7 @@ public class StanceComposerWindow : EditorWindow
                 b.priority = d.priority; b.crouchEnd = d.crouchEnd; b.airborneFreeze = d.airborneFreeze;
                 b.rootFromFrame = d.rootFromFrame; b.clip = d.clip;
                 b.footPlants = new List<FootPlant>();
+                if (walkCycle) MeasureSteps(b);
                 GUI.changed = true;
             }
         }
@@ -268,83 +278,29 @@ public class StanceComposerWindow : EditorWindow
             PopupWindow.Show(rect, new RollRootPopup(b, total, () => { EditorUtility.SetDirty(lib); Repaint(); }));
     }
 
-    // The Walk/Run row's step-frames button: label lists each authored plant as foot+frame (e.g. "L4 R20"), so which
-    // foot lands when is glanceable. Frame-authored like Roll (no fps needed) — the runtime turns each frame into a
-    // phase (frame ÷ the clip's frame count). This binding is the SINGLE OWNER of where feet land; the tracker reads it.
+    // The Walk/Run/Sprint row's step button: shows the MEASURED plants as foot+frame (e.g. "L8 R29"), so which foot
+    // lands when is glanceable. Never typed — clicking it measures the clip again, which is how a body added after the
+    // clip was picked gets measured. This binding is the SINGLE OWNER of where feet land; the tracker reads it.
     void StepFramesButton(StanceBinding b)
     {
         if (b.footPlants == null) b.footPlants = new List<FootPlant>();
-        int total = ClipFrameCount(b.clip);
-        string text = b.footPlants.Count == 0 ? "steps…" : StepSummary(b.footPlants);
-        var label = new GUIContent(text, "Foot-plants — one per footfall in the cycle, each with its frame and which foot. A footstep (SFX + ripple + print) fires when the walk/run clip crosses each. Click to edit.");
+        string text = b.footPlants.Count == 0 ? "measure" : StanceStrideMeasure.Summary(b.footPlants);
+        int bodies = b.bodyStrides != null ? b.bodyStrides.Count : 0;
+        var label = new GUIContent(text, $"Foot-plants measured from the clip — one per footfall, each with its frame and which foot — " +
+                                         $"and its walking speed on {bodies} bodies. A footstep (SFX + ripple + print) fires as the clip " +
+                                         "crosses each. Click to measure again.");
         var rect = GUILayoutUtility.GetRect(label, EditorStyles.miniButton, GUILayout.Width(90));
-        if (GUI.Button(rect, label, EditorStyles.miniButton))
-            PopupWindow.Show(rect, new StepFramesPopup(b, total, () => { EditorUtility.SetDirty(lib); Repaint(); }));
+        if (GUI.Button(rect, label, EditorStyles.miniButton)) MeasureSteps(b);
     }
 
-    static string StepSummary(List<FootPlant> plants)
+    // Measure the binding's clip on every body and keep the answer. The user's click is what runs it.
+    void MeasureSteps(StanceBinding b)
     {
-        var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < plants.Count; i++)
-        {
-            if (i > 0) sb.Append(' ');
-            var p = plants[i];
-            sb.Append(p != null && p.right ? 'R' : 'L').Append(p != null ? p.frame : 0);
-        }
-        return sb.ToString();
-    }
-
-    // Attached popup for the Walk/Run foot-plants — an add/remove LIST (one row per footfall), each row a frame plus an
-    // L/R foot toggle. So a cycle with many steps fires on every one AND each lands on the correct side. When the clip's
-    // frame count is known it clamps each frame to it and shows the total. Mutates the binding's list in place.
-    class StepFramesPopup : PopupWindowContent
-    {
-        readonly StanceBinding b;
-        readonly int total;
-        readonly Action onChange;
-        public StepFramesPopup(StanceBinding binding, int totalFrames, Action changed)
-        { b = binding; total = totalFrames; onChange = changed; if (b.footPlants == null) b.footPlants = new List<FootPlant>(); }
-
-        public override Vector2 GetWindowSize() => new Vector2(320, 66 + (b.footPlants.Count + 1) * 22 + (total > 0 ? 18 : 0));
-
-        public override void OnGUI(Rect r)
-        {
-            EditorGUILayout.LabelField("Foot-plants", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("One row per footfall — scrub the clip to each frame a foot is flat, set L/R, add as many as the cycle has.", EditorStyles.wordWrappedMiniLabel);
-
-            int removeAt = -1;
-            for (int i = 0; i < b.footPlants.Count; i++)
-            {
-                var p = b.footPlants[i];
-                if (p == null) { b.footPlants[i] = p = new FootPlant(); }
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUI.BeginChangeCheck();
-                    int f = EditorGUILayout.IntField(new GUIContent($"Step {i + 1}", "Frame this foot plants flat on the ground."), p.frame);
-                    // Foot toggle: shows the current foot; click to flip. Left = print offsets left of travel, Right = right.
-                    if (GUILayout.Button(new GUIContent(p.right ? "R" : "L", "Which foot plants here — click to flip L/R."), GUILayout.Width(26)))
-                        { p.right = !p.right; onChange?.Invoke(); }
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        f = Mathf.Max(0, f);
-                        if (total > 0) f = Mathf.Min(f, total);
-                        p.frame = f;
-                        onChange?.Invoke();
-                    }
-                    if (GUILayout.Button(new GUIContent("–", "Remove this step"), GUILayout.Width(24))) removeAt = i;
-                }
-            }
-            if (removeAt >= 0) { b.footPlants.RemoveAt(removeAt); onChange?.Invoke(); }
-
-            // New plants alternate foot from the last one, so the common L,R,L,R case needs no toggling.
-            if (GUILayout.Button("+ Add step"))
-            {
-                bool lastRight = b.footPlants.Count > 0 && b.footPlants[b.footPlants.Count - 1] != null && b.footPlants[b.footPlants.Count - 1].right;
-                b.footPlants.Add(new FootPlant { frame = 0, right = !lastRight });
-                onChange?.Invoke();
-            }
-            if (total > 0) EditorGUILayout.LabelField(" ", $"of {total} frames");
-        }
+        string line = StanceStrideMeasure.Measure(b, ResolveClip(b.clip));
+        if (line != null) Debug.Log("[unwritten] Stance Composer measured " + line);
+        EditorUtility.SetDirty(lib);
+        GUI.changed = true;
+        Repaint();
     }
 
     // Attached popup for the Roll root-start frame — a plain frame IntField. When the clip's frame count is known it

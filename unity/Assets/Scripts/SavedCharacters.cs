@@ -134,7 +134,7 @@ public static class SavedCharacters
         if (anim != null)
             anim.UseSheet(who.sheet, who.crownAtScaleOne, who.paintedWidthAtScaleOne, SavedCharacterRules.DrawnWidth,
                           who.footPx >= 0f && anim.cell > 0 ? who.footPx / anim.cell : SpriteSheetCache.MobFootPivotY);
-        MobBody.Fit(go, kind, MobSizes.Character);
+        MobBody.Fit(go, kind, MobSizes.Character, flies: false);
         var plate = go.GetComponent<MobNameplate>();   // perf-ok: once, when a body becomes a character
         if (plate != null) plate.displayName = who.displayName;
     }

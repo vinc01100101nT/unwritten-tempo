@@ -75,6 +75,41 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // (CharacterAction is billboard-only and never touches the 3D blend.) Idle is the default 0, so it needs no name.
     string walkClip = "", runClip = "", sprintClip = "";
 
+    // How fast the Walk / Run / Sprint clip walks on THIS body, in the model's own unscaled units a second — looked up
+    // once per body from the measurements on each binding (slot 0/1/2), then only multiplied by the live world scale.
+    readonly float[] nativeStride = new float[3];
+    readonly bool[] strideResolved = new bool[3];
+    static readonly HashSet<string> unmeasuredReported = new HashSet<string>();
+
+    /// <summary>How fast <paramref name="b"/>'s walk, run or sprint clip walks on this body at normal playback, in world
+    /// units a second. False for any other stance, or when the clip has never been measured.</summary>
+    public bool TryClipSpeed(StanceBinding b, out float worldSpeed)
+    {
+        worldSpeed = 0f;
+        int slot = b == null ? -1 : b.id == StanceId.Walk ? 0 : b.id == StanceId.Run ? 1 : b.id == StanceId.Sprint ? 2 : -1;
+        if (slot < 0 || anim == null) return false;
+        if (!strideResolved[slot]) { nativeStride[slot] = ResolveStride(b); strideResolved[slot] = true; }
+        if (nativeStride[slot] <= 0f) return false;
+        worldSpeed = nativeStride[slot] * transform.lossyScale.y;
+        return true;
+    }
+
+    // This body's own measurement when the binding has one for its avatar. A body added after the clip was measured
+    // gets the middle of every measured body, scaled by its own Humanoid size, and is reported once so it is measured.
+    float ResolveStride(StanceBinding b)
+    {
+        string avatar = anim.avatar != null ? anim.avatar.name : "";
+        if (b.bodyStrides != null)
+            for (int i = 0; i < b.bodyStrides.Count; i++)
+                if (b.bodyStrides[i] != null && b.bodyStrides[i].avatar == avatar) return b.bodyStrides[i].speed;
+        if (b.speedPerHumanScale <= 0f || anim.avatar == null || !anim.avatar.isHuman) return 0f;
+        if (unmeasuredReported.Add(b.id + "/" + avatar))
+            GameLog.Warn(LogCat.Unwritten, $"Character3DPose: the {b.id} clip '{b.clip}' was never measured on body " +
+                         $"'{avatar}', so its legs use the average body's stride. Pick the clip again in the Stance " +
+                         "Composer (or press its step button) to measure every body.", this);
+        return b.speedPerHumanScale * anim.humanScale;
+    }
+
     void Awake() => Reinitialize();
 
     // Every Animator call warns ONCE PER CALL when nothing is driving it — three per frame from Update alone, which
@@ -107,6 +142,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
         stateHash.Clear();
         clipLen.Clear();
         clipFrames.Clear();
+        System.Array.Clear(strideResolved, 0, strideResolved.Length);
 
         // Discover states + clip lengths straight from the controller, keyed by the CLIP NAME. A one-shot state is
         // named after its clip (the builder does this), so a clip counts as a one-shot only if a state with that

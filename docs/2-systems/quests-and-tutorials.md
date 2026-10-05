@@ -29,7 +29,7 @@ ground** to where the step happens, and the same whole route drawn on the minima
 - **A tutorial's requirements are what the rest of it still needs**, from the step it is on to its end:
   - The forging and folding its steps name, worked out from the items' own costs. A piece already held is not
     forged again, folds already made are not paid again, and a piece no step ahead needs costs nothing. For "Your
-    First Gear" from its start that is 24 Copper and 1,900 gold, the starter kit exactly.
+    First Gear" from its start that is 33 Copper and 2,350 gold, the starter kit exactly.
   - The character level the quest names, if any. Gold and items are never typed on a quest: they are only ever what
     its steps cost.
   - Each tutorial shows its list in the Quests window, every line green when the character has it and red when not —
@@ -116,9 +116,9 @@ the open conversation box says it too. The crafting tutorial pays nothing; the g
 
 ## The crafting tutorial — "Your First Gear"
 
-Given automatically. Ten steps: talk to Gunnar the Smith; forge a Sword and fold it twice; forge a Chainmail and fold
-it twice; forge an Iron Kite Shield and fold it twice; wear all three. A new character's starting kit (24 Copper,
-1,900 gold, 10 Minor Healing Potions) is exactly the bill for the forging and folding.
+Given automatically. Ten steps: talk to Gunnar the Smith; forge a Sword and fold it five times; forge a Chainmail and
+fold it five times; forge Iron Sabatons and fold them five times; wear all three. A new character's starting kit (33
+Copper, 2,350 gold, 10 Minor Healing Potions) is exactly the bill for the forging and folding.
 
 ## Torvald's Ploplings — a side quest
 

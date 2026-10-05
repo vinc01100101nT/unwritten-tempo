@@ -30,6 +30,10 @@ rounded half up (attack speed to one decimal). Full table: [Crafting Tables](cra
 | **Leather** | 0.25% attack speed + 0.25 evasion | 0.125% attack speed + 0.125 evasion |
 | **Cloth** | 0.5 magic defence + 2 MP | 0.25 magic defence + 1 MP |
 
+**Shoes also buy movement speed: +2% a fold, whatever their material, on top of the row above** (decided 2026-10-05).
+It is exactly 2% at every grade — the grade's lift does not touch it — so +5 shoes are +10% and A +35 shoes +70%. It is
+the only movement speed a piece gives: a bare-footed person or creature moves at the shared base speed.
+
 **Worn accuracy and evasion reach the hit roll** — Ink's Accuracy and Evasion lines and leather's evasion are added into
 HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players and creatures alike.
 
@@ -53,7 +57,7 @@ Every design forges for 5 band-1 units of its material and 400 gold. Weight and 
   changed afterwards. A creature's armour above Raw rolls one too, every life, the way its weapon rolls a trademark.
 - **Each word does exactly one thing, and lives on exactly one slot**, so a character can never wear the same word
   twice — which is also why one word's size never has to allow for stacking with itself.
-- **Part of the name**: `+15 Fleet Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
+- **Part of the name**: `+15 Tireless Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
   piece's size.
 - **Its size grows with grade** — the finished amount is written by the server; a player's machine only shows it.
 - **Saved by name** in the copy's roll text, beside the trademark. A piece forged before words existed has none and
@@ -71,11 +75,10 @@ Every design forges for 5 band-1 units of its material and 400 gold. Weight and 
 | Off-hand | **Guarding** | blocks more often | +1% → +8% (block chance held under 95%) |
 | Off-hand | **Longreach** | ordinary attacks reach further | +0.1 → +0.5 units |
 | Garment | **Emberward / Tideward / Stoneward / Galeward** | less damage from Fire / Water / Earth / Wind | 3% → 15% (never touches an immune or healing hit) |
-| Shoes | **Fleet** | you move faster | 2% → 10% |
 | Shoes | **Tireless** | sprint drains stamina slower | 5% → 25% |
 
 Per grade (Raw, F, E, D, C, B, A): 1 / 2 / 3 / 4 / 5 / 6.5 / 8 for Bulwark, Fierce and Guarding; 2 / 3 / 4 / 5 / 6 /
-8 / 10 for Thornclad and Fleet; 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5 for Sanguine; 5 / 8 / 11 / 14 / 17 / 21 / 25 for
+8 / 10 for Thornclad; 1 / 1.5 / 2 / 2.5 / 3 / 4 / 5 for Sanguine; 5 / 8 / 11 / 14 / 17 / 21 / 25 for
 Steadfast and Tireless; 3 / 5 / 7 / 9 / 11 / 13 / 15 for the wards; 0.9 / 1.8 / 2.7 / 3.6 / 4.5 / 6 / 7.5 for
 Ironblood; 0.5 / 0.75 / 1 / 1.25 / 1.5 / 2 / 2.5 for Wellspring; 0.1 / 0.15 / 0.2 / 0.25 / 0.3 / 0.4 / 0.5 for
 Longreach. **First guesses, to be tuned in play.**
@@ -86,8 +89,8 @@ Longreach. **First guesses, to be tuned in play.**
   words, their sizes, the card line). Pinned by the game-maths tests.
 - **One lift for the words that move an existing stat**: the unit's state store reads what the unit wears
   (`UnitStates.WornChanged`) and `ArmourWords.FoldIntoSubStats` adds each word into the same sub-stat table a timed buff
-  moves — so damage dealt, damage taken, reflect, life steal, MP regeneration, movement speed and reach take worn words
-  wherever they are read, for players and creatures. Death clears timed effects, never what is worn.
+  moves — so damage dealt, damage taken, reflect, life steal, MP regeneration and reach take worn words, and movement
+  speed takes worn shoes' folds, wherever they are read, for players and creatures. Death clears timed effects, never what is worn.
 - The new numbers each have one read site: crit shield (`CritShieldLuk`), ailment length (`StatusController.Apply`),
   block chance (`Combat.Blocked`), the element wards (`Elements.Warded`, in each unit's element lookup) and sprint
   drain (`Player3DController`).

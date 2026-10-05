@@ -158,9 +158,13 @@ public class PersistentPlayer3D : MonoBehaviour
     }
 
     // The persistent follow camera lives in Systems and is the only rig — point it at us.
+    // AND ON US, NOW. Every placement is a jump — a door, a sign-in, a save point — and with smooth follow on the
+    // camera otherwise eased the whole way from the map being left, thousands of units, to where we landed.
     void AimCamera()
     {
         var follow = FindAnyObjectByType<CameraFollow3D>();
-        if (follow != null) follow.target = transform;
+        if (follow == null) return;
+        follow.target = transform;
+        follow.SnapToTarget();
     }
 }

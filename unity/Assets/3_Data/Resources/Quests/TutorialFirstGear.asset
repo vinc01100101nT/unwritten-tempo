@@ -16,7 +16,8 @@ MonoBehaviour:
   title: Your First Gear
   category: 0
   description: Gunnar the Smith makes gear from Copper and gold. You carry just enough
-    for a sword, a chainmail and a shield, and the folds that make them stronger.
+    for a sword, a chainmail and a pair of iron sabatons, and the folds that make them
+    stronger.
   givenAutomatically: 1
   steps:
   - id: talk-gunnar
@@ -44,12 +45,12 @@ MonoBehaviour:
     - spot: 4
       text: Forge a Sword here. What it costs is on the row.
   - id: fold-sword
-    text: Fold your Sword twice.
+    text: Fold your Sword five times.
     objective:
       kind: 2
       townspersonId: 
       itemId: item.sword
-      folds: 2
+      folds: 5
     hints:
     - spot: 3
       text: Go back to the smith's list.
@@ -74,12 +75,12 @@ MonoBehaviour:
     - spot: 4
       text: Forge a Chainmail here. What it costs is on the row.
   - id: fold-chainmail
-    text: Fold your Chainmail twice.
+    text: Fold your Chainmail five times.
     objective:
       kind: 2
       townspersonId: 
       itemId: item.chainmail
-      folds: 2
+      folds: 5
     hints:
     - spot: 3
       text: Go back to the smith's list.
@@ -89,12 +90,12 @@ MonoBehaviour:
       text: Pick your Chainmail.
     - spot: 6
       text: Fold it. Each fold costs Copper and gold.
-  - id: forge-shield
-    text: Forge an Iron Kite Shield.
+  - id: forge-sabatons
+    text: Forge Iron Sabatons.
     objective:
       kind: 1
       townspersonId: 
-      itemId: item.iron-kite-shield
+      itemId: item.iron-sabatons
       folds: 1
     hints:
     - spot: 3
@@ -102,21 +103,21 @@ MonoBehaviour:
     - spot: 1
       text: Forge makes a new piece from Copper and gold.
     - spot: 4
-      text: Forge an Iron Kite Shield here. What it costs is on the row.
-  - id: fold-shield
-    text: Fold your Iron Kite Shield twice.
+      text: Forge Iron Sabatons here. What they cost is on the row.
+  - id: fold-sabatons
+    text: Fold your Iron Sabatons five times.
     objective:
       kind: 2
       townspersonId: 
-      itemId: item.iron-kite-shield
-      folds: 2
+      itemId: item.iron-sabatons
+      folds: 5
     hints:
     - spot: 3
       text: Go back to the smith's list.
     - spot: 2
       text: Folding makes a piece stronger, one fold at a time.
     - spot: 5
-      text: Pick your Iron Kite Shield.
+      text: Pick your Iron Sabatons.
     - spot: 6
       text: Fold it. Each fold costs Copper and gold.
   - id: wear-sword
@@ -143,15 +144,15 @@ MonoBehaviour:
       text: Open your bag with B.
     - spot: 7
       text: Double-click your Chainmail to wear it.
-  - id: wear-shield
-    text: Wear your Iron Kite Shield.
+  - id: wear-sabatons
+    text: Wear your Iron Sabatons.
     objective:
       kind: 3
       townspersonId: 
-      itemId: item.iron-kite-shield
+      itemId: item.iron-sabatons
       folds: 1
     hints:
     - spot: 0
       text: Open your bag with B.
     - spot: 7
-      text: Double-click your Iron Kite Shield to wear it.
+      text: Double-click your Iron Sabatons to wear them.

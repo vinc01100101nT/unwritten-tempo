@@ -110,6 +110,34 @@ public class BillboardAnimator3D : MonoBehaviour
     // character's own measured feet line (see UseSheet). Not saved, for the same reason as the width.
     [System.NonSerialized] float footPivot = SpriteSheetCache.MobFootPivotY;
 
+    // How far above its feet a FLYING creature's picture is drawn, in world units (see MobBody.Fit) — zero on the
+    // ground. Not saved: it is put on as each creature is made. Raised by moving the picture's pivot, so the body
+    // that walks, collides and routes never leaves the ground.
+    [System.NonSerialized] float lift;
+    // The scale the current pictures were cut at — a pivot is in the art's units, so a new scale needs a new cut.
+    [System.NonSerialized] float liftCutAtScale;
+
+    /// <summary>Draw this body <paramref name="worldLift"/> world units above its feet from now on — a flying
+    /// creature's (zero puts it back on the ground). Call after <see cref="FitToHeight"/>: the lift is turned into
+    /// the art's own units at the scale that fit set. Rebuilds the pictures only when the lift, or the scale a
+    /// non-zero lift was cut at, changed.</summary>
+    public void FlyAt(float worldLift)
+    {
+        worldLift = Mathf.Max(0f, worldLift);
+        if (Mathf.Approximately(worldLift, lift) && (lift <= 0f || Mathf.Approximately(baseScale.y, liftCutAtScale))) return;
+        lift = worldLift;
+        liftCutAtScale = baseScale.y;
+        if (sr == null) sr = GetComponent<SpriteRenderer>();
+        idleClip = walkClip = playing = null;
+        frame = 0; timer = 0f;
+        BuildFrames();
+        BuildPoses();
+        if (down != null && down.Length > 0) sr.sprite = down[0];
+    }
+
+    // The lift in the art's own units at scale one, which is what a pivot is measured in.
+    float LiftAtScaleOne => MobSizes.LiftAtScaleOne(lift, baseScale.y);
+
     // ---- the poses under a character sheet's walk --------------------------------------------------------
     // A character's sheet carries three more rows under its four walk rows: an attack, one picture per direction;
     // a jump; and a row of single pictures — dead, casting, releasing a cast, releasing with no cast. A sheet without
@@ -134,8 +162,8 @@ public class BillboardAnimator3D : MonoBehaviour
         deadPose = castPose = releasePose = instantReleasePose = posing = null;
         holdingCast = false;
         if (sheet == null || cell <= 0 || idleStrip.sheet != null) return;
-        var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow, footPivot);
-        var poses = SpriteSheetCache.FootRow(sheet, cell, PoseRow, footPivot);
+        var attack = SpriteSheetCache.FootRow(sheet, cell, AttackRow, DrawnPivot);
+        var poses = SpriteSheetCache.FootRow(sheet, cell, PoseRow, DrawnPivot);
         if (attack.Length < 4 || poses.Length < 4) return;
         attackPoses = attack;
         deadPose = poses[0];
@@ -190,13 +218,19 @@ public class BillboardAnimator3D : MonoBehaviour
         return 3;
     }
 
+    // The pivot a grid cell's pictures are cut with: the feet line, moved down by the lift.
+    float DrawnPivot => SpriteSheetCache.LiftedPivot(footPivot, LiftAtScaleOne);
+
     void BuildFrames()
     {
         if (idleStrip.sheet != null)
         {
-            idleClip  = SpriteSheetCache.Row(idleStrip.sheet, idleStrip.frames, idleStrip.footPx, stripPixelsPerUnit);
+            float liftUnits = LiftAtScaleOne;
+            idleClip  = SpriteSheetCache.Row(idleStrip.sheet, idleStrip.frames,
+                SpriteSheetCache.LiftedFootPx(idleStrip.footPx, liftUnits, stripPixelsPerUnit), stripPixelsPerUnit);
             walkClip = walkStrip.sheet != null
-                ? SpriteSheetCache.Row(walkStrip.sheet, walkStrip.frames, walkStrip.footPx, stripPixelsPerUnit)
+                ? SpriteSheetCache.Row(walkStrip.sheet, walkStrip.frames,
+                    SpriteSheetCache.LiftedFootPx(walkStrip.footPx, liftUnits, stripPixelsPerUnit), stripPixelsPerUnit)
                 : idleClip;
             down = idleClip;
             return;
@@ -204,7 +238,7 @@ public class BillboardAnimator3D : MonoBehaviour
         if (sheet == null) { GameLog.Warn(LogCat.Unwritten, "BillboardAnimator3D has no sheet on " + name); return; }
         // Shared slice cache: all mobs that use the same sheet+cell share ONE set of walk frames instead
         // of each instance allocating its own identical copies in Awake.
-        var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames, footPivot);
+        var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames, DrawnPivot);
         down = dirs[0]; up = dirs[1]; left = dirs[2]; right = dirs[3];
     }
 

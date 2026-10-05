@@ -175,7 +175,7 @@
       "rows": [
         [
           "**Move speed**",
-          "your character's own speed, multiplied by whatever is slowing or hastening you"
+          "your character's own speed, plus **2% for every fold on your shoes**, multiplied by whatever is slowing or hastening you"
         ],
         [
           "**Block chance**",

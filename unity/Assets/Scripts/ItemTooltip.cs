@@ -307,7 +307,7 @@ public class ItemTooltip : MonoBehaviour
         var trademark = Trademarks.SkillOf(inst);
         if (trademark != null && !string.IsNullOrEmpty(trademark.displayName))
             return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + trademark.displayName + " [" + grade + "]";
-        // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Fleet Iron Sabatons [C]".
+        // AN ARMOUR PIECE WITH A WORD reads the same way, the word before the design: "+15 Tireless Iron Sabatons [C]".
         if (inst.word != ArmourWord.None)
             return (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + inst.word + " " + inst.def.displayName + " [" + grade + "]";
         string folds = inst.upgrade > 0 ? " +" + inst.upgrade : "";
@@ -387,6 +387,7 @@ public class ItemTooltip : MonoBehaviour
         AppendStat(sb, "CRIT DMG", eb.critDamagePercent, "%");
         AppendStat(sb, "ASPD", eb.aspdPercent, "%");
         AppendStat(sb, "CAST SPEED", eb.castSpeedPercent, "%");
+        AppendStat(sb, "MOVEMENT SPEED", eb.moveSpeedPercent, "%");
         AppendInkSlots(sb, inst);
     }
 

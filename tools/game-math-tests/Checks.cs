@@ -211,7 +211,7 @@ static class Checks
 
         // The agreed first numbers, as literals.
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Bulwark, Quality.A) - 8f) < 0.001f, WordsF, "Bulwark at A should be 8%");
-        That(Math.Abs(ArmourWords.Amount(ArmourWord.Fleet, Quality.A) - 10f) < 0.001f, WordsF, "Fleet at A should be 10%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Thornclad, Quality.A) - 10f) < 0.001f, WordsF, "Thornclad at A should be 10%");
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Emberward, Quality.A) - 15f) < 0.001f, WordsF, "a ward at A should be 15%");
 
         // Ironblood's percentage reaches the crit roll as the LUK it is worth: 7.5% at 0.3% a point is 25 LUK.
@@ -221,13 +221,14 @@ static class Checks
         That(Math.Abs(Elements.Warded(1.5f, 0.1f) - 1.35f) < 0.001f, ElementF, "a 10% ward on 150% should leave 135%");
         That(Elements.Warded(0f, 0.5f) == 0f && Elements.Warded(-0.5f, 0.5f) == -0.5f, ElementF,
              "a ward must never change an immune or a healing answer");
-        // A worn word lands in the sub-stat table in that stat's own units.
+        // A worn word, and the movement speed worn shoes' folds bought, land in the sub-stat table in that stat's own units.
         var table = new float[SubStats.All.Length];
         var eb = default(EquipBonuses);
-        ArmourWords.AddWord(ArmourWord.Fleet, 10f, ref eb);
+        CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw),
+                              null, null, ref eb);
         ArmourWords.AddWord(ArmourWord.Wellspring, 2.5f, ref eb);
         ArmourWords.FoldIntoSubStats(eb, table);
-        That(Math.Abs(table[(int)SubStat.MovementSpeed] - 0.1f) < 0.0001f, WordsF, "Fleet 10% should be +0.10 movement speed");
+        That(Math.Abs(table[(int)SubStat.MovementSpeed] - 0.1f) < 0.0001f, WordsF, "+5 shoes should be +0.10 movement speed");
         That(Math.Abs(table[(int)SubStat.MPRegen] - 2.5f) < 0.0001f, WordsF, "Wellspring 2.5 should be +2.5 MP a second");
         // Block chance with a worn extra never makes a wall.
         That(Math.Abs(Combat.BlockChance(0.05f, 0.08f) - 0.13f) < 0.001f, CombatF, "5% block + 8% Guarding should be 13%");
@@ -439,6 +440,13 @@ static class Checks
         var shoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
         That(shoes.defense == 11 && shoes.hp == 91, CraftF,
              "metal shoes at A +35 should take half: 11 defence and 91 HP, got " + shoes.defense + " and " + shoes.hp);
+        That(Math.Abs(shoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
+             "shoes at A +35 should be +70% movement speed — 2% a fold, no grade lift — got " + shoes.moveSpeedPercent);
+        var rawShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Leather, 5, Quality.Raw);
+        That(Math.Abs(rawShoes.moveSpeedPercent - 10f) < 0.001f, CraftF,
+             "Raw +5 shoes should be +10% movement speed, got " + rawShoes.moveSpeedPercent);
+        That(metal.moveSpeedPercent == 0f && CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.Metal, 5,
+             Quality.Raw).moveSpeedPercent == 0f, CraftF, "only shoes may buy movement speed with a fold");
         var bare = CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.None, 35, Quality.A);
         That(bare.defense == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should fold into nothing");
     }
@@ -1011,6 +1019,35 @@ static class Checks
         That(WorldRoutes.NextFrom(doors, "a", "z", out n) == null && n == -1, RoutesF, "a map with no way to it has no next map");
     }
 
+    // ---- where a walk cycle's feet land, and how fast it walks -----------------------------------------------------
+    // Pinned on the REAL ankle paths of the Run2 clip on the Casual2_Female body at its in-game height (0.327), recorded
+    // 2026-10-05 — the clip whose hand-typed steps were L7 R17. A wrong landing rule moves the footstep sounds off the
+    // feet; a wrong speed makes every planted foot slide, and neither shows up anywhere but in play.
+    const string StrideF = "unity/Assets/Scripts/StrideMath.cs";
+    static void StrideRules()
+    {
+        float[] lF = { -.0240f, -.0145f, -.0007f, .0173f, .0383f, .0556f, .0612f, .0477f, .0280f, .0092f, -.0094f,
+                       -.0270f, -.0446f, -.0576f, -.0680f, -.0771f, -.0813f, -.0777f, -.0675f, -.0533f, -.0363f };
+        float[] lH = { .0827f, .0714f, .0548f, .0390f, .0263f, .0173f, .0106f, .0017f, .0009f, .0020f, .0021f,
+                       .0018f, .0046f, .0137f, .0276f, .0436f, .0614f, .0784f, .0887f, .0923f, .0907f };
+        float[] rF = { -.0228f, -.0421f, -.0599f, -.0745f, -.0855f, -.0918f, -.0923f, -.0876f, -.0778f, -.0664f, -.0552f,
+                       -.0438f, -.0278f, -.0050f, .0184f, .0397f, .0542f, .0499f, .0347f, .0157f, -.0037f };
+        float[] rH = { .0013f, .0023f, .0070f, .0152f, .0267f, .0412f, .0578f, .0722f, .0796f, .0799f, .0724f,
+                       .0588f, .0414f, .0263f, .0162f, .0112f, .0093f, .0043f, .0015f, .0017f, .0019f };
+        const float height = 0.327f;
+        var plants = new List<FootPlant>();
+        StrideMath.FindPlants(lF, lH, false, 0.05f * height, plants);
+        StrideMath.FindPlants(rF, rH, true, 0.05f * height, plants);
+        That(plants.Count == 2 && !plants[0].right && plants[0].frame == 7 && plants[1].right && plants[1].frame == 17, StrideF,
+             "Run2 should land L7 and R17 (the frames typed by hand), got " + plants.Count + " plant(s)");
+        float left = StrideMath.ContactSpeed(lF, lH, 7, 0.02f * height, 30f);
+        float right = StrideMath.ContactSpeed(rF, rH, 17, 0.02f * height, 30f);
+        That(Math.Abs(left - 0.5538f) < 0.001f, StrideF, "Run2's left foot should slide back at 0.554 a second, got " + left);
+        That(Math.Abs(right - 0.549f) < 0.001f, StrideF, "Run2's right foot should slide back at 0.549 a second (across the loop), got " + right);
+        That(Math.Abs(StrideMath.LockedPlayback(1.2f, 0.6f) - 2f) < 0.0001f, StrideF, "1.2 a second on a 0.6 clip should play at 2x");
+        That(StrideMath.LockedPlayback(1.2f, 0f) == 1f, StrideF, "an unmeasured clip should play at 1x, never freeze");
+    }
+
     static int Main()
     {
         ExperienceCurve();
@@ -1034,6 +1071,7 @@ static class Checks
         WaterRules();
         SavedCharacterNumbers();
         QuestSteps();
+        StrideRules();
 
         if (failures == 0)
         {

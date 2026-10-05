@@ -206,7 +206,6 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  xpReward: 600
   level: 1
   xpPerDamageDealt: 1
   xpToFirstLevel: 20
@@ -387,6 +386,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitBody
   halfHeight: 0.327
   halfWidth: 0.41941306
+  lift: 0
 --- !u!114 &1472534725775236052
 MonoBehaviour:
   m_ObjectHideFlags: 0

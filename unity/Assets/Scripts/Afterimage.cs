@@ -104,6 +104,8 @@ public static class Afterimage
         for (int i = live.Count - 1; i >= 0; i--)
         {
             var g = live[i];
+            // Its scene closed under it, and the host with every copy went too (MapManager.DestroyWhatOutlivedItsScene).
+            if (g.go == null) { live.RemoveAt(i); continue; }
             float t01 = g.life <= 0f ? 1f : (now - g.born) / g.life;
             if (t01 >= 1f)
             {

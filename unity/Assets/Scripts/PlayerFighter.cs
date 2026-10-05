@@ -89,7 +89,7 @@ public static class PlayerFighter
             // AND WHERE THE CHARACTER SERVER SENT THEM. Their save says which map they were in, and that is the
             // map this server was asked to hold for them — so it is known now, not a second later when their own
             // machine gets round to saying it.
-            shell.SetMapOnArrival(pushed.sceneName);
+            shell.SetMapOnArrival(pushed);
             GameLog.Info(LogCat.Server, "" + shell.playerName + " is level " + character.Level + " with "
                       + character.Bag.Count + " stack(s) — their character came with them.");
         }

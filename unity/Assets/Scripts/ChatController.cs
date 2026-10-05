@@ -116,7 +116,8 @@ public class ChatController : MonoBehaviour
         // the crown of its sprite — the same clearance every bubble keeps.
         if (pose != null) SpeechBubble.ShowOverHead(pose, skillName, BubbleLife);
         else if (body != null)
-            SpeechBubble.Show(body, 2f * UnitAnchor.HalfHeight(body) + SpeechBubble.HeadClearance, skillName, BubbleLife);
+            SpeechBubble.Show(body, UnitAnchor.Lift(body) + 2f * UnitAnchor.HalfHeight(body) + SpeechBubble.HeadClearance,
+                              skillName, BubbleLife);
     }
 
     // THE one place a spoken line becomes a row in the log and a bubble over a head. A said line and a skill call,

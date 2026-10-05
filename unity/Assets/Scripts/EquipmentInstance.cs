@@ -47,7 +47,7 @@ public class EquipmentInstance
     // folded or quenched (Recompute). A player's machine never works these out — it adds what it was sent.
     [Tooltip("Finished numbers this copy's folds and grade grant (server-written): attack or magic attack on a weapon; " +
              "on armour, what its material buys — defence and HP (metal), attack speed and evasion (leather), magic " +
-             "defence and MP (cloth).")]
+             "defence and MP (cloth) — and on shoes, movement speed as well.")]
     public CraftingMath.PieceStats piece;
 
     [Tooltip("The id of this copy's TRADEMARK skill, rolled once at the forge and never changed. Empty = none. Its " +
@@ -185,7 +185,7 @@ public class EquipmentInstance
 
     /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats and its
     /// trademark, joined for the save and the wire:
-    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed;stat:value,stat:value;trademark skill id:finished lift".
+    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed,movement speed;stat:value,stat:value;trademark skill id:finished lift".
     /// Paired with <see cref="DecodeRoll"/>. Kept in the same slot the armour roll used, so the save and the wire
     /// need no new array — and carrying the finished numbers here is what lets a player's machine draw them
     /// without working any of them out.</summary>
@@ -198,7 +198,8 @@ public class EquipmentInstance
           .Append(piece.attack.ToString(ci)).Append(',').Append(piece.magicAttack.ToString(ci)).Append(',')
           .Append(piece.defense.ToString(ci)).Append(',').Append(piece.magicDefense.ToString(ci)).Append(',')
           .Append(piece.hp.ToString(ci)).Append(',').Append(piece.mp.ToString(ci)).Append(',')
-          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(';');
+          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(',')
+          .Append(piece.moveSpeedPercent.ToString("0.#", ci)).Append(';');
         for (int i = 0; i < inkStats.Count; i++)
         {
             if (i > 0) sb.Append(',');
@@ -240,23 +241,26 @@ public class EquipmentInstance
             // no such part; the server works them out again below, and nothing else ever does.
             if (parts.Length > 1)
             {
-                // Four numbers from a save written before armour's material decided its folds; eight since. The
-                // server works a piece's numbers out again on load either way (RecomputeIfMine, below).
+                // Four numbers from a save written before armour's material decided its folds; eight before shoes'
+                // folds bought movement speed; nine since. The server works a piece's numbers out again on load
+                // either way (RecomputeIfMine, below).
                 var nums = parts[1].Split(',');
-                if (nums.Length == 4 || nums.Length == 8)
+                if (nums.Length == 4 || nums.Length >= 8)
                 {
                     int.TryParse(nums[0], ints, ci, out piece.attack);
                     int.TryParse(nums[1], ints, ci, out piece.magicAttack);
                     int.TryParse(nums[2], ints, ci, out piece.defense);
                     int.TryParse(nums[3], ints, ci, out piece.magicDefense);
                 }
-                if (nums.Length == 8)
+                if (nums.Length >= 8)
                 {
                     int.TryParse(nums[4], ints, ci, out piece.hp);
                     int.TryParse(nums[5], ints, ci, out piece.mp);
                     int.TryParse(nums[6], ints, ci, out piece.evasion);
                     float.TryParse(nums[7], System.Globalization.NumberStyles.Float, ci, out piece.attackSpeedPercent);
                 }
+                if (nums.Length >= 9)
+                    float.TryParse(nums[8], System.Globalization.NumberStyles.Float, ci, out piece.moveSpeedPercent);
             }
 
             if (parts.Length > 2 && !string.IsNullOrEmpty(parts[2]))
@@ -365,8 +369,10 @@ public struct EquipBonuses
     /// second (Wellspring) and world units of reach (Longreach). Read through the unit's state store, which folds them
     /// into the same sub-stat table a timed buff moves — so every reader of those stats gets worn words for free.</summary>
     public float wordCritShieldPercent, wordDisableCutPercent, wordMPRegen, wordDamageCutPercent, wordLifeStealPercent,
-                 wordDamagePercent, wordReflectPercent, wordBlockPercent, wordReach, wordMoveSpeedPercent,
-                 wordStaminaCutPercent;
+                 wordDamagePercent, wordReflectPercent, wordBlockPercent, wordReach, wordStaminaCutPercent;
+    /// <summary>Whole-percent movement speed the worn shoes' folds bought (see <see cref="CraftingMath.PieceNumbers"/>),
+    /// read through the same sub-stat table as the words above.</summary>
+    public float moveSpeedPercent;
     /// <summary>Whole-percent cut to damage of one element, from a garment's ward word.</summary>
     public float wardFirePercent, wardWaterPercent, wardEarthPercent, wardWindPercent;
 

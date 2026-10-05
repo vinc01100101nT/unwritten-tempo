@@ -23,6 +23,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 1
     action: 0
     clip: 
@@ -33,6 +35,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 2
     action: 0
     clip: Cast
@@ -43,6 +47,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 3
     action: 7
     clip: 
@@ -53,6 +59,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 4
     action: 0
     clip: Idle2
@@ -63,6 +71,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 5
     action: 0
     clip: Walk
@@ -75,8 +85,112 @@ MonoBehaviour:
     footPlants:
     - frame: 8
       right: 0
-    - frame: 30
+    - frame: 29
       right: 1
+    bodyStrides:
+    - avatar: Casual_BaldAvatar
+      speed: 1.56486
+    - avatar: Knight_Golden_MaleAvatar
+      speed: 1.5635257
+    - avatar: Casual2_MaleAvatar
+      speed: 1.5397478
+    - avatar: Chef_HatAvatar
+      speed: 1.5352283
+    - avatar: Viking_MaleAvatar
+      speed: 1.5180159
+    - avatar: Chef_MaleAvatar
+      speed: 1.5665034
+    - avatar: Pirate_MaleAvatar
+      speed: 1.5321097
+    - avatar: BaseCharacterAvatar
+      speed: 1.5574627
+    - avatar: BlueSoldier_FemaleAvatar
+      speed: 1.5419524
+    - avatar: Suit_FemaleAvatar
+      speed: 1.5427767
+    - avatar: CowAvatar
+      speed: 1.5494125
+    - avatar: Cowboy_HairAvatar
+      speed: 1.5681124
+    - avatar: PugAvatar
+      speed: 1.5445069
+    - avatar: Doctor_Male_YoungAvatar
+      speed: 1.5463583
+    - avatar: VikingHelmetAvatar
+      speed: 1.55195
+    - avatar: Ninja_Sand_FemaleAvatar
+      speed: 1.4877555
+    - avatar: Doctor_Female_YoungAvatar
+      speed: 1.5502465
+    - avatar: Knight_Golden_FemaleAvatar
+      speed: 1.5469004
+    - avatar: OldClassy_FemaleAvatar
+      speed: 1.5208838
+    - avatar: Doctor_Male_OldAvatar
+      speed: 1.5197358
+    - avatar: WizardAvatar
+      speed: 1.5054663
+    - avatar: Zombie_MaleAvatar
+      speed: 1.5626147
+    - avatar: Ninja_Male_HairAvatar
+      speed: 1.4838512
+    - avatar: Cowboy_MaleAvatar
+      speed: 1.5650647
+    - avatar: OldClassy_MaleAvatar
+      speed: 1.550118
+    - avatar: Goblin_FemaleAvatar
+      speed: 1.5391061
+    - avatar: Casual2_FemaleAvatar
+      speed: 1.5403442
+    - avatar: WitchAvatar
+      speed: 1.4984462
+    - avatar: Zombie_FemaleAvatar
+      speed: 1.5495579
+    - avatar: Casual_MaleAvatar
+      speed: 1.5478024
+    - avatar: Knight_MaleAvatar
+      speed: 1.5500934
+    - avatar: BlueSoldier_MaleAvatar
+      speed: 1.5631027
+    - avatar: Goblin_MaleAvatar
+      speed: 1.5486224
+    - avatar: Casual_FemaleAvatar
+      speed: 1.5172906
+    - avatar: Ninja_FemaleAvatar
+      speed: 1.4877555
+    - avatar: Ninja_SandAvatar
+      speed: 1.5659547
+    - avatar: Doctor_Female_OldAvatar
+      speed: 1.5306342
+    - avatar: Cowboy_FemaleAvatar
+      speed: 1.5502675
+    - avatar: Suit_MaleAvatar
+      speed: 1.53712
+    - avatar: Kimono_FemaleAvatar
+      speed: 1.5439925
+    - avatar: Worker_MaleAvatar
+      speed: 1.540348
+    - avatar: Soldier_FemaleAvatar
+      speed: 1.5419524
+    - avatar: Worker_FemaleAvatar
+      speed: 1.5317354
+    - avatar: Casual3_FemaleAvatar
+      speed: 1.5571005
+    - avatar: Chef_FemaleAvatar
+      speed: 1.5213006
+    - avatar: Ninja_MaleAvatar
+      speed: 1.5659547
+    - avatar: ElfAvatar
+      speed: 1.504912
+    - avatar: Viking_FemaleAvatar
+      speed: 1.5637703
+    - avatar: Pirate_FemaleAvatar
+      speed: 1.4964995
+    - avatar: Kimono_MaleAvatar
+      speed: 1.5185599
+    - avatar: Soldier_MaleAvatar
+      speed: 1.5631027
+    speedPerHumanScale: 1.1904573
   - id: 6
     action: 2
     clip: Run2
@@ -91,6 +205,110 @@ MonoBehaviour:
       right: 0
     - frame: 17
       right: 1
+    bodyStrides:
+    - avatar: Casual_BaldAvatar
+      speed: 5.436431
+    - avatar: Knight_Golden_MaleAvatar
+      speed: 5.415791
+    - avatar: Casual2_MaleAvatar
+      speed: 5.3852687
+    - avatar: Chef_HatAvatar
+      speed: 5.379998
+    - avatar: Viking_MaleAvatar
+      speed: 5.2807317
+    - avatar: Chef_MaleAvatar
+      speed: 5.4533825
+    - avatar: Pirate_MaleAvatar
+      speed: 5.4352264
+    - avatar: BaseCharacterAvatar
+      speed: 5.4151726
+    - avatar: BlueSoldier_FemaleAvatar
+      speed: 5.420111
+    - avatar: Suit_FemaleAvatar
+      speed: 5.4116125
+    - avatar: CowAvatar
+      speed: 5.4064364
+    - avatar: Cowboy_HairAvatar
+      speed: 5.4867992
+    - avatar: PugAvatar
+      speed: 5.3734922
+    - avatar: Doctor_Male_YoungAvatar
+      speed: 5.381281
+    - avatar: VikingHelmetAvatar
+      speed: 5.385936
+    - avatar: Ninja_Sand_FemaleAvatar
+      speed: 5.1996074
+    - avatar: Doctor_Female_YoungAvatar
+      speed: 5.400994
+    - avatar: Knight_Golden_FemaleAvatar
+      speed: 5.434444
+    - avatar: OldClassy_FemaleAvatar
+      speed: 5.3429203
+    - avatar: Doctor_Male_OldAvatar
+      speed: 5.404745
+    - avatar: WizardAvatar
+      speed: 5.340721
+    - avatar: Zombie_MaleAvatar
+      speed: 5.483474
+    - avatar: Ninja_Male_HairAvatar
+      speed: 5.1684666
+    - avatar: Cowboy_MaleAvatar
+      speed: 5.4614925
+    - avatar: OldClassy_MaleAvatar
+      speed: 5.4193172
+    - avatar: Goblin_FemaleAvatar
+      speed: 5.422064
+    - avatar: Casual2_FemaleAvatar
+      speed: 5.4254804
+    - avatar: WitchAvatar
+      speed: 5.32478
+    - avatar: Zombie_FemaleAvatar
+      speed: 5.411251
+    - avatar: Casual_MaleAvatar
+      speed: 5.377903
+    - avatar: Knight_MaleAvatar
+      speed: 5.4362993
+    - avatar: BlueSoldier_MaleAvatar
+      speed: 5.436301
+    - avatar: Goblin_MaleAvatar
+      speed: 5.3900185
+    - avatar: Casual_FemaleAvatar
+      speed: 5.333896
+    - avatar: Ninja_FemaleAvatar
+      speed: 5.1996074
+    - avatar: Ninja_SandAvatar
+      speed: 5.470681
+    - avatar: Doctor_Female_OldAvatar
+      speed: 5.365272
+    - avatar: Cowboy_FemaleAvatar
+      speed: 5.4643364
+    - avatar: Suit_MaleAvatar
+      speed: 5.3648577
+    - avatar: Kimono_FemaleAvatar
+      speed: 5.398299
+    - avatar: Worker_MaleAvatar
+      speed: 5.356607
+    - avatar: Soldier_FemaleAvatar
+      speed: 5.420111
+    - avatar: Worker_FemaleAvatar
+      speed: 5.380151
+    - avatar: Casual3_FemaleAvatar
+      speed: 5.410992
+    - avatar: Chef_FemaleAvatar
+      speed: 5.3083706
+    - avatar: Ninja_MaleAvatar
+      speed: 5.470681
+    - avatar: ElfAvatar
+      speed: 5.33817
+    - avatar: Viking_FemaleAvatar
+      speed: 5.4214125
+    - avatar: Pirate_FemaleAvatar
+      speed: 5.284119
+    - avatar: Kimono_MaleAvatar
+      speed: 5.301429
+    - avatar: Soldier_MaleAvatar
+      speed: 5.436301
+    speedPerHumanScale: 4.161414
   - id: 7
     action: 3
     clip: Punch
@@ -101,6 +319,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 8
     action: 9
     clip: Jump
@@ -111,6 +331,8 @@ MonoBehaviour:
     airborneFreeze: 1.0666667
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 9
     action: 12
     clip: Roll
@@ -121,6 +343,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 31
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 10
     action: 5
     clip: Hurt
@@ -131,6 +355,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 11
     action: 15
     clip: PickUp
@@ -141,6 +367,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 12
     action: 6
     clip: 
@@ -151,6 +379,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 13
     action: 9
     clip: 
@@ -161,6 +391,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 14
     action: 4
     clip: ReleaseAOESkill
@@ -171,6 +403,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 15
     action: 4
     clip: ReleaseAOESkill2
@@ -181,6 +415,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 16
     action: 4
     clip: ReleaseAOESkill4
@@ -191,6 +427,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 17
     action: 4
     clip: ReleaseSingleSkill
@@ -201,6 +439,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 18
     action: 4
     clip: ReleaseSingleSkill2
@@ -211,6 +451,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 19
     action: 4
     clip: Slide
@@ -221,6 +463,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 20
     action: 3
     clip: AttackSword2H
@@ -231,6 +475,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 21
     action: 3
     clip: 
@@ -241,6 +487,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 22
     action: 3
     clip: 
@@ -251,6 +499,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 23
     action: 3
     clip: Punch
@@ -261,6 +511,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 24
     action: 3
     clip: AttackSword2H
@@ -271,6 +523,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 25
     action: 3
     clip: 
@@ -281,6 +535,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 26
     action: 3
     clip: 
@@ -291,6 +547,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 27
     action: 3
     clip: 
@@ -301,6 +559,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 28
     action: 3
     clip: 
@@ -311,6 +571,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 29
     action: 3
     clip: 
@@ -321,6 +583,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 30
     action: 3
     clip: AttackBow
@@ -331,6 +595,8 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
   - id: 31
     action: 2
     clip: Sprint
@@ -349,3 +615,107 @@ MonoBehaviour:
       right: 1
     - frame: 28
       right: 0
+    bodyStrides:
+    - avatar: Casual_BaldAvatar
+      speed: 8.675723
+    - avatar: Knight_Golden_MaleAvatar
+      speed: 8.51746
+    - avatar: Casual2_MaleAvatar
+      speed: 8.492945
+    - avatar: Chef_HatAvatar
+      speed: 8.475721
+    - avatar: Viking_MaleAvatar
+      speed: 8.342449
+    - avatar: Chef_MaleAvatar
+      speed: 8.693729
+    - avatar: Pirate_MaleAvatar
+      speed: 8.649301
+    - avatar: BaseCharacterAvatar
+      speed: 8.634659
+    - avatar: BlueSoldier_FemaleAvatar
+      speed: 8.496716
+    - avatar: Suit_FemaleAvatar
+      speed: 8.490283
+    - avatar: CowAvatar
+      speed: 8.571279
+    - avatar: Cowboy_HairAvatar
+      speed: 8.638247
+    - avatar: PugAvatar
+      speed: 8.557249
+    - avatar: Doctor_Male_YoungAvatar
+      speed: 8.509914
+    - avatar: VikingHelmetAvatar
+      speed: 8.458378
+    - avatar: Ninja_Sand_FemaleAvatar
+      speed: 8.17617
+    - avatar: Doctor_Female_YoungAvatar
+      speed: 8.533318
+    - avatar: Knight_Golden_FemaleAvatar
+      speed: 8.513418
+    - avatar: OldClassy_FemaleAvatar
+      speed: 8.383837
+    - avatar: Doctor_Male_OldAvatar
+      speed: 8.540092
+    - avatar: WizardAvatar
+      speed: 8.434381
+    - avatar: Zombie_MaleAvatar
+      speed: 8.713953
+    - avatar: Ninja_Male_HairAvatar
+      speed: 8.164217
+    - avatar: Cowboy_MaleAvatar
+      speed: 8.578422
+    - avatar: OldClassy_MaleAvatar
+      speed: 8.561409
+    - avatar: Goblin_FemaleAvatar
+      speed: 8.483908
+    - avatar: Casual2_FemaleAvatar
+      speed: 8.492068
+    - avatar: WitchAvatar
+      speed: 8.320519
+    - avatar: Zombie_FemaleAvatar
+      speed: 8.610195
+    - avatar: Casual_MaleAvatar
+      speed: 8.481626
+    - avatar: Knight_MaleAvatar
+      speed: 8.552338
+    - avatar: BlueSoldier_MaleAvatar
+      speed: 8.5786
+    - avatar: Goblin_MaleAvatar
+      speed: 8.595692
+    - avatar: Casual_FemaleAvatar
+      speed: 8.360052
+    - avatar: Ninja_FemaleAvatar
+      speed: 8.17617
+    - avatar: Ninja_SandAvatar
+      speed: 8.73596
+    - avatar: Doctor_Female_OldAvatar
+      speed: 8.425411
+    - avatar: Cowboy_FemaleAvatar
+      speed: 8.57492
+    - avatar: Suit_MaleAvatar
+      speed: 8.474022
+    - avatar: Kimono_FemaleAvatar
+      speed: 8.515537
+    - avatar: Worker_MaleAvatar
+      speed: 8.444491
+    - avatar: Soldier_FemaleAvatar
+      speed: 8.496716
+    - avatar: Worker_FemaleAvatar
+      speed: 8.436344
+    - avatar: Casual3_FemaleAvatar
+      speed: 8.537397
+    - avatar: Chef_FemaleAvatar
+      speed: 8.383278
+    - avatar: Ninja_MaleAvatar
+      speed: 8.73596
+    - avatar: ElfAvatar
+      speed: 8.428773
+    - avatar: Viking_FemaleAvatar
+      speed: 8.517703
+    - avatar: Pirate_FemaleAvatar
+      speed: 8.382956
+    - avatar: Kimono_MaleAvatar
+      speed: 8.374421
+    - avatar: Soldier_MaleAvatar
+      speed: 8.5786
+    speedPerHumanScale: 6.551722

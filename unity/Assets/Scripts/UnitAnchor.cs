@@ -34,9 +34,18 @@ public static class UnitAnchor
     /// <para>A billboard that states no body keeps the scale rule. The lookup is one non-allocating
     /// TryGetComponent.</para></summary>
     public static float HalfHeight(Transform t)
-        => t.TryGetComponent<UnitBody>(out var b) && b.halfHeight > 0f
-            ? b.halfHeight
-            : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.y);
+        => HalfHeightOf(t, t.TryGetComponent<UnitBody>(out var b) ? b : null);
+
+    static float HalfHeightOf(Transform t, UnitBody b)
+        => b != null && b.halfHeight > 0f ? b.halfHeight : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.y);
+
+    // A point above the feet, in half-heights of the body, raised by the body's lift — ONE component lookup for both.
+    static Vector3 Above(Transform t, float halfHeights)
+    {
+        t.TryGetComponent<UnitBody>(out var b);
+        float lift = b != null ? b.lift : 0f;
+        return t.position + Vector3.up * (lift + halfHeights * HalfHeightOf(t, b));
+    }
 
     /// <summary>How wide this unit's body is, from its middle out to one side, in world units.
     ///
@@ -53,15 +62,20 @@ public static class UnitAnchor
             ? b.halfWidth
             : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.x);
 
+    /// <summary>How far above its feet this unit's body is DRAWN — a flying creature's lift (<see cref="UnitBody.lift"/>),
+    /// zero for everything on the ground. Every point above the feet below adds it; <see cref="Feet"/> does not.</summary>
+    public static float Lift(Transform t) => t.TryGetComponent<UnitBody>(out var b) ? b.lift : 0f;
+
     // The unit's feet on the ground. With the feet-pivot invariant this IS transform.position; kept as a
-    // named accessor so callers read intent, not a raw field.
+    // named accessor so callers read intent, not a raw field. A flying creature's feet are on the ground too: only
+    // its picture is raised.
     public static Vector3 Feet(Transform t) => t.position;
 
     // Mid-body — the visual centre of the sprite. Aim, projectile homing and ground-marker math target this.
-    public static Vector3 Center(Transform t) => t.position + Vector3.up * HalfHeight(t);
+    public static Vector3 Center(Transform t) => Above(t, 1f);
 
     // Top of the sprite / crown of the body.
-    public static Vector3 Head(Transform t) => t.position + Vector3.up * (2f * HalfHeight(t));
+    public static Vector3 Head(Transform t) => Above(t, 2f);
 
     // Gap above the crown for floating text, as a fraction of HALF-height — so it scales with the unit instead of
     // being a fixed world distance that swamps a small mob and hugs a big one.
@@ -74,9 +88,5 @@ public static class UnitAnchor
     /// of a fixed +0.5 buried in the popup pool itself, which is a world distance and therefore size-blind: measured,
     /// status text floated 8.4x a median mob's body height above its feet, and 11.2x on the smallest. Routing every
     /// caller here is what this class was written for — its own summary already forbade hand-added offsets.</para></summary>
-    public static Vector3 Overhead(Transform t)
-    {
-        float h = HalfHeight(t);
-        return t.position + Vector3.up * (2f * h + h * OverheadClearanceFactor);
-    }
+    public static Vector3 Overhead(Transform t) => Above(t, 2f + OverheadClearanceFactor);
 }

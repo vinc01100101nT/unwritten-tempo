@@ -102,7 +102,7 @@ public static class MobSpawner
         // ITS SIZE, from its data, on every machine — how tall it stands, its body, and the melee reach both read it, so
         // the server and a watching copy can never disagree about where a blow reaches. The prefab's baked size is only
         // the baker's copy of this.
-        MobBody.Fit(go, def.kind, def.size);
+        MobBody.Fit(go, def.kind, def.size, def.flies);
         // A SHADOW IS A 3D CHARACTER, decided by its kind, here — the one door every creature is made through — so no
         // caller can make one flat. Before it is announced, because what crosses the wire is read off the creature at
         // the moment it is published. It keeps the body for life, through every pooled respawn.

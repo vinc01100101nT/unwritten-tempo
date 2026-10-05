@@ -109,14 +109,18 @@ public static class CraftingMath
     const float MetalDefensePerFold = 0.5f, MetalHPPerFold = 4f;
     const float LeatherAttackSpeedPerFold = 0.25f, LeatherEvasionPerFold = 0.25f;
     const float ClothMagicDefensePerFold = 0.5f, ClothMPPerFold = 2f;
+    // SHOES ALSO BUY MOVEMENT SPEED (decided 2026-10-05): exactly +2% a fold at every grade — the grade's lift does
+    // not touch it — on top of what their material buys. It is the only source of movement speed a piece has, so a
+    // bare-footed unit moves at the shared base speed.
+    const float ShoesMoveSpeedPercentPerFold = 2f;
 
     /// <summary>The finished numbers one piece's folds and grade grant — what the server writes onto the copy and a
-    /// player's machine only ever adds up. Attack speed is whole percent, one decimal.</summary>
+    /// player's machine only ever adds up. Attack speed and movement speed are whole percent, one decimal.</summary>
     [System.Serializable]
     public struct PieceStats
     {
         public int attack, magicAttack, defense, magicDefense, hp, mp, evasion;
-        public float attackSpeedPercent;
+        public float attackSpeedPercent, moveSpeedPercent;
     }
 
     /// <summary>How much of its material's fold an armour slot takes: the full amount for body, off-hand and garment,
@@ -138,6 +142,8 @@ public static class CraftingMath
             else p.attack = Lifted(folds, lift);
             return p;
         }
+        if (slot == EquipSlotType.Boots)
+            p.moveSpeedPercent = folds * ShoesMoveSpeedPercentPerFold;
         float share = folds * SlotShare(slot);
         switch (material)
         {
@@ -294,6 +300,7 @@ public static class CraftingMath
         eb.mp += piece.mp;
         eb.evasion += piece.evasion;
         eb.aspdPercent += piece.attackSpeedPercent;
+        eb.moveSpeedPercent += piece.moveSpeedPercent;
         if (stats == null || values == null) return;
         int n = Mathf.Min(stats.Count, values.Count);
         for (int i = 0; i < n; i++) AddInk(stats[i], values[i], ref eb);

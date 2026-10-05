@@ -49,7 +49,25 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     // It landed after this machine had built the body. A body built later dresses itself from `worn` as it is made,
     // so neither order can leave somebody bare-handed.
     void OnWornArrived(string _, string now) { if (bodyGear != null) DressTheBody(); }
+
+    /// <summary>THE COLOURS THIS PERSON CHOSE AT CREATION, written by the server from the character it was handed
+    /// (<see cref="CharacterDye3D.PackLook"/>). Without it every other machine drew this person in their model's own
+    /// colours, because the only thing that ever recoloured a body was this machine's own character.</summary>
+    [SyncVar(hook = nameof(OnLookArrived))] string look = "";
+
+    // Landed after the body was built; a body built later is recoloured from `look` as it is made.
+    void OnLookArrived(string _, string now) { if (bodyDye != null) bodyDye.ShowLook(now); }
+    CharacterDye3D bodyDye;
+
     [SyncVar(hook = nameof(OnModelChanged))] public string modelName = "";
+
+    /// <summary>Server-only: what this person looks like — the model and the colours — read from the character the
+    /// character server handed over, never from anything their own machine said.</summary>
+    public void DressOnServer(SaveData progress)
+    {
+        modelName = progress != null ? (progress.modelName ?? "") : "";
+        look = progress != null ? CharacterDye3D.PackLook(progress.modelName, progress.dyeSources, progress.dyeTargets) : "";
+    }
 
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
@@ -246,15 +264,29 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// to name its map — which never moved it, because the name already matched. The body then stayed in the wrong
     /// map: once a field had been opened and let go, everybody arriving with a save was filed somewhere else, saw no
     /// townsfolk, and was seen by nobody in the town.</para></summary>
-    public void SetMapOnArrival(string map)
+    public void SetMapOnArrival(SaveData pushed)
     {
+        string map = pushed.sceneName;
         if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName))
         {
             mapName = map;
             FileBodyInto(map);
         }
         BindMapToFighter();
+
+        storedMap = pushed.sceneName;
+        storedPosition = new Vector3(pushed.posX, pushed.posY, pushed.posZ);
+        storedSpawnId = pushed.arriveAtSpawnId;
     }
+
+    // WHERE THE STORED CHARACTER STANDS, as it arrived. Written back unchanged until this person's own machine has
+    // had one position believed: the map above is known from the first moment, the position is not, and a save in
+    // that gap — the character being taken over the instant they connect, or them leaving at once — wrote the right
+    // map with the origin in it, so they came back at that map's arrival point. MEASURED 2026-10-05: a character
+    // saved at (-11.6, 5.7) was rewritten as (0, 0, 0) 150 ms after connecting, on every sign-in of the run.
+    string storedMap;
+    Vector3 storedPosition;
+    string storedSpawnId;
 
     /// <summary>SERVER ONLY: whose account this character belongs to. Like the id above it is never told to any
     /// client; it is here because a one-time ticket is minted against an account.</summary>
@@ -1194,10 +1226,23 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // body is this object — so the two things that decide where somebody comes back to are filled in here.
         // Left out, every save wrote an empty map and the origin, so everybody logged in at the front door of
         // the default map however far they had travelled, and the character server could not route them either.
-        save.sceneName = mapName;
-        save.posX = netPosition.x;
-        save.posY = netPosition.y;
-        save.posZ = netPosition.z;
+        // ONLY A PLACE THIS SERVER HAS ACTUALLY BELIEVED. Until one report has been, the position here is the empty
+        // one every object starts with, so the place the character arrived with is written back instead.
+        if (haveAcceptedAPosition)
+        {
+            save.sceneName = mapName;
+            save.posX = netPosition.x;
+            save.posY = netPosition.y;
+            save.posZ = netPosition.z;
+        }
+        else
+        {
+            save.sceneName = storedMap;
+            save.posX = storedPosition.x;
+            save.posY = storedPosition.y;
+            save.posZ = storedPosition.z;
+            save.arriveAtSpawnId = storedSpawnId;
+        }
 
         // WRITTEN DOWN WHILE DEAD — they chose another character, logged out, quit or dropped from the death window.
         // They come back exactly as "Return to last saved point" would have put them: at their save point, on a
@@ -2703,7 +2748,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // travels, and a Haste multiplies it — both read from the same places the mover itself reads, so the
         // ceiling cannot drift away from the speed it is meant to describe.
         var spec = CharacterSpec.Active;
-        float top = spec != null ? spec.moveSpeed * UnitScale.ForPlayer * spec.gaitSpeed : 8f;
+        float top = spec != null ? spec.FullSpeed : 8f;
         var unit = ServerCombatUnit;
         if (unit != null && unit.States != null) top *= Mathf.Max(1f, unit.States.MoveMult);
 
@@ -2941,6 +2986,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (body != null) Destroy(body);
         body = null;
         bodyGear = null;
+        bodyDye = null;
         bodyVisual = null;
         bodyStance = null;
         bodyLoading = false;
@@ -3024,6 +3070,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             // AND THE STANCE CHOKE POINT ON IT. Held here rather than looked up when it is wanted, because what
             // wants it is a per-frame drive; the builder puts one on the root of every character it makes.
             bodyStance = root.GetComponent<StanceController>();
+            // AND THE COLOURS THEY CHOSE, by the same recolouring their own avatar wears on their machine.
+            // perf-ok: once per body built.
+            bodyDye = CharacterDye3D.AddShowing(pose.gameObject, look);
 
             // AND WHAT THEY ARE CARRYING, IN THEIR HAND. The same socket the person's own avatar and every creature
             // wear, reading a worn set this machine is TOLD rather than one it decides — so another person's sword is

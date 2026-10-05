@@ -66,8 +66,9 @@ map, and the map generator no longer puts any there.
 ## Sizes
 
 - **A creature's size is one number: how many times a character's height it stands.** **1** is a character — the
-  player, the townsfolk and every shadow. It runs from **0.1** to **5.2**: a mouse is **0.12**, a raccoon **0.3**, a
-  bear **1.6**, a giant squid **4**. Each creature's art is measured and fitted to that height, so it stands exactly
+  player, the townsfolk and every shadow. It runs from **0.3** to **5.2**: a raccoon is **0.3**, a bear **1.6**, a
+  giant squid **4**. **No creature is ever smaller than Plopling, the level-1 creature, at 0.3** — a hard rule (the
+  user, 2026-10-05), so even the mouse, Squeak, is 0.3. Each creature's art is measured and fitted to that height, so it stands exactly
   that tall whatever padding its picture carries.
 - **Three size groups, worked out from that number and never typed:** under **0.6** is **Small**, **0.6 to 1.5** is
   **Medium**, over **1.5** is **Large**. The group is what cards and the weapon-vs-size chart will read; the number
@@ -78,6 +79,12 @@ map, and the map generator no longer puts any there.
   distance back.
 - **Its collision body grows with it.** A creature wider than the usual routing footprint steers around obstacles
   with its own width.
+- **Some creatures fly** — the winged ones: Flutterby, Skywing, Blinkbat, Drizzle, Emberhoot, Hootie, Karasu and
+  Oni Tengu, each set on its own catalog entry (**flies**). A flier's picture is drawn in the air with the middle of
+  its body level with a character's head (0.327 high), and its nameplate, damage numbers, aim point and click spot
+  rise with it. Its walking body stays on the ground, so where it goes, what blocks it and how far it reaches are
+  exactly a ground creature's. One twice a character's height or taller is not raised (its middle is already
+  there); a shadow never flies.
 - **Size changes nothing else**: not movement speed, not stats. The weapon-vs-size damage chart is not switched on.
 - **The split:** normals **40 Small, 17 Medium, 9 Large**; elites **16 Large, 2 Medium**; all shadows **1**
   (Medium). Each creature's size is set on its own catalog entry, in the Mob Table's **size** column, with its group

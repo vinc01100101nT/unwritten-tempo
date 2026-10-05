@@ -10,9 +10,9 @@ Always Included Shaders or a material the build ships references it. The editor 
 feature works in Play mode and silently does nothing in every build.
 
 **Why:** on 2026-10-02 the first builds anyone played (Windows and Mac, over the Wi-Fi) had no ink outline, no paper
-grade, and character colours did nothing. `InkScreen`, `HandDrawnGrade` and `AtlasRecolor` (used by `CharacterDye3D`)
+grade, and character colours did nothing. `InkScreen`, `HandDrawnGrade` and `AtlasRecolor` (the character-colour shader of the time, deleted 2026-10-05)
 had never been on the list nor used by any material — measured across every commit of GraphicsSettings. Each build's
-Player.log said "Shader 'Unwritten/InkScreen' not found". Added all three; both rebuilt builds contain them.
+Player.log said "Shader 'Unwritten/InkScreen' not found". Added all three; both rebuilt builds contained them.
 
 **How to apply:** when adding a `Shader.Find`, add the shader to Always Included in the same change. To audit: list
 every `Shader.Find("Unwritten/…")`, map each name to its `.shader` guid, and check the guid is in

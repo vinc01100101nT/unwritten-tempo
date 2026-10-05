@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.viper
   displayName: Viper
   kind: 0
-  size: 0.25
+  size: 0.3
   biome: 9
   artFolder: 73661034a9ba94a4fa24177bf2fcbdb0
   faceset: {fileID: 2800000, guid: 52cfee99bacc1af4aa713b8e786cc7fa, type: 3}

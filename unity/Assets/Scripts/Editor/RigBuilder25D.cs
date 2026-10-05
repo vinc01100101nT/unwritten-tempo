@@ -285,7 +285,7 @@ public static class RigBuilder25D
     {
         var anim = go.GetComponent<BillboardAnimator3D>();
         if (anim != null) MeasureArt(anim);
-        MobBody.Fit(go, arc.kind, arc.size);
+        MobBody.Fit(go, arc.kind, arc.size, arc.flies);
         return go;
     }
 

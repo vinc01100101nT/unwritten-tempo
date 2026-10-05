@@ -25,8 +25,9 @@ public static class MobSizes
     public const float LargeAbove = 1.5f;
     /// <summary>The largest size a creature may have.</summary>
     public const float Largest = 5.2f;
-    /// <summary>The smallest size a creature may have — above zero, so no creature can be authored invisible.</summary>
-    public const float Smallest = 0.1f;
+    /// <summary>The smallest size a creature may have: Plopling's, the level-1 creature. HARD RULE (the user, 2026-10-05) —
+    /// no creature is ever smaller than Plopling.</summary>
+    public const float Smallest = 0.3f;
     /// <summary>A character's size, and every shadow's.</summary>
     public const float Character = 1f;
 
@@ -54,6 +55,16 @@ public static class MobSizes
     /// scale one stand <paramref name="height"/> tall. Art with no measured crown keeps scale one.</summary>
     public static float BodyScale(float height, float crownAtScaleOne) =>
         crownAtScaleOne > 1e-4f ? height / crownAtScaleOne : 1f;
+
+    /// <summary>How far above its feet a FLYING creature of size <paramref name="size"/> is drawn, so the middle of its
+    /// body sits level with the crown of a character <paramref name="characterHeight"/> tall — the player's head.
+    /// A creature twice a character's height or taller already has its middle there, so it is not raised.</summary>
+    public static float FlyLift(float size, float characterHeight) =>
+        Mathf.Max(0f, characterHeight - 0.5f * Height(size, characterHeight));
+
+    /// <summary>A world-unit lift expressed in the art's own units at scale one, for a body drawn at
+    /// <paramref name="scale"/> — what the picture's pivot is moved by.</summary>
+    public static float LiftAtScaleOne(float lift, float scale) => scale > 1e-6f ? lift / scale : 0f;
 }
 
 /// <summary>
@@ -62,6 +73,10 @@ public static class MobSizes
 /// its size's height; its collision capsule rides that scale; its routing footprint grows to fit a body wider than
 /// <see cref="RoutingRadius"/> (never shrinks below it); and its brain learns the size its melee reach reads. A shadow's 3D body is
 /// fitted by <see cref="MobShadow3DVisual"/> instead, so only its brain is told (a character's size, 1).
+///
+/// <para>A creature that FLIES has only its picture raised (<see cref="MobSizes.FlyLift"/>), together with every point
+/// read off its body (<see cref="UnitAnchor"/>): its aim point, nameplate, numbers and the cursor's pick. Its walking
+/// body, collision capsule and routing stay on the ground, and its melee reach is measured exactly as before.</para>
 /// </summary>
 public static class MobBody
 {
@@ -69,7 +84,7 @@ public static class MobBody
     /// obstacles with. A body wider than this routes with its own width instead.</summary>
     public const float RoutingRadius = 0.3f;
 
-    public static void Fit(GameObject go, CreatureKind kind, float authored)
+    public static void Fit(GameObject go, CreatureKind kind, float authored, bool flies)
     {
         float size = MobSizes.Of(kind, authored);
         var brain = go.GetComponent<MonsterAI3D>();   // perf-ok: once per creature made
@@ -78,8 +93,12 @@ public static class MobBody
 
         var anim = go.GetComponent<BillboardAnimator3D>();   // perf-ok: once per creature made
         if (anim == null) return;
-        float height = MobSizes.Height(size, CharacterSpec.Active.bodyHeight * UnitScale.CharacterScale);
+        float characterHeight = CharacterSpec.Active.bodyHeight * UnitScale.CharacterScale;
+        float height = MobSizes.Height(size, characterHeight);
         float s = anim.FitToHeight(height);
+        float lift = flies ? MobSizes.FlyLift(size, characterHeight) : 0f;
+        anim.FlyAt(lift);
+        UnitBody.SetLift(go, lift);
 
         var cc = go.GetComponent<CharacterController>();   // perf-ok: once per creature made
         if (cc == null) return;

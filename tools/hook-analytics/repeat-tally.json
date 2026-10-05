@@ -1,34 +1,10 @@
 {
-  "b6f716f6-6077-4ede-8e0e-96850e637db3": {
+  "58e35454-6ffc-4272-b8bc-6326837dfc23": {
     "counts": {
-      "check-perf-hotpaths.py 2>&1": 19,
-      "check-skill-data.py 2>&1": 2,
-      "check-unity-code.sh": 1,
-      "check-unity-code.sh 2>&1": 73,
-      "check-unity-code.sh ;": 1,
-      "check-unity-code.sh >": 2,
-      "check-unity-code.sh |": 2,
-      "npm run migrate": 1,
-      "npm run typecheck": 1,
-      "recompile 2>&1": 6,
-      "recompile 2>&1|tail": 1,
-      "recompile _status": 3,
-      "recompile _status\";": 1,
-      "recompile d": 1,
-      "recompile was": 3,
-      "unwritten-server.app": 8,
-      "unwritten-server.app \"": 1
+      "build-game.sh client": 5
     },
     "told": [
-      "check-perf-hotpaths.py 2>&1",
-      "check-skill-data.py 2>&1",
-      "check-unity-code.sh 2>&1",
-      "check-unity-code.sh >",
-      "check-unity-code.sh |",
-      "recompile 2>&1",
-      "recompile _status",
-      "recompile was",
-      "unwritten-server.app"
+      "build-game.sh client"
     ]
   },
   "b9fb257d-eac4-4491-8601-d5bcea8775b1": {

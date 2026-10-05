@@ -59,6 +59,11 @@ public static class StanceCatalog
     public static bool IsLocomotion(StanceId id)
         => id == StanceId.Idle || id == StanceId.Walk || id == StanceId.Run || id == StanceId.Sprint;
 
+    /// <summary>The three travel gears whose feet step over the ground — the ones whose foot-plants and walking speed
+    /// are measured from their clip, and whose legs are locked to the ground.</summary>
+    public static bool IsWalkCycle(StanceId id)
+        => id == StanceId.Walk || id == StanceId.Run || id == StanceId.Sprint;
+
     /// <summary>Is this a real stance at all — a value inside the authored vocabulary? Asked of anything that
     /// arrived over the wire, where the number is whatever the sender wrote rather than something Unity picked.</summary>
     public static bool Exists(StanceId id)

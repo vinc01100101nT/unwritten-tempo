@@ -19,6 +19,7 @@ public struct MonsterArchetype
     public Color  tint;         // SpriteRenderer tint (white = none)
     public CreatureKind kind;   // a shadow's body is a 3D character, always size 1
     public float  size;         // body size — times a character's height, and how far its melee reaches (MobSizes)
+    public bool   flies;        // drawn in the air, its middle at a character's head height (MobSizes.FlyLift)
 
     // THE stat block, carried through to the spawned mob so it can RE-DERIVE on level-up instead of being scaled
     // by a mob-only growth rate. The derived fields below are the values at THIS level — a convenience snapshot for

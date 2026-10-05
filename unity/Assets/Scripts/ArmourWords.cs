@@ -12,7 +12,7 @@ public enum ArmourWord
     Bulwark, Sanguine, Fierce,                 // Body
     Thornclad, Guarding, Longreach,            // Off-hand
     Emberward, Tideward, Stoneward, Galeward,  // Garment
-    Fleet, Tireless,                           // Shoes
+    Tireless,                                  // Shoes
 }
 
 /// <summary>THE one place a word's slot, size and meaning live. Plain functions over plain numbers.</summary>
@@ -22,7 +22,7 @@ public static class ArmourWords
     static readonly ArmourWord[] BodyWords    = { ArmourWord.Bulwark, ArmourWord.Sanguine, ArmourWord.Fierce };
     static readonly ArmourWord[] OffHandWords = { ArmourWord.Thornclad, ArmourWord.Guarding, ArmourWord.Longreach };
     static readonly ArmourWord[] GarmentWords = { ArmourWord.Emberward, ArmourWord.Tideward, ArmourWord.Stoneward, ArmourWord.Galeward };
-    static readonly ArmourWord[] ShoesWords   = { ArmourWord.Fleet, ArmourWord.Tireless };
+    static readonly ArmourWord[] ShoesWords   = { ArmourWord.Tireless };
     static readonly ArmourWord[] NoWords      = System.Array.Empty<ArmourWord>();
 
     /// <summary>The words a piece worn in <paramref name="slot"/> can roll. Empty for a weapon and anything unworn.</summary>
@@ -50,7 +50,7 @@ public static class ArmourWords
     // What one word is worth, by the piece's grade (Raw, F, E, D, C, B, A) — first guesses, to be tuned in play. Sized
     // for ONE piece, since a word can never appear twice on a character. Percentages are whole percent (8 = 8%).
     static readonly float[] Small      = { 1f, 2f, 3f, 4f, 5f, 6.5f, 8f };       // damage cut, damage up, block
-    static readonly float[] Medium     = { 2f, 3f, 4f, 5f, 6f, 8f, 10f };        // reflect, move speed
+    static readonly float[] Medium     = { 2f, 3f, 4f, 5f, 6f, 8f, 10f };        // reflect
     static readonly float[] Leech      = { 1f, 1.5f, 2f, 2.5f, 3f, 4f, 5f };     // life steal
     static readonly float[] CritShield = { 0.9f, 1.8f, 2.7f, 3.6f, 4.5f, 6f, 7.5f }; // multiples of LUK's 0.3% each
     static readonly float[] Shorter    = { 5f, 8f, 11f, 14f, 17f, 21f, 25f };    // disables shorter, sprint longer
@@ -79,7 +79,6 @@ public static class ArmourWords
             case ArmourWord.Tideward:
             case ArmourWord.Stoneward:
             case ArmourWord.Galeward:   return Ward[i];
-            case ArmourWord.Fleet:      return Medium[i];
             case ArmourWord.Tireless:   return Shorter[i];
             default:                    return 0f;
         }
@@ -103,14 +102,14 @@ public static class ArmourWords
             case ArmourWord.Tideward:   eb.wardWaterPercent += amount; break;
             case ArmourWord.Stoneward:  eb.wardEarthPercent += amount; break;
             case ArmourWord.Galeward:   eb.wardWindPercent += amount; break;
-            case ArmourWord.Fleet:      eb.wordMoveSpeedPercent += amount; break;
             case ArmourWord.Tireless:   eb.wordStaminaCutPercent += amount; break;
         }
     }
 
-    /// <summary>Add a worn total's words into a unit's sub-stat table (indexed by <see cref="SubStat"/>), each in that
-    /// stat's own units: a fraction for the percentage stats, MP a second for regeneration, world units for reach. The
-    /// ONE place a worn word becomes a sub-stat, called by the state store's recompute.</summary>
+    /// <summary>Add a worn total's words — and the movement speed its shoes' folds bought — into a unit's sub-stat table
+    /// (indexed by <see cref="SubStat"/>), each in that stat's own units: a fraction for the percentage stats, MP a
+    /// second for regeneration, world units for reach. The ONE place worn gear becomes a sub-stat, called by the state
+    /// store's recompute.</summary>
     public static void FoldIntoSubStats(in EquipBonuses eb, float[] table)
     {
         table[(int)SubStat.Damage]           += eb.wordDamagePercent / 100f;
@@ -118,7 +117,7 @@ public static class ArmourWords
         table[(int)SubStat.Reflect]          += eb.wordReflectPercent / 100f;
         table[(int)SubStat.LifeSteal]        += eb.wordLifeStealPercent / 100f;
         table[(int)SubStat.MPRegen]          += eb.wordMPRegen;
-        table[(int)SubStat.MovementSpeed]    += eb.wordMoveSpeedPercent / 100f;
+        table[(int)SubStat.MovementSpeed]    += eb.moveSpeedPercent / 100f;
         table[(int)SubStat.BasicAttackRange] += eb.wordReach;
     }
 
@@ -158,7 +157,6 @@ public static class ArmourWords
             case ArmourWord.Tideward:   return "Water damage taken: −" + pct;
             case ArmourWord.Stoneward:  return "Earth damage taken: −" + pct;
             case ArmourWord.Galeward:   return "Wind damage taken: −" + pct;
-            case ArmourWord.Fleet:      return "Movement speed: +" + pct;
             case ArmourWord.Tireless:   return "Sprint drains stamina: " + pct + " slower";
             default:                    return "";
         }

@@ -69,12 +69,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - CharacterModel
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 356a413bfa09f6c488685167e033ff3a
-    m_Address: Characters/Casual3_Male
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - CharacterModel
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4fc631cb0964ed84d91941a77259605b
     m_Address: Characters/Suit_Female
     m_ReadOnly: 0

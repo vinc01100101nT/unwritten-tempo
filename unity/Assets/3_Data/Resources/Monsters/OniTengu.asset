@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: Oni Tengu
   kind: 1
   size: 1.3
+  flies: 1
   biome: 12
   artFolder: 8cad465112e36f249b9f5427b215e5be
   faceset: {fileID: 2800000, guid: 7d55f9c60303a814684b90327a023889, type: 3}

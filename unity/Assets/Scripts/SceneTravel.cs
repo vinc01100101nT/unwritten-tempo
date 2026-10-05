@@ -6,22 +6,25 @@
 /// </summary>
 public static class SceneTravel
 {
-    /// <summary>Walk through a door into a map the SAME process is holding. Nothing crosses the wire, nothing is
-    /// written down and no curtain is needed — this is what a door has always been, and it stays that way for
-    /// every door that does not leave the process. It is started by the server's word rather than by the
+    /// <summary>Walk through a door into a map the SAME process is holding. Nothing crosses the wire and nothing is
+    /// written down — this is what a door has always been, and it stays that way for every door that does not
+    /// leave the process. It is started by the server's word rather than by the
     /// player's own machine only because the machine cannot know which side of the line a map is on.</summary>
     public static void ArriveLocally(string map, string spawnId)
     {
-        LoadingScreen.Hide();
-
         // THE MAP THEY ARE ALREADY IN — a save point in the map somebody died in. Loading it again would stand a
         // second copy of the map beside the first; they are only placed.
         if (map == MapManager.CurrentMap)
         {
+            LoadingScreen.Hide();
             Target = spawnId;
             if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
             return;
         }
+
+        // ANOTHER MAP: the curtain stays up until it has loaded and they stand in it, then the new map fades in.
+        // Lowered here instead, it showed the map being left for the whole load.
+        LoadingScreen.HideWhenMapArrives();
         MapManager.Travel(map, spawnId);
     }
 

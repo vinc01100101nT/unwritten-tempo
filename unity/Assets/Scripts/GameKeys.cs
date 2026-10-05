@@ -152,6 +152,9 @@ public static class GameKeys
             case KeyCode.KeypadMultiply: return "Num *";
             case KeyCode.KeypadMinus: return "Num -";
             case KeyCode.KeypadPlus: return "Num +";
+            case KeyCode.Return: return "Enter";
+            case KeyCode.KeypadEnter: return "Num Enter";
+            case KeyCode.Escape: return "Esc";
             case KeyCode.CapsLock: return "Caps";
             case KeyCode.PageUp: return "PgUp";
             case KeyCode.PageDown: return "PgDn";

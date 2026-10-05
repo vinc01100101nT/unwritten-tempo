@@ -15,7 +15,7 @@ MonoBehaviour:
   id: mob.mossnail
   displayName: Mossnail
   kind: 0
-  size: 0.2
+  size: 0.3
   biome: 6
   artFolder: ef2ddfd8942d38c40b9986681e8d5b54
   faceset: {fileID: 2800000, guid: 7eec01b16e3805d4dba682f2c30883b2, type: 3}

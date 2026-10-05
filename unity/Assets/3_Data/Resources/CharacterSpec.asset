@@ -16,7 +16,6 @@ MonoBehaviour:
   - Casual2_Female
   - Casual2_Male
   - Casual3_Female
-  - Casual3_Male
   - Casual_Bald
   - Casual_Female
   - Casual_Male
@@ -68,7 +67,7 @@ MonoBehaviour:
   unarmedReach: 0.5
   swingInterval: 0.6
   stayEngagedFactor: 1.4
-  moveSpeed: 2
+  moveSpeed: 2.4
   gaitSpeed: 1.5
   walkGearMult: 0.2
   runGearMult: 0.5

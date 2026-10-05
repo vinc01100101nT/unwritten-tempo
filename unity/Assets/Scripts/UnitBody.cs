@@ -29,6 +29,10 @@ public class UnitBody : MonoBehaviour
              "back to the scale rule rather than trusting a made-up number.")]
     public float halfWidth;
 
+    [Tooltip("How far above the feet the body is DRAWN, in world units — a flying creature's. Zero for everything " +
+             "that stands on the ground. Only the picture and the points read off it rise; the walking body stays down.")]
+    public float lift;
+
     /// <summary>Declare <paramref name="root"/>'s real body height (feet to crown), and its width when the caller
     /// has measured one. Idempotent — call it again after a rebuild and it just updates the numbers.
     ///
@@ -42,5 +46,19 @@ public class UnitBody : MonoBehaviour
         var b = root.GetComponent<UnitBody>() ?? root.AddComponent<UnitBody>();
         b.halfHeight = 0.5f * bodyHeight;
         if (bodyWidth > 0f) b.halfWidth = 0.5f * bodyWidth;
+    }
+
+    /// <summary>Declare how far above its feet <paramref name="root"/>'s body is drawn (<see cref="lift"/>). Zero on a
+    /// body with no <see cref="UnitBody"/> adds nothing, since a missing one already reads as zero.</summary>
+    public static void SetLift(GameObject root, float lift)
+    {
+        if (root == null) return;
+        var b = root.GetComponent<UnitBody>();
+        if (b == null)
+        {
+            if (lift <= 0f) return;
+            b = root.AddComponent<UnitBody>();
+        }
+        b.lift = Mathf.Max(0f, lift);
     }
 }

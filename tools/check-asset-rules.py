@@ -335,6 +335,25 @@ def check_baked_components(repo, out):
                         break   # one line per component is enough to send somebody to the script
 
 
+# ---- A13  every character model has saved outfit parts ----------------------------------------------------------
+CHARACTER_MODELS = ("unity", "Assets", "1_Authored", "Art", "Characters", "Models")
+DYE_PARTS_TABLE = ("unity", "Assets", "3_Data", "Resources", "CharacterDyeParts.asset")
+
+
+def check_dye_parts(repo, out):
+    models = os.path.join(repo, *CHARACTER_MODELS)
+    if not os.path.isdir(models):
+        return
+    table = os.path.join(repo, *DYE_PARTS_TABLE)
+    saved = set(re.findall(r"^  - modelFile: (.+?)\s*$", read(table), re.M)) if os.path.isfile(table) else set()
+    for f in sorted(os.listdir(models)):
+        if not f.lower().endswith(".fbx"):
+            continue
+        if os.path.splitext(f)[0] not in saved:
+            out("FAIL", rel(repo, os.path.join(models, f)), "character model has no saved outfit parts, so nobody "
+                "wearing it can change its colours — run CharacterDyePartsBaker.BakeAll() in the editor")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=DEFAULT_REPO)
@@ -357,6 +376,7 @@ def main():
     check_settings(repo, out)
     check_packages(repo, out)
     check_baked_components(repo, out)
+    check_dye_parts(repo, out)
 
     for line in fails:
         print(line)

@@ -160,7 +160,7 @@ MonoBehaviour:
   - id: fenwick
     name: Fenwick
     description: Tool Dealer
-    model: Casual3_Male
+    model: Casual2_Male
     map: lastline
     home: {x: 3.06, y: 0, z: -2.18}
     wanderRadius: 0

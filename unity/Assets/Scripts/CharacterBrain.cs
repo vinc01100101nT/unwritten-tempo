@@ -99,6 +99,10 @@ public static class CharacterBrain
         /// clip starts over from its first frame — a second hit restarts the flinch instead of letting it run on.</summary>
         public int beat;
 
+        /// <summary>How fast the body is travelling over the ground, in units per second — what a walk, run or sprint
+        /// clip is played against so a planted foot stays still.</summary>
+        public float groundSpeed;
+
         public Vector3 facing;
         public bool applyFacing;
     }
@@ -114,7 +118,7 @@ public static class CharacterBrain
     /// so a rig with no distinct sprint clip runs instead of standing still.</summary>
     public static Decision Decide(in Intent it, float walkThreshold, bool hasRun, bool hasJump, bool hasSprint)
     {
-        var d = new Decision();
+        var d = new Decision { groundSpeed = it.groundSpeed };
 
         // WHICH WAY IT LOOKS is answered first and never skipped, because looking and moving are two different
         // questions — a body can stand its ground and turn to face somebody walking up to it. An opinion of zero
@@ -174,6 +178,7 @@ public static class CharacterBrain
 
         if (d.cancelOneShot) stance.CancelActionOverride();
 
+        stance.SetGroundSpeed(d.groundSpeed);
         if (d.hasAction) stance.DriveStance(d.id, d.window, d.release, d.beat);
         else             stance.ClearAction();
 

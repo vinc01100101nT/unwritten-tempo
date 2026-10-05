@@ -498,7 +498,6 @@ public class GameNetwork : NetworkManager
     public struct JoinRequest : NetworkMessage
     {
         public string characterName;
-        public string modelName;
 
         /// <summary>WHICH character, and the PROOF that it is theirs. The server reads their real stats from the
         /// account service with this rather than being told them — a client that states its own numbers is a client
@@ -2636,7 +2635,7 @@ public class GameNetwork : NetworkManager
         if (np != null)
         {
             np.playerName = string.IsNullOrWhiteSpace(announced.characterName) ? "Player" : announced.characterName;
-            np.modelName = msg.modelName;
+            np.DressOnServer(announced.progress);
         }
         NetworkServer.AddPlayerForConnection(conn, go);
 
@@ -2802,7 +2801,6 @@ public class GameNetwork : NetworkManager
         NetworkClient.Send(new JoinRequest
         {
             characterName = AccountSession.CharacterName ?? "Player",
-            modelName = AccountSession.ModelName ?? "",
             characterId = AccountSession.CharacterId ?? "",
             ticket = AccountSession.EntryTicket ?? ""
         });
@@ -2858,8 +2856,7 @@ public class GameNetwork : NetworkManager
             return;
         }
 
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMoveArrived;
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnMoveArrived;
+        LoadingScreen.HideWhenMapArrives();
         MapManager.Travel(map, spawn);
     }
 
@@ -2875,13 +2872,6 @@ public class GameNetwork : NetworkManager
     // OR THE EXACT SPOT THEY ARRIVE AT, inside the map — a save point — which has no doorway to name.
     static bool movingToSpot;
     static Vector3 movingToSpotAt;
-
-    static void OnMoveArrived(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
-    {
-        if (scene.name == MapManager.SystemsScene) return;
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMoveArrived;
-        LoadingScreen.Hide();
-    }
 
     /// <summary>Leave this world for another one, with the address and the one-time ticket the character server
     /// has already handed the process we are leaving.
