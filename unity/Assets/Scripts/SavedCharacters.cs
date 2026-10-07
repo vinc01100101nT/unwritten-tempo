@@ -125,8 +125,9 @@ public static class SavedCharacters
                 gold > 0 ? ", who was paid " + gold + " gold" : ""));
     }
 
-    /// <summary>EVERY MACHINE: draw <paramref name="go"/> as <paramref name="who"/> — its picture, a character's size,
-    /// and its name. The server runs it on the real creature, a watching machine on the body it draws.</summary>
+    /// <summary>EVERY MACHINE: make <paramref name="go"/> into <paramref name="who"/> — a character's size, fitted
+    /// against the character's own art, and its name; and on a machine that draws, its picture. The server runs it on
+    /// the real creature, a watching machine on the body it draws.</summary>
     public static void Wear(GameObject go, SavedCharacter who, CreatureKind kind)
     {
         if (go == null || who == null) return;
@@ -134,7 +135,8 @@ public static class SavedCharacters
         if (anim != null)
             anim.UseSheet(who.sheet, who.crownAtScaleOne, who.paintedWidthAtScaleOne, SavedCharacterRules.DrawnWidth,
                           who.footPx >= 0f && anim.cell > 0 ? who.footPx / anim.cell : SpriteSheetCache.MobFootPivotY);
-        MobBody.Fit(go, kind, MobSizes.Character, flies: false);
+        MobBody.Fit(go, kind, MobSizes.Character, flies: false,
+                    new MobBody.FlatArt(who.crownAtScaleOne, who.paintedWidthAtScaleOne, SavedCharacterRules.DrawnWidth));
         var plate = go.GetComponent<MobNameplate>();   // perf-ok: once, when a body becomes a character
         if (plate != null) plate.displayName = who.displayName;
     }

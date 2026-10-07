@@ -109,8 +109,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     SkillTriggerEntry firedBy;
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
     int pendingMana;                    // this cast's cost, checked at the press and taken at the release (never both)
-    VfxSequenceRunner castAura;         // the global OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
-    Vfx.EffectHandle castCircle;        // the per-skill cast circle (def.castCircleId) for this wind-up; MUST be Stopped at every exit
+    VfxCue.Aura castAura;               // the server's announced OnCastStart aura for this wind-up; MUST be Ended at every exit
+    Vfx.EffectHandle castCircle;        // the caster's own ring (def.castCircleId) on their screen; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
@@ -136,9 +136,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // see "this passive is already upstream of me" no matter how many frames later the damage lands.
     ulong castChain;
     bool consumedThisCast;              // the gate spends ONCE per cast, right after the effects have computed
-    // The one yellow total this run's repeats all climb, or null when the skill didn't ask for one (then a multi-hit
-    // flurry keeps drawing its own, per beat). Purely what's on screen — it reads damage, never changes any.
-    RepeatsDamageTotal runTotal;
     // The required state's stack count SNAPSHOT at cast start — taken before anything is spent, and reused by every
     // tick of the cast. A live re-read would pay the first tick off the full pile and the rest off an empty one, and
     // would also make a multi-tick finisher's damage depend on tick ORDER. (Locked order: snapshot → compute → consume.)
@@ -148,6 +145,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     float castCarried;
     // Whether THIS cast is efficient (SkillEfficiency) — rolled once at its release, read by every tick it runs.
     bool castEfficient;
+    // The MP and HP this cast gave up to its all-in costs (Spend All Mana, Drop Health To One), paid ONCE, by the first
+    // tick that carries one — so every later tick, spread tick and repeat of the cast reads the same amount, and a
+    // repeat never spends the MP regained since. -1 = this cast has not paid them yet.
+    int castGivenUp = -1;
 
     // WHOSE RUN THIS IS. A server holds one character per person signed in, so "the player" is not a fact it can
     // read off a global — it has to be told. Bound once when the fighter is built; left unbound on a screen, where
@@ -217,8 +218,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
         pendingMana = 0;      // …and an unfinished wind-up is never charged for
         awaitingOn = null;
-        EndRunTotal();        // the beat coroutine dies with the runner, so its total is ended here or never
-        if (castRoutine != null || castAura != null || castCircle != null) EndCast();
+        if (castRoutine != null || castAura.Running || castCircle != null) EndCast();
     }
 
     // ---- activation ---------------------------------------------------------
@@ -473,15 +473,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     // The ONE cast-SETUP choke point (paired with EndCast): begin BOTH wind-up visuals together.
     //   • OnCastStart aura — on the CASTER (body charge-up glow), the global cue authored in the Vfx Cue Composer.
+    //     Announced by the server to every screen, the caster's own included; a player's machine announces nothing.
     //   • Cast circle — on the GROUND at the impact point (lastCtx.target), the per-skill effect from the Skill
     //     Composer. For a ground skill it lands exactly where the aim reticle was (one continuous ring); for a Self
     //     cast the target IS the caster's feet, so the offset is ~0. The caster is rooted here, so the offset holds.
+    //     Drawn on the caster's own screen only; every other screen draws its own from the announced wind-up.
     // They are INDEPENDENT (two anchors, both optional) but share ONE lifecycle — held for the wind-up, stopped
     // together in EndCast. Never the release sequence.
     void BeginCastVisuals()
     {
         castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
-        if (!string.IsNullOrEmpty(def.castCircleId))
+        if (Mine && !string.IsNullOrEmpty(def.castCircleId))
             castCircle = Vfx.AttachGroundCircle(def.castCircleId, transform, lastCtx.target - transform.position,
                                                 def.LargestAreaRadius, def.castCircleTint);
     }
@@ -490,7 +492,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Called on completion, on interrupt, and on OnDisable — so neither visual can outlive its wind-up.
     void EndCast()
     {
-        if (castAura != null) { castAura.Stop(); castAura = null; }
+        VfxCue.End(ref castAura);
         if (castCircle != null) { castCircle.Stop(); castCircle = null; }
         if (Mine && StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
         if (!CasterGone) GameNetwork.AnnounceHeldOnCaster(Caster, false, StanceId.Casting, 0f);
@@ -516,6 +518,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             pendingMana = 0;
         }
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
+        castGivenUp = -1;           // nor its all-in costs — paid by the first tick that carries one
         castStacks = StateGate.StackCount(firedBy, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
         castCarried = StateGate.CarriedTotal(firedBy, CasterStates);   // same snapshot, same moment — the payoff picks which one counts
         bool pressed = firedBy != null && firedBy.trigger == SkillTrigger.OnCast;
@@ -569,12 +572,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // full distance and its spread-ticks hit along the whole path. Fan copies inherit this (PlayFan spreads at the
         // projected radius); repeat cycles inherit it via lastCtx.
         if (def.IsProjectileAim) lastCtx.target = ProjectToTravelRange(lastCtx.target);
-
-        // A run that shows one yellow total across all its repeats opens it BEFORE the first play, so the opening beat
-        // counts too. A cast that doesn't repeat can't have a total spanning repeats, so it never opens one.
-        EndRunTotal();   // a re-cast while the last run is still going hands the old total its ending, never orphans it
-        if (def.showRepeatsTotalDamage && (def.repeatCount > 1 || def.repeatCostsCharge))
-            runTotal = RepeatsDamageTotal.Begin();
 
         // The sequence plays ONCE. A tick that fans launches several copies of ITS OWN carrier step (see the fan
         // resolver above) — replaying the whole sequence per copy would have fanned every other step along with it.
@@ -716,7 +713,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
         // piles it set up are over too.
         EndRunPiles();
-        EndRunTotal();
     }
 
     /// <summary>End every pile the cast's opening play granted on the caster. A charge-driven run has no length of its
@@ -745,15 +741,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         }
     }
 
-    /// <summary>Tell this run's shared yellow total that the run is over. Each number still open finishes its own idle
-    /// wait before closing, so the last beat's total reads exactly like every earlier one. Safe to call when there is
-    /// none — a run that never showed one has nothing to end.</summary>
-    void EndRunTotal()
-    {
-        if (runTotal == null) return;
-        runTotal.End();
-        runTotal = null;
-    }
 
     bool Spend()
     {
@@ -842,8 +829,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         }
         // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnDamageDealt / OnKill fire
         // synchronously inside the applier) can see which passives are already upstream and refuse to re-fire them.
+        if (castGivenUp < 0 && SkillEffectApplier.HasAllInCost(effects))
+            castGivenUp = SkillEffectApplier.PayAllInCosts(effects, Caster);
+        var castVars = new StackVars(castStacks, castCarried);
+        if (castGivenUp > 0) castVars = castVars.WithGivenUp(castGivenUp);
+
         var prevCause = PassiveEvents.Push(castChain, def.id);
-        var prevTotal = RepeatsDamageTotal.Push(runTotal);   // null unless this run draws one total across its repeats
         try
         {
             // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
@@ -860,10 +851,21 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // Both readings of the cashed pile, measured once at cast start, handed to
                                           // EVERY effect this burst runs — so a skill's damage and its lifesteal read
                                           // the SAME pile, and the first one can't spend it out from under the second.
-                                          vars: new StackVars(castStacks, castCarried),
+                                          vars: castVars,
                                           efficient: castEfficient);
+
+            // A BOUNCING TICK carries on from the unit it just landed on — its target effects jump to the nearest
+            // enemies it has not hit, each worth less than the last (Flights). Every play starts its own chain: a repeat
+            // is another strike. Only a Single Target tick bounces, so one tick can never start more than one chain.
+            if (b.bounceJumps > 0 && b.targetMode == TargetMode.SingleTarget && tick.aimUnit != null)
+            {
+                var firstVictim = SkillEffectApplier.UnitStandingOn(tick.aimUnit);
+                if (firstVictim != null && Sides.Hostile(Caster, firstVictim))
+                    Flights.StartSkillBounce(Caster, firstVictim, b, effects, castVars, castChain,
+                                             def.id, def.Symbol, def.displayName, castEfficient);
+            }
         }
-        finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prevCause); }
+        finally { PassiveEvents.Pop(prevCause); }
 
         // COMPUTE BEFORE CONSUME: the effects above read the LIVE store (Deathblow sees the whole Momentum pile while
         // rolling its damage); only now is the cost paid. Once per cast, not per tick.

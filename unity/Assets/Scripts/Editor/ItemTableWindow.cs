@@ -187,6 +187,7 @@ public class ItemTableWindow : EditorWindow
             || (it.displayName ?? "").ToLowerInvariant().Contains(s)
             || (it.useSkillId ?? "").ToLowerInvariant().Contains(s)
             || it.weaponType.ToString().ToLowerInvariant().Contains(s)
+            || WeaponTypes.Label(it.weaponType).ToLowerInvariant().Contains(s)
             || it.element.ToString().ToLowerInvariant().Contains(s);
     }
 

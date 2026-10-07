@@ -56,7 +56,18 @@ The doc had been the only description of the game's look for months, and every v
 because the correct ones sat beside the invented ones in the same table. The cost was a whole prototype restyled
 after the fact, and a hover colour that broke the game's own rule that hover must never be a rarity colour.
 
+2026-10-06, the same rot relayed through a helper. A red team checking a plan quoted the character-cast tool's
+comment — that some character models are "accessory-only meshes (hats/hair/helmets)" and animals that "walk wrong"
+— and I repeated it to the user as a fact about their models, to justify leaving those bodies out of a picker. The
+comment had only guessed from the model NAMES. The user: *"do not hallucinate, we do not have hats, helmets, hair,
+we do have animals but they are on human body."* A helper's report quoting a comment is two hops from the asset,
+and I had checked neither hop.
+
 ## How to apply
+
+- **A claim a helper relays is still the claim of whatever it read.** When a sub-agent says "X is a hat" or "Y
+  walks wrong", ask where it read that; if the answer is a comment or a name, open the asset (or ask the user, who
+  knows their own assets) before repeating it.
 
 - When updating a doc, **list every factual claim it makes about the code**, then check each one. Not the diff;
   the document.

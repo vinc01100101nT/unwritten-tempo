@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -36,8 +37,44 @@ public static class MobSpawner
     {
         if (def == null) { onSpawned?.Invoke(null); return; }
 
-        AddressablePrefabs.Load(AddressPrefix + def.id,
-                                prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
+        // A CREATURE DRAWN AS A CHARACTER MUST NAME A BODY THE GAME CAN LOAD, checked by the server before it makes
+        // one. Without this a bad name is only found by the watchers, each of which would draw an invisible creature
+        // that still fights. Listing the roster loads no model, only the names, and it is fetched once per run.
+        if (GameServer.IsServer && CreatureKinds.Is3D(def.kind))
+        {
+            CharacterModels.Names(roster =>
+            {
+                if (!HasBody(roster, def.modelName))
+                {
+                    if (refusedBody.Add(def.id))
+                        GameLog.Warn(LogCat.Unwritten, "creature '" + def.id + "' names body '" + def.modelName +
+                                         "', which is not in the character roster — it is not made. Pick its body " +
+                                         "in the Mob Table.");
+                    onSpawned?.Invoke(null);
+                    return;
+                }
+                LoadAndClone(def, foot, map, onSpawned);
+            });
+            return;
+        }
+
+        LoadAndClone(def, foot, map, onSpawned);
+    }
+
+    static void LoadAndClone(MonsterDef def, Vector3 foot, Scene map, Action<GameObject> onSpawned)
+        => AddressablePrefabs.Load(AddressPrefix + def.id,
+                                   prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
+
+    // Each creature refused for a body it cannot wear is written to the log once, not once per attempt: a field
+    // spawner retries an empty slot, and the reason is the same every time.
+    static readonly HashSet<string> refusedBody = new HashSet<string>();
+
+    static bool HasBody(IReadOnlyList<string> roster, string body)
+    {
+        if (roster == null || string.IsNullOrWhiteSpace(body)) return false;
+        for (int i = 0; i < roster.Count; i++)
+            if (string.Equals(roster[i], body, StringComparison.Ordinal)) return true;
+        return false;
     }
 
     static bool SamePieces(Item[] a, Item[] b)
@@ -48,9 +85,38 @@ public static class MobSpawner
         return true;
     }
 
+    // SERVER: a switched-off parent each creature is made under, so none of its parts runs a line before its picture is
+    // taken off — a part's first line (its Awake) runs the moment it is made on a live object, and on a flat creature
+    // that first line cuts sprite frames and builds a cast shadow. Kept across map loads; remade if anything destroyed it.
+    static Transform unborn;
+
+    static Transform Unborn()
+    {
+        if (unborn != null) return unborn;
+        var holder = new GameObject("MobSpawner_Unborn") { hideFlags = HideFlags.DontSaveInEditor };
+        holder.SetActive(false);
+        UnityEngine.Object.DontDestroyOnLoad(holder);
+        return unborn = holder.transform;
+    }
+
     static GameObject Clone(GameObject prefab, Vector3 foot, Scene map, MonsterDef def)
     {
-        var go = UnityEngine.Object.Instantiate(prefab, foot, Quaternion.identity);
+        GameObject go;
+        MobBody.FlatArt art;
+        if (GameServer.IsServer)
+        {
+            // THE SERVER DRAWS NOTHING, so a creature it makes never has a picture at all: made asleep, its picture's
+            // measurements read for the body fit below, the picture parts removed, and only then woken.
+            go = UnityEngine.Object.Instantiate(prefab, foot, Quaternion.identity, Unborn());
+            art = MobBody.FlatArt.Of(go.GetComponent<BillboardAnimator3D>());   // perf-ok: once per creature made
+            MobBody.DropFlatPicture(go, beforeItWakes: true);
+            go.transform.SetParent(null, true);
+        }
+        else
+        {
+            go = UnityEngine.Object.Instantiate(prefab, foot, Quaternion.identity);
+            art = MobBody.FlatArt.Of(go.GetComponent<BillboardAnimator3D>());   // perf-ok: once per creature made
+        }
         go.hideFlags = HideFlags.DontSaveInEditor;   // a Play-only clone must never be baked into a saved scene
         MapManager.PutInMap(go, map);
         // ITS KIND, from its data, before anything on it asks — its skills, its gear and its loot all read this.
@@ -102,11 +168,14 @@ public static class MobSpawner
         // ITS SIZE, from its data, on every machine — how tall it stands, its body, and the melee reach both read it, so
         // the server and a watching copy can never disagree about where a blow reaches. The prefab's baked size is only
         // the baker's copy of this.
-        MobBody.Fit(go, def.kind, def.size, def.flies);
+        MobBody.Fit(go, def.kind, def.size, def.flies, art);
         // A SHADOW IS A 3D CHARACTER, decided by its kind, here — the one door every creature is made through — so no
         // caller can make one flat. Before it is announced, because what crosses the wire is read off the creature at
         // the moment it is published. It keeps the body for life, through every pooled respawn.
-        if (CreatureKinds.Is3D(def.kind)) go.AddComponent<MobShadow3DVisual>();   // perf-ok: once per creature made
+        // ITS LOOK comes from its entry, on every machine: the server takes the body from it (and sends that name to
+        // every watcher), and each machine reads the outfit colours from its own copy of the same entry — exactly as
+        // its size, element and name are read from it above.
+        if (CreatureKinds.Is3D(def.kind)) go.AddComponent<MobShadow3DVisual>().WearLookOf(def);   // perf-ok: once per creature made
         // AND A KIND THAT SUMMONS gets the list its summons are kept in, knowing which creature it is so it can work out
         // whom it calls. Server only: a watching copy summons nothing, it is told about each summon.
         if (GameServer.IsServer && CreatureKinds.Summons(def.kind)) go.AddComponent<CreatureSummons>().def = def;   // perf-ok: once per creature made

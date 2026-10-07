@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-12
+last-updated: 2026-10-05
 tags:
   - ai-learnings
 ---
@@ -12,7 +12,7 @@ tags:
 
 **An alarm keeps firing at you for doing the thing you were told to do** — a "you have run that several times"
 notice about a command a rule requires after every edit, a lint-on-save counted as a retry, a health check that
-trips on the healthy path.
+trips on the healthy path, or a check calling a guard dead that you watched run.
 
 ## The rule
 
@@ -53,6 +53,13 @@ was corrected. The other kept firing. Worse, the checker already had a prover th
 one run, and it was never opened before the change was made; the real roles leaked into its fixtures because
 it could redirect the settings file but not the new folder.
 
+2026-10-05, a third shape. The end-of-turn check said the performance gate "never ran once this session" — after
+it had refused two edits and passed 44 more that session, all in its own log. The diary keeps each guard's last
+eight sessions, ranked by when each FIRST appeared. The session had started at 14:46 and was still working at
+22:11; eight shorter sessions started after it that day, so it was the oldest entry and was dropped while it was
+still stamping on every call. Fixed by moving a session to the newest end each time it stamps. One round was lost
+to it.
+
 ## How to apply
 
 1. **Split the list by what a repeat MEANS.** Expensive-and-usually-a-retry on it; fast-and-mandated off it.
@@ -71,3 +78,6 @@ it could redirect the settings file but not the new folder.
 6. **Find every place the same question is asked.** One checker asked "has this guard run?" in two functions —
    session start and end of turn. Fixing one and assuming the other looked exactly like a fix that worked, then
    failed again on the next turn.
+7. **A "last N" list must rank by the LATEST activity, not the first.** Ranked by first appearance, the one member
+   still busy is the first one dropped once enough newer ones arrive. Before believing "never ran", read the
+   guard's own log for the session id.

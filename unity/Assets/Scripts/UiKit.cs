@@ -156,6 +156,8 @@ public static class UiKit
     public static readonly Color TextOnDim = new Color(1.000f, 1.000f, 1.000f);
     // #2E7D41 — a stat that went up
     public static readonly Color Good = new Color(0.180f, 0.490f, 0.255f);
+    // #867200 — a private message in the chat: a dark gold yellow (4.47:1 against PanelFill)
+    public static readonly Color PmText = new Color(0.525f, 0.447f, 0.000f);
 
     /// <summary>A theme colour as a rich-text tag value, "#RRGGBB" — for text that colours part of a line. Read it
     /// into a static field once; never call it per frame (it builds a string).</summary>
@@ -503,6 +505,23 @@ public static class UiKit
     {
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
         rt.offsetMin = offMin; rt.offsetMax = offMax;
+    }
+
+    /// <summary>Keep what is typed into a single-line box INSIDE the box: its text and hint move into a clipped area
+    /// <paramref name="inset"/> in from each side, and the box slides the text along as the caret passes the edge.
+    /// Without it a long line is drawn straight on past the box's right edge.</summary>
+    public static void ClipTyping(TMP_InputField box, float inset)
+    {
+        var area = (RectTransform)new GameObject("TextArea", typeof(RectTransform), typeof(RectMask2D)).transform;
+        area.SetParent(box.transform, false);
+        Fill(area, new Vector2(inset, 0), new Vector2(-inset, 0));
+        foreach (var g in new Graphic[] { box.textComponent, box.placeholder })
+        {
+            if (g == null) continue;
+            g.rectTransform.SetParent(area, false);
+            Fill(g.rectTransform, Vector2.zero, Vector2.zero);
+        }
+        box.textViewport = area;
     }
 
     /// <summary>Build a framed, draggable window. Returns its Content area; the window root (for

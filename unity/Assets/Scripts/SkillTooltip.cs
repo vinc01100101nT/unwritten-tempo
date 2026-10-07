@@ -340,6 +340,10 @@ public static class SkillTooltip
                 // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way
                 // wherever it appears rather than spelled out per kind.
                 s += StackNote(e.damageMult);
+                if (e.damageMultPerPointGivenUp.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerPointGivenUp.value.ToString("0.###") + "×") + " per point of MP or HP given up";
+                if (e.damageMultPerMetre.value > 0f)
+                    s += ", +" + Hl(e.damageMultPerMetre.value.ToString("0.###") + "×") + " per metre to the target";
                 return s;
             }
             case SkillEffectKind.Status:
@@ -360,6 +364,9 @@ public static class SkillTooltip
                 return (e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " : "")
                      + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.value.ToString("0.##")) + ")";
             case SkillEffectKind.Heal:          return "Heals " + Hl(Mathf.RoundToInt(e.amount.value * LiveMult(e)).ToString()) + " HP";
+            case SkillEffectKind.DrainMana:     return "Drains up to " + Hl(Mathf.RoundToInt(e.amount.value).ToString()) + " MP and gives it to you";
+            case SkillEffectKind.SpendAllMana:  return "Spends all your MP";
+            case SkillEffectKind.DropHealthToOne: return "Drops your HP to 1";
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
@@ -472,6 +479,8 @@ public static class SkillTooltip
             case SubStat.MaxHP:         return "max HP";
             case SubStat.DamageReduction: return "damage reduction";
             case SubStat.BasicAttackRange: return "basic attack range";
+            case SubStat.BlockChance:   return "block chance";
+            case SubStat.ExtraBounceJumps: return "extra bounce jumps";
             case SubStat.MaxMP:         return "max MP";
             // NOT A REAL STAT'S NAME. A catch-all that answers with a plausible stat makes a missing row look
             // like a working one: a new stat read "max MP" on the player's screen and nothing anywhere said it
@@ -508,7 +517,7 @@ public static class SkillTooltip
         var mastery = ch != null ? ch.Mastery : null;
         int opensAt = Mathf.Max(1, def.masteryLevel);
         sb.Append('\n');
-        sb.Append("\nRequires ").Append(Met(def.weaponType + " Mastery " + opensAt,
+        sb.Append("\nRequires ").Append(Met(WeaponTypes.Label(def.weaponType) + " Mastery " + opensAt,
                                             mastery != null ? mastery.SentLevel(def.weaponType) >= opensAt : (bool?)null, d));
         if (!string.IsNullOrEmpty(def.needsSkillId))
             sb.Append("\nRequires ").Append(Met(NameOf(def.needsSkillId),

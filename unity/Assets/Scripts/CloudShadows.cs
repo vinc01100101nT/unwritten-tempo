@@ -84,6 +84,7 @@ public class CloudShadows : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         seedX = Random.value * 1000f;
         seedY = Random.value * 1000f;
 

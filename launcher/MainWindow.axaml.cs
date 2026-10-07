@@ -48,7 +48,17 @@ public partial class MainWindow : Window
 
     async Task ShowNewsAndVersionAsync()
     {
-        try { VersionLabel.Text = "Version " + await patcher.ReadVersionAsync(); }
+        // THE VERSION OF THE FILES THIS COMPUTER GETS, not the shared number: a publish of one platform moves the
+        // shared number for both, and showing it made a computer still being served the old files look up to date.
+        // When this computer's files are behind the newest version, say so.
+        try
+        {
+            var mine = await patcher.ReadPlatformVersionAsync();
+            var newest = await patcher.ReadVersionAsync();
+            VersionLabel.Text = mine == null ? "Version unknown — this computer's update predates version numbers"
+                              : mine == newest ? "Version " + mine
+                              : "Version " + mine + " — the newest, " + newest + ", is not out for this computer yet";
+        }
         catch (Exception) { VersionLabel.Text = ""; }
 
         NewsList.Children.Clear();

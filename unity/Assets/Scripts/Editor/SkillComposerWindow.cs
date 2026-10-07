@@ -1423,7 +1423,8 @@ public class SkillComposerWindow : EditorWindow
     // another skill (Modifiers). Every kind lands in exactly one, nothing sits loose at the top, and a new kind has an
     // obvious home — which is the whole reason to group at all. Order in each array = display order.
     static readonly SkillEffectKind[] HealthKinds =
-        { SkillEffectKind.Damage, SkillEffectKind.Execute, SkillEffectKind.Heal };
+        { SkillEffectKind.Damage, SkillEffectKind.Execute, SkillEffectKind.Heal,
+          SkillEffectKind.DrainMana, SkillEffectKind.SpendAllMana, SkillEffectKind.DropHealthToOne };
     // Every verb that MOVES a body. Who gets moved (you or what you hit) is the targeting question, not this one —
     // a shove and a blink are the same kind of thing pointed at different people. Their seconds are travel time, not
     // an ongoing condition, which is exactly why they are not States.
@@ -1542,8 +1543,31 @@ public class SkillComposerWindow : EditorWindow
     // Write down WHICH SIDE this effect lands on, so it stays in the section the author put it in even after its kind
     // changes. Before the side was authored, the kind decided it — which is why changing a Guard to a Damage used to be
     // impossible rather than just moving it.
+    // The four bounce settings, and the look. The jumps' own settings are only shown once there is a jump to make.
+    static void DrawBounce(SkillTickBinding b)
+    {
+        b.bounceJumps = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("    bounce jumps",
+            "After this tick lands on its target, its target effects jump on to this many more enemies, one after " +
+            "another — each the nearest one not hit yet within the jump range of the last. 0 = no bounce. The " +
+            "Extra Bounce Jumps sub-stat adds to it. At most " + FlightMath.MaxJumps + "."), b.bounceJumps),
+            0, FlightMath.MaxJumps);
+        if (b.bounceJumps <= 0) return;
+        b.bounceRange = Mathf.Max(0.1f, EditorGUILayout.FloatField(new GUIContent("    jump range",
+            "How far each jump can reach from the enemy it last hit, in world units."), b.bounceRange));
+        b.bounceDamageKept = EditorGUILayout.Slider(new GUIContent("    damage kept per jump",
+            "What each jump is worth as a share of the hit before it: 0.75 = 100%, 75%, 56%, 42% … It scales every " +
+            "number the effects land with — damage, a heal, a DoT's ticks."), b.bounceDamageKept, 0f, 1f);
+        b.bounceReturns = EditorGUILayout.Toggle(new GUIContent("    flies back to the caster",
+            "After the last jump, what flies goes back to the caster. It hits nothing on the way back."), b.bounceReturns);
+        b.bounceEffectId = EditorGUILayout.TextField(new GUIContent("    bounce look (effect id)",
+            "What is drawn flying between targets: an Effect Library id. Empty = the caster's held weapon when it is " +
+            "one that flies itself (a shuriken), and a plain streak otherwise."), b.bounceEffectId ?? "");
+    }
+
+    // An all-in cost is the caster's price whichever section it was added in, so it is stamped Caster and moves there.
     static void StampSide(SkillEffect ef, bool casterSide)
-        => ef.side = casterSide ? SkillEffect.EffectSide.Caster : SkillEffect.EffectSide.Target;
+        => ef.side = casterSide || SkillEffect.IsAllInCost(ef.kind) ? SkillEffect.EffectSide.Caster
+                                                                     : SkillEffect.EffectSide.Target;
 
     // The GROUP popup, drawn inline on the effect header row — which of the four things this effect touches. Picking a
     // group lands on its first member, and the row below then picks within it. Side is stamped on any change, so an
@@ -1578,7 +1602,7 @@ public class SkillComposerWindow : EditorWindow
             var labels = group == EffectGroup.Health ? healthLabels : movementLabels;
             int i = System.Array.IndexOf(kinds, ef.kind); if (i < 0) i = 0;
             int n = EditorGUILayout.Popup(new GUIContent("  effect", group == EffectGroup.Health
-                ? "Which way this moves an HP bar."
+                ? "Which way this moves an HP or MP bar."
                 : "Which way this moves a body. WHO gets moved is the targeting above — a shove and a blink are the " +
                   "same verb pointed at different people."), i, labels);
             if (n != i) { ef.kind = kinds[n]; StampSide(ef, casterSide); }
@@ -1717,6 +1741,10 @@ public class SkillComposerWindow : EditorWindow
                 }
             }
             if (needsAffects) DrawAffects(b);
+            // BOUNCE belongs to a Single Target tick only: an area or projectile tick already reaches many units, and a
+            // chain started by each of them would be a dozen chains from one cast.
+            if (b.targetMode == TargetMode.SingleTarget) DrawBounce(b);
+            else b.bounceJumps = 0;
         }
 
         EditorGUILayout.LabelField("  → " + TargetingSummary(b, b.HasTargetEffects), EditorStyles.miniLabel);
@@ -1769,7 +1797,7 @@ public class SkillComposerWindow : EditorWindow
                         ef.resolveAsBasicAttack);
                     if (!ef.resolveAsBasicAttack)
                         ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
-                            "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
+                            "Physical (ATK vs armour) / Magic (MATK, unmissable, crits only in a sniper's hands) / Crit (pierces armour, always crits)."), ef.damageType);
                     // ONE meaning, always: this number MULTIPLIES the damage. Where it came from — typed, or built with
                     // the pile — changes nothing about what it then does, so the row never has to be re-read.
                     NumberRow(new GUIContent("damage mult",
@@ -1782,6 +1810,30 @@ public class SkillComposerWindow : EditorWindow
                         ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                             "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     NumberRow("hits", "Strikes per landing. Each hit is the TRIGGER for every other effect on this binding — each rolls its chance once per hit.", ref ef.hitCount, ef.useStacks, whole: true);
+                    NumberRow("damage mult per point given up",
+                        "Added to the damage mult for every point of MP or HP the caster gave up in THIS CAST to " +
+                        "Spend All Mana or Drop Health To One (both added together when the skill has both). They are paid " +
+                        "once, by the first tick that carries one, so a strike on an earlier tick reads nothing. 0.1 = +1 " +
+                        "multiplier for every 10 points. 0 = this strike does not grow with what was given up.",
+                        ref ef.damageMultPerPointGivenUp, ef.useStacks);
+                    NumberRow("damage mult per metre",
+                        "Added to the damage mult for every metre between the caster and the unit struck, measured when " +
+                        "the strike lands. 0.05 = +1 multiplier at 20 metres. 0 = distance changes nothing.",
+                        ref ef.damageMultPerMetre, ef.useStacks);
+                    break;
+                case SkillEffectKind.DrainMana:
+                    NumberRow("MP drained", "The most MP taken from the unit this lands on — never more than it holds. The caster gains exactly what was taken.", ref ef.amount, ef.useStacks, whole: true);
+                    break;
+                case SkillEffectKind.SpendAllMana:
+                    EditorGUILayout.HelpBox("No numbers: the caster spends every point of MP they hold, on top of the " +
+                        "skill's own MP cost. A Damage effect in this cast — this tick or a later one — grows with what was spent through its " +
+                        "'damage mult per point given up'. Always paid by the caster.", MessageType.None);
+                    break;
+                case SkillEffectKind.DropHealthToOne:
+                    EditorGUILayout.HelpBox("No numbers: the caster's HP drops to 1 — never to 0, so it cannot kill. It " +
+                        "is not a hit: no shield, parry, brace or damage cut stops it, and nothing that answers being " +
+                        "hurt fires. A Damage effect in this cast — this tick or a later one — grows with the HP given up through its 'damage " +
+                        "mult per point given up'. Always paid by the caster.", MessageType.None);
                     break;
                 case SkillEffectKind.Heal:
                     // The base value of the one formula — always shown, whether or not a pile sizes it.
@@ -1797,7 +1849,7 @@ public class SkillComposerWindow : EditorWindow
                     break;
                 case SkillEffectKind.Execute:
                     ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
-                        "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
+                        "Physical (ATK vs armour) / Magic (MATK, unmissable, crits only in a sniper's hands) / Crit (pierces armour, always crits)."), ef.damageType);
                     NumberRow("execute power ×", "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP.", ref ef.magnitude, ef.useStacks);
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                         "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
@@ -2067,6 +2119,9 @@ public class SkillComposerWindow : EditorWindow
         {
             case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. The ATK/MATK multiplier below says how many of the caster's own hits it is worth.";
             case SkillEffectKind.Heal:          return "Restores a flat chunk of HP to the caster.";
+            case SkillEffectKind.DrainMana:     return "Takes MP from whoever this lands on and gives the caster exactly what was taken.";
+            case SkillEffectKind.SpendAllMana:  return "The caster spends ALL their MP. A strike in the same cast can grow with how much was spent.";
+            case SkillEffectKind.DropHealthToOne: return "The caster's HP drops to 1. A strike in the same cast can grow with how much HP was given up.";
             case SkillEffectKind.Status:        return "Inflicts an ailment (damage-over-time, stun, slow, …) for its duration.";
             case SkillEffectKind.Parry:         return "Fully negates the next incoming hit (0 damage) and is spent by it — a timing read, not a damage cut. Fires the OnParry trigger.";
             case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";

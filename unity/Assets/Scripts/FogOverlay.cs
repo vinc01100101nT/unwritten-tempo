@@ -72,6 +72,7 @@ public class FogOverlay : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
         var sh = Shader.Find("Unwritten/FogScreen");
         if (sh == null)

@@ -12,8 +12,7 @@ sprite sheets (`Actor/Monster` sheets stay — those ARE the mobs, explicitly ke
 
 ## Why it works with no crashes
 Both consumers already null-guard: `MonsterAI3D` magic attack with null `projectileSheet` falls to the
-instant-touch `else` branch; stun swirl guarded by `if (stunSheet != null)`. Fields kept on the
-components (just unassigned) ready to wire to the non-Ninja Hovl `Vfx` library later.
+instant-touch `else` branch. The stun-swirl fields and `StatusFX` were later removed entirely (2026-10-07).
 
 ## Lessons
 - **Strip at the guarded CONSUMER, not just the assigner.** Removing smoke from `DeathDissolve.Play`

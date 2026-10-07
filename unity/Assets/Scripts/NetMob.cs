@@ -123,12 +123,11 @@ public class NetMob : NetworkBehaviour, IWatchedShell
 
     public int Level => netLevel;
 
-    /// <summary>WHICH BODY a live-3D creature wears, chosen once by this server before the creature is announced.
-    /// Empty on a flat sprite creature, which wears none.
+    /// <summary>WHICH BODY a live-3D creature wears — its creature entry's fixed look, taken by this server before the
+    /// creature is announced. Empty on a flat sprite creature, which wears none.
     ///
-    /// <para>On the wire because it is this creature's IDENTITY, not a picture each machine may invent. Every
-    /// watcher used to draw its own at random from the same pool, so the same creature stood in front of two people
-    /// wearing two different bodies. It changes once, before anybody is told about the creature at all.</para>
+    /// <para>On the wire because it is this creature's IDENTITY, not a picture each machine may invent. It is set
+    /// once, before anybody is told about the creature at all.</para>
     ///
     /// <para>Carries a change hook because the body a watcher builds and this name can land in either order: the
     /// hook covers the name arriving second, and the build covers it arriving first.</para></summary>
@@ -202,6 +201,16 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     [SyncVar] StanceId netAction;
     [SyncVar] double netActionAt;
     [SyncVar] float netActionSeconds;
+    // Who the action was aimed at, by their shared name (0 = nobody in particular) — so a flat creature's bite can be
+    // drawn leaning into whoever it bit.
+    [SyncVar] uint netActionAimedAt;
+    // When the action's blow connects, on the shared clock — the moment the server lands a melee swing's damage, and
+    // the moment a flat creature's bite is drawn slamming in. 0 = no blow lands with this action.
+    [SyncVar] double netActionConnectsAt;
+
+    // A scripted move — a glide, a blink, a knockback — said once as it begins, and drawn here (see MoveSaid).
+    [SyncVar] MoveSaid netMove;
+    readonly WatchedMove watchedMove = new WatchedMove();
 
     /// <summary>The real creature. Only ever set on the SERVER — this is the thing that actually thinks,
     /// walks and takes damage; everything below just copies its state onto the wire.</summary>
@@ -261,8 +270,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         mapName = mob != null ? mob.gameObject.scene.name : "";
         var shadow = mob != null ? mob.GetComponent<MobShadow3DVisual>() : null;
         isShadow = shadow != null;
-        // AND THE BODY IT WEARS, read off the creature at the same moment its kind is. The creature chose it as it
-        // was built, on the line above the one that announces it, so there is always an answer here to hand over.
+        // AND THE BODY IT WEARS, read off the creature at the same moment its kind is. It took its fixed look from its
+        // creature entry as it was built, on the line above the one that announces it, so there is an answer here.
         shadowModel = shadow != null ? (shadow.ModelName ?? "") : "";
         serverHealth = mob != null ? mob.GetComponent<Health>() : null;
         serverAgent = mob != null ? mob.GetComponent<PathAgent3D>() : null;
@@ -364,14 +373,27 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     ///
     /// <para><paramref name="seconds"/> is a number the SERVER owns. It must never be an animation clip's length:
     /// this machine is headless and has no business reading art to decide gameplay timing.</para></summary>
-    public void BeganAction(StanceId action, float seconds)
+    public void BeganAction(StanceId action, float seconds, uint aimedAt, float connectsAfter)
     {
         if (!isServer || seconds < 0f) return;
         netAction = action;
         netActionSeconds = seconds;
+        netActionAimedAt = aimedAt;
+        netActionConnectsAt = connectsAfter > 0f ? NetworkTime.time + connectsAfter : 0d;
         // Stamped LAST, and stamped HERE rather than by whoever asked: the moment is the thing every watcher
         // measures the action against, so it is the server's word or it is worth nothing.
         netActionAt = NetworkTime.time;
+    }
+
+    /// <summary>SERVER ONLY: this creature began a scripted move. Said once, for the same reason a person's is
+    /// (<see cref="MoveSaid"/>): the ten-a-second position push cannot show a move this short. The end point arrives
+    /// in world coordinates and is filed in the creature's map coordinates, the same as its position.</summary>
+    public void BeganMove(MoveSaid said)
+    {
+        if (!isServer) return;
+        said.to = MapManager.InMap(said.to, mapName);
+        said.at = NetworkTime.time;
+        netMove = said;
     }
 
     /// <summary>SERVER ONLY: this creature started or stopped holding a pose.</summary>
@@ -442,7 +464,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // player can never drift into gliding differently. It also leaves a body that has arrived completely
         // alone, which is the common case in a town or a quiet field, not the rare one.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
-        WatchedBody.Follow(view.transform, MapManager.InWorld(netPosition, mapName), facing);
+        if (watchedMove.IsNew(netMove)) watchedMove.Tell(netMove, MapManager.InWorld(netMove.to, mapName), view.transform);
+        WatchedBody.Follow(view.transform, MapManager.InWorld(netPosition, mapName), facing, watchedMove);
 
         // A WIND-UP IN PROGRESS: its bar over the body and its ring on the ground, drawn from the shared clock.
         watchedCast.Tick(view.transform, mapName);
@@ -470,7 +493,9 @@ public class NetMob : NetworkBehaviour, IWatchedShell
             if (netActionAt > 0d && netActionAt != poseShownAt)
             {
                 poseShownAt = netActionAt;
-                if (NetworkTime.time - netActionAt < netActionSeconds + 0.1d && IsSwing(netAction)) viewBillboard.ShowAttack();
+                if (NetworkTime.time - netActionAt < netActionSeconds + 0.1d && IsSwing(netAction))
+                    viewBillboard.ShowAttack(GameNetwork.DrawnBodyOf(netActionAimedAt),
+                                             netActionConnectsAt > 0d ? (float)(netActionConnectsAt - NetworkTime.time) : 0f);
             }
         }
 
@@ -736,6 +761,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // poisoned creature you walked away from would hand its glow to whatever came back in its place.
         VfxCue.ForgetAurasOn(netId);
         levelAura.Stop();
+        // …and a move being drawn on it, with any see-through fade that move put on it.
+        watchedMove.Stop();
         byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
         PutBodyBack(BodyKind, view);
         view = null;
@@ -815,6 +842,9 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         if (stack.Count >= SpareBodiesPerKind) { Destroy(body); return; }
 
         body.SetActive(false);
+        // A body banked while its blade was in the air would hand the next creature of its kind an empty hand forever.
+        var socket = body.GetComponentInChildren<WeaponSocket>(true);   // perf-ok: once per body banked
+        if (socket != null) socket.ResetFlights();
         stack.Push(body);
     }
 }

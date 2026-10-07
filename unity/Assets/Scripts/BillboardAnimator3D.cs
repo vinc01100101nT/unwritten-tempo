@@ -89,22 +89,21 @@ public class BillboardAnimator3D : MonoBehaviour
         if (GetComponent<BillboardShadow>() == null) gameObject.AddComponent<BillboardShadow>();
     }
 
-    /// <summary>Scale this body so its art stands <paramref name="height"/> tall, feet to crown, and state that height
-    /// and the matching width as the unit's real body (<see cref="UnitBody"/>), so its nameplate, health bar, aim point
-    /// and click area use the measured body rather than a guess from the scale. Returns the scale applied. Called by
-    /// <see cref="MobBody.Fit"/> only — once when the prefab is baked and once as each creature is made.</summary>
-    public float FitToHeight(float height)
+    /// <summary>Take the body's fitted <paramref name="scale"/> as this picture's rest scale — what breathing and a bite
+    /// squash around — and draw it <paramref name="worldLift"/> above its feet. Called by <see cref="MobBody.Fit"/> only,
+    /// which has already put that scale on the body.</summary>
+    public void TakeFit(Vector3 scale, float worldLift)
     {
-        float s = MobSizes.BodyScale(height, crownAtScaleOne);
-        baseScale = new Vector3(s * widthScale, s, s);
-        transform.localScale = baseScale;
-        if (crownAtScaleOne > 0f) UnitBody.Set(gameObject, height, paintedWidthAtScaleOne * s * widthScale);
-        return s;
+        baseScale = scale;
+        FlyAt(worldLift);
     }
 
     // How wide this body is drawn against its height — 1 for every creature, narrower for a saved character (see
     // UseSheet). Not saved: it belongs to the life, and a body only becomes a character while the game runs.
     [System.NonSerialized] float widthScale = 1f;
+
+    /// <summary>How wide this body is drawn against its height (see <see cref="MobBody.FlatArt"/>).</summary>
+    public float DrawnWidth => widthScale;
 
     // Where the feet stand in a grid cell, as a fraction of it up from the bottom — the mob default, or a saved
     // character's own measured feet line (see UseSheet). Not saved, for the same reason as the width.
@@ -118,10 +117,10 @@ public class BillboardAnimator3D : MonoBehaviour
     [System.NonSerialized] float liftCutAtScale;
 
     /// <summary>Draw this body <paramref name="worldLift"/> world units above its feet from now on — a flying
-    /// creature's (zero puts it back on the ground). Call after <see cref="FitToHeight"/>: the lift is turned into
+    /// creature's (zero puts it back on the ground). Reached through <see cref="TakeFit"/>: the lift is turned into
     /// the art's own units at the scale that fit set. Rebuilds the pictures only when the lift, or the scale a
     /// non-zero lift was cut at, changed.</summary>
-    public void FlyAt(float worldLift)
+    void FlyAt(float worldLift)
     {
         worldLift = Mathf.Max(0f, worldLift);
         if (Mathf.Approximately(worldLift, lift) && (lift <= 0f || Mathf.Approximately(baseScale.y, liftCutAtScale))) return;
@@ -172,10 +171,17 @@ public class BillboardAnimator3D : MonoBehaviour
         instantReleasePose = poses[3];
     }
 
-    /// <summary>A swing: the attack picture for the way it faces, briefly. Nothing on a sheet without one.</summary>
-    public void ShowAttack()
+    /// <summary>A swing: the attack picture for the way it faces, briefly. A sheet without one — every ordinary
+    /// creature's — has no picture to show, so it bites instead (<see cref="AttackLunge"/>), toward
+    /// <paramref name="aimedAt"/> when this machine draws them, slamming in <paramref name="connectsIn"/> seconds from
+    /// now — the moment its blow lands (0 = no blow lands with it, so it bites at once).</summary>
+    public void ShowAttack(Transform aimedAt, float connectsIn)
     {
-        if (attackPoses == null) return;
+        if (attackPoses == null)
+        {
+            if (lunge != null) lunge.Bite(aimedAt, connectsIn);
+            return;
+        }
         posing = attackPoses[DirectionColumn(facing)];
         poseUntil = Time.time + AttackPoseSeconds;   // server-math: how long a picture stays on screen, not a game number
     }
@@ -311,10 +317,10 @@ public class BillboardAnimator3D : MonoBehaviour
     }
 
     // Procedural idle: a soft squash-stretch loop while standing still. Yields to AttackLunge (the
-    // chomp owns the scale during a bite); resets to base while moving.
+    // bite owns the scale while it plays); resets to base while moving.
     void ApplyIdleScale(bool moving)
     {
-        if (lunge != null && lunge.Punching) return;
+        if (lunge != null && lunge.Biting) return;
         if (breathe && !moving && idleClip == null)
         {
             float e = Mathf.Sin(Time.time * breatheSpeed + breathePhase);

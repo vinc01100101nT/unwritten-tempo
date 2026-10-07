@@ -7,7 +7,7 @@ metadata:
 
 **BUILT 2026-09-20 — all six slices. Not play-tested.** (The lines below describe the design; the doc is now a
 record of what the code does.) Save is v15 (v14 = weapon trademarks, 2026-09-21; v15 = timed effects ride the save, 2026-09-23), both servers' build string `unwritten-character-v15`. The user must
-re-bake mob prefabs and re-run Build UI Shell. Testing doors added: `/station`, `/mastery`. A reviewer found 16 real faults on 2026-09-20 and all the code ones
+re-bake mob prefabs and re-run Build UI Shell. Testing door added: `/mastery` (`/station` was removed 2026-10-05 once the smith, loom and tannery townsfolk existed). A reviewer found 16 real faults on 2026-09-20 and all the code ones
 are fixed — the worst was that a townsperson's STATION was never sent to the client, so the whole crafting window
 was unreachable. Decisions that day: keep the 95% ceiling on a quench; **one Ink writes ONE sub-stat**, so the
 ring's two dual nodes (Defense, Critical) split into four (defence, magic defence, crit chance, crit damage) —

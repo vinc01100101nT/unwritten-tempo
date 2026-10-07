@@ -118,7 +118,7 @@ public class Health : MonoBehaviour, ICombatUnit
                             : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed,
                                          info.attacker);
     }
-    public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
+    public int ApplyTrueDamage(int amount) => TakeTrueDamage(amount);
 
     // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets a mob through the
     // SAME handle it targets the player through. Pure aliases onto this class's own fields — no second source of truth.
@@ -160,7 +160,7 @@ public class Health : MonoBehaviour, ICombatUnit
         get
         {
             var b = Brain;
-            return WeaponReach.For(b != null ? b.Equipment : null, CharacterSpec.Active.unarmedReach);
+            return WeaponReach.For(b != null ? b.Equipment : null, CharacterSpec.Active.unarmedReach, b != null && b.swingsRanged);
         }
     }
 
@@ -247,15 +247,21 @@ public class Health : MonoBehaviour, ICombatUnit
     PathAgent3D agent;
     MonsterAI3D brain;
     PathAgent3D Agent => agent != null ? agent : (agent = GetComponent<PathAgent3D>());
-    MonsterAI3D Brain => brain != null ? brain : (brain = GetComponent<MonsterAI3D>());
-    public void TeleportTo(Vector3 dest) { var a = Agent; if (a != null) a.Teleport(dest); else transform.position = dest; }
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt)
+    public MonsterAI3D Brain => brain != null ? brain : (brain = GetComponent<MonsterAI3D>());
+    public void TeleportTo(Vector3 dest, RelocationLook look = default)
+    {
+        var a = Agent;
+        if (a != null) a.Teleport(dest, look);
+        else transform.position = dest;
+    }
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                        RelocationLook look = default)
     {
         var a = Agent;
         if (a == null) return;
         // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
         // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
-        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds, faceAt);
+        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds, faceAt, look);
     }
     public bool IsRelocating { get { var a = Agent; return a != null && a.Gliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
@@ -306,6 +312,10 @@ public class Health : MonoBehaviour, ICombatUnit
             return gear != null ? gear.WeaponType : WeaponType.None;
         }
     }
+
+    /// <summary>Whether this creature's ordinary attack is ranged — the answer its brain was given with its attack
+    /// number (<see cref="MonsterAI3D.swingsRanged"/>).</summary>
+    public bool SwingsRanged { get { var b = Brain; return b != null && b.swingsRanged; } }
 
     // Same shape and same reason as the store above: looked up once, then held.
     StatusController statusHost;
@@ -473,26 +483,17 @@ public class Health : MonoBehaviour, ICombatUnit
     /// because the shell that speaks for it is what removes it when the server says it is gone.</summary>
     void PlayDeathVisuals()
     {
-        VfxCue.Fire(VfxCueId.OnDeath, transform);
         var fx = GetComponent<DeathDissolve>();
-        if (fx != null && gameObject.activeInHierarchy) fx.Play(() => { });
+        if (fx != null && gameObject.activeInHierarchy) fx.Play();
     }
 
-    // What this unit wears, looked up once on the first blow and never again — found or not — because the lookup would
-    // otherwise run on every hit this unit takes.
-    UnitEquipment wornGear;
-    bool wornGearLooked;
-
-    /// <summary>A worn shield stopping this physical blow outright — the same roll a player's shield makes
+    /// <summary>A skill's block chance stopping this physical blow outright — the same roll a player's block makes
     /// (<see cref="Combat.Blocked"/>), on the same blows. A watched copy tosses no coin: the server already did.</summary>
-    bool BlockedByShield()
+    bool Blocked()
     {
         if (IsWatchedCopy) return false;
-        if (!wornGearLooked) { wornGear = GetComponent<UnitEquipment>(); wornGearLooked = true; }
-        var shield = wornGear != null ? wornGear.Get(EquipSlotType.Shield) : null;
-        if (shield == null || !Combat.Blocked(shield.def, States.WornBlockChance)) return false;
-        if (shield.def.guardSfx != null && !shield.def.guardSfx.Empty) Sfx.Play(shield.def.guardSfx);
-        return true;
+        var st = States;
+        return st != null && Combat.Blocked(st.SubStatBonus(SubStat.BlockChance));
     }
 
     /// <summary>Apply a hit; final damage = max(1, attackerAttack − defense). Returns the damage dealt.</summary>
@@ -519,7 +520,7 @@ public class Health : MonoBehaviour, ICombatUnit
             Show(ShownBlow.Miss(), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
-        if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
+        if (Blocked()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
 
         // Element property: the attack's element vs this unit's armor element scales the damage (RO chart).
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
@@ -621,7 +622,7 @@ public class Health : MonoBehaviour, ICombatUnit
     public int TakeDamageOverkill(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
                                   ICombatUnit attacker = null)
     {
-        if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
+        if (Blocked()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         float mod = ElementModifier(attackElement);
         if (mod < 0f)
             return HealedByElement(Combat.AfterDefense(attackerAttack, defense, crit), mod, false, attacker);
@@ -694,35 +695,26 @@ public class Health : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>Apply raw over-time / reflected damage that bypasses Defense and element (used by
-    /// <see cref="StatusController"/> DoTs and damage-reflect). Pops a <paramref name="color"/>-tinted
-    /// number and dies exactly once. Does NOT leech (it isn't a player swing).</summary>
-    public int TakeTrueDamage(int amount, Color color)
+    /// <see cref="StatusController"/> DoTs and damage-reflect), and die exactly once. Does NOT leech (it isn't a
+    /// player swing).</summary>
+    public int TakeTrueDamage(int amount)
     {
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
         SubtractHealth(dmg);
-        DamagePopup.Spawn(transform, dmg, color);
         if (IsDead) Die();
         return dmg;
     }
 
-    // EVERY BLOW THIS UNIT SHOWS PASSES HERE — a hit, an immunity, a whiff, a flurry beat past death — on the machine
-    // that decided it. It draws the blow and, on the server, tells every watching machine exactly what was drawn, AT THE
-    // MOMENT it was drawn: announced any later, a reaction to this hit (a passive, a leech) could land a second blow on
-    // the same unit in between, and the two announcements would describe each other's numbers.
-    void Show(in ShownBlow blow, ICombatUnit attacker)
-    {
-        DrawShownBlow(blow);
-        // Every skill strike's number is shown HERE, whichever path rolled it — so this is also the one place a run that
-        // shows its own total can hear about the hit, with nothing per-path to keep in step. Null unless a run asked for
-        // the total, so the normal case costs one reference check.
-        if (!blow.missed && RepeatsDamageTotal.Current != null) RepeatsDamageTotal.Current.Report(transform, blow.number);
-        GameNetwork.AnnounceBlowOnMob(this, attacker, blow);
-    }
+    // EVERY BLOW THIS UNIT TAKES PASSES HERE — a hit, an immunity, a whiff, a flurry beat past death — on the server,
+    // which tells every watching machine exactly what landed, AT THE MOMENT it landed: announced any later, a reaction
+    // to this hit (a passive, a leech) could land a second blow on the same unit in between, and the two announcements
+    // would describe each other's numbers. The server draws none of it.
+    void Show(in ShownBlow blow, ICombatUnit attacker) => GameNetwork.AnnounceBlowOnMob(this, attacker, blow);
 
     /// <summary>Put a blow on screen exactly as it was decided — the digits and their colour — with no sums: every
-    /// number in <paramref name="blow"/> is already final. The server's own intake and every watching machine draw
-    /// through this one function, so one blow cannot be shown two ways.
+    /// number in <paramref name="blow"/> is already final. Every watching machine draws through this one function, so
+    /// one blow cannot be shown two ways.
     ///
     /// <para>Element feedback IS the number's opacity (no word cue): a resisted hit dims, an immune hit is a faded "0",
     /// strong and normal hits stay fully opaque.</para></summary>
@@ -731,6 +723,12 @@ public class Health : MonoBehaviour, ICombatUnit
         if (blow.missed)
         {
             DamagePopup.SpawnText(transform, "MISS", MissColor);
+            return;
+        }
+
+        if (blow.cause != TrueDamageCause.None)
+        {
+            if (blow.number > 0) DamagePopup.Spawn(transform, blow.number, TrueDamageCauses.Colour(blow.cause));
             return;
         }
 
@@ -766,7 +764,7 @@ public class Health : MonoBehaviour, ICombatUnit
             if (vs.ReflectBonus > 0f)
             {
                 int r = Mathf.RoundToInt(dmgDealt * vs.ReflectBonus);
-                if (r > 0) CombatAuthority.ApplyTrue(attacker, r, ReflectColor, "reflect");
+                if (r > 0) CombatAuthority.ApplyTrue(attacker, r, TrueDamageCause.ReflectedByCreature);
             }
             if (vs.ManaLeechPct > 0f) victim.GainMana(Mathf.RoundToInt(dmgDealt * vs.ManaLeechPct));
         }
@@ -775,8 +773,6 @@ public class Health : MonoBehaviour, ICombatUnit
         if (steal <= 0f) return;
         attacker.LeechHeal(Mathf.RoundToInt(dmgDealt * steal));
     }
-
-    static readonly Color ReflectColor = new Color(1f, 0.6f, 0.9f);   // damage bounced back at the attacker
 
     /// <summary>Refill to full HP silently — no popup, no color reset (used on a mob LEVEL-UP, which fully
     /// heals like the player's, but shouldn't spam a giant green heal number).</summary>
@@ -795,6 +791,14 @@ public class Health : MonoBehaviour, ICombatUnit
         // enable. Both are needed; don't collapse them.)
         var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
         ((ICombatUnit)this).BeginNewLife();   // the shared half — nothing timed carries across a death, for any unit
+    }
+
+    public int GiveUpHealthDownToOne()
+    {
+        if (IsDead || Current <= 1 || IsWatchedCopy) return 0;
+        int lost = Current - 1;
+        Current = 1;
+        return lost;
     }
 
     /// <summary>Restore HP (capped at max) and announce the gain.</summary>
@@ -835,9 +839,9 @@ public class Health : MonoBehaviour, ICombatUnit
         PassiveEvents.Fire(LastAttacker, SkillTrigger.OnKill, PassiveEvents.CurrentSkillId, transform);
         VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
-        // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob
-        // (if it has a MobRespawn) or remove it (the original Phase D behavior). With no FX, do the same
-        // immediately.
+        // Let the remains lie out their time if the body has them (every screen draws the death from the health the
+        // server sends), and once that is over either RECYCLE the mob (if it has a MobRespawn) or remove it (the
+        // original Phase D behavior). With no remains, do the same immediately.
         // A pooled mob (owned by a FieldMobSpawner) returns to its pool instead of self-recycling in place
         // (MobRespawn) or being destroyed. Checked first so a spawner-owned mob always takes the pool path.
         // A SUMMON goes back to its summoner, first of all — it never respawns by itself.
@@ -849,7 +853,7 @@ public class Health : MonoBehaviour, ICombatUnit
         else if (respawn != null) done = respawn.OnFadedOut;
         else done = () => Destroy(gameObject);
         var fx = GetComponent<DeathDissolve>();   // perf-ok: once, at the moment a unit dies
-        if (fx != null && gameObject.activeInHierarchy) fx.Play(done);
+        if (fx != null && gameObject.activeInHierarchy) fx.Expire(done);
         else done();
     }
 }
@@ -873,8 +877,12 @@ public readonly struct ShownBlow
     public readonly bool missed;
     /// <summary>The creature was alive to be hit, so it staggers — a flurry beat past its death does not.</summary>
     public readonly bool flash;
+    /// <summary>Damage that bypassed defence — a poison tick, a reflected blow — coloured by what it was;
+    /// <see cref="TrueDamageCause.None"/> for a blow.</summary>
+    public readonly TrueDamageCause cause;
 
-    public ShownBlow(int number, float elementModifier, bool crit, bool magic, bool flash, bool missed = false)
+    public ShownBlow(int number, float elementModifier, bool crit, bool magic, bool flash, bool missed = false,
+                     TrueDamageCause cause = TrueDamageCause.None)
     {
         this.number = number;
         this.elementModifier = elementModifier;
@@ -882,7 +890,12 @@ public readonly struct ShownBlow
         this.magic = magic;
         this.flash = flash;
         this.missed = missed;
+        this.cause = cause;
     }
+
+    /// <summary>Damage that bypassed defence, as it landed: no stagger, no element, coloured by <paramref name="cause"/>.</summary>
+    public static ShownBlow Tick(int number, TrueDamageCause cause) =>
+        new ShownBlow(number, 1f, false, false, false, cause: cause);
 
     public static ShownBlow Miss() =>
         new ShownBlow(0, 1f, false, false, false, missed: true);

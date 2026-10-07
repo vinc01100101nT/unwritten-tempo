@@ -100,7 +100,7 @@ public static class SkillExport
             // authored one", and Symbol's fallback to the whole display name hides it. Empty = unauthored, and each
             // surface decides what to draw in a space too small for a name.
             Field(json, "symbol", d.symbol, true);
-            Field(json, "weapon", d.weaponType.ToString(), true);
+            Field(json, "weapon", WeaponTypes.Label(d.weaponType), true);
             // "Blossom Wind — 13th Form" — the same line the in-game card shows, empty for a skill that is no form.
             Field(json, "form", SkillForms.Line(d), true);
             Field(json, "archetype", SkillTooltip.ArchetypeName(d.archetype), true);
@@ -162,7 +162,7 @@ public static class SkillExport
         {
             if (!byWeapon.TryGetValue(w, out var list)) continue;
             var c = colors != null ? colors.Lookup(w) : null;
-            md.Append("\n## ").Append(w == WeaponType.None ? "Not in any weapon's pool" : w.ToString());
+            md.Append("\n## ").Append(w == WeaponType.None ? "Not in any weapon's pool" : WeaponTypes.Label(w));
             md.Append(c != null ? "  —  colour `#" + ColorUtility.ToHtmlStringRGB(c.Value) + "`" : "  —  *no colour chosen*");
             md.Append("\n\n| Symbol | Skill | Tier | Cost | When | What it does |\n| --- | --- | --- | --- | --- | --- |\n");
             for (int i = 0; i < list.Count; i++)

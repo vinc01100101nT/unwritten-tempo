@@ -34,8 +34,8 @@ passages on those points are dead. **Not yet play-tested.**
 - **There is no level requirement to wear gear.** Anyone can equip anything.
 - **Weapons and armour scale the same way**: what a piece is worth comes from its **folds** and its **quality**,
   nothing else — attack on a weapon; on armour, what its **material** buys (metal defence and HP, leather attack
-  speed and evasion, cloth magic defence and MP). There is no Level on gear. Armour has five slots — Head, Body,
-  Off-hand, Garment, Shoes — each in all three materials, and every armour piece rolls one **word** from its slot
+  speed and evasion, cloth magic defence and MP). There is no Level on gear. Armour has four slots — Head, Body,
+  Garment, Shoes — each in all three materials, and every armour piece rolls one **word** from its slot
   ([Armour Roster, Materials & Words](armour-roster.md)).
 
 ## 2. Forge, Fold, Quench
@@ -165,20 +165,19 @@ the endgame.
   | Axe | Relentless aggression | Attack Speed, Attack, Critical |
   | Warhammer | Deny enemy actions | Attack, Defense, HP |
   | Spear | Control positioning | Accuracy, Attack, HP |
-  | Shield | Absorb attention | Defense, HP, MP |
+  | Fist | Physical bursts, or stand in front and take the hits | Attack, HP, MP |
   | Bow | Mobility and spacing | Evasion, Accuracy, Attack Speed |
-  | Dagger | Finish weakened targets | Critical, Evasion, Attack Speed |
-  | Firearm | Devastating single shots | Critical, Accuracy, Attack |
+  | Dagger | Poison from the blade | Attack Speed, Evasion, Attack |
+  | Katar | Chains of critical hits | Critical, Evasion, Attack Speed |
+  | Shuriken | Bouncing throws, or many-bladed swings | Attack Speed, Accuracy, HP |
+  | Sniper | One painful shot from far away | Critical, Accuracy, Magic Attack |
   | Staff | Destructive area magic | Magic Attack, Cast Speed, MP |
   | Wand | Keep allies alive | MP, Cast Speed, Defense |
   | Scythe | Overwhelm with curses | Magic Attack, MP, HP |
 
-  The engine's weapon types do not all match that list, and the code maps them this way (decided while
-  building, 2026-09-20; kept as is on 2026-09-21): **Greatsword** is the two-handed sword type; **Warhammer** is
-  the mace type; a **two-handed axe** uses the Axe row; **Wand** uses the Staff row until it has a type of its
-  own; **Katar** uses the Dagger row (the roster already maps Dagger to both). **Knuckle** has no roster identity
-  yet and raises **Attack Speed, Attack, Evasion** — a placeholder row, to be replaced when the fist gets its
-  sentence. **Shield** and **Scythe** have no type yet and so no mastery.
+  The engine's weapon types do not all match that list, and the code maps them this way: **Greatsword** is the
+  two-handed sword type; **Warhammer** is the mace type; a **two-handed axe** uses the Axe row; **Fist** is the
+  knuckle type; **Sniper** is the firearm type.
 
 - **Its bonus is added to the ring's bonus for the same stat, never multiplied.** +30% Attack from the ring and
   +20% Attack from Sword Mastery make +50% Attack.
@@ -300,9 +299,9 @@ move once it is played. Change it here, in place, when it does.
 - **Skill levels that count:** the grade's share of a 30-step scale (Raw 4 · F 8 · E 12 · D 16 · C 20 · B 25 ·
   A 30), applied to the skill's own max level and rounded up — so a 1-level skill always counts and only
   an A-grade weapon lets every level of a 10-level skill count.
-- **Per fold:** a weapon gains **+1 attack** (or +1 magic attack for a Staff / Wand / Scythe). An armour piece's
-  **material** decides what a fold buys and its **slot** how much: metal **+0.5 defence and +4 HP**, leather
-  **+0.25% attack speed and +0.25 evasion**, cloth **+0.5 magic defence and +2 MP** on body, off-hand and garment;
+- **Per fold:** a weapon gains **+1.8 attack** (or +1.8 magic attack for a Staff / Wand / Scythe). An armour piece's
+  **material** decides what a fold buys and its **slot** how much: metal **+0.9 defence and +7.2 HP**, leather
+  **+0.45% attack speed and +0.45 evasion**, cloth **+0.9 magic defence and +3.6 MP** on body and garment;
   head and shoes take half. Quality lifts that fold total by the column above. Shoes also gain **+2% movement
   speed** a fold, whatever their material, with no lift. The full table is in [Crafting Tables](crafting-tables.md).
 - **Fold cost:** 1 unit of the grade's band material + 50 gold × band number. **Quench cost:** 10 units of the
@@ -404,8 +403,8 @@ skill.
   until their pools exist.
 - **Which townspeople are stations** — Lastline has one of each, standing at the doors of the four houses around
   the fountain: Gunnar the Smith, Odette the Weaver (loom), Rook the Tanner (tannery), beside Fenwick the Tool Dealer's
-  shop. They are rows of the townsfolk list (`WorldTownsfolk`), not objects in the scene. `/station` still makes the
-  nearest villager one for a play-test. Which stations other towns get is to be planned.
+  shop. They are rows of the townsfolk list (`WorldTownsfolk`), not objects in the scene. Which stations other towns get
+  is to be planned.
 - **Which weapon each creature carries, how much mastery it has in it, and which skills it buys** — to be planned.
 
 ## What V4 replaced in V3

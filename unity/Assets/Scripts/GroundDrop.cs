@@ -214,7 +214,8 @@ public class GroundDrop : MonoBehaviour
     }
 
     /// <summary>Put a thing on the ground at <paramref name="worldPos"/> and hand it back. A server passes the
-    /// copy; a watching machine passes null and gives the grade and the folds instead.</summary>
+    /// copy; a watching machine passes null and gives the grade and the folds instead. Nothing is drawn here: a
+    /// watching machine puts its plate and sparkle up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
                                    Quality quality, int upgrade, string mapName, uint netId)
     {
@@ -241,8 +242,6 @@ public class GroundDrop : MonoBehaviour
         drop.mapName = mapName;
         drop.netId = netId;
         all.Add(drop);
-
-        drop.BuildVisuals();
         return drop;
     }
 
@@ -326,9 +325,10 @@ public class GroundDrop : MonoBehaviour
     const int TextPadSides = 14;
     const int TextPadEnds = 5;
 
-    static bool NobodyToShowItTo => GameServer.IsServer;
+    static bool NobodyToShowItTo => GameServer.CaughtDrawing("GroundDrop");
 
-    void BuildVisuals()
+    /// <summary>A WATCHING MACHINE: put this drop's plate and sparkle up.</summary>
+    public void ShowOnScreen()
     {
         if (NobodyToShowItTo) return;
         BuildPlate();

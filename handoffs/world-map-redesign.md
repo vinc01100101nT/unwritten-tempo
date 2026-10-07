@@ -5,9 +5,10 @@ tiles for every biome.
 
 **Status:** IN PROGRESS. Everything up to the mob-size work is committed and pushed (2026-09-26 ~13:05). Since then,
 UNCOMMITTED: the sandbox creature layout, the fourteen shadow styles and the sword's 22 forms with the called-out form
-names, every place named (regions, cities, towns, the Fist and Kick shadow places), every field and dungeon renamed to
+names, every place named (regions, cities, towns, every shadow's place), every field and dungeon renamed to
 its town's code (`lst_fild01`, `olk_dun01`), and 16 new maps filling the empty land — 75 generated maps + the
-hand-made `lastline`, all doors wired. **None of it is walked in play, and the game server build predates all of it.**
+hand-made `lastline`, all doors wired. On 2026-10-06 (also uncommitted) Hazemere, the Katar's city, was added and
+Luminhal rebuilt as the Fist's city: 76 generated maps. **None of it is walked in play, and the game server build predates all of it.**
 The 14 biome test maps are still unwalked. The stacked-props bug went with the 40 old maps it lived in; Lastline never
 had it (0 of 401 broken).
 
@@ -64,15 +65,15 @@ had it (0 of 401 broken).
 1. **The three-region world — designed 2026-09-25, generated 2026-09-26.** The design is `docs/3-world/world-map.md`
    (single home): a sandbox in three regions — Midlaine (Might), Lirenne (Finesse), The Far Shores (Arcane) — whose
    creatures mostly sit at 1–33 / 34–66 / 67–99, a city per one-family weapon, a border town per hybrid, 8 dungeons
-   (22 floors), elites everywhere, the 14 shadows' elements, places and ways in. Weapons are 14 (Fist and Kick added;
-   the groups and the Firearm-only magic crit are in the weapon roster doc).
-   - **Layout:** `tools/world-creator/worlds/world-regions.json` (90 maps incl. the 14 shadow places, 100 doors, each
+   (22 floors), elites everywhere, the 14 shadows' elements, places and ways in. Weapons are 14 (the groups and the
+   Sniper-only magic crit are in the weapon roster doc).
+   - **Layout:** `tools/world-creator/worlds/world-regions.json` (91 maps incl. the 14 shadow places, 102 doors, each
      map with a `name`; every generated map carries a pinned `seed`, so a rebuild reproduces it). The picture:
      `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
-   - **Generated** with `WorldCreator.BuildCore(...)`, keep list `lastline`, shadow places left out: 75 scenes, 172
+   - **Generated** with `WorldCreator.BuildCore(...)`, keep list `lastline`, shadow places left out: 76 scenes, 176
      door objects, all registered in Build Settings, each with its Map Painter file in `tools/map-painter/exports/`.
-     BuildCore also places doors to the shadow places it does not generate; those were deleted by script afterwards
-     (28 objects in 14 scenes) — do it again after any rebuild. The window's Build World must NOT be clicked (it would
+     The build places a door only when both of its maps have a scene, so no door into a shadow place is placed until
+     that place is built. The window's Build World must NOT be clicked (it would
      wipe `lastline` and drop unsaved scene changes) — see the World Creator spec.
    - **Creatures (2026-09-26):** a sandbox — every field and dungeon floor names its own creatures in the world spawn
      list (394 rows); the whole mapping is `docs/3-world/biome-mob-families.md`. The three dungeons added on 2026-09-26
@@ -204,9 +205,8 @@ had it (0 of 401 broken).
    - **The shadow places** (14 special maps) are in the layout, not generated.
    - **The player wiki's World & Maps page** lists all fourteen biomes (updated 2026-10-02) but says nothing of the
      three regions. Left alone while the region design is a proposal.
-   - **Fist and Kick** exist only in the docs: the code's weapon types have `Knuckle` (fist) but no kick, and no
-     shadow, mastery or skill exists for either. The Firearm's magic crit is decided, not built (the game blocks
-     every magic crit today).
+   - **The weapons changed on 2026-10-06** (Shield and Kick replaced by Katar and Shuriken, Firearm renamed Sniper):
+     the code's weapon types include `Katar`, `Knuckle` (the Fist) and `Shuriken`, and only a sniper's magic can crit.
 
 ## How to resume
 

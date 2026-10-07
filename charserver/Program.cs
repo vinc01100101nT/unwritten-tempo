@@ -104,6 +104,9 @@ new Characters(db, auth, roster, maps, gameVersion).MapOnto(app);
 // secret, counts and public names only — see WorldStats.
 new WorldStats(db, maps, config).MapOnto(app);
 
+// Timed changes a GM makes to the whole world at once — see WorldEvents. Map servers only, behind the server secret.
+new WorldEvents(db, maps).MapOnto(app);
+
 // ---- the map servers' own door ----------------------------------------------------------------------------
 // Reached with the shared SERVER secret, never with a player's token. A person signing in must not be able to
 // register a map server, and a map server does not sign in.
@@ -316,13 +319,29 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
     {
         var ticket = maps.MintTicket(body.accountId ?? "", characterId.ToString());
         bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, hotbar?.RootElement,
-                                              quests.RootElement, body.isGm, handover, http.RequestAborted);
+                                              quests.RootElement, body.isGm, handover, signingIn: false, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
 
         Console.WriteLine($"[char] moving '{name}' to '{body.map}' on map server '{to.Id}'.");
         return Results.Ok(new { host = to.Address, port = to.PlayerPort, ticket = ticket.Value, map = body.map });
     }
+});
+
+// A PRIVATE MESSAGE, passed from the map server its sender is on to the one holding whoever it is for. The sender's
+// name comes from that map server, which read it off the connection — never from anything a player typed — so this
+// door is a server's, behind the server secret, like every other here. Nothing is stored: an offline name is told so.
+app.MapPost("/server/pm", async (HttpContext http, PmBody? body) =>
+{
+    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+    if (body is null || string.IsNullOrWhiteSpace(body.toName) || string.IsNullOrWhiteSpace(body.fromName)
+        || string.IsNullOrWhiteSpace(body.text))
+        return Results.Json(new { error = "send { toName, fromName, text }" }, statusCode: 400);
+    // A name nobody could have is somebody who is not online, said the same way as any other.
+    if (!Characters.IsAName(body.toName)) return Results.Json(new { name = body.toName }, statusCode: 404);
+
+    var result = await maps.DeliverPmAsync(body.toName!, body.fromName!, body.text!, http.RequestAborted);
+    return Results.Json(new { name = result.Name ?? body.toName }, statusCode: result.Status);
 });
 
 // DELIBERATELY NO "spend this ticket" DOOR. A ticket is handed to the map server in the same breath as the
@@ -369,3 +388,4 @@ record MapServerRegistration(string? id, string? address, int port, int playerPo
                              string? arrivalsAddress = null);
 record SpendBody(string? ticket);
 record MoveBody(string? map, string? accountId, bool isGm);
+record PmBody(string? toName, string? fromName, string? text);

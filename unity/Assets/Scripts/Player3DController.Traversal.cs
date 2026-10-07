@@ -219,8 +219,10 @@ public partial class Player3DController
     /// <summary>Skill-driven INSTANT teleport (Blink Step): relocate the player straight to <paramref name="dest"/>
     /// — no roll, no travel. Cancels any in-progress dash, then uses the CharacterController-safe disable/move/enable
     /// so the capsule doesn't fight the reposition. The destination is already range-clamped by the ground reticle.</summary>
-    public void Teleport(Vector3 dest)
+    public void Teleport(Vector3 dest, RelocationLook look = default)
     {
+        // The afterimage belongs to the spot being left, so it is snapped before the body goes.
+        ShowLook(look, fadeWhileGliding: false);
         if (eDashing) { eDashing = false; SetDashInvuln(false); }
         // A teleport carries no fall. Every reposition comes through here, the server's "putting you back" among
         // them, and a body that kept its falling speed across one was put back mid-air, fell past the server's
@@ -229,6 +231,8 @@ public partial class Player3DController
         if (controller != null) controller.enabled = false;
         transform.position = dest;
         if (controller != null) controller.enabled = true;
+        // SAID TO EVERY OTHER SCREEN, so the copy of this person blinks too instead of sliding across.
+        GameNetwork.ReportMoveBegan(new MoveSaid { kind = MoveSaid.Blink, to = dest, look = look });
     }
 
     void BeginEDash(Vector3 dir)

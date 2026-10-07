@@ -212,6 +212,7 @@ public class WetGround : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
         var sh = Shader.Find("Unwritten/WetGround");
         if (sh == null)

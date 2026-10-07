@@ -147,6 +147,7 @@ public class FootstepTracker : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
         onPlayerPlant = OnPlayerPlant;   // cache once so the per-frame detection path allocates no closure
         // Mark every slot dead (stamped far in the past) so nothing draws until the player actually steps.

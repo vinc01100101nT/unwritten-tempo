@@ -97,6 +97,7 @@ public class SnowGround : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         var sh = Shader.Find("Unwritten/SnowGround");
         if (sh == null)
         {

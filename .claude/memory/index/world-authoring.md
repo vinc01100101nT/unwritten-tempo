@@ -28,5 +28,5 @@
 - [Procedural town map generator](../map-generator-tool.md) — VIN-13 editor-tool plan + Phase 0 done.
 - [World is 100% Pxltgr](../pxltgr-field-migration.md) — LowPolySimpleNature pack removed; field rebuilt via PxltgrFieldBuilder/Scatter.
 - [Creature kinds + world spawn list](../creature-kinds-and-world-spawns.md) — creatures placed by `Resources/WorldSpawns` rows at map load, never scene spawners; kind drives slots/summons/gear/drops/respawn.
-- [Naming: styles, forms and places](../world-names-tie-to-shadows-and-weapons.md) — shadows go by STYLES, skills are numbered FORMS; real English only, must sound smooth with 'style', no real-country culture, no made-up language, no other franchise's terms.
+- [Naming: styles, forms and places](../world-names-tie-to-shadows-and-weapons.md) — each shadow is a Kashira with a name, a title and a STYLE, skills are numbered FORMS; real English only, must sound smooth with 'style', no real-country culture, no made-up language, no other franchise's terms.
 - [Wiki Database pages are generated](../wiki-database-generated-pages.md) — Monsters, Skills, Equipment, Materials, World Map and Elements are generated (MobExport/WorldMapExport/ElementExport/ItemExport + the skill export); never hand-edit their json; hooks on save.

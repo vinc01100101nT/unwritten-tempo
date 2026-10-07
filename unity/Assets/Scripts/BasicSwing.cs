@@ -50,6 +50,11 @@ public static class BasicSwing
         // produces has no separate wind-up to announce from, so it raises both here, in the same order.
         if (announceIntent) PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackStart, null, victim.Body);
 
+        // A SNIPER'S ORDINARY ATTACK IS A MAGIC SHOT: magic attack against magic defence, it cannot miss, it can crit,
+        // and it grows with the distance to its target. Every other unit's ordinary attack is the physical swing below.
+        if (WeaponTypes.ShootsMagic(attacker.HeldWeapon))
+            return LandMagicShot(attacker, victim, power, vars, outer, overkill, out resolved);
+
         bool crit = attacker.RollBasicCrit(victim);
         int hit = attacker.BasicHit;
         bool missed = Combat.Missed(crit, hit, victim.Flee);
@@ -60,7 +65,8 @@ public static class BasicSwing
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
         dmg = UnitOffense.SpendCharges(attacker.States, dmg);
 
-        // An ordinary attack is PHYSICAL for every unit — player and creature alike — so it always lands against armour.
+        // A swing (anything but a sniper's shot, which returned above) is PHYSICAL for every unit — player and creature
+        // alike — so it always lands against armour.
         resolved = new DamageInfo(dmg, attacker.BasicElement, false,
                                   crit, attackerHit: hit, overkill: overkill,
                                   missed: missed, attacker: attacker);
@@ -74,6 +80,24 @@ public static class BasicSwing
             // for. Fired HERE, at the one place a swing lands, so no way of swinging can forget to announce it.
             PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackDealt, null, body);
         }
+        return dealt;
+    }
+
+    // The sniper's shot: the same two moments a swing has, the same charge spent, the same announcement — only the
+    // roll is magic, its crit is the sniper's magic crit, and it is scaled by how far the target stands.
+    static int LandMagicShot(ICombatUnit attacker, ICombatUnit victim, in ScaledNumber power, in StackVars vars,
+                             float outer, bool overkill, out DamageInfo resolved)
+    {
+        int roll = attacker.RollSkillDamage(DamageType.Magic, victim.CritShieldLuk, out bool crit);
+        float metres = attacker.Body != null && victim.Body != null
+            ? StrikeMath.Metres(attacker.Body.position, victim.Body.position) : 0f;
+        float growth = StrikeMath.SniperShotGrowth(metres);
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(power.Resolve(vars, Mathf.Max(0f, outer) * growth, roll)));
+        dmg = UnitOffense.SpendCharges(attacker.States, dmg);
+
+        resolved = new DamageInfo(dmg, attacker.BasicElement, true, crit, overkill: overkill, attacker: attacker);
+        int dealt = CombatAuthority.Apply(victim, resolved);
+        if (dealt > 0) PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackDealt, null, victim.Body);
         return dealt;
     }
 }

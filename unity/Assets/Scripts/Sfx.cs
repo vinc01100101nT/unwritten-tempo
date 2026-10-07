@@ -68,6 +68,7 @@ public class Sfx : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         GameSettings.ApplyAudio();   // start at the player's saved volumes, not the level baked into the scene
@@ -149,9 +150,10 @@ public class Sfx : MonoBehaviour
         }
     }
 
-    /// <summary>TRUE where there is nobody to hear — a headless server, which resolves every blow in the world and
-    /// would otherwise pick, load and play a clip for each one into an empty room.</summary>
-    static bool Deaf => GameServer.IsServer;
+    /// <summary>TRUE on the server, which sounds nothing and is never meant to reach this door: every sound is played by
+    /// the screens from the event the server announced, and reaching here writes an error to the server's log
+    /// (<see cref="GameServer.CaughtDrawing"/>).</summary>
+    static bool Deaf => GameServer.CaughtDrawing("Sfx");
 
     /// <summary>Play a random variation of the set in <b>2D</b> (no-op if the set is empty or no Sfx exists
     /// yet). For UI and player-self sounds where direction doesn't matter.</summary>

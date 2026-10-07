@@ -6,7 +6,7 @@
 # launcher already downloads the game and every later update from this folder, so a device only needs the launcher
 # once — and opening this computer's address in its browser offers it.
 #
-# USAGE:  tools/serve-updates.sh            # on the port PATCH_URL in settings.env names
+# USAGE:  tools/serve-updates.sh            # on PATCH_PORT from settings.env
 #
 # THEN, on another device:  open one of the addresses it prints. It prints only the addresses that answered when it
 # tried them from this computer, and says in red when PATCH_URL — the address players are given — does not answer.
@@ -25,5 +25,6 @@ FOLDER="$REPO/builds/patch"
 [ -f "$FOLDER/version.txt" ] || {
   echo "Nothing published yet in $FOLDER — run tools/publish-update.py first." >&2; exit 2; }
 
-PORT="$(patch_port)" || { echo "PATCH_URL is not set in settings.env — it names the address and port to serve on." >&2; exit 2; }
+[ -n "${PATCH_PORT:-}" ] || { echo "PATCH_PORT is not set in settings.env — it names the port to serve on." >&2; exit 2; }
+PORT="$PATCH_PORT"
 exec "$(find_python)" "$(native_path "$REPO/tools/serve-folder.py")" "$(native_path "$FOLDER")" "$PORT" PATCH_URL

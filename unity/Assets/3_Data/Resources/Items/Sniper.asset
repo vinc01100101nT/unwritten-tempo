@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Sniper
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.sniper
+  displayName: Sniper
+  icon: {fileID: 0}
+  slot: 3
+  weaponType: 12
+  attackRange: 7
+  equipModel: {fileID: 1198998981114754527, guid: d0c32318984847e428ac1bce4ea19377, type: 3}
+  element: 0
+  category: 0
+  cardSlots: 2
+  weight: 60
+  zeny: 5000
+  buyPrice: 0
+  madeOf: 1
+  forgeMaterialCost: 8
+  forgeGoldCost: 800
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
+  useSkillId: 
+  attackSfx:
+    clips:
+    - {fileID: 8300000, guid: 2c07351db97c3db46bdbbcac4cb54e86, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  hitSfx:
+    clips:
+    - {fileID: 8300000, guid: 1bbafb80233098340940fcf3bb0c7f26, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  description: 

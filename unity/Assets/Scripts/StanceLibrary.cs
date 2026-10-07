@@ -60,6 +60,14 @@ public enum StanceId
     // index); the Stance Composer lists it in the Locomotion group. Defaults to the Run action/clip so it looks like
     // the old full-speed run out of the box; author a distinct clip to differentiate it. Paced by MoveGait like Walk/Run.
     Sprint,
+
+    // --- Attack variants added after Sprint (APPEND-ONLY, see above); they belong with the weapon attack variants.
+    // The scythe's reaping sweep.
+    AttackScythe,
+    // The shuriken's swing (STR at or above DEX).
+    AttackShuriken,
+    // The shuriken's throw (DEX above STR) — the blade leaves the hand.
+    AttackShurikenThrow,
 }
 
 /// <summary>
@@ -200,7 +208,8 @@ public static class StanceDefaults
             // Weapon attack variants — same shape as the base Attack (swing fit to the attack-speed-scaled window).
             case StanceId.AttackBareHands: case StanceId.AttackSword: case StanceId.AttackDagger:
             case StanceId.AttackStaff:     case StanceId.AttackLance: case StanceId.AttackHandGun:
-            case StanceId.AttackRifle:     case StanceId.AttackBow:
+            case StanceId.AttackRifle:     case StanceId.AttackBow:   case StanceId.AttackScythe: case StanceId.AttackShuriken:
+            case StanceId.AttackShurikenThrow:
                 b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
         }
         return b;

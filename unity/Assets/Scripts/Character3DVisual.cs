@@ -129,7 +129,7 @@ public class Character3DVisual : MonoBehaviour
             dead          = Character.Instance != null && Character.Instance.IsDead,
             falling       = player.IsFalling,
             swinging      = attacker != null && attacker.Swinging,
-            swing         = WeaponStances.AttackFor(EquippedWeapon()),
+            swing         = WeaponStances.AttackFor(EquippedWeapon(), Character.Instance != null && Character.Instance.SwingsRanged),
             swingWindow   = attacker != null ? attacker.SwingTime : 0f,
             airborne      = player.IsAirborne,
             airborneFreeze    = player.JumpClipFreeze,

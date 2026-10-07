@@ -6,6 +6,11 @@ using UnityEngine;
 /// building blocks (<see cref="Vfx"/>, <see cref="Projectile3D"/>, <see cref="CameraFollow3D.ShakeMain"/>,
 /// <see cref="Sfx"/>). It is the ONLY thing that "runs" a sequence; the asset itself is inert data.
 ///
+/// <para><b>One schedule, drawn only where there is a screen.</b> The server and every watching machine run the SAME
+/// runner over the same seeded dice, so ticks, chained steps and flights land on the same moments everywhere — that is
+/// what the server measures damage against. Only a watching machine draws (<see cref="VfxSequenceRunner.Draws"/>): on
+/// the server every effect, shake and sound is skipped, a flight is a bare moving point, and nothing else changes.</para>
+///
 /// <para>The tick relay is the crux of the code/data split: a step can expose a gameplay <see cref="VfxStep.tickId"/>
 /// that fires per its <see cref="VfxStep.tickWhen"/> rule (Start / End / every <see cref="VfxStep.tickInterval"/>), at the step's
 /// gameplay moment (a Carrier's arrival, or any step's start). Each tick (and each visual emit-event) is relayed to
@@ -105,6 +110,9 @@ public static class VfxDirector
 /// into the next play of the same reused runner.</summary>
 public class VfxSequenceRunner : MonoBehaviour
 {
+    /// <summary>TRUE on a machine with a screen. The server keeps every beat of a sequence and draws none of it.</summary>
+    internal static readonly bool Draws = !GameServer.IsServer;
+
     VfxSequence seq;
     VfxContext ctx;
     System.Action<VfxTick> onTick;
@@ -147,17 +155,6 @@ public class VfxSequenceRunner : MonoBehaviour
     bool active;
     bool hasLiveAura;               // a persistent (Begin) Attach is running → never auto-tear-down; wait for Stop()
 
-    // THE LASTING CUE THIS PLAY IS SHOWING, if it is one, and the unit it is riding — so every machine watching that
-    // unit can be told the moment it ends. Whoever holds a status aura stops the runner and knows nothing about the
-    // wire, so the runner is what says so: one door for "this aura is over", whether it was stopped, expired, or torn
-    // down with its host. 0 = this play is not an announced cue (a skill's own sequence, or a single-machine game).
-    uint cueOnNetId;
-    int cueKey;
-
-    /// <summary>Say this play IS a named lasting cue on a unit, so its ending is announced. Set by
-    /// <see cref="VfxCue.Begin"/> on the machine that owns the world; never set anywhere else.</summary>
-    internal void AnnounceStopAs(uint onNetId, int key) { cueOnNetId = onNetId; cueKey = key; }
-
     internal void Begin(VfxSequence s, VfxContext c, System.Action<VfxTick> cb)
     {
         seq = s; ctx = c; onTick = cb;
@@ -167,10 +164,6 @@ public class VfxSequenceRunner : MonoBehaviour
         startTime = Time.time;
         active = true;
         hasLiveAura = false;
-        // CLEARED FOR THE NEW PLAY. These runners come back out of a pool, so last play's aura name left sitting here
-        // would have this one announce an ending that belongs to somebody else's poison.
-        cueOnNetId = 0u;
-        cueKey = 0;
         attached.Clear();
         intervals.Clear();
 
@@ -276,11 +269,14 @@ public class VfxSequenceRunner : MonoBehaviour
                 // Looping PlayAt: keep the particle loop on and live for the skill's Stay Duration; otherwise a
                 // one-shot that plays once for its natural length. The window end (natural or Stay) drives End ticks.
                 float stayP = Stay(st);
-                if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
-                var hP = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
-                           new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd,
-                                               clipStart = st.clipStart, loop = st.looping, lifetime = st.looping ? stayP : 0f });
-                if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, hP);
+                if (Draws)
+                {
+                    if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
+                    var hP = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
+                               new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd,
+                                                   clipStart = st.clipStart, loop = st.looping, lifetime = st.looping ? stayP : 0f });
+                    if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, hP);
+                }
                 // WHEN THIS BEAT LANDS is read off the effect TABLE, never off the instance we may or may not have
                 // just built. A machine that draws nothing has to reach the same moment as one that does, and asking
                 // the handle made the answer depend on having a screen.
@@ -303,17 +299,20 @@ public class VfxSequenceRunner : MonoBehaviour
                     bool loop = st.looping || ctx.persistent;
                     float stayA = Stay(st);
                     float lifeA = (st.looping && !ctx.persistent) ? stayA : 0f;   // 0 → authored (persistent = until Stop)
-                    if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
-                    var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
-                                       speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
+                    if (Draws)
+                    {
+                        if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
+                        var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
+                                           speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
+                        if (h != null) attached.Add(new HeldEffect { handle = h, generation = h.Generation });
+                        if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, h);
+                    }
                     float endA;
                     // The aura's latch reads whether this effect EXISTS, not whether we drew it — a server holds a
                     // persistent aura open for exactly as long as the machines watching it do.
                     if (ctx.persistent) { endA = float.PositiveInfinity; if (EffectCatalog.Has(st.effectId)) hasLiveAura = true; }
                     else { endA = StepEnds(st, lifeA, !loop, stayA);
                            if (endA + 0.5f > endBy) endBy = endA + 0.5f; }
-                    if (h != null) attached.Add(new HeldEffect { handle = h, generation = h.Generation });
-                    if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, h);
                     ArmTicks(i, point, endA, ctx.follow);
                 }
                 break;
@@ -356,13 +355,19 @@ public class VfxSequenceRunner : MonoBehaviour
 
                     int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
                     Transform mover = null;
+                    Vfx.EffectHandle travel = null;
                     // Each copy's arrival re-arms the steps chained to it, so a volley of five gets five landings —
                     // five explosions, five impact sounds — instead of one. Without that, an OnEvent step is once per
                     // sequence play, and four of the five bolts would land in silence.
-                    mover = Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
-                        st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
-                        () => { if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); } },
-                        st.carrierFaceTravel, st.clipStart, st.tint);
+                    // The flight itself is a bare moving point on every machine, so it arrives on the same frame-steps
+                    // everywhere; the effect riding it is a screen's alone, and comes off the moment it lands.
+                    mover = Projectile3D.Fly(from, land, st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
+                        () =>
+                        {
+                            if (travel != null) travel.Stop();
+                            if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); }
+                        });
+                    if (Draws) travel = DrawFlight(st, mover, from, land, scale);
                     // Carrier tick placement: Start = one tick at launch; Interval = every tickInterval along the
                     // flight (tracks the live mover, capped by carrierMaxLife, closed on arrival); End = one tick on
                     // arrival. Each copy answers for itself — its own launch, its own path, its own landing.
@@ -380,16 +385,32 @@ public class VfxSequenceRunner : MonoBehaviour
             }
 
             case VfxStepKind.Shake:
-                CameraFollow3D.ShakeMain(st.shakeStrength, st.shakeDuration);
+                if (Draws) CameraFollow3D.ShakeMain(st.shakeStrength, st.shakeDuration);
                 ScheduleEnd(i, Time.time + st.shakeDuration);
                 break;
 
             case VfxStepKind.Sound:
-                if (st.sound != null && !st.sound.Empty)
+                if (Draws && st.sound != null && !st.sound.Empty)
                     Sfx.PlayAt(st.sound, point, st.soundFadeIn, st.soundFadeOut, st.soundDuration);
                 ScheduleEnd(i, Time.time);   // one-shot cue: end ≈ start
                 break;
         }
+    }
+
+    // A carrier's travel effect, riding its mover and aimed down the flight path. Map DOWN → travel dir so a pure
+    // vertical drop is unchanged (identity) and only an angled launch tilts. Attach copies position each frame but not
+    // rotation, so setting it once on the handle holds for the straight-line flight.
+    static Vfx.EffectHandle DrawFlight(VfxStep st, Transform mover, Vector3 from, Vector3 land, float scale)
+    {
+        if (string.IsNullOrEmpty(st.effectId)) return null;
+        var travel = Vfx.Attach(st.effectId, mover, Vector3.zero, scale, tint: st.tint, clipStart: st.clipStart);
+        if (st.carrierFaceTravel && travel != null)
+        {
+            Vector3 dir = land - from;
+            if (dir.sqrMagnitude > 1e-6f)
+                travel.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir.normalized);
+        }
+        return travel;
     }
 
     /// <summary>The absolute moment this step's window closes — the beat an End tick lands on, and the fence an
@@ -530,16 +551,6 @@ public class VfxSequenceRunner : MonoBehaviour
         }
         attached.Clear();
         onTick = null;
-
-        // AND EVERY MACHINE WATCHING THAT UNIT TAKES IT OFF TOO. Cleared before the announce, so a teardown that
-        // somehow ran twice could not say it twice.
-        if (cueKey != 0)
-        {
-            uint on = cueOnNetId; int key = cueKey;
-            cueOnNetId = 0u; cueKey = 0;
-            GameNetwork.AnnounceCueStopped(on, key);
-        }
-
         VfxDirector.Return(this);
     }
 }

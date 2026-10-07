@@ -266,7 +266,7 @@ public class StatusBox : MonoBehaviour
         if (!show) return;
 
         masteryFillImage.color = WeaponColors.Load()?.Lookup(weapon) ?? RingFill;
-        masteryName.text = $"{weapon} Mastery Lv {level}";   // perf-ok: gated by the early return above
+        masteryName.text = $"{WeaponTypes.Label(weapon)} Mastery Lv {level}";   // perf-ok: gated by the early return above
         if (capped)
         {
             SetFill(masteryFill, 1f);

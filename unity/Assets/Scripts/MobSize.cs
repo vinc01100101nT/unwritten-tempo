@@ -84,21 +84,49 @@ public static class MobBody
     /// obstacles with. A body wider than this routes with its own width instead.</summary>
     public const float RoutingRadius = 0.3f;
 
-    public static void Fit(GameObject go, CreatureKind kind, float authored, bool flies)
+    /// <summary>The measurements a flat creature's picture was drawn at — what its body is fitted against: how far the
+    /// tallest frame's crown stands above its feet and how wide the widest frame is painted, in world units at scale
+    /// one, and how wide the body is drawn against its height (1 for every creature). Taken from the picture's own
+    /// authored numbers, or a saved character's, never re-measured — so a machine that draws nothing fits the same body.</summary>
+    public readonly struct FlatArt
+    {
+        public readonly bool exists;
+        public readonly float crownAtScaleOne, paintedWidthAtScaleOne, drawnWidth;
+
+        public FlatArt(float crownAtScaleOne, float paintedWidthAtScaleOne, float drawnWidth)
+        {
+            exists = true;
+            this.crownAtScaleOne = crownAtScaleOne;
+            this.paintedWidthAtScaleOne = paintedWidthAtScaleOne;
+            this.drawnWidth = drawnWidth;
+        }
+
+        /// <summary>The numbers <paramref name="anim"/> was authored with; nothing to fit against when there is none.</summary>
+        public static FlatArt Of(BillboardAnimator3D anim) =>
+            anim != null ? new FlatArt(anim.crownAtScaleOne, anim.paintedWidthAtScaleOne, anim.DrawnWidth) : default;
+    }
+
+    public static void Fit(GameObject go, CreatureKind kind, float authored, bool flies, in FlatArt art)
     {
         float size = MobSizes.Of(kind, authored);
         var brain = go.GetComponent<MonsterAI3D>();   // perf-ok: once per creature made
         if (brain != null) brain.size = size;
-        if (CreatureKinds.Is3D(kind)) return;
+        if (CreatureKinds.Is3D(kind) || !art.exists) return;
 
-        var anim = go.GetComponent<BillboardAnimator3D>();   // perf-ok: once per creature made
-        if (anim == null) return;
+        // THE BODY: scaled so its art stands its size's height, and that height and the matching width stated as the
+        // unit's real body (UnitBody), so its nameplate, health bar, aim point and click area use the measured body.
         float characterHeight = CharacterSpec.Active.bodyHeight * UnitScale.CharacterScale;
         float height = MobSizes.Height(size, characterHeight);
-        float s = anim.FitToHeight(height);
+        float s = MobSizes.BodyScale(height, art.crownAtScaleOne);
+        var scale = new Vector3(s * art.drawnWidth, s, s);
+        go.transform.localScale = scale;
+        if (art.crownAtScaleOne > 0f) UnitBody.Set(go, height, art.paintedWidthAtScaleOne * s * art.drawnWidth);
         float lift = flies ? MobSizes.FlyLift(size, characterHeight) : 0f;
-        anim.FlyAt(lift);
         UnitBody.SetLift(go, lift);
+        // …AND ITS PICTURE, on a machine that draws one: breathing and biting squash around this scale, and a flier's
+        // picture is drawn the lift above its feet.
+        var anim = go.GetComponent<BillboardAnimator3D>();   // perf-ok: once per creature made
+        if (anim != null) anim.TakeFit(scale, lift);
 
         var cc = go.GetComponent<CharacterController>();   // perf-ok: once per creature made
         if (cc == null) return;
@@ -106,5 +134,33 @@ public static class MobBody
         GroundElevation.ApplyWalkRules(cc);
         var agent = go.GetComponent<PathAgent3D>();   // perf-ok: once per creature made
         if (agent != null) agent.agentRadius = Mathf.Max(RoutingRadius, cc.radius * s);
+    }
+
+    /// <summary>Take every part that draws a FLAT creature off <paramref name="go"/> — the turn to face the camera, the
+    /// frames and breathing, the bite, the cast shadow and the depth order — and hide its sprite. The ONE list, used by
+    /// the server (which draws nothing) and by a creature that becomes a live-3D character. The sprite is only hidden:
+    /// <see cref="Health"/> and <see cref="DeathDissolve"/> require it.
+    ///
+    /// <para><paramref name="beforeItWakes"/>: the creature is still being made under a switched-off parent, so none of
+    /// these parts has run a single line yet and they are removed on the spot. Otherwise each is switched off now and
+    /// removed at the end of the frame, the only removal Unity allows on a live object.</para></summary>
+    public static void DropFlatPicture(GameObject go, bool beforeItWakes)
+    {
+        Remove<AttackLunge>(go, beforeItWakes);
+        Remove<BillboardShadow>(go, beforeItWakes);
+        Remove<Billboard>(go, beforeItWakes);
+        Remove<CameraDepthSorter>(go, beforeItWakes);
+        Remove<BillboardAnimator3D>(go, beforeItWakes);
+        var sprite = go.GetComponent<SpriteRenderer>();   // perf-ok: once per creature made
+        if (sprite != null) sprite.enabled = false;
+    }
+
+    static void Remove<T>(GameObject go, bool now) where T : Behaviour
+    {
+        var part = go.GetComponent<T>();   // perf-ok: once per creature made
+        if (part == null) return;
+        if (now) { Object.DestroyImmediate(part); return; }
+        part.enabled = false;
+        Object.Destroy(part);
     }
 }

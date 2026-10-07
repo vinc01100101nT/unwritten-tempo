@@ -35,6 +35,7 @@ public class RainAudio : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
 #if UNITY_EDITOR
         // Editor convenience: if the builder didn't assign the clips, load them by path so this works the moment

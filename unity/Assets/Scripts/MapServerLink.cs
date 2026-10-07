@@ -60,7 +60,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v19";
+    public const string CharacterBuild = "unwritten-character-v20";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -87,7 +87,30 @@ public class MapServerLink : MonoBehaviour
         // Every quest record the character has, open and finished (v19); empty for one that has never had any.
         public QuestRowWire[] quests;
         public int handover;
+        // Entering the world (true) rather than walking in from another map server (v20) — they are told which world
+        // events are running only then.
+        public bool signingIn;
         public float expiresAt;
+        // Private messages that arrived for them before they did, handed over at the door; at most MostPmsHeld.
+        public List<GameNetwork.PmHeard> pendingPms;
+    }
+
+    const int MostPmsHeld = 5;
+
+    /// <summary>Server-only: hold a private message for somebody announced here who has not connected yet. 200 when
+    /// held, 429 when as many are already waiting as are kept, 0 when nobody with that character is expected.</summary>
+    public static int HoldPmForArrival(string characterId, GameNetwork.PmHeard pm)
+    {
+        if (string.IsNullOrEmpty(characterId)) return 0;
+        foreach (var who in expected.Values)   // perf-ok: only people mid-arrival, a handful at most
+        {
+            if (who.characterId != characterId || Time.time > who.expiresAt) continue;
+            who.pendingPms ??= new List<GameNetwork.PmHeard>();
+            if (who.pendingPms.Count >= MostPmsHeld) return 429;
+            who.pendingPms.Add(pm);
+            return 200;
+        }
+        return 0;
     }
 
     static readonly Dictionary<string, Expected> expected = new();
@@ -295,6 +318,27 @@ public class MapServerLink : MonoBehaviour
             return;
         }
 
+        // A PRIVATE MESSAGE for somebody the character server last handed here. Queued for the game loop like a
+        // let-go — whether they are here is a question about bodies — and stamped, so one that waited past the
+        // character server's own patience is refused rather than delivered after the sender was told it failed.
+        if (ctx.Request.Url.AbsolutePath.EndsWith("/pm"))
+        {
+            var pm = JsonUtility.FromJson<PmDelivery>(body);
+            if (pm == null || string.IsNullOrEmpty(pm.toCharacterId) || string.IsNullOrEmpty(pm.text))
+            { Reply(ctx, 400, "{\"error\":\"no message\"}"); return; }
+            lock (toDeliver) toDeliver.Enqueue((pm, WorldClock.UtcNow, ctx));
+            return;
+        }
+
+        // THE WORLD EVENTS LIST, pushed the moment it changed (see WorldEvents). Answered at once — it is a copy to take,
+        // nothing is asked back — and applied on the game loop, where the players it is said to are.
+        if (ctx.Request.Url.AbsolutePath.EndsWith("/events"))
+        {
+            lock (eventLists) eventLists.Enqueue(body);
+            Reply(ctx, 200, "{\"ok\":true}");
+            return;
+        }
+
         if (!ctx.Request.Url.AbsolutePath.EndsWith("/arriving")) { Reply(ctx, 404, "{}"); return; }
 
         var msg = JsonUtility.FromJson<Arrival>(body);
@@ -318,6 +362,7 @@ public class MapServerLink : MonoBehaviour
                 hotbar = msg.hotbar,
                 quests = msg.quests,
                 handover = msg.handover,
+                signingIn = msg.signingIn,
             }, ctx));
         }
 
@@ -352,6 +397,11 @@ public class MapServerLink : MonoBehaviour
         Heartbeat();
         BringUpWhatWasAskedFor();
         LetGoOfWhoWasAskedFor();
+        DeliverWhatWasSent();
+        TakeEventLists();
+        // HERE, before anything below can return early: the events must end on time whether or not anybody is arriving.
+        WorldEvents.Tick();
+        WorldEvents.Poll();
 
         // Taken off the queue on the ordinary frame — the clock below is Unity's, and it may only be read here.
         lock (arrived)
@@ -486,6 +536,55 @@ public class MapServerLink : MonoBehaviour
                     GameLog.Warn(LogCat.Map, "could not confirm letting go of a character — " + e.Message);
                 }
             });
+        }
+    }
+
+    [Serializable]
+    class PmDelivery
+    {
+        public string toCharacterId;
+        public string fromName;
+        public string text;
+    }
+
+    // The character server waits five seconds for an answer; a message older than this when the game loop reaches it
+    // is refused, because the sender has already been told it did not arrive.
+    static readonly TimeSpan PmFreshFor = TimeSpan.FromSeconds(4);
+
+    readonly Queue<(PmDelivery pm, DateTime at, HttpListenerContext asker)> toDeliver =
+        new Queue<(PmDelivery, DateTime, HttpListenerContext)>();
+
+    void DeliverWhatWasSent()
+    {
+        while (true)
+        {
+            PmDelivery pm; DateTime at; HttpListenerContext asker;
+            lock (toDeliver)
+            {
+                if (toDeliver.Count == 0) return;
+                (pm, at, asker) = toDeliver.Dequeue();
+            }
+            int status = WorldClock.UtcNow - at > PmFreshFor
+                ? 503
+                : GameNetwork.DeliverPm(pm.toCharacterId, pm.fromName, pm.text);
+            try { Reply(asker, status, "{}"); }
+            catch (Exception e) { GameLog.Warn(LogCat.Map, "could not answer about a private message — " + e.Message); }
+        }
+    }
+
+    readonly Queue<string> eventLists = new Queue<string>();
+
+    void TakeEventLists()
+    {
+        while (true)
+        {
+            string list;
+            lock (eventLists)
+            {
+                if (eventLists.Count == 0) return;
+                list = eventLists.Dequeue();
+            }
+            WorldEvents.Apply(WorldEvents.Parse(list), justChanged: true);
         }
     }
 
@@ -633,5 +732,7 @@ public class MapServerLink : MonoBehaviour
         public QuestRowWire[] quests;
         // Which hand-over this is — every save of this character from here carries it back.
         public int handover;
+        // Entering the world rather than changing map servers (v20).
+        public bool signingIn;
     }
 }

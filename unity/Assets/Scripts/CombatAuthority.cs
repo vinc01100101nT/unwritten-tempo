@@ -110,6 +110,9 @@ public static class CombatAuthority
     // reason sitting here when the hit line reads it is this blow's own.
     static NoDamageReason lastNoDamage;
 
+    /// <summary>Why the blow being landed right now cost nothing — read by its announcement, which follows it at once.</summary>
+    public static NoDamageReason WhyNoDamage => lastNoDamage;
+
     /// <summary>Return zero from a damage intake and say why. Every intake that turns a blow away returns through
     /// this, so the hit line can say which way it was turned away instead of only "nothing got through".</summary>
     public static int NoDamage(NoDamageReason why)
@@ -158,7 +161,7 @@ public static class CombatAuthority
             case NoDamageReason.AlreadyDead: return "already dead";
             case NoDamageReason.Immune:      return "immune to that element";
             case NoDamageReason.Parried:     return "parried";
-            case NoDamageReason.Guarded:     return "blocked by an off-hand shield";
+            case NoDamageReason.Guarded:     return "blocked";
             case NoDamageReason.Dodged:      return "dodged";
             case NoDamageReason.Invincible:  return "invincible";
             case NoDamageReason.Soaked:      return "soaked by a shield barrier";
@@ -188,8 +191,9 @@ public static class CombatAuthority
     public static event System.Action<ICombatUnit, int> OnHPAdded;
 
     /// <summary>Announce that <paramref name="unit"/> just gained <paramref name="amount"/> HP. The ONE door every
-    /// gain passes through, so the green digits and the cue are written once and cannot be forgotten by whoever adds
-    /// the next source. The caller has already applied the HP — this only announces it.
+    /// gain passes through, so the announcement and the cue are written once and cannot be forgotten by whoever adds
+    /// the next source. The caller has already applied the HP — this only announces it; every screen draws the green
+    /// digits from it (<see cref="ShowHPAdded"/>).
     ///
     /// <para>The digits show the FULL intended amount even when the unit was already at full: the gain still landed,
     /// and hiding it would make a heal at full health look like it failed.</para></summary>
@@ -197,11 +201,7 @@ public static class CombatAuthority
     {
         if (unit == null || amount <= 0) return;
         var body = unit.Body;
-        if (body != null)
-        {
-            ShowHPAdded(body, amount);
-            VfxCue.Fire(VfxCueId.OnHPAdded, body);
-        }
+        if (body != null) VfxCue.Fire(VfxCueId.OnHPAdded, body);
         OnHPAdded?.Invoke(unit, amount);
         LogHeal(unit, amount, null);
         // Health is the server's, so this is where every gain happens — and a gain nobody says out loud is a bar that
@@ -232,7 +232,7 @@ public static class CombatAuthority
     /// <param name="attacker">The unit this damage is credited to, when there is one — whoever put a damage-over-time
     /// ailment on. Recorded as the target's last attacker BEFORE the damage, exactly as a blow is at <see cref="Land"/>,
     /// because a death pays whoever is recorded at that instant. Null leaves the record as it was.</param>
-    public static int ApplyTrue(IDamageable target, int amount, Color color, string cause, ICombatUnit attacker = null)
+    public static int ApplyTrue(IDamageable target, int amount, TrueDamageCause cause, ICombatUnit attacker = null)
     {
         if (target == null) return 0;
 
@@ -248,7 +248,7 @@ public static class CombatAuthority
         var priorAttacker = credited != null ? credited.LastAttacker : null;
         if (credited != null) credited.NoteAttacker(attacker);
 
-        int dealt = target.ApplyTrueDamage(amount, color);
+        int dealt = target.ApplyTrueDamage(amount);
         if (credited != null && dealt <= 0) credited.NoteAttacker(priorAttacker);
 
         // "field_15 Snake #3 took 4 from Poison by Alpha #1 [HP 40/60]" — damage that is not a blow still writes a line,
@@ -256,14 +256,68 @@ public static class CombatAuthority
         if (dealt > 0 && GameLog.On(LogCat.Hit) && target is ICombatUnit hurtUnit)
             GameLog.Info(LogCat.Hit, string.Concat(new[]
             {
-                SpawnIds.MapOf(hurtUnit), " ", SpawnIds.Label(hurtUnit), " took ", dealt.ToString(), " from ", cause,
+                SpawnIds.MapOf(hurtUnit), " ", SpawnIds.Label(hurtUnit), " took ", dealt.ToString(), " from ",
+                TrueDamageCauses.LogName(cause),
                 credited != null ? " by " + SpawnIds.Label(attacker) : "", HealthLeft(hurtUnit),
             }));
         // Announced for the same reason an ordinary blow is: a person's own machine no longer works their health
         // out, so a burn nobody says out loud is a bar that drops with no number to explain it.
         if (dealt > 0 && target is Character person)
             GameNetwork.AnnounceBlowOnPlayer(person, new DamageInfo(dealt, Element.Neutral, isMagic: false), dealt, tick: true,
-                                          tickColor: color);
+                                          tickCause: cause);
+        else if (dealt > 0 && target is Health creature)
+            GameNetwork.AnnounceBlowOnMob(creature, attacker, ShownBlow.Tick(dealt, cause));
         return dealt;
+    }
+}
+
+/// <summary>WHAT a piece of damage that bypasses defence IS — said with it, so the log line names it and every screen
+/// colours its number from its own table. <see cref="None"/> = not such damage (an ordinary blow).</summary>
+public enum TrueDamageCause : byte
+{
+    None = 0,
+    Poison,
+    Bleed,
+    Burn,
+    /// <summary>A Brace's held damage coming due.</summary>
+    BraceDebt,
+    /// <summary>Damage a person bounced back at whoever hit them.</summary>
+    ReflectedByPerson,
+    /// <summary>Damage a creature bounced back at whoever hit it.</summary>
+    ReflectedByCreature,
+    /// <summary>A game master's kill command.</summary>
+    GmKill,
+}
+
+/// <summary>The one table for <see cref="TrueDamageCause"/>: its name in the log and its colour on screen.</summary>
+public static class TrueDamageCauses
+{
+    /// <summary>The cause of a damage-over-time ailment's tick.</summary>
+    public static TrueDamageCause OfDot(Ailment a) =>
+        a == Ailment.Poison ? TrueDamageCause.Poison : a == Ailment.Bleed ? TrueDamageCause.Bleed : TrueDamageCause.Burn;
+
+    // Built once: an enum's ToString builds a string per call, and this runs per tick per unit.
+    static readonly string[] LogNames = { "", "Poison", "Bleed", "Burn", "brace debt", "reflect", "reflect", "GM kill" };
+
+    /// <summary>The cause as its log line names it — "field_15 Snake #3 took 4 from Poison …".</summary>
+    public static string LogName(TrueDamageCause cause) => LogNames[(int)cause];
+
+    /// <summary>The colour every screen draws this cause's number in.</summary>
+    public static Color Colour(TrueDamageCause cause)
+    {
+        switch (cause)
+        {
+            case TrueDamageCause.Poison:              return new Color(0.55f, 0.85f, 0.35f);
+            case TrueDamageCause.Bleed:               return new Color(1f, 0.3f, 0.3f);
+            case TrueDamageCause.Burn:                return new Color(1f, 0.55f, 0.25f);
+            // The bill coming due gets its OWN colour, deliberately not Brace's blue: the blue numbers are damage you
+            // dodged for now, this one is damage you are actually taking, and they must not read as the same event.
+            // Pushed toward magenta rather than violet so it can't be mistaken for magic damage (that's 0.7, 0.5, 1).
+            case TrueDamageCause.BraceDebt:           return new Color(0.8f, 0.25f, 0.9f);
+            case TrueDamageCause.ReflectedByPerson:   return new Color(0.85f, 0.85f, 0.95f);
+            case TrueDamageCause.ReflectedByCreature: return new Color(1f, 0.6f, 0.9f);
+            case TrueDamageCause.GmKill:              return new Color(1f, 0.3f, 0.3f);
+            default:                                  return Color.white;
+        }
     }
 }

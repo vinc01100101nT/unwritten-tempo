@@ -33,7 +33,7 @@ public class CharacterSpec : ScriptableObject
     static CharacterSpec _active;
 
     /// <summary>The live spec every character reads. Loaded once and cached; falls back to a code-default instance
-    /// (with empty model pools) if the asset is absent, so a missing asset degrades to "no townsfolk / no shadows"
+    /// (with an empty civilian pool and no animator) if the asset is absent, so a missing asset degrades to "no townsfolk / no shadows"
     /// with a warning rather than a null crash.</summary>
     public static CharacterSpec Active
     {
@@ -56,16 +56,15 @@ public class CharacterSpec : ScriptableObject
 
     // ---- the cast -------------------------------------------------------------------------------------------------
 
-    // The pools hold model NAMES, not object links. A direct link would drag every model in the cast into memory the
+    // The pool holds model NAMES, not object links. A direct link would drag every model in the cast into memory the
     // moment this settings asset loads — all of them, to wear one. A name costs nothing until something asks for it,
     // and the asset itself is fetched on demand through CharacterModels (the roster) → AddressablePrefabs (the cache).
     [Header("Cast (rigged model names — see CharacterModels for the roster)")]
     [Tooltip("Ordinary folk. Townsfolk draw from this pool. Entries are model names, e.g. 'Casual_Female'.")]
     public List<string> civilianModels = new List<string>();
 
-    [Tooltip("Soldiers, knights, and other fighters. Shadow mobs draw from this pool, so a Shadow of the Past reads " +
-             "as a fallen combatant rather than a chef. Entries are model names, e.g. 'BlueSoldier_Male'.")]
-    public List<string> fighterModels = new List<string>();
+    // NO SHADOW POOL HERE. Each shadow's body is written on its own creature entry (MonsterDef.modelName, picked in
+    // the Mob Table from the whole roster), so a named Kashira wears the same body every life.
 
     [Tooltip("The shared Humanoid animator controller. Every model's embedded avatar retargets it, so one controller " +
              "animates the whole cast — player, townsfolk and shadows alike.")]
@@ -73,9 +72,6 @@ public class CharacterSpec : ScriptableObject
 
     /// <summary>A random civilian model NAME, or null when the pool is empty. Load it via <see cref="CharacterModels"/>.</summary>
     public string RandomCivilian() => Pick(civilianModels);
-
-    /// <summary>A random fighter model NAME, or null when the pool is empty. Load it via <see cref="CharacterModels"/>.</summary>
-    public string RandomFighter() => Pick(fighterModels);
 
     static string Pick(List<string> pool)
     {

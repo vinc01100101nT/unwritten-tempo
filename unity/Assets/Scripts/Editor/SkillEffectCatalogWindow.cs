@@ -61,6 +61,9 @@ public class SkillEffectCatalogWindow : EditorWindow
     static readonly Dictionary<SkillEffectKind, Eff> Effects = new Dictionary<SkillEffectKind, Eff>
     {
         [SkillEffectKind.Damage]        = E("mobs/any", "yes", "damage, hits", "damage, hits", "CombatAuthority.Apply", "The caster's ATK/MATK roll × the effect's ATK/MATK multiplier × affinity; each hit triggers the binding's procs."),
+        [SkillEffectKind.DrainMana]     = E("mobs/any", "no", "mp_drained (amount), proc_chance", "mp_drained", "ICombatUnit.SpendMana + GainMana", "Takes up to N MP from the unit it lands on (never more than it holds); the caster gains exactly what was taken."),
+        [SkillEffectKind.SpendAllMana]  = E("self", "no", "—", "—", "SkillEffectApplier.PayAllInCosts", "The caster spends every point of MP held. Paid once per cast; a Damage effect later in the cast grows by its 'damage mult per point given up'."),
+        [SkillEffectKind.DropHealthToOne] = E("self", "no", "—", "—", "ICombatUnit.GiveUpHealthDownToOne", "The caster's HP drops to 1 (never 0); not a hit. Paid once per cast; a Damage effect later in the cast grows by its 'damage mult per point given up'."),
         [SkillEffectKind.Heal]          = E("self/others","no", "heal_amount", "heal_amount", "Health/Character.Heal", "Flat HP restored; landing follows the tick's TargetMode."),
         [SkillEffectKind.Status]        = E("mobs/self", "no", "ailment; dot_damage, duration, proc_chance", "output + duration (proc_chance never)", "StatusController.Apply", "Only the DoTs carry a number now; Stun/Freeze/Silence are duration-only. Slow and Blind moved to the sub-stat debuff."),
         [SkillEffectKind.Taunt]         = E("mobs", "no", "duration", "duration", "MonsterAI3D.Taunt", "Forces mob aggro onto the caster."),

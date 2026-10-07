@@ -479,7 +479,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 21
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -491,7 +491,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 22
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -527,7 +527,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 25
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -539,7 +539,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 26
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -551,7 +551,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 27
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -575,7 +575,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 29
     action: 3
-    clip: 
+    clip: AttackBow
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -719,3 +719,39 @@ MonoBehaviour:
     - avatar: Soldier_MaleAvatar
       speed: 8.5786
     speedPerHumanScale: 6.551722
+  - id: 32
+    action: 3
+    clip: AttackSword2H
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 33
+    action: 3
+    clip: AttackSword2H
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 34
+    action: 3
+    clip: ReleaseSingleSkill
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0

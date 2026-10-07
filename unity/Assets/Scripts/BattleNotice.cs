@@ -33,9 +33,9 @@ public class BattleNotice : MonoBehaviour
     public static void Warn(string message, Color color)
     {
         if (string.IsNullOrEmpty(message)) return;
-        // NOBODY TO TELL on a headless server, which resolves everybody's skills and would otherwise build a heads-up
-        // display in front of no screen. The twin of Sfx.Deaf and Vfx.Blind, written the same way.
-        if (GameServer.IsServer) return;
+        // NOBODY TO TELL on a headless server — and the server never means to: a warning is a player's own screen's.
+        // The twin of Sfx.Deaf and Vfx.Blind, written the same way.
+        if (GameServer.CaughtDrawing("BattleNotice")) return;
         Warned?.Invoke(message);
         Ensure();
         inst.Push(message, color);

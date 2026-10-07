@@ -37,18 +37,25 @@ public static class Rewards
         var character = killer as Character;
         if (character == null) return;
 
-        int levelsGained = character.AddXP(xp, out int ringLevelsGained);
-        // "field_15 Alpha #1 (id) earned 40 experience from Snake #3" — beside the loot line, so what a kill paid is
-        // all in the log and nothing about it needs a recorder.
-        if (GameLog.On(LogCat.Loot))
-            GameLog.Info(LogCat.Loot, string.Concat(new[]
-            {
-                SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " (", GameNetwork.CharacterIdOf(character),
-                ") earned ", xp.ToString(), " experience from ", victim != null ? SpawnIds.Label(victim) : "somebody",
-            }));
-        // On a server the character being paid is not the one on that player's screen, so their machine has to be
-        // told or the kill quietly earns them nothing. Does nothing anywhere else.
-        GameNetwork.TellOwnerTheyEarned(character, xp, 0, levelsGained, ringLevelsGained);
+        // UNDER WHATEVER WORLD EVENT IS RUNNING — an experience rate multiplies what the kill pays, here and nowhere
+        // else, so the number paid, logged and shown is one number. A rate small enough to round a kill down to
+        // nothing pays nothing, but the kill still counts for any quest below.
+        int paid = WorldEvents.KillExperience(xp);
+        if (paid > 0)
+        {
+            int levelsGained = character.AddXP(paid, out int ringLevelsGained);
+            // "field_15 Alpha #1 (id) earned 40 experience from Snake #3" — beside the loot line, so what a kill paid
+            // is all in the log and nothing about it needs a recorder.
+            if (GameLog.On(LogCat.Loot))
+                GameLog.Info(LogCat.Loot, string.Concat(new[]
+                {
+                    SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " (", GameNetwork.CharacterIdOf(character),
+                    ") earned ", paid.ToString(), " experience from ", victim != null ? SpawnIds.Label(victim) : "somebody",
+                }));
+            // On a server the character being paid is not the one on that player's screen, so their machine has to
+            // be told or the kill quietly earns them nothing. Does nothing anywhere else.
+            GameNetwork.TellOwnerTheyEarned(character, paid, 0, levelsGained, ringLevelsGained);
+        }
 
         // AND ANY QUEST COUNTING THIS CREATURE — the same kill, paid to the same person, through this same door.
         // A SAVED CHARACTER is not the creature whose body it wears — the same exclusion SavedCharacters makes.

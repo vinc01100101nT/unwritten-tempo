@@ -64,7 +64,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 - **Inline:** id, name, biome, kind, size (a number, its Small / Medium / Large group shown beside it; a shadow's is locked — it is always 1), **LVL + STR/AGI/VIT/INT/DEX/LUK**, element, Element Lv, weight, XP, gold.
 - **`pts` column:** `spent/budget` — green on budget, **red over**, amber when a real chunk is unspent. Typing a value the level can't afford **snaps** to the highest that fits (`FitSpreadToBudget`), and only the field you edited is adjusted — untouched stats are never knocked down.
 - **Derived readouts** (`=HP/=ATK/=DEF/=FLEE`): read-only, computed live through `UnitStatMath`, so you edit the cause and see the effect. Sorting on them sorts the derived value.
-- **`▸` expander:** per-mob **equipment** (one object field per slot; an item is rejected if its slot doesn't match) and, when a ring is worn, its **ranks** with the % each is worth.
+- **`▸` expander:** per-mob **equipment** (one object field per slot; an item is rejected if its slot doesn't match), when a ring is worn its **ranks** with the % each is worth, and on a shadow its **appearance** — a turning 3D preview, a body picker over every body in the roster, and one colour swatch per part of the chosen body, saved by Save All.
 
 **IMGUI gotcha:** the expander toggle is queued in `_pendingToggle` and applied *after* the draw loop. Flipping it mid-draw changes the layout-group count between the Layout and Repaint passes of one frame → "Mismatched LayoutGroup" spam.
 
@@ -75,7 +75,7 @@ Run `tools/check-unity-code.sh` — it type-checks three passes (the game, the e
 ## Still open
 
 - ~~Reset the roster~~ **DONE** — every creature exactly on its point budget. Re-levelled on 2026-09-22 onto the [Mob Roster](../../3-world/mob-roster.md) ladder (normals 1–99, elites 6–99, shadows 105–170) by re-spending each one's budget through `UnitStatMath.Allocate` in its existing proportions.
-- Only six equipment items exist — two weapons (`item.sword`, `item.bow`) and four armour pieces (`item.leather-cap`, `item.padded-vest`, `item.travellers-cloak`, `item.wooden-buckler`) — so the random gear a mob puts on draws from a very small pool. Content, not code.
+- Twenty-six equipment items exist — one weapon per weapon type (fourteen; all but the Sword and the Bow are stand-ins borrowing one of their two looks) and twelve armour pieces (four slots × three materials). Content, not code.
 - Roster re-tuning by playing it — the numbers are consistent now, not necessarily *fun* yet.
 - Nothing has been run in Play mode.
 

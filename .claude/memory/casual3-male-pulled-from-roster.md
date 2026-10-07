@@ -12,7 +12,7 @@ parts came from a whole-texture scan, and it is the only model on a loose `.mat`
 
 **Removed from (restore all four once it imports cleanly):**
 1. `accounts/data/character-models.json` — the creation roster the character server reads at start (restart it).
-2. `CharacterSpec.asset` `civilianModels` (it was between Casual3_Female and Casual_Bald; never in `fighterModels`).
+2. `CharacterSpec.asset` `civilianModels` (it was between Casual3_Female and Casual_Bald).
 3. Addressables group `Characters` — entry `Characters/Casual3_Male`, label `CharacterModel` (this is also what `/model` lists).
 4. `WorldTownsfolk.asset` — Fenwick (Tool Dealer, lastline) was moved to `Casual2_Male`, my pick as the nearest look; ask the user whether he goes back.
 

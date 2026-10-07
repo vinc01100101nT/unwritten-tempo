@@ -112,7 +112,7 @@ public sealed class QuestLog
 
     static readonly EquipSlotType[] WornSlots =
     {
-        EquipSlotType.Weapon, EquipSlotType.Shield, EquipSlotType.Head, EquipSlotType.Armor,
+        EquipSlotType.Weapon, EquipSlotType.Head, EquipSlotType.Armor,
         EquipSlotType.Garment, EquipSlotType.Boots,
     };
 

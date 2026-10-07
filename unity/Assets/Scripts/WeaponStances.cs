@@ -6,6 +6,12 @@
 /// </summary>
 public static class WeaponStances
 {
+    /// <summary>The basic-attack stance for <paramref name="w"/> when the holder's attack is
+    /// <paramref name="ranged"/> — a shuriken THROWN plays its own throw, a shuriken swung plays its swing. Every other
+    /// weapon has one attack either way.</summary>
+    public static StanceId AttackFor(WeaponType w, bool ranged)
+        => ranged && WeaponTypes.ThrowsItself(w) ? StanceId.AttackShurikenThrow : AttackFor(w);
+
     public static StanceId AttackFor(WeaponType w)
     {
         switch (w)
@@ -17,7 +23,10 @@ public static class WeaponStances
             case WeaponType.Mace:     return StanceId.AttackSword;
             case WeaponType.Dagger:
             case WeaponType.Katar:    return StanceId.AttackDagger;
-            case WeaponType.Staff:    return StanceId.AttackStaff;
+            case WeaponType.Staff:
+            case WeaponType.Wand:     return StanceId.AttackStaff;
+            case WeaponType.Scythe:   return StanceId.AttackScythe;
+            case WeaponType.Shuriken: return StanceId.AttackShuriken;
             case WeaponType.Spear:    return StanceId.AttackLance;
             case WeaponType.Bow:      return StanceId.AttackBow;
             case WeaponType.Firearm:  return StanceId.AttackRifle;
@@ -44,7 +53,10 @@ public static class WeaponStances
             case StanceId.AttackLance:
             case StanceId.AttackHandGun:
             case StanceId.AttackRifle:
-            case StanceId.AttackBow:  return true;
+            case StanceId.AttackBow:
+            case StanceId.AttackScythe:
+            case StanceId.AttackShuriken:
+            case StanceId.AttackShurikenThrow: return true;
             default:                  return false;
         }
     }

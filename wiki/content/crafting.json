@@ -26,7 +26,7 @@
       "type": "list",
       "items": [
         "**Forge** — pay a design's base materials and gold, and take a **Raw +0** piece. A weapon rolls one thing, once — its **trademark** — and an armour piece rolls one **word** from its slot (see *Weapons & Equipment*); nothing else about a piece is ever rolled.",
-        "**Fold** — 1 unit of your grade's band material and gold. Each fold raises a weapon's attack by one; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
+        "**Fold** — 1 unit of your grade's band material and gold. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
         "**Quench** — 10 units of the band and more gold. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
         "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced."
       ]

@@ -394,9 +394,9 @@ public class Character : MonoBehaviour, ICombatUnit
         if (def == null || def.weaponType == WeaponType.None) return null;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         if (!Mastery.HasLearned(skillId))
-            return name + " is not learned yet — spend a " + def.weaponType + " mastery point on it in the Skills window.";
+            return name + " is not learned yet — spend a " + WeaponTypes.Label(def.weaponType) + " mastery point on it in the Skills window.";
         if (HeldWeaponType != def.weaponType)
-            return name + " needs a " + def.weaponType + " in hand.";
+            return name + " needs a " + WeaponTypes.Label(def.weaponType) + " in hand.";
         return null;
     }
 
@@ -472,7 +472,8 @@ public class Character : MonoBehaviour, ICombatUnit
     public event Action OnManaChanged;     // current or max MP changed
     public event Action<int> OnLeveledUp;  // passes the new level
     public event Action<int> OnDamaged;    // took a hit — passes the damage (drives the hurt flash)
-    public event Action OnBlocked;         // an off-hand blocked a hit (no damage taken)
+    // A hit was blocked (no damage taken).
+    public event Action OnBlocked;
     public event Action OnEvaded;          // Evasion dodged a hit entirely (no damage taken)
     public event Action OnDied;            // HP hit 0 — the death screen takes over (Phase F)
     public event Action OnRevived;         // came back to life (respawn)
@@ -498,7 +499,7 @@ public class Character : MonoBehaviour, ICombatUnit
     }
 
     [Header("Audio")]
-    [Tooltip("Default block sound when the equipped off-hand has none of its own.")]
+    [Tooltip("The sound of a blocked hit.")]
     public SfxSet blockSfx;
     [Tooltip("Played on level-up.")]
     public SfxSet levelUpSfx;
@@ -513,11 +514,11 @@ public class Character : MonoBehaviour, ICombatUnit
     public static readonly Color MonsterHitColor   = new Color(1f, 0.35f, 0.35f);
     public static readonly Color MonsterMagicColor = new Color(0.7f, 0.5f, 1f);
 
-    /// <summary>THE colour a blow on a person is drawn in, on their own machine and on everyone watching: a tick in the
-    /// colour the server gave it, otherwise magic violet or hit red.</summary>
-    public static Color ColourOfBlow(in DamageInfo info, bool tick, Color tickColor) =>
-        tick && tickColor.a > 0f ? tickColor : info.isMagic ? MonsterMagicColor : MonsterHitColor;
-    static readonly Color ReflectColor = new Color(0.85f, 0.85f, 0.95f);   // thorns damage bounced back at a mob
+    /// <summary>THE colour a blow on a person is drawn in, on their own machine and on everyone watching: a tick in its
+    /// cause's colour (<see cref="TrueDamageCauses.Colour"/>), otherwise magic violet or hit red.</summary>
+    public static Color ColourOfBlow(in DamageInfo info, bool tick, TrueDamageCause tickCause) =>
+        tick && tickCause != TrueDamageCause.None ? TrueDamageCauses.Colour(tickCause)
+                                                  : info.isMagic ? MonsterMagicColor : MonsterHitColor;
 
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
     // The passive % layer is deliberately separate so a +% never goes obsolete the way a flat bonus does (doc §7).
@@ -586,9 +587,9 @@ public class Character : MonoBehaviour, ICombatUnit
     // defence exactly as the player's crit ignores a mob's; consumed by the Step D authority seam.
     public Vector3 DamagePosition { get { var a = Avatar(); return a != null ? a.position : transform.position; } }
     public int ApplyDamage(in DamageInfo info)
-        => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.attacker)
+        => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.attacker, info.isCrit)
                         : TakeDamage(info.amount, info.attackerHit, info.element, info.attacker, info.missed, info.isCrit);
-    public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
+    public int ApplyTrueDamage(int amount) => TakeTrueDamage(amount);
 
     // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets the player through
     // the SAME handle it targets a mob through. Body is the spawned AVATAR, not this component's own object — the
@@ -607,11 +608,20 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>PLUS whatever a skill is lending right now. A basic-attack range bonus is added here, at the one place
     /// reach is answered, so the walk that stops when you are close enough, the swing that decides it may land, and
     /// the server that checks it really did all read the same longer number and cannot disagree.</para>
+    ///
+    /// <para><b>On a player's own machine it is what the server sent</b>, like every other number on the sheet: whether a
+    /// shuriken is thrown or swung turns on the holder's total STR and DEX, and only the server decides that.</para>
     public float MeleeReachFullSize
-        => Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange));
+        => Told ? toldCurrent.basicAttackRange
+                : Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange));
 
     /// <summary>Gear alone, with nothing a skill is lending — see <see cref="ICombatUnit.EquippedReachFullSize"/>.</summary>
-    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), CharacterSpec.Active.unarmedReach);
+    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), CharacterSpec.Active.unarmedReach, SwingsRanged);
+
+    /// <summary>Whether this character's ordinary attack is ranged right now — the held weapon and, for a shuriken, the
+    /// higher of their total STR and DEX. Decided where the numbers are worked out (the server), never on a player's
+    /// machine for itself.</summary>
+    public bool SwingsRanged => WeaponTypes.SwingsRanged(HeldWeaponType, P(PrimaryStat.STR), P(PrimaryStat.DEX));
 
     /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, buffs included.
     ///
@@ -633,20 +643,21 @@ public class Character : MonoBehaviour, ICombatUnit
     // A CHARACTER THE SERVER HOLDS HAS NO LEGS OF ITS OWN. Walking is still the owner's machine to do, so a skill
     // that hauls them somewhere is decided here and performed there — otherwise a dash resolved on a server moved
     // nothing at all, silently, and the person stood where they were while the skill reported success.
-    public void TeleportTo(Vector3 dest)
+    public void TeleportTo(Vector3 dest, RelocationLook look = default)
     {
         if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
-            { kind = NetPlayer.Motion.Kind.Teleport, destination = dest })) return;
-        var r = Rig(); if (r != null) r.Teleport(dest);
+            { kind = NetPlayer.Motion.Kind.Teleport, destination = dest, look = look })) return;
+        var r = Rig(); if (r != null) r.Teleport(dest, look);
     }
 
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt)
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                        RelocationLook look = default)
     {
         if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
             { kind = NetPlayer.Motion.Kind.Glide, destination = dest, speed = speedMult,
               easeIn = easeIn, easeOut = easeOut, seconds = easeSeconds,
-              facing = faceAt.HasValue, faceAt = faceAt ?? Vector3.zero })) return;
-        var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt);
+              facing = faceAt.HasValue, faceAt = faceAt ?? Vector3.zero, look = look })) return;
+        var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt, look);
     }
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
 
@@ -865,7 +876,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public int RollBasicDamage(bool crit) => RollDamageMagnitude(crit);
 
     public int RollSkillDamage(DamageType type, int targetLuk, out bool crit)
-        => type == DamageType.Magic ? RollMagicDamage(out crit)
+        => type == DamageType.Magic ? RollMagicDamage(out crit, targetLuk)
                                     : RollDamage(out crit, targetLuk, type == DamageType.Crit);
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us — the same shield a mob's LUK gives it.</summary>
@@ -879,17 +890,19 @@ public class Character : MonoBehaviour, ICombatUnit
                 : UnitOffense.Dealt(States, CombatRng.Range(MinAttack, Attack + 1));
 
     /// <summary>As <see cref="RollDamage"/> but for a spell — rolls in [<see cref="MinMagicAttack"/>,
-    /// <see cref="MaxMagicAttack"/>]. Magic NEVER crits (RPS triangle — crit is the Finesse armour-piercer).</summary>
+    /// <see cref="MaxMagicAttack"/>]. Magic crits only in a sniper's hands (<see cref="WeaponTypes.MagicCanCrit"/>).</summary>
     public int RollMagicDamage(out bool crit) => RollMagicDamage(out crit, 0);
 
-    /// <summary>Spell roll. <paramref name="targetLuk"/> is ignored — magic can't crit, so no crit shield applies;
-    /// the param is kept only for call-site signature compatibility.</summary>
+    /// <summary>Spell roll. <paramref name="targetLuk"/> shields against a crit exactly as it does against a swing's —
+    /// which only matters in a sniper's hands, the one weapon whose magic can crit.</summary>
     public int RollMagicDamage(out bool crit, int targetLuk)
     {
-        // Magic NEVER crits: crit is the Finesse armour-piercer; a critting spell would pierce armour too and
-        // collapse the Might>Arcane>Finesse triangle (design "Combat Ontology").
-        crit = false;
-        return UnitOffense.Dealt(States, CombatRng.Range(MinMagicAttack, MagicAttack + 1));
+        // Magic crits ONLY with a sniper: a crit pierces defence, and every other spell doing so would collapse the
+        // Might>Arcane>Finesse triangle (design "Combat Ontology"). A sniper's crit is a physical crit's twin — full
+        // power × the crit multiplier, no spread.
+        crit = WeaponTypes.MagicCanCrit(HeldWeaponType) && RollCrit(targetLuk);
+        return crit ? UnitOffense.Dealt(States, MagicAttack * CritMultiplier)
+                    : UnitOffense.Dealt(States, CombatRng.Range(MinMagicAttack, MagicAttack + 1));
     }
 
     /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
@@ -1112,13 +1125,11 @@ public class Character : MonoBehaviour, ICombatUnit
     // The soaked-by-barrier number (Shield skill) — a pale cyan so an absorbed hit reads distinct from HP loss.
     static readonly Color ShieldAbsorbColor = new Color(0.5f, 0.8f, 1f);
 
-    // Negate an incoming hit because we're dashing through it; pop a small "Dodge" cue over the avatar.
+    // Negate an incoming hit because we're dashing through it.
     bool DodgedByInvuln()
     {
         if (Invincible) return true;   // GM invuln: silently eat the hit
         if (!Invulnerable) return false;
-        var a = Avatar();
-        if (a != null) DamagePopup.SpawnText(a, "Dodge", DodgeColor);
         OnEvaded?.Invoke();
         return true;
     }
@@ -1152,6 +1163,16 @@ public class Character : MonoBehaviour, ICombatUnit
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
     }
 
+    public int GiveUpHealthDownToOne()
+    {
+        if (IsDead || CurrentHP <= 1 || IsWatchedCopy || GameNetwork.TheWorldIsElsewhere) return 0;
+        // server-math: the guard above returns on every machine but the server's, which holds the real health
+        int lost = CurrentHP - 1;
+        SubtractHealth(lost);
+        OnHealthChanged?.Invoke();
+        return lost;
+    }
+
     /// <summary>The health the server says this character has. The authoritative figure, arriving on the machine of
     /// the person it belongs to; it corrects whatever the local presentation guessed within a tenth of a second.</summary>
     public void SetHealthFromServer(int current, int max)
@@ -1163,12 +1184,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // DEATH IS THE SERVER'S WORD TOO. It arrives as health reaching zero, which is the same shape the offline
         // game always used — so the death screen, the cue and everything listening run through their usual door.
-        if (wasAlive && CurrentHP <= 0)
-        {
-            OnDied?.Invoke();
-            var a = Avatar();
-            if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
-        }
+        if (wasAlive && CurrentHP <= 0) OnDied?.Invoke();
 
         // AND SO IS COMING BACK. Standing up arrives the same way dying did — as health — and everything that has
         // always happened on a revive has to happen here too, or the person is walking around with the buffs they
@@ -1446,12 +1462,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // i-frames (dodge-dash): the hit passes harmlessly through
         if (DodgedByInvuln()) return CombatAuthority.NoDamage(Invincible ? NoDamageReason.Invincible : NoDamageReason.Dodged);
 
-        // Accuracy was already rolled by the attacking MOB (Combat.Missed) — we only PRESENT it, never re-roll, since
-        // a second random roll could disagree. A miss shows a WHITE MISS over the player (player-dealt = red, Health).
+        // Accuracy was already rolled by the attacking MOB (Combat.Missed) — never re-rolled here, since a second random
+        // roll could disagree. Every screen shows the miss from the server's result (ShowBlowFromServer).
         if (missed)
         {
-            var dav = Avatar();
-            if (dav != null) DamagePopup.SpawnText(dav, "MISS", MonsterMissColor);
             OnEvaded?.Invoke();
             return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
@@ -1460,13 +1474,12 @@ public class Character : MonoBehaviour, ICombatUnit
         // than counted. The server has already taken the block, the parry, the armour's element and DEF off this
         // figure, so weighing them a second time here would draw the person a smaller number than the blow they
         // actually took, or swallow the blow entirely on a coin this machine had no business tossing.
-        if (IsWatchedCopy) return LandOnMe(attackerAttack, attacker, MonsterHitColor, false, crit, attackerHit);
+        if (IsWatchedCopy) return LandOnMe(attackerAttack, attacker, false, crit, attackerHit);
 
-        // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
-        var off = GetEquipped(EquipSlotType.Shield);
-        if (Combat.Blocked(off, States.WornBlockChance))
+        // Block: a skill's block chance can negate the hit before any damage applies. The clang is the owner's machine's,
+        // from the server's result (NetPlayer.ShowBlow).
+        if (Combat.Blocked(States.SubStatBonus(SubStat.BlockChance)))
         {
-            Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
             lastMitigation.blocked = true;
             OnBlocked?.Invoke();
             return CombatAuthority.NoDamage(NoDamageReason.Guarded);
@@ -1486,7 +1499,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
-        return LandOnMe(dmg, attacker, MonsterHitColor, false, crit, attackerHit);
+        return LandOnMe(dmg, attacker, false, crit, attackerHit);
     }
 
     /// <summary>Show a blow the SERVER decided landed on this person, on their own machine — exactly as decided, with
@@ -1495,12 +1508,19 @@ public class Character : MonoBehaviour, ICombatUnit
     ///
     /// <para>The one thing this starts is the hurt stagger, fed the server's final number: a stagger stops the legs,
     /// and the legs are this machine's to drive.</para></summary>
-    public void ShowBlowFromServer(in DamageInfo info, bool tick = false, Color tickColor = default)
+    public void ShowBlowFromServer(in DamageInfo info, bool tick = false, TrueDamageCause tickCause = TrueDamageCause.None,
+                                   bool dodged = false)
     {
         // THE BLOW THAT KILLED YOU STILL SHOWS, whichever reached this machine first — it or the health reading zero.
         // Only a damage-over-time tick is dropped once you are dead.
         if (tick && IsDead) return;
         var av = Avatar();
+        if (dodged)
+        {
+            if (av != null) DamagePopup.SpawnText(av, "Dodge", DodgeColor);
+            OnEvaded?.Invoke();
+            return;
+        }
         if (info.missed)
         {
             if (av != null) DamagePopup.SpawnText(av, "MISS", MonsterMissColor);
@@ -1510,7 +1530,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (info.amount <= 0) return;
 
         if (av != null)
-            DamagePopup.Spawn(av, info.amount, ColourOfBlow(info, tick, tickColor));
+            DamagePopup.Spawn(av, info.amount, ColourOfBlow(info, tick, tickCause));
         // The hurt grunt, and the event that drives the hurt flash.
         Sfx.Play(hurtSfx);
         OnDamaged?.Invoke(info.amount);
@@ -1521,27 +1541,19 @@ public class Character : MonoBehaviour, ICombatUnit
         if (status != null) status.TookHit(info.amount);
     }
 
-    /// <summary>Where every hit on the player ends: what a Shield or a Brace leaves of it comes off HP, the DIGITS
-    /// appear over the body, the hurt grunt and flash run, thorns bounce back, and a death is raised once.
-    ///
-    /// <para>The number is drawn HERE, on the side it happened to, for the same reason a creature's is drawn inside
-    /// its own <see cref="Health"/>: whoever swung is no longer on this machine. A monster's bite is decided on the
-    /// server, so a number the monster itself drew appeared on a screen nobody is sitting at.</para></summary>
-    int LandOnMe(int dmg, ICombatUnit attacker, Color numberColor, bool isMagic, bool crit, int attackerHit)
+    /// <summary>Where every hit on the player ends, on the server: what a Shield or a Brace leaves of it comes off HP,
+    /// the hit cue is announced, thorns bounce back, and a death is raised once. The digits, the grunt and the flash
+    /// are drawn by every screen from the server's result (<see cref="ShowBlowFromServer"/>), never here.</summary>
+    int LandOnMe(int dmg, ICombatUnit attacker, bool isMagic, bool crit, int attackerHit)
     {
         dmg = ApplyHitToHP(dmg, attacker);
         OnHealthChanged?.Invoke();
         var av = Avatar();
-        // The hit cue, chosen by the same rule a creature's is and played whenever the blow got this far — a miss, a
-        // block, a parry or an immunity has already returned — exactly as a creature plays it whatever its barrier
-        // left. The digits keep our own colour. Silent on a joined machine: the server's cue reaches every screen.
+        // The hit cue, chosen by the same rule a creature's is and announced whenever the blow got this far — a miss,
+        // a block, a parry or an immunity has already returned — exactly as a creature's is whatever its barrier left.
         if (av != null) VfxCue.Fire(VfxCue.HitCue(isMagic, crit, attackerHit), av);
         if (dmg > 0)
         {
-            if (av != null) DamagePopup.Spawn(av, dmg, numberColor);
-            // player hurt grunt
-            Sfx.Play(hurtSfx);
-            // drives the player hurt flash
             OnDamaged?.Invoke(dmg);
             // thorns: bounce a fraction back at the attacker
             Reflect(dmg, attacker);
@@ -1583,37 +1595,38 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>). Magic
     /// can't be dodged, and evasion does nothing to it. Returns the damage dealt.</summary>
-    public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, ICombatUnit attacker = null)
+    public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, ICombatUnit attacker = null,
+                               bool crit = false)
     {
         if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
         // i-frames (dodge-dash) dodge magic too
         if (DodgedByInvuln()) return CombatAuthority.NoDamage(Invincible ? NoDamageReason.Invincible : NoDamageReason.Dodged);
 
         // Told, not worked out — the same rule the physical intake above explains.
-        if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, MonsterMagicColor, true, false, -1);
+        if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, true, crit, -1);
 
         float mod = ElementModifier(attackElement);
-        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, MagicDefense, false), mod);
+        // A sniper's magic crit pierces magic defence the way a physical crit pierces defence (Combat.AfterDefense).
+        if (mod < 0f) return HealedByElement(Combat.AfterDefense(attackerMagic, MagicDefense, crit), mod);
         // armour already nullified it — nothing to parry, so no charge is spent
         if (mod == 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // the read catches magic too: Parry is a timing skill, not a physical block
         if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, MagicDefense, false) * mod);
-        return LandOnMe(dmg, attacker, MonsterMagicColor, true, false, -1);
+        // server-math: a watched copy returned above with the server's told number; only the server's copy gets here
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, MagicDefense, crit) * mod);
+        return LandOnMe(dmg, attacker, true, crit, -1);
     }
 
     /// <summary>Apply raw over-time damage (e.g. a <see cref="StatusController"/> Poison/Bleed/Burn tick) that
-    /// bypasses Defense, element, and Guard. Pops a <paramref name="color"/> number over the avatar, drives the
-    /// hurt flash, and triggers death once.</summary>
-    public int TakeTrueDamage(int amount, Color color)
+    /// bypasses Defense, element, and Guard, and triggers death once. Its number is drawn by every screen from the
+    /// server's result, coloured by its cause.</summary>
+    public int TakeTrueDamage(int amount)
     {
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
         SubtractHealth(dmg);
         OnHealthChanged?.Invoke();
-        var a = Avatar();
-        if (a != null) DamagePopup.Spawn(a, dmg, color);
         OnDamaged?.Invoke(dmg);
         if (CurrentHP == 0) RaiseDeath();
         return dmg;
@@ -1626,7 +1639,7 @@ public class Character : MonoBehaviour, ICombatUnit
         float pct = ActiveReflectBonus;
         if (pct <= 0f || dmgTaken <= 0 || PlayerUnits.Gone(attacker) || attacker.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
-        if (r > 0) CombatAuthority.ApplyTrue(attacker, r, ReflectColor, "reflect");
+        if (r > 0) CombatAuthority.ApplyTrue(attacker, r, TrueDamageCause.ReflectedByPerson);
     }
 
     /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
@@ -1803,7 +1816,7 @@ public class Character : MonoBehaviour, ICombatUnit
             StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
             CurrentHP = MaxHP;                // level-up fully heals
             CurrentMP = MaxMP;                // …and refills mana
-            PlayLevelUp(level);
+            NoteLevelUp(level);
         }
         if (level >= UnitStatMath.MaxBaseLevel) XP = 0;
         OnStatsChanged?.Invoke();
@@ -1825,18 +1838,25 @@ public class Character : MonoBehaviour, ICombatUnit
         LifetimeXp = System.Math.Max(0, lifetimeXp);
         StatPoints = Mathf.Max(0, statPoints);
         for (int reached = level - levelsGained + 1; reached <= level; reached++)
-            if (reached > 1) PlayLevelUp(reached);
+            if (reached > 1) ShowLevelUp(reached);
         OnStatsChanged?.Invoke();
     }
 
-    /// <summary>The moment of reaching <paramref name="reached"/>: the sting, the toast and the burst. Shared by
-    /// the server's loop and the owner's machine so the two can never celebrate differently.</summary>
-    void PlayLevelUp(int reached)
+    /// <summary>SERVER: the moment of reaching <paramref name="reached"/> — everything listening is told, and the burst
+    /// is announced to every screen watching. The sting is the owner's machine's (<see cref="ShowLevelUp"/>).</summary>
+    void NoteLevelUp(int reached)
+    {
+        OnLeveledUp?.Invoke(reached);
+        var lav = Avatar();
+        if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
+    }
+
+    /// <summary>The owner's machine, told it reached <paramref name="reached"/>: the sting, and everything listening
+    /// (the level-up toast). The burst arrives from the server like every other cue.</summary>
+    void ShowLevelUp(int reached)
     {
         Sfx.Play(levelUpSfx);          // triumphant sting
         OnLeveledUp?.Invoke(reached);  // drives the level-up toast
-        var lav = Avatar();
-        if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
     }
 
     /// <summary>Dev/testing: feed the ring XP directly (the <c>/ringxp</c> command), so the ring track can be

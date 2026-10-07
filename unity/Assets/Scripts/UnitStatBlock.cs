@@ -230,6 +230,7 @@ public class UnitStatBlock : MonoBehaviour
             ai.level        = inputs.level;
             var held        = Gear != null ? Gear.WeaponType : WeaponType.None;
             ai.attack       = UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack));
+            ai.swingsRanged = WeaponTypes.SwingsRanged(held, u.str, u.dex);
             ai.hit          = UnitStatMath.Hit(u, eb, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
             ai.critMultiplier = UnitStatMath.CritMultiplier(u, eb, Lift(StatId.Critical, SubStat.CritDamage));

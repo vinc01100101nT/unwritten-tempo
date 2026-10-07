@@ -21,7 +21,7 @@
 - [Feature knobs live on their OWN object/asset](../feature-knobs-own-object.md) — dedicated named GameObject (e.g. `WaterFX`), never piled onto the crowded `Sun`.
 - [Editor→runtime delegate bridge](../editor-runtime-delegate-bridge.md) — runtime can't name an Editor-folder type; editor fills a `static Func` hook on `[InitializeOnLoadMethod]`, runtime invokes it.
 - [Dead-code proof = 2-step scan](../dead-code-guid-scan.md) — code-ref grep AND .meta-guid grep of scenes/prefabs; scan by declared TYPE names (partial classes / multi-type files lie).
-- [Dormant-but-KEPT scripts](../dormant-kept-systems.md) — MultiHitBurst (Meteor revival), DialogueUI/InteractPrompt (future 3D press-to-talk); zero refs on purpose, don't re-flag.
+- [Dormant-but-KEPT scripts](../dormant-kept-systems.md) — DialogueUI/InteractPrompt (future 3D press-to-talk); zero refs on purpose, don't re-flag.
 - [Editor tool + prefab-instance undo/redo](../editor-tool-prefab-instance-undo-redo.md) — Ctrl+Y silently no-ops without `RecordPrefabInstancePropertyModifications`; RecordObject alone only does undo.
 - [Raw FS move can purge a live-Unity asset](../raw-fs-move-purges-unity-asset.md) — `mv` of a GLB prop (external Meshes/Materials deps) while Unity OPEN deleted the Oak_Tree cluster; use `AssetDatabase.MoveAsset` or move while closed. BUT see next line: hazard needs Auto Refresh ON.
 - [Unity Auto Refresh is ON, including during Play](../unity-auto-refresh-off.md) — editing ANY project file while a play session runs can destroy it; measure the setting, never quote the old "always off" claim.
@@ -58,3 +58,5 @@
 - [Addressables report window fails the build](../addressables-report-window-fails-the-build.md) — a content build failing in 0 s after a `BuildReportVisualizer` NullReference = the per-machine "Open Addressables Report after build" preference; turned off on the Windows PC 2026-10-01, Mac unmeasured.
 - [Plan shape: issue, why, fix, result](../plan-shape-issue-why-fix-result.md) — every plan item states the issue, why it matters, the recommended fix, and the expected result after it.
 - [LAN play: built games refuse plain HTTP off-machine](../lan-play-plain-http-blocked.md) — never put LAN IPs in ACCOUNTS_URL/CHAR_SERVER_URL (the map server is a built game too); use PUBLIC_* + `build-game.sh client --dev`.
+- [Website shows a published copy](../website-shows-published-copy.md) — any wiki/website edit is invisible until `publish-update.py --site-only`; run it in the same turn.
+- [Publishing one platform leaves the other stale](../publish-one-platform-leaves-other-stale.md) — the launcher shows the shared version.txt, not the platform manifest; check that platform's manifest and DLL before calling a fix live.

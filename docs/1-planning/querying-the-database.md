@@ -70,6 +70,9 @@ records which `.sql` files this database has already run.)
   slot, a skill's id, `item:<item id>` for a usable item, or `gear:<copy id>` for one exact piece of gear. A save
   from before version 18 still carries its old bar as `hotbarBindings` inside `progress`; the server reads that once
   to fill this row and never writes it again.
+- **`world_event`** — `kind`, `multiplier`, `started_at`, `ends_at`, `started_by`. The world events running now
+  (a GM's `/exprate`), one row per kind; a row whose time is up is deleted the next time the list is read.
+  **`world_event_revision`** holds one number, raised with every start and stop, that every copy of the list carries.
 - **`refresh_token`** — `token_hash`, `account_id`, `expires_at`, `revoked_at`. Live sessions, hashed.
 
 Two things about `character` that will bite you if you forget them:

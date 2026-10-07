@@ -50,6 +50,19 @@ public class MonsterDef : ScriptableObject
     [Tooltip("SpriteRenderer tint (white = none).")]
     public Color tint = Color.white;
 
+    // ---- A SHADOW'S LOOK: the body it wears and its outfit colours, in the same shape a player's look is saved in --
+    // (a model name, then each changed part's original colour and its chosen colour as "#RRGGBB", index-matched).
+    // Hidden from the Inspector on purpose: they mean nothing on any kind that is not drawn as a character, and a
+    // free-text box would accept a body that does not exist. The Mob Table is the one place they are edited, and
+    // tools/check-shadow-looks.py fails any shadow whose body is missing or whose colours are not that body's parts.
+    /// <summary>Which body this creature wears (a name in <see cref="CharacterModels"/>' roster). Shadows only.</summary>
+    [HideInInspector] public string modelName = "";
+    /// <summary>The original colour of each part this creature's look changes, "#RRGGBB". Index-matched with
+    /// <see cref="dyeTargets"/>.</summary>
+    [HideInInspector] public string[] dyeSources = System.Array.Empty<string>();
+    /// <summary>The chosen colour for each part in <see cref="dyeSources"/>, "#RRGGBB".</summary>
+    [HideInInspector] public string[] dyeTargets = System.Array.Empty<string>();
+
     // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
     // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through
     // UnitStatMath — the same functions Character runs. There is no mob-only tier or multiplier: a mob is dangerous
@@ -67,8 +80,8 @@ public class MonsterDef : ScriptableObject
 
     [Header("Equipment — the SAME items the player wears")]
     [Tooltip("Gear this creature spawns wearing, one piece per slot (the slot comes from the Item itself). Every " +
-             "piece comes to life at the three settings below, and none of it drops: a creature gives up materials, " +
-             "consumables and gold, never what it is wearing.")]
+             "piece comes to life at the three settings below, and none of it drops: a creature gives up materials " +
+             "and consumables, never what it is wearing.")]
     public Item[] startingGear = System.Array.Empty<Item>();
     [Tooltip("THE GRADE every piece this creature wears comes to life at — Raw through A, the same ladder a quench " +
              "climbs. It decides the fold cap and HOW MANY stats Ink writes on each piece (Raw none, F one, up to A six).")]

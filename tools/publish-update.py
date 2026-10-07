@@ -8,7 +8,9 @@ WHAT IT WRITES, into --out (default builds/patch):
                                character server reads this file (its PATCH_DIR setting points at this folder) and
                                turns away any copy that says otherwise.
   news.json                    the launcher's news box, copied from launcher/news.json.
-  <platform>/manifest.json     every game file: its path, size, fingerprint, and whether it is a program.
+  <platform>/manifest.json     the version these files are, and every game file: its path, size, fingerprint, and
+                               whether it is a program. The launcher shows THIS version, not version.txt, so a
+                               platform left out of a publish shows its own older number and says it is behind.
   <platform>/files/<sha256>    each file's contents, under its fingerprint.
   index.html + its files       the website (website/index.html), so opening this folder's address in a browser
                                shows the site and its Download page offers the launcher. Beside it: ui-tokens.css
@@ -130,7 +132,7 @@ def resign_mac(build):
                 fail(f"Could not sign {t} again: {r.stderr.strip()}")
 
 
-def publish_platform(platform, build, out):
+def publish_platform(platform, build, out, version):
     build = os.path.abspath(build)
     if not os.path.isdir(build):
         fail(f"No {platform} build at {build}.", 2)
@@ -168,7 +170,9 @@ def publish_platform(platform, build, out):
 
     tmp = manifest_path + ".part"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump({"start": start, "files": entries}, f, indent=1)
+        # The version these files ARE, written into this platform's own list: version.txt is shared by every
+        # platform, so a launcher showing it would claim a platform left out of a publish was up to date.
+        json.dump({"version": version, "start": start, "files": entries}, f, indent=1)
     os.replace(tmp, manifest_path)
 
     keep = previous | {e["sha256"] for e in entries}
@@ -306,7 +310,7 @@ def main():
         stamp_version(build, version)
         if platform == "mac":
             resign_mac(build)
-        publish_platform(platform, build, out)
+        publish_platform(platform, build, out, version)
 
     shutil.copyfile(args.news, os.path.join(out, "news.json"))
     publish_site(out)

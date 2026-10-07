@@ -27,14 +27,25 @@ public static class ItemExport
     [Serializable] class Trademark { public string name, weapon, chance; public Lines[] byGrade; }
     // One armour word, the slot it rolls on, and what it does at each grade (grades[] order).
     [Serializable] class Word { public string name, slot, chance; public int slotOrder; public string[] byGrade; }
+    // A weapon's reach as the wiki shows it. A weapon that is melee or ranged by its holder's higher stat reaches
+    // bare-hand distance when it swings melee and its own range only when it throws, so it shows both.
+    static string ReachText(Item it)
+    {
+        if (it.slot != EquipSlotType.Weapon) return "";
+        float unarmed = CharacterSpec.Active != null ? CharacterSpec.Active.unarmedReach : 0f;
+        float own = WeaponReach.Of(it, unarmed, true);
+        if (WeaponTypes.RangedByStat(it.weaponType))
+            return unarmed.ToString("0.##") + " melee · " + own.ToString("0.##") + " ranged";
+        return it.attackRange > 0f ? own.ToString("0.##") : "";
+    }
+
     [Serializable] class Lines { public string[] lines; }
 
     [Serializable] class Entry
     {
-        public string id, name, description, type, slot, weaponType, element, madeOf, forgeMaterial, blockChance;
+        public string id, name, description, type, slot, weaponType, element, madeOf, forgeMaterial, reach;
         public string materialKind, mergesInto;
         public int slotOrder, materialKindOrder, forgeUnits, forgeGold, cardSlots, weight, zeny, materialStep;
-        public float reach;
         public Source[] droppedBy;
     }
 
@@ -68,14 +79,13 @@ public static class ItemExport
                 type = ItemTypes.Of(it).ToString(),
                 slot = EquipSlots.Label(it.slot),
                 slotOrder = EquipSlots.Order(it.slot),
-                weaponType = it.weaponType == WeaponType.None ? "" : it.weaponType.ToString(),
-                reach = it.slot == EquipSlotType.Weapon ? it.attackRange : 0f,
+                weaponType = it.weaponType == WeaponType.None ? "" : WeaponTypes.Label(it.weaponType),
+                reach = ReachText(it),
                 element = it.element.ToString(),
                 madeOf = it.madeOf == MaterialKind.None ? "" : it.madeOf.ToString(),
                 forgeUnits = it.forgeMaterialCost,
                 forgeMaterial = band1 != null ? band1.displayName : "",
                 forgeGold = it.forgeGoldCost,
-                blockChance = it.blockChance > 0f ? LootDropper.ChanceText(it.blockChance) : "",
                 cardSlots = it.cardSlots,
                 weight = it.weight,
                 zeny = it.zeny,
@@ -111,7 +121,7 @@ public static class ItemExport
                 trademarks.Add(new Trademark
                 {
                     name = s.displayName,
-                    weapon = weapon.ToString(),
+                    weapon = WeaponTypes.Label(weapon),
                     chance = LootDropper.ChanceText(Trademarks.ChanceOf(s, weapon)),
                     byGrade = byGrade,
                 });

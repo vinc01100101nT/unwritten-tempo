@@ -231,6 +231,11 @@ public static class PlayerFighter
     public static bool AlreadyPlaying(string characterId)
         => !string.IsNullOrEmpty(characterId) && playing.ContainsKey(characterId);
 
+    /// <summary>The shell playing this character here, or null — the roll above, read without walking every
+    /// connection. A destroyed shell reads as null.</summary>
+    public static NetPlayer PlayedBy(string characterId)
+        => !string.IsNullOrEmpty(characterId) && playing.TryGetValue(characterId, out var shell) && shell ? shell : null;
+
     /// <summary>Tear the fighter down when its player leaves. The roll of who is here must not keep a name that is
     /// gone, or every creature in the world goes on chasing somebody who is not there.</summary>
     public static void Dismiss(NetPlayer shell)

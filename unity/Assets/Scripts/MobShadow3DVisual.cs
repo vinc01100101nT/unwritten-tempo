@@ -41,32 +41,58 @@ public class MobShadow3DVisual : Agent3DVisual
     bool built;
     bool building;   // a model is on its way — keeps a second call from starting a second load for the same mob
 
-    /// <summary>WHICH BODY THIS SHADOW WEARS, drawn from the shared cast's fighter pool. Empty until somebody has
-    /// chosen — which on a machine that only WATCHES this creature means the choice has not arrived yet.
+    /// <summary>WHICH BODY THIS SHADOW WEARS — the one written on its creature entry (<see cref="MonsterDef.modelName"/>,
+    /// authored in the Mob Table). Empty on a machine that only WATCHES this creature until the server's name for it
+    /// has arrived.
     ///
-    /// <para>It is a per-creature IDENTITY, so exactly one machine may decide it: the one that owns the creature.
-    /// Every machine used to draw its own, independently, from the same pool — so the same creature stood in front
-    /// of two people wearing two different bodies, and neither of them was wrong from where they were sitting.</para></summary>
+    /// <para>The server reads it off the creature entry as the creature is made and sends that name to every
+    /// watcher, so no machine ever chooses a body of its own and the same creature wears the same body in front of
+    /// everybody.</para></summary>
     public string ModelName { get; private set; }
 
-    // Whether the machine that owns this creature has spoken about its body yet — separately from WHAT it said,
-    // because "the owner will name it in a moment" and "nobody owns this, choose your own" are different answers
-    // and both of them look like an empty name.
-    bool modelIsTold;
+    // The creature entry this shadow's outfit colours are read from — this machine's own copy of the same asset the
+    // server made the creature from. Held rather than copied, so every time the colours are put on they are the
+    // entry's colours as they are now, never a copy taken earlier.
+    MonsterDef lookOf;
 
-    /// <summary>The owning machine's word on which body this creature wears. Called by whatever is following this
-    /// creature for the server, both when the body is built and again if the name lands after it.
+    // The colouring on the drawn body. Null until a model has been built, and never made on a machine with no screen.
+    CharacterDye3D dye;
+
+    /// <summary>Take this shadow's look from its creature entry. Called once by <see cref="MobSpawner"/>, the one door
+    /// every creature is made through, on every machine. On the server it also names the body, before the creature
+    /// is announced; a watching machine is told the body by the server instead (<see cref="WearModel"/>) and only
+    /// keeps the entry for its colours.</summary>
+    public void WearLookOf(MonsterDef def)
+    {
+        lookOf = def;
+        if (GameServer.IsServer) ModelName = def != null ? def.modelName : null;
+    }
+
+    /// <summary>The server's word on which body this creature wears. Called by whatever is following this creature
+    /// for the server, every time it takes this body on — when the body is first built, when the name lands after
+    /// it, and when a spare body is handed back from the pool.
     ///
-    /// <para>Calling it with nothing is meaningful and is not ignored: it says the owner is the one choosing, so
-    /// this machine must wait rather than draw a body of its own. Until then the creature is simply still a
-    /// sprite, which is a legal state it was already in.</para></summary>
+    /// <para>Calling it with nothing means the name has not arrived yet: the creature stays a sprite, which is a
+    /// legal state it was already in, until it does. Calling it with the name the body already wears puts the
+    /// colours on again, every time — a recycled body never keeps the colours it was last shown in.</para></summary>
     public void WearModel(string name)
     {
-        modelIsTold = true;
-        if (string.IsNullOrWhiteSpace(name) || name == ModelName) return;
+        if (string.IsNullOrWhiteSpace(name)) return;
+        if (name == ModelName) { ShowLook(); return; }
         ModelName = name;
         BuildBody();
     }
+
+    // Put this creature entry's outfit colours on the drawn body. The colours are stamped with the body they were
+    // chosen on, and a body that is not that one shows its own plain colours (CharacterDye3D.ShowLook).
+    void ShowLook()
+    {
+        if (dye != null) dye.ShowLook(LookOfEntry());
+    }
+
+    string LookOfEntry() => lookOf != null
+        ? CharacterDye3D.PackLook(lookOf.modelName, lookOf.dyeSources, lookOf.dyeTargets)
+        : "";
 
     protected override void Awake()
     {
@@ -74,13 +100,8 @@ public class MobShadow3DVisual : Agent3DVisual
         brain = GetComponent<MonsterAI3D>();
         health = GetComponent<Health>();
         status = GetComponent<StatusController>();
-
-        // THE OWNER CHOOSES THE BODY, HERE, BEFORE THE CREATURE IS ANNOUNCED. This is a name out of a list and
-        // nothing else — no model is fetched and no rig is assembled, so a machine with no screen pays a single
-        // random pick for it. It is chosen in Awake rather than Start because both places that create a shadow add
-        // this component and announce the creature on the very next line, and what crosses the wire is read off the
-        // creature at that moment.
-        if (GameServer.IsServer) ModelName = CharacterSpec.Active.RandomFighter();
+        // NO BODY IS CHOSEN HERE. It is written on the creature entry and handed over by WearLookOf, on the line
+        // after this component is added and before the creature is announced.
     }
 
     void Start()
@@ -108,27 +129,15 @@ public class MobShadow3DVisual : Agent3DVisual
     {
         if (built || building) return;
 
-        // A shadow has its OWN look, drawn from the shared cast's FIGHTER pool. It used to CLONE the live player,
-        // which made every shadow identical to you and to each other, tied a mob's appearance to a player (wrong the
-        // moment more than one player shares a map), and made shadows silently fail to exist at all on any map where
-        // no live 3D player had spawned yet. A shadow now depends on nothing but the spec.
+        // A shadow has its OWN look, written on its creature entry. It used to CLONE the live player, which made
+        // every shadow identical to you and to each other, and later drew a body at random, which gave a named
+        // Kashira a different face every life.
+        //
+        // NOTHING TO WEAR YET means the server's name for this creature has not arrived: it stays a sprite until
+        // WearModel brings it. Choosing one here instead is exactly the bug the name on the wire replaced.
         var spec = CharacterSpec.Active;
-        if (string.IsNullOrWhiteSpace(ModelName))
-        {
-            // NOTHING TO WEAR YET. If the machine that owns this creature is the one choosing, waiting is the whole
-            // of the job — it will say, and this creature stays a sprite in the meantime. Drawing one here instead
-            // is exactly the bug this replaced: every watcher picked its own and no two agreed.
-            if (modelIsTold) return;
-            ModelName = spec.RandomFighter();
-        }
-
         string modelName = ModelName;
-        if (string.IsNullOrWhiteSpace(modelName))
-        {
-            GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no fighter models — '" + name + "' stays a billboard.");
-            enabled = false;
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(modelName)) return;
 
         building = true;
         CharacterModels.Load(modelName, model =>
@@ -158,40 +167,12 @@ public class MobShadow3DVisual : Agent3DVisual
     void BecomeACharactersBody()
     {
         // --- Retire EVERY billboard part. A shadow keeps none of the sprite rig. ---
-        // BillboardAnimator3D writes this root's localScale every frame (breathing squash) and AttackLunge writes it
-        // per bite; both would deform the 3D model, and the squash "tell" is replaced by a real swing clip.
-        // Destroying (not disabling) is deliberate: MonsterAI3D caches AttackLunge and guards with `!= null`, so it
-        // cleanly stops punching. CameraDepthSorter only orders a SPRITE, so it's dead weight here.
-        var billboardAnim = GetComponent<BillboardAnimator3D>();
-        if (billboardAnim != null) { billboardAnim.enabled = false; Destroy(billboardAnim); }
-        var billboardShadow = GetComponent<BillboardShadow>();
-        if (billboardShadow != null) Destroy(billboardShadow);
-
-        // THE CAMERA-FACING TURN, WHICH IS THE ONE THAT WAS LEFT BEHIND. A flat sprite is a quad that has to be
-        // swung to face the camera or it renders edge-on, and that swing is written straight onto this object's
-        // rotation every single frame, after everything else has had its say. A character is not a quad: it has a
-        // real front, and which way it is turned is the whole point.
-        //
-        // MEASURED, and it is why a creature seen by anybody else pointed the wrong way: every mob is one object, so
-        // this was rewriting the very rotation the server had just sent for this creature. The body then handed that
-        // camera direction on to the model as "which way am I facing", so a live-3D creature faced the camera for its
-        // whole life — and this camera barely turns, which is what made it look like one fixed direction. A machine
-        // with no screen has no camera at all, so it never saw any of this and its own copy was turned correctly the
-        // whole time; only the machines watching threw that answer away.
-        //
-        // Destroyed rather than switched off, like the two above and for the same reason: the revive path switches a
-        // mob's parts back on wholesale, and a part that is gone cannot be switched back on by mistake.
-        var cameraFacing = GetComponent<Billboard>();
-        if (cameraFacing != null) Destroy(cameraFacing);
-        var lunge = GetComponent<AttackLunge>();
-        if (lunge != null) Destroy(lunge);
-        var depthSorter = GetComponent<CameraDepthSorter>();
-        if (depthSorter != null) depthSorter.enabled = false;
-
-        // The SpriteRenderer is only HIDDEN, never destroyed: DeathDissolve [RequireComponent]s it and drives the
-        // death fade that hands the mob back to the pool. Removing it would break the death → respawn chain.
-        var sprite = GetComponent<SpriteRenderer>();
-        if (sprite != null) sprite.enabled = false;
+        // The breathing and the bite write this root's scale and would deform the 3D model (a real swing clip replaces
+        // the bite). The camera-facing turn is the one that matters most: it rewrites this object's rotation every
+        // frame, so a live-3D creature watched by anybody faced the camera for its whole life instead of where the
+        // server turned it. Removed rather than switched off, so the revive path — which switches a mob's parts back
+        // on wholesale — cannot bring one back by mistake. The sprite is only hidden (see DropFlatPicture).
+        MobBody.DropFlatPicture(gameObject, beforeItWakes: false);
 
         // --- Rebuild the root as a CHARACTER's root, not a sprite's. ---
         // THIS is what every earlier size fix got wrong. A billboard mob's root carries the SPRITE's authored scale
@@ -238,6 +219,9 @@ public class MobShadow3DVisual : Agent3DVisual
         var builtPose = Character3DBody.Build(gameObject, model, spec.animatorController, spec.bodyHeight);
         if (builtPose == null) { enabled = false; return; }
         BindBody(builtPose);
+        // ITS OUTFIT COLOURS, from its creature entry — the same colouring every player's body is drawn with.
+        // perf-ok: once per body built; a pooled body keeps it for life and is re-coloured through WearModel.
+        dye = CharacterDye3D.AddShowing(builtPose.gameObject, LookOfEntry());
         // THE WEAPON IT WEARS, IN ITS HAND — the same socket the player's body carries, reading this creature's worn
         // set instead of the player's. Only a drawn body gets one; the server builds no model to hold anything.
         // perf-ok: once per body built; a pooled body keeps it for life.

@@ -126,6 +126,21 @@ public class WorldTownsfolk : ScriptableObject
     /// <summary>Forget a map that has gone, so it is populated again if it comes back.</summary>
     public static void Forget(Scene map) => populated.Remove(map.handle);
 
+    /// <summary>Every person who lives in <paramref name="map"/>, lowest level first, then by name. Somebody with no
+    /// model is left out, exactly as <see cref="Populate"/> leaves them out of the map.</summary>
+    public static void PeopleIn(string map, List<Row> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(map)) return;
+        foreach (var row in list.rows)
+            if (row != null && row.map == map && !string.IsNullOrWhiteSpace(row.model)) into.Add(row);
+        into.Sort(ByLevelThenName);
+    }
+
+    static int ByLevelThenName(Row a, Row b) =>
+        a.level != b.level ? a.level.CompareTo(b.level) : string.CompareOrdinal(a.name, b.name);
+
     // The highest Ground-layer surface of THIS map under the spot — not a roof, not a prop, not another map that
     // happens to share the coordinates. Falls back to the spot's own height when nothing is hit.
     static Vector3 GroundUnder(Vector3 p, Scene map)

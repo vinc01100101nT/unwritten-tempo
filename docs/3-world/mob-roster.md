@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-09-22, not yet play-tested. First-guess numbers are listed under Still open."
 owner: vince
-last-updated: 2026-09-26
+last-updated: 2026-10-06
 tags:
   - world-content
 ---
@@ -53,8 +53,8 @@ map, and the map generator no longer puts any there.
   A 35), and its **Ink** (Watery, Thin, Faint, Clear or Sharp). The grade decides how many stats are written on each
   piece (Raw none, F one, up to A six); the Ink decides what each is worth. They are edited in the Mob Table's
   equipment panel, and no rule in the code overrides them for any kind.
-- **Which stats are written, and a weapon's trademark, are rolled fresh every life**, exactly as a station rolls them.
-  A weapon gets a trademark only when its grade is above Raw.
+- **Which stats are written, a weapon's trademark and an armour piece's word are rolled fresh every life**, exactly
+  as a station rolls them, at every grade — a Raw piece included, as a forged one is.
 - **A creature wears exactly the pieces authored for it and nothing else.** An empty slot stays empty.
 - **The starting values follow level.** Folds rise evenly with level across each kind's range, and the grade is the
   lowest one (from that kind's starting grade) whose cap holds those folds; the Ink follows the grade — F Watery,
@@ -114,30 +114,33 @@ map, and the map generator no longer puts any there.
 - **The strongest creatures in the game.** They are the 3D characters, each wearing **one weapon type**, so there
   are fourteen of them — one for each weapon, all fourteen in the game.
 - **Levels 105, 110, 115 … 170**, one shadow per step — above the 1–99 range every other creature uses.
-- **The weapon order runs from the least-played weapon at 105 to the most-played at 170.** A shadow is what a
+- **The weapon order runs from the least-played weapon at 105 to the most-played at 165.** A shadow is what a
   weapon's end-game materials come from, so the weapons fewest people choose are the easiest to finish — a reason
   to pick them. The order is a first guess, made before there is any player data.
-- **A shadow goes by its weapon's STYLE**, never a personal name — the Fourteen left no names, only how they fought
-  (see [Story & Setting](story-setting-canon.md), which holds the fourteen styles and how their forms are named). The
-  styles are locked (2026-09-26).
+- **Veyra's shadow is always level 170, whatever the play counts say** (decided 2026-10-06). It is the one shadow
+  Chaos really lives in (see [Story & Setting](story-setting-canon.md)), and it carries Morwen's black lily mark. Only
+  the other thirteen follow the play counts.
+- **A shadow shows its Kashira's name and title** — *Veyra, the Last Petal* — and is also called by its style (see
+  [Story & Setting](story-setting-canon.md), which holds the fourteen names, styles and how their forms are named).
+  The names, titles and styles are locked (2026-10-06), and each shadow's data carries its name, title and element.
 
-  | Level | Weapon | Style | Element |
-  | --- | --- | --- | --- |
-  | 105 | Kick | **Autumn Gale** | Wind |
-  | 110 | Fist | **Northern Lights** | Neutral |
-  | 115 | Shield | **Still Oak** | Neutral |
-  | 120 | Wand | **Morning Dew** | Holy |
-  | 125 | Warhammer | **Stone Bloom** | Earth |
-  | 130 | Spear | **Silver Rain** | Water |
-  | 135 | Axe | **Forest Fire** | Fire |
-  | 140 | Firearm | **Dusk Crow** | Dark |
-  | 145 | Scythe | **Black Lily** | Undead |
-  | 150 | Dagger | **Night Orchid** | Poison |
-  | 155 | Staff | **Ashen Field** | Fire |
-  | 160 | Greatsword | **Silent Snow** | Ghost |
-  | 165 | Bow | **Feather Rain** | Wind |
-  | 170 | Sword | **Blossom Wind** | Wind |
-- **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Fire and Neutral
+  | Level | Weapon | Shadow | Style | Element |
+  | --- | --- | --- | --- | --- |
+  | 105 | Shuriken | **Riven, the Red Autumn** | Autumn Gale | Wind |
+  | 110 | Fist | **Asterion, the Light Beyond Night** | Northern Lights | Neutral |
+  | 115 | Katar | **Nysara, the Face Without a Name** | Veiled Mirage | Ghost |
+  | 120 | Wand | **Seraphine, Before the Dawn** | Morning Mist | Holy |
+  | 125 | Warhammer | **Tharos, the Starbreaker** | Earthrend Descent | Earth |
+  | 130 | Spear | **Orion, the River That Remembers** | Bending River | Water |
+  | 135 | Axe | **Varkhaz, the Ever-Burning** | Wildfire | Fire |
+  | 140 | Sniper | **Vael, the Moonless Eye** | Dark Moon | Dark |
+  | 145 | Scythe | **Morwen, the Last Bloom** | Black Lily | Undead |
+  | 150 | Dagger | **Velmora, the Poisoned Rose** | Nightshade Bloom | Poison |
+  | 155 | Staff | **Kaelen, the Ember Beneath Snow** | Frozen Ashes | Fire |
+  | 160 | Greatsword | **Mordane, King Beneath the Waves** | Raging Tide | Water |
+  | 165 | Bow | **Celestia, the Wandering Sky** | Passing Cloud | Wind |
+  | 170 | Sword | **Veyra, the Last Petal** | Blossom Wind | Wind |
+- **The shadows carry all ten elements** (decided in the [World Map](world-map.md)): Wind three times, Water and Fire
   twice each, the rest once. Only the Water, Earth, Fire and Wind shadows can be answered with a converter today; the
   counter for the others is to come from skill buffs and cards. At level 3 the element matters, and its own element
   lands very differently on each: it heals the Water, Fire, Wind, Holy and Dark shadows, does nothing to the Earth,
@@ -146,11 +149,11 @@ map, and the map generator no longer puts any there.
 - **Each shadow summons one elite kind, matched to its place on the ladder.** The top fourteen elites by level pair
   with the shadows from the top down:
 
-  | Shadow | Blossom Wind 170 | Feather Rain 165 | Silent Snow 160 | Ashen Field 155 | Night Orchid 150 | Black Lily 145 | Dusk Crow 140 |
+  | Shadow | Veyra 170 | Celestia 165 | Mordane 160 | Kaelen 155 | Velmora 150 | Morwen 145 | Vael 140 |
   | --- | --- | --- | --- | --- | --- | --- | --- |
   | Summons | Abyss Maw 99 | Venom Gloop 95 | Oni Tengu 92 | Wraithmother 90 | Inferno Mask 80 | Toadmaw 78 | Great Croak 66 |
 
-  | Shadow | Forest Fire 135 | Silver Rain 130 | Stone Bloom 125 | Morning Dew 120 | Still Oak 115 | Northern Lights 110 | Autumn Gale 105 |
+  | Shadow | Varkhaz 135 | Orion 130 | Tharos 125 | Seraphine 120 | Nysara 115 | Asterion 110 | Riven 105 |
   | --- | --- | --- | --- | --- | --- | --- | --- |
   | Summons | Blood Ronin 60 | Karasu 58 | Elder Stalk 47 | Golden Bandit 44 | Mossmaw 35 | Frost Ronin 33 | Deep Maw 24 |
 
@@ -162,14 +165,30 @@ map, and the map generator no longer puts any there.
 - **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
   trademark on the weapon — each roll made the way a station makes it.
 - **Weapon mastery: 0 today**, set in the Mob Table like every creature's.
-- **Ring ranks:** 40 in each of the three stats its weapon's mastery raises. The Fist shadow uses the fist's
-  placeholder row (Attack Speed, Attack, Evasion); the Kick shadow has none, because the kick has no mastery row yet.
+- **Ring ranks:** 40 in each of the three stats its weapon's mastery raises.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
-- **All fourteen exist.** Only **Blossom Wind** (the Sword shadow) holds a weapon; the other thirteen fight with
-  basic attacks until their weapon's skills exist, and then each is handed its weapon.
-- They carry their name and an always-visible health bar.
+- **All fourteen exist.** Only **Veyra** (the Sword shadow) holds a weapon; the other thirteen fight with basic
+  attacks until their weapon's skills exist, and then each is handed its weapon.
+- They carry their name and title and an always-visible health bar.
+- **Each shadow wears one fixed look of its own** — a body and its outfit colours, the same every life and in front of
+  everybody (decided and built 2026-10-06). Both are set on its catalog entry, and only in the **Mob Table**: open a
+  shadow's row (**▸**) and its look panel shows a 3D preview you drag to turn, a body picker offering **every**
+  character body the game can load, and one colour swatch per part of the chosen body. Picking another body clears
+  the colours. Nothing is written until **Save All**. The server takes the body from the entry and refuses to make a
+  shadow whose body it cannot load (written to its log); `tools/check-shadow-looks.py` fails such a shadow, or a colour
+  on a part its body does not have, before it ships. The starting bodies:
+
+  | Shadow | Body | Shadow | Body |
+  | --- | --- | --- | --- |
+  | Riven | Ninja_Male | Varkhaz | Viking_Male |
+  | Asterion | Knight_Golden_Male | Vael | Soldier_Male |
+  | Nysara | Ninja_Sand_Female | Morwen | Witch |
+  | Seraphine | Knight_Golden_Female | Velmora | Ninja_Female |
+  | Tharos | Knight_Male | Kaelen | Wizard |
+  | Orion | BlueSoldier_Male | Mordane | Pirate_Male |
+  | Celestia | Cowboy_Female | Veyra | Kimono_Female |
 
 ## Summoning
 
@@ -209,9 +228,8 @@ Several of one material go down as one pile.
 
 ## Still open
 
-- **The Kick shadow's ring ranks**: waiting on which three stats kick mastery raises.
-- **Kick and Fist at the bottom of the ladder** (105 and 110) is a first guess at the least-played weapons, made
-  before there is any player data, like the rest of the order.
+- **Shuriken, Fist and Katar at the bottom of the ladder** (105, 110 and 115) is a first guess at the least-played
+  weapons, made before there is any player data, like the rest of the order.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
   spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience.
@@ -220,8 +238,8 @@ Several of one material go down as one pile.
   5 experience — and its gold range (2 to 6 for the Octi) is still what a character saved from it is multiplied from.
 - **No death pays gold** (decided 2026-09-30): gold comes only from saving a character that never fights — see
   [Saved Characters](saved-characters.md).
-- **A shadow's 3D body is drawn at random from the cast each life**, like every 3D creature's, so a named shadow can
-  look different each time it comes back.
+- **The fourteen shadows' bodies are starting picks** (set 2026-10-06 from each Kashira's gender and theme, no colours
+  changed yet), listed under Shadow; each is the user's to change in the Mob Table.
 - **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.
 
 ## Related

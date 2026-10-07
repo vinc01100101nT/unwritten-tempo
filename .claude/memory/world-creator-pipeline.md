@@ -33,9 +33,12 @@ keep ids)` — keep list never opened or edited, maps opened additively and clos
 layout is `tools/world-creator/worlds/world-regions.json` (maps carry a `name`), its picture
 `Resources/WorldMap/world-map.png`; recipes `3_Data/Recipes/{Town,Field,Dungeon}Recipe.asset`. `lastline`'s doors were
 retargeted/added BY HAND to the new fields — rebuilding keeps it only if `lastline` is in the keep list.
-**BuildCore also places doors INTO the special maps it does not generate** (the shadow places), leading nowhere —
-after any rebuild, delete every door and arrival point naming a special map's id (28 objects in 14 scenes on
-2026-09-26); `tools/check-map-ids.py` fails on them.
+**A door is placed only when both maps it joins have a scene** (baked in that build, or already on disk) — since
+2026-10-06 the build skips the rest and names them in its summary, so no door into an unbuilt shadow place is ever
+placed and nothing needs deleting after a rebuild. Door names carry the portal's index in the layout (`w{i}`), so a new
+door goes into a freed slot or at the END of `portals`, never in the middle. **BuildCore cannot make a new scene while
+the only open scene is an untitled one** ("Cannot create a new scene additively with an untitled scene unsaved"): stand
+on a kept scene (open it Single), build, then put an empty untitled scene back (`NewScene(EmptyScene, Single)`).
 
 **RE-LAY ONLY THE GROUND (2026-09-30):** when how ground is shaped changes, don't rebuild maps — run
 `WorldCreator.RebuildGroundCore(json, town/field/dungeon/special recipe paths, mapIds)` through the live editor (it

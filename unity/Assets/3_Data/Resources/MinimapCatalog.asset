@@ -58,6 +58,9 @@ MonoBehaviour:
   - map: harrowen
     worldMin: {x: -35.73195, y: -36.490475}
     worldSize: 71.582
+  - map: hazemere
+    worldMin: {x: -41.6, y: -41.6}
+    worldSize: 83.2
   - map: hcr_fild01
     worldMin: {x: -33.377987, y: -33.329956}
     worldSize: 66.65991
@@ -176,8 +179,8 @@ MonoBehaviour:
     worldMin: {x: -33.28, y: -33.28}
     worldSize: 66.56
   - map: luminhal
-    worldMin: {x: -35.648937, y: -34.682243}
-    worldSize: 68.97539
+    worldMin: {x: -41.87924, y: -42.02966}
+    worldSize: 83.63808
   - map: old_oak
     worldMin: {x: -44.152306, y: -44.607048}
     worldSize: 88.39479

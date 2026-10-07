@@ -642,11 +642,11 @@
       "id": "luminhal",
       "pos": [
         1368,
-        438
+        430
       ],
       "size": [
-        64,
-        64
+        80,
+        80
       ],
       "type": "town",
       "biome": "coast",
@@ -936,7 +936,7 @@
       "name": "Thousand Gates"
     },
     {
-      "id": "iron_gate",
+      "id": "narrowbend",
       "pos": [
         340,
         1070
@@ -946,8 +946,7 @@
         50
       ],
       "type": "special",
-      "biome": "highland",
-      "name": "Iron Gate"
+      "name": "Narrowbend"
     },
     {
       "id": "masked_ballroom",
@@ -1311,6 +1310,21 @@
       "type": "dungeon",
       "name": "Kharnel Dungeon 9",
       "biome": "corrupted"
+    },
+    {
+      "id": "hazemere",
+      "pos": [
+        356,
+        440
+      ],
+      "size": [
+        80,
+        80
+      ],
+      "type": "town",
+      "biome": "steppe",
+      "name": "Hazemere",
+      "seed": 1764602420
     }
   ],
   "portals": [
@@ -2107,11 +2121,11 @@
       }
     },
     {
-      "a": "gmr_fild01",
-      "b": "iron_gate",
+      "a": "hazemere",
+      "b": "velmora",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.5
       },
       "anchorB": {
         "edge": "E",
@@ -2511,6 +2525,30 @@
       },
       "anchorB": {
         "edge": "N",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "hazemere",
+      "b": "tornel",
+      "anchorA": {
+        "edge": "E",
+        "offset": 0.5
+      },
+      "anchorB": {
+        "edge": "W",
+        "offset": 0.5
+      }
+    },
+    {
+      "a": "lst_fild04",
+      "b": "narrowbend",
+      "anchorA": {
+        "edge": "W",
+        "offset": 0.8
+      },
+      "anchorB": {
+        "edge": "E",
         "offset": 0.5
       }
     }

@@ -69,6 +69,7 @@ check "every asset follows ASSETS.md"             py tools/check-asset-rules.py
 check "every biome's look is whole"               py tools/check-biome-table.py
 check "every map id agrees with the world layout"  py tools/check-map-ids.py
 check "every quest can be finished"               py tools/check-quest-data.py
+check "every shadow look holds together"         py tools/check-shadow-looks.py
 
 if in_commit '^tools/(check-game-math\.sh|prove-game-math-check\.py|game-math-tests/)'; then
   check "the numbers check still catches a change"   py tools/prove-game-math-check.py
@@ -93,6 +94,9 @@ if in_commit '^tools/(check-map-ids|prove-map-ids-check)\.py$'; then
 fi
 if in_commit '^tools/(check-quest-data|prove-quest-data-check)\.py$'; then
   check "the quest data check still catches faults"  py tools/prove-quest-data-check.py
+fi
+if in_commit '^tools/(check-shadow-looks|prove-shadow-looks-check)\.py$'; then
+  check "the shadow-look check still catches faults"  py tools/prove-shadow-looks-check.py
 fi
 if in_commit '^tools/hook-analytics/(guard_check|prove-guard-check)\.py$'; then
   check "the guard check still sees a dead guard"    py tools/hook-analytics/prove-guard-check.py

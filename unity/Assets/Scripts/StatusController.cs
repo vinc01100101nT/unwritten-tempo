@@ -41,13 +41,6 @@ public class StatusController : MonoBehaviour
     float nextRegenTick, nextManaTick;   // each pool's own deadline on this unit
     float hpAccum, manaAccum;            // the sub-1-point remainder each carries between ticks
 
-    static readonly Color PoisonColor = new Color(0.55f, 0.85f, 0.35f);
-    static readonly Color BleedColor  = new Color(1f, 0.3f, 0.3f);
-    static readonly Color BurnColor   = new Color(1f, 0.55f, 0.25f);
-    static readonly Color StunColor   = new Color(1f, 0.9f, 0.3f);
-    static readonly Color FreezeColor = new Color(0.6f, 0.85f, 1f);
-    static readonly Color SilenceColor= new Color(0.7f, 0.5f, 1f);
-    static readonly Color BlindColor  = new Color(0.7f, 0.7f, 0.75f);
 
     // Ailment + Haste STATE (which are active, their timers + magnitudes) now lives in the unified per-unit
     // UnitStates store (V3). This controller keeps the VFX auras, the mob-AI delegation, the DoT ticking, and the
@@ -72,10 +65,10 @@ public class StatusController : MonoBehaviour
         }
     }
 
-    // Persistent status-aura VFX per DoT — begun on apply (a looping Attach cue that tracks this unit) and stopped
-    // when the ailment expires (see the sweep in Update / OnDestroy). Non-DoT ailments use one-shot cues instead.
-    readonly VfxSequenceRunner[] aura = new VfxSequenceRunner[N];
-    static readonly Color HasteColor = new Color(0.4f, 1f, 0.7f);
+    // The lasting status-aura cue per DoT — announced on apply (every watching screen draws a glow that tracks this
+    // unit) and ended when the ailment expires (see the sweep in Update / OnDestroy). Non-DoT ailments use one-shot
+    // cues instead.
+    readonly VfxCue.Aura[] aura = new VfxCue.Aura[N];
 
     Health health;          // mob: the thing DoTs damage
     MonsterAI3D ai;          // mob: the brain we delegate Stun/Freeze/Slow to
@@ -122,12 +115,7 @@ public class StatusController : MonoBehaviour
         for (int i = 0; i < N; i++) StopAura(i);
     }
 
-    void StopAura(int i)
-    {
-        if (aura[i] == null) return;
-        aura[i].Stop();
-        aura[i] = null;
-    }
+    void StopAura(int i) => VfxCue.End(ref aura[i]);
 
     bool Active(Ailment a) { var st = states; return st != null && st.Has((StateId)(int)a); }   // Ailment i ↔ StateId i (matching enum order)
     public static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
@@ -286,7 +274,6 @@ public class StatusController : MonoBehaviour
             if (s != null && !wasActive)
             {
                 s.nextTick = Time.time + DotInterval;   // first tick after one interval
-                Announce(a);
                 StartAura(a);                           // persistent aura for the ailment's duration
             }
             return;
@@ -299,19 +286,14 @@ public class StatusController : MonoBehaviour
         switch (a)
         {
             case Ailment.Stun:
-                if (ai != null) ai.Stun(seconds);                    // mob: reuse the freeze + head-swirl
-                else AnnounceIfNew(a, wasActive, "Stun!", StunColor);
+                if (ai != null) ai.Stun(seconds);                    // mob: reuse the freeze
                 break;
             case Ailment.Freeze:
                 if (ai != null) ai.Stagger(seconds);                 // mob: freeze movement/attacks
-                AnnounceIfNew(a, wasActive, "Frozen!", FreezeColor);
-                break;
-            case Ailment.Silence:
-                AnnounceIfNew(a, wasActive, "Silenced!", SilenceColor);
                 break;
         }
 
-        // One-shot cue on a NEW control/debuff (mirrors the announce gate). DoTs return above with their aura instead.
+        // One-shot cue on a NEW control/debuff. DoTs return above with their aura instead.
         if (!wasActive && CcCue(a, out var cue)) VfxCue.Fire(cue, transform);
     }
 
@@ -319,7 +301,7 @@ public class StatusController : MonoBehaviour
     void StartAura(Ailment a)
     {
         int i = (int)a;
-        if (aura[i] != null) aura[i].Stop();
+        VfxCue.End(ref aura[i]);
         aura[i] = VfxCue.Begin(StartCue(a), transform);
     }
 
@@ -360,11 +342,7 @@ public class StatusController : MonoBehaviour
         // would refuse as applying nothing.
         if (Mathf.Approximately(bonus, 0f)) { states.Apply(StateId.MovementSpeed, seconds, 0f); return; }
         bool started = states.ApplySubStat(SubStat.MovementSpeed, bonus, seconds);
-        if (started)
-        {
-            DamagePopup.SpawnText(transform, "Haste!", HasteColor);
-            if (VfxCue.SubStatStartCue(SubStat.MovementSpeed, true, bonus, out var cue)) VfxCue.Fire(cue, transform);
-        }
+        if (started && VfxCue.SubStatStartCue(SubStat.MovementSpeed, true, bonus, out var cue)) VfxCue.Fire(cue, transform);
     }
 
     /// <summary>Remove up to <paramref name="count"/> active ailments (DoTs and control/debuffs) — clears their
@@ -383,24 +361,6 @@ public class StatusController : MonoBehaviour
             cleared++;
         }
         return cleared;
-    }
-
-    void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)
-    {
-        if (!wasActive) DamagePopup.SpawnText(transform, label, c);
-    }
-
-    void Announce(Ailment a) => DamagePopup.SpawnText(transform, a.ToString() + "!", ColorOf(a));
-
-    static Color ColorOf(Ailment a)
-    {
-        switch (a)
-        {
-            case Ailment.Poison: return PoisonColor;
-            case Ailment.Bleed:  return BleedColor;
-            case Ailment.Burn:   return BurnColor;
-            default:             return Color.white;
-        }
     }
 
     void Update()
@@ -424,10 +384,10 @@ public class StatusController : MonoBehaviour
             states.EndTauntIfTaunterGone();
         }
 
-        // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
-        // the handful of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
+        // Tear down a DoT's aura once its state has lapsed (Running gates it, so states.Has is only hit for the handful
+        // of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
         for (int i = 0; i < N; i++)
-            if (aura[i] != null && !states.Has((StateId)i)) StopAura(i);
+            if (aura[i].Running && !states.Has((StateId)i)) StopAura(i);
     }
 
     bool UnitIsWatchedCopy()
@@ -442,16 +402,11 @@ public class StatusController : MonoBehaviour
         if (s == null || Time.time < s.nextTick) return;   // not active (Get returns null once lapsed) or not yet due
         s.nextTick = Time.time + DotInterval;
         int dmg = Mathf.Max(1, Mathf.RoundToInt(s.magnitude));
-        Color c = ColorOf(a);
         VfxCue.Fire(TickCue(a), transform);   // one-shot puff per DoT tick
 
         var u = Unit;
-        if (u != null) CombatAuthority.ApplyTrue(u, dmg, c, AilmentNames[(int)a], s.appliedBy);
+        if (u != null) CombatAuthority.ApplyTrue(u, dmg, TrueDamageCauses.OfDot(a), s.appliedBy);
     }
-
-    // Each ailment's name for the log line its tick writes, built once: an enum's ToString builds a string per call,
-    // and this runs per tick per unit.
-    static readonly string[] AilmentNames = System.Enum.GetNames(typeof(Ailment));
 
     // Heal-over-time (Mending Tide). Lives here — the one per-unit ticker BOTH sides already run — so a regen cast on a
     // mob actually heals it. It used to tick inside Character.Update, which is why regen was a player-only state in
@@ -513,13 +468,8 @@ public class StatusController : MonoBehaviour
         int owed = states.TakeExpiredDebt();
         if (owed <= 0) return;
         var u = Unit;
-        if (u != null) CombatAuthority.ApplyTrue(u, owed, BraceDueColor, "brace debt");
+        if (u != null) CombatAuthority.ApplyTrue(u, owed, TrueDamageCause.BraceDebt);
     }
-
-    // The bill coming due gets its OWN colour, deliberately not Brace's blue: the blue numbers are damage you dodged
-    // for now, this one is damage you are actually taking, and they must not read as the same event. Pushed toward
-    // magenta rather than violet so it can't be mistaken for magic damage either (that's 0.7, 0.5, 1).
-    static readonly Color BraceDueColor = new Color(0.8f, 0.25f, 0.9f);
 }
 
 /// <summary>Convenience front door: find-or-add the <see cref="StatusController"/> on a unit and apply an

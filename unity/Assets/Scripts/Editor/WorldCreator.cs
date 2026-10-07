@@ -453,11 +453,17 @@ public class WorldCreator : EditorWindow
             void AddPortal(string id, PortalSpec s) { if (!portalsByScene.TryGetValue(id, out var l)) portalsByScene[id] = l = new List<PortalSpec>(); l.Add(s); }
             void AddSpawn(string id, SpawnSpec s)   { if (!spawnsByScene.TryGetValue(id, out var l)) spawnsByScene[id] = l = new List<SpawnSpec>(); l.Add(s); }
 
+            // A door is placed only when BOTH of its maps have a scene: baked in this build, or already on disk. A door
+            // into a map with no scene (a shadow place nobody has built) would send every player who walks in nowhere.
+            bool HasScene(string id) => scenePathById.ContainsKey(id) || File.Exists($"{ScenesDir}/{SceneName(id)}.unity");
+            var skipped = new List<string>();
+
             if (world.portals != null)
                 for (int i = 0; i < world.portals.Length; i++)
                 {
                     var p = world.portals[i];
                     if (!byId.ContainsKey(p.a) || !byId.ContainsKey(p.b) || !HasAnchors(p)) continue;
+                    if (!HasScene(p.a) || !HasScene(p.b)) { skipped.Add($"{p.a}↔{p.b}"); continue; }
                     ResolvePortalEdges(p, out string edgeA, out float offA, out string edgeB, out float offB);
 
                     string sceneA = SceneName(p.a), sceneB = SceneName(p.b);
@@ -519,6 +525,7 @@ public class WorldCreator : EditorWindow
 
             string summary = $"Generated {built} maps and {portalCount} portals from {sourceName}"
                            + (baked ? ", and baked the world map" : " (the world map is NOT re-baked)")
+                           + (skipped.Count > 0 ? $"; {skipped.Count} door(s) not placed because a map they join has no scene: {string.Join(", ", skipped)}" : "")
                            + (keep.Count > 0 ? $"; kept as they are: {string.Join(", ", keep)}." : ".");
             Debug.Log("[unwritten] World Creator: " + summary);
             return summary;

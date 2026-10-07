@@ -32,14 +32,14 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$REPO/tools/load-settings.sh"
 
 # Every port comes from settings.env and nowhere else; a missing one is said, never guessed.
-for __setting in PORT CHAR_SERVER_PORT MAP_SERVER_ARRIVALS_PORT PATCH_URL; do
+for __setting in PORT CHAR_SERVER_PORT MAP_SERVER_ARRIVALS_PORT PATCH_PORT PATCH_URL; do
   [ -n "${!__setting:-}" ] || { printf '%s is not set in %s/settings.env.\n' "$__setting" "$REPO" >&2
                                 read -r -p "Press Enter to close." _ || true; exit 2; }
 done
 ACCOUNTS_PORT="$PORT"
 CHAR_PORT="$CHAR_SERVER_PORT"
 MAP_PORT="$MAP_SERVER_ARRIVALS_PORT"
-WEBSITE_PORT="$(patch_port)"
+WEBSITE_PORT="$PATCH_PORT"
 WINDOW_STATE="$REPO/logs/windows"
 
 # THE ONE LIST OF WINDOWS — name (what restart-servers.sh is given) | title | corner | port. Opened, and restarted, in

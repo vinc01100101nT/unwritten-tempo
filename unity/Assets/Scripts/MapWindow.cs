@@ -102,6 +102,16 @@ public class MapWindow : MonoBehaviour
     float glideT;
     Vector2 glideFrom, glideTo;
 
+    // Who lives in a map: on the right of the zone view for the map it shows, and beside the pointer in the world view
+    // for the map under it. Each is rebuilt only when the map it shows changes.
+    RosterCard zoneRoster, hoverRoster;
+    string hoverMap;
+    bool pointerOverMap;
+    Vector2 pointer, hoverAskedAt;
+    float hoverAskedZoom;
+    Vector2 hoverAskedPan;
+    bool hoverAsked;
+
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
     const float MarkerSize = 11f, RouteMarkSize = 14f;
 
@@ -132,7 +142,7 @@ public class MapWindow : MonoBehaviour
         if (Hotkeys.CancelDown()) { Close(); Hotkeys.MarkCancelHandled(); return; }
         if (player == null && PersistentPlayer3D.Instance != null) player = PersistentPlayer3D.Instance.transform;
 
-        if (active == world) UpdateWorldMarker(); else UpdateZone();
+        if (active == world) { UpdateWorldMarker(); UpdateHover(); } else UpdateZone();
         StepGlide();
         locateButton.SetActive(active == zone ? LocateUsefulInZone() : Zoomed(world) && !CentredOnMarker(world));
     }
@@ -150,6 +160,7 @@ public class MapWindow : MonoBehaviour
     {
         panel.SetActive(false);
         gliding = false;
+        HideHover();
         // A closed window holds no picture.
         MinimapCatalog.ReleasePicture(zonePictureMap);
         zonePictureMap = null;
@@ -186,6 +197,7 @@ public class MapWindow : MonoBehaviour
             zoneImage.enabled = picture != null;
             zoneMissing.gameObject.SetActive(picture == null);
             routeDrawnVersion = -1;
+            zoneRoster.Show(null, map, panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom);
         }
         UpdateZone();
     }
@@ -196,6 +208,8 @@ public class MapWindow : MonoBehaviour
         gliding = false;
         world.zoomRoot.gameObject.SetActive(v == world);
         zone.zoomRoot.gameObject.SetActive(v == zone);
+        zoneRoster.SetVisible(v == zone && zoneRoster.HasPeople);
+        if (v != world) HideHover();
     }
 
     void SwitchView()
@@ -238,22 +252,70 @@ public class MapWindow : MonoBehaviour
         v.marker.localScale = new Vector3(pulse, pulse, 1f);
     }
 
-    // A click on the world view opens the zone view on the map under the cursor — only a map that has a picture.
-    void PickZone(Vector2 screenPoint)
+    // The map under a point on the screen, in the world view; null over empty space.
+    WorldAtlas.Entry MapUnder(Vector2 screenPoint)
     {
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(world.picture, screenPoint, null, out Vector2 local)) return;
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(world.picture, screenPoint, null, out Vector2 local)) return null;
         Vector2 size = world.picture.rect.size;
         float u = local.x / Mathf.Max(1f, size.x) + 0.5f, vFromTop = 0.5f - local.y / Mathf.Max(1f, size.y);
         float wx = data.minX + u * data.worldW, wy = data.minY + vFromTop * data.worldH;
-        var catalog = MinimapCatalog.Instance;
         foreach (var e in data.maps)
-        {
-            if (e == null || wx < e.x || wx > e.x + e.w || wy < e.y || wy > e.y + e.h) continue;
-            if (catalog == null || catalog.Find(e.scene) == null) return;
-            UISounds.PlayClick();
-            ShowZone(e.scene);
+            if (e != null && wx >= e.x && wx <= e.x + e.w && wy >= e.y && wy <= e.y + e.h) return e;
+        return null;
+    }
+
+    // A click on the world view opens the zone view on the map under the cursor — only a map that has a picture.
+    void PickZone(Vector2 screenPoint)
+    {
+        var e = MapUnder(screenPoint);
+        var catalog = MinimapCatalog.Instance;
+        if (e == null || catalog == null || catalog.Find(e.scene) == null) return;
+        UISounds.PlayClick();
+        ShowZone(e.scene);
+    }
+
+    // ── world view: who lives in the map under the pointer ────────────────────────────────────────────────────────
+    // The map under the pointer is looked up again only when the pointer, the zoom or the drag moved.
+    void UpdateHover()
+    {
+        if (!pointerOverMap) { HideHover(); return; }
+        if (hoverAsked && pointer == hoverAskedAt && Mathf.Approximately(world.zoom, hoverAskedZoom) && world.pan == hoverAskedPan)
             return;
+        hoverAsked = true;
+        hoverAskedAt = pointer;
+        hoverAskedZoom = world.zoom;
+        hoverAskedPan = world.pan;
+
+        var e = MapUnder(pointer);
+        string map = e != null ? e.scene : null;
+        if (map != hoverMap)
+        {
+            hoverMap = map;
+            if (map != null) hoverRoster.Show(map, map, panelRect.rect.height - 2f * HoverEdge);
+            else hoverRoster.SetVisible(false);
         }
+        if (hoverMap != null && hoverRoster.HasPeople) PlaceBesidePointer(hoverRoster.Root, pointer);
+    }
+
+    void HideHover()
+    {
+        hoverMap = null;
+        hoverAsked = false;
+        if (hoverRoster != null) hoverRoster.SetVisible(false);
+    }
+
+    // Below and to the right of the pointer, flipped to the other side when that would run off the screen.
+    void PlaceBesidePointer(RectTransform card, Vector2 screenPoint)
+    {
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(panelRect, screenPoint, null, out Vector2 at);
+        Vector2 half = panelRect.rect.size * 0.5f, size = card.sizeDelta;
+        bool left = at.x + HoverGap + size.x > half.x - HoverEdge;
+        bool up = at.y - HoverGap - size.y < -half.y + HoverEdge;
+        card.pivot = new Vector2(left ? 1f : 0f, up ? 0f : 1f);
+        float x = at.x + (left ? -HoverGap : HoverGap), y = at.y + (up ? HoverGap : -HoverGap);
+        x = left ? Mathf.Max(x, -half.x + HoverEdge + size.x) : Mathf.Min(x, half.x - HoverEdge - size.x);
+        y = up ? Mathf.Min(y, half.y - HoverEdge - size.y) : Mathf.Max(y, -half.y + HoverEdge + size.y);
+        card.anchoredPosition = new Vector2(x, y);
     }
 
     // ── zone view: you, and the route, on the map you stand in ────────────────────────────────────────────────────
@@ -270,6 +332,9 @@ public class MapWindow : MonoBehaviour
             Pulse(zone);
         }
         DrawRoute();
+        // The screen changed size: the list is laid out again to the height it now has.
+        float rosterRoom = panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom;
+        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight)) zoneRoster.Show(null, zoneMap, rosterRoom);
     }
 
     // A spot on the ground of the map you stand in → a point on the zone picture, from its centre.
@@ -412,14 +477,25 @@ public class MapWindow : MonoBehaviour
     }
 
     /// <summary>The wheel, the drag and the click, caught by the dimmed backdrop that covers the whole screen.</summary>
-    sealed class MapInput : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IPointerClickHandler
+    sealed class MapInput : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IPointerClickHandler,
+                            IPointerMoveHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public MapWindow owner;
         public void OnScroll(PointerEventData e) => owner.ZoomAt(e.position, e.scrollDelta.y);
         public void OnBeginDrag(PointerEventData e) { }
-        public void OnDrag(PointerEventData e) { if (e.button == PointerEventData.InputButton.Left) owner.DragBy(e.delta); }
+        public void OnDrag(PointerEventData e)
+        {
+            owner.pointer = e.position;
+            if (e.button == PointerEventData.InputButton.Left) owner.DragBy(e.delta);
+        }
+        public void OnPointerEnter(PointerEventData e) { owner.pointerOverMap = true; owner.pointer = e.position; }
+        public void OnPointerMove(PointerEventData e) => owner.pointer = e.position;
+        public void OnPointerExit(PointerEventData e) => owner.pointerOverMap = false;
         public void OnPointerClick(PointerEventData e)
         {
+            // A DRAG IS NOT A CLICK. The backdrop both drags and clicks, so the event system still sends the click on
+            // release after a drag; it is still marked dragging at that moment, which is how a drag is told apart.
+            if (e.dragging) return;
             if (e.button == PointerEventData.InputButton.Left && owner.active == owner.world) owner.PickZone(e.position);
         }
     }
@@ -477,6 +553,153 @@ public class MapWindow : MonoBehaviour
         pin.rectTransform.sizeDelta = new Vector2(24f, 24f);
         locateButton = locate.gameObject;
         locateButton.SetActive(false);
+
+        zoneRoster = new RosterCard(panel.transform);
+        var zrt = zoneRoster.Root;
+        zrt.anchorMin = zrt.anchorMax = zrt.pivot = new Vector2(1f, 1f);
+        zrt.anchoredPosition = new Vector2(-24f, -ZoneRosterTop);
+        hoverRoster = new RosterCard(panel.transform);
+        hoverRoster.Root.anchorMin = hoverRoster.Root.anchorMax = new Vector2(0.5f, 0.5f);
+    }
+
+    // Where the zone view's list sits: below the title, above the location button.
+    const float ZoneRosterTop = 64f, ZoneRosterBottom = 76f;
+    // The hover list's distance from the pointer, and the least it keeps from the screen's edge.
+    const float HoverGap = 16f, HoverEdge = 12f;
+
+    /// <summary>
+    /// WHO LIVES IN ONE MAP — its mobs, then its NPCs, each with its level (<see cref="UnitLabel.WithLevel"/>), read
+    /// from the two lists of who lives where (<see cref="WorldSpawns.CreaturesIn"/>, <see cref="WorldTownsfolk.PeopleIn"/>).
+    /// A list taller than the room it is given carries on in another column to the right. It catches no clicks, so
+    /// the map under it still zooms, drags and picks. Hidden while the map has nobody.
+    /// </summary>
+    sealed class RosterCard
+    {
+        public RectTransform Root { get; }
+        public bool HasPeople { get; private set; }
+        public float LaidForHeight { get; private set; } = -1f;
+
+        const float Pad = 10f, ColumnGap = 18f, EntrySize = 13f, HeadSize = 14f;
+
+        readonly TMP_Text title;
+        readonly List<TMP_Text> columns = new List<TMP_Text>();
+        readonly List<MonsterDef> mobs = new List<MonsterDef>();
+        readonly List<WorldTownsfolk.Row> people = new List<WorldTownsfolk.Row>();
+        readonly List<string> lines = new List<string>();
+        readonly List<bool> heads = new List<bool>();
+        readonly System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        readonly string headOpen;
+
+        public RosterCard(Transform parent)
+        {
+            var card = UiKit.Card(UiKit.Img("Roster", parent, Color.white));
+            foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+            Root = card.rectTransform;
+            title = UiKit.MakeText("Map", Root, "", HeadSize, FontStyle.Bold, TextAnchor.UpperLeft);
+            title.color = UiKit.TitleText;
+            title.raycastTarget = false;
+            Corner(title.rectTransform);
+            headOpen = "<b><color=" + UiKit.Hex(UiKit.TitleText) + ">";
+            Root.gameObject.SetActive(false);
+        }
+
+        public void SetVisible(bool on)
+        {
+            bool want = on && HasPeople;
+            if (Root.gameObject.activeSelf != want) Root.gameObject.SetActive(want);
+        }
+
+        /// <summary>Lay out who lives in <paramref name="map"/> under <paramref name="heading"/> (none when null),
+        /// at most <paramref name="maxHeight"/> tall, and show it when anybody lives there.</summary>
+        public void Show(string heading, string map, float maxHeight)
+        {
+            LaidForHeight = maxHeight;
+            WorldSpawns.CreaturesIn(map, mobs);
+            WorldTownsfolk.PeopleIn(map, people);
+            HasPeople = mobs.Count > 0 || people.Count > 0;
+            if (!HasPeople) { SetVisible(false); return; }
+
+            lines.Clear();
+            heads.Clear();
+            if (mobs.Count > 0)
+            {
+                Add("Mobs", true);
+                foreach (var m in mobs) Add(UnitLabel.WithLevel(m.displayName, m.level), false);
+            }
+            if (people.Count > 0)
+            {
+                if (lines.Count > 0) Add("", false);
+                Add("NPCs", true);
+                foreach (var p in people) Add(UnitLabel.WithLevel(p.name, p.level), false);
+            }
+
+            bool titled = !string.IsNullOrEmpty(heading);
+            title.gameObject.SetActive(titled);
+            float top = Pad;
+            if (titled)
+            {
+                title.text = heading;
+                Vector2 t = title.GetPreferredValues(heading);
+                title.rectTransform.anchoredPosition = new Vector2(Pad, -Pad);
+                title.rectTransform.sizeDelta = t;
+                top += t.y + 4f;
+            }
+
+            float lineHeight = Column(0).GetPreferredValues("Ag").y;
+            int perColumn = Mathf.Max(2, Mathf.FloorToInt((maxHeight - top - Pad) / Mathf.Max(1f, lineHeight)));
+
+            int used = 0, at = 0;
+            float x = Pad, tallest = 0f, widest = titled ? title.rectTransform.sizeDelta.x : 0f;
+            while (at < lines.Count)
+            {
+                // A blank line never opens a column, and a heading never closes one.
+                if (lines[at].Length == 0) { at++; continue; }
+                int end = Mathf.Min(lines.Count, at + perColumn);
+                if (end < lines.Count && end - at > 1 && heads[end - 1]) end--;
+                if (end < lines.Count && end - at > 2 && lines[end - 1].Length == 0) end--;
+
+                sb.Clear();
+                for (int i = at; i < end; i++)
+                {
+                    if (i > at) sb.Append('\n');
+                    if (heads[i]) sb.Append(headOpen).Append(lines[i]).Append("</color></b>");
+                    else sb.Append(lines[i]);
+                }
+                var col = Column(used++);
+                col.gameObject.SetActive(true);
+                col.text = sb.ToString();
+                Vector2 size = col.GetPreferredValues(col.text);
+                col.rectTransform.anchoredPosition = new Vector2(x, -top);
+                col.rectTransform.sizeDelta = size;
+                x += size.x + ColumnGap;
+                tallest = Mathf.Max(tallest, size.y);
+                at = end;
+            }
+            for (int i = used; i < columns.Count; i++) columns[i].gameObject.SetActive(false);
+
+            float width = Mathf.Max(x - ColumnGap + Pad, widest + 2f * Pad);
+            Root.sizeDelta = new Vector2(width, top + tallest + Pad);
+            SetVisible(true);
+        }
+
+        void Add(string line, bool head) { lines.Add(line); heads.Add(head); }
+
+        TMP_Text Column(int i)
+        {
+            while (columns.Count <= i)
+            {
+                var t = UiKit.MakeText("Column", Root, "", EntrySize, FontStyle.Normal, TextAnchor.UpperLeft);
+                t.color = UiKit.TextMain;
+                t.raycastTarget = false;
+                t.richText = true;
+                t.textWrappingMode = TextWrappingModes.NoWrap;
+                Corner(t.rectTransform);
+                columns.Add(t);
+            }
+            return columns[i];
+        }
+
+        static void Corner(RectTransform rt) => rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
     }
 
     // A zoom node filling the screen, its picture fitted inside at the picture's own aspect, and a "you are here" on it.

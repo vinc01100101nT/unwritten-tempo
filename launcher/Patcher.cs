@@ -24,7 +24,9 @@ public sealed class Patcher
 {
     public sealed record NewsItem(string date, string title, string text);
     public sealed record ManifestFile(string path, long size, string sha256, bool exec);
-    public sealed record Manifest(string start, List<ManifestFile> files);
+    /// <summary><paramref name="version"/> is the version these files are — null in a list published before it was
+    /// written there.</summary>
+    public sealed record Manifest(string start, List<ManifestFile> files, string? version = null);
 
     /// <summary>What this machine had after its last finished update, so an unchanged file is recognised by its size
     /// and date instead of being read end to end on every launch. Kept beside the game folder, never inside it,
@@ -81,6 +83,15 @@ public sealed class Patcher
 
     public async Task<string> ReadVersionAsync() =>
         (await Http.GetStringAsync($"{PatchUrl}/version.txt")).Trim();
+
+    /// <summary>The version of the files THIS computer downloads — from its own platform's list, never the shared
+    /// version.txt, which moves even when only the other platform was published. Null when the list predates it.</summary>
+    public async Task<string?> ReadPlatformVersionAsync()
+    {
+        var listed = JsonSerializer.Deserialize<Manifest>(
+            await Http.GetStringAsync($"{PatchUrl}/{Platform}/manifest.json"), Json);
+        return listed?.version;
+    }
 
     public async Task<List<NewsItem>> ReadNewsAsync() =>
         JsonSerializer.Deserialize<List<NewsItem>>(await Http.GetStringAsync($"{PatchUrl}/news.json"), Json) ?? [];

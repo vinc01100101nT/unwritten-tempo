@@ -37,10 +37,11 @@ checker at the bottom is what makes them stick.
    process. Ten a minute per address on sign-up and sign-in; 120 a minute per address on everything.
 6. **A lockout is keyed by address AND email.** Keyed by email alone, five wrong guesses from anywhere locked the
    real owner out for a minute, repeatable forever.
-7. **Trust the forwarded address only behind the proxy.** Bound to `127.0.0.1` the service sits behind the
-   encrypting proxy and every request arrives from it — without trusting the forwarded header every player
-   shares one rate-limit bucket. Bound anywhere else there is no proxy, and trusting that header lets a caller
-   name any address they like. `trustProxy` follows `BIND_HOST`.
+7. **Trust the forwarded address only from this machine.** An encrypting proxy on the same machine — Caddy on the
+   hosted machine, Tailscale's HTTPS forwarder on a desk — delivers every request from `127.0.0.1`, so without
+   trusting the forwarded header every player behind it shares one rate-limit bucket. A caller connecting
+   directly arrives from its own address, and trusting the header from it would let it name any address it
+   liked. `trustProxy: "loopback"`, whatever `BIND_HOST` is.
 8. **Entering the world asks the server that holds you, not every server.** The character server remembers
    which map server it handed each character to and asks that one to let go; every server is asked only when none
    is written down. The old fan-out was players × map servers, all but one of them wasted.

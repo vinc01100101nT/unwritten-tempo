@@ -131,6 +131,7 @@ public class CharacterDye3D : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         if (addingForOther) showsOther = true;
         renderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
         mpb = new MaterialPropertyBlock();
@@ -174,11 +175,7 @@ public class CharacterDye3D : MonoBehaviour
     }
 
     /// <summary>The chosen color for a part, or the part's own color if it hasn't been dyed.</summary>
-    public Color TargetFor(Color source)
-    {
-        int i = IndexOf(source);
-        return i >= 0 ? targets[i] : source;
-    }
+    public Color TargetFor(Color source) => ChosenFor(source, sources, targets);
 
     /// <summary>The model's distinct dyeable cloth colors (skin/eyes filtered out), most-worn first, as saved in
     /// <see cref="CharacterDyeParts"/>. Drives character creation's part swatches.</summary>
@@ -249,16 +246,7 @@ public class CharacterDye3D : MonoBehaviour
         return arr;
     }
 
-    void DecodeInto(string[] src, string[] dst)
-    {
-        sources.Clear();
-        targets.Clear();
-        if (src == null || dst == null) return;
-        int n = Mathf.Min(src.Length, dst.Length);
-        for (int i = 0; i < n; i++)
-            if (ColorUtility.TryParseHtmlString(src[i], out var s) && ColorUtility.TryParseHtmlString(dst[i], out var t))
-            { sources.Add(s); targets.Add(t); }
-    }
+    void DecodeInto(string[] src, string[] dst) => DecodePairs(src, dst, sources, targets);
 
     // ── Hand the colours to the renderers ────────────────────────────────────────
     // Re-fetch the mesh renderers if the cache is empty or went stale (e.g. this component was reused across a
@@ -281,25 +269,59 @@ public class CharacterDye3D : MonoBehaviour
         if (mpb == null) return;
         EnsureRenderers();
         if (renderers == null) return;
+        Paint(renderers, sources.Count > 0 ? DetectableParts() : null, sources, targets, mpb);
+    }
+
+    /// <summary>THE ONE COLOURING ROUTINE — hand <paramref name="renderers"/> their model's
+    /// <paramref name="parts"/> and the chosen colour for each. Every body the game draws comes through here, and so
+    /// does the Mob Table's preview in the editor, so the two can never show one look two ways.
+    /// <paramref name="sources"/> and <paramref name="targets"/> are index-matched original→chosen colours; a part
+    /// missing from them keeps its own colour. Null or empty parts hands over a count of zero, which shows the
+    /// model's own colours.</summary>
+    public static void Paint(SkinnedMeshRenderer[] renderers, IReadOnlyList<Color> parts, IReadOnlyList<Color> sources,
+                             IReadOnlyList<Color> targets, MaterialPropertyBlock block)
+    {
+        if (renderers == null || block == null) return;
 
         // Hand over EVERY part (dyed or not), so the shader's nearest-part match can give each part its own pixels
         // and no dyed part bleeds into a neighbor. Undyed parts map to themselves and pass through. Nothing dyed →
         // a count of zero, and the shader skips the swap entirely.
-        var partsList = sources.Count > 0 ? DetectableParts() : null;
-        int n = partsList != null ? Mathf.Min(partsList.Count, MaxParts) : 0;
+        int n = parts != null && sources != null && sources.Count > 0 ? Mathf.Min(parts.Count, MaxParts) : 0;
 
         foreach (var r in renderers)
         {
             if (r == null) continue;
             // Read first and write back: the fade and other effects keep their own values in this same block.
-            r.GetPropertyBlock(mpb);
-            mpb.SetFloat(CountId, n);
+            r.GetPropertyBlock(block);
+            block.SetFloat(CountId, n);
             for (int i = 0; i < n; i++)
             {
-                mpb.SetVector(SrcIds[i], (Vector4)partsList[i]);
-                mpb.SetVector(DstIds[i], (Vector4)TargetFor(partsList[i]));
+                block.SetVector(SrcIds[i], (Vector4)parts[i]);
+                block.SetVector(DstIds[i], (Vector4)ChosenFor(parts[i], sources, targets));
             }
-            r.SetPropertyBlock(mpb);
+            r.SetPropertyBlock(block);
         }
+    }
+
+    // The chosen colour for one part, or the part's own colour when it was not changed.
+    static Color ChosenFor(Color part, IReadOnlyList<Color> sources, IReadOnlyList<Color> targets)
+    {
+        int n = targets != null ? Mathf.Min(sources.Count, targets.Count) : 0;
+        for (int i = 0; i < n; i++)
+            if (Approximately(sources[i], part)) return targets[i];
+        return part;
+    }
+
+    /// <summary>Read "#RRGGBB" colours into index-matched lists, skipping any pair that does not parse — the same
+    /// reading every look gets, so a look saved anywhere is read one way.</summary>
+    public static void DecodePairs(string[] src, string[] dst, List<Color> sources, List<Color> targets)
+    {
+        sources.Clear();
+        targets.Clear();
+        if (src == null || dst == null) return;
+        int n = Mathf.Min(src.Length, dst.Length);
+        for (int i = 0; i < n; i++)
+            if (ColorUtility.TryParseHtmlString(src[i], out var s) && ColorUtility.TryParseHtmlString(dst[i], out var t))
+            { sources.Add(s); targets.Add(t); }
     }
 }

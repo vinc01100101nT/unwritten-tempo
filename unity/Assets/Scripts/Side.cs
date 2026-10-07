@@ -69,13 +69,13 @@ public static class Sides
     {
         Health best = null;
         float bestSqr = float.MaxValue;
-        var list = MonsterAI3D.Active;
+        // Only that map's creatures, from the by-map filing — not every creature the server holds, each asked its map.
+        var list = string.IsNullOrEmpty(map) ? MonsterAI3D.Active : MonsterAI3D.ActiveIn(map);
         for (int i = 0; i < list.Count; i++)
         {
             var ai = list[i];
             var h = ai != null ? ai.Health : null;
             if (h == null || h.IsDead || h.side != Side.Creatures) continue;
-            if (!string.IsNullOrEmpty(map) && h.Map != map) continue;
             Vector3 d = ai.transform.position - from; d.y = 0f;
             if (d.sqrMagnitude < bestSqr) { bestSqr = d.sqrMagnitude; best = h; }
         }

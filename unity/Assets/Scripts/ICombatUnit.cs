@@ -94,6 +94,11 @@ public interface ICombatUnit : IDamageable
     /// <summary>Restore mana, clamped to the pool.</summary>
     void GainMana(int amount);
 
+    /// <summary>Drop this unit's HP to 1 and return how much it lost (0 when it was already at 1 or below). Not a hit:
+    /// nothing mitigates it and nothing that answers being hurt hears it. On a watched copy it changes nothing and
+    /// returns 0 — health is the server's.</summary>
+    int GiveUpHealthDownToOne();
+
     /// <summary>This unit's melee reach at FULL SIZE — its weapon's range, or its unarmed reach. Deliberately NOT
     /// scaled: contact distance depends on how big BOTH bodies are, so the caller blends it against the other unit
     /// (<see cref="UnitScale.MeleeBlend"/>). Storing a pre-scaled reach on one side is what let the player and a
@@ -179,6 +184,10 @@ public interface ICombatUnit : IDamageable
     /// <summary>The weapon type in this unit's hands, or <see cref="WeaponType.None"/> when they are empty.</summary>
     WeaponType HeldWeapon { get; }
 
+    /// <summary>Whether this unit's ordinary attack is ranged right now — its held weapon and, for a shuriken, its
+    /// higher of STR and DEX (<see cref="WeaponTypes.SwingsRanged"/>).</summary>
+    bool SwingsRanged { get; }
+
     /// <summary>The GRADE of the weapon in this unit's hands — what caps its weapon mastery and how many of each
     /// skill's levels count. Raw with empty hands, which is the lowest there is.</summary>
     Quality HeldQuality { get; }
@@ -195,8 +204,10 @@ public interface ICombatUnit : IDamageable
     // Each side drives a different rig (the player's controller vs a mob's pathing agent), but the CAPABILITY is
     // identical and named identically, so an effect never has to know which kind of thing it is moving.
 
-    /// <summary>Blink instantly to <paramref name="dest"/> — no travel, no animation.</summary>
-    void TeleportTo(Vector3 dest);
+    /// <summary>Blink instantly to <paramref name="dest"/> — no travel, no animation. <paramref name="look"/> names the
+    /// authored effect behind it, so every screen that draws the blink can read its afterimage from its own copy of
+    /// the skill; <see cref="RelocationLook.None"/> for a blink no effect authored.</summary>
+    void TeleportTo(Vector3 dest, RelocationLook look = default);
 
     /// <summary>Glide from here to <paramref name="dest"/> at <paramref name="speedMult"/> × this unit's own run
     /// speed. A fixed A→B move, not gated locomotion — it ignores the usual movement gates so a dash always travels.
@@ -204,7 +215,10 @@ public interface ICombatUnit : IDamageable
     /// <param name="faceAt">A world point to face for the WHOLE trip, instead of turning to face the way the unit is
     /// travelling. A hop that lands beside what it is about to hit must arrive already looking at it, or the strike
     /// reads as a swing at empty air — and nothing must re-turn it on landing. Null = face the travel direction.</param>
-    void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt);
+    /// <param name="look">The authored effect behind the glide (its afterimage and fade), read by every screen from
+    /// its own copy of the skill. <see cref="RelocationLook.None"/> for a glide no effect authored.</param>
+    void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                 RelocationLook look = default);
 
     /// <summary>True while this unit is mid-relocation — travelling a fixed A→B glide rather than walking. Lets a
     /// presentation effect last exactly as long as the hop does, without anyone having to author its length or guess

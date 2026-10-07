@@ -27,6 +27,11 @@ public class Billboard : MonoBehaviour
     [Tooltip("Tick if the sprite looks mirrored or you see its back — flips 180° on Y.")]
     public bool flip = false;
 
+    /// <summary>How far the picture is tipped over sideways about its feet, in degrees, as the camera sees it —
+    /// positive tips its top to the camera's right. Set at runtime by whatever animates a lean (a flat creature's bite,
+    /// <see cref="AttackLunge"/>); 0 stands it upright.</summary>
+    [System.NonSerialized] public float lean;
+
     Transform cam;
 
     void OnEnable() => cam = Camera.main != null ? Camera.main.transform : null;
@@ -46,8 +51,12 @@ public class Billboard : MonoBehaviour
         if (mode == Mode.Upright) dir.y = 0f;
         if (dir.sqrMagnitude < 1e-6f) return;
 
-        var rot = Quaternion.LookRotation(dir.normalized, Vector3.up);
+        dir.Normalize();
+        var rot = Quaternion.LookRotation(dir, Vector3.up);
         if (flip) rot *= Quaternion.Euler(0f, 180f, 0f);
+        // Turned about the line of sight, so the tip reads the same whichever way the quad is flipped. A positive turn
+        // about an axis pointing away from the viewer carries the top to the viewer's LEFT, hence the minus.
+        if (lean != 0f) rot = Quaternion.AngleAxis(-lean, dir) * rot;
         transform.rotation = rot;
     }
 }

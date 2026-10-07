@@ -12,6 +12,7 @@ public class GmCommand
     public readonly string[] aliases;   // extra names that map to the same command
     public readonly string usage;       // e.g. "gold <amount>" — shown by /help
     public readonly string summary;     // one-liner for /help
+    public readonly string example;     // one line that runs as typed, e.g. "mastery sword 70" — shown by /help
     public readonly Action<GmContext> run;
 
     /// <summary>May an ordinary player run this? <b>Default NO</b>, and that default is the point: every
@@ -25,15 +26,17 @@ public class GmCommand
     /// <see cref="GmCommands.Execute"/>).</summary>
     public readonly bool changesTheWorld;
 
-    public GmCommand(string name, string usage, string summary, Action<GmContext> run, params string[] aliases)
-        : this(name, usage, summary, run, false, false, aliases) { }
+    public GmCommand(string name, string usage, string summary, string example, Action<GmContext> run,
+                     params string[] aliases)
+        : this(name, usage, summary, example, run, false, false, aliases) { }
 
-    public GmCommand(string name, string usage, string summary, Action<GmContext> run,
+    public GmCommand(string name, string usage, string summary, string example, Action<GmContext> run,
                      bool anyoneMayRun, bool changesTheWorld, params string[] aliases)
     {
         this.name = name;
         this.usage = usage;
         this.summary = summary;
+        this.example = example;
         this.run = run;
         this.anyoneMayRun = anyoneMayRun;
         this.changesTheWorld = changesTheWorld;
@@ -49,8 +52,13 @@ public class GmContext
 {
     public string[] args;               // tokens AFTER the command name
     public Action<string> reply;        // print a line back into the chat log
+    public GmCommand command;           // the command being run — what ReplyUsage reads
 
     public void Reply(string msg) => reply?.Invoke(msg);
+
+    /// <summary>The answer to a line typed wrong: the command's own registered usage and example, never a copy typed
+    /// into the handler — a copy is what drifts.</summary>
+    public void ReplyUsage() { if (command != null) Reply(GmCommands.UsageLine(command)); }
 
     public int ArgCount => args != null ? args.Length : 0;
     public string Arg(int i) => (args != null && i >= 0 && i < args.Length) ? args[i] : null;

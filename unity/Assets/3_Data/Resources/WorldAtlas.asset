@@ -279,9 +279,9 @@ MonoBehaviour:
     type: dungeon
   - scene: luminhal
     x: 1368
-    y: 438
-    w: 64
-    h: 64
+    y: 430
+    w: 80
+    h: 80
     type: town
   - scene: lmh_fild01
     x: 1322
@@ -397,7 +397,7 @@ MonoBehaviour:
     w: 50
     h: 50
     type: special
-  - scene: iron_gate
+  - scene: narrowbend
     x: 340
     y: 1070
     w: 50
@@ -559,6 +559,12 @@ MonoBehaviour:
     w: 40
     h: 40
     type: dungeon
+  - scene: hazemere
+    x: 356
+    y: 440
+    w: 80
+    h: 80
+    type: town
   links:
   - a: lastline
     b: lst_fild01
@@ -692,8 +698,8 @@ MonoBehaviour:
     b: hill_of_the_flame
   - a: parley
     b: thousand_gates
-  - a: gmr_fild01
-    b: iron_gate
+  - a: hazemere
+    b: velmora
   - a: khn_fild04
     b: masked_ballroom
   - a: cdl_fild01
@@ -760,3 +766,7 @@ MonoBehaviour:
     b: khn_dun08
   - a: khn_dun08
     b: khn_dun09
+  - a: hazemere
+    b: tornel
+  - a: lst_fild04
+    b: narrowbend

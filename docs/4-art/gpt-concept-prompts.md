@@ -127,7 +127,7 @@ Generate **Tier 1 first**, eyeball all three together in Unity as a set — conf
 > - **Blades** — "broad blade with visible edge thickness, not a razor sheet."
 > - **Shafts / hafts** (spear, staff, axe, scythe) — "stout thick shaft, gripped like a haft, not a stick."
 > - **Bow** — draw it **stringless** and add "string painted on / omitted, thick carved limbs" — a taut thin string never survives the mesh.
-> - **Firearm** — "chunky barrel and stock, no thin ramrod or trigger wires."
+> - **Sniper** — "chunky barrel and stock, no thin ramrod, scope struts or trigger wires."
 > - Keep the whole thing **one connected solid** — no floating gems, no detached crossguard tips.
 
 ## ◆ WEAPON LINES — send one per image
@@ -146,21 +146,21 @@ Generate **Tier 1 first**, eyeball all three together in Unity as a set — conf
 7. **Dagger** *(Dagger)* — a fantasy assassin's dagger, a broad tapering blade with clear edge thickness, a small chunky guard, tightly wrapped grip, jeweled pommel. Poison/bleed knife.
 8. **Katar** *(Katar)* — a punch-dagger, a wide triangular blade riding over an H-frame handle held crosswise in the fist, all chunky steel. Crit assassin's fist-blade.
 9. **Bow** *(Bow)* — a recurve hunter's bow, thick carved wooden limbs curving to reinforced tips, a leather-wrapped central grip, subtle rune inlay. **Stringless / string painted on** — thick limbs carry the silhouette.
-10. **Firearm** *(Firearm)* — a fantasy flintlock (pick a chunky pistol *or* a long musket), thick carved wooden stock, stout iron barrel, brass fittings, an oversized decorative hammer/lock. No thin ramrod or wire trigger.
+10. **Sniper** *(Firearm)* — a long fantasy sniper rifle, a thick carved wooden stock, a long stout iron barrel, a chunky brass scope fused solid to the barrel, brass fittings. One-shot marksman's weapon. No thin ramrod, scope struts or wire trigger.
 
 ### :crystal_ball: Arcane — magic, wood + crystal (scales off MAtk / MP)
 
 11. **Caster staff** *(Staff)* — a tall wizard's staff, a stout gnarled wooden shaft (thick, not a stick), a chunky faceted crystal or orb cradled in carved wooden claws at the top, iron banding. The MAtk nuker's focus.
-12. **Support wand** *(short Staff)* — a short one-hand focus wand, a thick carved wooden handle, a glowing gem head set in a chunky metal cradle, soft warm light. The healer's tool — cozy, not menacing.
-13. **Scythe** *(needs a new WeaponType — see mapping)* — a fantasy reaping scythe, a broad curved blade **with real thickness**, a stout wooden snaith bound in iron braces, a subtle sickly-green rune glow. The curse/DoT necromancer weapon.
-14. **Focus orb / grimoire** *(needs a new WeaponType)* — an arcane focus: either a chunky crystal orb held in a clawed metal stand, or a thick spellbook with heavy metal corners and a gem clasp. The control mage's channel — one solid connected object, no floating orb.
+12. **Support wand** *(Wand)* — a short one-hand focus wand, a thick carved wooden handle, a glowing gem head set in a chunky metal cradle, soft warm light. The healer's tool — cozy, not menacing.
+13. **Scythe** *(Scythe)* — a fantasy reaping scythe, a broad curved blade **with real thickness**, a stout wooden snaith bound in iron braces, a subtle sickly-green rune glow. The curse/DoT necromancer weapon.
+14. **Shuriken** *(Shuriken)* — a large many-bladed throwing star, four to six broad leaf-shaped steel blades **with real thickness** around a chunky central hub with a leather-wrapped grip ring, so it can be held to slash or thrown. Autumn-leaf etching on the blades. One solid connected object.
 
 ## Weapon-type mapping (keep the art honest)
 
-Concept art is decoupled from code, but only some of these are wieldable **today**. Real `WeaponType` members: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm**.
+Concept art is decoupled from code, but only some of these are wieldable **today**. Real `WeaponType` members: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm, Wand, Scythe, Shuriken**.
 
-- **Wand** → author as a **short Staff**; there is no separate `Wand` type.
-- **Scythe · Focus-orb · Grimoire/Tome** → need a **new `WeaponType` + a new attack-animation bucket** before they can be equipped and swung. Fine to generate the concept + mesh ahead of that — just know it's not hand-ready until the type + swing clip exist.
+- **Wand** and **Scythe** have their own types. The Scythe has its own attack-animation slot, which plays the sword swing until a scythe clip exists.
+- **Shuriken** has its own type and attack-animation slot; the slot plays the sword swing until a shuriken clip exists.
 - **Knuckle** (fists) usually needs no held mesh — skip, or generate simple knuckle-guards.
 
 ## Quality / variants

@@ -3,9 +3,8 @@
 /// one-sentence identity in the Weapon Roster. Only the ten RING stats are used, because mastery adds to the
 /// ring's own term for that stat.
 ///
-/// <para>The five weapons the roster names that the engine has no type for yet (Greatsword, Warhammer, Shield,
-/// Wand, Scythe) map onto the types that exist: a greatsword is a two-handed sword, a wand is a staff. The rest
-/// arrive when their types do.</para>
+/// <para>Four roster weapons ride a type under another name (<see cref="WeaponTypes.Label"/>): a Greatsword is the
+/// two-handed sword type, a Warhammer the mace type, a Fist the knuckle type and a Sniper the firearm type.</para>
 /// </summary>
 public static class WeaponMasteryStats
 {
@@ -33,19 +32,30 @@ public static class WeaponMasteryStats
             // Bow — mobility and spacing.
             case WeaponType.Bow:
                 return stat == StatId.Evasion || stat == StatId.Accuracy || stat == StatId.AttackSpeed;
-            // Dagger / Katar — finish weakened targets.
+            // Dagger — poison from the blade.
             case WeaponType.Dagger:
+                return stat == StatId.AttackSpeed || stat == StatId.Evasion || stat == StatId.Atk;
+            // Katar — chains of critical hits.
             case WeaponType.Katar:
                 return stat == StatId.Critical || stat == StatId.Evasion || stat == StatId.AttackSpeed;
-            // Firearm — devastating single shots.
+            // Shuriken — bouncing throws, or many-bladed swings.
+            case WeaponType.Shuriken:
+                return stat == StatId.AttackSpeed || stat == StatId.Accuracy || stat == StatId.HP;
+            // Sniper (the firearm type) — one painful magic shot from far away.
             case WeaponType.Firearm:
-                return stat == StatId.Critical || stat == StatId.Accuracy || stat == StatId.Atk;
-            // Staff — destructive area magic (and the Wand's home until it has a type of its own).
+                return stat == StatId.Critical || stat == StatId.Accuracy || stat == StatId.MAtk;
+            // Staff — destructive area magic.
             case WeaponType.Staff:
                 return stat == StatId.MAtk || stat == StatId.CastSpeed || stat == StatId.MP;
-            // Knuckle — the fist has no roster identity yet; it trains what it swings with.
+            // Wand — keep allies alive.
+            case WeaponType.Wand:
+                return stat == StatId.MP || stat == StatId.CastSpeed || stat == StatId.Def;
+            // Scythe — overwhelm with curses.
+            case WeaponType.Scythe:
+                return stat == StatId.MAtk || stat == StatId.MP || stat == StatId.HP;
+            // Fist (the knuckle type) — physical bursts, or standing in front and taking the hits.
             case WeaponType.Knuckle:
-                return stat == StatId.AttackSpeed || stat == StatId.Atk || stat == StatId.Evasion;
+                return stat == StatId.Atk || stat == StatId.HP || stat == StatId.MP;
             default:
                 return false;
         }

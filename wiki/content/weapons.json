@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is what the artist kept of one of the **Fourteen Kashira**, and how the weapon fights *is* how that Kashira fought. None of them was ever named — only described by the deed they are remembered for. They fall into four families:"
+      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the fourteen is what the artist kept of one of the **Fourteen Kashira**, and how the weapon fights *is* how that Kashira fought (see **The World of Unwritten** and **The Whole Story**). **Mastery raises** lists the three stats that grow as your mastery of that weapon does — +0.5% each per mastery level. They fall into four families:"
     },
     {
       "type": "heading",
@@ -33,28 +33,43 @@
       "headers": [
         "Weapon",
         "Kashira",
-        "What it's for"
+        "What it's for",
+        "Specialty",
+        "Mastery raises",
+        "Attack"
       ],
       "rows": [
         [
           "**Greatsword**",
-          "The One Who Cleared the Road",
-          "Delete whole groups with huge cleaves."
+          "Mordane, King Beneath the Waves",
+          "Delete groups with huge cleaves.",
+          "Wide cleaves that hit every enemy in a broad arc; built to wipe out packs, not to duel.",
+          "Attack, Critical, HP",
+          "melee"
         ],
         [
           "**Warhammer**",
-          "The One Who Said No",
-          "Deny enemies their turn — stun and knock them back."
+          "Tharos, the Starbreaker",
+          "Control enemies by denying their actions.",
+          "Stuns and knocks back, interrupting what enemies were about to do.",
+          "Attack, Defense, HP",
+          "melee"
         ],
         [
           "**Spear**",
-          "The One Who Moved the Line",
-          "Reposition the fight — pull enemies in and impale them."
+          "Orion, the River That Remembers",
+          "Control enemy positioning.",
+          "Pulls enemies in, dashes through their line, and cuts the defence of whatever it moves.",
+          "Accuracy, Attack, HP",
+          "melee, longer reach"
         ],
         [
-          "**Shield**",
-          "The One Who Stood",
-          "Protect your allies by absorbing all the attention. *(off-hand — pair it with a one-handed weapon)*"
+          "**Fist**",
+          "Asterion, the Light Beyond Night",
+          "Overwhelm with physical bursts, or stand in front and take the hits — or both.",
+          "Two paths, chosen by the skills you learn. **Offence:** builds energy, then spends all your MP on one enormous physical blow; energy blasts that still deal physical damage. **Defence:** taunts, cuts damage taken, blocks, sends damage back. Build one path or mix both.",
+          "Attack, HP, MP",
+          "melee"
         ]
       ]
     },
@@ -68,18 +83,35 @@
       "headers": [
         "Weapon",
         "Kashira",
-        "What it's for"
+        "What it's for",
+        "Specialty",
+        "Mastery raises",
+        "Attack"
       ],
       "rows": [
         [
           "**Bow**",
-          "The One Who Kept Distance",
-          "Win through mobility and spacing — kite and never get touched."
+          "Celestia, the Wandering Sky",
+          "Win through mobility and spacing.",
+          "Slows enemies and dashes away to keep its distance; fights on the move.",
+          "Evasion, Accuracy, Attack Speed",
+          "ranged"
         ],
         [
           "**Dagger**",
-          "The Late Arrival",
-          "Eliminate weakened targets, then vanish."
+          "Velmora, the Poisoned Rose",
+          "Kill slowly with poison from the blade.",
+          "Stacks poison on one target with every hit; the poison does its damage over time.",
+          "Attack Speed, Evasion, Attack",
+          "melee"
+        ],
+        [
+          "**Katar**",
+          "Nysara, the Face Without a Name",
+          "Finish targets with chains of critical hits.",
+          "Raises its crit chance and crit damage as the fight goes on; finishes low-health targets.",
+          "Critical, Evasion, Attack Speed",
+          "melee"
         ]
       ]
     },
@@ -93,18 +125,27 @@
       "headers": [
         "Weapon",
         "Kashira",
-        "What it's for"
+        "What it's for",
+        "Specialty",
+        "Mastery raises",
+        "Attack"
       ],
       "rows": [
         [
           "**Staff**",
-          "The One Who Burned the Field",
-          "Dominate whole areas with destructive magic."
+          "Kaelen, the Ember Beneath Snow",
+          "Dominate areas with destructive magic.",
+          "Area nukes, Burn, and Freeze and slows to lock an area down.",
+          "Magic Attack, Cast Speed, MP",
+          "melee"
         ],
         [
           "**Wand**",
-          "The One Who Brought Them Back",
-          "Keep your allies alive."
+          "Seraphine, Before the Dawn",
+          "Keep allies alive.",
+          "Heals, regeneration, damage shields, buffs, and Cleanse.",
+          "MP, Cast Speed, Defense",
+          "melee"
         ]
       ]
     },
@@ -119,44 +160,56 @@
         "Weapon",
         "Families",
         "Kashira",
-        "What it's for"
+        "What it's for",
+        "Specialty",
+        "Mastery raises",
+        "Attack"
       ],
       "rows": [
         [
           "**Sword**",
           "Might + Finesse",
-          "The One Who Answered",
-          "Win duels with precise single-target bursts and timed defense."
+          "Veyra, the Last Petal",
+          "Win duels through precise single-target bursts and timed defence.",
+          "Fast strike combos that burst one enemy down; parries and braces at the right moment to win the exchange.",
+          "Attack Speed, Attack, HP",
+          "melee"
         ],
         [
           "**Axe**",
           "Might + Finesse",
-          "The One Who Never Stopped",
-          "Snowball through relentless aggression."
+          "Varkhaz, the Ever-Burning",
+          "Snowball through relentless aggression.",
+          "Stacks Bleed; gains speed and a damage buff that keeps rising while it keeps attacking; gives up all defence to do it.",
+          "Attack Speed, Attack, Critical",
+          "melee"
         ],
         [
-          "**Kick**",
+          "**Shuriken**",
           "Might + Finesse",
-          "*not yet told*",
-          "*not yet in the game*"
-        ],
-        [
-          "**Fist**",
-          "Might + Arcane",
-          "*not yet told*",
-          "*not yet in the game*"
+          "Riven, the Red Autumn",
+          "Many blades: thrown, they bounce through a crowd; swung, one swing lands two or three times.",
+          "**Thrown:** normal attacks, and some skills, bounce to nearby enemies. **Swung:** each swing can hit two or three times, and never bounces; its signature blow drops your HP to 1 for one huge physical hit.",
+          "Attack Speed, Accuracy, HP",
+          "melee or ranged — whichever of your STR or DEX is higher"
         ],
         [
           "**Scythe**",
           "Might + Arcane",
-          "The One Who Waited",
-          "Slowly overwhelm enemies with stacking curses."
+          "Morwen, the Last Bloom",
+          "Slowly overwhelm enemies with curses.",
+          "Silence, defence cut and mana drain that wear an enemy down over a long fight.",
+          "Magic Attack, MP, HP",
+          "melee"
         ],
         [
-          "**Firearm**",
+          "**Sniper**",
           "Finesse + Arcane",
-          "The One Who Fired Once",
-          "Land one devastating shot, then reload. The only weapon whose magic can crit."
+          "Vael, the Moonless Eye",
+          "Land one painful shot from as far away as possible.",
+          "One magic shot that can crit — the only magic in the game that can; the further the target, the more it hurts; the longest reach in the game.",
+          "Critical, Accuracy, Magic Attack",
+          "ranged, longest reach"
         ]
       ]
     },
@@ -176,18 +229,42 @@
     {
       "type": "list",
       "items": [
-        "**Head**, **Body**, **Off-hand**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**"
+        "**Head**, **Body**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**. There is no off-hand: blocking and sending damage back come from the Fist's defence skills."
       ]
     },
     {
       "type": "table",
-      "headers": ["Slot", "Metal (Smith)", "Leather (Tannery)", "Cloth (Loom)"],
+      "headers": [
+        "Slot",
+        "Metal (Smith)",
+        "Leather (Tannery)",
+        "Cloth (Loom)"
+      ],
       "rows": [
-        ["**Head**", "Iron Helm", "Leather Cap", "Padded Hood"],
-        ["**Body**", "Chainmail", "Leather Jerkin", "Padded Vest"],
-        ["**Off-hand**", "Iron Kite Shield", "Leather Buckler", "Padded Shield"],
-        ["**Garment**", "Chain Mantle", "Hide Cloak", "Traveller's Cloak"],
-        ["**Shoes**", "Iron Sabatons", "Leather Boots", "Woven Shoes"]
+        [
+          "**Head**",
+          "Iron Helm",
+          "Leather Cap",
+          "Padded Hood"
+        ],
+        [
+          "**Body**",
+          "Chainmail",
+          "Leather Jerkin",
+          "Padded Vest"
+        ],
+        [
+          "**Garment**",
+          "Chain Mantle",
+          "Hide Cloak",
+          "Traveller's Cloak"
+        ],
+        [
+          "**Shoes**",
+          "Iron Sabatons",
+          "Leather Boots",
+          "Woven Shoes"
+        ]
       ]
     },
     {
@@ -196,19 +273,62 @@
     },
     {
       "type": "table",
-      "headers": ["Slot", "Word", "What it does"],
+      "headers": [
+        "Slot",
+        "Word",
+        "What it does"
+      ],
       "rows": [
-        ["Head", "**Ironblood**", "Fewer critical hits land on you"],
-        ["Head", "**Steadfast**", "Stuns, freezes, silences and ailments on you end sooner"],
-        ["Head", "**Wellspring**", "Mana regenerates faster"],
-        ["Body", "**Bulwark**", "Damage taken is cut"],
-        ["Body", "**Sanguine**", "Damage dealt heals you"],
-        ["Body", "**Fierce**", "All damage dealt is higher"],
-        ["Off-hand", "**Thornclad**", "Damage taken is sent back"],
-        ["Off-hand", "**Guarding**", "Blocks more often"],
-        ["Off-hand", "**Longreach**", "Ordinary attacks reach further"],
-        ["Garment", "**Emberward · Tideward · Stoneward · Galeward**", "Less damage from Fire · Water · Earth · Wind"],
-        ["Shoes", "**Tireless**", "Sprint drains stamina slower"]
+        [
+          "Head",
+          "**Ironblood**",
+          "Fewer critical hits land on you"
+        ],
+        [
+          "Head",
+          "**Steadfast**",
+          "Stuns, freezes, silences and ailments on you end sooner"
+        ],
+        [
+          "Head",
+          "**Wellspring**",
+          "Mana regenerates faster"
+        ],
+        [
+          "Body",
+          "**Bulwark**",
+          "Damage taken is cut"
+        ],
+        [
+          "Body",
+          "**Sanguine**",
+          "Damage dealt heals you"
+        ],
+        [
+          "Body",
+          "**Fierce**",
+          "All damage dealt is higher"
+        ],
+        [
+          "Garment",
+          "**Emberward · Tideward · Stoneward · Galeward**",
+          "Less damage from Fire · Water · Earth · Wind"
+        ],
+        [
+          "Shoes",
+          "**Tireless**",
+          "Sprint drains stamina slower"
+        ],
+        [
+          "Shoes",
+          "**Anchored**",
+          "Knockbacks and pulls move you a shorter distance"
+        ],
+        [
+          "Shoes",
+          "**Wayfarer**",
+          "Health regenerates faster"
+        ]
       ]
     },
     {
@@ -225,11 +345,11 @@
     },
     {
       "type": "paragraph",
-      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds to what the piece is worth: **attack** on a weapon (a staff gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour, an off-hand or a garment add. **Shoes** also make you move faster: **+2% movement speed for every fold**, whatever they are made of, so +5 shoes are +10%. Bare feet add nothing."
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs one unit of the band material of the piece's own grade, plus gold, and adds to what the piece is worth: **attack** on a weapon (a staff, wand or scythe gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour or a garment add. **Shoes** also make you move faster: **+2% movement speed for every fold**, whatever they are made of, so +5 shoes are +10%. Bare feet add nothing."
     },
     {
       "type": "paragraph",
-      "text": "That fold total is then **lifted by the grade** — nothing at Raw and F, rising to **+30% at A**. So an A-grade piece at its full thirty-five folds carries 46 attack, where the same thirty-five folds on an E-grade piece carry 37."
+      "text": "That fold total is then **lifted by the grade** — nothing at Raw and F, rising to **+30% at A**. So an A-grade piece at its full thirty-five folds carries 82 attack, where the same thirty-five folds on an E-grade piece carry 66."
     },
     {
       "type": "paragraph",
@@ -346,7 +466,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the 14-weapon roster is locked in design. Fist and Kick are not in the game yet, and neither is the Firearm's magic crit; the other twelve weapons' one-line identities are locked. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"
+        "*Status: the 14-weapon roster is locked, and every weapon can be held — the newer ones as stand-ins that borrow the Sword's or the Bow's look until their own models and attack animations arrive. A Shuriken swings melee or ranged by your higher of STR or DEX, and thrown it bounces through up to 3 more enemies and comes back to your hand; a Sniper's normal attack is a magic shot that can crit and hits 2% harder for every metre to its target; the Shuriken's two-or-three-hit swings and the Fist's and Shuriken's all-in blows come with their skills, which are not in the game yet. Folding, quenching and the quality ladder are built; each weapon type's skill pool is being authored, and only the Sword's is finished today.*"
       ]
     }
   ]

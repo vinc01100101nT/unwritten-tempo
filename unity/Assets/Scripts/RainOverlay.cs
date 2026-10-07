@@ -66,6 +66,7 @@ public class RainOverlay : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
         var sh = Shader.Find("Unwritten/RainScreen");
         if (sh == null)

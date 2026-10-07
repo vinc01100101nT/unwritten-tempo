@@ -19,6 +19,32 @@ public static class GameServer
     /// <summary>True when this process owns the world instead of watching one.</summary>
     public static readonly bool IsServer = Resolve();
 
+    /// <summary>A part that only draws or sounds — the sky, the weather, the music, the camera — asks this as the first
+    /// line it runs. On the server it is switched off and removed on the spot, before it has done anything, and the
+    /// answer is true; everywhere else the answer is false and it carries on. The server sends data and nothing else.</summary>
+    public static bool RemovesPresentation(UnityEngine.Behaviour part)
+    {
+        if (!IsServer || part == null) return false;
+        part.enabled = false;
+        UnityEngine.Object.Destroy(part);
+        return true;
+    }
+
+    /// <summary>THE TRIPWIRE every drawing door asks: TRUE on the server, where nothing may be drawn or sounded, and
+    /// the door must do nothing. The server is never meant to reach one — every event is announced and drawn by the
+    /// screens — so the first time each door is reached here it writes an error to the server's log, naming the door
+    /// and the path that reached it. Each door says so once, so a door reached every frame cannot flood the log.</summary>
+    public static bool CaughtDrawing(string door)
+    {
+        if (!IsServer) return false;
+        if (reportedDoors.Add(door))
+            GameLog.Error(LogCat.Server, "the server reached the drawing door '" + door + "', which it must never do — "
+                                         + "announce the event and let the screens draw it. Reached by:\n" + Environment.StackTrace);
+        return true;
+    }
+
+    static readonly System.Collections.Generic.HashSet<string> reportedDoors = new System.Collections.Generic.HashSet<string>();
+
     static bool Resolve()
     {
 #if UNITY_SERVER

@@ -133,6 +133,22 @@ public static class Hotkeys
         return Input.GetKeyDown(KeyCode.Tab);
     }
 
+    /// <summary>Up arrow pressed this frame gives +1, Down gives -1, neither 0. Not typing-guarded, for the same
+    /// reason as <see cref="TabDown"/>: it steps through a list while a text box has the keyboard — the chat's name
+    /// box walks the people you have messaged with it.</summary>
+    public static int ArrowStep()
+    {
+        if (NoKeyboard) return 0;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null && kb.upArrowKey.wasPressedThisFrame) return 1;
+        if (kb != null && kb.downArrowKey.wasPressedThisFrame) return -1;
+#endif
+        if (Input.GetKeyDown(KeyCode.UpArrow)) return 1;
+        if (Input.GetKeyDown(KeyCode.DownArrow)) return -1;
+        return 0;
+    }
+
     /// <summary>Either Shift held. Not typing-guarded for the same reason as <see cref="TabDown"/> — it is only
     /// ever read alongside a key that has to work inside a text box.</summary>
     public static bool ShiftHeld

@@ -24,8 +24,7 @@ Built 2026-09-26 at the user's request ("live, from a single source of truth, no
   14 special maps have no scene yet and sit below the painted picture.
 - **Browser side:** a page reads the generated files fresh on each visit, and NOTHING polls. The user rejected a
   5-second re-read on 2026-09-26 as too expensive: "we just need to update the wiki when the data changes".
-- **The website shows a copy.** The editor rewrites the files in the repo; the website serves the copy publishing made,
-  so a change shows only after `tools/publish-update.py --site-only`. The old standalone wiki page was deleted on
+- **The website shows a copy** — see [[website-shows-published-copy]]. The old standalone wiki page was deleted on
   2026-10-04 — the main website is the only page that draws these files.
 
 **Why:** the user wants wiki data that can never lag the game.

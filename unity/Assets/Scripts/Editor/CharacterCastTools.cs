@@ -8,10 +8,11 @@ using UnityEngine;
 /// the rigged models on disk, and point it at the shared Humanoid controller. Run it after adding a character model.
 /// Which townsperson lives where is not this tool's business: that is the townsfolk list (<see cref="WorldTownsfolk"/>).
 ///
-/// <para>The cast is split in two: CIVILIANS (the bodies townsfolk wear) and FIGHTERS — soldiers, knights, goblins and
-/// zombies — which is the pool a Shadow of the Past draws from. Animals (Cow/Pug), the untextured BaseCharacter, and
-/// accessory-only meshes (hats/hair/helmets) are in neither: they'd walk wrong on the human controller or aren't full
-/// bodies.</para>
+/// <para>The cast is the CIVILIANS — the bodies townsfolk wear. Soldiers, knights, goblins and zombies are left out of
+/// it, and so are Cow, Pug, BaseCharacter and the hat, hair and helmet models. Those are NOT accessory-only meshes:
+/// every one of them is a full body imported with a Humanoid avatar, and every one can be worn — a Shadow of the Past
+/// picks its body from the WHOLE roster in the Mob Table (<see cref="MonsterDef.modelName"/>), so nothing here decides
+/// a shadow's body. They are only kept out of the townsfolk crowd.</para>
 ///
 /// Idempotent: re-running re-uses the existing spec instead of making a second one.
 /// </summary>
@@ -21,21 +22,19 @@ public static class CharacterCastTools
     const string ControllerPath = "Assets/1_Authored/Art/Characters/Animators/HumanoidPlayerController.controller";
     const string SpecPath = "Assets/3_Data/Resources/CharacterSpec.asset";
 
-    // Case-insensitive name tokens deciding which pool a model lands in. FIGHTER wins first (a soldier is not a
-    // civilian); anything EXCLUDED is in neither pool.
-    static readonly string[] FighterTokens = { "Soldier", "Knight", "Goblin", "Zombie" };
-    static readonly string[] ExcludeTokens = { "Cow", "Pug", "BaseCharacter", "_Hat", "_Hair", "Helmet" };
+    // Case-insensitive name tokens for the models kept OUT of the townsfolk crowd: combatants (a soldier is not a
+    // civilian), and the animal, untextured and hat/hair/helmet bodies.
+    static readonly string[] NotCivilianTokens =
+        { "Soldier", "Knight", "Goblin", "Zombie", "Cow", "Pug", "BaseCharacter", "_Hat", "_Hair", "Helmet" };
 
     [MenuItem("Tools/unwritten/World/Refresh Character Cast")]
     public static void RefreshCharacterCast()
     {
         var spec = LoadOrCreateSpec();
         var civilians = new List<string>();
-        var fighters = new List<string>();
-        CollectCast(civilians, fighters);
+        CollectCivilians(civilians);
 
         spec.civilianModels = civilians;
-        spec.fighterModels = fighters;
 
         var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
         if (controller != null) spec.animatorController = controller;
@@ -54,8 +53,8 @@ public static class CharacterCastTools
                     : "") +
                 "\nAssign the missing field(s) on the CharacterSpec asset by hand.", "OK");
 
-        Debug.Log($"[unwritten] Character cast wired on {SpecPath} — {civilians.Count} civilians, {fighters.Count} " +
-                  $"fighters. Townsfolk wear the civilians; shadow mobs draw from the fighters.");
+        Debug.Log($"[unwritten] Character cast wired on {SpecPath} — {civilians.Count} civilians, the bodies " +
+                  $"townsfolk wear.");
     }
 
     static CharacterSpec LoadOrCreateSpec()
@@ -70,11 +69,11 @@ public static class CharacterCastTools
         return spec;
     }
 
-    // Every rigged model in the Models folder that is a real character body (has a skinned mesh — an accessory or a
-    // clip-only FBX doesn't), sorted into the two pools by name. The pools store the model's NAME: the spec must not
-    // hold object links, or loading it would drag the whole cast into memory to dress one unit. The name is resolved
-    // to an asset on demand by CharacterModels.
-    static void CollectCast(List<string> civilians, List<string> fighters)
+    // Every rigged model in the Models folder that is a real character body (has a skinned mesh — a clip-only FBX
+    // doesn't) and is not kept out by name. The pool stores the model's NAME: the spec must not hold object links, or
+    // loading it would drag the whole cast into memory to dress one unit. The name is resolved to an asset on demand
+    // by CharacterModels.
+    static void CollectCivilians(List<string> civilians)
     {
         foreach (var guid in AssetDatabase.FindAssets("t:GameObject", new[] { ModelsDir }))
         {
@@ -82,15 +81,14 @@ public static class CharacterCastTools
             if (!path.ToLower().EndsWith(".fbx")) continue;
 
             string fileName = Path.GetFileNameWithoutExtension(path);
-            if (HasToken(fileName, ExcludeTokens)) continue;
+            if (HasToken(fileName, NotCivilianTokens)) continue;
 
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (go == null || go.GetComponentInChildren<SkinnedMeshRenderer>(true) == null) continue;
 
-            (HasToken(fileName, FighterTokens) ? fighters : civilians).Add(fileName);
+            civilians.Add(fileName);
         }
         civilians.Sort(string.CompareOrdinal);
-        fighters.Sort(string.CompareOrdinal);
     }
 
     static bool HasToken(string name, string[] tokens)

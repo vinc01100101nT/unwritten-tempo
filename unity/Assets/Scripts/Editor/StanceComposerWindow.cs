@@ -160,6 +160,7 @@ public class StanceComposerWindow : EditorWindow
         Section("Attack variants by weapon (brain picks by equipped weapon; each plays the Attack action)");
         Row(StanceId.AttackBareHands); Row(StanceId.AttackSword); Row(StanceId.AttackDagger); Row(StanceId.AttackStaff);
         Row(StanceId.AttackLance); Row(StanceId.AttackHandGun); Row(StanceId.AttackRifle); Row(StanceId.AttackBow);
+        Row(StanceId.AttackScythe); Row(StanceId.AttackShuriken); Row(StanceId.AttackShurikenThrow);
 
         Section("Skill-release cues (a SkillDef's 'skill type' — plays once at release)");
         foreach (var id in SkillReleaseStances.All) Row(id);

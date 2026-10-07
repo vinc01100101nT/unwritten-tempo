@@ -35,13 +35,10 @@ public class MobRespawn : MonoBehaviour
             footOffset = home.y - hit.point.y;
     }
 
-    /// <summary>Called by <see cref="Health.Die"/> after the death FX completes (instead of Destroy).</summary>
+    /// <summary>SERVER: called by <see cref="Health.Die"/> once the remains have lain out their time (instead of
+    /// Destroy). Nothing to hide: the server draws nothing, and every screen let go of this body when it died.</summary>
     public void OnFadedOut()
     {
-        var sr = GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = false;   // hide while waiting
-        // A live-3D shadow renders a BODY, not that sprite — hide it too, or its corpse stands around fully lit
-        // for the whole respawn wait.
-        var shadow = GetComponent<MobShadow3DVisual>(); if (shadow != null) shadow.SetBodyVisible(false);
         StartCoroutine(RespawnAfter());
     }
 
@@ -130,10 +127,11 @@ public class MobRespawn : MonoBehaviour
         // Re-enable everything DeathDissolve disabled when it became "remains".
         // PRESENTATION is owned by the unit, not assumed here. A billboard mob gets its sprite back; a live-3D
         // shadow restores its own BODY and must keep the sprite off — forcing sr.enabled = true on one is what made
-        // respawned shadows come back as sprites.
+        // respawned shadows come back as sprites. And a body with no flat picture at all (every creature on the
+        // server, which draws nothing) keeps its sprite hidden.
         var shadow = mob.GetComponent<MobShadow3DVisual>();
         if (shadow != null) shadow.OnRevived();
-        else { var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true; }
+        else if (mob.TryGetComponent<BillboardAnimator3D>(out _)) { var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true; }
         Enable<MonsterAI3D>(mob); Enable<BillboardAnimator3D>(mob); Enable<AttackLunge>(mob);
         // Enable the controller BEFORE its mover so PathAgent3D never runs a frame against a disabled cc.
         // Clamp stepOffset FIRST: a mob's body is scaled to its size (MobBody), and once a mob is small

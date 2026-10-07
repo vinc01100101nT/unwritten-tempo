@@ -218,6 +218,15 @@ deformed shape into a plain mesh, drawn once and faded, never animated. ⚠️ *
 rotation come verbatim from the source and NO scale is applied, because the bake already delivers world size.
 Re-applying the source's scale made every ghost ten times too large, the third time this project has hit that mistake.
 
+**Every screen draws it from its own copy of the skill; the server draws nothing and sends no picture.** Skills run
+on the game server, which has no screen. A Dash or Teleport only tells the move WHICH effect caused it, and every screen
+that draws the move reads that effect's afterimage and see-through fade (`casterOpacity`) out of its own skill data.
+
+**A scripted move is said once, as it begins.** A Dash hop lasts a few hundredths of a second and a blink none, far
+shorter than the gap between two position reports, so whoever moves the body (the owner's machine for a person, the
+server for a creature) says the move once — a glide, a blink, or a creature's knockback — and every other screen draws
+it with the same speed rule the mover uses. Person and creature glides ease by one shared rule.
+
 ## The Character window
 
 The Character sheet (**C**) lists **every** player-facing number and shows what states are doing to each, live.

@@ -86,7 +86,7 @@ The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's o
 
 ### What state a mob's gear is in
 
-A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, the same station rolls a forge uses. Which stats the Ink lands on, and a weapon's trademark (only above Raw), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
+A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, the same station rolls a forge uses. Which stats the Ink lands on, a weapon's trademark and an armour piece's word (at every grade, Raw included), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
 
 ### There is no such thing as mob-only gear
 
@@ -94,7 +94,7 @@ A creature wears exactly the pieces authored on its catalog entry and nothing el
 
 The codebase already enforces the line: `ItemType` is DERIVED from `slot` + `category` (ItemType.cs:14-17), so an item is Weapon/Armor *because* it has an equip slot. A stat-carrying item with no slot would be data the equip pipeline can't read — dead by construction.
 
-- **Equipment** — has an equip slot and bonuses; a weapon also has a model. Worn by anyone. Six exist today: the weapons `item.sword` and `item.bow`, and the armour `item.leather-cap`, `item.padded-vest`, `item.travellers-cloak` and `item.wooden-buckler`.
+- **Equipment** — has an equip slot and bonuses; a weapon also has a model. Worn by anyone. Twenty-six exist today: one weapon per weapon type (fourteen) and twelve armour pieces — see the [Armour Roster](../gameplay-system-v4/armour-roster.md).
 - **Materials** — `ItemCategory.Material`: an icon, a name, a crafting input, **no stats and no model**. Fangs, hides, carapace live here and feed [Crafting & Recycling](../crafting-and-recycling.md).
 
 **A mob with no equipment is valid.** Its stats come from level + primaries; `EquipBonuses` aggregates to zeros and every formula still resolves. So mobs start unarmed and get armed as real gear is made — the art debt is incremental content, never a prerequisite for the stat unification.
@@ -158,7 +158,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Sub-stat | Scaled by |
 | --- | --- |
 | Melee attack | STR ×1/pt + STR's jump, DEX÷2, LUK÷4, base + 1/level, gear, the Atk ring node, a timed Attack change. Used by every weapon that is not ranged, and bare hands |
-| Ranged attack | DEX ×1/pt + DEX's jump, STR÷2, LUK÷4, base + 1/level, gear, the **same** Atk ring node, a timed Attack change. Used while holding a Bow or Firearm (`WeaponTypes.IsRanged`) |
+| Ranged attack | DEX ×1/pt + DEX's jump, STR÷2, LUK÷4, base + 1/level, gear, the **same** Atk ring node, a timed Attack change. Used by normal attacks and physical skills while holding a Bow, a Shuriken with DEX above STR, or a Sniper's physical skills (`WeaponTypes.SwingsRanged`). A Sniper's normal attack is a magic shot and uses Magic attack (`WeaponTypes.ShootsMagic`) |
 | Magic attack | INT ×1/pt + INT's jump, LUK÷4, base + 1/level, gear, the MAtk ring node, a timed MagicAttack change |
 | Defence | VIT÷3 + VIT's jump, base + 1/level, gear, the Def ring node, a timed Defense change |
 | Magic defence | INT÷3, base + 1/level, gear, the **same** Def ring node, a timed MagicDefense change |
@@ -190,7 +190,8 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Damage dealt | **not a character stat** — a per-hit multiplier applied while the hit is built (`UnitOffense.Dealt`) |
 | Damage reduction | **not a character stat** — the DamageReduction sub-stat (the worn Bulwark word + timed states such as Guard), read per incoming hit by `UnitMitigation.Landed`. It is the ONLY percentage cut on a hit; defence itself subtracts flat |
 | Max stamina | flat 100 on `Character`; drain/refill rates on `Player3DController`, player-only |
-| Block chance | the equipped off-hand `Item.blockChance` |
+| Block chance | the block-chance sub-stat, which only a skill grants (`SubStat.BlockChance`) |
+| Extra bounce jumps | the extra-bounce-jumps sub-stat, which only a skill grants (`SubStat.ExtraBounceJumps`): whole jumps added to every bounce chain the unit starts — a thrown shuriken or a bouncing skill — never making one bounce that does not |
 | Element (what the unit is hit as) | a person: Neutral level 1, or an Armor Converter's element at level 1 while one runs; a mob: its authored element and level (`MonsterDef.element` / `elementLevel`), or a converter's |
 
 ### Regeneration is one ticker for everyone (2026-08-23)

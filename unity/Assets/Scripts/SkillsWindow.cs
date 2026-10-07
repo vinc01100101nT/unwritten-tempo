@@ -135,7 +135,7 @@ public class SkillsWindow : MonoBehaviour
         for (int i = 0; i < weapons.Count; i++)
         {
             var w = weapons[i];
-            var btn = UiKit.Btn(w + " Skills", col, () => { UISounds.PlayClick(); Show(w); });
+            var btn = UiKit.Btn(WeaponTypes.Label(w) + " Skills", col, () => { UISounds.PlayClick(); Show(w); });
             btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 40;
         }
     }
@@ -164,7 +164,7 @@ public class SkillsWindow : MonoBehaviour
         prt.anchorMin = new Vector2(0, 0); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 0.5f);
         prt.sizeDelta = new Vector2(220, 0); prt.anchoredPosition = new Vector2(82, 0);
         // The experience toward the next level, exactly as the server sent it — this window only prints the numbers.
-        string heading = weapon + " Mastery " + level;
+        string heading = WeaponTypes.Label(weapon) + " Mastery " + level;
         if (mastery != null && mastery.SentProgress(weapon, out double into, out double size, out bool capped))
             heading += capped ? "  ·  capped by this weapon's grade"
                               : "  ·  " + into.ToString("0.00") + " / " + size.ToString("0") + " exp";

@@ -199,8 +199,32 @@ public enum SkillEffectKind
     /// the same slot REPLACES the first; it never stacks (<see cref="UnitStates.BeginElement"/>). What the converter
     /// consumables run, and any creature skill may carry it too.
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
     ElementConverter,
+
+    /// <summary>The caster spends ALL the MP they hold, whatever the skill's own MP cost was. What it took is the cast's
+    /// <see cref="StackVars.GivenUp"/> — paid once per cast — which every strike of the cast from then on grows with through
+    /// <see cref="SkillEffect.damageMultPerPointGivenUp"/> — the Fist's all-in blow. Always lands on the caster: it is
+    /// the price of the cast, and a price is paid by whoever casts. Never rolls a chance — a cost that is sometimes not
+    /// paid is a bug. Has no numbers of its own.
+    ///
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    SpendAllMana,
+
+    /// <summary>The caster's HP drops to 1 — never to 0, so this can not kill. What it took is the tick's
+    /// <see cref="StackVars.GivenUp"/>, read the same way <see cref="SpendAllMana"/>'s is — the Shuriken's all-in blow.
+    /// Not a hit: no shield, parry, brace or damage cut stands in its way, and nothing that answers being hurt fires.
+    /// Always on the caster, never a chance, no numbers — for the same reasons as <see cref="SpendAllMana"/>.
+    ///
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    DropHealthToOne,
+
+    /// <summary>The unit it lands on loses up to <see cref="SkillEffect.amount"/> MP — never more than it holds — and
+    /// the caster gains exactly what was taken. The Scythe's mana drain. Rolls its chance once per hit of the binding's
+    /// strike, like every other effect that lands on a body.
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    DrainMana,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -229,6 +253,11 @@ public enum SubStat
     // How far this unit's BASIC ATTACK reaches, in world units, on top of what its weapon gives. Not melee-only:
     // a bow reads the same reach number, so a bonus here lengthens whatever the unit is holding.
     BasicAttackRange,
+    // The chance to stop a physical blow outright. Gear gives none: only a skill grants it (the Fist's defence path).
+    BlockChance,
+    // Extra jumps on every bounce chain this unit starts — a thrown shuriken, or a skill strike that bounces. Whole
+    // jumps, added to the chain's own count; a throw or strike that does not bounce at all is not made to.
+    ExtraBounceJumps,
 }
 
 /// <summary>THE sub-stat table — which pile each sub-stat lives in, and what its authored number MEANS. Every reader
@@ -264,7 +293,13 @@ public static class SubStats
             case SubStat.MaxHP:         return StateId.MaxHP;
             case SubStat.DamageReduction: return StateId.DamageReduction;
             case SubStat.BasicAttackRange: return StateId.BasicAttackRange;
-            default:                    return StateId.MaxMP;
+            case SubStat.BlockChance:   return StateId.BlockChance;
+            case SubStat.MaxMP:         return StateId.MaxMP;
+            case SubStat.ExtraBounceJumps: return StateId.ExtraBounceJumps;
+            // NO CATCH-ALL PILE. A sub-stat added without its own row used to fall into the max-MP pile, and the
+            // reverse map then read every max-MP buff as that stat. The reverse map is built from this switch at
+            // start-up, so a missing row now fails loudly the first time the game runs instead of moving another stat.
+            default: throw new System.ArgumentOutOfRangeException(nameof(s), s, "SubStat has no pile — add its row to PileFor.");
         }
     }
 
@@ -309,9 +344,13 @@ public static class SubStats
             case SubStat.LifeSteal:
             case SubStat.CritChance:
             case SubStat.CritDamage:
+            // BLOCK CHANCE STARTS AT ZERO, so a percentage of it would always be zero: the number is the chance itself.
+            case SubStat.BlockChance:
             // WORLD UNITS, not a percentage of the weapon's reach: a bonus that scaled with the weapon would be worth
             // more on a spear than on a dagger for the same authored number, which is not what "+2 reach" means.
-            case SubStat.BasicAttackRange: return false;
+            case SubStat.BasicAttackRange:
+            // WHOLE JUMPS: a percentage of a chain's jumps would round to nothing on a three-jump throw.
+            case SubStat.ExtraBounceJumps: return false;
             default:                 return true;
         }
     }
@@ -327,6 +366,8 @@ public static class SubStats
             case SubStat.MPRegen: return "MP per second";
             case SubStat.CritDamage: return "0.5 = +50% crit damage";
             case SubStat.BasicAttackRange: return "world units of extra reach";
+            case SubStat.BlockChance: return "0.1 = +10% chance to block a physical blow";
+            case SubStat.ExtraBounceJumps: return "extra jumps on every bounce";
             default: return "0.3 = 30%";
         }
     }
@@ -360,13 +401,21 @@ public class SkillEffect
              "basic attack, so it feeds Momentum and every on-basic passive. The ATK multiplier still scales it (1 = " +
              "one normal swing, 2 = twice one). Damage type and element are the weapon's then, not this effect's.")]
     public bool resolveAsBasicAttack = false;
-    [Tooltip("How the hit resolves: Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (physical " +
+    [Tooltip("How the hit resolves: Physical (ATK vs armour) / Magic (MATK, unmissable, crits only in a sniper's hands) / Crit (physical " +
              "that pierces armour & always crits). Default Magic — matches every pre-migration bool-magic skill.")]
     public DamageType damageType = DamageType.Magic;
     [Tooltip("ATK/MATK MULTIPLIER — how many of the caster's own hits this strike is worth (1 = one hit; a heavy nuke " +
              "is higher). The roll it multiplies is a physical ATK roll or a magic MATK roll, chosen by the damage " +
              "type above. Affinity picks WHICH stats scale it; this sets HOW BIG. No skill levels.")]
     public ScaledNumber damageMult = new ScaledNumber(1f);
+    [Tooltip("Added to the damage multiplier for every point of MP or HP the caster gave up in this cast to Spend All " +
+             "Mana or Drop Health To One — paid once, by the first tick carrying one, and read by every strike after it. 0.1 = +1 multiplier for every 10 points given up. 0 = the strike does not " +
+             "grow with what was given up — which is every strike authored before this existed.")]
+    public ScaledNumber damageMultPerPointGivenUp = new ScaledNumber(0f);
+    [Tooltip("Added to the damage multiplier for every metre between the caster and the unit struck, measured at the " +
+             "moment the strike lands. 0.05 = +1 multiplier at 20 metres. 0 = distance changes nothing — which is every " +
+             "strike authored before this existed.")]
+    public ScaledNumber damageMultPerMetre = new ScaledNumber(0f);
     [Tooltip("Attack element (RO property), checked against the target's armor element. On an Element Converter, " +
              "the element the converted slot takes.")]
     public Element element = Element.Neutral;
@@ -374,8 +423,9 @@ public class SkillEffect
              "the unit is hit as, at level 1).")]
     public EquipSlotType converts = EquipSlotType.Weapon;
 
-    [Header("Heal")]
-    [Tooltip("Flat HP restored (Heal kind).")]
+    [Header("Heal / Drain Mana")]
+    [Tooltip("Flat HP restored (Heal kind). Drain Mana: the most MP taken from the unit it lands on, and given to the " +
+             "caster.")]
     public ScaledNumber amount = new ScaledNumber(10f);
 
     [Header("Status / duration / magnitude")]
@@ -592,6 +642,12 @@ public class SkillEffect
     public static bool LandsOnCaster(SkillEffect e)
         => e != null && e.side == EffectSide.Caster;
 
+    /// <summary>A cost the CASTER pays with everything they hold. Only ever authored on the caster side — the composer
+    /// stamps it there whichever section it was added in, and the skill-data check fails one found on the target side,
+    /// which would otherwise do nothing at all.</summary>
+    public static bool IsAllInCost(SkillEffectKind k) =>
+        k == SkillEffectKind.SpendAllMana || k == SkillEffectKind.DropHealthToOne;
+
     /// <summary>Does this kind ask <see cref="chance"/> whether it happens? Every STATE does (a buff, an ailment, a
     /// charge pile, a cleanse) plus Execute — one list, read by the runtime roll, the composer's slider and the
     /// skill-data check, so a kind can never be offered a chance the game then ignores.
@@ -601,7 +657,8 @@ public class SkillEffect
     /// sometimes doesn't happen, or a cooldown cut that sometimes isn't cut, is a bug wearing a feature's clothes.</para></summary>
     public static bool RollsChance(SkillEffectKind k) =>
         k != SkillEffectKind.Damage && k != SkillEffectKind.Heal && !IsModifier(k) && !NeedsPoint(k) &&
-        k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull && k != SkillEffectKind.Summon;
+        k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull && k != SkillEffectKind.Summon &&
+        !IsAllInCost(k);
 
     // IsSelfVerb — the list of kinds that were "traditionally self" — is GONE (2026-08-24). It existed only to resolve
     // EffectSide.Auto, and Auto is gone: every effect names its own side now, so a kind no longer has a side at all.
@@ -659,6 +716,7 @@ public static class EffectScaling
             case SkillEffectKind.BoostOutgoingDamage:
             case SkillEffectKind.ReduceOutgoingDamage:
             case SkillEffectKind.AddStacks:
+            case SkillEffectKind.DrainMana:
                 return true;
             case SkillEffectKind.Status:
                 return StatusController.IsDot(e.ailment);
@@ -698,6 +756,7 @@ public static class EffectScaling
             case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
             case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
             case SkillEffectKind.AddStacks:            return "STACKS ADDED";
+            case SkillEffectKind.DrainMana:            return "MP DRAINED";
             // A sub-stat change is named for the STAT it moves — "boosts ATTACK SPEED", not "boosts BUFF".
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:        return Spaced(e.subStat.ToString()).ToUpperInvariant();

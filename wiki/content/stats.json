@@ -93,11 +93,11 @@
       "rows": [
         [
           "**MELEE ATK**",
-          "STR (plus its jump), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or firearm, or nothing at all"
+          "STR (plus its jump), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or sniper rifle (and a shuriken while your STR is at least your DEX), or nothing at all"
         ],
         [
           "**RANGED ATK**",
-          "DEX (plus its jump), STR÷2, LUK÷4, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow or firearm"
+          "DEX (plus its jump), STR÷2, LUK÷4, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow, or a shuriken with more DEX than STR, and what a sniper rifle's physical skills use — its normal attack is a magic shot that uses your Magic Attack"
         ],
         [
           "**M.ATK**",
@@ -179,7 +179,11 @@
         ],
         [
           "**Block chance**",
-          "the off-hand you have equipped — the item, not you — plus a **Guarding** word on it"
+          "none from gear — only the Fist's defence skills block *(coming with its skills)*"
+        ],
+        [
+          "**Extra bounce jumps**",
+          "none from gear — a skill can add jumps to your thrown shuriken and your bouncing skills for a while *(coming with its skills)*"
         ],
         [
           "**Element**",

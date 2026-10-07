@@ -21,6 +21,43 @@ public class WeaponSocket : MonoBehaviour
     UnitEquipment gear;     // the worn set this body shows, when it is not the person at this keyboard's
     Item shown;             // the weapon def whose model is currently mounted (null = nothing shown)
     GameObject mounted;     // the live instantiated weapon, or null
+    int bladesOut;          // how many of this body's thrown weapons are in the air — the hand is empty while any are
+
+    /// <summary>The hand of the person at this keyboard. Their model is a SEPARATE object riding their avatar, not a
+    /// child of it, so a search under the avatar never finds this socket; the body builder names it here instead.</summary>
+    public static WeaponSocket OnMyAvatar { get; private set; }
+
+    /// <summary>Name <paramref name="socket"/> as the hand of the person at this keyboard — called by the builder of
+    /// their model each time it builds one.</summary>
+    public static void MarkMine(WeaponSocket socket) => OnMyAvatar = socket;
+
+    /// <summary>The hand that holds the weapon of the body <paramref name="drawnBody"/> — a socket under it (another
+    /// person's body, a creature's), or the hand of the person at this keyboard when it is their avatar.</summary>
+    public static WeaponSocket Of(Transform drawnBody)
+    {
+        if (drawnBody == null) return null;
+        var under = drawnBody.GetComponentInChildren<WeaponSocket>();   // perf-ok: once per throw seen
+        if (under != null) return under;
+        var me = Character.Instance;
+        return me != null && me.Body == drawnBody ? OnMyAvatar : null;
+    }
+
+    /// <summary>The model the hand is showing (its prefab), or null — what a thrown weapon's flight draws.</summary>
+    public GameObject ShownModel => shown != null ? shown.equipModel : null;
+
+    /// <summary>The weapon in the hand as it is mounted, or null — its size is what the flying copy is drawn at.</summary>
+    public Transform Mounted => mounted != null ? mounted.transform : null;
+
+    /// <summary>One of this body's thrown weapons has left the hand. The hand stays empty until every one is back.</summary>
+    public void HideForFlight() { bladesOut++; ApplyFlights(); }
+
+    /// <summary>One of this body's thrown weapons is back (or its flight ended without coming back).</summary>
+    public void ShowAfterFlight() { if (bladesOut > 0) bladesOut--; ApplyFlights(); }
+
+    /// <summary>Nothing of this body's is in the air any more — a body banked or rebuilt starts with its weapon in hand.</summary>
+    public void ResetFlights() { bladesOut = 0; ApplyFlights(); }
+
+    void ApplyFlights() { if (mounted != null) mounted.SetActive(bladesOut == 0); }
 
     void Awake()
     {
@@ -85,5 +122,8 @@ public class WeaponSocket : MonoBehaviour
         // gets the coverage bit (so it hides the body behind it) but never the paint bit (it must not x-ray itself).
         var silhouette = GetComponentInParent<OccludedSilhouetteTarget>();
         if (silhouette != null) silhouette.Refresh();
+
+        // A weapon swapped while a blade is in the air mounts empty-handed, like the one it replaced.
+        ApplyFlights();
     }
 }

@@ -100,6 +100,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | range | Max aim distance | SkillDef.castRange |
 | radius | AoE / hit width | SkillTickBinding.radius |
 | projectiles / spread | Fan copies of THIS tick's carrier + cone angle | SkillTickBinding.projectileCount / projectileSpread |
+| bounce | Single Target ticks only: jumps on to N more enemies (nearest not hit, within jump range of the last), each worth a share of the one before, optionally flying back; the Extra Bounce Jumps sub-stat adds whole jumps | SkillTickBinding.bounceJumps / bounceRange / bounceDamageKept / bounceReturns / bounceEffectId |
 | cycle | Whole-effect repeat count + interval | SkillDef.repeatCount / repeatInterval |
 
 **Reserved — not built yet** (author only when a skill needs them): **Interval** (DoT tick cadence — hardcoded in `StatusController`), **Limit** (max stacks / summons — no system), **Speed** (projectile travel — lives in the VFX carrier), **Resource** (non-MP gain / drain).
@@ -110,11 +111,11 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and limit how many of their levels count** (§1), so there is still nothing to "fold": the ring and a skill's level both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
-**This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-09-23). It is the full set — there is no effect a skill can author that is not here.
+**This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-10-06). It is the full set — there is no effect a skill can author that is not here.
 
 | Effect | Target | Dmg type | Channels | Ring scales | Details |
 | --- | --- | --- | --- | --- | --- |
-| Damage | mobs/any | yes | damage, hits | damage, hits | Base power × ATK/MATK × affinity; each strike triggers the binding's procs. Multi-hit SPLITS one total across the strikes |
+| Damage | mobs/any | yes | damage, hits, mult per point given up, mult per metre | damage, hits | Base power × ATK/MATK × affinity; each strike triggers the binding's procs. Multi-hit SPLITS one total across the strikes. Its multiplier can GROW: by a set amount per point of MP or HP the caster gave up in the same cast (to SpendAllMana / DropHealthToOne, paid once by the first tick carrying one), and by a set amount per metre to the unit struck. Both 0 = no growth |
 | Heal | self/others | no | heal_amount | heal_amount | Flat HP; landing follows the tick's TargetMode |
 | Status | mobs/self | no | ailment + dot_damage, duration, proc_chance | output + duration (not proc_chance) | The **six** ailments: Poison / Bleed / Burn (DoT) and Stun / Freeze / Silence (duration-only) |
 | Taunt | mobs | no | duration | duration | Forces mob aggro onto the caster |
@@ -136,12 +137,15 @@ Every behavior is a **natural effect authored on the skill** (composed in the Sk
 | **SubStatDebuff** | mobs/self | no | sub-stat + magnitude, duration | magnitude, duration | The exact mirror of SubStatBuff, same stat list and pile. Authored as a positive number, applied as a subtraction |
 | Summon | self | no | — | — | Tops the caster's summons back up to its kind's maximum. Who and how many belong to the caster, never to the effect |
 | **ElementConverter** | self/others | no | converts (Weapon/Armor), element, duration | duration | For the window, the holder's ORDINARY ATTACKS land as the element (Weapon), or the holder is HIT AS the element at level 1 (Armor). A new one on the same slot replaces the old — never stacks. Skills keep their own element. What the converter consumables run |
+| **SpendAllMana** | self (always) | no | — | — | The caster spends every point of MP held, on top of the skill's MP cost. Paid once per cast, by the first tick carrying it; what it took is read by every Damage effect after it in the cast. Never rolls a chance. The Fist's all-in blow |
+| **DropHealthToOne** | self (always) | no | — | — | The caster's HP drops to 1 — never 0. Not a hit: nothing mitigates it and nothing that answers being hurt fires. What it took is read the same way. The Shuriken's all-in blow |
+| **DrainMana** | mobs/any | no | mp_drained, proc_chance | mp_drained | Takes up to N MP from the unit it lands on (never more than it holds); the caster gains exactly what was taken. The Scythe's mana drain |
 
 **Collapsed into the two sub-stat effects — they are NOT separate kinds any more:** Haste, Guard, Regen, Buff, Vulnerability, ManaLeech and Reflect. Each is now one row of the sub-stat table plus one lift at that stat's read site. Adding any of them back as its own verb is the DRY violation the collapse removed. **Slow and Blind are likewise not ailments** — slow is the MovementSpeed sub-stat, and accuracy loss is the Accuracy sub-stat.
 
 **Rejected — out of scope for unwritten:** **Transform** (a whole rig/stance/stat-swap feature).
 
-**Still PLANNED — not in the catalog yet** (V2 vocabulary with no verb today; add when a skill needs them): **targeting** (Penetrate / Bounce / Homing), **persistence** (Lingering / Trail).
+**Still PLANNED — not in the catalog yet** (V2 vocabulary with no verb today; add when a skill needs them): **targeting** (Penetrate / Homing — Bounce is built, as a tick setting above), **persistence** (Lingering / Trail).
 
 ## 3. Ring = numeric scaling only, and scaling locks roles — LOCKED (behaviors deferred)
 

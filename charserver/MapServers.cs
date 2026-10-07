@@ -54,6 +54,31 @@ public sealed class MapServers(Config config)
     /// forgotten, so it never names a machine that has gone.</summary>
     readonly ConcurrentDictionary<string, string> heldBy = new();
 
+    // THE SAME PEOPLE, BY NAME — how a private message finds who it is for without asking the database. Lower-cased
+    // name → the character last handed over under it, written and dropped beside heldBy (Hold / Unhold) and never
+    // anywhere else, so the two cannot disagree about who is out there. idToNameKey is the way back, so dropping a
+    // character finds its name without a search. A name reused by a newer character simply points at the newer one,
+    // and the older character letting go can no longer take it with it (Unhold removes only its own pairing).
+    readonly ConcurrentDictionary<string, (string id, string name)> heldNames = new();
+    readonly ConcurrentDictionary<string, string> idToNameKey = new();
+
+    void Hold(string characterId, string characterName, string serverId)
+    {
+        heldBy[characterId] = serverId;
+        if (string.IsNullOrEmpty(characterName)) return;
+        var key = characterName.ToLowerInvariant();
+        heldNames[key] = (characterId, characterName);
+        idToNameKey[characterId] = key;
+    }
+
+    void Unhold(string characterId)
+    {
+        heldBy.TryRemove(characterId, out _);
+        if (idToNameKey.TryRemove(characterId, out var key)
+            && heldNames.TryGetValue(key, out var held) && held.id == characterId)
+            heldNames.TryRemove(new KeyValuePair<string, (string id, string name)>(key, held));
+    }
+
     // Which map lives where. Rebuilt whenever a registration changes rather than searched each time — this is
     // asked on every entry into the world, and the answer only moves when a map server comes or goes.
     volatile Dictionary<string, Registration> byMap = new(StringComparer.OrdinalIgnoreCase);
@@ -64,7 +89,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v19";
+    public const string CharacterBuild = "unwritten-character-v20";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -168,7 +193,7 @@ public sealed class MapServers(Config config)
             byId.TryRemove(id, out _);
             lastSaid.TryRemove(id, out _);
             foreach (var held in heldBy)
-                if (held.Value == id) heldBy.TryRemove(held.Key, out _);
+                if (held.Value == id) Unhold(held.Key);
             Console.WriteLine($"[char] map server '{id}' has said nothing for {TrustedFor.TotalMinutes:0} minutes — forgotten.");
         }
         Rebuild();
@@ -191,10 +216,10 @@ public sealed class MapServers(Config config)
             if (byId.TryGetValue(holderId, out var holder))
             {
                 bool had = await AskToLetGoAsync(holder, characterId, ct);
-                if (!had) heldBy.TryRemove(characterId, out _);
+                if (!had) Unhold(characterId);
                 return had;
             }
-            heldBy.TryRemove(characterId, out _);
+            Unhold(characterId);
         }
 
         var servers = Alive;
@@ -359,7 +384,7 @@ public sealed class MapServers(Config config)
     /// <paramref name="hotbar"/> is that stored array, or null when the character has never had one written.</para></summary>
     public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName,
                                           JsonElement progress, JsonElement? hotbar, JsonElement quests, bool isGm,
-                                          int handover,
+                                          int handover, bool signingIn,
                                           CancellationToken ct = default)
     {
         var body = JsonSerializer.Serialize(new
@@ -376,6 +401,9 @@ public sealed class MapServers(Config config)
             quests,
             // Every save of this character from that server carries this back — see Handover.
             handover,
+            // ENTERING THE WORLD rather than walking from one map server to another — the moment the map server tells
+            // them which world events are running. Told on every map change, it would repeat at every door.
+            signingIn,
         });
 
         using var request = new HttpRequestMessage(HttpMethod.Post,
@@ -388,13 +416,78 @@ public sealed class MapServers(Config config)
         try
         {
             var reply = await wire.SendAsync(request, ct);
-            if (reply.IsSuccessStatusCode) heldBy[ticket.CharacterId] = to.Id;
+            if (reply.IsSuccessStatusCode) Hold(ticket.CharacterId, characterName, to.Id);
             return reply.IsSuccessStatusCode;
         }
         catch (Exception e)
         {
             Console.Error.WriteLine($"[char] could not announce to map server {to.Id} — {e.Message}");
             return false;
+        }
+    }
+
+    /// <summary>What became of a private message: the status the holding map server gave (200 delivered, 404 not
+    /// playing there, 409 changing maps, 429 receiving too many), 404 when nobody by that name was handed over, 503
+    /// when the server could not be reached. <see cref="Name"/> is the name as the character spells it.</summary>
+    public sealed record PmResult(int Status, string? Name);
+
+    /// <summary>Hand a private message to the one map server last given the character with this name. ONE server is
+    /// asked, found through <see cref="heldNames"/> and <see cref="heldBy"/>; nobody is searched for. A "not here"
+    /// answer leaves heldBy alone: it is owned by announcements, and somebody between two servers is still on their way
+    /// to the one written down.</summary>
+    public async Task<PmResult> DeliverPmAsync(string toName, string fromName, string text,
+                                               CancellationToken ct = default)
+    {
+        if (!heldNames.TryGetValue(toName.ToLowerInvariant(), out var who)) return new(404, null);
+        if (!heldBy.TryGetValue(who.id, out var serverId) || !byId.TryGetValue(serverId, out var server))
+            return new(404, who.name);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{server.ArrivalsUrl}/pm")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { toCharacterId = who.id, fromName, text }),
+                                        System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("x-server-secret", config.ServerSecret);
+
+        try
+        {
+            var reply = await wire.SendAsync(request, ct);
+            int status = (int)reply.StatusCode;
+            return status is 200 or 404 or 409 or 429 ? new(status, who.name) : new(503, who.name);
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"[char] map server {server.Id} did not answer about a private message — {e.Message}");
+            return new(503, who.name);
+        }
+    }
+
+    /// <summary>Hand the world events list to EVERY map server still believed to be there, all at once — the one
+    /// question every server has to hear. One that misses it catches up on its own poll (see WorldEvents), so a
+    /// failure here is logged and nothing more.</summary>
+    public async Task PushEventsAsync(string list)
+    {
+        var sends = new List<Task>();
+        foreach (var server in Alive) sends.Add(PushEventsTo(server, list));
+        await Task.WhenAll(sends);
+    }
+
+    async Task PushEventsTo(Registration server, string list)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{server.ArrivalsUrl}/events")
+        {
+            Content = new StringContent(list, System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("x-server-secret", config.ServerSecret);
+        try
+        {
+            var reply = await wire.SendAsync(request);
+            if (!reply.IsSuccessStatusCode)
+                Console.Error.WriteLine($"[char] map server {server.Id} refused the world events ({(int)reply.StatusCode}) — it will catch up on its own poll.");
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"[char] map server {server.Id} did not take the world events — {e.Message}. It will catch up on its own poll.");
         }
     }
 }

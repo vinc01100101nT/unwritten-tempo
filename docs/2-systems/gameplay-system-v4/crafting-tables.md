@@ -45,9 +45,6 @@ written on it. These are every design in the game today.
 | Chainmail | Body | Smith | Copper | 5 | 400 | 0 |
 | Leather Jerkin | Body | Tannery | Rawhide | 5 | 400 | 0 |
 | Padded Vest | Body | Loom | Burlap | 5 | 400 | 0 |
-| Iron Kite Shield | Off-hand | Smith | Copper | 5 | 400 | 0 |
-| Leather Buckler | Off-hand | Tannery | Rawhide | 5 | 400 | 0 |
-| Padded Shield | Off-hand | Loom | Burlap | 5 | 400 | 0 |
 | Chain Mantle | Garment | Smith | Copper | 5 | 400 | 0 |
 | Hide Cloak | Garment | Tannery | Rawhide | 5 | 400 | 0 |
 | Traveller's Cloak | Garment | Loom | Burlap | 5 | 400 | 0 |
@@ -55,8 +52,7 @@ written on it. These are every design in the game today.
 | Leather Boots | Shoes | Tannery | Rawhide | 5 | 400 | 0 |
 | Woven Shoes | Shoes | Loom | Burlap | 5 | 400 | 0 |
 
-Every armour slot comes in all three materials. The Leather Buckler keeps the id `item.wooden-buckler`, so a save
-holding one still loads it.
+Every armour slot comes in all three materials.
 
 ## 3. Fold — one unit of the band, plus gold
 
@@ -79,22 +75,24 @@ The finished number is `folds × what one fold buys × (1 + quality lift)`, roun
 decimal) — except shoes' movement speed, which is exactly `folds × 2%` at every grade. The server writes it onto the
 copy.
 
-A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body,
-off-hand and garment take the full amount, head and shoes half. Priced with Ink's own exchange rate — 1 defence =
+A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body
+and garment take the full amount, head and shoes half. Priced with Ink's own exchange rate — 1 defence =
 8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — so
-a fold is worth the one defence it bought before, split between two stats.
+a fold is worth 1.8 defence, split between two stats. The 1.8 was sized on 2026-10-07 so a level-1 character in the +5
+starter set (Sword 9 attack, Chainmail 5 defence and 36 HP, Iron Sabatons 2 defence and 18 HP) beats four ungeared
+level-1 creatures attacking together.
 
-| Piece | Each fold adds (body, off-hand, garment) | Head and shoes |
+| Piece | Each fold adds (body, garment) | Head and shoes |
 | --- | --- | --- |
-| Weapon (sword, bow, …) | +1 Attack | — |
-| Weapon — Staff | +1 Magic Attack | — |
-| Metal armour | +0.5 Defence and +4 HP | +0.25 Defence and +2 HP |
-| Leather armour | +0.25% Attack Speed and +0.25 Evasion | +0.125% Attack Speed and +0.125 Evasion |
-| Cloth armour | +0.5 Magic Defence and +2 MP | +0.25 Magic Defence and +1 MP |
+| Weapon (sword, bow, …) | +1.8 Attack | — |
+| Weapon — Staff | +1.8 Magic Attack | — |
+| Metal armour | +0.9 Defence and +7.2 HP | +0.45 Defence and +3.6 HP |
+| Leather armour | +0.45% Attack Speed and +0.45 Evasion | +0.225% Attack Speed and +0.225 Evasion |
+| Cloth armour | +0.9 Magic Defence and +3.6 MP | +0.45 Magic Defence and +1.8 MP |
 | Shoes, any material — on top of their material's row | — | +2% Movement Speed, the grade's lift not applied |
 
-Body armour at A +35: **23 Defence and 182 HP** (metal), **11.4% Attack Speed and 11 Evasion** (leather), **23 Magic
-Defence and 91 MP** (cloth).
+Body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack Speed and 20 Evasion** (leather), **41 Magic
+Defence and 164 MP** (cloth).
 
 | Grade | Quality lift on the fold total |
 | --- | --- |
@@ -106,7 +104,8 @@ Defence and 91 MP** (cloth).
 | B | +22% |
 | A | +30% |
 
-Example: an A-grade sword at +35 is 35 × 1.30 = 45.5 → **+46 Attack**.
+Example: an A-grade sword at +35 is 35 × 1.8 × 1.30 = 81.9 → **+82 Attack**; at +25 it is 25 × 1.8 × 1.30 = 58.5,
+which rounds up to **+59 Attack**.
 
 ## 4. Quench — ten units of the band, plus gold, plus an optional Salt
 
@@ -209,11 +208,11 @@ are not recorded and come back as nothing.
 | Step | Pays | Result |
 | --- | --- | --- |
 | Forge | 8 Copper + 800 g | Raw +0 |
-| Fold ×5 | 5 Copper + 250 g | Raw +5 (+5 Attack) |
+| Fold ×5 | 5 Copper + 250 g | Raw +5 (+9 Attack) |
 | Quench (allowed: at the +5 cap) | 10 Copper + 500 g, 80% | F +0 |
-| Fold ×10 | 10 Bronze + 1,000 g | F +10 (+10 Attack) |
+| Fold ×10 | 10 Bronze + 1,000 g | F +10 (+18 Attack) |
 | Quench | 10 Bronze + 1,000 g, 60% | E +0 (2 Ink slots) |
-| Fold ×15 | 15 Iron + 2,250 g | E +15 (+16 Attack) |
+| Fold ×15 | 15 Iron + 2,250 g | E +15 (+28 Attack) |
 | Quench | 10 Iron + 1,500 g, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
 | … | | |
-| Fold ×35 at A | 35 Adamant + 12,250 g | A +35 (+46 Attack), 6 Ink slots |
+| Fold ×35 at A | 35 Adamant + 12,250 g | A +35 (+82 Attack), 6 Ink slots |

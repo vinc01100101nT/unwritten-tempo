@@ -282,8 +282,9 @@ sequenceDiagram
 **The server stamps the moment, not your machine.** A machine that writes its own timestamp could backdate a
 swing past the cadence check or post-date one to shove everybody's view out of step.
 
-**One exception: a bow.** Its blow lands when the arrow arrives, which only the machine flying the arrow knows —
-so a bow asks at that moment instead, and the server lands it straight away.
+**A ranged attack is asked for the same way, at the moment it is let go.** The server throws it — an arrow, or a
+shuriken that bounces and comes back — and tells everybody watching each leg with the moments it leaves and arrives
+on the shared clock; the blow lands when it arrives.
 
 ---
 

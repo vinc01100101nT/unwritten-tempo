@@ -11,15 +11,13 @@ Built 2026-06-18 — the RO "one cast, several damage numbers, each a separate r
 pieces (first user: Mage **Meteor**). The point of multi-hit is per-hit PROC rolls (status/leech/cards), not raw
 damage — see the design rationale we discussed.
 
-- **`MultiHitBurst.Run(center, radius, hits, interval, onHit)`** (`MultiHitBurst.cs`) — snapshots the mobs in a
-  blast once (death-safe), then calls `onHit(mob, hitIndex)` for each living target across `hits` waves spaced
-  `interval`s apart (numbers sequence). Runs on its OWN GameObject (survives the caster being disabled). The
+- **`MultiHitBurst.Run(targets, hits, interval, onHit)`** (`MultiHitBurst.cs`) — takes a snapshot of the mobs
+  (death-safe), then calls `onHit(mob, hitIndex)` for each target across `hits` waves spaced `interval`s apart. Server
+  only; it draws nothing (the yellow totals are summed by `StrikeTotals` and sent with each hit). Runs on its OWN GameObject (survives the caster being disabled). The
   caller's `onHit` does the per-tick damage roll AND any per-tick status proc. Reuse for any multi-hit AoE.
-- **`MonsterAI3D.Stun(seconds)`** — freezes the mob (reuses the `Stagger` freeze: no move/attack) + a spinning
-  **swirl over the head** (`FX/Magic/Spirit`, via `StatusFX`) + a one-time "Stun!" popup. `stunSheet` is
-  assigned to all mobs in `BuildMonster`. The reusable status template — copy it for poison/freeze/etc.
-- **`StatusFX.cs`** — looping head-indicator that follows a unit + billboards for a duration; self-destroys
-  when the unit dies. Generalized [[GuardShieldFX]].
+- **`MonsterAI3D.Stun(seconds)`** — freezes the mob (reuses the `Stagger` freeze: no move/attack). The "Stun!" word
+  is drawn by every screen from the announced `OnStun` event (`CueWords`). The head swirl and `StatusFX.cs` were
+  removed 2026-10-07 (no prefab had a swirl sheet).
 
 **Meteor wiring:** `Player3DMeteor` exposes `hits` (3), `hitInterval`, `stunChance` (0.25/hit), `stunSeconds`;
 each tick deals `damageMult/hits` (so multi-hit ≠ power buff) and rolls stun independently. Per-tick `onHit`

@@ -16,6 +16,9 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     [GeneratedRegex(@"^[A-Za-z0-9_]{3,16}$")] private static partial Regex NamePattern();
     [GeneratedRegex(@"^#[0-9a-fA-F]{6}$")] private static partial Regex HexColour();
 
+    /// <summary>Could this be a character's name at all — the one rule, read by every door that is handed a name.</summary>
+    internal static bool IsAName(string? name) => name is not null && NamePattern().IsMatch(name);
+
     const string Columns = "id, name, progress, created_at, updated_at";
 
     /// <summary>How many recoloured colours a character may carry. One number, so the route that creates a
@@ -100,7 +103,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     {
         if (body is null) return Bad("send a character");
         var name = body.name?.Trim() ?? "";
-        if (!NamePattern().IsMatch(name)) return Bad("3-16 letters, digits or underscore");
+        if (!IsAName(name)) return Bad("3-16 letters, digits or underscore");
 
         var sources = body.dyeSources ?? [];
         var targets = body.dyeTargets ?? [];
@@ -408,7 +411,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
         bool taken = await maps.AnnounceAsync(to, ticket, name, sent, hotbar?.RootElement, quests.RootElement, isGm,
-                                              handover, http.RequestAborted);
+                                              handover, signingIn: true, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 

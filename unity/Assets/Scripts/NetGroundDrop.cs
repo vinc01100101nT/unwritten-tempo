@@ -98,6 +98,8 @@ public class NetGroundDrop : NetworkBehaviour
 
         view = GroundDrop.Place(MapManager.InWorld(inMap, mapName), def, count, null,
                                 (Quality)qualityIndex, upgrade, mapName, netId);
+        if (view == null) return;
+        view.ShowOnScreen();
         // DECIDED IN THE SAME BREATH AS IT IS BUILT, not on the next frame. Waiting left a drop in somebody
         // else's map lit up and reachable for a frame, in a place this machine parks that map and the player
         // is not.

@@ -225,39 +225,39 @@ Tall image. A big cheerful mascot: a cute round anime monster, a green slime blo
 ### Character standing art — one per weapon, 14 in all — box 900 × 1200
 
 Pick an outfit from sheet 4 for each weapon and describe it in words in place of `[HAIR]` and `[CLOTHES]`. Fill in
-the weapon, epithet and deed from the table — they are the lore's own words.
+the weapon, name and moment from the table — they are the lore's own words.
 
 ```text
 Send the text below to the image tool exactly as written, word for word. Do not change a single word.
 
 Hand-drawn anime illustration in the style of classic Ragnarok Online official art from the early 2000s: confident ink linework with varied line weight, clean cel shading with soft painted colour, bright warm colours. Correct anatomy with natural proportions: two arms and two legs, every leg ends in a visible boot, hands hold the weapon by the handle. A candid moment caught mid-action, never a stiff pose. Not pixel art, not 3D, not chibi. No text, no letters, no logos.
 
-Tall image, full body, plain #f7f8fa background, a small shadow at the feet. A hero whose skin is solid matte black like black paper — black face, black neck, black arms, black hands, black legs, no normal skin tone anywhere — with two small white eye marks and no mouth or nose — the face is blank black except the two eye marks, [HAIR] and [CLOTHES]. They hold a [WEAPON] and are caught in a moment that shows "[EPITHET]": [DEED]. Cloth and hair moving, a strong readable silhouette.
+Tall image, full body, plain #f7f8fa background, a small shadow at the feet. A hero whose skin is solid matte black like black paper — black face, black neck, black arms, black hands, black legs, no normal skin tone anywhere — with two small white eye marks and no mouth or nose — the face is blank black except the two eye marks, [HAIR] and [CLOTHES]. They hold a [WEAPON] and are [NAME], caught in this moment: [MOMENT]. Cloth and hair moving, a strong readable silhouette.
 ```
 
-| Weapon | Epithet | Deed |
+| Weapon | Name | Moment |
 | --- | --- | --- |
-| Sword | The One Who Answered | Met every challenge alone, one at a time, and never lost the exchange. |
-| Greatsword | The One Who Cleared the Road | Walked ahead of the others so there would be a path behind. |
-| Axe | The One Who Never Stopped | Would not be turned, would not defend, only pressed forward. |
-| Warhammer | The One Who Said No | Whatever the enemy meant to do, it did not get to. |
-| Spear | The One Who Moved the Line | Decided where everyone stood, on both sides. |
-| Shield | The One Who Stood | Took what was meant for the other thirteen. |
-| Bow | The One Who Kept Distance | Was never where the blow landed, and never out of range. |
-| Dagger | The Late Arrival | Was not in the fight until it was already ending. |
-| Firearm | The One Who Fired Once | Needed one shot; waited as long as that took. |
-| Staff | The One Who Burned the Field | Unmade the ground the enemy was standing on. |
-| Wand | The One Who Brought Them Back | Is the reason the other thirteen were still standing. |
-| Scythe | The One Who Waited | Did nothing quickly, and nothing survived it. |
-| Fist | *not yet told* | *not yet told* — write "standing ready" in place of the epithet and deed |
-| Kick | *not yet told* | *not yet told* — write "standing ready" in place of the epithet and deed |
+| Sword | Veyra, the Last Petal | dashing through the heart of Chaos, cutting it a thousand times in a few heartbeats, petals streaming behind her |
+| Greatsword | Mordane, King Beneath the Waves | rising like a raging tide, one sweep of his greatsword crashing over everything in front of him |
+| Axe | Varkhaz, the Ever-Burning | charging forward and never stepping back, each axe blow catching the next like wildfire in dry grass |
+| Warhammer | Tharos, the Starbreaker | leaping and bringing his hammer down hard enough to break a falling star, the earth splitting beneath it |
+| Spear | Orion, the River That Remembers | hooking an enemy with his spear and dragging it, the way a river bends whatever falls into it |
+| Fist | Asterion, the Light Beyond Night | standing in front of the others, then throwing one fist that lights the sky like the northern lights |
+| Bow | Celestia, the Wandering Sky | drifting above the fight like a cloud nobody can catch, raining arrows down |
+| Dagger | Velmora, the Poisoned Rose | stepping back after one nick of a blade dark with nightshade, letting the poison bloom |
+| Katar | Nysara, the Face Without a Name | circling unseen as a mirage in the dust, then striking one crack again and again |
+| Shuriken | Riven, the Red Autumn | flinging a hundred whirling blades like leaves in an autumn gale |
+| Sniper | Vael, the Moonless Eye | lying still on a far hill on a moonless night, firing one shot out of the dark |
+| Staff | Kaelen, the Ember Beneath Snow | setting the ground ablaze, then freezing the flames to ash under ice |
+| Wand | Seraphine, Before the Dawn | kneeling over a fallen friend as the morning mist settles and they open their eyes |
+| Scythe | Morwen, the Last Bloom | laying a quiet curse, watching, a black lily blooming at her feet |
 
 ### Weapon icon — 14 small boxes under the picker
 
 ```text
 Send the text below to the image tool exactly as written, word for word. Do not change a single word.
 
-Square image. A neat grid of fourteen fantasy weapon item illustrations in classic Ragnarok Online item-art style: inked outlines, soft painted shading, each weapon on its own, all the same size, the same light from the top left, plain #f7f8fa background, no text: sword, greatsword, axe, warhammer, spear, shield, bow, dagger, flintlock pistol, staff, wand, scythe, fighting gauntlet, armoured boot.
+Square image. A neat grid of fourteen fantasy weapon item illustrations in classic Ragnarok Online item-art style: inked outlines, soft painted shading, each weapon on its own, all the same size, the same light from the top left, plain #f7f8fa background, no text: sword, greatsword, axe, warhammer, spear, fighting gauntlet, bow, dagger, katar, shuriken, sniper rifle, staff, wand, scythe.
 ```
 
 ### Biome landscape art (×14) — box 800 × 500
@@ -350,7 +350,7 @@ Wide image. A candid moment: [SCENE]
 
 | Guide page | Fill `[SCENE]` with |
 | --- | --- |
-| The World of Unwritten | Fourteen heroes standing in a row on a giant book page, seen from behind and below, each holding a different weapon (sword, greatsword, axe, warhammer, spear, shield, bow, dagger, pistol, staff, wand, scythe, bare fists, armoured boots), their skin solid matte black, cloaks blowing in the wind, black ink blots creeping in at their feet. |
+| The World of Unwritten | Fourteen heroes standing in a row on a giant book page, seen from behind and below, each holding a different weapon (sword, greatsword, axe, warhammer, spear, bare fists, bow, dagger, katar, shuriken, sniper rifle, staff, wand, scythe), their skin solid matte black, cloaks blowing in the wind, black ink blots creeping in at their feet. |
 | Playstyles & Builds | Three friends arguing over loot at a campfire at dusk. Each friend's skin is solid matte black — black faces, arms, hands and legs — with two white eye marks and no mouth (a blank black face). One holds a sword, one a staff, one a bow, and each holds up a different glowing ring. |
 | World & Maps | A hero whose skin is solid matte black — black face, arms, hands and legs — with two white eye marks and no mouth (a blank black face), spreading a big map across a table at an inn; the map shows grassland, snow, desert, a volcano and a dark ink-smeared corner, each region drawn on its own torn page. |
 | Getting Started | A hero whose skin is solid matte black — black face, arms, hands and legs — with two white eye marks closed sleepily and no mouth (a blank black face), waking up on a grassy hill and stretching, while a pale blue slime blob stares at them curiously from the grass. |

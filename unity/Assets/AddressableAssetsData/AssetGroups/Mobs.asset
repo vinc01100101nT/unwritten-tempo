@@ -36,7 +36,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1642f4fa9906a45bca041587990bf208
-    m_Address: Mobs/mob.shadow.northernlights
+    m_Address: Mobs/mob.shadow.asterion
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -51,7 +51,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19307675a5443448ba03d7027658ccaf
-    m_Address: Mobs/mob.shadow.ines
+    m_Address: Mobs/mob.shadow.vael
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -81,7 +81,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 25781af2664b54f55a1da266b762dfbf
-    m_Address: Mobs/mob.shadow.azar
+    m_Address: Mobs/mob.shadow.kaelen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -246,7 +246,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 841cf47b10b8c44d68599073bab6fd8e
-    m_Address: Mobs/mob.shadow.brandr
+    m_Address: Mobs/mob.shadow.varkhaz
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -256,7 +256,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8618411ccf372449c80ae07144559c23
-    m_Address: Mobs/mob.shadow.radomir
+    m_Address: Mobs/mob.shadow.tharos
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -271,7 +271,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8d1325d8b3d394b4d97a7b745b3041d6
-    m_Address: Mobs/mob.shadow.ulrich
+    m_Address: Mobs/mob.shadow.mordane
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -281,7 +281,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9411ec2b7613b4e9fb83cc7c78e8b79b
-    m_Address: Mobs/mob.shadow.kallias
+    m_Address: Mobs/mob.shadow.orion
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -316,7 +316,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a08c2fb8b2ff347e1bf051deccc2ade3
-    m_Address: Mobs/mob.shadow.brigid
+    m_Address: Mobs/mob.shadow.seraphine
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -341,17 +341,17 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a302ae98dfbed487db414be0e61958bc
-    m_Address: Mobs/mob.shadow.tsubame
+    m_Address: Mobs/mob.shadow.veyra
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a485f67ae5023444bb5c801672b86b1b
-    m_Address: Mobs/mob.shadow.varro
+    m_Address: Mobs/mob.shadow.nysara
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a4a64b4f3a7a649a58c2dc93e4221355
-    m_Address: Mobs/mob.shadow.temulun
+    m_Address: Mobs/mob.shadow.celestia
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -376,7 +376,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aa30889277ebf451b82e516949e676e9
-    m_Address: Mobs/mob.shadow.fiora
+    m_Address: Mobs/mob.shadow.velmora
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -386,7 +386,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b3c0f160a70364f84bc7859d1db665c3
-    m_Address: Mobs/mob.shadow.morwenna
+    m_Address: Mobs/mob.shadow.morwen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -411,7 +411,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bec265ad126f64b6b92e5f46ec4cbfbb
-    m_Address: Mobs/mob.shadow.autumngale
+    m_Address: Mobs/mob.shadow.riven
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

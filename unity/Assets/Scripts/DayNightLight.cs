@@ -102,6 +102,7 @@ public class DayNightLight : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         sun = GetComponent<Light>();
         if (driveAmbient) RenderSettings.ambientMode = AmbientMode.Flat;   // so ambientLight actually applies
 

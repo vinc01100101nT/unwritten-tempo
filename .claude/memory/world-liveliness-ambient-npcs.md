@@ -22,7 +22,8 @@ Discussed 2026-06-24. **Layers 1 (wandering townsfolk) + 3 (reactive barks) BUIL
 - `DamagePopup.SpawnBubble(pos,label,color,life,rise)` — new pooled-popup overload for barks; `Begin()` resets
   timing so a stretched bark can't leak its long lifetime into the next combat number (zero-alloc).
 - `Editor/CharacterCastTools.cs` — `Tools ▸ unwritten ▸ World ▸ Refresh Character Cast` refreshes the CharacterSpec's
-  civilian/fighter model lists only; it places nothing.
+  civilian model list only; it places nothing. (The fighter list is gone since 2026-10-06: each shadow's body is its
+  own fixed look on its creature entry, edited in the Mob Table.)
 - GROUNDING (fixed 2026-06-25): baked chars float if you rely on CharacterController gravity (root rests at
   ground+skin, and they catch on prop/snow colliders). `TownNPC.LateUpdate` raycast-pins root Y to the **Ground
   layer only** (the [[world-ground-standard]] basis `BakedBillboard8.feetOffset` is tuned for) while moving →

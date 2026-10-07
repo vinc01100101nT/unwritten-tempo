@@ -64,7 +64,7 @@ public class Player3DAttacker : MonoBehaviour
     /// keep in sync; the Item stays the single owner of weapon reach.</summary>
     public float BaseRange
         => Character.Instance != null ? Character.Instance.MeleeReachFullSize
-                                      : WeaponReach.Of(null, range);   // the SHARED rule — a mob resolves its reach through this same one
+                                      : WeaponReach.Of(null, range, false);   // the SHARED rule — a mob resolves its reach through this same one
 
     /// <summary>Reach against the stand-in body (<see cref="UnitScale.MobScale"/>), kept only for the callers that have no
     /// target to measure against (the pickup radius, the editor gizmo). Every actual hit test uses

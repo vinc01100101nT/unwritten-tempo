@@ -21,6 +21,7 @@ public class PlayerHurtFlash : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         sr = GetComponent<SpriteRenderer>();
         flashWait = new WaitForSeconds(flashTime);
     }

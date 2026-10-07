@@ -40,14 +40,20 @@ public static class SkillEffectApplier
     /// <paramref name="caster"/> is the unit using the skill, whose own numbers scale every roll.</summary>
     // The practice lift the caster puts on the cast currently applying, as a fraction (see
     // Rarities.OutputLift). Held here rather than passed through every signature because it is one value for a whole
-    // burst — the same reason PassiveEvents and RepeatsDamageTotal hold theirs this way.
+    // burst — the same reason PassiveEvents holds its cause this way.
     static float masteryLift;
+
+    // What one hop of a bouncing chain is worth, as a share of its first hit (FlightMath.HopScale) — 1 for every burst
+    // that is not a hop. Held the same way and for the same reason as the practice lift above: one value for a whole
+    // burst, set at its entry and restored in its finally, so a passive a hop sets off casts at full strength rather
+    // than at the hop's share.
+    static float hopScale = 1f;
 
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol = null, string srcName = null, string srcId = null,
                                   Vector3? aimPoint = null, ICombatUnit caster = null, StackVars vars = default,
-                                  bool efficient = false)
+                                  bool efficient = false, bool casterPass = true, float hop = 1f)
     {
         if (effects == null || effects.Count == 0) return;
 
@@ -60,20 +66,22 @@ public static class SkillEffectApplier
         // (OnDamageDealt / OnKill fire synchronously below): without the restore, the inner cast's practice would go
         // on paying for the outer cast's remaining hits. An EFFICIENT cast adds its bonus on top (SkillEfficiency).
         float prevLift = masteryLift;
+        float prevHop = hopScale;
         masteryLift = SkillEfficiency.OutputLift(ch.SkillOutputLift(srcId), efficient);
+        hopScale = Mathf.Max(0f, hop);
         try
         {
             ApplyBurstTargets(point, radius, scope, targets, effects, singleTarget,
-                              srcSymbol, srcName, srcId, aimPoint, ch, vars);
+                              srcSymbol, srcName, srcId, aimPoint, ch, vars, casterPass);
         }
-        finally { masteryLift = prevLift; }
+        finally { masteryLift = prevLift; hopScale = prevHop; }
     }
 
     // The body of a burst, split out ONLY so the lift above is restored on every exit — this method has several.
     static void ApplyBurstTargets(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol, string srcName, string srcId,
-                                  Vector3? aimPoint, ICombatUnit ch, StackVars vars)
+                                  Vector3? aimPoint, ICombatUnit ch, StackVars vars, bool casterPass)
     {
 
         // Where a relocation (Teleport / Dash) sends whoever it moves — the caster, or a mob when the author put the
@@ -86,7 +94,9 @@ public static class SkillEffectApplier
         // PASS 1 — CASTER effects (see SkillEffect.LandsOnCaster): they happen TO THE CASTER, so the tick's targeting has no say.
         // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
-        ApplyCasterEffects(effects, relocatePoint, singleTarget, srcSymbol, srcName, srcId, ch, vars);
+        // A HOP of a bouncing chain skips it: the cast's own side — its buffs, its dash, its self-heal — happened once,
+        // on the cast, and a jump is only the strike reaching someone else.
+        if (casterPass) ApplyCasterEffects(effects, relocatePoint, singleTarget, srcSymbol, srcName, srcId, ch, vars);
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
@@ -234,9 +244,12 @@ public static class SkillEffectApplier
     static readonly List<ICombatUnit> pickPeople = new List<ICombatUnit>(8);
     static readonly List<MonsterAI3D> pickCreatures = new List<MonsterAI3D>(16);
 
+    // Reused: the people filed in the caster's map, read by one gather at a time.
+    static readonly List<ICombatUnit> peopleInMap = new List<ICombatUnit>(16);
+
     // Every living enemy of `caster` within the squared radius of `point` (planar): people into `people`, creatures into
-    // `creatures`. People only in the caster's own map — every map shares one set of coordinates on the server.
-    // Creatures are not filtered by map, which is how the players' gather has always read them.
+    // `creatures`. Only from the caster's own map, read from the by-map filing of each — so a gather walks one map's
+    // units, never every unit the server holds in every map. A caster whose map is not known reads everybody.
     static void GatherOpponents(Vector3 point, float radiusSqr, ICombatUnit caster,
                                 List<ICombatUnit> people, List<MonsterAI3D> creatures)
     {
@@ -244,11 +257,13 @@ public static class SkillEffectApplier
         creatures.Clear();
         var casterSide = Sides.Of(caster);
         if (casterSide == Side.None) return;
+        string map = caster != null ? caster.Map : null;
 
         if (Sides.Hostile(casterSide, Side.Players))
         {
-            string map = caster != null ? caster.Map : null;
-            var all = PlayerUnits.Present;
+            peopleInMap.Clear();
+            PlayerUnits.CollectIn(map, peopleInMap);
+            var all = peopleInMap;
             for (int i = 0; i < all.Count; i++)
             {
                 var person = all[i];
@@ -260,9 +275,10 @@ public static class SkillEffectApplier
                 if (d.sqrMagnitude > radiusSqr) continue;
                 people.Add(person);
             }
+            peopleInMap.Clear();
         }
 
-        var list = MonsterAI3D.Active;
+        var list = string.IsNullOrEmpty(map) ? MonsterAI3D.Active : MonsterAI3D.ActiveIn(map);
         for (int i = 0; i < list.Count; i++)
         {
             var ai = list[i];
@@ -288,6 +304,10 @@ public static class SkillEffectApplier
         }
         return null;
     }
+
+    /// <summary>The unit standing on a picked transform — a creature by its health, else a person by their body — or
+    /// null. What a bouncing skill tick starts its chain from.</summary>
+    public static ICombatUnit UnitStandingOn(Transform t) => t != null ? UnitOn(t) : null;
 
     // The unit standing on a picked transform: a creature by its health, else a person by their body.
     static ICombatUnit UnitOn(Transform t)
@@ -355,6 +375,53 @@ public static class SkillEffectApplier
             if (SkillEffect.LandsOnCaster(e))
                 ApplyOne(e, ch, 0, ch, point, aimUnit, srcSymbol, srcName, srcId, vars);
         }
+    }
+
+    /// <summary>True when <paramref name="effects"/> carries an all-in cost on the caster side — the tick that pays
+    /// them for its whole cast.</summary>
+    public static bool HasAllInCost(List<SkillEffect> effects)
+    {
+        if (effects == null) return false;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e != null && SkillEffect.IsAllInCost(e.kind) && SkillEffect.LandsOnCaster(e)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Pay the all-in costs in <paramref name="effects"/> and return what they took, MP and HP together. The
+    /// skill runner calls it ONCE per cast and hands the amount to every tick (<see cref="StackVars.GivenUp"/>). Only
+    /// the caster-side ones count (the composer never authors one anywhere else, and the skill-data check fails one
+    /// that is). Only the server pays: health and mana are the server's, and a strike that reads the amount lands only
+    /// there.</summary>
+    public static int PayAllInCosts(List<SkillEffect> effects, ICombatUnit ch)
+    {
+        if (ch == null || ch.IsDead || !GameServer.IsServer) return 0;
+        int givenUp = 0;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e == null || !SkillEffect.LandsOnCaster(e)) continue;
+            if (e.kind == SkillEffectKind.SpendAllMana)
+            {
+                int mp = ch.CurrentMP;
+                if (mp > 0 && ch.SpendMana(mp)) givenUp += mp;
+            }
+            else if (e.kind == SkillEffectKind.DropHealthToOne)
+                givenUp += ch.GiveUpHealthDownToOne();
+        }
+        return givenUp;
+    }
+
+    // Take up to `most` MP from `unit` and hand exactly what was taken to the caster. Never from the caster itself — a
+    // drain that lands on yourself would move your own MP from one pocket to the same pocket.
+    static void DrainMana(ICombatUnit unit, ICombatUnit caster, int most)
+    {
+        if (most <= 0 || unit == null || unit == caster || unit.IsDead || !GameServer.IsServer) return;
+        int taken = Mathf.Min(most, unit.CurrentMP);
+        if (taken <= 0 || !unit.SpendMana(taken)) return;
+        if (caster != null && !caster.IsDead) caster.GainMana(taken);
     }
 
     /// <summary>THE apply switch: ONE effect onto ONE unit — the player, a mob, anything that is an
@@ -489,61 +556,50 @@ public static class SkillEffectApplier
                 // the auto-pilot AI can't retarget away), so a taunt is authored once and works on whoever it lands on.
                 if (Fires(e, hit, caster, vars)) unit.ForceAggro(caster, seconds);
                 break;
+            // Paid once per cast by the skill runner (PayAllInCosts), which is what lets every strike read what they
+            // took. Nothing to do here.
+            case SkillEffectKind.SpendAllMana:
+            case SkillEffectKind.DropHealthToOne:
+                break;
+            case SkillEffectKind.DrainMana:
+                if (Fires(e, hit, caster, vars)) DrainMana(unit, caster, ScaledAmount(e, caster, vars));
+                break;
             case SkillEffectKind.Knockback:
                 // Shove AWAY from the caster (magnitude = speed).
-                if (hit == 0) unit.Shove(ShoveOrigin(unit, caster), StackedMagnitude(e, vars),
+                if (hit == 0) unit.Shove(ShoveOrigin(unit, caster), ShoveSpeed(e, unit, vars),
                                          StackedShoveSeconds(e, vars), StackedShoveSeconds(e, vars));
                 break;
             case SkillEffectKind.Pull:
                 // Drag TOWARD the caster: shove away from a point mirrored through the target = toward the caster.
                 if (hit == 0 && body != null)
-                    unit.Shove(2f * body.position - ShoveOrigin(unit, caster), StackedMagnitude(e, vars),
+                    unit.Shove(2f * body.position - ShoveOrigin(unit, caster), ShoveSpeed(e, unit, vars),
                                StackedShoveSeconds(e, vars), StackedShoveSeconds(e, vars));
                 break;
             // `unit` is whoever is being moved — the caster for a Caster-side effect, a mob for a Target-side one.
-            // Both relocations share this body: they differ only in HOW the mover travels, never in where it lands
-            // or what it leaves behind, so the landing spot and the afterimage are decided once for the pair.
+            // Both relocations share this body: they differ only in HOW the mover travels, never in where it lands.
+            //
+            // NOTHING HERE DRAWS. The afterimage and the see-through fade are pictures, and this runs on the server,
+            // which has no screen. The move carries WHICH effect caused it (RelocationLook), and every screen that
+            // draws the move — the mover's own and everybody watching — reads the look out of its own copy of the skill.
             case SkillEffectKind.Teleport:
             case SkillEffectKind.Dash:
+            {
                 if (hit != 0) break;
-                // Snapshot BEFORE the move — the copy belongs to the spot being left, not the one being arrived at.
-                float afterimage = e.afterimageSeconds.Resolve(vars);
-                if (afterimage > 0f)
-                    Afterimage.Capture(RenderedBody(unit), afterimage, e.afterimageTint);
+                var look = RelocationLook.Of(srcId, e, vars);
                 if (e.kind == SkillEffectKind.Teleport)
-                    unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)));   // instant blink
+                    unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)), look);   // instant blink
                 else
                     // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
                     // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
                     // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
-                {
                     unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)),   // A→B glide
                                  e.dashSpeedMult.Resolve(vars), e.dashEaseIn, e.dashEaseOut,
                                  Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars)),
-                                 aimUnit != null ? aimUnit.position : (Vector3?)null);
-                    // AFTER the glide has started, never before: the hold ends when the unit stops relocating, and
-                    // asking that a frame too early would end it instantly. The mover's own rendered model is what
-                    // fades — for the player that is a separate object from the body being moved.
-                    float opacity = Mathf.Clamp01(e.casterOpacity.Resolve(vars));
-                    if (opacity < 0.999f)
-                        CharacterFade.HoldWhileRelocating(unit, RenderedBody(unit), opacity);
-                }
+                                 aimUnit != null ? aimUnit.position : (Vector3?)null, look);
                 break;
+            }
         }
         if (tagDisplay) states.ClearApplyContext();
-    }
-
-    /// <summary>The unit's RENDERED model — what you actually see, which is not always the body that moves. The
-    /// player's model is a separate object riding its root (Character3DVisual is not parented under it), so its Body
-    /// holds no renderers at all; every other character carries its model as a child of its body, so Body is already
-    /// right for them. StanceController.Player IS the player's model, registered in Awake — a static field read, never
-    /// a scene search. Anything that DRAWS a unit (a snapshot, a fade) must ask through here, or it silently finds
-    /// nothing on the player.</summary>
-    static Transform RenderedBody(ICombatUnit unit)
-    {
-        if (unit == null) return null;
-        return ReferenceEquals(unit, Character.Instance) && StanceController.Player != null
-             ? StanceController.Player.transform : unit.Body;
     }
 
     // Where a shove is measured FROM: the caster's body. Falls back to the target's own spot when there's no caster,
@@ -624,20 +680,23 @@ public static class SkillEffectApplier
         ulong chain = PassiveEvents.CurrentChain;
         var flurryVars = vars;   // the cast's readings ride the callback too — later strikes must cash the SAME snapshot
         Vector3 flurryPoint = relocatePoint;   // and so does where this cast aimed — a later strike relocates to the same spot
-        // A run that shows ONE total across its repeats rides the callback for the same reason the cause does: the
-        // strikes land on later frames, long after the tick that started them has returned.
-        var runTotal = RepeatsDamageTotal.Current;
+        // The cast's practice lift and a hop's share ride the callback too: both are held for the burst that set them
+        // and restored when it returns, so a later strike, landing on a later frame, would otherwise read whatever is
+        // set then — no lift at all, or another cast's.
+        float flurryHop = hopScale;
+        float flurryLift = masteryLift;
         MultiHitBurst.Run(mobs, HitLoops(effects, caster, vars), MultiHitInterval,
             (ai, hit) =>
             {
                 // The CAUSE rides the callback whole — chain and skill both. A flurry's later strike can be the killing
                 // blow, and a kill that couldn't name the skill that landed it would be a kill by nobody.
                 var prev = PassiveEvents.Push(chain, srcId);
-                var prevTotal = RepeatsDamageTotal.Push(runTotal);
+                float prevHop = hopScale, prevLift = masteryLift;
+                hopScale = flurryHop;
+                masteryLift = flurryLift;
                 try { return ApplyHitToMob(effects, ai, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
-                finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prev); }   // the damage dealt feeds the rising total
-            },
-            showTotal: runTotal == null);   // one drawer of the yellow number, never both
+                finally { hopScale = prevHop; masteryLift = prevLift; PassiveEvents.Pop(prev); }
+            });
     }
 
     // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
@@ -742,7 +801,7 @@ public static class SkillEffectApplier
         float missing = 1f - Mathf.Clamp01((float)unit.CurrentHP / unit.MaxHP);
         if (missing <= 0f) return;
         int roll = RollPower(e, vars, OutputMult(e, caster),
-                             out bool crit, caster, unit.CritShieldLuk);
+                             out bool crit, caster, unit);
         int bonus = Mathf.RoundToInt(roll * power * missing);
         if (bonus <= 0) return;
         // Its own damage number, so its own charge — an execute is a second outgoing hit riding the first, not part of it.
@@ -776,14 +835,17 @@ public static class SkillEffectApplier
         ulong chain = PassiveEvents.CurrentChain;
         var flurryVars = vars;
         Vector3 flurryPoint = relocatePoint;
-        var runTotal = RepeatsDamageTotal.Current;
+        float flurryHop = hopScale;
+        float flurryLift = masteryLift;
         MultiHitBurst.RunOnUnits(people, loops, MultiHitInterval,
             (person, hit) =>
             {
                 var prev = PassiveEvents.Push(chain, srcId);
-                var prevTotal = RepeatsDamageTotal.Push(runTotal);
+                float prevHop = hopScale, prevLift = masteryLift;
+                hopScale = flurryHop;
+                masteryLift = flurryLift;
                 try { return ApplyHitToUnit(effects, person, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
-                finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prev); }
+                finally { hopScale = prevHop; masteryLift = prevLift; PassiveEvents.Pop(prev); }
             });
     }
 
@@ -841,15 +903,22 @@ public static class SkillEffectApplier
         {
             bool basic = e.resolveAsBasicAttack && caster != null;
             int shown;
-            if (basic)
+            // A sniper's ordinary attack is a magic shot (BasicSwing), so the number it would have been is a magic roll.
+            bool magicShot = basic && WeaponTypes.ShootsMagic(caster.HeldWeapon);
+            if (magicShot)
+            {
+                int roll = caster.RollSkillDamage(DamageType.Magic, unit.CritShieldLuk, out crit);
+                shown = Mathf.Max(1, Mathf.RoundToInt(StrikeMult(e, caster, unit, vars).Resolve(vars, Mathf.Max(0f, outer), roll)));
+            }
+            else if (basic)
             {
                 crit = caster.RollBasicCrit(unit);
-                shown = Mathf.Max(1, Mathf.RoundToInt(e.damageMult.Resolve(vars, Mathf.Max(0f, outer),
+                shown = Mathf.Max(1, Mathf.RoundToInt(StrikeMult(e, caster, unit, vars).Resolve(vars, Mathf.Max(0f, outer),
                                                                           caster.RollBasicDamage(crit))));
             }
-            else shown = RollPower(e, vars, outer, out crit, caster, unit.CritShieldLuk);
+            else shown = RollPower(e, vars, outer, out crit, caster, unit);
             resolved = new DamageInfo(shown, basic ? caster.BasicElement : e.element,
-                                      !basic && e.damageType == DamageType.Magic, crit,
+                                      magicShot || (!basic && e.damageType == DamageType.Magic), crit,
                                       attackerHit: basic ? caster.BasicHit : -1, overkill: true, attacker: caster);
             return CombatAuthority.Apply(unit, resolved);
         }
@@ -859,7 +928,7 @@ public static class SkillEffectApplier
         // roll is underneath, which is the whole point of it.
         if (e.resolveAsBasicAttack)
         {
-            int swung = BasicSwing.Land(caster, unit, e.damageMult, vars, outer, overkill,
+            int swung = BasicSwing.Land(caster, unit, StrikeMult(e, caster, unit, vars), vars, outer, overkill,
                                         // This swing has no wind-up of its own, so it announces the intent here rather
                                         // than never — a passive that answers "about to swing" (the auto-lunge) rides a
                                         // skill's swings exactly as it rides an ordinary one.
@@ -870,7 +939,7 @@ public static class SkillEffectApplier
             return swung;
         }
 
-        int power = RollPower(e, vars, outer, out crit, caster, unit.CritShieldLuk);
+        int power = RollPower(e, vars, outer, out crit, caster, unit);
         // One strike, one charge. (The basic-attack branch above doesn't come back through here: the swing spends its
         // own, so nothing is charged twice.)
         power = UnitOffense.SpendCharges(caster != null ? caster.States : null, power);
@@ -884,14 +953,30 @@ public static class SkillEffectApplier
     // roll is the BASIS the multiplier is applied to, which is what puts both sides of the operation in damage.
     // Crit-aware so a tick crits like any other skill, and the defender's LUK shields against it exactly as it shields
     // against a swing. No allocation.
-    static int RollPower(SkillEffect e, in StackVars vars, float outer, out bool crit, ICombatUnit caster, int targetLuk)
+    static int RollPower(SkillEffect e, in StackVars vars, float outer, out bool crit, ICombatUnit caster, ICombatUnit unit)
     {
         crit = false;
         if (caster == null) return 1;
         // Magic → the user's magic attack (unmissable, never a crit). Physical → its physical attack. Crit type → the
         // physical roll with a FORCED crit (its armour-pierce is the deferred combat-pass TODO).
-        int roll = caster.RollSkillDamage(e.damageType, targetLuk, out crit);
-        return Mathf.Max(1, Mathf.RoundToInt(e.damageMult.Resolve(vars, outer, roll)));
+        int roll = caster.RollSkillDamage(e.damageType, unit.CritShieldLuk, out crit);
+        return Mathf.Max(1, Mathf.RoundToInt(StrikeMult(e, caster, unit, vars).Resolve(vars, outer, roll)));
+    }
+
+    /// <summary>THE damage multiplier one strike lands with: the authored multiplier, plus what it grows by — the MP or HP
+    /// the caster gave up in this cast (<see cref="StackVars.GivenUp"/>) and the metres between the caster and the unit
+    /// struck. Both growths are added to the multiplier's own number, before the pile meets it, so a strike that grows
+    /// reads the pile exactly as one that does not. With both growth numbers at 0 it is the authored multiplier,
+    /// untouched — which is every strike authored before they existed.</summary>
+    static ScaledNumber StrikeMult(SkillEffect e, ICombatUnit caster, ICombatUnit unit, in StackVars vars)
+    {
+        var mult = e.damageMult;
+        float perPoint = vars.GivenUp > 0 ? e.damageMultPerPointGivenUp.Resolve(vars) : 0f;
+        float perMetre = e.damageMultPerMetre.Resolve(vars);
+        float metres = perMetre != 0f && caster != null && caster.Body != null && unit != null && unit.Body != null
+            ? StrikeMath.Metres(caster.Body.position, unit.Body.position) : 0f;
+        mult.value += StrikeMath.Growth(perPoint, vars.GivenUp, perMetre, metres);
+        return mult;
     }
 
     // ---- affinity (ring-investment scaling) ---------------------------------
@@ -940,6 +1025,11 @@ public static class SkillEffectApplier
         e.amount.ResolveInt(vars);
     // A shove's travel time is its own field because it is MOVEMENT, not a state window — but it is still this
     // effect's duration, so the pile lifts it through the same channel every other duration uses.
+    // A worn Anchored shortens the shove by slowing it, never by cutting its time: the stagger the shove carries still
+    // lasts what the author set, only the distance shrinks.
+    static float ShoveSpeed(SkillEffect e, ICombatUnit mover, in StackVars vars) =>
+        ArmourWords.CutBy(StackedMagnitude(e, vars), mover.States != null ? mover.States.WornShoveCut : 0f);
+
     static float StackedShoveSeconds(SkillEffect e, in StackVars vars) =>
         Mathf.Max(0.01f, e.shoveSeconds.Resolve(vars));
 
@@ -1004,7 +1094,7 @@ public static class SkillEffectApplier
     // this skill is worth. Added, never multiplied — so mastery is worth the same +30 POINTS to a new character as
     // to a maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at
     // a ring term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
-    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift);
+    static float OutputMult(SkillEffect e, ICombatUnit caster) => OutputScale(e, caster, masteryLift) * hopScale;
 
     /// <summary>THE multiplier on an effect's main number: the ring's term where <see cref="EffectScaling"/> gives it
     /// a ring row, plus the practice lift where it says practice raises it — ADDED, never multiplied. Public so the

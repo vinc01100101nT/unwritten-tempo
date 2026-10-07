@@ -72,6 +72,7 @@ public class SnowOverlay : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         Instance = this;
         var sh = Shader.Find("Unwritten/SnowScreen");
         if (sh == null)

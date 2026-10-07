@@ -41,6 +41,14 @@
           }
         },
         {
+          "id": "story",
+          "title": "The Whole Story",
+          "file": "story.json",
+          "sourceDocs": [
+            "docs/3-world/story-setting-canon.md"
+          ]
+        },
+        {
           "id": "start",
           "title": "Getting Started",
           "file": "getting-started.json",

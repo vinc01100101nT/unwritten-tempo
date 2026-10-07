@@ -6,6 +6,7 @@ using UnityEngine.UI;
 /// The <b>Settings</b> window, opened from <see cref="SystemWindow"/>. Four tabs — Gameplay, Sound,
 /// Graphics, Keys — each showing its own page; one page is visible at a time. Keys is where the hotbar's third row
 /// gets its keys: each slot's button opens a list of the keys the game does not already use (<see cref="GameKeys"/>).
+/// Graphics' Resolution button opens the same list, filled with the sizes the monitor offers.
 ///
 /// <para>Every option here reads and writes <see cref="GameSettings"/>, which owns the values and persists
 /// them; this window only draws them.</para>
@@ -21,7 +22,15 @@ public class SettingsWindow : MonoBehaviour
     readonly List<GameObject> pages = new List<GameObject>();
 
     public bool IsOpen => UiAnim.IsOpen(root);
-    public void Open()  { if (root != null) { UiAnim.Open(root);  UISounds.PlayOpen(); } }
+    public void Open()
+    {
+        if (root == null) return;
+        // Alt+Enter and the window's own frame change the screen without this window, so it re-reads it on every open.
+        resolutionLabel.text = SizeName(Screen.width, Screen.height);
+        fullscreenToggle.SetIsOnWithoutNotify(GameSettings.Fullscreen);
+        UiAnim.Open(root);
+        UISounds.PlayOpen();
+    }
     public void Close() { if (root != null) { UiAnim.Close(root); UISounds.PlayClose(); } }
 
     void Start()
@@ -74,19 +83,49 @@ public class SettingsWindow : MonoBehaviour
         var smooth = UiKit.Checkbox(Row(graphics, "Smooth camera follow"), GameSettings.SmoothCameraFollow);
         smooth.onValueChanged.AddListener(v => GameSettings.SmoothCameraFollow = v);
 
-        BuildKeysPage(keys, body.transform);
+        var resolutionBtn = ChoiceButton(Row(graphics, "Resolution", 0.6f), SizeName(Screen.width, Screen.height),
+                                         OpenResolutionPicker);
+        resolutionLabel = resolutionBtn.GetComponentInChildren<TMPro.TMP_Text>();
+
+        fullscreenToggle = UiKit.Checkbox(Row(graphics, "Fullscreen", 0.85f), GameSettings.Fullscreen);
+        fullscreenToggle.onValueChanged.AddListener(v => GameSettings.Fullscreen = v);
+
+        BuildKeysPage(keys);
+        BuildPicker(body.transform);
 
         Select(0);
+    }
+
+    // ---- resolution ---------------------------------------------------------------------------------------------
+
+    TMPro.TMP_Text resolutionLabel;
+    Toggle fullscreenToggle;
+    readonly List<Vector2Int> sizes = new List<Vector2Int>();
+
+    static string SizeName(int width, int height) => width + " × " + height;
+
+    void OpenResolutionPicker()
+    {
+        OpenPicker(110f);
+        GameSettings.Resolutions(sizes);
+        for (int i = 0; i < sizes.Count; i++)
+        {
+            var size = sizes[i];
+            PickerChoice(SizeName(size.x, size.y), () =>
+            {
+                GameSettings.SetResolution(size.x, size.y);
+                // Screen.width still reads the old size until the next frame, so the label shows the pick itself.
+                resolutionLabel.text = SizeName(size.x, size.y);
+            });
+        }
     }
 
     // ---- the hotbar's third row ---------------------------------------------------------------------------------
 
     readonly TMPro.TMP_Text[] keyLabels = new TMPro.TMP_Text[HotbarBindings.PerRow];
-    GameObject picker;
-    RectTransform pickerList;
     readonly List<KeyCode> freeKeys = new List<KeyCode>();
 
-    void BuildKeysPage(Transform page, Transform pageParent)
+    void BuildKeysPage(Transform page)
     {
         var vlg = page.GetComponent<VerticalLayoutGroup>();
         if (vlg != null) vlg.spacing = 3;
@@ -95,28 +134,9 @@ public class SettingsWindow : MonoBehaviour
             int column = c;
             var row = Row(page, "Row 3 · Slot " + (c + 1), 0.6f);
             row.GetComponent<LayoutElement>().preferredHeight = 24;
-            var btn = UiKit.Btn(KeyName(column), row, () => OpenPicker(column));
-            var rt = (RectTransform)btn.transform;
-            rt.anchorMin = new Vector2(0.6f, 0f); rt.anchorMax = new Vector2(1f, 1f);
-            rt.offsetMin = Vector2.zero; rt.offsetMax = new Vector2(-4f, 0f);
+            var btn = ChoiceButton(row, KeyName(column), () => OpenKeyPicker(column));
             keyLabels[column] = btn.GetComponentInChildren<TMPro.TMP_Text>();
         }
-
-        // The list a slot's button opens, laid over the pages; built empty, filled each time it opens.
-        var panel = UiKit.Img("KeyPicker", pageParent, UiKit.PanelRaise);
-        UiKit.Fill(panel.rectTransform, Vector2.zero, Vector2.zero);
-        picker = panel.gameObject;
-        var view = UiKit.Img("List", panel.transform, new Color(0, 0, 0, 0)).rectTransform;
-        UiKit.Fill(view, new Vector2(4, 36), new Vector2(-4, -4));
-        pickerList = UiKit.ScrollColumn(view);
-        var grid = pickerList.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(64, 26);
-        grid.spacing = new Vector2(4, 4);
-        var cancel = UiKit.Btn("Cancel", panel.transform, () => picker.SetActive(false));
-        var crt = (RectTransform)cancel.transform;
-        crt.anchorMin = crt.anchorMax = new Vector2(1f, 0f); crt.pivot = new Vector2(1f, 0f);
-        crt.sizeDelta = new Vector2(90, 28); crt.anchoredPosition = new Vector2(-4, 4);
-        picker.SetActive(false);
     }
 
     static string KeyName(int column)
@@ -125,28 +145,76 @@ public class SettingsWindow : MonoBehaviour
         return key == KeyCode.None ? "None" : GameKeys.Label(key);
     }
 
-    // Fill the list with "None" and every key this slot may take right now, then show it.
-    void OpenPicker(int column)
+    // Fill the list with "None" and every key this slot may take right now.
+    void OpenKeyPicker(int column)
     {
-        for (int i = pickerList.childCount - 1; i >= 0; i--) Destroy(pickerList.GetChild(i).gameObject);
-        AddChoice(column, KeyCode.None);
+        OpenPicker(64f);
+        AddKeyChoice(column, KeyCode.None);
         GameKeys.FreeKeys(column, freeKeys);
-        for (int i = 0; i < freeKeys.Count; i++) AddChoice(column, freeKeys[i]);
-        picker.SetActive(true);
-        picker.transform.SetAsLastSibling();
+        for (int i = 0; i < freeKeys.Count; i++) AddKeyChoice(column, freeKeys[i]);
     }
 
-    void AddChoice(int column, KeyCode key)
+    void AddKeyChoice(int column, KeyCode key)
     {
-        UiKit.Btn(key == KeyCode.None ? "None" : GameKeys.Label(key), pickerList, () =>
+        PickerChoice(key == KeyCode.None ? "None" : GameKeys.Label(key), () =>
         {
             if (GameSettings.SetHotbarRowThreeKey(column, key))
             {
                 keyLabels[column].text = KeyName(column);
                 HotbarPanel.RebuildRequested?.Invoke();
             }
-            picker.SetActive(false);
         });
+    }
+
+    // ---- the choice list ----------------------------------------------------------------------------------------
+    // One list laid over the pages, opened by any option that picks from several (a key, a resolution); built empty,
+    // refilled each time it opens.
+
+    GameObject picker;
+    RectTransform pickerList;
+    GridLayoutGroup pickerGrid;
+
+    void BuildPicker(Transform pageParent)
+    {
+        var panel = UiKit.Img("Picker", pageParent, UiKit.PanelRaise);
+        UiKit.Fill(panel.rectTransform, Vector2.zero, Vector2.zero);
+        picker = panel.gameObject;
+        var view = UiKit.Img("List", panel.transform, new Color(0, 0, 0, 0)).rectTransform;
+        UiKit.Fill(view, new Vector2(4, 36), new Vector2(-4, -4));
+        pickerList = UiKit.ScrollColumn(view);
+        pickerGrid = pickerList.gameObject.AddComponent<GridLayoutGroup>();
+        pickerGrid.cellSize = new Vector2(64, 26);
+        pickerGrid.spacing = new Vector2(4, 4);
+        var cancel = UiKit.Btn("Cancel", panel.transform, () => picker.SetActive(false));
+        var crt = (RectTransform)cancel.transform;
+        crt.anchorMin = crt.anchorMax = new Vector2(1f, 0f); crt.pivot = new Vector2(1f, 0f);
+        crt.sizeDelta = new Vector2(90, 28); crt.anchoredPosition = new Vector2(-4, 4);
+        picker.SetActive(false);
+    }
+
+    // Empty the list, size its buttons to fit their names, and show it; the caller then adds its choices.
+    void OpenPicker(float choiceWidth)
+    {
+        for (int i = pickerList.childCount - 1; i >= 0; i--) Destroy(pickerList.GetChild(i).gameObject);
+        pickerGrid.cellSize = new Vector2(choiceWidth, 26);
+        picker.SetActive(true);
+        picker.transform.SetAsLastSibling();
+    }
+
+    // One choice in the open list: clicking it does `pick` and closes the list.
+    void PickerChoice(string label, System.Action pick)
+    {
+        UiKit.Btn(label, pickerList, () => { pick(); picker.SetActive(false); });
+    }
+
+    // The button on an option's row that shows the current choice and opens the list.
+    static Button ChoiceButton(Transform row, string label, System.Action open)
+    {
+        var btn = UiKit.Btn(label, row, open);
+        var rt = (RectTransform)btn.transform;
+        rt.anchorMin = new Vector2(0.6f, 0f); rt.anchorMax = new Vector2(1f, 1f);
+        rt.offsetMin = Vector2.zero; rt.offsetMax = new Vector2(-4f, 0f);
+        return btn;
     }
 
     // A tab button plus the page it shows. Returns the page's build target.

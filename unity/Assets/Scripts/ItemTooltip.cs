@@ -360,7 +360,10 @@ public class ItemTooltip : MonoBehaviour
     static void AppendAttackKind(StringBuilder sb, Item item)
     {
         if (item.slot != EquipSlotType.Weapon || item.weaponType == WeaponType.None) return;
-        sb.Append('\n').Append(WeaponTypes.IsRanged(item.weaponType) ? "RANGED attack" : "MELEE attack");
+        if (WeaponTypes.RangedByStat(item.weaponType))
+            sb.Append('\n').Append("MELEE or RANGED attack — whichever of STR or DEX is higher");
+        else
+            sb.Append('\n').Append(WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
     }
 
     // THIS COPY's own numbers — what it really adds, read from the same sum the stat sheet uses, so the card and

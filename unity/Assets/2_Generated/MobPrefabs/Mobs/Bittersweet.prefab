@@ -210,9 +210,6 @@ MonoBehaviour:
   xpToFirstLevel: 20
   preferredRange: 0
   fleeHpFraction: 0
-  stunSheet: {fileID: 0}
-  stunFrameSize: 32
-  stunFrames: 5
   size: 0.4
   simulateRadius: 28
 --- !u!114 &2994578487463960368
@@ -307,8 +304,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f976caa179a3c0c489f7918587fe05a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AttackLunge
-  punchTime: 0.18
-  stretch: 0.25
+  biteSeconds: 0.5
+  squash: 0.25
+  stretchTall: 0.25
+  leanDegrees: 15
+  hopShare: 0.3
+  hopMax: 0.35
+  wobbles: 2
 --- !u!114 &8974144322835800965
 MonoBehaviour:
   m_ObjectHideFlags: 0

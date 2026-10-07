@@ -105,10 +105,16 @@ public static class CraftingMath
     // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT A FOLD BUYS, AND ITS SLOT HOW MUCH (decided 2026-09-23): metal buys
     // defence and health, leather attack speed and evasion, cloth magic defence and mana. Priced with Ink's own
     // exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point
-    // takes 1% off the hits that land — so a fold is worth the one defence it bought before, split between two stats.
-    const float MetalDefensePerFold = 0.5f, MetalHPPerFold = 4f;
-    const float LeatherAttackSpeedPerFold = 0.25f, LeatherEvasionPerFold = 0.25f;
-    const float ClothMagicDefensePerFold = 0.5f, ClothMPPerFold = 2f;
+    // takes 1% off the hits that land — so a fold is worth 1.8 defence, split between two stats.
+    //
+    // EVERY FOLD IS WORTH 1.8 OF WHAT IT ONCE BOUGHT (decided 2026-10-07): sized so a level-1 character wearing the
+    // +5 starter set — Sword, Chainmail, Iron Sabatons — beats four ungeared level-1 creatures attacking together.
+    // Held in HUNDREDTHS and summed as whole numbers: 0.9, 0.45, 3.6, 7.2 and 1.8 have no exact float, and summed as
+    // floats 19 of the values the folds can reach (an A +25 weapon's 58.5 among them) landed below the .5 they sit on.
+    const int WeaponAttackPerFold = 180;
+    const int MetalDefensePerFold = 90, MetalHPPerFold = 720;
+    const int LeatherAttackSpeedPerFold = 45, LeatherEvasionPerFold = 45;
+    const int ClothMagicDefensePerFold = 90, ClothMPPerFold = 360;
     // SHOES ALSO BUY MOVEMENT SPEED (decided 2026-10-05): exactly +2% a fold at every grade — the grade's lift does
     // not touch it — on top of what their material buys. It is the only source of movement speed a piece has, so a
     // bare-footed unit moves at the shared base speed.
@@ -135,39 +141,49 @@ public static class CraftingMath
     {
         var p = default(PieceStats);
         if (folds <= 0 || slot == EquipSlotType.None) return p;
-        float lift = 1f + QualityLift(q);
+        int lift = LiftHundredths(q);
         if (slot == EquipSlotType.Weapon)
         {
-            if (IsCasterWeapon(weapon)) p.magicAttack = Lifted(folds, lift);
-            else p.attack = Lifted(folds, lift);
+            int atk = FoldValue(folds * 2, WeaponAttackPerFold, lift);
+            if (IsCasterWeapon(weapon)) p.magicAttack = atk;
+            else p.attack = atk;
             return p;
         }
         if (slot == EquipSlotType.Boots)
             p.moveSpeedPercent = folds * ShoesMoveSpeedPercentPerFold;
-        float share = folds * SlotShare(slot);
+        int halves = folds * (SlotShare(slot) < 1f ? 1 : 2);
         switch (material)
         {
             case MaterialKind.Metal:
-                p.defense = LiftedAmount(share * MetalDefensePerFold, lift);
-                p.hp = LiftedAmount(share * MetalHPPerFold, lift);
+                p.defense = FoldValue(halves, MetalDefensePerFold, lift);
+                p.hp = FoldValue(halves, MetalHPPerFold, lift);
                 break;
             case MaterialKind.Leather:
-                p.attackSpeedPercent = Mathf.Floor(share * LeatherAttackSpeedPerFold * lift * 10f + 0.5f) / 10f;
-                p.evasion = LiftedAmount(share * LeatherEvasionPerFold, lift);
+                p.attackSpeedPercent = FoldValue(halves, LeatherAttackSpeedPerFold * 10, lift) / 10f;
+                p.evasion = FoldValue(halves, LeatherEvasionPerFold, lift);
                 break;
             case MaterialKind.Cloth:
-                p.magicDefense = LiftedAmount(share * ClothMagicDefensePerFold, lift);
-                p.mp = LiftedAmount(share * ClothMPPerFold, lift);
+                p.magicDefense = FoldValue(halves, ClothMagicDefensePerFold, lift);
+                p.mp = FoldValue(halves, ClothMPPerFold, lift);
                 break;
         }
         return p;
     }
 
-    /// <summary>A caster's weapon gains MAGIC attack from a fold rather than attack.</summary>
-    public static bool IsCasterWeapon(WeaponType w) => w == WeaponType.Staff;
+    /// <summary>The grade's lift as whole hundredths of the piece's value: 100 at Raw and F, up to 130 at A.</summary>
+    static int LiftHundredths(Quality q) => 100 + Mathf.RoundToInt(QualityLift(q) * 100f);
 
-    static int Lifted(int flat, float lift) => Mathf.FloorToInt(flat * lift + 0.5f);
-    static int LiftedAmount(float amount, float lift) => Mathf.FloorToInt(amount * lift + 0.5f);
+    /// <summary>What <paramref name="halves"/> half-folds buy at <paramref name="perFoldHundredths"/> a fold, lifted by
+    /// <paramref name="liftHundredths"/>, rounded half UP — all whole-number maths, so a value exactly on .5 rounds up.</summary>
+    static int FoldValue(int halves, int perFoldHundredths, int liftHundredths)
+    {
+        const long Den = 2L * 100 * 100;
+        long num = (long)halves * perFoldHundredths * liftHundredths;
+        return (int)((2 * num + Den) / (2 * Den));
+    }
+
+    /// <summary>A caster's weapon gains MAGIC attack from a fold rather than attack.</summary>
+    public static bool IsCasterWeapon(WeaponType w) => w == WeaponType.Staff || w == WeaponType.Wand || w == WeaponType.Scythe;
 
     // ---- the quench ---------------------------------------------------------------------------------------
     // Chance in whole percent that a quench of THIS grade goes up, stays, or goes down. F is the floor: a failed

@@ -6,10 +6,11 @@ using UnityEngine.Rendering;
 /// Makes a character's body see-through, and puts it back. Pooled and shared: ANY unit can fade (a dashing player, a
 /// vanishing mob), so this is a general presentation service, not one effect's trick.
 ///
-/// <para><b>Built for more than one reason to fade at once.</b> Each request is a HOLD, tagged with who asked for it,
-/// so a dash's fade and (later) an invisibility's fade can overlap on the same body without either erasing the other:
-/// while several holds are live the body wears the MOST see-through of them, and it only returns to solid when the
-/// last one is released. A single-slot fade would have looked fine until the day two of them met.</para>
+/// <para><b>Built for more than one reason to fade at once, on any number of bodies at once.</b> Each request is a
+/// HOLD, tagged with who asked for it, so a dash's fade and (later) an invisibility's fade can overlap on the same body
+/// without either erasing the other: while several holds are live the body wears the MOST see-through of them, and it
+/// only returns to solid when the last one is released. Every body is dressed on its own, so a crowd of people dashing
+/// at once each fade — a single dressed body would have looked fine until the day two of them met.</para>
 ///
 /// <para>Three ways to hold, matching how long the reason lasts:
 /// <list type="bullet">
@@ -43,7 +44,7 @@ public static class CharacterFade
         public ICombatUnit relocating; // non-null = let go the moment this unit stops relocating
     }
 
-    // One body currently wearing a fade: what it had on before, so it goes back exactly as it was.
+    // One renderer currently wearing a fade: what it had on before, so it goes back exactly as it was.
     struct Dressed
     {
         public Renderer renderer;
@@ -52,14 +53,21 @@ public static class CharacterFade
         public Color prevColor;
     }
 
+    // One body currently wearing a fade, at what level, and every renderer that was swapped for it. Pooled: a body
+    // that goes back to solid returns its entry for the next one, so fading costs no garbage after the first few.
+    sealed class DressedBody
+    {
+        public Transform body;
+        public float opacity;
+        public readonly List<Dressed> parts = new List<Dressed>(8);
+    }
+
     static readonly List<Hold_> holds = new List<Hold_>(8);
-    static readonly List<Dressed> dressed = new List<Dressed>(16);
+    static readonly List<DressedBody> dressedBodies = new List<DressedBody>(4);
+    static readonly Stack<DressedBody> spareBodies = new Stack<DressedBody>(4);
     static readonly Dictionary<Material, Material> transparentOf = new Dictionary<Material, Material>();
     static readonly List<Renderer> scratch = new List<Renderer>(8);
     static MaterialPropertyBlock mpb;
-
-    static Transform current;        // the body currently dressed (one at a time is all the game needs today)
-    static float currentOpacity = 1f;
 
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
@@ -121,25 +129,53 @@ public static class CharacterFade
         Resolve();
     }
 
+    // Bring every body to the level its holds ask for: undress the ones nothing holds any more, re-level the ones whose
+    // level moved, dress the ones newly held. Bodies already at their level are left alone — no churn.
     static void Resolve()
     {
-        Transform body = null;
-        float opacity = 1f;
-        for (int i = 0; i < holds.Count; i++)
+        for (int i = dressedBodies.Count - 1; i >= 0; i--)
         {
-            if (holds[i].body == null) continue;
-            if (body == null) body = holds[i].body;
-            if (holds[i].body == body) opacity = Mathf.Min(opacity, holds[i].opacity);
+            var d = dressedBodies[i];
+            float wanted = d.body != null ? WantedOpacity(d.body) : 1f;
+            if (wanted >= 0.999f)
+            {
+                Undress(d);
+                dressedBodies.RemoveAt(i);
+                spareBodies.Push(d);
+            }
+            else if (!Mathf.Approximately(wanted, d.opacity)) SetLevel(d, wanted);
         }
 
-        if (body == current && Mathf.Approximately(opacity, currentOpacity)) return;   // nothing changed — no churn
-        Undress();
-        if (body != null && opacity < 0.999f) Dress(body, opacity);
+        for (int i = 0; i < holds.Count; i++)
+        {
+            var body = holds[i].body;
+            if (body == null || IsDressed(body)) continue;
+            float wanted = WantedOpacity(body);
+            if (wanted < 0.999f) Dress(body, wanted);
+        }
+    }
+
+    // The MOST see-through level any live hold asks of this body; 1 = none.
+    static float WantedOpacity(Transform body)
+    {
+        float opacity = 1f;
+        for (int i = 0; i < holds.Count; i++)
+            if (holds[i].body == body) opacity = Mathf.Min(opacity, holds[i].opacity);
+        return opacity;
+    }
+
+    static bool IsDressed(Transform body)
+    {
+        for (int i = 0; i < dressedBodies.Count; i++)
+            if (dressedBodies[i].body == body) return true;
+        return false;
     }
 
     static void Dress(Transform body, float opacity)
     {
         if (mpb == null) mpb = new MaterialPropertyBlock();
+        var d = spareBodies.Count > 0 ? spareBodies.Pop() : new DressedBody();
+        d.body = body; d.opacity = opacity; d.parts.Clear();
         body.GetComponentsInChildren(false, scratch);   // false = skip hidden parts; a hidden piece shouldn't fade IN
         for (int i = 0; i < scratch.Count; i++)
         {
@@ -153,7 +189,7 @@ public static class CharacterFade
             r.GetPropertyBlock(mpb);
             bool had = mpb.HasColor(BaseColorId);
             Color prev = had ? mpb.GetColor(BaseColorId) : Color.white;
-            dressed.Add(new Dressed { renderer = r, original = src, hadColor = had, prevColor = prev });
+            d.parts.Add(new Dressed { renderer = r, original = src, hadColor = had, prevColor = prev });
 
             r.sharedMaterials = clone;
             var c = prev; c.a = opacity;
@@ -161,24 +197,39 @@ public static class CharacterFade
             r.SetPropertyBlock(mpb);
         }
         scratch.Clear();
-        current = body; currentOpacity = opacity;
+        dressedBodies.Add(d);
     }
 
-    static void Undress()
+    // Already wearing the see-through materials: only the colour's alpha moves.
+    static void SetLevel(DressedBody d, float opacity)
     {
-        for (int i = 0; i < dressed.Count; i++)
+        for (int i = 0; i < d.parts.Count; i++)
         {
-            var d = dressed[i];
-            if (d.renderer == null) continue;      // the body was destroyed mid-fade (death, model swap)
-            d.renderer.sharedMaterials = d.original;
-            // NOT SetPropertyBlock(null): the dye lives in this same block, so the colour goes back by value.
-            d.renderer.GetPropertyBlock(mpb);
-            if (d.hadColor) mpb.SetColor(BaseColorId, d.prevColor);
-            else mpb.SetColor(BaseColorId, OpaqueColorOf(d.original));
-            d.renderer.SetPropertyBlock(mpb);
+            var p = d.parts[i];
+            if (p.renderer == null) continue;
+            p.renderer.GetPropertyBlock(mpb);
+            var c = p.prevColor; c.a = opacity;
+            mpb.SetColor(BaseColorId, c);
+            p.renderer.SetPropertyBlock(mpb);
         }
-        dressed.Clear();
-        current = null; currentOpacity = 1f;
+        d.opacity = opacity;
+    }
+
+    static void Undress(DressedBody d)
+    {
+        for (int i = 0; i < d.parts.Count; i++)
+        {
+            var p = d.parts[i];
+            if (p.renderer == null) continue;      // the body was destroyed mid-fade (death, model swap)
+            p.renderer.sharedMaterials = p.original;
+            // NOT SetPropertyBlock(null): the dye lives in this same block, so the colour goes back by value.
+            p.renderer.GetPropertyBlock(mpb);
+            if (p.hadColor) mpb.SetColor(BaseColorId, p.prevColor);
+            else mpb.SetColor(BaseColorId, OpaqueColorOf(p.original));
+            p.renderer.SetPropertyBlock(mpb);
+        }
+        d.parts.Clear();
+        d.body = null;
     }
 
     // The colour to hand back when the block held none of its own: the material's own base colour, so a body whose

@@ -95,21 +95,27 @@ public class PathAgent3D : MonoBehaviour
         worldDir.y = 0f;
         if (worldDir.sqrMagnitude < 1e-6f || speed <= 0f || seconds <= 0f) return;
         knockbackVel = worldDir.normalized * speed;
-        knockbackDecel = speed / seconds;        // hits 0 right at the end → an ease-out shove
+        // hits 0 right at the end → an ease-out shove
+        knockbackDecel = speed / seconds;
         knockbackUntil = Time.time + seconds;
         Halt();
+        // SAID TO EVERY SCREEN WATCHING, once, as the push begins — a creature's legs are the server's, so the server
+        // says it. Silent anywhere else.
+        GameNetwork.AnnounceMoveOnMob(gameObject, new MoveSaid
+            { kind = MoveSaid.Knockback, direction = knockbackVel, speed = speed, window = seconds });
     }
 
     /// <summary>Blink this agent straight to <paramref name="dest"/> — no travel. The CharacterController is toggled
     /// off across the reposition so the capsule doesn't fight it (same disable/move/enable the player's teleport uses),
     /// and the current path is dropped so the brain re-routes from where it now stands.</summary>
-    public void Teleport(Vector3 dest)
+    public void Teleport(Vector3 dest, RelocationLook look = default)
     {
         knockbackUntil = 0f;
         Halt();
         if (cc != null) cc.enabled = false;
         transform.position = dest;
         if (cc != null) cc.enabled = true;
+        GameNetwork.AnnounceMoveOnMob(gameObject, new MoveSaid { kind = MoveSaid.Blink, to = dest, look = look });
     }
 
     /// <summary>Glide from here to <paramref name="dest"/> at <paramref name="speed"/> world-units/second — a fixed
@@ -120,7 +126,8 @@ public class PathAgent3D : MonoBehaviour
     /// controller follows, so a mob's dash-and-strike also lands looking at what it is about to hit.</summary>
     public Vector3? GlideFaceAt { get; private set; }
 
-    public void GlideTo(Vector3 dest, float speed, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt = null)
+    public void GlideTo(Vector3 dest, float speed, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt = null,
+                        RelocationLook look = default)
     {
         Vector3 to = dest - transform.position; to.y = 0f;
         float dist = to.magnitude;
@@ -137,6 +144,13 @@ public class PathAgent3D : MonoBehaviour
         // (which slows the trip) can't clip a legitimate long dash short.
         glideUntil = Time.time + dist / speed * 3f + 0.5f;
         gliding = true;
+        // SAID TO EVERY SCREEN WATCHING, once, as the trip begins — a creature's legs are the server's, so the server
+        // says it. Silent anywhere else.
+        GameNetwork.AnnounceMoveOnMob(gameObject, new MoveSaid
+        {
+            kind = MoveSaid.Glide, to = glideDest, speed = glideSpeed, easeIn = glideEaseIn, easeOut = glideEaseOut,
+            easeSeconds = glideEaseSeconds, window = glideUntil - Time.time, look = look,
+        });
     }
 
     public void MoveTo(Vector3 worldPoint)
@@ -182,7 +196,7 @@ public class PathAgent3D : MonoBehaviour
         if (Time.time < knockbackUntil)
         {
             cc.Move((knockbackVel + Vector3.down * gravity) * Time.deltaTime);
-            knockbackVel = Vector3.MoveTowards(knockbackVel, Vector3.zero, knockbackDecel * Time.deltaTime);
+            knockbackVel = GlideEase.KnockbackSlowed(knockbackVel, knockbackDecel, Time.deltaTime);
             Moving = false;
             return;
         }
@@ -250,16 +264,7 @@ public class PathAgent3D : MonoBehaviour
     // dash shorter than both ramps they simply overlap and the whole hop is gentle. Floored at a tenth so an eased
     // glide can never stall short of its destination.
     float GlideSpeed(float distLeft)
-    {
-        if (!glideEaseIn && !glideEaseOut) return glideSpeed;
-        float ramp = Mathf.Min(glideSpeed * glideEaseSeconds, glideTotalDist * 0.5f);
-        if (ramp <= 0.01f) return glideSpeed;
-        float travelled = glideTotalDist - distLeft;
-        float t = 1f;
-        if (glideEaseIn) t = Mathf.Min(t, travelled / ramp);
-        if (glideEaseOut) t = Mathf.Min(t, distLeft / ramp);
-        return glideSpeed * Mathf.Max(0.1f, Mathf.Clamp01(t));
-    }
+        => GlideEase.Speed(glideSpeed, distLeft, glideTotalDist, glideEaseIn, glideEaseOut, glideEaseSeconds);
 
     // Local crowd avoidance (ported from the 2D PathAgent): blend the desired heading with a radial push-off
     // from nearby units plus a tangential slide around whoever is dead ahead, so chasers fan out and surround

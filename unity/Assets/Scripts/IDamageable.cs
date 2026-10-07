@@ -64,5 +64,5 @@ public interface IDamageable
     /// <summary>Apply RAW over-time / reflected damage that bypasses DEF, element, and crit (poison/burn/bleed ticks,
     /// thorns reflect). A distinct channel from <see cref="ApplyDamage"/> — same seam owner, different rules. Returns
     /// damage dealt.</summary>
-    int ApplyTrueDamage(int amount, Color color);
+    int ApplyTrueDamage(int amount);
 }

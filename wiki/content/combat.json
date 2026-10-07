@@ -18,7 +18,7 @@
       "type": "list",
       "items": [
         "**Physical** — uses your **Attack** against the target's **Defense**. Can miss, can crit.",
-        "**Magic** — uses your **Magic Attack** against **Magic Defense**. **Never misses**, and **cannot crit**.",
+        "**Magic** — uses your **Magic Attack** against **Magic Defense**. **Never misses**, and **cannot crit** — except in a **Sniper**'s hands, where it crits like a physical hit and ignores Magic Defense.",
         "**Critical** — a forced critical hit that **ignores Defense**."
       ]
     },

@@ -422,12 +422,8 @@ public partial class Player3DController : MonoBehaviour
         // WHICH GEAR THIS BODY IS IN, said out loud the frame it changes and never in between. Speed alone cannot
         // tell a sprint from a hasted run — both are simply fast — so the machine that owns the legs is the only one
         // that knows, and without this every other screen showed a sprinting person jogging.
+        // The OnSprint puff comes back from the server, which says it to every screen (NetPlayer.CmdSprinting).
         if (Sprinting != wasSprinting) GameNetwork.ReportSprinting(Sprinting);
-
-        // Fire the OnSprint cue once, the frame sprinting kicks on (not per-frame). On a machine that has joined
-        // somebody else's world this does nothing and the world says it instead, so the puff reaches everybody
-        // watching rather than only the person sprinting — see VfxCue.
-        if (Sprinting && !wasSprinting) VfxCue.Fire(VfxCueId.OnSprint, transform);
     }
 
     // Move horizontally while applying ACCUMULATING gravity, so stepping off higher ground free-falls with
@@ -881,7 +877,7 @@ public partial class Player3DController : MonoBehaviour
     /// <paramref name="easeIn"/> starts the glide slow and accelerates; <paramref name="easeOut"/> decelerates to a
     /// gentle stop at the destination (both on = slow-fast-slow). Off = constant full speed (the previous behaviour).</summary>
     public void BeginGlideTo(Vector3 dest, float speedMult = 0f, bool easeIn = false, bool easeOut = false,
-                             float easeSeconds = 0.3f, Vector3? faceAt = null)
+                             float easeSeconds = 0.3f, Vector3? faceAt = null, RelocationLook look = default)
     {
         // Set ONCE here, not per frame: a hop that ends in a strike must arrive already looking at what it is about to
         // hit, and must not swivel again on landing. StepDash honours this instead of facing its travel direction.
@@ -909,6 +905,30 @@ public partial class Player3DController : MonoBehaviour
         // Small arrive snap so the ease-OUT curve can play to its slow tail before the dash ends. At 0.15 the dash
         // stopped while still at ~0.9 speed on a short trip (the whole 0.2→0.5 tail lived inside the snap = hard stop).
         dashArriveRange = 0.05f;
+        // The look AFTER the glide is set up and BEFORE the body has moved a step: the afterimage belongs to the spot
+        // being left, and the fade lasts exactly as long as this glide does.
+        ShowLook(look, fadeWhileGliding: true);
+        // SAID TO EVERY OTHER SCREEN, once, as the trip begins — the same numbers this glide is about to run on, so
+        // the copy of this person drawn elsewhere takes the identical trip instead of trailing the position report.
+        GameNetwork.ReportMoveBegan(new MoveSaid
+        {
+            kind = MoveSaid.Glide, to = dest, speed = dashSpeed, easeIn = dashEaseIn, easeOut = dashEaseOut,
+            easeSeconds = dashEaseSeconds, window = dashEndTime - Time.time, look = look,
+        });
+    }
+
+    /// <summary>Draw the look a move's effect authored, on THIS person's own rendered model, read from this machine's
+    /// own copy of the skill: an afterimage where the body stands now and, for a glide, the see-through fade for as
+    /// long as the glide lasts. Every other screen draws the same look on its copy of this person (WatchedMove).</summary>
+    void ShowLook(RelocationLook look, bool fadeWhileGliding)
+    {
+        if (!look.TryRead(out float afterimageSeconds, out Color tint, out float opacity)) return;
+        // The rendered model is a separate object from this body (StanceController.Player); this body draws nothing.
+        var model = StanceController.Player != null ? StanceController.Player.transform : null;
+        if (model == null) return;
+        Afterimage.Capture(model, afterimageSeconds, tint);
+        if (fadeWhileGliding && opacity < 0.999f && Character.Instance != null)
+            CharacterFade.HoldWhileRelocating(Character.Instance, model, opacity);
     }
 
     // Advance the charge one frame. Returns true while still dashing; on arrival/timeout it stops and
@@ -960,13 +980,8 @@ public partial class Player3DController : MonoBehaviour
     // so easing can never stall short of arrival. No easing = constant dashSpeed.
     float DashStepSpeed(float dist)
     {
-        if (!dashToPoint || (!dashEaseIn && !dashEaseOut)) return dashSpeed;
-        const float floor = 0.2f;
-        float d = Mathf.Clamp(dashEaseSeconds * dashSpeed, 1e-4f, dashTotalDist);   // ramp length = the ease-window's worth of travel
-        float f = 1f;
-        if (dashEaseIn)  f = Mathf.Min(f, Mathf.Lerp(floor, 1f, Mathf.SmoothStep(0f, 1f, (dashTotalDist - dist) / d)));
-        if (dashEaseOut) f = Mathf.Min(f, Mathf.Lerp(floor, 1f, Mathf.SmoothStep(0f, 1f, dist / d)));
-        return dashSpeed * f;
+        if (!dashToPoint) return dashSpeed;
+        return GlideEase.Speed(dashSpeed, dist, dashTotalDist, dashEaseIn, dashEaseOut, dashEaseSeconds);
     }
 
     void ClearCombat()

@@ -212,7 +212,17 @@ public readonly struct StackVars
     /// decimal (+30% ⇒ 0.3). <see cref="StackReading.CarriedTotal"/>.</summary>
     public readonly float Carried;
 
-    public StackVars(int count, float carried) { Count = count; Carried = carried; }
+    /// <summary>The MP and HP the caster gave up in this CAST to an "everything you have" cost — Spend All Mana empties
+    /// the MP, Drop Health To One leaves 1 HP — added together. Paid once per cast by the first tick that carries the cost, and read by
+    /// every later strike of the cast — every tick, spread tick and repeat — that grows with what was given up. 0 when
+    /// nothing was given up.</summary>
+    public readonly int GivenUp;
+
+    public StackVars(int count, float carried) { Count = count; Carried = carried; GivenUp = 0; }
+    StackVars(int count, float carried, int givenUp) { Count = count; Carried = carried; GivenUp = givenUp; }
+
+    /// <summary>These same readings, plus what the tick's cost took from the caster.</summary>
+    public StackVars WithGivenUp(int givenUp) => new StackVars(Count, Carried, givenUp);
 
     /// <summary>Read the variable an effect asked for. The ONE place the choice is resolved, so an effect can never
     /// read one reading while its label claims the other.</summary>
@@ -388,6 +398,23 @@ public class SkillTickBinding
              "(and, for an End tick, when it lands). Per-step, so a VFX with two looping steps can give each its own " +
              "length. 0 = default 3s. The VFX owns the loop rule; this skill owns how long THIS use of it lasts.")]
     public float stayDuration = 0f;
+
+    [Header("Bounce (Single Target only)")]
+    [Tooltip("Single Target only: after this tick lands on its target, its target effects jump on to this many more " +
+             "enemies, one after another — each the nearest one not hit yet within the jump range of the last. 0 = no " +
+             "bounce, which is every tick authored before this existed. Extra Bounce Jumps (a sub-stat a skill or " +
+             "passive can raise) adds to it, up to the most jumps any chain can make.")]
+    [Min(0)] public int bounceJumps = 0;
+    [Tooltip("How far each jump can reach from the enemy it last hit, in world units.")]
+    [Min(0f)] public float bounceRange = 2.5f;
+    [Tooltip("What each jump is worth as a share of the hit before it: 0.75 = every jump lands 75% of the last " +
+             "(100%, 75%, 56%, 42% …). It scales every number the effects land with — damage, a heal, a DoT's ticks.")]
+    [Range(0f, 1f)] public float bounceDamageKept = 0.75f;
+    [Tooltip("ON = after its last jump, what flies goes back to the caster. It hits nothing on the way back.")]
+    public bool bounceReturns = false;
+    [Tooltip("What is drawn flying between targets: an Effect Library id. Empty = the caster's held weapon when that " +
+             "weapon is one that flies itself (a shuriken), and a plain streak otherwise.")]
+    public string bounceEffectId = "";
 
     [Tooltip("What each tick does — applied through the shared SkillEffectApplier (the one damage path).")]
     public List<SkillEffect> effects = new List<SkillEffect>();

@@ -558,6 +558,7 @@ that costs a round.
   tools/check-biome-table.py    # after any Biome Table / biome list edit, or a test map rebuild — every biome's look is whole
   tools/check-map-ids.py        # after any world layout, scene, door or map rename — every map id agrees with the layout
   tools/check-quest-data.py     # after any quest asset or townsfolk edit — every quest can still be finished
+  tools/check-shadow-looks.py   # after any shadow creature edit — every shadow's fixed body exists and its colours fit it
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s

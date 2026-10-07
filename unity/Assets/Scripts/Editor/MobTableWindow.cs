@@ -39,6 +39,8 @@ public class MobTableWindow : EditorWindow
 
     void Reload()
     {
+        DropAllLookPreviews();
+        _rosterNames = null;
         _defs.Clear();
         _sheets.Clear();
         foreach (var guid in AssetDatabase.FindAssets("t:MonsterDef"))
@@ -152,8 +154,15 @@ public class MobTableWindow : EditorWindow
         foreach (var def in _defs)
         {
             if (!string.IsNullOrEmpty(_search) && !MatchesSearch(def)) continue;
+            // Read BEFORE the row can change it: the row's kind dropdown may switch it in this very event, and the
+            // look box appearing or vanishing mid-event would break IMGUI's layout count (see _pendingToggle).
+            bool drawnAsCharacter = CreatureKinds.Is3D(def.kind);
             DrawRow(def);
-            if (_expanded.Contains(def)) DrawGearAndRingEditor(def);
+            if (_expanded.Contains(def))
+            {
+                DrawGearAndRingEditor(def);
+                if (drawnAsCharacter) DrawShadowLook(def);
+            }
         }
         GUILayout.EndScrollView();
         EditorGUILayout.EndScrollView();
@@ -162,9 +171,316 @@ public class MobTableWindow : EditorWindow
         if (_pendingToggle != null)
         {
             if (!_expanded.Remove(_pendingToggle)) _expanded.Add(_pendingToggle);
+            else DropLookPreview(_pendingToggle);
             _pendingToggle = null;
             Repaint();
         }
+    }
+
+    // An undone body or colour must show at once, not on the next mouse move over the window.
+    void OnEnable() => Undo.undoRedoPerformed += Repaint;
+
+    void OnDisable()
+    {
+        Undo.undoRedoPerformed -= Repaint;
+        DropAllLookPreviews();
+    }
+
+    // ── A SHADOW'S LOOK: its body and outfit colours ─────────────────────────────────────────────────────────────
+    // The only editor of MonsterDef.modelName / dyeSources / dyeTargets (they are hidden from the Inspector). The 3D
+    // preview and its turning are presentation: they live outside every change check and never touch the asset.
+    // Only picking a body or a colour writes, under its own change check, Undo-able, and nothing reaches the disk
+    // until Save All.
+
+    // One preview per expanded shadow row. Everything in it lives in the preview's own hidden scene, never the open one.
+    sealed class LookPreview
+    {
+        public PreviewRenderUtility stage;
+        public GameObject root;           // HideAndDontSave, handed to the stage before anything is put under it
+        public string body;               // the body the stage is showing; rebuilt when the entry names another
+        public SkinnedMeshRenderer[] renderers;
+        public IReadOnlyList<Color> parts = System.Array.Empty<Color>();
+        public string signature;
+        public Vector3 centre;
+        public float height = 1f;
+        public float yaw;                 // the turn angle — the window's, never the asset's
+    }
+
+    readonly Dictionary<MonsterDef, LookPreview> _lookPreviews = new Dictionary<MonsterDef, LookPreview>();
+    // Made on first use, never in a field initialiser: Unity refuses to create one while the window itself is being
+    // constructed.
+    MaterialPropertyBlock _lookBlock;
+    readonly List<Color> _lookSources = new List<Color>();
+    readonly List<Color> _lookTargets = new List<Color>();
+
+    // The loadable roster: every Addressable entry carrying the character-model label (CharacterModels.Label), by
+    // the short name the game loads it by. Read from the Addressable settings, so it is exactly what the game can
+    // wear, and refreshed on Reload.
+    string[] _rosterNames;
+    Dictionary<string, string> _rosterPaths;
+    string _rosterProblem;
+
+    void EnsureRoster()
+    {
+        if (_rosterNames != null) return;
+        var names = new List<string>();
+        _rosterPaths = new Dictionary<string, string>(System.StringComparer.Ordinal);
+        _rosterProblem = null;
+        var settings = UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings;
+        if (settings == null) _rosterProblem = "The project has no Addressable settings, so there is no character roster.";
+        else
+            foreach (var group in settings.groups)
+            {
+                if (group == null) continue;
+                foreach (var entry in group.entries)
+                {
+                    if (entry == null || !entry.labels.Contains(CharacterModels.Label)) continue;
+                    string address = entry.address ?? "";
+                    if (!address.StartsWith(CharacterModels.AddressPrefix, System.StringComparison.Ordinal)) continue;
+                    string shortName = address.Substring(CharacterModels.AddressPrefix.Length);
+                    if (_rosterPaths.ContainsKey(shortName)) continue;
+                    _rosterPaths[shortName] = entry.AssetPath;
+                    names.Add(shortName);
+                }
+            }
+        // The same order the game lists the roster in (CharacterModels.Names).
+        names.Sort(System.StringComparer.OrdinalIgnoreCase);
+        _rosterNames = names.ToArray();
+        if (_rosterProblem == null && _rosterNames.Length == 0)
+            _rosterProblem = "No Addressable entry carries the '" + CharacterModels.Label + "' label.";
+    }
+
+    void DrawShadowLook(MonsterDef def)
+    {
+        EnsureRoster();
+        var look = PreviewFor(def);
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MaxWidth(TotalWidth - 20));
+        EditorGUILayout.LabelField($"   {def.displayName} — look", EditorStyles.miniBoldLabel);
+        if (_rosterProblem != null) EditorGUILayout.HelpBox(_rosterProblem, MessageType.Warning);
+
+        EditorGUILayout.BeginHorizontal();
+        DrawLookStage(look, def);
+
+        EditorGUILayout.BeginVertical(GUILayout.MinWidth(0f));
+        // The parts are read BEFORE the body can change in this event, so the number of swatches drawn below stays
+        // the same as the layout pass counted. A new body's swatches appear on the next repaint.
+        var parts = look.parts;
+
+        EditorGUI.BeginChangeCheck();
+        int at = System.Array.IndexOf(_rosterNames, def.modelName);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Body", EditorStyles.miniLabel, GUILayout.MaxWidth(40), GUILayout.MinWidth(0f));
+        int picked = at;
+        using (new EditorGUI.DisabledScope(_rosterNames.Length == 0))
+        {
+            if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.MaxWidth(24), GUILayout.MinWidth(0f)))
+                picked = at <= 0 ? _rosterNames.Length - 1 : at - 1;
+            picked = EditorGUILayout.Popup(picked, _rosterNames, GUILayout.MaxWidth(200), GUILayout.MinWidth(0f));
+            if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.MaxWidth(24), GUILayout.MinWidth(0f)))
+                picked = at < 0 || at >= _rosterNames.Length - 1 ? 0 : at + 1;
+        }
+        EditorGUILayout.EndHorizontal();
+        if (at < 0)
+            EditorGUILayout.LabelField(string.IsNullOrEmpty(def.modelName)
+                                           ? "No body picked — the server will not make this creature."
+                                           : "'" + def.modelName + "' is not in the roster — the server will not make this creature.",
+                                       EditorStyles.wordWrappedMiniLabel);
+
+        // One swatch per part of the body, showing the colour it is drawn in now.
+        CharacterDye3D.DecodePairs(def.dyeSources, def.dyeTargets, _lookSources, _lookTargets);
+        int changedPart = -1;
+        Color changedTo = default;
+        if (parts.Count > 0) EditorGUILayout.LabelField("Colours", EditorStyles.miniLabel);
+        const int perRow = 4;
+        for (int i = 0; i < parts.Count; i++)
+        {
+            if (i % perRow == 0) EditorGUILayout.BeginHorizontal();
+            Color shown = ChosenColour(parts[i]);
+            Color next = EditorGUILayout.ColorField(new GUIContent("", "#" + ColorUtility.ToHtmlStringRGB(parts[i])),
+                                                    shown, true, false, false,
+                                                    GUILayout.MaxWidth(56), GUILayout.MinWidth(0f));
+            if (next != shown) { changedPart = i; changedTo = next; }
+            if (i % perRow == perRow - 1 || i == parts.Count - 1) EditorGUILayout.EndHorizontal();
+        }
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            if (picked != at && picked >= 0 && picked < _rosterNames.Length)
+            {
+                // A new body is a new set of parts: colours chosen on the old one mean nothing on it, so both lists
+                // are emptied in the same Undo step as the body itself.
+                Undo.RecordObject(def, "Change Shadow Body");
+                def.modelName = _rosterNames[picked];
+                def.dyeSources = System.Array.Empty<string>();
+                def.dyeTargets = System.Array.Empty<string>();
+                EditorUtility.SetDirty(def);
+            }
+            else if (changedPart >= 0)
+            {
+                Undo.RecordObject(def, "Change Shadow Colour");
+                SetPartColour(def, parts[changedPart], changedTo);
+                EditorUtility.SetDirty(def);
+            }
+        }
+
+        EditorGUILayout.EndVertical();
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
+    }
+
+    // The colour a part is drawn in under the colours just decoded — the same lookup the game paints with.
+    Color ChosenColour(Color part)
+    {
+        for (int i = 0; i < _lookSources.Count && i < _lookTargets.Count; i++)
+            if (SameColour(_lookSources[i], part)) return _lookTargets[i];
+        return part;
+    }
+
+    // The game's own tolerance for "this is that part" (CharacterDye3D), one step of 8-bit colour.
+    static bool SameColour(Color a, Color b)
+        => Mathf.Abs(a.r - b.r) < 0.004f && Mathf.Abs(a.g - b.g) < 0.004f && Mathf.Abs(a.b - b.b) < 0.004f;
+
+    // Write one part's chosen colour into the entry, in the player's save shape: a part set back to its own colour is
+    // dropped from the lists rather than stored as a change to itself.
+    void SetPartColour(MonsterDef def, Color part, Color chosen)
+    {
+        var src = new List<string>();
+        var dst = new List<string>();
+        bool placed = false;
+        for (int i = 0; i < _lookSources.Count; i++)
+        {
+            if (SameColour(_lookSources[i], part))
+            {
+                placed = true;
+                if (SameColour(chosen, part)) continue;
+                src.Add(Hex(part)); dst.Add(Hex(chosen));
+                continue;
+            }
+            src.Add(Hex(_lookSources[i])); dst.Add(Hex(_lookTargets[i]));
+        }
+        if (!placed && !SameColour(chosen, part)) { src.Add(Hex(part)); dst.Add(Hex(chosen)); }
+        def.dyeSources = src.ToArray();
+        def.dyeTargets = dst.ToArray();
+    }
+
+    static string Hex(Color c) => "#" + ColorUtility.ToHtmlStringRGB(c);
+
+    // The preview for this row, rebuilt whenever the entry names a different body than the one on show.
+    LookPreview PreviewFor(MonsterDef def)
+    {
+        if (!_lookPreviews.TryGetValue(def, out var look))
+        {
+            look = new LookPreview { yaw = 0f };
+            _lookPreviews[def] = look;
+        }
+        if (look.stage != null && look.body == def.modelName) return look;
+
+        ClearStage(look);
+        look.body = def.modelName;
+        look.parts = System.Array.Empty<Color>();
+        if (string.IsNullOrEmpty(def.modelName) || _rosterPaths == null ||
+            !_rosterPaths.TryGetValue(def.modelName, out var path)) return look;
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (model == null) return look;
+
+        look.stage = new PreviewRenderUtility();
+        look.stage.camera.fieldOfView = 30f;
+        look.stage.camera.nearClipPlane = 0.01f;
+        look.stage.camera.farClipPlane = 100f;
+        look.stage.camera.clearFlags = CameraClearFlags.SolidColor;
+        look.stage.camera.backgroundColor = new Color(0.18f, 0.18f, 0.2f, 1f);
+        // Lit from the camera's side, bright enough that every outfit colour reads true against the dark backdrop.
+        look.stage.lights[0].intensity = 2.5f;
+        look.stage.lights[0].transform.rotation = Quaternion.Euler(30f, 200f, 0f);
+        look.stage.lights[1].intensity = 1.2f;
+        look.stage.ambientColor = Color.white;
+
+        // The root goes into the preview's own scene FIRST, then the body is made directly under it — so nothing of
+        // this is ever created in, or saved with, the scene the user has open.
+        look.root = new GameObject("ShadowLookPreview") { hideFlags = HideFlags.HideAndDontSave };
+        look.stage.AddSingleGO(look.root);
+        var body = Object.Instantiate(model, look.root.transform, false);
+        foreach (var t in body.GetComponentsInChildren<Transform>(true)) t.gameObject.hideFlags = HideFlags.HideAndDontSave;
+
+        look.renderers = body.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        look.signature = CharacterDye3D.SignatureOf(look.renderers);
+        look.parts = CharacterDyeParts.For(look.signature);
+
+        var bounds = new Bounds(body.transform.position, Vector3.zero);
+        bool any = false;
+        foreach (var r in look.renderers)
+        {
+            if (r == null) continue;
+            if (!any) { bounds = r.bounds; any = true; } else bounds.Encapsulate(r.bounds);
+        }
+        look.centre = bounds.center;
+        look.height = Mathf.Max(0.01f, bounds.size.y);
+        return look;
+    }
+
+    void DrawLookStage(LookPreview look, MonsterDef def)
+    {
+        var rect = GUILayoutUtility.GetRect(0f, 220f, 220f, 220f);
+        if (look.stage == null)
+        {
+            GUI.Label(rect, "no body", EditorStyles.centeredGreyMiniLabel);
+            return;
+        }
+
+        // Drag to turn. Window state only — nothing here is recorded or written.
+        int id = GUIUtility.GetControlID(FocusType.Passive);
+        var e = Event.current;
+        switch (e.GetTypeForControl(id))
+        {
+            case EventType.MouseDown:
+                if (rect.Contains(e.mousePosition)) { GUIUtility.hotControl = id; e.Use(); }
+                break;
+            case EventType.MouseDrag:
+                if (GUIUtility.hotControl == id) { look.yaw -= e.delta.x; e.Use(); Repaint(); }
+                break;
+            case EventType.MouseUp:
+                if (GUIUtility.hotControl == id) { GUIUtility.hotControl = 0; e.Use(); }
+                break;
+        }
+
+        if (e.type != EventType.Repaint) return;
+
+        // The entry's colours, put on through the game's one colouring routine — and, exactly like the game, a look
+        // stamped with another body shows this body's own colours (CharacterDye3D.ShowLook).
+        CharacterDye3D.DecodePairs(def.dyeSources, def.dyeTargets, _lookSources, _lookTargets);
+        bool stampFits = string.IsNullOrEmpty(look.signature) || look.signature == def.modelName;
+        _lookBlock ??= new MaterialPropertyBlock();
+        CharacterDye3D.Paint(look.renderers, stampFits ? look.parts : null, _lookSources, _lookTargets, _lookBlock);
+
+        look.root.transform.rotation = Quaternion.Euler(0f, look.yaw, 0f);
+        float distance = look.height * 0.5f / Mathf.Tan(look.stage.camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * 1.25f;
+        look.stage.camera.transform.position = look.centre + new Vector3(0f, 0f, distance);
+        look.stage.camera.transform.LookAt(look.centre);
+        look.stage.BeginPreview(rect, GUIStyle.none);
+        look.stage.Render(true);
+        GUI.DrawTexture(rect, look.stage.EndPreview(), ScaleMode.StretchToFill, false);
+    }
+
+    static void ClearStage(LookPreview look)
+    {
+        if (look.root != null) Object.DestroyImmediate(look.root);
+        look.root = null;
+        look.stage?.Cleanup();
+        look.stage = null;
+        look.renderers = null;
+    }
+
+    void DropLookPreview(MonsterDef def)
+    {
+        if (def != null && _lookPreviews.TryGetValue(def, out var look)) ClearStage(look);
+        if (def != null) _lookPreviews.Remove(def);
+    }
+
+    void DropAllLookPreviews()
+    {
+        foreach (var look in _lookPreviews.Values) ClearStage(look);
+        _lookPreviews.Clear();
     }
 
     bool MatchesSearch(MonsterDef d)
@@ -365,7 +681,7 @@ public class MobTableWindow : EditorWindow
     // a knob that changes nothing.
     static readonly EquipSlotType[] GearSlots =
     {
-        EquipSlotType.Weapon, EquipSlotType.Shield, EquipSlotType.Head, EquipSlotType.Armor,
+        EquipSlotType.Weapon, EquipSlotType.Head, EquipSlotType.Armor,
         EquipSlotType.Garment, EquipSlotType.Boots,
     };
 

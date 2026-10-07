@@ -220,7 +220,9 @@ pure random defensible — and it only works because recycle exists, which is wh
   lists. Change a skill's effects and every weapon carrying it follows at once.
 - **The forge rolls only PUBLISHED skills** of the weapon's type (`Trademarks.Rollable`): publishing is what lets a
   skill be rolled onto a weapon. The roll is server-side, through `CombatRng`, weighted by
-  `CraftingMath.TrademarkWeight`. A weapon handed out any other way (a GM grant, a creature's gear) has no trademark.
+  `CraftingMath.TrademarkWeight`. Every new weapon comes through that same roll (`EquipmentInstance.CreateFresh`) —
+  the forge, a GM's `/weapon`, a creature's gear at any grade — so no weapon exists without one. Only `/weapon` may
+  name the skill instead, and only one the forge could roll on that weapon.
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on

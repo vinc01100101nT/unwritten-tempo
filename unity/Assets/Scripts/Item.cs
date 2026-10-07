@@ -1,10 +1,10 @@
 using UnityEngine;
 
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
-/// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield) doesn't shift any
-/// serialized scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/
-/// Shield/Boots — shown to a player as Head, Body, Garment, Weapon, Off-hand and Shoes (see <see cref="EquipSlots"/>);
-/// the three Costume* slots are reserved for a future cosmetic layer (not shown in v1).
+/// Integer values are PINNED so the rename from the old taxonomy (Body→Armor) doesn't shift any serialized
+/// scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/Boots — shown to a
+/// player as Head, Body, Garment, Weapon and Shoes (see <see cref="EquipSlots"/>); the three Costume* slots are reserved
+/// for a future cosmetic layer (not shown in v1).
 ///
 /// <para>6 and 7 were the two accessory places, removed because the ring already fills that role. Never give those
 /// numbers to a new slot: an old save or asset still holding one would silently land in it.</para></summary>
@@ -14,7 +14,8 @@ public enum EquipSlotType
     Head = 1,
     Armor = 2,        // was Body
     Weapon = 3,
-    Shield = 4,       // shown as "Off-hand" — still the block source in combat
+    // 4 was the off-hand, removed on 2026-10-06 with every shield: blocking comes from skills now. Never give 4 to a
+    // new slot: an old save still naming it would silently land in it.
     Boots = 5,        // shown as "Shoes"
     Garment = 8,
     CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
@@ -47,7 +48,6 @@ public static class EquipSlots
             case EquipSlotType.Head:        return "Head";
             case EquipSlotType.Armor:       return "Body";
             case EquipSlotType.Weapon:      return "Weapon";
-            case EquipSlotType.Shield:      return "Off-hand";
             case EquipSlotType.Boots:       return "Shoes";
             case EquipSlotType.Garment:    return "Garment";
             case EquipSlotType.CostumeHead: return "Costume Head";
@@ -65,12 +65,11 @@ public static class EquipSlots
             case EquipSlotType.Head:        return 0;
             case EquipSlotType.Armor:       return 1;
             case EquipSlotType.Weapon:      return 2;
-            case EquipSlotType.Shield:      return 3;
-            case EquipSlotType.Garment:     return 4;
-            case EquipSlotType.Boots:       return 5;
-            case EquipSlotType.CostumeHead: return 6;
-            case EquipSlotType.CostumeBody: return 7;
-            case EquipSlotType.CostumeBack: return 8;
+            case EquipSlotType.Garment:     return 3;
+            case EquipSlotType.Boots:       return 4;
+            case EquipSlotType.CostumeHead: return 5;
+            case EquipSlotType.CostumeBody: return 6;
+            case EquipSlotType.CostumeBack: return 7;
             default:                        return 99;
         }
     }
@@ -178,15 +177,11 @@ public class Item : ScriptableObject
     /// <summary>True when using this item does something — the one test every consume path asks.</summary>
     public bool IsUsable => !string.IsNullOrEmpty(useSkillId);
 
-    [Header("Combat audio (weapon / off-hand — overrides the player defaults while equipped)")]
+    [Header("Combat audio (weapon — overrides the player defaults while equipped)")]
     [Tooltip("Weapon: the swing sound.")]
     public SfxSet attackSfx;
     [Tooltip("Weapon: the impact sound when a swing lands.")]
     public SfxSet hitSfx;
-    [Tooltip("Off-hand: the block/parry sound.")]
-    public SfxSet guardSfx;
-    [Tooltip("Off-hand: chance (0..1) to block an incoming hit (and play guardSfx).")]
-    [Range(0f, 1f)] public float blockChance;
 
     [TextArea] public string description;
 }

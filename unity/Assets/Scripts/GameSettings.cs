@@ -158,6 +158,35 @@ public static class GameSettings
         return true;
     }
 
+    // ---- the screen: resolution and fullscreen ------------------------------------------------------------------
+    // Unity keeps both itself (its own "Screenmanager …" entries in the same PlayerPrefs store) and restores them on
+    // the next launch, so nothing is stored here — keeping a second copy would be one that can disagree with it.
+
+    /// <summary>Borderless fullscreen (the game's default) when true, an ordinary window when false.</summary>
+    public static bool Fullscreen
+    {
+        get => Screen.fullScreenMode != FullScreenMode.Windowed;
+        set => Screen.SetResolution(Screen.width, Screen.height,
+                                    value ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+    }
+
+    /// <summary>Draw the game at <paramref name="width"/> × <paramref name="height"/>, keeping the current fullscreen
+    /// choice. The new size shows from the next frame, so <see cref="Screen.width"/> still reads the old one until then.</summary>
+    public static void SetResolution(int width, int height) => Screen.SetResolution(width, height, Screen.fullScreenMode);
+
+    /// <summary>Every size the monitor offers, largest first, each once (the monitor lists a size again for every
+    /// refresh rate it runs it at).</summary>
+    public static void Resolutions(System.Collections.Generic.List<Vector2Int> into)
+    {
+        into.Clear();
+        var all = Screen.resolutions;
+        for (int i = all.Length - 1; i >= 0; i--)
+        {
+            var size = new Vector2Int(all[i].width, all[i].height);
+            if (!into.Contains(size)) into.Add(size);
+        }
+    }
+
     /// <summary>Push the three volumes onto the systems that play sound. Called whenever one changes, and by
     /// each audio system as it comes online, so a system that spawns late still starts at the saved level.
     /// Master rides <see cref="AudioListener.volume"/> — Unity's one global multiplier over every

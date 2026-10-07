@@ -242,6 +242,9 @@ public static class MapManager
         if (go.scene == map) return;
 
         SceneManager.MoveGameObjectToScene(go, map);
+        // A creature is filed by its map for every search for enemies near a point; it was filed under the wrong one
+        // the moment it was built, so it is filed again now it is where it belongs.
+        if (go.TryGetComponent<MonsterAI3D>(out var creature)) creature.Refile();
     }
 
     /// <summary>The map this machine is standing in, as a scene. Invalid when there is no map yet.</summary>

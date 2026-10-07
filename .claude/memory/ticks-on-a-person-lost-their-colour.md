@@ -14,10 +14,14 @@ and the 89 bill 4 s later. Nothing was drawn twice.
 
 **Root cause:** `CombatAuthority.ApplyTrue(target, amount, color)` announces a tick on a person through
 `GameNetwork.AnnounceBlowOnPlayer(..., tick: true)` WITHOUT the colour, and `Character.ShowBlowFromServer` drew every
-blow magic-violet or hit-red. Creatures were fine: their tick is drawn inside `Health.TakeTrueDamage` with the colour.
+blow magic-violet or hit-red. (A creature's tick was then drawn inside `Health.TakeTrueDamage` — on the server, so in fact on no screen at all.)
 
-**Fix (uncommitted):** `PlayerHitResult.tickColor` carries the colour; `Character.ColourOfBlow(info, tick, tickColor)`
-is the one colour choice for a blow on a person, used on their own machine and by watchers (`NetPlayer.ShowBlow`).
+**Fix:** the tick now carries WHAT it is, not a colour — `TrueDamageCause` (poison, bleed, burn, brace debt, reflected
+by a person / by a creature, GM kill) on `PlayerHitResult.tickCause` and `HitResult.tickCause` — and every screen
+colours it from one table, `TrueDamageCauses.Colour`. `Character.ColourOfBlow(info, tick, tickCause)` is the one colour
+choice for a blow on a person (own machine and watchers, `NetPlayer.ShowBlow`); a creature's tick is drawn by
+`Health.DrawShownBlow` from the `HitResult` (2026-10-07; before that, creature ticks were drawn only on the server,
+so nobody saw them).
 Changes the message shape — server and game must be rebuilt together. Visible change: poison ticks on a player now
 show the ailment's colour instead of red, matching creatures.
 

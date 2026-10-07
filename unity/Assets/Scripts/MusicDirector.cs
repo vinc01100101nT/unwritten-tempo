@@ -66,6 +66,7 @@ public class MusicDirector : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
         GameSettings.ApplyAudio();   // start at the player's saved volumes, not the level baked into the scene

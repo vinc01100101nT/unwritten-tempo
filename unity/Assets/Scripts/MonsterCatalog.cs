@@ -108,21 +108,34 @@ public static class MonsterCatalog
         return m.biome == Biome.None ? includeCommons : m.biome == biome;
     }
 
-    /// <summary>Weighted pick among the Normals that match <paramref name="biome"/> within the
-    /// [<paramref name="minLevel"/>, <paramref name="maxLevel"/>] band (commons included when asked). This is
-    /// what the map generator uses to populate a biome's maps. Falls back to the unfiltered
-    /// <see cref="WeightedPick()"/> when nothing matches, so a map never spawns empty.</summary>
+    /// <summary>EVERY CREATURE A MIX CAN DRAW — the Normals that match <paramref name="biome"/> within the
+    /// [<paramref name="minLevel"/>, <paramref name="maxLevel"/>] band (commons included when asked), or, when nothing
+    /// matches, every Normal with a weight, so a map never spawns empty. The one rule for a mix: the server's pick
+    /// (<see cref="WeightedPick(Biome,int,int,bool)"/>) and the map window's list of who lives where both read it.
+    /// Fills <paramref name="into"/> in catalog order.</summary>
+    public static void MixOf(Biome biome, int minLevel, int maxLevel, bool includeCommons, List<MonsterDef> into)
+    {
+        into.Clear();
+        EnsureLoaded();
+        foreach (var m in _all) if (Eligible(m, biome, minLevel, maxLevel, includeCommons)) into.Add(m);
+        if (into.Count > 0) return;
+        foreach (var m in _all) if (m != null && m.kind == CreatureKind.Normal && m.weight > 0) into.Add(m);
+    }
+
+    static readonly List<MonsterDef> mixScratch = new List<MonsterDef>();
+
+    /// <summary>Weighted pick among <see cref="MixOf"/>. This is what a spawn area that draws a mix fills a slot
+    /// with.</summary>
     public static MonsterDef WeightedPick(Biome biome, int minLevel, int maxLevel, bool includeCommons = true)
     {
-        EnsureLoaded();
+        MixOf(biome, minLevel, maxLevel, includeCommons, mixScratch);
         int total = 0;
-        foreach (var m in _all) if (Eligible(m, biome, minLevel, maxLevel, includeCommons)) total += m.weight;
-        if (total <= 0) return WeightedPick();
+        foreach (var m in mixScratch) total += m.weight;
+        if (total <= 0) return null;
 
         int roll = Random.Range(0, total);
-        foreach (var m in _all)
+        foreach (var m in mixScratch)
         {
-            if (!Eligible(m, biome, minLevel, maxLevel, includeCommons)) continue;
             roll -= m.weight;
             if (roll < 0) return m;
         }

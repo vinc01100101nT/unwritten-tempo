@@ -10,7 +10,7 @@ metadata:
 Committed `9f393fac` (2026-07-23). Client-side prep that makes combat plug-ready for a future server-authoritative layer, with **zero gameplay change** — every path resolves to today's local-player values.
 
 **The seams (route new combat code through these — do NOT re-fork a direct call):**
-- **`CombatRng`** — the ONE source of every combat-OUTCOME roll (crit, damage/magic spread, off-hand block, accuracy in `Combat.Lands`, proc in `SkillEffectApplier.Fires`, mob attack-spread + on-hit ailment). Movement/wander/VFX random stays on `UnityEngine.Random`. Later becomes server-seeded in one file.
+- **`CombatRng`** — the ONE source of every combat-OUTCOME roll (crit, damage/magic spread, block (the block-chance sub-stat since 2026-10-06), accuracy in `Combat.Lands`, proc in `SkillEffectApplier.Fires`, mob attack-spread + on-hit ailment). Movement/wander/VFX random stays on `UnityEngine.Random`. Later becomes server-seeded in one file.
 - **`CombatAuthority`** — the single damage front door. `Apply(IDamageable, in DamageInfo)` for hits (9 sites: skill ticks, basic swings, mob attacks); `ApplyTrue(IDamageable, amount, color)` for raw DoT ticks + thorns reflect (3 sites). GM instakill cheat in `GmCommands` intentionally left direct.
 - **`IDamageable` / `DamageInfo`** — one damage contract on both sinks (`Health` mobs + `Character` player). `DamageInfo` carries amount/element/isMagic/isCrit/attackerHit/overkill/source so routing preserves accuracy, overkill cascades, and reflect.
 - **`SkillEffectApplier`** — the acting caster is threaded EXPLICITLY (param) instead of reaching for the `Character.Instance` global mid-resolve.

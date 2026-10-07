@@ -102,7 +102,10 @@ public static class Player3DBody
         if (instance.GetComponent<StanceController>() == null) instance.AddComponent<StanceController>();
         var vis = instance.GetComponent<Character3DVisual>() ?? instance.AddComponent<Character3DVisual>();
         vis.player = player;
-        if (instance.GetComponent<WeaponSocket>() == null) instance.AddComponent<WeaponSocket>();
+        var hand = instance.GetComponent<WeaponSocket>();
+        if (hand == null) hand = instance.AddComponent<WeaponSocket>();
+        // The model is not a child of the avatar, so a thrown weapon finds this hand by being told which one it is.
+        WeaponSocket.MarkMine(hand);
         if (instance.GetComponent<CharacterDye3D>() == null) instance.AddComponent<CharacterDye3D>();   // per-part outfit dye
         // The x-ray occlusion silhouette flags THIS object's renderers (the visible model) — it lives here, not on
         // the player root, because the model is a SEPARATE object riding the controller (the root only holds the

@@ -7,7 +7,8 @@ using UnityEngine.UI;
 /// come from the server (<see cref="QuestStore.Guide"/>): it teaches the tutorial that is playing, and nothing else; the step's hints come from the quest's data; the parts of the screen
 /// are found by the names their windows gave them (<see cref="GuideMarker"/>).
 ///
-/// <para><b>Which hint shows:</b> the last of the step's hints whose part is on screen right now. Going back a page, or
+/// <para><b>Which hint shows:</b> the last of the step's hints whose part is on screen right now — in an open window,
+/// even if its list is scrolled past it; that one part, and only it, is scrolled into view. Going back a page, or
 /// picking the wrong piece, simply brings an earlier hint back — nothing is remembered, so nothing can get stuck.</para>
 ///
 /// <para><b>It never traps anyone.</b> The dark stops the mouse only while its one part is really on screen and is the
@@ -177,9 +178,13 @@ public class GuideOverlay : MonoBehaviour
             // A station's rows count only in the station the step is worked at.
             if (h.spot != GuideSpot.BagRow && CraftStationPanel.OpenStation != station) continue;
             var m = GuideMarker.Find(h.spot, item, station);
-            if (m == null || !OnScreen(m)) continue;
+            if (m == null) continue;
             found = m; foundAt = i; textOnly = -1;
         }
+        // ONLY THE CHOSEN PART IS SCROLLED TO. Scrolling to every hint's part in turn made two parts of one list —
+        // Back at its top, the row to forge near its bottom — each scroll the other out of view, every frame, so
+        // neither was ever lit and the list was held where the last one left it.
+        if (found != null && !InView(found)) found = null;
         if (found != null)
         {
             target = found;
@@ -192,7 +197,7 @@ public class GuideOverlay : MonoBehaviour
     }
 
     // Is the part inside the area its list shows? A row scrolled out of view is brought into it, and counts once it is.
-    bool OnScreen(GuideMarker m)
+    bool InView(GuideMarker m)
     {
         var rt = (RectTransform)m.transform;
         var scroll = m.Scroll;

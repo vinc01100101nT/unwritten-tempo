@@ -591,7 +591,7 @@ about 35 seconds of somebody arriving.
 **A browser treats the website and the character server as two different sites**, because they answer on two
 different ports — so it refuses to hand the page that reply unless the character server names the website's
 address as allowed. Unless told otherwise it allows the download server's own address: the one in `PATCH_URL`,
-plus `http://127.0.0.1` and `http://localhost` on that same port (none at all when `PATCH_URL` is empty). Serve the site
+plus `http://127.0.0.1` and `http://localhost` on `PATCH_PORT` (none at all when `PATCH_URL` is empty). Serve the site
 from anywhere else and the character server must be started with that address in `WIKI_ORIGINS`. Setting it
 REPLACES that default rather than adding to it, so list every address that needs to read it, separated by commas:
 
@@ -623,14 +623,15 @@ it carries the two addresses in its own settings file, written there by `tools/b
 | `ACCOUNTS_URL` | Where the sign-in service lives. A whole address, so `https://…` needs nothing else changed. | none — a game with no address cannot sign in |
 | `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. Every build carries it, written in by `tools/build-game.sh`. | none on a server — it stops without it; on a player's build, whatever the build carries |
 | `PUBLIC_ACCOUNTS_URL`, `PUBLIC_CHAR_SERVER_URL` | The two addresses written into every game build instead of the two above, once the rented server exists — and the names the encrypting front door answers to. | empty — builds carry this machine's addresses |
-| `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. Also where this computer serves the website. | none — the launcher build, the website server and `start-servers.sh` stop without it |
+| `PATCH_URL` | Where the launcher downloads updates from; written into the launcher when it is built, and served by the front door. Also the website's address. It may be an encrypting proxy in front of `PATCH_PORT` rather than that port itself. | none — the launcher build, the website server and `start-servers.sh` stop without it |
 | `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. `0.0.0.0` is every address, which a desk needs. | none — both stop without it |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ARRIVALS_ADDRESS` | Where the character server delivers characters to this game server — a delivery carries a whole character, an entry ticket and the shared server secret as plain text, so on a rented machine this is a private network address, or `127.0.0.1` when both run on one machine. The game server then listens for deliveries on that address only. Set on the GAME server. | empty — the same as `MAP_SERVER_ADDRESS`, which is right only on a desk or a home network |
 | `MAP_SERVER_ADDRESS` | The address this game server is reached at — by the character server, which pushes each arriving character to it, AND by players, whom the character server sends there. On a rented server, its public address. | none — the game server stops without it |
-| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the website, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | the download server's address: `PATCH_URL`, plus `http://127.0.0.1` and `http://localhost` on its port (none at all when `PATCH_URL` is empty) |
+| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the website, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | the download server's address: `PATCH_URL`, plus `http://127.0.0.1` and `http://localhost` on `PATCH_PORT` (none at all when `PATCH_URL` is empty) |
 | `MAP_SERVER_ARRIVALS_PORT` | The door the character server pushes characters in on. Not the port players use. | none — the game server stops without it |
 | `PORT`, `CHAR_SERVER_PORT` | The ports the sign-in service and the character server listen on. | none — each stops without its own |
+| `PATCH_PORT` | The port this computer serves the update folder and the website on. | none — the website server and `start-servers.sh` stop without it |
 
 **There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
 server is now told nothing about zones when it starts: the character server decides which server a zone is
@@ -719,10 +720,12 @@ Already in the database. Password for both: `testpass123`
 
 ## GM accounts — who may type commands
 
-Every chat command except `/help`, `/whereis` and `/mobinfo` is for GMs: nearly all of them change something — a
+Every chat command except `/help`, `/whereis`, `/mobinfo`, `/whodrops` and `/iteminfo` is for GMs: nearly all of them change something — a
 level, a bag, the creatures standing in the world. So **none of those work unless the account is marked a GM.** An
-ordinary player who types one is told *That command is for GMs.* and nothing happens. `/help`, `/whereis` and
-`/mobinfo` only read, and anybody may type them.
+ordinary player who types one is told *That command is for GMs.* and nothing happens. `/help`, `/whereis`,
+`/mobinfo`, `/whodrops` and `/iteminfo` only read, and anybody may type them. `/help` lists every command with
+one example line each, in two groups — *Commands for everyone* and *GM commands* — and `/help <command>` shows
+that command's full usage.
 
 The mark belongs to the **account**, not to a character — being trusted with commands is a fact about a person,
 so it covers every character they make.
@@ -759,8 +762,9 @@ psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "select email, is
 ### Where each command actually runs
 
 **Every command except `/help` and `/where` is carried out by the server** — `/summon`, `/dummy`, `/kill`, `/killall`,
-`/log`, `/gold`, `/item`, `/weapon`, `/mastery`, `/resetskills`, `/station`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
-`/revive`, `/invuln`, `/bind`, `/tp`, `/speed`, `/model`, `/time`, `/weather`, `/whereis` and `/mobinfo`. Your game
+`/log`, `/gold`, `/item`, `/weapon`, `/mastery`, `/resetskills`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
+`/revive`, `/save`, `/invuln`, `/bind`, `/tp`, `/exprate`, `/speed`, `/model`, `/time`, `/weather`, `/whereis`, `/mobinfo`, `/whodrops`
+and `/iteminfo`. Your game
 hands the typed line over, the server checks its own copy of the mark, does the work on your
 character, sends your game the result, and sends the answer back into your chat a moment later. Each one shows
 up in the server's log as *"<name> ran '/…'"*. Summoned creatures are visible to everybody and can actually be
@@ -773,11 +777,11 @@ showed 61 points while the server held 1, so every point spent past the real one
 `/help` only lists the commands, so it runs in your own game and anybody may type it. `/where` prints your own
 position, so it runs in your own game too, but only a GM may type it.
 
-**`/whereis` and `/mobinfo` may be typed by anybody**, GM or not, and are the only commands the server takes from a
-non-GM. Both only read. `/whereis <creature>` lists every map the world spawn list places that creature in by name,
+**`/whereis`, `/mobinfo`, `/whodrops` and `/iteminfo` may be typed by anybody**, GM or not, and are the only commands
+the server takes from a non-GM. All four only read. `/whereis <creature>` lists every map the world spawn list places that creature in by name,
 with how many of it each map keeps alive; a test map that fills from a random mix is left out. `/mobinfo <creature>`
-shows its catalog entry as it spawns: level, size, element, health, attack, defence, flee, its six stats, experience,
-gold and drops. The server answers them because a creature's combat numbers are worked out on the server, never on a
+shows its catalog entry as it spawns: level, size, element, health, attack, defence, flee, its six stats, experience
+and drops — a kill pays no gold. The server answers them because a creature's combat numbers are worked out on the server, never on a
 player's machine — the same numbers the Mob Table shows.
 
 **`/model`, `/time` and `/weather` change what everybody sees.** `/model` changes your body on every screen that
@@ -785,6 +789,18 @@ can see you. `/time` and `/weather` change the sky for every player on that game
 it later gets the same sky. None of the three is saved: your model goes back to your character's own when you
 sign in again or move to a map another game server holds, and the time and weather go back to the real clock and
 the calendar when that game server restarts.
+
+**`/exprate` is a world event, and reaches every map server, not only yours.** `/exprate <duration> <multiplier>`
+(`/exprate 2h 1.5`; the duration takes `s`, `m`, `h` or `d`) multiplies the experience every creature kill pays,
+everywhere, until the time is up; `/exprate off` ends it at once, and running it again replaces the rate. Your map
+server asks the character server, which writes it in the `world_event` table and pushes the list to every map server
+it knows; each map server also asks for the list every 30 seconds, so one that missed the push, restarted, or started
+later catches up within half a minute. Every player online is told in chat when an event starts and when it ends —
+*Event started — experience ×1.5 for 2 h.* and *Event ended — experience ×1.5.* — and somebody who signs in while
+events run is told *Events running now: experience ×1.5 (1 h 20 min left).* Walking to a map on another map server
+says nothing new. A map server that only learns of an event on its 30-second ask says *Event running — …, … left.*
+instead of "started". The rate is saved, so restarting either server does not end it. Quest rewards and `/xp` are
+not multiplied.
 
 The server never believes a game's claim about who is playing it. It reads the mark from the character server
 itself, the same way it reads a player's real name and body rather than the one they announced.
@@ -1108,7 +1124,8 @@ keeps its old version**, so its players are told to update until it is published
 No rented machine needed: this computer serves the update folder itself, to its own launcher and to every device on
 the same Wi-Fi. `PATCH_URL` in `settings.env` is required — the launcher build refuses to run without it.
 `http://localhost:8090` works only for this computer; for other devices, set
-`PATCH_URL=http://<this computer's address>:8090` (`tools/platform.sh lan-address` prints the address).
+`PATCH_URL=http://<this computer's address>:8090` (`tools/platform.sh lan-address` prints the address). The folder
+is served on `PATCH_PORT` (8090), whatever `PATCH_URL` says.
 
 1. Build the launcher:
 

@@ -46,9 +46,9 @@ A few cells, to read the shape:
   biome table and the level tiers: a creature of levels 1–33 is only Neutral, Earth or Water; 34–66 adds Wind and
   Fire; 67–99 adds Poison, Holy, Dark, Ghost and Undead. Set 2026-09-26; each creature's value lives in its
   creature data only.
-- **The shadows' elements** cover all ten, as decided in the [World Map](../../3-world/world-map.md): Neutral — Still Oak
-  (Shield); Holy — Morning Dew (Wand); Earth — Stone Bloom (Warhammer); Water — Silver Rain (Spear); Fire — Forest Fire (Axe),
-  Ashen Field (Staff); Dark — Dusk Crow (Firearm); Undead — Black Lily (Scythe); Poison — Night Orchid (Dagger); Ghost — Silent Snow (Greatsword); Wind — Feather Rain (Bow), Blossom Wind (Sword). A shadow goes by its weapon's style. Only four of them — the Water, Earth, Fire and Wind ones —
+- **The shadows' elements** cover all ten, as decided in the [World Map](../../3-world/world-map.md): Neutral — Asterion
+  (Fist); Holy — Seraphine (Wand); Earth — Tharos (Warhammer); Water — Orion (Spear), Mordane (Greatsword); Fire — Varkhaz (Axe),
+  Kaelen (Staff); Dark — Vael (Sniper); Undead — Morwen (Scythe); Poison — Velmora (Dagger); Ghost — Nysara (Katar); Wind — Celestia (Bow), Riven (Shuriken), Veyra (Sword). A shadow shows its Kashira's name. Only four of them — the Water, Earth, Fire and Wind ones —
   can be answered with a converter today. (Full table in [Mob Roster](../../3-world/mob-roster.md).)
 - **A creature's ordinary attack** lands as: a weapon converter's element while one runs; otherwise its held
   weapon's element if that weapon HAS one; otherwise its own element. A weapon with no element (every weapon today)

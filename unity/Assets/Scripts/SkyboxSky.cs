@@ -113,6 +113,7 @@ public class SkyboxSky : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         var shader = Shader.Find("Unwritten/SkyboxClouds");
         if (shader == null)
         {

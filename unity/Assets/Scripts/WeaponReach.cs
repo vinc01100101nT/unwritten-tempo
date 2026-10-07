@@ -16,11 +16,16 @@ using UnityEngine;
 /// </summary>
 public static class WeaponReach
 {
-    /// <summary>Reach of <paramref name="weapon"/>, or <paramref name="unarmedFallback"/> when there's no weapon (or
-    /// it authors no range). FULL-SIZE reach — blend it against the other body via <see cref="UnitScale.MeleeBlend"/> for the live
-    /// value on resized units.</summary>
-    public static float Of(Item weapon, float unarmedFallback)
-        => weapon != null && weapon.attackRange > 0f ? weapon.attackRange : unarmedFallback;
+    /// <summary>Reach of <paramref name="weapon"/>, or <paramref name="unarmedFallback"/> when there's no weapon, it
+    /// authors no range, or it is a weapon whose range is its THROW and its holder is swinging it melee
+    /// (<paramref name="swingsRanged"/> false — see <see cref="WeaponTypes.SwingsRanged"/>). FULL-SIZE reach — blend it
+    /// against the other body via <see cref="UnitScale.MeleeBlend"/> for the live value on resized units.</summary>
+    public static float Of(Item weapon, float unarmedFallback, bool swingsRanged)
+        => SetsReach(weapon, swingsRanged) ? weapon.attackRange : unarmedFallback;
+
+    /// <summary>Whether <paramref name="weapon"/>'s own range is the reach right now, rather than the bare-hand one.</summary>
+    public static bool SetsReach(Item weapon, bool swingsRanged)
+        => weapon != null && weapon.attackRange > 0f && (swingsRanged || !WeaponTypes.RangedByStat(weapon.weaponType));
 
     /// <summary>The item in <paramref name="equipment"/>'s weapon slot, or null. A mob's gear lives on
     /// <see cref="UnitEquipment"/>; this unwraps the instance to the <see cref="Item"/> that owns the numbers.</summary>
@@ -32,6 +37,6 @@ public static class WeaponReach
 
     /// <summary>Reach for a unit whose gear lives on a <see cref="UnitEquipment"/> (every mob). Reads the weapon at
     /// USE time — no per-equip copy to keep in sync, the same pattern the player's reach uses.</summary>
-    public static float For(UnitEquipment equipment, float unarmedFallback)
-        => Of(WeaponOf(equipment), unarmedFallback);
+    public static float For(UnitEquipment equipment, float unarmedFallback, bool swingsRanged)
+        => Of(WeaponOf(equipment), unarmedFallback, swingsRanged);
 }

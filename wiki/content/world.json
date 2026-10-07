@@ -29,11 +29,11 @@
     },
     {
       "type": "paragraph",
-      "text": "To fight Chaos the artist imagined fourteen champions, the **Fourteen Kashira**. Together they sealed it away — but not before it **corrupted pages of the book**, twisting the characters drawn on them into monsters."
+      "text": "To fight Chaos the artist imagined fourteen champions, the **Fourteen Kashira**. Together they struck it down and sealed it away — or believed they had — but not before it **corrupted pages of the book**, twisting the characters drawn on them into monsters."
     },
     {
       "type": "paragraph",
-      "text": "After the battles the artist grew **paranoid**: what if Chaos had infected the Fourteen before it was sealed? He thought it until, in his mind, it became true. Chaos's power spread evenly through the fourteen, and they turned — the **fourteen shadows**. Now only the unwritten stand with him. You are one of them, and your task is to end that fear: restore the corrupted pages, and in the end face the shadows."
+      "text": "**The seal closed on an empty shell.** In the battle's last moments Chaos slipped into one of the Fourteen — **Veyra**, the Sword — and walked home among them wearing her face. **Morwen**, the Scythe, saw it and said so; Veyra accused her back, and most of the Fourteen believed the hero over the curse-caster. The artist could not tell which of his champions was lying, so he doubted every one of them, until his fear turned all fourteen into the **fourteen shadows**. Thirteen of them are innocent. Chaos lives in one. Now only the unwritten stand with him. You are one of them, and your task is to end that fear: restore the corrupted pages, remember the Fourteen one by one until each is proven, and in the end face the shadow where Chaos truly lives. The whole battle is told in **The Whole Story**."
     },
     {
       "type": "heading",
@@ -68,41 +68,130 @@
     },
     {
       "type": "paragraph",
-      "text": "The Fourteen Kashira were never put on the page, so they have **no names** — only epithets, and **fourteen weapons**. They sealed Chaos away; then the artist's fear turned them into the fourteen shadows."
+      "text": "The artist gave every one of the Fourteen a **name**, but never wrote one on the page — their names are spoken, never written. Each is also called by the **style** they fought in: *the Blossom Wind Kashira* is Veyra."
     },
     {
       "type": "list",
       "items": [
-        "**Each of the fourteen weapons is one of them.** A weapon is what the artist kept of a Kashira from before the fear took them. How the weapon fights *is* how that Kashira fought.",
-        "**They are known only by epithet, never by name** — the Shield is *The One Who Stood*, the Dagger is *The Late Arrival*. The missing name is the point, and it is also the reward.",
+        "**Each of the fourteen weapons is one of them.** A weapon is what the artist kept of a Kashira from before they fell. How the weapon fights *is* how that Kashira fought.",
         "**A weapon teaches its wielder's skills in fragments.** As your mastery of that kind of weapon grows, you choose which of them to draw out — and a weapon forged by a smith carries one of them more strongly than the rest: its **trademark**, the skill it is named for.",
-        "**Remembering who they really were frees the artist.** Every Kashira you come to know through their weapon proves to him that Chaos never truly had them. Master whichever weapons you like — nobody has to learn all fourteen.",
+        "**Remembering who they really were frees the artist.** Every Kashira you come to know through their weapon proves to him that Chaos never had them — and remembering the real Veyra proves that the shadow wearing her face is not her. Master whichever weapons you like — nobody has to learn all fourteen.",
         "**Carrying one bleeds their identity into you** — this is the charcoal-to-color return. You are not recovering *the* truth; you are finishing *a* story.",
-        "**Naming a Kashira is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — fourteen names to write, fourteen journeys to finish."
+        "**Writing a Kashira's name back into the book is the endgame.** Learn enough of a weapon's skills and its Kashira's name can finally be put on the page — fourteen names to write, fourteen journeys to finish."
       ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Read top to bottom, their legends are the battle in brief."
     },
     {
       "type": "table",
       "headers": [
         "Weapon",
-        "Epithet",
-        "The deed nobody recorded"
+        "Kashira",
+        "Style",
+        "Theme",
+        "Legend"
       ],
       "rows": [
-        ["**Sword**", "The One Who Answered", "Met every challenge alone, one at a time, and never lost the exchange."],
-        ["**Greatsword**", "The One Who Cleared the Road", "Walked ahead of the others so there would be a path behind."],
-        ["**Axe**", "The One Who Never Stopped", "Would not be turned, would not defend, only pressed forward."],
-        ["**Warhammer**", "The One Who Said No", "Whatever the enemy meant to do, it did not get to."],
-        ["**Spear**", "The One Who Moved the Line", "Decided where everyone stood, on both sides."],
-        ["**Shield**", "The One Who Stood", "Took what was meant for the other thirteen."],
-        ["**Bow**", "The One Who Kept Distance", "Was never where the blow landed, and never out of range."],
-        ["**Dagger**", "The Late Arrival", "Was not in the fight until it was already ending."],
-        ["**Firearm**", "The One Who Fired Once", "Needed one shot; waited as long as that took."],
-        ["**Staff**", "The One Who Burned the Field", "Unmade the ground the enemy was standing on."],
-        ["**Wand**", "The One Who Brought Them Back", "Is the reason the other thirteen were still standing."],
-        ["**Scythe**", "The One Who Waited", "Did nothing quickly, and nothing survived it."],
-        ["**Fist**", "*not yet told*", "*not yet told*"],
-        ["**Kick**", "*not yet told*", "*not yet told*"]
+        [
+          "**Bow**",
+          "**Celestia, the Wandering Sky**",
+          "Passing Cloud",
+          "cloud",
+          "When Chaos first came, Celestia drifted above it like a cloud nobody could catch, and rained arrows on it until it turned to chase her."
+        ],
+        [
+          "**Spear**",
+          "**Orion, the River That Remembers**",
+          "Bending River",
+          "river current",
+          "It chased her straight into Orion, who caught it the way a river catches a falling branch, and bent its path to where the others waited."
+        ],
+        [
+          "**Greatsword**",
+          "**Mordane, King Beneath the Waves**",
+          "Raging Tide",
+          "wave",
+          "There Mordane rose like a raging tide, and one swing swept its whole front off the road."
+        ],
+        [
+          "**Warhammer**",
+          "**Tharos, the Starbreaker**",
+          "Earthrend Descent",
+          "the ground splitting",
+          "What survived lunged at Orion, until Tharos leapt and brought his hammer down hard enough to break a falling star. The earth split open beneath it, and the whole field froze mid-breath."
+        ],
+        [
+          "**Fist**",
+          "**Asterion, the Light Beyond Night**",
+          "Northern Lights",
+          "aurora",
+          "Asterion stepped in front of the others, took every blow meant for them, then spent everything he had on one fist that lit the sky like the northern lights."
+        ],
+        [
+          "**Axe**",
+          "**Varkhaz, the Ever-Burning**",
+          "Wildfire",
+          "flame",
+          "Through that light Varkhaz charged, never once stepping back, each blow catching the next like wildfire in dry grass."
+        ],
+        [
+          "**Sword**",
+          "**Veyra, the Last Petal**",
+          "Blossom Wind",
+          "petal",
+          "Veyra dashed past him into the very heart of it and cut it a thousand times in a few heartbeats. The heart died, and as it died Chaos fled into the one who had killed it. Veyra fell before the petals settled."
+        ],
+        [
+          "**Wand**",
+          "**Seraphine, Before the Dawn**",
+          "Morning Mist",
+          "mist",
+          "Seraphine ran to her through the storm. As the morning mist settled over her, Veyra opened her eyes and stood, and Seraphine felt something cold look back at her. She said nothing."
+        ],
+        [
+          "**Shuriken**",
+          "**Riven, the Red Autumn**",
+          "Autumn Gale",
+          "leaf",
+          "The dark, empty now but still moving, split into a hundred shapes, and Riven answered with a hundred blades, whirling through them like leaves in an autumn gale."
+        ],
+        [
+          "**Dagger**",
+          "**Velmora, the Poisoned Rose**",
+          "Nightshade Bloom",
+          "nightshade flower",
+          "In the confusion nobody saw Velmora arrive. She nicked it once with a blade dark with nightshade, and stepped back to let the poison bloom."
+        ],
+        [
+          "**Staff**",
+          "**Kaelen, the Ember Beneath Snow**",
+          "Frozen Ashes",
+          "ash and frost",
+          "As it seemed to weaken, Kaelen set the ground beneath it burning, then froze the fire to ash under ice, so it had nowhere left to stand."
+        ],
+        [
+          "**Scythe**",
+          "**Morwen, the Last Bloom**",
+          "Black Lily",
+          "lily",
+          "Only Morwen saw what the others missed: her curse on the dark never took hold, because nothing was inside it, and Veyra's petals had stopped falling. Telling no one yet, she laid a second, slower curse on Veyra."
+        ],
+        [
+          "**Katar**",
+          "**Nysara, the Face Without a Name**",
+          "Veiled Mirage",
+          "dust",
+          "Nysara circled unseen, a mirage in the dust, until one crack showed, then struck that same spot again and again until it split wide."
+        ],
+        [
+          "**Sniper**",
+          "**Vael, the Moonless Eye**",
+          "Dark Moon",
+          "the moonless night",
+          "For three moonless nights Vael had lain still on the farthest hill. Through Nysara's crack he fired one shot out of the dark, and the seal closed. Fourteen walked home. But the seal had closed on an empty shell, and Chaos walked home with them, wearing Veyra's face."
+        ]
       ]
     },
     {
@@ -113,8 +202,8 @@
     {
       "type": "list",
       "items": [
-        "**Chaos** — the unwanted thoughts in the artist's mind, sealed away by the Fourteen. It never erases; it corrupts.",
-        "**The fourteen shadows** — the Kashira, turned by the artist's fear. Chaos's power is split evenly between them.",
+        "**Chaos** — the unwanted thoughts in the artist's mind. It never erases; it corrupts. The Fourteen believed they sealed it away; it walked home with them instead, wearing Veyra's face.",
+        "**The fourteen shadows** — the Kashira, turned by the artist's fear. Thirteen are his fear wearing his champions' shapes, and they come back whenever the fear does. The fourteenth is Chaos itself.",
         "**The corrupted pages** — the monsters of the world, and the reason to keep walking."
       ]
     },

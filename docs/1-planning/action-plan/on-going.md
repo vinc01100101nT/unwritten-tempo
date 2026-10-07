@@ -1,18 +1,18 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-28
+last-updated: 2026-10-06
 tags:
   - planning-production
 ---
 
 # unwritten — Action Plan — On-going
 
-Tasks whose status is `[ON-GOING]` — built, or under way, and not yet proven. The plan is three files by status — [done](done.md), [on-going](on-going.md), [not-started](not-started.md) — and a task moves between them when its status changes, wording untouched. A subtask sits in the file of its OWN status, indented as it was, and its ID names its parent (`ST-3-K` belongs to `MT-3`). Week goals repeat in every file that has a task from that week. The intro and the **How to read it** key are in [on-going.md](on-going.md).
+Tasks whose status is `[ON-GOING]` — built, or under way, and not yet proven. The plan is three files by status — [done](done.md), [on-going](on-going.md), [not-started](not-started.md) — and a task moves between them when its status changes, wording untouched. A subtask sits in the file of its OWN status, indented as it was, and its ID names its parent (`ST-3-K` belongs to `MT-3`). Week goals repeat in every file that has a task from that week. The intro and the **How to read it** key for all three files are on this page, below.
 
 Eleven weeks of work and the play-test between Week 6 and Week 7, as tasks. **This is the "what next" list.** [Roadmap to Launch](../roadmap-to-launch.md) is the "how far are we" picture — what is built, what is half-built, what is missing, all counted. Neither repeats the other.
 
-**Every fact in this plan was measured between 2026-09-12 and 2026-09-27** by reading the game's own files, its database or its builds.
+**Each task is one short entry that links the doc describing it.** The design lives in that doc, never on the entry; an entry carries a fact of its own only when no doc holds it.
 
 ---
 
@@ -32,9 +32,10 @@ Every task carries:
 - **An ID.** A main task is `MT-N`; a subtask sits indented under its main task as `ST-N-A`, where `N` is the parent's number and `A`, `B`, `C` … count its subtasks in order. An ID never changes and is never reused: a new main task takes the next free number, and a new subtask takes the next free letter under its parent.
 - **`[D]` decision · `[A]` authoring · `[E]` engineering.** A decision task is yours alone. An authoring task can be handed to the data-author agent. An engineering task is code.
 - **An estimate in days**, as a range. **The range already carries the swing from any decision it depends on** — you do not need to answer anything now for the estimate to hold.
+- **A link** to the doc that describes the task.
 - **Done when** — the concrete check. If you cannot watch it happen or count it, it is not a check.
 
-**Decisions are tasks, never gates.** Each one sits in the week *before* the work that needs it, with a recommendation attached so you can settle it by agreeing. If a decision slips, the work after it still starts — on the recommendation — and the estimate already covers changing course.
+**Decisions are tasks, never gates.** Each one sits in the week *before* the work that needs it, and its recommendation is in the doc it links, so you can settle it by agreeing. If a decision slips, the work after it still starts — on the recommendation — and the estimate already covers changing course.
 
 **My assumptions, labelled as mine:** a week is five working days, you and me together. The weeks are ordered by dependency, not by calendar. Slipping one pushes the rest; it does not break them.
 
@@ -46,36 +47,22 @@ Every task carries:
 
 **Goal:** every place on the body has something you can make, and a reason to keep working on the one you made.
 
-  - [ON-GOING] `ST-39-E` **`[E]` Weapon Mastery.** Earned by the share of a creature you took down with that weapon,
-    scaled by the fight's challenge and the weapon's grade, capped by that grade. It raises three stats that fit
-    the weapon and gives one mastery point per level, spent in the Skills window to learn and level its skills. Creatures have one too, authored as their level.
+  - [ON-GOING] `ST-39-E` **`[E]` Weapon Mastery.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
     *Done when:* a kill with a sword raises Sword Mastery and nothing else, and a skill can be bought once its level is reached.
 
-  - [ON-GOING] `ST-39-F` **`[E]` Skill levels.** The first mastery point spent on a skill learns it and each further point raises it
-    a level, up to its max level (10, 5 or 1); every level after the first adds +5% to its main numbers, active, passive or ultimate
-    alike, and the weapon held's grade limits how many levels count. Pressing a skill does not train it.
+  - [ON-GOING] `ST-39-F` **`[E]` Skill levels.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
     *Done when:* spending a point on one skill raises the number on its own card and no other.
 
 ---
 
 ## Week 5 — The world opens
 
-**Goal:** you can walk from the first town to any map in the game. The three-region world is laid out and generated
-(2026-09-26): 75 maps plus Lastline — 8 cities, 6 towns, 39 fields and 22 dungeon floors — joined by doors, with every
-place named ([World Map](../../3-world/world-map.md)). None of it has been walked in play.
+**Goal:** you can walk from the first town to any map in the game.
 
-- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** Every city, town, field and dungeon floor has its
-  doors from the world layout; the fourteen shadow places are not built. — **4–5 days**
-  *Done when:* starting from Lastline you can reach every one of the 75 maps on foot, without a game-master command.
-- [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** Built
-  2026-09-27: a biome's ground settles into flat levels joined by slopes, each biome with its own shape (Grassland: 0, 0.6 and 1.2 m, slopes to 20°);
-  a map recipe can line its roads with carved rock cliffs 1.5–2.7 m tall, with meeting points where a cliff slopes down
-  to meet the pass; the player, every creature and every route walk by one rule (45° slopes, 0.075 m steps); and a map
-  knows at load which of its areas connect, so an unreachable target costs no search
-  ([Biomes](../../3-world/biomes.md), [Walking and Routing](../../2-systems/walking-and-routing.md)). The test maps
-  `test_grassland` and `test_grassland_cliffs` and the 39 world fields (rebuilt 2026-09-27) use it. — **built**
-  *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you
-  up and down both.
+- [ON-GOING] `MT-15` **`[A]` Connect every map of the new world by doors.** — **4–5 days** — see [The World Map — Three Regions](../../3-world/world-map.md)
+  *Done when:* starting from Lastline you can reach every one of the 76 maps on foot, without a game-master command.
+- [ON-GOING] `MT-44` **`[E]` Give the fields shape: ground levels, cliffs, meeting points, one walking rule.** — **built** — see [Biomes](../../3-world/biomes.md) and [Walking and Routing](../../2-systems/walking-and-routing.md)
+  *Done when:* on both test maps you walk every level and climb a cliff at a meeting point, and a creature chases you up and down both.
 
 ---
 
@@ -83,41 +70,37 @@ place named ([World Map](../../3-world/world-map.md)). None of it has been walke
 
 **Goal:** every elite has its place in the world and every shadow stands on an end-game map, each worth the walk.
 
-- [ON-GOING] `MT-17` **`[E]` Give every elite its row.** One row in the world spawn list per elite, naming it, at the spot
-  the world shape gives it (`/where` prints the numbers). A map keeps its row for ordinary creatures beside it. — **1 day**
+- [ON-GOING] `MT-17` **`[E]` Give every elite its row.** — **1 day** — see [Mob Roster](../../3-world/mob-roster.md)
   *Done when:* every elite has a row, and each one's map still has its ordinary creatures.
 
 ---
 
 ## Play-test — strangers can play it
 
-**Goal:** people you invite download the game, make their own account, and play it on a server we rent, not on
-this machine. This is the play-test: the phase where interested players gather before the official release. Steam
-is not part of it — the game is handed out from our own download page. Quests, shops and the title screen are not
-needed to open it; they arrive as updates while it runs, which gives testers a reason to come back.
+**Goal:** people you invite download the game, make their own account, and play it on a server we rent, not on this machine.
 
-- [ON-GOING] `MT-50` **`[E]` A patcher launcher.** The game is downloaded in full once; after that the player opens a small
-  launcher, like Ragnarok Online's, which compares their files against a list on our server, downloads only the
-  ones that changed, and starts the game. Built 2026-09-28 for Windows and both kinds of Mac, with a news box, and
-  proven on this Mac against a test update folder: a first install fetched all 494 files, an update fetched only the
-  3 that changed, and a damaged file was fetched again. Not yet run on Windows, nor by a tester. — **3–4 days**
-  *Done when:* you change one thing in the game, publish the update, and a tester's launcher downloads only the
-  changed files and starts the updated game — on Windows and on Mac.
+- [ON-GOING] `MT-42` **`[E]` Make a Windows version of the game.** — **1–2 days** — see [Starting the Network](../../2-systems/networking/starting-the-network.md)
+  *Done when:* on a Windows PC, double-clicking the game reaches the sign-in box of the rented server, with nothing typed into a terminal.
 
-- [ON-GOING] `MT-51` **`[E]` The server turns away an outdated game.** Built 2026-09-28: the game sends its version
-  with every request to the character server, which refuses a copy whose version differs from the published one
-  with "Your game is out of date. Close it and run the launcher to update." Proven against a test copy of the
-  character server; not yet seen in a real session. Off on any machine that does not hand out updates. — **1 day**
-  *Done when:* an old copy of the game is refused with a message telling the player to update, and the updated
-  copy gets in.
+- [ON-GOING] `MT-43` **`[E]` A download page, and one place testers sign up and report problems.** — **1 day** — see [Starting the Network](../../2-systems/networking/starting-the-network.md)
+  *Done when:* somebody who has never seen the game follows one link, downloads it for Windows or Mac, and knows where to report what went wrong.
+
+- [ON-GOING] `MT-50` **`[E]` A patcher launcher.** — **3–4 days** — see [Starting the Network](../../2-systems/networking/starting-the-network.md)
+  *Done when:* you change one thing in the game, publish the update, and a tester's launcher downloads only the changed files and starts the updated game — on Windows and on Mac.
+
+- [ON-GOING] `MT-51` **`[E]` The server turns away an outdated game.** — **1 day** — see [Starting the Network](../../2-systems/networking/starting-the-network.md)
+  *Done when:* an old copy of the game is refused with a message telling the player to update, and the updated copy gets in.
 
 ---
 
 ## Week 7 — The world has people
 
-**Goal:** you can talk to somebody with a name who says the same thing twice. Today every villager in the game returns the same hardcoded name, "Villager", and speaks randomly chosen ambient lines.
+**Goal:** you can talk to somebody with a name who says the same thing twice.
 
-- [ON-GOING] `MT-23` **`[E]` Store a character's quests.** Built 2026-10-04 ([Quests and Tutorials](../../2-systems/quests-and-tutorials.md)): one row per quest ever given in `character_quest` — the step it is on, whether it is followed, whether it is finished — written inside the progress save in one transaction, so the bag and the quest that judged it land together. — **1 day**
+- [ON-GOING] `MT-20` **`[E]` Give a villager a name that can be authored.** — **1 day** — see [Quests and Tutorials](../../2-systems/quests-and-tutorials.md)
+  *Done when:* two villagers standing side by side show different names.
+
+- [ON-GOING] `MT-23` **`[E]` Store a character's quests.** — **1 day** — see [Quests and Tutorials](../../2-systems/quests-and-tutorials.md)
   *Done when:* a character logged out halfway through a quest comes back on the same step, after a restart of both servers.
 
 ---
@@ -126,19 +109,19 @@ needed to open it; they arrive as updates while it runs, which gives testers a r
 
 **Goal:** somebody asks you for something and the game remembers being asked.
 
-- [ON-GOING] `MT-24` **`[E]` Build the quest system.** Built 2026-10-04: quests as data assets with ordered steps (talk to someone; have, fold or wear an item), judged on the server; the Quests window (J) with Tutorial / Main Story / Side Quests tabs; following a quest lights arrows on the ground to its step; the tutorial guide darkens the screen except the next button. No branching, no chains, no rewards yet. — **4–5 days**
+- [ON-GOING] `MT-24` **`[E]` Build the quest system.** — **4–5 days** — see [Quests and Tutorials](../../2-systems/quests-and-tutorials.md)
   *Done when:* a new character is given the crafting tutorial, the arrows lead to Gunnar, the guide walks forge, fold and wear to the end, and progress survives closing the game.
 
 ---
 
 ## Week 10 — Gold has a use
 
-**Goal:** you can spend the money you have been collecting. The furthest character in the database has 4,396 gold and nothing in the game to spend it on.
+**Goal:** you can spend the money you have been collecting.
 
-- [ON-GOING] `MT-28` **`[E]` Build a shop screen.** Buy and sell, against one shopkeeper. Every item has a sell value and now a buy price (0 = no shop sells it); what each shop sells is the shops list, and a shopkeeper is a townsperson whose row names a shop. Built 2026-10-04: Fenwick the Tool Dealer in Lastline sells potions one or ten at a time and buys anything whose sell value is above 0 — the one rule, for every kind of item; a sell value of 0 means it cannot be sold to an NPC and every readout says so instead of showing a 0 — not yet play-tested. — **4–5 days**
+- [ON-GOING] `MT-28` **`[E]` Build a shop screen** — a buy price of 0 means no shop sells the item; a sell value of 0 means no shopkeeper buys it. — **4–5 days** — see [Roadmap to Launch](../roadmap-to-launch.md)
   *Done when:* you can sell a piece of loot for gold, buy a potion back, and both the gold and the bag survive a restart.
 
-- [ON-GOING] `MT-29` **`[A]` Stock the first shops.** What each town sells. Lastline's tool dealer sells the four potions (Minor Healing, Healing, Greater Healing, Antidote) at twice what each sells for — prices chosen 2026-10-04, yours to change. — **1 day**
+- [ON-GOING] `MT-29` **`[A]` Stock the first shops** — Lastline's potions cost twice their sell value (chosen 2026-10-04, yours to change). — **1 day** — see [Roadmap to Launch](../roadmap-to-launch.md)
   *Done when:* every town with a shopkeeper sells a list you chose, not a list the game made up.
 
 ---
@@ -147,36 +130,16 @@ needed to open it; they arrive as updates while it runs, which gives testers a r
 
 Each of these is worth doing and none of them blocks the loop above. They are here so they are not forgotten, and so nothing pretends they are free.
 
-- [ON-GOING] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** Built 2026-09-27: each biome has a cliffs switch in
-  the Biome Table, a map can set cliffs on or off for itself from its menu in the browser World Creator, and a build
-  gives the field template's cliffs (1.5 m, 8 m pass, 3 meeting points) to every map that has them. — **built**
-  *Done when:* a field set to "Cliffs: on" in the World Creator comes out of Build World with cliffs, and one set to
-  off comes out without.
+- [ON-GOING] `MT-46` **`[E]` Let the World Creator put cliffs on a map.** — **built** — see [World Creator — Spec](../../3-world/world-creator-spec.md)
+  *Done when:* a field set to "Cliffs: on" in the World Creator comes out of Build World with cliffs, and one set to off comes out without.
 
-- [ON-GOING] `MT-48` **`[E]` Rain leaves standing water that works like water.** Built 2026-09-27/28: 1 cm puddle sheets
-  on level ground; lakes that fill every hollow at once from the rain its slopes collect, spill downhill into the next
-  and flood the lowest ground; the same water for every player from the shared world clock; an exact reflection per
-  water height; things fade under water by depth, their outlines with them; shaped ground drawn at 0.25 m so level
-  edges curve ([Rain and Standing Water](../../2-systems/rain-and-standing-water.md)). `test_grassland`,
-  `test_grassland_cliffs` and the 39 fields have the 0.25 m ground (rebuilt 2026-09-28). — **built**
-  *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills,
-  two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.
+- [ON-GOING] `MT-48` **`[E]` Rain leaves standing water that works like water.** — **built** — see [Rain and Standing Water](../../2-systems/rain-and-standing-water.md)
+  *Done when:* in a storm on `test_grassland` the lakes rise every 30 seconds, a hollow below an overflowing one fills, two players see the same water, the frame time in a storm is measured, and the 39 fields are rebuilt at 0.25 m.
 
-- [ON-GOING] `MT-56` **`[E]` A beaten mob can turn back into the character the artist drew.** Built 2026-09-30
-  ([Saved Characters](../../3-world/saved-characters.md)): 15% of normal and elite kills leave one of 91 characters for
-  30 seconds — one that never fights (and pays the only gold: the mob's range ×20, ×40 or ×60), an ally that fights for
-  its saver, or a rebel that fights everyone and drops loot one kind up; every elite becomes its own ninja rebel. Lines,
-  appear auras at half size, half-width drawing, attack / cast / release / death poses, and every creature's portrait
-  beside its name. Deaths pay no gold. Built on one rule for
-  who is whose enemy, ready for player-versus-player. — **built**
-  *Done when:* in play a kill turns back about 3 times in 20, each kind behaves as described, gold arrives only from a
-  never-fights character, and two players see the same character, line and aura.
+- [ON-GOING] `MT-56` **`[E]` A beaten mob can turn back into the character the artist drew.** — **built** — see [Saved Characters](../../3-world/saved-characters.md)
+  *Done when:* in play a kill turns back about 3 times in 20, each kind behaves as described, gold arrives only from a never-fights character, and two players see the same character, line and aura.
 
-- [ON-GOING] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons.** Seen 2026-09-28 in play: hundreds of
-  "the object of type Image / TextMeshProUGUI has been destroyed" errors a session, from the hover plate over a unit
-  rebuilding its status icons. Cause, found 2026-10-04: a map change destroys the shared canvas the plate hangs on,
-  and the rebuilt plate kept its list of the old, destroyed icon tiles. Built: a rebuilt plate (`UnitPlate`) starts
-  from nothing — not yet play-tested.
+- [ON-GOING] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons** — its "has been destroyed" errors came from a map change destroying the shared canvas the plate hangs on, while the rebuilt plate kept its list of the old icons.
   *Done when:* a play session with fights and map changes logs none of them.
 
 ---
@@ -184,8 +147,8 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 ## Related
 
 - [Roadmap to Launch](../roadmap-to-launch.md) — the counted picture of how far the game is from shippable.
-- [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md) — forging, folding, quenching, recycling and mastery; built.
+- [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md) — forging, folding, quenching, recycling and mastery.
 - [Ring System — Current Facts (Trio-Ring)](../../2-systems/ring-system-trio-ring.md) — the progression engine; the ring is part of the character, not an item.
-- [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
+- [Weapon Roster — 14 Identities](../../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the weapon families and their skills.
 - [Networking — Implementation Notes](../../2-systems/networking/implementation-notes.md) — the deliberate limits that are still true, and what they sit on top of.
 - [Starting the Network](../../2-systems/networking/starting-the-network.md) — how to stand the game up to test any of this.

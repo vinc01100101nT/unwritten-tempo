@@ -20,7 +20,7 @@ public class WorldSpawns : ScriptableObject
     {
         [Tooltip("The map's scene name, e.g. 'lst_fild01'.")]
         public string map = "";
-        [Tooltip("A creature's id or name, e.g. 'mob.shadow.tsubame' — always that creature, and how an elite or a " +
+        [Tooltip("A creature's id or name, e.g. 'mob.shadow.veyra' — always that creature, and how an elite or a " +
                  "shadow is placed. Empty = a weighted mix of the Biome's normals inside the level range below.")]
         public string creature = "";
         [Tooltip("Only when Creature is empty: whose normals are drawn into the mix.")]
@@ -60,6 +60,34 @@ public class WorldSpawns : ScriptableObject
             else into[at] = (row.map, into[at].count + row.population);
         }
     }
+
+    static readonly List<MonsterDef> mixScratch = new List<MonsterDef>();
+
+    /// <summary>Every creature that can live in <paramref name="map"/>: each one a row names, and each one a mix row
+    /// can draw (<see cref="MonsterCatalog.MixOf"/>, the server's own rule). Each creature once, lowest level first,
+    /// then by name. A row naming a creature that is not on the roster adds nothing — that area stays empty.</summary>
+    public static void CreaturesIn(string map, List<MonsterDef> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(map)) return;
+        foreach (var row in list.rows)
+        {
+            if (row == null || row.map != map || row.population <= 0) continue;
+            if (!string.IsNullOrWhiteSpace(row.creature))
+            {
+                var named = MonsterCatalog.Get(row.creature);
+                if (named != null && !into.Contains(named)) into.Add(named);
+                continue;
+            }
+            MonsterCatalog.MixOf(row.biome, row.minLevel, row.maxLevel, row.includeCommons, mixScratch);
+            foreach (var m in mixScratch) if (!into.Contains(m)) into.Add(m);
+        }
+        into.Sort(ByLevelThenName);
+    }
+
+    static int ByLevelThenName(MonsterDef a, MonsterDef b) =>
+        a.level != b.level ? a.level.CompareTo(b.level) : string.CompareOrdinal(a.displayName, b.displayName);
 
     static WorldSpawns loaded;
     static bool looked;

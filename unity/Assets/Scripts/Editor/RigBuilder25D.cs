@@ -285,7 +285,7 @@ public static class RigBuilder25D
     {
         var anim = go.GetComponent<BillboardAnimator3D>();
         if (anim != null) MeasureArt(anim);
-        MobBody.Fit(go, arc.kind, arc.size, arc.flies);
+        MobBody.Fit(go, arc.kind, arc.size, arc.flies, MobBody.FlatArt.Of(anim));
         return go;
     }
 
@@ -446,13 +446,12 @@ public static class RigBuilder25D
         ai.onHitAilmentChance     = arc.onHitAilmentChance;
         ai.onHitAilmentSeconds    = arc.onHitAilmentSeconds;
         ai.onHitAilmentMagnitude  = arc.onHitAilmentMagnitude;
-        // No NinjaAdventure VFX sheets: a creature holding a ranged weapon lands its blow instantly (null projectileSheet)
-        // and the stun indicator stays off (null stunSheet) until a non-Ninja effect is wired in.
+        // No NinjaAdventure VFX sheets: a creature holding a ranged weapon lands its blow instantly (null projectileSheet).
 
         if (!CreatureKinds.Is3D(arc.kind)) go.AddComponent<BillboardAnimator3D>().sheet = tex;
         if (arc.tint.a > 0f && arc.tint != Color.white) msr.color = arc.tint;   // tint AFTER the animator sets frames
 
-        go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
+        go.AddComponent<AttackLunge>();              // the Poring-style bite each screen draws
         var death = go.AddComponent<DeathDissolve>();   // remains linger → fade (no death sprite)
         death.deathSfx = SfxAssets.Set(0.7f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");  // poof (TomMusic has no creature cries)
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies

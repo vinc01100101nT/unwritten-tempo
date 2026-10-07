@@ -14,7 +14,7 @@ Root cause: `MonsterDef.ToArchetype()` copied every field into `MonsterArchetype
 way into the prefab — the same family as [[mob-stats-dropped-by-unserializable-struct]].
 
 Fix: one line in `ToArchetype` (`weaponMasteryLevel = weaponMasteryLevel`) plus a re-bake of all 96 prefabs
-(`MobPrefabBaker.BakeAllCore()` through the live link). Verified by reading the prefab YAML: Snake4 99, Tsubame 160.
+(`MobPrefabBaker.BakeAllCore()` through the live link). Verified by reading the prefab YAML: Snake4 99, the Veyra shadow (then named Tsubame) 160.
 
 **Why:** a field added to `MonsterDef` does nothing until `ToArchetype` carries it AND the prefabs are re-baked; both
 steps fail silently.

@@ -346,7 +346,8 @@ public class InventoryList
         if (NameOf(e).ToLowerInvariant().Contains(query)) return true;
         if (EquipSlots.Label(e.def.slot).ToLowerInvariant().Contains(query)) return true;
         if (GradeText(e).ToLowerInvariant().Contains(query)) return true;
-        if (e.def.weaponType != WeaponType.None && e.def.weaponType.ToString().ToLowerInvariant().Contains(query)) return true;
+        if (e.def.weaponType != WeaponType.None && (e.def.weaponType.ToString().ToLowerInvariant().Contains(query)
+            || WeaponTypes.Label(e.def.weaponType).ToLowerInvariant().Contains(query))) return true;
         return false;
     }
 

@@ -37,19 +37,18 @@ public static class Combat
     public static bool Missed(bool crit, int attackerHit, int defenderFlee)
         => !crit && attackerHit >= 0 && !Lands(attackerHit, defenderFlee);
 
-    /// <summary>Whether a worn <paramref name="shield"/> stops one physical blow outright — its block chance plus
-    /// <paramref name="wornExtra"/> (the Guarding word), rolled once. The one roll for every unit, so a creature's shield
-    /// blocks exactly as often as a player's does.</summary>
-    public static bool Blocked(Item shield, float wornExtra)
+    /// <summary>Whether one physical blow is stopped outright, at <paramref name="blockChance"/> — the unit's block-chance
+    /// sub-stat, which only a skill grants. Rolled once. The one roll for every unit, so a creature blocks exactly as
+    /// often as a player with the same chance does.</summary>
+    public static bool Blocked(float blockChance)
     {
-        if (shield == null) return false;
-        float chance = BlockChance(shield.blockChance, wornExtra);
+        float chance = BlockChance(blockChance);
         return chance > 0f && CombatRng.Chance(chance);
     }
 
-    /// <summary>An off-hand's block chance with a worn extra added, held inside [0, 95%] — a wall that never lets a hit
-    /// through would be a wall nobody could fight.</summary>
-    public static float BlockChance(float itemChance, float wornExtra) => Mathf.Clamp(itemChance + wornExtra, 0f, 0.95f);
+    /// <summary>A block chance held inside [0, 95%] — a wall that never lets a hit through would be a wall nobody could
+    /// fight.</summary>
+    public static float BlockChance(float chance) => Mathf.Clamp(chance, 0f, 0.95f);
 
     /// <summary>
     /// Damage after defence — the one place it lives, shared by both directions (player→mob in

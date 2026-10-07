@@ -714,11 +714,11 @@ function itemRows(headers, list, row) {
 function equipmentTable() {
   const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Weapon' || it.type === 'Armor')
     .sort((a, b) => a.slotOrder - b.slotOrder || a.name.localeCompare(b.name));
-  return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Forge cost', 'Card slots', 'Block chance', 'Weight', 'Sells for'], list, it =>
+  return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Forge cost', 'Card slots', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>` +
-    `<td>${esc(dash(it.weaponType))}</td><td>${dash(it.reach)}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
+    `<td>${esc(dash(it.weaponType))}</td><td>${esc(dash(it.reach))}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
     `<td>${it.forgeUnits > 0 ? `${it.forgeUnits} ${esc(it.forgeMaterial)} + ${it.forgeGold} gold` : '—'}</td>` +
-    `<td>${dash(it.cardSlots)}</td><td>${esc(dash(it.blockChance))}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
+    `<td>${dash(it.cardSlots)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
 }
 function materialTable() {
   const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Material')

@@ -397,6 +397,11 @@ def main():
     pile_for_stat = parse_pile_for_stat(effect_src)
     triggers = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "SkillTrigger")
     weapons = parse_enum(read(os.path.join(SCRIPTS, "WeaponType.cs")), "WeaponType")
+    target_modes = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "TargetMode")
+    jump_cap = re.search(r"const\s+int\s+MaxJumps\s*=\s*(\d+)", read(os.path.join(SCRIPTS, "FlightMath.cs")))
+    if not jump_cap:
+        die("Could not find FlightMath.MaxJumps — the most jumps a bounce chain can make.")
+    jump_cap = int(jump_cap.group(1))
     state_for_kind = parse_state_for_kind(effect_src)
     armor_pile, weapon_pile = parse_converter_piles(effect_src)
     armor_slot = parse_enum(read(os.path.join(SCRIPTS, "Item.cs")), "EquipSlotType")["Armor"]
@@ -707,6 +712,14 @@ def main():
                 problem(s, "wires two pieces of gameplay to the same beat \"%s\"; only the first is read." % tick)
             bound_ticks.add(tick)
 
+            # A BOUNCE belongs to a Single Target tick only (the composer offers it nowhere else), and a chain can make
+            # at most FlightMath.MaxJumps jumps — the size of the list of units it has already hit.
+            jumps = as_int(b.get("bounceJumps"))
+            if jumps > 0 and as_int(b.get("targetMode")) != target_modes.get("SingleTarget", -1):
+                problem(s, "has a bounce on a beat that is not Single Target, so it never bounces.")
+            if jumps > jump_cap:
+                problem(s, "bounces %d times; the most any chain can make is %d." % (jumps, jump_cap))
+
             for e in b.get("effects") or []:
                 kind = kind_name.get(as_int(e.get("kind")), "?")
 
@@ -715,6 +728,21 @@ def main():
                 # is either a dead effect or an asset that missed the upgrade — both worth stopping for.
                 if "chance" in e and num_of(e.get("chance"), 1.0) <= 0.0:
                     problem(s, "has an effect set to a 0% chance, so it can never happen.")
+
+                # An all-in cost is the caster's price. On the target side the game never pays it, so it would do
+                # nothing at all — and a strike reading what it took would read nothing.
+                if kind in ("SpendAllMana", "DropHealthToOne") and as_int(e.get("side")) != 0:
+                    problem(s, "has %s on the target side; it is a cost the caster pays, so there it does nothing." % kind)
+                if kind == "DrainMana" and num_of(e.get("amount"), 0.0) <= 0.0:
+                    problem(s, "drains mana but takes 0 MP, so it can never take anything.")
+                # The all-in costs are paid once per cast by whichever tick carries one, so the question is asked of
+                # the whole skill, not of this beat.
+                if kind == "Damage" and num_of(e.get("damageMultPerPointGivenUp"), 0.0) != 0.0 and not any(
+                        kind_name.get(as_int(o.get("kind")), "") in ("SpendAllMana", "DropHealthToOne")
+                        and as_int(o.get("side")) == 0
+                        for ob in bindings for o in (ob.get("effects") or [])):
+                    problem(s, "has a strike that grows with the MP or HP given up, but nothing in the skill gives "
+                               "any up, so it never grows.")
 
                 # Every number is now its own little record, and any of them may pull from the pile. So the question
                 # is asked of the NUMBERS, not of the effect: does anything here pull with no pile to pull from?

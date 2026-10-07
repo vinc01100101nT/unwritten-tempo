@@ -4105,7 +4105,7 @@
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 20,
             "cz": 29
         },
@@ -4305,7 +4305,7 @@
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 21,
             "cz": 30
         },
@@ -4475,12 +4475,12 @@
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 22,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 22,
             "cz": 31
         },
@@ -4650,12 +4650,12 @@
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 23,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 23,
             "cz": 32
         },
@@ -4825,14 +4825,19 @@
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 24,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 24,
             "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 24,
+            "cz": 33
         },
         {
             "brush": "path_or_sidewalk_sandstone",
@@ -4986,6 +4991,21 @@
         },
         {
             "brush": "path_or_sidewalk_sandstone",
+            "cx": 25,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 25,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 25,
+            "cz": 34
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 26,
             "cz": 2
         },
@@ -5130,12 +5150,22 @@
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 26,
             "cz": 31
         },
         {
             "brush": "path_or_sidewalk_sandstone",
+            "cx": 26,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 26,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 27,
             "cz": 3
         },
@@ -5270,14 +5300,24 @@
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 27,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 27,
             "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 27,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 27,
+            "cz": 33
         },
         {
             "brush": "dirt",
@@ -5415,19 +5455,24 @@
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 28,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 28,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 28,
             "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 28,
+            "cz": 33
         },
         {
             "brush": "dirt",
@@ -5555,27 +5600,27 @@
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 29,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 29,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 29,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 29,
             "cz": 32
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 29,
             "cz": 33
         },
@@ -5675,32 +5720,32 @@
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 32
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 30,
             "cz": 33
         },
@@ -5800,37 +5845,37 @@
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 31
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 31,
             "cz": 32
         },
@@ -5930,37 +5975,37 @@
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 32,
             "cz": 31
         },
@@ -6065,37 +6110,37 @@
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 33,
             "cz": 30
         },
@@ -6210,37 +6255,37 @@
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 34,
             "cz": 29
         },
@@ -6365,32 +6410,37 @@
             "cz": 12
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 35,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 35,
             "cz": 28
         },
@@ -6530,27 +6580,37 @@
             "cz": 12
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 36,
+            "cz": 21
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 36,
+            "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 36,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 36,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 36,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 36,
             "cz": 26
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 36,
             "cz": 27
         },
@@ -6720,32 +6780,37 @@
             "cz": 12
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 37,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 25
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 37,
             "cz": 26
         },
@@ -6945,32 +7010,37 @@
             "cz": 11
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 38,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 24
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 38,
             "cz": 25
         },
@@ -7160,27 +7230,37 @@
             "cz": 11
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 39,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 39,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 39,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 39,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 39,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 39,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 39,
             "cz": 24
         },
@@ -7365,22 +7445,32 @@
             "cz": 11
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 40,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 40,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 40,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 40,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 40,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 40,
             "cz": 23
         },
@@ -7560,17 +7650,32 @@
             "cz": 11
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 41,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 41,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 41,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 41,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 41,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 41,
             "cz": 22
         },
@@ -7745,6 +7850,36 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 20
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 42,
+            "cz": 21
+        },
+        {
             "brush": "dirt",
             "cx": 42,
             "cz": 27
@@ -7895,6 +8030,36 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 43,
+            "cz": 20
+        },
+        {
             "brush": "dirt",
             "cx": 43,
             "cz": 29
@@ -8030,6 +8195,31 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 44,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 44,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 44,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 44,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 44,
+            "cz": 19
+        },
+        {
             "brush": "dirt",
             "cx": 44,
             "cz": 54
@@ -8160,6 +8350,31 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 45,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 45,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 45,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 45,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 45,
+            "cz": 19
+        },
+        {
             "brush": "dirt",
             "cx": 45,
             "cz": 54
@@ -8290,6 +8505,26 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 46,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 46,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 46,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 46,
+            "cz": 18
+        },
+        {
             "brush": "dirt",
             "cx": 46,
             "cz": 54
@@ -8410,6 +8645,26 @@
             "cz": 79
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 47,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 47,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 47,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 47,
+            "cz": 18
+        },
+        {
             "brush": "dirt",
             "cx": 47,
             "cz": 54
@@ -8518,6 +8773,26 @@
             "brush": "dirt",
             "cx": 47,
             "cz": 79
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 48,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 48,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 48,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 48,
+            "cz": 18
         },
         {
             "brush": "dirt",
@@ -8653,6 +8928,31 @@
             "brush": "dirt",
             "cx": 48,
             "cz": 79
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 49,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 49,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 49,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 49,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 49,
+            "cz": 19
         },
         {
             "brush": "dirt",
@@ -8823,6 +9123,31 @@
             "brush": "dirt",
             "cx": 49,
             "cz": 79
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 50,
+            "cz": 15
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 50,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 50,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 50,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 50,
+            "cz": 19
         },
         {
             "brush": "dirt",
@@ -9020,7 +9345,27 @@
             "cz": 79
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 51,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 51,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 51,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 51,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 51,
             "cz": 20
         },
@@ -9215,17 +9560,32 @@
             "cz": 79
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 52,
+            "cz": 16
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 52,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 52,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 52,
             "cz": 19
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 52,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 52,
             "cz": 21
         },
@@ -9430,19 +9790,49 @@
             "cz": 2
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 17
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 19
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 22
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 23
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 53,
+            "cz": 25
         },
         {
             "brush": "dirt",
@@ -9475,47 +9865,47 @@
             "cz": 32
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 36
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 37
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 53,
             "cz": 44
         },
@@ -9625,82 +10015,152 @@
             "cz": 10
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 19
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 23
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 25
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 34
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 35
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 36
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 37
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 54,
+            "cz": 38
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 44
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 45
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 46
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 54,
             "cz": 47
         },
@@ -9795,54 +10255,169 @@
             "cz": 12
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 18
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 19
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 23
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 25
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 29
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 30
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 34
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 35
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 36
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 37
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 38
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 39
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 40
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 55,
             "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 49
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 55,
+            "cz": 50
         },
         {
             "brush": "dirt",
@@ -9930,29 +10505,164 @@
             "cz": 18
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 56,
             "cz": 19
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 56,
             "cz": 20
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 56,
             "cz": 21
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 56,
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 56,
             "cz": 23
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 25
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 28
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 29
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 30
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 34
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 35
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 36
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 37
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 38
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 39
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 40
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 41
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 42
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 43
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 49
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 56,
+            "cz": 50
         },
         {
             "brush": "dirt",
@@ -10070,14 +10780,139 @@
             "cz": 22
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 57,
             "cz": 23
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 57,
             "cz": 24
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 25
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 27
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 28
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 29
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 30
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 32
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 33
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 34
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 35
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 36
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 37
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 38
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 39
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 40
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 41
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 43
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 49
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 57,
+            "cz": 50
         },
         {
             "brush": "dirt",
@@ -10208,6 +11043,51 @@
             "brush": "dirt",
             "cx": 58,
             "cz": 26
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 28
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 29
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 30
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 31
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 49
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 58,
+            "cz": 50
         },
         {
             "brush": "dirt",
@@ -10370,6 +11250,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 59,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 59,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 59,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 59,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 59,
+            "cz": 49
+        },
+        {
             "brush": "dirt",
             "cx": 59,
             "cz": 65
@@ -10565,6 +11470,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 60,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 60,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 60,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 60,
+            "cz": 48
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 60,
+            "cz": 49
+        },
+        {
             "brush": "dirt",
             "cx": 60,
             "cz": 65
@@ -10755,6 +11685,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 61,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 61,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 61,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 61,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 61,
+            "cz": 48
+        },
+        {
             "brush": "dirt",
             "cx": 61,
             "cz": 66
@@ -10945,6 +11900,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 62,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 62,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 62,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 62,
+            "cz": 47
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 62,
+            "cz": 48
+        },
+        {
             "brush": "dirt",
             "cx": 62,
             "cz": 68
@@ -11120,6 +12100,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 63,
+            "cz": 43
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 63,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 63,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 63,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 63,
+            "cz": 47
+        },
+        {
             "brush": "dirt",
             "cx": 63,
             "cz": 70
@@ -11275,6 +12280,31 @@
             "cz": 27
         },
         {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 64,
+            "cz": 43
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 64,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 64,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 64,
+            "cz": 46
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 64,
+            "cz": 47
+        },
+        {
             "brush": "dirt",
             "cx": 64,
             "cz": 71
@@ -11390,7 +12420,27 @@
             "cz": 27
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 65,
+            "cz": 42
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 65,
+            "cz": 43
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 65,
+            "cz": 44
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 65,
+            "cz": 45
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 65,
             "cz": 46
         },
@@ -11520,22 +12570,27 @@
             "cz": 28
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
+            "cx": 66,
+            "cz": 42
+        },
+        {
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 66,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 66,
             "cz": 44
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 66,
             "cz": 45
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 66,
             "cz": 46
         },
@@ -11670,27 +12725,27 @@
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 67,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 67,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 67,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 67,
             "cz": 44
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 67,
             "cz": 45
         },
@@ -11845,27 +12900,27 @@
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 68,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 68,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 68,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 68,
             "cz": 44
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 68,
             "cz": 45
         },
@@ -12035,27 +13090,27 @@
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 69,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 69,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 69,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 69,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 69,
             "cz": 44
         },
@@ -12230,27 +13285,27 @@
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 70,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 70,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 70,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 70,
             "cz": 43
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 70,
             "cz": 44
         },
@@ -12425,22 +13480,22 @@
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 71,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 71,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 71,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 71,
             "cz": 43
         },
@@ -12605,27 +13660,27 @@
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 72,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 72,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 72,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 72,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 72,
             "cz": 43
         },
@@ -12775,27 +13830,27 @@
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 73,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 73,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 73,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 73,
             "cz": 42
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 73,
             "cz": 43
         },
@@ -12930,27 +13985,27 @@
             "cz": 30
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 74,
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 74,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 74,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 74,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 74,
             "cz": 42
         },
@@ -13075,27 +14130,27 @@
             "cz": 37
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 75,
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 75,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 75,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 75,
             "cz": 41
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 75,
             "cz": 42
         },
@@ -13240,22 +14295,22 @@
             "cz": 37
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 76,
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 76,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 76,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 76,
             "cz": 41
         },
@@ -13395,22 +14450,22 @@
             "cz": 37
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 77,
             "cz": 38
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 77,
             "cz": 39
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 77,
             "cz": 40
         },
         {
-            "brush": "dirt",
+            "brush": "path_or_sidewalk_sandstone",
             "cx": 77,
             "cz": 41
         },
@@ -13774,149 +14829,163 @@
         {
             "brush": "houses",
             "prefab": "House3",
-            "x": 43.29999923706055,
-            "z": 7.204999923706055,
+            "x": 75.18399810791016,
+            "z": 44.698001861572269,
             "yaw": 68.32099914550781
         },
         {
             "brush": "houses",
             "prefab": "House3",
-            "x": 35.4379997253418,
-            "z": 5.7220001220703129,
+            "x": 71.9000015258789,
+            "z": 37.36800003051758,
             "yaw": 80.41899871826172
         },
         {
             "brush": "houses",
             "prefab": "House3",
-            "x": 38.7400016784668,
-            "z": 14.019000053405762,
+            "x": 66.34100341796875,
+            "z": 48.65700149536133,
             "yaw": 173.91099548339845
         },
         {
             "brush": "houses",
             "prefab": "House1",
-            "x": 32.108001708984378,
-            "z": 15.265999794006348,
+            "x": 62.654998779296878,
+            "z": 41.39799880981445,
             "yaw": 101.60900115966797
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_1_LOD0",
-            "x": 19.714000701904298,
-            "z": 11.260000228881836,
+            "x": 52.27199935913086,
+            "z": 48.67900085449219,
             "yaw": 84.9280014038086
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_1_LOD0",
-            "x": 19.485000610351564,
-            "z": 19.260000228881837,
+            "x": 50.84199905395508,
+            "z": 42.433998107910159,
             "yaw": 55.04899978637695
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_1_LOD0",
-            "x": 31.489999771118165,
-            "z": 23.83799934387207,
+            "x": 51.64400100708008,
+            "z": 36.834999084472659,
             "yaw": 179.78700256347657
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_2_LOD0",
-            "x": 22.97100067138672,
-            "z": 32.49100112915039,
+            "x": 59.731998443603519,
+            "z": 32.70500183105469,
             "yaw": 211.54600524902345
         },
         {
             "brush": "houses",
             "prefab": "House3",
-            "x": 14.53499984741211,
-            "z": 28.211000442504884,
+            "x": 52.4379997253418,
+            "z": 28.4689998626709,
             "yaw": 206.83200073242188
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_2_LOD0",
-            "x": 12.644000053405762,
-            "z": 19.52899932861328,
+            "x": 60.50600051879883,
+            "z": 27.19099998474121,
             "yaw": 29.933000564575197
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_2_LOD0",
-            "x": 4.15500020980835,
-            "z": 23.167999267578126,
+            "x": 50.981998443603519,
+            "z": 22.433000564575197,
             "yaw": 343.6820068359375
         },
         {
             "brush": "houses",
             "prefab": "WoodenHouse_2_LOD0",
-            "x": 9.628000259399414,
-            "z": 35.03300094604492,
+            "x": 54.4900016784668,
+            "z": 16.31100082397461,
             "yaw": 84.38600158691406
         },
         {
             "brush": "houses",
             "prefab": "House3",
-            "x": 1.8459999561309815,
-            "z": 32.14400100708008,
+            "x": 47.611000061035159,
+            "z": 13.039999961853028,
             "yaw": 99.43000030517578
         },
         {
-            "brush": "rocks",
-            "prefab": "Rock2",
-            "x": 61.83100128173828,
-            "z": 25.67099952697754,
-            "yaw": 32.0099983215332
+            "brush": "houses",
+            "prefab": "House2",
+            "x": 41.064998626708987,
+            "z": 15.067000389099121,
+            "yaw": 273.5320129394531
         },
         {
-            "brush": "rocks",
-            "prefab": "Stone3_LOD0",
-            "x": 72.53700256347656,
-            "z": 16.503999710083009,
-            "yaw": 261.0249938964844
+            "brush": "houses",
+            "prefab": "WoodenHouse_1_LOD0",
+            "x": 41.99100112915039,
+            "z": 24.038999557495118,
+            "yaw": 154.09800720214845
         },
         {
-            "brush": "rocks",
-            "prefab": "Stone2_LOD0",
-            "x": 74.45899963378906,
-            "z": 10.187999725341797,
-            "yaw": 270.9330139160156
+            "brush": "houses",
+            "prefab": "House2",
+            "x": 37.16899871826172,
+            "z": 18.584999084472658,
+            "yaw": 320.5150146484375
         },
         {
-            "brush": "rocks",
-            "prefab": "Stone3_LOD0",
-            "x": 60.9900016784668,
-            "z": 32.233001708984378,
-            "yaw": 233.58799743652345
+            "brush": "houses",
+            "prefab": "House2",
+            "x": 32.87300109863281,
+            "z": 21.924999237060548,
+            "yaw": 106.8239974975586
+        },
+        {
+            "brush": "houses",
+            "prefab": "House3",
+            "x": 35.39699935913086,
+            "z": 31.118999481201173,
+            "yaw": 92.88999938964844
+        },
+        {
+            "brush": "houses",
+            "prefab": "WoodenHouse_1_LOD0",
+            "x": 29.222000122070314,
+            "z": 35.50699996948242,
+            "yaw": 99.4010009765625
+        },
+        {
+            "brush": "houses",
+            "prefab": "House1",
+            "x": 21.41900062561035,
+            "z": 33.58700180053711,
+            "yaw": 124.96900177001953
         },
         {
             "brush": "rocks",
             "prefab": "Rock3",
-            "x": 42.3120002746582,
-            "z": 74.01699829101563,
-            "yaw": 279.2309875488281
+            "x": 5.664999961853027,
+            "z": 47.95800018310547,
+            "yaw": 117.927001953125
         },
         {
             "brush": "rocks",
             "prefab": "Rock1",
-            "x": 50.77199935913086,
-            "z": 77.88600158691406,
-            "yaw": 315.6189880371094
+            "x": 72.99299621582031,
+            "z": 29.22800064086914,
+            "yaw": 181.6739959716797
         },
         {
             "brush": "rocks",
-            "prefab": "Stone3_LOD0",
-            "x": 58.20500183105469,
-            "z": 70.6989974975586,
-            "yaw": 54.474998474121097
-        },
-        {
-            "brush": "rocks",
-            "prefab": "Stone1_LOD0",
-            "x": 66.35399627685547,
-            "z": 26.003000259399415,
-            "yaw": 283.1090087890625
+            "prefab": "Rock1",
+            "x": 9.303999900817871,
+            "z": 5.206999778747559,
+            "yaw": 304.8429870605469
         },
         {
             "brush": "rocks",
@@ -13927,73 +14996,108 @@
         },
         {
             "brush": "rocks",
-            "prefab": "Stone1_LOD0",
-            "x": 74.8280029296875,
-            "z": 47.9010009765625,
-            "yaw": 48.53200149536133
+            "prefab": "Rock1",
+            "x": 50.05699920654297,
+            "z": 7.392000198364258,
+            "yaw": 76.12000274658203
         },
         {
             "brush": "rocks",
-            "prefab": "Stone2_LOD0",
-            "x": 13.918000221252442,
-            "z": 61.92900085449219,
-            "yaw": 54.867000579833987
+            "prefab": "Rock1",
+            "x": 13.583000183105469,
+            "z": 41.4010009765625,
+            "yaw": 260.4830017089844
         },
         {
             "brush": "rocks",
-            "prefab": "Stone2_LOD0",
-            "x": 38.62799835205078,
-            "z": 74.58300018310547,
-            "yaw": 118.05699920654297
-        },
-        {
-            "brush": "rocks",
-            "prefab": "Stone1_LOD0",
-            "x": 24.200000762939454,
-            "z": 72.12799835205078,
-            "yaw": 114.02100372314453
-        },
-        {
-            "brush": "rocks",
-            "prefab": "Rock3",
-            "x": 52.2130012512207,
-            "z": 15.651000022888184,
-            "yaw": 0.12600000202655793
-        },
-        {
-            "brush": "rocks",
-            "prefab": "Rock3",
-            "x": 75.50800323486328,
-            "z": 6.553999900817871,
-            "yaw": 80.86100006103516
-        },
-        {
-            "brush": "rocks",
-            "prefab": "Stone2_LOD0",
-            "x": 35.233001708984378,
-            "z": 30.01300048828125,
-            "yaw": 15.557000160217286
+            "prefab": "Rock1",
+            "x": 26.92300033569336,
+            "z": 55.801998138427737,
+            "yaw": 14.013999938964844
         },
         {
             "brush": "rocks",
             "prefab": "Stone3_LOD0",
-            "x": 59.196998596191409,
-            "z": 11.699000358581543,
-            "yaw": 202.7100067138672
+            "x": 63.25899887084961,
+            "z": 77.96800231933594,
+            "yaw": 151.63600158691407
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 48.60900115966797,
+            "z": 60.59000015258789,
+            "yaw": 293.0539855957031
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 32.11000061035156,
+            "z": 74.65399932861328,
+            "yaw": 341.1579895019531
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone1_LOD0",
+            "x": 18.357999801635743,
+            "z": 35.202999114990237,
+            "yaw": 110.46800231933594
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 2.5280001163482668,
+            "z": 27.035999298095704,
+            "yaw": 311.1809997558594
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 24.740999221801759,
+            "z": 40.430999755859378,
+            "yaw": 236.7779998779297
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Stone2_LOD0",
+            "x": 12.70300006866455,
+            "z": 5.545000076293945,
+            "yaw": 61.2599983215332
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 18.13599967956543,
+            "z": 17.941999435424806,
+            "yaw": 257.6510009765625
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock3",
+            "x": 66.30400085449219,
+            "z": 60.38999938964844,
+            "yaw": 207.13299560546876
         },
         {
             "brush": "rocks",
             "prefab": "Rock2",
-            "x": 41.87699890136719,
-            "z": 46.262001037597659,
-            "yaw": 241.10899353027345
+            "x": 33.73500061035156,
+            "z": 67.88200378417969,
+            "yaw": 283.885009765625
         },
         {
             "brush": "rocks",
-            "prefab": "Stone3_LOD0",
-            "x": 62.88399887084961,
-            "z": 6.888000011444092,
-            "yaw": 177.95899963378907
+            "prefab": "Rock3",
+            "x": 20.43199920654297,
+            "z": 39.33700180053711,
+            "yaw": 71.72599792480469
+        },
+        {
+            "brush": "rocks",
+            "prefab": "Rock1",
+            "x": 4.205999851226807,
+            "z": 71.97200012207031,
+            "yaw": 31.856000900268556
         }
     ]
 }

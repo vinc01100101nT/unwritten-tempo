@@ -11,14 +11,15 @@ export async function buildServer() {
   // bodyLimit: nothing this service takes is bigger than a sign-in body. Characters — the list, a save, the
   // models one may be created with — live on the character server and nowhere else; the routes that once
   // answered for them here were the one door through which a player could write their own save, and are gone.
-  // trustProxy: the limits below are counted per client address. Bound to 127.0.0.1 this service sits behind
-  // the encrypting proxy (deploy/Caddyfile), where every request ARRIVES from the proxy and the real address
-  // is in the forwarded header — without trusting it, all players would share one bucket. Bound anywhere else
-  // there is no proxy, and trusting that header would let a caller name any address they liked.
+  // trustProxy: the limits below are counted per client address. A request that ARRIVES from this machine came
+  // through an encrypting proxy running on it (deploy/Caddyfile on the hosted machine, Tailscale's HTTPS forwarder
+  // on a desk), and the real address is in the forwarded header — without trusting it, every player behind the
+  // proxy would share one bucket. Only this machine is trusted: a caller connecting directly arrives from its own
+  // address, never this machine's, so it cannot name an address it likes.
   const app = Fastify({
     logger: true,
     bodyLimit: 16 * 1024,
-    trustProxy: config.bindHost === "127.0.0.1",
+    trustProxy: "loopback",
   });
 
   // Checking or setting a password costs 32 MB of memory and one of Node's four worker threads for as long as

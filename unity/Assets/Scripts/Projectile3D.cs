@@ -69,26 +69,6 @@ public class Projectile3D : MonoBehaviour
         p.payload = payload;
     }
 
-    /// <summary>Fly a LOOK and nothing else, drawn as a straight line rather than a sprite: it travels from
-    /// <paramref name="from"/> to <paramref name="target"/> (or <paramref name="fallbackPoint"/> with no target) and
-    /// then vanishes. Nothing is decided by it and nothing lands — it is the picture of a shot whose blow the server
-    /// is timing on its own clock.
-    ///
-    /// <para>Here rather than in its own object so an arrow is pooled and homes exactly as every other projectile in
-    /// the game is and does; what an ARROW looks like belongs to <see cref="Arrow"/>, which hands the numbers in.</para></summary>
-    public static void SpawnLine(Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
-                                 float arriveRadius, float maxLife, Color tint, float width, float length)
-    {
-        var p = Create(null, 0, 0, 1f, 1f, from, target, fallbackPoint, speed, arriveRadius, maxLife);
-        p.lineLength = Mathf.Max(0.01f, length);
-        var lr = p.line;
-        lr.startColor = tint;
-        lr.endColor = new Color(tint.r, tint.g, tint.b, 0f);
-        lr.widthMultiplier = Mathf.Max(0.001f, width);
-        lr.enabled = true;
-        p.DrawLine(from);
-    }
-
     // POOLED. Every ranged mob shot and every player arrow used to build a GameObject with three components and throw
     // it away on arrival; in a fight with archers or casters that is constant churn. Spent projectiles go dormant and
     // are reused (PERFORMANCE.md names projectiles explicitly in its "must be pooled" checklist).
@@ -111,20 +91,6 @@ public class Projectile3D : MonoBehaviour
         go.AddComponent<Billboard>();
         var made = go.AddComponent<Projectile3D>();
         made.sr = sr;
-        // THE OTHER LOOK a projectile can wear: a drawn line, for a shot with no art of its own. Built once with the
-        // pooled body rather than per flight, and left switched off until something asks for it.
-        var lr = go.AddComponent<LineRenderer>();
-        lr.useWorldSpace = true;
-        lr.positionCount = 2;
-        lr.numCornerVertices = 0;
-        lr.numCapVertices = 0;
-        lr.textureMode = LineTextureMode.Stretch;
-        lr.alignment = LineAlignment.View;
-        // always-included, URP-friendly — the same one the aim reticle draws with
-        lr.material = new Material(Shader.Find("Sprites/Default"));
-        lr.sortingOrder = DepthSortRuntime.FxSlash;
-        lr.enabled = false;
-        made.line = lr;
         return made;
     }
 
@@ -150,63 +116,46 @@ public class Projectile3D : MonoBehaviour
         p.onArriveWith = null;
         p.payload = default;
         p.impactSheet = null; p.impactFrameSize = 0; p.impactFrames = 0; p.impactFps = 20f; p.impactScale = 1f;
-        p.travel = null;
         p.done = false;
-        p.lineLength = 0f;
-        if (p.line != null) p.line.enabled = false;
         p.sr.enabled = true;
         p.sr.sprite = p.frames != null && p.frames.Length > 0 ? p.frames[0] : null;
         p.gameObject.SetActive(true);
         return p;
     }
 
-    /// <summary>As <see cref="Spawn"/> but the projectile IS a particle effect from the <see cref="EffectLibrary"/>
-    /// instead of a billboard sprite: <paramref name="travelId"/> is attached to the moving object and tracks it,
-    /// and on arrival <paramref name="impactId"/> (if any) plays at the hit point. Same homing/motion/onArrive.</summary>
-    public static Transform SpawnVfx(string travelId, float scale,
-                                Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
-                                float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
-                                float travelClipStart = 0f, Color travelTint = default)
+    /// <summary>A bare moving point flying from <paramref name="from"/> to <paramref name="to"/>: on arrival (within
+    /// <paramref name="arriveRadius"/>, or after <paramref name="maxLife"/> seconds) it fires <paramref name="onArrive"/>
+    /// and removes itself. It draws nothing — a sequence's flight on the server, and the thing a watching screen hangs
+    /// the flight's effect on. Same motion as every other projectile.</summary>
+    public static Transform Fly(Vector3 from, Vector3 to, float speed, float arriveRadius, float maxLife, System.Action onArrive)
     {
-        // NOT pooled, deliberately: this overload hands its live transform back to the caller, which keeps reading the
-        // position each frame — recycling it underneath that caller would silently re-aim someone else's effect. It
-        // also has no SpriteRenderer, so it isn't a valid object for the sprite pool to hand out. It is destroyed on
-        // arrival like before, and these are far rarer than per-shot sprite projectiles.
-        var go = new GameObject("Projectile3D(Vfx)") { hideFlags = HideFlags.DontSaveInEditor };
+        // NOT pooled, deliberately: this hands its live transform back to the caller, which keeps reading the position
+        // each frame — recycling it underneath that caller would silently re-aim someone else's effect. It also has no
+        // SpriteRenderer, so it isn't a valid object for the sprite pool to hand out. It is destroyed on arrival, and
+        // these are far rarer than per-shot sprite projectiles.
+        var go = new GameObject("Projectile3D(Flight)") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = from;
 
         var p = go.AddComponent<Projectile3D>();
         p.pooled = false;
-        p.target = target;
-        p.point = target != null ? UnitAnchor.Center(target) : fallbackPoint;   // home onto mid-body (feet-pivoted)
+        p.target = null;
+        p.point = to;
         p.speed = Mathf.Max(0.1f, speed);
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
         p.onArrive = onArrive;
-        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, tint: travelTint, clipStart: travelClipStart);
-        // Aim the effect down its flight path. Map DOWN → travel dir so a pure vertical drop is unchanged (identity)
-        // and only an angled launch tilts. Attach copies position each frame but not rotation, so setting it once on
-        // the handle holds for the straight-line flight.
-        if (faceTravel && p.travel != null)
-        {
-            Vector3 dir = p.point - from;
-            if (dir.sqrMagnitude > 1e-6f)
-                p.travel.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir.normalized);
-        }
         return go.transform;   // the live mover — a Carrier with spread ticks reads its position each frame
     }
 
     SpriteRenderer sr; Sprite[] frames; float fps, t;
-    LineRenderer line; float lineLength;
     Transform target; Vector3 point; float speed, arriveRadius, die;
     System.Action onArrive;
     // typed twin of onArrive: the payload rides here so callers can pass a cached handler (no closure)
     System.Action<HitPayload> onArriveWith;
     HitPayload payload;
     Texture2D impactSheet; int impactFrameSize, impactFrames; float impactFps, impactScale;
-    Vfx.EffectHandle travel;   // Hovl travel mode (SpawnVfx)
     bool done;
-    bool pooled = true;        // false only for the SpawnVfx overload, which hands its transform to a live caller
+    bool pooled = true;        // false only for Fly, which hands its transform to a live caller
 
     void Update()
     {
@@ -226,24 +175,11 @@ public class Projectile3D : MonoBehaviour
 
         if (d <= arriveRadius || d <= step || Time.time >= die) { Arrive(); return; }
         transform.position += to / d * step;
-        if (lineLength > 0f) DrawLine(transform.position);
-    }
-
-    // The two ends of the drawn line: the head where the shot is, and a tail trailing behind it down the flight
-    // path. No allocation — two SetPosition writes on a renderer built with the pooled body.
-    void DrawLine(Vector3 head)
-    {
-        Vector3 back = point - head;
-        Vector3 dir = back.sqrMagnitude > 1e-6f ? back.normalized : transform.forward;
-        line.SetPosition(0, head);
-        line.SetPosition(1, head - dir * lineLength);
     }
 
     void Arrive()
     {
         done = true;
-        if (line != null) line.enabled = false;
-        if (travel != null) travel.Stop();                         // stop + fade the attached travel effect
         if (impactSheet != null)
             SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, impactFps, transform.position, impactScale);
         onArrive?.Invoke();
@@ -262,8 +198,6 @@ public class Projectile3D : MonoBehaviour
         onArriveWith = null;
         payload = default;
         frames = null;
-        travel = null;
-        lineLength = 0f;
         impactSheet = null;
         if (sr != null) sr.sprite = null;
         gameObject.SetActive(false);

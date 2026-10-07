@@ -1,11 +1,8 @@
 {
-  "58e35454-6ffc-4272-b8bc-6326837dfc23": {
+  "4cb6c41b-7f14-4305-b144-ff261418c12e": {
     "counts": {
-      "build-game.sh client": 5
-    },
-    "told": [
-      "build-game.sh client"
-    ]
+      "npm run migrate": 1
+    }
   },
   "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
     "counts": {

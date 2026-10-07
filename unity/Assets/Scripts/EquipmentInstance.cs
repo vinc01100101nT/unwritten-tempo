@@ -76,18 +76,33 @@ public class EquipmentInstance
         if (GameServer.IsServer || !Application.isPlaying) Recompute();
     }
 
-    /// <summary>A fresh copy of <paramref name="def"/> as it ENTERS THE WORLD: Raw, unfolded, with nothing written
-    /// on it. THE single creation path for anything that enters the world — a grant, a reward, what a creature
-    /// spawns wearing — so no caller can hand out a copy in a state a forge could not have produced.</summary>
-    public static EquipmentInstance CreateFresh(Item def) => new EquipmentInstance(def);
+    /// <summary>A fresh copy of <paramref name="def"/> as it ENTERS THE WORLD, exactly as the forge hands one over:
+    /// Raw, unfolded, no Ink — and its one random thing already rolled, a weapon's trademark or an armour piece's
+    /// word. THE single creation path for anything that enters the world — the forge, a grant, a reward, what a
+    /// creature spawns wearing — so no caller can hand out a copy in a state a forge could not have produced.
+    /// Server only: the roll goes through CombatRng. Loading a saved or sent copy is not a creation and never
+    /// comes here.</summary>
+    public static EquipmentInstance CreateFresh(Item def)
+    {
+        var made = new EquipmentInstance(def);
+        if (def == null) return made;
+        if (def.slot == EquipSlotType.Weapon)
+        {
+            int total = Trademarks.RollTotal(def.weaponType);
+            if (total > 0) made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, total));
+        }
+        else made.RollWord();
+        made.Recompute();
+        return made;
+    }
 
     // Reused: the stats already written while one piece is being filled in. A piece is filled once per creature life.
     static readonly List<InkStat> inkScratch = new List<InkStat>(6);
 
     /// <summary>A copy of <paramref name="def"/> AT AN AUTHORED STATE: grade <paramref name="quality"/>, folded
     /// <paramref name="folds"/> times (never past that grade's cap), every stat slot the grade carries written with
-    /// Ink of <paramref name="inkTier"/> — each stat rolled exactly as a station rolls one — and, on a weapon above
-    /// Raw, a trademark rolled exactly as the forge rolls one. Nothing here could not come out of a station, so
+    /// Ink of <paramref name="inkTier"/> — each stat rolled exactly as a station rolls one — and the trademark or
+    /// word <see cref="CreateFresh"/> rolled, at any grade. Nothing here could not come out of a station, so
     /// <see cref="CreateFresh"/>'s promise holds. WHAT A CREATURE WEARS, from the three settings on its own catalog
     /// entry. Server only: every roll goes through CombatRng.</summary>
     public static EquipmentInstance CreateAt(Item def, Quality quality, int folds, int inkTier)
@@ -106,13 +121,7 @@ public class EquipmentInstance
             inkScratch.Add(stat);
         }
         inkScratch.Clear();
-        if (def.slot == EquipSlotType.Weapon && quality > Quality.Raw)
-        {
-            int total = Trademarks.RollTotal(def.weaponType);
-            if (total > 0) made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, total));
-        }
-        // AND AN ARMOUR PIECE'S WORD, on the same terms as a weapon's trademark: a creature's armour above Raw rolls one.
-        if (quality > Quality.Raw) made.RollWord();
+        // The trademark or the word was rolled by CreateFresh, at every grade — the forge rolls one on a Raw piece too.
         made.Recompute();
         return made;
     }
@@ -366,10 +375,10 @@ public struct EquipBonuses
     /// <summary>Whole-percent addition to how hard a crit lands, the other half of the ring's Critical node.</summary>
     public float critDamagePercent;
     /// <summary>What the worn pieces' rolled WORDS add (see <see cref="ArmourWords"/>): whole percent, except MP per
-    /// second (Wellspring) and world units of reach (Longreach). Read through the unit's state store, which folds them
+    /// second (Wellspring) and HP per second (Wayfarer). Read through the unit's state store, which folds them
     /// into the same sub-stat table a timed buff moves — so every reader of those stats gets worn words for free.</summary>
     public float wordCritShieldPercent, wordDisableCutPercent, wordMPRegen, wordDamageCutPercent, wordLifeStealPercent,
-                 wordDamagePercent, wordReflectPercent, wordBlockPercent, wordReach, wordStaminaCutPercent;
+                 wordDamagePercent, wordStaminaCutPercent, wordShoveCutPercent, wordHPRegen;
     /// <summary>Whole-percent movement speed the worn shoes' folds bought (see <see cref="CraftingMath.PieceNumbers"/>),
     /// read through the same sub-stat table as the words above.</summary>
     public float moveSpeedPercent;

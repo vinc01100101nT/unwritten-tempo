@@ -75,10 +75,16 @@
           "text": "Walk from the first town to every map in the world."
         },
         {
-          "state": "now",
-          "when": "Now",
+          "state": "planned",
+          "when": "Planned",
           "title": "Killing things pays you",
           "text": "Monsters drop the materials you forge with, plus consumables; saving a character that never fights pays coin. Pick up what falls and turn it into gear."
+        },
+        {
+          "state": "now",
+          "when": "Now",
+          "title": "A full wardrobe exists",
+          "text": "Make gear for every part of your body — forge it, fold it, quench it for a better grade, write stats on it with **Ink**, or **take it apart** for half of what went into it."
         },
         {
           "state": "done",
@@ -91,12 +97,6 @@
           "when": "23 Sep 2026",
           "title": "Checking the foundations",
           "text": "Making sure everything already in the game works as it should, before the milestones above begin."
-        },
-        {
-          "state": "done",
-          "when": "23 Sep 2026",
-          "title": "A full wardrobe exists",
-          "text": "Make gear for every part of your body — forge it, fold it, quench it for a better grade, write stats on it with **Ink**, or **take it apart** for half of what went into it."
         },
         {
           "state": "done",

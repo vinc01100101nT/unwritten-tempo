@@ -25,6 +25,9 @@ public class MonsterAI3D : MonoBehaviour
 
     /// <summary>Physical attack — written by <see cref="UnitStatBlock"/> from level, primaries, gear and ring.</summary>
     [System.NonSerialized] public int attack = 3;
+    // Whether its ordinary attack is ranged — the held weapon and, for a shuriken, its higher of STR and DEX. Written by
+    // UnitStatBlock with the attack number, from the same totals.
+    [System.NonSerialized] public bool swingsRanged;
 
     [Header("On-hit status (RO — inflicted on the player when this mob lands a hit)")]
     [Tooltip("The ailment applied on a landed hit. Only used when the chance below is > 0.")]
@@ -68,27 +71,11 @@ public class MonsterAI3D : MonoBehaviour
              "and runs from the player — a skittish 'wounded animal' that breaks off when hurt.")]
     [Range(0f, 1f)] public float fleeHpFraction = 0f;
 
-    [Header("Stun indicator (FX/Magic/Spirit)")]
-    [Tooltip("Spinning swirl shown over the mob's head while stunned. Null = stun still freezes it (no swirl).")]
-    public Texture2D stunSheet;
-    public int stunFrameSize = 32;
-    public int stunFrames = 5;
-
-    static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
-    static readonly Color LevelUpColor  = new Color(1f, 0.85f, 0.35f);   // mob level-up toast
-
-    // AN ARROW THIS CREATURE HAS IN THE AIR: who it was shot at, and the moment it arrives. ONE slot, because the
-    // swing cadence paces every shot and a creature can therefore only ever have one in flight. Two plain fields
-    // rather than a list, so a field of archers allocates nothing (PERFORMANCE.md).
-    ICombatUnit arrowAt;
-    float arrowLandsAt;
-
     // The next moment this creature's auto-pilot AI is allowed to WEIGH its skills. Its own clock, separate from the
     // bite's, so a creature that has nothing ready does not re-weigh them every frame while it walks toward you.
     float nextCastTry;
 
     PathAgent3D agent;
-    AttackLunge lunge;
     Transform player;   // whoever this mob is after, as a body to walk at — always Prey's, refreshed with it
 
     /// <summary>WHO this creature is currently after. Chosen from everybody actually present rather than fixed at
@@ -125,7 +112,6 @@ public class MonsterAI3D : MonoBehaviour
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
     float mobXp;          // XP toward this mob's next level (earned from damage dealt to the player)
-    StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
     StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-pilot target
@@ -178,8 +164,11 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (type == DamageType.Magic)
         {
-            crit = false;
-            return UnitOffense.Dealt(MobStates, magicAttack * (1f - CombatRng.Range(0f, magicDamageSpread)));
+            // Magic crits only in a sniper's hands — the same rule, and the same crit, a person's has.
+            crit = WeaponTypes.MagicCanCrit(Equipment != null ? Equipment.WeaponType : WeaponType.None)
+                   && RollCrit(targetLuk);
+            return crit ? UnitOffense.Dealt(MobStates, magicAttack * critMultiplier)
+                        : UnitOffense.Dealt(MobStates, magicAttack * (1f - CombatRng.Range(0f, magicDamageSpread)));
         }
         crit = type == DamageType.Crit || RollCrit(targetLuk);
         return RollBasicDamage(crit);
@@ -206,8 +195,8 @@ public class MonsterAI3D : MonoBehaviour
     public UnitStates MobStates => Health != null ? Health.States : null;
 
     /// <summary><see cref="Time.time"/> of this mob's last landed touch-attack — the one general "it just attacked"
-    /// moment, readable by ANY visual. The billboard's squash tell (<see cref="AttackLunge"/>) is driven straight
-    /// from the same beat below; a live-3D rig (<see cref="MobShadow3DVisual"/>) reads this to play a swing clip.</summary>
+    /// moment. Watching machines draw the swing from the beat announced below — a flat creature's squash
+    /// (<see cref="AttackLunge"/>) included — never from this brain, which draws nothing.</summary>
     public float LastAttackTime { get; private set; }
 
     /// <summary>The simulate-near / freeze-far switch gating this brain, when the unit has one. Assigned by whatever
@@ -257,6 +246,44 @@ public class MonsterAI3D : MonoBehaviour
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
     public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
 
+    // THE SAME CREATURES, FILED BY THE MAP THEY ARE IN — so a search for enemies near a point (a skill's area, a
+    // bouncing blade) walks one map's creatures instead of every creature the server holds in every map. Filed when a
+    // creature switches on, and FILED AGAIN when it is put into its map (MapManager.PutInMap): a creature built while
+    // the game runs lands in whichever map loaded last until then. Removed from the bucket it was filed under, never
+    // from whatever its scene says at that moment.
+    static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<MonsterAI3D>> activeByMap =
+        new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<MonsterAI3D>>();
+    static readonly System.Collections.Generic.List<MonsterAI3D> noCreatures = new System.Collections.Generic.List<MonsterAI3D>();
+    string filedUnder;
+
+    /// <summary>The active creatures in <paramref name="map"/>. Never null; the shared empty list when there are none.
+    /// Read-only to callers — it is the registry itself.</summary>
+    public static System.Collections.Generic.List<MonsterAI3D> ActiveIn(string map)
+        => !string.IsNullOrEmpty(map) && activeByMap.TryGetValue(map, out var here) ? here : noCreatures;
+
+    /// <summary>File this creature under the map it is in NOW — called when it is moved into its map.</summary>
+    public void Refile()
+    {
+        if (!Active.Contains(this)) return;
+        Unfile();
+        File();
+    }
+
+    void File()
+    {
+        filedUnder = gameObject.scene.name;
+        if (string.IsNullOrEmpty(filedUnder)) return;
+        if (!activeByMap.TryGetValue(filedUnder, out var list))
+            activeByMap[filedUnder] = list = new System.Collections.Generic.List<MonsterAI3D>();
+        list.Add(this);
+    }
+
+    void Unfile()
+    {
+        if (!string.IsNullOrEmpty(filedUnder) && activeByMap.TryGetValue(filedUnder, out var list)) list.Remove(this);
+        filedUnder = null;
+    }
+
     /// <summary>Move this mob's wander anchor to <paramref name="p"/>. Used when a pooled mob is reused at a
     /// new spot (<see cref="FieldMobSpawner"/>) so it wanders around where it reappeared, not its first spawn.</summary>
     public void SetHome(Vector3 p) => home = p;
@@ -296,7 +323,6 @@ public class MonsterAI3D : MonoBehaviour
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();
-        lunge = GetComponent<AttackLunge>();
         Health = GetComponent<Health>();
         status = Status.Of(gameObject);   // poison/bleed/burn ticks + silence/blind flags
         home = transform.position;
@@ -341,11 +367,13 @@ public class MonsterAI3D : MonoBehaviour
 
     void OnEnable()
     {
-        if (!Active.Contains(this)) Active.Add(this);
-        // A NEW LIFE HAS NOTHING IN THE AIR. A recycled body would otherwise land the shot its last life loosed.
-        arrowAt = null;
+        if (!Active.Contains(this)) { Active.Add(this); File(); }
+        // A NEW LIFE HAS NOTHING IN THE AIR: a blade or arrow its last life threw is the flight store's to drop, and it
+        // does, because it remembers which life threw it (Flights).
     }
-    void OnDisable() => Active.Remove(this);
+    // A swing still on its way in dies with the life that began it — a body switched off for death or the pool must not
+    // land it when it comes back.
+    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; }
 
     void Start()
     {
@@ -405,7 +433,6 @@ public class MonsterAI3D : MonoBehaviour
             level++;
             if (Health != null) Health.RefillToMax();
         }
-        DamagePopup.SpawnText(transform, "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }
 
@@ -418,19 +445,6 @@ public class MonsterAI3D : MonoBehaviour
     /// <summary>This mob's live stat block (level + primaries → every derived number). Cached; may be null on a
     /// legacy hand-placed mob that predates the block.</summary>
     public UnitStatBlock Stats => statBlock != null ? statBlock : (statBlock = GetComponent<UnitStatBlock>());
-
-    // This creature's live-3D animation driver, when it has one. Resolved ONCE and the miss remembered too: a flat
-    // sprite creature has none and never will, and a plain null-cache would search it out again on every bite.
-    Agent3DVisual visual;
-    bool lookedForVisual;
-    Agent3DVisual Visual
-    {
-        get
-        {
-            if (!lookedForVisual) { lookedForVisual = true; visual = GetComponent<Agent3DVisual>(); }
-            return visual;
-        }
-    }
 
     UnitEquipment gear;
     /// <summary>This mob's worn gear — the owner of its weapon, and so of its REACH (see <see cref="WeaponReach"/>).
@@ -456,7 +470,7 @@ public class MonsterAI3D : MonoBehaviour
             // The body's own answer — gear plus any reach a skill is lending — so a reach bonus lengthens this
             // creature's bite exactly as it lengthens a person's swing.
             float baseReach = Health != null ? Health.MeleeReachFullSize
-                                             : WeaponReach.For(Equipment, CharacterSpec.Active.unarmedReach);
+                                             : WeaponReach.For(Equipment, CharacterSpec.Active.unarmedReach, swingsRanged);
             // Blend THIS mob's size with its opponent's. Its opponent is the player, which is always built to the
             // shared character body — so the pair is (my size, character size), never a factor guessed in advance.
             return preferredRange > 0f ? baseReach
@@ -478,19 +492,12 @@ public class MonsterAI3D : MonoBehaviour
     }
 
     /// <summary>Stun this mob for <paramref name="seconds"/> — freezes it (reusing the <see cref="Stagger"/>
-    /// freeze) and shows a spinning swirl over its head. A reusable status hook for per-hit procs (e.g. the
-    /// Mage's multi-hit Meteor). Re-stunning while already stunned just refreshes the duration (no popup spam).</summary>
+    /// freeze). A reusable status hook for per-hit procs (e.g. the Mage's multi-hit Meteor). Re-stunning while already
+    /// stunned just refreshes the duration.</summary>
     public void Stun(float seconds)
     {
         if (seconds <= 0f) return;
-        bool wasStunned = Time.time < stunnedUntil;
         Stagger(seconds);   // freeze chase + attack (shares stunnedUntil)
-        if (stunSheet != null)
-        {
-            if (stunFx == null) stunFx = StatusFX.Create(transform, stunSheet, stunFrameSize, stunFrames, 12f, 0.7f, 1.15f);
-            stunFx.Show(seconds);
-        }
-        if (!wasStunned) DamagePopup.SpawnText(transform, "Stun!", StunColor);
     }
 
     /// <summary>The brain's half of the taunt verb: engage the player NOW rather than waiting to be provoked, and take
@@ -521,12 +528,13 @@ public class MonsterAI3D : MonoBehaviour
         Stagger(Mathf.Max(stagger, time));
     }
 
-    /// <summary>Roll this mob's configured on-hit ailment onto the player — called only when a hit actually
-    /// LANDED (so a MISS / Immune doesn't proc it). Applies straight to the player's status host.</summary>
-    public void TryInflictOnHit()
+    /// <summary>Roll this mob's configured on-hit ailment onto <paramref name="victim"/> — the unit the blow actually
+    /// landed on, which for a bouncing blade is not always the one it is chasing. Called only when a hit LANDED (so a
+    /// MISS / Immune doesn't proc it).</summary>
+    public void TryInflictOnHit(ICombatUnit victim)
     {
-        if (onHitAilmentChance <= 0f) return;
-        var ps = Prey != null ? Prey.StatusHost : null;
+        if (onHitAilmentChance <= 0f || PlayerUnits.Gone(victim)) return;
+        var ps = victim.StatusHost;
         if (ps != null && CombatRng.Chance(onHitAilmentChance))
             ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude, Health);
     }
@@ -543,14 +551,9 @@ public class MonsterAI3D : MonoBehaviour
         // targeted, hit and drawn on the map.
         if (!ThinksForItself) return;
 
-        // AN ARROW THIS CREATURE LOOSED, ARRIVING. Read before anything that could turn this frame around — a
-        // stagger, a root, a flinch — because a shot already in the air is not the shooter's to take back.
-        if (arrowAt != null && Time.time >= arrowLandsAt)
-        {
-            var shotAt = arrowAt;
-            arrowAt = null;
-            LandOneSwing(shotAt, announceIntent: false);
-        }
+        // A swing already begun connects at its contact moment whatever else this frame holds — a stagger or a root
+        // landing during the swing does not take back a blow already on its way, the same as for a person.
+        LandSwingIfDue();
 
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
 
@@ -632,40 +635,38 @@ public class MonsterAI3D : MonoBehaviour
 
         if (swingMoment)
         {
-            var held = Equipment != null ? Equipment.WeaponType : WeaponType.None;
-            if (WeaponTypes.IsRanged(held))
-            {
-                // A BOW LOOSES AN ARROW, and the blow lands when it arrives. The flight is timed from the one speed
-                // every arrow in the game flies at, and every machine that can see this creature is told to draw it —
-                // the identical treatment a person's bow gets, from the identical numbers.
-                Vector3 from = UnitAnchor.Center(transform);
-                Vector3 to = UnitAnchor.Center(player);
-                arrowAt = Prey;
-                arrowLandsAt = Time.time + Arrow.FlightSeconds(from, to);
-                GameNetwork.AnnounceArrow(transform, player, MapManager.InMap(to, Health.Map), Health.Map);
-                // ABOUT TO ATTACK is the RELEASE for a bow, not the arrival — the shot is the gesture, and a passive
-                // that answers it must fire when the string is let go.
-                PassiveEvents.Fire(Health, SkillTrigger.OnBasicAttackStart, null, player);
-            }
-            else LandOneSwing(Prey, announceIntent: true);
-
             // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
             float beat = SwingTime;
+            float contactAfter = 0f;
+            if (swingsRanged)
+            {
+                // A RANGED ATTACK FLIES — an arrow, or a thrown shuriken that bounces and comes back — and lands when
+                // it arrives. The ONE flight store a person's ranged attack goes through as well, so a creature's
+                // throw is the identical thing from the identical numbers.
+                Flights.ThrowBasic(Health, Prey, -1);
+                // ABOUT TO ATTACK is the RELEASE for a ranged attack, not the arrival — the throw is the gesture, and
+                // a passive that answers it must fire when it is let go.
+                PassiveEvents.Fire(Health, SkillTrigger.OnBasicAttackStart, null, player);
+            }
+            else
+            {
+                // A MELEE SWING BEGINS HERE AND CONNECTS PART WAY THROUGH — the way a person's does. ABOUT TO ATTACK is
+                // raised now, at the start of the swing; the blow itself, its damage and everything it sets off, lands
+                // at the contact moment (LandSwingIfDue), which is also the moment every screen draws the bite slamming in.
+                PassiveEvents.Fire(Health, SkillTrigger.OnBasicAttackStart, null, player);
+                contactAfter = ContactAfter(beat);
+                swingAt = Prey;
+                swingLandsAt = Time.time + contactAfter;
+            }
             nextTouch = Time.time + beat;
             LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
-            if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell (billboard mobs only)
 
-            // THE SWING ITSELF, through ONE door on every machine alike. The swing POSE is chosen here because the
-            // weapon that decides it is this machine's fact, not a watcher's guess; the beat is how long it has to
-            // finish inside, and the art still owns how long the clip takes.
-            //
-            // Said out loud as well, because a watching machine's copy of this creature has no brain to reach this
-            // line: without it a creature bites in silence and the damage numbers climb over a body that never
-            // moved. Both halves carry the SAME action and the SAME beat, from here, so a swing can never look one
-            // length on the machine that owns the creature and another on the machines watching it.
-            StanceId swing = WeaponStances.AttackFor(Equipment != null ? Equipment.WeaponType : WeaponType.None);
-            if (Visual != null) Visual.TellAction(swing, Mirror.NetworkTime.time, beat);
-            GameNetwork.AnnounceActionOnMob(gameObject, swing, beat);
+            // THE SWING ITSELF, said out loud — the only way any screen learns of it, since a watching machine's copy of
+            // this creature has no brain to reach this line. The swing POSE is chosen here because the weapon that
+            // decides it is this machine's fact, not a watcher's guess; the beat is how long it has to finish inside,
+            // and the art still owns how long the clip takes. This machine draws none of it.
+            StanceId swing = WeaponStances.AttackFor(Equipment != null ? Equipment.WeaponType : WeaponType.None, swingsRanged);
+            GameNetwork.AnnounceActionOnMob(gameObject, swing, beat, Prey != null ? Prey.Body : null, contactAfter);
         }
 
         // FLINCHED: a hit that cost HP pins this mob's feet for as long as its hurt reaction plays — but not its bite,
@@ -718,15 +719,42 @@ public class MonsterAI3D : MonoBehaviour
     /// <para>It used to roll its own crit, accuracy and damage inline here. Everything matched except the part that
     /// cannot be seen: neither "about to swing" nor "a swing landed" was ever announced, so every passive a creature
     /// could hold that answers either moment was dead on every creature in the world.</para></summary>
-    void LandOneSwing(ICombatUnit victim, bool announceIntent)
+    // A MELEE SWING ON ITS WAY IN: whom it was aimed at, and the moment it connects (Time.time). Null = none.
+    ICombatUnit swingAt;
+    float swingLandsAt;
+
+    /// <summary>The contact moment of a swing that began now and lasts <paramref name="beat"/>, in seconds from now —
+    /// the shared fraction of the swing every fighter connects at (<see cref="CharacterSpec.hitTiming"/>), the same one
+    /// a person's swing lands at on this machine.</summary>
+    static float ContactAfter(float beat) => beat * Mathf.Clamp01(CharacterSpec.Active.hitTiming);
+
+    // THE CONTACT MOMENT, on this machine's clock. Everything is re-asked rather than remembered from when the swing
+    // began, by the rules a person's swing lands by: the swinger and its target must both still be alive, still
+    // enemies, and the target still within reach — so one that walked out during the swing is missed.
+    void LandSwingIfDue()
     {
-        if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead) return;
-        int dealt = BasicSwing.Land(Health, victim, 1f, overkill: false, announceIntent: announceIntent);
+        if (swingAt == null || Time.time < swingLandsAt) return;
+        var victim = swingAt;
+        swingAt = null;
+        if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead || victim.Body == null) return;
+        if (!Sides.Hostile(Health, victim)) return;
+        if ((victim.Body.position - transform.position).sqrMagnitude > Reach * Reach) return;
+        LandSwing(victim, announceIntent: false, 1f);
+    }
+
+    /// <summary>One ordinary attack scaled by <paramref name="power"/> — what a thrown blade's hop lands (each jump is
+    /// worth less than the last). The creature's own half of a landed hit, its on-hit ailment and its combat
+    /// experience, comes with it on every hop, onto the unit the hop actually struck.</summary>
+    public int LandSwing(ICombatUnit victim, bool announceIntent, float power)
+    {
+        if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead) return 0;
+        int dealt = BasicSwing.Land(Health, victim, power, overkill: false, announceIntent: announceIntent);
         if (dealt > 0)
         {
-            TryInflictOnHit();
+            TryInflictOnHit(victim);
             GainCombatXp(dealt);
         }
+        return dealt;
     }
 
     // Reused: the ready skills a creature is choosing between at one swing moment. Cleared after every choice.
@@ -925,8 +953,7 @@ public class MonsterAI3D : MonoBehaviour
         // A WEAPON THAT SETS ITS OWN RANGE IS RESPECTED. A bow reaches as far as a bow reaches, for a creature exactly as
         // for the person at the keyboard, so a creature holding one stands off at that range instead of walking into
         // arm's length. The limit below is for bare hands, or a weapon that sets no range.
-        var held = WeaponReach.WeaponOf(Equipment);
-        bool weaponSetsReach = held != null && held.attackRange > 0f;
+        bool weaponSetsReach = WeaponReach.SetsReach(WeaponReach.WeaponOf(Equipment), swingsRanged);
         if (!weaponSetsReach && Prey != null && Health != null)
         {
             float preyReach = Prey.MeleeReachFullSize * UnitScale.MeleeBlend(Prey.MeleeScale, Health.MeleeScale);

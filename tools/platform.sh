@@ -153,6 +153,15 @@ port_pids() {
   fi
 }
 
+# The program name of a running process id, e.g. Unity or Unity.exe — prints nothing when no such process runs.
+process_name() {
+  if [ "$PLATFORM" = windows ]; then
+    tasklist //FI "PID eq $1" //FO CSV //NH 2>/dev/null | tr -d '\r' | grep '^"' | cut -d'"' -f2
+  else
+    __comm="$(ps -o comm= -p "$1" 2>/dev/null)" && basename -- "$__comm"
+  fi
+}
+
 # port_info <port>... — one line per listener; exits 1 when NOTHING listens on any of them (so "silent = all clear").
 port_info() {
   __any=1
@@ -180,18 +189,6 @@ stop_port() {
       echo "stopped $__p (port $__port)"
     done
   done
-}
-
-# The port the update folder (the website, the launcher and the game updates) is served on: the one PATCH_URL in
-# settings.env names — written in it, or its scheme's own (80, or 443 for https) when it names none. Fails when
-# PATCH_URL is empty. Load settings.env before asking.
-patch_port() {
-  [ -n "${PATCH_URL:-}" ] || return 1
-  __authority="${PATCH_URL#*://}"; __authority="${__authority%%/*}"
-  case "$__authority" in
-    *:[0-9]*) echo "${__authority##*:}" ;;
-    *)        case "$PATCH_URL" in https://*) echo 443 ;; *) echo 80 ;; esac ;;
-  esac
 }
 
 # This computer's address on the local network, for players on other machines.

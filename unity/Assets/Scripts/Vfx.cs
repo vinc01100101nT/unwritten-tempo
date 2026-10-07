@@ -270,14 +270,14 @@ public static class Vfx
         return NewInstance(def, key);
     }
 
-    /// <summary>TRUE where there is nobody to see — a headless server, which resolves every skill in the world and
-    /// would otherwise build and run a particle system for each one in front of no screen. The twin of
-    /// <c>Sfx.Deaf</c>, written the same way for the same reason.
+    /// <summary>TRUE on the server, which draws nothing and is never meant to reach this door: every effect is drawn by
+    /// the screens from the event the server announced, and reaching here writes an error to the server's log
+    /// (<see cref="GameServer.CaughtDrawing"/>). The twin of <c>Sfx.Deaf</c>.
     ///
     /// <para>Nothing about TIMING hangs on this. A skill's beats come from the effect table's measured lengths
     /// (see <see cref="EffectTiming"/>), never from whether an instance was built — so a machine that draws
     /// nothing still runs every skill on the same moments as the machines watching it.</para></summary>
-    static bool Blind => GameServer.IsServer;
+    static bool Blind => GameServer.CaughtDrawing("Vfx");
 
     /// <summary>Play a one-shot effect at a world position (prefab's own orientation). Returns null if the id
     /// is unknown or the library is missing.</summary>

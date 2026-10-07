@@ -440,9 +440,9 @@
             "type": "town",
             "preview": "assets/minimaps/luminhal.jpg",
             "left": 0.890625,
-            "top": 0.427734375,
-            "width": 0.0416666679084301,
-            "height": 0.0625
+            "top": 0.419921875,
+            "width": 0.0520833320915699,
+            "height": 0.078125
         },
         {
             "id": "lmh_fild01",
@@ -635,8 +635,8 @@
             "height": 0.048828125
         },
         {
-            "id": "iron_gate",
-            "name": "Iron Gate",
+            "id": "narrowbend",
+            "name": "Narrowbend",
             "type": "special",
             "preview": "",
             "left": 0.2213541716337204,
@@ -903,6 +903,16 @@
             "top": 0.72265625,
             "width": 0.02604166604578495,
             "height": 0.0390625
+        },
+        {
+            "id": "hazemere",
+            "name": "Hazemere",
+            "type": "town",
+            "preview": "assets/minimaps/hazemere.jpg",
+            "left": 0.2317708283662796,
+            "top": 0.4296875,
+            "width": 0.0520833320915699,
+            "height": 0.078125
         }
     ]
 }

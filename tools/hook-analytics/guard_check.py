@@ -80,8 +80,14 @@ def beat(name, session=""):
         # overwritten by any test run of the hook, and the next end-of-turn check then compares the
         # test's fake id against the real one and reports a working guard as dead. (Measured: the
         # gate was run five times with the id "try" while proving it; both false alarms followed.)
+        # RANKED BY THE LAST STAMP, NOT THE FIRST. A session that stamps again moves to the newest end, so
+        # one still working is never the one dropped. Ranked by first appearance, a long session was pushed
+        # out by eight shorter ones started after it while it kept stamping, and the end-of-turn check then
+        # called a gate dead that had run 46 times that session. (Measured 2026-10-05.)
         recent = list((seen.get(name) or {}).get("sessions") or [])
-        if session and session not in recent:
+        if session:
+            if session in recent:
+                recent.remove(session)
             recent.append(session)
         seen[name] = {"ts": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
                       "session": session,

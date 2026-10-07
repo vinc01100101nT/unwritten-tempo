@@ -59,6 +59,7 @@ public class CameraFollow3D : MonoBehaviour
 
     void Awake()
     {
+        if (GameServer.RemovesPresentation(this)) return;
         cam = GetComponent<Camera>();
         Main = this;
         StartViewDepth = new Vector2(distance, height - lookAtHeight).magnitude;

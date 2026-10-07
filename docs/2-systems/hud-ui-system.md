@@ -38,7 +38,7 @@ Tracking issue: **VIN-22**.
 Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
 value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button) and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button; both list every mob and NPC that lives in a map with its level, the zone view beside the map it shows and the world view beside the pointer) and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## The theme rule
 
@@ -116,6 +116,7 @@ background and veil), not to any window.
 | Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers |
 | Good | `#2E7D41` | a stat that went up |
 | Bad | `#B83A3A` | a stat that went down; a refusal |
+| PmText | `#867200` | a private message in the chat — a dark gold yellow, since bright yellow cannot be read on a window |
 
 ### Shapes
 
@@ -165,7 +166,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 ## Phase plan — where it actually stands (measured 2026-08-30)
 
 - **Phase 1 — DONE.** The Inventory and Character windows exist; what you wear is listed at the top of the inventory. Hotbar + stat allocation were already done.
-- **Phase 2 — mostly done.** The buff/debuff bar and both tooltips (item and skill) are built. **The quest tracker is not**, and cannot be: no quest system exists anywhere in the game.
+- **Phase 2 — mostly done.** The buff/debuff bar and both tooltips (item and skill) are built. **The quest tracker** has a quest system to follow since 2026-10-04: the Quests window (J), and the followed quest's route drawn on the ground and on the minimap.
 - **Phase 3 — no longer "deferred", and no longer one phase.** Chat is built. Guild / marketplace / mail are still absent, but they are now ordinary features on a real networked game rather than a bracket nobody expected to open.
 - **Phase 4 — partly done.** Windows are movable by their title bar, and in-game windows carry minimise and close buttons. **Saved layouts and UI scaling are not built**, and UI Toolkit was never revisited — it is still uGUI throughout.
 

@@ -184,6 +184,22 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # Every shadow's body and outfit colours. A body the roster lacks is refused by the server, and a colour on a part
+    # the body does not have is silently drawn as nothing — neither shows until somebody meets the creature.
+    "shadow-looks": {
+        "roots": [(os.path.join(DATA, "Resources", "Monsters"), ".asset")],
+        "files": [os.path.join(DATA, "Resources", "CharacterDyeParts.asset"),
+                  os.path.join(REPO, "unity", "Assets", "AddressableAssetsData", "AssetGroups", "Characters.asset")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-shadow-looks.py")],
+        "headline": "A shadow's look names a body the game cannot load, or a colour on a part that body does not have:",
+    },
+    "shadow-looks-checker": {
+        "files": [os.path.join(TOOLS, "check-shadow-looks.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-shadow-looks-check.py")],
+        "headline": "The shadow-look checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
     "editor-writes": {
         "roots": [(SCRIPTS, ".cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-editor-writes.py")],

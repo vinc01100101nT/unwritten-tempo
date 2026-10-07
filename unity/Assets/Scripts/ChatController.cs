@@ -21,7 +21,7 @@ using TMPro;
 /// </summary>
 public class ChatController : MonoBehaviour
 {
-    const int MaxLines = 200;   // oldest lines are trimmed past this so the log can't grow unbounded
+    const int MaxLines = 200;   // per kind of line; oldest are trimmed past this so the log can't grow unbounded
 
     // Rich-text tints read from the theme once: the speaker's name, a command you typed (echoed back), the hint line.
     static readonly string SpeakerHex = UiKit.Hex(UiKit.TitleText);
@@ -35,7 +35,30 @@ public class ChatController : MonoBehaviour
     RectTransform logContent;    // vertical list of message rows
     ScrollRect scroll;
     TMP_InputField input;
+    TMP_InputField nameBox;      // who a line goes to as a private message; empty = said out loud
     bool built;
+
+    // WHICH KIND OF LINE A ROW IS — what a tab shows, and what the row cap counts against. Guild, party and world
+    // become members here and tabs below; nothing else about a row changes.
+    enum LineKind { General, Pm }
+    const int LineKinds = 2;
+
+    // Each kind's rows, oldest first, so a full kind drops its OWN oldest — a busy fight's skill calls can never push
+    // a private message out of the PM tab. Each kind keeps up to MaxLines.
+    readonly Queue<GameObject>[] rowsOfKind = { new Queue<GameObject>(), new Queue<GameObject>() };
+
+    // The tab showing: null = All, otherwise only rows of that kind.
+    LineKind? showing;
+    Button allTab, pmTab;
+
+    // Everyone this person has messaged or been messaged by this session, most recent first — what Up and Down step
+    // through in the name box. Bounded, like the log.
+    const int MostPmPartners = 50;
+    readonly List<string> pmPartners = new List<string>();
+    int partnerStep = -1;
+
+    static string pmHex;
+    static string PmHex => pmHex ??= UiKit.Hex(UiKit.PmText);
 
     static ChatController instance;   // the one live chat, so the game can post a line without a lookup
 
@@ -137,6 +160,27 @@ public class ChatController : MonoBehaviour
         => string.IsNullOrEmpty(name) ? $"<color={SpeakerHex}>You:</color>"
                                       : $"<color={SpeakerHex}>{Sanitize(name)}:</color>";
 
+    /// <summary>A PRIVATE MESSAGE, as the server delivered it: one this person received, or — <paramref name="outgoing"/>
+    /// — their own, confirmed delivered. A row in the PM kind and no bubble over any head; the window opens if it
+    /// was shut, without taking the keyboard, so a message is never missed.</summary>
+    public static void Pm(string name, string text, bool outgoing)
+    {
+        if (instance == null || string.IsNullOrEmpty(name) || string.IsNullOrEmpty(text)) return;
+        instance.RememberPartner(name);
+        string lead = outgoing ? "To " : "From ";
+        instance.AddLine($"<color={PmHex}>{lead}{Sanitize(name)}:</color> {Sanitize(text)}", LineKind.Pm);
+        if (instance.root != null && !UiAnim.IsOpen(instance.root)) UiAnim.Open(instance.root);
+    }
+
+    void RememberPartner(string name)
+    {
+        for (int i = 0; i < pmPartners.Count; i++)
+            if (string.Equals(pmPartners[i], name, System.StringComparison.OrdinalIgnoreCase)) { pmPartners.RemoveAt(i); break; }
+        pmPartners.Insert(0, name);
+        if (pmPartners.Count > MostPmPartners) pmPartners.RemoveAt(pmPartners.Count - 1);
+        partnerStep = -1;
+    }
+
     // The tint a call is logged in, taken from the palette's own colour rather than typed here as a second copy.
     static string callHex;
     static string CallHex => callHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Accent);
@@ -162,13 +206,27 @@ public class ChatController : MonoBehaviour
             FocusInput();
             return;
         }
+        if (nameBox != null && nameBox.isFocused) StepPartner(Hotkeys.ArrowStep());
+
         if (UiAnim.IsOpen(root) && Hotkeys.CancelDown())
         {
             if (input != null) input.DeactivateInputField();
+            if (nameBox != null) nameBox.DeactivateInputField();
             UiAnim.Close(root);
             UISounds.PlayClose();
             Hotkeys.MarkCancelHandled();
         }
+    }
+
+    // Up walks back through the people this person has messaged with, Down forward again, wrapping at both ends.
+    void StepPartner(int step)
+    {
+        if (step == 0 || pmPartners.Count == 0) return;
+        partnerStep = partnerStep < 0 && step < 0
+            ? pmPartners.Count - 1
+            : ((partnerStep + step) % pmPartners.Count + pmPartners.Count) % pmPartners.Count;
+        nameBox.text = pmPartners[partnerStep];
+        nameBox.caretPosition = nameBox.text.Length;
     }
 
     // ---- build (once) ---------------------------------------------------------
@@ -184,38 +242,80 @@ public class ChatController : MonoBehaviour
         // behind the chat; the title bar stays solid.
         UiKit.SeeThroughBody(root.GetComponent<Image>(), content.parent.GetComponent<Image>(), BodyAlpha, UiKit.WindowRadius);
 
+        BuildTabs(content);
         BuildInput(content);
         BuildLog(content);
+        TabFocus.Attach(root);   // Tab steps between the name box and the line box
 
         built = true;   // starts hidden (UiKit.Window inactivates root); opens on the first Enter
     }
 
-    // One-line input box pinned to the bottom of the content area.
+    const float TabsHeight = 26f;
+    const float NameBoxWidth = 110f;
+
+    // All and PM, across the top of the window.
+    void BuildTabs(RectTransform content)
+    {
+        var row = UiKit.TabRow(content, TabsHeight);
+        allTab = UiKit.Btn("All", row, () => Show(null));
+        pmTab = UiKit.Btn("PM", row, () => Show(LineKind.Pm));
+        MarkTabs();
+    }
+
+    void Show(LineKind? kind)
+    {
+        showing = kind;
+        for (int k = 0; k < LineKinds; k++)
+        {
+            bool visible = kind == null || (int)kind.Value == k;
+            foreach (var row in rowsOfKind[k]) if (row != null) row.SetActive(visible);   // perf-ok: a tab click
+        }
+        MarkTabs();
+        wantsScrollToNewest = true;
+    }
+
+    void MarkTabs()
+    {
+        UiKit.MarkTab(allTab, showing == null);
+        UiKit.MarkTab(pmTab, showing == LineKind.Pm);
+    }
+
+    // The name box (left) and the line box (right), pinned to the bottom of the content area.
     void BuildInput(RectTransform content)
     {
-        var bg = UiKit.Field(UiKit.Img("Input", content, UiKit.SlotFill));
+        nameBox = BuildBox(content, "PmName", "PM to…", 0, NameBoxWidth);
+        nameBox.onEndEdit.AddListener(OnNameEndEdit);
+
+        input = BuildBox(content, "Input", "Say something, or /help…", NameBoxWidth + 4, 0);
+        input.onEndEdit.AddListener(OnEndEdit);
+    }
+
+    // One single-line box at the bottom of the content area: <paramref name="left"/> in from the left edge, and
+    // <paramref name="width"/> wide — or, at 0, stretching to the right edge.
+    TMP_InputField BuildBox(RectTransform content, string name, string hint, float left, float width)
+    {
+        var bg = UiKit.Field(UiKit.Img(name, content, UiKit.SlotFill));
         bg.raycastTarget = true;
         UiKit.SeeThroughBody(bg, bg.transform.Find("Well").GetComponent<Image>(), BodyAlpha, UiKit.ButtonRadius);
         bg.rectTransform.anchorMin = new Vector2(0, 0);
-        bg.rectTransform.anchorMax = new Vector2(1, 0);
-        bg.rectTransform.pivot = new Vector2(0.5f, 0);
-        bg.rectTransform.sizeDelta = new Vector2(0, 28);
-        bg.rectTransform.anchoredPosition = Vector2.zero;
+        bg.rectTransform.anchorMax = new Vector2(width > 0 ? 0 : 1, 0);
+        bg.rectTransform.pivot = new Vector2(0, 0);
+        bg.rectTransform.sizeDelta = new Vector2(width > 0 ? width : -left, 28);
+        bg.rectTransform.anchoredPosition = new Vector2(left, 0);
 
         var text = UiKit.Label("Text", bg.transform, "", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
         text.richText = false;   // typed text is literal, never markup
-        UiKit.Fill(text.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
 
-        var placeholder = UiKit.Label("Placeholder", bg.transform, "Say something, or /help…", 14, FontStyle.Italic, TextAnchor.MiddleLeft);
+        var placeholder = UiKit.Label("Placeholder", bg.transform, hint, 14, FontStyle.Italic, TextAnchor.MiddleLeft);
         placeholder.color = UiKit.TextDim;
-        UiKit.Fill(placeholder.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
 
-        input = bg.gameObject.AddComponent<TMP_InputField>();
-        input.targetGraphic = bg;
-        input.textComponent = text;
-        input.placeholder = placeholder;
-        input.lineType = TMP_InputField.LineType.SingleLine;
-        input.onEndEdit.AddListener(OnEndEdit);
+        var box = bg.gameObject.AddComponent<TMP_InputField>();
+        box.targetGraphic = bg;
+        box.textComponent = text;
+        box.placeholder = placeholder;
+        box.lineType = TMP_InputField.LineType.SingleLine;
+        UiKit.ClipTyping(box, 8);
+        return box;
     }
 
     // Scrolling message log filling the content area above the input box.
@@ -224,7 +324,7 @@ public class ChatController : MonoBehaviour
         // Clear, so the log reads at the window body's own see-through shade rather than stacking a second layer on it.
         var view = UiKit.Img("Log", content, Color.clear);
         view.raycastTarget = true;   // a graphic for the scroll wheel to land on
-        UiKit.Fill(view.rectTransform, new Vector2(0, 34), new Vector2(0, 0));   // sit above the 28px input (+ gap)
+        UiKit.Fill(view.rectTransform, new Vector2(0, 34), new Vector2(0, -(TabsHeight + 4)));   // between the tabs and the 28px input (+ gaps)
         view.gameObject.AddComponent<RectMask2D>();
 
         scroll = view.gameObject.AddComponent<ScrollRect>();
@@ -267,12 +367,26 @@ public class ChatController : MonoBehaviour
         FocusInput();   // keep the box focused for rapid entry
     }
 
+    // Enter in the name box moves on to the line box, where the message is typed.
+    void OnNameEndEdit(string value)
+    {
+        if (!(Input.GetKeyDown(GameKeys.Chat) || Input.GetKeyDown(GameKeys.ChatAlt))) return;
+        nameBox.text = value != null ? value.Trim() : "";
+        FocusInput();
+    }
+
     void Submit(string text)
     {
+        // A COMMAND IS ALWAYS A COMMAND, whatever the name box holds — it runs, and is never sent to anybody.
         if (GmCommands.IsCommand(text))
         {
             AddLine($"<color={EchoHex}>{Sanitize(text)}</color>");
             GmCommands.Execute(text, AddLine);
+        }
+        else if (nameBox != null && !string.IsNullOrWhiteSpace(nameBox.text))
+        {
+            // A PRIVATE MESSAGE: shown only when the server says it was delivered, like a said line.
+            if (!GameNetwork.SendPmToServer(nameBox.text, text)) GameSaid("Could not deliver that message.", false);
         }
         else
         {
@@ -303,16 +417,24 @@ public class ChatController : MonoBehaviour
         return true;
     }
 
-    void AddLine(string message)
+    void AddLine(string message) => AddLine(message, LineKind.General);
+
+    void AddLine(string message, LineKind kind)
     {
         LineAdded?.Invoke(message);
         if (logContent == null) return;
 
         var t = UiKit.MakeText("Line", logContent, message, 14, FontStyle.Normal, TextAnchor.UpperLeft);
         t.color = UiKit.TextMain;
+        // A typed "\n" or "<" stays the characters it is, never a line break or a tag: one row is one line from
+        // one person, and nothing typed can draw a second row that looks like it came from somebody else.
+        t.parseCtrlCharacters = false;
+        if (showing != null && showing.Value != kind) t.gameObject.SetActive(false);
 
-        // Trim the oldest rows so the log stays bounded.
-        while (logContent.childCount > MaxLines) Destroy(logContent.GetChild(0).gameObject);
+        // Trim each kind's oldest rows so the log stays bounded — a kind never pushes out another kind's rows.
+        var rows = rowsOfKind[(int)kind];
+        rows.Enqueue(t.gameObject);
+        while (rows.Count > MaxLines) { var oldest = rows.Dequeue(); if (oldest != null) Destroy(oldest); }
 
         // ASKED FOR, NOT DONE HERE. Snapping to the newest line needs a layout pass forced through first, and that
         // rebuilds every dirty canvas on screen. It used to run per line added, which was fine when the only lines
@@ -341,5 +463,5 @@ public class ChatController : MonoBehaviour
     }
 
     // Neutralize rich-text markup in user/echoed text so a stray '<' can't corrupt the log's formatting.
-    static string Sanitize(string s) => string.IsNullOrEmpty(s) ? s : s.Replace("<", "<​");
+    public static string Sanitize(string s) => string.IsNullOrEmpty(s) ? s : s.Replace("<", "<​");
 }

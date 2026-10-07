@@ -15,7 +15,7 @@ using UnityEngine;
 public enum WeaponType
 {
     None = 0,           // unarmed / not a weapon (bag items, armor)
-    Sword = 1,          // one-handed — balanced baseline (Swordsman home), pairs with a shield
+    Sword = 1,          // one-handed — balanced baseline
     TwoHandSword = 2,   // heavy two-hander, anti-Large
     Dagger = 3,         // fast, low per-hit, shines vs Small / swarms
     Axe = 4,            // one-handed axe
@@ -27,20 +27,95 @@ public enum WeaponType
     Katar = 10,         // assassin double-dagger, crit-leaning
     Knuckle = 11,       // monk / fist
     Firearm = 12,       // collapses RO's revolver/rifle/shotgun/gatling/launcher
+    // The support caster — heals and keeps allies up; swings like a staff.
+    Wand = 13,
+    // The curse reaper — Silence, defence cut and mana drain that wear an enemy down.
+    Scythe = 14,
+    // Many blades — thrown, they bounce through a crowd; swung, one swing lands two or three times.
+    Shuriken = 15,
 }
 
 /// <summary>Facts about a <see cref="WeaponType"/> that more than one system asks.</summary>
 public static class WeaponTypes
 {
-    /// <summary>A bow or a firearm — the weapons whose blow travels rather than connecting, and which swing with
-    /// ranged attack instead of melee attack. The one answer the arrow, the whiff sound, the server's landing check
-    /// and the damage roll all read, so they can never disagree about which weapons are ranged.</summary>
-    public static bool IsRanged(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
+    /// <summary>Whether a unit holding <paramref name="w"/> with these TOTAL primaries (gear and Ink included) swings
+    /// RANGED — its blow travels rather than connecting, and it swings with ranged attack instead of melee attack. A
+    /// bow and a firearm always do; a shuriken does when DEX is higher than STR (a tie is melee). The one answer the
+    /// arrow, the server's landing check, the reach and the damage roll all read, so they can never disagree.</summary>
+    public static bool SwingsRanged(WeaponType w, int str, int dex)
+        => w == WeaponType.Bow || w == WeaponType.Firearm || (RangedByStat(w) && dex > str);
 
-    /// <summary>The fighting STYLE a weapon's skills belong to — the name its shadow goes by, since the Fourteen left
-    /// no names of their own. Each of the weapon's skills is one numbered form of it (<see cref="SkillForms"/>). Empty
-    /// for a weapon whose style is not in the game yet. The fourteen styles are in the story canon doc.</summary>
-    public static string StyleOf(WeaponType w) => w == WeaponType.Sword ? "Blossom Wind" : "";
+    /// <summary>A weapon that is melee or ranged depending on who holds it — today the shuriken only.</summary>
+    public static bool RangedByStat(WeaponType w) => w == WeaponType.Shuriken;
+
+    /// <summary>A weapon whose ranged attack is the weapon ITSELF flying — it leaves the hand, bounces through a crowd
+    /// and comes back. Today the shuriken only; a bow and a firearm shoot something else and keep the weapon.</summary>
+    public static bool ThrowsItself(WeaponType w) => w == WeaponType.Shuriken;
+
+    /// <summary>A weapon whose holder's MAGIC can crit (decided 2026-10-06): the sniper, and nothing else. Every other
+    /// unit's magic never crits — a crit pierces defence, and a spell that pierced too would collapse the
+    /// Might › Arcane › Finesse triangle. A sniper's crit is the same crit a physical one is: full power × the crit
+    /// multiplier, no defence taken off.</summary>
+    public static bool MagicCanCrit(WeaponType w) => w == WeaponType.Firearm;
+
+    /// <summary>A weapon whose ORDINARY ATTACK is a magic shot (decided 2026-10-06): the sniper. It rolls magic attack
+    /// against magic defence, cannot miss, can crit (<see cref="MagicCanCrit"/>), and grows with the distance to its
+    /// target (<see cref="StrikeMath.SniperShotGrowth"/>). Every other ordinary attack is physical.</summary>
+    public static bool ShootsMagic(WeaponType w) => w == WeaponType.Firearm;
+
+    /// <summary>The weapon's name as a player reads it. The enum keeps the engine's names — they are saved in skill ids
+    /// and data — but four of them are called something else in the game.</summary>
+    public static string Label(WeaponType w)
+    {
+        switch (w)
+        {
+            case WeaponType.TwoHandSword: return "Greatsword";
+            case WeaponType.Mace:         return "Warhammer";
+            case WeaponType.Knuckle:      return "Fist";
+            case WeaponType.Firearm:      return "Sniper";
+            default:                      return w.ToString();
+        }
+    }
+
+    /// <summary>The weapon from a typed name — the engine's name or the one a player reads, any case. False for
+    /// anything else, and for None.</summary>
+    public static bool TryParse(string name, out WeaponType w)
+    {
+        w = WeaponType.None;
+        if (string.IsNullOrEmpty(name) || char.IsDigit(name[0])) return false;
+        foreach (WeaponType each in System.Enum.GetValues(typeof(WeaponType)))
+        {
+            if (each == WeaponType.None) continue;
+            if (string.Equals(name, each.ToString(), System.StringComparison.OrdinalIgnoreCase)
+                || string.Equals(name, Label(each), System.StringComparison.OrdinalIgnoreCase)) { w = each; return true; }
+        }
+        return false;
+    }
+
+    /// <summary>The fighting STYLE a weapon's skills belong to — the style its Kashira fought in, which its shadow is
+    /// also called by. Each of the weapon's skills is one numbered form of it (<see cref="SkillForms"/>). Empty for a
+    /// weapon no Kashira wielded. The fourteen styles are in the story canon doc.</summary>
+    public static string StyleOf(WeaponType w)
+    {
+        switch (w)
+        {
+            case WeaponType.Sword:        return "Blossom Wind";
+            case WeaponType.TwoHandSword: return "Raging Tide";
+            case WeaponType.Axe:          return "Wildfire";
+            case WeaponType.Mace:         return "Earthrend Descent";
+            case WeaponType.Spear:        return "Bending River";
+            case WeaponType.Knuckle:      return "Northern Lights";
+            case WeaponType.Bow:          return "Passing Cloud";
+            case WeaponType.Dagger:       return "Nightshade Bloom";
+            case WeaponType.Katar:        return "Veiled Mirage";
+            case WeaponType.Shuriken:     return "Autumn Gale";
+            case WeaponType.Firearm:      return "Dark Moon";
+            case WeaponType.Staff:        return "Frozen Ashes";
+            case WeaponType.Wand:         return "Morning Mist";
+            case WeaponType.Scythe:       return "Black Lily";
+            default:                      return "";
+        }
+    }
 }
 
 /// <summary>
@@ -53,7 +128,8 @@ public static class WeaponTypes
 /// </summary>
 public static class WeaponSizes
 {
-    public const int TypeCount = 13;   // WeaponType members
+    // Rows filled in below, in WeaponType order. Wand, Scythe and Shuriken have no row in RO's chart, so they fall back to 1.0.
+    public const int TypeCount = 13;
     public const int SizeCount = 3;    // MobSize columns filled in (Small / Medium / Large)
 
     // T[weaponType, size] — rows in WeaponType order, columns Small / Medium / Large.

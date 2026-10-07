@@ -179,13 +179,11 @@ public class DamagePopup : MonoBehaviour
 
     // The shared canvas. Recreated lazily if a scene unload destroyed it (the pool is cleared then, since
     // its pooled children died with it). Kept at origin/identity/unit-scale — see the class note.
-    /// <summary>TRUE where there is nobody to read a floating number — a headless server.
-    ///
-    /// <para>The server runs the whole of combat now, so without this every blow it decides builds a world-space
-    /// canvas and a piece of styled text on a machine with no screen: a font loaded, objects created and ticked,
-    /// and a pool grown, all of it for nobody. Asked at the door rather than at the call sites, because the call
-    /// sites are every place in the game that has ever shown a number and always will be.</para></summary>
-    static bool NobodyToShowItTo => GameServer.IsServer;
+    /// <summary>TRUE on the server, which draws nothing and is never meant to reach this door: every number is drawn by
+    /// the screens from the blow the server announced, and reaching here writes an error to the server's log
+    /// (<see cref="GameServer.CaughtDrawing"/>). Asked at the door rather than at the call sites, because the call
+    /// sites are every place in the game that has ever shown a number and always will be.</summary>
+    static bool NobodyToShowItTo => GameServer.CaughtDrawing("DamagePopup");
 
     static void EnsureHost()
     {

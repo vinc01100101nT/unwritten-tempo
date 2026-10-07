@@ -368,9 +368,10 @@ public static class UnitStatMath
               + StatJumpBonus(u.dex) + u.str / RangedAtkPerStr + u.luk / AtkPerLuk + eb.atk, ringPct);
 
     /// <summary>The physical attack a unit holding <paramref name="weapon"/> swings with — the one place the held
-    /// weapon decides between the two, for normal attacks and physical skills alike.</summary>
+    /// weapon (and, for a shuriken, the higher of its holder's total STR and DEX) decides between the two, for normal
+    /// attacks and physical skills alike. <paramref name="u"/> must carry the TOTAL primaries, gear included.</summary>
     public static int PhysicalAttack(WeaponType weapon, in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        WeaponTypes.IsRanged(weapon) ? RangedAttack(u, eb, ringPct) : MeleeAttack(u, eb, ringPct);
+        WeaponTypes.SwingsRanged(weapon, u.str, u.dex) ? RangedAttack(u, eb, ringPct) : MeleeAttack(u, eb, ringPct);
 
     public static int MagicAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseMagicAttack + u.magicAttackPerLevel * (u.level - 1) + u.intel * MatkPerInt

@@ -70,6 +70,12 @@ public enum StateId
     // stack's intAmount is the Element — read off that stack, never off the pile's sum. Never stacking: one element on
     // one slot has no "twice". See BeginElement.
     WeaponElement, ArmorElement,
+
+    // ---- Appended after the converters (APPEND-ONLY, see above) ----------------------------------------------------
+    // The block-chance sub-stat's pile. Only a skill fills it; gear has no block of its own.
+    BlockChance,
+    // The extra-bounce-jumps sub-stat's pile: whole jumps added to every bounce chain the unit starts.
+    ExtraBounceJumps,
 }
 
 /// <summary>
@@ -253,10 +259,10 @@ public class UnitStates : MonoBehaviour
     public int WornCritShieldLuk { get { EnsureFresh(); return UnitStatMath.CritShieldAsLuk(worn.wordCritShieldPercent); } }
     /// <summary>How much shorter a disable or an ailment on this unit runs, as a fraction (Steadfast).</summary>
     public float WornDisableCut { get { EnsureFresh(); return Mathf.Clamp01(worn.wordDisableCutPercent / 100f); } }
-    /// <summary>Extra chance to block with the off-hand, as a fraction (Guarding).</summary>
-    public float WornBlockChance { get { EnsureFresh(); return Mathf.Max(0f, worn.wordBlockPercent / 100f); } }
     /// <summary>How much slower sprinting drains stamina, as a fraction (Tireless).</summary>
     public float WornStaminaCut { get { EnsureFresh(); return Mathf.Clamp01(worn.wordStaminaCutPercent / 100f); } }
+    /// <summary>How much less far a knockback or a pull moves this unit, as a fraction (Anchored).</summary>
+    public float WornShoveCut { get { EnsureFresh(); return Mathf.Clamp01(worn.wordShoveCutPercent / 100f); } }
     /// <summary>The worn cut to damage of <paramref name="attack"/>'s element, as a fraction (the garment wards).</summary>
     public float WardAgainst(Element attack) { EnsureFresh(); return Mathf.Clamp01(ArmourWords.WardFraction(worn, attack)); }
 

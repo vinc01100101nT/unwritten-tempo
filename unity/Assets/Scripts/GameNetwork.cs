@@ -160,15 +160,6 @@ public class GameNetwork : NetworkManager
         identity.GetComponent<NetNpc>()?.ServerTalkTo(speaker);
     }
 
-    /// <summary>Server-only: tell every machine what a townsperson WORKS AT, so the copy each of them presses F on
-    /// opens the right thing. Silent with no world, where the only body is this machine's own.</summary>
-    public static void TellEverybodyTheyWorkAt(GameObject npcBody, int station)
-    {
-        if (!NetworkServer.active) return;
-        var shell = NetNpc.ShellForServerNpc(npcBody);
-        if (shell != null) shell.stationKind = station;
-    }
-
     /// <summary>Ask the server to accept <paramref name="questId"/> from the townsperson whose body is
     /// <paramref name="npcBody"/>. The server decides; this only asks.</summary>
     public static void TellServerAcceptQuest(GameObject npcBody, string questId)
@@ -549,18 +540,15 @@ public class GameNetwork : NetworkManager
         public bool missed;
         public bool flash;
 
-        /// <summary>This strike belongs to a run that shows a RISING YELLOW TOTAL, and the receiving machine should
-        /// fold it into one.
-        ///
-        /// <para><b>Why it has to travel.</b> The total used to be added up from what a local hit returned, which is
-        /// nothing now — a player's machine decides no damage, so every number reaches it separately and the run that
-        /// sent them has long since finished. The only thing that still knows whether a total was owed is the
-        /// authored skill, and the server is the one holding it.</para>
-        ///
-        /// <para><b>The server's reading, never a client's claim.</b> It is worked out from the same authored data
-        /// that decided it offline, so a machine cannot ask for a number it was not owed. It moves nothing about the
-        /// damage either way — this is one number on a screen.</para></summary>
-        public bool showsTotal;
+        /// <summary>The RISING YELLOW TOTAL this strike brings its striker's run over this creature to, worked out on the
+        /// server (<see cref="StrikeTotals"/>) — 0 when the strike belongs to no run that shows one. The watching machine
+        /// puts this number up as it is and adds nothing: whether a total is owed is the authored skill's answer, and
+        /// the sum is the server's.</summary>
+        public int total;
+
+        /// <summary>Damage that bypassed defence — a poison tick, a reflected blow — and what it was, so the number is
+        /// coloured by its cause (<see cref="TrueDamageCauses.Colour"/>). <see cref="TrueDamageCause.None"/> for a blow.</summary>
+        public TrueDamageCause tickCause;
     }
 
     /// <summary>What the server decided a blow ON A PERSON was. The mirror of <see cref="HitResult"/>, and it has to
@@ -577,15 +565,14 @@ public class GameNetwork : NetworkManager
         /// nobody anything: whatever the blow gave its attacker was already given, on the server.</summary>
         public uint attackerNetId;
 
-        /// <summary>This blow belongs to a run that shows a RISING YELLOW TOTAL. The exact twin of the field on a
-        /// creature's blow, and it exists for the same reason: a person's machine works no damage out, so every
-        /// number reaches it separately and the run that sent them has long since finished. The only thing that
-        /// still knows whether a total was owed is the authored skill, which the server holds.
-        ///
-        /// <para>Without it a creature's multi-hit skill landing on a person drew its numbers one by one and never a
-        /// total, while the identical skill landing on a creature drew one — the same flurry, two different
-        /// pictures, depending only on which side of it you were standing.</para></summary>
-        public bool showsTotal;
+        /// <summary>The RISING YELLOW TOTAL this blow brings its striker's run over this person to, worked out on the
+        /// server (<see cref="StrikeTotals"/>) — 0 when the blow belongs to no run that shows one. The exact twin of
+        /// the field on a creature's blow, so the same flurry draws the same total whichever side of it you stand on.</summary>
+        public int total;
+
+        /// <summary>The blow passed through them while they were dodging (a dash's moment of being untouchable), so their
+        /// screen says "Dodge" rather than nothing.</summary>
+        public bool dodged;
         public int amount;
         public Element element;
         public bool isMagic;
@@ -594,7 +581,7 @@ public class GameNetwork : NetworkManager
         public int attackerHit;
 
         /// <summary>WHAT THE BLOW RAN INTO on the way to their health — how much a barrier ate, how much a brace held
-        /// back, whether a parry or an off-hand block erased it outright.
+        /// back, whether a parry or a block erased it outright.
         ///
         /// <para><b>Why the number alone was not enough.</b> <see cref="amount"/> is what SURVIVED, and every one of
         /// these can take a blow down to nothing — so a fully braced, soaked, parried or blocked hit arrived as a
@@ -607,9 +594,10 @@ public class GameNetwork : NetworkManager
         /// nobody, and one arriving after the person is dead is not shown.</summary>
         public bool tick;
 
-        /// <summary>The colour the server gave this tick — a poison's own colour, a brace bill's violet. Read only when
-        /// <see cref="tick"/> is set: without it every tick on a person was drawn in plain hit red (play-test, 2026-09-14).</summary>
-        public Color tickColor;
+        /// <summary>What this tick IS — a poison, a brace's bill, damage bounced back — so every screen colours it from its
+        /// own table (<see cref="TrueDamageCauses.Colour"/>). Read only when <see cref="tick"/> is set: without it every
+        /// tick on a person was drawn in plain hit red (play-test, 2026-09-14).</summary>
+        public TrueDamageCause tickCause;
     }
 
     /// <summary>What the server HEALED a unit for, so the green digits appear over it. Health is the server's, and so is
@@ -730,23 +718,38 @@ public class GameNetwork : NetworkManager
     ///
     /// <para>It carries no outcome and no number. Whatever the event DID reached this machine through the doors that
     /// announce a blow, a heal or a death; this is only what it looked like.</para></summary>
-    /// <summary>A BOW WAS LOOSED — said by the machine that owns the world, drawn by every machine that can see the
-    /// shooter. It carries no damage and no timing: the blow it belongs to is already scheduled where it was decided,
-    /// and this is only the picture of the shot crossing the gap.</summary>
-    public struct ArrowLoosed : NetworkMessage
+    /// <summary>ONE LEG OF SOMETHING IN THE AIR — an arrow, a thrown blade's jump, its flight home — said by the
+    /// machine that owns the world (<see cref="Flights"/>) and drawn by every machine that can see the thrower. It
+    /// carries no damage: the blow is announced by the unit it lands on, at the moment it lands. It carries the exact
+    /// moments the leg leaves and arrives on the shared clock, so the drawn flight reaches its target at the instant
+    /// the number appears.</summary>
+    public struct FlightLeg : NetworkMessage
     {
-        /// <summary>Who shot — the shared name every machine knows that unit by.</summary>
-        public uint fromNetId;
+        /// <summary>Who threw it — the shared name every machine knows that unit by.</summary>
+        public uint throwerNetId;
 
-        /// <summary>What it was shot at, so the drawn arrow homes onto a body that is still moving. 0 when the
-        /// target is not a shared body, and the arrow then flies to the point below instead.</summary>
+        /// <summary>Which of that thrower's flights this leg belongs to, so its next leg moves the same drawn blade.</summary>
+        public ushort blade;
+
+        /// <summary>Where this leg goes, so the drawn flight homes onto a body that is still moving. The thrower's own
+        /// name when the leg is the flight home. 0 when the target is not a shared body.</summary>
         public uint toNetId;
 
-        /// <summary>Where it was aimed, in the shooter's own map. The fallback when there is no body to home onto,
-        /// and what a machine that has not been told about the target draws toward.</summary>
-        public Vector3 aimPoint;
+        /// <summary>Where the target stood, in the thrower's map — what a machine that has not been told about the
+        /// target draws toward.</summary>
+        public Vector3 toPoint;
 
-        /// <summary>The shooter's map, so a watcher puts the flight in the right world.</summary>
+        /// <summary>When the leg leaves and when it arrives, on the clock every machine shares.</summary>
+        public double departs, arrives;
+
+        /// <summary>WHAT WAS THROWN — the kind of weapon it left, and for a skill's bounce the skill and which of its tick
+        /// bindings it is (-1 for a plain throw). Each watching machine picks what to draw from these, out of its own
+        /// copy of the skill (<see cref="Flights.LookOf"/>).</summary>
+        public WeaponType thrown;
+        public string skillId;
+        public short binding;
+
+        /// <summary>The thrower's map, so a watcher puts the flight in the right world.</summary>
         public string map;
     }
 
@@ -852,6 +855,31 @@ public class GameNetwork : NetworkManager
         public bool isSkillCall;
     }
 
+    /// <summary>A PRIVATE MESSAGE somebody typed, for one person by name. Like <see cref="ChatSaid"/> it never names
+    /// its sender: the server takes that from the connection it arrived on.</summary>
+    public struct PmSend : NetworkMessage
+    {
+        public string toName;
+        public string text;
+    }
+
+    /// <summary>A private message as its two ends see it, sent only to them. <see cref="outgoing"/> is the sender's
+    /// own copy, sent once it was actually delivered; <see cref="name"/> is then who it went to, otherwise who it
+    /// came from — spelled as that character spells it.</summary>
+    public struct PmHeard : NetworkMessage
+    {
+        public string name;
+        public string text;
+        public bool outgoing;
+    }
+
+    /// <summary>A line THE GAME says to a player in their chat — a world event starting or ending, the events running
+    /// when they sign in. The sentence is finished on the server; the player's machine only shows it.</summary>
+    public struct SystemNotice : NetworkMessage
+    {
+        public string text;
+    }
+
     // WHO IS TOLD ABOUT WHAT. Without this, everything that happens is sent to every person connected, however far
     // away and whatever map they are standing in — so the traffic climbed with the SQUARE of how many people were
     // here, and a person in a dungeon paid for every cast in every town.
@@ -891,6 +919,7 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
         NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
+        NetworkServer.RegisterHandler<PmSend>(OnPmSend);
     }
 
     public override void OnStartClient()
@@ -908,12 +937,13 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<TimeOfDayShift>(OnTimeOfDayShift);
         NetworkClient.RegisterHandler<WeatherHeld>(OnWeatherHeld);
         NetworkClient.RegisterHandler<ChatHeard>(OnChatHeard);
+        NetworkClient.RegisterHandler<PmHeard>(OnPmHeard);
+        NetworkClient.RegisterHandler<SystemNotice>(OnSystemNotice);
         NetworkClient.RegisterHandler<CastWindupStarted>(OnCastWindupStarted);
         NetworkClient.RegisterHandler<CastWindupEnded>(OnCastWindupEnded);
-        NetworkClient.RegisterHandler<ArrowLoosed>(OnArrowLoosed);
+        NetworkClient.RegisterHandler<FlightLeg>(OnFlightLeg);
         NetworkClient.RegisterHandler<CuePlayed>(OnCuePlayed);
-        NetworkClient.RegisterHandler<CueStopped>(OnCueStopped);
-    }
+        NetworkClient.RegisterHandler<CueStopped>(OnCueStopped);    }
 
     // THE WORLD'S CLOCK ARRIVING. Until this lands the sun has nothing to draw itself from, which is why it is
     // sent with the body rather than waited for by anything.
@@ -957,7 +987,7 @@ public class GameNetwork : NetworkManager
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
-                       msg.mitigated, msg.tick, msg.tickColor, msg.showsTotal, msg.attackerNetId);
+                       msg.mitigated, msg.tick, msg.tickCause, msg.total, msg.attackerNetId, msg.dodged);
     }
 
     // Green digits the server said it healed, over the body this machine draws for that unit.
@@ -1237,12 +1267,13 @@ public class GameNetwork : NetworkManager
     /// damage door rather than by whatever swung, so a creature's bite, a poison tick and anything written later all
     /// reach the screens through one line.</summary>
     public static void AnnounceBlowOnPlayer(Character victim, in DamageInfo info, int dealt, bool tick = false,
-                                            Color tickColor = default)
+                                            TrueDamageCause tickCause = TrueDamageCause.None)
     {
         if (!NetworkServer.active || victim == null) return;
 
         var identity = IdentityOfFighter(victim);
         if (identity == null) return;
+        uint striker = SharedNameOfStriker(info.attacker);
 
         NetworkServer.SendToReadyObservers(identity, new PlayerHitResult
         {
@@ -1258,12 +1289,15 @@ public class GameNetwork : NetworkManager
             // of it or a brace held all of it.
             mitigated = victim.TakeMitigation(),
             tick = tick,
-            tickColor = tickColor,
+            tickCause = tickCause,
             // WHO STRUCK, through the one helper that answers for a creature and a person alike — the striker here is
             // usually a creature, which the person-only lookup the creature's announce uses cannot name.
-            attackerNetId = SharedNameOfStriker(info.attacker),
-            // The authored skill's answer, held by the strike landing right now — never a client's.
-            showsTotal = SkillEffectApplier.StrikeShowsTotal
+            attackerNetId = striker,
+            // Whether a total is owed is the authored skill's answer, held by the strike landing right now; the sum is
+            // the server's. A damage-over-time tick never folds in: it is a different thing happening at the same time.
+            total = SkillEffectApplier.StrikeShowsTotal && !tick && !info.missed && dealt > 0
+                ? StrikeTotals.Add(identity.netId, striker, dealt) : 0,
+            dodged = dealt <= 0 && CombatAuthority.WhyNoDamage == NoDamageReason.Dodged,
         });
     }
 
@@ -1284,12 +1318,22 @@ public class GameNetwork : NetworkManager
     ///
     /// <para><paramref name="beatSeconds"/> is the window the action has to finish inside — a number this machine
     /// already holds. It is never an animation clip's length: a headless server has no business reading art.</para></summary>
-    public static void AnnounceActionOnMob(GameObject serverMob, StanceId action, float beatSeconds)
+    public static void AnnounceActionOnMob(GameObject serverMob, StanceId action, float beatSeconds, Transform aimedAt = null,
+                                           float connectsAfter = 0f)
     {
         if (!NetworkServer.active || serverMob == null) return;
         var shell = NetMob.ShellForServerMob(serverMob);
-        if (shell != null) shell.BeganAction(action, beatSeconds);
+        if (shell == null) return;
+        // WHO IT WAS AIMED AT, by the shared name every machine knows them by — so a screen can draw the swing toward
+        // them. 0 = nobody in particular (a skill's release), or somebody no screen can see.
+        var aimed = aimedAt != null ? SharedIdentityOnServer(aimedAt) : null;
+        shell.BeganAction(action, beatSeconds, aimed != null ? aimed.netId : 0u, connectsAfter);
     }
+
+    /// <summary>CLIENT: the body this machine draws for the unit the server calls <paramref name="netId"/>, or null when
+    /// it is not here.</summary>
+    public static Transform DrawnBodyOf(uint netId)
+        => netId != 0u && NetworkClient.spawned.TryGetValue(netId, out var identity) ? DrawnBodyOf(identity) : null;
 
     /// <summary>SERVER ONLY: a caster began an action — a skill's release. A PERSON's own machine already tells the world
     /// every pose it plays, so this speaks only for a creature, through the same road its swings take.</summary>
@@ -1322,11 +1366,12 @@ public class GameNetwork : NetworkManager
         if (shell == null) return;
 
         var attackerIdentity = IdentityOfFighter(attacker as Character);
+        uint striker = attackerIdentity != null ? attackerIdentity.netId : 0u;
 
         NetworkServer.SendToReadyObservers(shell.netIdentity, new HitResult
         {
             targetNetId = shell.netId,
-            attackerNetId = attackerIdentity != null ? attackerIdentity.netId : 0u,
+            attackerNetId = striker,
             // THE BLOW AS IT CAME OUT, every number final: armour, the element chart, a parry and a barrier have all
             // already been taken off here, and nothing on the watching machine takes anything off again.
             number = blow.number,
@@ -1335,8 +1380,11 @@ public class GameNetwork : NetworkManager
             magic = blow.magic,
             missed = blow.missed,
             flash = blow.flash,
-            // The authored skill's answer, held by the strike being landed right now — never a client's.
-            showsTotal = SkillEffectApplier.StrikeShowsTotal
+            tickCause = blow.cause,
+            // Whether a total is owed is the authored skill's answer, held by the strike being landed right now; the sum
+            // is the server's. Damage that bypassed defence is never part of a run.
+            total = SkillEffectApplier.StrikeShowsTotal && blow.cause == TrueDamageCause.None && !blow.missed && blow.number > 0
+                ? StrikeTotals.Add(shell.netId, striker, blow.number) : 0,
         });
     }
 
@@ -1530,7 +1578,8 @@ public class GameNetwork : NetworkManager
         var victim = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
         if (victim == null) { HitResultsWithNoVictim++; return; }
 
-        victim.DrawShownBlow(new ShownBlow(msg.number, msg.elementModifier, msg.crit, msg.magic, msg.flash, msg.missed));
+        victim.DrawShownBlow(new ShownBlow(msg.number, msg.elementModifier, msg.crit, msg.magic, msg.flash, msg.missed,
+                                           msg.tickCause));
 
         // THE HURT STAGGER, fed the server's final number. It is the one thing a blow still starts on this machine,
         // because a stagger is a body stopping — movement — and each machine drives the bodies it draws.
@@ -1540,11 +1589,10 @@ public class GameNetwork : NetworkManager
             if (status != null) status.TookHit(msg.number);
         }
 
-        // THE RISING YELLOW TOTAL, built from the numbers that actually arrived. Keyed by WHO struck — the shared
-        // name every machine agrees on — so two people flurrying one creature keep two climbing numbers instead of
-        // pooling into a third that belongs to neither. It hangs over the watched copy the number was just drawn on.
-        if (msg.showsTotal && !msg.missed && msg.number > 0)
-            RepeatsDamageTotal.ReportArrived(victim.transform, msg.number, msg.attackerNetId);
+        // THE RISING YELLOW TOTAL, exactly as the server summed it. Keyed by WHO struck — the shared name every machine
+        // agrees on — so two people flurrying one creature keep two climbing numbers instead of pooling into a third
+        // that belongs to neither. It hangs over the watched copy the number was just drawn on.
+        if (msg.total > 0) RepeatsDamageTotal.ReportArrived(victim.transform, msg.total, msg.attackerNetId);
     }
 
     /// <summary>The shared name for something both halves know about, or null when this machine is the authority,
@@ -1671,10 +1719,10 @@ public class GameNetwork : NetworkManager
 
     // One counter, used by every ledger — so a new kind of claim gets a flood guard by adding a ceiling and a
     // dictionary, not by writing the counting again and getting it subtly different.
-    static bool TooMany(System.Collections.Generic.Dictionary<int, ClaimLedger> ledgers, int connectionId, int ceiling)
+    static bool TooMany<TKey>(System.Collections.Generic.Dictionary<TKey, ClaimLedger> ledgers, TKey key, int ceiling)
     {
-        if (!ledgers.TryGetValue(connectionId, out var ledger))
-            ledgers[connectionId] = ledger = new ClaimLedger();
+        if (!ledgers.TryGetValue(key, out var ledger))
+            ledgers[key] = ledger = new ClaimLedger();
 
         if (Time.time >= ledger.windowEnds) { ledger.windowEnds = Time.time + 1f; ledger.countedThisWindow = 0; }
         ledger.countedThisWindow++;
@@ -1713,7 +1761,10 @@ public class GameNetwork : NetworkManager
     public override void Update()
     {
         base.Update();
-        if (!NetworkServer.active || pendingBlows.Count == 0) return;
+        if (!NetworkServer.active) return;
+        // Everything in the air — arrows, thrown blades, bouncing skills — on the same server frame.
+        Flights.Tick();
+        if (pendingBlows.Count == 0) return;
 
         float now = Time.time;
         for (int i = pendingBlows.Count - 1; i >= 0; i--)
@@ -1769,7 +1820,8 @@ public class GameNetwork : NetworkManager
         // AND THE SWING IS SAID OUT LOUD. Nothing on the wire has ever said that a person's body did anything, so
         // until now everybody else watched their damage numbers climb over a character standing perfectly still.
         // The pose is chosen from the weapon THIS machine holds for them, never from what their machine claims.
-        if (attacker != null) attacker.BeganAction(WeaponStances.AttackFor(weapon), swingTime);
+        bool ranged = fighter != null && fighter.SwingsRanged;
+        if (attacker != null) attacker.BeganAction(WeaponStances.AttackFor(weapon, ranged), swingTime);
 
         // ABOUT TO SWING — RAISED HERE, WHERE THE SWING ACTUALLY BEGINS. It used to be raised down at the contact
         // moment instead, alongside "a swing landed", which put two moments that mean different things at the same
@@ -1787,27 +1839,15 @@ public class GameNetwork : NetworkManager
         // the shared character spec. Until this, the swinger's machine sent the request AT its contact frame, which
         // handed it the say over when inside its own swing a blow landed.
         //
-        // A BOW IS TIMED THE SAME WAY, by a different number: its blow lands when the arrow arrives, which is the gap
-        // divided by the one speed every arrow in the game flies at. The shooter's machine used to fly its own arrow
-        // and ask at the moment it landed, so how long a shot took was a fact about the shooter's frame rate rather
-        // than about the world — and nobody else could see the arrow at all, because nothing on the wire said one
-        // had been fired.
-        if (IsRangedWeapon(weapon))
+        // A RANGED ATTACK FLIES — an arrow, or a thrown shuriken that bounces and comes back — and lands when it
+        // arrives, in the ONE flight store every unit's ranged attack goes through (Flights). Its reach and its map are
+        // judged HERE, at the throw: once something is in the air it homes onto its target, so a check left to the
+        // landing would be the only thing standing between a forged request and a blade thrown across the world.
+        if (ranged)
         {
             var shotAt = announceTo as ICombatUnit;
-            Transform shotAtBody = shotAt != null ? shotAt.Body : null;
-            Vector3 fromPoint = swinger.Body != null ? UnitAnchor.Center(swinger.Body) : identity.transform.position;
-            // Aimed at the body when there is one to home onto, and otherwise at the shared object standing in for it
-            // — never at a reading off something that may not be there at all.
-            Vector3 toPoint = shotAtBody != null ? UnitAnchor.Center(shotAtBody) : identity.transform.position;
-            AnnounceArrow(swinger.Body, shotAtBody != null ? shotAtBody : identity.transform,
-                          MapManager.InMap(toPoint, swinger.Map), swinger.Map);
-            pendingBlows.Add(new PendingBlow
-            {
-                connectionId = conn.connectionId,
-                targetNetId = msg.targetNetId,
-                landsAt = Time.time + Arrow.FlightSeconds(fromPoint, toPoint)
-            });
+            if (shotAt == null || shotAt.Map != swinger.Map || !WithinReach(swinger, announceTo)) return;
+            Flights.ThrowBasic(swinger, shotAt, conn.connectionId);
             return;
         }
 
@@ -1827,7 +1867,6 @@ public class GameNetwork : NetworkManager
 
     /// <summary>A bow or a firearm — the two weapons whose blow travels rather than connecting. Read from the same
     /// weapon type the swinger's own machine reads, so the two can never disagree about which is which.</summary>
-    static bool IsRangedWeapon(WeaponType w) => WeaponTypes.IsRanged(w);
 
     // Whatever actually takes the damage behind a shell: a creature's real body on this machine, or the thing
     // itself. One reading of it, because both the accepting half and the landing half need the same answer.
@@ -2222,27 +2261,40 @@ public class GameNetwork : NetworkManager
         return identity.netId;
     }
 
-    /// <summary>SERVER: say that <paramref name="shooter"/> has loosed an arrow at <paramref name="target"/>, to
-    /// everybody who can see them. The one announce for every bow in the game — a person's and a creature's — so an
-    /// arrow cannot look one way when a person fires it and another when a creature does.
-    ///
-    /// <para>Nothing about the blow travels with it. The server has already worked out when that shot arrives and
-    /// scheduled the blow for that moment; this is the picture, and it is sent at the instant of the release so the
-    /// two are seen together.</para></summary>
-    public static void AnnounceArrow(Transform shooter, Transform target, Vector3 aimPointInMap, string map)
+    /// <summary>SERVER: say one leg of a flight to everybody who can see <paramref name="thrower"/> — the one announce
+    /// for every arrow, blade and bounce in the game, so a flight cannot look one way when a person throws it and
+    /// another when a creature does. <paramref name="to"/> is the thrower itself for the flight home.</summary>
+    public static void AnnounceFlightLeg(Transform thrower, ushort blade, Transform to, Vector3 toPointInMap,
+                                         double departs, double arrives, WeaponType thrown, string skillId, int binding,
+                                         string map)
     {
-        if (!NetworkServer.active || shooter == null) return;
-        var identity = SharedIdentityOnServer(shooter);
+        if (!NetworkServer.active || thrower == null) return;
+        var identity = SharedIdentityOnServer(thrower);
         if (identity == null) return;
 
-        var at = target != null && target != shooter ? SharedIdentityOnServer(target) : null;
-        NetworkServer.SendToReadyObservers(identity, new ArrowLoosed
+        var at = to == thrower ? identity : to != null ? SharedIdentityOnServer(to) : null;
+        NetworkServer.SendToReadyObservers(identity, new FlightLeg
         {
-            fromNetId = identity.netId,
+            throwerNetId = identity.netId,
+            blade = blade,
             toNetId = at != null ? at.netId : 0u,
-            aimPoint = aimPointInMap,
+            toPoint = toPointInMap,
+            departs = departs,
+            arrives = arrives,
+            thrown = thrown,
+            skillId = skillId ?? "",
+            binding = (short)binding,
             map = map ?? "",
         });
+    }
+
+    /// <summary>SERVER: is the person on this connection on their way out of this world — a door to a map another
+    /// process holds, mid-save? Anything that lands for them now happens to a copy about to be thrown away.</summary>
+    public static bool IsLeaving(int connectionId)
+    {
+        if (!NetworkServer.connections.TryGetValue(connectionId, out var conn) || conn == null) return true;
+        var shell = ShellFor(conn);
+        return shell == null || shell.Leaving;
     }
 
     /// <summary>Say that a lasting cue is over, to the same people who were told it began.</summary>
@@ -2294,24 +2346,28 @@ public class GameNetwork : NetworkManager
             at = DrawnBodyOf(other);
 
         VfxCue.PlayFromServer(msg.cue, on, at, msg.auraKey, msg.onNetId);
+        CueWords.Show(msg.cue, on, identity.TryGetComponent<NetMob>(out _));
     }
 
     static void OnCueStopped(CueStopped msg) => VfxCue.StopFromServer(msg.onNetId, msg.auraKey);
 
-    // AN ARROW CROSSING THE GAP. Drawn from the shooter's body to whatever it was shot at, on every machine that can
-    // see the shooter — including the shooter's own, which no longer flies one of its own. Nothing is decided here.
-    static void OnArrowLoosed(ArrowLoosed msg)
+    // ONE LEG OF A FLIGHT. Drawn from wherever that flight's picture is now (the thrower's hand for its first leg) to
+    // whatever the leg goes to, arriving at the moment the server said — on every machine that can see the thrower,
+    // the thrower's own included. Nothing is decided here.
+    static void OnFlightLeg(FlightLeg msg)
     {
-        if (!NetworkClient.spawned.TryGetValue(msg.fromNetId, out var identity) || identity == null) return;
-        Transform from = DrawnBodyOf(identity);
-        if (from == null) return;
+        if (!NetworkClient.spawned.TryGetValue(msg.throwerNetId, out var identity) || identity == null) return;
+        Transform thrower = DrawnBodyOf(identity);
+        if (thrower == null) return;
 
         Transform at = null;
-        if (msg.toNetId != 0u && NetworkClient.spawned.TryGetValue(msg.toNetId, out var other) && other != null)
+        if (msg.toNetId == msg.throwerNetId) at = thrower;
+        else if (msg.toNetId != 0u && NetworkClient.spawned.TryGetValue(msg.toNetId, out var other) && other != null)
             at = DrawnBodyOf(other);
 
-        Vector3 to = at != null ? UnitAnchor.Center(at) : MapManager.InWorld(msg.aimPoint, msg.map);
-        Arrow.Show(UnitAnchor.Center(from), at, to);
+        var look = Flights.LookOf(msg.thrown, msg.skillId, msg.binding, out var effectId);
+        FlightPictures.Leg(msg.throwerNetId, msg.blade, thrower, at, MapManager.InWorld(msg.toPoint, msg.map),
+                           msg.departs, msg.arrives, look, effectId, at == thrower);
     }
 
     // ---- stances: what a person's body is doing, said by the machine that owns their legs ----------------
@@ -2353,6 +2409,23 @@ public class GameNetwork : NetworkManager
     {
         var me = MyPlayer;
         if (me != null) me.CmdHopEnded();
+    }
+
+    /// <summary>Tell the world this body has begun a scripted move — a glide or a blink (<see cref="MoveSaid"/>). Said
+    /// once, at the start, because the move is over long before enough position reports could show it.</summary>
+    public static void ReportMoveBegan(MoveSaid said)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdMoveBegan(said);
+    }
+
+    /// <summary>SERVER ONLY: a creature began a scripted move — the mirror of <see cref="ReportMoveBegan"/>, said by the
+    /// machine that moves a creature's legs. Silent off a server, and for a body no shell speaks for.</summary>
+    public static void AnnounceMoveOnMob(GameObject serverMob, MoveSaid said)
+    {
+        if (!NetworkServer.active || serverMob == null) return;
+        var shell = NetMob.ShellForServerMob(serverMob);
+        if (shell != null) shell.BeganMove(said);
     }
 
     /// <summary>Tell the world this body has changed into or out of the sprint gear. Which gear somebody is in
@@ -2488,6 +2561,19 @@ public class GameNetwork : NetworkManager
 
     static bool SayingTooFast(int connectionId) => TooMany(chatLedgers, connectionId, MaxLinesSaidPerSecond);
 
+    /// <summary>A typed line made fit to pass on, for every kind of chat: every control character (a line break, a
+    /// tab, anything a poked game could send) becomes a space, so one line is always one row that cannot pretend to
+    /// be a second line from somebody else; then trimmed and cut at <see cref="MostCharactersInALine"/>.</summary>
+    static string CleanLine(string raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return "";
+        var chars = raw.ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+            if (char.IsControl(chars[i])) chars[i] = ' ';
+        var text = new string(chars).Trim();
+        return text.Length > MostCharactersInALine ? text.Substring(0, MostCharactersInALine) : text;
+    }
+
     /// <summary>Say a line to the world. Returns TRUE when it went, which means the caller must NOT show it
     /// itself — it comes back from the server a moment later, as everybody else receives it.
     ///
@@ -2512,9 +2598,8 @@ public class GameNetwork : NetworkManager
     {
         if (SayingTooFast(conn.connectionId)) return;
 
-        var text = msg.text != null ? msg.text.Trim() : "";
+        var text = CleanLine(msg.text);
         if (text.Length == 0) return;
-        if (text.Length > MostCharactersInALine) text = text.Substring(0, MostCharactersInALine);
 
         // A COMMAND IS NOT A SAID LINE and must never become one. Commands have their own door, which asks whether
         // the person is a GM; letting one through here would print it to the room and, worse, teach anybody reading
@@ -2560,6 +2645,127 @@ public class GameNetwork : NetworkManager
         // Somebody else's skill call, which this person may have chosen not to see.
         if (msg.isSkillCall && GameSettings.HideOtherPlayersSkillCalls) return;
         ChatController.Heard(msg.speaker, msg.text, shell.SpeechPose, msg.isSkillCall);
+    }
+
+    // ---- A PRIVATE MESSAGE ------------------------------------------------------------------------------
+    //
+    // The person it is for may be on any map server, so it never goes straight there: this server hands it to the
+    // character server, which knows which server it last gave that character to, and that server hands it to them.
+    // The sender's own copy comes back only once it has actually been delivered — the same rule a said line keeps.
+
+    /// <summary>How many private messages one connection may send in a second.</summary>
+    const int MaxPmsSentPerSecond = 2;
+    /// <summary>How many private messages one character may RECEIVE in a second, from everybody together — so nobody
+    /// can be buried, however many accounts are sending.</summary>
+    const int MaxPmsReceivedPerSecond = 5;
+    /// <summary>Longer than any name the character server accepts; anything past it is not sent on at all.</summary>
+    const int LongestNameAsked = 32;
+
+    static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> pmSentLedgers =
+        new System.Collections.Generic.Dictionary<int, ClaimLedger>();
+    // Keyed by character id, filled only for somebody playing here and dropped when they leave.
+    static readonly System.Collections.Generic.Dictionary<string, ClaimLedger> pmReceivedLedgers =
+        new System.Collections.Generic.Dictionary<string, ClaimLedger>();
+
+    /// <summary>Send a private message to <paramref name="toName"/>. FALSE with no world to send it through.</summary>
+    public static bool SendPmToServer(string toName, string text)
+    {
+        if (string.IsNullOrWhiteSpace(toName) || string.IsNullOrWhiteSpace(text)) return false;
+        if (!NetworkClient.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null) return false;
+        NetworkClient.Send(new PmSend { toName = toName.Trim(), text = text });
+        return true;
+    }
+
+    [System.Serializable]
+    class PmAsk { public string toName; public string fromName; public string text; }
+
+    [System.Serializable]
+    class PmAnswer { public string name; }
+
+    void OnPmSend(NetworkConnectionToClient conn, PmSend msg)
+    {
+        var sender = ShellFor(conn);
+        if (sender == null) return;
+        if (sender.Leaving) { sender.TellOwner("Could not deliver that message."); return; }
+        if (TooMany(pmSentLedgers, conn.connectionId, MaxPmsSentPerSecond))
+        {
+            sender.TellOwner("You are sending messages too fast.");
+            return;
+        }
+
+        var toName = msg.toName != null ? msg.toName.Trim() : "";
+        var text = CleanLine(msg.text);
+        if (toName.Length == 0 || text.Length == 0) return;
+        if (toName.Length > LongestNameAsked) { sender.TellOwner(toName.Substring(0, LongestNameAsked) + " is not online."); return; }
+        if (string.Equals(toName, sender.playerName, System.StringComparison.OrdinalIgnoreCase))
+        {
+            sender.TellOwner("You cannot send a message to yourself.");
+            return;
+        }
+
+        string fromId = sender.ServerCharacterId;
+        var body = JsonUtility.ToJson(new PmAsk { toName = toName, fromName = sender.playerName, text = text });
+        ServerHttp.Send("POST", MapServerLink.CharacterServerUrl + "/server/pm", body, MapServerLink.ServerSecret,
+                        (ok, reply, error, status) =>
+        {
+            // STILL THE SAME PERSON, STILL HERE. The answer can take seconds; by then this connection may have gone,
+            // or be playing somebody else, and their copy must not land on whoever has it now.
+            if (!NetworkServer.connections.TryGetValue(conn.connectionId, out var still) || still != conn) return;
+            var now = ShellFor(conn);
+            if (now == null || now.ServerCharacterId != fromId) return;
+
+            var answer = !string.IsNullOrEmpty(reply) ? JsonUtility.FromJson<PmAnswer>(reply) : null;
+            string name = answer != null && !string.IsNullOrEmpty(answer.name) ? answer.name : toName;
+            switch (status)
+            {
+                case 200: conn.Send(new PmHeard { name = name, text = text, outgoing = true }); break;
+                case 404: now.TellOwner(name + " is not online."); break;
+                case 409: now.TellOwner(name + " is changing maps — try again in a moment."); break;
+                case 429: now.TellOwner(name + " is receiving too many messages right now."); break;
+                default:
+                    GameLog.Warn(LogCat.Server, "a private message from " + now.playerName + " could not be passed on — "
+                                     + status + " " + error);
+                    now.TellOwner("Could not deliver that message.");
+                    break;
+            }
+        });
+    }
+
+    /// <summary>SERVER ONLY: hand a private message to the character it is for, if they are here. Returns what to
+    /// tell the character server: 200 delivered (or held for somebody announced and still on their way in, given
+    /// to them as they arrive), 409 when they are leaving this server for another, 429 when they are receiving too
+    /// many, 404 when they are not here at all.</summary>
+    public static int DeliverPm(string toCharacterId, string fromName, string text)
+    {
+        var pm = new PmHeard { name = fromName, text = CleanLine(text), outgoing = false };
+        var shell = PlayerFighter.PlayedBy(toCharacterId);
+        if (shell != null && !shell.Leaving && shell.connectionToClient != null)
+        {
+            if (TooMany(pmReceivedLedgers, toCharacterId, MaxPmsReceivedPerSecond)) return 429;
+            shell.connectionToClient.Send(pm);
+            return 200;
+        }
+        int held = MapServerLink.HoldPmForArrival(toCharacterId, pm);
+        if (held != 0) return held;
+        return shell != null ? 409 : 404;
+    }
+
+    static void OnPmHeard(PmHeard msg)
+    {
+        if (string.IsNullOrEmpty(msg.text) || string.IsNullOrEmpty(msg.name)) return;
+        ChatController.Pm(msg.name, msg.text, msg.outgoing);
+    }
+
+    static void OnSystemNotice(SystemNotice msg) => ChatController.GameSaid(msg.text);
+
+    /// <summary>Server-only: one finished line in the chat of every player on this map server. ONLY PEOPLE ALREADY IN —
+    /// a connection still at the door has no body yet, and is told what is running when it is let in.</summary>
+    public static void TellEveryoneOnThisServer(string line)
+    {
+        if (!NetworkServer.active || string.IsNullOrEmpty(line)) return;
+        var notice = new SystemNotice { text = line };
+        foreach (var conn in NetworkServer.connections.Values)
+            if (conn != null && conn.identity != null) conn.Send(notice);
     }
 
     // Asked BY a player, carried out HERE. Three things are checked before anything happens, in this order,
@@ -2657,6 +2863,19 @@ public class GameNetwork : NetworkManager
         if (np != null) np.ServerHandover = announced.handover;
         PlayerFighter.BuildFrom(np, announced);
 
+        // AND ANY PRIVATE MESSAGE THAT REACHED THIS SERVER WHILE THEY WERE ON THEIR WAY IN — held on their
+        // announcement (see MapServerLink.HoldPmForArrival), now theirs.
+        if (announced.pendingPms != null)
+            foreach (var pm in announced.pendingPms) conn.Send(pm);
+
+        // AND, TO SOMEBODY ENTERING THE WORLD, WHICH WORLD EVENTS ARE RUNNING. Only on entering — walking in from
+        // another map server is not news, and saying it at every door would bury it.
+        if (announced.signingIn)
+        {
+            var running = WorldEvents.RunningNowLine();
+            if (running != null) conn.Send(new SystemNotice { text = running });
+        }
+
         GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone")
                   + " (" + (np != null && !string.IsNullOrEmpty(np.ServerCharacterId) ? np.ServerCharacterId : "no player id")
                   + ") entered the world — " + NetworkServer.connections.Count + " player(s) here");
@@ -2714,11 +2933,16 @@ public class GameNetwork : NetworkManager
         swingLedgers.Remove(conn.connectionId);
         skillLedgers.Remove(conn.connectionId);
         chatLedgers.Remove(conn.connectionId);
+        pmSentLedgers.Remove(conn.connectionId);
+        if (leftShell != null && !string.IsNullOrEmpty(leftShell.ServerCharacterId))
+            pmReceivedLedgers.Remove(leftShell.ServerCharacterId);
         swingDueAt.Remove(conn.connectionId);
         // AND ANY SWING STILL IN FLIGHT. A blow scheduled a moment before somebody left would otherwise come round
         // and look for a fighter that has been dismissed — harmless, but it would sit in the list until it did.
         for (int i = pendingBlows.Count - 1; i >= 0; i--)
             if (pendingBlows[i].connectionId == conn.connectionId) pendingBlows.RemoveAt(i);
+        // And everything they threw that is still in the air.
+        Flights.DropThrower(conn.connectionId);
 
         // WRITTEN DOWN BEFORE THEY ARE LET GO. This is the moment everything that happened to them has to
         // survive — and the order matters: a character released while its last write is still in flight is how

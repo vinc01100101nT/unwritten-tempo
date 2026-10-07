@@ -186,6 +186,56 @@ static class Checks
             }
     }
 
+    // ---- a strike that grows ------------------------------------------------------------------------------
+    // Decided 2026-10-06: a strike's damage multiplier grows by a set amount per point of MP or HP the caster gave up
+    // (the all-in blows), and by a set amount per metre to its target. Both 0 must mean no growth at all, because that
+    // is what every strike authored before them carries.
+    const string StrikeF = "unity/Assets/Scripts/StrikeMath.cs";
+
+    static void StrikeGrowthRules()
+    {
+        That(StrikeMath.Growth(0f, 500, 0f, 30f) == 0f, StrikeF, "a strike with both growth numbers at 0 grew");
+        That(Math.Abs(StrikeMath.Growth(0.1f, 250, 0f, 0f) - 25f) < 0.001f, StrikeF, "0.1 per point with 250 given up should add 25");
+        That(Math.Abs(StrikeMath.Growth(0.05f, 0, 0f, 0f)) < 0.001f, StrikeF, "nothing given up should add nothing");
+        That(Math.Abs(StrikeMath.Growth(0f, 0, 0.05f, 20f) - 1f) < 0.001f, StrikeF, "0.05 per metre at 20 metres should add 1");
+        That(Math.Abs(StrikeMath.Growth(0.1f, 10, 0.05f, 20f) - 2f) < 0.001f, StrikeF, "the two growths should add together");
+        That(StrikeMath.Growth(0.1f, -5, 0.05f, -3f) == 0f, StrikeF, "a negative amount given up or distance should add nothing");
+        // The sniper (decided 2026-10-06): its ordinary attack is a magic shot that grows 2% a metre, and it is the only
+        // weapon whose magic can crit.
+        That(Math.Abs(StrikeMath.SniperShotGrowth(0f) - 1f) < 0.001f, StrikeF, "a point-blank sniper shot should be x1");
+        That(Math.Abs(StrikeMath.SniperShotGrowth(7f) - 1.14f) < 0.001f, StrikeF, "a sniper shot at 7 metres should be x1.14");
+        That(Math.Abs(StrikeMath.SniperShotGrowth(-2f) - 1f) < 0.001f, StrikeF, "a negative distance should not shrink a shot");
+        foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
+        {
+            That(WeaponTypes.MagicCanCrit(w) == (w == WeaponType.Firearm), StrikeF, w + ": only the sniper's magic may crit");
+            That(WeaponTypes.ShootsMagic(w) == (w == WeaponType.Firearm), StrikeF, w + ": only the sniper shoots magic");
+        }
+    }
+
+    // ---- things that fly -------------------------------------------------------------------------------------
+    // Decided 2026-10-06: a thrown shuriken makes 3 jumps, each within 2.5 of the last enemy hit and worth 75% of the
+    // hit before it; everything flies at 14 a second; a buff adds whole jumps to a chain that already bounces and never
+    // makes one bounce that does not; no chain passes the jump cap.
+    const string FlightF = "unity/Assets/Scripts/FlightMath.cs";
+
+    static void FlightRules()
+    {
+        That(FlightMath.ThrowJumps == 3, FlightF, "a thrown shuriken should make 3 jumps");
+        That(Math.Abs(FlightMath.ThrowJumpRange - 2.5f) < 0.001f, FlightF, "a jump should reach 2.5");
+        That(Math.Abs(FlightMath.ThrowDamageKept - 0.75f) < 0.001f, FlightF, "a jump should keep 75%");
+        That(Math.Abs(FlightMath.Speed - 7f) < 0.001f, FlightF, "everything should fly at 7 a second");
+        That(Math.Abs(FlightMath.HopScale(0.75f, 0) - 1f) < 0.001f, FlightF, "the first hit should be worth 100%");
+        That(Math.Abs(FlightMath.HopScale(0.75f, 1) - 0.75f) < 0.001f, FlightF, "the first jump should be worth 75%");
+        That(Math.Abs(FlightMath.HopScale(0.75f, 3) - 0.421875f) < 0.0001f, FlightF, "the third jump should be worth 42.2%");
+        That(Math.Abs(FlightMath.LegSeconds(UnityEngine.Vector3.zero, new UnityEngine.Vector3(7f, 0f, 0f)) - 1f) < 0.001f,
+             FlightF, "7 units should take one second");
+        That(FlightMath.TotalJumps(3, 0f) == 3, FlightF, "3 jumps with no buff should stay 3");
+        That(FlightMath.TotalJumps(3, 2f) == 5, FlightF, "a +2 buff should make 3 jumps 5");
+        That(FlightMath.TotalJumps(3, 1.6f) == 4, FlightF, "a buff adds WHOLE jumps — +1.6 adds 1");
+        That(FlightMath.TotalJumps(0, 5f) == 0, FlightF, "a buff made an arrow bounce");
+        That(FlightMath.TotalJumps(3, 100f) == FlightMath.MaxJumps, FlightF, "a chain passed the jump cap");
+    }
+
     // ---- armour words --------------------------------------------------------------------------------
     // Decided 2026-09-23: each armour slot rolls one of ITS OWN words, and no word lives on two slots, so a character
     // can never wear the same word twice. A wrong answer here is silent — a word that does nothing reads as a word.
@@ -211,8 +261,18 @@ static class Checks
 
         // The agreed first numbers, as literals.
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Bulwark, Quality.A) - 8f) < 0.001f, WordsF, "Bulwark at A should be 8%");
-        That(Math.Abs(ArmourWords.Amount(ArmourWord.Thornclad, Quality.A) - 10f) < 0.001f, WordsF, "Thornclad at A should be 10%");
         That(Math.Abs(ArmourWords.Amount(ArmourWord.Emberward, Quality.A) - 15f) < 0.001f, WordsF, "a ward at A should be 15%");
+        // Anchored and Wayfarer, decided 2026-10-06: 5% to 25% shorter shoves, +1 to +5 HP a second.
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Anchored, Quality.Raw) - 5f) < 0.001f, WordsF, "Anchored at Raw should be 5%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Anchored, Quality.A) - 25f) < 0.001f, WordsF, "Anchored at A should be 25%");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Wayfarer, Quality.Raw) - 1f) < 0.001f, WordsF, "Wayfarer at Raw should be 1 HP a second");
+        That(Math.Abs(ArmourWords.Amount(ArmourWord.Wayfarer, Quality.A) - 5f) < 0.001f, WordsF, "Wayfarer at A should be 5 HP a second");
+        var shoes = new EquipBonuses();
+        ArmourWords.AddWord(ArmourWord.Wayfarer, 3f, ref shoes);
+        var wornTable = new float[Enum.GetValues(typeof(SubStat)).Length];
+        ArmourWords.FoldIntoSubStats(shoes, wornTable);
+        That(Math.Abs(wornTable[(int)SubStat.HPRegen] - 3f) < 0.001f, WordsF, "a worn Wayfarer does not reach HP regeneration");
+        That(Math.Abs(ArmourWords.CutBy(10f, 0.25f) - 7.5f) < 0.001f, WordsF, "a 25% Anchored should leave a shove at 75% of its speed");
 
         // Ironblood's percentage reaches the crit roll as the LUK it is worth: 7.5% at 0.3% a point is 25 LUK.
         That(UnitStatMath.CritShieldAsLuk(7.5f) == 25, StatMath, "7.5% crit shield should be worth 25 LUK");
@@ -230,9 +290,10 @@ static class Checks
         ArmourWords.FoldIntoSubStats(eb, table);
         That(Math.Abs(table[(int)SubStat.MovementSpeed] - 0.1f) < 0.0001f, WordsF, "+5 shoes should be +0.10 movement speed");
         That(Math.Abs(table[(int)SubStat.MPRegen] - 2.5f) < 0.0001f, WordsF, "Wellspring 2.5 should be +2.5 MP a second");
-        // Block chance with a worn extra never makes a wall.
-        That(Math.Abs(Combat.BlockChance(0.05f, 0.08f) - 0.13f) < 0.001f, CombatF, "5% block + 8% Guarding should be 13%");
-        That(Combat.BlockChance(0.9f, 0.5f) <= 0.95f + 0.0001f, CombatF, "block chance passed 95%");
+        // Block chance — only a skill grants it — never makes a wall.
+        That(Math.Abs(Combat.BlockChance(0.13f) - 0.13f) < 0.001f, CombatF, "a 13% block chance should stay 13%");
+        That(Combat.BlockChance(1.4f) <= 0.95f + 0.0001f, CombatF, "block chance passed 95%");
+        That(Combat.BlockChance(-0.2f) == 0f, CombatF, "a negative block chance should be none");
     }
 
     // ---- worn accuracy and evasion reach the roll -----------------------------------------------------
@@ -280,16 +341,24 @@ static class Checks
         That(UnitStatMath.MeleeAttack(u, none, 0f) == UnitStatMath.RangedAttack(swapped, none, 0f), StatMath,
              "melee attack and ranged attack are no longer mirrors with STR and DEX swapped");
 
-        // The held weapon picks which one a unit swings with.
+        // The held weapon picks which one a unit swings with — and a shuriken picks by the higher of STR and DEX.
         foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
         {
-            int expected = WeaponTypes.IsRanged(w) ? UnitStatMath.RangedAttack(u, none, 0f)
-                                                   : UnitStatMath.MeleeAttack(u, none, 0f);
+            int expected = WeaponTypes.SwingsRanged(w, u.str, u.dex) ? UnitStatMath.RangedAttack(u, none, 0f)
+                                                                     : UnitStatMath.MeleeAttack(u, none, 0f);
             That(UnitStatMath.PhysicalAttack(w, u, none, 0f) == expected, StatMath,
                  "holding a " + w + " swings with the wrong attack");
         }
-        That(WeaponTypes.IsRanged(WeaponType.Bow) && WeaponTypes.IsRanged(WeaponType.Firearm), "unity/Assets/Scripts/WeaponType.cs",
-             "a bow or a firearm is no longer a ranged weapon");
+        That(WeaponTypes.SwingsRanged(WeaponType.Bow, 99, 1) && WeaponTypes.SwingsRanged(WeaponType.Firearm, 99, 1),
+             "unity/Assets/Scripts/WeaponType.cs", "a bow or a firearm is no longer always ranged");
+        That(!WeaponTypes.SwingsRanged(WeaponType.Sword, 1, 99), "unity/Assets/Scripts/WeaponType.cs",
+             "a sword swings ranged with high DEX");
+        That(UnitStatMath.PhysicalAttack(WeaponType.Shuriken, swapped, none, 0f) == UnitStatMath.RangedAttack(swapped, none, 0f),
+             StatMath, "a shuriken with DEX above STR should swing with ranged attack");
+        That(UnitStatMath.PhysicalAttack(WeaponType.Shuriken, u, none, 0f) == UnitStatMath.MeleeAttack(u, none, 0f),
+             StatMath, "a shuriken with STR above DEX should swing with melee attack");
+        That(!WeaponTypes.SwingsRanged(WeaponType.Shuriken, 40, 40), "unity/Assets/Scripts/WeaponType.cs",
+             "a shuriken with STR equal to DEX should swing melee");
 
         // A worn primary reaches the formulas once folded into a unit's inputs — the creature's road.
         var gear = default(EquipBonuses);
@@ -425,21 +494,33 @@ static class Checks
         var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.Metal, 10, Quality.A);
         That(staff.attack == 0 && staff.magicAttack > 0, CraftF, "a caster's weapon no longer folds into magic attack");
 
-        // An armour piece's MATERIAL decides what a fold buys; its SLOT how much (decided 2026-09-23). The literals are
-        // the agreed table: body armour at A +35 is 23 defence and 182 HP in metal, 11.4% attack speed and 11 evasion
-        // in leather, 23 magic defence and 91 MP in cloth; a head or shoes take half.
+        // An armour piece's MATERIAL decides what a fold buys; its SLOT how much (decided 2026-09-23), every fold worth
+        // 1.8 of the original table (decided 2026-10-07). The literals are the agreed table: body armour at A +35 is 41
+        // defence and 328 HP in metal, 20.5% attack speed and 20 evasion in leather, 41 magic defence and 164 MP in
+        // cloth; a head or shoes take half.
         var metal = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
-        That(metal.defense == 23 && metal.hp == 182 && metal.magicDefense == 0 && metal.evasion == 0, CraftF,
-             "metal body armour at A +35 should be 23 defence and 182 HP, got " + metal.defense + " and " + metal.hp);
+        That(metal.defense == 41 && metal.hp == 328 && metal.magicDefense == 0 && metal.evasion == 0, CraftF,
+             "metal body armour at A +35 should be 41 defence and 328 HP, got " + metal.defense + " and " + metal.hp);
         var leather = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Leather, 35, Quality.A);
-        That(Math.Abs(leather.attackSpeedPercent - 11.4f) < 0.001f && leather.evasion == 11 && leather.defense == 0, CraftF,
-             "leather body armour at A +35 should be 11.4% attack speed and 11 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
+        That(Math.Abs(leather.attackSpeedPercent - 20.5f) < 0.001f && leather.evasion == 20 && leather.defense == 0, CraftF,
+             "leather body armour at A +35 should be 20.5% attack speed and 20 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
         var cloth = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Cloth, 35, Quality.A);
-        That(cloth.magicDefense == 23 && cloth.mp == 91 && cloth.defense == 0, CraftF,
-             "cloth body armour at A +35 should be 23 magic defence and 91 MP, got " + cloth.magicDefense + " and " + cloth.mp);
+        That(cloth.magicDefense == 41 && cloth.mp == 164 && cloth.defense == 0, CraftF,
+             "cloth body armour at A +35 should be 41 magic defence and 164 MP, got " + cloth.magicDefense + " and " + cloth.mp);
         var shoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
-        That(shoes.defense == 11 && shoes.hp == 91, CraftF,
-             "metal shoes at A +35 should take half: 11 defence and 91 HP, got " + shoes.defense + " and " + shoes.hp);
+        That(shoes.defense == 20 && shoes.hp == 164, CraftF,
+             "metal shoes at A +35 should take half: 20 defence and 164 HP, got " + shoes.defense + " and " + shoes.hp);
+        // The +5 starter set the first tutorial makes — what the 1.8 was sized on: the Sword 9 attack, the Chainmail 5
+        // defence and 36 HP, the Iron Sabatons 2 defence and 18 HP.
+        var sword5 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 5, Quality.Raw);
+        var mail5 = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw);
+        var boots5 = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw);
+        That(sword5.attack == 9 && mail5.defense == 5 && mail5.hp == 36 && boots5.defense == 2 && boots5.hp == 18, CraftF,
+             "the +5 starter set should be 9 attack, 5 defence / 36 HP, 2 defence / 18 HP, got " + sword5.attack + ", "
+             + mail5.defense + " / " + mail5.hp + ", " + boots5.defense + " / " + boots5.hp);
+        // A value exactly on .5 rounds UP: an A +25 weapon is 25 × 1.8 × 1.3 = 58.5, which floats summed to 58.
+        int a25 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 25, Quality.A).attack;
+        That(a25 == 59, CraftF, "an A +25 weapon is 58.5 attack and should round up to 59, got " + a25);
         That(Math.Abs(shoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
              "shoes at A +35 should be +70% movement speed — 2% a fold, no grade lift — got " + shoes.moveSpeedPercent);
         var rawShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Leather, 5, Quality.Raw);
@@ -1024,6 +1105,31 @@ static class Checks
     // 2026-10-05 — the clip whose hand-typed steps were L7 R17. A wrong landing rule moves the footstep sounds off the
     // feet; a wrong speed makes every planted foot slide, and neither shows up anywhere but in play.
     const string StrideF = "unity/Assets/Scripts/StrideMath.cs";
+    // ---- world events: what a kill pays under an experience rate, and how a GM's duration is read -------------
+    const string EventF = "unity/Assets/Scripts/WorldEventMath.cs";
+
+    static void WorldEventNumbers()
+    {
+        That(WorldEventMath.Multiplied(40, 1.5) == 60, EventF, "40 experience at ×1.5 must pay 60");
+        That(WorldEventMath.Multiplied(5, 1.5) == 8, EventF, "5 at ×1.5 is 7.5, which must round UP to 8");
+        That(WorldEventMath.Multiplied(4, 0.1) == 0, EventF, "4 at ×0.1 is 0.4, which must pay nothing");
+        That(WorldEventMath.Multiplied(int.MaxValue, 3) == int.MaxValue, EventF, "a huge rate must stop at the largest count, not wrap negative");
+        That(WorldEventMath.Multiplied(40, 0) == 0, EventF, "a rate of 0 must pay nothing");
+
+        That(WorldEventMath.TryParseDuration("2h", out var s) && s == 7200, EventF, "'2h' must be 7200 seconds");
+        That(WorldEventMath.TryParseDuration("30m", out s) && s == 1800, EventF, "'30m' must be 1800 seconds");
+        That(WorldEventMath.TryParseDuration("1.5d", out s) && s == 129600, EventF, "'1.5d' must be 129600 seconds");
+        That(WorldEventMath.TryParseDuration("90s", out s) && s == 90, EventF, "'90s' must be 90 seconds");
+        That(!WorldEventMath.TryParseDuration("90", out _), EventF, "a duration with no unit must be refused");
+        That(!WorldEventMath.TryParseDuration("0h", out _), EventF, "a zero duration must be refused");
+        That(!WorldEventMath.TryParseDuration("-1h", out _), EventF, "a negative duration must be refused");
+
+        That(WorldEventMath.DurationText(7200) == "2 h", EventF, "7200 s must read '2 h'");
+        That(WorldEventMath.DurationText(4800) == "1 h 20 min", EventF, "4800 s must read '1 h 20 min'");
+        That(WorldEventMath.DurationText(2730) == "45 min 30 s", EventF, "2730 s must read '45 min 30 s'");
+        That(WorldEventMath.MultiplierText(1.5) == "×1.5", EventF, "1.5 must read '×1.5'");
+    }
+
     static void StrideRules()
     {
         float[] lF = { -.0240f, -.0145f, -.0007f, .0173f, .0383f, .0556f, .0612f, .0477f, .0280f, .0092f, -.0094f,
@@ -1058,6 +1164,8 @@ static class Checks
         ElementChart();
         WornAccuracyAndEvasion();
         ArmourWordRules();
+        StrikeGrowthRules();
+        FlightRules();
         Ring();
         QualityLadder();
         QuenchOdds();
@@ -1072,6 +1180,7 @@ static class Checks
         SavedCharacterNumbers();
         QuestSteps();
         StrideRules();
+        WorldEventNumbers();
 
         if (failures == 0)
         {

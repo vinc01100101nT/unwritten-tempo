@@ -56,7 +56,8 @@ public sealed class Config
             ServerSecret = Required("SERVER_SECRET"),
             PatchDir = Environment.GetEnvironmentVariable("PATCH_DIR"),
             WikiOrigins = Origins(Environment.GetEnvironmentVariable("WIKI_ORIGINS")
-                                  ?? WebsiteOrigins(Environment.GetEnvironmentVariable("PATCH_URL"))),
+                                  ?? WebsiteOrigins(Environment.GetEnvironmentVariable("PATCH_URL"),
+                                                    Environment.GetEnvironmentVariable("PATCH_PORT"))),
         };
     }
 
@@ -70,14 +71,17 @@ public sealed class Config
     }
 
     /// <summary>Where the website is served from when nobody says otherwise: the download server, which serves the
-    /// site from the same folder as the updates. Its address is PATCH_URL; this computer's own two names for that
-    /// port are added because a browser on this computer sends whichever one was typed. With no PATCH_URL there is
-    /// no website, and no page is let in.</summary>
-    static string WebsiteOrigins(string? patchUrl)
+    /// site from the same folder as the updates. Its address is PATCH_URL; this computer's own two names for the
+    /// port it is served on here, PATCH_PORT, are added because a browser on this computer sends whichever one was
+    /// typed. PATCH_URL may be a proxy in front of that port, so its own port is not this computer's. With no
+    /// PATCH_URL there is no website, and no page is let in.</summary>
+    static string WebsiteOrigins(string? patchUrl, string? patchPort)
     {
         if (!Uri.TryCreate(patchUrl, UriKind.Absolute, out var uri)) return "";
-        return string.Join(',', uri.GetLeftPart(UriPartial.Authority),
-                           $"http://127.0.0.1:{uri.Port}", $"http://localhost:{uri.Port}");
+        var origins = new List<string> { uri.GetLeftPart(UriPartial.Authority) };
+        if (int.TryParse(patchPort, out var port))
+            origins.AddRange([$"http://127.0.0.1:{port}", $"http://localhost:{port}"]);
+        return string.Join(',', origins);
     }
 
     /// <summary>Split a comma-separated list of addresses, dropping any trailing slash so that the value here

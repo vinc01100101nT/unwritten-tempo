@@ -197,7 +197,7 @@ public sealed class MasteryProgress
         int opensAt = Mathf.Max(1, def.masteryLevel);
         if (EarnedLevel(def.weaponType) < opensAt)
         {
-            why = name + " opens at " + def.weaponType + " Mastery " + opensAt + ".";
+            why = name + " opens at " + WeaponTypes.Label(def.weaponType) + " Mastery " + opensAt + ".";
             return false;
         }
         if (!string.IsNullOrEmpty(def.needsSkillId) && !HasLearned(def.needsSkillId))
@@ -208,7 +208,7 @@ public sealed class MasteryProgress
         }
         if (PointsLeft(def.weaponType) <= 0)
         {
-            why = "No " + def.weaponType + " mastery points left.";
+            why = "No " + WeaponTypes.Label(def.weaponType) + " mastery points left.";
             return false;
         }
 

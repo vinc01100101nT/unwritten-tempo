@@ -66,6 +66,7 @@ before any game code runs, has no time and no category.
 | `hit` | `<map> <unit> died — killed by <unit>` — or `killed by nobody` when no attacker was recorded |
 | `hit` | `<map> <unit> took <amount> from <cause> by <unit> [HP <now>/<max>]` — damage that is not a blow: `Poison`, `Bleed`, `Burn`, `reflect`, `brace debt`, `GM kill`. `by <unit>` appears when the damage is credited to somebody — an ailment's ticks are credited to whoever last put it on, so a kill by poison pays the poisoner |
 | `hit` | `<map> CANNOT REACH <target> — it is <distance> away and this weapon reaches <reach>` |
+| `hit` | `<map> <thrower> blade <n> thrown at <target> (hop 0)` · `… blade <n> jumps to <target> (hop <k>)` · `… blade <n> flies back[ — <why>]` · `… blade <n> ends — <why>` — one flight in the air: an arrow, a thrown shuriken or a bouncing skill. `<n>` ties a flight's lines together; each hop's blow is its own `hit` line. `<why>` is `out of jumps`, `nobody left to jump to`, `the thrower died`, `the thrower changed weapon`, `the thrower changed map`, `the thrower is leaving`, `the thrower left`, `the thrower is gone`, `the thrower died and came back` or `nobody near the first hit` |
 | `heal` | `<map> <unit> healed <amount> by <skill> [HP <now>/<max>]` — `by life steal` for life steal; no `by` for regeneration and `/heal` |
 | `buff` | `<map> <state> x<stacks> on <unit> from <skill id> for <seconds>s` — a state arriving or growing |
 | `buff` | `<map> <state> x<stacks> on <unit> from <skill id> restored from the save, <seconds>s left` — a state a character was carrying when it logged out or crossed to another server, back on it with the time it had left |
@@ -100,7 +101,7 @@ A `hit` line that dealt 0 says why, after `— nothing got through:`
 | Words in the line | What happened |
 | --- | --- |
 | `parried` | The target spent a parry charge and the blow was erased |
-| `blocked by an off-hand shield` | The target's off-hand shield blocked it |
+| `blocked` | The target blocked it, with block chance a skill granted |
 | `soaked by a shield barrier` | A Shield skill's barrier ate all of it |
 | `held back by a brace` | A Brace charge held it back — the damage is owed and comes due when the brace ends |
 | `immune to that element` | The target's element, at its level, fully resists the blow's element |

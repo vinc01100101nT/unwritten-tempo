@@ -162,6 +162,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     [SyncVar] float netHopPeak;     // how high it goes at the top, in world units
     [SyncVar] float netHopSeconds;  // how long the whole curve lasts
 
+    // A SCRIPTED MOVE — a skill glide, a shove, a blink — SAID ONCE AS IT BEGINS, for the same reason as the hop
+    // above. A Dash hop is over in a few hundredths of a second; replayed offline against Thousand Petals' real
+    // numbers, a watched copy following the ten-a-second position report reached at most 65% of the hop's speed and
+    // missed each star point by up to 0.4 units. The owner's machine says the move and every other screen draws it
+    // (WatchedMove), afterimage and fade included, read from its own copy of the skill.
+    [SyncVar] MoveSaid netMove;
+    readonly WatchedMove watchedMove = new WatchedMove();
+
     /// <summary>THE BODY THIS MACHINE DRAWS FOR THIS PERSON — the watched copy built for somebody else, and your own
     /// real avatar for yourself, because your own machine keeps no copy of you. Null before either exists.
     ///
@@ -676,6 +684,29 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     // cannot leave somebody arcing through the sky for a minute.
     const float LongestHop = 5f;
 
+    // The authored effect behind the last move this server told the owner to make. A move's look is only ever passed
+    // on as this one — so a machine cannot name some other skill's afterimage, or pile readings of its own choosing.
+    RelocationLook lookSentToOwner;
+
+    /// <summary>The owner's machine began a scripted move (a glide or a blink). A picture of a move it is making
+    /// anyway — it decides nothing, so it is kept sane rather than trusted: no move outlasts <see cref="LongestHop"/>,
+    /// for the same reason no hop does, and its look is the one this server sent, or none.</summary>
+    [Command]
+    public void CmdMoveBegan(MoveSaid said)
+    {
+        if (Leaving) return;
+        if (said.kind == MoveSaid.Glide && (said.speed <= 0f || said.window <= 0f)) return;
+        if (said.kind != MoveSaid.Glide && said.kind != MoveSaid.Blink) return;
+        said.easeSeconds = Mathf.Clamp(said.easeSeconds, 0f, LongestHop);
+        said.window = said.kind == MoveSaid.Glide ? Mathf.Clamp(said.window, 0.05f, LongestHop) : 0f;
+        bool sameEffect = said.look.Has && said.look.skillId == lookSentToOwner.skillId
+                       && said.look.binding == lookSentToOwner.binding && said.look.effect == lookSentToOwner.effect;
+        said.look = sameEffect ? lookSentToOwner : RelocationLook.None;
+        // STAMPED HERE, never by the machine that asked — the rule the hop and the swing already answer to.
+        said.at = NetworkTime.time;
+        netMove = said;
+    }
+
     [Command]
     public void CmdSprinting(bool on)
     {
@@ -976,6 +1007,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         public float seconds;
         /// <summary>Shove: how long they are staggered for.</summary>
         public float stagger;
+        /// <summary>Teleport / Glide: the authored effect behind it, so the owner's machine can read its afterimage
+        /// and fade out of its own copy of the skill. <see cref="RelocationLook.None"/> otherwise.</summary>
+        public RelocationLook look;
     }
 
     /// <summary>SERVER ONLY: hand this motion to the machine that owns the legs.</summary>
@@ -988,6 +1022,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // It is forgiven HERE rather than at each of the three kinds, because this is the one door they all pass
         // through: a fourth kind added later inherits it instead of quietly missing it.
         ForgiveNextMove();
+        lookSentToOwner = motion.look;
         TargetMove(owner, motion);
     }
 
@@ -1002,10 +1037,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         Vector3 face = MapManager.InWorld(motion.faceAt, MapManager.CurrentMap);
         switch (motion.kind)
         {
-            case Motion.Kind.Teleport: me.TeleportTo(dest); break;
+            case Motion.Kind.Teleport: me.TeleportTo(dest, motion.look); break;
             case Motion.Kind.Glide:
                 me.GlideTo(dest, motion.speed, motion.easeIn, motion.easeOut, motion.seconds,
-                           motion.facing ? face : (Vector3?)null);
+                           motion.facing ? face : (Vector3?)null, motion.look);
                 break;
             case Motion.Kind.Shove: me.Shove(dest, motion.speed, motion.seconds, motion.stagger); break;
         }
@@ -1828,19 +1863,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (band1 == null) { Refused("No band-1 material is authored for " + def.displayName + "."); return; }
         if (!Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
 
+        // The weapon's trademark or the armour's word — the one random thing in a piece's whole life — is rolled by
+        // CreateFresh, the one door every new piece comes through.
         var made = EquipmentInstance.CreateFresh(def);
-        // THE WEAPON'S TRADEMARK, rolled here and nowhere else — the one random thing in a weapon's whole life.
-        if (def.slot == EquipSlotType.Weapon)
-        {
-            made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, Trademarks.RollTotal(def.weaponType)));
-            made.Recompute();
-        }
-        // AN ARMOUR PIECE'S WORD, the armour's one random thing, rolled on the same terms.
-        else
-        {
-            made.RollWord();
-            made.Recompute();
-        }
         c.TakeIntoBag(made);
         Done("Forged a " + ItemTooltip.CopyTitle(made) + " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + ".");
         // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an
@@ -2846,7 +2871,8 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // stutter, so the body walks toward the latest known position instead. The SHARED way a watched body does
         // that — the identical one a watched creature uses, so the two can never drift into gliding differently.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
-        WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing);
+        if (watchedMove.IsNew(netMove)) watchedMove.Tell(netMove, MapManager.InWorld(netMove.to, mapName), body.transform);
+        WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing, watchedMove);
 
         // THE SMOKE AT THE LEVEL CAP, from the level the server sent — the same one every kind of unit wears.
         levelAura.Show(netLevel, body.transform);
@@ -2978,6 +3004,8 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         VfxCue.ForgetAurasOn(netId);
         // The level-cap smoke too — on a watched body, and on this machine's own avatar when this person leaves.
         levelAura.Stop();
+        // …and a move being drawn on the body, with any see-through fade that move put on it.
+        watchedMove.Stop();
         // STRUCK FROM THE REGISTRY BEFORE THE BODY GOES, or a cursor scan would walk a destroyed one.
         if (bodyHealth != null) WatchedBodies.Remove(bodyHealth);
         if (body != null) byBody.Remove(body);
@@ -3129,13 +3157,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// (<see cref="Character.ShowBlowFromServer"/>). On everybody else's machine it is a number over somebody's head,
     /// which is all a bystander can honestly know.</para></summary>
     public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false,
-                         Color tickColor = default, bool showsTotal = false, uint attackerNetId = 0u)
+                         TrueDamageCause tickCause = TrueDamageCause.None, int total = 0, uint attackerNetId = 0u,
+                         bool dodged = false)
     {
         if (isOwned)
         {
             var me = Character.Instance;
             if (me == null) return;
-            me.ShowBlowFromServer(info, tick, tickColor);
+            me.ShowBlowFromServer(info, tick, tickCause, dodged);
 
             // WHAT THE BLOW RAN INTO, drawn here because this is the first machine in the chain with a screen. The
             // server decided all of it and suppresses every floating number it makes, and none of these survives in
@@ -3145,32 +3174,30 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             {
                 var av = me.Body;
                 if (av != null) UnitMitigation.Show(mitigated, av);
+                if (mitigated.blocked) Sfx.Play(me.blockSfx);   // the clang of the block
             }
-            FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
+            ShowRisingTotal(total, attackerNetId);
             return;
         }
 
         if (body == null || info.amount <= 0 || info.missed) return;
         // The SAME colour the person it happened to sees over their own body — one owner, read here.
-        DamagePopup.Spawn(body.transform, info.amount, Character.ColourOfBlow(info, tick, tickColor));
-        FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
+        DamagePopup.Spawn(body.transform, info.amount, Character.ColourOfBlow(info, tick, tickCause));
+        ShowRisingTotal(total, attackerNetId);
     }
 
-    /// <summary>Add this blow to the RISING YELLOW TOTAL over the body this machine draws for this person, when the
-    /// server says it belongs to one — the exact twin of what a creature's blow does, over the person's body instead.
+    /// <summary>Put the RISING YELLOW TOTAL the server summed up over the body this machine draws for this person, when
+    /// the blow belongs to one (<paramref name="total"/> above 0) — the exact twin of what a creature's blow does, over
+    /// the person's body instead.
     ///
     /// <para>Called from BOTH halves of <see cref="ShowBlow"/> on purpose: the person it happened to and everybody
     /// watching them see the same climbing number, the same way both see the same white one. Keyed by who struck, so
-    /// two creatures flurrying one person keep two numbers.</para>
-    ///
-    /// <para>A damage-over-time tick never folds in. A total is one run's worth of strikes; a poison ticking through
-    /// the middle of one is a different thing happening at the same time, and adding it would make the number lie
-    /// about what the skill did.</para></summary>
-    void FoldIntoRisingTotal(in DamageInfo info, bool tick, bool showsTotal, uint attackerNetId)
+    /// two creatures flurrying one person keep two numbers.</para></summary>
+    void ShowRisingTotal(int total, uint attackerNetId)
     {
-        if (!showsTotal || tick || info.missed || info.amount <= 0) return;
+        if (total <= 0) return;
         var on = DrawnBody;
-        if (on != null) RepeatsDamageTotal.ReportArrived(on, info.amount, attackerNetId);
+        if (on != null) RepeatsDamageTotal.ReportArrived(on, total, attackerNetId);
     }
 
     /// <summary>Show this person casting a skill, on the machines watching them. The EFFECT and nothing else — no

@@ -54,6 +54,17 @@ public static class PlayerUnits
         else BucketFor(map).Add(unit);
     }
 
+    /// <summary>Everyone filed under <paramref name="map"/>, plus everyone whose map is not known yet, added to
+    /// <paramref name="into"/> (which is not cleared). An empty map adds everybody. The caller still asks each one's
+    /// map, the same way <see cref="NearestTo"/> does, so a stale entry is skipped rather than reached across maps.</summary>
+    public static void CollectIn(string map, List<ICombatUnit> into)
+    {
+        if (into == null) return;
+        if (string.IsNullOrEmpty(map)) { into.AddRange(present); return; }
+        if (byMap.TryGetValue(map, out var here)) into.AddRange(here);
+        into.AddRange(unfiled);
+    }
+
     /// <summary>Everyone currently in the world. Never null; empty before anybody has arrived.</summary>
     public static IReadOnlyList<ICombatUnit> Present => present;
 
