@@ -1846,6 +1846,13 @@ public class Character : MonoBehaviour, ICombatUnit
     /// is announced to every screen watching. The sting is the owner's machine's (<see cref="ShowLevelUp"/>).</summary>
     void NoteLevelUp(int reached)
     {
+        if (GameServer.IsServer && !IsWatchedCopy)
+        {
+            PlaySession.ReachedLevel(this, reached);
+            if (GameLog.On(LogCat.Server))
+                GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(this), " ", SpawnIds.Label(this),
+                                                          " reached level ", reached.ToString()));
+        }
         OnLeveledUp?.Invoke(reached);
         var lav = Avatar();
         if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
@@ -2108,7 +2115,7 @@ public class Character : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>The goods and the gold a character starts life with — exactly <see cref="StarterKit"/>, which decides
-    /// both in one place. Nothing wearable: gear is made, never handed out, so the kit is the bill for forging it.</summary>
+    /// both in one place.</summary>
     public void GiveStarterKit()
     {
         bag.Clear();

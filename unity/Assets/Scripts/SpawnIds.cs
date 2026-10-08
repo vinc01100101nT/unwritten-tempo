@@ -86,6 +86,7 @@ public static class SpawnIds
     {
         if (who == null || !GameServer.IsServer || who.IsWatchedCopy || string.IsNullOrEmpty(map)) return;
         who.Spawn = Next(map, GameNetwork.NameOf(who));
+        PlaySession.EnteredMap(who, map);
         if (GameLog.On(LogCat.Spawn))
             GameLog.Info(LogCat.Spawn, string.Concat(who.Spawn.map, " ", who.Spawn.label, " (",
                                                      GameNetwork.CharacterIdOf(who), ") entered"));

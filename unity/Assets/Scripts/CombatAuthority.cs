@@ -176,8 +176,22 @@ public static class CombatAuthority
     /// which is the only machine that decides a death. "killed by nobody" means no attacker was recorded.</summary>
     public static void LogDeath(ICombatUnit dead)
     {
-        if (!GameServer.IsServer || !GameLog.On(LogCat.Hit)) return;
+        if (!GameServer.IsServer) return;
         var killer = dead.LastAttacker;
+
+        // A PLAYER'S DEATH IS WRITTEN WHATEVER THE SWITCHES SAY, under [server], with what killed them and the level
+        // they were — the hit category that also writes it is off by default, and a play-test log that says a
+        // tester "was dead" and never what killed them cannot be acted on.
+        if (dead is Character person && !person.IsWatchedCopy)
+        {
+            PlaySession.Died(person);
+            if (GameLog.On(LogCat.Server))
+                GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(dead), " ", SpawnIds.Label(dead), " was killed by ",
+                                                          PlayerUnits.Gone(killer) ? "nobody" : SpawnIds.Label(killer),
+                                                          " at level ", person.Level.ToString()));
+        }
+
+        if (!GameLog.On(LogCat.Hit)) return;
         GameLog.Info(LogCat.Hit, string.Concat(SpawnIds.MapOf(dead), " ", SpawnIds.Label(dead), " died — killed by ",
                                                PlayerUnits.Gone(killer) ? "nobody" : SpawnIds.Label(killer)));
     }

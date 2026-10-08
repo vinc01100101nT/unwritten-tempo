@@ -112,7 +112,11 @@ public class NetGroundDrop : NetworkBehaviour
         // THE SERVER'S HALF: something with an end that nobody took goes away, and every watcher's copy with it.
         if (isServer)
         {
-            if (ServerDrop != null && ServerDrop.Expired) NetworkServer.Destroy(gameObject);
+            if (ServerDrop != null && ServerDrop.Expired)
+            {
+                LogVanished(ServerDrop);
+                NetworkServer.Destroy(gameObject);
+            }
             return;
         }
         if (!isClient) return;
@@ -132,5 +136,17 @@ public class NetGroundDrop : NetworkBehaviour
         // A map is set down in a different place on each machine, and where it is set down can change as maps
         // come and go — so where the words belong is worked out again whenever that happens.
         if (inMyMap) view.transform.position = MapManager.InWorld(inMap, mapName);
+    }
+
+    // "lst_fild01 Rawhide ×2 vanished untaken after 60s — it fell for patches #201": what a player LEFT on the ground,
+    // which is as telling in a play-test as what they took. Only a kill's drops have an end, so only they say this.
+    static void LogVanished(GroundDrop drop)
+    {
+        PlaySession.Vanished(drop.reservedForId);
+        if (!GameLog.On(LogCat.Server)) return;
+        int lay = Mathf.RoundToInt(Time.time - drop.placedAt);
+        string forWhom = !string.IsNullOrEmpty(drop.reservedForName) ? drop.reservedForName : drop.reservedForId;
+        GameLog.Info(LogCat.Server, string.Concat(drop.mapName, " ", drop.Text, " vanished untaken after ", lay.ToString(),
+                                                  "s", string.IsNullOrEmpty(forWhom) ? "" : " — it fell for " + forWhom));
     }
 }

@@ -83,6 +83,8 @@ public class ShopPanel : MonoBehaviour
         var store = InventoryStore.Instance;
         if (store == null) return;
         store.OnChanged += OnBagChanged;
+        // What a first run gives free arrives with the quests, a moment after the bag.
+        QuestStore.Changed += OnBagChanged;
         listening = true;
     }
 
@@ -91,6 +93,7 @@ public class ShopPanel : MonoBehaviour
         if (!listening) return;
         var store = InventoryStore.Instance;
         if (store != null) store.OnChanged -= OnBagChanged;
+        QuestStore.Changed -= OnBagChanged;
         listening = false;
     }
 
@@ -136,9 +139,13 @@ public class ShopPanel : MonoBehaviour
             if (!WorldShops.Sells(shop, def)) continue;
             selling++;
             string id = def.id;
-            Deal(def.displayName + "   " + def.buyPrice + "g each",
-                 "Buy 1", () => Buy(id, 1),
-                 "Buy 10", () => Buy(id, 10));
+            // FREE ONES FIRST, as the server counted them — a tutorial's first run takes nothing it has you buy.
+            int free = QuestStore.FreeBuys(id);
+            string price = free > 0 ? free + " free, then " + def.buyPrice + "g each" : def.buyPrice + "g each";
+            var buyOne = Deal(def.displayName + "   " + price,
+                              "Buy 1", () => Buy(id, 1),
+                              "Buy 10", () => Buy(id, 10));
+            GuideMarker.Put(buyOne.gameObject, GuideSpot.ShopBuyButton, id);
         }
         if (selling == 0) Line("Nothing for sale.", 12, Sub);
 
@@ -183,7 +190,8 @@ public class ShopPanel : MonoBehaviour
     }
 
     // One line of the list: what it is and its price on the left, two presses on the right.
-    void Deal(string label, string firstWord, System.Action first, string secondWord, System.Action second)
+    // A row with its two buttons; the first is handed back so a guide can point at it.
+    Button Deal(string label, string firstWord, System.Action first, string secondWord, System.Action second)
     {
         var row = new GameObject("Deal", typeof(RectTransform));
         row.transform.SetParent(content, false);
@@ -199,8 +207,10 @@ public class ShopPanel : MonoBehaviour
         t.color = UiKit.TextMain;
         t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
-        UiKit.Btn(firstWord, row.transform, first).gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
+        var firstButton = UiKit.Btn(firstWord, row.transform, first);
+        firstButton.gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
         UiKit.Btn(secondWord, row.transform, second).gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
+        return firstButton;
     }
 
     // One line of text, `rows` lines tall — a sentence from the server needs room to wrap.

@@ -61,6 +61,15 @@ public class WorldShops : ScriptableObject
         return false;
     }
 
+    /// <summary>Does any shop in the world sell <paramref name="def"/>.</summary>
+    public static bool AnySells(Item def)
+    {
+        var list = Instance;
+        if (list == null || def == null) return false;
+        for (int i = 0; i < list.rows.Count; i++) if (Sells(list.rows[i], def)) return true;
+        return false;
+    }
+
     /// <summary>Would <paramref name="shop"/> buy this stack: it buys at all, and the thing has a sell value. ONE RULE,
     /// whatever kind of item it is: a sell value of 0 is what makes a thing unsellable (<see cref="Item.CanBeSold"/>).</summary>
     public static bool Buys(Row shop, BagEntry e)

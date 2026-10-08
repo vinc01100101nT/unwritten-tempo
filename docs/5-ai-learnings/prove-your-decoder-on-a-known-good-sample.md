@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-10-05
+last-updated: 2026-10-08
 tags:
   - ai-learnings
 ---
@@ -12,7 +12,7 @@ tags:
 
 **You wrote a small parser or probe to inspect some data, and it is telling you the data is corrupt, empty or
 wrong.** Or **you built a throwaway copy of something to test against, and the code you are testing appears to
-do nothing to it.**
+do nothing to it.** Or **a screenshot you took seems to show a visual effect missing.**
 
 ## The rule
 
@@ -91,7 +91,20 @@ filter, PRINTED the scene of each object instead, and planted a known case: two 
 one flagged and one not. After one switch the flagged one was still there with no scene, and the plain one was
 gone. That one control settled the cause.
 
+### The same failure, 2026-10-08: a screenshot taken at night
+
+The user reported the ink outlines missing in client builds. I photographed a running build: no outlines, no
+paper grain — and told the user the ink draws nothing on screen, then built a test client and wrote two probe
+shaders to find out why. The picture was taken at in-game NIGHT: near-black ink on near-black walls cannot be
+seen. The user set the time to 0.2 and the outlines were plainly there, in the real build, untouched. My own probe
+had already counted 1,400–10,000 inked pixels inside the build. Cost: two rounds and a ten-minute build, chasing a
+bug that a daytime screenshot would have ruled out in seconds.
+
 ## How to apply
+
+- **Before calling a visual effect missing from a picture, make the picture able to show it**: daytime (the
+  `time 0.5` chat command), a lit spot, the same view the working case was seen in — and compare against a
+  picture of the working case taken under the same conditions.
 
 - **Never filter a census on the property the bug might be about — print it instead.** "Only objects in a valid
   scene", "only active ones", "only ones in the registry": each is a guess that the bug does not live there.

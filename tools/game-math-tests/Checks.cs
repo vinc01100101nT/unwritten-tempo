@@ -1085,7 +1085,17 @@ static class Checks
         That(copper == 10 && gold == 900, QuestF, "a Sword forged and folded twice costs 10 Copper and 900 gold");
         QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
         QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
-        That(copper == 24 && gold == 1900, QuestF, "the crafting tutorial's whole bill is the starter kit: 24 Copper, 1,900 gold");
+        That(copper == 24 && gold == 1900, QuestF, "three pieces forged and folded twice each cost 24 Copper and 1,900 gold");
+        // A Health step: 80% of 76 is met at 61 and not at 60; from 7 health, potions healing 30 each take two to get there.
+        That(QuestMath.HealthMet(61, 76, 80) && !QuestMath.HealthMet(60, 76, 80), QuestF, "80% of 76 health is 61");
+        That(QuestMath.HealthNeeded(76, 80) == 61, QuestF, "the least health meeting 80% of 76 is 61");
+        That(QuestMath.UsesToReach(7, 76, 80, 30) == 2 && QuestMath.UsesToReach(61, 76, 80, 30) == 0
+             && QuestMath.UsesToReach(7, 76, 80, 0) == 0, QuestF,
+             "from 7 of 76 health, 30-health potions take 2 to reach 80%; none when already there or when they heal nothing");
+        That(QuestMath.BuyBill(80, 3, 1, 1) == 80 && QuestMath.BuyBill(80, 1, 0, 2) == 0, QuestF,
+             "buying 3 at 80 with 1 bought and 1 free costs 80; more free than asked costs nothing");
+        That(QuestMath.HealOfOneUse(new List<float> { 30f }) == 30 && QuestMath.HealOfOneUse(new List<float> { 12.5f, 12.5f, 0.5f }) == 26
+             && QuestMath.HealOfOneUse(new List<float>()) == 0, QuestF, "one use heals the sum of its heals, rounded half up");
         int c2 = 0, g2 = 0;
         QuestMath.AddForgedPiece(0, 0, 1, 1, 50, ref c2, ref g2);
         That(c2 == 1 && g2 == 50, QuestF, "a piece already forged owes only the folds still missing");

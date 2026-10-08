@@ -57,7 +57,20 @@ before any game code runs, has no time and no category.
 | `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read this map's rows from the world spawn list as it loaded it |
 | `spawn` | `map '<map>' given <n> townsperson(s).` — the server read this map's people from the townsfolk list as it loaded it |
 | `spawn` | `townsperson '<name>' in '<map>' has no model — left out.` — a row of the townsfolk list names no body, so that person was not made |
-| `server` | `<player> bought <n> <item id> from '<shop>' for <g> gold` / `<player> sold <n> <item id> to '<shop>' for <g> gold` — a shop deal the server let through |
+| `server` | `<player> bought <n> <item id> from '<shop>' for <g> gold`, ending `(<f> free, a tutorial's first run)` when a tutorial's first run gave some of them free / `<player> sold <n> <item id> to '<shop>' for <g> gold` — a shop deal the server let through |
+| `server` | `<map> <player> picked up <item> — it had lain <s>s`, ending ` and fell for <unit>` when it was somebody else's kill · `<map> <player> could not pick up <item> — <why>` (`it is <d> away and the reach is <r>`, or `it is still kept for <unit>`; one a second at most) |
+| `server` | `<map> <item> vanished untaken after <s>s — it fell for <player>` — a kill's drop nobody picked up before it ran out |
+| `server` | `<map> <player> put down <item>` — dropped from their bag onto the floor |
+| `server` | `<map> <player> equipped <item> (<slot>)`, ending ` in place of <item>` when it replaced one · `<map> <player> took off <item> (<slot>)` |
+| `server` | `<map> <player> used <item> [HP <now>/<max>] — <n> left` — a potion or food eaten; the health is after it took effect |
+| `server` | `<map> <player> changed their hotbar: set slot <n> to <entry>, cleared slot <n>` — only the slots that moved |
+| `server` | `<map> <player> spent a skill point on <skill id>` · `<map> <player> was refused a skill point on <skill id> — <why>` |
+| `server` | `<map> <player> crafted: <sentence>` · `<map> <player> was refused a craft: <sentence>` — every forge, fold, quench, ink, recycle and merge press, in the same sentence the player was shown |
+| `server` | `<map> <player> started talking to <townsperson id>` · `… stopped talking to <townsperson id>` |
+| `server` | `<map> <player> accepted quest <quest id> from <townsperson id>` · `… started following quest <quest id>` / `stopped following any quest` · `… pressed Play on tutorial <quest id> — <Started / NotMet / …>` · `… reached step <i> of <n> (<step id>) of quest <quest id>` — the gap between two step lines is how long the step took |
+| `server` | `<map> <player> reached level <n>` · `<map> <player> was killed by <unit> at level <n>` — a player's death is written here even with `hit` off |
+| `server` | `<map> <player> said: <text>` — a line said in the room's chat; a private message is never written |
+| `server` | `<name> (<player id>) stopped playing after <m>m <s>s — level <a> → <b>; <k> kill(s) for <xp> experience and <g> gold; died <d> time(s); <f> thing(s) fell for them, <v> vanished untaken; picked up <p>; finished <q> quest(s); maps: <map>, …` — one line per visit, written when they leave the game; walking through doors on the same map server is the same visit |
 | `spawn` | `<map> <name> #<n> came back` — a creature that died is alive again, same body, same number |
 | `spawn` | `<map> <name> #<n> (<player id>) entered` — a player is now in this map |
 | `spawn` | `<map> <name> #<n> got up [HP <now>/<max>]` — a player who died is standing again, same number |
@@ -146,7 +159,7 @@ on.
 | Category | What it writes | Default |
 | --- | --- | --- |
 | `unwritten` | Start-up and general engine-side notes | on |
-| `server` | The machine that owns the world, talking about itself | on |
+| `server` | The machine that owns the world, talking about itself — and every choice a player makes, from picking something up to leaving | on |
 | `net` | Messages crossing between machines | on |
 | `client` | A player's own machine | on |
 | `map` | Maps loading, handing over, being let go | on |
@@ -271,6 +284,11 @@ repeat across maps).
 **"Everything one player did across maps."** — find their `entered` lines by player id, note the `<map> <name> #<n>`
 each gave, and grep for those.
 
+**"How did a play-tester play?"** — start from their `stopped playing after` line: it sums the visit in one line. Then
+read their `[server]` lines in order — picked up, equipped, used, crafted, talked, quest steps, deaths, what they said —
+which are on by default and tell the visit as a story. Things that `vanished untaken` against `picked up 0` means they
+never found how to loot; a quest step with a long gap before the next is where they got stuck.
+
 **"Is this mob's damage right?"** — `tools/server-log-tally.py --map <map>` and compare rolled against dealt per
 attacker; `(critical)` counts are in the same row.
 
@@ -292,6 +310,8 @@ out` means its time ended first.
 
 - **Mana** — no change to a unit's mana writes a line.
 - **Numbers on a player's machine** — its log names units without spawn_ids and never knows why a blow did nothing.
+- **What a player looked at** — a window opened, a tooltip read, a thing hovered: those happen only on their own
+  machine, and the server is never told.
 
 When a question needs one of these, put a recorder inside the game instead — see the related page below.
 

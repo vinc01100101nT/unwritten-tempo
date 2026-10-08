@@ -41,8 +41,19 @@ public class CraftStationPanel : MonoBehaviour
         if (GetComponent<QuestsWindow>() == null) gameObject.AddComponent<QuestsWindow>();
         if (GetComponent<GuideOverlay>() == null) gameObject.AddComponent<GuideOverlay>();
         if (GetComponent<QuestArrows>() == null) gameObject.AddComponent<QuestArrows>();
+        // What a first run makes free arrives with the quests, a moment after the piece the press made.
+        QuestStore.Changed += OnQuestsChanged;
     }
-    void OnDestroy() { if (Instance == this) Instance = null; }
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+        QuestStore.Changed -= OnQuestsChanged;
+    }
+
+    void OnQuestsChanged()
+    {
+        if (IsOpen) Rebuild();
+    }
 
     /// <summary>Open the window for <paramref name="which"/> station. Called when a player reaches a townsperson
     /// who works at one.</summary>
@@ -221,7 +232,10 @@ public class CraftStationPanel : MonoBehaviour
             var d = def;
             var band1 = MaterialCatalog.Band(d.madeOf, 1);
             string forgeMaterial = band1 != null ? band1.displayName : "material";
-            Row(d.displayName + "   " + d.forgeMaterialCost + " " + forgeMaterial + " · " + d.forgeGoldCost + "g",
+            // FREE when the server says so — a tutorial's first run takes nothing it has you make.
+            string price = QuestStore.FreeForge(d.id) ? "Free"
+                : d.forgeMaterialCost + " " + forgeMaterial + " · " + d.forgeGoldCost + "g";
+            Row(d.displayName + "   " + price,
                 () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToForge(d.id); },
                 GuideSpot.StationForgeRow, d.id);
         }
@@ -238,7 +252,7 @@ public class CraftStationPanel : MonoBehaviour
     {
         string itemId = inst.def.id;
         if (offer.canFold)
-            Row("Fold   " + offer.foldMaterialCost + " " + BandMaterialName() + " · " + offer.foldGoldCost + "g",
+            Row("Fold   " + (offer.foldFree ? "Free" : offer.foldMaterialCost + " " + BandMaterialName() + " · " + offer.foldGoldCost + "g"),
                 () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToFold(picked, itemId); },
                 GuideSpot.StationFoldButton, itemId);
         else

@@ -1455,6 +1455,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // weapon, which nobody learns, can still be bound and still fires.
         if (bindings.Length != HotbarBindings.SlotCount) return;
         c.KeepOnlyBindable(bindings);
+        if (GameLog.On(LogCat.Server)) LogHotbarChange(c, bindings);
         c.Hotbar.Restore(bindings);
         // AND THE BAR THE SERVER NOW HOLDS GOES BACK, so a bar the server sent while this was in the air (an item used
         // up) cannot leave the player's screen showing something the server no longer has.
@@ -1466,6 +1467,23 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // nothing. Their machine has always done this on the very same change (HotbarCommit.Now); this side never was.
         c.RefreshUsableSkills();
         SaveHotbarSoon();
+    }
+
+    // "set hotbar slot 3 to skill.lunge, cleared slot 5": only the slots that MOVED, so a bar sent whole on every change
+    // reads as the one thing the player did. Written before the new bar is laid on, while the old one can be read.
+    void LogHotbarChange(Character c, string[] bindings)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < bindings.Length; i++)
+        {
+            string was = c.Hotbar.Get(i) ?? "";
+            string now = bindings[i] ?? "";
+            if (was == now) continue;
+            sb.Append(sb.Length > 0 ? ", " : "");
+            if (now.Length == 0) sb.Append("cleared slot ").Append(i + 1);
+            else sb.Append("set slot ").Append(i + 1).Append(" to ").Append(now);
+        }
+        if (sb.Length > 0) LogDid(c, "changed their hotbar: " + sb);
     }
 
     /// <summary>Client-side: tell the server this person spent a point / rearranged their bar. Silently does
@@ -1628,7 +1646,12 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (c == null || string.IsNullOrEmpty(skillId) || skillId.Length > 128) return;
-        if (!c.Mastery.TrySpend(skillId, out string why))
+        bool spent = c.Mastery.TrySpend(skillId, out string why);
+        // A refusal is written as often as it is said to them — once a second at most — and a point spent every time.
+        if (GameLog.On(LogCat.Server) && (spent || Time.unscaledTime >= nextRefusalLine))
+            LogDid(c, spent ? "spent a skill point on " + skillId
+                            : string.Concat("was refused a skill point on ", skillId, " — ", why));
+        if (!spent)
         {
             // One reason a second at most: a client clicking a grey + in a loop must not turn into a chat flood.
             if (connectionToClient != null && !string.IsNullOrEmpty(why) && Time.unscaledTime >= nextRefusalLine)
@@ -1746,6 +1769,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
         // SAID IN CHAT, every time, so a person pressing a gear slot in a fight knows the swap really happened.
         if (connectionToClient != null) TargetTold(connectionToClient, "Equipped " + e.def.displayName + ".");
+        if (GameLog.On(LogCat.Server))
+            LogDid(c, string.Concat("equipped ", e.def.displayName, " (", e.def.slot.ToString(), ")",
+                                    prev != null && prev.def != null ? " in place of " + prev.def.displayName : ""));
     }
 
     [Command]
@@ -1765,6 +1791,8 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (worn.def != null) c.Bag.Add(new BagEntry { def = worn.def, count = 1, instance = worn });
         PushBagToOwner(theirBarChanges);
         SaveSoon();
+        if (GameLog.On(LogCat.Server) && worn.def != null)
+            LogDid(c, string.Concat("took off ", worn.def.displayName, " (", ((EquipSlotType)slot).ToString(), ")"));
     }
 
     /// <summary>Ten of one Ink or Salt become one of the next tier up. Deterministic — nothing is rolled and
@@ -1804,6 +1832,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     void TellOwnerAboutCraft(string line, bool ok, bool pieceGone)
     {
+        // THE SAME SENTENCE IN THE LOG, refusals included — every craft press ends here, so what a tester tried at a
+        // station, and what stopped them, is written once for all of them.
+        if (isServer && !string.IsNullOrEmpty(line) && GameLog.On(LogCat.Server))
+            LogDid(ServerCharacter, (ok ? "crafted: " : "was refused a craft: ") + line);
         if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
         TargetCraftResult(connectionToClient, line, ok, pieceGone);
     }
@@ -1861,13 +1893,18 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
         var band1 = MaterialCatalog.Band(def.madeOf, 1);
         if (band1 == null) { Refused("No band-1 material is authored for " + def.displayName + "."); return; }
-        if (!Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
+        // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you make — used up by this press, so a second press pays.
+        bool free = c.Quests.TakeFreeForge(itemId);
+        if (!free && !Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
 
         // The weapon's trademark or the armour's word — the one random thing in a piece's whole life — is rolled by
         // CreateFresh, the one door every new piece comes through.
         var made = EquipmentInstance.CreateFresh(def);
+        made.EnsureCopyId();
         c.TakeIntoBag(made);
-        Done("Forged a " + ItemTooltip.CopyTitle(made) + " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + ".");
+        c.Quests.NoteMade(itemId, made.copyId);
+        Done("Forged a " + ItemTooltip.CopyTitle(made) + (free ? " — free, your first time."
+             : " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + "."));
         // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an
         // offer arrives, so a forge that sent none left the sword in the bag and off the screen until reopened.
         AfterWorkingOnGear(c, made);
@@ -1890,11 +1927,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
         if (band == null) { Refused("No band-" + CraftingMath.Band(inst.quality) + " material is authored for this craft."); return; }
         int gold = CraftingMath.FoldGoldCost(inst.quality);
-        if (!Spend(c, band, CraftingMath.FoldMaterialCost, gold)) return;
+        inst.EnsureCopyId();
+        bool free = c.Quests.TakeFreeFold(inst.def.id, inst.copyId, inst.quality);
+        if (!free && !Spend(c, band, CraftingMath.FoldMaterialCost, gold)) return;
 
         inst.upgrade++;
         inst.Recompute();
-        Done("Folded to " + ItemTooltip.CopyTitle(inst) + " for " + Paid(band, CraftingMath.FoldMaterialCost, gold) + ".");
+        Done("Folded to " + ItemTooltip.CopyTitle(inst) + (free ? " — free, your first time."
+             : " for " + Paid(band, CraftingMath.FoldMaterialCost, gold) + "."));
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2120,6 +2160,13 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
     }
 
+    // Whether the next fold of this copy is one a tutorial's first run gives free — what the offer says it costs.
+    static bool FoldIsFree(Character c, EquipmentInstance inst)
+    {
+        inst.EnsureCopyId();
+        return c.Quests.FoldIsFree(inst.def.id, inst.copyId, inst.quality);
+    }
+
     static int IndexOf(Character c, EquipmentInstance inst)
     {
         for (int i = 0; i < c.Bag.Count; i++)
@@ -2189,6 +2236,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             canQuench = CraftingMath.ReadyToQuench(inst.quality, inst.upgrade),
             atTheTop = !CraftingMath.CanQuench(inst.quality),
             canFold = inst.upgrade < CraftingMath.FoldCap(inst.quality),
+            foldFree = FoldIsFree(c, inst),
         });
     }
 
@@ -2246,15 +2294,22 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (!WorldShops.Sells(shop, def)) { ShopSaid("That is not for sale here.", false); return; }
 
         int count = Mathf.Clamp(howMany, 1, MostInOneDeal);
-        long cost = (long)def.buyPrice * count;
+        // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you buy: the free ones are counted first, and only the rest are
+        // paid for. Checked before anything is used up, so a purse too short for the rest uses up nothing.
+        int free = Mathf.Min(count, c.Quests.FreeBuysOf(itemId));
+        long cost = (long)def.buyPrice * (count - free);
         if (cost > c.Gold) { ShopSaid("Needs " + cost + " gold — you have " + c.Gold + ".", false); return; }
 
-        c.AddGold(-(int)cost);
+        if (free > 0) c.Quests.TakeFreeBuys(itemId, free);
+        if (cost > 0) c.AddGold(-(int)cost);
         c.TakeIntoBag(def, count);
-        GameLog.Info(LogCat.Server, playerName + " bought " + count + " " + def.id + " from '" + shopId + "' for " + cost + " gold");
+        GameLog.Info(LogCat.Server, playerName + " bought " + count + " " + def.id + " from '" + shopId + "' for " + cost + " gold"
+                     + (free > 0 ? " (" + free + " free, a tutorial's first run)" : ""));
+        // A STEP TO BUY IT counts the purchase; the bag push below judges every step on what they now hold.
+        if (c.Quests.CountBought(itemId, count)) QuestsMoved();
         PushBagToOwner();
         SaveSoon();
-        ShopSaid("Bought " + count + " " + def.displayName + " for " + cost + " gold.", true);
+        ShopSaid("Bought " + count + " " + def.displayName + (cost > 0 ? " for " + cost + " gold." : " — free, your first time."), true);
     }
 
     /// <summary>Sell <paramref name="howMany"/> of the stack at bag position <paramref name="index"/> to shop
@@ -2329,6 +2384,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // item that existed in neither place.
         if (e.IsEquip || take >= e.count) c.Bag.RemoveAt(index);
         else e.count -= take;
+        if (GameLog.On(LogCat.Server)) LogDid(c, "put down " + drop.Text);
 
         GameNetwork.PublishDrop(drop);
         PushBagToOwner();
@@ -2354,20 +2410,57 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         float dx = drop.transform.position.x - mine.x;
         float dz = drop.transform.position.z - mine.z;
         float reach = GroundDrop.Reach + ReachSlack;
-        if (dx * dx + dz * dz > reach * reach) return;
+        if (dx * dx + dz * dz > reach * reach)
+        {
+            LogPickUpRefused(drop, string.Concat("it is ", Mathf.Sqrt(dx * dx + dz * dz).ToString("0.0"),
+                                                 " away and the reach is ", reach.ToString("0.0")));
+            return;
+        }
 
         // NOT YOURS YET. What falls from a kill is kept for whoever earned it for a few seconds before anybody else may
         // have it (GroundDrop.KillerOnlySeconds).
-        if (!drop.MayBeTakenBy(c)) return;
+        if (!drop.MayBeTakenBy(c))
+        {
+            LogPickUpRefused(drop, "it is still kept for " + drop.reservedForName);
+            return;
+        }
 
         // FIRST COME. The shell is taken away the moment somebody wins it, so a second person asking for the same
         // thing a frame later finds nothing to be given — there is no way for one drop to be handed out twice.
         if (drop.instance != null) c.TakeIntoBag(drop.instance);
         else c.TakeIntoBag(drop.def, drop.count);
 
+        PlaySession.PickedUp(c);
+        if (GameLog.On(LogCat.Server))
+            LogDid(c, string.Concat("picked up ", drop.Text, " — it had lain ",
+                                    Mathf.RoundToInt(Time.time - drop.placedAt).ToString(), "s",
+                                    !string.IsNullOrEmpty(drop.reservedForId) && drop.reservedFor != c
+                                        ? " and fell for " + drop.reservedForName : ""));
+
         NetworkServer.Destroy(shell.gameObject);
         PushBagToOwner();
         SaveSoon();
+    }
+
+    // A pick-up the server turned down, said once a second at most — a player pressing F over and over at something
+    // out of reach must not bury the log, but the first refusal is exactly what a play-test needs to see.
+    float nextPickUpRefusalLine;
+
+    void LogPickUpRefused(GroundDrop drop, string why)
+    {
+        if (!GameLog.On(LogCat.Server) || Time.unscaledTime < nextPickUpRefusalLine) return;
+        nextPickUpRefusalLine = Time.unscaledTime + 1f;
+        LogDid(ServerCharacter, string.Concat("could not pick up ", drop.Text, " — ", why));
+    }
+
+    /// <summary>SERVER: one line about something this player chose to do — "lst_fild01 patches #201 equipped Knife".
+    /// Every line about a player's own choices is written through this one shape, under [server], which is on by
+    /// default: read in order they are the story of a play-test. Builds a string, so callers put it behind
+    /// <see cref="GameLog.On"/>.</summary>
+    void LogDid(Character c, string what)
+    {
+        if (c == null) { GameLog.Info(LogCat.Server, string.Concat(playerName, " ", what)); return; }
+        GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(c), " ", SpawnIds.Label(c), " ", what));
     }
 
     // ---- what a client asks for, from the bag window -----------------------------------------------------
@@ -2469,6 +2562,17 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         GameNetwork.SetNpcTalkedTo(npcNetId, talking ? transform : null);
         if (talking) QuestTalkedTo(npcNetId);
+        if (GameLog.On(LogCat.Server)) LogDid(ServerCharacter, (talking ? "started talking to " : "stopped talking to ") + NpcName(npcNetId));
+    }
+
+    // The townsperson's own name for a log line, or the object's id when it cannot be found.
+    static string NpcName(uint npcNetId)
+    {
+        if (!NetworkServer.spawned.TryGetValue(npcNetId, out var identity) || identity == null) return "townsperson " + npcNetId;
+        var shell = identity.GetComponent<NetNpc>();
+        var npc = shell != null && shell.ServerNpc != null ? shell.ServerNpc.GetComponent<TownNPC>() : null;
+        if (npc == null) return "townsperson " + npcNetId;
+        return string.IsNullOrEmpty(npc.PersonId) ? npc.name : npc.PersonId;
     }
 
     // A CONVERSATION THAT COUNTS FOR A QUEST is one held within reach — measured here, on the server's own positions,
@@ -2509,6 +2613,16 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     bool questsPushOwed;
 
+    /// <summary>Server-only: this person's health moved. Only a quest step judged on health cares, and only while one is
+    /// the current step of a running quest; then the step is judged, and the list — which shows their health beside the
+    /// step — is sent again this frame.</summary>
+    public void HealthMoved()
+    {
+        if (this == null || ServerCombatUnit is not Character c || c == null || !c.Quests.WatchesHealth) return;
+        if (c.Quests.Advance(c)) QuestsMoved();
+        else questsPushOwed = true;
+    }
+
     readonly System.Collections.Generic.List<QuestDef> finishedScratch = new System.Collections.Generic.List<QuestDef>(2);
 
     // Asked BY a player: take the quest the townsperson in front of them offers. Only a quest that person offers, only
@@ -2520,6 +2634,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         var npc = TownspersonWithinReach(npcNetId);
         if (npc == null || string.IsNullOrEmpty(npc.PersonId)) return;
         if (!c.Quests.Accept(questId, npc.PersonId)) return;
+        if (GameLog.On(LogCat.Server)) LogDid(c, string.Concat("accepted quest ", questId, " from ", npc.PersonId));
         c.Quests.Advance(c);
         QuestsMoved();
     }
@@ -2561,10 +2676,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         questTargetSent = target;
         questNeedsSent = needs;
         // The kills counted since the last list ride IN it — one message a frame however many fell, one line per quest.
+        c.Quests.FreeBuys(freeBuyIds, freeBuyCounts);
         TargetQuestsChanged(connectionToClient, c.Quests.Snapshot(c, mapName), target, QuestLog.GuideOf(target),
                             c.Quests.NeedsSnapshot(), c.Quests.Offers(mapName), c.Quests.OngoingAt(mapName),
-                            c.Quests.TakeKills());
+                            c.Quests.TakeKills(), c.Quests.FreeForges(), freeBuyIds.ToArray(), freeBuyCounts.ToArray());
     }
+
+    readonly System.Collections.Generic.List<string> freeBuyIds = new System.Collections.Generic.List<string>(2);
+    readonly System.Collections.Generic.List<int> freeBuyCounts = new System.Collections.Generic.List<int>(2);
 
     static bool SameTarget(QuestTargetWire a, QuestTargetWire b) =>
         a.any == b.any && a.questId == b.questId && a.stepId == b.stepId && a.map == b.map && a.at == b.at
@@ -2578,7 +2697,13 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     void CmdTrackQuest(string questId)
     {
         if (Leaving || ServerCombatUnit is not Character c || c == null) return;
-        if (c.Quests.Track(questId)) { SaveSoon(); questsPushOwed = true; }
+        if (c.Quests.Track(questId))
+        {
+            SaveSoon();
+            questsPushOwed = true;
+            if (GameLog.On(LogCat.Server))
+                LogDid(c, string.IsNullOrEmpty(questId) ? "stopped following any quest" : "started following quest " + questId);
+        }
     }
 
     public void AskToTrackQuest(string questId) { if (isOwned) CmdTrackQuest(questId); }
@@ -2592,11 +2717,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     void CmdPlayTutorial(string questId)
     {
         if (Leaving || ServerCombatUnit is not Character c || c == null) return;
-        switch (c.Quests.Play(questId, c))
+        var answer = c.Quests.Play(questId, c);
+        switch (answer)
         {
             case QuestPlay.Started: SaveSoon(); questsPushOwed = true; break;
             case QuestPlay.NotMet: TargetRequirementsNotMet(connectionToClient); break;
         }
+        if (GameLog.On(LogCat.Server))
+            LogDid(c, string.Concat("pressed Play on tutorial ", questId, " — ", answer.ToString()));
     }
 
     public void AskToPlayTutorial(string questId) { if (isOwned) CmdPlayTutorial(questId); }
@@ -2606,9 +2734,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     [TargetRpc]
     void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide,
-                             QuestNeedWire[] needs, string[] offers, string[] ongoingAt, QuestKillWire[] kills)
+                             QuestNeedWire[] needs, string[] offers, string[] ongoingAt, QuestKillWire[] kills,
+                             string[] freeForges, string[] freeBuyIds, int[] freeBuyCounts)
     {
-        QuestStore.Receive(open, target, guide, needs, offers, ongoingAt);
+        QuestStore.Receive(open, target, guide, needs, offers, ongoingAt, freeForges, freeBuyIds, freeBuyCounts);
         QuestKillNotice.Show(kills);
     }
 

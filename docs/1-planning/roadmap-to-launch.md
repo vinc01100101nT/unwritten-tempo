@@ -68,7 +68,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 **One town has people.** Lastline has sixteen townsfolk, each with a name and a line saying what they are. The other fourteen towns have none. Outside a quest, talking to any of them gives a conversation picked at random from one shared set, by time of day.
 
-**Quests and the shop are built and not yet played** (2026-10-04, [Quests and Tutorials](../2-systems/quests-and-tutorials.md)). Two quests exist: the crafting tutorial and Torvald's side quest. One shop exists: Fenwick the Tool Dealer in Lastline, selling four potions and buying anything with a sell value.
+**Quests and the shop are built and not yet played** (2026-10-04, [Quests and Tutorials](../2-systems/quests-and-tutorials.md)). Three quests exist: two tutorials (crafting your first gear, and buying and drinking healing potions after coming back on low health) and Torvald's side quest. One shop exists: Fenwick the Tool Dealer in Lastline, selling four potions and buying anything with a sell value.
 
 **No death pays gold:** a creature's gold range is what a character saved from it pays its saver, times its tier — ordinary ×20, helpless ×40, wealthy ×60.
 

@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 106a9e95425d80943adccfcbc2e2d493, type: 3}
+  m_Name: TutorialHealUp
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDef
+  id: tutorial.heal-up
+  title: Low on Health
+  category: 0
+  description: Coming back at your save point leaves you with very little health. A
+    Tool Dealer sells healing potions; the first time you play this, the ones you need
+    to get your health back to 80% cost you nothing.
+  unlockCondition: 2
+  offeredBy: 
+  offerText: 
+  reward:
+    gold: 0
+    experience: 0
+    items: []
+  levelNeeded: 0
+  steps:
+  - id: buy-potion
+    text: Buy a Minor Healing Potion from a Tool Dealer.
+    objective:
+      kind: 6
+      townspersonId: 
+      itemId: item.minor-healing-potion
+      folds: 1
+      creatureId: 
+      count: 1
+      map: 
+      percent: 80
+    hints:
+    - spot: 8
+      text: This red bar is your health, and it is low. The blue bar under it is your
+        mana. Follow the arrows to a Tool Dealer, who sells healing potions.
+    - spot: 9
+      text: Buy a Minor Healing Potion here. What it costs is on its row.
+  - id: drink-potions
+    text: Drink potions until your health is back to 80%.
+    objective:
+      kind: 5
+      townspersonId: 
+      itemId: item.minor-healing-potion
+      folds: 1
+      creatureId: 
+      count: 1
+      map: 
+      percent: 80
+    hints:
+    - spot: 0
+      text: Open your bag with B.
+    - spot: 7
+      text: Double-click a Minor Healing Potion to drink it. Keep drinking until your
+        health is back to 80%.

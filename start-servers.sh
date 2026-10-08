@@ -29,26 +29,59 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$REPO/tools/platform.sh"
+
+# The names settings.env sets — the lines tools/load-settings.sh loads.
+settings_keys() {
+  __file="${SETTINGS_FILE:-$REPO/settings.env}"
+  [ -f "$__file" ] || return 0
+  sed -n 's/^[[:space:]]*\(export \)\{0,1\}\([A-Za-z0-9_]\{1,\}\)=.*/\2/p' "$__file"
+}
+
+# A SETTING CHANGED IN settings.env REACHES A RESTART. A value already set in the shell wins over the file (the rule in
+# tools/load-settings.sh), and each window is one long-lived shell — so a window that loaded the file once would hand
+# every restart the values from when it was opened, and an edited setting would be ignored until the window closed.
+# So a window reloads the file before every start, after dropping what it loaded last time. What it must NOT drop is a
+# value typed in front of this script: which settings those were is worked out once, here, and handed to each window.
+if [ "${1:-}" = window ]; then
+  TYPED_SETTINGS="${3:-}"
+else
+  TYPED_SETTINGS=""
+  for __k in $(settings_keys); do [ -z "${!__k:-}" ] || TYPED_SETTINGS="$TYPED_SETTINGS,$__k"; done
+fi
+LOADED_SETTINGS="$(settings_keys | tr '\n' ' ')"
 . "$REPO/tools/load-settings.sh"
 
-# Every port comes from settings.env and nowhere else; a missing one is said, never guessed.
-for __setting in PORT CHAR_SERVER_PORT MAP_SERVER_ARRIVALS_PORT PATCH_PORT PATCH_URL; do
-  [ -n "${!__setting:-}" ] || { printf '%s is not set in %s/settings.env.\n' "$__setting" "$REPO" >&2
-                                read -r -p "Press Enter to close." _ || true; exit 2; }
-done
-ACCOUNTS_PORT="$PORT"
-CHAR_PORT="$CHAR_SERVER_PORT"
-MAP_PORT="$MAP_SERVER_ARRIVALS_PORT"
-WEBSITE_PORT="$PATCH_PORT"
-WINDOW_STATE="$REPO/logs/windows"
+use_settings() {
+  # Every port comes from settings.env and nowhere else; a missing one is said, never guessed.
+  for __setting in PORT CHAR_SERVER_PORT MAP_SERVER_ARRIVALS_PORT PATCH_PORT PATCH_URL; do
+    [ -n "${!__setting:-}" ] || { printf '%s is not set in %s/settings.env.\n' "$__setting" "$REPO" >&2
+                                  read -r -p "Press Enter to close." _ || true; exit 2; }
+  done
+  ACCOUNTS_PORT="$PORT"
+  CHAR_PORT="$CHAR_SERVER_PORT"
+  MAP_PORT="$MAP_SERVER_ARRIVALS_PORT"
+  WEBSITE_PORT="$PATCH_PORT"
 
-# THE ONE LIST OF WINDOWS — name (what restart-servers.sh is given) | title | corner | port. Opened, and restarted, in
-# this order: the character server stops before the map server is asked to, so the map server always registers with
-# the character server that is coming up, never with the one going away.
-SERVERS="account|ACCOUNT SERVICE|top-left|$ACCOUNTS_PORT
+  # THE ONE LIST OF WINDOWS — name (what restart-servers.sh is given) | title | corner | port. Opened, and restarted,
+  # in this order: the character server stops before the map server is asked to, so the map server always registers
+  # with the character server that is coming up, never with the one going away.
+  SERVERS="account|ACCOUNT SERVICE|top-left|$ACCOUNTS_PORT
 char|CHAR SERVER|top-right|$CHAR_PORT
 map|MAP SERVER|bottom-right|$MAP_PORT
 website|WEBSITE|bottom-left|$WEBSITE_PORT"
+}
+use_settings
+WINDOW_STATE="$REPO/logs/windows"
+
+# Reads settings.env again, as a fresh start would, keeping only the values typed in front of this script.
+reload_settings() {
+  for __k in $LOADED_SETTINGS $(settings_keys); do
+    case ",$TYPED_SETTINGS," in *",$__k,"*) ;; *) unset "$__k" ;; esac
+  done
+  LOADED_SETTINGS="$(settings_keys | tr '\n' ' ')"
+  . "$REPO/tools/load-settings.sh"
+  use_settings
+}
 
 # What each window runs. In a subshell, so Ctrl+C stops it exactly as it would when typed by hand.
 run_server() (
@@ -72,6 +105,7 @@ if [ "${1:-}" = window ]; then
   trap ':' INT   # Ctrl+C reaches every program in the window; this loop must outlive it to decide what comes next
   while :; do
     rm -f "$WINDOW_STATE/$NAME.restart"
+    reload_settings
     run_server "$NAME" || true
     [ -f "$WINDOW_STATE/$NAME.restart" ] || break
     printf '\n===== restarting =====\n\n'
@@ -167,7 +201,7 @@ while IFS='|' read -r name title corner port; do
   if [ -n "$(port_pids "$port")" ]; then
     NOTES="$NOTES$title is already running (port $port is taken) — left alone, no window opened.\n"
   else
-    WINDOWS="$WINDOWS$title|$corner|$(cygpath -w "$REPO")|sh start-servers.sh window $name"$'\n'
+    WINDOWS="$WINDOWS$title|$corner|$(cygpath -w "$REPO")|sh start-servers.sh window $name $TYPED_SETTINGS"$'\n'
   fi
 done <<< "$SERVERS"
 [ -n "$WINDOWS" ] || exit 0

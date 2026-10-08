@@ -36,7 +36,7 @@ smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill le
 - Ten defects found in the 2026-09-20 play-test and by review were fixed on 2026-09-21: the HUD prefab rebuilt with
   the station window; a save's bar held to what is learned and a refused press said in chat; `/item` taking a
   quoted two-word name; Magic Defence and Crit Damage inks no longer dropped on decode; worn gear keeping its fold
-  count over the wire; a starter kit that is the forging bill, not one of every material; a forge answering with the new piece picked; one Ink
+  count over the wire; a starter kit no longer one of every material; a forge answering with the new piece picked; one Ink
   button per slot so the player picks; the Knuckle/Katar mastery rows written into the design; the dead Alt-key
   weapon-skills panel path removed from the tooltip.
 - Added 2026-09-21 at the user's asking, after the first play-test of the stations:
@@ -230,7 +230,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 5. **Whether `EquipSlotType.Ring = 12` is deleted or left unread.** Its integer is pinned (Item.cs:4-10) and no asset holds it. *Recommend:* delete the member and the `ItemType.Ring` bucket.
 6. **Materials in the random-item roll.** Settled 2026-09-22: the 30%-per-kill roll (`ItemCatalog.RandomConsumable`) hands out consumables only, and materials come from the creature's level and kind (`CreatureLoot`, [Mob Roster](../../3-world/mob-roster.md)).
 7. **What creatures wear.** Settled 2026-09-22: no random wardrobe — a creature wears exactly its authored pieces, at the grade, folds and Ink authored on its own catalog entry ([Mob Roster](../../3-world/mob-roster.md), Gear state).
-8. **Starter gear.** Settled 2026-10-04, pieces and folds changed 2026-10-05: nothing wearable is seeded — gear is made — and a new character gets the bill for forging a Sword, a Chainmail and Iron Sabatons and folding each to +5: 33 Copper and 2,350 gold, plus 10 Minor Healing Potions, nothing else (`StarterKit.cs`).
+8. **Starter gear.** Settled 2026-10-07: a new character starts with nothing — no items, no gold. Gear is made, never seeded: the crafting tutorial's first run forges a Sword, a Chainmail and Iron Sabatons and folds each to +5 free, and the healing tutorial's first run gives the first potions free (`StarterKit.cs`, [Quests and Tutorials](../quests-and-tutorials.md)).
 9. **Existing copies on old saves.** *Recommend:* every pre-V4 copy loads as Raw, folds 0, no Ink — not keeping `upgrade` as folds, because those refines were bought under the +3 attack rule.
 10. **Learning: automatic or an action.** Settled 2026-10-03: an action — each mastery level gives one point, and the player spends it in the Skills window; nothing is learned automatically.
 11. **What skills a creature has.** Settled 2026-10-04: only the skills it has bought with mastery points, in the same store and by the same rule as a player's. Nothing spends a creature's points yet, so no creature casts a skill.

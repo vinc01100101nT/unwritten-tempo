@@ -15,10 +15,10 @@ MonoBehaviour:
   id: tutorial.first-gear
   title: Your First Gear
   category: 0
-  description: Gunnar the Smith makes gear from Copper and gold. You carry just enough
-    for a sword, a chainmail and a pair of iron sabatons, and the folds that make them
-    stronger.
-  givenAutomatically: 1
+  description: Gunnar the Smith makes gear from Copper and gold. The first time you
+    play this, forging a sword, a chainmail and a pair of iron sabatons, and the folds
+    that make them stronger, costs you nothing.
+  unlockCondition: 1
   steps:
   - id: talk-gunnar
     text: Talk to Gunnar the Smith.
@@ -59,7 +59,7 @@ MonoBehaviour:
     - spot: 5
       text: Pick your Sword.
     - spot: 6
-      text: Fold it. Each fold costs Copper and gold.
+      text: Fold it. What a fold costs is on the button.
   - id: forge-chainmail
     text: Forge a Chainmail.
     objective:
@@ -89,7 +89,7 @@ MonoBehaviour:
     - spot: 5
       text: Pick your Chainmail.
     - spot: 6
-      text: Fold it. Each fold costs Copper and gold.
+      text: Fold it. What a fold costs is on the button.
   - id: forge-sabatons
     text: Forge Iron Sabatons.
     objective:
@@ -119,7 +119,7 @@ MonoBehaviour:
     - spot: 5
       text: Pick your Iron Sabatons.
     - spot: 6
-      text: Fold it. Each fold costs Copper and gold.
+      text: Fold it. What a fold costs is on the button.
   - id: wear-sword
     text: Wear your Sword.
     objective:

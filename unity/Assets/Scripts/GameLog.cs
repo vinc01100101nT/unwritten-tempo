@@ -14,7 +14,8 @@ public enum LogCat
     /// <summary>Start-up and general engine-side notes.</summary>
     Unwritten,
 
-    /// <summary>The machine that owns the world, talking about itself.</summary>
+    /// <summary>The machine that owns the world, talking about itself — and every choice a player makes on it (a
+    /// pick-up, an equip, a craft, a quest step, a death, what they said, and the one line summing up their visit).</summary>
     Server,
 
     /// <summary>Messages crossing between machines.</summary>

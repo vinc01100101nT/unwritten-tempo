@@ -12,15 +12,18 @@ Checks, per quest asset in unity/Assets/3_Data/Resources/Quests:
   - a quest id, unique across every quest
   - at least one step; every step has an id, unique within its quest
   - a Talk To step names a townsperson id listed in WorldTownsfolk.asset
-  - a Have / Folded To / Wear step names an item id the game has; Folded To asks for at least one fold
+  - a Have / Folded To / Wear / Health step names an item id the game has; Folded To asks for at least one fold
+  - a Buy step names an item a shop in WorldShops.asset sells, and asks for at least one
+  - a Health step asks for a share of full health between 1 and 100 percent
   - a Kill step names a creature the monster catalog has, which the world spawn list really places (by its own id,
     with at least one alive at a time — in the step's map when it names one), and asks for at least one
-  - a quest is given automatically OR offered by somebody, never both; its giver is listed and keeps no station
-    and no shop (those open a window when F is pressed, never a conversation)
+  - a quest has an unlock condition OR is offered by somebody, never both; a tutorial always has an unlock condition;
+    a giver is listed and keeps no station and no shop (those open a window when F is pressed, never a conversation)
   - every reward item exists, and a rewarded quest has no step judged on holding something (one lent item would
     finish it, and pay it, for everybody)
   - an offered quest has offer text
-  - every hint's spot is a real guide spot, and a station spot is only on a step whose item is made at a station
+  - every hint's spot is a real guide spot, a station spot is only on a step whose item is made at a station, and a
+    shop's buy button only on a Buy step
   - a hint has text
 
 USAGE:   tools/check-quest-data.py [--root <repo>]
@@ -38,6 +41,7 @@ ASSETS = os.path.join(REPO, "unity", "Assets")
 QUESTS = os.path.join(ASSETS, "3_Data", "Resources", "Quests")
 ITEMS = os.path.join(ASSETS, "3_Data", "Resources", "Items")
 TOWNSFOLK = os.path.join(ASSETS, "3_Data", "Resources", "WorldTownsfolk.asset")
+SHOPS = os.path.join(ASSETS, "3_Data", "Resources", "WorldShops.asset")
 MONSTERS = os.path.join(ASSETS, "3_Data", "Resources", "Monsters")
 SPAWNS = os.path.join(ASSETS, "3_Data", "Resources", "WorldSpawns.asset")
 QUEST_DEF = os.path.join(ASSETS, "Scripts", "QuestDef.cs")
@@ -55,8 +59,9 @@ def enum_values(cs, name):
     if not m:
         return None
     out = {}
-    for part in m.group(1).split(","):
-        part = re.sub(r"//.*", "", part).strip()
+    # Comments go first: a doc comment between two members may hold a comma of its own.
+    for part in re.sub(r"//.*", "", m.group(1)).split(","):
+        part = part.strip()
         mm = re.match(r"(\w+)\s*=\s*(\d+)", part)
         if mm:
             out[int(mm.group(2))] = mm.group(1)
@@ -173,6 +178,10 @@ def main():
             pop = re.search(r"^\s*population: (\d+)", block, re.M)
             if mm and cr and cr.group(1).strip() and pop and int(pop.group(1)) > 0:
                 placed.add((cr.group(1).strip(), mm.group(1).strip()))
+    sold = set()   # item ids some shop stocks
+    if os.path.isfile(SHOPS):
+        for m in re.finditer(r"^\s*- (item\.[\w.-]+)\s*$", read(SHOPS), re.M):
+            sold.add(m.group(1))
     creatures = set()
     if os.path.isdir(MONSTERS):
         for f in os.listdir(MONSTERS):
@@ -194,10 +203,14 @@ def main():
             faults.append("%s: quest id '%s' is also used by %s" % (where, qid, seen_ids[qid]))
         else:
             seen_ids[qid] = f
-        auto = str(q.get("givenAutomatically", "0")).strip() == "1"
+        unlock = str(q.get("unlockCondition", "0")).strip()
         giver = (q.get("offeredBy") or "").strip()
-        if auto and giver:
-            faults.append("%s: is both given automatically and offered by '%s'" % (where, giver))
+        if unlock != "0" and giver:
+            faults.append("%s: has an unlock condition and is also offered by '%s' — a quest is given one way"
+                          % (where, giver))
+        if unlock == "0" and str(q.get("category", "0")).strip() == str(tutorial):
+            faults.append("%s: is a tutorial with no unlock condition — it would be listed forever and never played"
+                          % where)
         if giver and giver not in people:
             faults.append("%s: is offered by '%s', whom the townsfolk list does not have" % (where, giver))
         elif giver in keepers:
@@ -260,9 +273,17 @@ def main():
                                   "be finished" % (sw, cid, (" in '%s'" % hunt) if hunt else ""))
                 if int(o.get("count", "0") or 0) < 1:
                     faults.append("%s: asks to defeat fewer than one" % sw)
+            elif kind == "Buy":
+                if item not in sold:
+                    faults.append("%s: is to buy '%s', which no shop sells" % (sw, item))
+                if int(o.get("count", "0") or 0) < 1:
+                    faults.append("%s: asks to buy fewer than one" % sw)
             else:
                 if item not in items:
                     faults.append("%s: names item '%s', which the game does not have" % (sw, item))
+                if kind == "Health" and not 1 <= int(o.get("percent", "0") or 0) <= 100:
+                    faults.append("%s: asks for %s%% of full health — it must be between 1 and 100"
+                                  % (sw, o.get("percent")))
                 if kind == "FoldedTo" and int(o.get("folds", "0") or 0) < 1:
                     faults.append("%s: asks for fewer than one fold" % sw)
                 if kind == "FoldedTo" and is_tutorial and int(o.get("folds", "0") or 0) > raw_fold_cap:
@@ -280,9 +301,12 @@ def main():
                 if spot not in spots:
                     faults.append("%s: a hint points at spot %r, which is not a real one" % (sw, h.get("spot")))
                     continue
-                if spot in station_spots and (kind in ("TalkTo", "Kill") or items.get(item, (0, 0))[0] == 0):
+                if spot in station_spots and (kind in ("TalkTo", "Kill", "Buy", "Health")
+                                              or items.get(item, (0, 0))[0] == 0):
                     faults.append("%s: a hint points at a station's %s, but this step's item is not made at a station"
                                   % (sw, spots[spot]))
+                if spots[spot] == "ShopBuyButton" and kind != "Buy":
+                    faults.append("%s: a hint points at a shop's buy button, but this step is not to buy anything" % sw)
                 if not (h.get("text") or "").strip():
                     faults.append("%s: a hint has no text" % sw)
 

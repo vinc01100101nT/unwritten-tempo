@@ -88,8 +88,14 @@ public static class QuestCatalog
             }
             else if (ItemCatalog.Resolve(o.itemId) == null)
                 return "step '" + s.id + "' names an item the game does not have: '" + o.itemId + "'";
+            else if (o.kind == QuestObjectiveKind.Buy && !WorldShops.AnySells(ItemCatalog.Resolve(o.itemId)))
+                return "step '" + s.id + "' is to buy '" + o.itemId + "', which no shop sells";
         }
-        if (q.givenAutomatically && !string.IsNullOrEmpty(q.offeredBy)) return "it is both given automatically and offered";
+        if (q.unlockCondition != QuestUnlock.None && !string.IsNullOrEmpty(q.offeredBy))
+            return "it has an unlock condition and is also offered — a quest is given one way";
+        // A TUTORIAL NOBODY CAN UNLOCK is listed forever and never played.
+        if (q.category == QuestCategory.Tutorial && q.unlockCondition == QuestUnlock.None)
+            return "it is a tutorial with no unlock condition";
         if (!string.IsNullOrEmpty(q.offeredBy))
         {
             var giver = WorldTownsfolkIds.Find(q.offeredBy);
@@ -144,6 +150,26 @@ public static class WorldTownsfolkIds
         {
             var r = list.rows[i];
             if (r == null || r.station != station) continue;
+            WorldRoutes.NextMap(map, r.map, out int doors);
+            if (doors < 0) continue;
+            if (doors < bestDoors) { best = r; bestDoors = doors; }
+            if (doors == 0) break;
+        }
+        return best;
+    }
+
+    /// <summary>The nearest somebody whose shop sells <paramref name="item"/>, counted in doors from
+    /// <paramref name="map"/>; null when no shop anywhere does.</summary>
+    public static WorldTownsfolk.Row Selling(Item item, string map)
+    {
+        var list = WorldTownsfolk.Instance;
+        if (list == null || item == null) return null;
+        WorldTownsfolk.Row best = null;
+        int bestDoors = int.MaxValue;
+        for (int i = 0; i < list.rows.Count; i++)
+        {
+            var r = list.rows[i];
+            if (r == null || string.IsNullOrEmpty(r.shop) || !WorldShops.Sells(WorldShops.Find(r.shop), item)) continue;
             WorldRoutes.NextMap(map, r.map, out int doors);
             if (doors < 0) continue;
             if (doors < bestDoors) { best = r; bestDoors = doors; }

@@ -113,6 +113,8 @@ public static class PlayerFighter
             shell.PushStatsToOwner();
             shell.SaveSoon();
         }
+        // THE VISIT'S TALLY starts here, or carries on when this is a door into another map this server holds.
+        PlaySession.Arrived(character, shell.ServerCharacterId, shell.playerName);
 
         // THEIR BAR, from its own row — after the save, because what may stay on it is held to the skills they have
         // learned and the things they carry. A character whose bar has never been written to that row carries the
@@ -148,10 +150,11 @@ public static class PlayerFighter
         // empty and only ever learns what it is carrying from here.
         shell.PushBagToOwner(alsoTheBar: true);
 
-        // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest given to everybody
-        // that this character has never had is given now, and anything already true moves it on at once.
+        // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest whose unlock
+        // condition is entering the world, that this character has never had, is given now, and anything already true
+        // moves it on at once.
         character.Quests.Load(quests);
-        character.Quests.GiveAutomatic(character);
+        character.Quests.Unlock(QuestUnlock.EnterWorld, character.CurrentHP, character.MaxHP);
         character.Quests.Advance(character);
         // Pays anything that finished on arrival, saves, and tells them — always, since they have just arrived.
         shell.QuestsMoved();
@@ -169,6 +172,9 @@ public static class PlayerFighter
         // changed the gold used to have to remember to send it — the GM's /gold did not, so the window, the bag and the
         // status bar never moved. Sent once per frame however many changes asked (NetPlayer.PushBagToOwner).
         character.OnGoldChanged += _ => shell.PushBagToOwner();
+        // A QUEST STEP JUDGED ON HEALTH moves when their health does — a drink, a heal, regeneration. The shell looks
+        // only while such a step is current, so every other change of health costs one yes-or-no.
+        character.OnHealthChanged += shell.HealthMoved;
         // Timed effects ride the save now, so a buff starting or ending is worth writing down too — otherwise a crash
         // would bring back whatever the last save happened to catch. SaveSoon only marks; the write is still once a beat.
         character.States.OnChanged += shell.SaveSoon;

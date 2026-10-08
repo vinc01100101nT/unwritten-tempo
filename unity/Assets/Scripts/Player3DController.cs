@@ -535,11 +535,14 @@ public partial class Player3DController : MonoBehaviour
             }
             else
             {
-                // Plain click: a mob → target-lock + attack it (shows the target indicator); another person → select
-                // them, which shows their details and goes nowhere; else a ground move (which clears any lock or
-                // selection via ClearCombat).
-                var mob = MonsterUnderCursor(cam);
-                if (mob != null) BeginAttack(mob, false);
+                // Plain click: a thing on the floor → pick it up, walking over first if it is out of reach; a mob →
+                // target-lock + attack it (shows the target indicator); another person → select them, which shows
+                // their details and goes nowhere; else a ground move (which clears any lock or selection via
+                // ClearCombat). The floor asks first, and itself gives way to a creature the cursor is right on.
+                var drop = GroundDrop.UnderCursor(cam);
+                var mob = drop == null ? MonsterUnderCursor(cam) : null;
+                if (drop != null) GroundDrop.ReachFor(drop);
+                else if (mob != null) BeginAttack(mob, false);
                 else if (PersonUnderCursor(cam, out var person)) SelectPerson(person);
                 else if (GroundPoint(cam, out var gp)) BeginMove(gp);
             }
@@ -1088,9 +1091,17 @@ public partial class Player3DController : MonoBehaviour
     {
         if (Time.frameCount == cursorPickFrame) return cursorPick;
         cursorPickFrame = Time.frameCount;
+        cursorOnBody = false;
         cursorPick = PickMonsterUnderCursor(cam);
         return cursorPick;
     }
+
+    /// <summary>True when this frame's <see cref="MonsterUnderCursor"/> came from the cursor being right on the
+    /// creature's body, false when it was only near enough to be snapped to. A thing on the floor under the cursor
+    /// gives way to the first and not the second (<see cref="GroundDrop.UnderCursor"/>). Read it only after asking
+    /// <see cref="MonsterUnderCursor"/> in the same frame.</summary>
+    public static bool CursorOnMonsterBody => cursorOnBody;
+    static bool cursorOnBody;
 
     static Health PickMonsterUnderCursor(Camera cam)
     {
@@ -1107,7 +1118,11 @@ public partial class Player3DController : MonoBehaviour
         {
             var h = hit.collider.GetComponentInParent<Health>();
             // Only an ENEMY is picked: a creature fighting beside you, or one that fights nobody, is not a target.
-            if (h != null && !h.IsDead && Sides.HostileToPeople(h) && h.GetComponent<MonsterAI3D>() != null) return h;
+            if (h != null && !h.IsDead && Sides.HostileToPeople(h) && h.GetComponent<MonsterAI3D>() != null)
+            {
+                cursorOnBody = true;
+                return h;
+            }
         }
 
         // 2) Soft-snap (magnetism): if no exact hit, grab the nearest LIVING mob whose on-screen sprite

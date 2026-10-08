@@ -1084,6 +1084,9 @@ public class GameNetwork : NetworkManager
 
         var shell = ShellFor(who);
         if (shell == null) return;
+        // COMING BACK THIS WAY IS AN UNLOCK CONDITION — the tutorial that teaches healing plays from here. Written down
+        // on the next save, which a move to a map another server holds makes before they leave.
+        if (who.Quests.Unlock(QuestUnlock.ReturnToSavePoint, who.CurrentHP, who.MaxHP)) shell.QuestsMoved();
         // AND COMING BACK MOVES THEM, nowhere near where they fell — a jump the movement check would otherwise read
         // as the largest lie it has ever seen. Forgiven from HERE because this is the server granting it: nothing a
         // client says can reach it.
@@ -2125,6 +2128,10 @@ public class GameNetwork : NetworkManager
         // the drinker's own machine would be put straight back the next time the server said what they were
         // carrying — a potion that heals you and is never used up.
         if (--entryInBag.count <= 0) caster.Bag.RemoveAt(msg.bagIndex);
+        if (GameLog.On(LogCat.Server))
+            GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(caster), " ", SpawnIds.Label(caster), " used ",
+                                                      item.displayName, CombatAuthority.HealthLeft(caster), " — ",
+                                                      Mathf.Max(0, entryInBag.count).ToString(), " left"));
 
         shell?.PushBagToOwner();
         // A drunk potion is a change like any other. Without this it was written down only if something ELSE
@@ -2611,6 +2618,16 @@ public class GameNetwork : NetworkManager
         var identity = speaker.netIdentity;
         if (identity == null) return;
 
+        // WHAT A TESTER SAYS OUT LOUD is often the most useful line of a play-test — "where do I go?", "this is
+        // stuck" — so a said line is written down. Only the room's chat: a private message is never logged.
+        if (GameLog.On(LogCat.Server))
+        {
+            var who = speaker.ServerCombatUnit as Character;
+            GameLog.Info(LogCat.Server, who != null
+                ? string.Concat(SpawnIds.MapOf(who), " ", SpawnIds.Label(who), " said: ", text)
+                : string.Concat(speaker.playerName, " said: ", text));
+        }
+
         NetworkServer.SendToReadyObservers(identity, new ChatHeard
         {
             speakerNetId = identity.netId,
@@ -2970,6 +2987,8 @@ public class GameNetwork : NetworkManager
             {
                 GameLog.Info(LogCat.Server, whoLeft + " left because they are being played elsewhere now — not "
                                  + "writing this copy down over theirs.");
+                // A DOOR, NOT A GOODBYE: their visit's tally waits for them to arrive in the next map.
+                PlaySession.WentThroughADoor(theirCharacter);
                 PlayerFighter.Dismiss(leaving);
                 // ONLY IF THE NAME IS STILL THIS SHELL'S. Somebody who walked into a map this same server holds is
                 // already playing again on a NEWER connection by the time this one is torn down, and freeing the
@@ -2978,6 +2997,9 @@ public class GameNetwork : NetworkManager
                 base.OnServerDisconnect(conn);
                 return;
             }
+
+            // THEY STOPPED PLAYING: the one line that sums up their whole visit.
+            PlaySession.Stopped(theirCharacter);
 
             // THE WRITE IS ASKED FOR FIRST, AND THIS ORDER IS THE WHOLE POINT. Letting go of the fighter unbinds
             // the character from this shell and destroys it — so asking for the write afterwards found nothing to

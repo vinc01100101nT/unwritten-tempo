@@ -1,5 +1,7 @@
 # Workflow / tooling / meta (Tempo, MCP, extractors, logs)
 
+- [restart-servers.sh kept OLD settings (fixed 2026-10-08)](../restart-servers-keeps-old-settings.md) — windows were one long-lived shell where already-set values beat settings.env; now each start rereads the file. Windows opened before the fix need one fresh start.
+
 - [Jira tried and LEFT (2026-09-13); tracking is now the action plan + wiki Roadmap](../jira-sprint-board.md) — what the Atlassian MCP cannot do (delete, create project, change type), why the user left, and how the `sprint-manager` now ticks the action plan and moves Roadmap entries.
 - [Spawn every sub-agent on Opus 5.5](../spawn-sub-agents-on-opus-5-5.md) — user standing rule 2026-09-23; agent definitions pin the `opus` alias, which resolved to `claude-opus-5-5` that day — re-check if the alias moves.
 - ["Proceed" with open questions = keep designing](../feedback-proceed-is-not-go-while-questions-open.md) — 2026-09-23: I built on my own picks after "let's proceed with the roster"; user stopped it — bring open questions back up instead.

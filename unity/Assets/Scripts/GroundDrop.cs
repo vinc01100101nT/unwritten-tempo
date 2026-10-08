@@ -7,9 +7,10 @@ using UnityEngine.UI;
 
 /// <summary>
 /// ONE THING LYING ON THE GROUND. You see it as a SPARKLE at the spot, and you
-/// read WHAT it is by holding <b>Alt</b> — which puts its name on a small dark plate above it, in the same
-/// colour the bag list writes that name in. There is still no icon and no model: the name is the only description
-/// of the item anywhere in this game, on the floor exactly as in the bag.
+/// read WHAT it is by pointing at the sparkle — which puts its name on a small plate above it and turns the cursor
+/// into a hand — or by holding <b>Alt</b>, which puts up every name at once. Clicking the sparkle or the name picks
+/// it up. There is still no icon and no model: the name is the only description of the item anywhere in this game,
+/// on the floor exactly as in the bag.
 ///
 /// <para><b>Alt is already this game's "tell me more" key</b> — the item tooltip opens a weapon's skill details on
 /// it, and dashing is deliberately suppressed while it is held — so a floor that answers to it is the key doing
@@ -68,6 +69,14 @@ public class GroundDrop : MonoBehaviour
     /// which is everything a player put down.</summary>
     public float expiresAt;
 
+    /// <summary>SERVER ONLY: the character id and the log name of whoever it was kept for, copied when it was kept for
+    /// them — read by the line written if it vanishes untaken. Empty for anything a player put down.</summary>
+    public string reservedForId = "", reservedForName = "";
+
+    /// <summary>When it was put down, on this machine's clock (<c>Time.time</c>) — so a pick-up's log line can say how
+    /// long it lay there first.</summary>
+    public float placedAt;
+
     /// <summary>How long a kill's drops are kept for whoever earned the kill, in seconds.</summary>
     public const float KillerOnlySeconds = 10f;
 
@@ -80,6 +89,10 @@ public class GroundDrop : MonoBehaviour
     public void ReserveFor(Character killer, float killerOnlySeconds, float lifetimeSeconds)
     {
         reservedFor = killer;
+        // TAKEN NOW, while the killer is certainly here: the log line written when this vanishes untaken names
+        // them, and by then they may have left and their body be gone.
+        reservedForId = killer != null ? GameNetwork.CharacterIdOf(killer) : "";
+        reservedForName = killer != null && GameLog.On(LogCat.Server) ? SpawnIds.Label(killer) : "";
         reservedUntil = Time.time + killerOnlySeconds;
         expiresAt = Time.time + lifetimeSeconds;
     }
@@ -241,6 +254,7 @@ public class GroundDrop : MonoBehaviour
         drop.upgrade = instance != null ? instance.upgrade : upgrade;
         drop.mapName = mapName;
         drop.netId = netId;
+        drop.placedAt = Time.time;
         all.Add(drop);
         return drop;
     }
@@ -263,6 +277,83 @@ public class GroundDrop : MonoBehaviour
         else Character.Instance.TakeIntoBag(drop.def, drop.count);
         drop.Remove();
         InventoryStore.Instance?.Notify();
+    }
+
+    /// <summary>What a click on a drop does — on its name or on its sparkle, the same thing: take it if you are
+    /// standing over it, otherwise walk there and take it on arrival, the same answer a skill cast from too far
+    /// gives. ONE function for both, so the two ways of clicking can never come to behave differently.</summary>
+    public static void ReachFor(GroundDrop drop)
+    {
+        if (drop == null) return;
+
+        var body = StatusController.Player != null
+            ? StatusController.Player.GetComponent<Player3DController>() : null;
+        if (body == null) { AskToTake(drop); return; }
+
+        // ALREADY STANDING OVER IT — take it now rather than starting a walk of zero distance, which would stop
+        // whatever the player was already doing for no reason.
+        float dx = drop.transform.position.x - body.transform.position.x;
+        float dz = drop.transform.position.z - body.transform.position.z;
+        if (dx * dx + dz * dz <= Reach * Reach) { AskToTake(drop); return; }
+
+        // THE WALK THE GAME ALREADY HAS, told a different distance. It re-measures every frame and runs the
+        // errand on the first frame the gap is small enough, so nothing here has to know about routing.
+        var wanted = drop;
+        body.BeginMoveIntoRange(drop.transform, Reach, () => AskToTake(wanted));
+    }
+
+    // ---- pointing at it --------------------------------------------------------------------------------------
+
+    /// <summary>How close to a drop's sparkle the cursor must be to point at it, in screen pixels. Smaller than a
+    /// creature's 72 because drops lie only <see cref="Spacing"/> apart: a wide circle would pick a drop from
+    /// across a pile, and would steal a click meant for the ground beside it.</summary>
+    public const float HoverPixels = 24f;
+
+    static int hoverFrame = -1;
+    static GroundDrop hoverPick;
+
+    // The drop whose NAME the pointer is on, told by the name itself. Over a name the interface answers "the
+    // pointer is over a window", which hides the ground — so without this a name shown by hovering the sparkle
+    // would vanish the moment the cursor moved up onto it.
+    internal static GroundDrop nameUnderPointer;
+
+    /// <summary>The drop the cursor is pointing at — its sparkle, or its name — or null. Frame-memoized, because the
+    /// cursor picture, the name on the floor and the click all ask in the same frame and must get one answer.
+    ///
+    /// <para>A creature whose BODY the cursor is directly on wins over a drop: a fight going on over a pile must
+    /// still be fightable. A creature the cursor is only NEAR does not — that is a drop being aimed at.</para></summary>
+    public static GroundDrop UnderCursor(Camera cam)
+    {
+        if (Time.frameCount == hoverFrame) return hoverPick;
+        hoverFrame = Time.frameCount;
+        hoverPick = PickUnderCursor(cam);
+        return hoverPick;
+    }
+
+    static GroundDrop PickUnderCursor(Camera cam)
+    {
+        var named = nameUnderPointer;
+        if (named != null && named.readable && named.plate != null && named.plate.gameObject.activeInHierarchy)
+            return named;
+        if (cam == null || all.Count == 0 || UiBlock.PointerOverUI()) return null;
+
+        Vector2 mp = PointerInput.Position;
+        GroundDrop best = null;
+        float bestSqr = HoverPixels * HoverPixels;
+        for (int i = all.Count - 1; i >= 0; i--)
+        {
+            var d = all[i];
+            if (d == null) { all.RemoveAt(i); continue; }
+            if (!d.readable) continue;
+            Vector3 sp = cam.WorldToScreenPoint(d.transform.position);
+            // behind the camera
+            if (sp.z <= 0f) continue;
+            float sqr = ((Vector2)sp - mp).sqrMagnitude;
+            if (sqr <= bestSqr) { bestSqr = sqr; best = d; }
+        }
+        if (best != null && Player3DController.MonsterUnderCursor(cam) != null && Player3DController.CursorOnMonsterBody)
+            return null;
+        return best;
     }
 
     /// <summary>Take this drop out of the world — the server when somebody has claimed it, a watcher when the
@@ -382,9 +473,10 @@ public class GroundDrop : MonoBehaviour
         var pointer = border.gameObject.AddComponent<GroundDropLabelPointer>();
         pointer.Bind(this, fill);
 
-        // NOTHING IS READ UNTIL ALT IS HELD. A field where every drop shouts its name is unreadable; the sparkle
-        // says something is there, and the key says what. It is also what keeps these out of the cursor's way:
-        // a switched-off plate is not something the pointer can find.
+        // NOTHING IS READ UNTIL IT IS ASKED FOR — by pointing at this one, or by holding Alt for all of them. A field
+        // where every drop shouts its name is unreadable; the sparkle says something is there, and pointing says
+        // what. It is also what keeps these out of the cursor's way: a switched-off plate is not something the
+        // pointer can find.
         plate.gameObject.SetActive(false);
     }
 
@@ -432,7 +524,7 @@ public class GroundDrop : MonoBehaviour
         if (on) StartSparkle(); else StopSparkle();
         // The name follows whether Alt is being held as well, so walking back into the map does not put a name up
         // that nobody asked for.
-        ShowName(on && namesWanted);
+        ShowName(on && (namesWanted || hovered == this));
     }
 
     void ShowName(bool on)
@@ -468,23 +560,55 @@ public class GroundDrop : MonoBehaviour
             {
                 var d = all[i];
                 if (d == null) { all.RemoveAt(i); continue; }
-                d.ShowName(wanted && d.readable);
+                d.ShowName(d.readable && (wanted || d == hovered));
             }
         }
-        if (!namesWanted) return;
 
         var cam = CameraRig.Cam;
         if (cam == null) return;
+
+        // THE ONE BEING POINTED AT shows its name without Alt, lit as pointed-at — changed only on the frame the
+        // pointed-at drop changes, so a still cursor costs one pick and nothing else.
+        var now = UnderCursor(cam);
+        if (now != hovered)
+        {
+            var was = hovered;
+            hovered = now;
+            if (was != null)
+            {
+                if (was.plateFill != null) was.plateFill.color = UiKit.PanelFill;
+                was.ShowName(was.readable && namesWanted);
+            }
+            if (now != null)
+            {
+                now.ShowName(true);
+                if (now.plateFill != null) now.plateFill.color = UiKit.Hover;
+            }
+        }
+
         float scale = OverheadScreenLayer.ScaleFor(hostCanvas, BaseScale);
+        if (!namesWanted)
+        {
+            if (hovered != null && hovered.plate != null) hovered.PlaceName(cam, scale);
+            return;
+        }
         for (int i = all.Count - 1; i >= 0; i--)
         {
             var d = all[i];
             if (d == null) { all.RemoveAt(i); continue; }
             if (d.plate == null || !d.readable) continue;
-            var at = d.transform.position;
-            at.y += LabelHeight;
-            OverheadScreenLayer.Place(d.plate, at, cam, scale);
+            d.PlaceName(cam, scale);
         }
+    }
+
+    // The drop the cursor is on, as last acted on by the ticker — what decides which single name is up without Alt.
+    static GroundDrop hovered;
+
+    void PlaceName(Camera cam, float scale)
+    {
+        var at = transform.position;
+        at.y += LabelHeight;
+        OverheadScreenLayer.Place(plate, at, cam, scale);
     }
 }
 
@@ -519,27 +643,28 @@ public class GroundDropLabelPointer : MonoBehaviour, IPointerEnterHandler, IPoin
 
     /// <summary>What a name looks like with the cursor on it: the plate filled with the theme's hover colour, the one
     /// this game uses to say "you are pointing at this". Solid, because a see-through plate would read the ground
-    /// through the words.</summary>
-    public void OnPointerEnter(PointerEventData e) { if (fill != null) fill.color = UiKit.Hover; }
-    public void OnPointerExit(PointerEventData e) { if (fill != null) fill.color = UiKit.PanelFill; }
+    /// through the words. It also tells the floor which drop is pointed at, so the cursor turns into the hand.</summary>
+    public void OnPointerEnter(PointerEventData e)
+    {
+        if (fill != null) fill.color = UiKit.Hover;
+        GroundDrop.nameUnderPointer = drop;
+    }
+
+    public void OnPointerExit(PointerEventData e)
+    {
+        if (fill != null) fill.color = UiKit.PanelFill;
+        if (GroundDrop.nameUnderPointer == drop) GroundDrop.nameUnderPointer = null;
+    }
+
+    // A name switched off under a still cursor gets no exit, so it lets go here too.
+    void OnDisable()
+    {
+        if (drop != null && GroundDrop.nameUnderPointer == drop) GroundDrop.nameUnderPointer = null;
+    }
 
     public void OnPointerClick(PointerEventData e)
     {
         if (drop == null || e.button != PointerEventData.InputButton.Left) return;
-
-        var body = StatusController.Player != null
-            ? StatusController.Player.GetComponent<Player3DController>() : null;
-        if (body == null) { GroundDrop.AskToTake(drop); return; }
-
-        // ALREADY STANDING OVER IT — take it now rather than starting a walk of zero distance, which would stop
-        // whatever the player was already doing for no reason.
-        float dx = drop.transform.position.x - body.transform.position.x;
-        float dz = drop.transform.position.z - body.transform.position.z;
-        if (dx * dx + dz * dz <= GroundDrop.Reach * GroundDrop.Reach) { GroundDrop.AskToTake(drop); return; }
-
-        // THE WALK THE GAME ALREADY HAS, told a different distance. It re-measures every frame and runs the
-        // errand on the first frame the gap is small enough, so nothing here has to know about routing.
-        var wanted = drop;
-        body.BeginMoveIntoRange(drop.transform, GroundDrop.Reach, () => GroundDrop.AskToTake(wanted));
+        GroundDrop.ReachFor(drop);
     }
 }

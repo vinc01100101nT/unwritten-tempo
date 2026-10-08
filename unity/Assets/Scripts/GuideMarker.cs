@@ -27,6 +27,7 @@ public class GuideMarker : MonoBehaviour
     // Looked up once each — the guide asks every frame while it is up.
     ScrollRect scroll;
     Button button;
+    bool inWorld;
     bool looked;
 
     /// <summary>The scrolling list this part sits in, or null.</summary>
@@ -35,12 +36,17 @@ public class GuideMarker : MonoBehaviour
     /// <summary>The button this part is, or null.</summary>
     public Button Button { get { Look(); return button; } }
 
+    /// <summary>True for a part drawn in the world (over a character's head) rather than on the screen's own layer.</summary>
+    public bool InWorld { get { Look(); return inWorld; } }
+
     void Look()
     {
         if (looked) return;
         looked = true;
         scroll = GetComponentInParent<ScrollRect>();
         button = GetComponent<Button>();
+        var canvas = GetComponentInParent<Canvas>();
+        inWorld = canvas != null && canvas.renderMode == RenderMode.WorldSpace;
     }
 
     /// <summary>Put a marker on <paramref name="go"/>.</summary>
@@ -71,7 +77,10 @@ public class GuideMarker : MonoBehaviour
 
     static bool NeedsItem(GuideSpot s) =>
         s == GuideSpot.StationForgeRow || s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton
-        || s == GuideSpot.BagRow;
+        || s == GuideSpot.BagRow || s == GuideSpot.ShopBuyButton;
 
-    static bool NeedsStation(GuideSpot s) => s != GuideSpot.BagRow && s != GuideSpot.None;
+    /// <summary>A part of a station's window — it counts only in the station the step is worked at.</summary>
+    public static bool NeedsStation(GuideSpot s) =>
+        s == GuideSpot.StationForgePage || s == GuideSpot.StationFoldPage || s == GuideSpot.StationBack
+        || s == GuideSpot.StationForgeRow || s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton;
 }

@@ -41,6 +41,7 @@ public static class Rewards
         // else, so the number paid, logged and shown is one number. A rate small enough to round a kill down to
         // nothing pays nothing, but the kill still counts for any quest below.
         int paid = WorldEvents.KillExperience(xp);
+        PlaySession.Killed(character, paid);
         if (paid > 0)
         {
             int levelsGained = character.AddXP(paid, out int ringLevelsGained);
@@ -120,9 +121,11 @@ public static class Rewards
                 }
         }
 
+        PlaySession.ThingsFell(character, dropped);
         if (gold > 0)
         {
             character.AddGold(gold);
+            PlaySession.EarnedGold(character, gold);
             // On a server the purse that just changed is not the one on that player's screen, so their machine is handed
             // it and the change is written down. Off a server there is only one purse and its window is told directly.
             if (!GameNetwork.TellOwnerTheirBagChanged(character)) InventoryStore.Instance?.Notify();

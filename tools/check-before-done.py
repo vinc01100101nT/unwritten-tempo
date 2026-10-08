@@ -248,6 +248,13 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    "skill-router-checker": {
+        "files": [os.path.join(TOOLS, "hook-analytics", "skill_router.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove_skill_router.py")],
+        "headline": "The skill router no longer sends a message it exists for to its skill, or sends one it "
+                    "should not, until this passes:",
+        "mine_by_construction": True,
+    },
 }
 
 

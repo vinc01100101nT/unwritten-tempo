@@ -143,7 +143,7 @@ public static class RigBuilder25D
     {
         const string dir = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Default";
         const string dirBig = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
-        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
+        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b", "hand_open" })
             AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
         AssetDatabase.ImportAsset($"{dirBig}/target_round_b.png", ImportAssetOptions.ForceUpdate);
 
@@ -152,6 +152,8 @@ public static class RigBuilder25D
         cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");       // hovering a mob
         cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");           // A-armed
         cur.targetCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dirBig}/target_round_b.png");  // aiming a skill — large 64×64 reticle, drawn full-size (software cursor)
+        cur.grabCursor       = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/hand_open.png");
+        // pointing at a thing on the floor
         // defaultHotspot is left at GameCursor3D's field default (the tip of pointer_b.png) — that field
         // is the single source of truth for the hotspot, so it isn't re-typed here.
         if (cur.defaultCursor == null)

@@ -103,6 +103,8 @@ public class CharacterPlates : MonoBehaviour
             nextLookForMySize = 0f;
             myDrawnHalfWidth = UnitAnchor.HalfWidth(body);
             mine.Begin(myDrawnHalfWidth, AccountSession.CharacterName ?? "", null);
+            // YOUR OWN HEALTH BAR is a part of the screen the tutorial guide may point at.
+            GuideMarker.Put(mine.HealthBar, GuideSpot.OwnHealthBar);
         }
 
         // THE BODY STATES ITS WIDTH ONCE ITS MODEL HAS LOADED, which can be after the plate went up. Looked for once a

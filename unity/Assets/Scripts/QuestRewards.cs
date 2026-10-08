@@ -42,6 +42,7 @@ public static class QuestRewards
             said.Append('.');
             shell?.PushBagToOwner();
         }
+        PlaySession.QuestFinished(c);
         GameLog.Info(LogCat.Loot, string.Concat(SpawnIds.MapOf(c), " ", SpawnIds.Label(c), " (",
                                                  GameNetwork.CharacterIdOf(c), ") finished quest ", def.id, " — ", said.ToString()));
         shell?.TellQuestLine(said.ToString());

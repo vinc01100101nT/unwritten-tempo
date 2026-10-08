@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>One quest record as it is saved and as it arrives with a character — the shape the character server's
-/// <c>character_quest</c> rows travel in: quest id, step id, followed, finished.</summary>
+/// <c>character_quest</c> rows travel in: quest id, step id, followed, finished, replaying, the quest to follow again
+/// when this one is done, and the pieces of the run under way.</summary>
 [Serializable]
 public class QuestRowWire
 {
@@ -13,6 +14,28 @@ public class QuestRowWire
     public bool f;
     /// <summary>How far along the current step is — creatures defeated for a Kill step; 0 otherwise.</summary>
     public int p;
+    /// <summary>A finished tutorial being played again. Its steps count only pieces made during the replay.</summary>
+    public bool r;
+    /// <summary>The quest that was followed when this one took over, followed again when this one is done; empty when none.</summary>
+    public string u = "";
+    /// <summary>The pieces this run forges and folds — empty once the quest is done.</summary>
+    public QuestPieceWire[] a;
+}
+
+/// <summary>ONE PIECE OF A TUTORIAL RUN, as it is saved: which item, the copy this run made or folds (empty until there
+/// is one), and what is still free on it — a character's first run of a tutorial forges and folds each of its pieces
+/// free, once; a replay frees nothing.</summary>
+[Serializable]
+public class QuestPieceWire
+{
+    public string i = "";
+    public string c = "";
+    /// <summary>Free forges left: 1 on a first run until the piece is forged, else 0.</summary>
+    public int g;
+    /// <summary>Free folds left on this run's copy.</summary>
+    public int n;
+    /// <summary>Free purchases left: an item a first run has you buy.</summary>
+    public int b;
 }
 
 /// <summary>An open quest, as a player's machine is told it. Finished numbers only: the step it is on, and for a fold
@@ -28,6 +51,8 @@ public struct QuestOpenWire
     /// <summary>Whether its current step happens somewhere the arrows can lead — what decides whether the Quests window
     /// offers "Show path" for it.</summary>
     public bool hasPath;
+    /// <summary>A tutorial finished and not being replayed — every step done, listed so it can be played again.</summary>
+    public bool finished;
 }
 
 /// <summary>One thing a tutorial needs before Play starts it, as its owner is told it — finished numbers: what is still
@@ -81,6 +106,14 @@ public struct QuestTargetWire
 /// the quest no longer has (the designer removed it) resumes at the first step, and the holdings carry it straight
 /// back to wherever the character really is.</para>
 ///
+/// <para><b>A finished tutorial can be REPLAYED</b> — Play again, from its first step, paying its whole bill. It stays
+/// finished throughout (its reward was paid once and is never paid again), and its steps count only the pieces made
+/// during the replay, so gear already held cannot finish it at once.</para>
+///
+/// <para><b>A character's first run of a tutorial is free</b>: each piece it forges and folds carries one free forge and
+/// its free folds, saved on the record and used up by the press that does the work (<see cref="TakeFreeForge"/>,
+/// <see cref="TakeFreeFold"/>), so a quick second press, a door or a restart can never spend it twice.</para>
+///
 /// <para><b>Saving.</b> Every change stamps the record with a rising number. A save carries the records stamped after
 /// the last save that LANDED (<see cref="CapturePending"/>), and a landed save acknowledges up to the number it was
 /// taken at (<see cref="Acknowledge"/>). A newer save waiting in the outbox therefore always carries everything an
@@ -96,6 +129,12 @@ public sealed class QuestLog
         public bool finished;
         public int progress;
         public int changedAt;
+        public bool replaying;
+        public string resume = "";
+        public readonly List<QuestPieceWire> pieces = new List<QuestPieceWire>(0);
+
+        /// <summary>Open, or finished and being replayed — a record whose steps are still being worked through.</summary>
+        public bool Running => !finished || replaying;
     }
 
     // Quests that finished since the server last asked — their rewards are owed (see TakeJustFinished).
@@ -126,9 +165,17 @@ public sealed class QuestLog
         stamp = acked = 0;
         if (rows != null)
             foreach (var r in rows)
-                if (r != null && !string.IsNullOrEmpty(r.q))
-                    records[r.q] = new Record { questId = r.q, stepId = r.s ?? "", tracked = r.t, finished = r.f,
-                                                progress = Mathf.Max(0, r.p) };
+            {
+                if (r == null || string.IsNullOrEmpty(r.q)) continue;
+                var rec = new Record { questId = r.q, stepId = r.s ?? "", tracked = r.t, finished = r.f,
+                                       progress = Mathf.Max(0, r.p), replaying = r.f && r.r, resume = r.u ?? "" };
+                if (r.a != null)
+                    foreach (var p in r.a)
+                        if (p != null && !string.IsNullOrEmpty(p.i))
+                            rec.pieces.Add(new QuestPieceWire { i = p.i, c = p.c ?? "", g = Mathf.Clamp(p.g, 0, 1),
+                                                                n = Mathf.Max(0, p.n), b = Mathf.Max(0, p.b) });
+                records[r.q] = rec;
+            }
         Version++;
     }
 
@@ -138,22 +185,86 @@ public sealed class QuestLog
         Version++;
     }
 
-    /// <summary>Give every quest marked "given automatically" that this character has never had. A quest given while
-    /// nothing is being followed becomes the one followed — a tutorial only when its requirements are met, the same test
-    /// Play makes. True when anything was given.</summary>
-    public bool GiveAutomatic(Character c)
+    /// <summary>UNLOCK every quest whose unlock condition is <paramref name="moment"/> that this character has never had,
+    /// as they stand on <paramref name="hp"/> of <paramref name="maxHp"/> health. A tutorial PLAYS the moment it
+    /// unlocks — followed at once, taking over from the quest followed until then, which is remembered and followed again
+    /// when it is done. Any other quest is followed only when nothing else is. True when anything was given.</summary>
+    public bool Unlock(QuestUnlock moment, int hp, int maxHp)
     {
+        if (moment == QuestUnlock.None) return false;
         bool any = false;
         foreach (var def in QuestCatalog.All)
         {
-            if (!def.givenAutomatically || records.ContainsKey(def.id)) continue;
-            var r = new Record { questId = def.id, stepId = def.steps[0].id };
-            records[def.id] = r;
-            if (Followed() == null && (def.category != QuestCategory.Tutorial || NeedsMet(r, def, c))) r.tracked = true;
+            if (def.unlockCondition != moment || records.ContainsKey(def.id)) continue;
+            var before = Followed();
+            var r = NewRecord(def, hp, maxHp);
+            if (def.category == QuestCategory.Tutorial)
+            {
+                r.resume = before != null ? before.questId : "";
+                Follow(r);
+            }
+            else if (before == null) r.tracked = true;
             Touch(r);
             any = true;
         }
         return any;
+    }
+
+    // A quest given for the first time. A tutorial's first run takes nothing its steps use up: every piece it has you
+    // make carries one free forge and its free folds, and every item it has you buy is free — as many as it asks for,
+    // or, when a Health step after it is healed with that item, as many as it takes to get there from the health the
+    // character has now.
+    Record NewRecord(QuestDef def, int hp, int maxHp)
+    {
+        var r = new Record { questId = def.id, stepId = def.steps[0].id };
+        if (def.category == QuestCategory.Tutorial)
+        {
+            foreach (var p in PiecesOf(def))
+                r.pieces.Add(new QuestPieceWire { i = p.itemId, g = 1, n = p.folds });
+            for (int i = 0; i < def.steps.Length; i++)
+            {
+                var o = def.steps[i].objective;
+                if (o.kind != QuestObjectiveKind.Buy) continue;
+                int free = Mathf.Max(1, o.count);
+                for (int k = i + 1; k < def.steps.Length; k++)
+                {
+                    var h = def.steps[k].objective;
+                    if (h.kind != QuestObjectiveKind.Health || h.itemId != o.itemId) continue;
+                    free = Mathf.Max(free, QuestMath.UsesToReach(hp, maxHp, h.percent, HealPerUse(ItemCatalog.Resolve(o.itemId))));
+                    break;
+                }
+                AddFreeBuys(r, o.itemId, free);
+            }
+        }
+        records[def.id] = r;
+        return r;
+    }
+
+    static void AddFreeBuys(Record r, string itemId, int count)
+    {
+        foreach (var p in r.pieces) if (p.i == itemId) { p.b += count; return; }
+        r.pieces.Add(new QuestPieceWire { i = itemId, b = count });
+    }
+
+    // WHAT ONE USE OF AN ITEM HEALS, as its skill is written: every Heal effect's own amount. Read once per item — item
+    // and skill data never change while the server runs.
+    static readonly Dictionary<string, int> healPerUse = new Dictionary<string, int>();
+    static readonly List<float> healScratch = new List<float>(2);
+
+    static int HealPerUse(Item item)
+    {
+        if (item == null) return 0;
+        if (healPerUse.TryGetValue(item.id, out int known)) return known;
+        healScratch.Clear();
+        var skill = item.IsUsable ? SkillCatalog.Get(item.useSkillId) : null;
+        if (skill != null && skill.bindings != null)
+            foreach (var b in skill.bindings)
+                if (b != null && b.effects != null)
+                    foreach (var e in b.effects)
+                        if (e != null && e.kind == SkillEffectKind.Heal && !e.amount.useStacks) healScratch.Add(e.amount.value);
+        int heal = QuestMath.HealOfOneUse(healScratch);
+        healPerUse[item.id] = heal;
+        return heal;
     }
 
     // A quest the catalog no longer has (suspended or retired) is never the followed one: it is shown nowhere, so it
@@ -161,7 +272,7 @@ public sealed class QuestLog
     Record Followed()
     {
         foreach (var r in records.Values)
-            if (r.tracked && !r.finished && QuestCatalog.Get(r.questId) != null) return r;
+            if (r.tracked && r.Running && QuestCatalog.Get(r.questId) != null) return r;
         return null;
     }
 
@@ -172,9 +283,10 @@ public sealed class QuestLog
     {
         if (c == null || records.Count == 0) return false;
         bool heldRead = false, changed = false;
+        Record followAgain = null;
         foreach (var r in records.Values)
         {
-            if (r.finished) continue;
+            if (!r.Running) continue;
             var def = QuestCatalog.Get(r.questId);
             if (def == null) continue;   // suspended or retired: kept exactly as it is
             int i = def.IndexOf(r.stepId);
@@ -190,31 +302,140 @@ public sealed class QuestLog
                     // ONE conversation finishes one talk step, never two in a row naming the same person.
                     if (met) spoken = null;
                 }
-                else if (o.kind == QuestObjectiveKind.Kill)
+                else if (o.kind == QuestObjectiveKind.Kill || o.kind == QuestObjectiveKind.Buy)
                 {
-                    // Counted only while this step is the current one (see CountKill), so a step reached later starts at 0.
+                    // Counted only while this step is the current one (see CountKill, CountBought), so a step reached
+                    // later starts at 0.
                     met = i == def.IndexOf(r.stepId) && r.progress >= o.count;
+                }
+                else if (o.kind == QuestObjectiveKind.Health)
+                {
+                    met = !c.IsDead && QuestMath.HealthMet(c.CurrentHP, c.MaxHP, o.percent);
                 }
                 else
                 {
                     if (!heldRead) { ReadHeld(c); heldRead = true; }
-                    met = QuestMath.Met(o.kind, o.itemId, o.folds, held);
+                    met = QuestMath.Met(o.kind, o.itemId, o.folds, HeldFor(r));
                 }
                 if (!met) break;
                 i++;
             }
             bool done = i >= def.steps.Length;
             string step = done ? "" : def.steps[i].id;
-            if (done == r.finished && step == r.stepId) continue;
-            r.finished = done;
+            if (!done && step == r.stepId) continue;
             r.stepId = step;
             // A new step starts counting from nothing.
             r.progress = 0;
-            if (done) { r.tracked = false; justFinished.Add(def); }
+            // WHERE A TUTORIAL WAS AT, AND WHEN: each step reached is a line, so the gap between two of them is how long
+            // a tester spent on a step — and the last one before they stopped is where they got stuck.
+            if (!done && GameServer.IsServer && !c.IsWatchedCopy && GameLog.On(LogCat.Server))
+                GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(c), " ", SpawnIds.Label(c), " reached step ",
+                                                          (i + 1).ToString(), " of ", def.steps.Length.ToString(), " (",
+                                                          step, ") of quest ", def.id));
+            if (done)
+            {
+                r.tracked = false;
+                r.pieces.Clear();
+                // A REPLAY ENDS as the finished quest it always was: nothing is paid again.
+                if (r.replaying) r.replaying = false;
+                else { r.finished = true; justFinished.Add(def); }
+                if (!string.IsNullOrEmpty(r.resume))
+                {
+                    if (records.TryGetValue(r.resume, out var back) && back.Running) followAgain = back;
+                    r.resume = "";
+                }
+            }
             Touch(r);
             changed = true;
         }
+        // THE TUTORIAL THIS ONE TOOK OVER FROM is followed again, once nothing else has been chosen in the meantime.
+        if (followAgain != null && Followed() == null) Follow(followAgain);
         return changed;
+    }
+
+    // What a running record's held-things steps are judged on: everything held — or, on a replay, only the copies made
+    // during it, so gear already held cannot finish a replay at once. Expects `held` read.
+    readonly List<QuestHeld> runHeld = new List<QuestHeld>(8);
+
+    List<QuestHeld> HeldFor(Record r)
+    {
+        if (!r.replaying && !r.finished) return held;
+        runHeld.Clear();
+        foreach (var h in held)
+            if (!string.IsNullOrEmpty(h.copyId))
+                foreach (var p in r.pieces)
+                    if (p.i == h.itemId && p.c == h.copyId) { runHeld.Add(h); break; }
+        return runHeld;
+    }
+
+    /// <summary>SERVER, at a shop: <paramref name="count"/> of <paramref name="itemId"/> were bought. Every running quest
+    /// whose CURRENT step is to buy that item counts them, up to the number the step asks for. True when anything counted.</summary>
+    public bool CountBought(string itemId, int count)
+    {
+        if (string.IsNullOrEmpty(itemId) || count <= 0) return false;
+        bool counted = false;
+        foreach (var r in records.Values)
+        {
+            if (!r.Running) continue;
+            var def = QuestCatalog.Get(r.questId);
+            int i = def != null ? def.IndexOf(r.stepId) : -1;
+            if (i < 0) continue;
+            var o = def.steps[i].objective;
+            if (o.kind != QuestObjectiveKind.Buy || o.itemId != itemId || r.progress >= o.count) continue;
+            r.progress = Mathf.Min(o.count, r.progress + count);
+            Touch(r);
+            counted = true;
+        }
+        return counted;
+    }
+
+    /// <summary>SERVER, at a shop: how many of <paramref name="howMany"/> <paramref name="itemId"/> a first run of a
+    /// tutorial gives free — used up here, in the same call that does the buying, so they are given once.</summary>
+    public int TakeFreeBuys(string itemId, int howMany)
+    {
+        int free = 0;
+        foreach (var r in records.Values)
+        {
+            if (free >= howMany) break;
+            if (r.finished || QuestCatalog.Get(r.questId) == null) continue;
+            foreach (var p in r.pieces)
+            {
+                if (p.i != itemId || p.b <= 0) continue;
+                int take = Mathf.Min(p.b, howMany - free);
+                p.b -= take;
+                free += take;
+                Touch(r);
+                break;
+            }
+        }
+        return free;
+    }
+
+    /// <summary>How many <paramref name="itemId"/> a first run of a tutorial still gives free at a shop.</summary>
+    public int FreeBuysOf(string itemId)
+    {
+        int free = 0;
+        foreach (var r in records.Values)
+            if (!r.finished && QuestCatalog.Get(r.questId) != null) free += FreeBuysLeft(r, itemId);
+        return free;
+    }
+
+    /// <summary>The items a first run of a tutorial still gives free at a shop, and how many — what a shop's rows say.</summary>
+    public void FreeBuys(List<string> ids, List<int> counts)
+    {
+        ids.Clear();
+        counts.Clear();
+        foreach (var r in records.Values)
+        {
+            if (r.finished || QuestCatalog.Get(r.questId) == null) continue;
+            foreach (var p in r.pieces)
+            {
+                if (p.b <= 0) continue;
+                int at = ids.IndexOf(p.i);
+                if (at < 0) { ids.Add(p.i); counts.Add(p.b); }
+                else counts[at] += p.b;
+            }
+        }
     }
 
     /// <summary>One <paramref name="creatureId"/> was defeated by this character: every open quest whose CURRENT step is
@@ -225,7 +446,7 @@ public sealed class QuestLog
         bool counted = false;
         foreach (var r in records.Values)
         {
-            if (r.finished) continue;
+            if (!r.Running) continue;
             var def = QuestCatalog.Get(r.questId);
             int i = def != null ? def.IndexOf(r.stepId) : -1;
             if (i < 0) continue;
@@ -303,7 +524,7 @@ public sealed class QuestLog
         var list = new List<string>();
         foreach (var r in records.Values)
         {
-            if (r.finished) continue;
+            if (!r.Running) continue;
             var def = QuestCatalog.Get(r.questId);
             int i = def != null ? def.IndexOf(r.stepId) : -1;
             if (i < 0) continue;
@@ -323,6 +544,8 @@ public sealed class QuestLog
             case QuestObjectiveKind.FoldedTo:
                 var item = ItemCatalog.Resolve(o.itemId);
                 return item != null ? WorldTownsfolkIds.WorkingAt(CraftStations.For(item), map) : null;
+            case QuestObjectiveKind.Buy:
+                return WorldTownsfolkIds.Selling(ItemCatalog.Resolve(o.itemId), map);
             default: return null;
         }
     }
@@ -344,15 +567,27 @@ public sealed class QuestLog
     }
 
     /// <summary>PLAY a tutorial: follow it — its guide and its path — but only when the character has what the rest of
-    /// it needs right now (<see cref="CollectNeeds"/>). Only an open tutorial the character holds. Checked at the press
-    /// only: what is spent afterwards is the guide's to explain.</summary>
+    /// it needs right now (<see cref="CollectNeeds"/>). An open tutorial carries on from its step; a FINISHED one is
+    /// replayed from its first step, which needs its whole bill. Checked at the press only: what is spent afterwards is
+    /// the guide's to explain.</summary>
     public QuestPlay Play(string questId, Character c)
     {
         var def = QuestCatalog.Get(questId);
-        if (def == null || def.category != QuestCategory.Tutorial || !records.TryGetValue(questId, out var r) || r.finished)
+        if (def == null || def.category != QuestCategory.Tutorial || !records.TryGetValue(questId, out var r))
             return QuestPlay.Ignored;
-        if (r.tracked) return QuestPlay.AlreadyPlaying;
+        if (r.tracked && r.Running) return QuestPlay.AlreadyPlaying;
         if (!NeedsMet(r, def, c)) return QuestPlay.NotMet;
+        if (!r.Running)
+        {
+            // A REPLAY: from the first step, with a fresh list of the pieces it makes and nothing free on any of them.
+            r.replaying = true;
+            r.stepId = def.steps[0].id;
+            r.progress = 0;
+            r.resume = "";
+            r.pieces.Clear();
+            foreach (var p in PiecesOf(def)) r.pieces.Add(new QuestPieceWire { i = p.itemId });
+            Touch(r);
+        }
         Follow(r);
         return QuestPlay.Started;
     }
@@ -379,8 +614,21 @@ public sealed class QuestLog
         int k = 0;
         foreach (var r in records.Values)
             if (r.changedAt > acked)
-                rows[k++] = new QuestRowWire { q = r.questId, s = r.stepId, t = r.tracked, f = r.finished, p = r.progress };
+                rows[k++] = new QuestRowWire { q = r.questId, s = r.stepId, t = r.tracked, f = r.finished, p = r.progress,
+                                               r = r.replaying, u = r.resume, a = CopyPieces(r) };
         return rows;
+    }
+
+    // A copy: a save's rows never share an object with the live record, which goes on changing.
+    static QuestPieceWire[] CopyPieces(Record r)
+    {
+        var a = new QuestPieceWire[r.pieces.Count];
+        for (int i = 0; i < a.Length; i++)
+        {
+            var p = r.pieces[i];
+            a[i] = new QuestPieceWire { i = p.i, c = p.c, g = p.g, n = p.n, b = p.b };
+        }
+        return a;
     }
 
     /// <summary>A save taken at <paramref name="upTo"/> is done with — landed, or refused for good and kept in a file.</summary>
@@ -389,16 +637,22 @@ public sealed class QuestLog
         if (upTo > acked) acked = upTo;
     }
 
-    /// <summary>Every open quest of a playable kind, as its owner is shown it.</summary>
+    /// <summary>Every open quest of a playable kind, as its owner is shown it — and every finished tutorial, which can be
+    /// played again.</summary>
     public QuestOpenWire[] Snapshot(Character c, string map)
     {
         var list = new List<QuestOpenWire>();
         bool heldRead = false;
         foreach (var r in records.Values)
         {
-            if (r.finished) continue;
             var def = QuestCatalog.Get(r.questId);
             if (def == null) continue;
+            if (!r.Running)
+            {
+                if (def.category == QuestCategory.Tutorial)
+                    list.Add(new QuestOpenWire { questId = r.questId, stepId = "", finished = true });
+                continue;
+            }
             var w = new QuestOpenWire { questId = r.questId, stepId = r.stepId, tracked = r.tracked };
             int i = def.IndexOf(r.stepId);
             if (i >= 0) w.hasPath = HasPlace(def.steps[i].objective, map);
@@ -412,7 +666,12 @@ public sealed class QuestLog
                 if (!heldRead) { ReadHeld(c); heldRead = true; }
                 var o = def.steps[i].objective;
                 w.need = o.folds;
-                w.have = Mathf.Min(o.folds, QuestMath.BestFolds(o.itemId, held));
+                w.have = Mathf.Min(o.folds, QuestMath.BestFolds(o.itemId, HeldFor(r)));
+            }
+            else if (i >= 0 && def.steps[i].objective.kind == QuestObjectiveKind.Health && c != null)
+            {
+                w.need = QuestMath.HealthNeeded(c.MaxHP, def.steps[i].objective.percent);
+                w.have = Mathf.Min(w.need, c.CurrentHP);
             }
             list.Add(w);
         }
@@ -442,6 +701,13 @@ public sealed class QuestLog
         t.stepId = r.stepId;
 
         WorldTownsfolk.Row person = null;
+        if (o.kind == QuestObjectiveKind.Health)
+        {
+            // Done wherever they stand, from the bag: there is nowhere to lead, only the item to run out of.
+            var use = ItemCatalog.Resolve(o.itemId);
+            if (use != null && Count(c, use) <= 0) t.block = (int)QuestBlock.NoneLeft;
+            return t;
+        }
         if (o.kind == QuestObjectiveKind.Kill)
         {
             // WHERE THE CREATURES LIVE: the nearest map, counted in doors, whose spawn list has them.
@@ -454,6 +720,14 @@ public sealed class QuestLog
             return t;
         }
         if (o.kind == QuestObjectiveKind.TalkTo) person = WorldTownsfolkIds.Find(o.townspersonId);
+        else if (o.kind == QuestObjectiveKind.Buy)
+        {
+            // WHERE IT IS SOLD, and whether it can be paid for: free on a first run while its free purchases last.
+            var item = ItemCatalog.Resolve(o.itemId);
+            person = WorldTownsfolkIds.Selling(item, map);
+            if (item != null && FreeBuysLeft(r, o.itemId) <= 0 && !QuestMath.CanPay(0, 0, c.Gold, item.buyPrice))
+                t.block = (int)QuestBlock.CannotPay;
+        }
         else if (o.kind != QuestObjectiveKind.Wear)
         {
             var item = ItemCatalog.Resolve(o.itemId);
@@ -461,12 +735,12 @@ public sealed class QuestLog
             t.station = (int)station;
             person = WorldTownsfolkIds.WorkingAt(station, map);
             ReadHeld(c);
-            t.block = (int)BlockFor(c, o, item);
+            t.block = (int)BlockFor(r, def, c, o, item);
         }
         else
         {
             ReadHeld(c);
-            if (!QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, held)) t.block = (int)QuestBlock.NotCarried;
+            if (!QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, HeldFor(r))) t.block = (int)QuestBlock.NotCarried;
         }
 
         if (person != null)
@@ -533,9 +807,9 @@ public sealed class QuestLog
         needs.Clear();
         if (c == null) return 0;
         bool heldRead = false;
+        // Every tutorial — a finished one too, which shows what playing it again needs.
         foreach (var r in records.Values)
         {
-            if (r.finished) continue;
             var def = QuestCatalog.Get(r.questId);
             if (def == null || def.category != QuestCategory.Tutorial) continue;
             if (!heldRead) { ReadHeld(c); heldRead = true; }
@@ -563,24 +837,43 @@ public sealed class QuestLog
     }
 
     // What is STILL needed from the step `r` is on to the quest's end: a piece already held is not forged again, folds
-    // already made are not paid again, and a piece no step ahead needs costs nothing. Then the level the quest names.
-    // Expects `held` read.
+    // already made are not paid again, a piece no step ahead needs costs nothing, and what a first run has free costs
+    // nothing. A finished tutorial is priced as a replay: from its first step, with nothing held counting. Then the
+    // level the quest names. Expects `held` read.
     void AddNeeds(Record r, QuestDef def, Character c)
     {
-        int at = def.IndexOf(r.stepId);
+        int at = r.Running ? def.IndexOf(r.stepId) : 0;
         if (at < 0) at = 0;
         int gold = 0, level = def.levelNeeded;
+        var judged = HeldFor(r);
         materialScratch.Clear();
         foreach (var p in PiecesOf(def))
         {
             if (p.lastStep < at) continue;
-            bool have = QuestMath.Met(QuestObjectiveKind.Have, p.itemId, 1, held);
-            int foldsDone = QuestMath.Met(QuestObjectiveKind.FoldedTo, p.itemId, p.folds, held)
-                ? p.folds : QuestMath.BestFolds(p.itemId, held);
+            bool have = QuestMath.Met(QuestObjectiveKind.Have, p.itemId, 1, judged);
+            int foldsDone = QuestMath.Met(QuestObjectiveKind.FoldedTo, p.itemId, p.folds, judged)
+                ? p.folds : QuestMath.BestFolds(p.itemId, judged);
+            bool forgeFree = false;
+            int foldsFree = 0;
+            if (!r.finished)
+                foreach (var q in r.pieces)
+                    if (q.i == p.itemId) { forgeFree = q.g > 0; foldsFree = q.n; break; }
             int material = 0;
-            QuestMath.AddForgedPiece(have ? 0 : p.forgeMaterial, have ? 0 : p.forgeGold, Mathf.Max(0, p.folds - foldsDone),
+            bool payForge = !have && !forgeFree;
+            QuestMath.AddForgedPiece(payForge ? p.forgeMaterial : 0, payForge ? p.forgeGold : 0,
+                                     Mathf.Max(0, p.folds - foldsDone - foldsFree),
                                      p.foldMaterialEach, p.foldGoldEach, ref material, ref gold);
             AddMaterial(p.material, material);
+        }
+        // WHAT IT HAS YOU BUY, at the shop's price — less what a first run still gives free.
+        for (int i = at; i < def.steps.Length; i++)
+        {
+            var o = def.steps[i].objective;
+            if (o.kind != QuestObjectiveKind.Buy) continue;
+            var item = ItemCatalog.Resolve(o.itemId);
+            if (item == null) continue;
+            int bought = r.Running && i == def.IndexOf(r.stepId) ? r.progress : 0;
+            QuestMath.AddBought(item.buyPrice, o.count, bought, FreeBuysLeft(r, o.itemId), ref gold);
         }
         foreach (var (material, amount) in materialScratch)
             needs.Add(new QuestNeedWire { questId = r.questId, kind = QuestRequirementKind.Item, itemId = material.id,
@@ -615,12 +908,14 @@ public sealed class QuestLog
     {
         switch (o.kind)
         {
-            case QuestObjectiveKind.Wear: return false;
+            case QuestObjectiveKind.Wear:
+            case QuestObjectiveKind.Health: return false;
             case QuestObjectiveKind.TalkTo: return WorldTownsfolkIds.Find(o.townspersonId) != null;
         }
         var key = o.kind == QuestObjectiveKind.Kill ? (o.kind, o.creatureId, o.map, map) : (o.kind, o.itemId, "", map);
         if (placeKnown.TryGetValue(key, out bool known)) return known;
         if (o.kind == QuestObjectiveKind.Kill) known = NearestSpawnOf(o.creatureId, o.map, map, out _, out _);
+        else if (o.kind == QuestObjectiveKind.Buy) known = WorldTownsfolkIds.Selling(ItemCatalog.Resolve(o.itemId), map) != null;
         else
         {
             var item = ItemCatalog.Resolve(o.itemId);
@@ -648,29 +943,169 @@ public sealed class QuestLog
         return spawnMap != null;
     }
 
-    // What stops the station step from being done now — measured against what the character holds this moment.
-    QuestBlock BlockFor(Character c, QuestDef.Objective o, Item item)
+    // What stops the station step from being done now — measured against what the character holds this moment, and
+    // what this run still has free.
+    QuestBlock BlockFor(Record r, QuestDef def, Character c, QuestDef.Objective o, Item item)
     {
         if (item == null) return QuestBlock.None;
         if (o.kind == QuestObjectiveKind.Have)
         {
+            if (FreeForgeOn(r, def, o.itemId) != null) return QuestBlock.None;
             var material = MaterialCatalog.Band(item.madeOf, 1);
             return QuestMath.CanPay(Count(c, material), item.forgeMaterialCost, c.Gold, item.forgeGoldCost)
                 ? QuestBlock.None : QuestBlock.CannotPay;
         }
-        // Folded To: a station works only on a piece in the bag.
-        if (!QuestMath.InBag(o.itemId, held))
-            return QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, held) ? QuestBlock.TakeItOff : QuestBlock.NotCarried;
-        var grade = LowestGradeInBag(o.itemId);
+        // Folded To: a station works only on a piece in the bag — on a replay, the piece made during it.
+        var judged = HeldFor(r);
+        if (!QuestMath.InBag(o.itemId, judged))
+            return QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, judged) ? QuestBlock.TakeItOff : QuestBlock.NotCarried;
+        var grade = LowestGradeInBag(o.itemId, judged);
+        if (grade == Quality.Raw)
+            foreach (var h in judged)
+                if (h.itemId == o.itemId && !h.worn && FreeFoldOn(r, def, o.itemId, h.copyId) != null) return QuestBlock.None;
         var foldMaterial = MaterialCatalog.Band(item.madeOf, CraftingMath.Band(grade));
         return QuestMath.CanPay(Count(c, foldMaterial), CraftingMath.FoldMaterialCost, c.Gold, CraftingMath.FoldGoldCost(grade))
             ? QuestBlock.None : QuestBlock.CannotPay;
     }
 
-    Quality LowestGradeInBag(string itemId)
+    // ---- what a first run gives free --------------------------------------------------------------------------------
+    // Free only while the record is on its FIRST run (never a replay) and the piece is still owed — a step ahead still
+    // needs it — so nothing free is ever left lying about to be spent on something the tutorial no longer asks for.
+
+    static int FreeBuysLeft(Record r, string itemId)
+    {
+        if (r == null || r.finished) return 0;
+        foreach (var p in r.pieces) if (p.i == itemId) return p.b;
+        return 0;
+    }
+
+    QuestPieceWire FreeForgeOn(Record r, QuestDef def, string itemId)
+    {
+        if (r == null || def == null || r.finished || r.replaying || !Owed(r, def, itemId)) return null;
+        foreach (var p in r.pieces) if (p.i == itemId && p.g > 0) return p;
+        return null;
+    }
+
+    QuestPieceWire FreeFoldOn(Record r, QuestDef def, string itemId, string copyId)
+    {
+        if (r == null || def == null || r.finished || r.replaying || string.IsNullOrEmpty(copyId)
+            || !Owed(r, def, itemId)) return null;
+        foreach (var p in r.pieces)
+            if (p.i == itemId && p.n > 0 && (p.c == "" || p.c == copyId)) return p;
+        return null;
+    }
+
+    static bool Owed(Record r, QuestDef def, string itemId)
+    {
+        int at = def.IndexOf(r.stepId);
+        if (at < 0) at = 0;
+        foreach (var p in PiecesOf(def)) if (p.itemId == itemId) return p.lastStep >= at;
+        return false;
+    }
+
+    /// <summary>SERVER, at the forge: if this character's first run of a tutorial still has a free forge of
+    /// <paramref name="itemId"/>, use it up and say so — the press then charges nothing. Used up here, in the same call
+    /// that does the work, so ten presses in one frame are one free forge and nine paid ones.</summary>
+    public bool TakeFreeForge(string itemId)
+    {
+        foreach (var r in records.Values)
+        {
+            var p = FreeForgeOn(r, QuestCatalog.Get(r.questId), itemId);
+            if (p == null) continue;
+            p.g = 0;
+            Touch(r);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>SERVER, at the forge: <paramref name="copyId"/> is a new <paramref name="itemId"/>. Every running record
+    /// with that piece and no copy yet takes it as its run's copy — the one a replay's steps count, and the one a first
+    /// run's free folds go on.</summary>
+    public void NoteMade(string itemId, string copyId)
+    {
+        if (string.IsNullOrEmpty(copyId)) return;
+        foreach (var r in records.Values)
+        {
+            if (!r.Running) continue;
+            foreach (var p in r.pieces)
+                if (p.i == itemId && p.c == "") { p.c = copyId; Touch(r); break; }
+        }
+    }
+
+    /// <summary>Is the next fold of <paramref name="copyId"/>, a <paramref name="itemId"/> of grade
+    /// <paramref name="grade"/>, free? Only a Raw piece's fold is ever free. What the station's offer says it costs.</summary>
+    public bool FoldIsFree(string itemId, string copyId, Quality grade)
+    {
+        if (grade != Quality.Raw) return false;
+        foreach (var r in records.Values)
+            if (FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId) != null) return true;
+        return false;
+    }
+
+    /// <summary>SERVER, at the fold: use up one free fold on <paramref name="copyId"/> if a first run has one. The copy
+    /// becomes that run's copy, so its other free folds can go on no other piece.</summary>
+    public bool TakeFreeFold(string itemId, string copyId, Quality grade)
+    {
+        if (grade != Quality.Raw) return false;
+        foreach (var r in records.Values)
+        {
+            var p = FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId);
+            if (p == null) continue;
+            p.n--;
+            p.c = copyId;
+            Touch(r);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>The items whose next forge is free for this character — what the station's forge rows say.</summary>
+    public string[] FreeForges()
+    {
+        List<string> list = null;
+        foreach (var r in records.Values)
+        {
+            var def = QuestCatalog.Get(r.questId);
+            if (def == null) continue;
+            foreach (var p in r.pieces)
+                if (p.g > 0 && FreeForgeOn(r, def, p.i) != null)
+                {
+                    list ??= new List<string>(4);
+                    if (!list.Contains(p.i)) list.Add(p.i);
+                }
+        }
+        return list != null ? list.ToArray() : Array.Empty<string>();
+    }
+
+    // ---- what is watching health ------------------------------------------------------------------------------------
+    int watchedAt = -1;
+    bool watching;
+
+    /// <summary>True while a running quest's current step is judged on health — the only time a change of health is
+    /// worth looking at. Worked out again only when a quest changed.</summary>
+    public bool WatchesHealth
+    {
+        get
+        {
+            if (watchedAt == Version) return watching;
+            watchedAt = Version;
+            watching = false;
+            foreach (var r in records.Values)
+            {
+                if (!r.Running) continue;
+                var def = QuestCatalog.Get(r.questId);
+                int i = def != null ? def.IndexOf(r.stepId) : -1;
+                if (i >= 0 && def.steps[i].objective.kind == QuestObjectiveKind.Health) { watching = true; break; }
+            }
+            return watching;
+        }
+    }
+
+    static Quality LowestGradeInBag(string itemId, List<QuestHeld> from)
     {
         var lowest = Quality.A;
-        foreach (var h in held) if (h.itemId == itemId && !h.worn && h.quality < lowest) lowest = h.quality;
+        foreach (var h in from) if (h.itemId == itemId && !h.worn && h.quality < lowest) lowest = h.quality;
         return lowest;
     }
 
@@ -694,13 +1129,15 @@ public sealed class QuestLog
                 folds = e.instance != null ? e.instance.upgrade : 0,
                 quality = e.instance != null ? e.instance.quality : Quality.Raw,
                 worn = false,
+                copyId = e.instance != null ? e.instance.copyId : "",
             });
         }
         foreach (var slot in WornSlots)
         {
             var w = c.GetEquippedInstance(slot);
             if (w == null || w.def == null) continue;
-            held.Add(new QuestHeld { itemId = w.def.id, folds = w.upgrade, quality = w.quality, worn = true });
+            held.Add(new QuestHeld { itemId = w.def.id, folds = w.upgrade, quality = w.quality, worn = true,
+                                     copyId = w.copyId });
         }
     }
 }

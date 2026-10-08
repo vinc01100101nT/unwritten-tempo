@@ -89,6 +89,9 @@ public sealed class UnitPlate
 
     public bool Shown => shown && root != null;
 
+    /// <summary>The health bar's own object — what the tutorial guide may point at. Null until the plate is built.</summary>
+    public GameObject HealthBar => hpFill != null ? hpFill.rectTransform.parent.gameObject : null;
+
     /// <summary>Build the widget when it is not there — the first use, or after a map change took the shared canvas
     /// and this plate with it. True when it had to be built: everything it showed is gone, and the owner hands it
     /// the unit again.</summary>

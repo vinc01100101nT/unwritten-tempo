@@ -15,6 +15,8 @@ public struct CraftStationOffer
     /// <summary>What ONE fold costs: the material, how many, and the gold beside it.</summary>
     public string foldMaterialId;
     public int foldMaterialCost, foldGoldCost;
+    /// <summary>True when the next fold costs nothing — a tutorial's first run gives it free.</summary>
+    public bool foldFree;
     /// <summary>What ONE quench costs, in the same material.</summary>
     public int quenchMaterialCost, quenchGoldCost;
 

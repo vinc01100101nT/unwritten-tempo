@@ -102,7 +102,10 @@ public class GuideOverlay : MonoBehaviour
         if (text != shownText) { shownText = text; tipText.text = text; }
 
         bool lit = target != null;
-        for (int i = 0; i < 4; i++) { dark[i].enabled = lit; frame[i].enabled = lit; }
+        // A PART IN THE WORLD — the health bar over your head — is framed and pointed at with NOTHING DARK: it is on
+        // screen the whole time, so a dark that stops the mouse would stop it for as long as the step lasts.
+        bool shade = lit && !target.InWorld;
+        for (int i = 0; i < 4; i++) { dark[i].enabled = shade; frame[i].enabled = lit; }
         pointer.enabled = lit;
 
         if (!lit)
@@ -118,8 +121,15 @@ public class GuideOverlay : MonoBehaviour
         var window = WindowOf(target);
         if (window != raisedWindow) { raisedWindow = window; if (window != null) UiLayers.Raise(window, UiLayers.Layer.Window); UiLayers.Raise(root, UiLayers.Layer.Guide); }
 
-        ((RectTransform)target.transform).GetWorldCorners(corners);
-        Vector2 min = root.InverseTransformPoint(corners[0]), max = root.InverseTransformPoint(corners[2]);
+        if (!Bounds(target, out Vector2 min, out Vector2 max))
+        {
+            // Behind the camera this frame: nothing to frame, the sentence stays.
+            for (int i = 0; i < 4; i++) { dark[i].enabled = false; frame[i].enabled = false; }
+            pointer.enabled = false;
+            waitCover.enabled = false;
+            PlaceTip(new Vector2(-TipWidth * 0.5f, -root.rect.height * 0.5f + 90f), 2);
+            return;
+        }
         min -= new Vector2(FramePad, FramePad);
         max += new Vector2(FramePad, FramePad);
         var r = root.rect;
@@ -142,6 +152,33 @@ public class GuideOverlay : MonoBehaviour
         if (costs) Hook(target.Button); else Unhook();
         waitCover.enabled = costs && QuestStore.AwaitingAnswer;
         if (waitCover.enabled) Place(waitCover, min, max);
+    }
+
+    // WHERE THE PART IS, in this layer's own units. A part on the screen's layer is read straight off its corners; a part
+    // in the world is seen through the camera first. False when it is behind the camera.
+    bool Bounds(GuideMarker target, out Vector2 min, out Vector2 max)
+    {
+        ((RectTransform)target.transform).GetWorldCorners(corners);
+        min = new Vector2(float.MaxValue, float.MaxValue);
+        max = new Vector2(float.MinValue, float.MinValue);
+        if (!target.InWorld)
+        {
+            min = root.InverseTransformPoint(corners[0]);
+            max = root.InverseTransformPoint(corners[2]);
+            return true;
+        }
+        var cam = CameraRig.Cam;
+        if (cam == null) return false;
+        var uiCam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+        for (int i = 0; i < 4; i++)
+        {
+            var screen = cam.WorldToScreenPoint(corners[i]);
+            if (screen.z <= 0f) return false;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screen, uiCam, out var local);
+            min = Vector2.Min(min, local);
+            max = Vector2.Max(max, local);
+        }
+        return true;
     }
 
     // What to show, if anything: the part to light (or none, for a sentence only) and its text.
@@ -176,7 +213,7 @@ public class GuideOverlay : MonoBehaviour
             if (h == null) continue;
             if (h.spot == GuideSpot.None) { if (found == null) textOnly = i; continue; }
             // A station's rows count only in the station the step is worked at.
-            if (h.spot != GuideSpot.BagRow && CraftStationPanel.OpenStation != station) continue;
+            if (GuideMarker.NeedsStation(h.spot) && CraftStationPanel.OpenStation != station) continue;
             var m = GuideMarker.Find(h.spot, item, station);
             if (m == null) continue;
             found = m; foundAt = i; textOnly = -1;
@@ -230,6 +267,7 @@ public class GuideOverlay : MonoBehaviour
             case QuestBlock.CannotPay: return "You are carrying too little to pay for this. Creatures in the fields drop what you need.";
             case QuestBlock.TakeItOff: return "Your " + name + " is being worn. Take it off in your bag first — a station works only on what you carry.";
             case QuestBlock.NotCarried: return "You are not carrying a " + name + ".";
+            case QuestBlock.NoneLeft: return "You have no " + name + " left. Buy more at a shop that sells them.";
             default: return null;
         }
     }

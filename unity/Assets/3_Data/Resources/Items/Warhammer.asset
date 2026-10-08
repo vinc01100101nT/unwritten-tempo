@@ -18,18 +18,20 @@ MonoBehaviour:
   slot: 3
   weaponType: 6
   attackRange: 0
-  equipModel: {fileID: 2839524829476184550, guid: b31cf3d5ac315214a950e823cb9e2b9f, type: 3}
+  equipModel: {fileID: 3885996839623212103, guid: 5d472f1ffeabf034293a5937a9afa464, type: 3}
   element: 0
   category: 0
   cardSlots: 2
   weight: 90
   zeny: 5000
+  buyPrice: 0
   madeOf: 1
   forgeMaterialCost: 8
   forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
+  useSkillId: 
   attackSfx:
     clips:
     - {fileID: 8300000, guid: 878de55de930ef847ae44df0e8de01eb, type: 3}
@@ -44,9 +46,4 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 49d119a83e396134fa07af4f5855130c, type: 3}
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: 

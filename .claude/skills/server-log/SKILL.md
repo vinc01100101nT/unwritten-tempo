@@ -54,8 +54,12 @@ The log is `logs/server.log` at the top of the repo; the run before is `logs/ser
 - **`Parry … : 1 spent` vs `1 ran out`** tells a charge used by a blow from one that expired.
 - **Damage over time and heals have their own lines:** `took 4 from Poison by Alpha #1`, `healed 10 by <skill>`. A
   damage-over-time kill is credited to whoever put the ailment on.
-- **Not written:** mana changes, and anything a player's machine decided about its own screen. For those, put a
-  recorder inside the game.
+- **What a player chose to do is a `[server]` line, on by default:** picked up / could not pick up, a drop that
+  `vanished untaken`, equipped, used, crafted, hotbar, skill point, talked to, quest accepted and each step reached,
+  `was killed by`, `reached level`, what they `said`. Each visit ends with ONE `stopped playing after` line that sums
+  it — start a play-test read there.
+- **Not written:** mana changes, and anything a player's machine decided about its own screen (a window opened, a
+  thing hovered). For those, put a recorder inside the game.
 
 ## 4. After a play-test: the two scripts
 

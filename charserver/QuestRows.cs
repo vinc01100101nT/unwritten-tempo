@@ -20,8 +20,15 @@ public static class QuestRows
     public const int MaxIdLength = 120;
     /// <summary>The most a step can count to — far above any count a quest asks for; it bounds a malformed body.</summary>
     public const int MaxProgress = 1_000_000;
+    /// <summary>The most pieces one tutorial run may list — far above any tutorial's; it bounds a malformed body.</summary>
+    public const int MaxPieces = 64;
+    /// <summary>The most free folds or free purchases one piece may carry — far above any tutorial's.</summary>
+    public const int MaxFree = 1000;
+    public const int MaxCopyIdLength = 64;
 
-    public sealed record Row(string QuestId, string StepId, bool Tracked, bool Finished, int Progress);
+    /// <summary>One quest row. <c>Pieces</c> is the run's piece list as JSON (see 011_character_quest_runs.sql).</summary>
+    public sealed record Row(string QuestId, string StepId, bool Tracked, bool Finished, int Progress, bool Replaying,
+                             string Resume, string Pieces);
 
     public readonly record struct Verdict(bool Ok, string Reason, List<Row>? Rows);
 
@@ -48,31 +55,71 @@ public static class QuestRows
             if (string.IsNullOrEmpty(id) || id.Length > MaxIdLength || step is null || step.Length > MaxIdLength)
                 return new Verdict(false, $"every quest row has an id and a step of at most {MaxIdLength} characters", null);
             if (!seen.Add(id)) return new Verdict(false, $"quest '{id}' appears twice in one save", null);
-            bool t = Bool(q, "t"), f = Bool(q, "f");
+            bool t = Bool(q, "t"), f = Bool(q, "f"), r = Bool(q, "r");
             int p = q.TryGetProperty("p", out var pv) && pv.ValueKind == JsonValueKind.Number && pv.TryGetInt32(out var pi) ? pi : 0;
             if (p < 0 || p > MaxProgress) return new Verdict(false, $"a quest's progress is between 0 and {MaxProgress}", null);
+            // ONLY A FINISHED QUEST IS REPLAYED — a replay never makes a quest unfinished, so its reward is never owed again.
+            if (r && !f) return new Verdict(false, $"quest '{id}' is replaying but not finished", null);
+            string resume = Str(q, "u") ?? "";
+            if (resume.Length > MaxIdLength) return new Verdict(false, $"a quest to resume is at most {MaxIdLength} characters", null);
+            var pieces = Pieces(q, out string? why);
+            if (pieces is null) return new Verdict(false, $"quest '{id}': {why}", null);
             if (t) tracked++;
-            rows.Add(new Row(id, step, t, f, p));
+            rows.Add(new Row(id, step, t, f, p, r, resume, pieces));
         }
         if (tracked > 1) return new Verdict(false, "at most one quest is tracked", null);
         return new Verdict(true, "", rows);
+    }
+
+    // The run's piece list, checked field by field and written back out in a fixed shape — never the body's own text, so
+    // nothing the body adds beside the known fields reaches the table. Null with the reason when it is malformed.
+    static string? Pieces(JsonElement q, out string? why)
+    {
+        why = null;
+        if (!q.TryGetProperty("a", out var a) || a.ValueKind == JsonValueKind.Null) return "[]";
+        if (a.ValueKind != JsonValueKind.Array) { why = "its pieces must be an array"; return null; }
+        if (a.GetArrayLength() > MaxPieces) { why = $"a run lists at most {MaxPieces} pieces"; return null; }
+        var clean = new List<object>(a.GetArrayLength());
+        foreach (var e in a.EnumerateArray())
+        {
+            if (e.ValueKind != JsonValueKind.Object) { why = "every piece is an object"; return null; }
+            string? item = Str(e, "i"), copy = Str(e, "c") ?? "";
+            if (string.IsNullOrEmpty(item) || item.Length > MaxIdLength || copy.Length > MaxCopyIdLength)
+            { why = $"every piece names an item, and a copy of at most {MaxCopyIdLength} characters"; return null; }
+            int g = Int(e, "g"), n = Int(e, "n"), b = Int(e, "b");
+            if (g < 0 || g > 1 || n < 0 || n > MaxFree || b < 0 || b > MaxFree)
+            { why = $"a piece's free forges are 0 or 1, and its free folds and purchases at most {MaxFree}"; return null; }
+            clean.Add(new { i = item, c = copy, g, n, b });
+        }
+        return JsonSerializer.Serialize(clean);
     }
 
     /// <summary>Write the rows inside the progress door's transaction. A finished quest stays finished whatever a later
     /// row says, and choosing a quest to follow stops following every other one.</summary>
     public static async Task WriteAsync(NpgsqlConnection conn, NpgsqlTransaction tx, Guid characterId, List<Row> rows)
     {
-        var json = JsonSerializer.Serialize(rows.Select(r => new { q = r.QuestId, s = r.StepId, t = r.Tracked, f = r.Finished, p = r.Progress }));
+        var json = JsonSerializer.Serialize(rows.Select(r => new
+        {
+            q = r.QuestId, s = r.StepId, t = r.Tracked, f = r.Finished, p = r.Progress, r = r.Replaying, u = r.Resume,
+            a = JsonSerializer.Deserialize<JsonElement>(r.Pieces),
+        }));
+        // A REPLAY STANDS ONLY ON A FINISHED ROW: `replaying` is written only beside a finished quest, so it can never
+        // make one unfinished.
         await using (var upsert = new NpgsqlCommand(
-            @"insert into character_quest (character_id, quest_id, step_id, tracked, progress, finished_at, updated_at)
-              select $1, x.q, x.s, x.t, coalesce(x.p, 0), case when x.f then now() end, now()
-                from jsonb_to_recordset($2) as x(q text, s text, t boolean, f boolean, p integer)
+            @"insert into character_quest (character_id, quest_id, step_id, tracked, progress, finished_at, replaying,
+                                           resume_quest, pieces, updated_at)
+              select $1, x.q, x.s, x.t, coalesce(x.p, 0), case when x.f then now() end, coalesce(x.r, false) and x.f,
+                     coalesce(x.u, ''), coalesce(x.a, '[]'::jsonb), now()
+                from jsonb_to_recordset($2) as x(q text, s text, t boolean, f boolean, p integer, r boolean, u text, a jsonb)
               on conflict (character_id, quest_id) do update
-                 set step_id     = excluded.step_id,
-                     tracked     = excluded.tracked,
-                     progress    = excluded.progress,
-                     finished_at = coalesce(character_quest.finished_at, excluded.finished_at),
-                     updated_at  = now()", conn, tx))
+                 set step_id      = excluded.step_id,
+                     tracked      = excluded.tracked,
+                     progress     = excluded.progress,
+                     finished_at  = coalesce(character_quest.finished_at, excluded.finished_at),
+                     replaying    = excluded.replaying,
+                     resume_quest = excluded.resume_quest,
+                     pieces       = excluded.pieces,
+                     updated_at   = now()", conn, tx))
         {
             upsert.Parameters.Add(new NpgsqlParameter { Value = characterId });
             upsert.Parameters.Add(new NpgsqlParameter { Value = json, NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb });
@@ -94,11 +141,15 @@ public static class QuestRows
     /// a join, so the progress document is read once however many quests there are.</summary>
     public const string ReadAsJson =
         @"(select coalesce(json_agg(json_build_object('q', quest_id, 's', step_id, 't', tracked, 'p', progress,
-                                                      'f', finished_at is not null)), '[]'::json)::text
+                                                      'f', finished_at is not null, 'r', replaying,
+                                                      'u', resume_quest, 'a', pieces)), '[]'::json)::text
              from character_quest where character_id = c.id)";
 
     static string? Str(JsonElement o, string name)
         => o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
+    static int Int(JsonElement o, string name)
+        => o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var i) ? i : 0;
 
     static bool Bool(JsonElement o, string name)
         => o.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.True;

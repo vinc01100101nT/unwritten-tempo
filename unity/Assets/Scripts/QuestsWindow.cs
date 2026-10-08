@@ -4,7 +4,9 @@ using UnityEngine.UI;
 
 /// <summary>
 /// THE QUESTS WINDOW (J, or the Quests button in the status box). Three tabs — Tutorial, Main Story, Side Quests — the
-/// open quests of the chosen tab down the left, and the chosen quest's steps on the right.
+/// open quests of the chosen tab down the left, and the chosen quest's steps on the right. The Tutorial tab lists EVERY
+/// tutorial in the game: one not yet unlocked shows its unlock condition and has no Play; a finished one can be played
+/// again.
 ///
 /// <para><b>It works nothing out.</b> Which quests are open, which step each is on and how far a fold step has got all
 /// arrive from the server (<see cref="QuestStore"/>); the titles and step lines are read from the same quest data the
@@ -108,23 +110,34 @@ public class QuestsWindow : MonoBehaviour
         Clear(listContent);
         Clear(detailContent);
 
-        // The open quests of this tab, as the server listed them. With nothing chosen, the followed one is shown, or
-        // else the first.
+        // THIS TAB'S QUESTS, as the server listed them — and, on the Tutorial tab, EVERY tutorial in the game: one not
+        // yet unlocked is listed with its unlock condition and no Play. With nothing chosen, the followed one is shown,
+        // or else the first.
         var category = TabCategories[tab];
-        if (chosen == null)
+        rows.Clear();
+        if (category == QuestCategory.Tutorial)
+        {
+            foreach (var def in QuestCatalog.All)
+                if (def != null && def.category == QuestCategory.Tutorial)
+                    rows.Add((def, Listed(def.id, out var wire), wire));
+        }
+        else
             foreach (var open in QuestStore.Open)
             {
                 var def = QuestCatalog.Get(open.questId);
-                if (def == null || def.category != category) continue;
-                if (chosen == null || open.tracked) chosen = def.id;
-                if (open.tracked) break;
+                if (def != null && def.category == category) rows.Add((def, true, open));
+            }
+        if (chosen == null)
+            foreach (var (def, listed, wire) in rows)
+            {
+                if (chosen == null || (listed && wire.tracked)) chosen = def.id;
+                if (listed && wire.tracked) break;
             }
         QuestDef shown = null;
         QuestOpenWire shownWire = default;
-        foreach (var open in QuestStore.Open)
+        bool shownListed = false;
+        foreach (var (def, listed, open) in rows)
         {
-            var def = QuestCatalog.Get(open.questId);
-            if (def == null || def.category != category) continue;
             var line = new GameObject("Quest", typeof(RectTransform));
             line.transform.SetParent(listContent, false);
             line.AddComponent<LayoutElement>().preferredHeight = 26;
@@ -133,12 +146,14 @@ public class QuestsWindow : MonoBehaviour
             rowRt.anchorMin = Vector2.zero; rowRt.anchorMax = Vector2.one;
             rowRt.offsetMin = Vector2.zero;
             bool tutorial = def.category == QuestCategory.Tutorial, showPath = !tutorial && (open.tracked || open.hasPath);
-            rowRt.offsetMax = new Vector2(tutorial ? -PlayWidth : showPath ? -ShowPathWidth : 0f, 0f);
+            bool play = tutorial && listed;
+            rowRt.offsetMax = new Vector2(play ? -PlayWidth : showPath ? -ShowPathWidth : 0f, 0f);
             UiKit.MarkTab(row, def.id == chosen);
-            // EVERY open tutorial has Play or Stop, whatever step it is on — one with nothing to lead to still has a guide.
-            if (tutorial) PlayButton(line.transform, def.id, open.tracked);
+            // EVERY UNLOCKED tutorial has Play or Stop, whatever step it is on — one with nothing to lead to still has a
+            // guide, and a finished one is played again.
+            if (play) PlayButton(line.transform, def.id, open.tracked && !open.finished);
             else if (showPath) ShowPathButton(line.transform, def.id, open.tracked);
-            if (def.id == chosen) { shown = def; shownWire = open; }
+            if (def.id == chosen) { shown = def; shownWire = open; shownListed = listed; }
         }
         if (listContent.childCount == 0) { Text(listContent, "No quests here yet.", 12, UiKit.TextDim); return; }
         if (shown == null) return;
@@ -147,8 +162,14 @@ public class QuestsWindow : MonoBehaviour
         if (!string.IsNullOrEmpty(shown.description)) Text(detailContent, shown.description, 12, UiKit.TextMain, FontStyle.Normal, 4);
         string reward = RewardLine(shown.reward);
         if (reward != null) Text(detailContent, reward, 12, UiKit.TitleText, FontStyle.Bold, 2);
-        if (shown.category == QuestCategory.Tutorial) Requirements(shown.id);
-        int now = shown.IndexOf(shownWire.stepId);
+        if (shown.category == QuestCategory.Tutorial)
+        {
+            if (shownListed) Requirements(shown.id);
+            else Text(detailContent, "Unlock Condition: " + UnlockText(shown.unlockCondition), 12, UiKit.TitleText,
+                      FontStyle.Bold, 2);
+        }
+        // A finished quest shows every step done; one not yet unlocked, none.
+        int now = !shownListed ? -1 : shownWire.finished ? shown.steps.Length : shown.IndexOf(shownWire.stepId);
         for (int i = 0; i < shown.steps.Length; i++)
         {
             var s = shown.steps[i];
@@ -157,6 +178,27 @@ public class QuestsWindow : MonoBehaviour
             if (current && shownWire.need > 0) line += "   " + shownWire.have + " / " + shownWire.need;
             Text(detailContent, line, 12, done ? UiKit.Good : current ? UiKit.TextMain : UiKit.TextDim,
                  current ? FontStyle.Bold : FontStyle.Normal);
+        }
+    }
+
+    readonly List<(QuestDef def, bool listed, QuestOpenWire wire)> rows = new List<(QuestDef, bool, QuestOpenWire)>(8);
+
+    // Whether the server listed this quest for this character (open, or a finished tutorial), and how.
+    static bool Listed(string questId, out QuestOpenWire wire)
+    {
+        foreach (var w in QuestStore.Open) if (w.questId == questId) { wire = w; return true; }
+        wire = default;
+        return false;
+    }
+
+    /// <summary>What a quest's unlock condition says to a player.</summary>
+    static string UnlockText(QuestUnlock u)
+    {
+        switch (u)
+        {
+            case QuestUnlock.EnterWorld: return "Enter the world.";
+            case QuestUnlock.ReturnToSavePoint: return "Die, then choose \"Return to last saved point\".";
+            default: return "None.";
         }
     }
 

@@ -7,10 +7,13 @@ public struct QuestHeld
     public int folds;
     public Quality quality;
     public bool worn;
+    /// <summary>Which copy this is — what tells a piece made during a replay from one held before it.</summary>
+    public string copyId;
 }
 
-/// <summary>Why the step being followed cannot be done right now — what the guide says instead of lighting a button.</summary>
-public enum QuestBlock { None = 0, CannotPay = 1, TakeItOff = 2, NotCarried = 3 }
+/// <summary>Why the step being followed cannot be done right now — what the guide says instead of lighting a button.
+/// NoneLeft: a Health step's item, which is used up, is not in the bag.</summary>
+public enum QuestBlock { None = 0, CannotPay = 1, TakeItOff = 2, NotCarried = 3, NoneLeft = 4 }
 
 /// <summary>
 /// THE SUMS BEHIND A QUEST STEP — plain functions over what a character holds, so each can be checked by calling it
@@ -63,6 +66,43 @@ public static class QuestMath
     {
         material += forgeMaterial + folds * foldMaterialEach;
         gold += forgeGold + folds * foldGoldEach;
+    }
+
+    /// <summary>Is a Health step met: <paramref name="current"/> of <paramref name="max"/> health is at least
+    /// <paramref name="percent"/> percent of it. Whole-number maths, so 80% of 76 is met at 61, never at 60.8.</summary>
+    public static bool HealthMet(int current, int max, int percent)
+        => max > 0 && (long)current * 100 >= (long)percent * max;
+
+    /// <summary>The least health that meets a Health step of <paramref name="percent"/> percent of <paramref name="max"/>
+    /// — what the Quests window shows beside the step.</summary>
+    public static int HealthNeeded(int max, int percent)
+        => max <= 0 ? 0 : (int)(((long)percent * max + 99) / 100);
+
+    /// <summary>How many uses of something that heals <paramref name="healPerUse"/> it takes to bring
+    /// <paramref name="hp"/> of <paramref name="max"/> up to <paramref name="percent"/> percent — 0 when already there,
+    /// or when it heals nothing.</summary>
+    public static int UsesToReach(int hp, int max, int percent, int healPerUse)
+    {
+        int missing = HealthNeeded(max, percent) - hp;
+        if (missing <= 0 || healPerUse <= 0) return 0;
+        return (missing + healPerUse - 1) / healPerUse;
+    }
+
+    /// <summary>What a Buy step still costs: <paramref name="count"/> to buy at <paramref name="price"/> each, less the
+    /// <paramref name="bought"/> already bought for it and the <paramref name="free"/> a first run still gives.</summary>
+    public static int BuyBill(int price, int count, int bought, int free)
+        => price * System.Math.Max(0, count - bought - free);
+
+    /// <summary>Add a Buy step's <see cref="BuyBill"/> to a tutorial's running gold bill.</summary>
+    public static void AddBought(int price, int count, int bought, int free, ref int gold)
+        => gold += BuyBill(price, count, bought, free);
+
+    /// <summary>What one use of an item heals: the sum of its Heal effects' written amounts, rounded, never below 0.</summary>
+    public static int HealOfOneUse(List<float> heals)
+    {
+        float total = 0f;
+        if (heals != null) foreach (var h in heals) total += h;
+        return System.Math.Max(0, (int)System.Math.Round(total, System.MidpointRounding.AwayFromZero));
     }
 
     /// <summary>Can a bill of <paramref name="needMaterial"/> material and <paramref name="needGold"/> gold be paid.</summary>

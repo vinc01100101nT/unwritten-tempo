@@ -17,7 +17,7 @@ MonoBehaviour:
   category: 2
   description: Torvald wants the Ploplings in the field west of Lastline thinned
     out.
-  givenAutomatically: 0
+  unlockCondition: 0
   offeredBy: torvald
   offerText: 'Ploplings again. They come bouncing through the west gate every morning
     and nobody does a thing about it.

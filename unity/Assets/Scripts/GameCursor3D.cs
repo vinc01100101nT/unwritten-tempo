@@ -2,7 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// Swaps the hardware cursor (Kenney pack) to match intent,
-/// Dota-style: default pointer, sword while hovering a mob, crosshair while attack-armed (A).
+/// Dota-style: default pointer, sword while hovering a mob, open hand while pointing at a thing on the floor,
+/// crosshair while attack-armed (A).
 /// Reads <see cref="Player3DController"/> (AttackArmed + the static MonsterUnderCursor). Textures
 /// are assigned by Build 2.5D Spike. Uses Cursor.SetCursor, so the PNGs must import as readable
 /// Cursor textures (the KenneyCursorPack special-case in PixelArtImportPostprocessor handles that).
@@ -17,8 +18,10 @@ public class GameCursor3D : MonoBehaviour
     public Texture2D attackCursor;     public Vector2 attackHotspot = Vector2.zero;       // (0,0) => centered
     public Texture2D attackMoveCursor; public Vector2 attackMoveHotspot = Vector2.zero;   // (0,0) => centered
     public Texture2D targetCursor;     public Vector2 targetHotspot = Vector2.zero;       // (0,0) => centered; shown while aiming a skill
+    public Texture2D grabCursor;       public Vector2 grabHotspot = Vector2.zero;
+    // grab: (0,0) => centered; shown while pointing at a thing on the floor
 
-    enum Kind { None, Default, Attack, AttackMove, Target }
+    enum Kind { None, Default, Attack, AttackMove, Target, Grab }
     Kind current = Kind.None;
 
     Player3DController player;
@@ -36,11 +39,12 @@ public class GameCursor3D : MonoBehaviour
         if (player == null) player = FindAnyObjectByType<Player3DController>();
 
         // Aiming a skill (single-target UnitTargeter or AoE GroundTargeter) takes priority → reticle cursor.
-        // Then: A-armed → crosshair; hovering a living mob → SWORD (so the player sees it's clickable to attack);
-        // otherwise the default pointer.
+        // Then: A-armed → crosshair; pointing at a thing on the floor → HAND (a click picks it up); hovering a
+        // living mob → SWORD (so the player sees it's clickable to attack); otherwise the default pointer.
         bool freeHover = player != null;
         Kind want = UnitTargeter.Active || GroundTargeter.Active ? Kind.Target
                   : player != null && player.AttackArmed       ? Kind.AttackMove
+                  : freeHover && GroundDrop.UnderCursor(cam) != null ? Kind.Grab
                   : freeHover && Player3DController.MonsterUnderCursor(cam) != null ? Kind.Attack
                   :                                               Kind.Default;
 
@@ -53,6 +57,7 @@ public class GameCursor3D : MonoBehaviour
         {
             case Kind.Attack:     Set(attackCursor, attackHotspot); break;
             case Kind.AttackMove: Set(attackMoveCursor, attackMoveHotspot); break;
+            case Kind.Grab:       Set(grabCursor != null ? grabCursor : defaultCursor, grabCursor != null ? grabHotspot : defaultHotspot); break;
             // Reticle is the large 64×64 texture; ForceSoftware so the OS doesn't clamp it to ~32px (hardware
             // cursors are size-limited). Software cursor renders the texture at its full native resolution.
             case Kind.Target:     Set(targetCursor != null ? targetCursor : attackMoveCursor, targetHotspot, CursorMode.ForceSoftware); break;

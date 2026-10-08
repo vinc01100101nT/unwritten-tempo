@@ -1308,6 +1308,8 @@ MonoBehaviour:
   attackMoveHotspot: {x: 0, y: 0}
   targetCursor: {fileID: 2800000, guid: 786dc3ccb209d304c981ae77065ac981, type: 3}
   targetHotspot: {x: 0, y: 0}
+  grabCursor: {fileID: 2800000, guid: f7e03379471e1d04baa47cc9fe3ef005, type: 3}
+  grabHotspot: {x: 0, y: 0}
 --- !u!114 &1559929217
 MonoBehaviour:
   m_ObjectHideFlags: 0
