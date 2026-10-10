@@ -34,6 +34,10 @@ public class WeaponSocket : MonoBehaviour
     // The flourish: while these shares of the put-away pass (and, backwards, of the take-out), the main copy turns flat
     // over the fist this many times, lifted this far off it.
     float spinFrom, spinTo, spinTurns, spinLift, shownSpinShare;
+    // A weapon that turns about its own middle slides this far through the fist (hand bone's space) at full lift.
+    Vector3 spinSlide;
+    // Played where the weapon leaves and where it arrives when it changes place (the row's handoverVfx), or null.
+    VfxSequence handoverVfx;
 
     /// <summary>Where a closed right fist grips, in the hand bone's space — the point every weapon model is fitted to
     /// (the import-weapon-models skill). A weapon turned over in the fingers turns about it.</summary>
@@ -104,10 +108,15 @@ public class WeaponSocket : MonoBehaviour
         bool main = InHand(phase, progress, 0), pair = InHand(phase, progress, 1);
         if (!placedOnce || main != mainInHand || pair != pairInHand)
         {
+            // a weapon seen changing place mid-move (not one placed for the first time) shows its handover effect
+            bool handover = placedOnce && main != mainInHand && (phase == DrawPhase.Drawing || phase == DrawPhase.Sheathing);
+            var from = mounted != null ? mounted.transform.position : Vector3.zero;
             placedOnce = true;
             mainInHand = main; pairInHand = pair;
             Place(mounted, mainInHand, false);
             Place(mountedPair, pairInHand, true);
+            if (handover && handoverVfx != null && mounted != null && !Application.isBatchMode)
+                VfxDirector.Play(handoverVfx, new VfxContext { origin = from, target = mounted.transform.position, scaleMult = 1f });
             shownSpinShare = 0f;
             ApplyFlights();
         }
@@ -115,7 +124,7 @@ public class WeaponSocket : MonoBehaviour
         if (share == shownSpinShare) return;
         shownSpinShare = share;
         if (mounted == null || grip == null || mounted.transform.parent != handBone) return;
-        SpunOverFist(grip, share, spinTurns, spinLift, out var pos, out var rot);
+        SpunOverFist(grip, share, spinTurns, spinLift, spinSlide, out var pos, out var rot);
         mounted.transform.localPosition = pos; mounted.transform.localRotation = rot;
     }
 
@@ -142,8 +151,29 @@ public class WeaponSocket : MonoBehaviour
     /// <summary>Where a spun weapon sits in its hand bone at <paramref name="windowShare"/> of its spin window (0 = at
     /// its grip).</summary>
     public static void SpunOverFist(WeaponGrip grip, float windowShare, float turns, float lift, out Vector3 localPosition, out Quaternion localRotation)
-        => TurnedOverFist(grip, WeaponDrawMath.SpinTurnShare(windowShare) * turns * 360f, WeaponDrawMath.SpinLiftShare(windowShare) * lift,
-                          out localPosition, out localRotation);
+        => SpunOverFist(grip, windowShare, turns, lift, Vector3.zero, out localPosition, out localRotation);
+
+    /// <summary>The same, for a weapon that turns about its own middle: it slides <paramref name="slide"/> (hand bone's
+    /// space, see <see cref="MiddleSlide"/>) through the fist as it lifts, and that slide turns with it.</summary>
+    public static void SpunOverFist(WeaponGrip grip, float windowShare, float turns, float lift, Vector3 slide, out Vector3 localPosition, out Quaternion localRotation)
+    {
+        float degrees = WeaponDrawMath.SpinTurnShare(windowShare) * turns * 360f, up = WeaponDrawMath.SpinLiftShare(windowShare);
+        TurnedOverFist(grip, degrees, up * lift, out localPosition, out localRotation);
+        if (slide == Vector3.zero) return;
+        localPosition += Quaternion.AngleAxis(grip.hand == WeaponHand.Left ? -degrees : degrees, Vector3.right) * (slide * up);
+    }
+
+    /// <summary>How far a weapon held at its grip must slide along its length, in the hand bone's space, for the middle
+    /// of its model to sit where the fist closes. <paramref name="modelMiddle"/> is the model's middle in the space of
+    /// the model's own root.</summary>
+    public static Vector3 MiddleSlide(Vector3 gripPosition, Vector3 gripEuler, Vector3 gripScale, bool leftHand, Vector3 modelMiddle)
+    {
+        var rot = Quaternion.Euler(gripEuler);
+        var middle = gripPosition + rot * Vector3.Scale(gripScale, modelMiddle);
+        var pivot = leftHand ? new Vector3(-FistPoint.x, FistPoint.y, FistPoint.z) : FistPoint;
+        var along = (rot * Vector3.up).normalized;
+        return -Vector3.Dot(middle - pivot, along) * along;
+    }
 
     /// <summary>Where a weapon sits in its hand bone when it is turned <paramref name="degrees"/> flat over the fist and
     /// lifted <paramref name="lift"/> off it: turned about the hand's own x through the point where the fist closes, so
@@ -201,8 +231,15 @@ public class WeaponSocket : MonoBehaviour
         handFrac[0] = handFrac[1] = 1f;   // put away: let go at the end
         handFrac[2] = handFrac[3] = 0f;   // take out: in hand from the start
         spinTurns = spinLift = spinFrom = spinTo = 0f;
+        spinSlide = Vector3.zero; handoverVfx = null;
         var b = StanceCatalog.Weapon(type);
         if (b == null) return;
+        handoverVfx = b.handoverVfx;
+        var model = shown != null ? shown.equipModel : null;
+        var mesh = model != null ? model.GetComponentInChildren<MeshFilter>() : null;   // perf-ok: on weapon change
+        if (b.spinAboutMiddle && grip != null && mesh != null && mesh.sharedMesh != null)
+            spinSlide = MiddleSlide(grip.localPosition, grip.localEuler, grip.localScale, grip.hand == WeaponHand.Left,
+                                    model.transform.InverseTransformPoint(mesh.transform.TransformPoint(mesh.sharedMesh.bounds.center)));
         float sheatheFrames = ClipFrames(b.sheatheClip), unsheatheFrames = ClipFrames(b.unsheatheClip);
         if (SpinWindow(b, sheatheFrames, out spinFrom, out spinTo)) { spinTurns = b.spinTurns; spinLift = b.spinLift; }
         int sMain = mainIsRight ? b.sheatheRightFrame : b.sheatheLeftFrame, sPair = mainIsRight ? b.sheatheLeftFrame : b.sheatheRightFrame;

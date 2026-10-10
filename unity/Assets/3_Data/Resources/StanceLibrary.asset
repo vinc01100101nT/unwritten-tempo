@@ -16,6 +16,7 @@ MonoBehaviour:
   - id: 0
     action: 0
     clip: 
+    mirrored: 0
     speedSource: 0
     speedMult: 1
     priority: 10
@@ -28,6 +29,7 @@ MonoBehaviour:
   - id: 1
     action: 0
     clip: 
+    mirrored: 0
     speedSource: 0
     speedMult: 1
     priority: 20
@@ -40,6 +42,7 @@ MonoBehaviour:
   - id: 2
     action: 0
     clip: Cast
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 30
@@ -52,6 +55,7 @@ MonoBehaviour:
   - id: 3
     action: 7
     clip: 
+    mirrored: 0
     speedSource: 0
     speedMult: 1
     priority: 5
@@ -64,6 +68,7 @@ MonoBehaviour:
   - id: 4
     action: 0
     clip: Idle2
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -76,6 +81,7 @@ MonoBehaviour:
   - id: 5
     action: 0
     clip: Walk
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -194,6 +200,7 @@ MonoBehaviour:
   - id: 6
     action: 2
     clip: Run2
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -312,6 +319,7 @@ MonoBehaviour:
   - id: 7
     action: 3
     clip: Punch
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -324,6 +332,7 @@ MonoBehaviour:
   - id: 8
     action: 9
     clip: Jump
+    mirrored: 0
     speedSource: 3
     speedMult: 2
     priority: 10
@@ -336,6 +345,7 @@ MonoBehaviour:
   - id: 9
     action: 12
     clip: Roll
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -348,6 +358,7 @@ MonoBehaviour:
   - id: 10
     action: 5
     clip: Hurt
+    mirrored: 0
     speedSource: 0
     speedMult: 4
     priority: 0
@@ -360,6 +371,7 @@ MonoBehaviour:
   - id: 11
     action: 15
     clip: PickUp
+    mirrored: 0
     speedSource: 4
     speedMult: 3
     priority: 0
@@ -372,6 +384,7 @@ MonoBehaviour:
   - id: 12
     action: 6
     clip: 
+    mirrored: 0
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -384,6 +397,7 @@ MonoBehaviour:
   - id: 13
     action: 9
     clip: 
+    mirrored: 0
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -396,6 +410,7 @@ MonoBehaviour:
   - id: 14
     action: 4
     clip: ReleaseAOESkill
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -408,6 +423,7 @@ MonoBehaviour:
   - id: 15
     action: 4
     clip: ReleaseAOESkill2
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -420,6 +436,7 @@ MonoBehaviour:
   - id: 16
     action: 4
     clip: ReleaseAOESkill4
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -432,6 +449,7 @@ MonoBehaviour:
   - id: 17
     action: 4
     clip: ReleaseSingleSkill
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -444,6 +462,7 @@ MonoBehaviour:
   - id: 18
     action: 4
     clip: ReleaseSingleSkill2
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -456,6 +475,7 @@ MonoBehaviour:
   - id: 19
     action: 4
     clip: Slide
+    mirrored: 0
     speedSource: 3
     speedMult: 2
     priority: 0
@@ -468,6 +488,7 @@ MonoBehaviour:
   - id: 20
     action: 3
     clip: AttackSword2H
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -480,6 +501,7 @@ MonoBehaviour:
   - id: 21
     action: 3
     clip: AttackSword2H
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -492,6 +514,7 @@ MonoBehaviour:
   - id: 22
     action: 3
     clip: AttackSword2H
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -504,6 +527,7 @@ MonoBehaviour:
   - id: 23
     action: 3
     clip: Punch
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -516,6 +540,7 @@ MonoBehaviour:
   - id: 24
     action: 3
     clip: AttackSword2H
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -528,6 +553,7 @@ MonoBehaviour:
   - id: 25
     action: 3
     clip: AttackDaggerStab
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -540,6 +566,7 @@ MonoBehaviour:
   - id: 26
     action: 3
     clip: AttackStaffSwing
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -552,6 +579,7 @@ MonoBehaviour:
   - id: 27
     action: 3
     clip: AttackSpear
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -564,6 +592,7 @@ MonoBehaviour:
   - id: 28
     action: 3
     clip: 
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -576,6 +605,7 @@ MonoBehaviour:
   - id: 29
     action: 3
     clip: AttackSniper
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -588,6 +618,7 @@ MonoBehaviour:
   - id: 30
     action: 3
     clip: AttackBow
+    mirrored: 1
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -600,6 +631,7 @@ MonoBehaviour:
   - id: 31
     action: 2
     clip: Sprint
+    mirrored: 0
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -722,6 +754,7 @@ MonoBehaviour:
   - id: 32
     action: 3
     clip: AttackScytheSweep
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -734,6 +767,7 @@ MonoBehaviour:
   - id: 33
     action: 3
     clip: AttackShurikenSwing
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -746,6 +780,7 @@ MonoBehaviour:
   - id: 34
     action: 3
     clip: ReleaseSingleSkill
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -758,6 +793,7 @@ MonoBehaviour:
   - id: 35
     action: 3
     clip: AttackOneHandSword
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -770,6 +806,7 @@ MonoBehaviour:
   - id: 36
     action: 3
     clip: AttackAxe
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -782,6 +819,7 @@ MonoBehaviour:
   - id: 37
     action: 3
     clip: AttackMace
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -794,6 +832,7 @@ MonoBehaviour:
   - id: 38
     action: 3
     clip: AttackKatar
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -806,6 +845,7 @@ MonoBehaviour:
   - id: 39
     action: 3
     clip: AttackKnuckle
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -818,6 +858,7 @@ MonoBehaviour:
   - id: 40
     action: 3
     clip: AttackWand
+    mirrored: 0
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -842,6 +883,9 @@ MonoBehaviour:
     spinEndFrame: 0
     spinTurns: 0
     spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
   - weapon: 3
     idleClip: IdleDagger
     carryClip: CarryDagger
@@ -856,6 +900,9 @@ MonoBehaviour:
     spinEndFrame: 48
     spinTurns: 2
     spinLift: 0.25
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
   - weapon: 4
     idleClip: IdleAxe
     carryClip: CarryAxe
@@ -870,3 +917,176 @@ MonoBehaviour:
     spinEndFrame: 0
     spinTurns: 0
     spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 2
+    idleClip: IdleGreatsword
+    carryClip: CarryGreatsword
+    carryArms: 0
+    sheatheClip: GreatswordSheathe
+    unsheatheClip: GreatswordUnsheathe
+    sheatheRightFrame: 40
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 24
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 1
+    idleClip: IdleSword
+    carryClip: CarrySword
+    carryArms: 1
+    sheatheClip: SwordSheathe
+    unsheatheClip: SwordUnsheathe
+    sheatheRightFrame: 35
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 9
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 1
+    handoverVfx: {fileID: 0}
+  - weapon: 8
+    idleClip: IdleStaff
+    carryClip: CarryStaff
+    carryArms: 0
+    sheatheClip: StaffSheathe
+    unsheatheClip: StaffUnsheathe
+    sheatheRightFrame: 24
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 20
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 11400000, guid: a535d95e7c522b94bbd81c2e5605af33, type: 2}
+  - weapon: 13
+    idleClip: IdleWand
+    carryClip: CarryWand
+    carryArms: 1
+    sheatheClip: WandSheathe
+    unsheatheClip: WandUnsheathe
+    sheatheRightFrame: 24
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 20
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 11400000, guid: a535d95e7c522b94bbd81c2e5605af33, type: 2}
+  - weapon: 7
+    idleClip: IdleSpear
+    carryClip: CarrySpear
+    carryArms: 0
+    sheatheClip: SpearSheathe
+    unsheatheClip: SpearUnsheathe
+    sheatheRightFrame: 36
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 8
+    unsheatheLeftFrame: -1
+    spinStartFrame: 8
+    spinEndFrame: 23
+    spinTurns: 1
+    spinLift: 0.3
+    spinAboutMiddle: 1
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 14
+    idleClip: IdleScythe
+    carryClip: CarryScythe
+    carryArms: 0
+    sheatheClip: ScytheSheathe
+    unsheatheClip: ScytheUnsheathe
+    sheatheRightFrame: 36
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 8
+    unsheatheLeftFrame: -1
+    spinStartFrame: 8
+    spinEndFrame: 23
+    spinTurns: 1
+    spinLift: 0.3
+    spinAboutMiddle: 1
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 6
+    idleClip: IdleWarhammer
+    carryClip: CarryWarhammer
+    carryArms: 0
+    sheatheClip: WarhammerSheathe
+    unsheatheClip: WarhammerUnsheathe
+    sheatheRightFrame: 30
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 14
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 15
+    idleClip: IdleShuriken
+    carryClip: CarryShuriken
+    carryArms: 1
+    sheatheClip: ShurikenSheathe
+    unsheatheClip: ShurikenUnsheathe
+    sheatheRightFrame: 20
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 24
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 11
+    idleClip: IdleFist
+    carryClip: CarryFist
+    carryArms: 0
+    sheatheClip: 
+    unsheatheClip: 
+    sheatheRightFrame: -1
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: -1
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}
+  - weapon: 12
+    idleClip: IdleSniper
+    carryClip: CarrySniper
+    carryArms: 0
+    sheatheClip: SniperSheathe
+    unsheatheClip: SniperUnsheathe
+    sheatheRightFrame: 20
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 14
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}

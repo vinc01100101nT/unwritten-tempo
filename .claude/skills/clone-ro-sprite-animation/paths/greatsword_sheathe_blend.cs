@@ -1,9 +1,9 @@
-// Run from the clone-ro-sprite-animation skill: build the five pose tables keys/greatsword_putaway_*.json and
-// keys/greatsword_idle.json first (write 1), fill __C__ with a clip whose LAST pose is the hanging-arms end (AxeSheathe),
-// run with eval_file, then reverse-clip.cs (GreatswordPutAwayCore -> GreatswordUnsheathe) for the take-out, then
-// chain-clips.cs for GreatswordSheathe (two swings of the attack, then this move; user, 2026-10-10).
-// GreatswordPutAwayCore made by blending whole poses joint by joint (60 poses per second): the combat idle (two hands low at
-// the right hip, blade forward) -> right hand out beside the hip, blade up and out (the left hand lets go) -> hand just
+// Run from the clone-ro-sprite-animation skill: build the pose tables keys/greatsword_putaway_*.json and
+// keys/greatsword_hold_upright.json first (write 1), fill __C__ with a clip whose LAST pose is the hanging-arms end
+// (AxeSheathe), run with eval_file, then reverse-clip.cs for GreatswordUnsheathe.
+// GreatswordSheathe made by blending whole poses joint by joint (60 poses per second): the hold (GreatswordHoldUpright —
+// the idle's arms, two hands low at the right hip, on the STANDING body, because in game a put-away plays on the arms
+// only, over the shared idle or the run) -> right hand out beside the hip, blade up and out (the left hand lets go) -> hand just
 // behind the hip, blade upright behind the right shoulder -> the blade tipping over to the left behind the back
 // (Diagonal, Slant) -> the sword lying level across the upper back, tip to the left, hilt by the right shoulder blade
 // (the handover, held a moment) -> standing with the arms hanging.
@@ -14,7 +14,7 @@
 // hand never stops between them; every pose is one the body can take (found with reach scans of the wrist's natural
 // range, 2026-10-10).
 const string DIR = "Assets/1_Authored/Art/Characters/Animations/";
-var chain = new[] { "IdleGreatsword", "GreatswordPutAwayPoseSide", "GreatswordPutAwayPoseBack", "GreatswordPutAwayPoseDiagonal", "GreatswordPutAwayPoseSlant", "GreatswordPutAwayPoseHandover" };   // at frames 0, 8, 16, 24, 32, 40
+var chain = new[] { "GreatswordHoldUpright", "GreatswordPutAwayPoseSide", "GreatswordPutAwayPoseBack", "GreatswordPutAwayPoseDiagonal", "GreatswordPutAwayPoseSlant", "GreatswordPutAwayPoseHandover" };   // at frames 0, 8, 16, 24, 32, 40
 const int STEP = 8, HAND = 40, HOLD = 46, END = 64;
 const string C = "__C__";   // a clip whose LAST pose is the hanging-arms end
 for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++) { var sc = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i); if (sc.isDirty) return "ABORT: scene already dirty " + sc.name; }
@@ -52,9 +52,9 @@ foreach (var b in AnimationUtility.GetCurveBindings(clips[0])) {
   AnimationUtility.SetEditorCurve(clip, b, Smooth(cv)); n++;
 }
 AnimationUtility.SetAnimationClipSettings(clip, AnimationUtility.GetAnimationClipSettings(cc));
-var outPath = DIR + "GreatswordPutAwayCore.anim"; var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(outPath);
-if (existing != null) { EditorUtility.CopySerialized(clip, existing); existing.name = "GreatswordPutAwayCore"; EditorUtility.SetDirty(existing); } else AssetDatabase.CreateAsset(clip, outPath);
+var outPath = DIR + "GreatswordSheathe.anim"; var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(outPath);
+if (existing != null) { EditorUtility.CopySerialized(clip, existing); existing.name = "GreatswordSheathe"; EditorUtility.SetDirty(existing); } else AssetDatabase.CreateAsset(clip, outPath);
 AssetDatabase.SaveAssets();
-var log = "GreatswordPutAwayCore blended through " + string.Join(" > ", chain) + ": " + n + " curves, " + (END + 1) + " poses";
+var log = "GreatswordSheathe blended through " + string.Join(" > ", chain) + ": " + n + " curves, " + (END + 1) + " poses";
 for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++) { var sc = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i); log += "; " + sc.name + " dirty=" + sc.isDirty; }
 return log;

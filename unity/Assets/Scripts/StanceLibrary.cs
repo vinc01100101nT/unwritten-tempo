@@ -113,6 +113,9 @@ public class StanceBinding
              "the single owner of a stance's 3D clip — there is NO hardcoded action->clip fallback. Empty = the 3D " +
              "character just stands (no clip). 2D billboards ignore this and use 'action' (baked sprite sets).")]
     public string clip = "";
+    [Tooltip("3D ONLY: play the clip mirrored — left and right swapped. The bow is held in the right hand, so its " +
+             "left-handed attack clip plays mirrored (the user, 2026-10-11).")]
+    public bool mirrored;
 
     [Tooltip("Where the LIVE playback-speed multiplier is read from each frame. Baked = the action's authored fps; " +
              "MoveGait reads GaitSpeedMult; FitWindow fits the clip to a runtime window (Attack = swing time, " +
@@ -289,4 +292,15 @@ public class WeaponStanceBinding
     [Tooltip("How far the weapon rises off the fist while it turns, in the hand bone's own units, along the line it turns " +
              "about — enough for the blade to pass over the forearm. 0 = it turns inside the fist.")]
     public float spinLift;
+    [Tooltip("The weapon turns about its own middle instead of about the fist: while it turns it slides through the fist " +
+             "until its middle sits there. For a weapon far longer than the arm (spear, scythe), whose far end would " +
+             "otherwise pass through the head or the ground.")]
+    public bool spinAboutMiddle;
+
+    [Tooltip("The put-away and take-out also move the torso and the head, not only the arms (the sword turns the body " +
+             "to present it). The legs keep walking or standing as they were.")]
+    public bool putAwayMovesUpperBody;
+    [Tooltip("Played where the weapon leaves the hand and where it arrives on the body, at the moment it changes place " +
+             "(a staff or wand that moves to the back by itself). Empty = nothing is played.")]
+    public VfxSequence handoverVfx;
 }

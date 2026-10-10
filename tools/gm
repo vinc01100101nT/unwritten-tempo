@@ -1,0 +1,4 @@
+#!/bin/sh
+# `gm` from Git Bash, a Mac or Linux terminal — see tools/gm.py. Started with the Python platform.sh says actually runs.
+HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+exec "$(sh "$HERE/platform.sh" python)" "$HERE/gm.py" "$@"

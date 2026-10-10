@@ -17,7 +17,6 @@ It needs the four services already running (database, sign-in, character server,
 docs/2-systems/networking/starting-the-network.md. It never starts or stops those.
 """
 import os
-import signal
 import socket
 import subprocess
 import sys
@@ -26,7 +25,9 @@ import time
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(REPO, "tools"))
 from settings_ask import setting  # noqa: E402
-CLIENT = os.path.join(REPO, "builds", "client", "unwritten.app", "Contents", "MacOS", "unwritten")
+from platform_ask import ask  # noqa: E402
+# The client build made for THIS computer — platform.sh is the one place that knows which computer that is.
+CLIENT = ask("game-program", "client") or ""
 PORT = int(os.environ.get("AGENT_PORT", "7790"))
 END = "<<END>>"
 
@@ -60,9 +61,13 @@ def launch(port=PORT):
         env["CHAR_SERVER_URL"] = setting("CHAR_SERVER_URL")
     if not env["CHAR_SERVER_URL"]:
         return "CHAR_SERVER_URL is not set in settings.env — the client would have no character server to ask"
+    # Detached from this terminal, so closing it does not take the game with it: a new session on a Mac or Linux, a
+    # new process group with no console window on Windows.
+    detach = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW}
+              if os.name == "nt" else {"start_new_session": True})
     proc = subprocess.Popen(
         [CLIENT, "-batchmode", "-nographics", "-agent-port", str(port), "-logFile", LOG],
-        env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **detach)
     with open(_pid_file(port), "w") as f:
         f.write(str(proc.pid))
     for _ in range(120):
@@ -77,10 +82,7 @@ def launch(port=PORT):
 def _is_our_client(pid, port):
     # A pid can be handed to a new process once the client is gone; only a process still running the game with
     # THIS port on its command line is ours to stop.
-    try:
-        cmd = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True).stdout
-    except OSError:
-        return False
+    cmd = ask("process-command", str(pid)) or ""
     return "-agent-port %d" % port in cmd
 
 
@@ -94,19 +96,16 @@ def quit_client(port=PORT):
     if not _is_our_client(pid, port):
         os.remove(PID_FILE)
         return "the client (pid %d) was already gone" % pid
-    try:
-        os.kill(pid, signal.SIGTERM)
-    except ProcessLookupError:
-        os.remove(PID_FILE)
-        return "the client (pid %d) was already gone" % pid
+    # Through platform.sh rather than os.kill: on Windows os.kill(pid, 0) does not ask whether a process is alive, it
+    # ENDS it, so the same call cannot be used to stop and to check on both computers.
+    ask("stop-pid", str(pid))
     for _ in range(20):
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+        if not _is_our_client(pid, port):
             break
         time.sleep(0.25)
     else:
-        os.kill(pid, signal.SIGKILL)
+        os.remove(PID_FILE)
+        return "asked the client (pid %d) to stop, and it is still running after 5s" % pid
     os.remove(PID_FILE)
     return "client stopped (pid %d)" % pid
 
@@ -138,6 +137,8 @@ def main(argv):
     if len(argv) < 2:
         print(__doc__)
         return 2
+    # The game answers in UTF-8; a Windows terminal otherwise prints every dash in it as a question mark.
+    sys.stdout.reconfigure(encoding="utf-8")
     arg = " ".join(argv[1:])
     if arg == "launch":
         print(launch())

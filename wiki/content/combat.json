@@ -208,7 +208,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Taking it out or putting it away takes **0.2 seconds plus 0.006 seconds for each point of the weapon's weight** — 0.74 seconds for a weapon of weight 90. Your legs keep moving while your arms do it."
+      "text": "Taking it out or putting it away takes **0.2 seconds plus 0.006 seconds for each point of the weapon's weight** — 0.74 seconds for a weapon of weight 90, about 1 second for the Greatsword at weight 133. Your legs keep moving while your arms do it."
     },
     {
       "type": "paragraph",

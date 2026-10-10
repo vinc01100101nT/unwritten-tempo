@@ -138,6 +138,7 @@ Every one of these is a fault in the game, found by playing it as text. None is 
 
 ## Related
 
+- [GM Commands from a Terminal](gm-commands-from-a-terminal.md) — a GM command or a status read with no client at all.
 - [Starting the Network](../2-systems/networking/starting-the-network.md) — the four services GMCP plays against.
 - [Reading the Game Log](reading-the-game-log.md) — the server's own account of what an AI player's orders did.
 - [Networking — Architecture](../2-systems/networking/README.md) — why the client may decide nothing.

@@ -83,7 +83,9 @@ public static class Character3DControllerBuilder
                 if (!made.Add(b.clip)) continue;                    // distinct only
                 var m = Resolve(b.clip, quat, resolver);
                 if (m == null) { Debug.LogWarning($"[unwritten] stance clip '{b.clip}' not found on this model/Mixamo set — skipped."); continue; }
-                sm.AddState(b.clip).motion = m;
+                var st = sm.AddState(b.clip);
+                st.motion = m;
+                st.mirror = b.mirrored;
             }
 
         if (writeDefaultsOff)
@@ -104,7 +106,8 @@ public static class Character3DControllerBuilder
     /// scrubbed by the <see cref="DrawTimeParam"/> parameter (the draw's progress) rather than by the clock, because the
     /// draw lasts as long as the weapon's weight says, not as long as the clip;
     /// layers 4 "CarryRight" and 5 "CarryLeft", one arm each, play the carry pose of a weapon whose pose holds only that
-    /// arm (<see cref="WeaponStanceBinding.carryArms"/>) — the other arm keeps the travel clip's swing.</summary>
+    /// arm (<see cref="WeaponStanceBinding.carryArms"/>) — the other arm keeps the travel clip's swing;
+    /// layer 6 "DrawUpper" is layer 3 for a weapon whose put-away turns the torso and head too.</summary>
     static void AddWeaponLayers(AnimatorController ctrl, StanceLibrary lib, Dictionary<string, AnimationClip> quat,
                               Func<string, Motion> resolver, bool writeDefaultsOff)
     {
@@ -112,10 +115,16 @@ public static class Character3DControllerBuilder
         AddWeaponLayer(ctrl, "Carry", mask, lib, c => CarryOn(c, CarryArms.Both), null, quat, resolver, writeDefaultsOff);
         AddWeaponLayer(ctrl, "Stand", null, lib, c => new[] { c.idleClip }, null, quat, resolver, writeDefaultsOff);
         ctrl.AddParameter(DrawTimeParam, AnimatorControllerParameterType.Float);
-        AddWeaponLayer(ctrl, "Draw", mask, lib, c => new[] { c.sheatheClip, c.unsheatheClip }, DrawTimeParam, quat, resolver, writeDefaultsOff);
+        AddWeaponLayer(ctrl, "Draw", mask, lib, c => c.putAwayMovesUpperBody ? new string[0] : new[] { c.sheatheClip, c.unsheatheClip }, DrawTimeParam, quat, resolver, writeDefaultsOff);
         // A carry pose that holds one arm sits on that arm's own layer, so the other arm swings with the legs.
         AddWeaponLayer(ctrl, "CarryRight", ArmsMask(ctrl, "RightArm", false, true), lib, c => CarryOn(c, CarryArms.Right), null, quat, resolver, writeDefaultsOff);
         AddWeaponLayer(ctrl, "CarryLeft", ArmsMask(ctrl, "LeftArm", true, false), lib, c => CarryOn(c, CarryArms.Left), null, quat, resolver, writeDefaultsOff);
+        // Layer 6 "DrawUpper": the put-away and take-out of a weapon whose move turns the torso and head as well
+        // (WeaponStanceBinding.putAwayMovesUpperBody) — the arms, the body and the head; the legs keep their own motion.
+        var upper = ArmsMask(ctrl, "UpperBody", true, true);
+        upper.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Body, true);
+        upper.SetHumanoidBodyPartActive(AvatarMaskBodyPart.Head, true);
+        AddWeaponLayer(ctrl, "DrawUpper", upper, lib, c => c.putAwayMovesUpperBody ? new[] { c.sheatheClip, c.unsheatheClip } : new string[0], DrawTimeParam, quat, resolver, writeDefaultsOff);
     }
 
     static string[] CarryOn(WeaponStanceBinding c, CarryArms layer) => c.carryArms == layer ? new[] { c.carryClip } : new string[0];

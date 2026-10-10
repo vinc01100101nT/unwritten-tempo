@@ -141,6 +141,49 @@ public static class GmCommands
         catch (Exception e) { reply?.Invoke($"<color={FailHex}>/{tokens[0]} failed: {e.Message}</color>"); }
     }
 
+    /// <summary>Run a line sent from a terminal through the character server (see <see cref="TerminalGm"/>). The
+    /// server secret it came with is the trust, so there is no GM check; every other rule a player's request meets
+    /// still holds. <paramref name="askerCharacter"/> is the <c>--as</c> character, or null when none was named — and
+    /// then only a command marked <see cref="GmCommand.worksWithNobody"/> runs.</summary>
+    public static void ExecuteFromTerminal(string line, string map, Character askerCharacter, Transform askerBody,
+                                           Action<string> reply)
+    {
+        EnsureBootstrap();
+        if (!IsCommand(line)) { reply?.Invoke("A command starts with '/'. Try /help."); return; }
+
+        var tokens = Tokenize(line);
+        if (tokens.Length == 0) { reply?.Invoke("Type a command after '/'. Try /help."); return; }
+        if (!byName.TryGetValue(tokens[0], out var cmd))
+        {
+            reply?.Invoke($"Unknown command '/{tokens[0]}'. Type /help.");
+            return;
+        }
+
+        // The same rule as a player's request, with /help let through: it only reads the list, and a terminal has no
+        // game of its own to run it in.
+        if (!cmd.changesTheWorld && cmd.name != "help")
+        {
+            reply?.Invoke($"/{cmd.name} runs in a player's own game, not on the server.");
+            return;
+        }
+        if (askerCharacter == null && !cmd.worksWithNobody)
+        {
+            reply?.Invoke($"/{cmd.name} acts on a person — name one with --as <character>.");
+            return;
+        }
+
+        var args = new string[tokens.Length - 1];
+        Array.Copy(tokens, 1, args, 0, args.Length);
+
+        var ctx = new GmContext
+        {
+            args = args, reply = reply, command = cmd, askerCharacter = askerCharacter, askerBody = askerBody,
+            fromTerminal = true, terminalMap = map, askedBy = "the terminal",
+        };
+        try { cmd.run(ctx); }
+        catch (Exception e) { reply?.Invoke($"<color={FailHex}>/{tokens[0]} failed: {e.Message}</color>"); }
+    }
+
     /// <summary>May somebody who is not a GM run this command? Asked by the server when a request arrives, because the
     /// server turns away every other request from a non-GM.</summary>
     public static bool AnyoneMayRun(string line)
@@ -167,7 +210,7 @@ public static class GmCommands
         if (bootstrapped) return;
         bootstrapped = true;
         Register(new GmCommand("help", "help [command]", "List commands, or show one command's usage.", "help mastery", Help,
-                               anyoneMayRun: true, changesTheWorld: false, "h", "commands"));
+                               anyoneMayRun: true, changesTheWorld: false, "h", "commands") { worksWithNobody = true });
 
         // WHICH KINDS OF LINE THE SERVER'S LOG WRITES. Marked as the server's, and that is the whole point:
         // hits, passives and buffs are DECIDED on the server and announced only in the server's log, so a
@@ -177,7 +220,7 @@ public static class GmCommands
         Register(new GmCommand("log", "log [category] [on|off]  ·  log all on|off  ·  log reset",
                                "Show which kinds of line the SERVER's log writes, or switch one on and off. "
                                + "Warnings and errors always print whatever this says.", "log hit on", CmdLog,
-                               anyoneMayRun: false, changesTheWorld: true, "logs"));
+                               anyoneMayRun: false, changesTheWorld: true, "logs") { worksWithNobody = true });
 
         // --- Character ---
         // THE SERVER'S, like everything else about a character. Run on a player's own machine these changed only
@@ -218,7 +261,7 @@ public static class GmCommands
         Register(new GmCommand("kill", "kill", "Kill the mob nearest you, in your map.", "kill", CmdKill,
                                anyoneMayRun: false, changesTheWorld: true));
         Register(new GmCommand("killall", "killall", "Kill every mob in your map.", "killall", CmdKillAll,
-                               anyoneMayRun: false, changesTheWorld: true));
+                               anyoneMayRun: false, changesTheWorld: true) { worksWithNobody = true });
         Register(new GmCommand("dummy", "dummy", "Put a training dummy in front of you — an immobile target with "
                                + "enormous health that never fights back, for measuring what your build actually does. "
                                + "The server owns it, so everybody can see and hit the same one.", "dummy", CmdDummy,
@@ -228,29 +271,29 @@ public static class GmCommands
         // ANY PLAYER MAY ASK THESE, and the SERVER answers both: a creature's numbers are worked out on the machine that
         // owns the world, never on a player's, so these ride the server's door although they change nothing.
         Register(new GmCommand("whereis", "whereis <creature>", "List every map a creature lives in, and how many of it "
-                               + "each keeps alive.", "whereis adder", CmdWhereIs, anyoneMayRun: true, changesTheWorld: true));
+                               + "each keeps alive.", "whereis adder", CmdWhereIs, anyoneMayRun: true, changesTheWorld: true) { worksWithNobody = true });
         Register(new GmCommand("mobinfo", "mobinfo <creature>", "Show a creature's level, size, element, combat numbers, "
                                + "stats, experience and drops, as it spawns.", "mobinfo adder", CmdMobInfo,
-                               anyoneMayRun: true, changesTheWorld: true));
+                               anyoneMayRun: true, changesTheWorld: true) { worksWithNobody = true });
         Register(new GmCommand("whodrops", "whodrops <item>", "List every creature that drops an item, and at what "
-                               + "chance.", "whodrops watery ink", CmdWhoDrops, anyoneMayRun: true, changesTheWorld: true));
+                               + "chance.", "whodrops watery ink", CmdWhoDrops, anyoneMayRun: true, changesTheWorld: true) { worksWithNobody = true });
         Register(new GmCommand("iteminfo", "iteminfo <item>", "Show what an item is — its type, weight, sell value, "
                                + "what it does when used — and every creature that drops it.", "iteminfo watery ink", CmdItemInfo,
-                               anyoneMayRun: true, changesTheWorld: true));
+                               anyoneMayRun: true, changesTheWorld: true) { worksWithNobody = true });
         Register(new GmCommand("where", "where", "Print the map you are in and your position in that map's own coordinates — the numbers a spawn area's Center takes in the world spawn list.", "where", CmdWhere, false, false, "pos"));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <map id> [spawnId]", "Travel to another map.", "tp lst_fild01", CmdTp, false, true, "warp", "goto"));
         // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
         // everybody on it — and everybody who arrives later — sees the same one.
-        Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", "time 0.5", CmdTime, false, true));
-        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow|fog>", "Force the weather preset.", "weather rain", CmdWeather, false, true));
+        Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", "time 0.5", CmdTime, false, true) { worksWithNobody = true });
+        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow|fog>", "Force the weather preset.", "weather rain", CmdWeather, false, true) { worksWithNobody = true });
         // A WORLD EVENT: every map server, not only this one — the character server holds the list and hands it to
         // all of them (see WorldEvents). Everyone online is told when it starts and when it ends.
         Register(new GmCommand("exprate", "exprate <duration> <multiplier>  ·  exprate off",
                                "World event: multiply the experience every creature kill pays, on every map server, for "
                                + "a duration (90s, 30m, 2h, 1d). Running it again replaces the rate; off ends it now.",
-                               "exprate 2h 1.5", CmdExpRate, false, true));
+                               "exprate 2h 1.5", CmdExpRate, false, true) { worksWithNobody = true });
         Register(new GmCommand("speed","speed <mult>", "Multiply your move speed for 9999 seconds (2 h 46 min); dying ends it.", "speed 1.5", CmdSpeed, false, true));
     }
 
@@ -954,7 +997,7 @@ public static class GmCommands
         TimeOfDay.TakeShift(TimeOfDay.ShiftSeconds
                             + TimeOfDay.SecondsToReach(TimeOfDay.ElapsedForTimeOfDay, tod.DayLengthSeconds, t));
         GameNetwork.TellEveryoneTheTimeOfDay();
-        c.Reply($"Time → {t:0.00}.");
+        c.Reply($"Time → {t:0.00}, on every map this server holds: {MapServerLink.HeldMapsText()}.");
     }
 
     static void CmdWeather(GmContext c)
@@ -963,15 +1006,15 @@ public static class GmCommands
         if (w == null || !ParseWeather(w, out var preset)) { c.ReplyUsage(); return; }
         WeatherDirector.TakeForced(preset);
         GameNetwork.TellEveryoneTheWeather();
-        c.Reply($"Weather → {preset}.");
+        c.Reply($"Weather → {preset}, on every map this server holds: {MapServerLink.HeldMapsText()}.");
     }
 
     // Asked of the character server, which holds the one list and hands it to every map server. Its answer is this
     // server's copy at once, so the GM's own players hear the change without waiting for the push.
     static void CmdExpRate(GmContext c)
     {
-        if (c.Ch == null) { c.Reply("No character."); return; }
-        string by = GameNetwork.ShellFor(c.Ch)?.playerName ?? "a GM";
+        if (c.Ch == null && c.askedBy == null) { c.Reply("No character."); return; }
+        string by = c.askedBy ?? GameNetwork.ShellFor(c.Ch)?.playerName ?? "a GM";
         var reply = c.reply;
 
         if (c.ArgCount == 1 && string.Equals(c.Arg(0), "off", StringComparison.OrdinalIgnoreCase))

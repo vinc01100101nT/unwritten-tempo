@@ -348,6 +348,41 @@ app.MapPost("/server/pm", async (HttpContext http, PmBody? body) =>
     return Results.Json(new { name = result.Name ?? body.toName }, statusCode: result.Status);
 });
 
+// A GM COMMAND OR A STATUS READ FROM A TERMINAL (tools/gm.py), passed to the map server holding the map it names. The
+// server secret is the whole of the trust: whoever holds it can already do anything a map server can. A map nobody is
+// holding is said so and NOT brought up — a command for an empty map has nobody to show it to.
+async Task<IResult> ForTerminal(HttpContext http, TerminalBody? body, string path)
+{
+    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+    if (body is null || string.IsNullOrWhiteSpace(body.map))
+        return Results.Json(new { error = "send { map, line, as }" }, statusCode: 400);
+    if (path == "gm" && string.IsNullOrWhiteSpace(body.line))
+        return Results.Json(new { error = "send { map, line, as }" }, statusCode: 400);
+
+    var server = maps.Holding(body.map);
+    if (server is null)
+        return Results.Json(new { error = $"no map server is holding {body.map} right now — nobody is in it" },
+                            statusCode: 404);
+
+    string characterId = "";
+    if (!string.IsNullOrWhiteSpace(body.@as))
+    {
+        characterId = maps.CharacterIdFor(body.@as) ?? "";
+        if (characterId.Length == 0)
+            return Results.Json(new { error = $"nobody called {body.@as} is in the world" }, statusCode: 404);
+    }
+
+    string map = MapServers.SpelledAsHeld(server, body.map);
+    Console.WriteLine($"[char] the terminal asked map server '{server.Id}' ({map}): {(path == "gm" ? body.line : "status")}"
+                      + (characterId.Length > 0 ? $" as {body.@as}" : ""));
+    var answer = await maps.AskForTerminalAsync(server, path, new { map, line = body.line ?? "", characterId },
+                                                http.RequestAborted);
+    return Results.Content(answer.Body, "application/json", statusCode: answer.Status);
+}
+
+app.MapPost("/server/gm", (HttpContext http, TerminalBody? body) => ForTerminal(http, body, "gm"));
+app.MapPost("/server/status", (HttpContext http, TerminalBody? body) => ForTerminal(http, body, "status"));
+
 // DELIBERATELY NO "spend this ticket" DOOR. A ticket is handed to the map server in the same breath as the
 // character it belongs to, so that server already holds it and checks it against its own list — one place, no
 // round trip while somebody waits at the door. A second door here would be a second answer to one question, and
@@ -393,3 +428,4 @@ record MapServerRegistration(string? id, string? address, int port, int playerPo
 record SpendBody(string? ticket);
 record MoveBody(string? map, string? accountId, bool isGm);
 record PmBody(string? toName, string? fromName, string? text);
+record TerminalBody(string? map, string? line, string? @as);

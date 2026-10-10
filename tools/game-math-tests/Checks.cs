@@ -1195,6 +1195,8 @@ static class Checks
         That(Math.Abs(WeaponDrawMath.DrawSeconds(60) - 0.56f) < 1e-5f, DrawF, "a weight-60 weapon should draw in 0.56 s, draws in " + WeaponDrawMath.DrawSeconds(60));
         That(Math.Abs(WeaponDrawMath.DrawSeconds(0) - 0.2f) < 1e-6f && Math.Abs(WeaponDrawMath.DrawSeconds(-5) - 0.2f) < 1e-6f, DrawF,
              "empty hands still take the 0.2 s floor, got " + WeaponDrawMath.DrawSeconds(0));
+        // The greatsword weighs 133 so that it takes 1 s either way (the user, 2026-10-10).
+        That(Math.Abs(WeaponDrawMath.DrawSeconds(133) - 0.998f) < 1e-5f, DrawF, "a weight-133 weapon should draw in 0.998 s, draws in " + WeaponDrawMath.DrawSeconds(133));
         // A weapon spun during its put-away (2026-10-10): nothing outside the window, half its turning at the middle,
         // all of it at the end; off the fist only inside the window, fully up through its middle.
         That(WeaponDrawMath.SpinWindowShare(0.1f, 0.2f, 0.6f) == 0f && WeaponDrawMath.SpinWindowShare(0.6f, 0.2f, 0.6f) == 0f

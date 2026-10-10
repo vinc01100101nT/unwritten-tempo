@@ -188,6 +188,9 @@ public class Character3DPose : MonoBehaviour, IStancePose
     WeaponLayer stand = new WeaponLayer { layer = 2 };   // hash 0 = the shared Idle
     WeaponLayer draw = new WeaponLayer { layer = 3 };    // the put-away or take-out clip playing now
     WeaponLayer carryRight = new WeaponLayer { layer = 4 }, carryLeft = new WeaponLayer { layer = 5 };   // one-arm carry
+    // the put-away or take-out of a weapon whose move turns the torso and head too (its row's putAwayMovesUpperBody)
+    WeaponLayer drawUpper = new WeaponLayer { layer = 6 };
+    bool drawOnUpper;                                    // this weapon's put-away lives on drawUpper, not on draw
     int sheatheHash, unsheatheHash;                      // 0 = this weapon simply moves, with no clip
     bool hasDrawParam;
     DrawPhase drawPhase = DrawPhase.Sheathed;
@@ -214,8 +217,10 @@ public class Character3DPose : MonoBehaviour, IStancePose
         carryLeft.hash = StateOn(carryLeft.layer, StanceCatalog.CarryPose(heldWeapon));
         stand.hash = StateOn(stand.layer, StanceCatalog.WeaponIdle(heldWeapon));
         var b = StanceCatalog.Weapon(heldWeapon);
-        sheatheHash = b != null ? StateOn(draw.layer, b.sheatheClip) : 0;
-        unsheatheHash = b != null ? StateOn(draw.layer, b.unsheatheClip) : 0;
+        drawOnUpper = b != null && b.putAwayMovesUpperBody;
+        int drawLayer = drawOnUpper ? drawUpper.layer : draw.layer;
+        sheatheHash = b != null ? StateOn(drawLayer, b.sheatheClip) : 0;
+        unsheatheHash = b != null ? StateOn(drawLayer, b.unsheatheClip) : 0;
         hasDrawParam = false;
         if (anim != null && anim.runtimeAnimatorController != null)
             foreach (var p in anim.parameters) if (p.nameHash == PDrawTime) { hasDrawParam = true; break; }   // perf-ok: on weapon change
@@ -436,9 +441,11 @@ public class Character3DPose : MonoBehaviour, IStancePose
             UpdateWeaponLayer(ref carryLeft, travel && inHand);
             UpdateWeaponLayer(ref stand, standing && inHand);
             bool moving = drawPhase == DrawPhase.Drawing || drawPhase == DrawPhase.Sheathing;
-            if (moving) draw.hash = drawPhase == DrawPhase.Drawing ? unsheatheHash : sheatheHash;
-            if (moving && hasDrawParam && draw.hash != 0) anim.SetFloat(PDrawTime, drawProgress);
-            UpdateWeaponLayer(ref draw, moving && travel && hasDrawParam);
+            int moveHash = drawPhase == DrawPhase.Drawing ? unsheatheHash : sheatheHash;
+            if (moving) { if (drawOnUpper) drawUpper.hash = moveHash; else draw.hash = moveHash; }
+            if (moving && hasDrawParam && moveHash != 0) anim.SetFloat(PDrawTime, drawProgress);
+            UpdateWeaponLayer(ref draw, moving && travel && hasDrawParam && !drawOnUpper);
+            UpdateWeaponLayer(ref drawUpper, moving && travel && hasDrawParam && drawOnUpper);
         }
 
         if (facing.sqrMagnitude > 1e-4f)

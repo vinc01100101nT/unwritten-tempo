@@ -13,6 +13,8 @@ In-game **chat** built 2026-07-04 (branch `experiment/3d-characters`) for in-gam
 - `GmCommands.cs` — THE single slash-command dispatcher (choke point). `IsCommand` (starts with `/`) · `Execute(line, reply)` parses `/name args`, looks up in one registry, runs; unknown/exception → error reply, never throws.
 - `GmCommand.cs` — command def (`name`, aliases, usage, summary, `Action<GmContext>`) + `GmContext` (parsed args, `Reply`, lazy `Ch`/`Player`).
 
+**From a terminal (2026-10-11):** `tools/gm.py --map <id> [--as <name>] "/line"` → charserver `/server/gm` → map server `TerminalGm` → `GmCommands.ExecuteFromTerminal`. A new command that needs no person must be registered with `{ worksWithNobody = true }`, or the terminal refuses it without `--as`. Doc: `docs/0-process/gm-commands-from-a-terminal.md`.
+
 To add a command: a single `GmCommands.Register(new GmCommand(...))` in `EnsureBootstrap()` + a static handler. User asked to **avoid the word "God"** in-game — the invuln command is `/invuln` (NOT `/god`).
 
 **Commands authored (2026-07-04, all handlers in GmCommands.cs):** `/help`; Character `/lvl /xp /ringxp /statpts /heal /revive /invuln`; Economy `/gold /item <id|name> [n] /bind <skillId>`; Mobs `/kill /killall /spawn [n]`; World `/tp <scene> [spawn] /time <0..1> /weather <clear|cloudy|rain|storm|snow|fog> /speed <mult>`.

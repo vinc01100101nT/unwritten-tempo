@@ -2,7 +2,7 @@
 
 **Task:** weapons drawn (combat) or put away on the body (peace) for players, other players and creatures, with peace
 bonuses; then give each weapon the katar's four stance pieces — combat idle, running arms, a resting place on the
-body, put-away and take-out clips — one weapon at a time, videos to the user first. No Tempo issue/doc id. Design
+body, put-away and take-out clips — videos to the user first, wired in after their yes on each weapon. No Tempo issue/doc id. Design
 doc: `docs/2-systems/combat-and-peace-mode.md`.
 
 **Status:** IN PROGRESS.
@@ -22,12 +22,25 @@ doc: `docs/2-systems/combat-and-peace-mode.md`.
   BACKWARD; frames sheathe R 64 / unsheathe R 20 (of 84). Not yet play-tested.
 - Axe: DONE and in game since 2026-10-10 (model doubled, whole set re-fitted, stance row and resting places wired,
   controller rebuilt and read back). Not yet play-tested.
-- Greatsword: stance set BUILT as clips and videos on 2026-10-10 by a sub-agent, NOT wired — waiting for the user's yes
-  on the videos. Its attack stays LOCKED.
+- Greatsword: DONE and in game since 2026-10-10 (low idle and running hold from its attack's first frames, a simple
+  put-away to level across the back and take-out, weight 133 = 0.998 s each way). Its attack stays LOCKED. Not yet
+  play-tested.
 - Warhammer 3x, Sniper 2x, Shuriken 2x, Greatsword 1.5x (user, 2026-10-10; done by a sub-agent): only their hand
   scale changed, fist on the same spot; their saved clips were NOT re-fitted (see What's left, item 8).
-- Warhammer, Spear, Bow, Staff, Scythe, Shuriken: NOT STARTED. Agreed order: one weapon at a time, all four
-  pieces, videos approved by the user before wiring.
+- IN THE GAME since 2026-10-11 (the user: "for the weapons i dont mention ... ship them in-game"): Sword, Staff,
+  Wand, Spear, Scythe, Warhammer, Shuriken, Fist — stance rows, resting places on their grips, the controller rebuilt
+  and read back (layer "DrawUpper" holds the Sword's put-away). New game settings on a stance row, all built then:
+  `putAwayMovesUpperBody` (Sword), `spinAboutMiddle` (Spear, Scythe), `handoverVfx` = Blink Step (Staff, Wand). The
+  Staff's attack is now two-handed, the Warhammer's re-timed to look heavy, the Shuriken throw's wind-up keeps the
+  hand off the head — each built over the shipped attack clip. NOT PLAY-TESTED.
+- Bow: RIGHT-HANDED since 2026-10-11 (the user: "the right hand must hold the bow's handle ... the left hand must hold
+  the bow's string ... the attack animation for bow should be flipped"): its grip was mirrored into the right hand
+  and `AttackBow` plays mirrored — both already in the game. Its idle and run (bow low and level in the middle of the
+  body, its face tilted 20 degrees down, left hand on the string) and its put-away (right arm straight out to the
+  side, then behind the hip to the lower back) are VIDEOS ONLY, waiting on the user. Its row is not written and its
+  grip's resting place is "not set" (hidden while put away) until then; the numbers are in "What's left", item 2.
+- Sniper: IN THE GAME since 2026-10-11 (the user: "ship the sniper in-game") — diagonal on the back, stock up at the
+  right shoulder, muzzle down at the left hip. NOT PLAY-TESTED.
 - Draw buffs (one passive per weapon, trigger "When you draw your weapon"): mechanism built, the 14 passives NOT
   authored — waiting on the user to name them.
 
@@ -99,22 +112,22 @@ hands low at the right hip; lean 26° with the hips forward stands in for the at
 so the breath does not lift the foot; running blade tilted 2° up so it stays off the ground). Built vs the attack's
 frame 0: right wrist 1.8% of body height off, left 4.4%, blade 0°. Known, not raised on purpose: the pommel sits in
 the left thigh and hips — idle 4.1% of the sword in every frame, running up to 9.0% (default) / 11.0% (Knight); the
-attack's own frame 0 is 2.6%. `GreatswordSheathe` (3.0 s, handover R 157 of 181 at 60/s) = `GreatswordFlourish` (1.6 s:
-the blade traces a sideways figure-8 — top-right to bottom-left, then top-left to bottom-right — user, 2026-10-10;
-keys one per frame from `paths/greatsword_flourish.py`, `steadyPasses` 16: the tip's path turns only at the 8's two
-crossings, 0 arm joint reversals, aim error 2° mean; pommel up to 4.9% in the left thigh at the low-right corner)
-joined by `chain-clips.cs` (20 poses: the left hand rolls 1.34 of its range there) to `GreatswordPutAwayCore`. **In
-game the whole put-away is scrubbed over the draw time, 0.74 s for weight 90, so the clip plays 4x fast; whether
-the greatsword's put-away gets longer is the user's call.** `GreatswordPutAwayCore` (1.067 s) / `GreatswordUnsheathe`
-(its reverse, no swings, R 24):
-blended through `GreatswordPutAwayPose{Side,Back,Diagonal,Slant,Handover}` by `paths/greatsword_sheathe_blend.cs`;
+attack's own frame 0 is 2.6%. `GreatswordSheathe` (1.067 s, handover R 40) / `GreatswordUnsheathe` (reversed, R 24):
+a pose blend (`paths/greatsword_sheathe_blend.cs`) from `GreatswordHoldUpright` — the idle's arms on the STANDING
+body, because in game a put-away plays on the arms only over the shared idle or the run — through
+`GreatswordPutAwayPose{Side,Back,Diagonal,Slant,Handover}`;
 ends with the sword level across the upper back, hilt at the right shoulder blade, tip left, flat facing back turned
 28° down. Resting place to write on the yes (Hips, default body): `stowPosition (-0.82022, 0.92847, -0.79970)`,
 `stowEuler (28.202, 182.600, 279.408)`. Resting on the back: 0.0% inside body and arms over Idle2 / Walk / Run2 /
 Sprint on the default body; Knight helmet 1.2% in Run2 frames 4–5. Handover jump 0.0% / 0° default, 2.5% / 2.9° Knight.
 Key tables `keys/greatsword_*.json`; videos `videos\greatsword\greatsword_{idle,run,sheathe,unsheathe}.mp4` (three
-views). To wire: the Greatsword stance row (idle, carry, `carryArms` Both, the clips, frames R 40 / R 24), the resting
-place plus `stowAuthored` on `greatsword_mordane`, rebuild the controller, read it back.
+views). **In game:** stance row (idle, carry, `carryArms` Both, the clips, frames sheathe R 40 / unsheathe R 24), the
+resting place plus `stowAuthored` on `greatsword_mordane`, the controller rebuilt and read back, and the item's weight
+90 -> 133 so the unchanged formula (0.2 s + 0.006 s × weight, the same for taking out and putting away) gives 0.998 s;
+its bag weight is 133 too. Files as they were before: `backups/greatsword-simple-2026-10-10/`.
+Tried and removed at the user's word the same day: a flourish before the put-away (two swings of the attack, then a
+figure-8) — on the arms-only layer the body stayed still under a heavy sword ("it looks so static"), and a put-away
+time that followed the animation's length ("the sheathe and unsheathe should have the same duration").
 
 **Warhammer handle (2026-10-10, user: thin it to fit the hands, then "too thin … 2x", then thick everywhere except
 inside the fist):** the prefab uses `2_Generated/WeaponModels/warhammer_tharos/warhammer_tharos_thin_handle.asset`, a
@@ -175,14 +188,21 @@ animation clips `IdleKatar`, `CarryKatarGuard`, `KatarSheathe/Unsheathe`, `IdleD
 
 ## What's left
 
-1. **Shuriken through the head during its (LOCKED) throw — OPEN.** It is held at its middle (HARD RULE, user
-   2026-10-10: never by a blade; a blade hold was tried and reverted). Turning it in its own plane could not clear the
-   head (7–21 points inside it per wind-up frame at every 5° step); 12 tilts of its plane about the fist left 3–134
-   head points each. Shrunk about the fist it clears the head at 0.5x today's size (head points 0) and nearly at 0.6x
-   (2); the user's call — waiting.
-2. Greatsword: wire it on the user's yes (see its paragraph). Then Warhammer, Spear, Bow, Staff, Scythe, Shuriken — same recipe. Proposed resting places (user said "go with
-   your recommendation"): warhammer, spear, bow, staff, scythe diagonal across the back, head/tip over the right
-   shoulder; shuriken flat on the lower back. Two-handed weapons need both arms in put-away.
+1. **Shuriken through the head during its throw — fixed and shipped 2026-10-11** (the wind-up keeps the hand farther
+   from the head; the shuriken is held at its middle — HARD RULE). Measured: more than 0.5% of it in the body in poses
+   0–3 of 41 only (legs and hips, as the arm leaves its hanging start); nothing in the head or neck.
+2. **Wire the Bow when the user approves its videos** (stance row; resting place on the grip, Hips;
+   rebuild the controller with `Player3DVisualBuilder.BuildController()` and read its states back). Default body,
+   frames at 60 per second, put-away / take-out:
+   - Bow — Both (bow hand and string hand) — 21 / 13 of 34 — pos (0.10883, 0.22273, -0.34672) eul (11.284, 191.315,
+     271.304). Flat across the lower back in the RIGHT hand, front straight down (8 degrees to the right), 3–4% of body
+     height off the back. On the way the right arm goes straight out to the side with the bow level, then behind the
+     hip: nothing of it enters the body; its far end dips 0.9% of body height under the ground for one pose.
+   Shipped rows, for reference (default body; written to the grips 2026-10-11): Sword 35/9, Staff 24/20, Wand 24/20,
+   Spear 36/8, Scythe 36/8, Warhammer 30/14, Shuriken 20/24, Sniper 20/14 (diagonal on the back; up to 5% of it passes
+   the hips and back in poses 4–12 of the put-away; it never touches the ground). The Spear's and Scythe's resting places are the hand's
+   place moved 6% / 5% of body height onto the back of the head (they still sit 11% off the middle of the back: the
+   chibi head sticks out further back than the torso), so at the handover they move that far straight in.
 3. Ask the user for the 14 draw-buff passive names; then author them with the data-author agent (values table in
    the earlier conversation: three channels per weapon from `WeaponMasteryStats.Raises`, 4 s, mastery-learned).
 4. The user's play-test of the dagger (draw with X, run, walk/sprint puts it on the hip, take it back out).
@@ -233,13 +253,12 @@ animation clips `IdleKatar`, `CarryKatarGuard`, `KatarSheathe/Unsheathe`, `IdleD
 
 ## Next single step
 
-The user's answers on the two bug reports (What's left, item 1) and their verdict on the greatsword videos; on the yes,
-wire the Greatsword. Their play-test of the axe, the katar and the dagger spin is still to come.
+The user's verdict on the Bow's videos; wire it on a yes (What's left, item 2). Their play-test of everything
+shipped — the axe, katar, dagger, greatsword and the nine weapons of 2026-10-11 — is still to come.
 
 ## How to resume
 
 ```text
 Read handoffs/weapon-stances-and-combat-mode.md and the clone-ro-sprite-animation skill (section 4c), then continue:
-wire the Greatsword stance set if I said yes to its videos, look into the hammer shake and the shuriken through the
-head once I confirmed what I mean, then the next weapon's stance set — videos to me first, wire after my yes.
+wire in the Bow if I approved its videos (What's left, item 2), or fix what I sent back.
 ```

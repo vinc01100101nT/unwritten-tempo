@@ -107,9 +107,9 @@ MonoBehaviour:
   localPosition: {x: 0.013562098, y: 0.37339228, z: -0.70525676}
   localEuler: {x: 345.37842, y: 86.71384, z: 282.81427}
   localScale: {x: 2.456047, y: 2.456047, z: 2.456047}
-  stowAuthored: 0
+  stowAuthored: 1
   stowBone: 0
-  stowPosition: {x: 0, y: 0, z: 0}
-  stowEuler: {x: 0, y: 0, z: 0}
+  stowPosition: {x: -0.92169, y: -0.23428, z: -0.27445}
+  stowEuler: {x: 327.505, y: 267.181, z: 127.116}
   stowPairPosition: {x: 0, y: 0, z: 0}
   stowPairEuler: {x: 0, y: 0, z: 0}

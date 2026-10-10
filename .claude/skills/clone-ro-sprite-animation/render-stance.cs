@@ -20,6 +20,23 @@ var STOW_POS = __STOWPOS__; var STOW_EUL = __STOWEUL__;   // the resting place o
 // a pair weapon's other copy: its own hand's handover time per put-away clip, and its resting place (stowPair*)
 var pairStowAt = new System.Collections.Generic.Dictionary<string, float> { __PAIRSTOWAT__ };   // e.g. { "AxeSheathe", 24f / 60f }
 var STOW_PAIR_POS = __STOWPAIRPOS__; var STOW_PAIR_EUL = __STOWPAIREUL__;
+// a weapon whose stance library row is not saved yet: the spin its put-away video is drawn with, by weapon item —
+// e.g. { "Spear", new WeaponStanceBinding { sheatheClip = "SpearSheathe", unsheatheClip = "SpearUnsheathe", spinStartFrame = 8, spinEndFrame = 23, spinTurns = 1f, spinLift = 0.3f, spinAboutMiddle = true } }
+var spinRows = new System.Collections.Generic.Dictionary<string, WeaponStanceBinding> { __SPINROWS__ };
+// clips drawn MIRRORED, left and right swapped, as a controller state with "mirror" plays them (the bow's attack since
+// the bow moved to the right hand, 2026-10-11): each "Left …" muscle takes its "Right …" partner's value, the middle's
+// side-bend and turn muscles change sign, and the body's sideways travel and turn are reflected
+var mirrorClips = new System.Collections.Generic.HashSet<string> { __MIRRORCLIPS__ };
+float[] Mirrored(float[] mus) {
+  var o = (float[])mus.Clone();
+  var byName = new System.Collections.Generic.Dictionary<string, int>(); for (int m = 0; m < HumanTrait.MuscleName.Length; m++) byName[HumanTrait.MuscleName[m]] = m;
+  for (int m = 0; m < mus.Length; m++) {
+    var n = HumanTrait.MuscleName[m];
+    if (n.StartsWith("Left ") && byName.TryGetValue("Right " + n.Substring(5), out var r)) { o[m] = mus[r]; o[r] = mus[m]; }
+    else if (!n.StartsWith("Right ") && (n.Contains("Left-Right"))) o[m] = -mus[m];
+  }
+  return o;
+}
 bool IsArm(string n) => (n.StartsWith("Left ") || n.StartsWith("Right ")) && (n.Contains("Shoulder") || n.Contains("Arm") || n.Contains("Forearm") || n.Contains("Hand") || n.Contains("Thumb") || n.Contains("Index") || n.Contains("Middle") || n.Contains("Ring") || n.Contains("Little"));   // e.g. "AttackSpear"; empty = all
 const float ZOOM = 1.0f;   // orthographic size as a share of body height: 1.0 for videos, 0.55 to inspect a weapon's angle
 // The default body's texture is plain dark grey, so the videos wear a dressed fighter.
@@ -127,6 +144,7 @@ foreach (var job in jobs) {
         if (IsArm(an) && (armsSide == null || an.StartsWith(armsSide + " ")) && idx.TryGetValue(an, out var ai)) hp.muscles[ai] = AnimationUtility.GetEditorCurve(arms, ab).Evaluate(0f);
       }
       if (arms != null) { rx = 0f; rz = 0f; }   // a travel gear runs in place, as in game
+      if (mirrorClips.Contains(job.Item2)) { hp.muscles = Mirrored(hp.muscles); rx = -rx; qy = -qy; qz = -qz; }
       hp.bodyPosition = new Vector3(rx, ry, rz); hp.bodyRotation = new Quaternion(qx, qy, qz, qw).normalized;
       hph.SetHumanPose(ref hp);
       if (heldW != null && stowJobs.TryGetValue(job.Item2, out var sj)) {
@@ -143,13 +161,16 @@ foreach (var job in jobs) {
         }
       }
       // a weapon spun during its put-away (its stance library row's spin settings) is drawn the way the game draws it
-      var spinRow = item is Item spinItem ? StanceCatalog.Weapon(spinItem.weaponType) : null;
+      var spinRow = spinRows.TryGetValue(job.Item3, out var spinOver) ? spinOver : item is Item spinItem ? StanceCatalog.Weapon(spinItem.weaponType) : null;
       if (heldW != null && grip != null && spinRow != null && heldW.transform.parent == heldHand && (job.Item2 == spinRow.sheatheClip || job.Item2 == spinRow.unsheatheClip)) {
         var sheathe = FindClip(spinRow.sheatheClip);
         if (sheathe != null && WeaponSocket.SpinWindow(spinRow, sheathe.length * sheathe.frameRate, out var sFrom, out var sTo)) {
           float prog = clip.length > 0f ? t / clip.length : 1f;
           float share = WeaponDrawMath.SpinWindowShare(job.Item2 == spinRow.sheatheClip ? prog : 1f - prog, sFrom, sTo);
-          WeaponSocket.SpunOverFist(grip, share, spinRow.spinTurns, spinRow.spinLift, out var sp, out var sr);
+          // a weapon that turns about its own middle slides through the fist the way the game's hand does it
+          var slide = Vector3.zero;
+          if (spinRow.spinAboutMiddle) { var meshF = weaponPrefab.GetComponentInChildren<MeshFilter>(); slide = WeaponSocket.MiddleSlide(grip.localPosition, grip.localEuler, grip.localScale, grip.hand == WeaponHand.Left, weaponPrefab.transform.InverseTransformPoint(meshF.transform.TransformPoint(meshF.sharedMesh.bounds.center))); }
+          WeaponSocket.SpunOverFist(grip, share, spinRow.spinTurns, spinRow.spinLift, slide, out var sp, out var sr);
           heldW.transform.localPosition = sp; heldW.transform.localRotation = sr;
         }
       }

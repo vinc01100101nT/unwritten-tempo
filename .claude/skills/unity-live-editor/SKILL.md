@@ -69,10 +69,13 @@ while it compiles scripts, imports assets, loads a scene, or builds a player. Th
 CALLER, and they are short:
 
 - **30 seconds** for any `unity cmd …` — the CLI's `--timeout`, which is in SECONDS and defaults to 30.
-- **5 seconds** for `eval` / `eval_file`. Both list a `--timeout` of their own, in MILLISECONDS, default 5000 —
-  but **measured 2026-09-22: `--timeout 600000` on both still ended at 5000ms**, three times (a 34-scene edit and two
-  96-prefab bakes). Whatever the flag does, it did not lengthen the wait. Every one of those runs finished its work
-  anyway.
+- **5 seconds** for `eval` / `eval_file`, unless their own `--timeout` (MILLISECONDS, default 5000) REACHES them:
+  written after the command name with nothing in between, the CLI takes it as its own flag and the script still
+  ends at 5000ms (measured 2026-09-22, three times; again 2026-10-10 with `--timeout=60000`). **Put the command's
+  own arguments after a `--`** and both waits hold (measured 2026-10-10: a 7-second script returned, and renders of
+  several minutes finished):
+  `unity cmd --timeout 900 --result-only eval_file -- --file <path.cs> --timeout 900000`.
+  The `eval_file` tool of the editor connection takes `timeout` directly and always worked.
 
 When a budget runs out the editor prints a red `Failed to handle /api/exec request: Main thread operation timed
 out after Nms`. **It does not mean the work was undone:** a command still sitting in the queue is cancelled, but

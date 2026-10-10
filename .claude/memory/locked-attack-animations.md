@@ -10,7 +10,10 @@ metadata:
 
 The Greatsword's attack (the imported `AttackSword2H`, two-handed already), the Bow's attack (`AttackBow`) and the
 Shuriken throw are LOCKED by the user: they stay exactly the clips they are. Never build a new clip or key table for
-them, never "rework" one, and never put one in a list of offered fixes. Measuring them is fine. Every other weapon's
+them, never "rework" one, and never put one in a list of offered fixes. Measuring them is fine. The only changes are
+the two the user made on 2026-10-11: the shuriken throw's wind-up keeps the hand farther from the head ("try moving
+the hand farther from the head during wind up", then "ship them in-game"), and the bow's attack plays MIRRORED because
+the bow moved to the right hand ("the attack animation for bow should be flipped to become right handed"). Every other weapon's
 attack is cloned from an RO sprite ([[attack-animations-from-ro-sprites]]).
 
 **Also locked since 2026-10-10 (the user: "lock these and put into the game with complete animations"): the Axe,

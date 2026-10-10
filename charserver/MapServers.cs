@@ -462,6 +462,48 @@ public sealed class MapServers(Config config)
         }
     }
 
+    /// <summary>The character currently handed over under this name, matched as the database matches names (ignoring
+    /// case) — or null when nobody by that name is in the world.</summary>
+    public string? CharacterIdFor(string name)
+        => heldNames.TryGetValue(name.ToLowerInvariant(), out var who) ? who.id : null;
+
+    /// <summary>The map's name exactly as the map server holding it spelled it, so its own case-sensitive checks
+    /// never refuse a name that differs only in case.</summary>
+    public static string SpelledAsHeld(Registration reg, string map)
+        => reg.Maps.FirstOrDefault(m => string.Equals(m, map, StringComparison.OrdinalIgnoreCase)) ?? map;
+
+    // ITS OWN WIRE, with more patience than the 5 s one above: a map server waits up to 12 s for a terminal command's
+    // last answer line (TerminalGm.AllWait), and giving up first would report a failure for a command that ran.
+    static readonly HttpClient terminalWire = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    public sealed record TerminalResult(int Status, string Body);
+
+    /// <summary>Pass a terminal's GM command or status read to the map server holding that map, and hand its answer
+    /// back exactly as it came.</summary>
+    public async Task<TerminalResult> AskForTerminalAsync(Registration server, string path, object body,
+                                                         CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{server.ArrivalsUrl}/{path}")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(body), System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("x-server-secret", config.ServerSecret);
+        try
+        {
+            var reply = await terminalWire.SendAsync(request, ct);
+            return new((int)reply.StatusCode, await reply.Content.ReadAsStringAsync(ct));
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"[char] map server {server.Id} did not answer a terminal command — {e.Message}");
+            return new(504, JsonSerializer.Serialize(new
+            {
+                error = $"map server {server.Id} did not answer in time — whether the command ran is unknown; "
+                        + "read logs/server.log",
+            }));
+        }
+    }
+
     /// <summary>Hand the world events list to EVERY map server still believed to be there, all at once — the one
     /// question every server has to hear. One that misses it catches up on its own poll (see WorldEvents), so a
     /// failure here is logged and nothing more.</summary>

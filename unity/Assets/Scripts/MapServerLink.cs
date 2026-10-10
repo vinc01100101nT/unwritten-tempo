@@ -330,6 +330,16 @@ public class MapServerLink : MonoBehaviour
             return;
         }
 
+        // A GM COMMAND OR A STATUS READ FROM A TERMINAL, passed on by the character server (see TerminalGm). Queued
+        // for the game loop, which is where commands may touch the world, and answered from there.
+        if (ctx.Request.Url.AbsolutePath.EndsWith("/gm") || ctx.Request.Url.AbsolutePath.EndsWith("/status"))
+        {
+            var ask = JsonUtility.FromJson<TerminalGm.Ask>(body);
+            bool status = ctx.Request.Url.AbsolutePath.EndsWith("/status");
+            lock (fromTerminal) fromTerminal.Enqueue((ask, status, ctx));
+            return;
+        }
+
         // THE WORLD EVENTS LIST, pushed the moment it changed (see WorldEvents). Answered at once — it is a copy to take,
         // nothing is asked back — and applied on the game loop, where the players it is said to are.
         if (ctx.Request.Url.AbsolutePath.EndsWith("/events"))
@@ -380,7 +390,7 @@ public class MapServerLink : MonoBehaviour
             Encoding.UTF8.GetBytes(given), Encoding.UTF8.GetBytes(ServerSecret));
     }
 
-    static void Reply(HttpListenerContext ctx, int code, string body)
+    internal static void Reply(HttpListenerContext ctx, int code, string body)
     {
         var bytes = Encoding.UTF8.GetBytes(body);
         ctx.Response.StatusCode = code;
@@ -398,6 +408,7 @@ public class MapServerLink : MonoBehaviour
         BringUpWhatWasAskedFor();
         LetGoOfWhoWasAskedFor();
         DeliverWhatWasSent();
+        AnswerTheTerminal();
         TakeEventLists();
         // HERE, before anything below can return early: the events must end on time whether or not anybody is arriving.
         WorldEvents.Tick();
@@ -572,6 +583,53 @@ public class MapServerLink : MonoBehaviour
         }
     }
 
+    readonly Queue<(TerminalGm.Ask ask, bool status, HttpListenerContext asker)> fromTerminal =
+        new Queue<(TerminalGm.Ask, bool, HttpListenerContext)>();
+
+    void AnswerTheTerminal()
+    {
+        while (true)
+        {
+            TerminalGm.Ask ask; bool status; HttpListenerContext asker;
+            lock (fromTerminal)
+            {
+                if (fromTerminal.Count == 0) break;
+                (ask, status, asker) = fromTerminal.Dequeue();
+            }
+            if (status) TerminalGm.Status(ask, asker);
+            else TerminalGm.Run(ask, asker);
+        }
+        TerminalGm.Tick();
+    }
+
+    /// <summary>Is this server holding that map — loaded here, and not the Systems scene every server has?</summary>
+    public static bool Holds(string map)
+    {
+        if (string.IsNullOrEmpty(map) || map == MapManager.SystemsScene) return false;
+        var s = UnityEngine.SceneManagement.SceneManager.GetSceneByName(map);
+        return s.IsValid() && s.isLoaded;
+    }
+
+    /// <summary>Every map this server holds, into <paramref name="into"/> — what it tells the character server, and
+    /// what a weather or time change reaches, since both are held once for all of them.</summary>
+    public static void HeldMaps(List<string> into)
+    {
+        into.Clear();
+        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+        {
+            var s = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+            if (s.isLoaded && s.name != MapManager.SystemsScene) into.Add(s.name);
+        }
+    }
+
+    /// <summary>The same list as one line, for a reply.</summary>
+    public static string HeldMapsText()
+    {
+        var maps = new List<string>();   // perf-ok: a typed command or a status read, never every frame
+        HeldMaps(maps);
+        return maps.Count == 0 ? "no maps" : string.Join(", ", maps);
+    }
+
     readonly Queue<string> eventLists = new Queue<string>();
 
     void TakeEventLists()
@@ -614,11 +672,7 @@ public class MapServerLink : MonoBehaviour
         registrationOwed = false;
 
         var maps = new List<string>();   // perf-ok: a 30-second beat or a map change, never every frame
-        for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
-        {
-            var s = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
-            if (s.isLoaded && s.name != MapManager.SystemsScene) maps.Add(s.name);
-        }
+        HeldMaps(maps);
 
         var body = JsonUtility.ToJson(new Registration
         {

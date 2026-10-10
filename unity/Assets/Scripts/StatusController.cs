@@ -183,7 +183,7 @@ public class StatusController : MonoBehaviour
     /// <summary>Take the weapon out, at the speed its weight allows. Server only.</summary>
     public void RequestDraw() => Draw.RequestDraw(WeaponDrawMath.DrawSeconds(HeldWeaponWeight()), Time.time);
 
-    /// <summary>Put the weapon away, at the speed its weight allows. Server only.</summary>
+    /// <summary>Put the weapon away, at the speed its weight allows — the same time taking it out takes. Server only.</summary>
     public void RequestSheathe() => Draw.RequestSheathe(WeaponDrawMath.DrawSeconds(HeldWeaponWeight()), Time.time);
 
     /// <summary>The weapon on the body at once — a weapon swapped, a new life, a body that just arrived.</summary>

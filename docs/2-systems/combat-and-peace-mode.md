@@ -9,8 +9,8 @@ body** (peace). The server alone decides which; every screen draws what it is to
 weapon is moving is remembered (the newest wins) and carried out when the move ends. A new life and a weapon swap
 put the weapon away at once, with nothing pending.
 
-**How long a move takes:** 0.2 s + 0.006 s × the weapon's weight (0.74 s at weight 90, 0.56 s at 60, 0.2 s bare
-handed). Drawing and putting away take the same time. The legs keep moving throughout.
+**How long a move takes:** 0.2 s + 0.006 s × the weapon's weight (0.74 s at weight 90, 0.56 s at 60, 0.998 s for the
+Greatsword at 133, 0.2 s bare handed). Drawing and putting away take the same time. The legs keep moving throughout.
 
 ## What takes it out and what puts it away
 
@@ -53,17 +53,26 @@ mastery points) but **not yet authored** — they wait on their names.
   both arms or only one: a weapon whose carry pose holds one arm (the dagger's right) leaves the other swinging
   with the run like an empty hand.
 - A weapon with put-away and take-out clips plays them on the arms only, over whatever the legs are doing, scrubbed
-  by the move's progress; each hand lets go of, or takes, its copy at its own frame of the clip.
+  by the move's progress; each hand lets go of, or takes, its copy at its own frame of the clip. A weapon whose move
+  turns the body (the Sword turns 60 degrees to the left to present the blade) plays it on the arms, body and head;
+  the legs still keep their own motion.
+- A weapon may show an effect at the moment it changes place: the Staff and the Wand play the Blink Step effect
+  where they leave the hand and where they appear on the back.
 - **Where the weapon rests** is set per weapon model on its grip: a body bone and a place on it (a second place for
-  the other copy of a pair weapon). **Today the Katar, the Dagger and the Axe have one** — the two katars cross in
-  an X on the lower back; the dagger hangs on the right hip, slanted backward and down; the two axes cross in an X
-  on the back, heads up behind the shoulders. Every other weapon is **hidden while put away** until its resting
-  place is set.
+  the other copy of a pair weapon). **Every weapon but the Bow has one** — the two katars cross in an X
+  on the lower back; the dagger hangs on the right hip, slanted backward and down; the two axes cross in an X on the
+  back, heads up behind the shoulders; the greatsword and the warhammer lie level across the upper back; the sword
+  rests at the left waist, its blade along the left hip; the staff and the wand lie diagonally on the back, head over
+  the right shoulder; the spear and the scythe lie diagonally behind the head, head over the left shoulder; the
+  shuriken lies flat on the middle of the back; the sniper rifle lies diagonally on the back, stock up by the right
+  shoulder, muzzle down by the left hip. The Bow is **hidden while put away** until its resting place is set.
 - **A put-away may carry a spin.** A weapon's stance row can name two frames of its put-away clip, a number of
   turns and a lift: between those frames the weapon in the main hand rises off the fist by the lift and turns flat
   over it that many times, then settles back before the hand lets go. The take-out, which is the put-away played
-  backwards, turns it back over the same frames. **Today only the Dagger has one**: the right arm is held straight
-  out to the side and the dagger makes 2 turns over the fist.
+  backwards, turns it back over the same frames. **The Dagger, the Spear and the Scythe have one**: the dagger makes
+  2 turns flat over the fist with the right arm held out to the side; the spear and the scythe, far longer than the
+  arm, make 1 turn about their own middle — sliding through the fist until the middle sits in it — in an upright
+  wheel beside the raised right arm.
 
 ## Related
 

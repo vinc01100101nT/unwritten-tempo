@@ -15,7 +15,11 @@ const string DIR = "Assets/1_Authored/Art/Characters/Animations/";
 // loop = a standing idle that repeats (its first and last keys must match); smooth = ease in AND out between keys
 // (a breath), instead of the default fast start and soft stop of a strike. steadyArms = the no-shake rule below is
 // applied to EVERY arm joint (shoulder, upper arm, elbow), not only the wrists.
-var clips = new (string name, string item, bool stepLift, bool twoHand, float secondGrip, bool rifle, bool loop, bool smooth, bool steadyArms, float wristStep, int steadyPasses, float[][] keys)[] {
+// hug = the weapon is LAID AGAINST the body in this clip (a resting pose on the back): the capsule estimate below may not
+// push it off — capsules are wider than the real back (0.10–0.125 of body height against a measured 0.065), so every
+// weapon handed over behind the body floated a hand's width off it. The report's count on the real mesh still shows
+// any point that ends up inside.
+var clips = new (string name, string item, bool stepLift, bool twoHand, float secondGrip, bool rifle, bool loop, bool smooth, bool steadyArms, float wristStep, bool hug, float[][] keys)[] {
 __CLIPS__
 };
 const float RIFLE_STOCK = 0.12f, RIFLE_BARREL = 0.5f;   // stand-in rifle: stock behind and barrel ahead of the trigger grip, share of body height
@@ -281,7 +285,7 @@ foreach (var cl in clips) {
         var sh = ua.position; var el = la.position; var wr = hb.position; var line = (wr - sh).normalized;
         var bend = (el - sh) - Vector3.Dot(el - sh, line) * line; bend = bend.sqrMagnitude > 1e-10f ? bend.normalized : Vector3.zero;
         bool bad = Vector3.Dot(bend, fwd) > 0.3f && Vector3.Dot(bend, leftHand ? right : -right) > 0.3f;
-        float sink = Sink(hb, tLocal, gLocal);
+        float sink = cl.hug ? 0f : Sink(hb, tLocal, gLocal);
         float score = eTip + 0.4f * eEdge + (bad ? 1000f : 0f) + Mathf.Abs(sw) * 0.05f + sink * 2000f + jump * 20f + (prevSw == 999 ? 0f : Mathf.Abs(sw - prevSw) * 0.1f);
         if (score < bestScore) { bestScore = score; bestMus = (float[])trial.muscles.Clone(); bTip = eTip; bEdge = eEdge; bBad = bad; bSink = sink; bPos = trial.bodyPosition; bRot = trial.bodyRotation; bSw = sw; }
       }
@@ -381,6 +385,15 @@ foreach (var cl in clips) {
     var fwd = rig.transform.forward; var right = rig.transform.right;
     TwoBone(B(HumanBodyBones.RightUpperLeg), B(HumanBodyBones.RightLowerLeg), B(HumanBodyBones.RightFoot), W(rf.x, 0, rf.z) + Vector3.up * (groundY - rig.transform.position.y + rf.y * H), fwd, true);
     TwoBone(B(HumanBodyBones.LeftUpperLeg), B(HumanBodyBones.LeftLowerLeg), B(HumanBodyBones.LeftFoot), W(lf.x, 0, lf.z) + Vector3.up * (groundY - rig.transform.position.y + lf.y * H), fwd, true);
+    // "twist": the torso turned this many degrees to the character's RIGHT over the hips (negative = left), shared by
+    // the spine's joints, while the hips and legs stay as they are — a turn that still shows when the clip plays on the
+    // upper body only, as a put-away does in game. Arm and weapon directions stay in the character's own frame.
+    float twist = Mathf.Lerp(A.Length > 46 ? A[46] : 0f, Bk.Length > 46 ? Bk[46] : 0f, t);
+    if (twist != 0f) {
+      var spineJoints = new System.Collections.Generic.List<Transform>();
+      foreach (var sb in new[] { HumanBodyBones.Spine, HumanBodyBones.Chest, HumanBodyBones.UpperChest }) { var sj = B(sb); if (sj != null) spineJoints.Add(sj); }
+      foreach (var sj in spineJoints) sj.rotation = Quaternion.AngleAxis(twist / spineJoints.Count, Vector3.up) * sj.rotation;
+    }
     var rT = B(HumanBodyBones.RightUpperArm).position + Dir(rd) * rr * armR;
     var lT = B(HumanBodyBones.LeftUpperArm).position + Dir(ld) * lr * armL;
     // Where each elbow bends: down and back by default; a key's "rp" / "lp" says where instead (character frame), eased
@@ -492,7 +505,7 @@ foreach (var cl in clips) {
   // steadyArms, second half: a hand following a handle also WOBBLES — it drifts one way for a few poses and back
   // (the warhammer's left wrist moved 0.1 of its reach back and forth over five poses), which no single pose shows.
   // Every arm joint is eased over its two neighbours (1-2-1), STEADY_PASSES times; the first and last poses stay.
-  int STEADY_PASSES = cl.steadyPasses > 0 ? cl.steadyPasses : 2;   // a table's "steadyPasses" eases a flowing move further
+  const int STEADY_PASSES = 2;
   if (cl.steadyArms) foreach (var am in System.Linq.Enumerable.Concat(armMusR, armMusL))
     for (int pass = 0; pass < STEADY_PASSES; pass++) {
       var next = new float[N];

@@ -26,6 +26,10 @@ public class GmCommand
     /// <see cref="GmCommands.Execute"/>).</summary>
     public readonly bool changesTheWorld;
 
+    /// <summary>Can it run with no person to act on — sent from a terminal with no <c>--as</c>? Default NO: a command
+    /// that reaches for "you" with nobody there acted on whatever map or body the server touched last.</summary>
+    public bool worksWithNobody;
+
     public GmCommand(string name, string usage, string summary, string example, Action<GmContext> run,
                      params string[] aliases)
         : this(name, usage, summary, example, run, false, false, aliases) { }
@@ -77,11 +81,19 @@ public class GmContext
     public Character askerCharacter;
     public Transform askerBody;
 
-    public Character Ch => askerCharacter != null ? askerCharacter : Character.Instance;
+    /// <summary>SENT FROM A TERMINAL, through the character server (see <see cref="TerminalGm"/>). Then nobody is
+    /// standing at this machine: "you" is only ever the <c>--as</c> character, never this machine's own player, and
+    /// the map is the one the terminal named, never whichever map this server loaded last.</summary>
+    public bool fromTerminal;
+    public string terminalMap;
+    /// <summary>Who to write down as having done it, when that is not a person in the world.</summary>
+    public string askedBy;
+
+    public Character Ch => askerCharacter != null ? askerCharacter : fromTerminal ? null : Character.Instance;
 
     /// <summary>The NAME of the map the person who asked is standing in — what <see cref="Map"/> looks up, kept
     /// beside it so a message about the map and the map itself can never name two different ones.</summary>
-    public string MapName => Ch != null ? Ch.Map : MapManager.CurrentMap;
+    public string MapName => Ch != null ? Ch.Map : fromTerminal ? terminalMap : MapManager.CurrentMap;
 
     /// <summary>THE MAP THE PERSON WHO ASKED IS STANDING IN. On a server the request arrives from one of many
     /// connections and the machine's own idea of "the current map" is meaningless — it names whichever map it
@@ -97,6 +109,7 @@ public class GmContext
         get
         {
             if (askerBody != null) return askerBody;
+            if (fromTerminal) return null;
             var p = UnityEngine.Object.FindAnyObjectByType<Player3DController>();
             return p != null ? p.transform : null;
         }

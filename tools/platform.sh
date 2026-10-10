@@ -22,6 +22,8 @@
 #   open-game [args]        start one copy of the game in the background (settings typed in front still apply)
 #   port-info <port>...     what is listening on each port: process id, when it started, its command (silent = none)
 #   stop-port <port>...     stop whatever is listening on each port — by port, never by name
+#   process-command <pid>   the full command line a running process was started with (silent = no such process)
+#   stop-pid <pid>          stop that one process id
 #   lan-address             this computer's address on the local network, for players on other machines
 #   editor-log | player-log the log Unity's editor writes, and the one a client build writes (Player-prev.log beside it)
 #   open-launcher           open the launcher tools/build-launcher.sh made for this computer
@@ -191,6 +193,19 @@ stop_port() {
   done
 }
 
+# The command line a process id was started with — so a caller can tell a recycled id from the program it started.
+process_command() {
+  if [ "$PLATFORM" = windows ]; then
+    powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId = $1').CommandLine" | tr -d '\r'
+  else
+    ps -o command= -p "$1" 2>/dev/null
+  fi
+}
+
+stop_pid() {
+  if [ "$PLATFORM" = windows ]; then taskkill //PID "$1" //F >/dev/null; else kill "$1"; fi
+}
+
 # This computer's address on the local network, for players on other machines.
 lan_address() {
   case "$PLATFORM" in
@@ -300,6 +315,8 @@ if [ "$(basename -- "$0")" = platform.sh ]; then
                   "$__prog" "$@" >/dev/null 2>&1 & ;;
     port-info)    port_info "$@" ;;
     stop-port)    stop_port "$@" ;;
+    process-command) process_command "$1" ;;
+    stop-pid)     stop_pid "$1" ;;
     lan-address)  lan_address ;;
     editor-log)   editor_log ;;
     player-log)   player_log ;;

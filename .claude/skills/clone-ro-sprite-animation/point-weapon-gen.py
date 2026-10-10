@@ -6,8 +6,8 @@ import json, os, sys
 SP = os.path.dirname(os.path.abspath(__file__))
 ITEM = {"sword": "Sword", "axe": "Axe", "warhammer": "Warhammer", "spear": "Spear", "fist": "Fist", "dagger": "Dagger",
         "katar": "Katar", "shuriken": "Shuriken", "sniper": "Sniper", "staff": "Staff", "wand": "Wand", "scythe": "Scythe",
-        "greatsword": "Greatsword"}
-KEYS = os.path.join(SP, "keys")
+        "greatsword": "Greatsword", "bow": "Bow"}
+KEYS = os.environ.get("KEYS_DIR") or os.path.join(SP, "keys")   # KEYS_DIR: trial tables kept in a scratch folder
 OUT = sys.argv[1]
 write, aim = sys.argv[2] == "1", sys.argv[3] == "1"
 names = sys.argv[4:] or list(ITEM)
@@ -30,16 +30,16 @@ def row(k):
             1 if "rw" in k else 0, *k.get("rw", [0, 0, 0]), 1 if "re" in k else 0, *k.get("re", [0, 0, 0]),
             1 if "lw" in k else 0, *k.get("lw", [0, 0, 0]), 1 if "le" in k else 0, *k.get("le", [0, 0, 0]),
             1 if "rp" in k else 0, *k.get("rp", [0, 0, 0]), 1 if "lp" in k else 0, *k.get("lp", [0, 0, 0]),
-            k.get("look", 0), 1 if k.get("pass") else 0]
+            k.get("look", 0), 1 if k.get("pass") else 0, k.get("twist", 0)]
     return "new float[]{" + ",".join("%gf" % x for x in vals) + "}"
 
 out = []
 for w in names:
     c = json.load(open(os.path.join(KEYS, w + ".json")))
-    out.append('  ("%s", "%s", %s, %s, %gf, %s, %s, %s, %s, %gf, %d, new float[][]{ %s }),' % (
+    out.append('  ("%s", "%s", %s, %s, %gf, %s, %s, %s, %s, %gf, %s, new float[][]{ %s }),' % (
         c["clip"], ITEM[w.split("_")[0]], "true" if c.get("stepLift", True) else "false", "true" if c.get("twoHand") else "false",
         c.get("secondGrip", -0.11), "true" if c.get("rifle") else "false", "true" if c.get("loop") else "false",
-        "true" if c.get("smooth") else "false", "true" if c.get("steadyArms") else "false", c.get("wristStep", 0), c.get("steadyPasses", 0), ", ".join(row(k) for k in breathe(c))))
+        "true" if c.get("smooth") else "false", "true" if c.get("steadyArms") else "false", c.get("wristStep", 0), "true" if c.get("hug") else "false", ", ".join(row(k) for k in breathe(c))))
 src = open(os.path.join(SP, "point-weapon-build.cs"), encoding="utf-8").read()
 src = src.replace("__CLIPS__", "\n".join(out)).replace("__WRITE__", "true" if write else "false").replace("__AIM__", "true" if aim else "false")
 open(OUT, "w", encoding="utf-8").write(src)
