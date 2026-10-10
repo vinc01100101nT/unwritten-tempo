@@ -369,8 +369,8 @@ with no sword in it. Its direction comes from the rule below, and the user judge
 
 Agreed with the user on 2026-10-10: every weapon gets the katar's four pieces, videos first, wired in only after the
 user's yes on each weapon. The Katar, Dagger, Axe and Greatsword were made one at a time; the other ten (Sword, Staff,
-Wand, Spear, Warhammer, Scythe, Bow, Sniper, Shuriken, Fist) in one run at the user's word — all but the Bow and the
-Sniper in the game since 2026-10-11 — and their tables are all
+Wand, Spear, Warhammer, Scythe, Bow, Sniper, Shuriken, Fist) in one run at the user's word — all in the game since
+2026-10-11 — and their tables are all
 written by ONE script, `paths/stance_sets.py` (`python paths/stance_sets.py <folder>` rewrites their `keys/` tables
 and writes one filled put-away blend script per weapon into the folder; it prints each handover frame and spin). The
 Fist has no model and no put-away clip: an idle and running arms only. Trial tables go in a scratch folder, never in

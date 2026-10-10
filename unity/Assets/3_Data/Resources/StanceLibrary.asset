@@ -1090,3 +1090,20 @@ MonoBehaviour:
     spinAboutMiddle: 0
     putAwayMovesUpperBody: 0
     handoverVfx: {fileID: 0}
+  - weapon: 9
+    idleClip: IdleBow
+    carryClip: CarryBow
+    carryArms: 0
+    sheatheClip: BowSheathe
+    unsheatheClip: BowUnsheathe
+    sheatheRightFrame: 21
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 13
+    unsheatheLeftFrame: -1
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+    spinAboutMiddle: 0
+    putAwayMovesUpperBody: 0
+    handoverVfx: {fileID: 0}

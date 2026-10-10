@@ -5,7 +5,7 @@ bonuses; then give each weapon the katar's four stance pieces — combat idle, r
 body, put-away and take-out clips — videos to the user first, wired in after their yes on each weapon. No Tempo issue/doc id. Design
 doc: `docs/2-systems/combat-and-peace-mode.md`.
 
-**Status:** IN PROGRESS.
+**Status:** ALL 14 WEAPON STANCE SETS IN THE GAME (2026-10-11); waiting only on the user's play-test.
 - Combat/peace mode: BUILT, partly play-tested by the user (they tested the katar in game on 2026-10-10 and
   reported only the running-arms bug, now fixed). Not every path has been played — don't trust "it works" beyond
   the katar's draw/run/idle.
@@ -35,10 +35,9 @@ doc: `docs/2-systems/combat-and-peace-mode.md`.
   hand off the head — each built over the shipped attack clip. NOT PLAY-TESTED.
 - Bow: RIGHT-HANDED since 2026-10-11 (the user: "the right hand must hold the bow's handle ... the left hand must hold
   the bow's string ... the attack animation for bow should be flipped"): its grip was mirrored into the right hand
-  and `AttackBow` plays mirrored — both already in the game. Its idle and run (bow low and level in the middle of the
-  body, its face tilted 20 degrees down, left hand on the string) and its put-away (right arm straight out to the
-  side, then behind the hip to the lower back) are VIDEOS ONLY, waiting on the user. Its row is not written and its
-  grip's resting place is "not set" (hidden while put away) until then; the numbers are in "What's left", item 2.
+  and `AttackBow` plays mirrored. IN THE GAME since 2026-10-11 (the user: "ship the bow in-game"): idle and run (bow
+  low and level in the middle of the body, its face tilted 20 degrees down, left hand on the string) and put-away
+  (right arm straight out to the side, then behind the hip to the lower back). NOT PLAY-TESTED.
 - Sniper: IN THE GAME since 2026-10-11 (the user: "ship the sniper in-game") — diagonal on the back, stock up at the
   right shoulder, muzzle down at the left hip. NOT PLAY-TESTED.
 - Draw buffs (one passive per weapon, trigger "When you draw your weapon"): mechanism built, the 14 passives NOT
@@ -191,14 +190,14 @@ animation clips `IdleKatar`, `CarryKatarGuard`, `KatarSheathe/Unsheathe`, `IdleD
 1. **Shuriken through the head during its throw — fixed and shipped 2026-10-11** (the wind-up keeps the hand farther
    from the head; the shuriken is held at its middle — HARD RULE). Measured: more than 0.5% of it in the body in poses
    0–3 of 41 only (legs and hips, as the arm leaves its hanging start); nothing in the head or neck.
-2. **Wire the Bow when the user approves its videos** (stance row; resting place on the grip, Hips;
-   rebuild the controller with `Player3DVisualBuilder.BuildController()` and read its states back). Default body,
-   frames at 60 per second, put-away / take-out:
+2. **Every weapon is wired** (stance row; resting place on the grip, Hips; the controller rebuilt with
+   `Player3DVisualBuilder.BuildController()` and its states read back). Default body, frames at 60 per second,
+   put-away / take-out:
    - Bow — Both (bow hand and string hand) — 21 / 13 of 34 — pos (0.10883, 0.22273, -0.34672) eul (11.284, 191.315,
      271.304). Flat across the lower back in the RIGHT hand, front straight down (8 degrees to the right), 3–4% of body
      height off the back. On the way the right arm goes straight out to the side with the bow level, then behind the
      hip: nothing of it enters the body; its far end dips 0.9% of body height under the ground for one pose.
-   Shipped rows, for reference (default body; written to the grips 2026-10-11): Sword 35/9, Staff 24/20, Wand 24/20,
+   The other rows (default body; written to the grips 2026-10-11): Sword 35/9, Staff 24/20, Wand 24/20,
    Spear 36/8, Scythe 36/8, Warhammer 30/14, Shuriken 20/24, Sniper 20/14 (diagonal on the back; up to 5% of it passes
    the hips and back in poses 4–12 of the put-away; it never touches the ground). The Spear's and Scythe's resting places are the hand's
    place moved 6% / 5% of body height onto the back of the head (they still sit 11% off the middle of the back: the
@@ -253,12 +252,12 @@ animation clips `IdleKatar`, `CarryKatarGuard`, `KatarSheathe/Unsheathe`, `IdleD
 
 ## Next single step
 
-The user's verdict on the Bow's videos; wire it on a yes (What's left, item 2). Their play-test of everything
-shipped — the axe, katar, dagger, greatsword and the nine weapons of 2026-10-11 — is still to come.
+The user's play-test of every weapon's stance set — the axe, katar, dagger and greatsword and the ten weapons shipped
+on 2026-10-11 — then fix what it finds.
 
 ## How to resume
 
 ```text
 Read handoffs/weapon-stances-and-combat-mode.md and the clone-ro-sprite-animation skill (section 4c), then continue:
-wire in the Bow if I approved its videos (What's left, item 2), or fix what I sent back.
+fix what my play-test of the weapon stance sets found.
 ```

@@ -59,13 +59,15 @@ mastery points) but **not yet authored** — they wait on their names.
 - A weapon may show an effect at the moment it changes place: the Staff and the Wand play the Blink Step effect
   where they leave the hand and where they appear on the back.
 - **Where the weapon rests** is set per weapon model on its grip: a body bone and a place on it (a second place for
-  the other copy of a pair weapon). **Every weapon but the Bow has one** — the two katars cross in an X
+  the other copy of a pair weapon). **Every weapon has one** — the two katars cross in an X
   on the lower back; the dagger hangs on the right hip, slanted backward and down; the two axes cross in an X on the
   back, heads up behind the shoulders; the greatsword and the warhammer lie level across the upper back; the sword
   rests at the left waist, its blade along the left hip; the staff and the wand lie diagonally on the back, head over
   the right shoulder; the spear and the scythe lie diagonally behind the head, head over the left shoulder; the
   shuriken lies flat on the middle of the back; the sniper rifle lies diagonally on the back, stock up by the right
-  shoulder, muzzle down by the left hip. The Bow is **hidden while put away** until its resting place is set.
+  shoulder, muzzle down by the left hip; the bow lies flat across the lower back. The bow is held in the right
+  hand, the left hand on its string, and its attack plays mirrored. A weapon whose resting place is not set would be
+  **hidden while put away**.
 - **A put-away may carry a spin.** A weapon's stance row can name two frames of its put-away clip, a number of
   turns and a lift: between those frames the weapon in the main hand rises off the fist by the lift and turns flat
   over it that many times, then settles back before the hand lets go. The take-out, which is the put-away played
