@@ -183,7 +183,9 @@ public static class PlayerUnits
 
             Vector3 d = body.position - from;
             d.y = 0f;
-            float sqr = d.sqrMagnitude;
+            // As a creature weighs it: somebody at peace counts as further away (WeaponDrawMath.NoticedSqr).
+            var host = unit.StatusHost;
+            float sqr = WeaponDrawMath.NoticedSqr(d.sqrMagnitude, host != null && host.PeaceBonusesOn);
             if (sqr >= bestSqr) continue;
 
             bestSqr = sqr;

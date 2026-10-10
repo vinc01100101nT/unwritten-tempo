@@ -975,6 +975,26 @@ public class UnitStates : MonoBehaviour
         return mult;
     }
 
+    /// <summary>Remove every pile one skill granted — its buff ends at once (a weapon's draw buff when that weapon is
+    /// swapped out). No-op if it granted none.</summary>
+    public void RemoveFrom(string sourceSkillId)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId)) return;
+        bool any = false;
+        for (int i = active.Count - 1; i >= 0; i--)
+        {
+            var s = active[i];
+            if (s.sourceSkillId != sourceSkillId) continue;
+            LogStacksGone(s, s.stacks.Count, "removed", wholePile: true);
+            active.RemoveAt(i);
+            pool.Push(s);
+            any = true;
+        }
+        if (!any) return;
+        Recompute();
+        OnChanged?.Invoke();
+    }
+
     /// <summary>Remove a state now (e.g. Cleanse, or a consumed mark). No-op if absent.</summary>
     public void Remove(StateId id)
     {

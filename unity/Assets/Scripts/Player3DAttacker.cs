@@ -153,6 +153,8 @@ public class Player3DAttacker : MonoBehaviour
         }
 
         if (Time.time < nextSwing || swing != null || !InRange(t)) return;
+        // A swing needs the weapon in hand. The order that brought us here already asked for it; the swing waits.
+        if (Character.Instance != null && !WeaponDrawClient.Ready) { WeaponDrawClient.AskToDraw(); return; }
         attemptOpen = false;   // the announced attack is happening — this attempt is resolved
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.

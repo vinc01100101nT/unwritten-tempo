@@ -210,6 +210,12 @@ public class NetMob : NetworkBehaviour, IWatchedShell
 
     // A scripted move — a glide, a blink, a knockback — said once as it begins, and drawn here (see MoveSaid).
     [SyncVar] MoveSaid netMove;
+
+    /// <summary>Where this creature's weapon is — on its body, coming out, in hand, going back — as the server holds
+    /// it. A watcher draws it and decides nothing.</summary>
+    [SyncVar(hook = nameof(OnDrawArrived))] DrawSaid netDraw;
+    int drawVersionSent = -1;
+    void OnDrawArrived(DrawSaid _, DrawSaid now) => (viewVisual as MobShadow3DVisual)?.ShowDraw(now);
     readonly WatchedMove watchedMove = new WatchedMove();
 
     /// <summary>The real creature. Only ever set on the SERVER — this is the thing that actually thinks,
@@ -330,6 +336,19 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         {
             NetworkServer.Destroy(gameObject);
             return;
+        }
+
+        // ITS WEAPON, the moment the draw state changes rather than on the beat: a draw is shorter than a few beats.
+        var drawHost = serverHealth != null ? serverHealth.StatusHost : null;
+        if (drawHost != null && drawHost.Draw.Version != drawVersionSent)
+        {
+            drawVersionSent = drawHost.Draw.Version;
+            netDraw = new DrawSaid
+            {
+                phase = (byte)drawHost.Draw.Phase,
+                at = NetworkTime.time - (Time.time - drawHost.Draw.PhaseStart),
+                window = drawHost.Draw.Window,
+            };
         }
 
         if (Time.time < nextPush) return;
@@ -586,6 +605,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         SilenceTheBrain(view);
         // Reviving put its authored gear back on; what it actually wears is what the server says.
         ApplyWornToView();
+        (viewVisual as MobShadow3DVisual)?.ShowDraw(netDraw);
     }
 
     // DRESS THE WATCHED COPY in what the server says this creature wears — so its swing pose and reach follow the weapon
@@ -674,6 +694,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // when the name has not arrived yet: an empty one tells the creature to WAIT for it rather than draw one of
         // its own, and the change hook above finishes the job the moment it lands.
         if (isShadow) (viewVisual as MobShadow3DVisual)?.WearModel(shadowModel);
+        // And where its weapon is — a reused body still shows the last creature's.
+        if (isShadow) (viewVisual as MobShadow3DVisual)?.ShowDraw(netDraw);
 
         // A REUSED BODY MUST BE TOLD ITS HEALTH AGAIN. These remember what was last drawn so a creature at steady
         // health costs nothing; left as they were, a recycled body would keep showing the last creature's wounds

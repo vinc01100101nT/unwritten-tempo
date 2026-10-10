@@ -62,6 +62,11 @@ public class MonsterDef : ScriptableObject
     [HideInInspector] public string[] dyeSources = System.Array.Empty<string>();
     /// <summary>The chosen colour for each part in <see cref="dyeSources"/>, "#RRGGBB".</summary>
     [HideInInspector] public string[] dyeTargets = System.Array.Empty<string>();
+    /// <summary>This creature's hairstyle, by its id in <see cref="HeadPieces"/>, or "none". Empty = the hair its body
+    /// model was made with. Shadows only.</summary>
+    [HideInInspector] public string hairStyle = "";
+    /// <summary>Its hair colour, "#RRGGBB". Empty = the hairstyle's own colour.</summary>
+    [HideInInspector] public string hairColour = "";
 
     // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
     // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through

@@ -183,8 +183,8 @@ public class HotbarPanel : MonoBehaviour
     /// for anything that stacks above it.</summary>
     public static float TopOfStack => BarBottom + BarHeight + 6f;
 
-    // The shell bakes a row of cells; the bar is three rows of nine. Lay the holder out as that grid and clone the
-    // (pristine) first cell up to 27, at runtime — so an already-baked scene gets the full bar with no editor re-bake.
+    // The shell bakes the cells with NO layout on them; the bar is three rows of nine. Lay the holder out as that grid
+    // and clone the (pristine) first cell up to 27, at runtime — so an older bake with fewer cells still gets the full bar.
     // Runs once.
     void EnsureCells()
     {
@@ -215,7 +215,9 @@ public class HotbarPanel : MonoBehaviour
         for (int i = 0; i < holder.childCount && i < wanted; i++)
             if (holder.GetChild(i) is RectTransform crt) crt.sizeDelta = new Vector2(CellSize, CellSize);
 
-        // A GRID OF NINE ACROSS, first row on top. The baked row layout is replaced, at runtime only.
+        // A GRID OF NINE ACROSS, first row on top, added at runtime only: a layout saved into the HUD rearranges the
+        // cells in the editor too and marks the scene modified (tools/check-scene-stays-clean.py). An older bake's
+        // row layout is removed first.
         var row = holder.GetComponent<HorizontalLayoutGroup>();
         if (row != null) DestroyImmediate(row);
         var grid = holder.GetComponent<GridLayoutGroup>() ?? holder.gameObject.AddComponent<GridLayoutGroup>();

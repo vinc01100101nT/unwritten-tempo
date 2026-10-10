@@ -1,0 +1,246 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6ee4c7b20b5b14449210910a70446cb, type: 3}
+  m_Name: HeadPieces
+  m_EditorClassIdentifier: Assembly-CSharp::HeadPieces
+  hairstyles:
+  - id: hair01
+    piece: {fileID: 4719002789735059675, guid: 0ba10329758cd9f4ea23da10e919d9ef, type: 3}
+  - id: hair02
+    piece: {fileID: 1217578418421274819, guid: 1d9acc08d14c232449e838f76c731f64, type: 3}
+  - id: hair03
+    piece: {fileID: 8414452774818678778, guid: ac2cc9a5a48ba144b938654677861a10, type: 3}
+  - id: hair04
+    piece: {fileID: 5989465494504691907, guid: 4fcb933e5719bce4c9778773abc8c575, type: 3}
+  - id: hair05
+    piece: {fileID: 122413984609260849, guid: 439c88a907cd3c14c9b4f3bd559a1a22, type: 3}
+  - id: hair06
+    piece: {fileID: 6608191831724057716, guid: 886b7cb1c3e5b2d49afd67684b3f10f7, type: 3}
+  - id: hair07
+    piece: {fileID: 4873829382394585820, guid: 93c44a1211155bb44a50216e143047a4, type: 3}
+  - id: hair08
+    piece: {fileID: 3108742038399249478, guid: 0ca7562f26a5e8f49878d782dbc8a57c, type: 3}
+  - id: hair09
+    piece: {fileID: 7846636639080656772, guid: a7a23763a5dc05546835aaaeee1db27b, type: 3}
+  - id: hair10
+    piece: {fileID: 150253711714687442, guid: 997250cbea12f924a88b9c930ed36131, type: 3}
+  - id: hair11
+    piece: {fileID: 621933786249194503, guid: 0fd85246465fbea4c8e79e2a588d4de6, type: 3}
+  - id: hair12
+    piece: {fileID: 6185378476931459419, guid: 2920bb3e66016d8418c145fae9c9e73b, type: 3}
+  - id: hair13
+    piece: {fileID: 4502928280329834568, guid: 528d376349f0af5409e5ca5bb34256fe, type: 3}
+  bodies:
+  - model: BaseCharacter
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: BlueSoldier_Female
+    hair: hair01
+    hairColour: '#8B7643'
+    takesHair: 1
+  - model: BlueSoldier_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Casual2_Female
+    hair: hair01
+    hairColour: '#7F403D'
+    takesHair: 1
+  - model: Casual2_Male
+    hair: hair12
+    hairColour: '#8B7643'
+    takesHair: 1
+  - model: Casual3_Female
+    hair: hair05
+    hairColour: '#49433A'
+    takesHair: 1
+  - model: Casual_Bald
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Casual_Female
+    hair: hair02
+    hairColour: '#5C3E2A'
+    takesHair: 1
+  - model: Casual_Male
+    hair: hair10
+    hairColour: '#5C3E2A'
+    takesHair: 1
+  - model: Chef_Female
+    hair: hair05
+    hairColour: '#8B886B'
+    takesHair: 1
+  - model: Chef_Hat
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Chef_Male
+    hair: hair11
+    hairColour: '#9C9C9C'
+    takesHair: 1
+  - model: Cow
+    hair: none
+    hairColour: 
+    takesHair: 0
+  - model: Cowboy_Female
+    hair: hair02
+    hairColour: '#8B7643'
+    takesHair: 1
+  - model: Cowboy_Hair
+    hair: hair10
+    hairColour: '#5C3914'
+    takesHair: 1
+  - model: Cowboy_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Doctor_Female_Old
+    hair: hair01
+    hairColour: '#9C9C9C'
+    takesHair: 1
+  - model: Doctor_Female_Young
+    hair: hair05
+    hairColour: '#9C7A43'
+    takesHair: 1
+  - model: Doctor_Male_Old
+    hair: hair11
+    hairColour: '#9C9C9C'
+    takesHair: 1
+  - model: Doctor_Male_Young
+    hair: hair10
+    hairColour: '#9C7E3F'
+    takesHair: 1
+  - model: Elf
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Goblin_Female
+    hair: hair01
+    hairColour: '#252021'
+    takesHair: 1
+  - model: Goblin_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Kimono_Female
+    hair: hair06
+    hairColour: '#88486A'
+    takesHair: 1
+  - model: Kimono_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Knight_Golden_Female
+    hair: hair04
+    hairColour: '#8B7643'
+    takesHair: 1
+  - model: Knight_Golden_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Knight_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Ninja_Female
+    hair: hair02
+    hairColour: '#497F79'
+    takesHair: 1
+  - model: Ninja_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Ninja_Male_Hair
+    hair: hair09
+    hairColour: '#497F79'
+    takesHair: 1
+  - model: Ninja_Sand
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Ninja_Sand_Female
+    hair: hair02
+    hairColour: '#532443'
+    takesHair: 1
+  - model: OldClassy_Female
+    hair: hair01
+    hairColour: '#9C9C9C'
+    takesHair: 1
+  - model: OldClassy_Male
+    hair: hair11
+    hairColour: '#9C9C9C'
+    takesHair: 1
+  - model: Pirate_Female
+    hair: hair06
+    hairColour: '#7F6132'
+    takesHair: 1
+  - model: Pirate_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Pug
+    hair: none
+    hairColour: 
+    takesHair: 0
+  - model: Soldier_Female
+    hair: hair01
+    hairColour: '#7F3D21'
+    takesHair: 1
+  - model: Soldier_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Suit_Female
+    hair: hair01
+    hairColour: '#3F321D'
+    takesHair: 1
+  - model: Suit_Male
+    hair: hair10
+    hairColour: '#8A6D40'
+    takesHair: 1
+  - model: VikingHelmet
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Viking_Female
+    hair: hair08
+    hairColour: '#6B3521'
+    takesHair: 1
+  - model: Viking_Male
+    hair: hair13
+    hairColour: '#6B3521'
+    takesHair: 1
+  - model: Witch
+    hair: hair01
+    hairColour: '#D1D1D1'
+    takesHair: 1
+  - model: Wizard
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Worker_Female
+    hair: hair03
+    hairColour: '#7F6132'
+    takesHair: 1
+  - model: Worker_Male
+    hair: none
+    hairColour: 
+    takesHair: 1
+  - model: Zombie_Female
+    hair: hair07
+    hairColour: '#3B2415'
+    takesHair: 1
+  - model: Zombie_Male
+    hair: none
+    hairColour: 
+    takesHair: 1

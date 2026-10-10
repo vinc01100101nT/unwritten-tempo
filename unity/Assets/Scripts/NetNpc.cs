@@ -73,6 +73,10 @@ public class NetNpc : NetworkBehaviour
     /// can draw the quest mark over the right head and offer the right quest when F is pressed on them.</summary>
     [SyncVar] public string personId = "";
 
+    // WHAT IS ON THEIR HEAD: the hair (HeadPieces.Pack) and the Head item they wear, by its item id.
+    [SyncVar] public string hair = "";
+    [SyncVar] public string headgear = "";
+
     /// <summary>Every townsperson's body this machine has drawn, with the shell that speaks for it — a plain list, filed
     /// when a body is built and struck when it is dropped, so a readout walks the people on screen without searching
     /// the scene.</summary>
@@ -169,6 +173,8 @@ public class NetNpc : NetworkBehaviour
         personDescription = serverBrain != null ? serverBrain.Description ?? "" : "";
         shopId = serverBrain != null ? serverBrain.Shop ?? "" : "";
         personId = serverBrain != null ? serverBrain.PersonId ?? "" : "";
+        hair = serverBrain != null ? serverBrain.Hair ?? "" : "";
+        headgear = serverBrain != null ? serverBrain.Headgear ?? "" : "";
         serverAgent = npc != null ? npc.GetComponent<PathAgent3D>() : null;
         if (npc != null)
         {
@@ -347,6 +353,16 @@ public class NetNpc : NetworkBehaviour
             brain.Description = personDescription;
             brain.Shop = shopId;
             brain.PersonId = personId;
+        }
+
+        // WHAT IS ON THEIR HEAD, by the same socket every body wears.
+        var pose = go.GetComponentInChildren<Character3DPose>();
+        if (pose != null)
+        {
+            // perf-ok: once per body built.
+            var head = pose.gameObject.AddComponent<HeadSocket>();
+            head.ShowHair(hair);
+            head.ShowHeadgear(string.IsNullOrEmpty(headgear) ? null : ItemCatalog.Resolve(headgear));
         }
 
         view = go;

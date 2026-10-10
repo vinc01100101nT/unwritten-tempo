@@ -1,9 +1,4 @@
 {
-  "aae7640e-b2de-4b5c-bf33-d1c0f8d32132": {
-    "counts": {
-      "build-game.sh client": 1
-    }
-  },
   "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
     "counts": {
       "editor_play": 1
@@ -99,6 +94,11 @@
       "unwritten-server.app \"",
       "unwritten-server.app ];"
     ]
+  },
+  "dc17906e-ebd5-4df2-a130-c335c15bbdcc": {
+    "counts": {
+      "build-game.sh server": 1
+    }
   },
   "dc78c957-781a-4bde-9ad0-29bc85e6131b": {
     "counts": {

@@ -53,5 +53,24 @@
     "Worker_Male",
     "Zombie_Female",
     "Zombie_Male"
+  ],
+  "hairstyles": [
+    "hair01",
+    "hair02",
+    "hair03",
+    "hair04",
+    "hair05",
+    "hair06",
+    "hair07",
+    "hair08",
+    "hair09",
+    "hair10",
+    "hair11",
+    "hair12",
+    "hair13"
+  ],
+  "noHairModels": [
+    "Cow",
+    "Pug"
   ]
 }

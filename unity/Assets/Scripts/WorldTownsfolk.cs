@@ -48,6 +48,13 @@ public class WorldTownsfolk : ScriptableObject
         [Min(1)] public int level = 1;
         [Tooltip("Whether they call out the odd line when a player walks past.")]
         public bool barks = true;
+        [Tooltip("Their hairstyle, by its id in the hairstyle list (HeadPieces), or 'none'. Empty = the hair their " +
+                 "body model was made with.")]
+        public string hairStyle = "";
+        [Tooltip("Their hair colour, \"#RRGGBB\". Empty = the hairstyle's own colour.")]
+        public string hairColour = "";
+        [Tooltip("The Head item they wear, by its item id. Empty = nothing on their head.")]
+        public string headgear = "";
     }
 
     public List<Row> rows = new List<Row>();
@@ -116,6 +123,10 @@ public class WorldTownsfolk : ScriptableObject
             npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop);
             // Who they are to a quest — "talk to Gunnar" is decided against this, never against a name on screen.
             npc.PersonId = row.id;
+            // What is on their head — the same hair and the same Head items everybody wears.
+            HeadPieces.Resolve(row.model, row.hairStyle, row.hairColour, null, null, out var hairId, out var hairHex);
+            npc.Hair = HeadPieces.Pack(hairId, hairHex);
+            npc.Headgear = row.headgear ?? "";
             GameNetwork.PublishNpc(root, row.model);
             people++;
         }

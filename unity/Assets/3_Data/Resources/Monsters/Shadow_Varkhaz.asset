@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Viking_Male
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair13
+  hairColour: '#6B3521'
   level: 135
   str: 92
   agi: 72

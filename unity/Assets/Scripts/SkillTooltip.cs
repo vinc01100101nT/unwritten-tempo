@@ -129,6 +129,7 @@ public static class SkillTooltip
             case SkillTrigger.OnDamageDealt:       return "When you deal damage";
             case SkillTrigger.OnParry:             return "When you parry";
             case SkillTrigger.OnDamageReceived:    return "When you take damage";
+            case SkillTrigger.OnWeaponDrawn:       return "When you draw your weapon";
             default:                               return "Passive";
         }
     }

@@ -51,7 +51,11 @@ public class SpeechBubble : MonoBehaviour
     /// clearance. Use this instead of hand-computing a per-caller offset.</summary>
     public static void ShowOverHead(IStancePose pose, string label, float life)
     {
-        if (pose is Component c) Show(c.transform, pose.VisualWorldHeight + HeadClearance, label, life);
+        if (!(pose is Component c)) return;
+        // Above a worn hat as well as the head: the body's height no longer counts what is worn on it.
+        var socket = c.GetComponentInChildren<HeadSocket>();
+        float crown = Mathf.Max(pose.VisualWorldHeight, socket != null ? socket.TopAbove(c.transform) : 0f);
+        Show(c.transform, crown + HeadClearance, label, life);
     }
 
     /// <summary>Show a bark line in a white bubble that RIDES <paramref name="owner"/> at

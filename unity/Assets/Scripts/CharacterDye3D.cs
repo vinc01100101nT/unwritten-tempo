@@ -133,7 +133,7 @@ public class CharacterDye3D : MonoBehaviour
     {
         if (GameServer.RemovesPresentation(this)) return;
         if (addingForOther) showsOther = true;
-        renderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        renderers = BodyRenderers();
         mpb = new MaterialPropertyBlock();
     }
 
@@ -259,9 +259,23 @@ public class CharacterDye3D : MonoBehaviour
             for (int i = 0; i < renderers.Length; i++) if (renderers[i] == null) { stale = true; break; }
             if (!stale) return;
         }
-        renderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        renderers = BodyRenderers();
         // The mesh changed → the parts belong to the old body; read them again for the new one.
         parts = null;
+    }
+
+    // THE BODY'S renderers, never a worn head piece's. A hair or a hat is drawn with a texture of its own, and taken
+    // in here it would join the body's signature — the stamp that is saved as which body this character wears.
+    SkinnedMeshRenderer[] BodyRenderers()
+    {
+        var all = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        int n = 0;
+        for (int i = 0; i < all.Length; i++) if (!HeadPiece.IsPiece(all[i])) n++;
+        if (n == all.Length) return all;
+        var body = new SkinnedMeshRenderer[n];
+        n = 0;
+        for (int i = 0; i < all.Length; i++) if (!HeadPiece.IsPiece(all[i])) body[n++] = all[i];
+        return body;
     }
 
     void Apply()
@@ -278,7 +292,7 @@ public class CharacterDye3D : MonoBehaviour
     /// <paramref name="sources"/> and <paramref name="targets"/> are index-matched original→chosen colours; a part
     /// missing from them keeps its own colour. Null or empty parts hands over a count of zero, which shows the
     /// model's own colours.</summary>
-    public static void Paint(SkinnedMeshRenderer[] renderers, IReadOnlyList<Color> parts, IReadOnlyList<Color> sources,
+    public static void Paint(Renderer[] renderers, IReadOnlyList<Color> parts, IReadOnlyList<Color> sources,
                              IReadOnlyList<Color> targets, MaterialPropertyBlock block)
     {
         if (renderers == null || block == null) return;

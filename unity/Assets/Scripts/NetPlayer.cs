@@ -59,6 +59,15 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     void OnLookArrived(string _, string now) { if (bodyDye != null) bodyDye.ShowLook(now); }
     CharacterDye3D bodyDye;
 
+    /// <summary>THE HAIR THIS PERSON WEARS, worked out by the server from the character it was handed
+    /// (<see cref="HeadPieces.Resolve"/>, packed by <see cref="HeadPieces.Pack"/>) — the chosen style, or for a
+    /// character made before hairstyles the hair their body was made with, in the colour they gave it.</summary>
+    [SyncVar(hook = nameof(OnHairArrived))] string hair = "";
+
+    // Landed after the body was built; a body built later puts it on as it is made.
+    void OnHairArrived(string _, string now) { if (bodyHead != null) bodyHead.ShowHair(now); }
+    HeadSocket bodyHead;
+
     [SyncVar(hook = nameof(OnModelChanged))] public string modelName = "";
 
     /// <summary>Server-only: what this person looks like — the model and the colours — read from the character the
@@ -67,6 +76,13 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         modelName = progress != null ? (progress.modelName ?? "") : "";
         look = progress != null ? CharacterDye3D.PackLook(progress.modelName, progress.dyeSources, progress.dyeTargets) : "";
+        if (progress != null)
+        {
+            HeadPieces.Resolve(progress.modelName, progress.hairStyle, progress.hairColour,
+                               progress.dyeSources, progress.dyeTargets, out var hairId, out var hairHex);
+            hair = HeadPieces.Pack(hairId, hairHex);
+        }
+        else hair = "";
     }
 
     [SyncVar] Vector3 netPosition;
@@ -206,7 +222,17 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (serverGear == null || serverGear.Version == wornVersionSent) return;
         wornVersionSent = serverGear.Version;
         worn = WornList.Encode(serverGear);
+        // A DIFFERENT WEAPON STARTS ON THE BODY: what was drawn was the old one.
+        var weapon = serverGear.Get(EquipSlotType.Weapon);
+        var weaponDef = weapon != null ? weapon.def : null;
+        if (weaponDef != drawWeaponSeen)
+        {
+            drawWeaponSeen = weaponDef;
+            var host = ServerCombatUnit != null ? ServerCombatUnit.StatusHost : null;
+            if (host != null) host.WeaponSwapped();
+        }
     }
+    Item drawWeaponSeen;
 
     /// <summary>THE ONE PLACE THIS CONNECTION'S MAP REACHES ITS FIGHTER, called from every moment either half can
     /// become known.
@@ -565,7 +591,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); PushMyMastery(); PushMyRing(); PushWorn(); PushDraw(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned)
         {
             ReportMyPosition();
@@ -707,11 +733,97 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         netMove = said;
     }
 
+    // ---- combat or peace: the asks this person's machine sends, and the server's word sent back ----------------
+
+    /// <summary>Where this person's weapon is, said by the server to every machine — their own included.</summary>
+    [SyncVar(hook = nameof(OnDrawArrived))] DrawSaid netDraw;
+    /// <summary>Where this person's weapon is, as the server last said — what a body built later is shown.</summary>
+    public DrawSaid CurrentDraw => netDraw;
+    WeaponSocket bodySocket;
+    int drawVersionSent = int.MinValue;
+    float nextWeaponAskAt;
+    int drawnTooFastReports;
+    float orderedMoveUntil;   // a glide or shove this server ordered is fast on purpose — not a sprint, until then
+
+    void OnDrawArrived(DrawSaid _, DrawSaid now) => ShowDraw(now);
+
+    // Every body this machine draws for this person shows the same word: their own avatar on their own machine, the
+    // watched copy everywhere else. A body built later is shown it as it is made.
+    void ShowDraw(DrawSaid said)
+    {
+        if (isOwned)
+        {
+            WeaponDrawClient.Told(said.Phase);
+            if (WeaponSocket.OnMyAvatar != null) WeaponSocket.OnMyAvatar.ShowDraw(said);
+            return;
+        }
+        if (bodySocket != null) bodySocket.ShowDraw(said);
+    }
+
+    // SERVER: put the draw state on the wire when it changes. The phase's start travels on the clock both machines
+    // share, worked back from how long ago it began here.
+    void PushDraw()
+    {
+        var host = ServerCombatUnit != null ? ServerCombatUnit.StatusHost : null;
+        if (host == null || host.Draw.Version == drawVersionSent) return;
+        drawVersionSent = host.Draw.Version;
+        netDraw = new DrawSaid
+        {
+            phase = (byte)host.Draw.Phase,
+            at = NetworkTime.time - (Time.time - host.Draw.PhaseStart),
+            window = host.Draw.Window,
+        };
+    }
+
+    /// <summary>This person asks for their weapon out (true) or away (false). The server decides; a dead person, a
+    /// person leaving, and asks faster than a few a second are turned away.</summary>
+    [Command]
+    public void CmdWeapon(bool draw)
+    {
+        if (Leaving || Time.time < nextWeaponAskAt) return;
+        nextWeaponAskAt = Time.time + 0.15f;
+        var unit = ServerCombatUnit;
+        var host = unit != null ? unit.StatusHost : null;
+        if (host == null || unit.IsDead) return;
+        if (draw) host.RequestDraw(); else host.RequestSheathe();
+    }
+
+    /// <summary>This person started or stopped walking. Walking puts the weapon away.</summary>
+    [Command]
+    public void CmdWalking(bool on)
+    {
+        if (Leaving || !on) return;
+        var host = ServerCombatUnit != null ? ServerCombatUnit.StatusHost : null;
+        if (host != null) host.RequestSheathe();
+    }
+
+    // SERVER: a drawn weapon cannot sprint. The sprint report is this person's own machine talking, so their measured
+    // speed decides as well: three accepted steps in a row faster than a run puts the weapon away, said in the log.
+    void PutAwayIfSprintingDrawn()
+    {
+        var unit = ServerCombatUnit;
+        var host = unit != null ? unit.StatusHost : null;
+        if (host == null || host.Draw.IsSheathed || Time.time < orderedMoveUntil) { drawnTooFastReports = 0; return; }
+        var spec = CharacterSpec.Active;
+        float moveMult = unit.States != null ? unit.States.MoveMult : 1f;
+        if (spec == null || !WeaponDrawMath.FasterThanRunning(acceptedGroundSpeed, spec.RunGearSpeed, moveMult)) { drawnTooFastReports = 0; return; }
+        if (++drawnTooFastReports < 3) return;
+        drawnTooFastReports = 0;
+        if (host.Draw.Phase == DrawPhase.Drawn || host.Draw.Phase == DrawPhase.Drawing)
+        {
+            host.RequestSheathe();
+            GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(unit), " ", playerName, " moved faster than a run with their weapon out (",
+                acceptedGroundSpeed.ToString("0.##"), " u/s) — putting it away"));
+        }
+    }
+
     [Command]
     public void CmdSprinting(bool on)
     {
         if (Leaving || netSprinting == on) return;
         netSprinting = on;
+        // Sprinting puts the weapon away.
+        if (on && ServerCombatUnit != null && ServerCombatUnit.StatusHost != null) ServerCombatUnit.StatusHost.RequestSheathe();
         // AND THE PUFF THAT GOES WITH IT, said from here so it reaches every screen — the person's own included.
         // Their machine no longer plays a cue it decided itself; it plays what the world tells it, exactly as it
         // already does for their own spells.
@@ -1022,6 +1134,13 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // It is forgiven HERE rather than at each of the three kinds, because this is the one door they all pass
         // through: a fourth kind added later inherits it instead of quietly missing it.
         ForgiveNextMove();
+        // And a move this server ordered is not a sprint either: how long it lasts, from its own distance and speed.
+        var spec = CharacterSpec.Active;
+        float runSpeed = spec != null ? spec.RunGearSpeed : 1f;
+        float lasts = motion.kind == Motion.Kind.Glide
+            ? WeaponDrawMath.OrderedMoveSeconds(Vector3.Distance(netPosition, motion.destination), runSpeed * motion.speed, motion.seconds, LongestHop)
+            : motion.kind == Motion.Kind.Shove ? WeaponDrawMath.OrderedMoveSeconds(0f, 1f, motion.seconds, LongestHop) : 0f;
+        orderedMoveUntil = Mathf.Max(orderedMoveUntil, Time.time + lasts);
         lookSentToOwner = motion.look;
         TargetMove(owner, motion);
     }
@@ -2924,6 +3043,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             // this is the only place that holds both the distance and the time it took. Flat, like the check
             // above: falling is not travelling, and a body does not break into a run for stepping off a ledge.
             acceptedGroundSpeed = elapsed > 0f ? Mathf.Sqrt(movedSqr) / elapsed : 0f;
+            PutAwayIfSprintingDrawn();
             lastAcceptedAt = now;
             refusedInARow = 0;
             haveAcceptedAPosition = true;
@@ -3143,7 +3263,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (body != null) Destroy(body);
         body = null;
         bodyGear = null;
+        bodySocket = null;
         bodyDye = null;
+        bodyHead = null;
         bodyVisual = null;
         bodyStance = null;
         bodyLoading = false;
@@ -3239,6 +3361,16 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             var socket = pose.gameObject.AddComponent<WeaponSocket>();
             socket.ShowWeaponOf(bodyGear);
             DressTheBody();
+            // …and where that weapon is: in their hand or on their body, as the server last said.
+            bodySocket = socket;
+            socket.ShowDraw(netDraw);
+
+            // AND WHAT IS ON THEIR HEAD: the hair the server worked out for them, and the Head item in that same
+            // worn set — the same socket every body wears.
+            // perf-ok: once per body built.
+            bodyHead = pose.gameObject.AddComponent<HeadSocket>();
+            bodyHead.ShowHair(hair);
+            bodyHead.ShowHeadgearOf(bodyGear);
 
             // AND THE NUMBERS, on the body that shows them. Marked as a watched copy first thing: this body does
             // not get to decide it died or how hard it was hit — both arrive from the server like every other fact

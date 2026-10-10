@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Cowboy_Female
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair02
+  hairColour: '#8B7643'
   level: 165
   str: 99
   agi: 97

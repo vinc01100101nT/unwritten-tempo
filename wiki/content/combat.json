@@ -199,6 +199,33 @@
       "text": "A skill that triggers off your hits can never chain into itself, so a combo can't spiral out of control — its charges are its budget, and that's the ceiling."
     },
     {
+      "type": "heading",
+      "text": "Weapon out or put away"
+    },
+    {
+      "type": "paragraph",
+      "text": "Your weapon is either **in your hands** or **put away on your body**. Press **X** to take it out or put it away. Attacking, or pressing one of your weapon's skills, takes it out first, and the attack or skill follows the moment it is in hand. Starting to walk (**Shift**) or to sprint (**V**) puts it away: you can only sprint with your weapon put away."
+    },
+    {
+      "type": "paragraph",
+      "text": "Taking it out or putting it away takes **0.2 seconds plus 0.006 seconds for each point of the weapon's weight** — 0.74 seconds for a weapon of weight 90. Your legs keep moving while your arms do it."
+    },
+    {
+      "type": "paragraph",
+      "text": "With your weapon put away, and **5 seconds** gone by since you last dealt or took a blow:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "your health and mana come back **twice as fast** on their own — healing skills and potions heal what they always heal",
+        "monsters notice you from **half** the distance they otherwise would"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Monsters live by the same rules: they take their weapons out while they hunt and put them away when they give up."
+    },
+    {
       "type": "quote",
       "text": [
         "*Status: the model and rules above are set; specific numbers and the size matchup are in tuning.*"

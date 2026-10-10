@@ -189,6 +189,7 @@ GROUPS = {
     "shadow-looks": {
         "roots": [(os.path.join(DATA, "Resources", "Monsters"), ".asset")],
         "files": [os.path.join(DATA, "Resources", "CharacterDyeParts.asset"),
+                  os.path.join(DATA, "Resources", "HeadPieces.asset"),
                   os.path.join(REPO, "unity", "Assets", "AddressableAssetsData", "AssetGroups", "Characters.asset")],
         "run": [sys.executable, os.path.join(TOOLS, "check-shadow-looks.py")],
         "headline": "A shadow's look names a body the game cannot load, or a colour on a part that body does not have:",
@@ -197,6 +198,24 @@ GROUPS = {
         "files": [os.path.join(TOOLS, "check-shadow-looks.py")],
         "run": [sys.executable, os.path.join(TOOLS, "prove-shadow-looks-check.py")],
         "headline": "The shadow-look checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
+    # What everybody wears on their head. A hairstyle or a hat named by a text that matches nothing is drawn as no
+    # hair or no hat, and a body address left on the model file draws the model's own hair under the chosen one.
+    "head-pieces": {
+        "roots": [(os.path.join(DATA, "Resources", "Items"), ".asset"),
+                  (os.path.join(REPO, "unity", "Assets", "2_Generated", "Characters"), ".prefab")],
+        "files": [os.path.join(DATA, "Resources", "HeadPieces.asset"),
+                  os.path.join(DATA, "Resources", "WorldTownsfolk.asset"),
+                  os.path.join(REPO, "unity", "Assets", "AddressableAssetsData", "AssetGroups", "Characters.asset")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-head-pieces.py")],
+        "headline": "Something worn on the head names a hairstyle, a hat or a body the game cannot draw:",
+    },
+    "head-pieces-checker": {
+        "files": [os.path.join(TOOLS, "check-head-pieces.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-head-pieces-check.py")],
+        "headline": "The hair and headgear checker no longer sees every planted fault, so its silence proves nothing "
                     "until this passes:",
         "mine_by_construction": True,
     },
@@ -211,6 +230,21 @@ GROUPS = {
         "run": [sys.executable, os.path.join(TOOLS, "prove-editor-writes-check.py")],
         "headline": "The editor-writes checker no longer sees an unclicked write, so its silence proves nothing "
                     "until this passes:",
+        "mine_by_construction": True,
+    },
+    # The other half of NOEDITORWRITES: Unity's own components saved into a scene that rewrite themselves in the
+    # editor. One of them stopped every build at "Modified Scenes must be saved" (2026-10-09).
+    "scene-stays-clean": {
+        "roots": [(SCENES, ".unity"), (AUTHORED, ".prefab"), (GENERATED, ".prefab"), (DATA, ".prefab")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-scene-stays-clean.py")],
+        "headline": "Something saved into a scene rewrites itself in the editor, which marks the scene modified "
+                    "and stops every build:",
+    },
+    "scene-stays-clean-checker": {
+        "files": [os.path.join(TOOLS, "check-scene-stays-clean.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-scene-stays-clean-check.py")],
+        "headline": "The scene-stays-clean checker no longer sees every planted fault, so its silence proves "
+                    "nothing until this passes:",
         "mine_by_construction": True,
     },
     "client-math": {

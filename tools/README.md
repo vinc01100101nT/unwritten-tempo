@@ -211,6 +211,18 @@ tools/prove-editor-writes-check.py   # plants the three real 2026-09-20 shapes a
 A write on such a path passes only with `// editor-write-ok: <why>` beside it — the reason sits with the code, as
 `// perf-ok:` does. `cs_methods.py` is the shared method-and-call reader this and the client-math check use.
 
+## check-scene-stays-clean.py · prove-scene-stays-clean-check.py
+
+Is anything saved into a scene — or into a prefab a scene places — that rewrites itself in the editor and marks the
+scene modified? (The other half of RULE NOEDITORWRITES: Unity's own components, not our code.)
+
+```bash
+tools/check-scene-stays-clean.py           # every scene + every prefab they place: no layout, no fontless text
+tools/prove-scene-stays-clean-check.py     # plants the 2026-10-09 hotbar row layout and three siblings, expects each named
+```
+
+Built 2026-10-09, after a row layout saved on the hotbar stopped every build at "Modified Scenes must be saved".
+
 ## check-client-math.py · prove-client-math-check.py · client-math-baseline.txt
 
 Does runtime code work out a game number on a path the player's machine can run? (RULE NOCLIENTMATH.)

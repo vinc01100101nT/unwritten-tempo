@@ -24,4 +24,21 @@ public class WeaponGrip : MonoBehaviour
     public Vector3 localEuler;
     [Tooltip("Local scale under the hand bone (leave 1,1,1 unless the mesh is authored at the wrong size).")]
     public Vector3 localScale = Vector3.one;
+
+    // ---- PUT AWAY: where the weapon rests on the body while its holder is at peace ----------------------------------
+    // Local to the body bone below, so it rides the body's every move. Drawn at the same size as in the hand.
+
+    [Header("Put away (on the body)")]
+    [Tooltip("True once the put-away place below has been set. A weapon without one is hidden while put away.")]
+    public bool stowAuthored;
+    [Tooltip("The body bone the weapon rests on while put away.")]
+    public HumanBodyBones stowBone = HumanBodyBones.Hips;
+    [Tooltip("Where the weapon rests, local to the bone above.")]
+    public Vector3 stowPosition;
+    [Tooltip("How it is turned there, local to the bone above.")]
+    public Vector3 stowEuler;
+    [Tooltip("A pair weapon (Katar, Axe): where the copy in the other hand rests, on the same bone.")]
+    public Vector3 stowPairPosition;
+    [Tooltip("A pair weapon: how that copy is turned there.")]
+    public Vector3 stowPairEuler;
 }

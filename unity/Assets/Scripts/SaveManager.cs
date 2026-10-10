@@ -157,6 +157,8 @@ public class SaveManager : MonoBehaviour
     {
         bodyToWear = true;
         character.SetDye(AccountSession.DyeSources, AccountSession.DyeTargets, AccountSession.ModelName);
+        // Always the whole value, empty included — or the last character's hair stays on this one.
+        character.SetHair(AccountSession.HairStyle, AccountSession.HairColour);
     }
 
     /// <summary>Push a recolour to the character record. Appearance is not progress, so it never waits for the

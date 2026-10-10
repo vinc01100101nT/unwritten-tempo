@@ -498,6 +498,21 @@ public class Character : MonoBehaviour, ICombatUnit
         OnAppearanceChanged?.Invoke();
     }
 
+    // The hairstyle (HeadPieces id, or HeadPieces.NoHair) and its colour "#RRGGBB" (persisted). Both empty = never
+    // chosen: the character wears the hair their body model was made with (HeadPieces.Resolve).
+    public string HairStyle { get; private set; } = "";
+    public string HairColour { get; private set; } = "";
+
+    /// <summary>Replace the hair and notify listeners — the creation screen, a loaded save, or a character chosen.
+    /// Always the whole value: setting it back to empty is how a never-chosen hair is told apart from the last
+    /// character's.</summary>
+    public void SetHair(string style, string colour)
+    {
+        HairStyle  = style ?? "";
+        HairColour = colour ?? "";
+        OnAppearanceChanged?.Invoke();
+    }
+
     [Header("Audio")]
     [Tooltip("The sound of a blocked hit.")]
     public SfxSet blockSfx;
@@ -675,6 +690,8 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Call off a walk started by <see cref="WalkIntoRange"/> without running what it was holding.</summary>
     public void StopWalkingIntoRange() { var r = Rig(); if (r != null) r.DropTheWait(); }
+    /// <summary>Drop the wish to sprint — a weapon skill is taking the weapon out, and sprinting is for peace.</summary>
+    public void StopSprinting() { var r = Rig(); if (r != null) r.StopSprinting(); }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     {
         if (States != null && States.DisablesBlocked) return;   // a shove is a disable: the window turns it away
@@ -2026,6 +2043,8 @@ public class Character : MonoBehaviour, ICombatUnit
         d.modelName  = DyeModel;
         d.dyeSources = DyeSources;
         d.dyeTargets = DyeTargets;
+        d.hairStyle  = HairStyle;
+        d.hairColour = HairColour;
 
         d.stamina = Stamina;
         d.savePointMap = SavePointMap;
@@ -2287,6 +2306,9 @@ public class Character : MonoBehaviour, ICombatUnit
         // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave
         // whatever the character already wears rather than stripping it to nothing.
         if (!string.IsNullOrEmpty(d.modelName)) SetDye(d.dyeSources, d.dyeTargets, d.modelName);
+        // The hair always comes back exactly as saved, empty included — empty is "never chosen", and leaving the
+        // last character's hair in place instead would dress this one in it.
+        SetHair(d.hairStyle, d.hairColour);
 
         // TIMED EFFECTS BEFORE HP/MP: a max-health or max-mana buff is part of the maxima the clamp below reads, so a
         // character saved above their plain maximum would otherwise lose the difference on every login.

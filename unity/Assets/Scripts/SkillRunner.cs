@@ -290,6 +290,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (!CanStart()) return false;
+        // A weapon skill needs the weapon in hand. Pressed with it away, the press is held, the weapon comes out, and
+        // the press runs again — aimed fresh — once the server says it is in hand.
+        if (Mine && def.weaponType != WeaponType.None && !WeaponDrawClient.Ready)
+        {
+            (Caster as Character)?.StopSprinting();
+            WeaponDrawClient.HoldPress(this);
+            return false;
+        }
 
         // The aim is a SEQUENCE derived from the ticks (SkillDef.NeedsUnitPick / NeedsAimPoint), never an authored
         // field: pick an entity (only when target effects need one), then pick a point (only when a ground tick or a

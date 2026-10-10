@@ -117,6 +117,15 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         var model = roster.Resolve(body.modelName);
         if (model is null) return Bad($"no character model called '{body.modelName}'");
 
+        // THE HAIR, always explicit for a new character: a hairstyle that body can wear (or "none"), and its colour.
+        // Empty is kept for characters made before hairstyles, so a new one may never be created that way.
+        var hairStyle = body.hairStyle?.Trim() ?? "";
+        if (hairStyle.Length == 0) return Bad("choose a hairstyle");
+        if (!roster.AllowsHair(model, hairStyle)) return Bad($"'{model}' cannot wear the hairstyle '{hairStyle}'");
+        var hairColour = body.hairColour?.Trim() ?? "";
+        if (hairStyle == Roster.NoHair) hairColour = "";
+        else if (!IsColour(hairColour)) return Bad("the hair colour must look like #RRGGBB");
+
         // The six stats chosen on the creation hexagon. Only their SHAPE is checked here — six whole numbers, 1 to 9 —
         // so nothing absurd is stored. Whether they are a spread the hexagon can make is the game's own rule
         // (UnitStatMath.IsCreationSpread), applied by the map server on the character's first entry; it is not
@@ -126,7 +135,10 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         // The look and the stats go straight into the save document — the character has no other home for them.
         // It carries no version, which is exactly what marks this character as never played.
-        var born = JsonSerializer.Serialize(new { modelName = model, dyeSources = sources, dyeTargets = targets, primary });
+        var born = JsonSerializer.Serialize(new
+        {
+            modelName = model, dyeSources = sources, dyeTargets = targets, hairStyle, hairColour, primary,
+        });
 
         try
         {
@@ -249,6 +261,8 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
             modelName = look.ModelName,
             dyeSources = look.DyeSources,
             dyeTargets = look.DyeTargets,
+            hairStyle = look.HairStyle,
+            hairColour = look.HairColour,
             level = Progress.LevelOf(progress.RootElement),
             createdAt = rows.GetDateTime(3),
             updatedAt = rows.GetDateTime(4),
@@ -438,6 +452,8 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
             modelName = look.ModelName,
             dyeSources = look.DyeSources,
             dyeTargets = look.DyeTargets,
+            hairStyle = look.HairStyle,
+            hairColour = look.HairColour,
             level = Progress.LevelOf(progress.RootElement),
             createdAt = rows.GetDateTime(3),
             updatedAt = rows.GetDateTime(4),
@@ -447,6 +463,7 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
     static IResult Bad(string why) => Results.Json(new { error = why }, statusCode: 400);
     static IResult NoSuchCharacter() => Results.Json(new { error = "no such character" }, statusCode: 404);
 
-    public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets, int[]? primary);
+    public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets,
+                                    string? hairStyle, string? hairColour, int[]? primary);
     public sealed record AppearanceBody(string? modelName, string[]? dyeSources, string[]? dyeTargets);
 }

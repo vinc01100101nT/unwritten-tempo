@@ -40,6 +40,10 @@ public static class PlayerModelSwap
         return (i >= 0 && i < p.Count) ? Path.GetFileNameWithoutExtension(p[i]) : "(none)";
     }
 
+    // The bare bodies the game wears (HeadPieceBaker), one per model file: a model file still carries the hair it
+    // was made with, and swapped on with the hair the player wears it would show two.
+    const string BareDir = "Assets/2_Generated/Characters/Bodies";
+
     static List<string> Ensure()
     {
         if (paths != null) return paths;
@@ -47,8 +51,9 @@ public static class PlayerModelSwap
         foreach (var guid in AssetDatabase.FindAssets("t:GameObject", new[] { RiggedDir }))
         {
             string p = AssetDatabase.GUIDToAssetPath(guid);
-            if (p.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase) && IsPlayableHumanoid(p))
-                paths.Add(p);
+            if (!p.EndsWith(".fbx", System.StringComparison.OrdinalIgnoreCase) || !IsPlayableHumanoid(p)) continue;
+            string bare = BareDir + "/" + Path.GetFileNameWithoutExtension(p) + ".prefab";
+            paths.Add(AssetDatabase.LoadAssetAtPath<GameObject>(bare) != null ? bare : p);
         }
         paths.Sort(System.StringComparer.OrdinalIgnoreCase);
         return paths;

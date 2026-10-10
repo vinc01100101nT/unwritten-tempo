@@ -130,6 +130,11 @@ public class CharacterSpec : ScriptableObject
              "for the same cadence; the damage just connects at this point — 0.7 = 70% in, the natural contact " +
              "moment — instead of right at the end.")]
     [Range(0.1f, 1f)] public float hitTiming = 0.70f;
+    [Tooltip("Fraction (0..1) of the swing at which a weapon wielded in both hands (the katar, the axe) lands its SECOND " +
+             "hit, from the other hand. Always after the first — 0.9 = the other hand's slash in their attacks.")]
+    [Range(0.1f, 1f)] public float offHandHitTiming = 0.90f;
+    [Tooltip("How hard that second hit lands, as a share of a full swing — 0.5 = half. It rolls its own miss and crit.")]
+    [Range(0f, 1f)] public float offHandPower = 0.5f;
 
     // WHY THESE TWO LIVE HERE: every fighter — a person or a creature — swings bare-handed by the same rule, so the
     // reach and the cadence have ONE home. Creatures used to carry their own typed copy of both.

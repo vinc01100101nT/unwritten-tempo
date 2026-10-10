@@ -611,6 +611,12 @@ public class SkillComposerWindow : EditorWindow
                        "The pointer lives on the ITEM (its 'runs skill' field in the Consumables table), which is why " +
                        "there is nothing to pick here. A skill carrying only this trigger never reaches the hotbar and " +
                        "never announces itself, and it pays no MP or cooldown — being consumed is the cost.";
+            case SkillTrigger.OnWeaponDrawn:
+                return "YOUR WEAPON FINISHED COMING OUT — the draw ended and it is in your hands. Always about YOU; no " +
+                       "target is handed over, so author this skill's effects on the caster.\n\n" +
+                       "Fires at most once every 15 seconds per unit, so drawing over and over can't keep a buff up — " +
+                       "keep the buff shorter than that. Creatures fire it too when they draw. This is the moment each " +
+                       "weapon's draw buff answers.";
             default:
                 return "";
         }

@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Ninja_Female
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair02
+  hairColour: '#497F79'
   level: 150
   str: 99
   agi: 83

@@ -127,14 +127,11 @@ public static class UIShellBuilder
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 42);
-        // Three rows of nine (HotbarBindings), first row on top — the same grid HotbarPanel lays out at runtime.
+        // Three rows of nine (HotbarBindings), first row on top — HotbarPanel adds the grid that lays them out, at
+        // runtime only. NO LAYOUT GROUP IS BAKED HERE: a layout group runs in the editor too, and every script reload
+        // makes Unity reset the cells it positions, which marks the open scene modified and stops every build at
+        // "Modified Scenes must be saved" (measured 2026-10-09).
         holder.rectTransform.sizeDelta = new Vector2(HotbarBindings.PerRow * 54 - 6, HotbarBindings.Rows * 54 - 6);
-        var grid = holder.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(48, 48);
-        grid.spacing = new Vector2(6, 6);
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = HotbarBindings.PerRow;
-        grid.childAlignment = TextAnchor.MiddleCenter;
         for (int i = 0; i < HotbarBindings.SlotCount; i++)
             UiKit.Round(NewColor("Hotslot", holder.transform, UiKit.ButtonEdge), UiKit.ButtonRadius).rectTransform.sizeDelta = new Vector2(48, 48);
     }

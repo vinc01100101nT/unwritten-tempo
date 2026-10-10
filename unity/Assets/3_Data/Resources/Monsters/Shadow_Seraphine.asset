@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Knight_Golden_Female
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair04
+  hairColour: '#8B7643'
   level: 120
   str: 40
   agi: 61

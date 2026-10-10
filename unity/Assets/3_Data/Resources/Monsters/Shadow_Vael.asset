@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Soldier_Male
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair10
+  hairColour: '#5C3E2A'
   level: 140
   str: 95
   agi: 76

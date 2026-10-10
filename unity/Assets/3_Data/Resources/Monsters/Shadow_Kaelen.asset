@@ -25,16 +25,16 @@ MonoBehaviour:
   modelName: Wizard
   dyeSources:
   - '#1F1F1F'
-  - '#13263A'
   - '#3B230F'
   - '#27425D'
   - '#926F35'
   dyeTargets:
   - '#000000'
-  - '#5D261C'
   - '#000000'
   - '#5D261C'
   - '#67423C'
+  hairStyle: hair11
+  hairColour: '#9C9C9C'
   level: 155
   str: 63
   agi: 87

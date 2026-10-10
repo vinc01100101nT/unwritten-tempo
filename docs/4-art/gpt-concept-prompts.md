@@ -159,8 +159,8 @@ Generate **Tier 1 first**, eyeball all three together in Unity as a set — conf
 
 Concept art is decoupled from code, but only some of these are wieldable **today**. Real `WeaponType` members: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm, Wand, Scythe, Shuriken**.
 
-- **Wand** and **Scythe** have their own types. The Scythe has its own attack-animation slot, which plays the sword swing until a scythe clip exists.
-- **Shuriken** has its own type and attack-animation slot; the slot plays the sword swing until a shuriken clip exists.
+- **Wand** and **Scythe** have their own types and their own attack animations.
+- **Shuriken** has its own type and two attack animations: a swing and a throw.
 - **Knuckle** (fists) usually needs no held mesh — skip, or generate simple knuckle-guards.
 
 ## Quality / variants

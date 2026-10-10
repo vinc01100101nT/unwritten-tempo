@@ -386,7 +386,10 @@ public class AgentLink : MonoBehaviour
         AccountClient.ListModels((models, err) =>
         {
             if (models == null || models.Length == 0) { pendingError = err ?? "no character models offered"; pendingDone = true; return; }
-            AccountClient.CreateCharacter(name, models[0], null, null, UnitStatMath.EvenCreationSpread(), (info, e2) =>
+            // The hair the body was made with — a character is always created with an explicit hair.
+            HeadPieces.Resolve(models[0], "", "", null, null, out var hairStyle, out var hairColour);
+            AccountClient.CreateCharacter(name, models[0], null, null, hairStyle, hairColour,
+                                          UnitStatMath.EvenCreationSpread(), (info, e2) =>
             {
                 if (info == null) { pendingError = e2 ?? "could not create"; pendingDone = true; return; }
                 AccountClient.ListCharacters((list, e3) => { characters = list; pendingError = e3; pendingDone = true; });
@@ -406,7 +409,7 @@ public class AgentLink : MonoBehaviour
                 if (string.Equals(c.name, which, StringComparison.OrdinalIgnoreCase)) pick = c;
         if (pick == null) { Text(() => "no character '" + which + "'. " + CharacterListText()); return; }
 
-        AccountSession.PlayAs(pick.id, pick.name, pick.modelName, pick.dyeSources, pick.dyeTargets);
+        AccountSession.PlayAs(pick.id, pick.name, pick.modelName, pick.dyeSources, pick.dyeTargets, pick.hairStyle, pick.hairColour);
         var settled = Settling();
         WaitFor(() => InWorld() && settled() ? "in the world" : null, 60f, "not in the world after 60s");
     }

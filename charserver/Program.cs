@@ -185,7 +185,11 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
                set progress = $2::jsonb
                             || jsonb_build_object('modelName',  progress -> 'modelName',
                                                   'dyeSources', progress -> 'dyeSources',
-                                                  'dyeTargets', progress -> 'dyeTargets'),
+                                                  'dyeTargets', progress -> 'dyeTargets')
+                            -- THE HAIR, only where one is stored: a key the stored save never had must not be
+                            -- written in as a null over the empty one the map server sent.
+                            || jsonb_strip_nulls(jsonb_build_object('hairStyle',  progress -> 'hairStyle',
+                                                                    'hairColour', progress -> 'hairColour')),
                    updated_at = now()
              where id = $1 and deleted_at is null and ($3 = 0 or handover = $3) returning id", conn, tx);
     cmd.Parameters.Add(new Npgsql.NpgsqlParameter { Value = characterId });

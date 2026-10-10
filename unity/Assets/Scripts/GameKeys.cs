@@ -17,6 +17,8 @@ public static class GameKeys
     public const KeyCode Jump = KeyCode.Space;
     public const KeyCode Dash = KeyCode.E;
     public const KeyCode SprintToggle = KeyCode.V;
+    /// <summary>Takes the weapon out, or puts it away.</summary>
+    public const KeyCode DrawToggle = KeyCode.X;
     /// <summary>Held: walk instead of run. Either Shift.</summary>
     public const KeyCode Walk = KeyCode.LeftShift, WalkAlt = KeyCode.RightShift;
     public const KeyCode Interact = KeyCode.F;
@@ -63,7 +65,7 @@ public static class GameKeys
     // Every fixed key above, once. Kept beside the constants so a new key is added in one place.
     static readonly KeyCode[] Fixed =
     {
-        MoveForward, MoveLeft, MoveBack, MoveRight, Jump, Dash, SprintToggle, Walk, WalkAlt, Interact, AutoPilot,
+        MoveForward, MoveLeft, MoveBack, MoveRight, Jump, Dash, SprintToggle, DrawToggle, Walk, WalkAlt, Interact, AutoPilot,
         ShowDrops, ShowDropsAlt, Inventory, CharacterWindow, Skills, Calendar, Map, Quests, Chat, ChatAlt,
         System, DialogNext, PerformanceOverlay, PerformancePeakReset,
     };

@@ -46,7 +46,9 @@ public static class Sides
         if (side == Side.Players) playerSide.Add(creature);
     }
 
-    /// <summary>The living creature on the players' side nearest <paramref name="from"/> in <paramref name="map"/>, or null.</summary>
+    /// <summary>The living creature on the players' side nearest <paramref name="from"/> in <paramref name="map"/>, or null.
+    /// Nearest as a creature notices it: one at peace counts as further away, and <paramref name="sqr"/> is that
+    /// weighed distance (<see cref="WeaponDrawMath.NoticedSqr"/>).</summary>
     public static Health NearestPlayerSideCreature(Vector3 from, string map, out float sqr)
     {
         Health best = null;
@@ -58,13 +60,15 @@ public static class Sides
             if (!h.isActiveAndEnabled || h.IsDead) continue;
             if (!string.IsNullOrEmpty(map) && h.Map != map) continue;
             Vector3 d = h.transform.position - from; d.y = 0f;
-            if (d.sqrMagnitude < sqr) { sqr = d.sqrMagnitude; best = h; }
+            var host = h.StatusHost;
+            float weighed = WeaponDrawMath.NoticedSqr(d.sqrMagnitude, host != null && host.PeaceBonusesOn);
+            if (weighed < sqr) { sqr = weighed; best = h; }
         }
         return best;
     }
 
     /// <summary>The living creature on the creatures' side nearest <paramref name="from"/> in <paramref name="map"/>, or
-    /// null — what a creature fighting for the players hunts.</summary>
+    /// null — what a creature fighting for the players hunts. Nearest as noticed: one at peace counts as further away.</summary>
     public static Health NearestCreatureSideCreature(Vector3 from, string map)
     {
         Health best = null;
@@ -77,7 +81,9 @@ public static class Sides
             var h = ai != null ? ai.Health : null;
             if (h == null || h.IsDead || h.side != Side.Creatures) continue;
             Vector3 d = ai.transform.position - from; d.y = 0f;
-            if (d.sqrMagnitude < bestSqr) { bestSqr = d.sqrMagnitude; best = h; }
+            var host = h.StatusHost;
+            float weighed = WeaponDrawMath.NoticedSqr(d.sqrMagnitude, host != null && host.PeaceBonusesOn);
+            if (weighed < bestSqr) { bestSqr = weighed; best = h; }
         }
         return best;
     }

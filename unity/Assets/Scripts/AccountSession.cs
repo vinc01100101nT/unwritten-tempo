@@ -70,6 +70,11 @@ public static class AccountSession
     public static string[] DyeSources { get; private set; }
     public static string[] DyeTargets { get; private set; }
 
+    /// <summary>The chosen hairstyle and its colour, as the list answered — both empty for a character made before
+    /// hairstyles (see <see cref="HeadPieces.Resolve"/>).</summary>
+    public static string HairStyle { get; private set; }
+    public static string HairColour { get; private set; }
+
     /// <summary>True once a character has been chosen — the only condition under which anything can be
     /// loaded or saved, and the one condition under which the world may come up at all.</summary>
     public static bool IsActive => !string.IsNullOrEmpty(AccessToken) && !string.IsNullOrEmpty(CharacterId);
@@ -108,13 +113,15 @@ public static class AccountSession
     /// <summary>Choose the character to play. The appearance comes from the list the server answered with,
     /// which reads it out of that character's save — the same document the game loads a moment later.</summary>
     public static void PlayAs(string characterId, string characterName, string modelName,
-                              string[] dyeSources, string[] dyeTargets)
+                              string[] dyeSources, string[] dyeTargets, string hairStyle, string hairColour)
     {
         CharacterId = characterId;
         CharacterName = characterName;
         ModelName = modelName;
         DyeSources = dyeSources ?? Array.Empty<string>();
         DyeTargets = dyeTargets ?? Array.Empty<string>();
+        HairStyle = hairStyle ?? "";
+        HairColour = hairColour ?? "";
         OnChanged?.Invoke();
     }
 
@@ -124,14 +131,14 @@ public static class AccountSession
     /// character list is the next thing that can happen.</summary>
     public static void LeaveCharacter()
     {
-        CharacterId = CharacterName = ModelName = null;
+        CharacterId = CharacterName = ModelName = HairStyle = HairColour = null;
         DyeSources = DyeTargets = null;
         OnChanged?.Invoke();
     }
 
     public static void SignOut()
     {
-        AccessToken = AccountId = CharacterId = CharacterName = ModelName = null;
+        AccessToken = AccountId = CharacterId = CharacterName = ModelName = HairStyle = HairColour = null;
         DyeSources = DyeTargets = null;
         IsGm = false;   // signed out is nobody, and nobody is trusted with commands
         OnChanged?.Invoke();

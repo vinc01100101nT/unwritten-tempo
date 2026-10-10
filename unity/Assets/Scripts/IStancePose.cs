@@ -44,6 +44,11 @@ public interface IStancePose
     /// <summary>Hand back to the visual's own movement-sampled Idle/Walk/Run (self-driving units).</summary>
     void ResumeSelfDrive();
 
+    /// <summary>Which stance is shown this frame. The held weapon's standing idle shows only on Idle and its carry
+    /// pose only on the travel gears (Idle/Walk/Run/Sprint); every other stance plays its own whole-body clip. Told
+    /// every frame by the stance choke point, before the stance is played.</summary>
+    void SetShownStance(StanceId id);
+
     /// <summary>The character's current rendered world-space height (0 before it's renderable) — lets gameplay place
     /// head-anchored UI (e.g. an NPC speech bubble) without caring how the visual renders.</summary>
     float VisualWorldHeight { get; }

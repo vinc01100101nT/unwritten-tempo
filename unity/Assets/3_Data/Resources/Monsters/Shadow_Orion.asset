@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: BlueSoldier_Male
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair10
+  hairColour: '#5C3E2A'
   level: 130
   str: 88
   agi: 70

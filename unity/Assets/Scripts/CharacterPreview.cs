@@ -253,6 +253,8 @@ public class CharacterPreview : MonoBehaviour
             // exists under this screen, so the world body is bound to the same colours — which is why a body only
             // SHOWS colours stamped for it and never erases them. Nothing is saved until the character is created.
             dye = body.AddComponent<CharacterDye3D>();
+            // …and the hair being chosen, held by that same character.
+            body.AddComponent<HeadSocket>();
             ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
             OnBodyChanged?.Invoke();
         });

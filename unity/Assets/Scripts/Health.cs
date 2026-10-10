@@ -751,6 +751,9 @@ public class Health : MonoBehaviour, ICombatUnit
         // The ONE dealt-damage choke (basics and skills both funnel here) → also the OnDamageDealt fire-site
         // (victim = whatever was just hit).
         PassiveEvents.Fire(attacker, SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
+        // A blow dealt restarts the attacker's quiet spell, the same as a blow taken does.
+        var attackerHost = attacker.StatusHost;
+        if (attackerHost != null) attackerHost.NoteDealtBlow();
         // ManaLeech skill window (V3)
         float manaLeech = attacker.States != null ? attacker.States.ManaLeechPct : 0f;
         if (manaLeech > 0f) attacker.GainMana(Mathf.RoundToInt(dmgDealt * manaLeech));

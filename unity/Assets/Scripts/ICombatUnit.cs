@@ -248,6 +248,6 @@ public interface ICombatUnit : IDamageable
         var st = States;
         if (st != null) { st.Clear(); st.NoteNewLife(); }
         var host = StatusHost;
-        if (host != null) host.ClearFlinch();
+        if (host != null) { host.ClearFlinch(); host.ResetDraw(); }   // a new life starts with the weapon on the body
     }
 }

@@ -140,7 +140,8 @@ public class EquipmentInstance
     /// THE SERVER calls this once, when the copy is made; a weapon or an unworn item rolls nothing.</summary>
     public void RollWord()
     {
-        if (def == null) return;
+        // A piece made of nothing is worn for its look alone, and carries nothing.
+        if (def == null || def.madeOf == MaterialKind.None) return;
         var words = ArmourWords.For(def.slot);
         word = words.Length == 0 ? ArmourWord.None : ArmourWords.Pick(def.slot, CombatRng.Range(0, words.Length));
     }

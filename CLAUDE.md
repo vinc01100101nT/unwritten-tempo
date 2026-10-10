@@ -56,8 +56,17 @@ care about the client, its only job is to render, not compute".)*
 
 ### ⛔ THE OTHER HALF — REMOVING A SERIALIZED FIELD CAUSES ONE PROMPT, AND YOU SAY SO. ANY OTHER PROMPT IS A BUG YOU DIAGNOSE BY DIFFING, NEVER BY GUESSING (same ultra-priority)
 
-There are exactly **two** reasons a scene reports unsaved changes when nobody touched it. The rule above bans the
-first. This is the second, and it is not a bug — but it becomes one the moment the user is left to discover it.
+There are exactly **three** reasons a scene reports unsaved changes when nobody touched it. The rule above bans the
+first — our own code writing. The second is Unity's OWN components saved into a scene that rearrange themselves in
+the editor: a layout (row, column, grid, size or aspect fitter, scroll view) or a text saved with no font. Measured
+2026-10-09: one row layout on the saved hotbar re-marked Systems modified after EVERY code recompile, with not one
+byte changed. `tools/check-scene-stays-clean.py` bans both, so a layout is added at runtime and every saved text
+carries a font. The third is below, and it is not a bug — but it becomes one the moment the user is left to
+discover it.
+
+**The build never meets the prompt.** `tools/build-game.sh` checks every open scene marked modified first: if a saved
+copy matches the file on disk it saves (the same bytes) and goes on; if not, it stops before deleting anything and
+prints the exact lines.
 
 **A field deleted from a script leaves its VALUE in every scene and prefab that held it.** Unity drops that value
 when it loads the file, so what is in memory no longer matches what is on disk, and it says so — on every load,
@@ -559,7 +568,9 @@ that costs a round.
   tools/check-map-ids.py        # after any world layout, scene, door or map rename — every map id agrees with the layout
   tools/check-quest-data.py     # after any quest asset or townsfolk edit — every quest can still be finished
   tools/check-shadow-looks.py   # after any shadow creature edit — every shadow's fixed body exists and its colours fit it
+  tools/check-head-pieces.py    # after any hair, hat, Head item, townsfolk or body bake — everything worn on a head can be drawn
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
+  tools/check-scene-stays-clean.py  # after any scene / prefab / HUD bake edit — nothing saved rewrites itself in the editor
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s
   tools/check-server-rules.py   # after any accounts/ or charserver/ edit — SERVER.md as tests
@@ -631,6 +642,7 @@ that costs a round.
   prototype. Full sequence: `docs/0-process/prototyping-ui-workflow.md`.
 - **Writing an editor window or tool? Use the `editor-window` skill** — it owns the shrink rule (max-width only, never a fixed or minimum width), the tools-catalog update, and the quick-fix tagging. A window that can't shrink hides every field beside the greedy control.
 - **⛔ ANY weapon 3D model work → the `import-weapon-models` skill, EVERY time (added 2026-10-08 at the user's instruction).** A whole pack, one new model, swapping a single weapon's model, or fixing how a weapon sits in the hand — invoke the skill before touching anything. No exception for "it's only one weapon". A prompt hook (`tools/hook-analytics/skill_router.py`, proven by `prove_skill_router.py`) also reminds the session whenever a message mentions a weapon and a model.
+- **⛔ ANY character animation → the `clone-ro-sprite-animation` skill (added 2026-10-09 at the user's instruction: "let's make this a standard process").** An attack, a skill release, a stance, any body motion: the matching Ragnarok Online sprite animation is the reference, cloned onto our 3D characters by posing them frame by frame and proven with a sprite-over-ours picture. Kimodo text-to-motion is only for long, flowing full-body motion.
 - **Enemy term is "mobs"** — never "bestiary"
 - **"Set default values" = change it EVERYWHERE, not just the code.** A serialized value in a scene or prefab ALWAYS beats the code default, so changing only the code silently does nothing. The four layers to hunt are the `set-defaults` skill.
 - **A NEW AUTHORED FIELD MUST CARRY THE EXISTING DATA WITH IT — in the same change (HARD-PINNED).** Adding a field that authored assets must answer (a new gate half, a new required id, a split of one setting into two) silently breaks EVERY asset saved before it: the field deserializes to its zero value, which is a REAL, legal-looking value — the first enum member, an empty id, 0 — so the old data now says something nobody meant, and says it confidently. Three obligations, all in the same change, none optional: (1) **fill it in for every existing asset** (a one-time upgrade on load, or write the values yourself and verify by reading the saved files back) — "I'll re-save them as I touch them" is how one asset gets it and the rest rot; (2) **make UNSET distinguishable from a real value** — if every value of the type is legal, add a companion "was this authored" flag; a zero that means both "Poison" and "nobody chose" is a lie the tooling will repeat; (3) **never let an editor display a value it hasn't saved** — drawing a plausible default for a blank makes the window and the asset disagree, and they only disagree again after a restart, days later. Then SAY in the report which assets were upgraded. (Scar: the stack gate gained a "which pile" half; only the one new skill got it. Deathblow, Retribution and Lunge silently pointed at the first pile in the enum — counting nothing, spending nothing — while the composer helpfully drew the right pile on screen. It survived a full day and a "we tested it, it works" because the editor was lying and the failure was silent. Cost the user an afternoon.)

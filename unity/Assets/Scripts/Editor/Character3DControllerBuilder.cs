@@ -50,7 +50,7 @@ public static class Character3DControllerBuilder
                              "Stance Composer and pick a clip per stance, then rebuild. The character will just stand.");
 
         Directory.CreateDirectory(Path.GetDirectoryName(controllerPath));
-        var ctrl = AnimatorController.CreateAnimatorControllerAtPath(controllerPath);
+        var ctrl = EmptyControllerAt(controllerPath);
         ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
         var sm = ctrl.layers[0].stateMachine;
 
@@ -89,8 +89,100 @@ public static class Character3DControllerBuilder
         if (writeDefaultsOff)
             foreach (var cs in sm.states) cs.state.writeDefaultValues = false;
 
+        AddWeaponLayers(ctrl, lib, quat, resolver, writeDefaultsOff);
+
         EditorUtility.SetDirty(ctrl);
         AssetDatabase.SaveAssets();
+        return ctrl;
+    }
+
+    /// <summary>The weapon layers (<see cref="StanceLibrary.weaponStances"/>), each with one state per distinct clip
+    /// NAMED by the clip, starting at weight 0 on an empty state — <see cref="Character3DPose"/> eases them in:
+    /// layer 1 "Carry", masked to the arms and fingers, plays each weapon's carry pose over the shared travel legs;
+    /// layer 2 "Stand", the whole body, plays each weapon's own standing idle;
+    /// layer 3 "Draw", the arms again, plays each weapon's put-away and take-out clips over whatever the legs are doing,
+    /// scrubbed by the <see cref="DrawTimeParam"/> parameter (the draw's progress) rather than by the clock, because the
+    /// draw lasts as long as the weapon's weight says, not as long as the clip;
+    /// layers 4 "CarryRight" and 5 "CarryLeft", one arm each, play the carry pose of a weapon whose pose holds only that
+    /// arm (<see cref="WeaponStanceBinding.carryArms"/>) — the other arm keeps the travel clip's swing.</summary>
+    static void AddWeaponLayers(AnimatorController ctrl, StanceLibrary lib, Dictionary<string, AnimationClip> quat,
+                              Func<string, Motion> resolver, bool writeDefaultsOff)
+    {
+        var mask = ArmsMask(ctrl, "Arms", true, true);
+        AddWeaponLayer(ctrl, "Carry", mask, lib, c => CarryOn(c, CarryArms.Both), null, quat, resolver, writeDefaultsOff);
+        AddWeaponLayer(ctrl, "Stand", null, lib, c => new[] { c.idleClip }, null, quat, resolver, writeDefaultsOff);
+        ctrl.AddParameter(DrawTimeParam, AnimatorControllerParameterType.Float);
+        AddWeaponLayer(ctrl, "Draw", mask, lib, c => new[] { c.sheatheClip, c.unsheatheClip }, DrawTimeParam, quat, resolver, writeDefaultsOff);
+        // A carry pose that holds one arm sits on that arm's own layer, so the other arm swings with the legs.
+        AddWeaponLayer(ctrl, "CarryRight", ArmsMask(ctrl, "RightArm", false, true), lib, c => CarryOn(c, CarryArms.Right), null, quat, resolver, writeDefaultsOff);
+        AddWeaponLayer(ctrl, "CarryLeft", ArmsMask(ctrl, "LeftArm", true, false), lib, c => CarryOn(c, CarryArms.Left), null, quat, resolver, writeDefaultsOff);
+    }
+
+    static string[] CarryOn(WeaponStanceBinding c, CarryArms layer) => c.carryArms == layer ? new[] { c.carryClip } : new string[0];
+
+    static AvatarMask ArmsMask(AnimatorController ctrl, string name, bool left, bool right)
+    {
+        var mask = new AvatarMask { name = name };
+        for (var p = AvatarMaskBodyPart.Root; p < AvatarMaskBodyPart.LastBodyPart; p++)
+            mask.SetHumanoidBodyPartActive(p, (left && (p == AvatarMaskBodyPart.LeftArm || p == AvatarMaskBodyPart.LeftFingers)) ||
+                                              (right && (p == AvatarMaskBodyPart.RightArm || p == AvatarMaskBodyPart.RightFingers)));
+        AssetDatabase.AddObjectToAsset(mask, ctrl);
+        return mask;
+    }
+
+    /// <summary>The parameter the "Draw" layer's states are scrubbed by — read by <see cref="Character3DPose"/>.</summary>
+    public const string DrawTimeParam = Character3DPose.DrawTimeParam;
+
+    // The layer list is a copy, so a new layer's settings are written back as a whole.
+    static void AddWeaponLayer(AnimatorController ctrl, string name, AvatarMask mask, StanceLibrary lib,
+                               Func<WeaponStanceBinding, string[]> clipsOf, string timeParam, Dictionary<string, AnimationClip> quat,
+                               Func<string, Motion> resolver, bool writeDefaultsOff)
+    {
+        ctrl.AddLayer(name);
+        int li = ctrl.layers.Length - 1;
+        var layers = ctrl.layers;
+        layers[li].avatarMask = mask;
+        layers[li].blendingMode = AnimatorLayerBlendingMode.Override;
+        layers[li].defaultWeight = 0f;
+        ctrl.layers = layers;
+
+        var csm = ctrl.layers[li].stateMachine;
+        csm.defaultState = csm.AddState("Empty");
+        var made = new HashSet<string>();
+        if (lib != null && lib.weaponStances != null)
+            foreach (var c in lib.weaponStances)
+            {
+                if (c == null) continue;
+                foreach (var clip in clipsOf(c))
+                {
+                    if (string.IsNullOrEmpty(clip) || !made.Add(clip)) continue;
+                    var m = Resolve(clip, quat, resolver);
+                    if (m == null) { Debug.LogWarning($"[unwritten] weapon {name} clip '{clip}' not found on this model/Mixamo set — skipped."); continue; }
+                    var st = csm.AddState(clip);
+                    st.motion = m;
+                    if (timeParam != null) { st.timeParameterActive = true; st.timeParameter = timeParam; }
+                }
+            }
+        if (writeDefaultsOff)
+            foreach (var cs in csm.states) cs.state.writeDefaultValues = false;
+    }
+
+    /// <summary>The controller at <paramref name="path"/>, emptied to a single base layer and no parameters — the SAME
+    /// object when it already exists, so everything that holds it (a scene's Animator, the character spec) stays
+    /// linked. Writing a new controller over the path keeps the file's ID but destroys the object those links point at
+    /// in memory, and the next save writes them blank: every character T-posed in game on 2026-10-09 that way.</summary>
+    static AnimatorController EmptyControllerAt(string path)
+    {
+        var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+        if (ctrl == null) return AnimatorController.CreateAnimatorControllerAtPath(path);
+        // Everything inside the controller file except the controller itself: its layers' state machines, states,
+        // transitions, blend trees and mask from the last build. LoadAllAssets, not the visible-only listing: layer
+        // state machines are stored hidden, and skipping them left every rebuild's old copy behind in the file.
+        foreach (var sub in AssetDatabase.LoadAllAssetsAtPath(path))
+            if (sub != null && sub != ctrl) UnityEngine.Object.DestroyImmediate(sub, true);
+        ctrl.layers = new AnimatorControllerLayer[0];
+        ctrl.parameters = new AnimatorControllerParameter[0];
+        ctrl.AddLayer("Base Layer");
         return ctrl;
     }
 
@@ -115,7 +207,9 @@ public static class Character3DControllerBuilder
         if (ctrl == null) return null;
 
         anim.runtimeAnimatorController = ctrl;   // reattach (CreateAnimatorControllerAtPath returns a fresh asset ref)
-        if (Application.isPlaying) pose.Reinitialize();
+        // Every body shares this controller, so in Play every body re-reads it — not only the one found above.
+        if (Application.isPlaying)
+            foreach (var p in UnityEngine.Object.FindObjectsByType<Character3DPose>(FindObjectsSortMode.None)) p.Reinitialize();
         else UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(pose.gameObject.scene);
         EditorUtility.SetDirty(anim);
         return pose.gameObject.name;

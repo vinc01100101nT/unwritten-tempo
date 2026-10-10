@@ -35,6 +35,23 @@ public enum WeaponType
     Shuriken = 15,
 }
 
+/// <summary>WHEN a basic swing connects and HOW HARD, as fractions of the swing — the one answer a person's swing on
+/// the server and every creature's swing both read, so the two can never land differently. A pair weapon
+/// (<see cref="WeaponTypes.IsDualWield"/>) lands twice: the first hand at <c>hitTiming</c> at full power, then the other
+/// hand at <c>offHandHitTiming</c> (never before the first, never past the end) at <c>offHandPower</c>. Every other
+/// weapon lands once. Numbers in, numbers out.</summary>
+public static class SwingContacts
+{
+    public static int Of(WeaponType w, float hitTiming, float offHandHitTiming, float offHandPower,
+                         out float firstAt, out float secondAt, out float secondPower)
+    {
+        firstAt = Mathf.Clamp01(hitTiming);
+        secondAt = Mathf.Min(1f, Mathf.Max(offHandHitTiming, firstAt + 0.01f));
+        secondPower = Mathf.Clamp01(offHandPower);
+        return WeaponTypes.IsDualWield(w) ? 2 : 1;
+    }
+}
+
 /// <summary>Facts about a <see cref="WeaponType"/> that more than one system asks.</summary>
 public static class WeaponTypes
 {
@@ -51,6 +68,11 @@ public static class WeaponTypes
     /// <summary>A weapon whose ranged attack is the weapon ITSELF flying — it leaves the hand, bounces through a crowd
     /// and comes back. Today the shuriken only; a bow and a firearm shoot something else and keep the weapon.</summary>
     public static bool ThrowsItself(WeaponType w) => w == WeaponType.Shuriken;
+
+    /// <summary>A weapon wielded in BOTH hands as a pair (decided 2026-10-09): equipping one fills the left hand with the
+    /// same weapon automatically — nobody equips a second one. Today the katar and the axe. The one answer the hand
+    /// that draws the pair and the swing that lands a hit per hand both read, so they can never disagree.</summary>
+    public static bool IsDualWield(WeaponType w) => w == WeaponType.Katar || w == WeaponType.Axe;
 
     /// <summary>A weapon whose holder's MAGIC can crit (decided 2026-10-06): the sniper, and nothing else. Every other
     /// unit's magic never crits — a crit pierces defence, and a spell that pierced too would collapse the

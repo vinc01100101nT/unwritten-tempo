@@ -24,7 +24,10 @@ all 95 of the clip's muscles on the first try, and the next pictures showed the 
 2. For each `AnimationUtility.GetCurveBindings(clip)` binding whose type is `Animator`, turn its name into a muscle
    name (`LeftHand.` → `Left `, `RightHand.` → `Right `, `.` → space), look it up in `HumanTrait.MuscleName`, and set
    `hp.muscles[i] = AnimationUtility.GetEditorCurve(clip, binding).Evaluate(time)`. Count the matches.
-3. `hph.SetHumanPose(ref hp); hph.Dispose();`
-4. Measure a hand or foot bone before and after. If it did not move, nothing above worked.
+3. For a whole-body pose, also set `hp.bodyPosition` from the `RootT.x/y/z` curves and `hp.bodyRotation` from
+   `RootQ.x/y/z/w` — muscles are only the joint bends; without these the hips stay at standing height and the feet
+   float (2026-10-08: up to 14% of body height on a slam).
+4. `hph.SetHumanPose(ref hp); hph.Dispose();`
+5. Measure a hand or foot bone before and after. If it did not move, nothing above worked.
 
 The full script, in use, is in the `import-weapon-models` skill.

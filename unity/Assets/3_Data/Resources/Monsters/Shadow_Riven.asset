@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Ninja_Male
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair09
+  hairColour: '#202020'
   level: 105
   str: 71
   agi: 56

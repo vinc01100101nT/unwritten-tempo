@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Ninja_Sand_Female
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair02
+  hairColour: '#532443'
   level: 115
   str: 78
   agi: 62

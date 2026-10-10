@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Kimono_Female
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair06
+  hairColour: '#88486A'
   level: 170
   str: 99
   agi: 99

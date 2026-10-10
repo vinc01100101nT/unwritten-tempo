@@ -4,6 +4,7 @@
 - [GM commands are the test tool](../gm-commands-are-the-test-tool.md) — the P-key dev panel was deleted 2026-09-13; test through `/` commands, which all run on the server.
 - [HUD windows + the one interface theme](../hud-progression-windows.md) — `ProgressionWindows.cs` on `UiKit`; Ragnarok-style light theme, every colour/shape from `UiKit` (2026-09-28).
 - [HUD hotbar = IHotbarSkill + HotbarPanel](../hotbar-ihotbarskill.md) — implement `IHotbarSkill` → auto on bar; re-bake Build UI Shell.
+- [Build stops at "Modified Scenes must be saved"](../layout-group-dirties-scene-on-reload.md) — a layout or fontless text saved into a scene re-dirties it; check-scene-stays-clean bans both, build-game.sh settles a no-change mark.
 - [HUD build process (ONE way)](../hud-build-process.md) — GameUICanvas Resources PREFAB; wire into UIShellBuilder + Build UI Shell.
 - [Window open/close motion choke](../ui-window-motion-choke.md) — `UiAnim.Toggle/Open/Close/IsOpen`, never SetActive a panel root; `UiButtonFx` in `UiKit.Btn`.
 - [HUD NRE from stale baked scene (legacy Text vs TMP)](../hud-stale-baked-scene-nre.md) — GoldCounter/CalendarWeatherHUD `label` null; scene drifted from builder; fix = rebuild HUD shell via MCP, don't patch scripts.

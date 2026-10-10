@@ -324,6 +324,11 @@ public class TownNPC : MonoBehaviour
     /// machine's copy (<see cref="NetNpc.personId"/>). Empty for anybody not placed from that list.</summary>
     public string PersonId { get; set; } = "";
 
+    /// <summary>The hair on their head, "id|#RRGGBB" (<see cref="HeadPieces.Pack"/>), and the Head item they wear by
+    /// its item id — set from the townsfolk list on the server and handed to every watching machine's copy.</summary>
+    public string Hair { get; set; } = "";
+    public string Headgear { get; set; } = "";
+
     /// <summary>What this person is, in a few words, shown under their name (<see cref="WorldTownsfolk.Row.description"/>).
     /// Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine; empty for
     /// somebody with none.</summary>

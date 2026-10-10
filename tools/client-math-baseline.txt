@@ -29,7 +29,6 @@ unity/Assets/Scripts/RingProgress.cs 996fcf99bd88
 unity/Assets/Scripts/SkillDraftPanel.cs 290b18f8505f
 unity/Assets/Scripts/SkillDraftPanel.cs 82fd0d75be69
 unity/Assets/Scripts/StanceController.cs cdecb3992a7e
-unity/Assets/Scripts/StatusController.cs 25ef70843402
 unity/Assets/Scripts/StatusController.cs 30a0d8edb625
 unity/Assets/Scripts/StatusController.cs eaca1e6bcbfa
 unity/Assets/Scripts/StatusController.cs f1b8f338f94e

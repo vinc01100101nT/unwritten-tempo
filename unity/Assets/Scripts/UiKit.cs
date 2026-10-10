@@ -14,10 +14,17 @@ public static class UiKit
     // THE interface typeface: DejaVu Sans Condensed, the one face every window, button, name and label is drawn in
     // (the combat numbers keep PixelFont). It is the free stand-in for Tahoma, whose licence forbids shipping it.
     // TextMeshPro (SDF) so text stays razor-sharp at ANY window size — the whole game routes text through
-    // here. The TMP font asset is created ONCE at runtime from the TTF already in Resources/Fonts
-    // (dynamic SDF atlas, glyphs populated on demand) — no Font Asset Creator step, no saved .asset to bake.
-    public static TMP_FontAsset Font => _font != null ? _font : (_font = MakeFont("Fonts/DejaVuSansCondensed"));
+    // here. It is a SAVED font asset (Resources/Fonts, dynamic SDF atlas, glyphs populated on demand) so text baked
+    // into the saved HUD carries it too: a text saved with no font is handed TMP's default the moment it switches on
+    // in the editor, which marks the scene modified and stops every build (tools/check-scene-stays-clean.py).
+    public static TMP_FontAsset Font => _font != null ? _font : (_font = LoadSavedFont());
     static TMP_FontAsset _font, _pixel, _fallback;
+
+    static TMP_FontAsset LoadSavedFont()
+    {
+        var saved = Resources.Load<TMP_FontAsset>("Fonts/DejaVuSansCondensed SDF");
+        return saved != null ? saved : Fallback;
+    }
 
     /// <summary>The crunchy pixel face for RO/OSRS-style combat numbers.</summary>
     public static TMP_FontAsset PixelFont => _pixel != null ? _pixel : (_pixel = MakeFont("Fonts/PixelFont"));

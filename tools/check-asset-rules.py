@@ -73,8 +73,11 @@ def check_textures(repo, out):
             path = os.path.join(dirpath, f)
             p = rel(repo, path)
             # The pixel-art sprites under /Art/ are UNCOMPRESSED BY DESIGN (block compression bleeds on a pixel
-            # grid) and the import rule owns them. Ground tiles are the one /Art/ folder that is not pixel art.
-            pixel_art = "/Art/" in p and "/GroundTiles/" not in p
+            # grid) and the import rule owns them. Ground tiles are the one /Art/ folder that is not pixel art. The
+            # weapons made from sprite sheets carry one texel per block face, so they are pixel art too. So are the
+            # head pieces' colour strips (HeadPieceBaker): a few exact colours a hair's chosen colour is matched
+            # against, which block compression would shift off the colour the piece names.
+            pixel_art = ("/Art/" in p and "/GroundTiles/" not in p) or "/2_Generated/Weapons/" in p                 or "/2_Generated/Characters/HeadPieces/" in p
             cursor = "/KenneyCursorPack/" in p
             meta = read(path)
             if "TextureImporter:" not in meta:
@@ -354,6 +357,29 @@ def check_dye_parts(repo, out):
                 "wearing it can change its colours — run CharacterDyePartsBaker.BakeAll() in the editor")
 
 
+CHARACTER_CLIPS = ("unity", "Assets", "1_Authored", "Art", "Characters", "Animations")
+
+
+def check_clip_root_motion(repo, out):
+    """Rule 14: an authored character clip (.anim) bakes the body's turn, height and travel into the pose. The game's
+    characters never apply root motion, so whatever a clip leaves as root motion is thrown away in game."""
+    folder = os.path.join(repo, *CHARACTER_CLIPS)
+    if not os.path.isdir(folder):
+        return
+    for f in sorted(os.listdir(folder)):
+        if not f.endswith(".anim"):
+            continue
+        path = os.path.join(folder, f)
+        text = read(path)
+        if "RootT.x" not in text:          # not a humanoid body clip: nothing to bake
+            continue
+        loose = [k for k in ("m_LoopBlendOrientation", "m_LoopBlendPositionY", "m_LoopBlendPositionXZ")
+                 if value(text, k) != "1"]
+        if loose:
+            out("FAIL", rel(repo, path), "the body's movement is not baked into the pose (%s) — in game the body "
+                "stays put and a planted foot slides; bake it in (AnimationUtility.SetAnimationClipSettings)" % ", ".join(loose))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=DEFAULT_REPO)
@@ -377,6 +403,7 @@ def main():
     check_packages(repo, out)
     check_baked_components(repo, out)
     check_dye_parts(repo, out)
+    check_clip_root_motion(repo, out)
 
     for line in fails:
         print(line)

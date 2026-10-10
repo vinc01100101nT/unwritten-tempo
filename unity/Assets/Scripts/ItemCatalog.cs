@@ -43,6 +43,8 @@ public static class ItemCatalog
                 else unworn.Add(it);
                 continue;
             }
+            // A worn piece made of nothing is worn for its look alone and is not handed out at random.
+            if (it.slot != EquipSlotType.Weapon && it.madeOf == MaterialKind.None) continue;
             if (!wornBySlot.TryGetValue(it.slot, out var list)) wornBySlot[it.slot] = list = new List<Item>();
             list.Add(it);
         }

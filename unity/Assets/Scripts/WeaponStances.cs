@@ -16,21 +16,21 @@ public static class WeaponStances
     {
         switch (w)
         {
-            case WeaponType.Sword:
+            case WeaponType.Sword:    return StanceId.AttackOneHandSword;
             case WeaponType.TwoHandSword:
-            case WeaponType.Axe:
-            case WeaponType.TwoHandAxe:
-            case WeaponType.Mace:     return StanceId.AttackSword;
-            case WeaponType.Dagger:
-            case WeaponType.Katar:    return StanceId.AttackDagger;
-            case WeaponType.Staff:
-            case WeaponType.Wand:     return StanceId.AttackStaff;
+            case WeaponType.TwoHandAxe: return StanceId.AttackSword;
+            case WeaponType.Axe:      return StanceId.AttackAxe;
+            case WeaponType.Mace:     return StanceId.AttackMace;
+            case WeaponType.Dagger:   return StanceId.AttackDagger;
+            case WeaponType.Katar:    return StanceId.AttackKatar;
+            case WeaponType.Staff:    return StanceId.AttackStaff;
+            case WeaponType.Wand:     return StanceId.AttackWand;
             case WeaponType.Scythe:   return StanceId.AttackScythe;
             case WeaponType.Shuriken: return StanceId.AttackShuriken;
             case WeaponType.Spear:    return StanceId.AttackLance;
             case WeaponType.Bow:      return StanceId.AttackBow;
             case WeaponType.Firearm:  return StanceId.AttackRifle;
-            case WeaponType.Knuckle:
+            case WeaponType.Knuckle:  return StanceId.AttackKnuckle;
             case WeaponType.None:
             default:                  return StanceId.AttackBareHands;
         }
@@ -56,7 +56,13 @@ public static class WeaponStances
             case StanceId.AttackBow:
             case StanceId.AttackScythe:
             case StanceId.AttackShuriken:
-            case StanceId.AttackShurikenThrow: return true;
+            case StanceId.AttackShurikenThrow:
+            case StanceId.AttackOneHandSword:
+            case StanceId.AttackAxe:
+            case StanceId.AttackMace:
+            case StanceId.AttackKatar:
+            case StanceId.AttackKnuckle:
+            case StanceId.AttackWand: return true;
             default:                  return false;
         }
     }

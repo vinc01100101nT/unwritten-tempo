@@ -88,7 +88,20 @@ public class MobShadow3DVisual : Agent3DVisual
     void ShowLook()
     {
         if (dye != null) dye.ShowLook(LookOfEntry());
+        if (head != null) head.ShowHair(HairOfEntry());
     }
+
+    // Its hair, from its creature entry, worked out the one way every character's hair is.
+    string HairOfEntry()
+    {
+        if (lookOf == null) return "";
+        HeadPieces.Resolve(lookOf.modelName, lookOf.hairStyle, lookOf.hairColour, lookOf.dyeSources, lookOf.dyeTargets,
+                           out var id, out var hex);
+        return HeadPieces.Pack(id, hex);
+    }
+
+    // What is on its head. Null until a model has been built, and never made on a machine with no screen.
+    HeadSocket head;
 
     string LookOfEntry() => lookOf != null
         ? CharacterDye3D.PackLook(lookOf.modelName, lookOf.dyeSources, lookOf.dyeTargets)
@@ -206,6 +219,16 @@ public class MobShadow3DVisual : Agent3DVisual
         if (brain != null) brain.Lod = lod;
     }
 
+    WeaponSocket hand;   // null until a model lands
+    DrawSaid draw;       // what the server last said about this creature's weapon
+
+    /// <summary>The server's word on this creature's weapon, kept for a body still being built and passed to its hand.</summary>
+    public void ShowDraw(DrawSaid said)
+    {
+        draw = said;
+        if (hand != null) hand.ShowDraw(said);
+    }
+
     // The in-place sprite→character swap, once the model is in hand. Presentation only: everything that changes
     // what this creature IS happened in BecomeACharactersBody, which a headless server runs on its own.
     void SwapToBody(CharacterSpec spec, GameObject model)
@@ -227,6 +250,13 @@ public class MobShadow3DVisual : Agent3DVisual
         // perf-ok: once per body built; a pooled body keeps it for life.
         var socket = builtPose.gameObject.AddComponent<WeaponSocket>();
         socket.ShowWeaponOf(GetComponent<UnitEquipment>());
+        hand = socket;
+        socket.ShowDraw(draw);   // the server may have spoken before the model landed
+        // ITS HAIR AND WHAT IT WEARS ON ITS HEAD — the same socket every body wears, reading its own worn set.
+        // perf-ok: once per body built; a pooled body keeps it for life and is re-dressed through WearModel.
+        head = builtPose.gameObject.AddComponent<HeadSocket>();
+        head.ShowHair(HairOfEntry());
+        head.ShowHeadgearOf(GetComponent<UnitEquipment>());
         built = true;
 
         PointTheFreezeSwitchAt(builtPose.GetComponent<Animator>());

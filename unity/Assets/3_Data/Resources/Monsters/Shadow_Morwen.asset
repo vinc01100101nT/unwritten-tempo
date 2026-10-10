@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Witch
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair01
+  hairColour: '#D1D1D1'
   level: 145
   str: 54
   agi: 78

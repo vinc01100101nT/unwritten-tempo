@@ -204,6 +204,8 @@ public class MobTableWindow : EditorWindow
         public Vector3 centre;
         public float height = 1f;
         public float yaw;                 // the turn angle — the window's, never the asset's
+        public GameObject hair;           // the hair worn on the stage's body, put on the way the game puts it on
+        public string hairShown;          // which hair is on it, so a changed entry puts a new one on
     }
 
     readonly Dictionary<MonsterDef, LookPreview> _lookPreviews = new Dictionary<MonsterDef, LookPreview>();
@@ -416,8 +418,32 @@ public class MobTableWindow : EditorWindow
         }
         look.centre = bounds.center;
         look.height = Mathf.Max(0.01f, bounds.size.y);
+        look.hair = null;
+        look.hairShown = null;
         return look;
     }
+
+    // ITS HAIR, from the entry, through the game's own socket — the piece goes on and is coloured exactly as a
+    // shadow's hair is in play (HeadSocket.Wear / PaintHair).
+    void ShowHair(LookPreview look, MonsterDef def)
+    {
+        HeadPieces.Resolve(def.modelName, def.hairStyle, def.hairColour, def.dyeSources, def.dyeTargets,
+                           out var id, out var hex);
+        string want = id + "|" + hex;
+        if (look.hairShown == want) return;
+        if (look.hair != null) Object.DestroyImmediate(look.hair);
+        look.hair = null;
+        look.hairShown = want;
+        var body = look.renderers != null && look.renderers.Length > 0 ? look.renderers[0] : null;
+        look.hair = HeadSocket.Wear(body, HeadPieces.HairPiece(id));
+        if (look.hair == null) return;
+        foreach (var t in look.hair.GetComponentsInChildren<Transform>(true)) t.gameObject.hideFlags = HideFlags.HideAndDontSave;
+        var colour = ColorUtility.TryParseHtmlString(hex, out var c) ? c : HeadPieces.OwnColourOf(id);
+        _hairBlock ??= new MaterialPropertyBlock();
+        HeadSocket.PaintHair(look.hair, colour, _hairBlock);
+    }
+
+    static MaterialPropertyBlock _hairBlock;
 
     void DrawLookStage(LookPreview look, MonsterDef def)
     {
@@ -452,6 +478,7 @@ public class MobTableWindow : EditorWindow
         bool stampFits = string.IsNullOrEmpty(look.signature) || look.signature == def.modelName;
         _lookBlock ??= new MaterialPropertyBlock();
         CharacterDye3D.Paint(look.renderers, stampFits ? look.parts : null, _lookSources, _lookTargets, _lookBlock);
+        ShowHair(look, def);
 
         look.root.transform.rotation = Quaternion.Euler(0f, look.yaw, 0f);
         float distance = look.height * 0.5f / Mathf.Tan(look.stage.camera.fieldOfView * 0.5f * Mathf.Deg2Rad) * 1.25f;

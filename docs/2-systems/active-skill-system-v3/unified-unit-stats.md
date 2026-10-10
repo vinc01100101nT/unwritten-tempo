@@ -196,7 +196,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 
 ### Regeneration is one ticker for everyone (2026-08-23)
 
-Both pools refill in `StatusController` — the one per-unit ticker — on the 0.8s cadence, each carrying its sub-1-point remainder so a tiny rate is paid exactly rather than rounded up. Rate = the unit's own natural rate + the timed sub-stat change; **a rate at or below zero pays nothing**, so a regen debuff can stop healing but never drain, and never heals what it is meant to weaken.
+Both pools refill in `StatusController` — the one per-unit ticker — on the 0.8s cadence, each carrying its sub-1-point remainder so a tiny rate is paid exactly rather than rounded up. Rate = the unit's own natural rate (doubled while its weapon is put away and it has neither dealt nor taken a blow for 5 s — see [Combat and Peace Mode](../combat-and-peace-mode.md)) + the timed sub-stat change, which peace never doubles; **a rate at or below zero pays nothing**, so a regen debuff can stop healing but never drain, and never heals what it is meant to weaken.
 
 This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `Character.Update` no longer trickles either pool.
 

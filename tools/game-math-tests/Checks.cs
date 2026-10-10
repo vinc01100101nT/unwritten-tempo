@@ -1164,8 +1164,88 @@ static class Checks
         That(StrideMath.LockedPlayback(1.2f, 0f) == 1f, StrideF, "an unmeasured clip should play at 1x, never freeze");
     }
 
+    // ---- when a swing connects: one hit, or a pair weapon's two (decided 2026-10-09) ------------------------
+    // The server lands a person's blows and a creature's from this one answer, so a wrong number here silently
+    // changes every Katar and Axe hit in the game (and every other weapon if the count went wrong).
+    const string SwingF = "unity/Assets/Scripts/WeaponType.cs";
+    static void SwingContactRules()
+    {
+        foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
+        {
+            int n = SwingContacts.Of(w, 0.7f, 0.9f, 0.5f, out float first, out float second, out float power);
+            bool pair = WeaponTypes.IsDualWield(w);
+            That(n == (pair ? 2 : 1), SwingF, w + " should land " + (pair ? 2 : 1) + " hit(s) per swing, lands " + n);
+            That(Math.Abs(first - 0.7f) < 1e-6f, SwingF, w + "'s first hit should land at 0.7 of the swing, lands at " + first);
+        }
+        That(WeaponTypes.IsDualWield(WeaponType.Katar) && WeaponTypes.IsDualWield(WeaponType.Axe), SwingF,
+             "the katar and the axe are the pair weapons (user, 2026-10-09)");
+        SwingContacts.Of(WeaponType.Katar, 0.7f, 0.9f, 0.5f, out _, out float at, out float pw);
+        That(Math.Abs(at - 0.9f) < 1e-6f && Math.Abs(pw - 0.5f) < 1e-6f, SwingF, "the other hand should land at 0.9 with half power, got " + at + " / " + pw);
+        SwingContacts.Of(WeaponType.Axe, 0.7f, 0.5f, 0.5f, out float f2, out float early, out _);
+        That(early > f2, SwingF, "the other hand's hit can never land before the first, landed at " + early + " vs " + f2);
+        SwingContacts.Of(WeaponType.Axe, 0.7f, 1.4f, 2f, out _, out float late, out float strong);
+        That(late <= 1f && strong <= 1f, SwingF, "the other hand's hit can never land past the end of the swing or above full power, got " + late + " / " + strong);
+    }
+
+    const string DrawF = "unity/Assets/Scripts/WeaponDrawMath.cs";
+    static void WeaponDrawRules()
+    {
+        // Agreed with the user 2026-10-09: draw time from weight, 0.2 s + 0.006 s per point.
+        That(Math.Abs(WeaponDrawMath.DrawSeconds(90) - 0.74f) < 1e-5f, DrawF, "a weight-90 weapon should draw in 0.74 s, draws in " + WeaponDrawMath.DrawSeconds(90));
+        That(Math.Abs(WeaponDrawMath.DrawSeconds(60) - 0.56f) < 1e-5f, DrawF, "a weight-60 weapon should draw in 0.56 s, draws in " + WeaponDrawMath.DrawSeconds(60));
+        That(Math.Abs(WeaponDrawMath.DrawSeconds(0) - 0.2f) < 1e-6f && Math.Abs(WeaponDrawMath.DrawSeconds(-5) - 0.2f) < 1e-6f, DrawF,
+             "empty hands still take the 0.2 s floor, got " + WeaponDrawMath.DrawSeconds(0));
+        // A weapon spun during its put-away (2026-10-10): nothing outside the window, half its turning at the middle,
+        // all of it at the end; off the fist only inside the window, fully up through its middle.
+        That(WeaponDrawMath.SpinWindowShare(0.1f, 0.2f, 0.6f) == 0f && WeaponDrawMath.SpinWindowShare(0.6f, 0.2f, 0.6f) == 0f
+             && WeaponDrawMath.SpinWindowShare(0.5f, 0.6f, 0.2f) == 0f, DrawF, "a spin shows nothing before its window, at its end, or for a window with no length");
+        That(Math.Abs(WeaponDrawMath.SpinWindowShare(0.4f, 0.2f, 0.6f) - 0.5f) < 1e-5f, DrawF,
+             "halfway between 0.2 and 0.6 is half the spin window, got " + WeaponDrawMath.SpinWindowShare(0.4f, 0.2f, 0.6f));
+        That(WeaponDrawMath.SpinTurnShare(0f) == 0f && Math.Abs(WeaponDrawMath.SpinTurnShare(0.5f) - 0.5f) < 1e-6f && Math.Abs(WeaponDrawMath.SpinTurnShare(1f) - 1f) < 1e-6f, DrawF,
+             "a spin has turned nothing at its start, half at its middle and everything at its end");
+        That(WeaponDrawMath.SpinLiftShare(0f) == 0f && Math.Abs(WeaponDrawMath.SpinLiftShare(0.5f) - 1f) < 1e-6f && Math.Abs(WeaponDrawMath.SpinLiftShare(1f)) < 1e-5f
+             && Math.Abs(WeaponDrawMath.SpinLiftShare(0.1f) - 0.5f) < 1e-5f, DrawF,
+             "a spun weapon is on the fist at both ends of the window, half lifted a tenth in, fully lifted at the middle");
+        // A glide of 10 units at 20 u/s with 0.2 s of easing lasts 0.7 s, 1.2 s with the slack; a broken one is capped.
+        That(Math.Abs(WeaponDrawMath.OrderedMoveSeconds(10f, 20f, 0.2f, 5f) - 1.2f) < 1e-5f, DrawF,
+             "a 10-unit glide at 20 u/s with 0.2 s easing should be exempt for 1.2 s, got " + WeaponDrawMath.OrderedMoveSeconds(10f, 20f, 0.2f, 5f));
+        That(Math.Abs(WeaponDrawMath.OrderedMoveSeconds(1000f, 1f, 0f, 5f) - 5.5f) < 1e-5f, DrawF,
+             "an ordered move is never exempt past the longest hop plus slack, got " + WeaponDrawMath.OrderedMoveSeconds(1000f, 1f, 0f, 5f));
+        // The quiet spell: 5 s since the last blow, and only with the weapon on the body.
+        That(!WeaponDrawMath.PeaceBonusesOn(true, 104.9f, 100f), DrawF, "4.9 s after a blow is still not quiet");
+        That(WeaponDrawMath.PeaceBonusesOn(true, 105f, 100f), DrawF, "5 s after a blow the peace bonuses pay");
+        That(!WeaponDrawMath.PeaceBonusesOn(false, 200f, 100f), DrawF, "a drawn weapon never earns the peace bonuses");
+        That(Math.Abs(WeaponDrawMath.NaturalRegen(3f, true) - 6f) < 1e-6f && Math.Abs(WeaponDrawMath.NaturalRegen(3f, false) - 3f) < 1e-6f, DrawF,
+             "peace doubles natural recovery and nothing else");
+        That(Math.Abs(WeaponDrawMath.RegenPerSecond(3f, true, 2f) - 8f) < 1e-6f, DrawF,
+             "peace doubles the natural 3/s to 6/s and leaves a timed +2/s alone: 8/s, got " + WeaponDrawMath.RegenPerSecond(3f, true, 2f));
+        That(Math.Abs(WeaponDrawMath.NoticedSqr(4f, true) - 16f) < 1e-5f && Math.Abs(WeaponDrawMath.NoticedSqr(4f, false) - 4f) < 1e-6f, DrawF,
+             "somebody at peace 2 units away is weighed as 4 away (16 squared), got " + WeaponDrawMath.NoticedSqr(4f, true));
+        That(Math.Abs(WeaponDrawMath.NoticeRadius(6f, true) - 3f) < 1e-6f && Math.Abs(WeaponDrawMath.NoticeRadius(6f, false) - 6f) < 1e-6f, DrawF,
+             "peace halves the distance a creature notices you from (6 becomes 3)");
+        // The draw buff: at most once per 15 s, and longer than any draw buff lasts.
+        That(WeaponDrawMath.DrawBuffDue(1f, 0f, true), DrawF, "the first draw ever grants its buff");
+        That(!WeaponDrawMath.DrawBuffDue(14.9f, 0f, false) && WeaponDrawMath.DrawBuffDue(15f, 0f, false), DrawF, "the next draw buff waits 15 s");
+
+        // The state: a draw runs its window, a request made mid-move is carried out after it, a reset is instant.
+        const string StateF = "unity/Assets/Scripts/WeaponDraw.cs";
+        var d = new WeaponDraw();
+        d.RequestDraw(0.74f, 10f);
+        That(d.Phase == DrawPhase.Drawing, StateF, "a draw from the body starts drawing, is " + d.Phase);
+        That(!d.Tick(10.7f) && d.Phase == DrawPhase.Drawing, StateF, "0.7 s into a 0.74 s draw is still drawing");
+        d.RequestSheathe(0.74f, 10.72f);
+        That(d.Tick(10.75f), StateF, "the draw finishing is the 'weapon drawn' moment");
+        That(d.Phase == DrawPhase.Sheathing, StateF, "a sheathe asked for mid-draw starts the moment the draw ends, is " + d.Phase);
+        int v = d.Version;
+        d.Reset(11f);
+        That(d.Phase == DrawPhase.Sheathed && d.Version > v, StateF, "a reset puts the weapon away at once and is announced");
+        d.RequestSheathe(0.74f, 12f);
+        That(d.Phase == DrawPhase.Sheathed, StateF, "putting away a weapon already away changes nothing");
+    }
+
     static int Main()
     {
+        WeaponDrawRules();
         ExperienceCurve();
         CreationSpreads();
         StatPoints();
@@ -1191,6 +1271,7 @@ static class Checks
         QuestSteps();
         StrideRules();
         WorldEventNumbers();
+        SwingContactRules();
 
         if (failures == 0)
         {

@@ -27,10 +27,24 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
     {
         string path = assetPath.Replace('\\', '/');
 
+        var importer = (TextureImporter)assetImporter;
+
+        // Weapons made from sprite sheets by tools/sprite-sheet-to-weapon.py: one texel per block face, so the same
+        // crisp pixel-art settings as the sprites, but a plain texture for a 3D material rather than a Sprite.
+        if (path.Contains("/2_Generated/Weapons/"))
+        {
+            importer.textureType = TextureImporterType.Default;
+            importer.filterMode = FilterMode.Point;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.mipmapEnabled = false;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.alphaSource = TextureImporterAlphaSource.None;
+            return;
+        }
+
         // Only touch the art folder; leave UI/editor/imported-package textures alone.
         if (!path.Contains("/Art/")) return;
-
-        var importer = (TextureImporter)assetImporter;
 
         // Kenney Cursor Pack: import as readable, uncompressed Cursor textures so
         // Cursor.SetCursor() (GameCursor) gets a clean Texture2D. NOT sprites — the

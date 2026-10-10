@@ -370,9 +370,14 @@ public partial class Player3DController : MonoBehaviour
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) facing.Toward(move);
+        // The weapon key (X): out if away, away if out. Taking it out ends a sprint, which only peace allows.
+        if (Hotkeys.Down(GameKeys.DrawToggle)) { if (WeaponDrawClient.Away) sprintToggled = false; WeaponDrawClient.Toggle(); }
         // Sprint gear (V toggle, stamina-gated) decided FIRST so it wins over Shift-walk; also drains/refills stamina.
         UpdateSprintAndStamina(moving);
+        bool wasWalking = WalkingSlow;
         WalkingSlow = moving && HeldShift() && !Sprinting;   // Shift = walk (unless sprinting); read by the stance visual
+        // Starting to walk puts the weapon away — the server does it on hearing this, once per walk.
+        if (WalkingSlow != wasWalking) GameNetwork.ReportWalking(WalkingSlow);
         // THREE gears: Sprint = full (old run), Run = runSpeedMult (jog), Walk = walkSpeedMult.
         float travelTier = Sprinting ? 1f : (WalkingSlow ? walkSpeedMult : runSpeedMult);
         float liveMove = status != null ? status.MoveMult : 1f;
@@ -390,16 +395,22 @@ public partial class Player3DController : MonoBehaviour
     // allocation. Sprint engages only while moving with stamina left and not locked; draining to 0 forces Run and
     // locks re-sprint until stamina recovers to sprintUnlockFrac. Recharge rate depends on the current gear:
     // idle = fast, walk = normal, everything else (run/attack/etc.) = slow.
+    /// <summary>Drop the wish to sprint — the weapon is coming out, and sprinting is for peace.</summary>
+    public void StopSprinting() => sprintToggled = false;
+
     void UpdateSprintAndStamina(bool moving)
     {
         if (Hotkeys.Down(GameKeys.SprintToggle)) sprintToggled = !sprintToggled;   // the ONE sprint input site
+        // Sprinting is a peace gear: wanting it with the weapon out asks to put the weapon away, and the sprint
+        // starts once the server says the weapon is going back.
+        if (sprintToggled && !WeaponDrawClient.Away) WeaponDrawClient.AskToSheathe();
 
         var ch = Character.Instance;
         float stam = ch != null ? ch.Stamina : 0f;
         float max = ch != null ? ch.maxStamina : 0f;
 
         bool wasSprinting = Sprinting;
-        Sprinting = sprintToggled && moving && !sprintLocked && stam > 0f;
+        Sprinting = sprintToggled && moving && !sprintLocked && stam > 0f && WeaponDrawClient.Away;
 
         float dt = Time.deltaTime;
         if (Sprinting)
@@ -630,6 +641,9 @@ public partial class Player3DController : MonoBehaviour
     // OnBasicAttackStart: a passive gap-closer moves us first, and the same frame's reach check sees the new position.
     Vector3 PursueAttackTarget()
     {
+        // An attack order takes the weapon out first — on the way to the target, so it is usually in hand on arrival.
+        // A sprint ends with it: the server puts away any weapon that travels at sprint speed.
+        if (!WeaponDrawClient.Ready) { StopSprinting(); WeaponDrawClient.AskToDraw(); }
         if (attacker != null) attacker.AnnounceAttackIntent(attackTarget);
         if (attacker != null && attacker.EngagedWith(attackTarget))
         {

@@ -168,6 +168,93 @@ public class Character3DPose : MonoBehaviour, IStancePose
         var w = StanceCatalog.Get(StanceId.Walk);   walkClip   = w != null ? w.clip ?? "" : "";
         var r = StanceCatalog.Get(StanceId.Run);    runClip    = r != null ? r.clip ?? "" : "";
         var sp = StanceCatalog.Get(StanceId.Sprint); sprintClip = sp != null ? sp.clip ?? "" : "";
+
+        ResolveWeaponLayers();
+    }
+
+    // ---- How the held weapon is held: three layers of the controller over the base layer ----
+    // Layer 1 (arms and fingers only) = the weapon's carry pose, over the shared Idle/Walk/Run/Sprint legs.
+    // Layer 2 (whole body) = the weapon's own standing idle, over everything while the body stands still.
+    // Layer 3 (arms and fingers only) = the weapon being put away or taken out, over whatever the legs are doing.
+    // Layers 4 and 5 (one arm each) = the carry pose of a weapon that holds only that arm; the other swings with the legs.
+    // Layers 1, 2, 4 and 5 show only while the weapon is in hand; at peace the body is the shared one, hands empty.
+
+    /// <summary>The controller parameter the "Draw" layer's states are scrubbed by: the draw's progress, 0..1.</summary>
+    public const string DrawTimeParam = "DrawTime";
+    static readonly int PDrawTime = Animator.StringToHash(DrawTimeParam);
+
+    struct WeaponLayer { public int layer; public int hash; public float written; }
+    WeaponLayer carry = new WeaponLayer { layer = 1 };   // hash 0 = the shared arms
+    WeaponLayer stand = new WeaponLayer { layer = 2 };   // hash 0 = the shared Idle
+    WeaponLayer draw = new WeaponLayer { layer = 3 };    // the put-away or take-out clip playing now
+    WeaponLayer carryRight = new WeaponLayer { layer = 4 }, carryLeft = new WeaponLayer { layer = 5 };   // one-arm carry
+    int sheatheHash, unsheatheHash;                      // 0 = this weapon simply moves, with no clip
+    bool hasDrawParam;
+    DrawPhase drawPhase = DrawPhase.Sheathed;
+    float drawProgress;
+    WeaponType heldWeapon = WeaponType.None;
+    bool travel;            // the stance shown this frame is Idle/Walk/Run/Sprint
+    bool standing;          // the stance shown this frame is Idle
+
+    public void SetShownStance(StanceId id) { travel = StanceCatalog.IsLocomotion(id); standing = id == StanceId.Idle; }
+
+    /// <summary>The weapon type this body holds — told by its <see cref="WeaponSocket"/> whenever the weapon changes.</summary>
+    public void SetHeldWeapon(WeaponType w) { heldWeapon = w; ResolveWeaponLayers(); }
+
+    /// <summary>Where this body's weapon is and how far through a draw or a put-away — told by its
+    /// <see cref="WeaponSocket"/> every frame from the server's word.</summary>
+    public void SetDraw(DrawPhase phase, float progress) { drawPhase = phase; drawProgress = progress; }
+
+    // Asked when the weapon or the controller changes, never per frame.
+    void ResolveWeaponLayers()
+    {
+        // The carry pose is found on whichever of the three carry layers the controller built it into.
+        carry.hash = StateOn(carry.layer, StanceCatalog.CarryPose(heldWeapon));
+        carryRight.hash = StateOn(carryRight.layer, StanceCatalog.CarryPose(heldWeapon));
+        carryLeft.hash = StateOn(carryLeft.layer, StanceCatalog.CarryPose(heldWeapon));
+        stand.hash = StateOn(stand.layer, StanceCatalog.WeaponIdle(heldWeapon));
+        var b = StanceCatalog.Weapon(heldWeapon);
+        sheatheHash = b != null ? StateOn(draw.layer, b.sheatheClip) : 0;
+        unsheatheHash = b != null ? StateOn(draw.layer, b.unsheatheClip) : 0;
+        hasDrawParam = false;
+        if (anim != null && anim.runtimeAnimatorController != null)
+            foreach (var p in anim.parameters) if (p.nameHash == PDrawTime) { hasDrawParam = true; break; }   // perf-ok: on weapon change
+    }
+
+    // A controller built before a layer existed has fewer layers: nothing is asked of a layer it does not have.
+    int StateOn(int layer, string clip)
+    {
+        if (string.IsNullOrEmpty(clip) || anim == null || anim.runtimeAnimatorController == null || anim.layerCount <= layer) return 0;
+        int h = Animator.StringToHash(clip);
+        return anim.HasState(layer, h) ? h : 0;
+    }
+
+    // Eases a weapon layer in while <paramref name="on"/> and the held weapon has a clip for it, out otherwise, over the
+    // same time the body cross-fades into a one-shot — so the layer and the body change together. Everything is read
+    // back from the Animator rather than remembered: a body switched off and on (a banked creature reused, one thawed
+    // far from the camera, a controller rebuilt) comes back with its layers reset, and a remembered "already there"
+    // would leave it showing nothing.
+    void UpdateWeaponLayer(ref WeaponLayer l, bool on)
+    {
+        if (l.hash == 0 && l.written == 0f) return;
+        if (!anim.isActiveAndEnabled || anim.layerCount <= l.layer) return;
+        float target = on && l.hash != 0 ? 1f : 0f;
+        float weight = anim.GetLayerWeight(l.layer);
+        if (target > 0f && anim.GetCurrentAnimatorStateInfo(l.layer).shortNameHash != l.hash)
+        {
+            if (!anim.IsInTransition(l.layer))
+            {
+                // Already showing another weapon's clip: blend across. Showing nothing: enter it outright, since the
+                // layer weight is the fade.
+                if (weight > 0.001f) anim.CrossFadeInFixedTime(l.hash, crossFade, l.layer);
+                else anim.Play(l.hash, l.layer, 0f);
+            }
+            // The weight does not rise until the layer holds the clip: an empty state never shows at any weight.
+            if (weight <= 0.001f) target = 0f;
+        }
+        float next = Mathf.MoveTowards(weight, target, Time.deltaTime / Mathf.Max(0.01f, crossFade));
+        if (next != weight) anim.SetLayerWeight(l.layer, next);
+        l.written = next;
     }
 
     static string Clean(string n)
@@ -308,9 +395,16 @@ public class Character3DPose : MonoBehaviour, IStancePose
     {
         if (cachedHeight > 0f) return;
         var rends = GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return;
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+        // The body alone: a worn hat is not the person's height (see Character3DBody.MeasureHeight).
+        bool any = false;
+        var b = new Bounds();
+        for (int i = 0; i < rends.Length; i++)
+        {
+            if (HeadPiece.IsPiece(rends[i])) continue;
+            if (!any) { b = rends[i].bounds; any = true; }
+            else b.Encapsulate(rends[i].bounds);
+        }
+        if (!any) return;
         cachedHeight = b.size.y;
         cachedWidth = Mathf.Max(b.size.x, b.size.z);
     }
@@ -336,6 +430,15 @@ public class Character3DPose : MonoBehaviour, IStancePose
         {
             float s = anim.GetFloat(PSpeed);
             anim.SetFloat(PSpeed, Mathf.SmoothDamp(s, speedTarget, ref speedVel, speedSmooth));
+            bool inHand = drawPhase == DrawPhase.Drawn;
+            UpdateWeaponLayer(ref carry, travel && inHand);
+            UpdateWeaponLayer(ref carryRight, travel && inHand);
+            UpdateWeaponLayer(ref carryLeft, travel && inHand);
+            UpdateWeaponLayer(ref stand, standing && inHand);
+            bool moving = drawPhase == DrawPhase.Drawing || drawPhase == DrawPhase.Sheathing;
+            if (moving) draw.hash = drawPhase == DrawPhase.Drawing ? unsheatheHash : sheatheHash;
+            if (moving && hasDrawParam && draw.hash != 0) anim.SetFloat(PDrawTime, drawProgress);
+            UpdateWeaponLayer(ref draw, moving && travel && hasDrawParam);
         }
 
         if (facing.sqrMagnitude > 1e-4f)

@@ -106,9 +106,10 @@ public class Item : ScriptableObject
              "0 = leave the attacker's default range unchanged. Ignored for non-weapon items.")]
     public float attackRange;
 
-    [Tooltip("The 3D model wielded in-hand while this weapon is equipped (live-3D characters mount it on the hand " +
-             "bone via WeaponSocket). Its root WeaponGrip authors how it sits in the hand. None = no visible weapon. " +
-             "Author the grip with Tools ▸ unwritten ▸ Weapons ▸ Weapon Grip Tuner.")]
+    [Tooltip("The 3D model shown on the body while this is equipped. A weapon: wielded in-hand (WeaponSocket mounts " +
+             "it on the hand bone; its root WeaponGrip authors how it sits — Tools ▸ unwritten ▸ Weapons ▸ Weapon " +
+             "Grip Tuner). A Head item: a headgear piece (its root HeadPiece) that HeadSocket puts on the head. " +
+             "None = nothing shown.")]
     public GameObject equipModel;
 
     // V3: a weapon's kit is ROLLED PER COPY at the drop (WeaponSkillRoll → EquipmentInstance.skillIds), so it can
@@ -124,7 +125,8 @@ public class Item : ScriptableObject
     public ItemCategory category = ItemCategory.Etc;
     [Tooltip("Number of card sockets (◇ pips). 0 = no sockets. Only meaningful for equipment.")]
     public int cardSlots;
-    [Tooltip("Display-only weight (v1). Real encumbrance lands with the loot loop.")]
+    [Tooltip("How heavy it is. A weapon's weight sets how long it takes to draw and to put away: 0.2 s plus 0.006 s " +
+             "per point.")]
     public int weight;
     [Tooltip("Sell value in zeny — what a shop pays for one. 0 = it cannot be sold to an NPC, whatever kind of item it is.")]
     public int zeny;
@@ -145,7 +147,8 @@ public class Item : ScriptableObject
     [Header("Crafting")]
     [Tooltip("What this PIECE is made of, which decides where it is made and which material band it folds with: " +
              "Metal at a smith, Cloth at a loom, Leather at a tannery. None = not something anyone crafts " +
-             "(a consumable, a material, or a piece nobody has given a craft to yet).")]
+             "(a consumable, a material, or a piece nobody has given a craft to yet). A worn piece made of None is " +
+             "worn for its look alone: it rolls no word and is never handed out at random.")]
     public MaterialKind madeOf = MaterialKind.None;
     [Tooltip("What it costs to FORGE one, in units of its craft's band-1 material, plus gold. 0 units = nobody " +
              "can forge this piece.")]

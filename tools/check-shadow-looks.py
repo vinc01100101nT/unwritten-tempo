@@ -17,6 +17,8 @@ Checks, per creature entry in unity/Assets/3_Data/Resources/Monsters whose kind 
     key is the body's name — the game only shows a look stamped with the name of the body it is drawn on
   - the source and target colour lists are the same length, every entry is "#RRGGBB", no part is listed twice
   - every source colour is one of that body's parts (within one step of 8-bit colour, the game's own tolerance)
+  - its hairstyle is empty (the hair its body was made with), "none", or a hairstyle in HeadPieces.asset, and its
+    hair colour is empty or "#RRGGBB" — a misspelt hairstyle is silently drawn as no hair at all
 
 USAGE:   tools/check-shadow-looks.py [--root <repo>]
 EXIT:    0 = clean, 1 = problems found, 2 = setup problem.
@@ -33,6 +35,8 @@ ASSETS = os.path.join(REPO, "unity", "Assets")
 SCRIPTS = os.path.join(ASSETS, "Scripts")
 MONSTERS = os.path.join(ASSETS, "3_Data", "Resources", "Monsters")
 DYE_PARTS = os.path.join(ASSETS, "3_Data", "Resources", "CharacterDyeParts.asset")
+HEAD_PIECES = os.path.join(ASSETS, "3_Data", "Resources", "HeadPieces.asset")
+BARE_BODIES = os.path.join(ASSETS, "2_Generated", "Characters", "Bodies")
 GROUPS = os.path.join(ASSETS, "AddressableAssetsData", "AssetGroups")
 CREATURE_KIND = os.path.join(SCRIPTS, "CreatureKind.cs")
 CHARACTER_MODELS = os.path.join(SCRIPTS, "CharacterModels.cs")
@@ -110,19 +114,27 @@ def roster():
 
 
 def model_files_by_guid():
-    """Asset GUID -> model file name without extension, for every model under the authored art folder."""
+    """Asset GUID -> model name, for every model under the authored art folder AND every bare body the head-piece
+    bake made from one (2_Generated/Characters/Bodies) — the roster points at the bare body once it exists."""
     out = {}
-    root = os.path.join(ASSETS, "1_Authored")
-    for dirpath, _dirs, files in os.walk(root):
-        for f in files:
-            if not f.lower().endswith(".fbx.meta"):
-                continue
-            with open(os.path.join(dirpath, f), encoding="utf-8", errors="replace") as fh:
-                for line in fh:
-                    if line.startswith("guid:"):
-                        out[line.split(":", 1)[1].strip()] = f[:-len(".fbx.meta")]
-                        break
+    for root, ending in ((os.path.join(ASSETS, "1_Authored"), ".fbx.meta"), (BARE_BODIES, ".prefab.meta")):
+        for dirpath, _dirs, files in os.walk(root):
+            for f in files:
+                if not f.lower().endswith(ending):
+                    continue
+                with open(os.path.join(dirpath, f), encoding="utf-8", errors="replace") as fh:
+                    for line in fh:
+                        if line.startswith("guid:"):
+                            out[line.split(":", 1)[1].strip()] = f[:-len(ending)]
+                            break
     return out
+
+
+def hairstyles():
+    """Every hairstyle id in the saved table (HeadPieces.asset), or None when there is no table yet."""
+    if not os.path.exists(HEAD_PIECES):
+        return None
+    return set(re.findall(r"^  - id: (\S+)$", read(HEAD_PIECES), re.M))
 
 
 def dye_parts():
@@ -181,6 +193,7 @@ def main():
         setup_fail("the character roster is empty - no Addressable entry carries the character-model label")
     files = model_files_by_guid()
     parts_of = dye_parts()
+    styles = hairstyles()
 
     problems, checked = [], 0
     for f in sorted(os.listdir(MONSTERS)):
@@ -229,6 +242,13 @@ def main():
         for i, d in enumerate(dst):
             if not HEX.match(d):
                 problems.append("%s: target colour %d '%s' is not #RRGGBB." % (who, i + 1, d))
+
+        hair = string_field(text, "hairStyle") or ""
+        hair_colour = string_field(text, "hairColour") or ""
+        if hair and hair != "none" and (styles is None or hair not in styles):
+            problems.append("%s: hairstyle '%s' is not in the hairstyle list - it is drawn as no hair at all." % (who, hair))
+        if hair_colour and not HEX.match(hair_colour):
+            problems.append("%s: hair colour '%s' is not #RRGGBB." % (who, hair_colour))
 
     if checked == 0:
         print(RED + "no creature of a kind drawn as a character (%s) was found, so nothing was checked"

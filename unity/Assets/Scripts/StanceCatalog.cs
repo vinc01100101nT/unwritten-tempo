@@ -13,6 +13,7 @@ public static class StanceCatalog
     const string ResourcePath = "StanceLibrary";
 
     static StanceBinding[] _byId;   // indexed by (int)StanceId; null slot = unbound stance
+    static WeaponStanceBinding[] _byWeapon; // indexed by (int)WeaponType; null = that weapon keeps the shared ones
 
     static void EnsureLoaded()
     {
@@ -20,6 +21,14 @@ public static class StanceCatalog
         int count = System.Enum.GetValues(typeof(StanceId)).Length;
         _byId = new StanceBinding[count];
         var lib = Resources.Load<StanceLibrary>(ResourcePath);
+        _byWeapon = new WeaponStanceBinding[System.Enum.GetValues(typeof(WeaponType)).Length];
+        if (lib != null && lib.weaponStances != null)
+            for (int i = 0; i < lib.weaponStances.Count; i++)
+            {
+                var c = lib.weaponStances[i];
+                int w = c != null ? (int)c.weapon : -1;
+                if (w >= 0 && w < _byWeapon.Length) _byWeapon[w] = c;
+            }
         if (lib != null && lib.stances != null)
         {
             for (int i = 0; i < lib.stances.Count; i++)
@@ -71,6 +80,25 @@ public static class StanceCatalog
         EnsureLoaded();
         int idx = (int)id;
         return idx >= 0 && idx < _byId.Length;
+    }
+
+    /// <summary>The carry pose clip of weapon type <paramref name="w"/>, or "" when it keeps the shared arms. Asked
+    /// when a body's weapon changes, never per frame.</summary>
+    public static string CarryPose(WeaponType w) => ForWeapon(w)?.carryClip ?? "";
+
+    /// <summary>The whole-body standing idle of weapon type <paramref name="w"/>, or "" when it keeps the shared Idle.
+    /// Asked when a body's weapon changes, never per frame.</summary>
+    public static string WeaponIdle(WeaponType w) => ForWeapon(w)?.idleClip ?? "";
+
+    /// <summary>Weapon type <paramref name="w"/>'s full binding — its put-away and take-out clips and their hand
+    /// frames included — or null when it has none. Asked when a body's weapon changes, never per frame.</summary>
+    public static WeaponStanceBinding Weapon(WeaponType w) => ForWeapon(w);
+
+    static WeaponStanceBinding ForWeapon(WeaponType w)
+    {
+        EnsureLoaded();
+        int idx = (int)w;
+        return idx >= 0 && idx < _byWeapon.Length ? _byWeapon[idx] : null;
     }
 
     /// <summary>Resolve a stance's binding, or null if it isn't bound. Zero-alloc array index.</summary>

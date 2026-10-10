@@ -88,6 +88,51 @@ fi
 
 mkdir -p "$OUT_ROOT"
 
+# NO BUILD EVER MEETS "Modified Scenes must be saved". The content step refuses any open scene marked modified with
+# a dialog that freezes the editor until somebody clicks it (measured 2026-10-09: 7 minutes 49 seconds). So every open
+# scene marked modified is checked first, by saving a COPY into Temp/ and comparing it with the file on disk:
+#   - the same, line for line: the mark changes nothing, so the scene is saved (it writes the bytes already there)
+#     and the build goes on;
+#   - different: the build stops here, before anything is deleted, and prints the exact lines — a real unsaved edit
+#     is the user's to keep or throw away, never this script's.
+# What keeps marking scenes modified in the first place is caught by tools/check-scene-stays-clean.py.
+scenes_unchanged_or_stop() {
+  local report
+  report="$("${UNITY_CMD[@]}" eval --timeout 120 --code '
+    var sb = new System.Text.StringBuilder();
+    System.Func<string, byte[]> bytesNoCr = p => System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Where(System.IO.File.ReadAllBytes(p), b => b != 13));
+    for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++) {
+      var s = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+      if (!s.isDirty) continue;
+      if (string.IsNullOrEmpty(s.path)) { sb.Append("UNTITLED|" + s.name + ";"); continue; }
+      var copy = "Temp/__unsaved_check_" + i + ".unity";
+      UnityEditor.SceneManagement.EditorSceneManager.SaveScene(s, copy, true);
+      if (System.Linq.Enumerable.SequenceEqual(bytesNoCr(s.path), bytesNoCr(copy))) {
+        System.IO.File.Delete(copy); System.IO.File.Delete(copy + ".meta");
+        UnityEditor.SceneManagement.EditorSceneManager.SaveScene(s);
+        sb.Append("SETTLED|" + s.path + ";");
+      } else sb.Append("CHANGED|" + s.path + "|" + copy + ";");
+    }
+    return sb.ToString();' 2>/dev/null | grep -o '"result":"[^"]*"' | cut -d'"' -f4)"
+  local entry kind path copy stop=0
+  IFS=';' read -ra entries <<< "$report"
+  for entry in "${entries[@]}"; do
+    [ -n "$entry" ] || continue
+    IFS='|' read -r kind path copy <<< "$entry"
+    case "$kind" in
+      SETTLED) printf 'scene %s was marked modified with nothing changed in it — saved, build goes on\n' "$path" >&2 ;;
+      UNTITLED) printf '\033[31mAn unsaved new scene (%s) is open. Save or close it, then run this again.\033[0m\n' "$path" >&2; stop=1 ;;
+      CHANGED)
+        printf '\033[31mScene %s has real unsaved changes — the build stops here so they are not lost or baked in:\033[0m\n' "$path" >&2
+        diff --strip-trailing-cr "$REPO/unity/$path" "$REPO/unity/$copy" >&2
+        rm -f "$REPO/unity/$copy" "$REPO/unity/$copy.meta"
+        printf '   Keep them: File > Save in Unity. Throw them away: reopen the scene without saving. Then run this again.\n' >&2
+        stop=1 ;;
+    esac
+  done
+  return "$stop"
+}
+
 # build_one <server|client> -> echoes the output path
 build_one() {
   local kind="$1"
@@ -151,6 +196,8 @@ EOF
     "${UNITY_CMD[@]}" editor_status 2>/dev/null | grep -q '"status":"ready"' && break
     sleep 5
   done
+
+  scenes_unchanged_or_stop || return 1
 
   rm -rf "$out" "$out.no-content.txt"
 

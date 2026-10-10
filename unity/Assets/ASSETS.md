@@ -19,8 +19,11 @@ checker at the bottom is what makes them stick without anybody remembering.
 
 1. **Every authored texture ships compressed, unless it is pixel art.** Block compression is invisible on a
    painted photo of ground and costs a quarter to an eighth of the memory. Nine ground tiles imported with
-   compression set to None were 85 MB of the 307 MB build. Pixel-art sprites are the one exception — block
-   compression bleeds across a pixel grid — and the import rule (below) owns them.
+   compression set to None were 85 MB of the 307 MB build. Pixel art is the one exception — block
+   compression bleeds across a pixel grid — the sprites and the textures of weapons made from sprite sheets alike,
+   and the import rule (below) owns them. The head pieces' colour strips (`2_Generated/Characters/HeadPieces/`,
+   written by `HeadPieceBaker`) are the same case: a handful of exact colours, a few hundred bytes each, which
+   compression would shift off the colours a chosen hair colour is matched against.
 2. **Nothing above 2048 square, and only 2048 when the camera can see it.** 34 textures at 2048 were 160 MB of the
    build for a 2.5D camera that never fills the screen with a prop. Halving one saves three quarters of its memory.
 3. **A texture is Read/Write Enabled only when a script reads its pixels.** It doubles the texture's memory. The
@@ -69,6 +72,12 @@ checker at the bottom is what makes them stick without anybody remembering.
     graphics card and froze the game for 18.7 ms the first time each model appeared. A model with no entry offers
     no colour choices and is never recoloured. Enforced: the asset-rules check fails any `.fbx` in
     `1_Authored/Art/Characters/Models` the table does not list.
+14. **A character clip made by a script bakes the body's movement into the pose.** The game's characters never apply
+    root motion, so whatever a clip leaves as root motion — the body's travel, its height, its turn — is thrown away
+    in game: the body stays put and a planted foot slides. Imported clips are set this way in their import settings;
+    a clip a script saves (`.anim` in `1_Authored/Art/Characters/Animations`) must set it itself. All 12 weapon
+    attacks shipped without it on 2026-10-09, and the back foot slid in every one. Enforced: the asset-rules check
+    fails any such `.anim` that does not bake all three.
 
 ---
 
@@ -76,7 +85,7 @@ checker at the bottom is what makes them stick without anybody remembering.
 
 | Need | Use | Why |
 | --- | --- | --- |
-| Import settings for anything under `1_Authored/Art/` | **The import rule** `Editor/PixelArtImportPostprocessor.cs` | It is the single OWNER of those settings and re-applies them on every import. Hand-editing a `.meta` there is reverted on the next import — change the rule, then reimport the folder. Its `/GroundTiles/` branch is the one non-pixel-art case: Default + Repeat + mipmaps + **Compressed** + ToNearest + **max 1024** + **no alpha**, the same for every tile. |
+| Import settings for anything under `1_Authored/Art/`, and the textures under `2_Generated/Weapons/` | **The import rule** `Editor/PixelArtImportPostprocessor.cs` | It is the single OWNER of those settings and re-applies them on every import. Hand-editing a `.meta` there is reverted on the next import — change the rule, then reimport the folder. Its `/GroundTiles/` branch is the one non-pixel-art case: Default + Repeat + mipmaps + **Compressed** + ToNearest + **max 1024** + **no alpha**, the same for every tile. |
 | Ground textures for the blended ground, the curbs and the prop materials | **One copy**, in `1_Authored/Art/GroundTiles/` — every ground tile the game uses, new ones included, lives there and nowhere else | The same four images used to live twice, once compressed and once not, and both shipped — 48 MB of the build was the same three pictures twice. |
 | Level-of-detail for a placed prop | **`LodGroupWirer.WireAllCore()`** through the live editor link | Nests each `_LODn` copy's mesh under the `_LOD0` prefab (no collider on the copies — the placed prefab already blocks) and lets Unity compute the switching bounds. Idempotent; re-run after re-decimating. |
 | Creature stats, gear, drops | **The creature data files** → `Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs` | The bake is the only road from data to a prefab. After ANY change to a struct a baked component holds, re-bake — adding the missing `[Serializable]` alone changes nothing on disk. |
@@ -105,7 +114,7 @@ checker at the bottom is what makes them stick without anybody remembering.
 ```bash
 tools/check-asset-rules.py          # every rule above, on the whole project; --all also lists the debt (WARN)
 tools/check-editor-writes.py        # editor code that writes with no click
-tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — 20 cases: each planted fault named, the sound copy quiet
+tools/prove-asset-rules-check.py    # re-run after ANY edit to the checker — 21 cases: each planted fault named, the sound copy quiet
 ```
 
 They run by themselves at the end of any turn that edited a texture or model setting, a prefab, a project setting

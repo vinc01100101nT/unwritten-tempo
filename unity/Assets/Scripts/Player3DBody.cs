@@ -107,6 +107,8 @@ public static class Player3DBody
         // The model is not a child of the avatar, so a thrown weapon finds this hand by being told which one it is.
         WeaponSocket.MarkMine(hand);
         if (instance.GetComponent<CharacterDye3D>() == null) instance.AddComponent<CharacterDye3D>();   // per-part outfit dye
+        // Hair and headgear — this machine's own character's, the same socket every body wears.
+        if (instance.GetComponent<HeadSocket>() == null) instance.AddComponent<HeadSocket>();
         // The x-ray occlusion silhouette flags THIS object's renderers (the visible model) — it lives here, not on
         // the player root, because the model is a SEPARATE object riding the controller (the root only holds the
         // hidden sprite). A model swap rebuilds this object, so the fresh renderers are re-tagged automatically.

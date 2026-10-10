@@ -310,6 +310,12 @@ public enum SkillTrigger
     /// has no pressed form — it never reaches the hotbar and never announces itself — which is exactly what a
     /// consumable's effect should be.</para></summary>
     OnItemUsed,
+
+    /// <summary>YOUR WEAPON FINISHED COMING OUT — the moment a draw ends and the weapon is in your hands. Fired on the
+    /// server by <c>StatusController.WeaponDrawn</c>, for players and creatures alike, at most once every
+    /// <see cref="WeaponDrawMath.DrawBuffSpacingSeconds"/> per unit, so drawing again and again never keeps its buff
+    /// up. No entity is passed — it is always about you. Each weapon's draw buff answers this.</summary>
+    OnWeaponDrawn,
 }
 
 /// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of

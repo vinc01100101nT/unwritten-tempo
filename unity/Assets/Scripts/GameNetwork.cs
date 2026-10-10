@@ -1754,6 +1754,8 @@ public class GameNetwork : NetworkManager
         public int connectionId;
         public uint targetNetId;
         public float landsAt;
+        public float power;     // share of a full swing: 1 for the first hand, less for a pair weapon's other hand
+        public EquipmentInstance weapon;   // the very copy in the hand when the swing began — another at the contact drops it
     }
 
     static readonly System.Collections.Generic.List<PendingBlow> pendingBlows =
@@ -1769,14 +1771,21 @@ public class GameNetwork : NetworkManager
         Flights.Tick();
         if (pendingBlows.Count == 0) return;
 
+        // IN THE ORDER THEY CONNECT: a pair weapon's two hits can both fall due in one frame at a high attack speed,
+        // and the first hand's must land first — it is the one that can kill, spend the charge, start the run.
         float now = Time.time;
-        for (int i = pendingBlows.Count - 1; i >= 0; i--)
+        while (true)
         {
-            var p = pendingBlows[i];
-            if (now < p.landsAt) continue;
-            pendingBlows.RemoveAt(i);
+            int due = -1;
+            for (int i = 0; i < pendingBlows.Count; i++)
+                if (now >= pendingBlows[i].landsAt && (due < 0 || pendingBlows[i].landsAt < pendingBlows[due].landsAt)) due = i;
+            if (due < 0) break;
+            var p = pendingBlows[due];
+            int last = pendingBlows.Count - 1;
+            pendingBlows[due] = pendingBlows[last];
+            pendingBlows.RemoveAt(last);
             if (NetworkServer.connections.TryGetValue(p.connectionId, out var conn) && conn != null)
-                LandTheBlow(conn, p.targetNetId);
+                LandTheBlow(conn, p.targetNetId, p.power, p.weapon);
         }
     }
 
@@ -1808,6 +1817,17 @@ public class GameNetwork : NetworkManager
         // and that is this machine's answer, not the cursor's that asked.
         if (!Sides.Hostile(swinger, VictimBehind(identity) as ICombatUnit)) return;
 
+        // A SWING NEEDS THE WEAPON IN HAND. Their machine waits for it already; one that did not gets the weapon taken
+        // out instead of a blow, and asks again once it is in hand. Judged before the beat, so a refused ask costs none.
+        var drawHost = swinger.StatusHost;
+        if (drawHost != null && !drawHost.Draw.IsDrawn)
+        {
+            drawHost.RequestDraw();
+            if (GameLog.On(LogCat.Hit)) GameLog.Info(LogCat.Hit, "no swing for connection " + conn.connectionId
+                                                     + ": the weapon is not in hand (" + drawHost.Draw.Phase + ") — taking it out");
+            return;
+        }
+
         // THE BEAT IS THIS MACHINE'S, not the swinger's. Until now the only thing standing between a client and
         // twenty blows a second was the flood ceiling, which is set far above any real attack speed on purpose —
         // so a machine that sent a request the moment it was allowed to, instead of when its own animation reached
@@ -1817,7 +1837,8 @@ public class GameNetwork : NetworkManager
         float swingTime = fighter != null ? fighter.SwingTime : 0f;
         if (swingTime > 0f && !SwingIsDue(conn.connectionId, swingTime)) return;
 
-        var worn = fighter != null ? fighter.GetEquipped(EquipSlotType.Weapon) : null;
+        var wornCopy = fighter != null ? fighter.GetEquippedInstance(EquipSlotType.Weapon) : null;
+        var worn = wornCopy != null ? wornCopy.def : null;
         var weapon = worn != null ? worn.weaponType : WeaponType.None;
 
         // AND THE SWING IS SAID OUT LOUD. Nothing on the wire has ever said that a person's body did anything, so
@@ -1856,16 +1877,33 @@ public class GameNetwork : NetworkManager
 
         if (swingTime > 0f)
         {
+            // A PAIR WEAPON LANDS TWICE — the other hand's hit later in the same swing, at its own share of the power,
+            // each a whole hit of its own when it lands. Both moments are fractions of the swing, so attack speed
+            // brings both sooner.
+            var spec = CharacterSpec.Active;
+            int contacts = SwingContacts.Of(weapon, spec.hitTiming, spec.offHandHitTiming, spec.offHandPower,
+                                            out float firstAt, out float secondAt, out float secondPower);
             pendingBlows.Add(new PendingBlow
             {
                 connectionId = conn.connectionId,
                 targetNetId = msg.targetNetId,
-                landsAt = Time.time + swingTime * Mathf.Clamp01(CharacterSpec.Active.hitTiming)
+                landsAt = Time.time + swingTime * firstAt,
+                power = 1f,
+                weapon = wornCopy
             });
+            if (contacts == 2)
+                pendingBlows.Add(new PendingBlow
+                {
+                    connectionId = conn.connectionId,
+                    targetNetId = msg.targetNetId,
+                    landsAt = Time.time + swingTime * secondAt,
+                    power = secondPower,
+                    weapon = wornCopy
+                });
             return;
         }
 
-        LandTheBlow(conn, msg.targetNetId);
+        LandTheBlow(conn, msg.targetNetId, 1f, wornCopy);
     }
 
     /// <summary>A bow or a firearm — the two weapons whose blow travels rather than connecting. Read from the same
@@ -1885,12 +1923,15 @@ public class GameNetwork : NetworkManager
     // The contact moment itself, on the server's clock. EVERYTHING here is re-asked rather than remembered from
     // when the swing was accepted: a creature can die, be recycled or walk out of reach during a swing, and a
     // fighter can be gone entirely if their player left mid-blow.
-    void LandTheBlow(NetworkConnectionToClient conn, uint targetNetId)
+    void LandTheBlow(NetworkConnectionToClient conn, uint targetNetId, float power, EquipmentInstance weaponAtStart)
     {
         if (!NetworkServer.spawned.TryGetValue(targetNetId, out var identity) || identity == null) return;
 
         var victim = VictimBehind(identity);
         if (victim == null) return;
+        // A TARGET ALREADY DEAD IS NOT HIT AGAIN. A pair weapon's first hand can kill, and its second hit is then
+        // due on a body that is already down; a creature's own swing has always refused this, now a person's does too.
+        if (victim is ICombatUnit fallen && fallen.IsDead) return;
 
         var attacker = ShellFor(conn);
         // Same refusal as FighterFor makes: somebody on their way out of this world does not act in it.
@@ -1905,6 +1946,11 @@ public class GameNetwork : NetworkManager
         // their own machine. The skill door has always refused a dead caster; this is the same refusal, on the
         // one moment every basic attack passes through.
         if (swinger.IsDead) return;
+
+        // THE SWING BELONGS TO THE WEAPON THAT STARTED IT. One swapped mid-swing drops what is still on its way, so a
+        // pair weapon's second hit can never land from a sword drawn in between.
+        var holder = swinger as Character;
+        if (holder != null && holder.GetEquippedInstance(EquipSlotType.Weapon) != weaponAtStart) return;
 
         // Reach is judged HERE, at the contact moment, exactly as it was when the swinger's own machine chose that
         // moment — so a target that walked out during the swing is missed the same way it always was.
@@ -1923,7 +1969,7 @@ public class GameNetwork : NetworkManager
         //
         // EVERYBODY WATCHING IS TOLD by the victim itself, at the moment it draws the blow (Health.Show for a creature,
         // the damage door for a person) — so there is no second announcement to send from here.
-        BasicSwing.Land(swinger, victim as ICombatUnit, ScaledNumber.Of(1f), StackVars.None,
+        BasicSwing.Land(swinger, victim as ICombatUnit, ScaledNumber.Of(power), StackVars.None,
                         outer: 1f, overkill: false, announceIntent: false, out _);
     }
 
@@ -2007,6 +2053,14 @@ public class GameNetwork : NetworkManager
 
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return; }
+        // A WEAPON SKILL NEEDS THE WEAPON IN HAND — the same rule a swing obeys, the same answer: take it out.
+        var drawHost = caster.StatusHost;
+        if (def.weaponType != WeaponType.None && drawHost != null && !drawHost.Draw.IsDrawn)
+        {
+            drawHost.RequestDraw();
+            WhyCastRefused(msg.skillId, "the weapon is not in hand (" + drawHost.Draw.Phase + ") — taking it out");
+            return;
+        }
         if (!Owns(caster, msg.skillId))
         {
             WarnNotTheirSkill(conn.connectionId, msg.skillId);
@@ -2441,6 +2495,20 @@ public class GameNetwork : NetworkManager
     {
         var me = MyPlayer;
         if (me != null) me.CmdSprinting(on);
+    }
+
+    /// <summary>Tell the server this body started or stopped walking (Shift). Walking puts the weapon away.</summary>
+    public static void ReportWalking(bool on)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdWalking(on);
+    }
+
+    /// <summary>Ask the server to take this person's weapon out, or put it away. It decides; this only asks.</summary>
+    public static void AskWeapon(bool draw)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdWeapon(draw);
     }
 
     // What the cast was aimed at, as the shared thing that speaks for it — asked on the SERVER, where a creature is

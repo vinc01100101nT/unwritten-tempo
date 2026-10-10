@@ -101,14 +101,21 @@ public static class Character3DBody
 
     static float NonZero(float v) => Mathf.Abs(v) > 1e-5f ? v : 1f;
 
-    /// <summary>World-space rendered height (union of every renderer's bounds) at the object's CURRENT scale. Call
-    /// on a freshly instantiated, unparented model to get its native height.</summary>
+    /// <summary>World-space rendered height of the BODY (union of its renderers' bounds) at the object's CURRENT
+    /// scale. Call on a freshly instantiated, unparented model to get its native height. Worn hair and headgear are
+    /// never counted (<see cref="HeadPiece.IsPiece"/>): a tall hat used to shrink the whole person to fit — the Witch
+    /// stood at 73% of everybody else.</summary>
     public static float MeasureHeight(GameObject go)
     {
         var rends = go.GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return 0f;
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-        return b.size.y;
+        bool any = false;
+        var b = new Bounds();
+        for (int i = 0; i < rends.Length; i++)
+        {
+            if (HeadPiece.IsPiece(rends[i])) continue;
+            if (!any) { b = rends[i].bounds; any = true; }
+            else b.Encapsulate(rends[i].bounds);
+        }
+        return any ? b.size.y : 0f;
     }
 }

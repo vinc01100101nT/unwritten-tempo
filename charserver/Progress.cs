@@ -19,7 +19,7 @@ public static class Progress
     /// and the six stats from the creation hexagon.</summary>
     static readonly HashSet<string> CreationKeys = new(StringComparer.Ordinal)
     {
-        "modelName", "dyeSources", "dyeTargets", "primary",
+        "modelName", "dyeSources", "dyeTargets", "hairStyle", "hairColour", "primary",
     };
 
     public readonly record struct Verdict(bool Ok, string? Reason);
@@ -48,17 +48,22 @@ public static class Progress
     public static long? LevelOf(JsonElement progress)
         => HasWholeNumber(progress, "level", out var level) ? level : null;
 
-    public readonly record struct Appearance(string ModelName, string[] DyeSources, string[] DyeTargets);
+    public readonly record struct Appearance(string ModelName, string[] DyeSources, string[] DyeTargets,
+                                             string HairStyle, string HairColour);
 
     public static Appearance AppearanceOf(JsonElement progress)
     {
         if (progress.ValueKind != JsonValueKind.Object)
-            return new Appearance("", [], []);
+            return new Appearance("", [], [], "", "");
 
-        string model = progress.TryGetProperty("modelName", out var m) && m.ValueKind == JsonValueKind.String
-            ? m.GetString() ?? "" : "";
-        return new Appearance(model, StringArray(progress, "dyeSources"), StringArray(progress, "dyeTargets"));
+        return new Appearance(StringOf(progress, "modelName"), StringArray(progress, "dyeSources"),
+                              StringArray(progress, "dyeTargets"), StringOf(progress, "hairStyle"),
+                              StringOf(progress, "hairColour"));
     }
+
+    // A string field, or "" when it is absent, null or not a string — all three mean "not recorded".
+    static string StringOf(JsonElement doc, string name)
+        => doc.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
 
     static string[] StringArray(JsonElement doc, string name)
     {

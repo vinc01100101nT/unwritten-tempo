@@ -64,6 +64,8 @@ MonoBehaviour:
   capsuleSkinWidth: 0.02
   routingRadius: 0.35
   hitTiming: 0.7
+  offHandHitTiming: 0.9
+  offHandPower: 0.5
   unarmedReach: 0.5
   swingInterval: 0.6
   stayEngagedFactor: 1.4

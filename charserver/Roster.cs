@@ -13,14 +13,28 @@ namespace CharServer;
 /// </summary>
 public sealed class Roster
 {
+    /// <summary>The hairstyle id of no hair at all — the game's HeadPieces.NoHair.</summary>
+    public const string NoHair = "none";
+
     public IReadOnlyList<string> Models { get; }
     readonly Dictionary<string, string> byLowerName;
 
-    Roster(IReadOnlyList<string> models)
+    /// <summary>Every hairstyle the game can draw, exported from the same project beside the models.</summary>
+    public IReadOnlyList<string> Hairstyles { get; }
+    readonly HashSet<string> noHairModels;
+
+    Roster(IReadOnlyList<string> models, IReadOnlyList<string> hairstyles, IEnumerable<string> noHairModels)
     {
         Models = models;
         byLowerName = models.ToDictionary(m => m.ToLowerInvariant(), m => m);
+        Hairstyles = hairstyles;
+        this.noHairModels = new HashSet<string>(noHairModels, StringComparer.Ordinal);
     }
+
+    /// <summary>May <paramref name="model"/> be created wearing <paramref name="style"/>? No hair always; any listed
+    /// hairstyle, unless the model's head takes no hair (an animal's) — the same list the creation screen offers.</summary>
+    public bool AllowsHair(string model, string style)
+        => style == NoHair || (!noHairModels.Contains(model) && Hairstyles.Contains(style));
 
     public static Roster Load(string path)
     {
@@ -38,7 +52,19 @@ public sealed class Roster
             if (m.ValueKind == JsonValueKind.String) list.Add(m.GetString()!);
 
         if (list.Count == 0) throw new InvalidDataException($"{path} lists no models.");
-        return new Roster(list);
+
+        // THE HAIRSTYLES, required: a file without them was exported before hairstyles existed, and a server reading
+        // it would refuse every new character. Said plainly rather than started half-blind.
+        if (!doc.RootElement.TryGetProperty("hairstyles", out var hairs) || hairs.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException($"{path} has no 'hairstyles' array — re-run accounts/scripts/sync-roster.mjs.");
+        var styles = new List<string>();
+        foreach (var h in hairs.EnumerateArray())
+            if (h.ValueKind == JsonValueKind.String) styles.Add(h.GetString()!);
+        var bald = new List<string>();
+        if (doc.RootElement.TryGetProperty("noHairModels", out var nh) && nh.ValueKind == JsonValueKind.Array)
+            foreach (var m in nh.EnumerateArray())
+                if (m.ValueKind == JsonValueKind.String) bald.Add(m.GetString()!);
+        return new Roster(list, styles, bald);
     }
 
     /// <summary>The canonically-cased model name, or null when the roster has no such model.</summary>

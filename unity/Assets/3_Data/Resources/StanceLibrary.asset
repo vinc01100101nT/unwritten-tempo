@@ -527,7 +527,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 25
     action: 3
-    clip: AttackSword2H
+    clip: AttackDaggerStab
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -539,7 +539,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 26
     action: 3
-    clip: AttackSword2H
+    clip: AttackStaffSwing
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -551,7 +551,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 27
     action: 3
-    clip: AttackSword2H
+    clip: AttackSpear
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -575,7 +575,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 29
     action: 3
-    clip: AttackBow
+    clip: AttackSniper
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -721,7 +721,7 @@ MonoBehaviour:
     speedPerHumanScale: 6.551722
   - id: 32
     action: 3
-    clip: AttackSword2H
+    clip: AttackScytheSweep
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -733,7 +733,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 33
     action: 3
-    clip: AttackSword2H
+    clip: AttackShurikenSwing
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -755,3 +755,118 @@ MonoBehaviour:
     footPlants: []
     bodyStrides: []
     speedPerHumanScale: 0
+  - id: 35
+    action: 3
+    clip: AttackOneHandSword
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 36
+    action: 3
+    clip: AttackAxe
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 37
+    action: 3
+    clip: AttackMace
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 38
+    action: 3
+    clip: AttackKatar
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 39
+    action: 3
+    clip: AttackKnuckle
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  - id: 40
+    action: 3
+    clip: AttackWand
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants: []
+    bodyStrides: []
+    speedPerHumanScale: 0
+  weaponStances:
+  - weapon: 10
+    idleClip: IdleKatar
+    carryClip: CarryKatarGuard
+    carryArms: 0
+    sheatheClip: KatarSheathe
+    unsheatheClip: KatarUnsheathe
+    sheatheRightFrame: 24
+    sheatheLeftFrame: 32
+    unsheatheRightFrame: 20
+    unsheatheLeftFrame: 12
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0
+  - weapon: 3
+    idleClip: IdleDagger
+    carryClip: CarryDagger
+    carryArms: 1
+    sheatheClip: DaggerSheathe
+    unsheatheClip: DaggerUnsheathe
+    sheatheRightFrame: 64
+    sheatheLeftFrame: -1
+    unsheatheRightFrame: 20
+    unsheatheLeftFrame: -1
+    spinStartFrame: 14
+    spinEndFrame: 48
+    spinTurns: 2
+    spinLift: 0.25
+  - weapon: 4
+    idleClip: IdleAxe
+    carryClip: CarryAxe
+    carryArms: 0
+    sheatheClip: AxeSheathe
+    unsheatheClip: AxeUnsheathe
+    sheatheRightFrame: 24
+    sheatheLeftFrame: 24
+    unsheatheRightFrame: 20
+    unsheatheLeftFrame: 20
+    spinStartFrame: 0
+    spinEndFrame: 0
+    spinTurns: 0
+    spinLift: 0

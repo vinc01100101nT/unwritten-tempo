@@ -16,6 +16,7 @@ public static class CharacterDyePartsBaker
 {
     const string ModelFolder = "Assets/1_Authored/Art/Characters/Models";
     const string TablePath = "Assets/3_Data/Resources/" + CharacterDyeParts.ResourcePath + ".asset";
+    const string BareBodyFolder = "Assets/2_Generated/Characters/Bodies";
 
     // Must match the eight colour pairs the character shader takes.
     const int MaxParts = 8;
@@ -48,7 +49,11 @@ public static class CharacterDyePartsBaker
 
         foreach (var path in paths)
         {
-            var model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            // The BARE body the game wears when there is one (HeadPieceBaker): a hair's colour is the hair's to
+            // change, never a clothes part — and a hat cut off the body is no part of it at all.
+            var bare = AssetDatabase.LoadAssetAtPath<GameObject>(
+                BareBodyFolder + "/" + System.IO.Path.GetFileNameWithoutExtension(path) + ".prefab");
+            var model = bare != null ? bare : AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (model == null) continue;
             var renderers = model.GetComponentsInChildren<SkinnedMeshRenderer>(true);
             string textures = CharacterDye3D.SignatureOf(renderers);

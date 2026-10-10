@@ -127,6 +127,12 @@ public class SaveData
     public string[] dyeSources;
     public string[] dyeTargets;
 
+    // The hairstyle (a HeadPieces id, or "none") and its colour "#RRGGBB", chosen at creation. Both empty = a
+    // character made before hairstyles: they wear the hair their body model was made with (HeadPieces.Resolve). No
+    // version bump — "never chosen" and "not recorded" are one fact.
+    public string hairStyle;
+    public string hairColour;
+
     // Where you left off (v8+). Empty scene name = "nowhere recorded yet" → the game spawns you where it
     // always did, so a save written before this existed still loads.
     public string sceneName;

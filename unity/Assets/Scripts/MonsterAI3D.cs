@@ -373,7 +373,7 @@ public class MonsterAI3D : MonoBehaviour
     }
     // A swing still on its way in dies with the life that began it — a body switched off for death or the pool must not
     // land it when it comes back.
-    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; }
+    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; offSwingAt = null; }
 
     void Start()
     {
@@ -579,7 +579,18 @@ public class MonsterAI3D : MonoBehaviour
         bool was = chasing;
         if (Taunted && playerAlive) chasing = true;   // taunt overrides leash — locked onto the player
         else if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
-        else if (!chasing && toPlayerSqr <= aggroRadius * aggroRadius) chasing = true;
+        else if (!chasing && toPlayerSqr <= NoticeSqr()) chasing = true;
+
+        // ITS WEAPON OUT WHILE IT HUNTS, AWAY WHILE IT DOES NOT — the rule a person plays by, decided here on the
+        // server and drawn on every screen. A swing and a weapon skill wait for the weapon to be in hand.
+        // Asked only while the weapon is not where the hunt wants it, so a settled creature costs one comparison.
+        if (status != null)
+        {
+            var ph = status.Draw.Phase;
+            if (chasing && (ph == DrawPhase.Sheathed || ph == DrawPhase.Sheathing)) status.RequestDraw();
+            else if (!chasing && (ph == DrawPhase.Drawn || ph == DrawPhase.Drawing)) status.RequestSheathe();
+        }
+        bool armed = status == null || status.Draw.IsDrawn;
 
         // Touch damage (Phase F parity). No-op in the spike: Character.Instance is null without Systems.
         // Use TRUE 3D distance (not planar) so a mob that has fallen off a cliff/edge below the terrain —
@@ -614,7 +625,7 @@ public class MonsterAI3D : MonoBehaviour
             ? engagement.AskHolding(player, touch3DSqr, hold * hold)
             : engagement.Ask(player, touch3DSqr, Mathf.Min(hold * hold, touch * touch)));
 
-        bool swingMoment = player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null;
+        bool swingMoment = armed && player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null;
 
         // A SKILL INSTEAD OF THE SWING — and it is NOT judged by biting reach. A creature used to have to be close
         // enough to bite you before it was even asked whether it had a skill ready, so every long-range skill it
@@ -654,9 +665,17 @@ public class MonsterAI3D : MonoBehaviour
                 // raised now, at the start of the swing; the blow itself, its damage and everything it sets off, lands
                 // at the contact moment (LandSwingIfDue), which is also the moment every screen draws the bite slamming in.
                 PassiveEvents.Fire(Health, SkillTrigger.OnBasicAttackStart, null, player);
-                contactAfter = ContactAfter(beat);
+                // A PAIR WEAPON LANDS TWICE, by the same rule a person's does (SwingContacts).
+                var spec = CharacterSpec.Active;
+                swingWeapon = Equipment != null ? Equipment.WeaponType : WeaponType.None;
+                int contacts = SwingContacts.Of(swingWeapon, spec.hitTiming, spec.offHandHitTiming, spec.offHandPower,
+                                                out float firstAt, out float secondAt, out float secondPower);
+                contactAfter = beat * firstAt;
                 swingAt = Prey;
                 swingLandsAt = Time.time + contactAfter;
+                offSwingAt = contacts == 2 ? Prey : null;
+                offSwingLandsAt = Time.time + beat * secondAt;
+                offSwingPower = secondPower;
             }
             nextTouch = Time.time + beat;
             LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
@@ -722,24 +741,29 @@ public class MonsterAI3D : MonoBehaviour
     // A MELEE SWING ON ITS WAY IN: whom it was aimed at, and the moment it connects (Time.time). Null = none.
     ICombatUnit swingAt;
     float swingLandsAt;
-
-    /// <summary>The contact moment of a swing that began now and lasts <paramref name="beat"/>, in seconds from now —
-    /// the shared fraction of the swing every fighter connects at (<see cref="CharacterSpec.hitTiming"/>), the same one
-    /// a person's swing lands at on this machine.</summary>
-    static float ContactAfter(float beat) => beat * Mathf.Clamp01(CharacterSpec.Active.hitTiming);
+    // A pair weapon's second hit from the other hand: whom, when, and at what share of a full swing. Null = none.
+    ICombatUnit offSwingAt;
+    float offSwingLandsAt, offSwingPower;
+    // The weapon the swing began with — a different one at the contact drops the hit, as it does for a person.
+    WeaponType swingWeapon;
 
     // THE CONTACT MOMENT, on this machine's clock. Everything is re-asked rather than remembered from when the swing
     // began, by the rules a person's swing lands by: the swinger and its target must both still be alive, still
     // enemies, and the target still within reach — so one that walked out during the swing is missed.
     void LandSwingIfDue()
     {
-        if (swingAt == null || Time.time < swingLandsAt) return;
-        var victim = swingAt;
-        swingAt = null;
+        if (swingAt != null && Time.time >= swingLandsAt) { var first = swingAt; swingAt = null; LandContact(first, 1f); }
+        // The other hand's hit only after the first hand's has landed, so the two always connect in order.
+        if (offSwingAt != null && swingAt == null && Time.time >= offSwingLandsAt) { var second = offSwingAt; offSwingAt = null; LandContact(second, offSwingPower); }
+    }
+
+    void LandContact(ICombatUnit victim, float power)
+    {
         if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead || victim.Body == null) return;
+        if ((Equipment != null ? Equipment.WeaponType : WeaponType.None) != swingWeapon) return;
         if (!Sides.Hostile(Health, victim)) return;
         if ((victim.Body.position - transform.position).sqrMagnitude > Reach * Reach) return;
-        LandSwing(victim, announceIntent: false, 1f);
+        LandSwing(victim, announceIntent: false, power);
     }
 
     /// <summary>One ordinary attack scaled by <paramref name="power"/> — what a thrown blade's hop lands (each jump is
@@ -802,6 +826,8 @@ public class MonsterAI3D : MonoBehaviour
         {
             var def = skills.DefAt(pressed[s]);
             if (def == null || def.IsPassive) continue;
+            // A weapon skill needs the weapon in hand, as it does for a person.
+            if (def.weaponType != WeaponType.None && status != null && !status.Draw.IsDrawn) continue;
             if (!Reaches(def))
             {
                 reasons = reasons * 31 + OutOfReachReason;
@@ -971,6 +997,15 @@ public class MonsterAI3D : MonoBehaviour
     ///
     /// <para>A creature keeps whoever it has while they are still worth keeping, so walking past a monster that is
     /// already fighting your friend does not steal it off them.</para></summary>
+    /// <summary>The squared distance this creature notices its prey from: <see cref="aggroRadius"/>, halved for prey at
+    /// peace (<see cref="WeaponDrawMath.NoticeRadius"/>).</summary>
+    float NoticeSqr()
+    {
+        var host = Prey != null ? Prey.StatusHost : null;
+        float r = WeaponDrawMath.NoticeRadius(aggroRadius, host != null && host.PeaceBonusesOn);
+        return r * r;
+    }
+
     void PickPrey(Vector3 pos)
     {
         // Whoever it has stops counting the moment they die, their body leaves the world, or they leave it
@@ -1003,7 +1038,9 @@ public class MonsterAI3D : MonoBehaviour
         var ally = Sides.NearestPlayerSideCreature(pos, map, out float allySqr);
         if (ally == null) return person;
         if (person == null || person.Body == null) return ally;
-        return PlanarSqr(pos, person.Body.position) <= allySqr ? person : ally;
+        var host = person.StatusHost;
+        float personSqr = WeaponDrawMath.NoticedSqr(PlanarSqr(pos, person.Body.position), host != null && host.PeaceBonusesOn);
+        return personSqr <= allySqr ? person : ally;
     }
 
     void SetPrey(ICombatUnit unit)

@@ -9,7 +9,7 @@ metadata:
 
 The player ROOT `Player3D` (the `Player3DController` object) holds only a **disabled** `SpriteRenderer` — the
 visible body is a **separate scene object** named `Player3DVisual (<Model>)` carrying `Character3DVisual` +
-the `SkinnedMeshRenderer` (`Body`) and equipped-weapon `MeshRenderer` (e.g. `bow_1_blue`). It **rides** the
+the `SkinnedMeshRenderer` (`Body`) and equipped-weapon `MeshRenderer` (e.g. `bow_celestia`). It **rides** the
 controller (snaps to its feet each frame); it is NOT parented under the player, so
 `player.GetComponentsInChildren<Renderer>()` sees ONLY the hidden sprite.
 

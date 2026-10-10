@@ -114,6 +114,10 @@ def main():
     bad += case("a body whose parts row is keyed by other textures", DYE_PARTS,
                 "\n  - modelFile: %s\n    textures: %s\n" % (body, row.group(1)),
                 "\n  - modelFile: %s\n    textures: %s_Other\n" % (body, row.group(1)), "never matches it")
+    bad += case("a hairstyle that is not in the hairstyle list", rel, look,
+                look + "  hairStyle: hair99\n", "is not in the hairstyle list")
+    bad += case("a hair colour that is not #RRGGBB", rel, look,
+                look + "  hairColour: blonde\n", "hair colour 'blonde' is not #RRGGBB")
     bad += case("a body with no parts row at all", DYE_PARTS,
                 "\n  - modelFile: %s\n" % body, "\n  - modelFile: %s_Gone\n" % body, "no row in the outfit-parts table")
 

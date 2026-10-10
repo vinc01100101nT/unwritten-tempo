@@ -133,6 +133,8 @@ public static class AccountClient
         public string modelName;
         public string[] dyeSources;
         public string[] dyeTargets;
+        public string hairStyle;
+        public string hairColour;
         public int level;
     }
 
@@ -145,6 +147,8 @@ public static class AccountClient
         public string modelName;
         public string[] dyeSources;
         public string[] dyeTargets;
+        public string hairStyle;
+        public string hairColour;
         public int[] primary;
     }
 
@@ -175,7 +179,8 @@ public static class AccountClient
     /// name and belong to the character record. They are the player's CHOICE, not a result: the map server checks
     /// the spread against the one rule before using any of it.</summary>
     public static void CreateCharacter(string name, string modelName, string[] dyeSources, string[] dyeTargets,
-                                       int[] primary, Action<CharacterInfo, string> onDone)
+                                       string hairStyle, string hairColour, int[] primary,
+                                       Action<CharacterInfo, string> onDone)
     {
         var body0 = new NewCharacter
         {
@@ -183,6 +188,8 @@ public static class AccountClient
             modelName = modelName,
             dyeSources = dyeSources ?? Array.Empty<string>(),
             dyeTargets = dyeTargets ?? Array.Empty<string>(),
+            hairStyle = hairStyle ?? "",
+            hairColour = hairColour ?? "",
             primary = primary,
         };
         Send("POST", "/characters", JsonUtility.ToJson(body0),

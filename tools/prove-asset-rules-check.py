@@ -183,6 +183,27 @@ def main():
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+        # A character clip that leaves the body's movement as root motion: in game the body stays put and a foot slides.
+        root = tempfile.mkdtemp(prefix="asset-rules-case-")
+        try:
+            shutil.copytree(base, root, dirs_exist_ok=True)
+            clips = os.path.join(root, "unity/Assets/1_Authored/Art/Characters/Animations")
+            os.makedirs(clips, exist_ok=True)
+            def clip(name, flag):
+                with open(os.path.join(clips, name), "w", encoding="utf-8") as f:
+                    f.write("AnimationClip:\n  m_EditorCurves:\n  - attribute: RootT.x\n  m_AnimationClipSettings:\n"
+                            "    m_LoopBlendOrientation: %d\n    m_LoopBlendPositionY: %d\n    m_LoopBlendPositionXZ: %d\n" % (flag, flag, flag))
+            clip("Unbaked_Attack.anim", 0)
+            clip("Baked_Attack.anim", 1)
+            code, out = run(root)
+            named = code == 1 and "Unbaked_Attack.anim" in out and "Baked_Attack.anim" not in out.replace("Unbaked_Attack.anim", "")
+            print((GRN + "caught  " if named else RED + "MISSED  ") + "a character clip that leaves the body's movement as root motion" + OFF)
+            if not named:
+                failures += 1
+                print(out)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
         # The one rule that must only WARN: an unwired family is debt, not a red turn.
         code, out = run(base)
         lod_quiet = code == 0
@@ -192,7 +213,7 @@ def main():
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
-    total = len(cases) + 4   # every planted fault, the stray tile-folder file, the unbaked model, the sound copy, the warn-only LOD case
+    total = len(cases) + 5   # every planted fault, the stray tile-folder file, the unbaked model, the unbaked clip, the sound copy, the warn-only LOD case
     if failures:
         print(RED + "%d of %d case(s) failed — the asset-rules checker is blind somewhere." % (failures, total) + OFF)
         return 1

@@ -68,6 +68,14 @@ public enum StanceId
     AttackShuriken,
     // The shuriken's throw (DEX above STR) — the blade leaves the hand.
     AttackShurikenThrow,
+    // One weapon, one swing — each cloned from its Ragnarok Online sprite attack (2026-10-09). The two-handed sword
+    // keeps AttackSword; these give the one-handed weapons that shared it, and the katar, fist and wand, their own.
+    AttackOneHandSword,
+    AttackAxe,
+    AttackMace,
+    AttackKatar,
+    AttackKnuckle,
+    AttackWand,
 }
 
 /// <summary>
@@ -210,6 +218,8 @@ public static class StanceDefaults
             case StanceId.AttackStaff:     case StanceId.AttackLance: case StanceId.AttackHandGun:
             case StanceId.AttackRifle:     case StanceId.AttackBow:   case StanceId.AttackScythe: case StanceId.AttackShuriken:
             case StanceId.AttackShurikenThrow:
+            case StanceId.AttackOneHandSword: case StanceId.AttackAxe: case StanceId.AttackMace:
+            case StanceId.AttackKatar:     case StanceId.AttackKnuckle: case StanceId.AttackWand:
                 b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
         }
         return b;
@@ -225,4 +235,58 @@ public static class StanceDefaults
 public class StanceLibrary : ScriptableObject
 {
     public List<StanceBinding> stances = new List<StanceBinding>();
+
+    [Tooltip("Each weapon type's own standing idle (whole body) and carry pose (the arms while walking, running or " +
+             "sprinting). A weapon with no entry, or an empty clip, keeps the shared one.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("carryPoses")]
+    public List<WeaponStanceBinding> weaponStances = new List<WeaponStanceBinding>();
+}
+
+/// <summary>Which arms a weapon's carry pose holds while its holder travels. An arm the pose does not hold swings with
+/// the legs' own clip, the way an empty hand does.</summary>
+public enum CarryArms { Both, Right, Left }
+
+/// <summary>How one weapon type is held when its holder is not attacking. The standing idle replaces the whole body
+/// of the shared Idle; the carry pose plays on the arms-only layer of the character controller over the shared
+/// Idle/Walk/Run/Sprint legs. Attacks, skills, jumps, flinches and every other stance play their own whole-body clip
+/// with both faded out.</summary>
+[System.Serializable]
+public class WeaponStanceBinding
+{
+    public WeaponType weapon;
+    [Tooltip("The whole-body idle played while the holder stands still. Empty = the shared Idle.")]
+    public string idleClip = "";
+    [Tooltip("The still arm pose this weapon is carried in while walking, running or sprinting — and while standing " +
+             "when there is no idle above. Empty = the shared arms.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("clip")]
+    public string carryClip = "";
+    [Tooltip("Which arms the carry pose holds. Both = the whole pose; Right or Left = only that arm, and the other " +
+             "swings with the run like an empty hand.")]
+    public CarryArms carryArms = CarryArms.Both;
+
+    [Tooltip("The arms putting this weapon away, played over whatever the legs are doing. Empty = it simply moves.")]
+    public string sheatheClip = "";
+    [Tooltip("The arms taking this weapon out, played over whatever the legs are doing. Empty = it simply moves.")]
+    public string unsheatheClip = "";
+    [Tooltip("The frame of the put-away clip at which the right hand lets go of its weapon. -1 = at the end.")]
+    public int sheatheRightFrame = -1;
+    [Tooltip("The frame of the put-away clip at which the left hand lets go (a pair weapon's second copy). -1 = at the end.")]
+    public int sheatheLeftFrame = -1;
+    [Tooltip("The frame of the take-out clip at which the right hand takes its weapon. -1 = at the start.")]
+    public int unsheatheRightFrame = -1;
+    [Tooltip("The frame of the take-out clip at which the left hand takes its weapon. -1 = at the start.")]
+    public int unsheatheLeftFrame = -1;
+
+    [Tooltip("A flourish during the put-away: the frame of the put-away clip at which the weapon in the main hand starts " +
+             "turning over in the fingers (a dagger spun before it is sheathed). The take-out — the put-away played " +
+             "backwards — turns it back over the mirrored frames.")]
+    public int spinStartFrame;
+    [Tooltip("The frame of the put-away clip at which that turning stops. Must be after the start and before the hand " +
+             "lets go.")]
+    public int spinEndFrame;
+    [Tooltip("How many whole turns the weapon makes between those two frames. 0 = it never turns.")]
+    public float spinTurns;
+    [Tooltip("How far the weapon rises off the fist while it turns, in the hand bone's own units, along the line it turns " +
+             "about — enough for the blade to pass over the forearm. 0 = it turns inside the fist.")]
+    public float spinLift;
 }

@@ -134,6 +134,10 @@ public class StanceComposerWindow : EditorWindow
             "Walk / Run / Sprint have no speed source: picking their clip measures it on every body — the frames each foot " +
             "lands (the step button) and how fast the clip walks — and their legs play at the body's real ground speed, so " +
             "a planted foot stays still. Click the step button to measure again after adding a body.\n\n" +
+            "By weapon: the standing idle is a whole-body clip played instead of the shared Idle while the holder " +
+            "stands still. The carry pose is a still arm pose played over the arms and fingers only while the holder " +
+            "walks, runs or sprints (and stands, when the weapon has no idle); the legs keep the Walk/Run/Sprint clips " +
+            "above. Every other stance plays its own clip with both faded out. (none) = the shared one.\n\n" +
             "Jump timing (the button on the Jump row): crouchEnd / airborneFreeze, authored in clip FRAMES. 0→crouchEnd the player is " +
             "rooted (crouch/push-off); crouchEnd→airborneFreeze plays then FREEZES for the whole airborne time; on landing " +
             "it plays airborneFreeze→end (rooted) as the landing tail. The Fall stance (ledge walk-off) reuses airborneFreeze.",
@@ -161,9 +165,15 @@ public class StanceComposerWindow : EditorWindow
         Row(StanceId.AttackBareHands); Row(StanceId.AttackSword); Row(StanceId.AttackDagger); Row(StanceId.AttackStaff);
         Row(StanceId.AttackLance); Row(StanceId.AttackHandGun); Row(StanceId.AttackRifle); Row(StanceId.AttackBow);
         Row(StanceId.AttackScythe); Row(StanceId.AttackShuriken); Row(StanceId.AttackShurikenThrow);
+        Row(StanceId.AttackOneHandSword); Row(StanceId.AttackAxe); Row(StanceId.AttackMace);
+        Row(StanceId.AttackKatar); Row(StanceId.AttackKnuckle); Row(StanceId.AttackWand);
 
         Section("Skill-release cues (a SkillDef's 'skill type' — plays once at release)");
         foreach (var id in SkillReleaseStances.All) Row(id);
+
+        Section("By weapon: standing idle (whole body) · carry pose (the arms while moving)");
+        foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
+            if (w != WeaponType.None) WeaponRow(w);
 
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(lib);
 
@@ -374,23 +384,61 @@ public class StanceComposerWindow : EditorWindow
     // The Clip dropdown: the single owner of a stance's 3D animation. Options are the model's clips (BuildClipPalette)
     // plus "" = none (stands). If a stance already names a clip that isn't in the palette (authored for another model,
     // or the file was removed), it's shown appended with a "(?)" so it's never silently lost.
-    void ClipField(StanceBinding b)
+    void ClipField(StanceBinding b) => b.clip = ClipPicker(b.clip, null);
+
+    // The one clip dropdown, shared by the stance rows and the carry pose rows. <paramref name="noneLabel"/> names the
+    // empty choice when "" means something other than "stands".
+    string ClipPicker(string clip, GUIContent noneLabel)
     {
-        string cur = b.clip ?? "";
+        string cur = clip ?? "";
         string[] opts = clipPalette;
         GUIContent[] labels = clipLabels;
         int idx = Array.IndexOf(opts, cur);
-        if (idx < 0)
+        if (idx < 0 || noneLabel != null)
         {
-            opts = new string[clipPalette.Length + 1];
+            int extra = idx < 0 ? 1 : 0;
+            opts = new string[clipPalette.Length + extra];
             clipPalette.CopyTo(opts, 0);
-            opts[opts.Length - 1] = cur;
             labels = new GUIContent[opts.Length];
             Array.Copy(clipLabels, labels, clipLabels.Length);
-            labels[labels.Length - 1] = new GUIContent(cur + "  (?)");
-            idx = opts.Length - 1;
+            if (noneLabel != null) labels[0] = noneLabel;
+            if (extra == 1)
+            {
+                opts[opts.Length - 1] = cur;
+                labels[labels.Length - 1] = new GUIContent(cur + "  (?)");
+                idx = opts.Length - 1;
+            }
         }
         int sel = EditorGUILayout.Popup(idx, labels, GUILayout.Width(200));
-        b.clip = opts[Mathf.Clamp(sel, 0, opts.Length - 1)];
+        return opts[Mathf.Clamp(sel, 0, opts.Length - 1)];
+    }
+
+    // One row per weapon type: its own standing idle (whole body) and its carry pose (the arms while moving). Drawn
+    // straight from the weapon list; an entry is written to the library only when a clip is picked here.
+    static readonly GUIContent SharedIdle = new GUIContent("(none — shared Idle)");
+    static readonly GUIContent SharedArms = new GUIContent("(none — shared arms)");
+    void WeaponRow(WeaponType w)
+    {
+        WeaponStanceBinding entry = null;
+        if (lib.weaponStances != null)
+            for (int i = 0; i < lib.weaponStances.Count; i++)
+                if (lib.weaponStances[i] != null && lib.weaponStances[i].weapon == w) { entry = lib.weaponStances[i]; break; }
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.LabelField(w.ToString(), GUILayout.Width(80));
+            string idleBefore = entry != null ? entry.idleClip ?? "" : "";
+            string carryBefore = entry != null ? entry.carryClip ?? "" : "";
+            string idle = ClipPicker(idleBefore, SharedIdle);
+            string carry = ClipPicker(carryBefore, SharedArms);
+            var armsBefore = entry != null ? entry.carryArms : CarryArms.Both;
+            var arms = (CarryArms)EditorGUILayout.EnumPopup(armsBefore, GUILayout.MaxWidth(70));
+            if (idle == idleBefore && carry == carryBefore && arms == armsBefore) return;
+            if (lib.weaponStances == null) lib.weaponStances = new List<WeaponStanceBinding>();
+            if (entry == null) { entry = new WeaponStanceBinding { weapon = w }; lib.weaponStances.Add(entry); }
+            entry.idleClip = idle;
+            entry.carryClip = carry;
+            entry.carryArms = arms;
+            GUI.changed = true;
+        }
     }
 }

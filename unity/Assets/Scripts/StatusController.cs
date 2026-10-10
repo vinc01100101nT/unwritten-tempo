@@ -164,6 +164,77 @@ public class StatusController : MonoBehaviour
     float flinchUntil, flinchImmuneUntil, pityDamage, lastHpLossTime;
     StanceController stanceCache;
 
+    // ---- combat or peace: where this unit's weapon is ------------------------------------------------------------
+    // Decided on the server (ticked in Update's server block); every other machine is told it by the unit's network
+    // shell and only draws it.
+
+    /// <summary>This unit's weapon: on its body, coming out, in its hands, or going back.</summary>
+    public readonly WeaponDraw Draw = new WeaponDraw();
+    float lastBlowDealtTime = float.NegativeInfinity, lastDrawBuffTime;
+    bool drawBuffEver;
+
+    /// <summary>This unit's blow landed on someone — restarts the quiet spell the peace bonuses wait for.</summary>
+    public void NoteDealtBlow() => lastBlowDealtTime = Time.time;
+
+    /// <summary>Are the peace bonuses paying right now: weapon on the body, and a quiet spell since the last blow
+    /// dealt or taken (<see cref="WeaponDrawMath.PeaceBonusesOn"/>).</summary>
+    public bool PeaceBonusesOn => WeaponDrawMath.PeaceBonusesOn(Draw.IsSheathed, Time.time, Mathf.Max(lastHpLossTime, lastBlowDealtTime));
+
+    /// <summary>Take the weapon out, at the speed its weight allows. Server only.</summary>
+    public void RequestDraw() => Draw.RequestDraw(WeaponDrawMath.DrawSeconds(HeldWeaponWeight()), Time.time);
+
+    /// <summary>Put the weapon away, at the speed its weight allows. Server only.</summary>
+    public void RequestSheathe() => Draw.RequestSheathe(WeaponDrawMath.DrawSeconds(HeldWeaponWeight()), Time.time);
+
+    /// <summary>The weapon on the body at once — a weapon swapped, a new life, a body that just arrived.</summary>
+    public void ResetDraw() => Draw.Reset(Time.time);
+
+    /// <summary>A different weapon is in hand: the new one starts on the body, and the old one's draw buff ends.</summary>
+    public void WeaponSwapped()
+    {
+        ResetDraw();
+        var st = states;
+        if (st == null) return;
+        var list = st.Active;
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            if (i >= list.Count) continue;
+            var def = SkillCatalog.Get(list[i].sourceSkillId);
+            if (def != null && def.EntryFor(SkillTrigger.OnWeaponDrawn, null) != null) st.RemoveFrom(def.id);
+        }
+    }
+
+    int HeldWeaponWeight()
+    {
+        var u = Unit;
+        Item weapon = null;
+        if (u is Character person) weapon = person.GetEquipped(EquipSlotType.Weapon);
+        else if (u is Health creature && creature.Brain != null && creature.Brain.Equipment != null)
+        {
+            var held = creature.Brain.Equipment.Get(EquipSlotType.Weapon);
+            weapon = held != null ? held.def : null;
+        }
+        return weapon != null ? weapon.weight : 0;
+    }
+
+    // THE "WEAPON DRAWN" MOMENT. Its buff comes from the unit's own passives that answer it — at most once per
+    // spacing, so drawing over and over can never keep one up.
+    void WeaponDrawn()
+    {
+        var u = Unit;
+        if (u == null || u.IsDead) return;
+        if (!WeaponDrawMath.DrawBuffDue(Time.time, lastDrawBuffTime, !drawBuffEver))
+        {
+            if (GameLog.On(LogCat.Passive))
+                GameLog.Info(LogCat.Passive, string.Concat(SpawnIds.MapOf(u), " ", SpawnIds.Label(u), " drew without a draw buff — ",
+                    (WeaponDrawMath.DrawBuffSpacingSeconds - (Time.time - lastDrawBuffTime)).ToString("0.#"), "s until the next"));
+            return;
+        }
+        drawBuffEver = true;
+        lastDrawBuffTime = Time.time;
+        PassiveEvents.Fire(u, SkillTrigger.OnWeaponDrawn);
+    }
+
     /// <summary>Is this unit's MOVEMENT stopped by a hit right now? Deliberately not part of
     /// <see cref="ActionLocked"/>: a flinched unit still swings, casts and presses skills — it just can't walk.</summary>
     public bool MovementFlinched => Time.time < flinchUntil;
@@ -378,6 +449,7 @@ public class StatusController : MonoBehaviour
             TickDot(Ailment.Poison);
             TickDot(Ailment.Bleed);
             TickDot(Ailment.Burn);
+            if (Draw.Tick(Time.time)) WeaponDrawn();
             TickRegen();
             TickMana();
             TickBrace();
@@ -425,7 +497,8 @@ public class StatusController : MonoBehaviour
         if (u == null || u.IsDead || u.CurrentHP >= u.MaxHP) { hpAccum = 0f; return; }
         // Both halves are HP per SECOND: what the unit's own VIT restores, plus whatever a timed regen change adds
         // (or, negative, takes away).
-        int pay = Owed(ref hpAccum, u.HPRegenPerSecond + states.SubStatBonus(SubStat.HPRegen));
+        // Peace doubles only the NATURAL rate; a healing skill heals what it says.
+        int pay = Owed(ref hpAccum, WeaponDrawMath.RegenPerSecond(u.HPRegenPerSecond, PeaceBonusesOn, states.SubStatBonus(SubStat.HPRegen)));
         if (pay > 0) u.Heal(pay);
     }
 
@@ -437,7 +510,7 @@ public class StatusController : MonoBehaviour
         nextManaTick = Time.time + UnitStates.RegenInterval;
         var u = Unit;
         if (u == null || u.IsDead || u.CurrentMP >= u.MaxMP) { manaAccum = 0f; return; }
-        int pay = Owed(ref manaAccum, u.MPRegenPerSecond + states.SubStatBonus(SubStat.MPRegen));
+        int pay = Owed(ref manaAccum, WeaponDrawMath.RegenPerSecond(u.MPRegenPerSecond, PeaceBonusesOn, states.SubStatBonus(SubStat.MPRegen)));
         if (pay > 0) u.GainMana(pay);
     }
 

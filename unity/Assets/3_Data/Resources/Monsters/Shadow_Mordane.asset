@@ -25,6 +25,8 @@ MonoBehaviour:
   modelName: Pirate_Male
   dyeSources: []
   dyeTargets: []
+  hairStyle: hair09
+  hairColour: '#202020'
   level: 160
   str: 99
   agi: 93

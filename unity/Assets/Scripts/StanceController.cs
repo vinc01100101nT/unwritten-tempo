@@ -456,12 +456,13 @@ public class StanceController : MonoBehaviour
         // 3) Nothing active — hand back to the fallback.
         if (selfDrive)
         {
+            pose.SetShownStance(StanceId.Walk);   // the visual's own Idle/Walk/Run: the carry arms, never the whole-body stand
             if (driving) { pose.ResumeSelfDrive(); driving = false; }   // ONCE — ResumeSelfDrive re-bases movement sampling
         }
         else
         {
             var idle = StanceCatalog.Get(StanceId.Idle);
-            if (idle != null) ApplyStance(idle, 0f); else pose.Play(CharacterAction.Idle, "");
+            if (idle != null) ApplyStance(idle, 0f); else { pose.SetShownStance(StanceId.Idle); pose.Play(CharacterAction.Idle, ""); }
             currentResolved = StanceId.Idle;
             driving = false;
         }
@@ -470,6 +471,7 @@ public class StanceController : MonoBehaviour
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
     void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false, float seekTo = -1f)
     {
+        pose.SetShownStance(b.id);
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }

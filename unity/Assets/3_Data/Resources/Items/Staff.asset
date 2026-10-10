@@ -18,7 +18,7 @@ MonoBehaviour:
   slot: 3
   weaponType: 8
   attackRange: 0
-  equipModel: {fileID: 4438083616498825780, guid: 71ad249738a41694fa213459f02624fd, type: 3}
+  equipModel: {fileID: 2438708307947556973, guid: 1f6d428d611ac5b4588d19e866138050, type: 3}
   element: 0
   category: 0
   cardSlots: 2
