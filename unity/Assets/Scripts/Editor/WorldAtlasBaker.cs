@@ -189,18 +189,20 @@ public static class WorldAtlasBaker
         return AssetDatabase.LoadAssetAtPath<Texture2D>(AtlasPngPath);
     }
 
-    /// <summary>Write the doors between maps — the layout's portal pairs — into the world atlas, replacing what was there.
-    /// What the game finds its way between maps by (<see cref="WorldRoutes"/>); run with every bake, from the same
-    /// layout, so the two never differ. <c>tools/check-map-ids.py</c> fails when they do.</summary>
-    public static void WriteLinks(IEnumerable<(string a, string b)> pairs)
+    /// <summary>Write the doors between maps — the layout's portals, each with where it stands in both maps — into the
+    /// world atlas, replacing what was there. What the game finds its way between maps by (<see cref="WorldRoutes"/>)
+    /// and draws its doors from; written with every bake and every door move, from the same layout, so the two never
+    /// differ. <c>tools/check-map-ids.py</c> fails when they do. Returns how many doors were written.</summary>
+    public static int WriteLinks(IEnumerable<WorldAtlas.Link> doors)
     {
         var asset = AssetDatabase.LoadAssetAtPath<WorldAtlas>(AtlasAssetPath);
-        if (asset == null) return;
+        if (asset == null) return 0;
         asset.links.Clear();
-        foreach (var (a, b) in pairs)
-            if (!string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b)) asset.links.Add(new WorldAtlas.Link { a = a, b = b });
+        foreach (var d in doors)
+            if (d != null && !string.IsNullOrEmpty(d.a) && !string.IsNullOrEmpty(d.b)) asset.links.Add(d);
         EditorUtility.SetDirty(asset);
         AssetDatabase.SaveAssets();
+        return asset.links.Count;
     }
 
     static void WriteAsset(Texture2D texture, List<Entry> entries, float minX, float minY, float worldW, float worldH, float ppu)

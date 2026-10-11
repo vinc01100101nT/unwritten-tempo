@@ -32,11 +32,18 @@ public class WorldAtlas : ScriptableObject
 
     public List<Entry> maps = new List<Entry>();
 
-    /// <summary>One door between two maps, either way through — the world layout's portal pairs, copied here by the bake
-    /// so the game can find its way between maps (<see cref="WorldRoutes"/>). The layout stays the one owner;
-    /// <c>tools/check-map-ids.py</c> fails the moment this copy disagrees with it.</summary>
+    /// <summary>One door between two maps, either way through — the world layout's portals, copied here by the bake
+    /// so the game can find its way between maps (<see cref="WorldRoutes"/>) and draw each door where it stands. A
+    /// READ-ONLY MIRROR of <c>tools/world-creator/worlds/world-regions.json</c>, never edited by hand: the layout stays
+    /// the one owner, and <c>tools/check-map-ids.py</c> fails the moment this copy disagrees with it.</summary>
     [System.Serializable]
-    public class Link { public string a, b; }
+    public class Link
+    {
+        public string a, b;      // the two maps it joins (kept the first two fields: the checker reads them in this order)
+        public int id;           // the door's permanent id in the layout
+        public float ax, az;     // where the door stands in map a: metres from that map's centre, x east, z north
+        public float bx, bz;     // where it stands in map b, the same way
+    }
 
     public List<Link> links = new List<Link>();
 
