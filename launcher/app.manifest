@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <!-- Runs as the player, never asking for administrator rights: everything it writes is inside the folder the
-       launcher sits in. -->
+  <!-- Runs as the player, never asking for administrator rights: the game it downloads goes into the
+       player's own user folder. -->
   <assemblyIdentity version="1.0.0.0" name="unwritten-launcher.app"/>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
     <security>

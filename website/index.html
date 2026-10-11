@@ -14,7 +14,8 @@
 
   This page holds no game text of its own: every page body is read from content/ at load time. The wiki pages the
   site shows as its own pages (the Game Guide, Roadmap, Server Status) are named in GUIDE and SITE_PAGES below; every
-  other page in the manifest is a Wiki page. Boxes marked IMAGE ART HERE are reserved for art made later.
+  other page in the manifest is a Wiki page. Boxes marked IMAGE ART HERE are reserved for art made later; a box
+  given data-src shows that picture instead.
 -->
 <html lang="en">
 <head>
@@ -66,6 +67,7 @@
   .art.tiny .desc, .art.tiny .size { display: none; }
   .art.tiny .here { font-size: 11px; }
   .art.tiny .kind { font-size: 11px; }
+  .art.filled { background-size: cover; background-position: center; border-style: solid; }
 
   /* ---------- home ---------- */
   .hero { position: relative; height: 440px; margin: 0 0 18px; }
@@ -263,7 +265,7 @@
   nav.main a:hover::after, nav.main a.on::after { transform: scaleX(1); }
   /* The stripes of a reserved art box drift while the pointer is over it. 39.6px is one stripe period measured
      sideways for 28px stripes at 45 degrees, so the loop has no visible jump. */
-  .art:hover { animation: stripes 1.6s linear infinite; }
+  .art:not(.filled):hover { animation: stripes 1.6s linear infinite; }
   @keyframes stripes { to { background-position: 39.6px 0; } }
   .swap { animation: swapIn .3s ease-out; }
   @keyframes swapIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
@@ -351,8 +353,8 @@
 <!-- ================= HOME ================= -->
 <section class="page" id="p-home">
   <div class="hero">
-    <div class="art" data-kind="Main key art banner" data-size="1920 × 600"
-         data-desc="The headline picture of the game: colourless charcoal heroes facing flat paper monsters torn from the artist's book. Dense and busy, like a Ragnarok Online poster; the tagline sits on its own panel over it."></div>
+    <div class="art" data-kind="Main key art banner" data-src="assets/last-line-frostcap-slime-siege.jpg"
+         style="background-position:center 32%"></div>
     <div class="floatpages" aria-hidden="true">
       <div class="floatpage" style="top:12%;animation-duration:26s;animation-delay:-3s"></div>
       <div class="floatpage" style="top:38%;animation-duration:34s;animation-delay:-17s;width:36px;height:48px"></div>
@@ -550,8 +552,11 @@
           <div class="version" id="version"></div>
 
           <h3>Windows</h3>
-          <p>Unzip it, open the <b>unwritten</b> folder, and run <b>unwritten-launcher.exe</b>. The game is downloaded into
-          that same folder.</p>
+          <p>Unzip it, open the <b>unwritten</b> folder, and run <b>unwritten-launcher.exe</b>. It downloads the game
+          into your own user folder, so it works wherever you unzipped it. To remove the game later, press
+          <b>Uninstall</b> in the launcher.</p>
+          <p>Already have the game? Open the launcher you have and press <b>Start</b> — it moves itself over to the
+          new one and keeps your game. Or unzip this over your old <b>unwritten</b> folder.</p>
 
           <h3>Mac</h3>
           <p>Not sure which chip your Mac has? Open the Apple menu (top left) &#9656; <b>About This Mac</b>. "Chip: Apple M…"
@@ -918,6 +923,13 @@ function fillArt(root) {
   root.querySelectorAll('.art').forEach(a => {
     if (a.dataset.done) return;
     a.dataset.done = 1;
+    if (a.dataset.src) {
+      a.classList.add('filled');
+      a.style.backgroundImage = `url("${a.dataset.src}")`;
+      a.setAttribute('role', 'img');
+      a.setAttribute('aria-label', a.dataset.kind || '');
+      return;
+    }
     a.innerHTML = '<div class="here">IMAGE ART HERE</div>' +
       `<div class="kind">${esc(a.dataset.kind || '')}</div>` +
       (a.dataset.size ? `<div class="size">${esc(a.dataset.size)}</div>` : '') +

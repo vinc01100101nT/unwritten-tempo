@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
-# Build the LAUNCHER players download: a program that fetches what changed since their last update, then starts
-# the game (the source is launcher/, the update folder it reads is made by tools/publish-update.py).
+# Build the LAUNCHER: a program that fetches what changed since the player's last update, then starts the game (the
+# source is launcher/, the update folder it reads is made by tools/publish-update.py). And, for Windows, the SMALL
+# PROGRAM A PLAYER DOWNLOADS (launcher-updater/), which fetches that launcher into the player's own folder, keeps it
+# up to date and starts it. A Mac player downloads the launcher itself.
 #
 # USAGE:  tools/build-launcher.sh      # downloads from PATCH_URL in settings.env; refuses to build without it
 #         PATCH_URL=https://patch.example.com tools/build-launcher.sh   # a value typed here wins
 #
-# WRITES: builds/launcher/windows/unwritten-launcher.exe
+# WRITES: builds/launcher/windows/unwritten-launcher.exe          the small program, with launcher.txt — the download
+#         builds/launcher/windows-patcher/unwritten-launcher.exe  the Windows launcher the small program fetches
 #         builds/launcher/mac-arm64/unwritten.app      (Apple silicon Macs)
 #         builds/launcher/mac-x64/unwritten.app        (Intel Macs)
-# Each carries a launcher.txt naming the update server.
+# Each download carries a launcher.txt naming the update server.
+#
+# THE SMALL PROGRAM IS BUILT ON WINDOWS ONLY: it is compiled straight to a Windows program, which only a Windows
+# computer with Visual Studio's C++ build tools can do. Anywhere else its folder is REMOVED rather than left holding
+# an older build, so a publish can never hand out a stale one.
 #
 # EXIT: 0 = built, 1 = a build failed, 2 = setup problem.
 
@@ -37,10 +44,26 @@ publish() {
   rm -f "$dir.log"
 }
 
+# The launcher wears the game's colours, read from a file written from the game's code — written again here, so a
+# launcher is never built with colours the game has since changed.
+"$(find_python)" "$REPO/tools/ui-tokens.py" >/dev/null || { echo "could not read the game's colours (tools/ui-tokens.py)." >&2; exit 2; }
+
 STATUS=0
 mkdir -p "$OUT"
 
-publish win-x64 "$OUT/windows" && settings "$OUT/windows" || STATUS=1
+publish win-x64 "$OUT/windows-patcher" || STATUS=1
+
+rm -rf "$OUT/windows"
+if [ "$PLATFORM" = windows ]; then
+  # The compiler finds Visual Studio's linker through vswhere, which Visual Studio installs here and not on the PATH.
+  PATH="$PATH:/c/Program Files (x86)/Microsoft Visual Studio/Installer" \
+    dotnet publish "$REPO/launcher-updater/LauncherUpdater.csproj" -c Release -o "$OUT/windows" -p:DebugType=none \
+    >"$OUT/windows.log" 2>&1 \
+    && [ -f "$OUT/windows/unwritten-launcher.exe" ] && rm -f "$OUT/windows.log" && settings "$OUT/windows" \
+    || { echo "the small Windows program FAILED to build — see $OUT/windows.log" >&2; rm -rf "$OUT/windows"; STATUS=1; }
+else
+  printf '\033[33mNot on Windows: the small program Windows players download was not built, and its folder was removed.\033[0m\n' >&2
+fi
 
 for arch in arm64 x64; do
   staging="$OUT/mac-$arch.staging"
@@ -77,8 +100,9 @@ EOF
 done
 
 if [ "$STATUS" -eq 0 ]; then
-  for f in "$OUT/windows/unwritten-launcher.exe" "$OUT/mac-arm64/unwritten.app" "$OUT/mac-x64/unwritten.app"; do
-    printf '\033[32mbuilt\033[0m  %s  (%s)\n' "$f" "$(du -sh "$f" | cut -f1)"
+  for f in "$OUT/windows/unwritten-launcher.exe" "$OUT/windows-patcher/unwritten-launcher.exe" \
+           "$OUT/mac-arm64/unwritten.app" "$OUT/mac-x64/unwritten.app"; do
+    [ -e "$f" ] && printf '\033[32mbuilt\033[0m  %s  (%s)\n' "$f" "$(du -sh "$f" | cut -f1)"
   done
 fi
 exit "$STATUS"

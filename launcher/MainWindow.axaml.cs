@@ -6,17 +6,36 @@ namespace UnwrittenLauncher;
 
 public partial class MainWindow : Window
 {
-    readonly Patcher patcher = new();
+    readonly Patcher patcher = new(Program.Beside);
     readonly CancellationTokenSource closing = new();
     bool failed;
+    CancellationTokenSource? updateStop;
+    Task update = Task.CompletedTask;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        var shape = LetteringShape.Load(App.Colour("PanelFill").Color, App.Colour("WindowEdge").Color);
+        Lettering.Source = shape.Lettering;
+        LetteringRim.Source = shape.Rim;
+        LetteringEdge.Source = shape.Edge;
+
+        // The window has no title bar, so these three do its jobs: moving the window, minimising it, closing it.
+        Shape.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed && !NewsBox.IsPointerOver) BeginMoveDrag(e);
+        };
+        MinimiseButton.Click += (_, _) => WindowState = WindowState.Minimized;
+        CloseButton.Click += (_, _) => Close();
+
         StartButton.Click += (_, _) => OnStart();
         ExitButton.Click += (_, _) => Close();
+        UninstallButton.Click += (_, _) => AskUninstall(true);
+        UninstallCancelButton.Click += (_, _) => AskUninstall(false);
+        UninstallYesButton.Click += (_, _) => OnUninstall();
         Closing += (_, _) => closing.Cancel();
-        Opened += async (_, _) => await RunAsync();
+        Opened += async (_, _) => await (update = RunAsync());
     }
 
     async Task RunAsync()
@@ -27,22 +46,64 @@ public partial class MainWindow : Window
 
         _ = ShowNewsAndVersionAsync();
 
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(closing.Token);
+        updateStop = stop;
+        Exception? error = null;
         try
         {
             await Task.Run(() => patcher.UpdateAsync(
-                (text, fraction) => Dispatcher.UIThread.Post(() => { StatusLabel.Text = text; Bar.Value = fraction; }),
-                closing.Token));
-            StartButton.IsEnabled = true;
+                (text, fraction) => Dispatcher.UIThread.Post(() => { StatusLabel.Text = text; Bar.Value = fraction; },
+                                                             DispatcherPriority.Normal),
+                stop.Token));
         }
-        catch (OperationCanceledException) { }
+        catch (Exception e) { error = e; }
+        finally { updateStop = null; }
+
+        // EVERY PROGRESS LINE IS QUEUED FOR THE WINDOW, so the result waits in the same queue behind the last of them.
+        // Without this a failure's message could be drawn first and the queued "Checking your files…" over it —
+        // MEASURED 2026-10-11: a player saw that line beside the Retry button, with no reason given.
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Normal);
+
+        if (error is OperationCanceledException) return;
+        if (error == null) { StartButton.IsEnabled = true; return; }
+
+        failed = true;
+        StatusLabel.Text = error is HttpRequestException
+            ? "Could not reach the update server. Check your connection and press Retry."
+            : error.Message;
+        StartButton.Content = "Retry";
+        StartButton.IsEnabled = true;
+    }
+
+    void AskUninstall(bool asking)
+    {
+        Buttons.IsVisible = !asking;
+        UninstallQuestion.IsVisible = asking;
+    }
+
+    async void OnUninstall()
+    {
+        AskUninstall(false);
+        StartButton.IsEnabled = false;
+        UninstallButton.IsEnabled = false;
+
+        // A download still running holds the very files being removed, so it is stopped and waited for first.
+        updateStop?.Cancel();
+        await update;
+
+        try
+        {
+            await Task.Run(patcher.Uninstall);
+            Close();
+        }
         catch (Exception e)
         {
             failed = true;
-            StatusLabel.Text = e is HttpRequestException
-                ? "Could not reach the update server. Check your connection and press Retry."
-                : e.Message;
+            StatusLabel.Text = "Could not remove the game: " + e.Message;
+            Bar.Value = 0;
             StartButton.Content = "Retry";
             StartButton.IsEnabled = true;
+            UninstallButton.IsEnabled = true;
         }
     }
 
@@ -75,16 +136,16 @@ public partial class MainWindow : Window
         var entry = new StackPanel { Spacing = 3 };
         entry.Children.Add(new TextBlock
         {
-            Text = item.date, FontSize = 11, Foreground = new SolidColorBrush(Color.Parse("#a79e88")),
+            Text = item.date, FontSize = 11, Foreground = App.Colour("TextDim"),
         });
         entry.Children.Add(new TextBlock
         {
             Text = item.title, FontSize = 14, FontWeight = FontWeight.Bold,
-            Foreground = new SolidColorBrush(Color.Parse("#e7e3d5")), TextWrapping = TextWrapping.Wrap,
+            Foreground = App.Colour("TextMain"), TextWrapping = TextWrapping.Wrap,
         });
         entry.Children.Add(new TextBlock
         {
-            Text = item.text, FontSize = 12, Foreground = new SolidColorBrush(Color.Parse("#a79e88")),
+            Text = item.text, FontSize = 12, Foreground = App.Colour("TextDim"),
             TextWrapping = TextWrapping.Wrap,
         });
         return entry;
@@ -92,7 +153,7 @@ public partial class MainWindow : Window
 
     async void OnStart()
     {
-        if (failed) { await RunAsync(); return; }
+        if (failed) { await (update = RunAsync()); return; }
         try
         {
             patcher.StartGame();

@@ -2,77 +2,153 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="UnwrittenLauncher.MainWindow"
         Title="unwritten"
-        Width="760" Height="500" CanResize="False"
+        Width="760" Height="580" CanResize="False"
         WindowStartupLocation="CenterScreen"
-        Background="#121317"
+        SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed">
 
-  <!-- THE RAGNAROK ONLINE PATCHER'S LAYOUT: a big news box, the buttons beside it, and the download bar across the
-       bottom. Every colour is the game's own shared palette (prototypes/ui-tokens.css, read from the game's code). -->
+  <!-- A WINDOW WITH NO TITLE BAR, SHAPED BY THE GAME'S LETTERING: the lettering stands 80 above the panel with a pale
+       rim, and everything outside the rim and the panel is see-through, so the desktop shows around the letters. The
+       panel is the artwork, with the news box and the buttons on it and the download bar on a strip along the bottom.
+       The lettering and the artwork are the website's own files (wiki/assets), linked in the project file, never copied.
+       NO COLOUR IS TYPED HERE: each is one of the game's shared palette, by the game's own name for it, read at
+       start-up (App.axaml.cs) from the file tools/ui-tokens.py writes from the game's code. Which colour goes on
+       which part is the website's choice (website/index.html), so the two look like one product. -->
   <Window.Styles>
+    <Style Selector="Button">
+      <Setter Property="Background" Value="{DynamicResource ButtonFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ButtonEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource ButtonText}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.big">
+      <Setter Property="Background" Value="{DynamicResource Accent}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnDim}" />
+    </Style>
+    <!-- The two round buttons that stand in for the title bar's own. -->
+    <Style Selector="Button.round">
+      <Setter Property="Background" Value="{DynamicResource SlotFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource TitleText}" />
+      <Setter Property="Width" Value="22" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="CornerRadius" Value="11" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+
     <!-- Start stays greyed out until the update has finished, so the game is never started half-patched. -->
     <Style Selector="Button:disabled">
       <Setter Property="Opacity" Value="0.4" />
     </Style>
-    <!-- The theme's own hover and press colours are replaced with the game's, so a button keeps its fill. -->
+
+    <!-- The theme's own hover, press and greyed-out colours are replaced with the game's. -->
     <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#212228" />
-      <Setter Property="BorderBrush" Value="#59f2ff" />
-      <Setter Property="Foreground" Value="#e7e3d5" />
+      <Setter Property="Background" Value="{DynamicResource Hover}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+      <Setter Property="Foreground" Value="{DynamicResource ButtonText}" />
     </Style>
     <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#15161a" />
-      <Setter Property="BorderBrush" Value="#59f2ff" />
-      <Setter Property="Foreground" Value="#e7e3d5" />
+      <Setter Property="Background" Value="{DynamicResource Hover}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+      <Setter Property="Foreground" Value="{DynamicResource ButtonText}" />
     </Style>
     <Style Selector="Button:disabled /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#212228" />
-      <Setter Property="BorderBrush" Value="#c8a862" />
-      <Setter Property="Foreground" Value="#e7e3d5" />
+      <Setter Property="Background" Value="{DynamicResource ButtonFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ButtonEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource ButtonText}" />
+    </Style>
+    <Style Selector="Button.big:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnDim}" />
+    </Style>
+    <Style Selector="Button.big:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnDim}" />
+    </Style>
+    <Style Selector="Button.big:disabled /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource Accent}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource WindowEdge}" />
+      <Setter Property="Foreground" Value="{DynamicResource TextOnDim}" />
     </Style>
   </Window.Styles>
 
-  <Grid RowDefinitions="Auto,*,Auto" Margin="18">
+  <Panel x:Name="Shape">
 
-    <!-- The name, and which version the update server is handing out. -->
-    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
-      <TextBlock Grid.Column="0" Text="UNWRITTEN" FontSize="30" Foreground="#c8a862"
-                 FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold"
-                 VerticalAlignment="Center" />
-      <TextBlock Grid.Column="1" x:Name="VersionLabel" Foreground="#a79e88" FontSize="12"
-                 VerticalAlignment="Bottom" />
-    </Grid>
+    <!-- The dark line round the lettering's rim, behind the panel so it only shows above the panel's top edge. -->
+    <Image x:Name="LetteringEdge" Width="572" HorizontalAlignment="Center" VerticalAlignment="Top" />
 
-    <Grid Grid.Row="1" ColumnDefinitions="*,170">
+    <Border Margin="0,80,0,0" BorderBrush="{DynamicResource WindowEdge}" BorderThickness="2" CornerRadius="10"
+            ClipToBounds="True">
+      <Border.Background>
+        <ImageBrush Source="avares://unwritten-launcher/Assets/last-line-frostcap-slime-siege.jpg" Stretch="UniformToFill" />
+      </Border.Background>
 
-      <!-- The news box. -->
-      <Border Grid.Column="0" Background="#15161a" BorderBrush="#c8a862" BorderThickness="1" CornerRadius="3"
-              Padding="14,10">
-        <DockPanel>
-          <TextBlock DockPanel.Dock="Top" Text="News" Foreground="#c8a862" FontSize="16" Margin="0,0,0,8"
-                     FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold" />
-          <ScrollViewer>
-            <StackPanel x:Name="NewsList" Spacing="14" />
-          </ScrollViewer>
-        </DockPanel>
-      </Border>
+      <Canvas>
+        <Button x:Name="MinimiseButton" Classes="round" Content="–" Canvas.Right="40" Canvas.Top="10" />
+        <Button x:Name="CloseButton" Classes="round" Content="×" Canvas.Right="12" Canvas.Top="10" />
 
-      <!-- The buttons. -->
-      <StackPanel Grid.Column="1" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Bottom">
-        <Button x:Name="StartButton" Content="Start" IsEnabled="False" Height="52"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                FontFamily="avares://unwritten-launcher/Assets/Fonts#DejaVu Sans Condensed" FontWeight="Bold" FontSize="18"
-                Background="#212228" Foreground="#e7e3d5" BorderBrush="#c8a862" BorderThickness="1" />
-        <Button x:Name="ExitButton" Content="Exit" Height="36"
-                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Background="#212228" Foreground="#a79e88" BorderBrush="#a79e88" BorderThickness="1" />
-      </StackPanel>
-    </Grid>
+        <!-- The news box, drawn as the game's window: its edge, its title bar, its fill. -->
+        <Border x:Name="NewsBox" Canvas.Left="16" Canvas.Top="186" Width="440" Height="240"
+                Background="{DynamicResource PanelFill}" BorderBrush="{DynamicResource WindowEdge}"
+                BorderThickness="2" CornerRadius="5" ClipToBounds="True">
+          <DockPanel>
+            <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBar}" MinHeight="28" Padding="12,4">
+              <TextBlock Text="News" Foreground="{DynamicResource TitleText}" FontSize="14" VerticalAlignment="Center"
+                         FontWeight="Bold" />
+            </Border>
+            <ScrollViewer Margin="14,9">
+              <StackPanel x:Name="NewsList" Spacing="12" />
+            </ScrollViewer>
+          </DockPanel>
+        </Border>
 
-    <!-- What is happening, and how far along the download is. -->
-    <StackPanel Grid.Row="2" Margin="0,14,0,0" Spacing="6">
-      <TextBlock x:Name="StatusLabel" Foreground="#e7e3d5" FontSize="12" TextTrimming="CharacterEllipsis" />
-      <ProgressBar x:Name="Bar" Minimum="0" Maximum="1" Height="14" Background="#15161a" Foreground="#59f2ff" />
-    </StackPanel>
-  </Grid>
+        <!-- The buttons. -->
+        <StackPanel x:Name="Buttons" Canvas.Right="16" Canvas.Top="272" Width="156" Spacing="10">
+          <Button x:Name="StartButton" Classes="big" Content="Start" IsEnabled="False" Height="52"
+                  FontWeight="Bold" FontSize="18" />
+          <Button x:Name="ExitButton" Content="Exit" Height="36" />
+          <Button x:Name="UninstallButton" Content="Uninstall" Height="36" />
+        </StackPanel>
+
+        <!-- Asked before anything is deleted; it takes the buttons' place while it is up. -->
+        <Border x:Name="UninstallQuestion" Canvas.Right="16" Canvas.Top="272" Width="156" IsVisible="False"
+                Background="{DynamicResource PanelFill}" BorderBrush="{DynamicResource WindowEdge}"
+                BorderThickness="2" CornerRadius="5" Padding="10">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Remove the game from this computer?" Foreground="{DynamicResource TextMain}" FontSize="13"
+                       TextWrapping="Wrap" />
+            <Button x:Name="UninstallYesButton" Content="Yes" Height="36" />
+            <Button x:Name="UninstallCancelButton" Content="Cancel" Height="36" />
+          </StackPanel>
+        </Border>
+
+        <!-- What is happening, which version, and how far along the download is. -->
+        <Border Canvas.Left="0" Canvas.Bottom="0" Width="756" Padding="16,8,16,12"
+                Background="{DynamicResource PanelRaise}" BorderBrush="{DynamicResource Rule}" BorderThickness="0,1,0,0">
+          <StackPanel Spacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" x:Name="StatusLabel" Foreground="{DynamicResource TextMain}" FontSize="12"
+                         TextTrimming="CharacterEllipsis" />
+              <TextBlock Grid.Column="1" x:Name="VersionLabel" Foreground="{DynamicResource TextDim}" FontSize="12"
+                         Margin="12,0,0,0" />
+            </Grid>
+            <ProgressBar x:Name="Bar" Minimum="0" Maximum="1" Height="14" Background="{DynamicResource SlotFill}"
+                         Foreground="{DynamicResource Accent}" BorderBrush="{DynamicResource Rule}" BorderThickness="1" />
+          </StackPanel>
+        </Border>
+      </Canvas>
+    </Border>
+
+    <!-- The rim itself and the lettering, in front of the panel so the lettering's lower half lies on the artwork. -->
+    <Image x:Name="LetteringRim" Width="572" HorizontalAlignment="Center" VerticalAlignment="Top" IsHitTestVisible="False" />
+    <Image x:Name="Lettering" Width="572" HorizontalAlignment="Center" VerticalAlignment="Top" IsHitTestVisible="False" />
+  </Panel>
 </Window>

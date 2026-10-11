@@ -1,7 +1,7 @@
 ---
-status: "Prompts written 2026-10-02; the Home banner has been tried in ChatGPT, the other boxes not yet."
+status: "Prompts written 2026-10-02; the Home banner is made and on the website (wiki/assets/last-line-frostcap-slime-siege.jpg), the other boxes not yet."
 owner: vince
-last-updated: 2026-10-02
+last-updated: 2026-10-11
 tags:
   - art-animation-pipeline
 ---

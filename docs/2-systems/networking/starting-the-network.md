@@ -167,7 +167,9 @@ Each of the three says what it would do, and changes nothing, with `--dry-run` a
 
 The full explanation is [Handing out updates](#handing-out-updates), at the end of this page.
 
-Builds the launcher players download — once, and again only when the launcher itself or `PATCH_URL` changes.
+Builds the launcher, and the small program Windows players download to fetch it — once, and again only when either
+changes or `PATCH_URL` does. A launcher change on its own is then published with
+`tools/publish-update.py --launcher-only`: no game build is read and no new version is written.
 
 ```
 tools/build-launcher.sh
@@ -1061,7 +1063,9 @@ one region — never over the open internet.
 
 ### Handing out updates
 
-Players download a **launcher** once. Every time they open it, it compares their game files with the update
+A Windows player downloads one small program once (about 5 MB). Every time they open it, it fetches the **launcher**
+into their own user folder if it is missing or out of date (about 100 MB), and opens it. A Mac player downloads the
+launcher itself. The launcher compares their game files with the update
 folder on the hosted machine, downloads only the files that changed, and then lets them press **Start**. A copy
 of the game whose version differs from the published one is refused by the character server with *"Your game is
 out of date. Close it and run the launcher to update."* — so nobody plays a copy that no longer matches the
@@ -1073,22 +1077,46 @@ server.
 tools/build-launcher.sh
 ```
 
-It writes `builds/launcher/windows/unwritten-launcher.exe` and a Mac `unwritten.app` each for Apple silicon and
-Intel (about 100 MB each, about 41 MB zipped). With each it writes `launcher.txt`, which is how the launcher knows
-which server to download from; a launcher without it looks on the player's own computer and finds nothing. It sits
+It writes four things. `builds/launcher/windows/unwritten-launcher.exe` is the small program a Windows player
+downloads (`launcher-updater/`, about 5 MB); only a Windows PC with Visual Studio's C++ build tools can build it, and
+anywhere else its folder is removed rather than left holding an older build.
+`builds/launcher/windows-patcher/unwritten-launcher.exe` is the Windows launcher that small program fetches (about
+100 MB). And a Mac `unwritten.app` each for Apple silicon and Intel is the launcher a Mac player downloads (about
+100 MB each, about 41 MB zipped). With each download it writes `launcher.txt`, which is how the program knows
+which server to download from; without it the program finds nothing. It sits
 beside the Windows program, and in the Mac app's `Contents/Resources` — a non-program file in `Contents/MacOS` is not
-covered by the app's signature, and a Mac then refuses the app as "damaged". A
-Windows player's game goes beside the launcher, in a `game` folder; a Mac player's goes in
-`~/Library/Application Support/unwritten/game`.
+covered by the app's signature, and a Mac then refuses the app as "damaged". On Windows everything the small program
+and the launcher write goes in `AppData/Local/unwritten/` in the player's user folder, wherever they unzipped the
+download: the launcher in `patcher/`, the game in `game/`. A Mac player's game goes in
+`~/Library/Application Support/unwritten/game`. The launcher's **Uninstall** button removes the game from either,
+and on Windows the launcher with it; the small program stays where the player put it, and opening it installs
+everything again.
+
+**How a Windows launcher change reaches players.** The small program asks the update server for
+`windows/patcher.json` — the launcher's size and fingerprint, and the update address players should be using — and
+downloads the launcher from `windows/files/` when the one on the computer differs. A launcher opened directly (a
+taskbar pin) hands back to the small program first, so it is never left behind. The small program itself never
+writes into its own folder, which is what lets it run from Program Files; the launcher replaces the copy in the
+player's folder with the published one whenever that folder can be written to, and rewrites the address beside it.
+
+**The first launcher is handed over through the game's own file list.** The launcher players downloaded before
+2026-10-11 keeps the game beside itself, cannot update itself, and on **Start** runs whatever the Windows list names
+as `start`. So the Windows list names the small program as one more game file and as `start`, and the game as `play`,
+which every later launcher runs. That player presses Start once: the small program opens instead of the game,
+fetches the launcher, the launcher replaces the first launcher's file with the small program and moves the game
+into the player's user folder without downloading it again. `tools/publish-update.py --without-hand-over` publishes
+the list the old way and withdraws the small program from every first launcher in one publish. A first launcher
+that was unzipped into Program Files never gets that far — it cannot create its game folder — so that player
+downloads again from the website; the news says so.
 
 **The website and its Download page.** Publishing also writes the website into the update folder (section 6) —
-the page a browser gets at the update server's address — and zips the Windows launcher with its `launcher.txt` into
-`download/unwritten-windows.zip`, which the Download page's button offers. A player downloads only that zip; the launcher's
-first run downloads the whole game, about 850 MB. It also zips the two Mac launchers (Apple chip and Intel) into
+the page a browser gets at the update server's address — and zips the small Windows program with its `launcher.txt` into
+`download/unwritten-windows.zip`, which the Download page's button offers. A player downloads only that zip; its
+first run downloads the launcher, and the launcher's first run downloads the whole game, about 850 MB. It also zips the two Mac launchers (Apple chip and Intel) into
 `download/unwritten-mac-arm64.zip` and `download/unwritten-mac-x64.zip`, keeping the permission that lets the program
 start. The site reads the version and the news from the same folder the launcher does.
 
-**Everything Mac can be made on the Windows PC.** A Mac only runs a signed program; off a Mac, `tools/platform.sh`
+**Everything Mac can be made on the Windows PC** — and the small Windows program only there. A Mac only runs a signed program; off a Mac, `tools/platform.sh`
 signs with `rcodesign` (installed to `~/.local/bin`), the same certificate-free signature a Mac makes. The launcher
 build signs the Mac launchers, and publishing signs the Mac game again after stamping its version. A Mac that has
 never seen the game asks once: **System Settings ▸ Privacy & Security ▸ Open Anyway**. The macOS build profile builds
@@ -1154,14 +1182,15 @@ is served on `PATCH_PORT` (8090), whatever `PATCH_URL` says.
 5. On another device, open one of the addresses step 4 printed, press **Download for Windows**, unzip it, and
    run `unwritten-launcher.exe` from the `unwritten` folder. On this computer: `tools/platform.sh open-launcher`.
 
-**Worked when:** the News box fills, the bar downloads the whole game (about 850 MB) the first time, and **Start**
+**Worked when:** on Windows a small window says "Downloading the patcher" and then the launcher opens by itself; the
+News box fills, the bar downloads the whole game (about 850 MB) the first time, and **Start**
 lights up and opens the game. Open it again and it downloads nothing; publish again and it downloads only what
 changed. **"Could not reach the update server"** means step 4 is not running, or the launcher was built with a
 PATCH_URL the device cannot reach.
 
-**Stop the folder server** with Ctrl+C in its terminal. The launcher keeps the game it downloaded in a `game` folder
-beside itself on Windows, and in `~/Library/Application Support/unwritten/` on a Mac; delete that to try a first
-install again.
+**Stop the folder server** with Ctrl+C in its terminal. The launcher keeps the game it downloaded in
+`AppData/Local/unwritten/` in your user folder on Windows, and in `~/Library/Application Support/unwritten/` on a Mac;
+press **Uninstall** in the launcher to try a first install again.
 
 ---
 

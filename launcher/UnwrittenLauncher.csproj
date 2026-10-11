@@ -41,4 +41,16 @@
     <AvaloniaResource Include="../unity/Assets/3_Data/Resources/Fonts/DejaVuSansCondensed.ttf" Link="Assets/Fonts/DejaVuSansCondensed.ttf" />
   </ItemGroup>
 
+  <!-- THE GAME'S OWN COLOURS, read from the file tools/ui-tokens.py writes from the game's code rather than typed
+       here, for the same reason. -->
+  <ItemGroup>
+    <AvaloniaResource Include="../prototypes/ui-tokens.json" Link="Assets/ui-tokens.json" />
+  </ItemGroup>
+
+  <!-- THE WEBSITE'S OWN PICTURES: the lettering the window is shaped by, and the artwork behind its news box. -->
+  <ItemGroup>
+    <AvaloniaResource Include="../wiki/assets/unwritten-lettering.png" Link="Assets/unwritten-lettering.png" />
+    <AvaloniaResource Include="../wiki/assets/last-line-frostcap-slime-siege.jpg" Link="Assets/last-line-frostcap-slime-siege.jpg" />
+  </ItemGroup>
+
 </Project>

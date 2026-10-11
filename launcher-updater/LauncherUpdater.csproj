@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- THE PROGRAM A PLAYER DOWNLOADS AND OPENS. It fetches the launcher (../launcher) into the player's own folder,
+       keeps it up to date, and starts it. Separate from the launcher so the launcher can be replaced while it is not
+       running, and small — no window toolkit, compiled straight to a Windows program — because it is the first thing
+       a new player downloads. Windows only: a Mac player downloads the launcher itself. -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>unwritten-launcher</AssemblyName>
+    <RootNamespace>UnwrittenLauncherUpdater</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <StackTraceSupport>false</StackTraceSupport>
+  </PropertyGroup>
+
+  <!-- THE GAME'S OWN COLOURS AND FONT, carried inside the program from where the game keeps them, never copied. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../prototypes/ui-tokens.json" LogicalName="ui-tokens.json" />
+    <EmbeddedResource Include="../unity/Assets/3_Data/Resources/Fonts/DejaVuSansCondensed.ttf" LogicalName="font.ttf" />
+  </ItemGroup>
+
+</Project>
