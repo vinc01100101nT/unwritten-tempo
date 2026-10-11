@@ -6,7 +6,7 @@ namespace UnwrittenLauncher;
 
 public partial class MainWindow : Window
 {
-    readonly Patcher patcher = new(Program.Beside);
+    readonly Patcher patcher = new(Program.Beside, Program.BesideId, Program.BesideVersion);
     readonly CancellationTokenSource closing = new();
     bool failed;
     CancellationTokenSource? updateStop;

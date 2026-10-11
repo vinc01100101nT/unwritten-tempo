@@ -3,7 +3,7 @@
   <!-- THE PROGRAM A PLAYER DOWNLOADS AND OPENS. It fetches the launcher (../launcher) into the player's own folder,
        keeps it up to date, and starts it. Separate from the launcher so the launcher can be replaced while it is not
        running, and small — no window toolkit, compiled straight to a Windows program — because it is the first thing
-       a new player downloads. Windows only: a Mac player downloads the launcher itself. -->
+       a new player downloads. Windows only: the Mac twin is ../launcher-updater-mac. -->
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>

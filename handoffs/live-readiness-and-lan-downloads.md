@@ -39,7 +39,7 @@ map server listens only there when set); Unity insecure HTTP = development build
 Postgres; **never run against this PC's database** (archiving is still off here).
 
 **Wi-Fi downloads** — the website's Download page (`website/index.html`, with detailed Mac steps), `tools/serve-updates.sh`,
-`publish-update.py` writes the website and zips the Windows and two Mac launchers into `download/`, and publishes this
+`publish-update.py` writes the website and zips the small Windows and Mac programs into `download/`, and publishes this
 computer's platform by default. Mac on the Windows PC: Unity Mac Build Support (Mono) installed, `rcodesign` 0.29.0
 in `~/.local/bin` (fingerprint checked), `platform.sh sign-mac-app` uses it off a Mac, `build-game.sh --mac` switches
 the editor to the macOS build profile and back. The Mac launcher's `launcher.txt` now lives in

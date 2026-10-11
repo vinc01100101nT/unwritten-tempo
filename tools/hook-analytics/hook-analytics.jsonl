@@ -5725,3 +5725,9 @@
 {"ts": "2026-10-11T13:36:18+08:00", "session_id": "4e973c27-c5de-4aa5-9b4e-40f8f746c1a8", "file": "D:\\tempo\\projects\\roguelike-mmo\\charserver\\GameVersion.cs", "outcome": "blocked", "doc": "SERVER.md"}
 {"ts": "2026-10-11T13:39:03+08:00", "session_id": "4e973c27-c5de-4aa5-9b4e-40f8f746c1a8", "file": "probe.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-11T13:39:13+08:00", "session_id": "4e973c27-c5de-4aa5-9b4e-40f8f746c1a8", "file": "probe2.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T14:38:26+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "P.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T14:38:35+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "P.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T14:43:00+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "MacWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T14:43:09+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "P.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T15:04:25+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "MacWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T15:18:59+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "MacWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
