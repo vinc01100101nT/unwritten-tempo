@@ -10,16 +10,18 @@
 # WRITES: builds/launcher/windows/unwritten-launcher.exe          the small program, with launcher.txt — the download
 #         builds/launcher/windows-patcher/unwritten-launcher.exe  the Windows launcher the small program fetches
 #         builds/launcher/mac/unwritten.app                       the small Mac program, for both kinds of chip — the download
-#         builds/launcher/mac.zip                                 the same, zipped to carry to the Windows PC
 #         builds/launcher/mac-patcher-arm64/unwritten.app         the Mac launcher it fetches on Apple silicon Macs
 #         builds/launcher/mac-patcher-x64/unwritten.app           the Mac launcher it fetches on Intel Macs
 # Each program carries a launcher.txt naming the update server.
 #
-# EACH SMALL PROGRAM IS BUILT ON ITS OWN SYSTEM ONLY: it is compiled straight to a Windows or a Mac program, which
+# EACH SMALL PROGRAM IS COMPILED ON ITS OWN SYSTEM ONLY: it is compiled straight to a Windows or a Mac program, which
 # only that kind of computer can do (Windows also needs Visual Studio's C++ build tools). Off Windows the small
 # Windows program's folder is REMOVED rather than left holding an older build, so a publish can never hand out a
-# stale one. Off a Mac the small Mac program's folder is LEFT AS IT IS, because that is where the one built on the Mac
-# is unzipped (builds/launcher/mac.zip) — tools/publish-update.py refuses it if it names a different update server.
+# stale one. THE SMALL MAC PROGRAM TRAVELS THROUGH GIT: a Mac compiles it into launcher-updater-mac/built/ (kept in
+# Git LFS) with its build number, and every computer makes the app from that copy, with its own update address, and
+# signs it. Repeated builds of the same source give the same bytes (measured 2026-10-11, after one first build that
+# did not), so that copy and its build number change only when the program's code does — commit them when they do. A
+# change with no code change only means players' copies are replaced once, by an identical program.
 #
 # EXIT: 0 = built, 1 = a build failed, 2 = setup problem.
 
@@ -109,24 +111,41 @@ EOF
   sign_mac_app "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; STATUS=1; }
 done
 
-# THE SMALL MAC PROGRAM: built once per kind of chip, then the two joined into one program that runs on both, so
-# one app is the whole download and the copy the Mac game list carries runs on any Mac.
+# THE SMALL MAC PROGRAM: on a Mac, compiled once per kind of chip and the two joined into one program that runs on
+# both, so one app is the whole download and the copy the Mac game list carries runs on any Mac. Written into git's
+# copy only when it differs, with a new build number then — the launcher only ever replaces a player's copy with a
+# higher one, so an unchanged program must keep its number.
+BUILT="$REPO/launcher-updater-mac/built"
+rm -f "$OUT/mac.zip"
 if [ "$PLATFORM" = mac ]; then
-  rm -rf "$OUT/mac" "$OUT/mac.zip"
-  app="$OUT/mac/unwritten.app"
-  mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
-  built=1
+  compiled=1
   for arch in arm64 x64; do
     dotnet publish "$REPO/launcher-updater-mac/LauncherUpdaterMac.csproj" -c Release -r "osx-$arch" \
       -o "$OUT/mac-$arch.fetcher" -p:DebugType=none >"$OUT/mac-$arch.fetcher.log" 2>&1 \
       && [ -f "$OUT/mac-$arch.fetcher/unwritten-launcher" ] && rm -f "$OUT/mac-$arch.fetcher.log" \
-      || { echo "the small Mac program for $arch FAILED to build — see $OUT/mac-$arch.fetcher.log" >&2; built=0; }
+      || { echo "the small Mac program for $arch FAILED to build — see $OUT/mac-$arch.fetcher.log" >&2; compiled=0; }
   done
-  [ "$built" = 1 ] && lipo -create "$OUT/mac-arm64.fetcher/unwritten-launcher" "$OUT/mac-x64.fetcher/unwritten-launcher" \
-                        -output "$app/Contents/MacOS/unwritten-launcher" || built=0
-  rm -rf "$OUT/mac-arm64.fetcher" "$OUT/mac-x64.fetcher"
+  if [ "$compiled" = 1 ] && lipo -create "$OUT/mac-arm64.fetcher/unwritten-launcher" "$OUT/mac-x64.fetcher/unwritten-launcher" \
+                                -output "$OUT/mac.fetcher"; then
+    mkdir -p "$BUILT"
+    if ! cmp -s "$OUT/mac.fetcher" "$BUILT/unwritten-launcher"; then
+      mv "$OUT/mac.fetcher" "$BUILT/unwritten-launcher"
+      date -u +%Y%m%d%H%M > "$BUILT/build-number.txt"
+      printf '\033[33mThe small Mac program changed: commit launcher-updater-mac/built/ so the Windows PC gets it.\033[0m\n' >&2
+    fi
+  else
+    STATUS=1
+  fi
+  rm -rf "$OUT/mac-arm64.fetcher" "$OUT/mac-x64.fetcher" "$OUT/mac.fetcher"
+fi
+
+rm -rf "$OUT/mac"
+if [ -f "$BUILT/unwritten-launcher" ] && [ -f "$BUILT/build-number.txt" ]; then
+  app="$OUT/mac/unwritten.app"
+  mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+  cp "$BUILT/unwritten-launcher" "$app/Contents/MacOS/unwritten-launcher"
+  chmod +x "$app/Contents/MacOS/unwritten-launcher"
   settings "$app/Contents/Resources"
-  # The build number is the time it was built: the launcher only ever replaces a player's copy with a newer one.
   cat > "$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -137,21 +156,17 @@ if [ "$PLATFORM" = mac ]; then
   <key>CFBundleName</key><string>unwritten</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>$(date -u +%Y%m%d%H%M)</string>
+  <key>CFBundleVersion</key><string>$(tr -d '[:space:]' < "$BUILT/build-number.txt")</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
 PLIST
-  if [ "$built" = 1 ] && sign_mac_app "$app" >/dev/null 2>&1; then
-    # Zipped by the Mac's own tool with no Mac-only extras, which would land inside the app as files its signature
-    # does not cover. Unzipped in builds/launcher/ on the Windows PC, it becomes builds/launcher/mac/unwritten.app.
-    ditto -c -k --norsrc --noextattr --noqtn --keepParent "$OUT/mac" "$OUT/mac.zip"
-  else
-    echo "the small Mac program FAILED to build or sign" >&2; rm -rf "$OUT/mac"; STATUS=1
-  fi
+  # Signed here, never in git's copy: the signature covers this computer's launcher.txt.
+  sign_mac_app "$app" >/dev/null 2>&1 || { echo "could not sign $app" >&2; rm -rf "$OUT/mac"; STATUS=1; }
 else
-  printf '\033[33mNot on a Mac: the small program Mac players download was not built; builds/launcher/mac is left as it is.\033[0m\n' >&2
+  echo "No small Mac program in launcher-updater-mac/built/ — run this on a Mac once and commit that folder." >&2
+  STATUS=1
 fi
 
 if [ "$STATUS" -eq 0 ]; then

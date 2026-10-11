@@ -48,7 +48,7 @@ Start runs the small program, which fetches the launcher, which puts the small p
 --without-hand-over withdraws it from the Mac list too.
 
 A PUBLISH THAT LEAVES MAC OUT NEVER TOUCHES IT: the Mac list, the Mac launchers and the Mac downloads stay exactly as
-they were, so a Windows publish is never held up by Mac programs that have not been brought over from the Mac.
+they were, so a Windows publish is never held up by a Mac program that has not been built.
 
 THE SAME VERSION GOES INTO THE GAME. Before listing a build, its settings file (StreamingAssets/server.txt) gets
 GAME_VERSION=<version>, which the game sends to the character server with every request. So a platform left out
@@ -64,7 +64,8 @@ version is written — so a wiki edit reaches the site without publishing the ga
 --launcher-only publishes the launchers, the small programs and the downloads, with the website and news — no game
 build is read and no version is written, so a launcher change reaches players without publishing the game again. Each
 list already published is kept file for file; only the small program's entries in it are replaced. Mac is included
-when builds/launcher/mac holds the small Mac program, and skipped, saying so, when it does not.
+when builds/launcher/mac holds the small Mac program (tools/build-launcher.sh makes it on any computer from the copy
+in git), and skipped, saying so, when it does not.
 
 USAGE:   tools/publish-update.py                        # builds/client, as the platform of THIS computer
          tools/publish-update.py --site-only            # the website, wiki pages and news only
@@ -193,8 +194,8 @@ def windows_launchers():
              f"PATCH_URL in settings.env, run tools/build-launcher.sh, then publish again.", 2)
 
 
-# THE SMALL MAC PROGRAM can only be built on a Mac (it is compiled straight to a Mac program), so on the Windows PC
-# builds/launcher/mac is what was brought over from the Mac. The Mac launcher it fetches can be built anywhere.
+# THE SMALL MAC PROGRAM can only be compiled on a Mac, so it reaches other computers through git
+# (launcher-updater-mac/built/), and tools/build-launcher.sh makes this app from it on any computer.
 MAC_FETCHER_APP = os.path.join(REPO, "builds", "launcher", "mac", "unwritten.app")
 MAC_LAUNCHER_APPS = {arch: os.path.join(REPO, "builds", "launcher", "mac-patcher-" + arch, "unwritten.app")
                      for arch in ("arm64", "x64")}
@@ -253,19 +254,19 @@ def mac_launchers():
            [(app, f"the Mac launcher for {arch} Macs", MAC_LAUNCHER_ID) for arch, app in MAC_LAUNCHER_APPS.items()]
     for app, what, wanted in apps:
         if not os.path.isfile(os.path.join(app, *MAC_PROGRAM.split("/"))):
-            fail(f"No {what} at {app}. Run tools/build-launcher.sh on the Mac, bring builds/launcher/mac.zip over and "
-                 f"unzip it into builds/launcher/, then publish again.", 2)
+            fail(f"No {what} at {app}. Run tools/build-launcher.sh, then publish again.", 2)
         extra = {p for p, _ in app_files(app)} - MAC_APP_FILES
         if extra:
             fail(f"{app} holds files its signature does not cover, which makes a Mac refuse it as damaged: "
-                 f"{', '.join(sorted(extra))}. Bring it over again as the zip tools/build-launcher.sh makes.", 2)
+                 f"{', '.join(sorted(extra))}. Run tools/build-launcher.sh, then publish again.", 2)
         if plist_value(app, "CFBundleIdentifier") != wanted:
             fail(f"{app} is not {what}: it says it is {plist_value(app, 'CFBundleIdentifier')!r}.", 2)
     program = os.path.join(MAC_FETCHER_APP, *MAC_PROGRAM.split("/"))
     if os.path.getsize(program) > FETCHER_LARGEST:
         fail(f"{program} is {os.path.getsize(program) / 1e6:.0f} MB — that is a launcher, not the small program.", 2)
     if mac_chips(program) != {"arm64", "x64"}:
-        fail(f"{program} is not built for both kinds of Mac chip. Run tools/build-launcher.sh on the Mac.", 2)
+        fail(f"{program} is not built for both kinds of Mac chip. Run tools/build-launcher.sh on a Mac, commit "
+             f"launcher-updater-mac/built/, then pull and build here.", 2)
     # Every Mac app built since 2026-10-11 carries a build number; a launcher without one is taken for one handed out
     # before then, and replaced on players' Macs by the small program.
     for app, _, _ in apps:
@@ -275,7 +276,7 @@ def mac_launchers():
     have = address_in(os.path.join(MAC_FETCHER_APP, "Contents", "Resources"))
     if have != wanted:
         fail(f"The small Mac program downloads from {have}, but PATCH_URL in settings.env is {wanted}. Run "
-             f"tools/build-launcher.sh on the Mac with the same PATCH_URL and bring it over again.", 2)
+             f"tools/build-launcher.sh, then publish again.", 2)
 
 
 def mac_entries(app, prefix=""):

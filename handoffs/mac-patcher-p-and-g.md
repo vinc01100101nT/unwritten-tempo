@@ -34,8 +34,9 @@ shows a message and does not start the game; testing is terminal-only.
   Mac list hand-over (`start` = `play` = P, `game`, `fetcher`), `mac_launchers()` checks (only when Mac is
   published), Mac zips written only by a publish that includes Mac, `--launcher-only` includes Mac when
   `builds/launcher/mac` exists. **Build** — `tools/build-launcher.sh`: Mac G → `mac-patcher-<chip>/` with a build
-  number; Mac P on a Mac only → `builds/launcher/mac/` + `builds/launcher/mac.zip` (ditto, no extras); off a Mac,
-  `builds/launcher/mac` is left alone. `tools/platform.sh open-launcher` opens Mac P.
+  number; Mac P compiled on a Mac only, into `launcher-updater-mac/built/` (Git LFS) with `build-number.txt`, rewritten
+  only when the bytes differ (the compiler is deterministic, measured); on every computer `builds/launcher/mac/` is
+  made from that copy with the local `PATCH_URL` and signed. `tools/platform.sh open-launcher` opens Mac P.
 - **Docs** — runbook section rewritten; website Mac steps gained the "Already have the game?" line; learnings page
   `docs/5-ai-learnings/a-started-program-cannot-ask-who-started-it.md`, and the backslash page gained an incident.
 
@@ -61,23 +62,21 @@ P's window drawn offscreen from the shipping code: font, centring, wrapping and 
 - App Translocation: P resolving its real location when run from a quarantined download (`SecTranslocate*`, private
   but exported; needs a Finder-opened download, which puts a window on screen).
 - Any window on a real screen, on either platform; G started by P coming to the front.
-- Building on Windows with the new code (`tools/build-launcher.sh` there), and Windows P staying byte-identical
+- Building on Windows with the new code (`tools/build-launcher.sh` there) — including `rcodesign` signing the
+  two-chip small Mac program, which it has only done for one-chip apps so far — and Windows P staying byte-identical
   (its sources are untouched; only a comment in its project file changed).
 
 ## Uncommitted working-tree changes
 
-All of the above is uncommitted on `main` on the Mac. Run `git status` on arrival — do not rely on this paragraph.
+Committed and pushed to `main`. Run `git status` on arrival — do not rely on this paragraph.
 
 ## What's left
 
-1. Commit and push (needs the user's go), `git pull` on the Windows PC.
-2. Windows PC: `tools/build-launcher.sh` (Windows P + G, Mac G with build numbers).
-3. Copy `builds/launcher/mac.zip` from the Mac (built 2026-10-11 15:22 with
-   `PATCH_URL=https://unwritten.tailc2913b.ts.net:10000`) to the Windows PC, unzip inside `builds/launcher/`.
-   Publish refuses it if Windows' `PATCH_URL` differs — then rebuild on the Mac with that value.
-4. Windows PC: `tools/publish-update.py --launcher-only` — writes the Mac lists, the Mac hand-over and the Mac zips,
+1. Windows PC: `git pull`, then `tools/build-launcher.sh` (Windows P + G, Mac G with build numbers, and the small
+   Mac app made from `launcher-updater-mac/built/`).
+2. Windows PC: `tools/publish-update.py --launcher-only` — writes the Mac lists, the Mac hand-over and the Mac zips,
    and the new Windows G (its Mac-only code changes nothing on Windows).
-5. Play-test on a real Mac: a fresh download, and an old launcher's Start.
+3. Play-test on a real Mac: a fresh download, and an old launcher's Start.
 
 Not done, offered earlier and unanswered: resuming an interrupted launcher download; choosing another drive on
 Windows when the system drive is full.
@@ -92,7 +91,7 @@ Windows when the system drive is full.
 
 ## Next single step
 
-Ask the user for the go to commit, then steps 2–4 on the Windows PC.
+Steps 1–2 on the Windows PC.
 
 ## How to resume
 

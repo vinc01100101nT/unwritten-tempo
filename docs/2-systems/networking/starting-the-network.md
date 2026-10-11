@@ -1082,10 +1082,11 @@ downloads (`launcher-updater/`, about 5 MB); only a Windows PC with Visual Studi
 anywhere else its folder is removed rather than left holding an older build.
 `builds/launcher/windows-patcher/unwritten-launcher.exe` is the Windows launcher that small program fetches (about
 100 MB). `builds/launcher/mac/unwritten.app` is the small program a Mac player downloads (`launcher-updater-mac/`,
-about 12 MB): one app that runs on both kinds of Mac chip, and only a Mac can build it — anywhere else its folder is
-left as it is, because that is where the one built on the Mac is unzipped (`builds/launcher/mac.zip`, below).
+about 12 MB): one app that runs on both kinds of Mac chip. Only a Mac can compile it, so it travels through git
+(below).
 `builds/launcher/mac-patcher-arm64/unwritten.app` and `mac-patcher-x64/unwritten.app` are the Mac launchers it
-fetches, one per kind of chip (about 100 MB each). Every Mac app carries a build number, the time it was built. Each
+fetches, one per kind of chip (about 100 MB each). Every Mac app carries a build number: the time it was built, and for the small Mac
+program the time its program last changed. Each
 program carries `launcher.txt`, which is how it knows which server to download from; without it the program finds
 nothing. It sits beside the Windows program, and in the Mac app's `Contents/Resources` — a non-program file in
 `Contents/MacOS` is not covered by the app's signature, and a Mac then refuses the app as "damaged". Everything the
@@ -1145,11 +1146,13 @@ since it runs on either chip — keeping the permission that lets the program st
 publish that includes its platform, so it always holds the small program that platform's list carries. The site
 reads the version and the news from the same folder the launcher does.
 
-**Everything Mac can be made on the Windows PC except the small Mac program** — and the small Windows program only
-there. The small Mac program is built on the Mac by `tools/build-launcher.sh`, which also zips it into
-`builds/launcher/mac.zip`; copy that file to the Windows PC and unzip it inside `builds/launcher/` there, which gives
-`builds/launcher/mac/unwritten.app`. Publishing refuses it when it names a different update server than `PATCH_URL`,
-lacks either kind of chip, or holds a file its signature does not cover. A publish that leaves Mac out never looks at
+**Everything Mac can be made on the Windows PC** — and the small Windows program only there. The one part only a
+Mac can make, the small Mac program itself, travels through git: `tools/build-launcher.sh` on a Mac compiles it into
+`launcher-updater-mac/built/` (kept in Git LFS) with its build number, and says so when it changed — commit and push
+that folder, pull on the Windows PC, and `tools/build-launcher.sh` there makes the app from it with the Windows PC's
+own `PATCH_URL` and signs it. Repeated builds of the same source give the same bytes, so the copy in git and its
+build number change only when the program's code does. Publishing refuses the app when it names a different update server
+than `PATCH_URL`, lacks either kind of chip, or holds a file its signature does not cover. A publish that leaves Mac out never looks at
 it, and `--launcher-only` skips Mac, saying so, when it is not there. A Mac only runs a signed program; off a Mac,
 `tools/platform.sh` signs with `rcodesign` (installed to `~/.local/bin`), the same certificate-free signature a Mac
 makes. The launcher build signs the Mac apps, and publishing signs the Mac game again after stamping its version. A Mac that has
