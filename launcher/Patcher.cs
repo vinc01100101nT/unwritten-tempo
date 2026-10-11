@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
+using UnwrittenMac;
 
 namespace UnwrittenLauncher;
 
@@ -18,6 +19,8 @@ namespace UnwrittenLauncher;
 ///   &lt;platform&gt;/files/&lt;sha256&gt;    each file's contents, stored under its fingerprint
 ///   windows/patcher.json         this launcher itself, for the small program a Windows player downloads
 ///                                (launcher-updater/), which fetches it, keeps it up to date and starts it
+///   mac/patcher-arm64.json       this launcher's files, one list per kind of Mac chip, for the small program a
+///   mac/patcher-x64.json         Mac player downloads (launcher-updater-mac/), which does the same on a Mac
 /// </code>
 /// <para>Contents are stored by fingerprint rather than by path so a publish never overwrites a file somebody is
 /// halfway through downloading, and a file that did not change between versions is never uploaded twice.</para>
@@ -32,8 +35,15 @@ public sealed class Patcher
     /// over: that launcher runs <paramref name="start"/> and nothing else, cannot update itself, and kept the game
     /// beside itself — so <paramref name="start"/> is given to it as the small program players download today
     /// (<c>launcher-updater/</c>), which fetches this launcher. This launcher starts <paramref name="play"/>, and
-    /// <paramref name="start"/> only where the list names no <paramref name="play"/>.</para></summary>
-    public sealed record Manifest(string start, List<ManifestFile> files, string? version = null, string? play = null);
+    /// <paramref name="start"/> only where the list names no <paramref name="play"/>.</para>
+    /// <para>A MAC list handing launchers over names the small program as BOTH <paramref name="start"/> and
+    /// <paramref name="play"/>, and the game as <paramref name="game"/>, because two kinds of Mac launcher are in
+    /// players' hands: the first runs <paramref name="start"/> and the one handed out on 2026-10-11 runs
+    /// <paramref name="play"/>. This launcher runs <paramref name="game"/> before either. <paramref name="fetcher"/>
+    /// is the build number of the small program in that list, so a newer one already in the player's hands is never
+    /// replaced by it.</para></summary>
+    public sealed record Manifest(string start, List<ManifestFile> files, string? version = null, string? play = null,
+                                  string? game = null, long? fetcher = null);
 
     /// <summary>What this machine had after its last finished update, so an unchanged file is recognised by its size
     /// and date instead of being read end to end on every launch. Kept in the folder that holds the game folder, never
@@ -53,6 +63,10 @@ public sealed class Patcher
     /// game's files, where the update server lists a copy of it.</summary>
     const string FetcherName = "unwritten-launcher.exe";
 
+    /// <summary>The folder a Mac list keeps its copy of the small program in, among the game's files. Never the game:
+    /// starting it from here would only start this launcher again.</summary>
+    const string MacFetcherFolder = "unwritten-patcher.app";
+
     /// <summary>ON WINDOWS, the folder the player keeps the small downloaded program in, which that program names when
     /// it starts this launcher (<c>--beside</c>). The first launcher kept the game there too, so it is where an older
     /// copy of the game is looked for. Null when nobody named one, on a Mac, and when it is this launcher's own
@@ -63,14 +77,29 @@ public sealed class Patcher
     string LauncherFolder => Path.Combine(InstallRoot, "patcher");
     bool KeptByFetcher => OperatingSystem.IsWindows() && SameFolder(AppContext.BaseDirectory, LauncherFolder);
 
+    /// <summary>ON A MAC, the small program the player opened, which names itself when it starts this launcher, with
+    /// its build number. Null when none was named, or when it is not one this launcher may replace: anything but our
+    /// own apps, anything in the player's unwritten folder, and this launcher itself are never touched.</summary>
+    readonly (string path, string id, long? version)? playersApp;
+
+    /// <summary>True when the small program started this launcher; false when the player opened it directly.</summary>
+    readonly bool startedByFetcher;
+
+    /// <summary>Held on a Mac for as long as the launcher runs, so the small program never replaces its files while it
+    /// is open and two launchers never update the same game at once.</summary>
+    FileStream? held;
+
+    string MacApp => Path.Combine(LauncherFolder, "unwritten.app");
+    bool KeptByMacFetcher => OperatingSystem.IsMacOS()
+        && SameFolder(AppContext.BaseDirectory, Path.Combine(MacApp, "Contents", "MacOS"));
+
     static string GameDirIn(string root) => Path.Combine(root, "game");
     static string KnownFileIn(string root) => Path.Combine(root, "installed.json");
 
     Manifest? manifest;
 
-    public Patcher(string? beside = null)
+    public Patcher(string? beside = null, string? besideId = null, string? besideVersion = null)
     {
-        PatchUrl = (Setting("PATCH_URL") ?? "").TrimEnd('/');
         Platform = OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "mac" : "linux";
 
         // THE GAME LIVES IN THE PLAYER'S OWN FOLDER, never beside the launcher: a launcher unzipped into Program
@@ -82,9 +111,19 @@ public sealed class Patcher
             : OperatingSystem.IsWindows()
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "unwritten")
                 : AppContext.BaseDirectory;
+        PatchUrl = (Setting("PATCH_URL", InstallRoot) ?? "").TrimEnd('/');
+        startedByFetcher = beside != null;
 
         if (OperatingSystem.IsWindows() && !string.IsNullOrWhiteSpace(beside) && !Within(beside, InstallRoot))
             playersFolder = Path.TrimEndingDirectorySeparator(Path.GetFullPath(beside));
+
+        if (OperatingSystem.IsMacOS() && !string.IsNullOrWhiteSpace(beside) && besideId is MacApps.LauncherId or MacApps.FetcherId)
+        {
+            var app = Path.TrimEndingDirectorySeparator(Path.GetFullPath(beside));
+            var own = Environment.ProcessPath is { } self ? MacApps.AppOf(self) : null;
+            if (app.EndsWith(".app", StringComparison.Ordinal) && !Within(app, InstallRoot) && (own == null || !SameFolder(app, own)))
+                playersApp = (app, besideId, long.TryParse(besideVersion, out var v) ? v : null);
+        }
     }
 
     static bool SameFolder(string a, string b) =>
@@ -114,15 +153,18 @@ public sealed class Patcher
     }
 
     /// <summary>Where the update server is. The environment first, so it can be pointed somewhere else for a test
-    /// without touching a file; then <c>launcher.txt</c>, in the same <c>NAME=value</c> shape the game's own settings
-    /// file uses — beside the program on Windows, and in the app's <c>Contents/Resources</c> on a Mac, the one place
-    /// inside a Mac app where a file that is not a program is covered by the app's signature.</summary>
-    static string? Setting(string name)
+    /// without touching a file — and on a Mac it is how the small program hands over the address that just answered
+    /// it; then <c>launcher.txt</c>, in the same <c>NAME=value</c> shape the game's own settings file uses — beside the
+    /// program on Windows; on a Mac the one the small program keeps in the player's folder (the address the server
+    /// last gave), then the one in the app's <c>Contents/Resources</c>, the one place inside a Mac app where a file that
+    /// is not a program is covered by the app's signature.</summary>
+    static string? Setting(string name, string installRoot)
     {
         var env = Environment.GetEnvironmentVariable(name);
         if (!string.IsNullOrWhiteSpace(env)) return env.Trim();
 
         var file = Path.Combine(AppContext.BaseDirectory, "launcher.txt");
+        if (!File.Exists(file) && OperatingSystem.IsMacOS()) file = Path.Combine(installRoot, "patcher", "launcher.txt");
         if (!File.Exists(file))
             file = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources", "launcher.txt"));
         if (!File.Exists(file)) return null;
@@ -159,7 +201,15 @@ public sealed class Patcher
         if (PatchUrl.Length == 0)
             throw new InvalidOperationException("This launcher was built without an update address (PATCH_URL).");
 
+        if (OperatingSystem.IsMacOS())
+        {
+            Directory.CreateDirectory(LauncherFolder);
+            try { held ??= new FileStream(Path.Combine(LauncherFolder, ".lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+            catch (IOException) { throw new InvalidOperationException("The launcher is already open."); }
+        }
+
         progress("Checking for updates…", 0);
+        if (OperatingSystem.IsMacOS() && KeptByMacFetcher && !startedByFetcher) await StopIfBehindAsync(cancel);
         manifest = JsonSerializer.Deserialize<Manifest>(
                        await Http.GetStringAsync($"{PatchUrl}/{Platform}/manifest.json", cancel), Json)
                    ?? throw new InvalidDataException("The update list could not be read.");
@@ -191,6 +241,7 @@ public sealed class Patcher
 
         RemoveUnlisted();
         WriteKnown();
+        if (OperatingSystem.IsMacOS()) KeepPlayersMacAppCurrent();
         progress("Up to date. Press Start.", 1);
     }
 
@@ -315,6 +366,91 @@ public sealed class Patcher
         return true;
     }
 
+    /// <summary>ONLY THE SMALL PROGRAM REPLACES THIS LAUNCHER ON A MAC, and a Mac launcher opened directly (from the
+    /// Dock) cannot hand back to it. So when one is opened directly and the update server lists a different launcher,
+    /// it says so and goes no further, rather than updating the game with an old launcher. When the list cannot be
+    /// read, it carries on: the update that follows says what is wrong.</summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("macos")]
+    async Task StopIfBehindAsync(CancellationToken cancel)
+    {
+        var chip = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture
+                   == System.Runtime.InteropServices.Architecture.Arm64 ? "arm64" : "x64";
+        List<ManifestFile>? listed;
+        try
+        {
+            using var doc = JsonDocument.Parse(await Http.GetStringAsync($"{PatchUrl}/mac/patcher-{chip}.json", cancel));
+            listed = doc.RootElement.GetProperty("files").Deserialize<List<ManifestFile>>(Json);
+        }
+        catch (Exception e) when (e is HttpRequestException or JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            return;
+        }
+        if (listed == null || listed.Any(f => !MacApps.IsSafePath(f.path))) return;
+
+        // The small program's record of the files it installed, in the shape of this launcher's record of the game.
+        var known = ReadKnown(Path.Combine(LauncherFolder, "checked.json"));
+        foreach (var f in listed)
+            if (!await IsCurrentAtAsync(MacApps.Inside(MacApp, f.path), f, known, cancel))
+                throw new InvalidOperationException(
+                    $"A newer launcher is out. Open the unwritten app you downloaded, or download it again from {PatchUrl}.");
+    }
+
+    /// <summary>ON A MAC, every app a player opens to play is made the small program the game list carries: each
+    /// launcher handed out before 2026-10-11 that the Mac knows about, which is what moves those players over — their
+    /// Start runs the copy among the game's files, so it is that copy which got this far — and the small program the
+    /// player opened, when it is older than the listed one. Run after the game's files are current, so the copy among
+    /// them is whole. Each app folder swaps in one step; one this launcher may not write to is left exactly as it is,
+    /// and nothing about it stops the update.</summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("macos")]
+    void KeepPlayersMacAppCurrent()
+    {
+        if (manifest!.game == null || manifest.fetcher is not { } listedVersion) return;
+        var prefix = MacFetcherFolder + "/";
+        var fetcher = manifest.files.Where(f => f.path.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+        if (fetcher.Count == 0 || MacApps.HasRepeats(fetcher.Select(f => f.path))) return;
+        foreach (var f in fetcher)
+            if (!IsAsync(LocalPath(f.path), f, CancellationToken.None).GetAwaiter().GetResult()) return;
+
+        var replace = new List<string>();
+        if (playersApp is { } players && !(players.id == MacApps.FetcherId && players.version >= listedVersion))
+            replace.Add(players.path);
+        var own = Environment.ProcessPath is { } self ? MacApps.AppOf(self) : null;
+        foreach (var old in MacApps.OldLaunchers(InstallRoot))
+            if (!replace.Contains(old) && (own == null || !SameFolder(old, own))) replace.Add(old);
+
+        foreach (var app in replace)
+        {
+            try
+            {
+                MacApps.ClearLeftovers(app);
+                var arriving = MacApps.Arriving(app);
+                foreach (var f in fetcher)
+                {
+                    var to = MacApps.Inside(arriving, f.path[prefix.Length..]);
+                    Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                    File.Copy(LocalPath(f.path), to);
+                    if (f.exec) MacApps.MayRun(to);
+                }
+                MacApps.Swap(arriving, app);
+                if (Directory.Exists(arriving)) Directory.Delete(arriving, recursive: true);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+            {
+                try { MacApps.ClearLeftovers(app); }
+                catch (Exception again) when (again is IOException or UnauthorizedAccessException) { }
+            }
+        }
+    }
+
+    async Task<bool> IsCurrentAtAsync(string local, ManifestFile f, Dictionary<string, Known> known, CancellationToken cancel)
+    {
+        var info = new FileInfo(local);
+        if (!info.Exists || info.Length != f.size) return false;
+        if (known.TryGetValue(f.path, out var k) && k.size == info.Length && k.written == info.LastWriteTimeUtc)
+            return k.sha256 == f.sha256;
+        return await HashAsync(local, cancel) == f.sha256;
+    }
+
     /// <summary>A game the first launcher downloaded beside itself is moved into the player's own folder file by file,
     /// so nobody downloads it a second time. A file that cannot be moved is left where it is and downloaded like any
     /// missing one, and the move is tried again the next time. Nothing is moved while the game is running from there,
@@ -379,8 +515,8 @@ public sealed class Patcher
     }
 
     /// <summary>Take the game off this computer: the game folder and the record of what was downloaded, in the
-    /// player's own folder and wherever the first launcher left a copy. On Windows this launcher goes too, once it has
-    /// closed. The small program the player downloaded stays where they put it — opening it installs everything again.</summary>
+    /// player's own folder and wherever the first launcher left a copy. This launcher goes too — on Windows once it has
+    /// closed, on a Mac at once. The small program the player downloaded stays where they put it — opening it installs everything again.</summary>
     public void Uninstall()
     {
         var roots = new List<string> { InstallRoot };
@@ -391,6 +527,14 @@ public sealed class Patcher
             if (File.Exists(KnownFileIn(root))) File.Delete(KnownFileIn(root));
         }
         manifest = null;
+
+        // ON A MAC THIS LAUNCHER GOES TOO, at once: a Mac lets a running program's files be deleted.
+        if (OperatingSystem.IsMacOS() && Directory.Exists(LauncherFolder))
+        {
+            held?.Dispose();
+            held = null;
+            Directory.Delete(LauncherFolder, recursive: true);
+        }
 
         if (KeptByFetcher) RemoveSelfOnceClosed();
         else if (!SameFolder(AppContext.BaseDirectory, InstallRoot) && Directory.Exists(InstallRoot)
@@ -415,7 +559,10 @@ public sealed class Patcher
     public void StartGame()
     {
         if (manifest == null) throw new InvalidOperationException("Update first.");
-        var program = LocalPath(manifest.play ?? manifest.start);
+        var game = manifest.game ?? manifest.play ?? manifest.start;
+        if (game.StartsWith(MacFetcherFolder + "/", StringComparison.Ordinal))
+            throw new InvalidOperationException("The update list names the patcher as the game. Press Retry later.");
+        var program = LocalPath(game);
         Process.Start(new ProcessStartInfo(program) { WorkingDirectory = Path.GetDirectoryName(program)!, UseShellExecute = false });
     }
 

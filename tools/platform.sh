@@ -236,8 +236,7 @@ player_log() {
 # Open the launcher tools/build-launcher.sh made for this computer.
 open_launcher() {
   case "$PLATFORM" in
-    mac)     __arch=x64; [ "$(uname -m)" = arm64 ] && __arch=arm64
-             open "$__PLATFORM_REPO/builds/launcher/mac-$__arch/unwritten.app" ;;
+    mac)     open "$__PLATFORM_REPO/builds/launcher/mac/unwritten.app" ;;
     windows) "$(native_path "$__PLATFORM_REPO")/builds/launcher/windows/unwritten-launcher.exe" >/dev/null 2>&1 & ;;
     *)       echo "No launcher is built for Linux." >&2; return 2 ;;
   esac

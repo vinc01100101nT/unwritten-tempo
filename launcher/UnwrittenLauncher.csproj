@@ -13,6 +13,8 @@
     <RootNamespace>UnwrittenLauncher</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- For the Mac app-folder helpers it shares with the small Mac program (below). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- One file per platform, carrying its own .NET, so a player needs nothing installed first. -->
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
@@ -28,6 +30,11 @@
     <NetCoreTargetingPackRoot>$(MSBuildProjectDirectory)/obj/no-local-dotnet</NetCoreTargetingPackRoot>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
   </PropertyGroup>
+
+  <!-- WHAT THE TWO MAC PROGRAMS DO TO A MAC APP FOLDER, written once and read by both. -->
+  <ItemGroup>
+    <Compile Include="../launcher-updater-mac/MacApps.cs" Link="MacApps.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.22" />

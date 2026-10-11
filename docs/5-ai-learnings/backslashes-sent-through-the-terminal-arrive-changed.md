@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-11
 tags:
   - ai-learnings
 ---
@@ -38,11 +38,20 @@ script arrived as a real line break. Nothing was damaged only because every scri
 occurred exactly once before replacing — each failure cost a re-run. Writing the script to a file with the Write
 tool and then running `py <file>` worked first time, every time.
 
+2026-10-11, the rule above ignored, twice in one session. A Python edit piped through `<<'EOF'` wrote
+`re.compile(r"^[^/\\\0]+$")` into a publish script: the `\0` arrived as a real zero byte, and the file would not
+even load ("source code string cannot contain null bytes"). Later a piped edit script that itself contained a shell
+heredoc (an `Info.plist` written with `<<EOF`) was cut off at that inner `EOF` line — the outer heredoc ended there
+and the shell refused the whole command with "parse error near `else'". Nothing was damaged only because the shell
+parses a whole command before running any of it; each cost a round. Both edits went through first time once the
+script was a file written with the Write tool.
+
 ## How to apply
 
 1. Any edit whose new text contains a `\` goes through the editor's Edit or Write tool.
 2. If it must be scripted, write the SCRIPT itself with the Write tool and run it as a file (`py path/to/edit.py`) —
-   never pipe it through a heredoc. Make every replacement assert its search text occurs exactly once, so a mangled
+   never pipe it through a heredoc. This goes double when the text being written holds a heredoc of its own: its
+   closing word ends the outer one. Make every replacement assert its search text occurs exactly once, so a mangled
    search string fails loudly instead of writing nothing or the wrong thing. Inside a terminal-typed script, write a
    backslash as `chr(92)`.
 3. After ANY scripted edit, scan every file it touched — not only the one you meant:

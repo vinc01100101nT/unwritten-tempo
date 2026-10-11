@@ -74,3 +74,6 @@ unity/**/*.cginc    text
 unity/**/*.compute  text
 unity/**/*.uss      text
 unity/**/*.uxml     text
+
+# The small Mac program, compiled on a Mac and carried to other computers through git (tools/build-launcher.sh).
+launcher-updater-mac/built/unwritten-launcher filter=lfs diff=lfs merge=lfs -text

@@ -24,6 +24,13 @@ WHAT IT WRITES, into --out (default builds/patch):
   windows/patcher.json         the Windows launcher that small program fetches: its size and fingerprint, the update
                                address players should be using, and the fingerprint of the launcher before it. Its
                                contents sit in windows/files/ under its fingerprint, from builds/launcher/windows-patcher.
+  download/unwritten-mac-arm64.zip, download/unwritten-mac-x64.zip   what a Mac player downloads: the small Mac
+                               program (launcher-updater-mac/, one app for both kinds of chip, so both zips hold the
+                               same app), from builds/launcher/mac. It fetches the launcher for its chip.
+  mac/patcher-arm64.json, mac/patcher-x64.json   the Mac launcher that program fetches, one per kind of chip: every
+                               file of the app with its size, fingerprint and whether it is a program, the update
+                               address, and the fingerprints of the launcher before it. Contents in mac/files/, from
+                               builds/launcher/mac-patcher-arm64 and mac-patcher-x64.
 
 THE FIRST LAUNCHER IS HANDED OVER THROUGH THE WINDOWS LIST. That launcher (in players' hands since 2026-10-04) cannot
 update itself, keeps the game beside itself, and on Start runs the list's "start" and nothing else. So the Windows
@@ -32,6 +39,16 @@ which every later launcher runs. The list stays a superset of the game, so the f
 Start runs the small program, which fetches the launcher, which moves the game into the player's own folder.
 --without-hand-over publishes the list the old way ("start" is the game, no "play", no extra file), which withdraws
 the small program from every first launcher in one publish.
+
+THE MAC LAUNCHERS ARE HANDED OVER THE SAME WAY, through the Mac list. Two kinds are in players' hands: the first, which
+runs "start", and the one handed out on 2026-10-11, which runs "play". So the Mac list carries the small Mac program's
+files under unwritten-patcher.app/, names its program as both "start" and "play", the game as "game" (which the
+launcher from now on runs), and the small program's build number as "fetcher". Whichever launcher the player has, its
+Start runs the small program, which fetches the launcher, which puts the small program where the player's app was.
+--without-hand-over withdraws it from the Mac list too.
+
+A PUBLISH THAT LEAVES MAC OUT NEVER TOUCHES IT: the Mac list, the Mac launchers and the Mac downloads stay exactly as
+they were, so a Windows publish is never held up by a Mac program that has not been built.
 
 THE SAME VERSION GOES INTO THE GAME. Before listing a build, its settings file (StreamingAssets/server.txt) gets
 GAME_VERSION=<version>, which the game sends to the character server with every request. So a platform left out
@@ -44,9 +61,11 @@ halfway through downloading the previous update is not left pointing at nothing.
 --site-only refreshes the website, its wiki pages and news.json and touches nothing else — no build is read, no
 version is written — so a wiki edit reaches the site without publishing the game again.
 
---launcher-only publishes the Windows launcher, the small program and the downloads, with the website and news — no
-game build is read and no version is written, so a launcher change reaches players without publishing the game again.
-The Windows list already published is kept file for file; only the small program's entry in it is replaced.
+--launcher-only publishes the launchers, the small programs and the downloads, with the website and news — no game
+build is read and no version is written, so a launcher change reaches players without publishing the game again. Each
+list already published is kept file for file; only the small program's entries in it are replaced. Mac is included
+when builds/launcher/mac holds the small Mac program (tools/build-launcher.sh makes it on any computer from the copy
+in git), and skipped, saying so, when it does not.
 
 USAGE:   tools/publish-update.py                        # builds/client, as the platform of THIS computer
          tools/publish-update.py --site-only            # the website, wiki pages and news only
@@ -175,6 +194,139 @@ def windows_launchers():
              f"PATCH_URL in settings.env, run tools/build-launcher.sh, then publish again.", 2)
 
 
+# THE SMALL MAC PROGRAM can only be compiled on a Mac, so it reaches other computers through git
+# (launcher-updater-mac/built/), and tools/build-launcher.sh makes this app from it on any computer.
+MAC_FETCHER_APP = os.path.join(REPO, "builds", "launcher", "mac", "unwritten.app")
+MAC_LAUNCHER_APPS = {arch: os.path.join(REPO, "builds", "launcher", "mac-patcher-" + arch, "unwritten.app")
+                     for arch in ("arm64", "x64")}
+# Where the Mac list keeps its copy of the small program among the game's files. Never the game's own folder name.
+MAC_FETCHER_FOLDER = "unwritten-patcher.app"
+MAC_PROGRAM = "Contents/MacOS/unwritten-launcher"
+# Every file either Mac app may hold. Anything else inside one — a ._ or .DS_Store a copy picked up on the way from
+# the Mac — is not covered by its signature, and a Mac then refuses the downloaded app as "damaged".
+MAC_APP_FILES = {"Contents/Info.plist", MAC_PROGRAM, "Contents/_CodeSignature/CodeResources",
+                 "Contents/Resources/launcher.txt"}
+MAC_FETCHER_ID, MAC_LAUNCHER_ID = "com.unwritten.patcher", "com.unwritten.launcher"
+# A Mac program built for both kinds of chip starts with this, then one entry per chip: Intel and Apple's own.
+FAT_MAGIC, MAC_CHIPS = 0xCAFEBABE, {0x01000007: "x64", 0x0100000C: "arm64"}
+SAFE_PART = re.compile(r"^[^/\\\x00]+$")
+
+
+def app_files(app):
+    """Every file inside a Mac app, as (path inside the app, path on disk), in a fixed order."""
+    found = []
+    for root, _, files in os.walk(app):
+        for name in files:
+            path = os.path.join(root, name)
+            found.append((os.path.relpath(path, app).replace(os.sep, "/"), path))
+    return sorted(found)
+
+
+def plist_value(app, key):
+    with open(os.path.join(app, "Contents", "Info.plist"), "rb") as f:
+        return plistlib.load(f).get(key)
+
+
+def address_in(folder):
+    """PATCH_URL from a launcher.txt, or None."""
+    path = os.path.join(folder, "launcher.txt")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.strip().startswith("PATCH_URL="):
+                return line.split("=", 1)[1].strip().rstrip("/")
+    return None
+
+
+def mac_chips(program):
+    with open(program, "rb") as f:
+        head = f.read(8 + 20 * 8)
+    if len(head) < 8 or int.from_bytes(head[:4], "big") != FAT_MAGIC:
+        return set()
+    count = int.from_bytes(head[4:8], "big")
+    return {MAC_CHIPS.get(int.from_bytes(head[8 + 20 * i:12 + 20 * i], "big")) for i in range(min(count, 8))} - {None}
+
+
+def mac_launchers():
+    """The Mac programs every Mac publish needs, proved to be the right ones before anything is written."""
+    apps = [(MAC_FETCHER_APP, "the small Mac program players download", MAC_FETCHER_ID)] + \
+           [(app, f"the Mac launcher for {arch} Macs", MAC_LAUNCHER_ID) for arch, app in MAC_LAUNCHER_APPS.items()]
+    for app, what, wanted in apps:
+        if not os.path.isfile(os.path.join(app, *MAC_PROGRAM.split("/"))):
+            fail(f"No {what} at {app}. Run tools/build-launcher.sh, then publish again.", 2)
+        extra = {p for p, _ in app_files(app)} - MAC_APP_FILES
+        if extra:
+            fail(f"{app} holds files its signature does not cover, which makes a Mac refuse it as damaged: "
+                 f"{', '.join(sorted(extra))}. Run tools/build-launcher.sh, then publish again.", 2)
+        if plist_value(app, "CFBundleIdentifier") != wanted:
+            fail(f"{app} is not {what}: it says it is {plist_value(app, 'CFBundleIdentifier')!r}.", 2)
+    program = os.path.join(MAC_FETCHER_APP, *MAC_PROGRAM.split("/"))
+    if os.path.getsize(program) > FETCHER_LARGEST:
+        fail(f"{program} is {os.path.getsize(program) / 1e6:.0f} MB — that is a launcher, not the small program.", 2)
+    if mac_chips(program) != {"arm64", "x64"}:
+        fail(f"{program} is not built for both kinds of Mac chip. Run tools/build-launcher.sh on a Mac, commit "
+             f"launcher-updater-mac/built/, then pull and build here.", 2)
+    # Every Mac app built since 2026-10-11 carries a build number; a launcher without one is taken for one handed out
+    # before then, and replaced on players' Macs by the small program.
+    for app, _, _ in apps:
+        if not str(plist_value(app, "CFBundleVersion") or "").isdigit():
+            fail(f"{app} carries no build number. Run tools/build-launcher.sh, then publish again.", 2)
+    wanted = (setting("PATCH_URL") or "").rstrip("/")
+    have = address_in(os.path.join(MAC_FETCHER_APP, "Contents", "Resources"))
+    if have != wanted:
+        fail(f"The small Mac program downloads from {have}, but PATCH_URL in settings.env is {wanted}. Run "
+             f"tools/build-launcher.sh, then publish again.", 2)
+
+
+def mac_entries(app, prefix=""):
+    """A Mac app's files as list entries. Which files may run is decided by where they sit, not read off the disk —
+    a copy brought onto Windows has no such permission to read."""
+    return [{"path": prefix + rel, "size": os.path.getsize(path), "sha256": sha256(path),
+             "exec": rel.startswith("Contents/MacOS/") and not rel.endswith(".txt")}
+            for rel, path in app_files(app)]
+
+
+def publish_mac_launchers(out):
+    """The Mac launchers the small Mac program fetches. CONTENTS FIRST, THEN EACH LISTING, for the same reason as on
+    Windows."""
+    target = os.path.join(out, "mac")
+    address = (setting("PATCH_URL") or "").rstrip("/")
+    if not address:
+        fail("PATCH_URL is empty in settings.env, so the launcher would not know where updates are.", 2)
+    for arch, app in MAC_LAUNCHER_APPS.items():
+        listing = os.path.join(target, f"patcher-{arch}.json")
+        before = read_json(listing) or {}
+        entries = mac_entries(app)
+        for _, path in app_files(app):
+            put_blob(os.path.join(target, "files"), path)
+        was = {e["sha256"] for e in before.get("files", [])}
+        now = {e["sha256"] for e in entries}
+        previous = sorted(was - now) if was != now else before.get("previous", [])
+        write_json(listing, {"address": address, "files": entries, "previous": previous})
+        print(f"mac launcher ({arch}): {sum(e['size'] for e in entries) / 1e6:.0f} MB, "
+              f"{'unchanged' if was == now else 'NEW'}.")
+
+
+def mac_hand_over(entries, game, files_dir, on):
+    """The Mac list as every Mac launcher must see it (see the top of this file). Returns the list's fields."""
+    if game.startswith(MAC_FETCHER_FOLDER + "/"):
+        fail(f"The Mac list would name the small program as the game ({game}). Publish the game again.")
+    entries = [e for e in entries if not e["path"].startswith(MAC_FETCHER_FOLDER + "/")]
+    if not on:
+        return {"start": game, "files": entries}
+    added = mac_entries(MAC_FETCHER_APP, MAC_FETCHER_FOLDER + "/")
+    for _, path in app_files(MAC_FETCHER_APP):
+        put_blob(files_dir, path)
+    paths = [e["path"] for e in entries + added]
+    if len({p.lower() for p in paths}) != len(paths) or not all(all(SAFE_PART.match(part) and part not in (".", "..")
+                                                                    for part in p.split("/")) for p in paths):
+        fail("The Mac list would name the same file twice, or a file outside the game folder.")
+    fetcher = os.path.join(MAC_FETCHER_FOLDER, *MAC_PROGRAM.split("/")).replace(os.sep, "/")
+    return {"start": fetcher, "play": fetcher, "game": game,
+            "fetcher": int(plist_value(MAC_FETCHER_APP, "CFBundleVersion")), "files": entries + added}
+
+
 def put_blob(files_dir, path):
     """Store a file's contents under its fingerprint; returns (fingerprint, size)."""
     os.makedirs(files_dir, exist_ok=True)
@@ -216,9 +368,14 @@ def publish_windows_launcher(out):
 
 
 def launcher_blobs(target):
-    """The fingerprints the launcher's listing still needs kept: the launcher, and the one before it."""
+    """The fingerprints the launcher's listings still need kept: the launcher, and the one before it — on Windows one
+    file, on a Mac every file of each chip's launcher."""
     listing = read_json(os.path.join(target, "patcher.json")) or {}
-    return {d for d in (listing.get("sha256"), listing.get("previous")) if d}
+    keep = {d for d in (listing.get("sha256"), listing.get("previous")) if d}
+    for arch in MAC_LAUNCHER_APPS:
+        listing = read_json(os.path.join(target, f"patcher-{arch}.json")) or {}
+        keep |= {e["sha256"] for e in listing.get("files", [])} | set(listing.get("previous", []))
+    return keep
 
 
 def hand_over(entries, start, files_dir, on):
@@ -229,6 +386,20 @@ def hand_over(entries, start, files_dir, on):
     digest, size = put_blob(files_dir, FETCHER)
     entries.append({"path": FETCHER_NAME, "size": size, "sha256": digest, "exec": True})
     return {"start": FETCHER_NAME, "play": start, "files": entries}
+
+
+def publish_mac_launcher_only(out, on):
+    """The Mac half of a launcher-only publish: the Mac list already live is kept file for file."""
+    target = os.path.join(out, "mac")
+    manifest_path = os.path.join(target, "manifest.json")
+    live = read_json(manifest_path)
+    if live is None:
+        fail(f"No Mac list at {manifest_path} yet — publish the Mac game once first.", 2)
+    game = live.get("game") or live["start"]
+    publish_mac_launchers(out)
+    fields = mac_hand_over(live["files"], game, os.path.join(target, "files"), on)
+    write_json(manifest_path, {"version": live.get("version"), **fields})
+    print(f"mac list: {len(fields['files'])} files, hand-over {'on' if on else 'OFF'}; the game's files untouched.")
 
 
 def publish_launcher_only(out, on):
@@ -284,6 +455,11 @@ def publish_platform(platform, build, out, version, hands_over=True):
         fail(f"{build}: the program to start, {start}, is not among the files.")
 
     fields = {"start": start, "files": entries}
+    if platform == "mac":
+        if any(e["path"].startswith(MAC_FETCHER_FOLDER + "/") for e in entries):
+            fail(f"{build} holds a folder named {MAC_FETCHER_FOLDER}, the name the small program is listed under.")
+        fields = mac_hand_over(entries, start, files_dir, hands_over)
+        entries = fields["files"]
     if platform == "windows":
         if any(e["path"] == FETCHER_NAME for e in entries):
             fail(f"{build} holds a file named {FETCHER_NAME}, the name the small program is listed under.")
@@ -340,10 +516,10 @@ def publish_site(out):
         json.dump({"charServerUrl": char_server}, f)
 
 
-def publish_launchers(out, windows):
-    """What the Download page offers. A Windows player downloads the small program, which fetches the launcher,
-    which fetches the game; a Mac player downloads the launcher itself. `windows` is false when this publish left
-    Windows out, and the Windows download already there is then left as it is."""
+def publish_launchers(out, windows, mac):
+    """What the Download page offers. A player downloads the small program, which fetches the launcher, which
+    fetches the game. `windows` and `mac` are false when this publish left that platform out, and its download
+    already there is then left as it is — so the Mac download always holds the same small program as the Mac list."""
     os.makedirs(os.path.join(out, "download"), exist_ok=True)
     if windows:
         # ZIPPED WITH launcher.txt, because that file beside the program is how it knows which server to download
@@ -355,13 +531,11 @@ def publish_launchers(out, windows):
                 z.write(os.path.join(folder, name), "unwritten/" + name)
         os.replace(target + ".part", target)
 
-    # AND THE TWO MAC LAUNCHERS, one per kind of Mac chip. A .app is a folder, so it travels zipped — and the zip
-    # carries each file's "may run" permission itself, because a zip made on Windows has none to copy and a Mac will
-    # not start a program that lacks it.
-    for arch in ("arm64", "x64"):
-        app = os.path.join(REPO, "builds", "launcher", "mac-" + arch, "unwritten.app")
-        if not os.path.isdir(app):
-            continue
+    # AND THE SMALL MAC PROGRAM, under both Mac download names: one app runs on both kinds of chip. A .app is a
+    # folder, so it travels zipped — and the zip carries each file's "may run" permission itself, because a zip made
+    # on Windows has none to copy and a Mac will not start a program that lacks it.
+    for arch in ("arm64", "x64") if mac else ():
+        app = MAC_FETCHER_APP
         target = os.path.join(out, "download", "unwritten-mac-" + arch + ".zip")
         with zipfile.ZipFile(target + ".part", "w", zipfile.ZIP_DEFLATED) as z:
             for root, _, files in os.walk(app):
@@ -410,10 +584,18 @@ def main():
 
     if args.launcher_only:
         windows_launchers()
+        mac = os.path.isdir(MAC_FETCHER_APP)
+        if mac:
+            mac_launchers()
         publish_launcher_only(out, not args.without_hand_over)
+        if mac:
+            publish_mac_launcher_only(out, not args.without_hand_over)
+        else:
+            print(f"\033[33mMac skipped: no small Mac program at {MAC_FETCHER_APP}. The Mac list and downloads are "
+                  f"left as they are.\033[0m", file=sys.stderr)
         shutil.copyfile(args.news, os.path.join(out, "news.json"))
         publish_site(out)
-        publish_launchers(out, windows=True)
+        publish_launchers(out, windows=True, mac=mac)
         print(f"\033[32mPublished the launcher\033[0m to {out}")
         return
 
@@ -436,6 +618,8 @@ def main():
             fail(f"No {platform} build at {os.path.abspath(build)}.", 2)
     if args.windows:
         windows_launchers()
+    if args.mac:
+        mac_launchers()
 
     for platform, build in (("mac", args.mac), ("windows", args.windows)):
         if not build:
@@ -443,13 +627,14 @@ def main():
         stamp_version(build, version)
         if platform == "mac":
             resign_mac(build)
+            publish_mac_launchers(out)
         if platform == "windows":
             publish_windows_launcher(out)
         publish_platform(platform, build, out, version, hands_over=not args.without_hand_over)
 
     shutil.copyfile(args.news, os.path.join(out, "news.json"))
     publish_site(out)
-    publish_launchers(out, windows=bool(args.windows))
+    publish_launchers(out, windows=bool(args.windows), mac=bool(args.mac))
     with open(os.path.join(out, "version.txt.part"), "w", encoding="utf-8") as f:
         f.write(version + "\n")
     os.replace(os.path.join(out, "version.txt.part"), os.path.join(out, "version.txt"))
