@@ -100,6 +100,7 @@ public static class MinimapBaker
         Directory.CreateDirectory(PictureDir);
         string path = PictureDir + "/" + map + ".png";
         if (File.Exists(path) && SameBytes(File.ReadAllBytes(path), png) && AssetImporter.GetAtPath(path) != null) return;
+        // editor-write-ok: writes the picture this bake just drew, because the user saved the map or ran the bake.
         File.WriteAllBytes(path, png);
         // editor-write-ok: imports the picture this bake just drew, because the user saved the map or ran the bake.
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);

@@ -5744,3 +5744,7 @@
 {"ts": "2026-10-11T14:43:09+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "P.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-11T15:04:25+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "MacWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-11T15:18:59+08:00", "session_id": "fd4d1a97-9c8b-4266-a178-d78c803ffd67", "file": "MacWindow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T16:21:30+08:00", "session_id": "fa735c8d-803b-4685-bc04-522852bad239", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\WorldMapDoors.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T16:33:16+08:00", "session_id": "fa735c8d-803b-4685-bc04-522852bad239", "file": "Owner: EdgeMargin in WorldCreator.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T16:38:16+08:00", "session_id": "32711715-be84-4681-b2b9-9b443851cdf0", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-11T16:43:19+08:00", "session_id": "32711715-be84-4681-b2b9-9b443851cdf0", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\SkillDraftPanel.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

@@ -10,7 +10,9 @@ using UnityEngine;
 /// nothing else ever writes them.
 ///
 /// <para><b>Where each value comes from.</b> Every map's place and type is the world atlas's own entry, turned into a
-/// share of the picture exactly the way the World Map window turns a world point into one. The picture is the
+/// share of the picture exactly the way the World Map window turns a world point into one. Every door between two maps
+/// is the atlas's own copy of the layout's doors, each end turned into a share of the picture the same way; the
+/// picture has no doors painted on it, so the page draws them. The picture is the
 /// atlas's own texture file, copied byte for byte. Names come from the world layout, the one home of them. Which
 /// creatures live on a map is NOT written here: the wiki reads it from the creature export, so there is one copy.</para>
 ///
@@ -33,7 +35,10 @@ public static class WorldMapExport
     static string PreviewRel(string map) => "assets/minimaps/" + map + ".jpg";
     static string Abs(string rel) => Path.Combine(WikiDir, rel);
 
-    [Serializable] class Export { public string note, picture; public int width, height; public Zone[] maps; }
+    [Serializable] class Export { public string note, picture; public int width, height; public Zone[] maps; public Door[] doors; }
+
+    // One door between maps a and b: where each end stands, as a share of the picture (0..1 from its left and its top).
+    [Serializable] class Door { public int id; public string a, b; public float ax, ay, bx, by; }
 
     [Serializable] class Zone
     {
@@ -69,6 +74,22 @@ public static class WorldMapExport
             });
         }
 
+        var doors = new List<Door>(atlas.links.Count);
+        foreach (var l in atlas.links)
+        {
+            if (l == null) continue;
+            WorldAtlas.Entry ea = atlas.Find(l.a), eb = atlas.Find(l.b);
+            if (ea == null || eb == null) continue;
+            // A map's box has its top-left at (x, y) with y running south, and a door's spot is metres east and north
+            // of the box's centre.
+            doors.Add(new Door
+            {
+                id = l.id, a = l.a, b = l.b,
+                ax = (ea.x + ea.w * 0.5f + l.ax - atlas.minX) / w, ay = (ea.y + ea.h * 0.5f - l.az - atlas.minY) / h,
+                bx = (eb.x + eb.w * 0.5f + l.bx - atlas.minX) / w, by = (eb.y + eb.h * 0.5f - l.bz - atlas.minY) / h,
+            });
+        }
+
         var picturePath = AssetDatabase.GetAssetPath(atlas.atlas);
         if (!string.IsNullOrEmpty(picturePath))
             WriteBytesIfChanged(Abs(PictureRel), File.ReadAllBytes(Path.Combine(RepoRoot, "unity", picturePath)));
@@ -82,6 +103,7 @@ public static class WorldMapExport
             width = atlas.atlas.width,
             height = atlas.atlas.height,
             maps = zones.ToArray(),
+            doors = doors.ToArray(),
         };
         SkillExport.WriteIfChanged(DataPath, JsonUtility.ToJson(export, true) + "\n");
         return zones.Count;

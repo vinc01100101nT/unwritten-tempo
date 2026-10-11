@@ -1,38 +1,27 @@
 ---
 status: Both parts built; the pipeline has produced the 76 maps of the three-region world (2026-09-26, Hazemere added 2026-10-06); the 40 older maps were deleted on 2026-09-26
 owner: vince
-last-updated: 2026-09-26
+last-updated: 2026-10-11
 tags:
   - world-content
 ---
 
 # World Creator — Spec
 
-A two-part pipeline for authoring the connected world of *unwritten*. You paint a grid of maps and their warps in a fun browser tool, export one JSON file, and a single Unity orchestrator digests it — generating every map (via the existing `RecipeGenerator`) and wiring all the warp portals deterministically.
+A two-part pipeline for authoring the connected world of *unwritten*. You place maps and the doors between them in a browser tool, save one JSON file, and a single Unity orchestrator digests it — generating every map (via the existing `RecipeGenerator`) and wiring all the warp portals deterministically.
 
-The JSON file is the **single source of truth** for world topology. Rebuilding from it is idempotent, so regenerating a map never strands its links — the killer flaw of the old per-scene `MapLinker` flow.
+The JSON file (`tools/world-creator/worlds/world-regions.json`) is the **single source of truth** for world topology AND for where every door stands. It stays editable in the browser tool; moving a door by hand inside a map in Unity writes the new spot back into it, so no copy drifts. Rebuilding from it is idempotent, so regenerating a map never strands its links.
 
----
-
-## :warning: v2 update (2026-06-27) — free-form, rectangular maps (CLEAN BREAK)
-
-The original design (below) put maps on a **fixed square grid**. v2 removes the grid entirely:
-
-- **Maps are free-placed** anywhere in world space and can be **any rectangular size** — width and height are independent **integers** (in world units). Square is just `w == h`.
-- `**pos:[x,y]**` (float, top-left corner; `x`→east, `y`→south) + `**size:[w,h]**` (integer) replace `cell:[col,row]`. Per-map `size` drives `MapRecipe.sizeX`/`sizeZ` (already separate axes), so rectangular ground is free.
-- **Every warp is explicitly anchored** on both ends (`anchorA`/`anchorB` = `{edge, offset}`). The adjacency-derived `offset`-only form and the top-level `worldSize` are **gone** — there's no grid to derive a facing edge from.
-- **Clean break, no migration:** v1 grid files (`cell`) do **not** import. The world-map atlas is now composited by each map's world-space rectangle at one px/world-unit scale (was a grid of fixed squares).
-- Square-map results are **identical** to v1 (shared `EdgePoint` rim geometry generalized to `halfX`/`halfZ`).
-
-The sections below are kept for lineage; where they say "grid / cell / adjacency", read the v2 model above.
+Maps are free-placed anywhere in world space at any rectangular size (whole-number width and height). Every door between two maps is anchored explicitly on both ends.
 
 ---
 
 ## Pipeline at a glance
 
-1. **HTML World Creator** (browser) — paint cells on a grid (Town/Field/Dungeon/Special), drop blue-dot warps between them, Export Data → `world.json`.
-2. `**world.json**` — the contract. Abstract topology only (types, cells, warps). No prefab/asset references.
-3. **Unity World Creator** (one Editor window) — Import `world.json`, then **Build World**: for each map cell it assigns a seed and calls the Map Generator; for each warp it places paired `Portal3D` + arrival `SpawnPoint`; registers scenes in Build Settings; validates the graph.
+1. **HTML World Creator** (browser) — place maps (Town/Field/Dungeon/Special) as rectangles, link them with doors, save → `world-regions.json`.
+2. `**world-regions.json**` — the contract. Topology only (maps, their places and sizes, the doors between them and where each door stands). No prefab/asset references.
+3. **Unity World Creator** (one Editor window) — **Build World** reads the layout: for each map it assigns a seed and calls the Map Generator; for each door it places the paired `Portal3D` + arrival `SpawnPoint` at the door's spot; registers scenes in Build Settings; validates the graph.
+4. **Door moves in Unity flow back.** Saving a map's scene after dragging one of its doors or arrival points writes that spot into the layout as the door's `at` / `arriveAt`, raises the layout's `revision` by 1, and writes the world map's copy of the doors again.
 
 Separation of concerns: the HTML tool is blind to Unity assets and only emits *intent*; Unity resolves intent into real prefabs, recipes, and scenes.
 
@@ -41,10 +30,10 @@ Separation of concerns: the HTML tool is blind to Unity assets and only emits *i
 ## Design decisions (locked)
 
 - **Warp portals, not edge seams.** Authentic RO model = step on a warp pad → load linked map. Reuses the existing `Portal3D` trigger + `MapManager.Travel` runtime unchanged.
-- **Seeds are assigned by Unity, not the HTML tool.** The orchestrator rolls a deterministic seed per map cell and passes it to the generator. Same `world.json` → same world. A map may carry an optional pinned seed to lock a look.
+- **Seeds are assigned by Unity, not the HTML tool.** The orchestrator rolls a deterministic seed per map and passes it to the generator. Same `world.json` → same world. A map may carry an optional pinned seed to lock a look.
 - **Path tile / path width default to seed-randomized in Unity**, with optional per-map override in the JSON. They are *map-level*, never per-portal.
 - **Portals feed the generator as exit points.** A map's warp positions are handed to `RecipeGenerator` so the recipe routes its paths to *terminate at each doorway* — pads land on roads, not mid-field. (This is the most important mechanic.)
-- **Adjacent + distant warps, one model.** Adjacent warps derive their edge/direction from grid neighbour coords. Distant warps (cross-map, non-neighbour) carry an explicit anchor (edge + offset) on each end. Same `portal` shape either way.
+- **One door model.** Every door carries an explicit anchor on each end — a side and an offset along it, plus an exact spot when the door was placed by hand. There is no grid and no door derived from neighbouring maps.
 - **WorldGraph has zero runtime cost.** It is an author-time artifact only — read by the Editor tool at build time, never loaded or ticked at runtime.
 
 ---
@@ -54,6 +43,10 @@ Separation of concerns: the HTML tool is blind to Unity assets and only emits *i
 The single file both tools agree on. Versioned so we can evolve it safely. **Current = v2 (free-form, rectangular).**
 
 - `version` (int) — schema version. **Current `2`.**
+- `revision` (int) — raised by 1 by every writer on every write: the browser tool on each save, Unity on each door
+  move it writes back. The browser tool remembers the revision it imported and refuses to save over a file whose
+  revision is higher ("this file was changed in Unity since you opened it - import it again"); a plain download
+  (a browser with no save window) cannot read the file first, so its message shows the revision it wrote instead.
 - `maps` (array of map objects):
   - `id` (string) — unique. **A town, city or special map's id is its `name` in snake_case** (`Old Oak` → `old_oak`; a repeated name gets `_2`, `_3` on the later map), set by the browser tool on every rename and every import. **A field's id is `<town code>_fildNN` and a dungeon floor's `<town code>_dunNN`**, Ragnarok-style (`lst_fild01`, `olk_dun01`), typed in the tool when the map is renamed; a dungeon with no town near it may take its own name instead. The id is the Unity scene file name (`Assets/Scenes/<id>.unity`), what `/tp` takes, and what a character's save names. This file is the ONE source of every map id; `tools/check-map-ids.py` fails when a scene, door, the world map, a Map Painter file, the starting map or the music table disagrees with it. An unnamed map keeps the tool's `type_N` id.
   - `pos` ([x, y], float) — top-left corner in world units. `x`→east, `y`→south. Free placement, no grid.
@@ -67,18 +60,28 @@ The single file both tools agree on. Versioned so we can evolve it safely. **Cur
   - `cliffs` ("on" | "off", optional) — rock cliffs lining this map's roads regardless of its biome; omit = as the
     biome says. Set from the map's menu in the browser tool ("Cliffs: as the biome says / on / off").
   - `name` (string, optional) — the map's display name, shown in the browser tool and on the exported map picture; its snake_case is the `id`.
-- `portals` (array of portal objects) — **all warps are explicitly anchored on both ends:**
-  - `a` (string) — map id of endpoint A.
-  - `b` (string) — map id of endpoint B.
-  - `anchorA` / `anchorB` ({ edge: "N"|"E"|"S"|"W", offset: 0..1 }) — the doorway position on each map's rim. `offset` is the fraction along that edge.
+- `portals` (array of portal objects) — **every door is explicitly anchored on both ends.** Key order: `id, a, b, anchorA, anchorB`.
+  - `id` (int) — the door's permanent number. Unity names the door's objects after it: `Portal_w{id}_to_{other map}` and `SpawnPoint_w{id}_from_{other map}`. A new door takes the highest id + 1; an id is never reused or renumbered.
+  - `a` (string) — map id of end A.
+  - `b` (string) — map id of end B.
+  - `anchorA` / `anchorB` — where the door stands on each map. Key order: `edge, offset, at, arriveAt`.
+    - `edge` ("N"|"E"|"S"|"W") and `offset` (0..1) — the side of the map and how far along it. `offset` counts west → east on N and S, and **north → south** on E and W.
+    - `at` ([x, z], optional) — the door's exact spot in metres from its map's centre (x east, z north, 2 decimals), written when the door is placed by hand in Unity. When present, `edge` and `offset` still hold the side of the map's box nearest that spot and how far along that side it falls.
+    - `arriveAt` ([x, z], optional) — the exact spot a player arrives at on this map through this door, the same way.
 
-A warp's `offset` places **both** the portal pad and the paired arrival spawn on each map's chosen edge, so you step on a pad → arrive at the matching spot on the destination's edge. Up to **~3 warps per map-pair** is a sensible cap (the HTML tool / validator nudge, not enforced by schema). There is no longer any `cell`, top-level `worldSize`, or adjacency-derived `offset`-only portal form.
+**The one door-point rule** (stated identically in the browser tool, in Unity's `WorldLayoutFile` and in `tools/check-map-ids.py`):
+
+- **Door point** = `at` when present; otherwise the rim point, where the rim is the map's box pulled in by 4 m (`EdgeMargin`) on every side: with hx = width/2 − 4 and hz = height/2 − 4, N → (−hx + 2·hx·offset, +hz), S → (−hx + 2·hx·offset, −hz), E → (+hx, hz − 2·hz·offset), W → (−hx, hz − 2·hz·offset).
+- **Arrival point** = `arriveAt` when present; otherwise the door point moved 3 m (`SpawnInset`) straight in from its side.
+
+Both numbers live in `unity/Assets/Scripts/Editor/WorldLayoutFile.cs`; the browser tool mirrors the 4 as `EDGE_MARGIN` and the checker reads both from that file. Today four doors carry `at` / `arriveAt` — Lastline's four hand-placed gates — and every other door stands on its rim point. Up to **~3 doors per map pair** is a sensible cap (a nudge, not enforced by the schema).
 
 ### Example
 
 ```json
 {
   "version": 2,
+  "revision": 1,
   "maps": [
     { "id": "lastline",  "pos": [0, 0],     "size": [60, 60], "type": "town" },
     { "id": "field_1", "pos": [0, -90],   "size": [90, 60], "type": "field", "seed": 67890 },
@@ -86,11 +89,12 @@ A warp's `offset` places **both** the portal pad and the paired arrival spawn on
     { "id": "cave_0",  "pos": [70, 20],   "size": [50, 80], "type": "dungeon" }
   ],
   "portals": [
-    { "a": "lastline",  "b": "field_1",
+    { "id": 0, "a": "lastline",  "b": "field_1",
       "anchorA": { "edge": "N", "offset": 0.35 }, "anchorB": { "edge": "S", "offset": 0.35 } },
-    { "a": "lastline",  "b": "field_2",
-      "anchorA": { "edge": "W", "offset": 0.5 },  "anchorB": { "edge": "E", "offset": 0.5 } },
-    { "a": "lastline",  "b": "cave_0",
+    { "id": 1, "a": "lastline",  "b": "field_2",
+      "anchorA": { "edge": "W", "offset": 0.5, "at": [-21.4, -0.3], "arriveAt": [-19.7, -1.4] },
+      "anchorB": { "edge": "E", "offset": 0.5 } },
+    { "id": 2, "a": "lastline",  "b": "cave_0",
       "anchorA": { "edge": "E", "offset": 0.6 },  "anchorB": { "edge": "W", "offset": 0.5 } }
   ]
 }
@@ -111,15 +115,17 @@ A single self-contained HTML/JS/CSS file (no build step) that runs locally.
 
 **Warps (v2 — one anchored model)**
 
-- **Warp mode:** click map A then map B → a two-way warp with auto facing-edge anchors at offset 0.5 (dashed line + square end-caps). **Drag an end-cap** to slide that doorway along its map's edge (snaps to nearest edge + offset). **Click an end-cap** to delete the warp. `Esc` cancels a half-made link. (The old separate adjacent-dot "Warp" vs distant "Link" modes were unified — every warp is explicitly anchored now.)
+- Every door's square is drawn exactly where the map has that door, by the one door-point rule above (4 m inside the map's box on the rim, or at its own `at`).
+- **Warp mode:** click map A then map B → a two-way door with facing-side anchors at offset 0.5 (dashed line + a square at each end), taking the highest id + 1. **Drag a square** to move that door: a rim door slides along its map's rim (snaps to the nearest side + offset); a door with its own `at` follows the pointer anywhere inside its map's box, its `arriveAt` moves by the same amount, and its side + offset are worked out again from the new spot. **Click a square** to delete the door. `Esc` cancels a half-made link. Resizing a map pulls any `at` / `arriveAt` that would fall outside back inside its box.
 
 **Data I/O**
 
-- **Export** (⬇️ JSON) → saves the world (v2: `pos`/`size` + anchored `portals`), suggesting the name of the file last imported (`world.json` when none).
+- **Export** (⬇️ JSON) → saves the world (`revision` + 1, `pos`/`size`, and every door's `id`, anchors, `at` and `arriveAt`), suggesting the name of the file last imported (`world.json` when none). Before writing over a file, it reads that file and refuses if its `revision` is higher than the one imported.
+- **🖼️ PNG** → the map picture: background, every map's box and name, and a **Doors** box that is OFF by default — the game's World Map window draws the doors itself from the world map's links, so the picture it shows carries none.
 - **Saving** — ⬇️ JSON and the picture's ⬇️ Download PNG both open the browser's save window, which starts in the folder that kind of file was last saved to (remembered across visits). The layouts and the clean background live beside the tool in `tools/world-creator/worlds/` (`world-regions.json`, `wm1.png`); the picture the game shows is saved over `unity/Assets/3_Data/Resources/WorldMap/world-map.png`. Browsers without a save window (Safari, Firefox) download to their downloads folder instead.
-- **Import** → upload a v2 `world.json` → rebuilds the whole world + warps, fully round-trips. v1 grid files (`cell`) are rejected with a friendly message.
+- **Import** → upload a v2 `world.json` → rebuilds the whole world + doors, fully round-trips (`revision`, door ids, `at`, `arriveAt` included). A file whose doors carry no ids gives each door its place in the list; a file where any door's id is missing, not a whole number, or shared is refused. Grid files (`cell`) are rejected with a friendly message.
 
-**Status:** Part 1 complete (v2) — free-form rectangular maps + int-snap resize + anchored warps + Export/Import, all in `tools/world-creator/index.html`.
+**Status:** Part 1 complete — free-form rectangular maps + int-snap resize + anchored doors with permanent ids + Export/Import, all in `tools/world-creator/index.html`.
 
 ---
 
@@ -129,14 +135,14 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 
 **Import + Build World**
 
-- Load `world.json` (file picker), show a summary (N maps, M warps), validate before building.
+- Load the layout, show a summary (N maps, M doors, its revision), validate before building.
 - **Build World** (idempotent):
   1. For each `map`: assign a seed (use pinned `seed` or roll deterministically from `id`), resolve `type` → a `MapRecipe` template (theme: town = houses/trees/stone paths/grass; field = scatter; dungeon = dungeon props — creatures are never baked in; they come from the world spawn list, see [Mob Roster](mob-roster.md)), compute the map's exit points from its portals, and call the Map Generator with those params → bakes `Assets/Scenes/<id>.unity`.
-  2. For each `portal`: place paired `Portal3D` + arrival `SpawnPoint` on both maps at the resolved edge/offset, reusing `RegionBuilder.EnsurePortal/EnsureSpawn` (idempotent) and the destination-colour convention.
+  2. For each `portal`: place the paired `Portal3D` + arrival `SpawnPoint` on both maps at the door point and arrival point the one door-point rule gives, named `Portal_w{id}_to_{other map}` / `SpawnPoint_w{id}_from_{other map}` after the door's `id`, at the top of the scene (no parent), with the destination-colour convention.
   3. `RegisterInBuildSettings` for every scene.
   4. **Validate:** every warp two-way, every map reachable, no dangling spawn id, no door in a wall/off-ground.
 - **Build World in the window regenerates EVERY map in the file and opens each one as the only open scene.** It overwrites hand-made maps and drops unsaved changes in whatever scene is open. For a build run through the live editor, `WorldCreator.BuildCore(json, town, field, dungeon, special recipe paths, keep ids)` does the same build without dialogs, never opens or edits the maps named in the keep list (warps into a kept map arrive at its first arrival point until doors are placed there by hand), and opens every other map alongside the user's scenes, closing it again. Either way, a door is placed only when both maps it joins have a scene — baked in that build or already on disk — so a door into a map nobody has built (a shadow place) is left out, and the build's summary names every door it left out.
-- **The in-game world map (M, then World map).** With a **World map picture** set in the window, baking shows that picture as it is — the game draws nothing on it but the "you are here" marker, and no scene is opened. The picture in use is the browser tool's **🖼️ PNG** export at its default settings: the background with every map's box and its `name` (its id when it has none), and every warp as a dashed line with a square at each doorway, drawn the same as in the editor. Without one, the baker snapshots every map from above, which opens each map as the only scene. The picture in use lives at `Assets/3_Data/Resources/WorldMap/world-map.png`; `WorldCreator.BakeWorldMapCore(json, picture path)` bakes it without dialogs.
+- **The in-game world map (M, then World map).** With a **World map picture** set in the window, baking shows that picture as it is — the game draws nothing on it but the "you are here" marker, and no scene is opened. The picture in use is the browser tool's **🖼️ PNG** export at its default settings: the background with every map's box and its `name` (its id when it has none), and no doors — **Doors** is off by default, because the World Map window draws every door itself from the world map's `links`. Each link carries `a, b, id, ax, az, bx, bz`: the two maps, the door's id, and where the door stands in each map (metres from that map's centre), copied from the layout; `tools/check-map-ids.py` fails the moment that copy differs from the layout by more than 0.01 m. Without one, the baker snapshots every map from above, which opens each map as the only scene. The picture in use lives at `Assets/3_Data/Resources/WorldMap/world-map.png`; `WorldCreator.BakeWorldMapCore(json, picture path)` bakes it without dialogs.
 
 **Map Generator changes (the one real engine change)**
 
@@ -160,9 +166,9 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 ## Build plan
 
 1. **Spec** (this doc). DONE
-2. **HTML World Creator** — paint + colours + Export/Import + adjacent **and distant** warps. DONE
-3. **Unity World Creator window** — import + validate + Build World loop (both adjacent + distant). DONE — `WorldCreator.cs`, `Tools ▸ unwritten ▸ World ▸ World Creator…`. Per-type content from **template recipe assets** wired into the window; each warp gets a unique paired spawn id `w{i}_from_{map}` so up to 3 stacked warps per border work (why `RegionBuilder.EnsurePortal`, which dedupes by destination, was *not* reused; Build World re-bakes scenes fresh so there's nothing stale to dedupe).
-4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` joins the first two doorways with one meandering road, and gives every further doorway its own meandering road that joins an existing road at a random point along it; a map with one doorway gets a road from it to a random spot in the middle half of the map. There is no centre meeting point. Each road turns across its straight line at random waypoints and stays at least 4 units inside the map edge; how far it drifts is the recipe's `pathWander` (no arrival point is placed at the map centre either, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
+2. **HTML World Creator** — paint + colours + Export/Import + anchored doors. DONE
+3. **Unity World Creator window** — import + validate + Build World loop (both adjacent + distant). DONE — `WorldCreator.cs`, `Tools ▸ unwritten ▸ World ▸ World Creator…`. Per-type content from **template recipe assets** wired into the window; each door gets a unique paired spawn id `w{id}_from_{map}`, `id` being the door's permanent id in the layout, so up to 3 stacked doors per border work (why `RegionBuilder.EnsurePortal`, which dedupes by destination, was *not* reused; Build World re-bakes scenes fresh so there's nothing stale to dedupe).
+4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` joins the first two doorways with one meandering road, and gives every further doorway its own meandering road that joins an existing road at a random point along it; a map with one doorway gets a road from it to a random spot in the middle half of the map. There is no centre meeting point. Each road turns across its straight line at random waypoints and stays at least 4 units inside the map edge; how far it drifts is the recipe's `pathWander` (no arrival point is placed at the map centre either, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same door-point rule as door placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
 **The pipeline has been run in anger:** on 2026-09-26 it generated the maps of the three-region world from `tools/world-creator/worlds/world-regions.json`, with `lastline` (Lastline, hand-made) kept as it is; on 2026-10-06 it added Hazemere and rebuilt Luminhal, Velmora and Tornel, keeping every other map. The world now has 76 generated maps — 10 cities, 5 towns, 39 fields and 22 dungeon floors. The 40 maps it produced before, besides Lastline, were deleted on 2026-09-26. The layout's 14 shadow places are not generated yet.

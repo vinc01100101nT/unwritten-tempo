@@ -40,8 +40,10 @@ so a region has a feel, not a lock.
   names are made is under Cities and towns.
 
 **The map in use for now** is a GPT painting (1536×1024); it can be replaced. The zones are laid out on it in the
-world creator, and the in-game world map (M, then World map) shows that tool's PNG export exactly as exported — the painting with
-every map's box, its name and the lines of every door between maps on it — kept in the project as `unity/Assets/3_Data/Resources/WorldMap/world-map.png`.
+world creator, and the in-game world map (M, then World map) shows that tool's PNG export — the painting with every map's
+box and its name, and no doors — kept in the project as `unity/Assets/3_Data/Resources/WorldMap/world-map.png`. The game
+draws every door between maps over it itself, as a dashed line with a square at each end, at the spot the layout gives
+each door.
 The clean painting and the layout sit beside the tool: `tools/world-creator/worlds/wm1.png` and `world-regions.json`.
 
 ## Cities and towns
@@ -196,7 +198,8 @@ Castles are the seats guild wars will be fought over; how many there are, and wh
   near their level, and the first five dungeons' bottom floors each hold their own. Every creature, every map and the rules are in
   [Creatures and Where They Live](biome-mob-families.md); the fourteen shadows' elements are in the table above.
   Cities and towns have none.
-- **The in-game world map (M, then World map)** shows the world creator's PNG export of the layout, as exported; the game adds nothing to it but the "you are here" marker.
+- **The in-game world map (M, then World map)** shows the world creator's PNG export of the layout (boxes and names, no doors); the game draws the doors
+  over it from the world map's copy of the layout's doors, and the "you are here" marker.
 
 ## Still open
 

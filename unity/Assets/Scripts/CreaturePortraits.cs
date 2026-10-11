@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// A CREATURE'S PORTRAIT — the small face drawn beside its name on the hover plate and the target panel. A saved
+/// A CREATURE'S PORTRAIT — the small face drawn beside its name on the hover plate, the target panel and the map
+/// window's creature card. A saved
 /// character shows its own; any other creature shows its creature's (<see cref="MonsterDef.faceset"/>). A creature with
 /// none (a shadow, drawn as a 3D character) shows nothing.
 /// </summary>
@@ -25,6 +26,9 @@ public static class CreaturePortraits
         }
         return SpriteOf(face);
     }
+
+    /// <summary>The portrait of the creature <paramref name="def"/> describes; null when it has none.</summary>
+    public static Sprite Of(MonsterDef def) => SpriteOf(def != null ? def.faceset : null);
 
     static Sprite SpriteOf(Texture2D face)
     {

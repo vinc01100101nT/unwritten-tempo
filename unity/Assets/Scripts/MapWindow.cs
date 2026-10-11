@@ -14,7 +14,8 @@ using TMPro;
 /// Any other map shows its picture alone. Resting the pointer on a creature's name in the list beside it shows what
 /// the server says about that creature (<see cref="MobInfo"/>) — the lines <c>/mobinfo</c> prints.</para>
 ///
-/// <para><b>World view</b>: the baked <see cref="WorldAtlas"/> with a pulsing "you are here" over the map you are in.
+/// <para><b>World view</b>: the baked <see cref="WorldAtlas"/> with every door between maps drawn on it
+/// (<see cref="WorldMapDoors"/>) and a pulsing "you are here" over the map you are in.
 /// Clicking a map that has a picture opens the zone view on it.</para>
 ///
 /// <para>In both, the wheel zooms toward the cursor and a zoomed view drags with the mouse. The location button brings
@@ -116,6 +117,7 @@ public class MapWindow : MonoBehaviour
     // The creature card of the zone view: which creature's name the pointer rests on, since when, and what is drawn.
     RectTransform mobCard;
     TMP_Text mobCardText;
+    Image mobCardFace;
     MonsterDef cardMob;
     float cardRestedSince;
     string cardShownText;
@@ -123,7 +125,7 @@ public class MapWindow : MonoBehaviour
     bool cardLooked;
     // How long the pointer rests on a name before its card is asked for and shown, in seconds.
     const float MobCardRest = 0.15f;
-    const float MobCardWidth = 380f, MobCardPad = 10f;
+    const float MobCardWidth = 380f, MobCardPad = 10f, MobCardFaceSize = 38f, MobCardFaceGap = 8f;
 
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
     const float MarkerSize = 11f, RouteMarkSize = 14f;
@@ -360,10 +362,16 @@ public class MapWindow : MonoBehaviour
         {
             cardShownText = text;
             mobCardText.text = text;
-            float inner = MobCardWidth - 2f * MobCardPad;
+            // The creature's face sits left of the text; a creature with none gives the text the whole width.
+            var face = CreaturePortraits.Of(cardMob);
+            mobCardFace.sprite = face;
+            mobCardFace.gameObject.SetActive(face != null);
+            float beside = face != null ? MobCardFaceSize + MobCardFaceGap : 0f;
+            float inner = MobCardWidth - 2f * MobCardPad - beside;
             float height = mobCardText.GetPreferredValues(text, inner, 0f).y;
+            mobCardText.rectTransform.anchoredPosition = new Vector2(MobCardPad + beside, -MobCardPad);
             mobCardText.rectTransform.sizeDelta = new Vector2(inner, height);
-            mobCard.sizeDelta = new Vector2(MobCardWidth, height + 2f * MobCardPad);
+            mobCard.sizeDelta = new Vector2(MobCardWidth, Mathf.Max(height, face != null ? MobCardFaceSize : 0f) + 2f * MobCardPad);
         }
         if (!mobCard.gameObject.activeSelf) mobCard.gameObject.SetActive(true);
         if (rewritten || pointer != cardPlacedAt)
@@ -579,6 +587,7 @@ public class MapWindow : MonoBehaviour
 
         atlasImage = BuildView(world, "World", data.atlas, (float)data.atlas.width / Mathf.Max(1, data.atlas.height));
         zoneImage = BuildView(zone, "Zone", null, 1f);
+        BuildDoors();
 
         routeSprite = Resources.Load<Sprite>("Guide/GroundArrow");
         routeRoot = new GameObject("Route", typeof(RectTransform)).GetComponent<RectTransform>();
@@ -635,6 +644,12 @@ public class MapWindow : MonoBehaviour
         var crt = mobCardText.rectTransform;
         crt.anchorMin = crt.anchorMax = crt.pivot = new Vector2(0f, 1f);
         crt.anchoredPosition = new Vector2(MobCardPad, -MobCardPad);
+        mobCardFace = NewImage("Face", mobCard, Color.white);
+        mobCardFace.preserveAspect = true;
+        var frt = mobCardFace.rectTransform;
+        frt.anchorMin = frt.anchorMax = frt.pivot = new Vector2(0f, 1f);
+        frt.anchoredPosition = new Vector2(MobCardPad, -MobCardPad);
+        frt.sizeDelta = new Vector2(MobCardFaceSize, MobCardFaceSize);
         foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
         mobCard.gameObject.SetActive(false);
     }
@@ -801,6 +816,58 @@ public class MapWindow : MonoBehaviour
         }
 
         static void Corner(RectTransform rt) => rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+    }
+
+    // Every door of the world on the world picture, from the atlas's copy of the world layout's doors: the dashed
+    // lines first and the squares over them, each as few meshes as hold them, on a canvas of their own so nothing
+    // else on the screen layer is rebuilt with them. Built once; a door whose map the atlas does not hold is left out.
+    void BuildDoors()
+    {
+        var ends = new List<Vector4>(data.links != null ? data.links.Count : 0);
+        if (data.links != null)
+            foreach (var link in data.links)
+            {
+                if (link == null) continue;
+                var a = data.Find(link.a);
+                var b = data.Find(link.b);
+                if (a == null || b == null) continue;
+                Vector2 pa = OnWorldPicture(a, link.ax, link.az), pb = OnWorldPicture(b, link.bx, link.bz);
+                ends.Add(new Vector4(pa.x, pa.y, pb.x, pb.y));
+            }
+        if (ends.Count == 0) return;
+
+        var holder = new GameObject("Doors", typeof(RectTransform), typeof(Canvas)).GetComponent<RectTransform>();
+        holder.SetParent(world.picture, false);
+        Stretch(holder);
+        AddDoorMeshes(holder, WorldMapDoors.Part.Lines, ends);
+        AddDoorMeshes(holder, WorldMapDoors.Part.Squares, ends);
+        world.marker.SetAsLastSibling();
+    }
+
+    // A spot in a map, in metres east and north of the map's centre, as a share of the world picture from its left
+    // and top edges.
+    Vector2 OnWorldPicture(WorldAtlas.Entry map, float east, float north)
+        => new Vector2((map.x + map.w * 0.5f + east - data.minX) / Mathf.Max(1f, data.worldW),
+                       (map.y + map.h * 0.5f - north - data.minY) / Mathf.Max(1f, data.worldH));
+
+    void AddDoorMeshes(RectTransform holder, WorldMapDoors.Part part, List<Vector4> ends)
+    {
+        int from = 0, corners = 0;
+        for (int i = 0; i <= ends.Count; i++)
+        {
+            int next = i < ends.Count ? WorldMapDoors.CornersFor(part, ends[i], data.worldW, data.worldH) : 0;
+            if (i < ends.Count && corners + next <= WorldMapDoors.MostCorners) { corners += next; continue; }
+            if (i > from)
+            {
+                var mesh = new GameObject(part.ToString(), typeof(RectTransform), typeof(CanvasRenderer), typeof(WorldMapDoors))
+                    .GetComponent<WorldMapDoors>();
+                mesh.transform.SetParent(holder, false);
+                Stretch(mesh.rectTransform);
+                mesh.Show(part, ends, from, i, data.worldW, data.worldH);
+            }
+            from = i;
+            corners = next;
+        }
     }
 
     // A zoom node filling the screen, its picture fitted inside at the picture's own aspect, and a "you are here" on it.

@@ -86,14 +86,12 @@ public class Character : MonoBehaviour, ICombatUnit
     int toldMaxHP = 1, toldMaxMP = 1;
     // -1 = "cannot raise", until the server's first sheet says otherwise — a 0 would read as a free point at the cap.
     readonly int[] toldRaiseCost = { -1, -1, -1, -1, -1, -1 };
-    readonly int[] toldJumpAt = new int[6];
-    readonly int[] toldJumpGain = new int[6];
     readonly int[] toldGearStat = new int[6];
 
     /// <summary>The sheet the server derived for this character — the three views, and per stat its next point's cost
-    /// (-1 at the cap), its next jump and what worn gear adds to it. Arrays are indexed by <see cref="PrimaryStat"/>.</summary>
+    /// (-1 at the cap) and what worn gear adds to it. Arrays are indexed by <see cref="PrimaryStat"/>.</summary>
     public void SetSheetFromServer(in DerivedSnapshot current, in DerivedSnapshot baseline, in DerivedSnapshot withStates,
-                                   int[] raiseCost, int[] jumpAt, int[] jumpGain, int[] gearStat)
+                                   int[] raiseCost, int[] gearStat)
     {
         sheetArrived = true;
         toldCurrent = current;
@@ -102,17 +100,9 @@ public class Character : MonoBehaviour, ICombatUnit
         for (int i = 0; i < 6; i++)
         {
             toldRaiseCost[i] = raiseCost != null && i < raiseCost.Length ? raiseCost[i] : -1;
-            toldJumpAt[i] = jumpAt != null && i < jumpAt.Length ? jumpAt[i] : 0;
-            toldJumpGain[i] = jumpGain != null && i < jumpGain.Length ? jumpGain[i] : 0;
             toldGearStat[i] = gearStat != null && i < gearStat.Length ? gearStat[i] : 0;
         }
     }
-
-    /// <summary>The value at which <paramref name="s"/> next jumps, counting gear.</summary>
-    public int NextJumpAt(PrimaryStat s) => Told ? toldJumpAt[(int)s] : UnitStatMath.NextJumpAt(P(s));
-
-    /// <summary>How much <paramref name="s"/>'s next jump gives.</summary>
-    public int JumpGainAt(PrimaryStat s) => Told ? toldJumpGain[(int)s] : UnitStatMath.JumpGainAt(NextJumpAt(s));
 
     public int EffectiveStat(PrimaryStat s) => P(s);
 

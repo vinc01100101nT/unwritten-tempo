@@ -6,9 +6,14 @@ fault at a time into a throwaway mirror of the repo (tools/prove_mirror.py — t
 writing), runs the checker against the mirror, and demands it fail AND name the fault. Then it demands the real
 project still passes. Every anchor is read out of the real files at run time, so a fault always lands on today's data.
 
+A planted fault only counts as caught when the checker says something about the mirror that it does NOT say about
+the real project — so the cases still prove sight on a day the real project is failing for a reason of its own
+(the world map waiting for a re-bake, say). That day the prover still exits 1 and says the real project fails.
+
 USAGE:   tools/prove-map-ids-check.py
-EXIT:    0 = every planted fault caught and the real project passes, 1 = blind or crying wolf.
+EXIT:    0 = every planted fault caught and the real project passes, 1 = blind, crying wolf, or the real project fails.
 """
+import importlib.util
 import json
 import os
 import re
@@ -40,7 +45,52 @@ def read(rel):
         return fh.read()
 
 
+BASELINE = ""   # what the checker says about the real project, untouched
+
+
+def checker_module():
+    spec = importlib.util.spec_from_file_location("check_map_ids", CHECK)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def transform_text(scene_text, name, upto):
+    """The saved text of the named object's Transform, from its owner line down to its `upto` line — the exact
+    anchor a planted fault swaps."""
+    owner = re.search(r"^--- !u!1 &(\d+)\nGameObject:\n(?:  .*\n)*?  m_Name: %s\n" % re.escape(name), scene_text, re.M)
+    if owner is None:
+        return None
+    found = re.search(r"m_GameObject: \{fileID: %s\}\n(?:  .*\n)*?  %s: \{[^}]*\}" % (owner.group(1), upto), scene_text)
+    return found.group(0) if found else None
+
+
+def stays_quiet(description, rel, old, new, must_not_say):
+    """The opposite of a case: this change must NOT make the checker say any of these."""
+    root, _hits = mirror_with_change(REPO, rel, old, new)
+    if root is None:
+        print(RED + " WRONG" + OFF + " %s — the anchor was not found in %s, so this proves nothing" % (description, rel))
+        return 1
+    try:
+        _code, out = run(root)
+    finally:
+        discard(root)
+    said = [w for w in must_not_say if w in out]
+    if not said:
+        print(GRN + "  ok  " + OFF + description)
+        return 0
+    print(RED + " WRONG" + OFF + " %s (it said %r)" % (description, said))
+    print("\n".join(["         " + l[:300] for l in out.splitlines() if any(w in l for w in said)][:4]))
+    return 1
+
+
 def case(description, rel, old, new, must_say):
+    if old is None:
+        print(RED + " WRONG" + OFF + " %s — nothing in %s to plant it on, so this proves nothing" % (description, rel))
+        return 1
+    if must_say in BASELINE:
+        print(RED + " WRONG" + OFF + " %s — the real project already says %r, so catching it proves nothing" % (description, must_say))
+        return 1
     root, hits = mirror_with_change(REPO, rel, old, new)
     if root is None:
         print(RED + " WRONG" + OFF + " %s — the anchor was not found in %s, so this proves nothing" % (description, rel))
@@ -58,11 +108,9 @@ def case(description, rel, old, new, must_say):
 
 
 def main():
+    global BASELINE
     code, out = run()
-    if code != 0:
-        print(RED + "the real project does not pass the check, so no planted fault can be told apart:" + OFF)
-        print(out)
-        return 1
+    BASELINE = out
 
     layout = json.loads(read(LAYOUT))
     scenes = os.path.join(REPO, "unity", "Assets", "Scenes")
@@ -108,6 +156,86 @@ def main():
     else:
         bad += case("the in-game world map's doors disagreeing with the layout's portals", ATLAS,
                     "  b: %s" % door.group(2).strip(), "  b: %s_old" % door.group(2).strip(), "door between")
+
+    # ── doors: ids, spots, parents, and the world map's copy ──
+    check = checker_module()
+    margin, inset, _rim_faults = check.rim_constants()
+    size = {x["id"]: x["size"] for x in layout["maps"]}
+    has_scene = lambda i: os.path.exists(os.path.join(scenes, i + ".unity"))
+    portals = layout["portals"]
+    # a rim door whose two maps both have scenes, a door that touches neither of them, and a door with its own spot
+    rim = next(p for p in portals if has_scene(p["a"]) and has_scene(p["b"]) and "at" not in p["anchorA"])
+    far = next(p for p in portals if not {p["a"], p["b"]} & {rim["a"], rim["b"]})
+    spot = next(p for p in portals if "at" in p["anchorA"] or "at" in p["anchorB"])
+    rim_scene = os.path.join("unity", "Assets", "Scenes", rim["a"] + ".unity")
+    rim_text = read(rim_scene)
+    door_name, arrival_name = "Portal_w%d_to_%s" % (rim["id"], rim["b"]), "SpawnPoint_w%d_from_%s" % (rim["id"], rim["b"])
+    shove = lambda text: None if text is None else re.sub(r"(m_LocalPosition: \{x: )([^,]+)", lambda m: m.group(1) + repr(float(m.group(2)) + 1.5), text)
+    adopt = lambda text: None if text is None else text[: text.rindex("{fileID: 0}")] + "{fileID: 4242}"
+    id_line = '"id": %d,\n      "a": "%s"' % (rim["id"], rim["a"])
+    bad += case("a door with no id", LAYOUT, id_line, '"a": "%s"' % rim["a"], "has no id")
+    bad += case("a door whose id is not a whole number", LAYOUT, id_line, id_line.replace('"id": %d' % rim["id"], '"id": "%d"' % rim["id"]),
+                "which is not a whole number")
+    bad += case("two doors sharing one id", LAYOUT, id_line, id_line.replace('"id": %d' % rim["id"], '"id": %d' % far["id"]),
+                "door id %d is used by more than one door" % far["id"])
+    at = spot["anchorA"]["at"] if "at" in spot["anchorA"] else spot["anchorB"]["at"]
+    at_text = re.search(r'"at": \[\s*%s,\s*%s\s*\]' % (re.escape(json.dumps(at[0])), re.escape(json.dumps(at[1]))), read(LAYOUT))
+    bad += case("a door's own spot lying outside its map's box", LAYOUT, at_text and at_text.group(0),
+                at_text and at_text.group(0).replace(json.dumps(at[0]), "4000", 1), "outside its map's")
+    door_at = transform_text(rim_text, door_name, "m_LocalPosition")
+    bad += case("a door standing somewhere the layout does not put it", rim_scene, door_at, shove(door_at),
+                "door: %s in '%s' stands at" % (door_name, rim["a"]))
+    arrival_at = transform_text(rim_text, arrival_name, "m_LocalPosition")
+    bad += case("an arrival point standing somewhere the layout does not put it", rim_scene, arrival_at, shove(arrival_at),
+                "arrival point: %s in '%s' stands at" % (arrival_name, rim["a"]))
+    door_father = transform_text(rim_text, door_name, "m_Father")
+    bad += case("a door with a parent", rim_scene, door_father, adopt(door_father), "door: %s in '%s' has a parent" % (door_name, rim["a"]))
+    stolen = "Portal_w%d_to_%s" % (far["id"], rim["b"])
+    bad += case("a door named after an id that belongs to two other maps", rim_scene, "m_Name: %s\n" % door_name, "m_Name: %s\n" % stolen,
+                "door: %s in '%s' names door %d, which the layout has between" % (stolen, rim["a"], far["id"]))
+    owner_rel = os.path.join("unity", "Assets", "Scripts", "Editor", "WorldLayoutFile.cs")
+    declared = re.search(r"const\s+float\s+EdgeMargin\s*=\s*[\d.]+f?\s*;", read(owner_rel))
+    declared = declared and declared.group(0)
+    bad += case("the rim margin changing in the editor code while the scenes still hold the old spots", owner_rel, declared,
+                declared and re.sub(r"=\s*[\d.]+", "= %g" % (margin + 1), declared), "stands at")
+    bad += case("the rim margin losing its declaration", owner_rel, declared, declared and declared.replace("EdgeMargin", "EdgeMarginWas"),
+                "declares `const float EdgeMargin` 0 times")
+    bad += case("a scene missing a door the layout has", rim_scene, "m_Name: %s\n" % door_name, "m_Name: Somewhere_Else\n",
+                "'%s' has no %s" % (rim["a"], door_name))
+
+    # The world map's links. The honest copy is worked out here from the layout with the checker's own rule, so these
+    # cases prove sight whether or not the real world map has been re-baked yet.
+    real_links = re.search(r"^  links:\n(?:  - a: .*\n(?:    \w+: .*\n?)*)*", read(ATLAS), re.M)
+
+    def links_block(change=None, bare=False):
+        rows = ["  links:"]
+        for p in portals:
+            a, b = check.door_point(size[p["a"]], p["anchorA"], margin), check.door_point(size[p["b"]], p["anchorB"], margin)
+            row = {"a": p["a"], "b": p["b"], "id": p["id"], "ax": "%g" % a[0], "az": "%g" % a[1], "bx": "%g" % b[0], "bz": "%g" % b[1]}
+            if change and p is rim:
+                row.update(change)
+            rows.append(("  - a: %(a)s\n    b: %(b)s" if bare else
+                         "  - a: %(a)s\n    b: %(b)s\n    id: %(id)s\n    ax: %(ax)s\n    az: %(az)s\n    bx: %(bx)s\n    bz: %(bz)s") % row)
+        return "\n".join(rows) + "\n"
+
+    real = real_links.group(0) if real_links and real_links.group(0).count("- a:") else None
+    if real is None:
+        print(RED + " WRONG" + OFF + " the world map has no links block to stand a copy in, so its door spots prove nothing")
+        bad += 1
+    else:
+        bad += stays_quiet("a world map whose links carry every door's id and spots exactly as the layout has them", ATLAS, real,
+                           links_block(), ["world map: link", "have no link carrying"])
+        wrong_ax = "%g" % (check.door_point(size[rim["a"]], rim["anchorA"], margin)[0] + 2.5)
+        bad += case("the world map putting a door somewhere the layout does not", ATLAS, real, links_block({"ax": wrong_ax}),
+                    "world map: link %d (%s-%s) puts the door on '%s' at" % (rim["id"], rim["a"], rim["b"], rim["a"]))
+        bad += case("the world map carrying a door id the layout does not have", ATLAS, real, links_block({"id": 987654}),
+                    "world map: link 987654 is a door the layout does not have")
+        if "have no link carrying" in BASELINE:
+            print(GRN + "  ok  " + OFF + "the world map's links carrying no ids or spots (the real world map is in exactly this state, and is named)")
+        else:
+            bad += case("the world map's links carrying no ids or spots", ATLAS, real, links_block(bare=True),
+                        "have no link carrying their id and door spots")
+
     bad += case("a Map Painter file whose saved name differs", sidecar, '"name": "%s"' % scene,
                 '"name": "%s_old"' % scene, "says its name is")
     bad += case("the starting map naming no scene", SYSTEMS, first, first + "_old", "starting map:")
@@ -120,6 +248,10 @@ def main():
     print()
     if bad:
         print(RED + "%d case(s) wrong — the map id check's silence proves nothing." % bad + OFF)
+        return 1
+    if code != 0:
+        print(GRN + "the map id check sees every planted fault" + OFF + RED + " — but the real project does not pass it:" + OFF)
+        print(out)
         return 1
     print(GRN + "the map id check sees every planted fault and the real project passes." + OFF)
     return 0

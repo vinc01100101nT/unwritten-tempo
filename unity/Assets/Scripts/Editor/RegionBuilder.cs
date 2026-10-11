@@ -17,7 +17,7 @@ using UnityEngine.SceneManagement;
 /// </list>
 /// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival): a portal stores the target
 /// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; <see cref="WorldCreator"/> keys each warp's
-/// paired arrival spawn id by source map (the w{i}_from_&lt;map&gt; scheme).
+/// paired arrival spawn id by source map (the w{id}_from_&lt;map&gt; scheme, id = the door's permanent id in the world layout).
 /// </summary>
 public static class RegionBuilder
 {

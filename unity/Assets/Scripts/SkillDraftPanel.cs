@@ -20,16 +20,19 @@ public class SkillDraftPanel : MonoBehaviour
     // the draft currently shown — its wildcard is the one the server rolled and sent
     DraftService.Draft? pending;
 
-    // A pick ASKED of the server and not answered yet. The server spends the point; the ring only turns once
-    // the walk it sends back shows that pick landed.
-    DraftService.Option askedPick;
-    int bankedWhenAsked;
+    // A pick ASKED of the server and not answered yet. The server spends the point and always sends the walk back,
+    // and the ring turns when that walk shows a new leader.
     bool asking;
     bool bound, spinning;
+    Coroutine spin;
+    int spinTarget = -1;
 
     // Which ring position sits at the top, counted in stats. It differs from the leader's own position only
     // while the ring is turning.
     float turn;
+    // The next refresh puts the ring straight at its leader instead of turning to it: when it is first built, and
+    // when the window opens on a leader that moved while it was shut.
+    bool snapNext = true;
 
     // Built once and re-texted in place, so a ring XP tick or a pick never rebuilds the panel.
     RectTransform dial, xpFill;
@@ -72,7 +75,7 @@ public class SkillDraftPanel : MonoBehaviour
         if (open != wasOpen)
         {
             wasOpen = open;
-            if (open) Refresh();
+            if (open) { snapNext = true; Refresh(); }
         }
     }
 
@@ -100,8 +103,9 @@ public class SkillDraftPanel : MonoBehaviour
 
     void OnDisable()
     {
-        // A turn cut short by the component switching off must not leave picks refused for good.
-        spinning = false;
+        // A turn cut short by the component switching off must not leave picks refused for good; the next refresh
+        // puts the ring where it belongs.
+        spinning = false; spin = null; spinTarget = -1; snapNext = true;
     }
 
     void OnDestroy()
@@ -235,8 +239,8 @@ public class SkillDraftPanel : MonoBehaviour
             nodeButton[i].interactable = pick;
 
             // A stat a point can go on shows what it is and what the pick would make it; the rest show what they are.
-            int now = SkillRing.PercentPoints(stat, ranks);
-            string value = pick ? $"{now}→{SkillRing.PercentPoints(stat, ranks + 1)}%" : $"+{now}%";
+            int now = p.ShownPercent(stat);
+            string value = pick ? $"{now}→{p.ShownNextPercent(stat)}%" : $"+{now}%";
             nodeText[i].text = $"<b>{SkillRing.ShortName(stat)}</b> <size=9>×{ranks}</size>\n{value}";
             nodeText[i].fontStyle = isLeader ? FontStyles.Bold : FontStyles.Normal;
             nodeText[i].color = isLeader ? LeaderEdge : inTrio ? UiKit.TextMain : RowDim;
@@ -247,12 +251,34 @@ public class SkillDraftPanel : MonoBehaviour
         xpText.text = $"XP {r.XP:0.00} / {r.XPToNext}";
         bankText.text = BankString(p);
 
-        if (!spinning)
-        {
-            turn = p.HasLeader ? SkillRing.IndexOf(p.Leader) : 0;
-            Place();
-        }
+        TurnTo(p.HasLeader ? SkillRing.IndexOf(p.Leader) : 0);
     }
+
+    // THE ONE PLACE THE RING MOVES. Every refresh lands here, whichever event caused it — the walk arriving, the
+    // stats it changes, the ring's XP — so the order those events fire in can never decide whether the ring turns.
+    // A new leader while the window is on screen is turned to; otherwise the ring is simply put there.
+    void TurnTo(int target)
+    {
+        bool open = panelRoot != null && UiAnim.IsOpen(panelRoot);
+        if (snapNext || !open || !isActiveAndEnabled)
+        {
+            snapNext = false;
+            if (spin != null) StopCoroutine(spin);
+            spin = null; spinning = false; spinTarget = -1;
+            turn = target;
+            Place();
+            return;
+        }
+        if (Mathf.Approximately(ShortWay(target - turn), 0f)) return;
+        // Already turning there: the stat sheet and ring XP that follow a pick refresh the window mid-turn, and
+        // restarting the ease from midway would stutter.
+        if (spinning && spinTarget == target) return;
+        // A turn already under way is redirected from wherever it has got to, never restarted from the old leader.
+        if (spin != null) StopCoroutine(spin);
+        spin = StartCoroutine(Spin(target));
+    }
+
+    static float ShortWay(float steps) => Mathf.Repeat(steps + SkillRing.Count * 0.5f, SkillRing.Count) - SkillRing.Count * 0.5f;
 
     // Stand every stat at its place round the circle for the current turn: clockwise from the top.
     void Place()
@@ -274,35 +300,23 @@ public class SkillDraftPanel : MonoBehaviour
         if (me == null) return;
 
         UISounds.PlayClick();
-        askedPick = nodeOption[i]; bankedWhenAsked = Character.Instance.Passives.BankedPoints; asking = true;
-        me.AskToPickRingStat(askedPick.stat);
+        asking = true;
+        me.AskToPickRingStat(nodeOption[i].stat);
     }
 
-    // The walk changed — usually the server's answer to a pick. If it shows the asked pick landed (a point gone and
-    // the leader now on the picked stat), the ring turns to it; otherwise (refused, or a change from elsewhere) it
-    // is simply shown as it now is.
+    // The walk changed — the server's answer to a pick (it answers every pick, refused or not), or a point banked.
     void OnWalkChanged()
     {
-        var p = Character.Instance.Passives;
-        bool landed = asking && p.HasLeader && p.Leader == askedPick.stat && p.BankedPoints < bankedWhenAsked;
         asking = false;
-        if (landed && dial != null && !spinning && isActiveAndEnabled)
-        {
-            // Raised first, so the refresh shows the new numbers and edges but leaves the turning to the coroutine.
-            spinning = true;
-            Refresh();
-            StartCoroutine(Spin(SkillRing.IndexOf(p.Leader)));
-            return;
-        }
         Refresh();
     }
 
-    // Turn the ring until `target` is at the top, the short way round. Stacking the leader is a turn of nothing.
+    // Turn the ring until `target` is at the top, the short way round, from wherever it is now.
     IEnumerator Spin(int target)
     {
-        float from = turn, half = SkillRing.Count * 0.5f;
-        float steps = Mathf.Repeat(target - from + half, SkillRing.Count) - half;
-        if (Mathf.Approximately(steps, 0f)) { spinning = false; yield break; }
+        spinning = true;
+        spinTarget = target;
+        float from = turn, steps = ShortWay(target - turn);
         for (float e = 0; e < SlideDur; e += Time.unscaledDeltaTime)
         {
             turn = from + steps * Ease(Mathf.Clamp01(e / SlideDur));
@@ -312,6 +326,8 @@ public class SkillDraftPanel : MonoBehaviour
         turn = target;
         Place();
         spinning = false;
+        spin = null;
+        spinTarget = -1;
     }
 
     // Smootherstep: eases gently IN and OUT (6t⁵−15t⁴+10t³). Zero velocity at both ends → no abrupt

@@ -16,7 +16,8 @@ THE RULE, as a test:
       may not contain a WRITE —
         SetDirty, SaveAssets, SaveAssetIfDirty, SaveAsPrefabAsset, SavePrefabAsset, SaveScene, MarkSceneDirty,
         MarkAllScenesDirty, CreateAsset, MoveAsset, DeleteAsset, AssetDatabase.Refresh, DestroyImmediate,
-        PlayerSettings.Set*, or an assignment to .position / .localPosition / .rotation / .localScale
+        PlayerSettings.Set*, a file written to disk (File.WriteAllText, File.WriteAllBytes, any File.Write*),
+        or an assignment to .position / .localPosition / .rotation / .localScale
       unless that write's line (or the line above it) says WHY it is a user's action:
           // editor-write-ok: <why>
       The marker is the whole contract, exactly as `// perf-ok:` is for PERFORMANCE.md: the reason sits beside
@@ -54,6 +55,7 @@ WRITES = [
     r"SavePrefabAsset\(", r"EditorSceneManager\.SaveScene\(", r"MarkSceneDirty\(", r"MarkAllScenesDirty\(",
     r"AssetDatabase\.CreateAsset\(", r"AssetDatabase\.MoveAsset\(", r"AssetDatabase\.DeleteAsset\(",
     r"AssetDatabase\.Refresh\(", r"DestroyImmediate\(", r"PlayerSettings\.Set\w+\(",
+    r"\bFile\.Write\w*\(",
     r"\.(?:position|localPosition|rotation|localRotation|localScale)\s*=[^=]",
 ]
 MARKER = "editor-write-ok:"

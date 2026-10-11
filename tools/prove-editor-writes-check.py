@@ -47,8 +47,45 @@ class MovesOnImport : AssetPostprocessor
     static void Tidy() { AssetDatabase.MoveAsset("Assets/a", "Assets/b"); AssetDatabase.Refresh(); }
 }
 """,
+    # a scene-save hook that writes a file on disk (the shape of a door move being written back to the world layout)
+    "WritesFileOnSave.cs": """using UnityEditor; using UnityEditor.SceneManagement; using UnityEngine.SceneManagement;
+[InitializeOnLoad]
+static class WritesFileOnSave
+{
+    static WritesFileOnSave() { EditorSceneManager.sceneSaving += OnSaving; }
+    static void OnSaving(Scene s, string p) { System.IO.File.WriteAllText("world.json", "{}"); }
+}
+""",
+    # the same, as bytes, from a load hook
+    "WritesBytesOnLoad.cs": """using UnityEditor; using System.IO;
+public static class WritesBytesOnLoad
+{
+    [InitializeOnLoadMethod]
+    static void Go() { EditorApplication.delayCall += () => Dump(); }
+    static void Dump() { File.WriteAllBytes("picture.png", new byte[0]); }
+}
+""",
 }
 CLEAN = {
+    # a menu item that writes a file — a click, so never a finding
+    "WritesFileOnClick.cs": """using UnityEditor; using System.IO;
+public static class WritesFileOnClick
+{
+    [MenuItem("Tools/unwritten/Prove/Write File")]
+    static void Save() { File.WriteAllText("world.json", "{}"); }
+}
+""",
+    # a scene-save hook whose file write is explained
+    "MarkedFileOnSave.cs": """using UnityEditor; using UnityEditor.SceneManagement; using UnityEngine.SceneManagement; using System.IO;
+[InitializeOnLoad]
+static class MarkedFileOnSave
+{
+    static MarkedFileOnSave() { EditorSceneManager.sceneSaving += OnSaving; }
+    static void OnSaving(Scene s, string p) {
+        // editor-write-ok: proven fixture — the user pressed Save on a scene whose door they moved
+        File.WriteAllText("world.json", "{}"); }
+}
+""",
     # a menu item that saves — a click, so never a finding
     "SavesOnClick.cs": """using UnityEditor;
 public static class SavesOnClick

@@ -102,14 +102,30 @@ public class PassiveRanks
                || (HasWildcard && stat == Wildcard);
     }
 
-    /// <summary>PLAYER'S MACHINE: take the whole walk as the server now has it, wildcard included.</summary>
+    /// <summary>PLAYER'S MACHINE: take the whole walk as the server now has it, wildcard included, with what each
+    /// stat is worth now and after one more point (whole percent, indexed by <see cref="StatId"/>).</summary>
     public void TakeFromServer(StatId[] stats, int[] values, StatId leader, bool hasLeader, int banked,
-                               StatId wildcard, bool hasWildcard)
+                               StatId wildcard, bool hasWildcard, int[] percentNow, int[] percentNext)
     {
         Wildcard = wildcard;
         HasWildcard = hasWildcard;
+        for (int i = 0; i < toldPercentNow.Length; i++)
+        {
+            toldPercentNow[i] = percentNow != null && i < percentNow.Length ? percentNow[i] : 0;
+            toldPercentNext[i] = percentNext != null && i < percentNext.Length ? percentNext[i] : 0;
+        }
         LoadState(stats, values, leader, hasLeader, banked);
     }
+
+    // The server's whole-percent figures for the window, as last sent. Zero until the first walk arrives.
+    readonly int[] toldPercentNow = new int[Enum.GetValues(typeof(StatId)).Length];
+    readonly int[] toldPercentNext = new int[Enum.GetValues(typeof(StatId)).Length];
+
+    /// <summary>PLAYER'S MACHINE: what <paramref name="stat"/> is worth now, in whole percent, as the server said.</summary>
+    public int ShownPercent(StatId stat) => toldPercentNow[(int)stat];
+
+    /// <summary>PLAYER'S MACHINE: what one more point would make <paramref name="stat"/>, as the server said.</summary>
+    public int ShownNextPercent(StatId stat) => toldPercentNext[(int)stat];
 
     /// <summary>Spend one banked point on <paramref name="stat"/>: +1 rank and recenter the
     /// leader on it. No-op (and returns false) if there are no points to spend.</summary>

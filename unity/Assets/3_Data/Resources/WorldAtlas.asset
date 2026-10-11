@@ -568,205 +568,715 @@ MonoBehaviour:
   links:
   - a: lastline
     b: lst_fild01
+    id: 0
+    ax: -21.4
+    az: -0.3
+    bx: 28
+    bz: 0
   - a: lst_fild01
     b: old_oak
+    id: 1
+    ax: -28
+    az: 0
+    bx: 36
+    bz: 0
   - a: old_oak
     b: prl_fild01
+    id: 2
+    ax: 0
+    az: -36
+    bx: 0
+    bz: 24
   - a: old_oak
     b: olk_fild01
+    id: 3
+    ax: 0
+    az: 36
+    bx: 0
+    bz: -24
   - a: olk_fild01
     b: olk_dun01
+    id: 4
+    ax: -28
+    az: 0
+    bx: 16
+    bz: 0
   - a: olk_dun01
     b: olk_dun02
+    id: 5
+    ax: 0
+    az: -16
+    bx: 0
+    bz: 16
   - a: lastline
     b: lst_fild02
+    id: 6
+    ax: 0
+    az: 29
+    bx: 0
+    bz: -24
   - a: lst_fild02
     b: gemmara
+    id: 7
+    ax: 28
+    az: 0
+    bx: -36
+    bz: 0
   - a: gemmara
     b: gmr_fild01
+    id: 8
+    ax: 36
+    az: 0
+    bx: -28
+    bz: 0
   - a: gmr_fild01
     b: pluvenne
+    id: 9
+    ax: 28
+    az: 0
+    bx: -36
+    bz: 0
   - a: pluvenne
     b: plv_fild01
+    id: 10
+    ax: 0
+    az: -36
+    bx: 0
+    bz: 24
   - a: plv_fild01
     b: lst_fild03
+    id: 11
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: lst_fild03
     b: lastline
+    id: 12
+    ax: 0
+    az: 24
+    bx: 21.14
+    bz: -0.5
   - a: gemmara
     b: hlt_fild02
+    id: 13
+    ax: 0
+    az: 36
+    bx: 0
+    bz: -24
   - a: hlt_fild02
     b: hilt
+    id: 14
+    ax: 28
+    az: 0
+    bx: -36
+    bz: 0
   - a: hilt
     b: hlt_fild01
+    id: 15
+    ax: 36
+    az: 0
+    bx: -28
+    bz: 0
   - a: hlt_fild02
     b: hlt_dun01
+    id: 16
+    ax: 28
+    az: -9.599999
+    bx: -16
+    bz: 0
   - a: hlt_dun01
     b: hlt_dun02
+    id: 17
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: hlt_dun02
     b: hlt_dun03
+    id: 18
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: lastline
     b: hrw_fild01
+    id: 19
+    ax: 0.6
+    az: -27.3
+    bx: 28
+    bz: 0
   - a: hrw_fild01
     b: harrowen
+    id: 20
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: prl_fild01
     b: parley
+    id: 21
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: parley
     b: prl_fild02
+    id: 22
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: prl_fild02
     b: tornel
+    id: 23
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 28
   - a: harrowen
     b: tornel
+    id: 24
+    ax: 0
+    az: 28
+    bx: 0
+    bz: -28
   - a: tornel
     b: trn_fild01
+    id: 25
+    ax: -11.199999
+    az: 28
+    bx: 0
+    bz: -24
   - a: prl_fild02
     b: pennaryl
+    id: 26
+    ax: 0
+    az: 24
+    bx: 0
+    bz: -36
   - a: pennaryl
     b: pnr_fild01
+    id: 27
+    ax: -36
+    az: 0
+    bx: 28
+    bz: 0
   - a: pnr_fild01
     b: vlm_fild01
+    id: 28
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 24
   - a: vlm_fild01
     b: trn_fild01
+    id: 29
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: vlm_fild01
     b: velmora
+    id: 30
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 36
   - a: velmora
     b: vlm_fild02
+    id: 31
+    ax: -36
+    az: 0
+    bx: 28
+    bz: 0
   - a: vlm_fild02
     b: brm_fild02
+    id: 32
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: velmora
     b: vlm_fild03
+    id: 33
+    ax: -14.4
+    az: 36
+    bx: 0
+    bz: -24
   - a: vlm_fild02
     b: vlm_dun01
+    id: 34
+    ax: 0
+    az: 24
+    bx: 0
+    bz: -16
   - a: vlm_dun01
     b: vlm_dun02
+    id: 35
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: vlm_dun02
     b: vlm_dun03
+    id: 36
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: brm_fild02
     b: brimstone
+    id: 37
+    ax: 28
+    az: -9.599999
+    bx: -28
+    bz: 0
   - a: brimstone
     b: brm_fild01
+    id: 38
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: cindrel
     b: cdl_fild01
+    id: 39
+    ax: -36
+    az: 0
+    bx: 28
+    bz: 0
   - a: cindrel
     b: cdl_fild02
+    id: 40
+    ax: 36
+    az: 0
+    bx: -28
+    bz: 0
   - a: cdl_fild02
     b: cdl_dun01
+    id: 41
+    ax: 0
+    az: 24
+    bx: 0
+    bz: -16
   - a: cdl_dun01
     b: cdl_dun02
+    id: 42
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: cdl_dun02
     b: cdl_dun03
+    id: 43
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: luminhal
     b: lmh_fild01
+    id: 44
+    ax: 0
+    az: -36
+    bx: 0
+    bz: 24
   - a: kharnel
     b: khn_fild02
+    id: 45
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: kharnel
     b: khn_fild01
+    id: 46
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild01
     b: khn_dun01
+    id: 47
+    ax: -28
+    az: -9.599999
+    bx: 16
+    bz: 0
   - a: khn_dun01
     b: khn_dun02
+    id: 48
+    ax: 0
+    az: -16
+    bx: 0
+    bz: 16
   - a: khn_dun02
     b: khn_dun03
+    id: 49
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: khn_dun03
     b: khn_dun04
+    id: 50
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: khn_fild03
     b: khn_fild04
+    id: 51
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild04
     b: khn_fild05
+    id: 52
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild05
     b: khn_fild07
+    id: 53
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild07
     b: khn_fild06
+    id: 54
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 24
   - a: halcyra
     b: hcr_fild01
+    id: 55
+    ax: -36
+    az: 0
+    bx: 28
+    bz: 0
   - a: halcyra
     b: hcr_fild02
+    id: 56
+    ax: 36
+    az: 0
+    bx: -28
+    bz: 0
   - a: pluvenne
     b: luminhal
+    id: 57
+    ax: 36
+    az: 0
+    bx: -36
+    bz: 0
   - a: harrowen
     b: kharnel
+    id: 58
+    ax: -28
+    az: 0
+    bx: 28
+    bz: -11.199999
   - a: brimstone
     b: khn_fild02
+    id: 59
+    ax: 0
+    az: -28
+    bx: 0
+    bz: 24
   - a: kharnel
     b: khn_fild03
+    id: 60
+    ax: 28
+    az: 11.199999
+    bx: -28
+    bz: 0
   - a: luminhal
     b: cdl_fild02
+    id: 61
+    ax: -36
+    az: -14.4
+    bx: 28
+    bz: 0
   - a: cindrel
     b: hcr_fild01
+    id: 62
+    ax: -36
+    az: -14.4
+    bx: 28
+    bz: -9.599999
   - a: lst_fild01
     b: last_bridge
+    id: 63
+    ax: -28
+    az: -9.599999
+    bx: 21
+    bz: 0
   - a: hcr_fild02
     b: hill_of_the_flame
+    id: 64
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 21
   - a: parley
     b: thousand_gates
+    id: 65
+    ax: 0
+    az: -28
+    bx: 0
+    bz: 21
   - a: hazemere
     b: velmora
+    id: 66
+    ax: -36
+    az: 0
+    bx: 36
+    bz: 0
   - a: khn_fild04
     b: masked_ballroom
+    id: 67
+    ax: -28
+    az: -9.599999
+    bx: 21
+    bz: 0
   - a: cdl_fild01
     b: burning_keel
+    id: 68
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 21
   - a: brm_fild01
     b: everburning_plain
+    id: 69
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 21
   - a: vlm_fild01
     b: sky_cairn
+    id: 70
+    ax: -11.199999
+    az: -24
+    bx: 0
+    bz: 21
   - a: plv_fild01
     b: tide_temple
+    id: 71
+    ax: -28
+    az: -9.599999
+    bx: 21
+    bz: 0
   - a: khn_fild07
     b: dusk_tower
+    id: 72
+    ax: -28
+    az: -9.599999
+    bx: 21
+    bz: 0
   - a: khn_fild06
     b: walking_road
+    id: 73
+    ax: -28
+    az: 0
+    bx: 21
+    bz: 0
   - a: khn_fild02
     b: drowned_chapel
+    id: 74
+    ax: 0
+    az: -24
+    bx: 0
+    bz: 21
   - a: lmh_fild01
     b: aurora_steps
+    id: 75
+    ax: -28
+    az: 0
+    bx: 21
+    bz: 0
   - a: prl_fild02
     b: unmarked_path
+    id: 76
+    ax: -11.199999
+    az: -24
+    bx: 0
+    bz: 21
   - a: gmr_fild02
     b: lst_fild02
+    id: 77
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: gmr_fild02
     b: gemmara
+    id: 78
+    ax: 28
+    az: 0
+    bx: -36
+    bz: -14.4
   - a: lst_fild04
     b: lst_fild01
+    id: 79
+    ax: -28
+    az: 0
+    bx: 11.199999
+    bz: -24
   - a: lst_fild04
     b: lst_fild03
+    id: 80
+    ax: 28
+    az: 0
+    bx: -16.8
+    bz: 24
   - a: hrw_fild02
     b: hrw_fild01
+    id: 81
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 14.4
   - a: hrw_fild02
     b: lst_fild04
+    id: 82
+    ax: 28
+    az: -9.599999
+    bx: -11.199999
+    bz: -24
   - a: lst_fild05
     b: lst_fild04
+    id: 83
+    ax: 0
+    az: 24
+    bx: 11.199999
+    bz: -24
   - a: lst_fild05
     b: lst_dun01
+    id: 84
+    ax: 28
+    az: 0
+    bx: -16
+    bz: 0
   - a: lst_dun01
     b: lst_dun02
+    id: 85
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: pnr_fild02
     b: vlm_fild03
+    id: 86
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: pnr_fild02
     b: pnr_fild01
+    id: 87
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: brm_fild03
     b: brm_fild02
+    id: 88
+    ax: -28
+    az: -9.599999
+    bx: 28
+    bz: 9.599999
   - a: brm_fild03
     b: brimstone
+    id: 89
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild08
     b: kharnel
+    id: 90
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: khn_fild08
     b: khn_fild01
+    id: 91
+    ax: -11.199999
+    az: -24
+    bx: 16.800001
+    bz: 24
   - a: khn_fild09
     b: khn_fild04
+    id: 92
+    ax: -28
+    az: 0
+    bx: 28
+    bz: 0
   - a: khn_fild09
     b: khn_dun05
+    id: 93
+    ax: -11.199999
+    az: -24
+    bx: 0
+    bz: 16
   - a: khn_dun05
     b: khn_dun06
+    id: 94
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: khn_fild10
     b: khn_fild05
+    id: 95
+    ax: 0
+    az: 24
+    bx: 0
+    bz: -24
   - a: khn_fild10
     b: khn_fild06
+    id: 96
+    ax: 28
+    az: 0
+    bx: -28
+    bz: 0
   - a: khn_fild07
     b: khn_dun07
+    id: 97
+    ax: 28
+    az: 0
+    bx: -16
+    bz: 0
   - a: khn_dun07
     b: khn_dun08
+    id: 98
+    ax: 16
+    az: 0
+    bx: -16
+    bz: 0
   - a: khn_dun08
     b: khn_dun09
+    id: 99
+    ax: 0
+    az: -16
+    bx: 0
+    bz: 16
   - a: hazemere
     b: tornel
+    id: 100
+    ax: 36
+    az: 0
+    bx: -28
+    bz: 0
   - a: lst_fild04
     b: narrowbend
+    id: 101
+    ax: -28
+    az: 14.4
+    bx: 21
+    bz: 0

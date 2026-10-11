@@ -28,15 +28,15 @@ Spec doc: Tempo doc `q176qkd22qmbk4r5t9g7fcc30n895whr`. The `MapLinker`/`Link Tw
 regenerates EVERY map in the file (it would wipe `lastline`, the user's precious hand-made Lastline) and opens each map
 as the only scene (drops unsaved changes in the open Systems scene); the snapshot world-map bake opens scenes the same
 way. Driven through the live editor, use `WorldCreator.BuildCore(json, town/field/dungeon/special recipe paths,
-keep ids)` — keep list never opened or edited, maps opened additively and closed — and
+keep ids)` — a keep-list (hand-made) map is only opened to move or add its doors to the layout's spots, and only where ground is under them; its other contents are never touched — and
 `WorldCreator.BakeWorldMapCore(json, picture path)` for the painted world map (opens nothing). The current world's
 layout is `tools/world-creator/worlds/world-regions.json` (maps carry a `name`), its picture
-`Resources/WorldMap/world-map.png`; recipes `3_Data/Recipes/{Town,Field,Dungeon}Recipe.asset`. `lastline`'s doors were
-retargeted/added BY HAND to the new fields — rebuilding keeps it only if `lastline` is in the keep list.
+`Resources/WorldMap/world-map.png`; recipes `3_Data/Recipes/{Town,Field,Dungeon}Recipe.asset`. Since 2026-10-11 `lastline`'s hand-placed doors are
+recorded in the layout as exact spots (`at`/`arriveAt`); rebuilding keeps the town only if `lastline` is in the keep list.
 **A door is placed only when both maps it joins have a scene** (baked in that build, or already on disk) — since
 2026-10-06 the build skips the rest and names them in its summary, so no door into an unbuilt shadow place is ever
-placed and nothing needs deleting after a rebuild. Door names carry the portal's index in the layout (`w{i}`), so a new
-door goes into a freed slot or at the END of `portals`, never in the middle. **BuildCore cannot make a new scene while
+placed and nothing needs deleting after a rebuild. Door names carry the portal's permanent `id` in the layout (`w{id}`), never its place in the list;
+the world creator gives a new door the highest id + 1. Moving a door in a map and saving writes its spot back into the layout (`WorldDoorSync`). **BuildCore cannot make a new scene while
 the only open scene is an untitled one** ("Cannot create a new scene additively with an untitled scene unsaved"): stand
 on a kept scene (open it Single), build, then put an empty untitled scene back (`NewScene(EmptyScene, Single)`).
 

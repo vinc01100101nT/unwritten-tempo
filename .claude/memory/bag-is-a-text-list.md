@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-**Ported 2026-09-09**, from a clickable HTML prototype in `prototypes/text-inventory.html`.
+**Ported 2026-09-09** from a clickable HTML prototype; made compact on 2026-10-11 (324×296, 20-tall rows) from `prototypes/compact-character-and-bag.html`, which is now its mock.
 
 The bag no longer draws 40 icon squares. `InventoryList.cs` renders **text rows** in three columns — name
 (rarity-coloured, with the `+N` refine prefix), tier, and how many are held — inside the same Inventory window,

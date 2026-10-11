@@ -131,6 +131,7 @@
       <label>Cells opacity <input type="range" id="ex-opacity" min="0" max="100" value="100" /></label>
       <label>Width <input type="number" id="ex-width" min="256" max="8192" step="1" /> px</label>
       <label><input type="checkbox" id="ex-labels" checked /> Labels</label>
+      <label><input type="checkbox" id="ex-doors" /> Doors</label>
       <span class="ex-dims" id="ex-dims"></span>
       <span class="spacer"></span>
       <button class="tool" id="ex-cancel">Cancel</button>
@@ -154,7 +155,14 @@
 //          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
 //          biome = theme the Unity generator applies to the map (its row in BiomeTable); omitted = grassland.
 //          cliffs = "on" / "off": rock cliffs lining this map's roads, regardless of its biome; omitted = as the biome says.
-// portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
+// portals: [{ id, aId, bId, anchorA:{edge,offset,at?,arriveAt?}, anchorB:{…} }]  (edge ∈ N/S/E/W, offset 0..1)
+//          id = the door's permanent whole number: Unity names its objects Portal_w{id}_to_… / SpawnPoint_w{id}_from_….
+//          A new door takes the highest id + 1; an id is never renumbered.
+//          at = [x, z]: the door's exact spot in metres from its map's centre (x east, z north), written when the door
+//          was placed by hand in Unity. arriveAt = [x, z]: the same for where a player arrives. Both optional.
+// THE ONE DOOR-POINT RULE (the same in WorldCreator.cs and tools/check-map-ids.py): a door stands at `at` when it has
+// one; otherwise on the rim, EDGE_MARGIN inside the map's box — offset runs west→east on N/S and north→south on E/W.
+// revision: a whole number every writer (this tool, Unity) raises by 1 on every write of world.json.
 const TYPES = ["town", "field", "dungeon", "special"];
 const COLORS = { town: "#f2c200", field: "#3fb24a", dungeon: "#8a3ffb", special: "#e23b3b" };
 // Biomes the Unity side understands (WorldCreator.TryParseBiome → the biome's row in BiomeTable). Swatch colours are
@@ -171,12 +179,22 @@ const CLIFF_CHOICES = [{ value: undefined, label: "Cliffs: as the biome says" },
 const DEFAULT_SIZE = 60;   // new maps start 60×60 (one classic square)
 const MIN_SIZE = 16;       // smallest a map can be resized to
 const GRID_STEP = 10;      // faint guide grid every N world units
+const EDGE_MARGIN = 4;     // how far inside a map's box its rim doors stand. Owner: EdgeMargin in WorldLayoutFile.cs — this is a mirror.
 
 const state = {
   maps: [],
   portals: [],
   nextIndex: { town: 0, field: 0, dungeon: 0, special: 0 },
+  revision: 0,               // the revision of the world.json this layout was imported from (0 = none)
 };
+let lastWrittenRevision = 0; // the revision this page itself last saved; its own save is never "changed since you opened it"
+let nextPortalId = 0;        // never goes down, so a deleted door's id is not handed out again while the page is open
+function baseRevision() { return Math.max(state.revision, lastWrittenRevision); }
+function takePortalId() {
+  const id = Math.max(nextPortalId, ...state.portals.map(p => p.id + 1), 0);
+  nextPortalId = id + 1;
+  return id;
+}
 
 // ── Camera (scale = pixels per WORLD UNIT) ───────────────────────────────────
 const cam = { x: 0, y: 0, scale: 1.4 };
@@ -203,21 +221,46 @@ function screenToWorld(px, py) { return { x: (px - cam.x) / cam.scale, y: (py - 
 function mapById(id) { return state.maps.find(m => m.id === id) || null; }
 
 // ── Geometry ─────────────────────────────────────────────────────────────────
-// A point on a map's named edge at offset t (0..1), in WORLD units. Mirrors WorldCreator.EdgePoint.
+// The rim: the box EDGE_MARGIN inside a map's own box. A rim door stands on it. → the four rim sides as segments,
+// each running the way offset runs (west→east on N/S, north→south on E/W), in WORLD units.
+function rimSegments(m) {
+  const c = centerOf(m), hx = m.w / 2 - EDGE_MARGIN, hy = m.h / 2 - EDGE_MARGIN;
+  return {
+    N: [{ x: c.x - hx, y: c.y - hy }, { x: c.x + hx, y: c.y - hy }],
+    S: [{ x: c.x - hx, y: c.y + hy }, { x: c.x + hx, y: c.y + hy }],
+    E: [{ x: c.x + hx, y: c.y - hy }, { x: c.x + hx, y: c.y + hy }],
+    W: [{ x: c.x - hx, y: c.y - hy }, { x: c.x - hx, y: c.y + hy }],
+  };
+}
+// The rim point on a map's named edge at offset t (0..1), in WORLD units. Mirrors WorldCreator.EdgePoint.
 function edgePointWorld(m, edge, t) {
-  switch (edge) {
-    case "N": return { x: m.x + t * m.w, y: m.y };          // top
-    case "S": return { x: m.x + t * m.w, y: m.y + m.h };    // bottom
-    case "E": return { x: m.x + m.w,     y: m.y + t * m.h }; // right
-    case "W": return { x: m.x,           y: m.y + t * m.h }; // left
-  }
-  return { x: m.x + m.w / 2, y: m.y + m.h / 2 };
+  const seg = rimSegments(m)[edge];
+  if (!seg) return centerOf(m);
+  t = clamp(t, 0, 1);
+  return { x: seg[0].x + (seg[1].x - seg[0].x) * t, y: seg[0].y + (seg[1].y - seg[0].y) * t };
+}
+// Where a door stands, in WORLD units: its own spot when it has one, else its rim point. (World y runs south, a
+// door's z runs north, so z flips.)
+function doorPointWorld(m, anchor) {
+  if (anchor.at) { const c = centerOf(m); return { x: c.x + anchor.at[0], y: c.y - anchor.at[1] }; }
+  return edgePointWorld(m, anchor.edge, anchor.offset);
 }
 function anchorScreenPos(m, anchor) {
-  const p = edgePointWorld(m, anchor.edge, anchor.offset);
+  const p = doorPointWorld(m, anchor);
   return worldToScreen(p.x, p.y);
 }
 function centerOf(m) { return { x: m.x + m.w / 2, y: m.y + m.h / 2 }; }
+// For a door with its own spot [x, z]: the side of the map's box nearest that spot, and how far along that side it is.
+function sideOfSpot(m, x, z) {
+  const hx = m.w / 2, hz = m.h / 2;
+  const gaps = [["N", hz - z], ["S", z + hz], ["W", x + hx], ["E", hx - x]];   // on a tie the earlier one wins, as in Unity
+  let edge = gaps[0][0], best = Math.abs(gaps[0][1]);
+  for (const g of gaps) if (Math.abs(g[1]) < best) { edge = g[0]; best = Math.abs(g[1]); }
+  const t = (edge === "N" || edge === "S") ? (x + hx) / (2 * hx) : (hz - z) / (2 * hz);
+  return { edge, offset: round2(clamp(t, 0, 1)) };
+}
+// Keep a spot [x, z] inside its map's box.
+function spotInBox(m, spot) { return [round2(clamp(spot[0], -m.w / 2, m.w / 2)), round2(clamp(spot[1], -m.h / 2, m.h / 2))]; }
 // The edge of A that faces B (dominant axis of the center-to-center vector). y is south.
 function facingEdge(a, b) {
   const ca = centerOf(a), cb = centerOf(b);
@@ -225,15 +268,10 @@ function facingEdge(a, b) {
   if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? "E" : "W";
   return dy >= 0 ? "S" : "N";
 }
-// Snap a screen point to the nearest edge of map m → { edge, offset }.
+// Snap a screen point to the nearest rim side of map m → { edge, offset }.
 function nearestEdgeAnchor(m, px, py) {
-  const s = worldToScreen(m.x, m.y), w = m.w * cam.scale, h = m.h * cam.scale;
-  const edges = {
-    N: [{ x: s.x, y: s.y },         { x: s.x + w, y: s.y }],
-    S: [{ x: s.x, y: s.y + h },     { x: s.x + w, y: s.y + h }],
-    W: [{ x: s.x, y: s.y },         { x: s.x, y: s.y + h }],
-    E: [{ x: s.x + w, y: s.y },     { x: s.x + w, y: s.y + h }],
-  };
+  const rim = rimSegments(m), edges = {};
+  for (const e of ["N", "S", "W", "E"]) edges[e] = rim[e].map(p => worldToScreen(p.x, p.y));
   let best = null;
   for (const e in edges) {
     const proj = projectToSegment(px, py, edges[e][0], edges[e][1]);
@@ -300,11 +338,11 @@ function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 const HISTORY_LIMIT = 80;
 const undoStack = [], redoStack = [];
 let clipboard = null;
-function snapshot() { return JSON.stringify({ maps: state.maps, portals: state.portals, nextIndex: state.nextIndex }); }
+function snapshot() { return JSON.stringify({ maps: state.maps, portals: state.portals, nextIndex: state.nextIndex, revision: state.revision }); }
 function recordUndo(snap) { if (!snap) return; undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack.length = 0; }
 function applySnapshot(snap) {
   const d = JSON.parse(snap);
-  state.maps = d.maps; state.portals = d.portals; state.nextIndex = d.nextIndex;
+  state.maps = d.maps; state.portals = d.portals; state.nextIndex = d.nextIndex; state.revision = d.revision || 0;
   selectedId = null; linkPickA = null;
 }
 function undo() { if (!undoStack.length) { flash("Nothing to undo"); return; } redoStack.push(snapshot()); applySnapshot(undoStack.pop()); draw(); }
@@ -466,13 +504,13 @@ function draw() {
   updateHint();
 }
 
-// Every warp: a dashed line between its two doorways, a square at each end. toPx turns a world point into pixels on
+// Every warp: a dashed line between its two doors, a square at each end, each where its map has that door. toPx turns a world point into pixels on
 // c; k scales the line, dash and squares (1 = their size on the editor's screen). Shared by the editor and the export.
 function paintWarps(c, toPx, k) {
   for (const p of state.portals) {
     const a = mapById(p.aId), b = mapById(p.bId);
     if (!a || !b) continue;
-    const wa = edgePointWorld(a, p.anchorA.edge, p.anchorA.offset), wb = edgePointWorld(b, p.anchorB.edge, p.anchorB.offset);
+    const wa = doorPointWorld(a, p.anchorA), wb = doorPointWorld(b, p.anchorB);
     const pa = toPx(wa.x, wa.y), pb = toPx(wb.x, wb.y);
     c.strokeStyle = "#2b6cf2"; c.lineWidth = 2 * k; c.setLineDash([7 * k, 6 * k]);
     c.beginPath(); c.moveTo(pa.x, pa.y); c.lineTo(pb.x, pb.y); c.stroke();
@@ -613,6 +651,13 @@ function applyResize(d, w) {
   // keep the fixed edge anchored (the side opposite the dragged handle)
   m.x = hd.includes("w") ? (o.x + o.w) - newW : o.x;
   m.y = (hd[0] === "n")  ? (o.y + o.h) - newH : o.y;
+  // a door with its own spot stays inside the box it belongs to
+  for (const p of state.portals) for (const [id, anchor] of [[p.aId, p.anchorA], [p.bId, p.anchorB]]) {
+    if (id !== m.id || !anchor.at) continue;
+    anchor.at = spotInBox(m, anchor.at);
+    if (anchor.arriveAt) anchor.arriveAt = spotInBox(m, anchor.arriveAt);
+    Object.assign(anchor, sideOfSpot(m, anchor.at[0], anchor.at[1]));
+  }
 }
 
 // Resize the backdrop (free float; corner handles keep the image's aspect so art isn't stretched).
@@ -633,9 +678,20 @@ function applyBackdropResize(d, w) {
   backdrop.y = (hd[0] === "n") ? (o.y + o.h) - nh : o.y;
 }
 
+// Drag a door. One with its own spot follows the pointer anywhere inside its map, and its arrival point moves with
+// it by the same amount; one without is re-planted on the rim.
 function reanchorEndpoint(ep, px, py) {
   const m = mapById(ep.end === "a" ? ep.portal.aId : ep.portal.bId);
   if (!m) return;
+  const old = ep.end === "a" ? ep.portal.anchorA : ep.portal.anchorB;
+  if (old.at) {
+    const w = screenToWorld(px, py), c = centerOf(m);
+    const at = spotInBox(m, [w.x - c.x, c.y - w.y]);
+    const moved = { ...sideOfSpot(m, at[0], at[1]), at };
+    if (old.arriveAt) moved.arriveAt = spotInBox(m, [old.arriveAt[0] + at[0] - old.at[0], old.arriveAt[1] + at[1] - old.at[1]]);
+    if (ep.end === "a") ep.portal.anchorA = moved; else ep.portal.anchorB = moved;
+    return;
+  }
   const na = nearestEdgeAnchor(m, px, py);
   const anchor = { edge: na.edge, offset: na.offset };
   if (ep.end === "a") ep.portal.anchorA = anchor; else ep.portal.anchorB = anchor;
@@ -653,6 +709,7 @@ function handleWarpClick(wx, wy) {
   else {
     recordUndo(snapshot());
     state.portals.push({
+      id: takePortalId(),
       aId: a.id, bId: b.id,
       anchorA: { edge: facingEdge(a, b), offset: 0.5 },
       anchorB: { edge: facingEdge(b, a), offset: 0.5 },
@@ -809,7 +866,13 @@ function deleteMap(id) {
 // ── Export / Import ──────────────────────────────────────────────────────────
 function round2(n) { return Math.round(n * 100) / 100; }
 
-function worldJson() {
+function anchorJson(anchor) {
+  const o = { edge: anchor.edge, offset: round2(anchor.offset) };
+  if (anchor.at) o.at = [round2(anchor.at[0]), round2(anchor.at[1])];
+  if (anchor.arriveAt) o.arriveAt = [round2(anchor.arriveAt[0]), round2(anchor.arriveAt[1])];
+  return o;
+}
+function worldJson(revision) {
   const maps = state.maps.map(m => {
     const o = { id: m.id, pos: [round2(m.x), round2(m.y)], size: [Math.round(m.w), Math.round(m.h)], type: m.type };
     if (m.seed !== undefined) o.seed = m.seed;
@@ -821,15 +884,17 @@ function worldJson() {
     return o;
   });
   const portals = state.portals.map(p => ({
-    a: p.aId, b: p.bId,
-    anchorA: { edge: p.anchorA.edge, offset: round2(p.anchorA.offset) },
-    anchorB: { edge: p.anchorB.edge, offset: round2(p.anchorB.offset) },
+    id: p.id, a: p.aId, b: p.bId,
+    anchorA: anchorJson(p.anchorA),
+    anchorB: anchorJson(p.anchorB),
   }));
-  return JSON.stringify({ version: 2, maps, portals }, null, 2);
+  return JSON.stringify({ version: 2, revision, maps, portals }, null, 2);
 }
+// Every export writes the next revision. The number only counts as used once the file is really written.
 function exportJSON() {
-  const blob = new Blob([worldJson()], { type: "application/json" });
-  saveFile(blob, "json", jsonName, { "application/json": [".json"] });
+  const revision = baseRevision() + 1;
+  const blob = new Blob([worldJson(revision)], { type: "application/json" });
+  saveFile(blob, "json", jsonName, { "application/json": [".json"] }, revision);
 }
 
 // ── Saving ───────────────────────────────────────────────────────────────────
@@ -858,8 +923,16 @@ function downloadBlob(blob, name) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-async function saveFile(blob, kind, suggestedName, accept) {
-  if (!window.showSaveFilePicker) { downloadBlob(blob, suggestedName); return; }
+// revision: given for world.json only — the revision this save writes.
+async function saveFile(blob, kind, suggestedName, accept, revision) {
+  if (!window.showSaveFilePicker) {
+    downloadBlob(blob, suggestedName);
+    if (revision !== undefined) {
+      lastWrittenRevision = revision;
+      flash(`Downloaded ${suggestedName} — revision ${revision} (it was revision ${state.revision} when you imported it)`);
+    }
+    return;
+  }
   let last = null;
   try { last = await saveDb("readonly", s => s.get(kind)); } catch (e) { }
   const opts = { suggestedName, types: [{ accept }] };
@@ -870,12 +943,23 @@ async function saveFile(blob, kind, suggestedName, accept) {
     // A remembered file that no longer exists can't be a starting folder; ask again from the default one.
     try { handle = await showSaveFilePicker(opts); } catch (e2) { if (e2.name !== "AbortError") alert("Save failed: " + e2.message); return; }
   }
+  if (revision !== undefined) {
+    // Unity writes this file too. If the copy on disk is newer than the one this layout came from, saving would undo
+    // what Unity wrote — so read the chosen file first and refuse.
+    let onDisk = 0;
+    try { onDisk = JSON.parse(await (await handle.getFile()).text()).revision || 0; } catch (e) { }
+    if (onDisk > baseRevision()) {
+      alert(`Not saved: ${handle.name} was changed in Unity since you opened it (it is revision ${onDisk}, you opened revision ${state.revision}) - import it again.`);
+      return;
+    }
+  }
   const out = await handle.createWritable();
   await out.write(blob);
   await out.close();
   try { await saveDb("readwrite", s => s.put(handle, kind)); } catch (e) { }
   if (kind === "json") jsonName = handle.name;
-  flash("Saved " + handle.name);
+  if (revision !== undefined) lastWrittenRevision = revision;
+  flash("Saved " + handle.name + (revision !== undefined ? " — revision " + revision : ""));
 }
 
 function importJSON(text) {
@@ -886,10 +970,22 @@ function importJSON(text) {
     alert("That looks like an old grid-format world.json (v1). This tool now uses free-form 'pos'/'size' (v2) and can't import the old format.");
     return;
   }
+  // Door ids: a file from before doors had ids gives each door its place in the list; otherwise every door must carry
+  // its own whole number, and no two may share one.
+  const filePortals = data.portals || [];
+  const legacyIds = filePortals.every(p => p.id === undefined);
+  const fileIds = filePortals.map((p, i) => legacyIds ? i : p.id);
+  if (fileIds.some(id => !Number.isInteger(id) || id < 0) || new Set(fileIds).size !== fileIds.length) {
+    alert("Not imported: every door in world.json needs its own whole-number id, and two doors can't share one.");
+    return;
+  }
   recordUndo(snapshot());
   state.maps = [];
   state.portals = [];
   state.nextIndex = { town: 0, field: 0, dungeon: 0, special: 0 };
+  state.revision = Number.isInteger(data.revision) ? data.revision : 0;
+  lastWrittenRevision = 0;
+  nextPortalId = Math.max(nextPortalId, ...fileIds.map(id => id + 1), 0);
   for (const m of data.maps) {
     const pos = m.pos || [0, 0], size = m.size || [DEFAULT_SIZE, DEFAULT_SIZE];
     const cell = { id: m.id, type: m.type, x: pos[0], y: pos[1], w: Math.round(size[0]), h: Math.round(size[1]) };
@@ -914,21 +1010,25 @@ function importJSON(text) {
     if (id !== m.id) renamed[m.id] = id;
     m.id = id;
   }
-  for (const p of (data.portals || [])) {
-    if (!p.anchorA || !p.anchorB) continue;
+  const spot = v => Array.isArray(v) && v.length === 2 && v.every(Number.isFinite) ? [v[0], v[1]] : undefined;
+  const anchorIn = (src) => {
+    const anchor = { edge: src.edge, offset: src.offset ?? 0.5 };
+    const at = spot(src.at), arriveAt = spot(src.arriveAt);
+    if (at) anchor.at = at;
+    if (arriveAt) anchor.arriveAt = arriveAt;
+    return anchor;
+  };
+  filePortals.forEach((p, i) => {
+    if (!p.anchorA || !p.anchorB) return;
     const a = renamed[p.a] || p.a, b = renamed[p.b] || p.b;
-    if (!mapById(a) || !mapById(b)) continue;
-    state.portals.push({
-      aId: a, bId: b,
-      anchorA: { edge: p.anchorA.edge, offset: p.anchorA.offset ?? 0.5 },
-      anchorB: { edge: p.anchorB.edge, offset: p.anchorB.offset ?? 0.5 },
-    });
-  }
+    if (!mapById(a) || !mapById(b)) return;
+    state.portals.push({ id: fileIds[i], aId: a, bId: b, anchorA: anchorIn(p.anchorA), anchorB: anchorIn(p.anchorB) });
+  });
   selectedId = null;
   fitToContent();
   draw();
   const n = Object.keys(renamed).length;
-  flash(`Imported ${state.maps.length} maps, ${state.portals.length} warps` + (n ? ` — ${n} id(s) set from their names; export to keep them` : ""));
+  flash(`Imported ${state.maps.length} maps, ${state.portals.length} warps, revision ${state.revision}` + (n ? ` — ${n} id(s) set from their names; export to keep them` : ""));
 }
 
 function fitToContent() {
@@ -1047,7 +1147,7 @@ const bgOpacity = document.getElementById("bg-opacity");
 bgOpacity.oninput = () => { backdrop.opacity = +bgOpacity.value / 100; draw(); };
 bgOpacity.onchange = saveBackdrop;
 
-// ── Export image (background + cells + labels + warps) ───────────────────────────────
+// ── Export image (background + cells + labels, and doors only when asked — the game draws its own) ──
 // The export frame is the backdrop's world rect (the art defines the canvas); with no backdrop it's the
 // bounding box of all cells + margin. Output width in px sets the scale, so cells scale WITH the map size.
 function exportFrame() {
@@ -1062,7 +1162,7 @@ function exportFrame() {
   return { x: minX - pad, y: minY - pad, w: (maxX - minX) + pad * 2, h: (maxY - minY) + pad * 2 };
 }
 // Paint the whole composition onto context c. sc = pixels per world unit; cellOpacity 0..1.
-function paintComposite(c, frame, sc, cellOpacity, showLabels) {
+function paintComposite(c, frame, sc, cellOpacity, showLabels, showDoors) {
   const W = Math.round(frame.w * sc), H = Math.round(frame.h * sc);
   if (bgLoaded()) c.drawImage(backdrop.img, (backdrop.x - frame.x) * sc, (backdrop.y - frame.y) * sc, backdrop.w * sc, backdrop.h * sc);
   else { c.fillStyle = "#11141a"; c.fillRect(0, 0, W, H); }
@@ -1081,6 +1181,7 @@ function paintComposite(c, frame, sc, cellOpacity, showLabels) {
     c.lineWidth = Math.max(3, fs * 0.22); c.strokeStyle = "rgba(0,0,0,0.78)"; c.strokeText(label, ncx, nameY);
     c.fillStyle = "#ffffff"; c.fillText(label, ncx, nameY);
   }
+  if (!showDoors) return;
   c.globalAlpha = cellOpacity;
   paintWarps(c, (wx, wy) => ({ x: (wx - frame.x) * sc, y: (wy - frame.y) * sc }), sc);
   c.globalAlpha = 1;
@@ -1092,6 +1193,7 @@ const exCtx = exCanvas.getContext("2d");
 const exWidth = document.getElementById("ex-width");
 const exOpacity = document.getElementById("ex-opacity");
 const exLabels = document.getElementById("ex-labels");
+const exDoors = document.getElementById("ex-doors");
 let exFrame = null;
 
 function openExportImage() {
@@ -1099,7 +1201,7 @@ function openExportImage() {
   if (!exFrame) { flash("Add some maps (and ideally a background) first"); return; }
   const defW = bgLoaded() ? backdrop.img.naturalWidth : Math.round(exFrame.w * 2);
   exWidth.value = Math.round(clamp(defW, 256, 8192));
-  exOpacity.value = 100; exLabels.checked = true;
+  exOpacity.value = 100; exLabels.checked = true; exDoors.checked = false;
   exportModal.style.display = "flex";
   renderExport();
 }
@@ -1109,13 +1211,14 @@ function renderExport() {
   const sc = outW / exFrame.w;
   const outH = Math.max(1, Math.round(exFrame.h * sc));
   exCanvas.width = outW; exCanvas.height = outH;
-  paintComposite(exCtx, exFrame, sc, (+exOpacity.value) / 100, exLabels.checked);
+  paintComposite(exCtx, exFrame, sc, (+exOpacity.value) / 100, exLabels.checked, exDoors.checked);
   document.getElementById("ex-dims").textContent = `${outW} × ${outH} px`;
 }
 document.getElementById("btn-export-img").onclick = openExportImage;
 document.getElementById("ex-cancel").onclick = () => { exportModal.style.display = "none"; };
 exOpacity.oninput = renderExport;
 exLabels.onchange = renderExport;
+exDoors.onchange = renderExport;
 exWidth.oninput = renderExport;
 document.getElementById("ex-download").onclick = () => {
   exCanvas.toBlob((blob) => {
@@ -1160,7 +1263,7 @@ function updateHint() {
   else if (mode === "edit")
     h.textContent = "✏️ Edit: click empty to add · click a map to retype/set biome/cliffs/delete · drag to move · handles to resize · [Ctrl+C/V] copy/paste · [Ctrl+D] duplicate · [Ctrl+Z/Y] undo/redo · [Del] remove · Shift/middle-drag pan · scroll zoom · [W] warp";
   else
-    h.textContent = "🔵 Warp: click map A then map B to link them · drag a square end-marker to slide the doorway along its edge · click an end-marker to delete · [Esc] cancel · [E] edit";
+    h.textContent = "🔵 Warp: click map A then map B to link them · drag a square end-marker to slide the door along its edge (a door placed by hand in Unity moves anywhere inside its map) · click an end-marker to delete · [Esc] cancel · [E] edit";
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────

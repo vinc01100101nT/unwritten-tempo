@@ -17,6 +17,7 @@ public static class WorldLayoutFile
 {
     public const float EdgeMargin = 4f;
     public const float SpawnInset = 3f;
+    public const float DefaultSize = 60f;   // a map that omits its size (the browser tool's DEFAULT_SIZE)
 
     public static string Path => System.IO.Path.GetFullPath(
         System.IO.Path.Combine(Application.dataPath, "..", "..", "tools", "world-creator", "worlds", "world-regions.json"));

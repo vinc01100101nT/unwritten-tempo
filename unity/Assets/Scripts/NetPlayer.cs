@@ -581,7 +581,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         {
             sheetWaiting = false;
             Character.Instance.SetSheetFromServer(waitingCurrent, waitingBaseline, waitingWithStates,
-                                                  waitingRaiseCost, waitingJumpAt, waitingJumpGain, waitingGearStat);
+                                                  waitingRaiseCost, waitingGearStat);
         }
 
         // THREE possible askers, not two — and this is where the server used to fall through the crack. "Am I the
@@ -863,8 +863,6 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     bool sheetSent;
     DerivedSnapshot sentCurrent, sentBaseline, sentWithStates;
     readonly int[] sentRaiseCost = new int[6];
-    readonly int[] sentJumpAt = new int[6];
-    readonly int[] sentJumpGain = new int[6];
     readonly int[] sentGearStat = new int[6];
 
     void PushMySheet()
@@ -885,13 +883,11 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         for (int i = 0; i < 6; i++)
         {
             var stat = (PrimaryStat)i;
-            int cost = person.CostToRaise(stat), jumpAt = person.NextJumpAt(stat), gain = person.JumpGainAt(stat);
+            int cost = person.CostToRaise(stat);
             int gear = person.GearStat(stat);
-            if (cost != sentRaiseCost[i] || jumpAt != sentJumpAt[i] || gain != sentJumpGain[i] || gear != sentGearStat[i])
+            if (cost != sentRaiseCost[i] || gear != sentGearStat[i])
                 changed = true;
             sentRaiseCost[i] = cost;
-            sentJumpAt[i] = jumpAt;
-            sentJumpGain[i] = gain;
             sentGearStat[i] = gear;
         }
         if (!changed) return;
@@ -902,16 +898,15 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         sentWithStates = withStates;
         // Copied only on a change, which is when a new sheet is worth a send at all.
         TargetSheet(connectionToClient, current, baseline, withStates,
-                    (int[])sentRaiseCost.Clone(), (int[])sentJumpAt.Clone(), (int[])sentJumpGain.Clone(),
-                    (int[])sentGearStat.Clone());
+                    (int[])sentRaiseCost.Clone(), (int[])sentGearStat.Clone());
     }
 
     [TargetRpc]
     void TargetSheet(NetworkConnectionToClient target, DerivedSnapshot current, DerivedSnapshot baseline,
-                     DerivedSnapshot withStates, int[] raiseCost, int[] jumpAt, int[] jumpGain, int[] gearStat)
+                     DerivedSnapshot withStates, int[] raiseCost, int[] gearStat)
     {
         var me = Character.Instance;
-        if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, jumpAt, jumpGain, gearStat); return; }
+        if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, gearStat); return; }
         // ARRIVED BEFORE THERE WAS A CHARACTER TO GIVE IT TO. The server only sends a sheet when it changes, so a
         // dropped one would leave zeros on the window until something happened to move a stat. Held until there is.
         sheetWaiting = true;
@@ -919,14 +914,12 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         waitingBaseline = baseline;
         waitingWithStates = withStates;
         waitingRaiseCost = raiseCost;
-        waitingJumpAt = jumpAt;
-        waitingJumpGain = jumpGain;
         waitingGearStat = gearStat;
     }
 
     bool sheetWaiting;
     DerivedSnapshot waitingCurrent, waitingBaseline, waitingWithStates;
-    int[] waitingRaiseCost, waitingJumpAt, waitingJumpGain, waitingGearStat;
+    int[] waitingRaiseCost, waitingGearStat;
 
     // ---- the server's half: say what is running on them --------------------------------------------------
 
@@ -1503,15 +1496,27 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         var values = new int[map.Count];
         int i = 0;
         foreach (var kv in map) { stats[i] = (int)kv.Key; values[i] = kv.Value; i++; }
+        // What each stat is worth now and what one more point would make it, in whole percent, indexed by StatId —
+        // the window copies these and works out none of them.
+        int count = System.Enum.GetValues(typeof(StatId)).Length;
+        var percentNow = new int[count];
+        var percentNext = new int[count];
+        for (int s = 0; s < count; s++)
+        {
+            int ranks = p.RanksIn((StatId)s);
+            percentNow[s] = SkillRing.PercentPoints((StatId)s, ranks);
+            percentNext[s] = SkillRing.PercentPoints((StatId)s, ranks + 1);   // server-math: PushMyRing runs on the server only — it leaves at once with no client connection
+        }
         TargetRing(connectionToClient, stats, values, (int)p.Leader, p.HasLeader, p.BankedPoints,
-                   (int)p.Wildcard, p.HasWildcard);
+                   (int)p.Wildcard, p.HasWildcard, percentNow, percentNext);
     }
 
     [TargetRpc]
     void TargetRing(NetworkConnectionToClient target, int[] stats, int[] values, int leader, bool hasLeader,
-                    int banked, int wildcard, bool hasWildcard)
+                    int banked, int wildcard, bool hasWildcard, int[] percentNow, int[] percentNext)
     {
-        ringWaitingForACharacter = new object[] { stats, values, leader, hasLeader, banked, wildcard, hasWildcard };
+        ringWaitingForACharacter = new object[] { stats, values, leader, hasLeader, banked, wildcard, hasWildcard,
+                                                  percentNow, percentNext };
         GiveWaitingRingToTheCharacter();
     }
 
@@ -1526,7 +1531,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         var stats = new StatId[ints.Length];
         for (int i = 0; i < ints.Length; i++) stats[i] = (StatId)ints[i];
         Character.Instance.Passives.TakeFromServer(stats, (int[])r[1], (StatId)(int)r[2], (bool)r[3], (int)r[4],
-                                                   (StatId)(int)r[5], (bool)r[6]);
+                                                   (StatId)(int)r[5], (bool)r[6], (int[])r[7], (int[])r[8]);
     }
 
     [Command]
