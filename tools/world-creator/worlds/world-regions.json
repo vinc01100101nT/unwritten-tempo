@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "revision": 1,
   "maps": [
     {
       "id": "lastline",
@@ -1329,11 +1330,20 @@
   ],
   "portals": [
     {
+      "id": 0,
       "a": "lastline",
       "b": "lst_fild01",
       "anchorA": {
         "edge": "W",
-        "offset": 0.5
+        "offset": 0.5,
+        "at": [
+          -21.4,
+          -0.3
+        ],
+        "arriveAt": [
+          -19.7,
+          -1.4
+        ]
       },
       "anchorB": {
         "edge": "E",
@@ -1341,6 +1351,7 @@
       }
     },
     {
+      "id": 1,
       "a": "lst_fild01",
       "b": "old_oak",
       "anchorA": {
@@ -1353,6 +1364,7 @@
       }
     },
     {
+      "id": 2,
       "a": "old_oak",
       "b": "prl_fild01",
       "anchorA": {
@@ -1365,6 +1377,7 @@
       }
     },
     {
+      "id": 3,
       "a": "old_oak",
       "b": "olk_fild01",
       "anchorA": {
@@ -1377,6 +1390,7 @@
       }
     },
     {
+      "id": 4,
       "a": "olk_fild01",
       "b": "olk_dun01",
       "anchorA": {
@@ -1389,6 +1403,7 @@
       }
     },
     {
+      "id": 5,
       "a": "olk_dun01",
       "b": "olk_dun02",
       "anchorA": {
@@ -1401,11 +1416,20 @@
       }
     },
     {
+      "id": 6,
       "a": "lastline",
       "b": "lst_fild02",
       "anchorA": {
         "edge": "N",
-        "offset": 0.5
+        "offset": 0.5,
+        "at": [
+          0,
+          29
+        ],
+        "arriveAt": [
+          0,
+          26.8
+        ]
       },
       "anchorB": {
         "edge": "S",
@@ -1413,6 +1437,7 @@
       }
     },
     {
+      "id": 7,
       "a": "lst_fild02",
       "b": "gemmara",
       "anchorA": {
@@ -1425,6 +1450,7 @@
       }
     },
     {
+      "id": 8,
       "a": "gemmara",
       "b": "gmr_fild01",
       "anchorA": {
@@ -1437,6 +1463,7 @@
       }
     },
     {
+      "id": 9,
       "a": "gmr_fild01",
       "b": "pluvenne",
       "anchorA": {
@@ -1449,6 +1476,7 @@
       }
     },
     {
+      "id": 10,
       "a": "pluvenne",
       "b": "plv_fild01",
       "anchorA": {
@@ -1461,6 +1489,7 @@
       }
     },
     {
+      "id": 11,
       "a": "plv_fild01",
       "b": "lst_fild03",
       "anchorA": {
@@ -1473,6 +1502,7 @@
       }
     },
     {
+      "id": 12,
       "a": "lst_fild03",
       "b": "lastline",
       "anchorA": {
@@ -1480,11 +1510,20 @@
         "offset": 0.5
       },
       "anchorB": {
-        "edge": "S",
-        "offset": 0.5
+        "edge": "E",
+        "offset": 0.51,
+        "at": [
+          21.14,
+          -0.5
+        ],
+        "arriveAt": [
+          18.98,
+          -0.72
+        ]
       }
     },
     {
+      "id": 13,
       "a": "gemmara",
       "b": "hlt_fild02",
       "anchorA": {
@@ -1497,6 +1536,7 @@
       }
     },
     {
+      "id": 14,
       "a": "hlt_fild02",
       "b": "hilt",
       "anchorA": {
@@ -1509,6 +1549,7 @@
       }
     },
     {
+      "id": 15,
       "a": "hilt",
       "b": "hlt_fild01",
       "anchorA": {
@@ -1521,11 +1562,12 @@
       }
     },
     {
+      "id": 16,
       "a": "hlt_fild02",
       "b": "hlt_dun01",
       "anchorA": {
         "edge": "E",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "W",
@@ -1533,6 +1575,7 @@
       }
     },
     {
+      "id": 17,
       "a": "hlt_dun01",
       "b": "hlt_dun02",
       "anchorA": {
@@ -1545,6 +1588,7 @@
       }
     },
     {
+      "id": 18,
       "a": "hlt_dun02",
       "b": "hlt_dun03",
       "anchorA": {
@@ -1557,11 +1601,20 @@
       }
     },
     {
+      "id": 19,
       "a": "lastline",
       "b": "hrw_fild01",
       "anchorA": {
-        "edge": "W",
-        "offset": 0.3
+        "edge": "S",
+        "offset": 0.51,
+        "at": [
+          0.6,
+          -27.3
+        ],
+        "arriveAt": [
+          0.6,
+          -25.3
+        ]
       },
       "anchorB": {
         "edge": "E",
@@ -1569,6 +1622,7 @@
       }
     },
     {
+      "id": 20,
       "a": "hrw_fild01",
       "b": "harrowen",
       "anchorA": {
@@ -1581,6 +1635,7 @@
       }
     },
     {
+      "id": 21,
       "a": "prl_fild01",
       "b": "parley",
       "anchorA": {
@@ -1593,6 +1648,7 @@
       }
     },
     {
+      "id": 22,
       "a": "parley",
       "b": "prl_fild02",
       "anchorA": {
@@ -1605,6 +1661,7 @@
       }
     },
     {
+      "id": 23,
       "a": "prl_fild02",
       "b": "tornel",
       "anchorA": {
@@ -1617,6 +1674,7 @@
       }
     },
     {
+      "id": 24,
       "a": "harrowen",
       "b": "tornel",
       "anchorA": {
@@ -1629,6 +1687,7 @@
       }
     },
     {
+      "id": 25,
       "a": "tornel",
       "b": "trn_fild01",
       "anchorA": {
@@ -1641,6 +1700,7 @@
       }
     },
     {
+      "id": 26,
       "a": "prl_fild02",
       "b": "pennaryl",
       "anchorA": {
@@ -1653,6 +1713,7 @@
       }
     },
     {
+      "id": 27,
       "a": "pennaryl",
       "b": "pnr_fild01",
       "anchorA": {
@@ -1665,6 +1726,7 @@
       }
     },
     {
+      "id": 28,
       "a": "pnr_fild01",
       "b": "vlm_fild01",
       "anchorA": {
@@ -1677,6 +1739,7 @@
       }
     },
     {
+      "id": 29,
       "a": "vlm_fild01",
       "b": "trn_fild01",
       "anchorA": {
@@ -1689,6 +1752,7 @@
       }
     },
     {
+      "id": 30,
       "a": "vlm_fild01",
       "b": "velmora",
       "anchorA": {
@@ -1701,6 +1765,7 @@
       }
     },
     {
+      "id": 31,
       "a": "velmora",
       "b": "vlm_fild02",
       "anchorA": {
@@ -1713,6 +1778,7 @@
       }
     },
     {
+      "id": 32,
       "a": "vlm_fild02",
       "b": "brm_fild02",
       "anchorA": {
@@ -1725,6 +1791,7 @@
       }
     },
     {
+      "id": 33,
       "a": "velmora",
       "b": "vlm_fild03",
       "anchorA": {
@@ -1737,6 +1804,7 @@
       }
     },
     {
+      "id": 34,
       "a": "vlm_fild02",
       "b": "vlm_dun01",
       "anchorA": {
@@ -1749,6 +1817,7 @@
       }
     },
     {
+      "id": 35,
       "a": "vlm_dun01",
       "b": "vlm_dun02",
       "anchorA": {
@@ -1761,6 +1830,7 @@
       }
     },
     {
+      "id": 36,
       "a": "vlm_dun02",
       "b": "vlm_dun03",
       "anchorA": {
@@ -1773,11 +1843,12 @@
       }
     },
     {
+      "id": 37,
       "a": "brm_fild02",
       "b": "brimstone",
       "anchorA": {
         "edge": "E",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "W",
@@ -1785,6 +1856,7 @@
       }
     },
     {
+      "id": 38,
       "a": "brimstone",
       "b": "brm_fild01",
       "anchorA": {
@@ -1797,6 +1869,7 @@
       }
     },
     {
+      "id": 39,
       "a": "cindrel",
       "b": "cdl_fild01",
       "anchorA": {
@@ -1809,6 +1882,7 @@
       }
     },
     {
+      "id": 40,
       "a": "cindrel",
       "b": "cdl_fild02",
       "anchorA": {
@@ -1821,6 +1895,7 @@
       }
     },
     {
+      "id": 41,
       "a": "cdl_fild02",
       "b": "cdl_dun01",
       "anchorA": {
@@ -1833,6 +1908,7 @@
       }
     },
     {
+      "id": 42,
       "a": "cdl_dun01",
       "b": "cdl_dun02",
       "anchorA": {
@@ -1845,6 +1921,7 @@
       }
     },
     {
+      "id": 43,
       "a": "cdl_dun02",
       "b": "cdl_dun03",
       "anchorA": {
@@ -1857,6 +1934,7 @@
       }
     },
     {
+      "id": 44,
       "a": "luminhal",
       "b": "lmh_fild01",
       "anchorA": {
@@ -1869,6 +1947,7 @@
       }
     },
     {
+      "id": 45,
       "a": "kharnel",
       "b": "khn_fild02",
       "anchorA": {
@@ -1881,6 +1960,7 @@
       }
     },
     {
+      "id": 46,
       "a": "kharnel",
       "b": "khn_fild01",
       "anchorA": {
@@ -1893,11 +1973,12 @@
       }
     },
     {
+      "id": 47,
       "a": "khn_fild01",
       "b": "khn_dun01",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -1905,6 +1986,7 @@
       }
     },
     {
+      "id": 48,
       "a": "khn_dun01",
       "b": "khn_dun02",
       "anchorA": {
@@ -1917,6 +1999,7 @@
       }
     },
     {
+      "id": 49,
       "a": "khn_dun02",
       "b": "khn_dun03",
       "anchorA": {
@@ -1929,6 +2012,7 @@
       }
     },
     {
+      "id": 50,
       "a": "khn_dun03",
       "b": "khn_dun04",
       "anchorA": {
@@ -1941,6 +2025,7 @@
       }
     },
     {
+      "id": 51,
       "a": "khn_fild03",
       "b": "khn_fild04",
       "anchorA": {
@@ -1953,6 +2038,7 @@
       }
     },
     {
+      "id": 52,
       "a": "khn_fild04",
       "b": "khn_fild05",
       "anchorA": {
@@ -1965,6 +2051,7 @@
       }
     },
     {
+      "id": 53,
       "a": "khn_fild05",
       "b": "khn_fild07",
       "anchorA": {
@@ -1977,6 +2064,7 @@
       }
     },
     {
+      "id": 54,
       "a": "khn_fild07",
       "b": "khn_fild06",
       "anchorA": {
@@ -1989,6 +2077,7 @@
       }
     },
     {
+      "id": 55,
       "a": "halcyra",
       "b": "hcr_fild01",
       "anchorA": {
@@ -2001,6 +2090,7 @@
       }
     },
     {
+      "id": 56,
       "a": "halcyra",
       "b": "hcr_fild02",
       "anchorA": {
@@ -2013,6 +2103,7 @@
       }
     },
     {
+      "id": 57,
       "a": "pluvenne",
       "b": "luminhal",
       "anchorA": {
@@ -2025,6 +2116,7 @@
       }
     },
     {
+      "id": 58,
       "a": "harrowen",
       "b": "kharnel",
       "anchorA": {
@@ -2033,10 +2125,11 @@
       },
       "anchorB": {
         "edge": "E",
-        "offset": 0.3
+        "offset": 0.7
       }
     },
     {
+      "id": 59,
       "a": "brimstone",
       "b": "khn_fild02",
       "anchorA": {
@@ -2049,11 +2142,12 @@
       }
     },
     {
+      "id": 60,
       "a": "kharnel",
       "b": "khn_fild03",
       "anchorA": {
         "edge": "E",
-        "offset": 0.7
+        "offset": 0.3
       },
       "anchorB": {
         "edge": "W",
@@ -2061,11 +2155,12 @@
       }
     },
     {
+      "id": 61,
       "a": "luminhal",
       "b": "cdl_fild02",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -2073,23 +2168,25 @@
       }
     },
     {
+      "id": 62,
       "a": "cindrel",
       "b": "hcr_fild01",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
-        "offset": 0.3
+        "offset": 0.7
       }
     },
     {
+      "id": 63,
       "a": "lst_fild01",
       "b": "last_bridge",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -2097,6 +2194,7 @@
       }
     },
     {
+      "id": 64,
       "a": "hcr_fild02",
       "b": "hill_of_the_flame",
       "anchorA": {
@@ -2109,6 +2207,7 @@
       }
     },
     {
+      "id": 65,
       "a": "parley",
       "b": "thousand_gates",
       "anchorA": {
@@ -2121,6 +2220,7 @@
       }
     },
     {
+      "id": 66,
       "a": "hazemere",
       "b": "velmora",
       "anchorA": {
@@ -2133,11 +2233,12 @@
       }
     },
     {
+      "id": 67,
       "a": "khn_fild04",
       "b": "masked_ballroom",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -2145,6 +2246,7 @@
       }
     },
     {
+      "id": 68,
       "a": "cdl_fild01",
       "b": "burning_keel",
       "anchorA": {
@@ -2157,6 +2259,7 @@
       }
     },
     {
+      "id": 69,
       "a": "brm_fild01",
       "b": "everburning_plain",
       "anchorA": {
@@ -2169,6 +2272,7 @@
       }
     },
     {
+      "id": 70,
       "a": "vlm_fild01",
       "b": "sky_cairn",
       "anchorA": {
@@ -2181,11 +2285,12 @@
       }
     },
     {
+      "id": 71,
       "a": "plv_fild01",
       "b": "tide_temple",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -2193,11 +2298,12 @@
       }
     },
     {
+      "id": 72,
       "a": "khn_fild07",
       "b": "dusk_tower",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
@@ -2205,6 +2311,7 @@
       }
     },
     {
+      "id": 73,
       "a": "khn_fild06",
       "b": "walking_road",
       "anchorA": {
@@ -2217,6 +2324,7 @@
       }
     },
     {
+      "id": 74,
       "a": "khn_fild02",
       "b": "drowned_chapel",
       "anchorA": {
@@ -2229,6 +2337,7 @@
       }
     },
     {
+      "id": 75,
       "a": "lmh_fild01",
       "b": "aurora_steps",
       "anchorA": {
@@ -2241,6 +2350,7 @@
       }
     },
     {
+      "id": 76,
       "a": "prl_fild02",
       "b": "unmarked_path",
       "anchorA": {
@@ -2253,6 +2363,7 @@
       }
     },
     {
+      "id": 77,
       "a": "gmr_fild02",
       "b": "lst_fild02",
       "anchorA": {
@@ -2265,6 +2376,7 @@
       }
     },
     {
+      "id": 78,
       "a": "gmr_fild02",
       "b": "gemmara",
       "anchorA": {
@@ -2273,10 +2385,11 @@
       },
       "anchorB": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       }
     },
     {
+      "id": 79,
       "a": "lst_fild04",
       "b": "lst_fild01",
       "anchorA": {
@@ -2289,6 +2402,7 @@
       }
     },
     {
+      "id": 80,
       "a": "lst_fild04",
       "b": "lst_fild03",
       "anchorA": {
@@ -2301,6 +2415,7 @@
       }
     },
     {
+      "id": 81,
       "a": "hrw_fild02",
       "b": "hrw_fild01",
       "anchorA": {
@@ -2309,15 +2424,16 @@
       },
       "anchorB": {
         "edge": "E",
-        "offset": 0.8
+        "offset": 0.2
       }
     },
     {
+      "id": 82,
       "a": "hrw_fild02",
       "b": "lst_fild04",
       "anchorA": {
         "edge": "E",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "S",
@@ -2325,6 +2441,7 @@
       }
     },
     {
+      "id": 83,
       "a": "lst_fild05",
       "b": "lst_fild04",
       "anchorA": {
@@ -2337,6 +2454,7 @@
       }
     },
     {
+      "id": 84,
       "a": "lst_fild05",
       "b": "lst_dun01",
       "anchorA": {
@@ -2349,6 +2467,7 @@
       }
     },
     {
+      "id": 85,
       "a": "lst_dun01",
       "b": "lst_dun02",
       "anchorA": {
@@ -2361,6 +2480,7 @@
       }
     },
     {
+      "id": 86,
       "a": "pnr_fild02",
       "b": "vlm_fild03",
       "anchorA": {
@@ -2373,6 +2493,7 @@
       }
     },
     {
+      "id": 87,
       "a": "pnr_fild02",
       "b": "pnr_fild01",
       "anchorA": {
@@ -2385,18 +2506,20 @@
       }
     },
     {
+      "id": 88,
       "a": "brm_fild03",
       "b": "brm_fild02",
       "anchorA": {
         "edge": "W",
-        "offset": 0.3
+        "offset": 0.7
       },
       "anchorB": {
         "edge": "E",
-        "offset": 0.7
+        "offset": 0.3
       }
     },
     {
+      "id": 89,
       "a": "brm_fild03",
       "b": "brimstone",
       "anchorA": {
@@ -2409,6 +2532,7 @@
       }
     },
     {
+      "id": 90,
       "a": "khn_fild08",
       "b": "kharnel",
       "anchorA": {
@@ -2421,6 +2545,7 @@
       }
     },
     {
+      "id": 91,
       "a": "khn_fild08",
       "b": "khn_fild01",
       "anchorA": {
@@ -2433,6 +2558,7 @@
       }
     },
     {
+      "id": 92,
       "a": "khn_fild09",
       "b": "khn_fild04",
       "anchorA": {
@@ -2445,6 +2571,7 @@
       }
     },
     {
+      "id": 93,
       "a": "khn_fild09",
       "b": "khn_dun05",
       "anchorA": {
@@ -2457,6 +2584,7 @@
       }
     },
     {
+      "id": 94,
       "a": "khn_dun05",
       "b": "khn_dun06",
       "anchorA": {
@@ -2469,6 +2597,7 @@
       }
     },
     {
+      "id": 95,
       "a": "khn_fild10",
       "b": "khn_fild05",
       "anchorA": {
@@ -2481,6 +2610,7 @@
       }
     },
     {
+      "id": 96,
       "a": "khn_fild10",
       "b": "khn_fild06",
       "anchorA": {
@@ -2493,6 +2623,7 @@
       }
     },
     {
+      "id": 97,
       "a": "khn_fild07",
       "b": "khn_dun07",
       "anchorA": {
@@ -2505,6 +2636,7 @@
       }
     },
     {
+      "id": 98,
       "a": "khn_dun07",
       "b": "khn_dun08",
       "anchorA": {
@@ -2517,6 +2649,7 @@
       }
     },
     {
+      "id": 99,
       "a": "khn_dun08",
       "b": "khn_dun09",
       "anchorA": {
@@ -2529,6 +2662,7 @@
       }
     },
     {
+      "id": 100,
       "a": "hazemere",
       "b": "tornel",
       "anchorA": {
@@ -2541,11 +2675,12 @@
       }
     },
     {
+      "id": 101,
       "a": "lst_fild04",
       "b": "narrowbend",
       "anchorA": {
         "edge": "W",
-        "offset": 0.8
+        "offset": 0.2
       },
       "anchorB": {
         "edge": "E",

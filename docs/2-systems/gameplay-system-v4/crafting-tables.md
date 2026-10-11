@@ -172,20 +172,21 @@ Eighteen stats are on the table: twelve sub-stats at weight 80 each and six prim
 is taken off the table and the rest share its weight — with one sub-stat written, each remaining sub-stat is 8%
 and each primary 2%.
 
-## 6. What the grade of the weapon in hand does to mastery and skill levels
+## 6. What the grade of the weapon in hand does to mastery
 
-| Grade | Weapon Mastery cap | Levels that count — 10-level skill | Levels that count — 5-level skill | Training speed |
-| --- | --- | --- | --- | --- |
-| Raw | 10 | 2 | 1 | ×0.5 |
-| F | 20 | 3 | 2 | ×0.75 |
-| E | 30 | 4 | 2 | ×1.0 |
-| D | 40 | 6 | 3 | ×1.1 |
-| C | 50 | 7 | 4 | ×1.2 |
-| B | 60 | 9 | 5 | ×1.35 |
-| A | 70 | 10 | 5 | ×1.5 |
+| Grade | Weapon Mastery cap | Training speed |
+| --- | --- | --- |
+| Raw | 10 | ×0.5 |
+| F | 20 | ×0.75 |
+| E | 30 | ×1.0 |
+| D | 40 | ×1.1 |
+| C | 50 | ×1.2 |
+| B | 60 | ×1.35 |
+| A | 70 | ×1.5 |
 
-A 1-level skill always counts. Mastery already earned and skill levels already bought are never lost; a poorer
-weapon in hand only caps what is USED and what mastery can be EARNED. Training speed applies to Weapon Mastery.
+Mastery already earned is never lost; a poorer weapon in hand only caps how much of it is USED and how much can
+be EARNED. Skill levels are not touched by the grade: every level bought counts with any weapon of the skill's
+type. Training speed applies to Weapon Mastery.
 
 ## 7. Recycle — half of what the piece provably consumed
 

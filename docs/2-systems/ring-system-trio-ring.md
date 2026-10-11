@@ -36,7 +36,7 @@ The loop wraps from Attack Speed back to Defense.
 ## The ring order (poles & tint) — BUILT
 
 - **Poles sit dead-opposite:** Defense (#1, top) ↔ Magic Attack (#6, bottom). Accuracy/Cast Speed bridge the physical→magic transition; Critical/Attack Speed close the loop back to the top.
-- **Colour families** (draft-card tint): physical/warm = Atk, Accuracy, Critical, AttackSpeed, Evasion; magic/blue = MAtk, CastSpeed, MP; survivability/green = HP, Def.
+- **Colour families** (the edge a stat on the ring wears while a point can be spent on it): physical/warm = Atk, Accuracy, Critical, AttackSpeed, Evasion; magic/blue = MAtk, CastSpeed, MP; survivability/green = HP, Def.
 
 ## The draft — BUILT
 

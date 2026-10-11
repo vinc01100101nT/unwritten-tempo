@@ -41,10 +41,11 @@ public class ProgressionWindows : MonoBehaviour
     static ProgressionWindows active;   // singleton guard (avoid a doubled build if two canvases carry it)
     static readonly PrimaryStat[] StatOrder =
         { PrimaryStat.STR, PrimaryStat.AGI, PrimaryStat.VIT, PrimaryStat.INT, PrimaryStat.DEX, PrimaryStat.LUK };
-    TMP_Text charIdentity, charPoints, charDerived;
+    TMP_Text charIdentity, charLevel;
+    // the derived numbers: the full-width lines, then the left and the right of the two-to-a-line block
+    readonly TMP_Text[] charDerived = new TMP_Text[3];
     readonly TMP_Text[] statValue = new TMP_Text[6];
     readonly TMP_Text[] statCost = new TMP_Text[6];
-    readonly TMP_Text[] statJump = new TMP_Text[6];
     readonly Button[] statPlus = new Button[6];
 
     void Start()
@@ -153,12 +154,12 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildInventory()
     {
-        // One centred window, holding what you carry and what you wear. Its size is the approved design's,
-        // measured: 742x528 leaves the list exactly the 710px the mock lays its columns out in.
-        var content = UiKit.Window(canvas, "Inventory", new Vector2(742, 528), new Vector2(0, 0), out invRoot);
+        // One centred window, holding what you carry and what you wear. Its size is the approved compact design's:
+        // 324x296 leaves the list the 292px the mock lays its columns out in.
+        var content = UiKit.Window(canvas, "Inventory", new Vector2(324, 296), new Vector2(0, 0), out invRoot);
 
         // tabs
-        var tabRow = UiKit.TabRow(content);
+        var tabRow = UiKit.TabRow(content, 20f);
 
         AddTab(tabRow.transform, "All", false, default);
         AddTab(tabRow.transform, "Equip", true, ItemCategory.Equip);
@@ -175,17 +176,18 @@ public class ProgressionWindows : MonoBehaviour
         ItemActionMenu.OpenCardPicker = OpenCardDialog;
 
         // footer
-        invFooter = UiKit.Label("Footer", content, "", 14, FontStyle.Bold, TextAnchor.MiddleRight);
+        invFooter = UiKit.Label("Footer", content, "", 12, FontStyle.Bold, TextAnchor.MiddleRight);
         invFooter.rectTransform.anchorMin = new Vector2(0, 0);
         invFooter.rectTransform.anchorMax = new Vector2(1, 0);
         invFooter.rectTransform.pivot = new Vector2(0.5f, 0);
-        invFooter.rectTransform.sizeDelta = new Vector2(0, 24);
+        invFooter.rectTransform.sizeDelta = new Vector2(0, 18);
         invFooter.color = UiKit.TextMain;
     }
 
     void AddTab(Transform parent, string label, bool filtered, ItemCategory cat)
     {
         var btn = UiKit.Btn(label, parent, () => { useFilter = filtered; tab = cat; RefreshInventory(); });
+        btn.GetComponentInChildren<TMP_Text>().fontSize = 11;
         tabButtons.Add(btn);
     }
 
@@ -243,7 +245,8 @@ public class ProgressionWindows : MonoBehaviour
         var border = UiKit.Img("CardDialog", parent, UiKit.WindowEdge);
         border.rectTransform.anchorMin = border.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         border.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        border.rectTransform.sizeDelta = new Vector2(260, 280);
+        // No taller than the room inside the bag it opens over.
+        border.rectTransform.sizeDelta = new Vector2(260, 244);
         // Its title in the blue bar; its own Close button below closes it, so the bar carries no buttons.
         var content = UiKit.DressWindow(border, "Insert Card", closable: false, minimizable: false, draggable: false);
 
@@ -304,7 +307,16 @@ public class ProgressionWindows : MonoBehaviour
 
     // ---- Character window -----------------------------------------------------
 
-    const float StatColumnW = 332f, ColumnGap = 20f, RingColumnW = 480f;
+    const float StatColumnW = 248f, ColumnGap = 14f, RingColumnW = 274f;
+    const float StatRowHeight = 20f, DerivedTextSize = 11f;
+
+    // The derived block's labels. The attack lines and CRIT each take a whole line: with a buff running they carry
+    // bracketed extras that do not fit in half the column. Everything after them sits two to a line, so the
+    // two-to-a-line texts open with as many empty lines as there are whole ones above them.
+    const string DerivedFullLabels = "MELEE ATK\nRANGED ATK\nM.ATK\nCRIT";
+    const string DerivedSkip = "\n\n\n\n";
+    const string DerivedLeftLabels = DerivedSkip + "DEF\nHIT\nASPD\nMOVE\nGUARD\nLEECH\nREFLECT\nHP\nSTA";
+    const string DerivedRightLabels = DerivedSkip + "M.DEF\nFLEE\nCAST\nRUN\nBARRIER\nMP LEECH\nRANGE\nMP";
 
     /// <summary>The Character window's right-hand column, where <see cref="SkillDraftPanel"/> draws the Ring of
     /// Progression. Null until the window is built.</summary>
@@ -315,23 +327,12 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildCharacter()
     {
-        // Taller than the old 500: the derived block now lists every stat (offence, defence, speed, sustain, resources)
-        // instead of five summary lines, and a fixed-height window would clip the tail silently.
         // Two columns: the stat sheet on the left, the Ring of Progression on the right (SkillDraftPanel builds
-        // into RingColumn). The ring's widest row is its trio band, ~462 wide, so the right column is sized for it.
-        var content = UiKit.Window(canvas, "Character", new Vector2(StatColumnW + ColumnGap + RingColumnW + 28, 660),
+        // into RingColumn). The ring is drawn as a circle 274 wide, so the right column is sized for it; the window's
+        // frame takes 32 of its width and 50 of its height.
+        var content = UiKit.Window(canvas, "Character", new Vector2(StatColumnW + ColumnGap + RingColumnW + 32, 400),
                                    new Vector2(0, 0), out charRoot);
         CharacterRoot = charRoot;
-
-        // A plate behind the identity block. Decorative, sits behind the stat column so it never disturbs layout.
-        var plate = UiKit.Round(UiKit.Img("Backplate", content, UiKit.ButtonEdge), UiKit.ButtonRadius);
-        plate.raycastTarget = false;
-        var plateFill = UiKit.Round(UiKit.Img("Fill", plate.transform, UiKit.PanelRaise), UiKit.ButtonRadius);
-        UiKit.Fill(plateFill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        plateFill.raycastTarget = false;
-        var prt = plate.rectTransform;
-        prt.anchorMin = new Vector2(0, 1); prt.anchorMax = new Vector2(0, 1); prt.pivot = new Vector2(0, 1);
-        prt.sizeDelta = new Vector2(StatColumnW - 4, 56); prt.anchoredPosition = new Vector2(2, 0);
 
         var col = UiKit.Img("Col", content, new Color(0, 0, 0, 0));
         col.raycastTarget = false;
@@ -351,49 +352,84 @@ public class ProgressionWindows : MonoBehaviour
         ringRt.offsetMin = new Vector2(StatColumnW + ColumnGap, 0); ringRt.offsetMax = Vector2.zero;
         RingColumn = ringRt;
         var vlg = col.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 6;
+        vlg.spacing = 4;
         vlg.childControlWidth = vlg.childControlHeight = true;
         vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
         vlg.childAlignment = TextAnchor.UpperLeft;
 
-        charIdentity = UiKit.Label("Identity", col.transform, "", 16, FontStyle.Bold, TextAnchor.UpperLeft);
-        charPoints = UiKit.Label("Points", col.transform, "", 15, FontStyle.Bold, TextAnchor.UpperLeft);
-        charPoints.color = UiKit.TitleText;
+        // The identity plate: who and how many stat points on the left, level and XP on the right.
+        var plate = UiKit.Framed(UiKit.Img("Identity", col.transform, UiKit.ButtonEdge), UiKit.ButtonEdge, UiKit.PanelRaise, UiKit.ButtonRadius);
+        plate.raycastTarget = false;
+        plate.gameObject.AddComponent<LayoutElement>().preferredHeight = 38;
+        charIdentity = UiKit.MakeText("Who", plate.transform, "", 12, FontStyle.Bold, TextAnchor.MiddleLeft, null, false);
+        charLevel = UiKit.MakeText("Level", plate.transform, "", 12, FontStyle.Normal, TextAnchor.MiddleRight, null, false);
+        UiKit.Fill(charIdentity.rectTransform, new Vector2(6, 0), new Vector2(-6, 0));
+        UiKit.Fill(charLevel.rectTransform, new Vector2(6, 0), new Vector2(-6, 0));
+        charIdentity.raycastTarget = charLevel.raycastTarget = false;
 
-        // Six allocatable stat rows (moved here from the retired StatPanel): value · next-cost · + button.
-        for (int i = 0; i < StatOrder.Length; i++) BuildStatRow(col.transform, i);
+        // Six allocatable stat rows: value · cost of the next point · + button.
+        var stats = UiKit.Img("Stats", col.transform, new Color(0, 0, 0, 0));
+        stats.raycastTarget = false;
+        // Pinned: a row of stretching children would otherwise claim the room the derived numbers need.
+        stats.gameObject.AddComponent<LayoutElement>().flexibleHeight = 0;
+        var sv = stats.gameObject.AddComponent<VerticalLayoutGroup>();
+        sv.spacing = 2;
+        sv.childControlWidth = sv.childControlHeight = true;
+        sv.childForceExpandWidth = true; sv.childForceExpandHeight = false;
+        for (int i = 0; i < StatOrder.Length; i++) BuildStatRow(stats.transform, i);
 
         var div = UiKit.Img("Div", col.transform, UiKit.Rule);
         div.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
 
-        charDerived = UiKit.Label("Derived", col.transform, "", 13, FontStyle.Normal, TextAnchor.UpperLeft);
-        charDerived.lineSpacing = 1.1f;   // many more lines now than the old 5-line summary — tighter so they all fit
+        // The derived numbers: grey labels written once, values beside them right-aligned and rewritten when one moves.
+        var derived = UiKit.Img("Derived", col.transform, new Color(0, 0, 0, 0));
+        derived.raycastTarget = false;
+        derived.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1;
+        float half = ColumnGap * 0.5f;
+        DerivedText(derived.transform, 0f, 1f, 0f, 0f, false, DerivedFullLabels);
+        charDerived[0] = DerivedText(derived.transform, 0f, 1f, 0f, 0f, true, "");
+        DerivedText(derived.transform, 0f, 0.5f, 0f, half, false, DerivedLeftLabels);
+        charDerived[1] = DerivedText(derived.transform, 0f, 0.5f, 0f, half, true, "");
+        DerivedText(derived.transform, 0.5f, 1f, half, 0f, false, DerivedRightLabels);
+        charDerived[2] = DerivedText(derived.transform, 0.5f, 1f, half, 0f, true, "");
+    }
+
+    // One text of the derived block, spanning part of its width: labels grey from the left, values from the right.
+    static TMP_Text DerivedText(Transform parent, float xMin, float xMax, float insetLeft, float insetRight, bool values, string s)
+    {
+        var t = UiKit.MakeText(values ? "Values" : "Labels", parent, s, DerivedTextSize, FontStyle.Normal,
+                               values ? TextAnchor.UpperRight : TextAnchor.UpperLeft, null, false);
+        t.raycastTarget = false;
+        if (!values) t.color = UiKit.TextDim;
+        var rt = t.rectTransform;
+        rt.anchorMin = new Vector2(xMin, 0); rt.anchorMax = new Vector2(xMax, 1);
+        rt.offsetMin = new Vector2(insetLeft, 0); rt.offsetMax = new Vector2(-insetRight, 0);
+        return t;
     }
 
     void BuildStatRow(Transform parent, int i)
     {
         var stat = StatOrder[i];
         var row = UiKit.Img("Row_" + stat, parent, UiKit.PanelRaise);
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 26;
+        var rowSize = row.gameObject.AddComponent<LayoutElement>();
+        rowSize.preferredHeight = StatRowHeight; rowSize.flexibleHeight = 0;
         var h = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-        h.spacing = 6; h.padding = new RectOffset(6, 6, 0, 0);
+        h.spacing = 4; h.padding = new RectOffset(5, 3, 2, 2);
         h.childControlWidth = h.childControlHeight = true;
-        h.childForceExpandHeight = true; h.childAlignment = TextAnchor.MiddleLeft;
+        // Width is NOT shared out: each cell is the width it declares and the value takes what is left.
+        h.childForceExpandHeight = true; h.childForceExpandWidth = false; h.childAlignment = TextAnchor.MiddleLeft;
 
-        // Stat Family Icon v1: a procedural gold emblem in the left gutter (recognition by mark, not label).
-        StatGlyph.Build(row.transform, stat);
+        // Stat Family Icon v1: a procedural emblem in the left gutter (recognition by mark, not label).
+        StatGlyph.Build(row.transform, stat, 14f);
 
-        var name = UiKit.Label("Name", row.transform, stat.ToString(), 15, FontStyle.Bold, TextAnchor.MiddleLeft);
-        name.gameObject.AddComponent<LayoutElement>().preferredWidth = 44;
+        var name = UiKit.Label("Name", row.transform, stat.ToString(), 12, FontStyle.Bold, TextAnchor.MiddleLeft);
+        name.gameObject.AddComponent<LayoutElement>().preferredWidth = 32;
 
-        statValue[i] = UiKit.Label("Val", row.transform, "1", 15, FontStyle.Normal, TextAnchor.MiddleRight);
+        statValue[i] = UiKit.Label("Val", row.transform, "1", 12, FontStyle.Normal, TextAnchor.MiddleRight);
         statValue[i].gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
-        statJump[i] = UiKit.Label("Jump", row.transform, "", 11, FontStyle.Normal, TextAnchor.MiddleRight);
-        statJump[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 96;
-
-        statCost[i] = UiKit.Label("Cost", row.transform, "", 12, FontStyle.Normal, TextAnchor.MiddleRight);
-        statCost[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 38;
+        statCost[i] = UiKit.Label("Cost", row.transform, "", 11, FontStyle.Normal, TextAnchor.MiddleRight);
+        statCost[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 26;
 
         // ASKED FOR IN A WORLD, where a point is real power and the server decides; done here when there is no
         // world. Spent locally in a world it was simply undone by the server's next write, within fifteen
@@ -404,7 +440,8 @@ public class ProgressionWindows : MonoBehaviour
             if (me != null) { me.AskToSpendStatPoint(stat); return; }
             if (Character.Instance != null) Character.Instance.AddStat(stat);
         });
-        btn.gameObject.AddComponent<LayoutElement>().preferredWidth = 28;
+        btn.gameObject.AddComponent<LayoutElement>().preferredWidth = 20;
+        btn.GetComponentInChildren<TMP_Text>().fontSize = 12;
         statPlus[i] = btn;
     }
 
@@ -414,8 +451,8 @@ public class ProgressionWindows : MonoBehaviour
         var c = Character.Instance;
         // Nothing is drawn from placeholder zeros: the window fills in the moment the server's first sheet arrives.
         if (!c.SheetReady) return;
-        charIdentity.text = $"<color={AccentHex}>Adventurer</color>\nLevel {c.Level}    XP {c.XP:0.00}/{c.XPToNext}";
-        charPoints.text = $"Stat Points: {c.StatPoints}";
+        charIdentity.text = $"<color={AccentHex}><size=13>Adventurer</size></color>\n<color={TitleHex}>Stat Points: {c.StatPoints}</color>";
+        charLevel.text = $"<b>Level {c.Level}</b>\nXP {c.XP:0.00}/{c.XPToNext}";
 
         for (int i = 0; i < StatOrder.Length; i++)
         {
@@ -424,9 +461,6 @@ public class ProgressionWindows : MonoBehaviour
             int gear = c.GearStat(s);
             statValue[i].text = gear == 0 ? c.GetStat(s).ToString()
                                           : c.GetStat(s) + " (" + (gear > 0 ? "+" : "") + gear + ")";
-            // The jump counts gear, so the next one is measured from the stat the formulas see, not the points bought.
-            int jumpAt = c.NextJumpAt(s);
-            statJump[i].text = "next +" + c.JumpGainAt(s) + (s == PrimaryStat.LUK ? "%" : "") + " at " + jumpAt;
             int cost = c.CostToRaise(s);
             bool capped = cost < 0;
             bool can = c.CanRaise(s);
@@ -443,26 +477,36 @@ public class ProgressionWindows : MonoBehaviour
         var b = c.BaseDerived;
         var d = c.DerivedWithStates;
         var pc = PlayerBody();
-        charDerived.text =
-            $"<color={DimHex}>DERIVED</color>\n" +
-            $"MELEE ATK  {b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}    RANGED ATK {b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
-            $"M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
-            $"DEF   {b.def}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Delta(d.mdef - b.mdef)}\n" +
-            $"HIT   {b.hit}{Delta(d.hit - b.hit)}    FLEE {b.flee}{Delta(d.flee - b.flee)}\n" +
-            $"CRIT  {Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +
-            $"ASPD  ×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}    CAST ×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
-            $"MOVE  {b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}{Gait(pc)}\n" +
-            $"GUARD {Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}    BARRIER {b.barrierHP}{Delta(d.barrierHP - b.barrierHP)}\n" +
-            $"LEECH {Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}    MP LEECH {Pct(b.manaLeechPct)}{DeltaPct(d.manaLeechPct - b.manaLeechPct)}\n" +
-            $"REFLECT {Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
-            $"RANGE {b.basicAttackRange:0.##}{Delta(d.basicAttackRange - b.basicAttackRange)}\n" +
-            $"HP {c.MaxHP}  MP {c.MaxMP}  STA {Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
+        charDerived[0].text =
+            $"{b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}\n" +
+            $"{b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
+            $"{b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
+            $"{Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}";
+        charDerived[1].text = DerivedSkip +
+            $"{b.def}{Delta(d.def - b.def)}\n" +
+            $"{b.hit}{Delta(d.hit - b.hit)}\n" +
+            $"×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}\n" +
+            $"{b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}\n" +
+            $"{Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}\n" +
+            $"{Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}\n" +
+            $"{Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
+            $"{c.MaxHP}\n" +
+            $"{Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
+        charDerived[2].text = DerivedSkip +
+            $"{b.mdef}{Delta(d.mdef - b.mdef)}\n" +
+            $"{b.flee}{Delta(d.flee - b.flee)}\n" +
+            $"×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
+            $"{RunSpeed(pc)}\n" +
+            $"{b.barrierHP}{Delta(d.barrierHP - b.barrierHP)}\n" +
+            $"{Pct(b.manaLeechPct)}{DeltaPct(d.manaLeechPct - b.manaLeechPct)}\n" +
+            $"{b.basicAttackRange:0.##}{Delta(d.basicAttackRange - b.basicAttackRange)}\n" +
+            $"{c.MaxMP}";
     }
 
     static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";
     // Sprint/run gear lives on the player's BODY, not the character sheet — surfaced here because it's a speed the
     // player feels. Shown as the real run speed so it reads next to MOVE.
-    static string Gait(Player3DController pc) => pc == null ? "" : $"    RUN {pc.CurrentRunSpeed:0.0}";
+    static string RunSpeed(Player3DController pc) => pc == null ? "" : pc.CurrentRunSpeed.ToString("0.0");
 
     Player3DController playerBody;   // cached: resolved once, re-resolved only if the body was rebuilt
     Player3DController PlayerBody()
@@ -477,6 +521,7 @@ public class ProgressionWindows : MonoBehaviour
     static readonly string MalusHex = UiKit.Hex(UiKit.Bad);
     static readonly string DimHex = UiKit.Hex(UiKit.TextDim);
     static readonly string AccentHex = UiKit.Hex(UiKit.Accent);
+    static readonly string TitleHex = UiKit.Hex(UiKit.TitleText);
 
     // " (+3)" / " (−2)", coloured; empty when nothing is modifying the stat (no parentheses noise on a clean sheet).
     static string Delta(int diff) => diff == 0 ? "" : $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Mathf.Abs(diff)})</color>";

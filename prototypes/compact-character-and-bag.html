@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compact Character and Inventory windows</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  /* Every colour is a token from ui-tokens.css except the four below, which the game keeps beside the ring
+     itself rather than in the shared palette: the three ring-region tints (SkillRing.TintFor) and the
+     wildcard edge (SkillDraftPanel.WildEdge). */
+  :root {
+    --ring-physical: #f28c59;
+    --ring-magic: #7399f2;
+    --ring-survival: #80cc80;
+    --wild-edge: #d98cff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
+  .stage { display: flex; gap: 40px; align-items: flex-start; padding: 40px; flex-wrap: wrap; }
+
+  /* ---- the shared window frame, at the game's own measurements (UiKit.DressWindow / UiKit.Header) ---- */
+  .win { border: 1px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
+         color: var(--text-main); font-size: 12px; overflow: hidden; user-select: none; }
+  .bar { height: 24px; display: flex; align-items: center; padding: 0 2px 0 10px;
+         background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  .bar b { flex: 1; font-size: 13px; color: var(--title-text); }
+  .bar i { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+           color: var(--title-text); font: bold 12px/18px var(--font-ui); text-align: center; }
+  .body { padding: 8px 15px 15px; }
+  .btn { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill);
+         color: var(--button-text); font-family: inherit; padding: 0; cursor: pointer; }
+  .btn:hover { background: var(--hover); }
+  .btn:disabled { color: var(--text-dim); cursor: default; background: var(--button-fill); }
+  .rule { height: 2px; background: var(--rule); }
+  .dim { color: var(--text-dim); }
+  .col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+  /* ---- Character ---- */
+  #character { width: 568px; }
+  #character .body { display: grid; grid-template-columns: 248px 2px 274px; column-gap: 6px; }
+  #character .split { background: var(--rule); }
+
+  .plate { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--panel-raise);
+           padding: 3px 6px; display: grid; grid-template-columns: 1fr auto; row-gap: 1px; font-weight: bold; }
+  .who { color: var(--accent); font-size: 13px; }
+  .pts { color: var(--title-text); }
+  .plate .xp { font-weight: normal; text-align: right; }
+
+  .stats { display: flex; flex-direction: column; gap: 2px; }
+  .stat { height: 20px; display: grid; grid-template-columns: 14px 32px 1fr 26px 20px; column-gap: 4px;
+          align-items: center; padding: 0 3px 0 5px; background: var(--panel-raise); }
+  .stat svg { width: 14px; height: 14px; color: var(--accent); }
+  .stat .n { font-weight: bold; }
+  .stat .v { text-align: right; }
+  .stat .c { text-align: right; font-size: 11px; }
+  .stat .c.ok { color: var(--good); }
+  .stat .c.no { color: var(--bad); }
+  .stat .c.max { color: var(--title-text); }
+  .stat .btn { height: 16px; font-size: 12px; line-height: 12px; }
+
+  .derived { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 14px; font-size: 11px;
+             line-height: 13px; white-space: nowrap; }
+  .kv.whole { grid-column: 1 / -1; }
+  .kv { display: flex; justify-content: space-between; gap: 4px; }
+  .kv > span:first-child { color: var(--text-dim); }
+  .up { color: var(--good); }
+
+  .xpbar { position: relative; height: 12px; background: var(--rule); }
+  .xpbar div { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); }
+  .xpbar span { position: absolute; inset: 0; text-align: center; font: bold 10px/12px var(--font-ui); }
+
+  /* The ring, drawn as a ring. The leader always sits at the top with its two neighbours either side.
+     One stat: dim by default; the three in the window read in full; the leader in the accent; a stat a
+     point can be spent on carries its region's colour on its edge and takes the click. */
+  .dial { position: relative; width: 274px; height: 244px; margin: auto; }
+  .dial .hoop { position: absolute; left: 31px; top: 16px; width: 212px; height: 212px;
+                border: 2px solid var(--rule); border-radius: 50%; }
+  .rc { position: absolute; width: 62px; height: 32px; margin: -16px 0 0 -31px; text-align: center;
+        font-size: 11px; line-height: 13px; padding-top: 1px; white-space: nowrap;
+        border: 2px solid var(--panel-raise); background: var(--panel-raise); color: var(--text-dim); }
+  .rc.trio { color: var(--text-main); }
+  .rc.lead { color: var(--accent); font-weight: bold; }
+  .rc.pick { cursor: pointer; }
+  .rc.pick:hover { background: var(--hover); }
+  .rc small { font-size: 9px; font-weight: normal; }
+  .hub { position: absolute; left: 50%; top: 50%; width: 112px; transform: translate(-50%, -50%);
+         text-align: center; line-height: 15px; }
+  .hub b span { color: var(--title-text); }
+  .hub .xpbar { margin: 3px 0; }
+  .hub .bank { color: var(--title-text); font-weight: bold; height: 15px; }
+
+  /* ---- Inventory ---- */
+  #inventory { width: 324px; }
+  #inventory .body { display: flex; flex-direction: column; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 4px; }
+  .tabs .btn { height: 20px; font-size: 11px; }
+  .search { height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px;
+            border: 1px solid var(--button-edge); border-radius: 3px; background: var(--slot-fill); }
+  .search label { font-size: 10px; color: var(--text-dim); }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-main);
+                  font: 12px var(--font-ui); caret-color: var(--accent); }
+  .search input::placeholder { font-style: italic; font-size: 11px; color: var(--text-dim); opacity: .55; }
+  .hdr, .row { display: grid; grid-template-columns: 1fr 34px; column-gap: 8px; align-items: center; padding: 0 8px; }
+  .hdr { height: 18px; background: var(--panel-raise); color: var(--text-dim); font-size: 10px; cursor: pointer; }
+  .hdr span:last-child, .row span:last-child { text-align: right; }
+  .rows { list-style: none; margin: 0; padding: 0; height: 160px; overflow-y: auto; }
+  .row { height: 20px; font-size: 12px; white-space: nowrap; }
+  .row:hover { background: var(--hover); }
+  .row span:first-child { overflow: hidden; text-overflow: ellipsis; }
+  .row span:last-child { font-size: 10px; color: var(--text-dim); }
+  .row em { font-style: normal; font-size: 10px; color: var(--accent); margin-left: 8px; }
+  .foot { height: 18px; line-height: 18px; text-align: right; font-size: 12px; margin-top: 4px; }
+  .foot span { margin-left: 18px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <section class="win" id="character" data-mocks="Character">
+    <div class="bar"><b>Character</b><i>_</i><i>X</i></div>
+    <div class="body">
+      <div class="col">
+        <div class="plate">
+          <span class="who">Adventurer</span><span>Level 11</span>
+          <span class="pts" id="pts"></span><span class="xp">XP 161.00/351</span>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="rule"></div>
+        <div class="derived" id="derived"></div>
+      </div>
+      <div class="split"></div>
+      <div class="dial" id="dial"></div>
+    </div>
+  </section>
+
+  <section class="win" id="inventory" data-mocks="Inventory">
+    <div class="bar"><b>Inventory</b><i>_</i><i>X</i></div>
+    <div class="body">
+      <div class="tabs" id="tabs"></div>
+      <div class="search" data-part="search">
+        <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill">
+      </div>
+      <div class="hdr" data-part="header"><span data-k="name">Name</span><span data-k="held">Held</span></div>
+      <ul class="rows" id="rows" data-part="list"></ul>
+      <div class="foot"><span><span class="dim" style="margin:0">Weight</span> 318</span><span>1,220 z</span></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ---------- Character: the six stats ----------
+// The cost follows the game's own rule (UnitStatMath.StatCost), so pressing + behaves as it does in play.
+// The derived numbers are a fixed picture and do not move.
+const STATS = [["STR", 19], ["AGI", 9], ["VIT", 1], ["INT", 1], ["DEX", 9], ["LUK", 1]];
+let points = 10;
+const cost = v => v >= 99 ? -1 : Math.floor(v / 10) + 2;
+
+// The six emblems, bar for bar from StatGlyph (an 18-unit box, origin at its centre).
+const GLYPHS = {
+  STR: [[-3, 1.5, 2.4, 11, -45], [3, 1.5, 2.4, 11, 45], [0, -6, 12, 2.4, 0]],
+  AGI: [[-4, 4, 2.2, 8, 45], [-4, -2, 2.2, 8, -45], [2, 4, 2.2, 8, 45, 1], [2, -2, 2.2, 8, -45, 1]],
+  VIT: [[0, 0, 2.8, 12, 0], [0, 0, 12, 2.8, 0]],
+  INT: [[3.4, 3.4, 1.7, 10, 45], [3.4, -3.4, 1.7, 10, -45], [-3.4, -3.4, 1.7, 10, 45], [-3.4, 3.4, 1.7, 10, -45], [0, 0, 3.4, 3.4, 45]],
+  DEX: [[0, 0, 2.3, 16, -45], [3, 6, 6.5, 2.3, 0], [6, 3, 2.3, 6.5, 0]],
+  LUK: [[0, 0, 1.6, 15, 0], [0, 0, 15, 1.6, 0], [0, 0, 1.5, 12, 45], [0, 0, 1.5, 12, -45], [0, 0, 5, 5, 45]],
+};
+const glyph = k => '<svg viewBox="-9 -9 18 18">' + GLYPHS[k].map(([x, y, w, h, a, soft]) =>
+  `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" fill="currentColor"${soft ? ' opacity=".55"' : ''} transform="translate(${x} ${-y}) rotate(${-a})"/>`).join("") + "</svg>";
+
+function drawStats() {
+  $("pts").textContent = "Stat Points: " + points;
+  $("stats").innerHTML = STATS.map(([k, v], i) => {
+    const c = cost(v), cls = c < 0 ? "max" : points >= c ? "ok" : "no";
+    return `<div class="stat">${glyph(k)}<span class="n">${k}</span><span class="v">${v}</span>` +
+      `<span class="c ${cls}">${c < 0 ? "MAX" : "(" + c + ")"}</span>` +
+      `<button class="btn" data-plus="${i}" ${cls === "ok" ? "" : "disabled"}>+</button></div>`;
+  }).join("");
+}
+$("stats").addEventListener("click", e => {
+  const i = e.target.dataset.plus; if (i === undefined) return;
+  points -= cost(STATS[i][1]); STATS[i][1]++; drawStats();
+});
+
+// The attack lines and CRIT each take a whole line: with a buff running they carry bracketed extras that do
+// not fit in half the column. Everything after them sits two to a line.
+$("derived").innerHTML = [["MELEE ATK", "30-45", 1], ["RANGED ATK", "23-35", 1], ["M.ATK", "8-14", 1], ["CRIT", "0%  ×1.40", 1],
+  ["DEF", "18"], ["M.DEF", "11"], ["HIT", "20"], ["FLEE", "20"], ["ASPD", "×1.06"], ["CAST", "×0.94"],
+  ["MOVE", '100 <span class="up">(+10)</span>'], ["RUN", "2.6"], ["GUARD", "0%"], ["BARRIER", "0"], ["LEECH", "0%"],
+  ["MP LEECH", "0%"], ["REFLECT", "0%"], ["RANGE", "0.5"], ["HP", "136"], ["MP", "41"], ["STA", "100/100"]]
+  .map(([k, v, whole]) => `<div class="kv${whole ? " whole" : ""}"><span>${k}</span><span>${v}</span></div>`).join("");
+
+// ---------- Character: the ring ----------
+const RING = ["DEF", "HP", "ATK", "ACC", "CAST", "M.ATK", "MP", "EVA", "CRIT", "ASPD"];
+const TINT = { ATK: "physical", ACC: "physical", CRIT: "physical", ASPD: "physical", EVA: "physical",
+               "M.ATK": "magic", CAST: "magic", MP: "magic", HP: "survival", DEF: "survival" };
+const CAP = { CRIT: 0.5, EVA: 0.6 };
+const pct = (s, r) => r <= 0 ? 0 : Math.round((CAP[s] || 0.8) * r / (r + 40) * 100);
+const ranks = Object.fromEntries(RING.map(s => [s, 0])); ranks.ATK = 6;
+let leader = "ATK", banked = 2, wild = "M.ATK";
+const at = off => RING[((RING.indexOf(leader) + off) % 10 + 10) % 10];
+
+// Which ring position is at the top, counted in stats. It only differs from the leader's own position
+// while the ring is turning.
+let turn = RING.indexOf(leader), spinning = false;
+
+// With a point to spend, the three in the window and the wildcard take the click and show what the stat
+// would become; every other stat shows what it is.
+function drawRing() {
+  const cells = RING.map((s, i) => {
+    const trio = [at(-1), leader, at(1)].includes(s);
+    const pick = banked > 0 && (trio || s === wild);
+    const edge = !pick ? "" : `border-color:${s === wild && !trio ? "var(--wild-edge)" : `var(--ring-${TINT[s]})`};`;
+    const cls = "rc" + (s === leader ? " lead" : trio ? " trio" : "") + (pick ? " pick" : "");
+    const now = pct(s, ranks[s]), value = pick ? `${now}→${pct(s, ranks[s] + 1)}%` : `+${now}%`;
+    const a = (i - turn) * Math.PI / 5, x = 137 + 106 * Math.sin(a), y = 122 - 106 * Math.cos(a);
+    return `<div class="${cls}" style="${edge}left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;"${pick ? ` data-pick="${s}"` : ""}>` +
+      `<b>${s}</b> <small>×${ranks[s]}</small><br>${value}</div>`;
+  }).join("");
+  const bank = banked > 0 ? `${banked} ring point${banked === 1 ? "" : "s"}` : "";
+  $("dial").innerHTML = '<div class="hoop"></div>' + cells +
+    `<div class="hub"><b><span>Ring of Progression</span></b><br>Lv 8` +
+    `<div class="xpbar"><div style="width:1.05%"></div><span>XP 1.85 / 177</span></div><div class="bank">${bank}</div></div>`;
+}
+
+// The turn takes the time and the easing the game's own pick animation uses (SkillDraftPanel.SlideDur / Ease),
+// and goes the short way round.
+const SPIN_MS = 450, ease = t => t * t * t * (t * (t * 6 - 15) + 10);
+function spinTo(target) {
+  const from = turn, steps = ((target - from) % 10 + 15) % 10 - 5, t0 = performance.now();
+  if (steps === 0) return;
+  spinning = true;
+  (function frame() {
+    const u = Math.min(1, (performance.now() - t0) / SPIN_MS);
+    turn = from + steps * ease(u);
+    if (u === 1) { turn = target; spinning = false; }
+    drawRing();
+    if (u < 1) setTimeout(frame, 1000 / 60);
+  })();
+}
+
+$("dial").addEventListener("click", e => {
+  const pick = e.target.closest("[data-pick]"); if (!pick || banked <= 0 || spinning) return;
+  ranks[pick.dataset.pick]++; leader = pick.dataset.pick; banked--;
+  const far = RING.filter(r => ![at(-1), leader, at(1)].includes(r));
+  wild = far[Math.floor(Math.random() * far.length)];
+  drawRing();
+  spinTo(RING.indexOf(leader));
+});
+
+// ---------- Inventory ----------
+const ITEMS = [
+  { name: "+5 Fierce Chainmail [Raw]", held: 1, worn: true, cat: "Equip" },
+  { name: "+5 Tireless Iron Sabatons [Raw]", held: 1, worn: true, cat: "Equip" },
+  { name: "Stripped Bough [F]", held: 1, worn: false, cat: "Material" },
+];
+let tab = "All", query = "", sortKey = null, desc = false;
+$("tabs").innerHTML = ["All", "Equip", "Use", "Material", "Etc"]
+  .map(t => `<button class="btn" data-t="${t}">${t}</button>`).join("");
+function drawBag() {
+  let list = ITEMS.filter(i => (tab === "All" || i.cat === tab) && i.name.toLowerCase().includes(query));
+  if (sortKey) list = [...list].sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * (desc ? -1 : 1));
+  $("rows").innerHTML = list.map(i =>
+    `<li class="row" data-part="row"><span>${i.name}${i.worn ? "<em>worn</em>" : ""}</span><span>${i.held}</span></li>`).join("");
+}
+$("tabs").addEventListener("click", e => { if (e.target.dataset.t) { tab = e.target.dataset.t; drawBag(); } });
+$("find").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); drawBag(); });
+document.querySelector(".hdr").addEventListener("click", e => {
+  const k = e.target.dataset.k; if (!k) return;
+  desc = sortKey === k ? !desc : false; sortKey = k; drawBag();
+});
+
+drawStats(); drawRing(); drawBag();
+</script>
+</body>
+</html>

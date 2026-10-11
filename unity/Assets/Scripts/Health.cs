@@ -195,16 +195,15 @@ public class Health : MonoBehaviour, ICombatUnit
 
     public float RingBonus(StatId stat) { var s = StatBlock; return s != null ? s.RingBonus(stat) : 0f; }
 
-    /// <summary>What lifts a skill's output for this creature: the level it bought in that skill, counting only the
-    /// levels the grade of the weapon in its hands allows, plus that weapon's trademark — the player's own rule
+    /// <summary>What lifts a skill's output for this creature: the level it bought in that skill, every level
+    /// counting, plus the trademark of the weapon in its hands — the player's own rule
     /// (<see cref="Character.MasteryLift"/>), read off the same kind of store.</summary>
     public float SkillOutputLift(string skillId)
     {
         if (StatBlock == null) return 0f;
         var def = SkillCatalog.Get(skillId);
-        var held = HeldWeaponCopy;
         float level = def != null && def.RidesWeaponMastery(HeldWeapon)
-            ? MasteryMath.SkillLevelLift(Mastery.UsableSkillLevel(skillId, held != null ? held.quality : Quality.Raw))
+            ? MasteryMath.SkillLevelLift(Mastery.LevelOf(skillId))
             : 0f;
         return level + TrademarkLift(skillId);
     }

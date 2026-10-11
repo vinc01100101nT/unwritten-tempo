@@ -42,8 +42,8 @@ public class InventoryList
     // tools/check-ui-prototypes.py reads both and reports any that disagree.
     static readonly Column[] Columns =
     {
-        new Column { key = SortKey.Name,   label = "Name",    width = 0f,   textSize = 14f, align = TextAlignmentOptions.Left },
-        new Column { key = SortKey.Held,   label = "Held",    width = 48f,  textSize = 11f, align = TextAlignmentOptions.Right },
+        new Column { key = SortKey.Name,   label = "Name",    width = 0f,   textSize = 12f, align = TextAlignmentOptions.Left },
+        new Column { key = SortKey.Held,   label = "Held",    width = 34f,  textSize = 10f, align = TextAlignmentOptions.Right },
     };
 
     // The name is the whole point of a text inventory, so it gets a FLOOR it can never be squeezed below. Without
@@ -52,11 +52,11 @@ public class InventoryList
     const float NameMinWidth = 140f;
 
     const int RowPool = 40;          // the bag's own capacity — the same fixed pool the grid used, no per-refresh alloc
-    const float HeaderTextSize = 11f;
-    const float SearchHeight = 41f;
-    const float HeaderHeight = 27f;
-    const float RowHeight = 34f;
-    const float ListHeight = 340f;   // fixed, so the window is one size on every tab and after every drop
+    const float HeaderTextSize = 10f;
+    const float SearchHeight = 22f;
+    const float HeaderHeight = 18f;
+    const float RowHeight = 20f;
+    const float ListHeight = 160f;   // fixed, so the window is one size on every tab and after every drop
 
     class Row
     {
@@ -83,7 +83,7 @@ public class InventoryList
     Action onChanged;                // the window's own refresh, raised after an action mutates the bag
 
     // The same blue mark the approved design uses, on a name that is otherwise drawn plain.
-    static readonly string WornTag = "   <size=11><color=" + UiKit.Hex(UiKit.Accent) + ">worn</color></size>";
+    static readonly string WornTag = "   <size=10><color=" + UiKit.Hex(UiKit.Accent) + ">worn</color></size>";
 
     static readonly Color HeaderIdle = UiKit.TextDim;
 
@@ -96,7 +96,7 @@ public class InventoryList
 
         var col = new GameObject("TextList", typeof(RectTransform)).GetComponent<RectTransform>();
         col.SetParent(parent, false);
-        UiKit.Fill(col, new Vector2(0, 28), new Vector2(0, -34));
+        UiKit.Fill(col, new Vector2(0, 22), new Vector2(0, -24));
         var v = col.gameObject.AddComponent<VerticalLayoutGroup>();
         v.spacing = 0f;
         v.childControlWidth = v.childControlHeight = true;
@@ -117,29 +117,29 @@ public class InventoryList
         var le = bar.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = SearchHeight;
         var h = bar.gameObject.AddComponent<HorizontalLayoutGroup>();
-        h.padding = new RectOffset(8, 8, 3, 3);
-        h.spacing = 8f;
+        h.padding = new RectOffset(6, 6, 2, 2);
+        h.spacing = 6f;
         h.childControlWidth = h.childControlHeight = true;
         h.childForceExpandHeight = true;
         h.childAlignment = TextAnchor.MiddleLeft;
 
-        var label = UiKit.MakeText("Label", bar.transform, "FIND", 12, FontStyle.Normal,
+        var label = UiKit.MakeText("Label", bar.transform, "FIND", 10, FontStyle.Normal,
                                    TextAnchor.MiddleLeft, null, false);
         label.color = UiKit.TextDim;
         var ll = label.gameObject.AddComponent<LayoutElement>();
-        ll.minWidth = ll.preferredWidth = 34f;
+        ll.minWidth = ll.preferredWidth = 26f;
 
         // The field itself: TMP's input, the same kind chat and the sign-in screen use.
         var fieldGo = UiKit.Img("Field", bar.transform, new Color(0, 0, 0, 0));
         var fl = fieldGo.gameObject.AddComponent<LayoutElement>();
         fl.flexibleWidth = 1f;
-        var text = UiKit.MakeText("Text", fieldGo.transform, "", 14, FontStyle.Normal,
+        var text = UiKit.MakeText("Text", fieldGo.transform, "", 12, FontStyle.Normal,
                                   TextAnchor.MiddleLeft, null, false);
         UiKit.Fill(text.rectTransform, new Vector2(2, 0), new Vector2(-2, 0));
         // Short enough to sit on ONE line in the width it really gets — the long version wrapped and spilled
         // out of the 26px bar. And wrap:false so it can never wrap even if the window narrows.
         var placeholder = UiKit.MakeText("Placeholder", fieldGo.transform, "name, slot, tier, weapon type, or a skill",
-                                         14, FontStyle.Italic, TextAnchor.MiddleLeft, null, false);
+                                         11, FontStyle.Italic, TextAnchor.MiddleLeft, null, false);
         UiKit.Fill(placeholder.rectTransform, new Vector2(2, 0), new Vector2(-2, 0));
         placeholder.color = new Color(UiKit.TextDim.r, UiKit.TextDim.g, UiKit.TextDim.b, 0.55f);
 
@@ -158,11 +158,11 @@ public class InventoryList
             Refresh();
         });
 
-        hits = UiKit.MakeText("Hits", bar.transform, "", 12, FontStyle.Normal,
+        hits = UiKit.MakeText("Hits", bar.transform, "", 10, FontStyle.Normal,
                               TextAnchor.MiddleRight, null, false);
         hits.color = UiKit.TextDim;
         var hl2 = hits.gameObject.AddComponent<LayoutElement>();
-        hl2.minWidth = hl2.preferredWidth = 62f;
+        hl2.minWidth = hl2.preferredWidth = 40f;
     }
 
     void BuildHeader(Transform parent)
@@ -171,8 +171,8 @@ public class InventoryList
         var le = head.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = HeaderHeight;
         var h = head.gameObject.AddComponent<HorizontalLayoutGroup>();
-        h.padding = new RectOffset(14, 14, 0, 0);
-        h.spacing = 14f;
+        h.padding = new RectOffset(8, 8, 0, 0);
+        h.spacing = 8f;
         h.childControlWidth = h.childControlHeight = true;
         h.childForceExpandHeight = true;
         // OFF, so a fixed column is exactly the width it declares. Left on, the leftover room is
@@ -261,8 +261,8 @@ public class InventoryList
         le.minHeight = le.preferredHeight = RowHeight;
 
         var h = bg.gameObject.AddComponent<HorizontalLayoutGroup>();
-        h.padding = new RectOffset(14, 14, 0, 0);
-        h.spacing = 14f;
+        h.padding = new RectOffset(8, 8, 0, 0);
+        h.spacing = 8f;
         h.childControlWidth = h.childControlHeight = true;
         h.childForceExpandHeight = true;
         h.childForceExpandWidth = false;

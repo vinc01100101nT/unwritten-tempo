@@ -29,7 +29,6 @@ public static class CraftingMath
     static readonly float[] Lifts       = { 0f, 0f, 0.05f, 0.10f, 0.15f, 0.22f, 0.30f };
     static readonly int[] Slots         = { 0, 1, 2, 3, 4, 5, 6 };
     static readonly int[] WeaponCaps    = { 10, 20, 30, 40, 50, 60, 70 };
-    static readonly int[] SkillCaps     = { 4, 8, 12, 16, 20, 25, 30 };
     static readonly float[] Speeds      = { 0.5f, 0.75f, 1f, 1.1f, 1.2f, 1.35f, 1.5f };
 
     static readonly float[] TrademarkLifts = { 0.05f, 0.07f, 0.10f, 0.12f, 0.15f, 0.18f, 0.20f };
@@ -67,16 +66,6 @@ public static class CraftingMath
 
     /// <summary>The highest Weapon Mastery level a weapon of this grade lets its wielder use — and earn.</summary>
     public static int WeaponMasteryCap(Quality q) => WeaponCaps[Index(q)];
-
-    /// <summary>How many of a skill's levels count while a weapon of this grade is held: the grade's share of the
-    /// table's top, applied to the skill's own <paramref name="maxLevel"/> and rounded UP — so every grade lets a
-    /// learned skill count at level 1, and only the best grade lets every level count. A 10-level skill counts
-    /// 2 / 3 / 4 / 6 / 7 / 9 / 10 from Raw to A.</summary>
-    public static int SkillLevelCap(Quality q, int maxLevel)
-    {
-        int top = SkillCaps[SkillCaps.Length - 1];
-        return (System.Math.Max(0, maxLevel) * SkillCaps[Index(q)] + top - 1) / top;
-    }
 
     /// <summary>How fast a weapon of this grade trains its weapon mastery (1 = par).</summary>
     public static float TrainingSpeed(Quality q) => Speeds[Index(q)];

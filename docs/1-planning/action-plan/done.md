@@ -58,8 +58,8 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
   - [DONE] `ST-3-O` **`[E]` Build the jumps for all six main stats.** — see [Unified Unit Stats](../../2-systems/active-skill-system-v3/unified-unit-stats.md)
     *Done when:* crossing 10 in STR, INT, VIT, AGI or DEX moves that stat's headline number by 4 more than a normal point does, for a player and for a creature — and crossing 10 LUK adds 4% crit damage more than a normal point does.
 
-  - [DONE] `ST-3-P` **`[E]` Show melee attack, ranged attack and each main stat's next jump on the stat screen.** — see [Unified Unit Stats](../../2-systems/active-skill-system-v3/unified-unit-stats.md)
-    *Done when:* the stat screen shows both attack numbers, and next to each main stat what its next jump gives and at which value.
+  - [DONE] `ST-3-P` **`[E]` Show melee attack and ranged attack on the stat screen.** — see [Unified Unit Stats](../../2-systems/active-skill-system-v3/unified-unit-stats.md)
+    *Done when:* the stat screen shows both attack numbers.
 
   - [DONE] `ST-3-Q` **`[D]` A staff's and a wand's normal attack rolls melee attack.** — see [Unified Unit Stats](../../2-systems/active-skill-system-v3/unified-unit-stats.md)
 

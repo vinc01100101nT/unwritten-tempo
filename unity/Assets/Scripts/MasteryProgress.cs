@@ -145,16 +145,6 @@ public sealed class MasteryProgress
     /// number of skills, different levels".</summary>
     public int LevelsVersion { get; private set; }
 
-    /// <summary>The level of <paramref name="skillId"/> that counts while a weapon of <paramref name="heldQuality"/>
-    /// is held — what was bought, held to what that grade lets count (<see cref="CraftingMath.SkillLevelCap"/>).</summary>
-    public int UsableSkillLevel(string skillId, Quality heldQuality)
-    {
-        int bought = LevelOf(skillId);
-        if (bought <= 0) return 0;
-        var def = SkillCatalog.Get(skillId);
-        return def != null ? Mathf.Min(bought, CraftingMath.SkillLevelCap(heldQuality, def.maxLevel)) : 0;
-    }
-
     /// <summary>The mastery points already spent on <paramref name="weapon"/>'s skills.</summary>
     public int PointsSpentOn(WeaponType weapon)
     {
@@ -272,59 +262,52 @@ public sealed class MasteryProgress
     // works them out (SkillLevelNumbers) and this machine only keeps and draws them.
     readonly Dictionary<string, SkillLevelView> sentViews = new Dictionary<string, SkillLevelView>(32);
 
-    /// <summary>SERVER: for every skill that belongs to a weapon, the level that counts and its raised numbers now and
-    /// at the next level bought, as <paramref name="owner"/> would land them — finished values for the hover card,
-    /// flattened with a count per skill. A skill of the weapon in hand counts only the levels that weapon's grade
-    /// allows and carries its trademark's lift; any other weapon's skill shows every level bought, since which of that
-    /// weapon's grades will be held is not known. An unlearned skill's "now" is its numbers at level 1 and its next
-    /// level is level 1; a skill the grade holds back shows the same numbers in both.</summary>
-    public void CaptureViews(Character owner, out string[] ids, out int[] usable, out int[] counts,
-                             out float[] now, out float[] next)
+    /// <summary>SERVER: for every skill that belongs to a weapon, its raised numbers at the level bought and at the
+    /// next level, as <paramref name="owner"/> would land them — finished values for the hover card, flattened with a
+    /// count per skill. Every level bought counts, whatever is in hand; a skill of the weapon in hand also carries
+    /// that weapon's trademark's lift. An unlearned skill's "now" is its numbers at level 1 and its next level is
+    /// level 1; a skill at its highest level shows the same numbers in both.</summary>
+    public void CaptureViews(Character owner, out string[] ids, out int[] counts, out float[] now, out float[] next)
     {
         var held = owner != null ? owner.HeldWeapon : WeaponType.None;
-        var heldQuality = owner != null ? owner.HeldQuality : Quality.Raw;
-        viewIds.Clear(); viewUsable.Clear(); viewCounts.Clear(); viewNow.Clear(); viewNext.Clear();
+        viewIds.Clear(); viewCounts.Clear(); viewNow.Clear(); viewNext.Clear();
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
         {
             var def = all[i];
             if (def == null || string.IsNullOrEmpty(def.id) || def.weaponType == WeaponType.None) continue;
             bool inHand = def.weaponType == held;
-            int cap = inHand ? CraftingMath.SkillLevelCap(heldQuality, def.maxLevel) : def.maxLevel;
             int bought = LevelOf(def.id);
-            int counting = Mathf.Min(bought, cap);
-            int countingNext = Mathf.Min(Mathf.Min(bought + 1, def.maxLevel), cap);
+            int boughtNext = Mathf.Min(bought + 1, def.maxLevel);
             float trademark = inHand && owner != null ? owner.TrademarkLift(def.id) : 0f;
             int before = viewNow.Count;
-            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(counting) + trademark, viewNow);
-            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(countingNext) + trademark, viewNext);
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(bought) + trademark, viewNow);
+            SkillLevelNumbers.Collect(def, owner, MasteryMath.SkillLevelLift(boughtNext) + trademark, viewNext);
             viewIds.Add(def.id);
-            viewUsable.Add(counting);
             viewCounts.Add(viewNow.Count - before);
         }
         ids = viewIds.ToArray();
-        usable = viewUsable.ToArray();
         counts = viewCounts.ToArray();
         now = viewNow.ToArray();
         next = viewNext.ToArray();
     }
     readonly List<string> viewIds = new List<string>(32);
-    readonly List<int> viewUsable = new List<int>(32), viewCounts = new List<int>(32);
+    readonly List<int> viewCounts = new List<int>(32);
     readonly List<float> viewNow = new List<float>(48), viewNext = new List<float>(48);
 
-    /// <summary>PLAYER'S MACHINE: keep what the server sent about every weapon skill — its usable level with the weapon
-    /// in hand, and its growing numbers now and at the next level, flattened with a count per skill.</summary>
-    public void TakeSentViews(string[] ids, int[] usable, int[] counts, float[] now, float[] next)
+    /// <summary>PLAYER'S MACHINE: keep what the server sent about every weapon skill — its growing numbers now and at
+    /// the next level, flattened with a count per skill.</summary>
+    public void TakeSentViews(string[] ids, int[] counts, float[] now, float[] next)
     {
         sentViews.Clear();
-        if (ids != null && usable != null && counts != null && now != null && next != null)
+        if (ids != null && counts != null && now != null && next != null)
         {
             int at = 0;
-            for (int i = 0; i < ids.Length && i < usable.Length && i < counts.Length; i++)
+            for (int i = 0; i < ids.Length && i < counts.Length; i++)
             {
                 int c = counts[i];
                 if (c < 0 || at + c > now.Length || at + c > next.Length) break;
-                var v = new SkillLevelView { usable = usable[i], now = new float[c], next = new float[c] };
+                var v = new SkillLevelView { now = new float[c], next = new float[c] };
                 System.Array.Copy(now, at, v.now, 0, c);
                 System.Array.Copy(next, at, v.next, 0, c);
                 sentViews[ids[i]] = v;
@@ -383,11 +366,10 @@ public sealed class MasteryProgress
     }
 }
 
-/// <summary>What the server told this machine about one skill's levels: the level that counts with the weapon in
-/// hand, and each growing number (in the order <see cref="SkillLevelNumbers"/> lists them) now and at the next level.</summary>
+/// <summary>What the server told this machine about one skill's levels: each growing number (in the order
+/// <see cref="SkillLevelNumbers"/> lists them) now and at the next level.</summary>
 public struct SkillLevelView
 {
-    public int usable;
     public float[] now;
     public float[] next;
 }

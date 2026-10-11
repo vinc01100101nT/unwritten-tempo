@@ -86,7 +86,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | yes (own affinity list) | no — clamped to 100%, so a lift saturates then does nothing |
 | duration | Effect window length | sec | yes (own affinity list) | **NEVER** — a skill's level must not hold a longer stun |
 
-**The skill-level lift, in full** (V4): every level a character has bought in a skill after the first adds **+5%** to the ring's affinity term on the channels marked above — level 5 is +20%, level 10 is +45% — the same for an active, a passive and an ultimate. It is **added** to that term, never multiplied onto the finished number: multiplying would pay out more the more ring a player had already built, so the same level would be worth far more to a veteran. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless 10-level skill at level 10 is still ×1.45. The grade of the weapon in hand limits how many of the levels count — see [V4 §7 and §9](../gameplay-system-v4/README.md).
+**The skill-level lift, in full** (V4): every level a character has bought in a skill after the first adds **+5%** to the ring's affinity term on the channels marked above — level 5 is +20%, level 10 is +45% — the same for an active, a passive and an ultimate. It is **added** to that term, never multiplied onto the finished number: multiplying would pay out more the more ring a player had already built, so the same level would be worth far more to a veteran. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless 10-level skill at level 10 is still ×1.45. Every level bought counts, whatever the grade of the weapon in hand — see [V4 §7](../gameplay-system-v4/README.md).
 
 **Retired channels — folded into `sub_stat_magnitude` when the sub-stat collapse landed:** `dmg_reduction` (Guard), `dmg_taken_frac` (Vulnerability), `heal_per_tick` (Regen), `slow_amount`, `accuracy_loss`, `move_mult` (Haste), `leech_frac`, `reflect_frac`, `buff_mult`. Do not reintroduce any of them as its own channel — see the note under the Effects catalog.
 
@@ -109,7 +109,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 ## 2. Effects Catalog — LOCKED (the behaviors, "what happens?")
 
-Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used, and limit how many of their levels count** (§1), so there is still nothing to "fold": the ring and a skill's level both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
+Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer) — a skill that knocks back simply *is* a knockback skill. **A weapon contributes no BEHAVIOUR and no numbers to a skill; what it does is decide which skills may be learned and used** (§1), so there is still nothing to "fold": the ring and a skill's level both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
 **This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-10-06). It is the full set — there is no effect a skill can author that is not here.
 
@@ -210,7 +210,7 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 | System | Single responsibility |
 | --- | --- |
-| Weapon | Decides which skills may be learned and used, and limits how many of their levels count (see **[Gameplay System V4](../gameplay-system-v4/README.md)**); defines weapon identity |
+| Weapon | Decides which skills may be learned and used (see **[Gameplay System V4](../gameplay-system-v4/README.md)**); defines weapon identity |
 | Channels (§1) | The skill's numeric outputs ("how much?") |
 | Effects (§2) | The skill's natural behaviors ("what happens?") |
 | Trigger (§6) | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler) |

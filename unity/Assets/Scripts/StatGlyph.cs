@@ -25,6 +25,9 @@ public static class StatGlyph
     /// UIShellBuilder once a hand-drawn icon family exists.</summary>
     public static readonly Sprite[] art = new Sprite[6];
 
+    // The emblems below are drawn for a box this size; any other box shows the same emblem scaled to fit it.
+    const float DrawnBox = 18f;
+
     static Color Ink     => UiKit.Accent;
     static Color InkSoft => new Color(UiKit.Accent.r, UiKit.Accent.g, UiKit.Accent.b, 0.55f);
 
@@ -43,15 +46,28 @@ public static class StatGlyph
         int i = (int)stat;
         if (i >= 0 && i < art.Length && art[i] != null) { Sprite(rt, art[i], box); return rt; }
 
+        var p = Mathf.Approximately(box, DrawnBox) ? rt : Scaled(rt, box / DrawnBox);
         switch (stat)
         {
-            case PrimaryStat.STR: Str(rt); break;
-            case PrimaryStat.AGI: Agi(rt); break;
-            case PrimaryStat.VIT: Vit(rt); break;
-            case PrimaryStat.INT: Int(rt); break;
-            case PrimaryStat.DEX: Dex(rt); break;
-            case PrimaryStat.LUK: Luk(rt); break;
+            case PrimaryStat.STR: Str(p); break;
+            case PrimaryStat.AGI: Agi(p); break;
+            case PrimaryStat.VIT: Vit(p); break;
+            case PrimaryStat.INT: Int(p); break;
+            case PrimaryStat.DEX: Dex(p); break;
+            case PrimaryStat.LUK: Luk(p); break;
         }
+        return rt;
+    }
+
+    // A centred child of the holder that the emblem's bars are drawn into at their own size and shown at `scale`.
+    static RectTransform Scaled(RectTransform holder, float scale)
+    {
+        var inner = UiKit.Img("Emblem", holder, new Color(0, 0, 0, 0));
+        inner.raycastTarget = false;
+        var rt = inner.rectTransform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(DrawnBox, DrawnBox);
+        rt.localScale = new Vector3(scale, scale, 1f);
         return rt;
     }
 

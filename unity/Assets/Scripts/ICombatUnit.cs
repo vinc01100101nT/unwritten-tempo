@@ -188,8 +188,8 @@ public interface ICombatUnit : IDamageable
     /// higher of STR and DEX (<see cref="WeaponTypes.SwingsRanged"/>).</summary>
     bool SwingsRanged { get; }
 
-    /// <summary>The GRADE of the weapon in this unit's hands — what caps its weapon mastery and how many of each
-    /// skill's levels count. Raw with empty hands, which is the lowest there is.</summary>
+    /// <summary>The GRADE of the weapon in this unit's hands — what caps its weapon mastery. Raw with
+    /// empty hands, which is the lowest there is.</summary>
     Quality HeldQuality { get; }
 
     /// <summary>Seconds between this unit's swings at its current attack speed.</summary>

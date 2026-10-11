@@ -27,8 +27,6 @@ public static class MobExport
 
     public static string WikiPath => Path.Combine(RepoRoot, "wiki", "content", "monsters.generated.json");
 
-    static string LayoutPath => Path.Combine(RepoRoot, "tools", "world-creator", "worlds", "world-regions.json");
-
     [Serializable] class Export { public string note; public Creature[] creatures; }
 
     [Serializable] class Creature
@@ -102,7 +100,7 @@ public static class MobExport
         var names = new Dictionary<string, string>();
         try
         {
-            var layout = JsonUtility.FromJson<LayoutJson>(File.ReadAllText(LayoutPath));
+            var layout = JsonUtility.FromJson<LayoutJson>(WorldLayoutFile.ReadText());
             if (layout?.maps != null)
                 foreach (var m in layout.maps)
                     if (m != null && !string.IsNullOrEmpty(m.id)) names[m.id] = string.IsNullOrEmpty(m.name) ? m.id : m.name;

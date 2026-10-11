@@ -55,8 +55,8 @@ try {
 return sb.ToString();
 """
 
-# The bag: a 742x528 window whose frame leaves 710x470 inside (2px border + 14px padding each side,
-# and 40px off the top for the title bar) — read from the window builder, not guessed.
+# The bag: a 324x296 window whose frame leaves 292x246 inside — measured from a window stood up in the editor
+# (the frame takes 32 of the width and 50 of the height), not guessed.
 INVENTORY_BUILD = r"""
   var list = new InventoryList();
   list.Build(panel, null);
@@ -96,8 +96,8 @@ INVENTORY_MEASURE = r"""
 
 RECIPES = {
     "Inventory": {
-        "width": 710, "height": 470,
-        "window_note": "the bag window is 742x528; its frame leaves 710x470 inside",
+        "width": 292, "height": 246,
+        "window_note": "the bag window is 324x296; its frame leaves 292x246 inside",
         "build": INVENTORY_BUILD,
         "measure": INVENTORY_MEASURE,
     },

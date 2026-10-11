@@ -11,7 +11,8 @@ using TMPro;
 /// <para><b>Zone view</b> (what M opens): one map's whole picture, the same picture the minimap slides under you
 /// (<see cref="MinimapCatalog"/>). In the map you stand in it shows where you are and the followed quest's whole route
 /// as the ground's own arrows (<see cref="QuestArrows.Marks"/>) — one route, drawn on the ground, the minimap and here.
-/// Any other map shows its picture alone.</para>
+/// Any other map shows its picture alone. Resting the pointer on a creature's name in the list beside it shows what
+/// the server says about that creature (<see cref="MobInfo"/>) — the lines <c>/mobinfo</c> prints.</para>
 ///
 /// <para><b>World view</b>: the baked <see cref="WorldAtlas"/> with a pulsing "you are here" over the map you are in.
 /// Clicking a map that has a picture opens the zone view on it.</para>
@@ -112,6 +113,18 @@ public class MapWindow : MonoBehaviour
     Vector2 hoverAskedPan;
     bool hoverAsked;
 
+    // The creature card of the zone view: which creature's name the pointer rests on, since when, and what is drawn.
+    RectTransform mobCard;
+    TMP_Text mobCardText;
+    MonsterDef cardMob;
+    float cardRestedSince;
+    string cardShownText;
+    Vector2 cardPlacedAt, cardLookedAt;
+    bool cardLooked;
+    // How long the pointer rests on a name before its card is asked for and shown, in seconds.
+    const float MobCardRest = 0.15f;
+    const float MobCardWidth = 380f, MobCardPad = 10f;
+
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
     const float MarkerSize = 11f, RouteMarkSize = 14f;
 
@@ -142,7 +155,7 @@ public class MapWindow : MonoBehaviour
         if (Hotkeys.CancelDown()) { Close(); Hotkeys.MarkCancelHandled(); return; }
         if (player == null && PersistentPlayer3D.Instance != null) player = PersistentPlayer3D.Instance.transform;
 
-        if (active == world) { UpdateWorldMarker(); UpdateHover(); } else UpdateZone();
+        if (active == world) { UpdateWorldMarker(); UpdateHover(); } else { UpdateZone(); UpdateMobCard(); }
         StepGlide();
         locateButton.SetActive(active == zone ? LocateUsefulInZone() : Zoomed(world) && !CentredOnMarker(world));
     }
@@ -161,6 +174,7 @@ public class MapWindow : MonoBehaviour
         panel.SetActive(false);
         gliding = false;
         HideHover();
+        HideMobCard();
         // A closed window holds no picture.
         MinimapCatalog.ReleasePicture(zonePictureMap);
         zonePictureMap = null;
@@ -198,6 +212,7 @@ public class MapWindow : MonoBehaviour
             zoneMissing.gameObject.SetActive(picture == null);
             routeDrawnVersion = -1;
             zoneRoster.Show(null, map, panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom);
+            HideMobCard();
         }
         UpdateZone();
     }
@@ -210,6 +225,7 @@ public class MapWindow : MonoBehaviour
         zone.zoomRoot.gameObject.SetActive(v == zone);
         zoneRoster.SetVisible(v == zone && zoneRoster.HasPeople);
         if (v != world) HideHover();
+        if (v != zone) HideMobCard();
     }
 
     void SwitchView()
@@ -318,6 +334,53 @@ public class MapWindow : MonoBehaviour
         card.anchoredPosition = new Vector2(x, y);
     }
 
+    // ── zone view: what the server says about the creature whose name the pointer rests on ────────────────────────
+    // The name under the pointer is looked up again only when the pointer moved. The text is the server's, shown as it
+    // arrived; this machine works nothing out.
+    void UpdateMobCard()
+    {
+        if (!cardLooked || pointer != cardLookedAt)
+        {
+            cardLooked = true;
+            cardLookedAt = pointer;
+            var under = pointerOverMap ? zoneRoster.MobUnder(pointer) : null;
+            if (under != cardMob)
+            {
+                cardMob = under;
+                cardRestedSince = Time.unscaledTime;
+                cardShownText = null;
+                if (mobCard.gameObject.activeSelf) mobCard.gameObject.SetActive(false);
+            }
+        }
+        if (cardMob == null || Time.unscaledTime - cardRestedSince < MobCardRest) return;
+
+        if (!MobInfo.TryGetSent(cardMob.id, out string text)) { MobInfo.Ask(cardMob.id); text = "…"; }
+        bool rewritten = !ReferenceEquals(text, cardShownText);
+        if (rewritten)
+        {
+            cardShownText = text;
+            mobCardText.text = text;
+            float inner = MobCardWidth - 2f * MobCardPad;
+            float height = mobCardText.GetPreferredValues(text, inner, 0f).y;
+            mobCardText.rectTransform.sizeDelta = new Vector2(inner, height);
+            mobCard.sizeDelta = new Vector2(MobCardWidth, height + 2f * MobCardPad);
+        }
+        if (!mobCard.gameObject.activeSelf) mobCard.gameObject.SetActive(true);
+        if (rewritten || pointer != cardPlacedAt)
+        {
+            cardPlacedAt = pointer;
+            PlaceBesidePointer(mobCard, pointer);
+        }
+    }
+
+    void HideMobCard()
+    {
+        cardMob = null;
+        cardLooked = false;
+        cardShownText = null;
+        if (mobCard != null && mobCard.gameObject.activeSelf) mobCard.gameObject.SetActive(false);
+    }
+
     // ── zone view: you, and the route, on the map you stand in ────────────────────────────────────────────────────
     bool ShowingOwnMap => zoneMap == MapManager.CurrentMap && zoneEntry != null;
 
@@ -334,7 +397,7 @@ public class MapWindow : MonoBehaviour
         DrawRoute();
         // The screen changed size: the list is laid out again to the height it now has.
         float rosterRoom = panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom;
-        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight)) zoneRoster.Show(null, zoneMap, rosterRoom);
+        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight)) { zoneRoster.Show(null, zoneMap, rosterRoom); HideMobCard(); }
     }
 
     // A spot on the ground of the map you stand in → a point on the zone picture, from its centre.
@@ -476,7 +539,7 @@ public class MapWindow : MonoBehaviour
         ApplyView(v);
     }
 
-    /// <summary>The wheel, the drag and the click, caught by the dimmed backdrop that covers the whole screen.</summary>
+    /// <summary>The wheel, the drag and the click, caught by the black backdrop that covers the whole screen.</summary>
     sealed class MapInput : MonoBehaviour, IScrollHandler, IBeginDragHandler, IDragHandler, IPointerClickHandler,
                             IPointerMoveHandler, IPointerEnterHandler, IPointerExitHandler
     {
@@ -508,8 +571,8 @@ public class MapWindow : MonoBehaviour
         panelRect = panel.GetComponent<RectTransform>();
         Stretch(panelRect);
 
-        // dim, click-blocking backdrop — and the thing the wheel, the drag and the click land on
-        var dim = NewImage("Dim", panel.transform, new Color(0f, 0f, 0f, 0.8f));
+        // solid black, click-blocking backdrop — and the thing the wheel, the drag and the click land on
+        var dim = NewImage("Dim", panel.transform, Color.black);
         Stretch(dim.rectTransform);
         dim.raycastTarget = true;
         dim.gameObject.AddComponent<MapInput>().owner = this;
@@ -560,6 +623,20 @@ public class MapWindow : MonoBehaviour
         zrt.anchoredPosition = new Vector2(-24f, -ZoneRosterTop);
         hoverRoster = new RosterCard(panel.transform);
         hoverRoster.Root.anchorMin = hoverRoster.Root.anchorMax = new Vector2(0.5f, 0.5f);
+
+        // the creature card — built last, so it draws over the list it belongs to; it catches no clicks
+        var card = UiKit.Card(UiKit.Img("MobCard", panel.transform, Color.white));
+        mobCard = card.rectTransform;
+        mobCard.anchorMin = mobCard.anchorMax = new Vector2(0.5f, 0.5f);
+        mobCardText = UiKit.MakeText("Text", mobCard, "", 12, FontStyle.Normal, TextAnchor.UpperLeft);
+        mobCardText.color = UiKit.TextMain;
+        mobCardText.richText = true;
+        mobCardText.textWrappingMode = TextWrappingModes.Normal;
+        var crt = mobCardText.rectTransform;
+        crt.anchorMin = crt.anchorMax = crt.pivot = new Vector2(0f, 1f);
+        crt.anchoredPosition = new Vector2(MobCardPad, -MobCardPad);
+        foreach (var g in card.GetComponentsInChildren<Graphic>(true)) g.raycastTarget = false;
+        mobCard.gameObject.SetActive(false);
     }
 
     // Where the zone view's list sits: below the title, above the location button.
@@ -587,6 +664,10 @@ public class MapWindow : MonoBehaviour
         readonly List<WorldTownsfolk.Row> people = new List<WorldTownsfolk.Row>();
         readonly List<string> lines = new List<string>();
         readonly List<bool> heads = new List<bool>();
+        // The creature each line names (null for a heading, a blank or a person), and the line each shown column opens on.
+        readonly List<MonsterDef> lineMobs = new List<MonsterDef>();
+        readonly List<int> columnStarts = new List<int>();
+        int shownColumns;
         readonly System.Text.StringBuilder sb = new System.Text.StringBuilder();
         readonly string headOpen;
 
@@ -617,14 +698,17 @@ public class MapWindow : MonoBehaviour
             WorldSpawns.CreaturesIn(map, mobs);
             WorldTownsfolk.PeopleIn(map, people);
             HasPeople = mobs.Count > 0 || people.Count > 0;
-            if (!HasPeople) { SetVisible(false); return; }
+            if (!HasPeople) { shownColumns = 0; SetVisible(false); return; }
 
             lines.Clear();
             heads.Clear();
+            lineMobs.Clear();
+            columnStarts.Clear();
             if (mobs.Count > 0)
             {
                 Add("Mobs", true);
-                foreach (var m in mobs) Add(UnitLabel.WithLevel(m.displayName, m.level), false);
+                foreach (var m in mobs)
+                    Add(UnitLabel.WithLevel(m.displayName, m.level) + (m.kind == CreatureKind.Elite ? " (Elite)" : ""), false, m);
             }
             if (people.Count > 0)
             {
@@ -665,6 +749,7 @@ public class MapWindow : MonoBehaviour
                     if (heads[i]) sb.Append(headOpen).Append(lines[i]).Append("</color></b>");
                     else sb.Append(lines[i]);
                 }
+                columnStarts.Add(at);
                 var col = Column(used++);
                 col.gameObject.SetActive(true);
                 col.text = sb.ToString();
@@ -676,13 +761,29 @@ public class MapWindow : MonoBehaviour
                 at = end;
             }
             for (int i = used; i < columns.Count; i++) columns[i].gameObject.SetActive(false);
+            shownColumns = used;
 
             float width = Mathf.Max(x - ColumnGap + Pad, widest + 2f * Pad);
             Root.sizeDelta = new Vector2(width, top + tallest + Pad);
             SetVisible(true);
         }
 
-        void Add(string line, bool head) { lines.Add(line); heads.Add(head); }
+        void Add(string line, bool head, MonsterDef mob = null) { lines.Add(line); heads.Add(head); lineMobs.Add(mob); }
+
+        /// <summary>The creature whose line of the list is under <paramref name="screenPoint"/>; null over anything else.</summary>
+        public MonsterDef MobUnder(Vector2 screenPoint)
+        {
+            if (!Root.gameObject.activeSelf) return null;
+            for (int i = 0; i < shownColumns; i++)
+            {
+                var col = columns[i];
+                if (!RectTransformUtility.RectangleContainsScreenPoint(col.rectTransform, screenPoint, null)) continue;
+                int line = TMP_TextUtilities.FindIntersectingLine(col, screenPoint, null);
+                int at = line >= 0 ? columnStarts[i] + line : -1;
+                return at >= 0 && at < lineMobs.Count ? lineMobs[at] : null;
+            }
+            return null;
+        }
 
         TMP_Text Column(int i)
         {

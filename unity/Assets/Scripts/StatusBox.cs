@@ -16,10 +16,8 @@ public class StatusBox : MonoBehaviour
     const float Width = 330f, RowHeight = 18f, RowGap = 5f, BarHeight = 12f, LabelWidth = 124f;
     const float ButtonHeight = 24f, ButtonGap = 4f, Pad = 10f;
 
-    // The bars' fills — the colours they have always had: the character's green and the ring's blue; the mastery bar
-    // takes the held weapon's own colour.
-    static readonly Color CharFill = new Color(0.55f, 0.85f, 0.5f, 0.9f);
-    static readonly Color RingFill = new Color(0.55f, 0.8f, 1f, 0.9f);
+    // Every bar fills in the theme's blue.
+    static readonly Color BarFill = UiKit.Accent;
 
     // Every HUD window, by the name it carries, and the key that already opens it. Settings has no key of its own
     // and is opened directly.
@@ -35,7 +33,6 @@ public class StatusBox : MonoBehaviour
     RectTransform window;
     TMP_Text title, charLabel, ringLabel, masteryLabel, charName, ringName, masteryName, zeny;
     RectTransform charFill, ringFill, masteryFill;
-    Image masteryFillImage;
     GameObject masteryRow, windowButtons;
     TMP_Text toggleGlyph;
     float collapsedHeight, expandedHeight;
@@ -80,12 +77,11 @@ public class StatusBox : MonoBehaviour
 
         // The content area starts under the bar with the window's own inset; the rows are laid top-down in it.
         float y = 0f;
-        charFill = Row(content, y, CharFill, out charName, out charLabel, out _);
+        charFill = Row(content, y, BarFill, out charName, out charLabel, out _);
         y -= RowHeight + RowGap;
-        ringFill = Row(content, y, RingFill, out ringName, out ringLabel, out _);
+        ringFill = Row(content, y, BarFill, out ringName, out ringLabel, out _);
         y -= RowHeight + RowGap;
-        masteryFill = Row(content, y, RingFill, out masteryName, out masteryLabel, out masteryRow);
-        masteryFillImage = masteryFill.GetComponent<Image>();
+        masteryFill = Row(content, y, BarFill, out masteryName, out masteryLabel, out masteryRow);
         y -= RowHeight + RowGap;
 
         zeny = UiKit.MakeText("Zeny", content, "", 12, FontStyle.Normal, TextAnchor.MiddleRight, null, false);
@@ -130,8 +126,8 @@ public class StatusBox : MonoBehaviour
         border.gameObject.SetActive(true);
     }
 
-    // A labelled bar: its name on the left ("Lv 12"), the bar filling the rest with "x / y" on it. Returns the fill,
-    // left-anchored, whose width is the progress.
+    // A labelled bar: its name on the left ("Lv 12"), the bar filling the rest with how full it is, as a percentage,
+    // written on it. Returns the fill, left-anchored, whose width is the progress.
     RectTransform Row(Transform parent, float top, Color fillColor, out TMP_Text name, out TMP_Text numbers, out GameObject row)
     {
         row = new GameObject("Row", typeof(RectTransform));
@@ -226,8 +222,7 @@ public class StatusBox : MonoBehaviour
         if (ch.Level != lastCharLvl || ch.XP != lastCharXp || ch.XPToNext != lastCharToNext)
         {
             lastCharLvl = ch.Level; lastCharXp = ch.XP; lastCharToNext = ch.XPToNext;
-            SetFill(charFill, ch.XPToNext > 0 ? (float)(ch.XP / ch.XPToNext) : 0f);
-            charLabel.text = $"{ch.XP:0.00} / {ch.XPToNext}";
+            ShowProgress(charFill, charLabel, ch.XPToNext > 0 ? (float)(ch.XP / ch.XPToNext) : 0f);
             charName.text = "Lv " + ch.Level;
         }
 
@@ -235,8 +230,7 @@ public class StatusBox : MonoBehaviour
         if (r.Level != lastRingLvl || r.XP != lastRingXp)
         {
             lastRingLvl = r.Level; lastRingXp = r.XP;
-            SetFill(ringFill, r.XPToNext > 0 ? (float)(r.XP / r.XPToNext) : 0f);
-            ringLabel.text = $"{r.XP:0.00} / {r.XPToNext}";
+            ShowProgress(ringFill, ringLabel, r.XPToNext > 0 ? (float)(r.XP / r.XPToNext) : 0f);
             ringName.text = "Ring Lv " + r.Level;
         }
 
@@ -265,7 +259,6 @@ public class StatusBox : MonoBehaviour
         masteryRow.SetActive(show);
         if (!show) return;
 
-        masteryFillImage.color = WeaponColors.Load()?.Lookup(weapon) ?? RingFill;
         masteryName.text = $"{WeaponTypes.Label(weapon)} Mastery Lv {level}";   // perf-ok: gated by the early return above
         if (capped)
         {
@@ -274,9 +267,15 @@ public class StatusBox : MonoBehaviour
         }
         else
         {
-            SetFill(masteryFill, size > 0.0 ? (float)(into / size) : 0f);
-            masteryLabel.text = $"{into:0.00} / {size:0}";   // perf-ok: gated by the early return above
+            ShowProgress(masteryFill, masteryLabel, size > 0.0 ? (float)(into / size) : 0f);
         }
+    }
+
+    // One fraction for a bar, drawn twice: as the fill's width and as the percentage written on it.
+    static void ShowProgress(RectTransform fill, TMP_Text label, float fraction)
+    {
+        SetFill(fill, fraction);
+        label.text = Mathf.Clamp01(fraction).ToString("0.00%");
     }
 
     static void SetFill(RectTransform fill, float fraction)

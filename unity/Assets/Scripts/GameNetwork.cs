@@ -829,6 +829,21 @@ public class GameNetwork : NetworkManager
         public string text;
     }
 
+    /// <summary>A player's machine asking what the game says about one creature, by its id — sent when the pointer
+    /// rests on a creature's name in the map window. It carries the id and nothing else.</summary>
+    public struct MobInfoRequest : NetworkMessage
+    {
+        public string id;
+    }
+
+    /// <summary>The server's finished text about that creature (<see cref="MobInfo.Text"/>), with the id it answers,
+    /// sent only to the connection that asked.</summary>
+    public struct MobInfoReply : NetworkMessage
+    {
+        public string id;
+        public string text;
+    }
+
     /// <summary>A LINE SOMEBODY TYPED AND SAID OUT LOUD. It carries the words and nothing else: not who said them
     /// and not where they were standing, because the server already knows which connection this arrived on and
     /// where it holds that person. A machine that named its own speaker could put words in anybody's mouth.</summary>
@@ -918,6 +933,7 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<SkillCastRequest>(OnSkillCastRequest);
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
+        NetworkServer.RegisterHandler<MobInfoRequest>(OnMobInfoRequest);
         NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
         NetworkServer.RegisterHandler<PmSend>(OnPmSend);
     }
@@ -933,6 +949,9 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<XpEarned>(OnXpEarned);
         NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
+        // A new connection may be to a server holding different numbers, so nothing an earlier one sent is kept.
+        MobInfo.ForgetSent();
+        NetworkClient.RegisterHandler<MobInfoReply>(OnMobInfoReply);
         NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
         NetworkClient.RegisterHandler<TimeOfDayShift>(OnTimeOfDayShift);
         NetworkClient.RegisterHandler<WeatherHeld>(OnWeatherHeld);
@@ -2617,6 +2636,35 @@ public class GameNetwork : NetworkManager
         pendingCommandReply?.Invoke(msg.text);
     }
 
+    /// <summary>PLAYER'S MACHINE: ask the server what it says about creature <paramref name="id"/>. False when
+    /// there is no server to ask.</summary>
+    public static bool AskMobInfo(string id)
+    {
+        if (!NetworkClient.isConnected || string.IsNullOrEmpty(id)) return false;
+        NetworkClient.Send(new MobInfoRequest { id = id });
+        return true;
+    }
+
+    static void OnMobInfoReply(MobInfoReply msg) => MobInfo.TakeSent(msg.id, msg.text);
+
+    // Questions asked of the server — a typed command, a creature's details — counted per connection together, so
+    // neither door can be used to flood the other's work.
+    const int MaxQuestionsPerSecond = 10;
+    static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> questionLedgers =
+        new System.Collections.Generic.Dictionary<int, ClaimLedger>();
+    static bool AskingTooFast(int connectionId) => TooMany(questionLedgers, connectionId, MaxQuestionsPerSecond);
+
+    // Asked BY a player, answered HERE with the finished text. Only an exact creature id is looked up, and the
+    // text is built once per creature (MobInfo), so an answer costs one dictionary read.
+    void OnMobInfoRequest(NetworkConnectionToClient conn, MobInfoRequest msg)
+    {
+        if (conn == null || AskingTooFast(conn.connectionId)) return;
+        if (ShellFor(conn) == null) return;
+        if (string.IsNullOrEmpty(msg.id) || msg.id.Length > 64) return;
+        var d = MonsterCatalog.ById(msg.id);
+        conn.Send(new MobInfoReply { id = msg.id, text = d != null ? MobInfo.Text(d) : "No creature called '" + msg.id + "'." });
+    }
+
     // ---- SAYING SOMETHING OUT LOUD ----------------------------------------------------------------------
     //
     // A said line takes exactly the shape a cast already takes, and deliberately so: the speaker ASKS, the server
@@ -2867,6 +2915,7 @@ public class GameNetwork : NetworkManager
             conn.Send(new GmCommandReply { text = text });
         }
 
+        if (conn == null || AskingTooFast(conn.connectionId)) return;
         var asker = ShellFor(conn);
         if (asker == null) return;   // no body here yet; there is nobody for a command to act as
 
@@ -3018,6 +3067,7 @@ public class GameNetwork : NetworkManager
         swingLedgers.Remove(conn.connectionId);
         skillLedgers.Remove(conn.connectionId);
         chatLedgers.Remove(conn.connectionId);
+        questionLedgers.Remove(conn.connectionId);
         pmSentLedgers.Remove(conn.connectionId);
         if (leftShell != null && !string.IsNullOrEmpty(leftShell.ServerCharacterId))
             pmReceivedLedgers.Remove(leftShell.ServerCharacterId);

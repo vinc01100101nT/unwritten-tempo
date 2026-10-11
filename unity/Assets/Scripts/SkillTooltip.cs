@@ -533,7 +533,6 @@ public static class SkillTooltip
         {
             hasView = mastery.SentView(def.id, out view);
             sb.Append("\nSkill level ").Append(Hl(level.ToString())).Append(" / ").Append(top);
-            if (hasView && level > view.usable) sb.Append("  ").Append(Chipped(view.usable + " count with this weapon"));
         }
 
         bool any = false;

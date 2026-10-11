@@ -863,16 +863,8 @@ public static class GmCommands
         var d = MonsterCatalog.Get(typed);
         if (d == null) { c.Reply($"No creature called '{typed}'."); return; }
 
-        float size = MobSizes.Of(d.kind, d.size);
-        c.Reply($"<color={NameHex}>{d.displayName}</color> ({d.id}) — {d.kind}, Lv {d.level}");
-        c.Reply($"Size {size:0.##} ({MobSizes.GroupOf(size)}) · Element {d.element} {d.elementLevel} · Biome {d.biome}");
-        c.Reply($"HP {MonsterDefStats.Derived(d, MonsterDefStats.Stat.HP)} · ATK {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk)}"
-                + $" · DEF {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def)} · FLEE {MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee)}");
-        c.Reply($"STR {d.str} · AGI {d.agi} · VIT {d.vit} · INT {d.intel} · DEX {d.dex} · LUK {d.luk}");
-        c.Reply($"XP {CreatureKinds.KillExperience(d.kind, d.level)}");
-
-        // WHAT IT DROPS, read from the same tables the death roll reads, in the one wording the wiki prints too.
-        c.Reply("Drops: " + CreatureDrops.Line(d));
+        // The one wording of a creature's details — the map window's card shows these same lines.
+        foreach (var line in MobInfo.Lines(d)) c.Reply(line);
     }
 
     static readonly List<CreatureDrops.Source> sourcesScratch = new List<CreatureDrops.Source>();

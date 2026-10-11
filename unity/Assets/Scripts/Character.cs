@@ -415,14 +415,14 @@ public class Character : MonoBehaviour, ICombatUnit
     public float SkillOutputLift(string skillId) => MasteryLift(skillId) + TrademarkLift(skillId);
 
     /// <summary>The lift the level this character bought in <paramref name="skillId"/> puts on its main numbers — the
-    /// same for an active, a passive and an ultimate: +5% a level after the first, counting only the levels the weapon
-    /// in hand's grade allows, and only while that skill's weapon is in hand, so a potion's skill gets nothing.</summary>
+    /// same for an active, a passive and an ultimate: +5% a level after the first, every level bought counting, and
+    /// only while that skill's weapon is in hand, so a potion's skill gets nothing.</summary>
     public float MasteryLift(string skillId)
     {
         if (string.IsNullOrEmpty(skillId)) return 0f;
         var def = SkillCatalog.Get(skillId);
         if (def == null || !def.RidesWeaponMastery(HeldWeaponType)) return 0f;
-        return MasteryMath.SkillLevelLift(Mastery.UsableSkillLevel(skillId, HeldQuality));
+        return MasteryMath.SkillLevelLift(Mastery.LevelOf(skillId));
     }
 
     /// <summary>What the weapon in hand's trademark adds to <paramref name="skillId"/>'s main numbers — the finished

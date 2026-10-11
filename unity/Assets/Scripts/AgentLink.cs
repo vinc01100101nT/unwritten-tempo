@@ -1248,8 +1248,6 @@ public class AgentLink : MonoBehaviour
             if (d == null || d.weaponType != w) continue;
             sb.Append("\n  ").Append(d.displayName).Append(" ").Append(me.Mastery.LevelOf(d.id)).Append('/')
               .Append(Mathf.Max(1, d.maxLevel)).Append(" (opens at ").Append(Mathf.Max(1, d.masteryLevel)).Append(')');
-            if (me.Mastery.SentView(d.id, out var view) && me.Mastery.LevelOf(d.id) > view.usable)
-                sb.Append(" counts as ").Append(view.usable);
         }
         return sb.ToString();
     }

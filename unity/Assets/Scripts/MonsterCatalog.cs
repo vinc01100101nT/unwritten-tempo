@@ -31,7 +31,15 @@ public static class MonsterCatalog
     }
 
     /// <summary>Drop the cache so the next access reloads from Resources (use after creating/editing assets).</summary>
-    public static void Reload() { _all = null; _byId = null; }
+    public static void Reload() { _all = null; _byId = null; MobInfo.ForgetLines(); }
+
+    /// <summary>The creature with exactly this id (either case), or null — never a search by name.</summary>
+    public static MonsterDef ById(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        EnsureLoaded();
+        return _byId.TryGetValue(id, out var d) ? d : null;
+    }
 
     public static IReadOnlyList<MonsterDef> All { get { EnsureLoaded(); return _all; } }
 

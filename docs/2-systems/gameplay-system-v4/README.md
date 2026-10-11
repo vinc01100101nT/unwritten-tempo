@@ -98,7 +98,7 @@ way further is to quench. *(Example gates, to be tuned:)*
 So a B +30 that quenches becomes **A +0** or **C +0**, and the decision to try is the whole game.
 
 **What quality does:** it lifts what the piece's folds buy (as rarity used to), and the size of an armour piece's word, it caps and speeds
-weapon mastery (§5), it limits how many of a skill's levels count (§7), and it sets **how many stat slots** the piece has (§3). A Raw piece caps mastery **below F**.
+weapon mastery (§5), and it sets **how many stat slots** the piece has (§3). A Raw piece caps mastery **below F**.
 
 **No Potential.** The folds are the budget, and they refill through work.
 
@@ -257,16 +257,15 @@ train it.
   stacks a skill adds to another skill's pile. A skill with several (Thousand Petals' strike AND its damage buff)
   has all of them raised. Chance, duration, number of hits and seconds added are raised by the ring alone. The
   weapon trademark (§6) raises exactly the same numbers.
-- **The equipped weapon's grade limits how many levels COUNT** (the table in §9). The levels bought are kept;
-  a better weapon lets more of them count again. Level 1 of a learned skill always counts, at every grade.
+- **Every level bought COUNTS, with any weapon of the skill's type.** The weapon's grade does not limit skill
+  levels, and nothing else does: a skill can be raised to its max level and every level raises its numbers.
 - **What the Skills window shows.** One weapon at a time, as a horizontal timeline of mastery 0 → 70: each skill's
   left edge sits at the mastery level that opens it, a skill and the skills that need it share rows joined by
   wires, a skill out of reach is faint, one in reach with no point is solid grey, and a bought one wears the
   weapon's colour; a **+** button on each skill spends a point. The skill's card shows **PASSIVE / ACTIVE /
   ULTIMATE** beside the name, its requirements (green when met, red when not), "Skill level N / max", and each
   growing number now → at the next level. Those numbers are what an ordinary cast lands: they include the
-  character's ring investment and, for a skill of the weapon in hand, its grade limit and its trademark; a skill of
-  a weapon not in hand shows every level bought.
+  character's ring investment and, for a skill of the weapon in hand, its trademark.
 - **Existing characters** had their automatically-learned skills cleared and every point their masteries earned
   handed back to spend (save version 17). There is no refund for players; the GM command `/resetskills
   [weapon|all]` takes points back for testing.
@@ -286,19 +285,16 @@ move once it is played. Change it here, in place, when it does.
 
 ### Folds and quality
 
-| Grade | Fold cap = quench gate | Quality lift on the fold value | Ink slots | Weapon Mastery cap | Skill levels that count (10-level / 5-level skill) | Weapon Mastery speed |
-| --- | --- | --- | --- | --- | --- | --- |
-| Raw | +5 | +0% | 0 | 10 | 2 / 1 | ×0.5 |
-| F | +10 | +0% | 1 | 20 | 3 / 2 | ×0.75 |
-| E | +15 | +5% | 2 | 30 | 4 / 2 | ×1.0 |
-| D | +20 | +10% | 3 | 40 | 6 / 3 | ×1.1 |
-| C | +25 | +15% | 4 | 50 | 7 / 4 | ×1.2 |
-| B | +30 | +22% | 5 | 60 | 9 / 5 | ×1.35 |
-| A | +35 | +30% | 6 | 70 | 10 / 5 | ×1.5 |
+| Grade | Fold cap = quench gate | Quality lift on the fold value | Ink slots | Weapon Mastery cap | Weapon Mastery speed |
+| --- | --- | --- | --- | --- | --- |
+| Raw | +5 | +0% | 0 | 10 | ×0.5 |
+| F | +10 | +0% | 1 | 20 | ×0.75 |
+| E | +15 | +5% | 2 | 30 | ×1.0 |
+| D | +20 | +10% | 3 | 40 | ×1.1 |
+| C | +25 | +15% | 4 | 50 | ×1.2 |
+| B | +30 | +22% | 5 | 60 | ×1.35 |
+| A | +35 | +30% | 6 | 70 | ×1.5 |
 
-- **Skill levels that count:** the grade's share of a 30-step scale (Raw 4 · F 8 · E 12 · D 16 · C 20 · B 25 ·
-  A 30), applied to the skill's own max level and rounded up — so a 1-level skill always counts and only
-  an A-grade weapon lets every level of a 10-level skill count.
 - **Per fold:** a weapon gains **+1.8 attack** (or +1.8 magic attack for a Staff / Wand / Scythe). An armour piece's
   **material** decides what a fold buys and its **slot** how much: metal **+0.9 defence and +7.2 HP**, leather
   **+0.45% attack speed and +0.45 evasion**, cloth **+0.9 magic defence and +3.6 MP** on body and garment;

@@ -84,6 +84,9 @@ public static class SkillRing
         return cap * ranks / (ranks + k);
     }
 
+    /// <summary><see cref="Percent"/> as the whole number a window shows — 0.104 reads as 10.</summary>
+    public static int PercentPoints(StatId stat, int ranks) => Mathf.RoundToInt(Percent(stat, ranks) * 100f);
+
     // ---- ring topology --------------------------------------------------------
 
     static readonly Dictionary<StatId, int> indexOf = BuildIndex();

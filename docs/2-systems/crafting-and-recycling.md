@@ -22,7 +22,7 @@ material band of its own grade to make it worth more, and **quench** it to move 
 F-to-A ladder — which spends every fold, whichever way the quench goes. **Ink** writes a stat onto it, one roll
 of one stat, and better Ink writes a bigger number. **Salt** shifts a quench's odds and is spent either way.
 Skills are not on the weapon at all: you buy and level them with the mastery points a weapon's mastery earns, and
-the grade of what you hold caps that mastery and how many of a skill's levels count.
+the grade of what you hold caps that mastery; every skill level you bought counts at any grade.
 
 ---
 

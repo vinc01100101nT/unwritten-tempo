@@ -2,22 +2,20 @@
   "generated_by": "tools/ui-geometry.py \u2014 measured from the running editor; re-run it",
   "Inventory": {
     "parts": {
-      "window": 710.0,
-      "header_size": 11.0,
-      "row": 34.0,
-      "search": 41.0,
-      "list": 340.0
+      "window": 292.0,
+      "header_size": 10.0,
+      "row": 20.0,
+      "search": 22.0,
+      "list": 160.0
     },
     "columns": {
-      "Name": 530.0,
-      "Tier": 76.0,
-      "Held": 48.0
+      "Name": 234.0,
+      "Held": 34.0
     },
     "cell_sizes": {
-      "Name": 14.0,
-      "Tier": 12.0,
-      "Held": 11.0
+      "Name": 12.0,
+      "Held": 10.0
     },
-    "note": "the bag window is 742x528; its frame leaves 710x470 inside"
+    "note": "the bag window is 324x296; its frame leaves 292x246 inside"
   }
 }

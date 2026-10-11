@@ -36,7 +36,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every stat feeds several numbers at once — that spread is what makes a build. On top of that, **every time a stat reaches a multiple of 10 — gear included — it jumps one number up**: +4 at 10, +6 at 20, +22 at 100, each jump bigger than the last. Your character sheet shows the next jump beside each stat. The exact per-point values:"
+      "text": "Every stat feeds several numbers at once — that spread is what makes a build. On top of that, **every time a stat reaches a multiple of 10 — gear included — it jumps one number up**: +4 at 10, +6 at 20, +22 at 100, each jump bigger than the last. The exact per-point values:"
     },
     {
       "type": "table",

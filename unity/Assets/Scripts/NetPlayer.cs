@@ -1669,8 +1669,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     // wide, and a skill level moves only when a point is spent.
     double sentPracticeTotal = -1.0;
     int sentLevelsVersion = -1;
-    // The weapon in hand and its grade decide which progress is shown, whether it is capped, and how many of each
-    // skill's levels count, so a swap resends.
+    // The weapon in hand and its grade decide which progress is shown and whether it is capped, so a swap resends.
     WeaponType sentHeldWeapon = (WeaponType)(-1);
     Quality sentHeldGrade;
     // The card's numbers also carry the ring's investment and the trademark of the exact weapon in hand.
@@ -1704,21 +1703,21 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         sentRingRanks = ringRanks;
         sentTrademark = trademark;
         person.Mastery.CaptureProgress(held, grade, out var progWeapons, out var into, out var size, out var capped);
-        string[] viewIds = null; int[] usable = null, counts = null; float[] now = null, next = null;
-        if (withViews) person.Mastery.CaptureViews(person, out viewIds, out usable, out counts, out now, out next);
+        string[] viewIds = null; int[] counts = null; float[] now = null, next = null;
+        if (withViews) person.Mastery.CaptureViews(person, out viewIds, out counts, out now, out next);
         TargetMastery(connectionToClient, weapons, points, skillIds, levels, person.Mastery.EarnedLevels(weapons),
                       person.Mastery.PointsLeft(weapons), progWeapons, into, size, capped,
-                      withViews, viewIds, usable, counts, now, next);
+                      withViews, viewIds, counts, now, next);
     }
 
     [TargetRpc]
     void TargetMastery(NetworkConnectionToClient target, int[] weapons, double[] points,
                        string[] skillIds, int[] skillLevels, int[] levels, int[] pointsLeft,
                        int[] progWeapons, double[] into, double[] size, bool[] capped,
-                       bool withViews, string[] viewIds, int[] usable, int[] counts, float[] now, float[] next)
+                       bool withViews, string[] viewIds, int[] counts, float[] now, float[] next)
     {
         var p = new object[] { weapons, points, skillIds, skillLevels, levels, pointsLeft,
-                               progWeapons, into, size, capped, withViews, viewIds, usable, counts, now, next };
+                               progWeapons, into, size, capped, withViews, viewIds, counts, now, next };
         // A delivery still parked keeps the card's numbers it carried when a later one arrives without any.
         if (!withViews && masteryWaitingForACharacter != null && (bool)masteryWaitingForACharacter[10])
             for (int i = 10; i < p.Length; i++) p[i] = masteryWaitingForACharacter[i];
@@ -1749,7 +1748,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         me.Mastery.TakeSentLevels(weapons, (int[])p[4]);
         me.Mastery.TakeSentPointsLeft(weapons, (int[])p[5]);
         me.Mastery.TakeSentProgress((int[])p[6], (double[])p[7], (double[])p[8], (bool[])p[9]);
-        if ((bool)p[10]) me.Mastery.TakeSentViews((string[])p[11], (int[])p[12], (int[])p[13], (float[])p[14], (float[])p[15]);
+        if ((bool)p[10]) me.Mastery.TakeSentViews((string[])p[11], (int[])p[12], (float[])p[13], (float[])p[14]);
         me.RefreshUsableSkills();
     }
 
