@@ -946,6 +946,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     float nextWeaponAskAt;
     int drawnTooFastReports;
     float orderedMoveUntil;   // a glide or shove this server ordered is fast on purpose — not a sprint, until then
+    float orderedMoveSpeed;   // …and how fast it goes: the movement check allows this much until it ends
 
     void OnDrawArrived(DrawSaid _, DrawSaid now) => ShowDraw(now);
 
@@ -1354,6 +1355,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             ? WeaponDrawMath.OrderedMoveSeconds(Vector3.Distance(netPosition, motion.destination), runSpeed * motion.speed, motion.seconds, LongestHop)
             : motion.kind == Motion.Kind.Shove ? WeaponDrawMath.OrderedMoveSeconds(0f, 1f, motion.seconds, LongestHop) : 0f;
         orderedMoveUntil = Mathf.Max(orderedMoveUntil, Time.time + lasts);
+        // A DASH IS FASTER THAN ANYTHING THE MOVEMENT CHECK EXPECTS — Thousand Petals glides at 8× the run gear, past
+        // three sprints — so while it lasts, the check is told its speed. Forgiving only the first report was not
+        // enough: a long dash sent four more, each refused, and the fourth dragged the dasher back to where they began.
+        orderedMoveSpeed = WeaponDrawMath.OrderedMoveSpeed(runSpeed, motion.kind == Motion.Kind.Glide ? motion.speed : 0f);
         lookSentToOwner = motion.look;
         TargetMove(owner, motion);
     }
@@ -3779,6 +3784,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         float top = spec != null ? spec.FullSpeed : 8f;
         var unit = ServerCombatUnit;
         if (unit != null && unit.States != null) top *= Mathf.Max(1f, unit.States.MoveMult);
+        if (now < orderedMoveUntil) top = Mathf.Max(top, orderedMoveSpeed);
 
         float allowed = top * SpeedForgiveness * elapsed + StepSlack;
 

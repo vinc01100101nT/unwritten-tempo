@@ -71,6 +71,11 @@ public static class WeaponDrawMath
         return (lasts < longest ? lasts : longest) + OrderedMoveSlackSeconds;
     }
 
+    /// <summary>How fast a move the server ordered travels: the run gear's speed × the glide's own speed multiplier.
+    /// 0 for a move that is not a glide, which then leaves the movement check's ceiling as it was.</summary>
+    public static float OrderedMoveSpeed(float runSpeed, float glideSpeedMult) =>
+        glideSpeedMult > 0f ? runSpeed * glideSpeedMult : 0f;
+
     /// <summary>The share of a spin's window spent lifting the weapon off the fist at its start, and the same share
     /// settling it back at its end.</summary>
     public const float SpinLiftEaseShare = 0.2f;

@@ -89,11 +89,14 @@ public static class UiKit
         if (font == null) return null;
         if (_outlined.TryGetValue((font, width), out var m) && m != null) return m;
         m = new Material(font.material);
+        // Words floating in the world draw over it, never behind the grass or the ground they stand on. MOVED ONTO
+        // THE ALWAYS-ON-TOP SHADER FIRST, and only then given the edge: a material changing shader keeps no promise
+        // about the switches set on the old one, and the black edge went missing from every floating word the batch
+        // this swap arrived in (2026-10-12).
+        DrawOverTheWorld(m);
         m.EnableKeyword("OUTLINE_ON");
         m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
         m.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0, 0, 0, 0.9f));
-        // Words floating in the world draw over it, never behind the grass or the ground they stand on.
-        DrawOverTheWorld(m);
         _outlined[(font, width)] = m;
         return m;
     }
