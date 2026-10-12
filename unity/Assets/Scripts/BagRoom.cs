@@ -28,6 +28,19 @@ public static class BagRoom
     public static int SlotsNeeded(bool isGear, int count, bool alreadyHeld)
         => isGear ? (count > 0 ? count : 0) : (alreadyHeld || count <= 0 ? 0 : 1);
 
+    /// <summary>How many of <paramref name="wanted"/> (a stack, one entry however many) fit — for taking part of a
+    /// pile when all of it does not. 0 when none does.</summary>
+    public static int MostThatFits(int wanted, int slotsUsed, bool alreadyHeld, int weightNow, int unitWeight, int weightCap)
+    {
+        if (wanted <= 0) return 0;
+        if (!alreadyHeld && slotsUsed + 1 > SlotsPerCategory) return 0;
+        if (unitWeight <= 0) return wanted;
+        int room = weightCap - weightNow;
+        if (room <= 0) return 0;
+        int most = room / unitWeight;
+        return most < wanted ? most : wanted;
+    }
+
     /// <summary>Does it fit? <paramref name="slotsUsed"/> is what its tab holds now, <paramref name="weightNow"/> what is
     /// carried now. A thing that adds no entry is never refused for slots, and one that adds no weight never for weight —
     /// so a tab already over its limit (a save from before the limit) still takes more of a stack it holds.</summary>

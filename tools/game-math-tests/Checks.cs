@@ -1483,6 +1483,9 @@ static class Checks
         That(BagRoom.Judge(0, 1, 1990, 10, 2000) == BagRefusal.None, BagRoomF, "reaching the weight limit exactly should fit");
         That(BagRoom.Judge(0, 1, 1991, 10, 2000) == BagRefusal.TooHeavy, BagRoomF, "going one past the weight limit should be refused");
         That(BagRoom.Judge(0, 1, 5000, 0, 2000) == BagRefusal.None, BagRoomF, "a weightless thing should never be too heavy");
+        That(BagRoom.MostThatFits(3000, 10, true, 1500, 2, 2000) == 250, BagRoomF, "500 weight of room should take 250 of a weight-2 pile, takes " + BagRoom.MostThatFits(3000, 10, true, 1500, 2, 2000));
+        That(BagRoom.MostThatFits(5, 50, false, 0, 1, 2000) == 0, BagRoomF, "a full tab should take none of a new pile");
+        That(BagRoom.MostThatFits(5, 50, true, 0, 1, 2000) == 5, BagRoomF, "a full tab should take all of a held pile that is light enough");
     }
 
     static int Main()

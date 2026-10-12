@@ -2078,22 +2078,22 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetTold(NetworkConnectionToClient target, string line) => ChatController.GameSaid(line);
 
-    /// <summary>SERVER ONLY: say in this person's chat that a thing could not go into their bag, and why. The same line
-    /// pressed again within a second is said once — a pickup held down asks every frame.</summary>
-    public void TellNoRoom(Item def, BagRefusal why, string verb = "take")
+    /// <summary>SERVER ONLY: say in this person's chat that a thing could not go into their bag, and why. Said once per
+    /// thing and reason for <paramref name="quietFor"/> seconds — a pickup held down asks every frame, and auto-loot
+    /// meets the same full tab on every kill.</summary>
+    public void TellNoRoom(Item def, BagRefusal why, string verb = "take", float quietFor = 1f)
     {
-        if (!isServer || why == BagRefusal.None || ServerCombatUnit is not Character c) return;
+        if (!isServer || def == null || why == BagRefusal.None || ServerCombatUnit is not Character c) return;
+        string key = def.id + (why == BagRefusal.SlotsFull ? "#slots" : "#weight");
+        if (noRoomQuietUntil.TryGetValue(key, out float until) && Time.unscaledTime < until) return;
+        noRoomQuietUntil[key] = Time.unscaledTime + quietFor;
         string line = c.RefusalLine(def, why, verb);
         if (GameLog.On(LogCat.Server)) LogDid(c, "had no room: " + line);
-        if (connectionToClient == null) return;
-        if (line == lastNoRoomLine && Time.unscaledTime < nextNoRoomLine) return;
-        lastNoRoomLine = line;
-        nextNoRoomLine = Time.unscaledTime + 1f;
-        TargetTold(connectionToClient, line);
+        if (connectionToClient != null) TargetTold(connectionToClient, line);
     }
 
-    string lastNoRoomLine;
-    float nextNoRoomLine;
+    readonly System.Collections.Generic.Dictionary<string, float> noRoomQuietUntil =
+        new System.Collections.Generic.Dictionary<string, float>();
 
     [TargetRpc]
     void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds)
@@ -3175,10 +3175,13 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var held = serverStorage.Known ? serverStorage.Find(itemId, copyId ?? "") : null;
         if (held == null) { KeeperSaid("That is no longer in storage.", false); return; }
 
-        int count = held.instance != null ? 1 : (all ? held.count : 1);
-        // ROOM FOR IT IN THE BAG, asked before the move starts; it stays in storage when there is none.
-        var noRoom = c.RoomFor(held.def, count);
-        if (noRoom != BagRefusal.None) { KeeperSaid(c.RefusalLine(held.def, noRoom), false); return; }
+        int wanted = held.instance != null ? 1 : (all ? held.count : 1);
+        // ROOM FOR IT IN THE BAG, asked before the move starts. "All" of a pile too heavy to carry takes the most that
+        // fits; nothing fitting leaves it in storage, and either way they are told.
+        int count = c.MostThatFits(held.def, wanted);
+        if (count <= 0) { KeeperSaid(c.RefusalLine(held.def, c.RoomFor(held.def, wanted)), false); return; }
+        if (count < wanted)
+            KeeperSaid("Took " + count + " of " + wanted + " " + held.def.displayName + " — that is all you can carry.", true);
         var move = new StorageMoveWire { moveId = Guid.NewGuid().ToString("D"), kind = "take", itemId = held.def.id,
                                          count = count, limit = KeeperMath.StorageLimit };
         if (held.instance != null) held.instance.ToSaved(out move.refine, out move.cards, out move.roll, out move.copyId);

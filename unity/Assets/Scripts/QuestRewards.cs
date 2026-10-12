@@ -36,8 +36,16 @@ public static class QuestRewards
                 {
                     var item = it != null ? ItemCatalog.Resolve(it.itemId) : null;
                     if (item == null || it.count <= 0) continue;
+                    // ALWAYS PAID, PAST THE BAG'S LIMITS IF IT MUST BE: the finished record is saved with the reward,
+                    // so a reward refused here could never be paid again. Past a limit it is said, so the player knows
+                    // the bag needs room before it takes anything else of that kind.
+                    var over = c.RoomFor(item, it.count);
                     c.TakeIntoBag(item, it.count);
                     Part(said, ref first, it.count + " " + item.displayName);
+                    if (over != BagRefusal.None && shell != null)
+                        shell.TellOwner(over == BagRefusal.SlotsFull
+                            ? "Your bag is now over its limit for " + item.displayName + "'s tab — make room before picking up more of that kind."
+                            : "You are now carrying more than you can — make room before picking up anything with weight.");
                 }
             said.Append('.');
             shell?.PushBagToOwner();

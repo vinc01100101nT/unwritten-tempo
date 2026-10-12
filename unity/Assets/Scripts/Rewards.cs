@@ -177,7 +177,10 @@ public static class Rewards
         return AutoCombatMath.Takes(killer.AutoCombat, kind, chance01);
     }
 
-    // Entries each bag tab has gained so far from one kill's auto-loot, indexed by ItemCategory — reused.
+    // A thing auto-loot cannot take is said once in this long, not on every kill that drops it.
+    const float AutoLootQuietSeconds = 45f;
+
+    // Entries each bag tab holds during one kill's auto-loot, indexed by ItemCategory — reused.
     static readonly int[] lootTabSlots = new int[System.Enum.GetValues(typeof(ItemCategory)).Length];
 
     static bool HoldsStackOf(Character c, Item def)
@@ -196,8 +199,10 @@ public static class Rewards
         if (shell == null || !shell.AutoCombatOn) return 0;
 
         autoLooted.Clear();
-        System.Array.Clear(lootTabSlots, 0, lootTabSlots.Length);
-        int lootWeight = 0;
+        // What the bag holds, read ONCE for the whole kill; each thing taken is counted on top.
+        for (int t = 0; t < lootTabSlots.Length; t++) lootTabSlots[t] = killer.SlotsUsed((ItemCategory)t);
+        int lootWeight = killer.CarriedWeight;
+        int weightCap = killer.WeightCap;
         for (int i = items.Count - 1; i >= 0; i--)
         {
             var def = items[i];
@@ -207,9 +212,8 @@ public static class Rewards
             bool gear = def.slot != EquipSlotType.None;
             bool held = !gear && (autoLooted.Contains(def) || HoldsStackOf(killer, def));
             int needed = BagRoom.SlotsNeeded(gear, 1, held);
-            var noRoom = BagRoom.Judge(killer.SlotsUsed(def.category) + lootTabSlots[(int)def.category], needed,
-                                       killer.CarriedWeight + lootWeight, def.weight, killer.WeightCap);
-            if (noRoom != BagRefusal.None) { shell.TellNoRoom(def, noRoom, "auto-loot"); continue; }
+            var noRoom = BagRoom.Judge(lootTabSlots[(int)def.category], needed, lootWeight, def.weight, weightCap);
+            if (noRoom != BagRefusal.None) { shell.TellNoRoom(def, noRoom, "auto-loot", AutoLootQuietSeconds); continue; }
             lootTabSlots[(int)def.category] += needed;
             lootWeight += def.weight;
             autoLooted.Add(def);

@@ -2103,6 +2103,17 @@ public class Character : MonoBehaviour, ICombatUnit
                              CarriedWeight + extraWeight, def.weight * count, WeightCap);
     }
 
+    /// <summary>How many of a STACK of <paramref name="def"/> fit, up to <paramref name="wanted"/> (gear: 1 or 0).</summary>
+    public int MostThatFits(Item def, int wanted)
+    {
+        if (def == null || wanted <= 0) return 0;
+        if (def.slot != EquipSlotType.None) return RoomFor(def, 1) == BagRefusal.None ? 1 : 0;
+        bool held = false;
+        for (int i = 0; i < bag.Count; i++)
+            if (bag[i] != null && bag[i].def == def && !bag[i].IsEquip) { held = true; break; }
+        return BagRoom.MostThatFits(wanted, SlotsUsed(def.category), held, CarriedWeight, def.weight, WeightCap);
+    }
+
     /// <summary>The sentence a refusal is said in, naming the thing and the limit it hit.</summary>
     public string RefusalLine(Item def, BagRefusal why, string verb = "take")
     {
