@@ -17,7 +17,7 @@ public enum BagRefusal { None, SlotsFull, TooHeavy }
 /// </summary>
 public static class BagRoom
 {
-    public const int SlotsPerCategory = 50;
+    public const int SlotsPerCategory = 24;
     public const int BaseCarryWeight = 2000;
     public const int CarryWeightPerStr = 30;
 

@@ -1465,27 +1465,27 @@ static class Checks
         That(empty.bagItemIds.Length == 0, StorageF, "taking back from a bag that does not hold the thing must change nothing");
     }
 
-    // ---- how much a bag holds: 50 entries a tab, and Ragnarok's carry weight ----------------------------------
-    // Promised numbers (2026-10-12): 50 a tab, 2000 + 30 per STR. A stack already held never needs a new entry, so a
+    // ---- how much a bag holds: 24 entries a tab, and Ragnarok's carry weight ----------------------------------
+    // Promised numbers (2026-10-12): 24 a tab, 2000 + 30 per STR. A stack already held never needs a new entry, so a
     // tab at its limit still takes more of what it holds.
     const string BagRoomF = "unity/Assets/Scripts/BagRoom.cs";
     static void BagRoomNumbers()
     {
         That(BagRoom.WeightCap(0) == 2000, BagRoomF, "carry weight with no STR should be 2000, is " + BagRoom.WeightCap(0));
         That(BagRoom.WeightCap(10) == 2300, BagRoomF, "carry weight at 10 STR should be 2300, is " + BagRoom.WeightCap(10));
-        That(BagRoom.SlotsPerCategory == 50, BagRoomF, "a tab should hold 50 entries, holds " + BagRoom.SlotsPerCategory);
+        That(BagRoom.SlotsPerCategory == 24, BagRoomF, "a tab should hold 24 entries, holds " + BagRoom.SlotsPerCategory);
         That(BagRoom.SlotsNeeded(true, 3, false) == 3, BagRoomF, "three pieces of gear should need three entries");
         That(BagRoom.SlotsNeeded(false, 99, true) == 0, BagRoomF, "more of a stack already held should need no entry");
         That(BagRoom.SlotsNeeded(false, 99, false) == 1, BagRoomF, "a new stack should need one entry");
-        That(BagRoom.Judge(50, 0, 0, 1, 2000) == BagRefusal.None, BagRoomF, "a full tab should still take more of a held stack");
-        That(BagRoom.Judge(50, 1, 0, 1, 2000) == BagRefusal.SlotsFull, BagRoomF, "a full tab should refuse a new entry");
-        That(BagRoom.Judge(49, 1, 0, 1, 2000) == BagRefusal.None, BagRoomF, "the 50th entry should fit");
+        That(BagRoom.Judge(24, 0, 0, 1, 2000) == BagRefusal.None, BagRoomF, "a full tab should still take more of a held stack");
+        That(BagRoom.Judge(24, 1, 0, 1, 2000) == BagRefusal.SlotsFull, BagRoomF, "a full tab should refuse a new entry");
+        That(BagRoom.Judge(23, 1, 0, 1, 2000) == BagRefusal.None, BagRoomF, "the 24th entry should fit");
         That(BagRoom.Judge(0, 1, 1990, 10, 2000) == BagRefusal.None, BagRoomF, "reaching the weight limit exactly should fit");
         That(BagRoom.Judge(0, 1, 1991, 10, 2000) == BagRefusal.TooHeavy, BagRoomF, "going one past the weight limit should be refused");
         That(BagRoom.Judge(0, 1, 5000, 0, 2000) == BagRefusal.None, BagRoomF, "a weightless thing should never be too heavy");
         That(BagRoom.MostThatFits(3000, 10, true, 1500, 2, 2000) == 250, BagRoomF, "500 weight of room should take 250 of a weight-2 pile, takes " + BagRoom.MostThatFits(3000, 10, true, 1500, 2, 2000));
-        That(BagRoom.MostThatFits(5, 50, false, 0, 1, 2000) == 0, BagRoomF, "a full tab should take none of a new pile");
-        That(BagRoom.MostThatFits(5, 50, true, 0, 1, 2000) == 5, BagRoomF, "a full tab should take all of a held pile that is light enough");
+        That(BagRoom.MostThatFits(5, 24, false, 0, 1, 2000) == 0, BagRoomF, "a full tab should take none of a new pile");
+        That(BagRoom.MostThatFits(5, 24, true, 0, 1, 2000) == 5, BagRoomF, "a full tab should take all of a held pile that is light enough");
     }
 
     static int Main()

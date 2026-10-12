@@ -6,13 +6,15 @@
 <link rel="stylesheet" href="ui-tokens.css">
 <style>
   /* Every colour is a token from ui-tokens.css except --cell-empty: the hotbar's own unbound-slot grey
-     (HotbarPanel.CellEmpty, 0.32/0.32/0.37 at 60%), borrowed on purpose — an empty bag box is the hotbar's empty box. */
+     (HotbarPanel.CellEmpty, 0.32/0.32/0.37 at 60%), borrowed on purpose — an empty bag box is the hotbar's empty box.
+     The port moves it into the shared palette. */
   :root { --cell-empty: rgba(82, 82, 94, 0.6); }
 
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
-  .stage { display: flex; gap: 40px; align-items: flex-start; padding: 40px; flex-wrap: wrap; }
+  .stage { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; padding: 40px; }
+  .row2 { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
   .note { color: #c8cfdc; font-size: 13px; max-width: 360px; line-height: 1.5; }
   .note b { color: #fff; }
 
@@ -30,6 +32,10 @@
   .btn:hover { background: var(--hover); }
   .dim { color: var(--text-dim); }
 
+  /* THE CHOSEN TAB, in every window that has tabs (UiKit.MarkTab): filled with the accent, its word bold and white.
+     It used to differ only by a thin accent edge. */
+  .btn.chosen { background: var(--accent); border-color: var(--accent); color: var(--text-on-dim); font-weight: bold; }
+
   /* ---- Inventory ---- */
   #inventory { width: 324px; }
   #inventory .body { display: flex; flex-direction: column; }
@@ -42,113 +48,167 @@
                   font: 12px var(--font-ui); caret-color: var(--accent); }
   .search input::placeholder { font-style: italic; font-size: 11px; color: var(--text-dim); opacity: .55; }
   .search .hits { font-size: 10px; color: var(--text-dim); }
-  .hdr { height: 18px; display: flex; align-items: center; gap: 12px; padding: 0 8px; background: var(--panel-raise);
-         color: var(--text-dim); font-size: 10px; }
-  .hdr span[data-k] { cursor: pointer; }
-  .hdr span.on { color: var(--text-main); }
 
-  /* THE GRID: hotbar boxes (48 x 48, HotbarPanel.CellSize), six across, NO GAP between them. Each box keeps a
-     1px edge so two filled boxes side by side still read as two. Four rows show; the rest scrolls. */
+  /* "Sort by :" is a plain dim label; the choices beside it are small buttons, the chosen one marked like a tab. */
+  .sort { height: 20px; display: flex; align-items: center; gap: 3px; margin: 3px 0; font-size: 10px; }
+  .sort .lbl { color: var(--text-dim); margin-right: 3px; }
+  .sort .btn { height: 16px; padding: 0 6px; font-size: 10px; }
+
+  /* THE GRID: hotbar boxes (48 x 48, HotbarPanel.CellSize), six across, four down, NO GAP — exactly the 24 a tab
+     holds, so a tab never scrolls and every box it has is on screen. Only All (every tab at once) can hold more.
+     The scroll bar has its own lane OUTSIDE the boxes, out in the window's right margin, and the lane is always
+     kept: the boxes never move when the bar appears, and the bar never covers one. Never a sideways scroll. */
   .grid { display: grid; grid-template-columns: repeat(6, 48px); grid-auto-rows: 48px; gap: 0;
-          height: 192px; overflow-y: auto; align-content: start; }
+          width: 298px; margin-right: -10px; height: 192px; overflow-x: hidden; overflow-y: auto;
+          scrollbar-gutter: stable; align-content: start; }
+  .grid::-webkit-scrollbar { width: 6px; }
+  .grid::-webkit-scrollbar-thumb { background: var(--button-edge); border-radius: 2px; }
+  .grid::-webkit-scrollbar-track { background: transparent; }
   .cell { position: relative; width: 48px; height: 48px; border-radius: 3px; border: 1px solid var(--button-edge);
-          background: var(--slot-fill); cursor: pointer; }
+          background: var(--slot-fill); cursor: grab; }
   .cell:hover { background: var(--hover); }
   .cell.empty { background: var(--cell-empty); border-color: transparent; cursor: default; }
-  /* The hotbar's name on a tile: bold, centred, 9-12px, wraps, cut with an ellipsis, 12px clear top and bottom. */
+  .cell.over { border-color: var(--accent); }
+  .cell.lifted { opacity: .4; }
+  /* The hotbar's name on a tile: bold, centred, 9-12px, cut with an ellipsis, 12px clear top and bottom. */
   .cell .name { position: absolute; left: 3px; right: 3px; top: 12px; bottom: 12px; display: flex;
                 align-items: center; justify-content: center; text-align: center; font-weight: bold;
-                font-size: 10px; line-height: 11px; overflow: hidden; }
+                font-size: 10px; line-height: 11px; overflow: hidden; pointer-events: none; }
   .cell .name span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
                      overflow-wrap: anywhere; }
   /* The hotbar's count: bottom-right, bold 11. */
-  .cell .count { position: absolute; right: 3px; bottom: 1px; font: bold 11px var(--font-ui); color: var(--title-text); }
+  .cell .count { position: absolute; right: 3px; bottom: 1px; font: bold 11px var(--font-ui); color: var(--title-text);
+                 pointer-events: none; }
   /* Where the hotbar puts its key, a worn piece says so. */
-  .cell .worn { position: absolute; left: 3px; top: 1px; font-size: 9px; color: var(--accent); }
-  .r-good { color: var(--good); } .r-rare { color: var(--rarity-rare); }
-  .r-epic { color: var(--rarity-epic); } .r-leg { color: var(--rarity-legendary); }
+  .cell .worn { position: absolute; left: 3px; top: 1px; font-size: 9px; color: var(--accent); pointer-events: none; }
+  .r1 { color: var(--good); } .r2 { color: var(--rarity-rare); }
+  .r3 { color: var(--rarity-epic); } .r4 { color: var(--rarity-legendary); }
 
   .foot { height: 18px; line-height: 18px; text-align: right; font-size: 12px; margin-top: 4px; }
   .foot span { margin-left: 18px; }
+
+  /* ---- the hotbar, only so a box can be dragged onto it (HotbarPanel: 48px cells, 6px apart) ---- */
+  #hotbar { display: grid; grid-template-columns: repeat(9, 48px); gap: 6px; }
+  #hotbar .cell { cursor: default; border: 0; }
+  #hotbar .cell.empty.over { outline: 1px solid var(--accent); }
+  #hotbar .key { position: absolute; left: 3px; top: 1px; font: bold 11px var(--font-ui); color: var(--text-on-dim); }
+  #hotbar .cell:not(.empty) .key { color: var(--text-dim); }
 </style>
 </head>
 <body>
 <div class="stage">
-
-  <section class="win" id="inventory" data-mocks="Inventory">
-    <div class="bar"><b>Inventory</b><i>_</i><i>X</i></div>
-    <div class="body">
-      <div class="tabs" id="tabs"></div>
-      <div class="search" data-part="search">
-        <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill"><span class="hits" id="hits"></span>
+  <div class="row2">
+    <section class="win" id="inventory" data-mocks="Inventory">
+      <div class="bar"><b>Inventory</b><i>_</i><i>X</i></div>
+      <div class="body">
+        <div class="tabs" id="tabs"></div>
+        <div class="search" data-part="search">
+          <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill"><span class="hits" id="hits"></span>
+        </div>
+        <div class="sort" id="sort" data-part="header"></div>
+        <div class="grid" id="grid" data-part="list"></div>
+        <div class="foot" id="foot"></div>
       </div>
-      <div class="hdr" data-part="header"><span>Sort</span><span data-k="name">Name</span><span data-k="held">Held</span></div>
-      <div class="grid" id="grid" data-part="list"></div>
-      <div class="foot" id="foot"></div>
-    </div>
-  </section>
+    </section>
 
-  <div class="note">
-    <b>Try:</b> the tabs (Equip / Use / Material / Etc show all 50 boxes, the empty ones in the hotbar's grey —
-    that is the tab's limit), FIND, and the Sort words. "All" shows only what you hold, filled out to the end of
-    its row. Worn pieces come first and say <i>worn</i> where the hotbar shows its key.
+    <div class="note">
+      <b>Try:</b> the tabs (the chosen one is filled), FIND, and <i>Sort by</i>. A tab holds 24 and shows all 24
+      boxes at once. Only All can need a scroll bar; it sits in its own lane outside the boxes, so nothing moves when
+      it appears. <b>Drag</b> a box onto another to swap
+      them, onto an empty box to move it to the end, or onto the hotbar below to put it there. While a sort is on,
+      the order is the sort's, so dragging inside the bag does nothing (dragging to the hotbar still works).
+      Hovering a box shows the game's own item tooltip, unchanged.
+    </div>
   </div>
+
+  <div id="hotbar" data-mocks="Hotbar"></div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
-const R = ["", "r-good", "r-rare", "r-epic", "r-leg"];
-const ITEMS = [
-  { name: "+5 Fierce Chainmail [Raw]", held: 1, worn: true, cat: "Equip", r: 0 },
-  { name: "+15 Thousand Petals [C]", held: 1, worn: true, cat: "Equip", r: 3 },
-  { name: "B +12 Padded Vest", held: 1, cat: "Equip", r: 2 },
-  { name: "Sword", held: 1, cat: "Equip", r: 0 },
-  { name: "Red Potion", held: 42, cat: "Use", r: 0 },
-  { name: "Butterfly Wing", held: 3, cat: "Use", r: 1 },
-  { name: "Fly Wing", held: 17, cat: "Use", r: 0 },
-  { name: "Grilled Fish", held: 6, cat: "Use", r: 0 },
-  { name: "Iron", held: 312, cat: "Material", r: 0 },
-  { name: "Stripped Bough [F]", held: 9, cat: "Material", r: 0 },
-  { name: "Jellopy", held: 128, cat: "Etc", r: 0 },
-  { name: "Fluff", held: 64, cat: "Etc", r: 0 },
-  { name: "Sticky Mucus", held: 11, cat: "Etc", r: 0 },
+let seq = 0;
+const it = (name, held, cat, r, worn) => ({ name, held, cat, r: r || 0, worn: !!worn, got: ++seq });
+let ITEMS = [
+  it("+5 Fierce Chainmail [Raw]", 1, "Equip", 0, true),
+  it("+15 Thousand Petals [C]", 1, "Equip", 3, true),
+  it("B +12 Padded Vest", 1, "Equip", 2),
+  it("Sword", 1, "Equip"),
+  it("Red Potion", 42, "Use"),
+  it("Butterfly Wing", 3, "Use", 1),
+  it("Fly Wing", 17, "Use"),
+  it("Grilled Fish", 6, "Use"),
+  it("Iron", 312, "Material"),
+  it("Stripped Bough [F]", 9, "Material"),
+  it("Jellopy", 128, "Etc"),
+  it("Fluff", 64, "Etc"),
+  it("Sticky Mucus", 11, "Etc"),
 ];
-for (let i = 0; i < 30; i++) ITEMS.push({ name: "Ore Shard " + (i + 1), held: 1 + (i * 7) % 40, cat: "Material", r: i % 9 === 0 ? 2 : 0 });
+for (let i = 0; i < 20; i++) ITEMS.push(it("Ore Shard " + (i + 1), 1 + (i * 7) % 40, "Material", i % 9 === 0 ? 2 : 0));
 
-let tab = "All", query = "", sortKey = null, desc = false;
 const TABS = ["All", "Equip", "Use", "Material", "Etc"];
-function drawTabs() {
-  $("tabs").innerHTML = TABS.map(t => `<button class="btn" data-t="${t}">${t}</button>`).join("");
-}
+const SORTS = [["name", "Name"], ["held", "Held"], ["r", "Rarity"], ["got", "Acquired"]];
+let tab = "All", query = "", sortKey = null, desc = false, dragging = null;
+const hotbar = Array(9).fill(null);
+
 function cell(i) {
-  return `<div class="cell" title="${i.name}">${i.worn ? '<span class="worn">worn</span>' : ""}` +
-         `<span class="name ${R[i.r]}"><span>${i.name}</span></span>${i.cat !== "Equip" ? `<span class="count">${i.held}</span>` : ""}</div>`;
+  return `<div class="cell" draggable="true" data-id="${ITEMS.indexOf(i)}" title="${i.name}">` +
+         (i.worn ? '<span class="worn">worn</span>' : "") +
+         `<span class="name r${i.r}"><span>${i.name}</span></span>` +
+         (i.cat !== "Equip" ? `<span class="count">${i.held}</span>` : "") + "</div>";
 }
 function draw() {
-  drawTabs();
+  $("tabs").innerHTML = TABS.map(t => `<button class="btn${t === tab ? " chosen" : ""}" data-t="${t}">${t}</button>`).join("");
+  $("sort").innerHTML = '<span class="lbl">Sort by :</span>' + SORTS.map(([k, w]) =>
+    `<button class="btn${k === sortKey ? " chosen" : ""}" data-k="${k}">${w}${k === sortKey ? (desc ? " ▼" : " ▲") : ""}</button>`).join("");
+
   let list = ITEMS.filter(i => (tab === "All" || i.cat === tab) && i.name.toLowerCase().includes(query));
-  if (sortKey) list = [...list].sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * (desc ? -1 : 1));
-  const worn = list.filter(i => i.worn), rest = list.filter(i => !i.worn);
-  list = [...worn, ...rest];
-  // A tab shows its whole limit; All, and any search, only what is held, filled to the end of the row.
-  const boxes = tab !== "All" && !query ? 50 : Math.max(24, Math.ceil(list.length / 6) * 6);
+  if (sortKey) list = [...list].sort((a, b) => {
+    const c = sortKey === "name" ? a.name.localeCompare(b.name) : a[sortKey] - b[sortKey];
+    return (c || a.name.localeCompare(b.name)) * (desc ? -1 : 1);
+  });
+  list = [...list.filter(i => i.worn), ...list.filter(i => !i.worn)];
+  const boxes = tab !== "All" && !query ? Math.max(24, list.length) : Math.max(24, Math.ceil(list.length / 6) * 6);
   let html = list.map(cell).join("");
   for (let k = list.length; k < boxes; k++) html += '<div class="cell empty"></div>';
   $("grid").innerHTML = html;
   $("hits").textContent = query ? list.length + " / " + ITEMS.filter(i => tab === "All" || i.cat === tab).length : "";
-  document.querySelectorAll(".hdr span[data-k]").forEach(s => {
-    const on = s.dataset.k === sortKey;
-    s.className = on ? "on" : ""; s.textContent = (s.dataset.k === "name" ? "Name" : "Held") + (on ? (desc ? " ▼" : " ▲") : "");
-  });
   const used = tab === "All" ? null : ITEMS.filter(i => i.cat === tab).length;
-  $("foot").innerHTML = (used !== null ? `<span><span class="dim" style="margin:0">Slots</span> ${used}/50</span>` : "") +
+  $("foot").innerHTML = (used !== null ? `<span><span class="dim" style="margin:0">Slots</span> ${used}/24</span>` : "") +
     `<span><span class="dim" style="margin:0">Weight</span> 1318/2570</span><span>1,220 z</span>`;
+
+  $("hotbar").innerHTML = hotbar.map((h, n) => h
+    ? `<div class="cell" data-slot="${n}"><span class="key">${n + 1}</span><span class="name"><span>${h.name}</span></span>` +
+      (h.cat !== "Equip" ? `<span class="count">${h.held}</span>` : "") + "</div>"
+    : `<div class="cell empty" data-slot="${n}"><span class="key">${n + 1}</span></div>`).join("");
 }
+
 $("tabs").addEventListener("click", e => { if (e.target.dataset.t) { tab = e.target.dataset.t; draw(); } });
 $("find").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); draw(); });
-document.querySelector(".hdr").addEventListener("click", e => {
-  const k = e.target.dataset.k; if (!k) return;
+$("sort").addEventListener("click", e => {
+  const k = e.target.closest("[data-k]")?.dataset.k; if (!k) return;
   if (sortKey !== k) { sortKey = k; desc = false; } else if (!desc) desc = true; else { sortKey = null; desc = false; }
+  draw();
+});
+
+// ---- dragging: swap inside the bag, move to the end on an empty box, bind on the hotbar ----
+document.addEventListener("dragstart", e => {
+  const c = e.target.closest("#grid .cell:not(.empty)"); if (!c) return;
+  dragging = ITEMS[+c.dataset.id]; c.classList.add("lifted"); e.dataTransfer.setData("text/plain", "");
+});
+document.addEventListener("dragend", () => { dragging = null; draw(); });
+document.addEventListener("dragover", e => {
+  const t = e.target.closest("#grid .cell, #hotbar .cell"); if (!t || !dragging) return;
+  if (t.closest("#grid") && (sortKey || dragging.worn)) return;
+  e.preventDefault();
+  document.querySelectorAll(".over").forEach(x => x.classList.remove("over")); t.classList.add("over");
+});
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  const t = e.target.closest("#grid .cell, #hotbar .cell"); if (!t || !dragging) return;
+  if (t.dataset.slot !== undefined) { hotbar[+t.dataset.slot] = dragging; draw(); return; }
+  const from = ITEMS.indexOf(dragging);
+  if (t.classList.contains("empty")) { ITEMS.splice(from, 1); ITEMS.push(dragging); }
+  else { const to = +t.dataset.id; if (ITEMS[to].worn) return; [ITEMS[from], ITEMS[to]] = [ITEMS[to], ITEMS[from]]; }
   draw();
 });
 draw();
