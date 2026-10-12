@@ -79,3 +79,4 @@
 - [Flurry beats lost the mastery lift](../flurry-beats-lost-mastery-lift.md) — burst-scoped statics (masteryLift, hopScale) must be captured into every delayed callback a burst schedules.
 - [Draw and sheathe take the same time, by weight](../draw-and-sheathe-same-time-by-weight.md) — a weapon needing longer gets more WEIGHT (Greatsword 133 = 1 s); never a per-weapon time setting or an animation-length rule; put-aways are arms-only, keep them simple.
 - [Skill levels are never capped](../skill-levels-are-never-capped.md) — HARD LAW 2026-10-11: every bought skill level always counts; weapon grade caps mastery only.
+- [A refused press left a charge run holding](../refused-press-left-a-charge-run-holding.md) — the player's picture of a charge-driven run lasts while a pile only the server spends; a refused press froze the character for good. CastAnswered.refused ends it.

@@ -38,6 +38,19 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// <summary>The server answered this skill's last press — cast or refused. Any cooldown it started arrived first.</summary>
     public void ServerAnsweredPress() => awaitingOn = null;
 
+    // The run of beats this cast started on this machine, so a press the server refused can be stopped.
+    Coroutine runRoutine;
+
+    /// <summary>THE SERVER REFUSED THE LAST PRESS — the skill did not run there, so the picture of it here stops: its run
+    /// of beats ends and the hold it put on the caster lets go. Without this a run that lasts while a pile only the
+    /// server spends (a charge-driven run) never ended, and held its caster still for good.</summary>
+    public void ServerRefusedPress()
+    {
+        if (runRoutine != null) { StopCoroutine(runRoutine); runRoutine = null; }
+        if (castRoutine != null || castAura.Running || castCircle != null) EndCast();
+        if (def != null && def.holdCasterForRun) Status?.Unlock();
+    }
+
     public void ResumeCooldown(System.DateTime moment)
     {
         dueAtUtc = moment;
@@ -613,7 +626,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (extra > 0 && isActiveAndEnabled)
         {
             HoldForBeat(BeatInterval());   // the opening beat; every later one re-takes the hold inside the loop
-            StartCoroutine(PlayExtraCycles(extra, lastCtx));
+            runRoutine = StartCoroutine(PlayExtraCycles(extra, lastCtx));
         }
     }
 

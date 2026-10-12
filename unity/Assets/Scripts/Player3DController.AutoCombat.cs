@@ -173,7 +173,7 @@ public partial class Player3DController
         if (slots == null) return;
         for (int i = 0; i < slots.Length; i++)
         {
-            if (string.IsNullOrEmpty(slots[i])) continue;
+            if (string.IsNullOrEmpty(slots[i]) || AutoCombatClient.Refused(slots[i])) continue;
             var runner = PlayerSkills.ById(slots[i]) as SkillRunner;
             if (runner == null || !HotbarReady.Now(runner)) continue;
             if (runner.ActivateAt(attackTarget.transform)) return;

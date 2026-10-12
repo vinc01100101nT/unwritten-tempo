@@ -28,6 +28,7 @@ public static class AutoCombatClient
     {
         On = on;
         Settings = settings ?? new AutoCombatSettings();
+        refusedUntil.Clear();
         // THE CHARACTER CARRIES THE SLOTS TOO, so the skills only auto-combat presses get runners on this machine —
         // the same rebuild a change to the bar asks for.
         owedToCharacter = true;
@@ -51,6 +52,25 @@ public static class AutoCombatClient
         me.AutoCombat = Settings.Clone();
         if (slotsMoved) me.RefreshUsableSkills();
     }
+
+    // SKILLS THE SERVER REFUSED from an auto-skill slot, each skipped for a while — pressed again a quarter of a second
+    // later it would only be refused again. For a while rather than for good, because a refusal can be passing (out of
+    // reach, a cooldown still crossing the wire). At most four entries.
+    static readonly System.Collections.Generic.Dictionary<string, float> refusedUntil =
+        new System.Collections.Generic.Dictionary<string, float>(4);
+    const float SecondsToSkipARefusedSkill = 10f;
+
+    /// <summary>SERVER'S WORD: it refused a press of <paramref name="skillId"/>. Auto-combat leaves it alone a while.</summary>
+    public static void ServerRefused(string skillId)
+    {
+        var slots = Settings.slots;
+        if (string.IsNullOrEmpty(skillId) || slots == null || System.Array.IndexOf(slots, skillId) < 0) return;
+        refusedUntil[skillId] = UnityEngine.Time.time + SecondsToSkipARefusedSkill;
+    }
+
+    /// <summary>Is this skill being left alone after a refusal?</summary>
+    public static bool Refused(string skillId)
+        => refusedUntil.TryGetValue(skillId, out float until) && UnityEngine.Time.time < until;
 
     /// <summary>SERVER'S WORD: a Fly Wing set them down elsewhere, and the hunt goes on from there.</summary>
     public static void LandedElsewhere() => Landings++;

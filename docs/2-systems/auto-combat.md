@@ -33,7 +33,7 @@ Four slots, skills only (never an item or a piece of gear), chosen from every sk
 A few times a second the first slot whose skill is ready — off cooldown and affordable, the same test the hotbar draws
 by — is pressed at the current target. A target outside the skill's range is no press: auto-combat never walks for a
 skill. Every press is an ordinary cast the server judges; a skill in an auto-skill slot counts as on the bar for the
-server's "is this skill theirs" check.
+server's "is this skill theirs" check. A skill the server refuses is left alone for 10 seconds.
 
 ## Auto-loot
 

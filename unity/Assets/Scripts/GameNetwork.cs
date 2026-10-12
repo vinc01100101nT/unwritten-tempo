@@ -623,6 +623,9 @@ public class GameNetwork : NetworkManager
     public struct CastAnswered : NetworkMessage
     {
         public string skillId;
+        // REFUSED: the skill did not run there, so the picture this machine started of it must stop — a run that holds
+        // its caster still and lasts while a pile only the server spends would otherwise never end.
+        public bool refused;
     }
 
     /// <summary>What a kill was worth, told to the person who earned it. Progress is written by a player's own
@@ -1106,7 +1109,13 @@ public class GameNetwork : NetworkManager
     {
         var me = Character.Instance;
         var runner = me != null ? me.RunnerById(msg.skillId) : null;
-        if (runner != null) runner.ServerAnsweredPress();
+        if (runner == null) return;
+        runner.ServerAnsweredPress();
+        if (msg.refused)
+        {
+            runner.ServerRefusedPress();
+            AutoCombatClient.ServerRefused(msg.skillId);
+        }
     }
 
     static void OnXpEarned(XpEarned msg)
@@ -2185,60 +2194,60 @@ public class GameNetwork : NetworkManager
     // knows when it may send the next one.
     void OnSkillCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
     {
-        RunCastRequest(conn, msg);
-        conn.Send(new CastAnswered { skillId = msg.skillId });
+        bool cast = RunCastRequest(conn, msg);
+        conn.Send(new CastAnswered { skillId = msg.skillId, refused = !cast });
     }
 
-    void RunCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
+    bool RunCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
     {
         // EVERY REFUSAL BELOW SAYS SO, exactly as the strike door above already does. These were six bare returns,
         // and a cast stopped by any of them was invisible everywhere: the player's own machine had already spent the
         // mana and started the cooldown, their screen showed the skill doing nothing, and no log anywhere said which
         // of the six it was. Silence has no stack trace.
         if (CastingTooFast(conn.connectionId))
-        { WhyCastRefused(msg.skillId, "asked for faster than the ceiling allows"); return; }
+        { WhyCastRefused(msg.skillId, "asked for faster than the ceiling allows"); return false; }
 
         var def = SkillCatalog.Get(msg.skillId);
-        if (def == null) { WhyCastRefused(msg.skillId, "this server has no such skill in its catalog"); return; }
+        if (def == null) { WhyCastRefused(msg.skillId, "this server has no such skill in its catalog"); return false; }
         // a passive has no pressed form: it fires from its own moments, here
-        if (def.IsPassive) { WhyCastRefused(msg.skillId, "it is a passive — it has no pressed form"); return; }
+        if (def.IsPassive) { WhyCastRefused(msg.skillId, "it is a passive — it has no pressed form"); return false; }
 
         var caster = FighterFor(conn) as Character;
-        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
+        if (caster == null) { WarnNoFighter(conn.connectionId); return false; }
         // A WEAPON SKILL NEEDS THE WEAPON IN HAND — the same rule a swing obeys, the same answer: take it out.
         var drawHost = caster.StatusHost;
         if (def.weaponType != WeaponType.None && drawHost != null && !drawHost.Draw.IsDrawn)
         {
             drawHost.RequestDraw();
             WhyCastRefused(msg.skillId, "the weapon is not in hand (" + drawHost.Draw.Phase + ") — taking it out");
-            return;
+            return false;
         }
         if (!Owns(caster, msg.skillId))
         {
-            WarnNotTheirSkill(conn.connectionId, msg.skillId);
+            WarnNotTheirSkill(conn.connectionId, msg.skillId, WhyNotTheirs(caster, msg.skillId));
             // AND THE PLAYER IS TOLD, in their own chat, because from their side a refused press looks exactly like
             // a broken key: their screen animated, and nothing happened.
             ShellFor(conn)?.TellOwner(caster.WhyNotUsable(msg.skillId)
                                       ?? "That skill is not on the bar this server holds for you.");
-            return;
+            return false;
         }
 
         var runner = PlayerFighter.RunnerFor(caster, msg.skillId);
         if (runner == null)
-        { WhyCastRefused(msg.skillId, "this server built them no runner for it — it is not among the skills they can use"); return; }
+        { WhyCastRefused(msg.skillId, "this server built them no runner for it — it is not among the skills they can use"); return false; }
 
         // WHERE THEY AIMED, put back into this machine's copy of their map.
         Vector3 point = MapManager.InWorld(msg.aimPoint, caster.Map);
 
         var casterBody = caster.Body;
         if (casterBody == null)
-        { WhyCastRefused(msg.skillId, "this server has no body bound for that character"); return; }
+        { WhyCastRefused(msg.skillId, "this server has no body bound for that character"); return false; }
         if ((point - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling)
         {
             WhyCastRefused(msg.skillId, "they aimed " + Mathf.RoundToInt((point - casterBody.position).magnitude)
                              + " units away, past the ceiling of " + SkillReachCeiling
                              + " — usually the map this server has them in disagreeing with the one they are in");
-            return;
+            return false;
         }
 
         Transform aimed = null;
@@ -2270,7 +2279,7 @@ public class GameNetwork : NetworkManager
             {
                 WhyCastRefused(msg.skillId, "they cast it from " + gap.magnitude.ToString("0.#")
                                  + " units away and it reaches " + def.castRange);
-                return;
+                return false;
             }
         }
 
@@ -2280,7 +2289,8 @@ public class GameNetwork : NetworkManager
         // AND WHEN THE RUNNER ITSELF SAYS NO, IT SAYS WHY. Its own gates — silenced, stunned, on cooldown, no mana,
         // a pile it spends that is not there — were only ever written to a log category that is off by default, on
         // the one machine nobody is watching. The reason comes back here and is said out loud with the rest.
-        if (!runner.CastFromRequest(aimed, point, out string why)) WhyCastRefused(msg.skillId, why);
+        if (!runner.CastFromRequest(aimed, point, out string why)) { WhyCastRefused(msg.skillId, why); return false; }
+        return true;
     }
 
     /// <summary>Tell the server an item was used, so the skill it names is run there like every other skill.
@@ -2722,7 +2732,7 @@ public class GameNetwork : NetworkManager
     // progress never arrived, leaving the server holding somebody with no weapon and therefore no skills.
     static readonly System.Collections.Generic.HashSet<string> warnedNotTheirSkill = new System.Collections.Generic.HashSet<string>();
 
-    static void WarnNotTheirSkill(int connectionId, string skillId)
+    static void WarnNotTheirSkill(int connectionId, string skillId, string exactly)
     {
         // KEYED BY THE SKILL AS WELL AS THE PERSON. Said once per CONNECTION, the first refusal silenced every
         // other skill that person cast for the rest of their session — so a log with one line in it looked like
@@ -2731,7 +2741,8 @@ public class GameNetwork : NetworkManager
         GameLog.Warn(LogCat.Server, "connection " + connectionId + " cast '" + skillId + "', which is not on the "
                          + "hotbar this server holds for them, or is not learned, or belongs to a weapon they are not "
                          + "holding, so the strike was refused. Either their character's progress never loaded (they "
-                         + "are standing here at starting numbers, holding nothing), or the skill was never theirs.");
+                         + "are standing here at starting numbers, holding nothing), or the skill was never theirs. "
+                         + "Exactly: " + exactly + ".");
     }
 
     // IS THIS SKILL EVEN THEIRS? Without asking, the server would roll ANY skill in the catalog for anybody who
@@ -2766,6 +2777,18 @@ public class GameNetwork : NetworkManager
         if (!onTheirBar) onTheirBar = InAutoSlots(caster.AutoCombat, skillId);
         if (!onTheirBar) return false;
         return caster.MayUse(skillId);
+    }
+
+    // Which of Owns' three questions said no, in words — for the log line above only.
+    static string WhyNotTheirs(Character caster, string skillId)
+    {
+        if (caster == null) return "there is no character";
+        bool onBar = caster.Hotbar != null && caster.Hotbar.IsBound(skillId);
+        bool inAuto = InAutoSlots(caster.AutoCombat, skillId);
+        string auto = caster.AutoCombat != null && caster.AutoCombat.slots != null
+            ? string.Join(",", caster.AutoCombat.slots) : "(none)";
+        return "on the hotbar " + onBar + ", in the auto-skill slots " + inAuto + " (they hold: " + auto + "), "
+               + (caster.WhyNotUsable(skillId) ?? "learned and its weapon in hand");
     }
 
     static bool InAutoSlots(AutoCombatSettings s, string skillId)
