@@ -6,17 +6,18 @@
 <link rel="stylesheet" href="ui-tokens.css">
 <style>
   /* Every colour is a token from ui-tokens.css except --cell-empty: the hotbar's own unbound-slot grey
-     (HotbarPanel.CellEmpty, 0.32/0.32/0.37 at 60%), borrowed on purpose — an empty bag box is the hotbar's empty box.
-     The port moves it into the shared palette. */
+     (HotbarPanel.CellEmpty, 0.32/0.32/0.37 at 60%), borrowed on purpose — an empty bag box or an empty equipment slot
+     is the hotbar's empty box. The port moves it into the shared palette. */
   :root { --cell-empty: rgba(82, 82, 94, 0.6); }
 
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
-  .stage { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; padding: 40px; }
-  .row2 { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
-  .note { color: #c8cfdc; font-size: 13px; max-width: 360px; line-height: 1.5; }
+  .stage { display: flex; flex-direction: column; gap: 20px; align-items: flex-start; padding: 32px; }
+  .row2 { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .note { color: #c8cfdc; font-size: 13px; max-width: 380px; line-height: 1.5; }
   .note b { color: #fff; }
+  .note ul { margin: 6px 0 0; padding-left: 18px; }
 
   /* ---- the shared window frame (UiKit.DressWindow / UiKit.Header) ---- */
   .win { border: 1px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
@@ -26,19 +27,30 @@
   .bar b { flex: 1; font-size: 13px; color: var(--title-text); }
   .bar i { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
            color: var(--title-text); font: bold 12px/18px var(--font-ui); text-align: center; }
-  .body { padding: 8px 15px 15px; }
   .btn { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill);
          color: var(--button-text); font-family: inherit; padding: 0; cursor: pointer; }
   .btn:hover { background: var(--hover); }
   .dim { color: var(--text-dim); }
-
-  /* THE CHOSEN TAB, in every window that has tabs (UiKit.MarkTab): filled with the accent, its word bold and white.
-     It used to differ only by a thin accent edge. */
+  /* THE CHOSEN TAB, in every window that has tabs (UiKit.MarkTab): filled with the accent, its word bold and white. */
   .btn.chosen { background: var(--accent); border-color: var(--accent); color: var(--text-on-dim); font-weight: bold; }
 
-  /* ---- Inventory ---- */
-  #inventory { width: 324px; }
-  #inventory .body { display: flex; flex-direction: column; }
+  /* ---- Inventory: what you wear on the left, what you carry on the right ---- */
+  #inventory { width: 512px; }
+  #inventory .body { padding: 8px 15px 15px; display: grid; grid-template-columns: 176px 292px; column-gap: 12px; }
+  .bagcol { display: flex; flex-direction: column; min-width: 0; }
+
+  /* WHAT YOU WEAR: your own body, drawn live (CharacterPreview), each slot beside the part of it it dresses. */
+  .gear { position: relative; height: 264px; border: 1px solid var(--rule); border-radius: 3px; background: var(--panel-raise); }
+  .gear.drop-here { border-color: var(--accent); }
+  .gear .figure { position: absolute; left: 50px; top: 6px; width: 76px; height: 252px; }
+  .gear .figure svg { width: 100%; height: 100%; }
+  .gear .slot { position: absolute; }
+  .gear .slot .what { position: absolute; left: 0; right: 0; top: 3px; text-align: center; font-size: 9px;
+                      color: var(--text-on-dim); pointer-events: none; }
+  .gear .slot:not(.empty) .what { color: var(--text-dim); }
+  .gear .slot.fits { border: 2px solid var(--accent); background: var(--hover); }
+  .gear .slot.fits .what { color: var(--accent); font-weight: bold; }
+
   .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 4px; }
   .tabs .btn { height: 20px; font-size: 11px; }
   .search { height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px;
@@ -48,51 +60,55 @@
                   font: 12px var(--font-ui); caret-color: var(--accent); }
   .search input::placeholder { font-style: italic; font-size: 11px; color: var(--text-dim); opacity: .55; }
   .search .hits { font-size: 10px; color: var(--text-dim); }
-
-  /* "Sort by :" is a plain dim label; the choices beside it are small buttons, the chosen one marked like a tab. */
   .sort { height: 20px; display: flex; align-items: center; gap: 3px; margin: 3px 0; font-size: 10px; }
   .sort .lbl { color: var(--text-dim); margin-right: 3px; }
   .sort .btn { height: 16px; padding: 0 6px; font-size: 10px; }
 
-  /* THE GRID: hotbar boxes (48 x 48, HotbarPanel.CellSize), six across, four down, NO GAP — exactly the 24 a tab
-     holds, so a tab never scrolls and every box it has is on screen. Only All (every tab at once) can hold more.
-     The scroll bar has its own lane OUTSIDE the boxes, out in the window's right margin, and the lane is always
-     kept: the boxes never move when the bar appears, and the bar never covers one. Never a sideways scroll. */
+  /* THE GRID: hotbar boxes, six across, four down, NO GAP — a tab's 24. The scroll bar has its own lane outside the
+     boxes, in the window's margin, always kept, so nothing moves when it appears. Never a sideways scroll. */
   .grid { display: grid; grid-template-columns: repeat(6, 48px); grid-auto-rows: 48px; gap: 0;
           width: 298px; margin-right: -10px; height: 192px; overflow-x: hidden; overflow-y: auto;
           scrollbar-gutter: stable; align-content: start; }
   .grid::-webkit-scrollbar { width: 6px; }
-  .grid::-webkit-scrollbar-thumb { background: var(--button-edge); border-radius: 2px; }
+  .grid::-webkit-scrollbar-thumb { background: var(--button-edge); border-radius: 3px; }
   .grid::-webkit-scrollbar-track { background: transparent; }
+
   .cell { position: relative; width: 48px; height: 48px; border-radius: 3px; border: 1px solid var(--button-edge);
           background: var(--slot-fill); cursor: grab; }
   .cell:hover { background: var(--hover); }
   .cell.empty { background: var(--cell-empty); border-color: transparent; cursor: default; }
   .cell.over { border-color: var(--accent); }
   .cell.lifted { opacity: .4; }
-  /* The hotbar's name on a tile: bold, centred, 9-12px, cut with an ellipsis, 12px clear top and bottom. */
   .cell .name { position: absolute; left: 3px; right: 3px; top: 12px; bottom: 12px; display: flex;
                 align-items: center; justify-content: center; text-align: center; font-weight: bold;
                 font-size: 10px; line-height: 11px; overflow: hidden; pointer-events: none; }
   .cell .name span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
                      overflow-wrap: anywhere; }
-  /* The hotbar's count: bottom-right, bold 11. */
   .cell .count { position: absolute; right: 3px; bottom: 1px; font: bold 11px var(--font-ui); color: var(--title-text);
                  pointer-events: none; }
-  /* Where the hotbar puts its key, a worn piece says so. */
-  .cell .worn { position: absolute; left: 3px; top: 1px; font-size: 9px; color: var(--accent); pointer-events: none; }
-  .r1 { color: var(--good); } .r2 { color: var(--rarity-rare); }
+  .r0 { color: var(--text-main); } .r1 { color: var(--good); } .r2 { color: var(--rarity-rare); }
   .r3 { color: var(--rarity-epic); } .r4 { color: var(--rarity-legendary); }
 
-  .foot { height: 18px; line-height: 18px; text-align: right; font-size: 12px; margin-top: 4px; }
+  .foot { grid-column: 1 / -1; height: 18px; line-height: 18px; text-align: right; font-size: 12px; margin-top: 4px; }
   .foot span { margin-left: 18px; }
 
-  /* ---- the hotbar, only so a box can be dragged onto it (HotbarPanel: 48px cells, 6px apart) ---- */
+  /* ---- the hotbar, so a box can be dragged onto it (HotbarPanel: 48px cells, 6px apart) ---- */
   #hotbar { display: grid; grid-template-columns: repeat(9, 48px); gap: 6px; }
   #hotbar .cell { cursor: default; border: 0; }
-  #hotbar .cell.empty.over { outline: 1px solid var(--accent); }
   #hotbar .key { position: absolute; left: 3px; top: 1px; font: bold 11px var(--font-ui); color: var(--text-on-dim); }
   #hotbar .cell:not(.empty) .key { color: var(--text-dim); }
+
+  /* ---- the chat, so a shift-clicked name can be sent (ChatController: the log over a SlotFill field) ---- */
+  #chat { width: 420px; background: var(--panel-fill); border: 1px solid var(--window-edge); border-radius: 5px;
+          padding: 6px; font-size: 12px; color: var(--text-main); }
+  #chat .log { height: 72px; overflow-y: auto; line-height: 16px; }
+  #chat .log .who { color: var(--accent); }
+  #chat .field { margin-top: 4px; height: 22px; border: 1px solid var(--button-edge); border-radius: 3px;
+                 background: var(--slot-fill); display: flex; align-items: center; padding: 0 6px; gap: 2px;
+                 cursor: text; white-space: nowrap; overflow: hidden; }
+  #chat .field .ph { color: var(--text-dim); font-style: italic; font-size: 11px; }
+  #chat .link { font-weight: bold; cursor: help; }
+  #chat .link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -101,85 +117,133 @@
     <section class="win" id="inventory" data-mocks="Inventory">
       <div class="bar"><b>Inventory</b><i>_</i><i>X</i></div>
       <div class="body">
-        <div class="tabs" id="tabs"></div>
-        <div class="search" data-part="search">
-          <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill"><span class="hits" id="hits"></span>
+        <div class="gear" id="gear" data-part="equipment">
+          <div class="figure">
+            <!-- stands for the player's own body, drawn live by CharacterPreview -->
+            <svg viewBox="0 0 76 252" aria-hidden="true">
+              <circle cx="38" cy="30" r="22" fill="var(--rule)"/>
+              <rect x="18" y="56" width="40" height="86" rx="10" fill="var(--rule)"/>
+              <rect x="4" y="62" width="12" height="74" rx="6" fill="var(--rule)"/>
+              <rect x="60" y="62" width="12" height="74" rx="6" fill="var(--rule)"/>
+              <rect x="20" y="144" width="15" height="98" rx="6" fill="var(--rule)"/>
+              <rect x="41" y="144" width="15" height="98" rx="6" fill="var(--rule)"/>
+            </svg>
+          </div>
         </div>
-        <div class="sort" id="sort" data-part="header"></div>
-        <div class="grid" id="grid" data-part="list"></div>
+        <div class="bagcol">
+          <div class="tabs" id="tabs"></div>
+          <div class="search" data-part="search">
+            <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill"><span class="hits" id="hits"></span>
+          </div>
+          <div class="sort" id="sort" data-part="header"></div>
+          <div class="grid" id="grid" data-part="list"></div>
+        </div>
         <div class="foot" id="foot"></div>
       </div>
     </section>
 
     <div class="note">
-      <b>Try:</b> the tabs (the chosen one is filled), FIND, and <i>Sort by</i>. A tab holds 24 and shows all 24
-      boxes at once. Only All can need a scroll bar; it sits in its own lane outside the boxes, so nothing moves when
-      it appears. <b>Drag</b> a box onto another to swap
-      them, onto an empty box to move it to the end, or onto the hotbar below to put it there. While a sort is on,
-      the order is the sort's, so dragging inside the bag does nothing (dragging to the hotbar still works).
-      Hovering a box shows the game's own item tooltip, unchanged.
+      <b>Try:</b>
+      <ul>
+        <li><b>Double-click</b> a box: a potion is used (its count drops), gear is put on, 10+ Ink or Salt merge.</li>
+        <li><b>Shift-click</b> a box: its name goes into the chat field in its rarity's colour; press Enter to send it.
+            Hovering the sent name shows that very item's tooltip.</li>
+        <li><b>Drag gear</b>: the slot it fits lights up; drop it anywhere on the body to put it on. Drag a worn
+            piece back into the bag to take it off, or double-click it.</li>
+        <li><b>Drag</b> a box onto another to swap them, onto the hotbar to put it there, or out of the window to
+            drop it on the ground (asks how many, as today).</li>
+        <li>No sort chosen = <b>newest first</b>; new things arrive at the front.</li>
+      </ul>
     </div>
   </div>
 
   <div id="hotbar" data-mocks="Hotbar"></div>
+  <div id="chat" data-mocks="Chat">
+    <div class="log" id="log"><div><span class="who">Vince:</span> anyone selling Iron?</div></div>
+    <div class="field" id="field"><span class="ph">Press Enter to chat</span></div>
+  </div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
-let seq = 0;
-const it = (name, held, cat, r, worn) => ({ name, held, cat, r: r || 0, worn: !!worn, got: ++seq });
-let ITEMS = [
-  it("+5 Fierce Chainmail [Raw]", 1, "Equip", 0, true),
-  it("+15 Thousand Petals [C]", 1, "Equip", 3, true),
-  it("B +12 Padded Vest", 1, "Equip", 2),
-  it("Sword", 1, "Equip"),
+const it = (name, held, cat, r, slot) => ({ name, held, cat, r: r || 0, slot: slot || null });
+// The bag in its own order: newest first (things arrive at the front).
+let BAG = [
+  it("Fluff", 64, "Etc"),
+  it("B +12 Padded Vest", 1, "Equip", 2, "Body"),
   it("Red Potion", 42, "Use"),
+  it("+3 Leather Cap [D]", 1, "Equip", 1, "Head"),
+  it("Iron", 312, "Material"),
+  it("Blue Ink", 14, "Material"),
   it("Butterfly Wing", 3, "Use", 1),
+  it("Sword", 1, "Equip", 0, "Weapon"),
   it("Fly Wing", 17, "Use"),
   it("Grilled Fish", 6, "Use"),
-  it("Iron", 312, "Material"),
   it("Stripped Bough [F]", 9, "Material"),
   it("Jellopy", 128, "Etc"),
-  it("Fluff", 64, "Etc"),
   it("Sticky Mucus", 11, "Etc"),
 ];
-for (let i = 0; i < 20; i++) ITEMS.push(it("Ore Shard " + (i + 1), 1 + (i * 7) % 40, "Material", i % 9 === 0 ? 2 : 0));
+for (let i = 0; i < 14; i++) BAG.push(it("Ore Shard " + (i + 1), 1 + (i * 7) % 40, "Material", i % 9 === 0 ? 2 : 0));
+
+// What is worn, by slot — each beside the part of the body it dresses.
+const SLOTS = [
+  { key: "Head",    word: "Head",    x: 0,   y: 8 },
+  { key: "Garment", word: "Garment", x: 128, y: 40 },
+  { key: "Body",    word: "Body",    x: 0,   y: 88 },
+  { key: "Weapon",  word: "Weapon",  x: 128, y: 110 },
+  { key: "Shoes",   word: "Shoes",   x: 0,   y: 208 },
+];
+const WORN = { Head: null, Garment: null, Body: it("+5 Fierce Chainmail [Raw]", 1, "Equip", 0, "Body"),
+               Weapon: it("+15 Thousand Petals [C]", 1, "Equip", 3, "Weapon"), Shoes: null };
 
 const TABS = ["All", "Equip", "Use", "Material", "Etc"];
-const SORTS = [["name", "Name"], ["held", "Held"], ["r", "Rarity"], ["got", "Acquired"]];
-let tab = "All", query = "", sortKey = null, desc = false, dragging = null;
+const SORTS = [["name", "Name"], ["held", "Held"], ["r", "Rarity"]];
+let tab = "All", query = "", sortKey = null, desc = false, dragging = null, dragFrom = null;
 const hotbar = Array(9).fill(null);
+let chatDraft = [];
 
-function cell(i) {
-  return `<div class="cell" draggable="true" data-id="${ITEMS.indexOf(i)}" title="${i.name}">` +
-         (i.worn ? '<span class="worn">worn</span>' : "") +
-         `<span class="name r${i.r}"><span>${i.name}</span></span>` +
-         (i.cat !== "Equip" ? `<span class="count">${i.held}</span>` : "") + "</div>";
-}
+const boxHtml = (i, attrs) => `<div class="cell" ${attrs} title="tooltip: ${i.name}">` +
+  `<span class="name r${i.r}"><span>${i.name}</span></span>` +
+  (i.cat !== "Equip" ? `<span class="count">${i.held}</span>` : "") + "</div>";
+
 function draw() {
   $("tabs").innerHTML = TABS.map(t => `<button class="btn${t === tab ? " chosen" : ""}" data-t="${t}">${t}</button>`).join("");
   $("sort").innerHTML = '<span class="lbl">Sort by :</span>' + SORTS.map(([k, w]) =>
     `<button class="btn${k === sortKey ? " chosen" : ""}" data-k="${k}">${w}${k === sortKey ? (desc ? " ▼" : " ▲") : ""}</button>`).join("");
 
-  let list = ITEMS.filter(i => (tab === "All" || i.cat === tab) && i.name.toLowerCase().includes(query));
+  let list = BAG.filter(i => (tab === "All" || i.cat === tab) && i.name.toLowerCase().includes(query));
   if (sortKey) list = [...list].sort((a, b) => {
     const c = sortKey === "name" ? a.name.localeCompare(b.name) : a[sortKey] - b[sortKey];
     return (c || a.name.localeCompare(b.name)) * (desc ? -1 : 1);
   });
-  list = [...list.filter(i => i.worn), ...list.filter(i => !i.worn)];
   const boxes = tab !== "All" && !query ? Math.max(24, list.length) : Math.max(24, Math.ceil(list.length / 6) * 6);
-  let html = list.map(cell).join("");
+  let html = list.map(i => boxHtml(i, `draggable="true" data-bag="${BAG.indexOf(i)}"`)).join("");
   for (let k = list.length; k < boxes; k++) html += '<div class="cell empty"></div>';
   $("grid").innerHTML = html;
-  $("hits").textContent = query ? list.length + " / " + ITEMS.filter(i => tab === "All" || i.cat === tab).length : "";
-  const used = tab === "All" ? null : ITEMS.filter(i => i.cat === tab).length;
+  $("hits").textContent = query ? list.length + " / " + BAG.filter(i => tab === "All" || i.cat === tab).length : "";
+
+  // the body and its slots
+  const fig = $("gear").querySelector(".figure").outerHTML;
+  $("gear").innerHTML = fig + SLOTS.map(s => {
+    const w = WORN[s.key];
+    const at = `style="left:${s.x}px;top:${s.y}px"`;
+    return w ? boxHtml(w, `${at} draggable="true" data-worn="${s.key}"`).replace('class="cell"', 'class="cell slot"')
+                 .replace("</div>", `<span class="what">${s.word}</span></div>`)
+             : `<div class="cell slot empty" ${at} data-slotkey="${s.key}"><span class="what">${s.word}</span></div>`;
+  }).join("");
+
+  const used = tab === "All" ? null : BAG.filter(i => i.cat === tab).length;
   $("foot").innerHTML = (used !== null ? `<span><span class="dim" style="margin:0">Slots</span> ${used}/24</span>` : "") +
     `<span><span class="dim" style="margin:0">Weight</span> 1318/2570</span><span>1,220 z</span>`;
 
   $("hotbar").innerHTML = hotbar.map((h, n) => h
-    ? `<div class="cell" data-slot="${n}"><span class="key">${n + 1}</span><span class="name"><span>${h.name}</span></span>` +
+    ? `<div class="cell" data-hot="${n}"><span class="key">${n + 1}</span><span class="name r${h.r}"><span>${h.name}</span></span>` +
       (h.cat !== "Equip" ? `<span class="count">${h.held}</span>` : "") + "</div>"
-    : `<div class="cell empty" data-slot="${n}"><span class="key">${n + 1}</span></div>`).join("");
+    : `<div class="cell empty" data-hot="${n}"><span class="key">${n + 1}</span></div>`).join("");
+
+  $("field").innerHTML = chatDraft.length
+    ? chatDraft.map(i => `<span class="link r${i.r}">[${i.name}]</span>`).join(" ")
+    : '<span class="ph">Press Enter to chat</span>';
 }
 
 $("tabs").addEventListener("click", e => { if (e.target.dataset.t) { tab = e.target.dataset.t; draw(); } });
@@ -190,26 +254,68 @@ $("sort").addEventListener("click", e => {
   draw();
 });
 
-// ---- dragging: swap inside the bag, move to the end on an empty box, bind on the hotbar ----
-document.addEventListener("dragstart", e => {
-  const c = e.target.closest("#grid .cell:not(.empty)"); if (!c) return;
-  dragging = ITEMS[+c.dataset.id]; c.classList.add("lifted"); e.dataTransfer.setData("text/plain", "");
+// ---- clicks: double = use / put on / take off / merge; shift = name into chat ----
+document.addEventListener("click", e => {
+  if (!e.shiftKey) return;
+  const c = e.target.closest("[data-bag],[data-worn]"); if (!c) return;
+  const i = c.dataset.bag !== undefined ? BAG[+c.dataset.bag] : WORN[c.dataset.worn];
+  chatDraft.push(i); draw();
 });
-document.addEventListener("dragend", () => { dragging = null; draw(); });
+document.addEventListener("dblclick", e => {
+  const w = e.target.closest("[data-worn]");
+  if (w) { const p = WORN[w.dataset.worn]; WORN[w.dataset.worn] = null; BAG.unshift(p); draw(); return; }
+  const c = e.target.closest("[data-bag]"); if (!c) return;
+  const i = BAG[+c.dataset.bag];
+  if (i.slot) { const was = WORN[i.slot]; WORN[i.slot] = i; BAG.splice(BAG.indexOf(i), 1, ...(was ? [was] : [])); }
+  else if (i.cat === "Use") { if (--i.held <= 0) BAG.splice(BAG.indexOf(i), 1); }
+  else if (/Ink|Salt/.test(i.name) && i.held >= 10) { i.held -= 10; BAG.unshift(it("Red Ink", 1, "Material")); }
+  draw();
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || !chatDraft.length) return;
+  const line = document.createElement("div");
+  line.innerHTML = '<span class="who">You:</span> ' +
+    chatDraft.map(i => `<span class="link r${i.r}" title="tooltip: ${i.name} (the sender's own copy)">[${i.name}]</span>`).join(" ");
+  $("log").appendChild(line); $("log").scrollTop = 1e6; chatDraft = []; draw();
+});
+
+// ---- dragging ----
+document.addEventListener("dragstart", e => {
+  const c = e.target.closest("[data-bag],[data-worn]"); if (!c) return;
+  dragFrom = c.dataset.worn ? { worn: c.dataset.worn } : { bag: +c.dataset.bag };
+  dragging = c.dataset.worn ? WORN[c.dataset.worn] : BAG[+c.dataset.bag];
+  c.classList.add("lifted"); e.dataTransfer.setData("text/plain", "");
+  // The slot this piece belongs in lights up for as long as it is held.
+  if (dragging.slot && dragFrom.bag !== undefined)
+    setTimeout(() => document.querySelectorAll(".gear .slot").forEach((s, n) => {
+      if (SLOTS[n].key === dragging.slot) s.classList.add("fits"); }), 0);
+});
+document.addEventListener("dragend", () => { dragging = null; dragFrom = null; draw(); });
 document.addEventListener("dragover", e => {
-  const t = e.target.closest("#grid .cell, #hotbar .cell"); if (!t || !dragging) return;
-  if (t.closest("#grid") && (sortKey || dragging.worn)) return;
-  e.preventDefault();
-  document.querySelectorAll(".over").forEach(x => x.classList.remove("over")); t.classList.add("over");
+  if (!dragging) return;
+  const onGear = e.target.closest("#gear"), onBag = e.target.closest("#grid .cell"), onHot = e.target.closest("#hotbar .cell");
+  if (onGear && dragging.slot && dragFrom.bag !== undefined) { e.preventDefault(); return; }
+  if (onHot) { e.preventDefault(); return; }
+  if (onBag && (dragFrom.worn || !sortKey)) { e.preventDefault(); return; }
+  if (!e.target.closest("#inventory") && dragFrom.bag !== undefined) e.preventDefault();   // out of the window: drop
 });
 document.addEventListener("drop", e => {
-  e.preventDefault();
-  const t = e.target.closest("#grid .cell, #hotbar .cell"); if (!t || !dragging) return;
-  if (t.dataset.slot !== undefined) { hotbar[+t.dataset.slot] = dragging; draw(); return; }
-  const from = ITEMS.indexOf(dragging);
-  if (t.classList.contains("empty")) { ITEMS.splice(from, 1); ITEMS.push(dragging); }
-  else { const to = +t.dataset.id; if (ITEMS[to].worn) return; [ITEMS[from], ITEMS[to]] = [ITEMS[to], ITEMS[from]]; }
-  draw();
+  e.preventDefault(); if (!dragging) return;
+  const onGear = e.target.closest("#gear"), onBag = e.target.closest("#grid .cell"), onHot = e.target.closest("#hotbar .cell");
+  if (onHot) { hotbar[+onHot.dataset.hot] = dragging; draw(); return; }
+  if (onGear && dragFrom.bag !== undefined && dragging.slot) {
+    const was = WORN[dragging.slot]; WORN[dragging.slot] = dragging;
+    BAG.splice(BAG.indexOf(dragging), 1, ...(was ? [was] : [])); draw(); return;
+  }
+  if (onBag && dragFrom.worn) { WORN[dragFrom.worn] = null; BAG.unshift(dragging); draw(); return; }
+  if (onBag && dragFrom.bag !== undefined && onBag.dataset.bag !== undefined) {
+    const a = dragFrom.bag, b = +onBag.dataset.bag; [BAG[a], BAG[b]] = [BAG[b], BAG[a]]; draw(); return;
+  }
+  if (!e.target.closest("#inventory") && dragFrom.bag !== undefined) {
+    const n = dragging.held > 1 ? +prompt("Drop how many " + dragging.name + "?", dragging.held) || 0 : 1;
+    if (n > 0) { dragging.held -= n; if (dragging.held <= 0 || dragging.cat === "Equip") BAG.splice(BAG.indexOf(dragging), 1); }
+    draw();
+  }
 });
 draw();
 </script>
