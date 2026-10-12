@@ -76,8 +76,16 @@ public static class SpawnIds
     {
         if (npc == null || !GameServer.IsServer) return;
         var tag = Next(npc.scene.name, PlainName(npc.name));
-        if (GameLog.On(LogCat.Spawn))
-            GameLog.Info(LogCat.Spawn, string.Concat(tag.map, " ", tag.label, " (", modelName, ") appeared"));
+        if (!GameLog.On(LogCat.Spawn)) return;
+        // WHERE IT STANDS, AND WHERE THE GROUND IS UNDER IT. A Keeper was once seen floating above head height after a
+        // Butterfly Wing brought its emptied town back (2026-10-12); this line is the measurement that tells "placed
+        // before the ground existed" (no ground found) from "placed at the wrong height" (a gap) at a glance.
+        Vector3 p = npc.transform.position;
+        string ground = GroundSnap.TryGroundY(p, GroundSnap.GroundMask, 60f, 200f, out float groundY)
+            ? string.Concat("ground y ", groundY.ToString("0.00"), ", ", (p.y - groundY).ToString("0.00"), " above it")
+            : "NO GROUND FOUND under it";
+        GameLog.Info(LogCat.Spawn, string.Concat(tag.map, " ", tag.label, " (", modelName, ") appeared at x ",
+            p.x.ToString("0.00"), ", y ", p.y.ToString("0.00"), ", z ", p.z.ToString("0.00"), " — ", ground));
     }
 
     /// <summary>A player is now standing in <paramref name="map"/>. Called only when their map CHANGES, so a death

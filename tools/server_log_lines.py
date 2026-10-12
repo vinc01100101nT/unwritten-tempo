@@ -28,7 +28,7 @@ STATE_LOST = re.compile(TIME + r" \[buff\] (?P<map>\S+) (?P<state>\S+) on (?P<wh
 PASSIVE_FIRED = re.compile(TIME + r" \[passive\] (?P<map>\S+) (?P<who>.+?) fired (?P<skill>\S+) on (?P<trigger>\S+)(?: at .*)?$")
 PASSIVE_SKIPPED = re.compile(TIME + r" \[passive\] (?P<map>\S+) (?P<who>.+?) skipped (?P<skill>\S+) on (?P<trigger>\S+) "
                                     r"— (?P<why>.+)$")
-APPEARED = re.compile(TIME + r" \[spawn\] (?P<map>\S+) (?P<who>.+? #(?P<n>\d+)) \((?P<id>[^)]*)\) (?P<how>appeared|entered)$")
+APPEARED = re.compile(TIME + r" \[spawn\] (?P<map>\S+) (?P<who>.+? #(?P<n>\d+)) \((?P<id>[^)]*)\) (?P<how>appeared|entered)(?: at .*)?$")
 CAME_BACK = re.compile(TIME + r" \[spawn\] (?P<map>\S+) (?P<who>.+? #\d+) came back$")
 GOT_UP = re.compile(TIME + r" \[spawn\] (?P<map>\S+) (?P<who>.+?) got up" + _HP + r"$")
 INVINCIBLE = re.compile(TIME + r" \[server\] (?P<map>\S+) (?P<who>.+?) invincibility (?P<state>on|off)$")

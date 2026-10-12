@@ -53,7 +53,7 @@ before any game code runs, has no time and no category.
 
 | Category | Shape |
 | --- | --- |
-| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (a townsperson's name is `Townsfolk_<their name>`, and their model name is in the brackets) |
+| `spawn` | `<map> <name> #<n> (<mob id>) appeared` — a creature or townsperson came into the map (a townsperson's name is `Townsfolk_<their name>`, and their model name is in the brackets). A townsperson's line goes on: `at x <x>, y <y>, z <z> — ground y <g>, <gap> above it`, or `NO GROUND FOUND under it` when it was placed before its map's ground existed |
 | `spawn` | `map '<map>' given <n> spawn area(s), <m> creature(s).` — the server read this map's rows from the world spawn list as it loaded it |
 | `spawn` | `map '<map>' given <n> townsperson(s).` — the server read this map's people from the townsfolk list as it loaded it |
 | `spawn` | `townsperson '<name>' in '<map>' has no model — left out.` — a row of the townsfolk list names no body, so that person was not made |

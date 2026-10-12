@@ -62,6 +62,12 @@ public static class PropLodBaker
             var root = PrefabUtility.LoadPrefabContents(path);
             try
             {
+                if (KeptWhole(name))
+                {
+                    if (StripLevels(root, name)) { PrefabUtility.SaveAsPrefabAsset(root, path); report.AppendLine(name + ": far levels removed — drawn whole at every distance"); }
+                    skipped++;
+                    continue;
+                }
                 if (root.GetComponentInChildren<LODGroup>(true) != null) { skipped++; continue; }
                 var originals = new List<Renderer>();
                 var filters = new List<MeshFilter>();
@@ -110,6 +116,29 @@ public static class PropLodBaker
                          + skipped + " left alone.\n");
         Debug.Log("[unwritten] " + report);
         return report.ToString();
+    }
+
+    // HOUSES ARE NEVER SIMPLIFIED. A house is almost every triangle its own patch of texture: kept whole at the seams it
+    // cannot come down at all (House_A: 72,945 → 69,343), and with the seams let go its far levels came out visibly
+    // broken in play (2026-10-12) — only House_A had ever been looked at. So houses are drawn whole at every distance;
+    // trees, rocks and the rest keep their far levels.
+    static bool KeptWhole(string propName) => propName.StartsWith("House", System.StringComparison.Ordinal);
+
+    // Takes off what an earlier bake added to a kept-whole prop: its LOD group, the "<part>_LOD<n>" copies beside each
+    // part, and the simpler meshes generated for it. Returns true when there was anything to take off.
+    static bool StripLevels(GameObject root, string propName)
+    {
+        bool changed = false;
+        foreach (var g in root.GetComponentsInChildren<LODGroup>(true)) { Object.DestroyImmediate(g, true); changed = true; }
+        var copies = new List<GameObject>();
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (t != root.transform && IsFamilyMember(t.name) && !t.name.EndsWith("_LOD0", System.StringComparison.Ordinal))
+                copies.Add(t.gameObject);
+        foreach (var c in copies) if (c != null) { Object.DestroyImmediate(c, true); changed = true; }
+        string dir = OutputDir + "/" + propName;
+        // editor-write-ok: part of the same bake the user ran by hand; removes only this tool's own output.
+        if (AssetDatabase.IsValidFolder(dir)) { AssetDatabase.DeleteAsset(dir); changed = true; }
+        return changed;
     }
 
     // "Stone1_LOD0", "Stone1_LOD2": one of a family with hand-made copies, which LodGroupWirer wires.
