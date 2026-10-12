@@ -243,7 +243,12 @@ public class GuideOverlay : MonoBehaviour
         var vp = scroll.viewport;
         Vector2 a = vp.InverseTransformPoint(corners[0]), b = vp.InverseTransformPoint(corners[2]);
         var vr = vp.rect;
-        if (a.y >= vr.yMin && b.y <= vr.yMax) return true;
+        // HALF A PIXEL OF GRACE. A list exactly as tall as its view (the bag's grid: a tab is four rows of boxes) has its
+        // first and last rows flush with the view's edges, and the trip through world space rounds those edges either
+        // way by a sliver — so a part that is fully on screen read as out of it on some frames (the arrow blinked) or on
+        // every frame (it never showed), and scrolling could not help, because there is nowhere to scroll to.
+        const float Grace = 0.5f;
+        if (a.y >= vr.yMin - Grace && b.y <= vr.yMax + Grace) return true;
         ScrollInto(scroll, rt);
         return false;
     }

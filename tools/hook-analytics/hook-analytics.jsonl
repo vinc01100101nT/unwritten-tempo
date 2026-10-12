@@ -6101,3 +6101,4 @@
 {"ts": "2026-10-12T14:44:59+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/KeeperPanel.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T14:45:59+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/EquipmentPanel.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T14:46:07+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/ProgressionWindows.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T15:48:41+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/GuideOverlay.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
