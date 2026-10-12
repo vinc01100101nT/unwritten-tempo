@@ -19,7 +19,8 @@ returns early when the material cannot be made.
 
 **Lessons:**
 - Any runtime `Shader.Find` must name a shader on Project Settings ▸ Graphics ▸ Always Included Shaders (ASSETS.md
-  rule 12). On 2026-10-12 every other runtime by-name shader was checked and is included.
+  rule 12), now enforced by `tools/check-runtime-shaders.py` (run by the end-of-turn gate, proven by
+  `tools/prove-runtime-shaders-check.py`).
 - Mirror drops the connection when a message handler throws. A "disconnect" with nothing on the server is an
   exception on the CLIENT — read `tools/platform.sh player-log` first.
 - Build-only bugs: the editor is not evidence. Ask for Player.log.

@@ -62,7 +62,7 @@ public static class UiKit
         if (m == null) return;
         if (m.HasProperty(ShaderUtilities.ID_OutlineWidth))
         {
-            var onTop = m.shader.name.EndsWith(OnTopTextSuffix) ? m.shader : Shader.Find(m.shader.name + OnTopTextSuffix);
+            var onTop = m.shader.name.EndsWith(OnTopTextSuffix) ? m.shader : Shader.Find(m.shader.name + OnTopTextSuffix);   // shader-ok: TMP's "<text shader> Overlay" twin, on Always Included; if absent this logs an error and keeps the shader — it never throws
             if (onTop != null)
             {
                 if (onTop == m.shader) return;

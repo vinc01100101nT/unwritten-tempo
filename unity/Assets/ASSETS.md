@@ -67,7 +67,9 @@ checker at the bottom is what makes them stick without anybody remembering.
     it — and the editor always finds it, so the feature works in Play mode and silently does nothing in every build.
     The ink outline, the paper grade and the old character-colour shader (`InkScreen`, `HandDrawnGrade`, and one
     since removed) were missing from every build until 2026-10-02, each build's log saying "not found". Adding a
-    `Shader.Find` means adding the shader to that list in the same change. Not yet checked automatically.
+    `Shader.Find` means adding the shader to that list in the same change. Checked by `tools/check-runtime-shaders.py`
+    (proven by `tools/prove-runtime-shaders-check.py`), written after the afterimage's URP Unlit — missing from every
+    build — threw inside a network message on 2026-10-12 and disconnected every Thousand Petals dash.
 13. **Every character model has its outfit parts saved.** Which colours of a model can be recoloured is worked out
     once in the editor and saved (`CharacterDyePartsBaker.BakeAll()`, run through the live editor link, writes
     `3_Data/Resources/CharacterDyeParts.asset`). Working it out in game read the whole texture back from the

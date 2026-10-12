@@ -232,6 +232,22 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # A shader the game looks up by name must be in a BUILT game, or Shader.Find answers null there and only there —
+    # the 2026-10-12 afterimage threw inside a network message and disconnected every Thousand Petals dash.
+    "runtime-shaders": {
+        "roots": [(SCRIPTS, ".cs")],
+        "files": [os.path.join(REPO, "unity", "ProjectSettings", "GraphicsSettings.asset")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-runtime-shaders.py")],
+        "headline": "Game code looks up a shader by name that a built game would not carry (it works in the editor "
+                    "and is null in a build). Use a shader on Always Included Shaders:",
+    },
+    "runtime-shaders-checker": {
+        "files": [os.path.join(TOOLS, "check-runtime-shaders.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-runtime-shaders-check.py")],
+        "headline": "The runtime-shaders checker no longer sees a missing shader, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
     # The other half of NOEDITORWRITES: Unity's own components saved into a scene that rewrite themselves in the
     # editor. One of them stopped every build at "Modified Scenes must be saved" (2026-10-09).
     "scene-stays-clean": {

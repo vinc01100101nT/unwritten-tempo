@@ -572,6 +572,7 @@ that costs a round.
   tools/check-editor-writes.py  # after any Editor/ C# edit — no write with nobody having clicked
   tools/check-scene-stays-clean.py  # after any scene / prefab / HUD bake edit — nothing saved rewrites itself in the editor
   tools/check-client-math.py    # after any runtime C# edit — no NEW sum on a game number off the server
+  tools/check-runtime-shaders.py  # after any runtime Shader.Find or Always Included Shaders edit — a build carries every shader the game looks up
   tools/check-game-math.sh      # after any edit to a maths class — the pinned numbers, run outside Unity in ~1s
   tools/check-server-rules.py   # after any accounts/ or charserver/ edit — SERVER.md as tests
   ```
