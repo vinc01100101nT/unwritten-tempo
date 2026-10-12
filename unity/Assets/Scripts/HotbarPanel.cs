@@ -47,7 +47,7 @@ public class HotbarPanel : MonoBehaviour
     /// <summary>A cell you cannot afford: its OWN colour, darkened. Dimming rather than replacing is what keeps the
     /// weapon readable when the skill is greyed out.</summary>
     static Color Dim(Color c) => new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.5f, c.a);
-    static readonly Color CellEmpty  = new Color(0.32f, 0.32f, 0.37f, 0.6f);   // unbound slot
+    static readonly Color CellEmpty  = UiKit.SlotEmpty;   // unbound slot
     static readonly Color KeyColor   = UiKit.TextOnDim;
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);

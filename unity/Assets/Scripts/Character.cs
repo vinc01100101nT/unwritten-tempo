@@ -2026,21 +2026,17 @@ public class Character : MonoBehaviour, ICombatUnit
     // ---- HOW MUCH THE BAG HOLDS (BagRoom) -------------------------------------------------------------------
     //
     // Answered by the server's copy of a character, which is the only one that decides what may arrive. A player's
-    // machine is TOLD the totals with every bag it is sent (BagWire) and only draws them. Worn gear counts in both
-    // totals, so putting a piece on or taking it off never changes either one.
+    // machine is TOLD the totals with every bag it is sent (BagWire) and only draws them. Worn gear counts toward
+    // WEIGHT, so putting a piece on or taking it off never changes it; it does not take a box in its tab — what you
+    // wear is shown on your body, not in the bag — so taking one off needs a free box (CmdUnequipToBag).
 
-    /// <summary>Entries held in one bag tab, worn pieces of that tab included.</summary>
+    /// <summary>Entries held in one bag tab. What is worn is not in the bag and takes no box.</summary>
     public int SlotsUsed(ItemCategory tab)
     {
         if (Told) return toldSlots != null && (int)tab < toldSlots.Length ? toldSlots[(int)tab] : 0;
         int n = 0;
         for (int i = 0; i < bag.Count; i++)
             if (bag[i] != null && bag[i].def != null && bag[i].def.category == tab) n++;
-        for (int i = 0; i < WornSlotKinds.Length; i++)
-        {
-            var piece = Gear.Get(WornSlotKinds[i]);
-            if (piece != null && piece.def != null && piece.def.category == tab) n++;
-        }
         return n;
     }
 
@@ -2066,7 +2062,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public int WeightCap => Told ? toldWeightCap : BagRoom.WeightCap(P(PrimaryStat.STR));
 
     // Every slot a piece can be worn in, walked by index: asking the gear for its worn list builds a new list walker
-    // each time, and these are asked on every auto-looted thing.
+    // each time, and the carried weight is asked on every auto-looted thing.
     static readonly EquipSlotType[] WornSlotKinds = WearableSlots();
     static EquipSlotType[] WearableSlots()
     {

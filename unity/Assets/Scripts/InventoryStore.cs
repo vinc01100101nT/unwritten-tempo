@@ -143,6 +143,9 @@ public class InventoryStore : MonoBehaviour
 
         var inst = Character.Instance.GetEquippedInstance(slot);
         if (inst == null) return;
+        // The same free box the server asks for (BagRoom), here because with no world this machine decides.
+        var noRoom = Character.Instance.RoomFor(inst.def, 1);
+        if (noRoom != BagRefusal.None) { ChatController.GameSaid(Character.Instance.RefusalLine(inst.def, noRoom, "take off")); return; }
         Character.Instance.SetEquipped(slot, (EquipmentInstance)null);
         if (inst.def != null) Entries.Add(new BagEntry { def = inst.def, count = 1, instance = inst });
         Notify();
@@ -185,6 +188,22 @@ public class InventoryStore : MonoBehaviour
         // is ALSO reduced here. In a world it is not — the server takes it off and says so.
         if (!ItemUse.Use(e.def, Entries.IndexOf(e))) return;
         if (--e.count <= 0) Entries.Remove(e);
+        Notify();
+    }
+
+    /// <summary>A box dropped on another box: the two trade places. Neither may be a worn piece (what is worn is not in
+    /// the bag).</summary>
+    public void Swap(BagEntry a, BagEntry b)
+    {
+        if (a == null || b == null || a == b || a.worn || b.worn) return;
+        var entries = Entries;
+        int ia = entries.IndexOf(a), ib = entries.IndexOf(b);
+        if (ia < 0 || ib < 0) return;
+
+        var me = GameNetwork.MyPlayer;
+        if (me != null) { me.AskToSwap(ia, ib, a.def != null ? a.def.id : "", b.def != null ? b.def.id : ""); return; }
+
+        (entries[ia], entries[ib]) = (entries[ib], entries[ia]);
         Notify();
     }
 

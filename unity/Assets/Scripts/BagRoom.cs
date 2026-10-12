@@ -6,11 +6,11 @@ public enum BagRefusal { None, SlotsFull, TooHeavy }
 /// out, so it can be checked without the game (tools/check-game-math.sh).
 ///
 /// <para><b>Slots</b>: each bag tab (<see cref="ItemCategory"/>) holds <see cref="SlotsPerCategory"/> entries. A stack is
-/// one entry however many it holds; every piece of gear is its own entry. Worn gear counts in its tab, as Ragnarok counts
-/// what you wear in your inventory, so putting a piece on or taking it off never changes the count.</para>
+/// one entry however many it holds; every piece of gear is its own entry. What is worn is shown on the body, not in the
+/// bag, and takes no box — so taking a piece off needs a free one in its tab.</para>
 ///
 /// <para><b>Weight</b>: Ragnarok Online's carry limit, 2000 + 30 per point of STR. Its class bonus is left out — there
-/// are no classes. Worn gear counts here too, for the same reason.</para>
+/// are no classes. Worn gear counts here too, as Ragnarok counts what you wear in your weight.</para>
 ///
 /// <para>A thing that would go past either limit is REFUSED where it would arrive, with the reason said. It is never
 /// put in and hidden.</para>

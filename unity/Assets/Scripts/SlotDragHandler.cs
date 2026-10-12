@@ -4,12 +4,13 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// Dragging a bag row. Lives on the same GameObject as an <see cref="ItemSlot"/> (added by
-/// <see cref="InventoryList"/>); operates on the <see cref="InventoryStore"/> rather than on the row, so it never
-/// desyncs from the data on the next refresh.
+/// Dragging a box — in the bag, on the body, in the Keeper's storage. Lives on the same GameObject as an
+/// <see cref="ItemSlot"/> (every <see cref="ItemBox"/> has both); it decides nothing about what a drop MEANS. Whatever
+/// it is let go over answers that (<see cref="IItemDropTarget"/>): another box, a grid, the body in the equipment panel.
 ///
-/// Drops: onto another row = reorder · onto THE WORLD = put it down on the ground. A cursor-following ghost moves
-/// with the drag.
+/// Drops: onto the hotbar = put it there · onto a drop target = what that target says · onto THE WORLD = put it down
+/// on the ground (only a thing in the bag). A cursor-following ghost moves with the drag, and
+/// <see cref="ItemDrag"/> tells anything listening what is being held.
 ///
 /// <para><b>Letting go over the world means dropping it</b>, and "the world" means the cursor is over no window
 /// at all — not merely outside the bag. Releasing onto your character sheet or your skill book does nothing,
@@ -35,6 +36,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (slot == null || slot.Item == null || canvas == null) return;   // empty cell → no drag
         dragging = true;
+        ItemDrag.Begin(slot.boundEntry);
 
         ItemTooltip.Suppressed = true;          // no tooltips flickering over slots mid-drag
         ItemTooltip.HideTip();
@@ -61,6 +63,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     {
         if (!dragging) return;
         dragging = false;
+        ItemDrag.End();
 
         ItemTooltip.Suppressed = false;
         if (ghost != null) { Destroy(ghost); ghost = null; }
@@ -72,10 +75,34 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             return;
         }
 
-        var target = SlotUnder(e);
-        if (target == null && NothingUnder(e)) { DropIntoTheWorld(e); return; }
-        ResolveDrop(target);
-        // Reorder Notify()s the store → ProgressionWindows.RefreshAll re-renders.
+        if (DropTargetTakes(e)) return;
+        if (NothingUnder(e)) DropIntoTheWorld(e);
+    }
+
+    // The first thing under the cursor that takes the drop — a box, a grid, the body. The box being dragged is not one.
+    bool DropTargetTakes(PointerEventData e)
+    {
+        if (EventSystem.current == null) return false;
+        hits.Clear();
+        EventSystem.current.RaycastAll(e, hits);
+        foreach (var h in hits)
+        {
+            var target = h.gameObject.GetComponentInParent<IItemDropTarget>();
+            if (target == null) continue;
+            if ((target as Component) == GetComponent<ItemBox>()) return true;   // let go where it was: nothing moves
+            return target.TakeDrop(slot, e);
+        }
+        return false;
+    }
+
+    void OnDisable()
+    {
+        // A box switched off mid-drag (its window closed) must not leave the drag, or the ghost, behind.
+        if (!dragging) return;
+        dragging = false;
+        ItemDrag.End();
+        ItemTooltip.Suppressed = false;
+        if (ghost != null) { Destroy(ghost); ghost = null; }
     }
 
     /// <summary>What a bag row stands for on the hotbar: one exact piece of gear (worn or carried), a usable item by its
@@ -87,14 +114,13 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         return entry.def.IsUsable ? HotbarEntry.Item(entry.def.id) : "";
     }
 
-    /// <summary>Let go over the world: put it down where you are standing, through the same door the right-click
-    /// menu's Drop uses — so a stack still asks how many, and a worn piece, a quest item and the Ring are still
-    /// refused with the reason shown there.</summary>
+    /// <summary>Let go over the world: put it down where you are standing — a stack asks how many, and a quest item is
+    /// refused with the reason shown. Only a thing IN THE BAG: a worn piece is on your body (take it off first), and a
+    /// stored one is the Keeper's to hand back.</summary>
     void DropIntoTheWorld(PointerEventData e)
     {
-        // A WORN piece is on your body, not in the bag: the store refuses to drop it, and taking it off is what
-        // the menu's Unequip is for.
-        if (slot == null || slot.boundEntry == null) return;
+        if (slot == null || slot.boundEntry == null || InventoryStore.Instance == null) return;
+        if (!InventoryStore.Instance.Entries.Contains(slot.boundEntry)) return;
         DropAmountPrompt.DropFromScreen(slot.boundEntry, e.position, canvas, null);
     }
 
@@ -106,29 +132,5 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         hits.Clear();
         EventSystem.current.RaycastAll(e, hits);
         return hits.Count == 0;
-    }
-
-    void ResolveDrop(ItemSlot target)
-    {
-        var store = InventoryStore.Instance;
-        if (store == null || slot == null || slot.Item == null || target == null || target == slot) return;
-        if (slot.boundEntry == null) return;
-
-        // Onto another row: reorder (a null entry = an empty row → append).
-        store.Reorder(slot.boundEntry, target.boundEntry);
-    }
-
-    // The ItemSlot under the cursor at drop time (the ghost is raycast-transparent, so it won't shadow it).
-    static ItemSlot SlotUnder(PointerEventData e)
-    {
-        if (EventSystem.current == null) return null;
-        hits.Clear();
-        EventSystem.current.RaycastAll(e, hits);
-        foreach (var h in hits)
-        {
-            var s = h.gameObject.GetComponentInParent<ItemSlot>();
-            if (s != null) return s;
-        }
-        return null;
     }
 }

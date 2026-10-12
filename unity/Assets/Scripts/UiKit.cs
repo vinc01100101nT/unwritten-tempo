@@ -176,6 +176,8 @@ public static class UiKit
     public static readonly Color PanelRaise = new Color(0.929f, 0.945f, 0.969f);
     // #FFFFFF — a text field, slot or track well
     public static readonly Color SlotFill = new Color(1.000f, 1.000f, 1.000f);
+    // #52525E at 60% — an empty box: a hotbar slot, a bag box or an equipment slot with nothing in it
+    public static readonly Color SlotEmpty = new Color(0.32f, 0.32f, 0.37f, 0.6f);
     // #7F97BD — the edge around every window
     public static readonly Color WindowEdge = new Color(0.498f, 0.592f, 0.741f);
     // #E6EEFA — the title bar fades from this…
@@ -459,13 +461,23 @@ public static class UiKit
         return rt;
     }
 
-    /// <summary>Show whether a tab made by <see cref="Btn"/> is the chosen one: its edge in the accent colour when it
-    /// is, the ordinary button edge when it is not.</summary>
+    /// <summary>Show whether a tab made by <see cref="Btn"/> is the chosen one: FILLED with the accent colour, its word
+    /// bold and white, when it is; an ordinary button when it is not. Every tabbed window marks its tabs through here,
+    /// so a chosen tab looks the same in all of them.</summary>
     public static void MarkTab(Button tab, bool chosen)
     {
         if (tab == null) return;
         var edge = tab.GetComponent<Image>();
         if (edge != null) edge.color = chosen ? Accent : ButtonEdge;
+        var fill = tab.transform.Find("Fill");
+        var fillImg = fill != null ? fill.GetComponent<Image>() : null;
+        if (fillImg != null) fillImg.color = chosen ? Accent : ButtonFill;
+        var word = fill != null ? fill.GetComponentInChildren<TMP_Text>() : null;
+        if (word != null)
+        {
+            word.color = chosen ? TextOnDim : ButtonText;
+            word.fontStyle = chosen ? FontStyles.Bold : FontStyles.Normal;
+        }
     }
 
     /// <summary>Turn a window's fixed "Content" node into a clipped vertical scroll (wheel and drag) and return the

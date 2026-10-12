@@ -55,17 +55,17 @@ try {
 return sb.ToString();
 """
 
-# The bag: a 324x296 window whose frame leaves 292x246 inside — measured from a window stood up in the editor
-# (the frame takes 32 of the width and 50 of the height), not guessed.
+# The bag: a 320x336 window whose frame leaves 288x286 inside (the frame takes 32 of the width and 50 of the height,
+# measured from a window stood up in the editor). Its tabs, then search, sort and the grid of boxes.
 INVENTORY_BUILD = r"""
   var list = new InventoryList();
-  list.Build(panel, null);
+  list.Build(panel, new Vector2(0, -24));
   var entries = new System.Collections.Generic.List<BagEntry>();
   var fish = Resources.Load<Item>("Items/Grilled Fish");
   var sword = Resources.Load<Item>("Items/Sword");
   if (fish != null) entries.Add(new BagEntry { def = fish, count = 3 });
   if (sword != null) entries.Add(new BagEntry { def = sword, count = 1, instance = new EquipmentInstance(sword) });
-  list.Refresh(entries);
+  list.Refresh(entries, true);
 """
 
 INVENTORY_MEASURE = r"""
@@ -78,7 +78,7 @@ INVENTORY_MEASURE = r"""
     if (t != null) sb.Append("header_size=").Append(t.fontSize.ToString("0.##")).Append("|");
   }
   foreach (var rt in all) {
-    if (rt.name != "Row" || !rt.gameObject.activeInHierarchy) continue;
+    if (rt.name != "Box" || !rt.gameObject.activeInHierarchy) continue;
     sb.Append("row=").Append(rt.rect.height.ToString("0.##")).Append("|");
     for (int i = 0; i < rt.childCount; i++) {
       var c = rt.GetChild(i) as RectTransform;
@@ -90,14 +90,14 @@ INVENTORY_MEASURE = r"""
   }
   foreach (var rt in all) {
     if (rt.name == "Search") sb.Append("search=").Append(rt.rect.height.ToString("0.##")).Append("|");
-    if (rt.name == "Viewport") sb.Append("list=").Append(rt.rect.height.ToString("0.##")).Append("|");
+    if (rt.name == "Grid") sb.Append("list=").Append(rt.rect.height.ToString("0.##")).Append("|");
   }
 """
 
 RECIPES = {
     "Inventory": {
-        "width": 292, "height": 246,
-        "window_note": "the bag window is 324x296; its frame leaves 292x246 inside",
+        "width": 288, "height": 286,
+        "window_note": "the bag window is 320x336; its frame leaves 288x286 inside",
         "build": INVENTORY_BUILD,
         "measure": INVENTORY_MEASURE,
     },

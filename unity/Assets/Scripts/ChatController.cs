@@ -35,6 +35,7 @@ public class ChatController : MonoBehaviour
     RectTransform logContent;    // vertical list of message rows
     ScrollRect scroll;
     TMP_InputField input;
+    ChatLinkInput linkInput;
     TMP_InputField nameBox;      // who a line goes to as a private message; empty = said out loud
     bool built;
 
@@ -157,9 +158,38 @@ public class ChatController : MonoBehaviour
     static void Post(string speaker, string text, IStancePose over, bool isSkillCall)
     {
         if (instance == null || string.IsNullOrEmpty(text)) return;
-        string body = isSkillCall ? $"<color=#{CallHex}>{Sanitize(text)}</color>" : Sanitize(text);
-        instance.AddLine($"{SpeakerPrefix(speaker)} {body}");
-        if (over != null) SpeechBubble.ShowOverHead(over, text, BubbleLife);
+        if (isSkillCall)
+            instance.AddLine($"{SpeakerPrefix(speaker)} <color=#{CallHex}>{Sanitize(text)}</color>");
+        else
+            instance.AddLinkedLine(SpeakerPrefix(speaker) + " ", text, LineKind.General);
+        // A bubble draws no colours: each linked item is its bare "[name]" there.
+        if (over != null) SpeechBubble.ShowOverHead(over, ChatLinks.Plain(text), BubbleLife);
+    }
+
+    // A row whose text may name items (ChatLinks): each one drawn in its colour, and its tooltip shown while the pointer
+    // is on it. The same for every kind of line that can carry one.
+    void AddLinkedLine(string lead, string text, LineKind kind)
+    {
+        linkTitles.Clear(); linkColours.Clear(); linkBodies.Clear();
+        string body = ChatLinks.ToRichText(text, Sanitize, linkTitles, linkColours, linkBodies);
+        var row = AddLine(lead + body, kind);
+        if (row != null && linkTitles.Count > 0) ChatLinkRow.Attach(row, linkTitles, linkColours, linkBodies);
+    }
+
+    static readonly List<string> linkTitles = new List<string>(ChatLinks.MostLinksInALine);
+    static readonly List<Color> linkColours = new List<Color>(ChatLinks.MostLinksInALine);
+    static readonly List<string> linkBodies = new List<string>(ChatLinks.MostLinksInALine);
+
+    /// <summary>Shift-click on a thing you hold: its name goes into the chat field as a link, where the caret is, and the
+    /// field takes the keyboard so the line can be finished and sent.</summary>
+    public static void InsertItemLink(BagEntry thing)
+    {
+        if (instance == null || thing == null || thing.def == null) return;
+        if (!instance.built) instance.TryBuild();
+        if (instance.input == null || instance.linkInput == null) return;
+        if (instance.root != null && !UiAnim.IsOpen(instance.root)) UiAnim.Open(instance.root);
+        instance.linkInput.Insert(thing);
+        instance.FocusInput();
     }
 
     // Who is speaking, written once: a said line and a skill call are the same person talking, so they share this
@@ -176,7 +206,7 @@ public class ChatController : MonoBehaviour
         if (instance == null || string.IsNullOrEmpty(name) || string.IsNullOrEmpty(text)) return;
         instance.RememberPartner(name);
         string lead = outgoing ? "To " : "From ";
-        instance.AddLine($"<color={PmHex}>{lead}{Sanitize(name)}:</color> {Sanitize(text)}", LineKind.Pm);
+        instance.AddLinkedLine($"<color={PmHex}>{lead}{Sanitize(name)}:</color> ", text, LineKind.Pm);
         if (instance.root != null && !UiAnim.IsOpen(instance.root)) UiAnim.Open(instance.root);
     }
 
@@ -298,6 +328,9 @@ public class ChatController : MonoBehaviour
 
         input = BuildBox(content, "Input", "Say something, or /help…", NameBoxWidth + 4, 0);
         input.onEndEdit.AddListener(OnEndEdit);
+        // Items named in the line: each one whole, in its colour, never edited from the inside.
+        linkInput = input.gameObject.AddComponent<ChatLinkInput>();
+        linkInput.Bind(input);
     }
 
     // One single-line box at the bottom of the content area: <paramref name="left"/> in from the left edge, and
@@ -369,7 +402,9 @@ public class ChatController : MonoBehaviour
         // onEndEdit also fires on focus-loss; only act on an actual Enter press.
         if (!(Input.GetKeyDown(GameKeys.Chat) || Input.GetKeyDown(GameKeys.ChatAlt))) return;
 
-        var text = value != null ? value.Trim() : "";
+        // The items the line names go as references to the server, which turns them into links (ChatLinks).
+        var text = linkInput != null ? linkInput.Encode(value) : value;
+        text = text != null ? text.Trim() : "";
         input.text = "";
         if (text.Length == 0) { input.DeactivateInputField(); return; }
 
@@ -404,7 +439,8 @@ public class ChatController : MonoBehaviour
             // hear it — this machine included. That is why nothing is shown here in that case: one line said is one
             // row and one bubble for everybody, decided in one place, so the speaker cannot see a different chat
             // from the people listening. With no server there is nobody to ask and the line lands here.
-            if (!GameNetwork.SendSayToServer(text)) Said(text);
+            if (!GameNetwork.SendSayToServer(text))
+                Said(ChatLinks.Resolve(text, Character.Instance, GameNetwork.MostCharactersInALine));
         }
     }
 
@@ -429,10 +465,10 @@ public class ChatController : MonoBehaviour
 
     void AddLine(string message) => AddLine(message, LineKind.General);
 
-    void AddLine(string message, LineKind kind)
+    TMP_Text AddLine(string message, LineKind kind)
     {
         LineAdded?.Invoke(message);
-        if (logContent == null) return;
+        if (logContent == null) return null;
 
         var t = UiKit.MakeText("Line", logContent, message, 14, FontStyle.Normal, TextAnchor.UpperLeft);
         t.color = UiKit.TextMain;
@@ -453,6 +489,7 @@ public class ChatController : MonoBehaviour
         // around: five in a fight is several rebuilds a second, forever, for one scroll position. Once a frame,
         // however many lines arrived in it, costs the same as it ever did for one.
         wantsScrollToNewest = true;
+        return t;
     }
 
     bool wantsScrollToNewest;

@@ -12,11 +12,11 @@ using UnityEngine.UI;
 /// nothing to ask — so it is never shown for one.</para>
 ///
 /// <para><b>There is ONE of these in the game</b>, and <see cref="DropFromScreen"/> is the only way anything on a
-/// screen puts an item down — the right-click menu and dragging an item out of the window both go through it, so
-/// the two cannot start disagreeing about when you are asked and what happens when you answer.</para>
+/// screen puts an item down — dragging an item out of the window goes through it, so there is one answer to when
+/// you are asked and what happens when you answer.</para>
 ///
-/// <para>Built like <see cref="ItemActionMenu"/> and opened at the same place on screen: one thin rounded edge
-/// around a flat panel, floating above every window on the HUD canvas.</para>
+/// <para>Opened where the item was let go: one thin rounded edge around a flat panel, floating above every window
+/// on the HUD canvas.</para>
 /// </summary>
 public class DropAmountPrompt
 {
@@ -199,7 +199,7 @@ public class DropAmountPrompt
     }
 
     /// <summary>Close on Esc, or on a click that lands anywhere but on this box. Call once a frame from whatever
-    /// owns it — the same shape <see cref="ItemActionMenu.TickDismiss"/> uses, for the same reason.</summary>
+    /// owns it.</summary>
     public void TickDismiss()
     {
         if (!IsOpen || Time.frameCount == openedFrame) return;

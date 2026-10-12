@@ -59,6 +59,25 @@ public class ItemTooltip : MonoBehaviour
     public static void ShowForPreview(EquipmentInstance inst, EquipSlotType previewSlot)
     { if (!Suppressed && Instance != null) Instance.ShowPreview(inst, previewSlot); }
 
+    /// <summary>Show a tooltip whose words were worked out elsewhere — an item linked in chat, whose title, colour and
+    /// card the SERVER built from the sender's own copy. Drawn as given; nothing is worked out here.</summary>
+    public static void ShowText(string title, Color titleColour, string body)
+    {
+        if (Suppressed || Instance == null) return;
+        Instance.previewing = null;
+        Instance.titleText.text = title ?? "";
+        Instance.titleText.color = titleColour;
+        Instance.bodyText.text = body ?? "";
+        Instance.ShowSkillIcons(null);
+        Instance.group.alpha = 1f;
+        Instance.Follow();
+    }
+
+    /// <summary>The card's words for a thing — a piece's own (<paramref name="piece"/>), or the item's. What a chat link
+    /// carries, built on the server by the same lines the bag's tooltip draws.</summary>
+    public static string BodyFor(Item def, EquipmentInstance piece)
+        => piece != null && piece.def != null ? DescribeInstance(piece) : def != null ? Describe(def) : "";
+
     /// <summary>Hide the tooltip (no-op if the UI isn't up yet).</summary>
     public static void HideTip()
     {
@@ -252,7 +271,7 @@ public class ItemTooltip : MonoBehaviour
         SkillTooltip.EffectLines(def, SkillTooltip.Dialect.RichText, useLines);
         for (int i = 0; i < useLines.Count; i++)
             sb.Append("\n" + UseTag).Append(useLines[i]).Append("</color>");
-        sb.Append("\n" + UseTag + "(right-click to use)</color>");
+        sb.Append("\n" + UseTag + "(double-click to use)</color>");
     }
 
     static string DescribeInstance(EquipmentInstance inst)

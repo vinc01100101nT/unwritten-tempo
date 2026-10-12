@@ -2898,18 +2898,8 @@ public class GameNetwork : NetworkManager
 
     static bool SayingTooFast(int connectionId) => TooMany(chatLedgers, connectionId, MaxLinesSaidPerSecond);
 
-    /// <summary>A typed line made fit to pass on, for every kind of chat: every control character (a line break, a
-    /// tab, anything a poked game could send) becomes a space, so one line is always one row that cannot pretend to
-    /// be a second line from somebody else; then trimmed and cut at <see cref="MostCharactersInALine"/>.</summary>
-    static string CleanLine(string raw)
-    {
-        if (string.IsNullOrEmpty(raw)) return "";
-        var chars = raw.ToCharArray();
-        for (int i = 0; i < chars.Length; i++)
-            if (char.IsControl(chars[i])) chars[i] = ' ';
-        var text = new string(chars).Trim();
-        return text.Length > MostCharactersInALine ? text.Substring(0, MostCharactersInALine) : text;
-    }
+    // A typed line is made fit to pass on — for every kind of chat — by ChatLinks.Resolve: its item references become
+    // links, every other control character a space, and it is cut at MostCharactersInALine as shown.
 
     /// <summary>Say a line to the world. Returns TRUE when it went, which means the caller must NOT show it
     /// itself — it comes back from the server a moment later, as everybody else receives it.
@@ -2935,7 +2925,14 @@ public class GameNetwork : NetworkManager
     {
         if (SayingTooFast(conn.connectionId)) return;
 
-        var text = CleanLine(msg.text);
+        var speaker = ShellFor(conn);
+        if (speaker == null) return;   // no body here yet, so there is nobody to have said it and nobody to hang a bubble on
+        var identity = speaker.netIdentity;
+        if (identity == null) return;
+
+        // Every item the line names becomes a link to the speaker's own copy of it (ChatLinks), and nothing else in it
+        // may be anything but plain text.
+        var text = ChatLinks.Resolve(msg.text, speaker.ServerCombatUnit as Character, MostCharactersInALine);
         if (text.Length == 0) return;
 
         // A COMMAND IS NOT A SAID LINE and must never become one. Commands have their own door, which asks whether
@@ -2943,19 +2940,14 @@ public class GameNetwork : NetworkManager
         // the log to type it.
         if (GmCommands.IsCommand(text)) return;
 
-        var speaker = ShellFor(conn);
-        if (speaker == null) return;   // no body here yet, so there is nobody to have said it and nobody to hang a bubble on
-        var identity = speaker.netIdentity;
-        if (identity == null) return;
-
         // WHAT A TESTER SAYS OUT LOUD is often the most useful line of a play-test — "where do I go?", "this is
         // stuck" — so a said line is written down. Only the room's chat: a private message is never logged.
         if (GameLog.On(LogCat.Server))
         {
             var who = speaker.ServerCombatUnit as Character;
             GameLog.Info(LogCat.Server, who != null
-                ? string.Concat(SpawnIds.MapOf(who), " ", SpawnIds.Label(who), " said: ", text)
-                : string.Concat(speaker.playerName, " said: ", text));
+                ? string.Concat(SpawnIds.MapOf(who), " ", SpawnIds.Label(who), " said: ", ChatLinks.Plain(text))
+                : string.Concat(speaker.playerName, " said: ", ChatLinks.Plain(text)));
         }
 
         NetworkServer.SendToReadyObservers(identity, new ChatHeard
@@ -3041,7 +3033,7 @@ public class GameNetwork : NetworkManager
         }
 
         var toName = msg.toName != null ? msg.toName.Trim() : "";
-        var text = CleanLine(msg.text);
+        var text = ChatLinks.Resolve(msg.text, sender.ServerCombatUnit as Character, MostCharactersInALine);
         if (toName.Length == 0 || text.Length == 0) return;
         if (toName.Length > LongestNameAsked) { sender.TellOwner(toName.Substring(0, LongestNameAsked) + " is not online."); return; }
         if (string.Equals(toName, sender.playerName, System.StringComparison.OrdinalIgnoreCase))
@@ -3084,7 +3076,8 @@ public class GameNetwork : NetworkManager
     /// many, 404 when they are not here at all.</summary>
     public static int DeliverPm(string toCharacterId, string fromName, string text)
     {
-        var pm = new PmHeard { name = fromName, text = CleanLine(text), outgoing = false };
+        // Made fit by the sender's server, links and all; cleaned again here, keeping those links.
+        var pm = new PmHeard { name = fromName, text = ChatLinks.CleanRelayed(text, MostCharactersInALine), outgoing = false };
         var shell = PlayerFighter.PlayedBy(toCharacterId);
         if (shell != null && !shell.Leaving && shell.connectionToClient != null)
         {

@@ -3,9 +3,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// The interaction half of one bag row: it holds the item the row shows and owns hovering it (the item tooltip, or
-/// the live equip→stat-delta preview) and clicking it. <see cref="InventoryList"/> adds one to every row, with a
-/// <see cref="SlotDragHandler"/> beside it for dragging. It draws nothing — the row's text cells do that.
+/// The interaction half of one box: it holds the item the box shows and owns hovering it (the item tooltip, or the
+/// live equip→stat-delta preview) and clicking it. Every <see cref="ItemBox"/> carries one, with a
+/// <see cref="SlotDragHandler"/> beside it for dragging. It draws nothing — the box does that.
 /// </summary>
 [RequireComponent(typeof(Image))]
 public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler

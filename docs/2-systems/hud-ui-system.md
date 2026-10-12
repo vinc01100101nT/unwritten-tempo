@@ -38,7 +38,7 @@ Tracking issue: **VIN-22**.
 Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
 value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the kill combo, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button; both list every mob and NPC that lives in a map with its level, the zone view beside the map it shows and the world view beside the pointer, and each mob with how many are alive there now over how many the map keeps ("12/30"), both from the server — alive alone for a creature only a random mix puts there; the zone view also draws every door out of the map it shows, in the colour of the kind of map it leads to and named for it — clicking a door opens that map, and clicking anywhere else on the picture sets the spot the ground arrows lead to, on any map, and a right click drops it), the name of each map flashed across the top of the screen in its kind's colour as you arrive, a settings window and the Auto-Combat window (System menu ▸ Auto-Combat; see [Auto-Combat](auto-combat.md)) all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory (a grid of boxes, with what you wear in a see-through frame on its left where the camera stands your own character) and the character window, the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the kill combo, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button; both list every mob and NPC that lives in a map with its level, the zone view beside the map it shows and the world view beside the pointer, and each mob with how many are alive there now over how many the map keeps ("12/30"), both from the server — alive alone for a creature only a random mix puts there; the zone view also draws every door out of the map it shows, in the colour of the kind of map it leads to and named for it — clicking a door opens that map, and clicking anywhere else on the picture sets the spot the ground arrows lead to, on any map, and a right click drops it), the name of each map flashed across the top of the screen in its kind's colour as you arrive, a settings window and the Auto-Combat window (System menu ▸ Auto-Combat; see [Auto-Combat](auto-combat.md)) all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## The theme rule
 
@@ -58,7 +58,7 @@ and over every person, the cast bar), which stay light text on the world. **A me
 ## Window headings
 
 **Every window's heading is its blue title bar, and the title is always in it** — "Login", "Your Characters",
-"Character Creation", "Inventory", "Skills", the status box, the right-click menu, the card dialog, the drop
+"Character Creation", "Inventory", "Skills", the status box, the drop
 prompt. The bar is **`UiKit.TitleBarHeight` = 24 units high on every one of them**, whatever it carries, and is
 built by the one `UiKit.Header` (through `DressWindow`) or, for a menu's strip, `UiKit.TitleBar`.
 
@@ -140,13 +140,14 @@ here and the code disagree, the code is right and this table is stale — re-ver
 | Token | Hex | What it is |
 | --- | --- | --- |
 | PanelFill | `#F7F8FA` | every window's body, and a speech bubble |
-| PanelRaise | `#EDF1F7` | a sub-panel inside a window — the bag's column header, a stat row, the chat log |
-| SlotFill | `#FFFFFF` | the well of a text field, the bag's search box, a checkbox |
+| PanelRaise | `#EDF1F7` | a sub-panel inside a window — a stat row, the chat log |
+| SlotFill | `#FFFFFF` | the well of a text field, the bag's search box, a checkbox, a filled box in the bag, storage, the equipment frame or the hotbar |
+| SlotEmpty | `#52525E` at 60% | an empty box — a hotbar slot, a bag box or an equipment slot with nothing in it |
 | WindowEdge | `#7F97BD` | the edge around every window, tooltip, menu and HUD plate |
 | TitleBarTop | `#E6EEFA` | a window's title bar fades from this at its top edge… |
 | TitleBarBottom | `#B9CCE9` | …down to this at its bottom edge |
 | ButtonFill | `#E9EBEF` | a button's face |
-| ButtonEdge | `#B5BDC9` | a button's edge, a text field's edge, a slider track, an unselected row's edge |
+| ButtonEdge | `#B5BDC9` | a button's edge, a text field's edge, a slider track, an unselected tab's edge, a filled box's edge |
 | Rule | `#C9D3E2` | a divider line, a bar's empty track |
 | Hover | `#D6E5FB` | behind whatever the pointer is over; a text selection |
 | CloseFill | `#D9DFE8` | the close button |
@@ -164,7 +165,7 @@ background and veil), not to any window.
 | TitleText | `#22324D` | a window's title and headings |
 | ButtonText | `#222222` | a button's label |
 | TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice, the loading screen |
-| Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers |
+| Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers, the fill of a chosen tab (its word bold and white) and of the equipment slot a dragged piece belongs in |
 | Good | `#2E7D41` | a stat that went up |
 | Bad | `#B83A3A` | a stat that went down; a refusal |
 | PmText | `#867200` | a private message in the chat — a dark gold yellow, since bright yellow cannot be read on a window |
@@ -185,8 +186,8 @@ them; a corner-radius change means re-running that script.
 **Good**, Rare in **RarityRare**, Epic in **RarityEpic**, Legendary in **RarityLegendary**. Rarity is how rare an
 item is to come by — a weapon as rare as its trademark, a material by its kind and tier, everything else Common (see
 [V4 §4](gameplay-system-v4/README.md)) — and one function answers both the rarity and its colour (`Rarities`), so
-every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag rows, the
-worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a
+every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag's boxes, an item
+linked in chat, the worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a
 piece is worth is still written in words — its **grade and its folds**, "B +12" — and a grade is never coloured.
 
 ### Fonts
@@ -222,7 +223,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 ## Phase plan — where it actually stands (measured 2026-08-30)
 
-- **Phase 1 — DONE.** The Inventory and Character windows exist; what you wear is listed at the top of the inventory. Hotbar + stat allocation were already done.
+- **Phase 1 — DONE.** The Inventory and Character windows exist; what you wear is in the equipment frame beside the bag. Hotbar + stat allocation were already done.
 - **Phase 2 — mostly done.** The buff/debuff bar and both tooltips (item and skill) are built. **The quest tracker** has a quest system to follow since 2026-10-04: the Quests window (J), and the followed quest's route drawn on the ground and on the minimap.
 - **Phase 3 — no longer "deferred", and no longer one phase.** Chat is built. Guild / marketplace / mail are still absent, but they are now ordinary features on a real networked game rather than a bracket nobody expected to open.
 - **Phase 4 — partly done.** Windows are movable by their title bar, and in-game windows carry minimise and close buttons. **Saved layouts and UI scaling are not built**, and UI Toolkit was never revisited — it is still uGUI throughout.

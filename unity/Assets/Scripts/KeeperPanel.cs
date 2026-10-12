@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// THE KEEPER'S WINDOW — what opens when you press F on a town's Keeper. A menu of the Keeper's three services, each
@@ -13,8 +15,13 @@ using UnityEngine;
 /// server still answers.</para>
 ///
 /// <para><b>It builds only what is on screen.</b> The page is a list of plain records (<see cref="Line"/>), and the
-/// column (<see cref="UiListView"/>) makes text and rows only for the lines in view — 600 stored things cost the rows on
-/// screen, not 600 rows made and destroyed on every change. Whatever arrives in one frame redraws it once.</para>
+/// column (<see cref="UiListView"/>) makes text and rows only for the lines in view. Whatever arrives in one frame
+/// redraws it once.</para>
+///
+/// <para><b>Storage is two grids, the bag's own</b> (<see cref="ItemGrid"/>): what is stored on the left, what you carry
+/// on the right, each thing a box by its name with its tooltip on hover. Double-click a box to move all of it across,
+/// Ctrl + double-click to move one; or drag it from one grid onto the other to move all of it. A grid makes boxes only
+/// for the rows in view, so 600 stored things cost thirty boxes.</para>
 ///
 /// <para>Opening it is an interaction with a townsperson, exactly as a shop is: <see cref="PlayerInteractor"/> holds the
 /// player, frames the camera and closes this window when the interaction ends.</para>
@@ -23,8 +30,19 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
 {
     public static KeeperPanel Instance { get; private set; }
 
+    // The window's size on its menu and teleport pages, and wider on the storage page for its two grids side by side.
+    static readonly Vector2 ListSize = new Vector2(420, 460);
+    const float GridGap = 12f, StorageTop = 112f, CaptionHeight = 18f;
+    static readonly Vector2 StorageSize = new Vector2(2 * ItemGrid.WidthWithLane + GridGap + 32f,
+                                                      StorageTop + CaptionHeight + 4f + ItemGrid.Height + 8f + 50f);
+
     GameObject root;
     UiListView view;
+    GameObject storageArea;
+    TMP_Text storedCaption, carriedCaption;
+    readonly ItemGrid storedGrid = new ItemGrid(), carriedGrid = new ItemGrid();
+    StoredBoxes storedBoxes;
+    CarriedBoxes carriedBoxes;
     string keeper;
     string lastResult;
     bool lastResultOk;
@@ -44,7 +62,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     Character storageOf;
 
     // ---- the page, as plain records ------------------------------------------------------------------------
-    enum Kind { Title, Gold, Note, Header, Button, Trip, Stored, Carried, Result }
+    enum Kind { Title, Gold, Note, Button, Trip, Result }
     struct Line { public Kind kind; public int index; }
     readonly List<Line> lines = new List<Line>(64);
 
@@ -52,12 +70,10 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     static readonly string[] Notes =
     {
         "Nobody here.", "Asking the Keeper…", "There is nowhere to send you from here.", "Opening storage…",
-        "Nothing is stored.", "You are carrying nothing that can be stored.",
     };
-    const int NoteNobody = 0, NoteAsking = 1, NoteNowhere = 2, NoteOpening = 3, NoteNothingStored = 4, NoteNothingCarried = 5;
+    const int NoteNobody = 0, NoteAsking = 1, NoteNowhere = 2, NoteOpening = 3;
     static readonly string[] Buttons = { "Save Point", "Storage", "Teleport", "← Back" };
     const int ButtonSavePoint = 0, ButtonStorage = 1, ButtonTeleport = 2, ButtonBack = 3;
-    const int HeaderStored = 0, HeaderCarried = 1;
 
     static readonly Color Sub = UiKit.TextDim;
 
@@ -140,6 +156,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
         keeper = keeperTitle;
         lastResult = null;
         page = Page.Menu;
+        ShowStorageArea(false);
         trips = null;
         KeepStorageFor(Character.Instance);
         Build();
@@ -181,8 +198,51 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
         if (root != null) return;
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
-        var body = UiKit.Window(canvas.transform, "Keeper", new Vector2(420, 460), Vector2.zero, out root);
+        var body = UiKit.Window(canvas.transform, "Keeper", ListSize, Vector2.zero, out root);
         view = new UiListView(body, this);
+        BuildStorage(body);
+    }
+
+    // The two grids and their captions, under the page's title and Back button; shown only on the storage page.
+    void BuildStorage(RectTransform body)
+    {
+        var area = new GameObject("Storage", typeof(RectTransform));
+        area.transform.SetParent(body, false);
+        var art = (RectTransform)area.transform;
+        art.anchorMin = art.anchorMax = new Vector2(0, 1);
+        art.pivot = new Vector2(0, 1);
+        art.anchoredPosition = new Vector2(0, -StorageTop);
+        art.sizeDelta = new Vector2(2 * ItemGrid.WidthWithLane + GridGap, CaptionHeight + 4f + ItemGrid.Height);
+        storageArea = area;
+
+        storedCaption = Caption(art, 0f);
+        carriedCaption = Caption(art, ItemGrid.WidthWithLane + GridGap);
+        storedBoxes = new StoredBoxes(this);
+        carriedBoxes = new CarriedBoxes(this);
+        storedGrid.Build(art, new Vector2(0, -(CaptionHeight + 4f)), storedBoxes);
+        carriedGrid.Build(art, new Vector2(ItemGrid.WidthWithLane + GridGap, -(CaptionHeight + 4f)), carriedBoxes);
+        area.SetActive(false);
+    }
+
+    static TMP_Text Caption(RectTransform parent, float x)
+    {
+        var t = UiKit.MakeText("Caption", parent, "", 15, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
+        t.color = UiKit.TitleText;
+        t.raycastTarget = false;
+        var rt = t.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0, 1);
+        rt.pivot = new Vector2(0, 1);
+        rt.anchoredPosition = new Vector2(x, 0);
+        rt.sizeDelta = new Vector2(ItemGrid.Width, CaptionHeight);
+        return t;
+    }
+
+    // The storage page shows the grids and widens the window for them; every other page is the list alone.
+    void ShowStorageArea(bool on)
+    {
+        if (root == null || storageArea == null) return;
+        ((RectTransform)root.transform).sizeDelta = on ? StorageSize : ListSize;
+        if (storageArea.activeSelf != on) storageArea.SetActive(on);
     }
 
     // AT MOST ONCE A FRAME, however many things arrived in it: the page is laid out again, and the column redraws the
@@ -195,6 +255,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
             linesOwed = false;
             LayOut();
             view.Changed();
+            DrawStorage();
         }
         view.RedrawIfNeeded();
     }
@@ -223,23 +284,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
                 else for (int i = 0; i < trips.Length; i++) Add(Kind.Trip, i);
             }
             else if (!storage.Known) Add(Kind.Note, NoteOpening);
-            else
-            {
-                Add(Kind.Header, HeaderStored);
-                for (int i = 0; i < storage.Entries.Count; i++) Add(Kind.Stored, i);
-                if (storage.Entries.Count == 0) Add(Kind.Note, NoteNothingStored);
-                Add(Kind.Header, HeaderCarried);
-                int storable = 0;
-                for (int i = 0; i < c.Bag.Count; i++)
-                {
-                    var e = c.Bag[i];
-                    // A QUEST ITEM IS NEVER STORED — the server refuses it, so it is not offered.
-                    if (e == null || e.def == null || e.def.category == ItemCategory.Quest) continue;
-                    storable++;
-                    Add(Kind.Carried, i);
-                }
-                if (storable == 0) Add(Kind.Note, NoteNothingCarried);
-            }
+            // The storage page's things are its two grids (DrawStorage), under these lines.
         }
         // WHAT THE LAST PRESS DID, last.
         if (!string.IsNullOrEmpty(lastResult)) Add(Kind.Result, 0);
@@ -257,7 +302,6 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
             case Kind.Title:  return UiListView.LineHeight(18);
             case Kind.Gold:   return UiListView.LineHeight(13);
             case Kind.Note:   return UiListView.LineHeight(12);
-            case Kind.Header: return UiListView.LineHeight(15);
             case Kind.Result: return UiListView.LineHeight(12, 2);
             default:          return UiListView.RowHeight;
         }
@@ -279,10 +323,6 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
             case Kind.Note:
                 slot.ShowLine(Notes[line.index], 12, Sub);
                 break;
-            case Kind.Header:
-                slot.ShowLine(line.index == HeaderStored ? "In storage (" + storedRows + " of " + storageLimit + ")"
-                                                         : "In your bag", 15, UiKit.TitleText);
-                break;
             case Kind.Button:
                 slot.ShowButton(Buttons[line.index]);
                 break;
@@ -291,25 +331,6 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
                 var t = trips[line.index];
                 // TOO DEAR FOR THE PURSE THE SERVER SENT, drawn dim. The press still asks; the server still decides.
                 slot.ShowButton(t.name + " — " + t.price + "g", c != null && t.price > c.Gold);
-                break;
-            }
-            case Kind.Stored:
-            {
-                var e = storage.Entries[line.index];
-                if (e.instance != null)
-                    slot.ShowDeal(Rarities.Coloured(e.def, e.instance, ItemTooltip.CopyTitle(e.instance)), "Take");
-                else
-                    slot.ShowDeal(Rarities.Coloured(e.def, null, e.def.displayName) + " ×" + e.count, "Take 1", "Take all");
-                break;
-            }
-            case Kind.Carried:
-            {
-                var e = c != null && line.index < c.Bag.Count ? c.Bag[line.index] : null;
-                if (e == null || e.def == null) { slot.ShowLine("", 12, Sub); break; }
-                if (e.instance != null)
-                    slot.ShowDeal(Rarities.Coloured(e.def, e.instance, ItemTooltip.CopyTitle(e.instance)), "Store");
-                else
-                    slot.ShowDeal(Rarities.Coloured(e.def, null, e.def.displayName) + " ×" + e.count, "Store 1", "Store all");
                 break;
             }
             case Kind.Result:
@@ -332,30 +353,14 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
                 if (me != null && trips != null && line.index < trips.Length) me.AskKeeperTeleport(trips[line.index].map);
                 UISounds.PlayClick();
                 break;
-            case Kind.Stored:
-            {
-                if (line.index >= storage.Entries.Count) break;
-                var e = storage.Entries[line.index];
-                if (me != null) me.AskToTake(e.def.id, e.CopyId, which == 1);
-                UISounds.PlayClick();
-                break;
-            }
-            case Kind.Carried:
-            {
-                var c = Character.Instance;
-                if (c == null || line.index >= c.Bag.Count) break;
-                var e = c.Bag[line.index];
-                if (e == null || e.def == null) break;
-                if (me != null) me.AskToStore(line.index, e.def.id, e.instance != null ? e.instance.copyId ?? "" : "", which == 1);
-                UISounds.PlayClick();
-                break;
-            }
         }
     }
 
     void Open(Page which)
     {
         page = which;
+        ShowStorageArea(which == Page.Storage);
+        if (which == Page.Storage) { storedGrid.ToTop(); carriedGrid.ToTop(); }
         lastResult = null;
         UISounds.PlayClick();
         var me = GameNetwork.MyPlayer;
@@ -366,5 +371,120 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
         }
         linesOwed = true;
         view.ToTop();
+    }
+
+    // ---- the storage page's two grids ----------------------------------------------------------------------------
+
+    // What each grid shows, as the boxes hold it — the stored things as bag entries made once and reused, and the things
+    // carried that can be stored (a quest item never can: the server refuses it, so it is not offered).
+    readonly List<BagEntry> storedShown = new List<BagEntry>(64);
+    readonly List<BagEntry> carriedShown = new List<BagEntry>(64);
+
+    void DrawStorage()
+    {
+        if (page != Page.Storage || storageArea == null) return;
+        var c = Character.Instance;
+
+        var entries = storage.Entries;
+        while (storedShown.Count < entries.Count) storedShown.Add(new BagEntry());   // perf-ok: grows to the most ever stored, once
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var e = entries[i];
+            var row = storedShown[i];
+            row.def = e.def;
+            row.count = e.count;
+            row.instance = e.instance;
+        }
+        storedBoxes.count = storage.Known ? entries.Count : 0;
+
+        carriedShown.Clear();
+        if (c != null)
+            for (int i = 0; i < c.Bag.Count; i++)
+            {
+                var e = c.Bag[i];
+                if (e != null && e.def != null && e.def.category != ItemCategory.Quest) carriedShown.Add(e);
+            }
+
+        storedCaption.text = storage.Known ? "In storage (" + storedRows + " of " + storageLimit + ")" : "In storage";
+        carriedCaption.text = "In your bag";
+        storedGrid.Refresh();
+        carriedGrid.Refresh();
+    }
+
+    static int Padded(int count)
+    {
+        int filled = (count + ItemGrid.Columns - 1) / ItemGrid.Columns * ItemGrid.Columns;
+        return Mathf.Max(ItemGrid.Rows * ItemGrid.Columns, filled);
+    }
+
+    // Double-click moves all of it; with Ctrl held, one.
+    static bool JustOne() => Hotkeys.Held(KeyCode.LeftControl) || Hotkeys.Held(KeyCode.RightControl);
+
+    void TakeOut(BagEntry stored, bool all)
+    {
+        var me = GameNetwork.MyPlayer;
+        if (me == null || stored == null || stored.def == null) return;
+        me.AskToTake(stored.def.id, stored.instance != null ? stored.instance.copyId ?? "" : "", all);
+        UISounds.PlayClick();
+    }
+
+    void PutIn(BagEntry carried, bool all)
+    {
+        var me = GameNetwork.MyPlayer;
+        var c = Character.Instance;
+        if (me == null || c == null || carried == null || carried.def == null) return;
+        int index = c.Bag.IndexOf(carried);
+        if (index < 0) return;
+        me.AskToStore(index, carried.def.id, carried.instance != null ? carried.instance.copyId ?? "" : "", all);
+        UISounds.PlayClick();
+    }
+
+    class StoredBoxes : IItemBoxOwner
+    {
+        readonly KeeperPanel panel;
+        public int count;
+        public StoredBoxes(KeeperPanel owner) { panel = owner; }
+        public int BoxCount => Padded(count);
+        public void Bind(int index, ItemBox box)
+        {
+            if (index < count) box.Show(panel.storedShown[index], ItemBoxSource.Storage);
+            else box.ShowEmpty();
+        }
+        public void Clicked(ItemBox box, PointerEventData e)
+        {
+            if (box.Entry != null && e.button == PointerEventData.InputButton.Left && e.clickCount >= 2)
+                panel.TakeOut(box.Entry, !JustOne());
+        }
+        public bool Dropped(ItemBox onto, ItemSlot from)
+        {
+            var fromBox = from != null ? from.GetComponent<ItemBox>() : null;
+            if (fromBox == null) return false;
+            if (fromBox.source == ItemBoxSource.Bag) panel.PutIn(from.boundEntry, true);
+            return true;
+        }
+    }
+
+    class CarriedBoxes : IItemBoxOwner
+    {
+        readonly KeeperPanel panel;
+        public CarriedBoxes(KeeperPanel owner) { panel = owner; }
+        public int BoxCount => Padded(panel.carriedShown.Count);
+        public void Bind(int index, ItemBox box)
+        {
+            if (index < panel.carriedShown.Count) box.Show(panel.carriedShown[index], ItemBoxSource.Bag);
+            else box.ShowEmpty();
+        }
+        public void Clicked(ItemBox box, PointerEventData e)
+        {
+            if (box.Entry != null && e.button == PointerEventData.InputButton.Left && e.clickCount >= 2)
+                panel.PutIn(box.Entry, !JustOne());
+        }
+        public bool Dropped(ItemBox onto, ItemSlot from)
+        {
+            var fromBox = from != null ? from.GetComponent<ItemBox>() : null;
+            if (fromBox == null) return false;
+            if (fromBox.source == ItemBoxSource.Storage) panel.TakeOut(from.boundEntry, true);
+            return true;
+        }
     }
 }

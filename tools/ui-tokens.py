@@ -40,7 +40,8 @@ FONTS = [
 SCREEN_NAMES = {
     "ProgressionWindows.cs": "Inventory",
     "InventoryList.cs": "Inventory",
-    "ItemActionMenu.cs": "Inventory",
+    "ItemGrid.cs": "Inventory",
+    "EquipmentPanel.cs": "Inventory",
     "ItemSlot.cs": "Inventory",
     "ItemTooltip.cs": "Item Tooltip",
     "SkillBookPanel.cs": "Skill Book",

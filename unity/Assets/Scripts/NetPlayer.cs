@@ -2168,6 +2168,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var worn = c.GetEquippedInstance((EquipSlotType)slot);
         if (worn == null) return;
 
+        // A FREE BOX FOR IT in its tab, or it stays on (BagRoom): what is worn takes no box, so taking it off needs one.
+        var noRoom = c.RoomFor(worn.def, 1);
+        if (noRoom != BagRefusal.None) { TellNoRoom(worn.def, noRoom, "take off"); return; }
+
         // Taking the weapon off empties the bar, for the same reason putting one on refills it.
         bool theirBarChanges = (EquipSlotType)slot == EquipSlotType.Weapon;
 
@@ -2769,6 +2773,19 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToInkWorn(EquipSlotType slot, string itemId, int inkIndex, int inkSlot) => CmdInkWorn((int)slot, itemId, inkIndex, inkSlot);
     public void AskToRecycleWorn(EquipSlotType slot, string itemId) => CmdRecycleWorn((int)slot, itemId);
     public void AskToRecycle(int index, string itemId) => CmdRecycle(index, itemId);
+
+    /// <summary>Swap the two bag positions <paramref name="a"/> and <paramref name="b"/> — a box dropped on another box.
+    /// Both are named by position AND item id, so a bag that moved under the asker swaps nothing.</summary>
+    [Command]
+    void CmdSwapBag(int a, int b, string expectedA, string expectedB)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (a == b || !StillTheSameStack(c, a, expectedA) || !StillTheSameStack(c, b, expectedB)) return;
+        (c.Bag[a], c.Bag[b]) = (c.Bag[b], c.Bag[a]);
+        PushBagToOwner();
+        SaveSoon();
+    }
 
     [Command]
     void CmdReorderBag(int from, int to, string expectedItemId)
@@ -3383,6 +3400,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToEquip(int index, string itemId) => CmdEquipFromBag(index, itemId);
     public void AskToUnequip(EquipSlotType slot) => CmdUnequipToBag((int)slot);
     public void AskToReorder(int from, int to, string itemId) => CmdReorderBag(from, to, itemId);
+    public void AskToSwap(int a, int b, string idA, string idB) => CmdSwapBag(a, b, idA, idB);
     public void AskToDrop(int index, string itemId, int howMany) => CmdDropFromBag(index, itemId, howMany);
     public void AskToPickUp(uint dropNetId) => CmdPickUpDrop(dropNetId);
     public void AskToMerge(int index, string itemId) => CmdMergeMaterial(index, itemId);
