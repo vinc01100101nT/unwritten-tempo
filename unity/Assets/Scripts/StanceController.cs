@@ -37,7 +37,7 @@ public class StanceController : MonoBehaviour
     // The presentation sink this choke point drives — a baked billboard OR a live-3D Character3DPose. Resolved
     // via the IStancePose interface so swapping the visual backend doesn't touch this resolver.
     IStancePose pose;
-    Player3DController playerCtrl;   // optional — resolves the MoveGait source
+    Player3DController playerCtrl;   // optional — owns the walk/run/sprint pace
 
     // An AI unit's own status host, so its leg cadence answers to ITS Slow/Haste. Optional: a unit with no status
     // host simply never slows or hastes, and reads the shared baseline unchanged.
@@ -102,24 +102,24 @@ public class StanceController : MonoBehaviour
     /// to carry a value FROZEN at spawn instead, so a hasted townsperson or shadow kept walking at the old cadence
     /// while it visibly sped up. It now folds the same three terms from the same shared baseline, reading its OWN
     /// Slow/Haste and the gear it is actually playing.</para></summary>
-    float GaitFor(StanceId id)
+    float LocomotionAnimFor(StanceId id)
     {
-        if (playerCtrl != null) return playerCtrl.GaitSpeedMult;
+        if (playerCtrl != null) return playerCtrl.LocomotionAnimSpeedMult;
         // TOLD, for a body standing in for somebody on another machine. Their cadence is folded from their gear,
         // their Slow and their Haste by the controller they actually have, and none of those three reach here — so
         // a watched person's legs, and every clip paced by them, ran at the bare baseline. On the jump clip that
         // came out at exactly twice the speed the jumper saw. Used AS IT IS, with no gear tier applied on top: the
         // number arrives with the owner's own tier already in it, and applying one again would count it twice.
-        if (toldGait > 0f) return toldGait;
+        if (toldLocomotionAnim > 0f) return toldLocomotionAnim;
         var spec = CharacterSpec.Active;
         // Run legs churn at the run gear so the slower travel doesn't foot-skate — the same tier rule the player uses.
         float gearAnimTier = id == StanceId.Run ? spec.runGearMult : 1f;
-        return spec.GaitMult(status != null ? status.MoveMult : 1f, gearAnimTier);
+        return spec.LocomotionAnimMult(status != null ? status.PaceMult : 1f, gearAnimTier);
     }
 
     // The owner's own leg cadence, for a body that is only being watched. 0 = nobody has said, which is every
     // townsperson and every creature — they read the shared baseline below exactly as they always have.
-    float toldGait;
+    float toldLocomotionAnim;
 
     // How fast this body is travelling over the ground right now, handed over every frame by the shared brain.
     float groundSpeed;
@@ -131,7 +131,7 @@ public class StanceController : MonoBehaviour
     /// <summary>THE LEGS OF A WALK, RUN OR SPRINT ARE LOCKED TO THE GROUND: the clip plays at the body's real ground
     /// speed divided by how fast that clip walks on this body, so a planted foot stays still at any speed — bare feet,
     /// shoes, a buff or a slow. Only a live-3D body whose clip has been measured can answer; anything else (a flat
-    /// billboard, a clip never measured) keeps the movement-paced rule every other clip uses.</summary>
+    /// billboard, a clip never measured) plays at the locomotion pace instead.</summary>
     bool TryGroundLocked(StanceBinding b, out float playback)
     {
         playback = 1f;
@@ -141,17 +141,17 @@ public class StanceController : MonoBehaviour
     }
 
     /// <summary>The owning machine's word on this body's leg cadence. The watched-body mirror of
-    /// <see cref="SetGaitSource"/>: one hands over the live owner, the other hands over its answer.</summary>
-    public void TellGait(float gaitMult) { toldGait = gaitMult > 0f ? gaitMult : 0f; }
+    /// <see cref="SetLocomotionSource"/>: one hands over the live owner, the other hands over its answer.</summary>
+    public void TellLocomotionAnim(float mult) { toldLocomotionAnim = mult > 0f ? mult : 0f; }
 
-    /// <summary>This body's leg cadence as it stands right now — the number every clip paced by movement is played
+    /// <summary>This body's leg cadence as it stands right now — the pace an unmeasured walk, run or sprint plays
     /// at. Read by the position report so the machines watching this person can be told it; asking any other object
     /// for it would be a second owner of one answer.</summary>
-    public float TravelGait => GaitFor(StanceId.Idle);
+    public float LocomotionAnimNow => LocomotionAnimFor(StanceId.Idle);
 
-    /// <summary>Point the MoveGait source at the player controller (the gait-mult owner) — for a rig whose billboard
+    /// <summary>Point the walk/run/sprint pace at the player controller (its owner) — for a rig whose billboard
     /// rides a separate object from the controller (e.g. the player visual).</summary>
-    public void SetGaitSource(Player3DController p) { if (p != null) playerCtrl = p; }
+    public void SetLocomotionSource(Player3DController p) { if (p != null) playerCtrl = p; }
 
     /// <summary>Claim this as the PLAYER's controller: register it as <see cref="Player"/> (so cast/combat systems
     /// can push held stances onto it) and switch its fallback to hold the authored Idle stance instead of self-drive.</summary>
@@ -242,10 +242,9 @@ public class StanceController : MonoBehaviour
         bool fit = fitToWindow || b == null || b.speedSource == StanceSpeedSource.FitWindow;
         float dur;
         if (!fit)
-            // Intrinsic-speed stance (MoveGait / AttackSpeed / CastSpeed / Baked): the clip plays at its OWN resolved
-            // speed, so the lock must equal its real play time = natural / that speed. durationScale (an attack-speed
-            // hint for FitWindow) does NOT apply — the speed source already owns the timing. This is what stops a
-            // MoveGait release stance from over-rooting: the lock now ends exactly when the animation does.
+            // Intrinsic-speed stance (Baked, or a walk cycle): the clip plays at its OWN resolved speed, so the lock
+            // must equal its real play time = natural / that speed. durationScale (an attack-speed hint for FitWindow)
+            // does NOT apply — the speed source already owns the timing, so the lock ends exactly when the animation does.
             // NEVER LONGER THAN FOUR TIMES ITS OWN LENGTH: this number roots the caster, and a pace read near 0 once
             // turned a 1.2 s release into a two-minute freeze. A pace that slow is a fault, not a speed anybody chose.
             dur = natural / Mathf.Max(MinPaceForAHold, ResolveSpeedMult(b, 0f));   // server-math: how long this machine's own body plays an animation — the movement exception, no game number
@@ -295,10 +294,10 @@ public class StanceController : MonoBehaviour
         return b != null && pose != null ? pose.NaturalDuration(b.action, b.clip) : 0f;
     }
 
-    /// <summary>The gait/stat-resolved PLAYBACK multiplier for a stance on THIS unit — the exact value ApplyStance feeds
+    /// <summary>The resolved PLAYBACK multiplier for a stance on THIS unit — the exact value ApplyStance feeds
     /// the pose. The jump brain reads it to shrink its rooted crouch/land timers by the same factor the clip is sped up,
     /// so the root and the visible wind-up/tail can't drift (single owner of the multiplier). Respects the stance's
-    /// speedSource: a MoveGait Jump scales with GaitSpeedMult, a Baked one stays at 1×.</summary>
+    /// speedSource: a Baked Jump plays at its own speedMult, a FitWindow one fits its window.</summary>
     public float ResolvedSpeedMultOf(StanceId id)
     {
         var b = StanceCatalog.Get(id);
@@ -495,13 +494,16 @@ public class StanceController : MonoBehaviour
         // forceFit REPLACES the authored source rather than stacking on it: a caller that says "this play must last
         // exactly this long" owns the timing outright, and multiplying a gait on top would break the very fit it asked
         // for. Without it, behaviour is identical to before.
-        if (forceFit || b.speedSource == StanceSpeedSource.FitWindow)
+        bool walkCycle = StanceCatalog.IsWalkCycle(b.id);
+        if (forceFit || (!walkCycle && b.speedSource == StanceSpeedSource.FitWindow))
         {
             float n = pose.NaturalDuration(b.action, b.clip);
             if (window > 0.01f && n > 0.01f) m *= n / window;
         }
-        else if (StanceCatalog.IsWalkCycle(b.id) && TryGroundLocked(b, out float locked)) m *= locked;
-        else if (b.speedSource == StanceSpeedSource.MoveGait) m *= GaitFor(b.id);
+        // WALK, RUN AND SPRINT — AND NOTHING ELSE — play at the pace of the legs: locked to the ground when the clip's
+        // stride was measured, otherwise the locomotion pace. Their saved speedSource is never read, and no other
+        // stance can reach this pace, so a movement buff or a root can never change how long a skill takes.
+        else if (walkCycle) m *= TryGroundLocked(b, out float locked) ? locked : LocomotionAnimFor(b.id);
         return Mathf.Max(0.01f, m);
     }
 }

@@ -346,7 +346,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
     public void SetActionSpeed(CharacterAction a, float multiplier)
     {
         // Scale clip PLAYBACK by the live multiplier — for one-shot states (Attack/Cast/… FitWindow or stat sync) AND
-        // for the locomotion blend (Walk/Run MoveGait). On the blend, anim.speed is the CADENCE (how fast the legs
+        // for the locomotion blend (Walk/Run). On the blend, anim.speed is the CADENCE (how fast the legs
         // churn) and is orthogonal to PSpeed (which only picks the walk↔run pose), so a Slow/Haste gait mult belongs
         // here. Play() resets anim.speed to 1 each frame right before this, so this is the sole live speed owner.
         anim.speed = Mathf.Max(0.01f, multiplier);

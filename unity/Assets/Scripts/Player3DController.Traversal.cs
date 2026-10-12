@@ -89,7 +89,7 @@ public partial class Player3DController
             // clip finishes early and the player stands frozen while the phase timer runs out. Freeze stays in NATURAL
             // seconds: the pose normalizes it (freezeN), which is mult-independent, and Air is physics-driven — so gait
             // scales the wind-up + landing while the airborne hold stays neutral. Read the SAME resolved mult the pose
-            // uses (gait-inclusive when the Jump stance is MoveGait), so root and clip can't drift.
+            // uses (the Jump stance's own resolved speed), so root and clip can't drift.
             float jumpMult = StanceController.Player != null
                 ? StanceController.Player.ResolvedSpeedMultOf(StanceId.Jump)
                 : (jb != null ? Mathf.Max(0.01f, jb.speedMult) : 1f);

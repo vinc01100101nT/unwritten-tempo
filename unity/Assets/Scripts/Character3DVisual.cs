@@ -63,7 +63,7 @@ public class Character3DVisual : MonoBehaviour
         UnitBody.Set(player.gameObject, measured > 1e-3f ? measured : CharacterSpec.Active.bodyHeight,
                      pose != null ? pose.VisualWorldWidth : 0f);
         attacker = player.GetComponent<Player3DAttacker>();
-        stance.SetGaitSource(player);
+        stance.SetLocomotionSource(player);
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = false;
 

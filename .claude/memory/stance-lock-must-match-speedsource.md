@@ -10,7 +10,7 @@ metadata:
 **Today (2026-10-12):** every skill release is FIT to the caster's swing time — `SkillRunner.PlayCycles` plays
 `PlayActionFor(releaseStance, Caster.SwingTime, 1, fitToWindow: true)` and roots for exactly that, the same beat a
 creature's release is announced with; the nine release rows in `StanceLibrary.asset` (ids 14–22) are FitWindow. Attack
-speed shortens a release; movement speed, slows, shoes and the legs' gear do not (they used to, through MoveGait — see
+speed shortens a release; movement speed, slows, shoes and the legs' gear do not (they used to, through the retired MoveGait source — see
 [[paced-release-held-two-minutes]]).
 
 **Symptom that taught the rule (earlier):** a release stance played on MoveGait while its aftercast root was timed by

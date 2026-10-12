@@ -26,9 +26,9 @@ public partial class Player3DController : MonoBehaviour
     // TRAVEL, GAIT and the gear fractions all come from the shared CharacterSpec, so the player, the townsfolk and the
     // shadow mobs cannot disagree about how fast a character travels or how quickly its legs churn. Tune them there.
 
-    /// <summary>The playback baseline for the clips paced by movement OTHER than walk, run and sprint, which are locked
-    /// to the ground instead. Stacks multiplicatively with live Slow/Haste. Travel never reads it.</summary>
-    public float gaitSpeed => CharacterSpec.Active.gaitSpeed;
+    /// <summary>How fast the walk, run and sprint animations play when their clip has no measured stride (a measured one
+    /// is locked to the ground). Stacks multiplicatively with live Slow/Haste. Travel never reads it.</summary>
+    public float locomotionAnimSpeed => CharacterSpec.Active.locomotionAnimSpeed;
     /// <summary>The player's CURRENT full (sprint) speed in world units/sec — the shared movement speed scaled by
     /// <see cref="UnitScale.ForPlayer"/> and the live movement-speed sub-stat (shoes, Slow, Haste), but NOT the gear.
     /// The dodge roll (E) reads this so it's always exactly 2× the current full speed.</summary>
@@ -42,10 +42,9 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
-    /// <summary>The playback multiplier for the clips paced by movement OTHER than walk, run and sprint (idle, the
-    /// jump, the skill releases): the gait baseline × the live movement-speed sub-stat × the gear. Walk, run and sprint
-    /// legs are locked to the ground instead (<see cref="StanceController"/>).</summary>
-    public float GaitSpeedMult { get; private set; } = 1f;
+    /// <summary>The walk/run/sprint playback multiplier for a clip with no measured stride: the locomotion baseline ×
+    /// the live movement-speed sub-stat × the gear. No other animation reads it (see <see cref="StanceSpeedSource.Locomotion"/>).</summary>
+    public float LocomotionAnimSpeedMult { get; private set; } = 1f;
 
     // ── Sprint (V) + stamina ──────────────────────────────────────────────────
     /// <summary>Run gear as a fraction of Sprint — both its travel speed AND its leg cadence. The shared run gear;
@@ -384,13 +383,12 @@ public partial class Player3DController : MonoBehaviour
         float travelTier = Sprinting ? 1f : (WalkingSlow ? walkSpeedMult : runSpeedMult);
         float liveMove = status != null ? status.MoveMult : 1f;
         float spd = CharacterSpec.Active.FullSpeed * travelTier * liveMove;
-        // The playback of the OTHER clips paced by movement (idle, jump, skill releases): the gait baseline × live
-        // movement speed × gear. Walk, run and sprint never read it — their legs are locked to the ground.
-        // PACED BY SLOW AND HASTE, NOT BY A ROOT: a skill pressed earlier in this frame may already be holding us, and
-        // a pace of 0 written here is what every movement-paced release animation divides by (StatusController.PaceMult).
-        float gait = gaitSpeed * (status != null ? status.PaceMult : 1f);
+        // The walk/run/sprint pace for a clip with no measured stride: the locomotion baseline × live movement speed ×
+        // gear. PACED BY SLOW AND HASTE, NOT BY A ROOT (StatusController.PaceMult): a skill pressed earlier in this
+        // frame may already be holding us.
+        float gait = locomotionAnimSpeed * (status != null ? status.PaceMult : 1f);
         float animTier = (Sprinting || WalkingSlow) ? 1f : runSpeedMult;
-        GaitSpeedMult = gait * animTier;
+        LocomotionAnimSpeedMult = gait * animTier;   // server-math: how fast this machine's own legs animate — the movement exception, no game number
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
     }

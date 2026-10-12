@@ -27,8 +27,8 @@ public enum StanceId
 
     // --- Action stances (transient; the gameplay brain drives one at a time; beat held stances) ---
     Idle,     // standing baseline when nothing else is active
-    Walk,     // slow locomotion (paced by MoveGait)
-    Run,      // fast locomotion (paced by MoveGait)
+    Walk,     // slow locomotion (legs locked to the ground; Locomotion pace when unmeasured)
+    Run,      // fast locomotion (legs locked to the ground; Locomotion pace when unmeasured)
     Attack,   // melee swing (FitWindow → fps fits the attack-speed-scaled swing)
     Jump,     // the scripted hop
     Roll,     // dodge-roll / dash (FitWindow → fps fits the dash window)
@@ -58,7 +58,7 @@ public enum StanceId
 
     // --- Sprint (V) — the fast locomotion gear above Run. Appended here to keep the enum APPEND-ONLY (stored int
     // index); the Stance Composer lists it in the Locomotion group. Defaults to the Run action/clip so it looks like
-    // the old full-speed run out of the box; author a distinct clip to differentiate it. Paced by MoveGait like Walk/Run.
+    // the old full-speed run out of the box; author a distinct clip to differentiate it. Paced like Walk/Run.
     Sprint,
 
     // --- Attack variants added after Sprint (APPEND-ONLY, see above); they belong with the weapon attack variants.
@@ -89,8 +89,10 @@ public enum StanceSpeedSource
     Baked = 0,      // the baked action's authored fps (× speedMult) — no live link
     // 1,2 (was AttackSpeed / CastSpeed) retired: the actual swing / cast stances use FitWindow (they fit the
     // gameplay swing time / cast-bar window). The ASPD & cast-speed STATS are unchanged (Character.AttackSpeedMult /
-    // CastTimeMult) — only the stance-animation source is gone. Ints kept stable so MoveGait/FitWindow assets survive.
-    MoveGait = 3,   // × the player's GaitSpeedMult (locomotion stances)
+    // CastTimeMult) — only the stance-animation source is gone. Ints kept stable so saved FitWindow rows survive.
+    // 3 (was MoveGait) retired 2026-10-12: it let ANY stance play at how fast its body walks, so a movement buff or a
+    // skill's own root changed how long a skill took. Walk, run and sprint now take their pace by being walk cycles,
+    // never from this list (StanceController.ResolveSpeedMult) — no stance can choose it.
     FitWindow = 4,  // fps fits the clip to a RUNTIME window: clipNaturalLength / window (window fed at drive time).
                     // For a swing/dodge whose duration is gameplay-driven (Attack = swing time, Roll = dash length),
                     // so the whole clip plays exactly within it. The window stays runtime (not stored) → SSOT-safe.
@@ -118,7 +120,7 @@ public class StanceBinding
     public bool mirrored;
 
     [Tooltip("Where the LIVE playback-speed multiplier is read from each frame. Baked = the action's authored fps; " +
-             "MoveGait reads GaitSpeedMult; FitWindow fits the clip to a runtime window (Attack = swing time, " +
+             "FitWindow fits the clip to a runtime window (Attack = swing time, " +
              "Roll = dash length, Casting = cast-bar length).")]
     public StanceSpeedSource speedSource = StanceSpeedSource.Baked;
 
@@ -196,12 +198,12 @@ public static class StanceDefaults
             case StanceId.Guard:   b.action = CharacterAction.Idle;   b.priority = 20; break;
             case StanceId.Casting: b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow;  b.priority = 30; break;
             case StanceId.Sit:     b.action = CharacterAction.Sit;    b.priority = 5;  break;
-            case StanceId.Idle:    b.action = CharacterAction.Idle;   break;
-            case StanceId.Walk:    b.action = CharacterAction.Walk;   b.speedSource = StanceSpeedSource.MoveGait;  break;
-            case StanceId.Run:     b.action = CharacterAction.Run;    b.speedSource = StanceSpeedSource.MoveGait;  break;
-            case StanceId.Sprint:  b.action = CharacterAction.Run;    b.speedSource = StanceSpeedSource.MoveGait;  break;   // clip defaults to Run; author a distinct sprint clip to differentiate
+            case StanceId.Idle:    b.action = CharacterAction.Idle;   b.speedMult = 0.75f; break;
+            case StanceId.Walk:    b.action = CharacterAction.Walk;   break;   // walk cycles take the legs' pace; speedSource is never read
+            case StanceId.Run:     b.action = CharacterAction.Run;    break;
+            case StanceId.Sprint:  b.action = CharacterAction.Run;    break;   // clip defaults to Run; author a distinct sprint clip to differentiate
             case StanceId.Attack:  b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
-            case StanceId.Jump:    b.action = CharacterAction.Jump;   b.crouchEnd = 0.25f; b.airborneFreeze = 1.5f; break;
+            case StanceId.Jump:    b.action = CharacterAction.Jump;   b.speedMult = 1.5f; b.crouchEnd = 0.25f; b.airborneFreeze = 1.5f; break;
             case StanceId.Roll:    b.action = CharacterAction.Roll;   b.speedSource = StanceSpeedSource.FitWindow; break;
             case StanceId.Hurt:    b.action = CharacterAction.Hurt;   break;
             case StanceId.PickUp:  b.action = CharacterAction.PickUp; break;

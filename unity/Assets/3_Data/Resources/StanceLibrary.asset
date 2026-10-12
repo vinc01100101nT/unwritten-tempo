@@ -69,8 +69,8 @@ MonoBehaviour:
     action: 0
     clip: Idle2
     mirrored: 0
-    speedSource: 3
-    speedMult: 1
+    speedSource: 0
+    speedMult: 0.75
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
@@ -82,7 +82,7 @@ MonoBehaviour:
     action: 0
     clip: Walk
     mirrored: 0
-    speedSource: 3
+    speedSource: 0
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
     action: 2
     clip: Run2
     mirrored: 0
-    speedSource: 3
+    speedSource: 0
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -333,8 +333,8 @@ MonoBehaviour:
     action: 9
     clip: Jump
     mirrored: 0
-    speedSource: 3
-    speedMult: 2
+    speedSource: 0
+    speedMult: 1.5
     priority: 10
     crouchEnd: 0.5
     airborneFreeze: 1.0666667
@@ -632,7 +632,7 @@ MonoBehaviour:
     action: 2
     clip: Sprint
     mirrored: 0
-    speedSource: 3
+    speedSource: 0
     speedMult: 1
     priority: 0
     crouchEnd: 0

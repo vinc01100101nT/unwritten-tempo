@@ -1467,7 +1467,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (playerVisual == null && StanceController.Player != null)
             playerVisual = StanceController.Player.GetComponent<Character3DVisual>();
         float above = playerVisual != null ? playerVisual.HeightAboveGround : 0f;
-        float gait = StanceController.Player != null ? StanceController.Player.TravelGait : 1f;
+        float gait = StanceController.Player != null ? StanceController.Player.LocomotionAnimNow : 1f;
 
         // TURNING COUNTS AS A CHANGE, and it did not before. Only a step used to be worth a packet, so a person
         // who stood their ground and turned to face you never sent anything — they went on facing whichever way
@@ -3909,10 +3909,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             // changed — the body's own driver holds it from there.
             bodyVisual.TellPose(netHasDriven, netDriven, netDrivenWindow, netDrivenRelease, netDrivenBeat, netSprinting);
             // …AND THE TWO THINGS A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
-            // makes a jump actually leave the ground here, and how fast their legs are churning, which is what every
-            // movement-paced clip is played at.
+            // makes a jump actually leave the ground here, and how fast their legs are churning, which is what an
+            // unmeasured walk, run or sprint is played at.
             bodyVisual.TellHeightAboveGround(HeightRightNow());
-            if (bodyStance != null) bodyStance.TellGait(netGait);
+            if (bodyStance != null) bodyStance.TellLocomotionAnim(netGait);
         }
 
         ShowTheirHeldStance();

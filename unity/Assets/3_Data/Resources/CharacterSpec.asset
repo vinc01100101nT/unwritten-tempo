@@ -70,7 +70,7 @@ MonoBehaviour:
   swingInterval: 0.6
   stayEngagedFactor: 1.4
   moveSpeed: 2.4
-  gaitSpeed: 1.5
+  locomotionAnimSpeed: 1.5
   walkGearMult: 0.2
   runGearMult: 0.5
   footstepSfx:

@@ -226,7 +226,7 @@ public abstract class Agent3DVisual : MonoBehaviour
         // …and the leg cadence it was told, which lives on the stance choke point rather than here. Nothing pools a
         // watched PERSON today (their body is destroyed outright), so this changes nothing now — it is here so that
         // the day one is pooled, it cannot come back walking at the last person's cadence.
-        if (stance != null) stance.TellGait(0f);
+        if (stance != null) stance.TellLocomotionAnim(0f);
         gait.Seed(transform.position);
     }
 

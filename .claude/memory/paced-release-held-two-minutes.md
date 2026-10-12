@@ -12,12 +12,13 @@ auto-combat was stopped. No error in any log.
 `held still by a skill for 120.1s more | runs: skill.sword.onslaught (0 charges) skill.sword.blade_dance (0 charges)`.
 
 **Root cause:** Petal Storm and Thousand Petals release with stance 20 (PhysicalSkill1), whose speedSource is
-MoveGait, so its hold = natural length ÷ `Player3DController.GaitSpeedMult`. That pace was written every free frame from
+MoveGait (the leg pace), so its hold = natural length ÷ the player's leg-pace multiplier. That pace was written every free frame from
 `StatusController.MoveMult`, which reads 0 while ActionLocked. Auto-combat presses INSIDE Update's Tick, so the press
 rooted the caster and the same frame then wrote a pace of 0; the next press — on the very first free frame, before the
 pace was rewritten — divided by 0 (clamped to 0.01): 1.2 s × 100 = 120 s. A hand press almost never lands on that frame.
 
 **Fix:** releases no longer follow the gait at all — they are FIT to the caster's swing time, the creatures' rule
-(see [[stance-lock-must-match-speedsource]]). The gait itself now reads `StatusController.PaceMult` (Slow × Haste, not
-zeroed by a root) for the stances still on MoveGait (Idle, Jump), and `StanceController.ActionDuration` never times a
-paced hold slower than 0.25 (at most 4× the clip).
+(see [[stance-lock-must-match-speedsource]]). The leg pace now reads `StatusController.PaceMult` (Slow × Haste, not
+zeroed by a root) and is reachable by walk, run and sprint ONLY — the MoveGait source was retired the same day, Idle and
+Jump became Baked ([[gait-speed-sync]]) — and `StanceController.ActionDuration` never times a non-fit hold slower than
+0.25 (at most 4× the clip).

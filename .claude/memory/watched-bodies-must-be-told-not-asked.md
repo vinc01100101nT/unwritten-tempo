@@ -48,13 +48,13 @@ watched copy has no CharacterController, so it cannot tell real lift from the he
 standing, and using the raw reported Y would leave everybody hovering by that offset. `Character3DVisual` already
 separates the two (`HeightAboveGround`); that is what travels.
 
-**THE LEG CADENCE.** `StanceController.GaitFor` reads `playerCtrl.GaitSpeedMult` when it has a controller and the
-bare `CharacterSpec` baseline when it does not — and a watched body never has one. So every movement-paced clip on
-somebody else's body ran at the baseline, ignoring their gear, Slow and Haste. **Measured on the Jump stance
-(MoveGait, ×2): the owner played it at 1.5× and every watcher at 3.0× — exactly twice as fast**, which also threw
-the crouch/freeze/landing phases out of step, since the owner derives those timings from the same resolved mult
-(`ResolvedSpeedMultOf(Jump)`). Told via `StanceController.TellGait`, and used AS-IS with no gear tier on top: the
-number already has the owner's tier folded in, and re-applying one counts it twice.
+**THE LEG CADENCE.** `StanceController.LocomotionAnimFor` reads `playerCtrl.LocomotionAnimSpeedMult` when it has a
+controller and the bare `CharacterSpec` baseline when it does not — and a watched body never has one. So an
+unmeasured walk, run or sprint on somebody else's body ran at the baseline, ignoring their gear, Slow and Haste.
+**Measured on the Jump stance when it was still movement-paced (×2): the owner played it at 1.5× and every watcher
+at 3.0× — exactly twice as fast.** (Since 2026-10-12 only walk cycles read the leg pace; the Jump is Baked ×1.5.)
+Told via `StanceController.TellLocomotionAnim`, and used AS-IS with no gear tier on top: the number already has the
+owner's tier folded in, and re-applying one counts it twice.
 
 The cadence rides the POSITION report, and so does the height WHEN GRAVITY IS DOING THE WORK (a fall off a ledge) —
 the report gate had to learn that rising counts as moving, or a jump straight up sent nothing at all.

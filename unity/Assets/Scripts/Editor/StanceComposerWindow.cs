@@ -128,9 +128,8 @@ public class StanceComposerWindow : EditorWindow
             "(no hardcoded map). Empty = the character just stands. Idle/Walk/Run clips feed the locomotion blend " +
             "(the driven clip alone picks Idle/Walk/Run — no 2D action involved); every other stance's clip becomes " +
             "its own state. After adding/importing model clips, hit 'Refresh Clips'.\n\n" +
-            "Speed source = where the LIVE fps multiplier is read from (the stance never stores the stat): AttackSpeed/" +
-            "CastSpeed read Character.Instance; MoveGait reads move speed; FitWindow fits the clip to a runtime window " +
-            "(Attack = swing time, Roll = dash length); Baked = the action's authored fps. × mult is a constant on top.\n\n" +
+            "Speed source = how fast the clip plays: FitWindow fits it to a runtime window (Attack and every skill " +
+            "release = swing time, Roll = dash length); Baked = the clip's own fps. × mult is a constant on top.\n\n" +
             "Walk / Run / Sprint have no speed source: picking their clip measures it on every body — the frames each foot " +
             "lands (the step button) and how fast the clip walks — and their legs play at the body's real ground speed, so " +
             "a planted foot stays still. Click the step button to measure again after adding a body.\n\n" +
@@ -242,7 +241,11 @@ public class StanceComposerWindow : EditorWindow
             else GUILayout.Space(94);
             // A walk cycle's legs are locked to the ground, so no speed source applies to it; a blank keeps columns aligned.
             if (walkCycle) GUILayout.Space(110);
-            else b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
+            else
+            {
+                var picked = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
+                if (picked != b.speedSource) b.speedSource = picked;
+            }
             b.speedMult = EditorGUILayout.FloatField(b.speedMult, GUILayout.Width(55));
             b.priority = EditorGUILayout.IntField(b.priority, GUILayout.Width(55));
             // Reset this row to its built-in default (StanceDefaults) — for rows saved before the defaults existed.
