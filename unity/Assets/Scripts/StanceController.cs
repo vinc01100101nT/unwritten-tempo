@@ -248,7 +248,7 @@ public class StanceController : MonoBehaviour
             // MoveGait release stance from over-rooting: the lock now ends exactly when the animation does.
             // NEVER LONGER THAN FOUR TIMES ITS OWN LENGTH: this number roots the caster, and a pace read near 0 once
             // turned a 1.2 s release into a two-minute freeze. A pace that slow is a fault, not a speed anybody chose.
-            dur = natural / Mathf.Max(MinPaceForAHold, ResolveSpeedMult(b, 0f));
+            dur = natural / Mathf.Max(MinPaceForAHold, ResolveSpeedMult(b, 0f));   // server-math: how long this machine's own body plays an animation — the movement exception, no game number
         else
             // FitWindow release stance: the caller feeds the window (seconds, or the natural length), scaled by
             // durationScale; the clip is fit to it, so play time == the window.
