@@ -266,7 +266,7 @@ document.addEventListener("dblclick", e => {
   if (w) { const p = WORN[w.dataset.worn]; WORN[w.dataset.worn] = null; BAG.unshift(p); draw(); return; }
   const c = e.target.closest("[data-bag]"); if (!c) return;
   const i = BAG[+c.dataset.bag];
-  if (i.slot) { const was = WORN[i.slot]; WORN[i.slot] = i; BAG.splice(BAG.indexOf(i), 1, ...(was ? [was] : [])); }
+  if (i.slot) { const was = WORN[i.slot]; WORN[i.slot] = i; BAG.splice(BAG.indexOf(i), 1); if (was) BAG.unshift(was); }
   else if (i.cat === "Use") { if (--i.held <= 0) BAG.splice(BAG.indexOf(i), 1); }
   else if (/Ink|Salt/.test(i.name) && i.held >= 10) { i.held -= 10; BAG.unshift(it("Red Ink", 1, "Material")); }
   draw();
@@ -305,7 +305,7 @@ document.addEventListener("drop", e => {
   if (onHot) { hotbar[+onHot.dataset.hot] = dragging; draw(); return; }
   if (onGear && dragFrom.bag !== undefined && dragging.slot) {
     const was = WORN[dragging.slot]; WORN[dragging.slot] = dragging;
-    BAG.splice(BAG.indexOf(dragging), 1, ...(was ? [was] : [])); draw(); return;
+    BAG.splice(BAG.indexOf(dragging), 1); if (was) BAG.unshift(was); draw(); return;
   }
   if (onBag && dragFrom.worn) { WORN[dragFrom.worn] = null; BAG.unshift(dragging); draw(); return; }
   if (onBag && dragFrom.bag !== undefined && onBag.dataset.bag !== undefined) {
