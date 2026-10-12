@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bag Grid</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  /* Every colour is a token from ui-tokens.css except --cell-empty: the hotbar's own unbound-slot grey
+     (HotbarPanel.CellEmpty, 0.32/0.32/0.37 at 60%), borrowed on purpose — an empty bag box is the hotbar's empty box. */
+  :root { --cell-empty: rgba(82, 82, 94, 0.6); }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
+  .stage { display: flex; gap: 40px; align-items: flex-start; padding: 40px; flex-wrap: wrap; }
+  .note { color: #c8cfdc; font-size: 13px; max-width: 360px; line-height: 1.5; }
+  .note b { color: #fff; }
+
+  /* ---- the shared window frame (UiKit.DressWindow / UiKit.Header) ---- */
+  .win { border: 1px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
+         color: var(--text-main); font-size: 12px; overflow: hidden; user-select: none; }
+  .bar { height: 24px; display: flex; align-items: center; padding: 0 2px 0 10px;
+         background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  .bar b { flex: 1; font-size: 13px; color: var(--title-text); }
+  .bar i { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+           color: var(--title-text); font: bold 12px/18px var(--font-ui); text-align: center; }
+  .body { padding: 8px 15px 15px; }
+  .btn { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill);
+         color: var(--button-text); font-family: inherit; padding: 0; cursor: pointer; }
+  .btn:hover { background: var(--hover); }
+  .dim { color: var(--text-dim); }
+
+  /* ---- Inventory ---- */
+  #inventory { width: 324px; }
+  #inventory .body { display: flex; flex-direction: column; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; margin-bottom: 4px; }
+  .tabs .btn { height: 20px; font-size: 11px; }
+  .search { height: 22px; display: flex; align-items: center; gap: 6px; padding: 0 6px;
+            border: 1px solid var(--button-edge); border-radius: 3px; background: var(--slot-fill); }
+  .search label { font-size: 10px; color: var(--text-dim); }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text-main);
+                  font: 12px var(--font-ui); caret-color: var(--accent); }
+  .search input::placeholder { font-style: italic; font-size: 11px; color: var(--text-dim); opacity: .55; }
+  .search .hits { font-size: 10px; color: var(--text-dim); }
+  .hdr { height: 18px; display: flex; align-items: center; gap: 12px; padding: 0 8px; background: var(--panel-raise);
+         color: var(--text-dim); font-size: 10px; }
+  .hdr span[data-k] { cursor: pointer; }
+  .hdr span.on { color: var(--text-main); }
+
+  /* THE GRID: hotbar boxes (48 x 48, HotbarPanel.CellSize), six across, NO GAP between them. Each box keeps a
+     1px edge so two filled boxes side by side still read as two. Four rows show; the rest scrolls. */
+  .grid { display: grid; grid-template-columns: repeat(6, 48px); grid-auto-rows: 48px; gap: 0;
+          height: 192px; overflow-y: auto; align-content: start; }
+  .cell { position: relative; width: 48px; height: 48px; border-radius: 3px; border: 1px solid var(--button-edge);
+          background: var(--slot-fill); cursor: pointer; }
+  .cell:hover { background: var(--hover); }
+  .cell.empty { background: var(--cell-empty); border-color: transparent; cursor: default; }
+  /* The hotbar's name on a tile: bold, centred, 9-12px, wraps, cut with an ellipsis, 12px clear top and bottom. */
+  .cell .name { position: absolute; left: 3px; right: 3px; top: 12px; bottom: 12px; display: flex;
+                align-items: center; justify-content: center; text-align: center; font-weight: bold;
+                font-size: 10px; line-height: 11px; overflow: hidden; }
+  .cell .name span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+                     overflow-wrap: anywhere; }
+  /* The hotbar's count: bottom-right, bold 11. */
+  .cell .count { position: absolute; right: 3px; bottom: 1px; font: bold 11px var(--font-ui); color: var(--title-text); }
+  /* Where the hotbar puts its key, a worn piece says so. */
+  .cell .worn { position: absolute; left: 3px; top: 1px; font-size: 9px; color: var(--accent); }
+  .r-good { color: var(--good); } .r-rare { color: var(--rarity-rare); }
+  .r-epic { color: var(--rarity-epic); } .r-leg { color: var(--rarity-legendary); }
+
+  .foot { height: 18px; line-height: 18px; text-align: right; font-size: 12px; margin-top: 4px; }
+  .foot span { margin-left: 18px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <section class="win" id="inventory" data-mocks="Inventory">
+    <div class="bar"><b>Inventory</b><i>_</i><i>X</i></div>
+    <div class="body">
+      <div class="tabs" id="tabs"></div>
+      <div class="search" data-part="search">
+        <label>FIND</label><input id="find" placeholder="name, slot, tier, weapon type, or a skill"><span class="hits" id="hits"></span>
+      </div>
+      <div class="hdr" data-part="header"><span>Sort</span><span data-k="name">Name</span><span data-k="held">Held</span></div>
+      <div class="grid" id="grid" data-part="list"></div>
+      <div class="foot" id="foot"></div>
+    </div>
+  </section>
+
+  <div class="note">
+    <b>Try:</b> the tabs (Equip / Use / Material / Etc show all 50 boxes, the empty ones in the hotbar's grey —
+    that is the tab's limit), FIND, and the Sort words. "All" shows only what you hold, filled out to the end of
+    its row. Worn pieces come first and say <i>worn</i> where the hotbar shows its key.
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const R = ["", "r-good", "r-rare", "r-epic", "r-leg"];
+const ITEMS = [
+  { name: "+5 Fierce Chainmail [Raw]", held: 1, worn: true, cat: "Equip", r: 0 },
+  { name: "+15 Thousand Petals [C]", held: 1, worn: true, cat: "Equip", r: 3 },
+  { name: "B +12 Padded Vest", held: 1, cat: "Equip", r: 2 },
+  { name: "Sword", held: 1, cat: "Equip", r: 0 },
+  { name: "Red Potion", held: 42, cat: "Use", r: 0 },
+  { name: "Butterfly Wing", held: 3, cat: "Use", r: 1 },
+  { name: "Fly Wing", held: 17, cat: "Use", r: 0 },
+  { name: "Grilled Fish", held: 6, cat: "Use", r: 0 },
+  { name: "Iron", held: 312, cat: "Material", r: 0 },
+  { name: "Stripped Bough [F]", held: 9, cat: "Material", r: 0 },
+  { name: "Jellopy", held: 128, cat: "Etc", r: 0 },
+  { name: "Fluff", held: 64, cat: "Etc", r: 0 },
+  { name: "Sticky Mucus", held: 11, cat: "Etc", r: 0 },
+];
+for (let i = 0; i < 30; i++) ITEMS.push({ name: "Ore Shard " + (i + 1), held: 1 + (i * 7) % 40, cat: "Material", r: i % 9 === 0 ? 2 : 0 });
+
+let tab = "All", query = "", sortKey = null, desc = false;
+const TABS = ["All", "Equip", "Use", "Material", "Etc"];
+function drawTabs() {
+  $("tabs").innerHTML = TABS.map(t => `<button class="btn" data-t="${t}">${t}</button>`).join("");
+}
+function cell(i) {
+  return `<div class="cell" title="${i.name}">${i.worn ? '<span class="worn">worn</span>' : ""}` +
+         `<span class="name ${R[i.r]}"><span>${i.name}</span></span>${i.cat !== "Equip" ? `<span class="count">${i.held}</span>` : ""}</div>`;
+}
+function draw() {
+  drawTabs();
+  let list = ITEMS.filter(i => (tab === "All" || i.cat === tab) && i.name.toLowerCase().includes(query));
+  if (sortKey) list = [...list].sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * (desc ? -1 : 1));
+  const worn = list.filter(i => i.worn), rest = list.filter(i => !i.worn);
+  list = [...worn, ...rest];
+  // A tab shows its whole limit; All, and any search, only what is held, filled to the end of the row.
+  const boxes = tab !== "All" && !query ? 50 : Math.max(24, Math.ceil(list.length / 6) * 6);
+  let html = list.map(cell).join("");
+  for (let k = list.length; k < boxes; k++) html += '<div class="cell empty"></div>';
+  $("grid").innerHTML = html;
+  $("hits").textContent = query ? list.length + " / " + ITEMS.filter(i => tab === "All" || i.cat === tab).length : "";
+  document.querySelectorAll(".hdr span[data-k]").forEach(s => {
+    const on = s.dataset.k === sortKey;
+    s.className = on ? "on" : ""; s.textContent = (s.dataset.k === "name" ? "Name" : "Held") + (on ? (desc ? " ▼" : " ▲") : "");
+  });
+  const used = tab === "All" ? null : ITEMS.filter(i => i.cat === tab).length;
+  $("foot").innerHTML = (used !== null ? `<span><span class="dim" style="margin:0">Slots</span> ${used}/50</span>` : "") +
+    `<span><span class="dim" style="margin:0">Weight</span> 1318/2570</span><span>1,220 z</span>`;
+}
+$("tabs").addEventListener("click", e => { if (e.target.dataset.t) { tab = e.target.dataset.t; draw(); } });
+$("find").addEventListener("input", e => { query = e.target.value.trim().toLowerCase(); draw(); });
+document.querySelector(".hdr").addEventListener("click", e => {
+  const k = e.target.dataset.k; if (!k) return;
+  if (sortKey !== k) { sortKey = k; desc = false; } else if (!desc) desc = true; else { sortKey = null; desc = false; }
+  draw();
+});
+draw();
+</script>
+</body>
+</html>
