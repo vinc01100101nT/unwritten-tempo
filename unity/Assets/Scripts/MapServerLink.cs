@@ -60,7 +60,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v22";
+    public const string CharacterBuild = "unwritten-character-v23";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -72,6 +72,10 @@ public class MapServerLink : MonoBehaviour
     static HashSet<string> mapsInBuild = new HashSet<string>(StringComparer.Ordinal);
     static string startingMap = "";
 
+    /// <summary>The map this server's build begins in — where a character never played, or saved in a map the game no
+    /// longer has, is sent when no map is named for them.</summary>
+    public static string StartingMap => startingMap;
+
     /// <summary>Someone the character server has told us to expect, with the character it sent. Held until they
     /// actually connect, or until they have taken too long about it.</summary>
     public sealed class Expected
@@ -81,6 +85,9 @@ public class MapServerLink : MonoBehaviour
         public string characterId;
         public string characterName;
         public bool isGm;
+        // THE MAP THE CHARACTER SERVER SENT THEM TO — their save's, a door's, or the starting map for one never played
+        // or saved in a map that is gone. Empty from a character server built before it was sent.
+        public string map;
         public SaveData progress;
         // The bar's own row, as the character server stored it; null or empty when the character has none yet.
         public string[] hotbar;
@@ -368,6 +375,7 @@ public class MapServerLink : MonoBehaviour
                 characterId = msg.characterId,
                 characterName = msg.characterName,
                 isGm = msg.isGm,
+                map = msg.map,
                 progress = msg.progress,
                 hotbar = msg.hotbar,
                 quests = msg.quests,
@@ -779,6 +787,8 @@ public class MapServerLink : MonoBehaviour
         public string characterId;
         public string characterName;
         public bool isGm;
+        // The map they are sent to (see Expected.map).
+        public string map;
         public SaveData progress;
         // The bar's own row (v18), or null when none has been written yet.
         public string[] hotbar;

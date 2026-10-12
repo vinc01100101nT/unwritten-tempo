@@ -36,6 +36,10 @@ public static class SavedCharacters
 
         // Everything it carries over, read off the creature AS IT DIED: its level may have grown in the fight.
         var block = died.GetComponent<UnitStatBlock>();   // perf-ok: once, at the moment a creature turns back
+        // AND THE SAVER'S RUN OF KILLS this death belongs to — the same count its experience is paid under, whichever of
+        // the two is asked first. A creature whose kill pays nothing (a training dummy) is no part of a run.
+        var brain = died.GetComponent<MonsterAI3D>();   // perf-ok: once, at the moment a creature turns back
+        int combo = brain != null && brain.paysExperience ? Rewards.CountKill(saver, died, KillCombo.Now) : 0;
         var carried = new Carried
         {
             def = def,
@@ -46,6 +50,7 @@ public static class SavedCharacters
             hasInputs = block != null,
             inputs = block != null ? block.inputs : default,
             rolledGold = CombatRng.Range(Mathf.Min(def.goldMin, def.goldMax), Mathf.Max(def.goldMin, def.goldMax) + 1),
+            combo = combo,
         };
 
         var body = TakeBanked(def.id);
@@ -78,6 +83,7 @@ public static class SavedCharacters
         public bool hasInputs;
         public UnitStatInputs inputs;
         public int rolledGold;
+        public int combo;
     }
 
     // Make `go` — a fresh or banked body of the creature that died — into its character, announce it, and say its line.
@@ -116,13 +122,21 @@ public static class SavedCharacters
         GameNetwork.PublishMob(go, c.def.id);
         life.Say(SavedCharacterLines.Pick(SavedCharacterLines.Appears(behaviour, c.who.group), CombatRng.Range(0, int.MaxValue)));
 
-        int gold = SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.rolledGold);
-        if (gold > 0) Rewards.PayLoot(c.saver, null, gold, health);
+        // THE ONE ZENY A KILL CAUSES, so the saver's run of kills multiplies it exactly as it does the kill's experience.
+        int rescued = SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.rolledGold);
+        int gold = KillComboMath.Paid(rescued, c.combo);
+        bool saverHere = !PlayerUnits.Gone(c.saver);
+        if (gold > 0 && saverHere)
+        {
+            Rewards.PayLoot(c.saver, null, gold, health);
+            c.saver.KillCombo.Earned(KillCombo.Now, 0, gold);
+            GameNetwork.TellOwnerTheirKillCombo(c.saver, health, false, 0, 0, gold, gold - rescued);
+        }
 
         if (GameLog.On(LogCat.Loot))
             GameLog.Info(LogCat.Loot, string.Concat(SpawnIds.MapOf(health), " ", SpawnIds.Label(health), " turned back into ",
                 c.who.id, " (", behaviour.ToString(), ") for ", SpawnIds.Label(c.saver),
-                gold > 0 ? ", who was paid " + gold + " gold" : ""));
+                gold > 0 && saverHere ? ", who was paid " + gold + " gold" + Rewards.ComboWords(c.combo, gold - rescued) : ""));
     }
 
     /// <summary>EVERY MACHINE: make <paramref name="go"/> into <paramref name="who"/> — a character's size, fitted

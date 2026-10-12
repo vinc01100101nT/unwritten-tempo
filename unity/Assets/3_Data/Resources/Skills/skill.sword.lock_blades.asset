@@ -19,12 +19,14 @@ MonoBehaviour:
   masteryLevel: 7
   needsSkillId: skill.sword.lunge
   published: 1
+  trademarkRarity: 0
+  trademarkRaritySet: 1
   maxLevel: 5
   description: 'No escape.
 
-    Casting Piercing Gust arms 5 charges, each +2 basic attack
-    range for 5s. Every basic attack you start spends one to lunge at the target
-    again.'
+    Casting Piercing Gust arms 5 charges, each +2 basic
+    attack range for 5s. Every basic attack you start spends one to lunge at the
+    target again.'
   archetype: 0
   family: 0
   shape: 0
@@ -71,6 +73,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 5
       useStacks: 0
@@ -82,7 +89,20 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0

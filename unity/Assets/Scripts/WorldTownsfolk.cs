@@ -44,6 +44,9 @@ public class WorldTownsfolk : ScriptableObject
         [Tooltip("The shop they keep, by its id in the shops list (WorldShops): pressing F on them opens it. Empty = " +
                  "they keep no shop.")]
         public string shop = "";
+        [Tooltip("This person is the town's Keeper: pressing F on them opens the Keeper's window — Save Point, Storage, " +
+                 "Teleport. Every town has exactly one, and a Keeper keeps no shop and works no station.")]
+        public bool keeper;
         [Tooltip("Their level. At 99 or above they wear the same smoke every unit at level 99 or above wears.")]
         [Min(1)] public int level = 1;
         [Tooltip("Whether they call out the odd line when a player walks past.")]
@@ -120,7 +123,7 @@ public class WorldTownsfolk : ScriptableObject
             // Turned before anybody is told about them, so a shopkeeper is never first seen facing their own door.
             if (row.wanderRadius <= 0f) root.transform.rotation = Quaternion.Euler(0f, row.facing, 0f);
             var npc = root.GetComponent<TownNPC>();
-            npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop);
+            npc.Init(at, row.wanderRadius, row.barks, row.level, row.name, row.description, row.station, row.shop, row.keeper);
             // Who they are to a quest — "talk to Gunnar" is decided against this, never against a name on screen.
             npc.PersonId = row.id;
             // What is on their head — the same hair and the same Head items everybody wears.
@@ -147,6 +150,20 @@ public class WorldTownsfolk : ScriptableObject
         foreach (var row in list.rows)
             if (row != null && row.map == map && !string.IsNullOrWhiteSpace(row.model)) into.Add(row);
         into.Sort(ByLevelThenName);
+    }
+
+    /// <summary>The Keeper of <paramref name="map"/> — their row, read for where they stand and which way they face —
+    /// or null when the map has none (it is then no town a Keeper can send anybody to).</summary>
+    public static Row KeeperIn(string map)
+    {
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(map)) return null;
+        for (int i = 0; i < list.rows.Count; i++)
+        {
+            var row = list.rows[i];
+            if (row != null && row.keeper && row.map == map) return row;
+        }
+        return null;
     }
 
     static int ByLevelThenName(Row a, Row b) =>

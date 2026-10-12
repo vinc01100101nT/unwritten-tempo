@@ -21,7 +21,7 @@ earlier "a kill never leaves anything lying in the world" design.
   2026-09-15 so none carries it — the same save also dropped three older dead values (flashColor, flashTime, attackType).
   `AssetDatabase.ForceReserializeAssets` wrote NOTHING to these prefabs while reporting success;
   `PrefabUtility.LoadPrefabContents` + `SaveAsPrefabAsset` did the job.
-- **Wire:** `NetMob` private SyncVar `worn` = `WornList.Encode` ("id\trarity\tchance" per piece, body order), re-sent when
+- **Wire:** `NetMob` private SyncVar `worn` = `WornList.Encode` (one tab-separated record per piece in body order, its last field the piece's server-computed rarity — see `WornList`), re-sent when
   `UnitEquipment.Version` changes. Watchers `ApplyWornToView` (Clear + plain copies, so swing pose/reach follow the real
   weapon; re-applied after revive) and `UnitStatusPanel` (hover top-right, target top-centre) reads `NetMob.WornText` and lists one row per piece under the states. The floating bar under a creature shows no gear.
 - **Parity fixes in the same change:** creature shield block (`Combat.Blocked`, shared with `Character`, in
@@ -30,4 +30,4 @@ earlier "a kill never leaves anything lying in the world" design.
   element, else its authored `attackElement`.
 - **Known gaps left:** a refused pick-up tells the player nothing. (Weapon models on 3D creatures were drawn from 2026-09-16 — see [[creatures-cast-weapon-kit]].)
 
-Related: [[armour-rolls-per-copy]], [[mobs-get-everything-players-get]], [[creatures-cast-weapon-kit]].
+Related: [[mobs-get-everything-players-get]], [[creatures-cast-weapon-kit]].

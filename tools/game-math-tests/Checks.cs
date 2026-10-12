@@ -453,9 +453,90 @@ static class Checks
         }
     }
 
+    // ---- the trademark roll: a rarity by its share, then a skill of it evenly -------------------------------
+    // A weapon's rarity IS how rare its trademark is to roll, so a wrong share silently makes a Legendary weapon common
+    // and nothing on screen says so. The shares are the decided ladder (2026-10-12): Common 50, Uncommon 30, Rare 14,
+    // Epic 5, Legendary 1 — promises, so stated. Everything else is checked in its general form.
+    const string RarityF = "unity/Assets/Scripts/Rarity.cs";
+
+    static void TrademarkRoll()
+    {
+        var rarities = (Rarity[])Enum.GetValues(typeof(Rarity));
+        That(CraftingMath.RarityCount == rarities.Length, CraftF,
+             "there are " + rarities.Length + " rarities but " + CraftingMath.RarityCount + " shares");
+        int[] promised = { 50, 30, 14, 5, 1 };
+        int sum = 0;
+        for (int r = 0; r < rarities.Length; r++)
+        {
+            int share = CraftingMath.RarityShare(rarities[r]);
+            sum += share;
+            if (r < promised.Length)
+                That(share == promised[r], CraftF, rarities[r] + "'s share is " + share + "%, not the decided " + promised[r] + "%");
+            if (r > 0)
+                That(share < CraftingMath.RarityShare(rarities[r - 1]), CraftF, rarities[r] + " is no rarer than " + rarities[r - 1]);
+        }
+        That(sum == 100, CraftF, "the rarity shares add up to " + sum + "%, not 100%");
+
+        // The sword as built: 5 Common, 4 Uncommon, 3 Rare, 3 Epic, 3 Legendary — 10%, 7.5%, 4.67%, 1.67% and 0.33% each.
+        int[] sword = { 5, 4, 3, 3, 3 };
+        float[] each = { 0.10f, 0.075f, 0.14f / 3f, 0.05f / 3f, 0.01f / 3f };
+        for (int r = 0; r < sword.Length; r++)
+        {
+            float got = CraftingMath.TrademarkChance((Rarity)r, sword);
+            That(Math.Abs(got - each[r]) < 1e-6f, CraftF, "one sword trademark of " + (Rarity)r + " rolls at " + got + ", not " + each[r]);
+        }
+
+        // In ANY mix of candidates, every rarity is drawn exactly as often as its share of the rarities present, the
+        // missing ones' share is handed out in proportion, and every candidate's chances together make certainty.
+        int[][] mixes =
+        {
+            new[] { 5, 4, 3, 3, 3 }, new[] { 2, 0, 0, 0, 1 }, new[] { 0, 0, 0, 0, 3 }, new[] { 1, 0, 1, 0, 0 },
+            new[] { 0, 7, 0, 2, 0 }, new[] { 4, 0, 0, 0, 0 },
+        };
+        foreach (var mix in mixes)
+        {
+            string name = "[" + string.Join(",", mix) + "]";
+            int total = CraftingMath.TrademarkRollTotal(mix);
+            int expectTotal = 0;
+            for (int r = 0; r < mix.Length; r++) if (mix[r] > 0) expectTotal += CraftingMath.RarityShare((Rarity)r);
+            That(total == expectTotal, CraftF, "the first draw over " + name + " is " + total + " wide, not " + expectTotal);
+
+            var hits = new int[mix.Length];
+            for (int roll = 0; roll < total; roll++) hits[(int)CraftingMath.TrademarkRarityAt(mix, roll)]++;
+            float certain = 0f;
+            for (int r = 0; r < mix.Length; r++)
+            {
+                int want = mix[r] > 0 ? CraftingMath.RarityShare((Rarity)r) : 0;
+                That(hits[r] == want, CraftF, "over " + name + ", " + (Rarity)r + " is drawn on " + hits[r] + " of " + total + " rolls, not " + want);
+                certain += CraftingMath.TrademarkChance((Rarity)r, mix) * mix[r];
+            }
+            That(Math.Abs(certain - 1f) < 1e-5f, CraftF, "over " + name + " every trademark's chance adds up to " + certain + ", not 1");
+        }
+
+        int[] none = { 0, 0, 0, 0, 0 };
+        That(CraftingMath.TrademarkRollTotal(none) == 0, CraftF, "a weapon type with nothing to roll still has a first draw");
+        That(CraftingMath.TrademarkChance(Rarity.Common, none) == 0f, CraftF, "a rarity with no candidate has a chance");
+
+        // A material's rarity, as decided: metal, cloth and leather Common at every band; Ink Watery Uncommon, Thin and
+        // Faint Rare, Clear and Sharp Epic; Salt Coarse Uncommon, Fine Rare, Pure Epic. Nothing that is not a material
+        // is rare, and no material is Legendary.
+        for (int band = 1; band <= CreatureLoot.Grades; band++)
+            foreach (var kind in new[] { MaterialKind.Metal, MaterialKind.Cloth, MaterialKind.Leather })
+                That(Rarities.OfMaterial(kind, band) == Rarity.Common, RarityF, kind + " band " + band + " is not Common");
+        Rarity[] ink = { Rarity.Uncommon, Rarity.Rare, Rarity.Rare, Rarity.Epic, Rarity.Epic };
+        for (int tier = 1; tier <= CraftingMath.TopInkTier; tier++)
+            That(Rarities.OfMaterial(MaterialKind.Ink, tier) == ink[tier - 1], RarityF,
+                 "Ink tier " + tier + " is " + Rarities.OfMaterial(MaterialKind.Ink, tier) + ", not " + ink[tier - 1]);
+        Rarity[] salt = { Rarity.Uncommon, Rarity.Rare, Rarity.Epic };
+        for (int tier = 1; tier <= salt.Length; tier++)
+            That(Rarities.OfMaterial(MaterialKind.Salt, tier) == salt[tier - 1], RarityF,
+                 "Salt tier " + tier + " is " + Rarities.OfMaterial(MaterialKind.Salt, tier) + ", not " + salt[tier - 1]);
+        That(Rarities.OfMaterial(MaterialKind.None, 0) == Rarity.Common, RarityF, "something that is not a material is not Common");
+    }
+
     // ---- what a quality grade is worth ------------------------------------------------------------------
-    // The ladder rarity used to be. Every rung has to be worth more than the one below it, in each of the five
-    // things a grade decides, or a quench can take a piece backwards while reading as a promotion.
+    // The grade ladder. Every rung has to be worth more than the one below it, in each of the five things a grade
+    // decides, or a quench can take a piece backwards while reading as a promotion.
     static void QualityLadder()
     {
         var grades = (Quality[])Enum.GetValues(typeof(Quality));
@@ -1099,6 +1180,32 @@ static class Checks
     // 2026-10-05 — the clip whose hand-typed steps were L7 R17. A wrong landing rule moves the footstep sounds off the
     // feet; a wrong speed makes every planted foot slide, and neither shows up anywhere but in play.
     const string StrideF = "unity/Assets/Scripts/StrideMath.cs";
+    // ---- shops: what a sale pays, and what getting a sold thing back costs --------------------------------------
+    const string ShopF = "unity/Assets/Scripts/ShopMath.cs";
+
+    static void ShopNumbers()
+    {
+        That(ShopMath.SalePay(7, 3) == 21, ShopF, "3 sold at 7 each must pay 21");
+        That(ShopMath.SalePay(int.MaxValue, 2) == int.MaxValue, ShopF, "a sale past the largest purse must stop there, not wrap negative");
+        That(ShopMath.SalePay(5, 0) == 0, ShopF, "selling none must pay nothing");
+        That(ShopMath.BuyCost(25, 4) == 100, ShopF, "4 bought at 25 each must cost 100");
+        That(ShopMath.BuybackPrice(100) == 125, ShopF, "buying back what paid 100 must cost 125");
+        That(ShopMath.BuybackPrice(1) == 2, ShopF, "what paid 1 must cost 2 back — never free storage");
+        That(ShopMath.BuybackPrice(3) == 4, ShopF, "3 x 1.25 is 3.75, which must round UP to 4");
+        That(ShopMath.BuybackPrice(4) == 5, ShopF, "4 x 1.25 is exactly 5");
+        That(ShopMath.BuybackPrice(0) == 1, ShopF, "even a thing that paid nothing must cost a gold back");
+        That(ShopMath.BuybackPrice(int.MaxValue) > int.MaxValue, ShopF, "the price of the largest sale must stay above what it paid, not wrap");
+        That(ShopMath.PaidTogether(int.MaxValue, 5) == int.MaxValue, ShopF, "two payments past the largest purse must stop there");
+        That(ShopMath.BuybackEndsAt(1000) == 4600, ShopF, "a thing sold at 1000 must be kept until 4600");
+        That(ShopMath.MinutesShown(3600) == 60, ShopF, "a full hour must read 60 min");
+        That(ShopMath.MinutesShown(61) == 2, ShopF, "61 seconds must read 2 min");
+        That(ShopMath.MinutesShown(1) == 1, ShopF, "the last second must still read 1 min");
+        That(ShopMath.MinutesShown(0) == 0, ShopF, "nothing left must read 0");
+        That(ShopMath.SecondsUntilMinuteChanges(61) == 1, ShopF, "at 61 s the shown 2 min must change in 1 s");
+        That(ShopMath.SecondsUntilMinuteChanges(120) == 60, ShopF, "at 120 s the shown 2 min must change in 60 s");
+        That(ShopMath.SecondsUntilMinuteChanges(30) == 30, ShopF, "at 30 s the last minute must end in 30 s");
+    }
+
     // ---- world events: what a kill pays under an experience rate, and how a GM's duration is read -------------
     const string EventF = "unity/Assets/Scripts/WorldEventMath.cs";
 
@@ -1229,6 +1336,135 @@ static class Checks
         That(d.Phase == DrawPhase.Sheathed, StateF, "putting away a weapon already away changes nothing");
     }
 
+    // ---- the kill combo: a run of kills inside ten seconds, a multiplier on what each pays, and the per-hour meter ----
+    const string ComboF = "unity/Assets/Scripts/KillComboMath.cs";
+
+    static void KillComboNumbers()
+    {
+        That(KillComboMath.Step(0, 0, 1000) == 1, ComboF, "the first kill must start a run of 1");
+        That(KillComboMath.Step(5, 1000, 1009.9) == 6, ComboF, "a kill 9.9 s after the last must carry the run to 6");
+        That(KillComboMath.Step(5, 1000, 1010) == 6, ComboF, "a kill exactly 10 s after the last must still carry the run");
+        That(KillComboMath.Step(5, 1000, 1010.01) == 1, ComboF, "a kill just past 10 s must start a new run of 1");
+        That(KillComboMath.EndsAt(1000) == 1010, ComboF, "a run that killed at 1000 must end at 1010");
+
+        That(KillComboMath.BonusPercent(0) == 0, ComboF, "no run must add nothing");
+        That(KillComboMath.BonusPercent(1) == 1, ComboF, "a run of 1 must add 1%");
+        That(KillComboMath.BonusPercent(50) == 50, ComboF, "a run of 50 must add 50%");
+        That(KillComboMath.BonusPercent(51) == 50, ComboF, "a run past 50 must stop at 50%");
+        That(KillComboMath.BonusPercent(int.MaxValue) == 50, ComboF, "a huge run must stop at 50%, not overflow");
+
+        That(KillComboMath.Paid(2, 24) == 2, ComboF, "2 at a run of 24 is 2.48, which must pay 2");
+        That(KillComboMath.Paid(2, 25) == 3, ComboF, "2 at a run of 25 is 2.5, which must round UP to 3");
+        That(KillComboMath.Paid(100, 12) == 112, ComboF, "100 at a run of 12 must pay 112");
+        That(KillComboMath.Paid(100, 0) == 100, ComboF, "no run must pay exactly what the kill is worth");
+        That(KillComboMath.Paid(0, 30) == 0, ComboF, "a kill worth nothing must pay nothing, whatever the run");
+
+        That(KillComboMath.PerHour(100, 30) == 6000, ComboF, "100 over 30 s must be read over the 60 s floor: 6000 an hour");
+        That(KillComboMath.PerHour(100, 600) == 600, ComboF, "100 over ten minutes must be 600 an hour");
+        That(KillComboMath.PerHour(0, 600) == 0, ComboF, "nothing earned must be 0 an hour");
+
+        // 10:00:30 — the current minute is 30 s in, so the ring covers 9 full minutes and those 30 s.
+        double now = 36030;
+        That(KillComboMath.SecondsCovered(0, now) == 570, ComboF, "the ring must cover 9 minutes and the current 30 s");
+        That(KillComboMath.SecondsCovered(now - 45, now) == 45, ComboF, "a meter 45 s old must cover 45 s");
+
+        var buckets = new long[KillComboMath.MeterBuckets];
+        long b = KillComboMath.BucketOf(now);
+        KillComboMath.Add(buckets, b, 40);
+        long later = KillComboMath.Roll(buckets, b, b + 3);
+        KillComboMath.Add(buckets, later, 60);
+        That(KillComboMath.Sum(buckets) == 100, ComboF, "three minutes on, both kills must still be in the meter");
+        later = KillComboMath.Roll(buckets, later, b + KillComboMath.MeterBuckets);
+        That(KillComboMath.Sum(buckets) == 60, ComboF, "ten minutes on, the first kill must have left the meter");
+        That(KillComboMath.Roll(buckets, later, later - 2) == later && KillComboMath.Sum(buckets) == 60, ComboF,
+             "a clock that went backwards must empty nothing");
+        later = KillComboMath.Roll(buckets, later, later + 25);
+        That(KillComboMath.Sum(buckets) == 0, ComboF, "a meter left for longer than ten minutes must be empty");
+    }
+
+    const string KeeperF = "unity/Assets/Scripts/KeeperMath.cs";
+    const string StorageF = "unity/Assets/Scripts/StorageMoves.cs";
+
+    static void KeeperNumbers()
+    {
+        That(KeeperMath.PerDoorPrice == 100, KeeperF, "a door of a Keeper's trip must cost 100 gold");
+        That(KeeperMath.StorageLimit == 600, KeeperF, "storage must hold 600 things");
+        That(KeeperMath.TeleportPrice(0) == 0, KeeperF, "a trip of no doors must cost nothing");
+        That(KeeperMath.TeleportPrice(-1) == 0, KeeperF, "a trip with no way there must cost nothing, never a negative price");
+        That(KeeperMath.TeleportPrice(1) == 100, KeeperF, "a trip of 1 door must cost 100");
+        That(KeeperMath.TeleportPrice(7) == 700, KeeperF, "a trip of 7 doors must cost 700");
+        That(KeeperMath.TeleportPrice(30000000) == 3000000000L, KeeperF, "a huge trip must not overflow a whole number");
+
+        var home = new UnityEngine.Vector3(10f, 2f, 5f);
+        var north = KeeperMath.ArrivalSpot(home, 0f, 1.5f);
+        That(Math.Abs(north.x - 10f) < 0.001f && Math.Abs(north.y - 2f) < 0.001f && Math.Abs(north.z - 6.5f) < 0.001f, KeeperF,
+             "a Keeper facing north must set you down 1.5 m north of them, at their height");
+        var east = KeeperMath.ArrivalSpot(home, 90f, 1.5f);
+        That(Math.Abs(east.x - 11.5f) < 0.001f && Math.Abs(east.z - 5f) < 0.001f, KeeperF, "a Keeper facing east must set you down 1.5 m east of them");
+        var south = KeeperMath.ArrivalSpot(home, 180f, 1.5f);
+        That(Math.Abs(south.x - 10f) < 0.001f && Math.Abs(south.z - 3.5f) < 0.001f, KeeperF, "a Keeper facing south must set you down 1.5 m south of them");
+
+        That(KeeperMath.WithinReach(3f, 0f, 3f), KeeperF, "exactly at the reach must count as within it");
+        That(!KeeperMath.WithinReach(3f, 0.1f, 3f), KeeperF, "just past the reach must not count");
+        That(KeeperMath.WithinReach(-2f, -2f, 3f), KeeperF, "2 m west and 2 m south is 2.83 m away, within 3 m");
+
+        That(!KeeperMath.Fits(600, 600, true), KeeperF, "a new thing must not fit in a full storage");
+        That(KeeperMath.Fits(600, 600, false), KeeperF, "more of a stack already stored must fit in a full storage");
+        That(KeeperMath.Fits(599, 600, true), KeeperF, "a new thing must fit while one place is left");
+
+        // Each area's walkable cells, grouped once when a map is labelled, so a random landing is one lookup.
+        var labels = new ushort[] { 0, 2, 1, 2, 2, 0, 1 };
+        var grouped = KeeperMath.GroupByLabel(labels, 2, out var firstOf);
+        That(grouped.Length == 5, KeeperF, "five walkable cells must be grouped, and the two of label 0 left out");
+        That(firstOf.Length == 4 && firstOf[1] == 0 && firstOf[2] == 2 && firstOf[3] == 5, KeeperF,
+             "area 1 must own entries 0-1 and area 2 entries 2-4");
+        That(grouped[0] == 2 && grouped[1] == 6, KeeperF, "area 1's cells must be positions 2 and 6, in order");
+        That(grouped[2] == 1 && grouped[3] == 3 && grouped[4] == 4, KeeperF, "area 2's cells must be positions 1, 3 and 4, in order");
+        var none = KeeperMath.GroupByLabel(null, 3, out var noneFirst);
+        That(none.Length == 0 && noneFirst.Length == 5 && noneFirst[4] == 0, KeeperF, "no labels at all must group nothing");
+        var gap = KeeperMath.GroupByLabel(new ushort[] { 3, 1, 3 }, 3, out var gapFirst);
+        That(gapFirst[2] - gapFirst[1] == 1 && gapFirst[3] - gapFirst[2] == 0 && gapFirst[4] - gapFirst[3] == 2
+             && grouped.Length == 5 && gap[gapFirst[3]] == 0 && gap[gapFirst[3] + 1] == 2, KeeperF,
+             "an area with no cells must own no entries, and the areas after it must still find theirs");
+
+        // What a take adds to the bag a save writes.
+        var d = new SaveData
+        {
+            bagItemIds = new[] { "item.sword", "item.potion" }, bagCounts = new[] { 1, 3 }, bagRefines = new[] { 2, 0 },
+            bagCards = new[] { "", "" }, bagRolls = new[] { "r", "" }, bagCopyIds = new[] { "c0", "" },
+        };
+        StorageMoves.AddToSavedBag(d, "item.potion", 2, 0, "", "", "");
+        That(d.bagItemIds.Length == 2 && d.bagCounts[1] == 5, StorageF, "a stack taken out of storage must join the stack already in the bag");
+        StorageMoves.AddToSavedBag(d, "item.sword", 1, 4, "card", "roll", "c1");
+        That(d.bagItemIds.Length == 3 && d.bagItemIds[2] == "item.sword" && d.bagCounts[2] == 1 && d.bagRefines[2] == 4
+             && d.bagCards[2] == "card" && d.bagRolls[2] == "roll" && d.bagCopyIds[2] == "c1", StorageF,
+             "a piece of gear taken out of storage must be its own entry at the end, with its own four values");
+        That(d.bagCounts[0] == 1 && d.bagCopyIds[0] == "c0", StorageF, "taking a piece out of storage must not touch the piece already carried");
+        StorageMoves.AddToSavedBag(d, "item.sword", 3, 0, "", "", "");
+        That(d.bagItemIds.Length == 4 && d.bagCounts[3] == 3 && d.bagCopyIds[3] == "", StorageF,
+             "a stack must never join an entry that is a piece of gear, even of the same item");
+        var empty = new SaveData();
+        StorageMoves.AddToSavedBag(empty, "item.potion", 4, 0, "", "", "");
+        That(empty.bagItemIds != null && empty.bagItemIds.Length == 1 && empty.bagCounts[0] == 4 && empty.bagCopyIds[0] == "", StorageF,
+             "a take into a save with no bag at all must make a bag of that one stack");
+        StorageMoves.AddToSavedBag(empty, "item.potion", 0, 0, "", "", "");
+        That(empty.bagCounts[0] == 4, StorageF, "a take of nothing must change nothing");
+
+        // What a REFUSED take puts back: exactly what the take added, and nothing else.
+        StorageMoves.RemoveFromSavedBag(d, "item.potion", 2, "");
+        That(d.bagItemIds.Length == 4 && d.bagCounts[1] == 3, StorageF,
+             "a refused take of 2 must leave the stack it joined with the 3 it had before");
+        StorageMoves.RemoveFromSavedBag(d, "item.sword", 1, "c1");
+        That(d.bagItemIds.Length == 3 && d.bagCopyIds[0] == "c0" && d.bagCopyIds[2] == "" && d.bagCounts[2] == 3
+             && d.bagRefines.Length == 3 && d.bagCards.Length == 3 && d.bagRolls.Length == 3, StorageF,
+             "a refused take of a piece must remove that very piece from every bag array, and no other entry");
+        StorageMoves.RemoveFromSavedBag(empty, "item.potion", 4, "");
+        That(empty.bagItemIds.Length == 0 && empty.bagCounts.Length == 0 && empty.bagCopyIds.Length == 0, StorageF,
+             "a refused take of a whole stack must remove the stack's entry, not leave one of nothing");
+        StorageMoves.RemoveFromSavedBag(empty, "item.potion", 1, "");
+        That(empty.bagItemIds.Length == 0, StorageF, "taking back from a bag that does not hold the thing must change nothing");
+    }
+
     static int Main()
     {
         WeaponDrawRules();
@@ -1244,6 +1480,7 @@ static class Checks
         FlightRules();
         Ring();
         QualityLadder();
+        TrademarkRoll();
         QuenchOdds();
         InkRoll();
         MasteryCurve();
@@ -1257,7 +1494,10 @@ static class Checks
         QuestSteps();
         StrideRules();
         WorldEventNumbers();
+        ShopNumbers();
         SwingContactRules();
+        KillComboNumbers();
+        KeeperNumbers();
 
         if (failures == 0)
         {

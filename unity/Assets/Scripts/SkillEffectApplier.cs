@@ -39,7 +39,7 @@ public static class SkillEffectApplier
     /// Active list, no physics / Find / GetComponent.
     /// <paramref name="caster"/> is the unit using the skill, whose own numbers scale every roll.</summary>
     // The practice lift the caster puts on the cast currently applying, as a fraction (see
-    // Rarities.OutputLift). Held here rather than passed through every signature because it is one value for a whole
+    // SkillEfficiency.OutputLift). Held here rather than passed through every signature because it is one value for a whole
     // burst — the same reason PassiveEvents holds its cause this way.
     static float masteryLift;
 
@@ -414,6 +414,82 @@ public static class SkillEffectApplier
         return givenUp;
     }
 
+    // How wide a body a random landing spot must fit: the one routing width people walk by.
+    static float TripRadius => CharacterSpec.Active != null ? CharacterSpec.Active.routingRadius : 0.35f;
+
+    // Back to where this unit returns to: a person to their save point — OWED to their shell's next frame, because an
+    // item that ran this is spent after it fires, and a trip to another server saves them the moment it starts — a
+    // creature to the home it spawned at, and anything with neither nowhere. The trip remembers the item that ran it,
+    // so a trip that does not happen gives that item back.
+    static void ReturnHome(ICombatUnit unit, string skillId)
+    {
+        if (unit is Character person)
+        {
+            var shell = GameNetwork.ShellFor(person);
+            if (shell != null) shell.OweTripToSavePoint(ItemRunning(skillId));
+            return;
+        }
+        if (unit is Health creature && creature.Brain != null) creature.TeleportTo(creature.Brain.Home);
+    }
+
+    // The item whose use runs `skillId`, or null — an item names its skill, so this is the one way back. Asked once per
+    // wing used: a walk over every item the game has (under 200).
+    static Item ItemRunning(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return null;
+        var all = ItemCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && all[i].useSkillId == skillId) return all[i];
+        return null;
+    }
+
+    // A RANDOM LANDING FOUND BEFORE AN ITEM WAS SPENT, kept for the effect that uses it — so the spot the check found is
+    // the spot the unit lands on, rolled once. Filed with the map it was found in: a unit that changed map in between
+    // rolls again. At most one entry per unit, removed when used or when the item's skill did not run.
+    static readonly Dictionary<ICombatUnit, (string map, Vector3 spot)> landingFound =
+        new Dictionary<ICombatUnit, (string map, Vector3 spot)>();
+
+    /// <summary>Forget a landing found for <paramref name="unit"/> that will not be used (its item's skill did not run).</summary>
+    public static void ForgetLanding(ICombatUnit unit) { if (unit != null) landingFound.Remove(unit); }
+
+    // Where a random landing puts `unit`: the spot found for it before its item was spent, or one rolled now.
+    static bool LandingFor(ICombatUnit unit, Transform body, out Vector3 spot)
+    {
+        if (landingFound.TryGetValue(unit, out var held))
+        {
+            landingFound.Remove(unit);
+            if (held.map == SpawnIds.MapOf(unit)) { spot = held.spot; return true; }
+        }
+        return Pathfinder3D.RandomSpotInArea(body.position, TripRadius, out spot);
+    }
+
+    /// <summary>Why <paramref name="def"/>'s effects could not happen to <paramref name="unit"/> right now, or null when
+    /// they can. Asked before an ITEM runs its skill, so a wing that has nowhere to go is not spent: today only a random
+    /// landing spot can be missing. Server only, once per use.</summary>
+    public static string WhyItCannotLand(SkillDef def, ICombatUnit unit)
+    {
+        if (def == null || def.bindings == null || unit == null || unit.Body == null) return null;
+        for (int b = 0; b < def.bindings.Count; b++)
+        {
+            var fx = def.bindings[b]?.effects;
+            if (fx == null) continue;
+            for (int i = 0; i < fx.Count; i++)
+            {
+                if (fx[i] == null || fx[i].kind != SkillEffectKind.TeleportToRandomSpot) continue;
+                if (!Pathfinder3D.RandomSpotInArea(unit.Body.position, TripRadius, out var spot))
+                {
+                    landingFound.Remove(unit);
+                    return "There is nowhere to land here.";
+                }
+                // THE SPOT IS KEPT FOR THE EFFECT, so it is not rolled a second time — a second roll could fail after the
+                // wing has been spent.
+                landingFound[unit] = (SpawnIds.MapOf(unit), spot);
+                return null;
+            }
+        }
+        return null;
+    }
+
     // Take up to `most` MP from `unit` and hand exactly what was taken to the caster. Never from the caster itself — a
     // drain that lands on yourself would move your own MP from one pocket to the same pocket.
     static void DrainMana(ICombatUnit unit, ICombatUnit caster, int most)
@@ -563,6 +639,19 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.DrainMana:
                 if (Fires(e, hit, caster, vars)) DrainMana(unit, caster, ScaledAmount(e, caster, vars));
+                break;
+            // A WING'S TRIP. Once per landing, never a chance, and only on the server — where anybody stands is its to
+            // decide. A dead unit goes nowhere.
+            case SkillEffectKind.ReturnToSavePoint:
+                if (hit == 0 && GameServer.IsServer && !unit.IsDead) ReturnHome(unit, srcId);
+                break;
+            case SkillEffectKind.TeleportToRandomSpot:
+                if (hit == 0 && GameServer.IsServer && !unit.IsDead && body != null)
+                {
+                    if (LandingFor(unit, body, out var spot)) unit.TeleportTo(spot);
+                    else GameLog.Warn(LogCat.Server, SpawnIds.Label(unit) + " found nowhere to land on a random spot of '"
+                                      + SpawnIds.MapOf(unit) + "'");
+                }
                 break;
             case SkillEffectKind.Knockback:
                 // Shove AWAY from the caster (magnitude = speed).

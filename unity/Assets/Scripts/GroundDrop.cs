@@ -51,6 +51,10 @@ public class GroundDrop : MonoBehaviour
     /// <summary>The +N in front of the name. Sent as its own number for the same reason the grade is.</summary>
     public int upgrade;
 
+    /// <summary>How rare it is (<see cref="Rarities.Of"/>), which colours its name. Worked out where the copy is and
+    /// sent like the grade, because a weapon's rarity is its trademark's and a watcher never holds the copy.</summary>
+    public Rarity rarity = Rarity.Common;
+
     /// <summary>Which map it lies in. A server holds several at once and keeps them apart, so a drop that never
     /// said which one it was in would be reachable from all of them at once.</summary>
     public string mapName = "";
@@ -227,10 +231,11 @@ public class GroundDrop : MonoBehaviour
     }
 
     /// <summary>Put a thing on the ground at <paramref name="worldPos"/> and hand it back. A server passes the
-    /// copy; a watching machine passes null and gives the grade and the folds instead. Nothing is drawn here: a
-    /// watching machine puts its plate and sparkle up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
+    /// copy; a watching machine passes null and gives the grade, the folds and the <paramref name="rarity"/> it was
+    /// sent instead. With no rarity given it is read off the item and the copy. Nothing is drawn here: a watching
+    /// machine puts its plate and sparkle up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
-                                   Quality quality, int upgrade, string mapName, uint netId)
+                                   Quality quality, int upgrade, string mapName, uint netId, Rarity? rarity = null)
     {
         if (def == null || count <= 0) return null;
 
@@ -252,6 +257,7 @@ public class GroundDrop : MonoBehaviour
         drop.instance = instance;
         drop.quality = instance != null ? instance.quality : quality;
         drop.upgrade = instance != null ? instance.upgrade : upgrade;
+        drop.rarity = rarity ?? Rarities.Of(def, instance);
         drop.mapName = mapName;
         drop.netId = netId;
         drop.placedAt = Time.time;
@@ -393,6 +399,14 @@ public class GroundDrop : MonoBehaviour
     RectTransform plate;       // the plate + rounded edge the name sits on
     Image plateFill;           // the plate's body, tinted while the cursor is on it
     TMP_Text label;
+
+    /// <summary>THE one way a name's plate changes colour — resting or pointed at — and its words with it: the rarity's
+    /// colour, darkened only as far as it must be to read on that plate.</summary>
+    public void SetPlateFill(Color fill)
+    {
+        if (plateFill != null) plateFill.color = fill;
+        if (label != null) label.color = UiKit.Readable(Rarities.Color(rarity), fill);
+    }
     Vfx.EffectHandle sparkle;
 
     // Can this machine reach for it: false while its map is not the one this player is standing in. The sparkle
@@ -462,9 +476,9 @@ public class GroundDrop : MonoBehaviour
 
         label = UiKit.MakeText("Text", fill.transform, Text, FontSize, FontStyle.Bold,
                                TextAnchor.MiddleCenter, null, false);
-        // Dark text on the light plate, like any window's text; the font's own shared material, so a floor covered
-        // in them is still one draw call.
-        label.color = UiKit.TextMain;
+        // Dark text on the light plate in its rarity's colour, like the same item's name in the bag; the font's own
+        // shared material, so a floor covered in them is still one draw call.
+        label.color = UiKit.Readable(Rarities.Color(rarity));
         label.raycastTarget = false;
 
         // SIZED NOW, while it can be. A box that is switched off does no layout, so one measured only when Alt is
@@ -480,8 +494,8 @@ public class GroundDrop : MonoBehaviour
         plate.gameObject.SetActive(false);
     }
 
-    // The one colour a drop's sparkle is drawn in. There are no tiers to colour a drop by any more: what a piece is
-    // worth is its grade and its folds, which are words on the label, not a hue.
+    // The one colour every drop's sparkle is drawn in, whatever it is. A drop's rarity colours its name on the plate,
+    // never the sparkle; what a piece is worth is its grade and its folds, which are words on the label.
     static readonly Color SparkleColor = new Color(0.85f, 0.82f, 0.62f);
 
     /// <summary>Light the spot up. Through the game's own effect system, so it is pooled like every other effect
@@ -533,7 +547,7 @@ public class GroundDrop : MonoBehaviour
         // UNLIT EVERY TIME IT COMES BACK. Letting go of Alt while the cursor is on a name switches the plate off
         // without the cursor ever leaving it, so the "you are pointing at me" brightening is never taken back —
         // and the next time you held Alt that name would already look hovered.
-        if (!on && plateFill != null) plateFill.color = UiKit.PanelFill;
+        if (!on) SetPlateFill(UiKit.PanelFill);
         plate.gameObject.SetActive(on);
     }
 
@@ -576,13 +590,13 @@ public class GroundDrop : MonoBehaviour
             hovered = now;
             if (was != null)
             {
-                if (was.plateFill != null) was.plateFill.color = UiKit.PanelFill;
+                was.SetPlateFill(UiKit.PanelFill);
                 was.ShowName(was.readable && namesWanted);
             }
             if (now != null)
             {
                 now.ShowName(true);
-                if (now.plateFill != null) now.plateFill.color = UiKit.Hover;
+                now.SetPlateFill(UiKit.Hover);
             }
         }
 
@@ -646,13 +660,15 @@ public class GroundDropLabelPointer : MonoBehaviour, IPointerEnterHandler, IPoin
     /// through the words. It also tells the floor which drop is pointed at, so the cursor turns into the hand.</summary>
     public void OnPointerEnter(PointerEventData e)
     {
-        if (fill != null) fill.color = UiKit.Hover;
+        if (drop != null) drop.SetPlateFill(UiKit.Hover);
+        else if (fill != null) fill.color = UiKit.Hover;
         GroundDrop.nameUnderPointer = drop;
     }
 
     public void OnPointerExit(PointerEventData e)
     {
-        if (fill != null) fill.color = UiKit.PanelFill;
+        if (drop != null) drop.SetPlateFill(UiKit.PanelFill);
+        else if (fill != null) fill.color = UiKit.PanelFill;
         if (GroundDrop.nameUnderPointer == drop) GroundDrop.nameUnderPointer = null;
     }
 

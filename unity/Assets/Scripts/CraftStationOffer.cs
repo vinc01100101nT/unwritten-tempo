@@ -5,8 +5,11 @@
 /// </summary>
 public struct CraftStationOffer
 {
-    /// <summary>Which bag position this is about, so a reply that arrives late can be matched to what is shown.</summary>
+    /// <summary>Which bag position this is about, so a reply that arrives late can be matched to what is shown.
+    /// -1 when the piece is worn (<see cref="wornSlot"/>).</summary>
     public int bagIndex;
+    /// <summary>The slot the piece is worn in (an <see cref="EquipSlotType"/>), or 0 (None) when it is in the bag.</summary>
+    public int wornSlot;
     /// <summary>The piece's grade and folds right now.</summary>
     public int quality, folds;
     /// <summary>The most folds this grade allows, and how many stats it can carry.</summary>

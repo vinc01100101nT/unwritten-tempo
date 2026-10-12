@@ -86,6 +86,15 @@
   {
    "type": "heading",
    "level": 2,
+   "text": "Kill combo"
+  },
+  {
+   "type": "paragraph",
+   "text": "Every kill starts a run, shown big on the left of your screen: kill again within **10 seconds** and the run climbs by one; wait longer and the next kill starts it again at 1. Each kill pays **1% more experience for every kill in the run, up to 50%** at a run of 50 — and the gold a saved character pays you grows the same way. Under the run you see your **EXP/h** and **Zeny/h**, what your kills paid over the last 10 minutes. A summon or a training dummy is no part of a run, and walking through a door starts it again."
+  },
+  {
+   "type": "heading",
+   "level": 2,
    "text": "Elites & the shadows"
   },
   {

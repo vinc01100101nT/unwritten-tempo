@@ -4,9 +4,13 @@ using System.Collections.Generic;
 /// A forged weapon's TRADEMARK: the one skill of its weapon type that the weapon empowers, rolled once at the forge.
 ///
 /// <para>Nothing about a trademark is stored except WHICH skill it is. Whether a skill can be one, what its name is,
-/// and which of its numbers the weapon raises are all read from the skill as it is right now — so a skill that gains
-/// a main number becomes a trademark, one that loses its last stops being one, and a changed value is followed at
-/// once, with no second list to keep in step.</para>
+/// how rare it is and which of its numbers the weapon raises are all read from the skill as it is right now — so a
+/// skill that gains a main number becomes a trademark, one that loses its last stops being one, and a changed value
+/// is followed at once, with no second list to keep in step.</para>
+///
+/// <para><b>The roll is two draws.</b> First a RARITY, by its share (<see cref="CraftingMath.TrademarkRarityAt"/>) among
+/// the rarities this weapon type has trademarks of; then one trademark of that rarity, every one equally likely. So
+/// the rarer a trademark, the rarer the weapon — which is what an item's rarity means (<see cref="Rarities"/>).</para>
 /// </summary>
 public static class Trademarks
 {
@@ -20,13 +24,15 @@ public static class Trademarks
     public static bool Rollable(SkillDef def, WeaponType weapon) =>
         def != null && def.published && def.weaponType == weapon && Qualifies(def);
 
-    // The forge's candidates, gathered into one reused list — a forge is rare, but it needs no garbage either.
+    // The forge's candidates and how many there are of each rarity, gathered into reused storage — a forge is rare,
+    // but it needs no garbage either.
     static readonly List<SkillDef> scratch = new List<SkillDef>(24);
+    static readonly int[] byRarity = new int[CraftingMath.RarityCount];
 
-    static void Gather(WeaponType weapon, out int ordinaries, out int ultimates)
+    static void Gather(WeaponType weapon)
     {
         scratch.Clear();
-        ordinaries = ultimates = 0;
+        System.Array.Clear(byRarity, 0, byRarity.Length);
         if (weapon == WeaponType.None) return;
         var all = SkillCatalog.All;
         for (int i = 0; i < all.Count; i++)
@@ -34,42 +40,39 @@ public static class Trademarks
             var s = all[i];
             if (!Rollable(s, weapon)) continue;
             scratch.Add(s);
-            if (s.IsUltimate) ultimates++; else ordinaries++;
+            byRarity[(int)Rarities.OfTrademark(s)]++;
         }
     }
 
-    /// <summary>The size of the forge's trademark roll for <paramref name="weapon"/> — draw a whole number below it
-    /// and hand it to <see cref="Pick"/>. 0 when that weapon has nothing to roll.</summary>
-    public static int RollTotal(WeaponType weapon)
+    /// <summary>True when the forge has at least one trademark to roll onto a new <paramref name="weapon"/>.</summary>
+    public static bool AnyFor(WeaponType weapon)
     {
-        Gather(weapon, out int ord, out int ult);
-        int total = 0;
-        for (int i = 0; i < scratch.Count; i++)
-            total += CraftingMath.TrademarkWeight(scratch[i].IsUltimate, ord, ult);
-        return total;
+        Gather(weapon);
+        return scratch.Count > 0;
     }
 
     /// <summary>The chance a forge of <paramref name="weapon"/> rolls <paramref name="def"/> as its trademark — its
-    /// weight over the whole roll, 0 when it cannot be rolled. Read by the wiki's trademark table; never on a hot path.</summary>
+    /// rarity's share of the first draw, split evenly with the other trademarks of that rarity; 0 when it cannot be
+    /// rolled. Read by the wiki's trademark table; never on a hot path.</summary>
     public static float ChanceOf(SkillDef def, WeaponType weapon)
     {
         if (!Rollable(def, weapon)) return 0f;
-        int total = RollTotal(weapon);
-        Gather(weapon, out int ord, out int ult);
-        return total > 0 ? CraftingMath.TrademarkWeight(def.IsUltimate, ord, ult) / (float)total : 0f;
+        Gather(weapon);
+        return CraftingMath.TrademarkChance(Rarities.OfTrademark(def), byRarity);
     }
 
-    /// <summary>The skill id a draw of <paramref name="roll"/> (0 to <see cref="RollTotal"/> − 1) lands on, or "" when
-    /// the weapon has nothing to roll.</summary>
-    public static string Pick(WeaponType weapon, int roll)
+    /// <summary>SERVER ONLY: roll the trademark of a new <paramref name="weapon"/> — a rarity, then a skill of that
+    /// rarity, both drawn through <see cref="CombatRng"/>. The skill's id, or "" when that weapon has nothing to roll.</summary>
+    public static string Roll(WeaponType weapon)
     {
-        Gather(weapon, out int ord, out int ult);
+        Gather(weapon);
+        int total = CraftingMath.TrademarkRollTotal(byRarity);
+        if (total <= 0) return "";
+        var rarity = CraftingMath.TrademarkRarityAt(byRarity, CombatRng.Range(0, total));
+        int nth = CombatRng.Range(0, byRarity[(int)rarity]);
         for (int i = 0; i < scratch.Count; i++)
-        {
-            roll -= CraftingMath.TrademarkWeight(scratch[i].IsUltimate, ord, ult);
-            if (roll < 0) return scratch[i].id;
-        }
-        return scratch.Count > 0 ? scratch[scratch.Count - 1].id : "";
+            if (Rarities.OfTrademark(scratch[i]) == rarity && nth-- == 0) return scratch[i].id;
+        return scratch[scratch.Count - 1].id;
     }
 
     /// <summary>The trademark skill of <paramref name="weapon"/> as it stands now, or null — none rolled, the skill

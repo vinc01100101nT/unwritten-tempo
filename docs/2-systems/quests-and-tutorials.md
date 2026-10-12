@@ -96,7 +96,7 @@ numbers are the server's. Kills that land in the same moment make one line per q
   not met.
 - **The route on the ground** is the one thing worked out on the player's machine: the arrows follow the same
   route-finder the character walks by, and the minimap and the zone view draw that one route, whole. It decides nothing (user's decision 2026-10-04, as part of movement's
-  exception). Where the target is, and which door leads toward it when it is on another map, come from the server.
+  exception). Where the target is, and which door leads toward it when it is on another map, come from the server. A spot the player clicks on the zone view (`MapGuide`) is led to by the same arrows, ahead of the quest, until it is reached — and for that one the next door is found on the player's machine (`WorldRoutes`), since where they want to walk decides nothing.
 
 ## How a step is finished
 
@@ -209,7 +209,7 @@ fault — an item the game does not have, a townsperson nobody lists, two steps 
 sells, a tutorial with no unlock condition — is **suspended**: nobody is given it or shown it until the data is fixed.
 `tools/check-quest-data.py` catches all of these before they ship, and also: a Kill step for a creature the world
 spawn list places nowhere (it could never be finished); an offered quest with no offer text; a giver who keeps a
-station or a shop; **a rewarded quest with any step judged on holding something** — one lent item would finish
+station or a shop, or is a town's Keeper; **a rewarded quest with any step judged on holding something** — one lent item would finish
 it, and pay it, for every character it passes through; **hints or a level needed on a quest that is not a tutorial**;
 a tutorial's fold step asking for more folds than a Raw piece takes (5), whose bill would need a quench; a Health step
 asking for less than 1% or more than 100%; and a shop's buy button lit on a step that buys nothing.

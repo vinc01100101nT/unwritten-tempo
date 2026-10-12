@@ -159,6 +159,21 @@ public class TownNPC : MonoBehaviour
         return best;
     }
 
+    /// <summary>The nearest Keeper within <paramref name="maxDist"/>, or null — the reach every Keeper service is held to.</summary>
+    public static TownNPC NearestKeeper(Vector3 pos, float maxDist)
+    {
+        TownNPC best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Active.Count; i++)
+        {
+            var n = Active[i];
+            if (n == null || !n.Keeper) continue;
+            float d = (n.transform.position - pos).sqrMagnitude;
+            if (d <= bestSq) { bestSq = d; best = n; }
+        }
+        return best;
+    }
+
     public static TownNPC NearestStation(Vector3 pos, float maxDist, CraftStation wanted)
     {
         TownNPC best = null;
@@ -210,13 +225,14 @@ public class TownNPC : MonoBehaviour
     /// <summary>Set this townsperson up. Called by <see cref="WorldTownsfolk"/> right after spawn so all the
     /// per-NPC randomization (home, phase offsets) lives in one place.</summary>
     public void Init(Vector3 homePoint, float wander, bool barksOn, int townLevel, string personName, string description,
-                     CraftStation workStation, string shopId)
+                     CraftStation workStation, string shopId, bool isKeeper)
     {
         Level = Mathf.Max(1, townLevel);
         DisplayName = personName;
         Description = description;
         station = workStation;
         Shop = shopId ?? "";
+        Keeper = isKeeper;
         home = homePoint;
         // 0 = stands at home: a shopkeeper at their door. Anything above is a stroll, never shorter than half a metre.
         Stands = wander <= 0f;
@@ -337,6 +353,10 @@ public class TownNPC : MonoBehaviour
     /// <summary>The shop this person keeps, by its id in <see cref="WorldShops"/>, or empty. Pressing F on them opens
     /// it. Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine.</summary>
     public string Shop { get; set; } = "";
+
+    /// <summary>True for the town's Keeper (<see cref="WorldTownsfolk.Row.keeper"/>): pressing F on them opens the Keeper
+    /// window. Set by whatever placed them on the server, and by the shell that speaks for them on a watching machine.</summary>
+    public bool Keeper { get; set; }
 
     /// <summary>True for somebody who stands at their home and never strolls — a shopkeeper at their door.</summary>
     public bool Stands { get; private set; }

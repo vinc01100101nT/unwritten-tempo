@@ -68,8 +68,8 @@ public class Character : MonoBehaviour, ICombatUnit
     // point's cost, not the next jump. The server derives them from the character it holds and sends the finished
     // sheet (NetPlayer.PushMySheet); on that machine every getter below answers from it.
     //
-    // THE ONE PLACE THAT STILL DERIVES HERE is the equip-hover preview (CurrentDerived / DeriveWith), which asks "what
-    // if I wore this" of a loadout the server has never seen. It sets computeHere for exactly as long as it snapshots.
+    // The equip-hover preview ("what if I wore this") is derived by the SERVER too (EquipPreview, through DeriveWith,
+    // which sets computeHere for exactly as long as it snapshots) and arrives as finished lines.
     bool computeHere;
     bool Told => !computeHere && (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere);
 
@@ -249,6 +249,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// (the same kills feed both — see <see cref="AddXP"/>), and what it has earned always counts.</summary>
     public RingProgress Ring { get; } = new RingProgress();
 
+    /// <summary>SERVER: the run of kills this character is on, and what its kills paid over the last ten minutes — the
+    /// combo and the per-hour readout under it. Not saved: a door or a disconnect starts a new one.</summary>
+    public KillCombo KillCombo { get; } = new KillCombo();
+
     /// <summary>The Phase G passive skill layer (Trio-Ring draft). Its <see cref="PassiveRanks.Percent"/> is the
     /// % multiplier folded into the effective-stat getters below (see <see cref="PassivePercent"/>).</summary>
     public PassiveRanks Passives => Ring.Passives;
@@ -307,8 +311,8 @@ public class Character : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>Blank, in place, every entry in <paramref name="entries"/> this character may not keep on the bar: a
-    /// skill it may not bind (<see cref="MayBind"/>), an item it does not carry or cannot use, or a piece of gear it
-    /// neither carries nor wears. The one rule a bar is held to wherever it arrives from — a rearrangement, the
+    /// skill it may not bind (<see cref="MayBind"/>), an item that cannot be used (or no longer exists), or a piece of
+    /// gear it neither carries nor wears. An item used up STAYS — its slot shows none left until more is carried. The one rule a bar is held to wherever it arrives from — a rearrangement, the
     /// stored row, or a bar carried over from an older save.</summary>
     public void KeepOnlyBindable(string[] entries)
     {
@@ -321,7 +325,13 @@ public class Character : MonoBehaviour, ICombatUnit
     public bool MayKeepOnBar(string entry)
     {
         if (string.IsNullOrEmpty(entry)) return true;
-        if (HotbarEntry.IsItem(entry, out string itemId)) return CarriedStack(itemId) != null;
+        // AN ITEM USED UP KEEPS ITS SLOT (decided by the user 2026-10-11): the bar shows none left and the next one
+        // picked up fills it again. Only an item that cannot be used at all, or no longer exists, leaves.
+        if (HotbarEntry.IsItem(entry, out string itemId))
+        {
+            var def = ItemCatalog.Resolve(itemId);
+            return def != null && def.IsUsable;
+        }
         if (HotbarEntry.IsGear(entry, out string copyId)) return FindCopy(copyId, out _, out _);
         return MayBind(entry);
     }
@@ -361,8 +371,8 @@ public class Character : MonoBehaviour, ICombatUnit
         return false;
     }
 
-    /// <summary>SERVER: take off the bar every item no longer carried and every piece no longer owned — an item used
-    /// up, a piece recycled or dropped. Returns true when the bar changed.</summary>
+    /// <summary>SERVER: take off the bar every piece no longer owned — recycled or dropped — and every item that can no
+    /// longer be used. An item merely used up stays (<see cref="MayKeepOnBar"/>). Returns true when the bar changed.</summary>
     public bool PruneHotbar()
     {
         bool changed = false;
@@ -1701,11 +1711,26 @@ public class Character : MonoBehaviour, ICombatUnit
     public Vector3 SavePointPosition { get; private set; }
     public bool HasSavePoint => !string.IsNullOrEmpty(SavePointMap);
 
+    /// <summary>True when the save point was set AT A KEEPER: it names the town only, and where in it they stand back up
+    /// is worked out each time from where that town's Keeper stands — so moving a Keeper moves everybody saved there.
+    /// False for a save point that is an exact spot (the GM's <c>/save</c>), and for every save written before this
+    /// existed.</summary>
+    public bool SavePointAtKeeper { get; private set; }
+
     /// <summary>SERVER: make <paramref name="positionInMap"/> in <paramref name="map"/> this person's save point.</summary>
     public void SetSavePoint(string map, Vector3 positionInMap)
     {
         SavePointMap = map ?? "";
         SavePointPosition = positionInMap;
+        SavePointAtKeeper = false;
+    }
+
+    /// <summary>SERVER: make the Keeper of <paramref name="town"/> this person's save point — the town alone, no spot.</summary>
+    public void SetSavePointAtKeeper(string town)
+    {
+        SavePointMap = town ?? "";
+        SavePointPosition = Vector3.zero;
+        SavePointAtKeeper = !string.IsNullOrEmpty(town);
     }
 
     public void Heal(int amount)
@@ -1896,6 +1921,10 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <see cref="InventoryStore"/>, which is the one door for changing it.</summary>
     public System.Collections.Generic.List<BagEntry> Bag => bag;
 
+    /// <summary>What this character has sold and can still buy back. The server's list on a server; the copy it last
+    /// sent on the player's own machine.</summary>
+    public readonly BuybackList Buyback = new BuybackList();
+
     /// <summary>Put <paramref name="count"/> of <paramref name="def"/> into this character's bag, and hand back the
     /// stack it landed in. Anything wearable adds one entry per copy, each rolling its own upgrade and cards,
     /// because two copies cannot share a stack without losing one of them; everything else merges into a stack
@@ -2028,6 +2057,7 @@ public class Character : MonoBehaviour, ICombatUnit
         Mastery.Capture(out d.masteryWeapons, out d.masteryPoints, out d.skillLevelIds, out d.skillLevels);
         CaptureEquipment(d);
         CaptureBag(d);
+        d.buyback = Buyback.Capture(WorldClock.EpochSecondsNow);
 
         // The look, written into the save with everything else it changes alongside. One home, one write.
         d.modelName  = DyeModel;
@@ -2041,6 +2071,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.savePointX = SavePointPosition.x;
         d.savePointY = SavePointPosition.y;
         d.savePointZ = SavePointPosition.z;
+        d.savePointAtKeeper = SavePointAtKeeper;
         CaptureCooldowns(d);
         CaptureTimedEffects(d);
         return d;
@@ -2067,11 +2098,8 @@ public class Character : MonoBehaviour, ICombatUnit
             counts.Add(Mathf.Max(1, e.count));
             if (e.IsEquip && e.instance != null)
             {
-                e.instance.EnsureCopyId();
-                refines.Add(e.instance.upgrade);
-                cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
-                rolls.Add(e.instance.EncodeRoll());
-                copies.Add(e.instance.copyId);
+                e.instance.ToSaved(out int folds, out string cardsText, out string roll, out string copyId);
+                refines.Add(folds); cards.Add(cardsText); rolls.Add(roll); copies.Add(copyId);
             }
             else { refines.Add(0); cards.Add(""); rolls.Add(""); copies.Add(""); }
         }
@@ -2109,15 +2137,13 @@ public class Character : MonoBehaviour, ICombatUnit
                 // would leave a Raw piece folded past what a forge could ever fold it to — so it starts at none.
                 int folds = d.version >= 13 && d.bagRefines != null && i < d.bagRefines.Length ? d.bagRefines[i] : 0;
                 entry.count = 1;
-                entry.instance = new EquipmentInstance(def, folds);
-                if (d.bagCards != null && i < d.bagCards.Length)
-                    ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
                 // v12+: the copy's grade and the stats written on it. A save older than that carries the old
                 // rolled-armour text, which does not read as a grade — so the piece loads Raw with nothing
                 // written, which is what a piece that has never been forged is.
-                if (d.bagRolls != null && i < d.bagRolls.Length) entry.instance.DecodeRoll(d.bagRolls[i]);
-                else entry.instance.Recompute();
-                if (d.bagCopyIds != null && i < d.bagCopyIds.Length) entry.instance.copyId = d.bagCopyIds[i] ?? "";
+                entry.instance = EquipmentInstance.FromSaved(def, folds,
+                    d.bagCards != null && i < d.bagCards.Length ? d.bagCards[i] : null,
+                    d.bagRolls != null && i < d.bagRolls.Length ? d.bagRolls[i] ?? "" : null,
+                    d.bagCopyIds != null && i < d.bagCopyIds.Length ? d.bagCopyIds[i] : "");
             }
             bag.Add(entry);
         }
@@ -2181,13 +2207,13 @@ public class Character : MonoBehaviour, ICombatUnit
         foreach (var kv in Gear.Worn)
         {
             var inst = kv.Value;
-            inst.EnsureCopyId();
-            copies.Add(inst.copyId);
+            inst.ToSaved(out int folds, out string cardsText, out string roll, out string copyId);
+            copies.Add(copyId);
             slots.Add((int)kv.Key);
             ids.Add(inst.def.id);
-            refines.Add(inst.upgrade);
-            cards.Add(ItemCatalog.EncodeCards(inst.cards));
-            rolls.Add(inst.EncodeRoll());
+            refines.Add(folds);
+            cards.Add(cardsText);
+            rolls.Add(roll);
         }
         d.equipSlots   = slots.ToArray();
         d.equipItemIds = ids.ToArray();
@@ -2211,14 +2237,12 @@ public class Character : MonoBehaviour, ICombatUnit
                 if (def == null) continue;
                 // The same rule the bag follows: a pre-crafting refine is not a fold.
                 int folds = d.version >= 13 && d.equipRefines != null && i < d.equipRefines.Length ? d.equipRefines[i] : 0;
-                var inst = new EquipmentInstance(def, folds);
-                if (d.equipCards != null && i < d.equipCards.Length)
-                    ItemCatalog.DecodeCards(d.equipCards[i], inst.cards);
                 // v12+: the copy's grade and written stats. A save older than that carries the old rolled-armour
                 // text, which does not read as a grade, so the piece loads Raw with nothing written on it.
-                if (d.equipRolls != null && i < d.equipRolls.Length) inst.DecodeRoll(d.equipRolls[i]);
-                else inst.Recompute();
-                if (d.equipCopyIds != null && i < d.equipCopyIds.Length) inst.copyId = d.equipCopyIds[i] ?? "";
+                var inst = EquipmentInstance.FromSaved(def, folds,
+                    d.equipCards != null && i < d.equipCards.Length ? d.equipCards[i] : null,
+                    d.equipRolls != null && i < d.equipRolls.Length ? d.equipRolls[i] ?? "" : null,
+                    d.equipCopyIds != null && i < d.equipCopyIds.Length ? d.equipCopyIds[i] : "");
                 Gear.Equip(slot, inst);
             }
         }
@@ -2291,6 +2315,7 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             RestoreEquipment(d);         // v6+: rebuild worn gear from the save
             RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
+            Buyback.Restore(d.buyback, WorldClock.EpochSecondsNow);   // what they sold and can still buy back
         }
 
         // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave
@@ -2309,7 +2334,8 @@ public class Character : MonoBehaviour, ICombatUnit
         CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
         // Below zero means a save older than v8, which never recorded it — keep the full pool it starts with.
         SetStamina(d.stamina < 0f ? maxStamina : d.stamina);
-        SetSavePoint(d.savePointMap, new Vector3(d.savePointX, d.savePointY, d.savePointZ));
+        if (d.savePointAtKeeper) SetSavePointAtKeeper(d.savePointMap);
+        else SetSavePoint(d.savePointMap, new Vector3(d.savePointX, d.savePointY, d.savePointZ));
 
         RestoreCooldowns(d);
 

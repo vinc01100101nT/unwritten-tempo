@@ -14,7 +14,8 @@ using UnityEngine;
 /// </summary>
 public class RepeatsDamageTotal : MonoBehaviour
 {
-    static readonly Color TotalColor = new Color(1f, 0.92f, 0.15f);   // the same yellow a multi-hit flurry pops
+    /// <summary>The same yellow a multi-hit flurry pops — and the kill combo's count (<see cref="KillComboHud"/>).</summary>
+    public static readonly Color TotalColor = new Color(1f, 0.92f, 0.15f);
 
     /// <summary>How long a mob may go unstruck before its total closes and the next hit starts a new one.</summary>
     public const float IdleCloseSeconds = 1f;

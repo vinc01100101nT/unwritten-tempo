@@ -24,6 +24,7 @@
       "trigger": "",
       "description": "Step through the gap.\nInstantly teleports you to the aimed spot.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Blinks to the target location"
       ]
@@ -47,6 +48,7 @@
       "trigger": "",
       "description": "Brace behind a guard.\nCuts incoming damage by 50% for 5s and forces nearby foes to attack you.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**50%** damage reduction for **5s**",
         "Taunts nearby enemies for **5s**"
@@ -71,6 +73,7 @@
       "trigger": "",
       "description": "A single-target fire bolt that ignites the\ntarget, leaving a burning wound.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Deals **1×** magic damage",
         "+**100%** damage reduction for **0.5s**"
@@ -95,6 +98,7 @@
       "trigger": "",
       "description": "Ground that mends.\nRestores 100 HP.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Heals **100** HP"
       ]
@@ -118,6 +122,7 @@
       "trigger": "",
       "description": "Curse the ground so enemies inside are slowed and take extra damage.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Deals **1×** magic damage",
         "Stun for **4s**"
@@ -142,8 +147,33 @@
       "trigger": "Passive",
       "description": "Clears up to 3 harmful effects.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Removes **3** debuff(s)"
+      ]
+    },
+    {
+      "id": "skill.item.butterfly-wing",
+      "name": "Butterfly Wing",
+      "symbol": "",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Returns you to your save point.",
+      "trademark": "",
+      "trademarkRarity": "",
+      "effects": [
+        "Returns you to your save point"
       ]
     },
     {
@@ -165,6 +195,7 @@
       "trigger": "Passive",
       "description": "Your armor is Fire (level 1) for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your armor is **Fire** (level 1) for **5:00**"
       ]
@@ -188,8 +219,33 @@
       "trigger": "Passive",
       "description": "Your weapon strikes as Fire for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your weapon strikes as **Fire** for **5:00**"
+      ]
+    },
+    {
+      "id": "skill.item.fly-wing",
+      "name": "Fly Wing",
+      "symbol": "",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Sets you down somewhere random on this map.",
+      "trademark": "",
+      "trademarkRarity": "",
+      "effects": [
+        "Sets you down somewhere random on this map"
       ]
     },
     {
@@ -211,6 +267,7 @@
       "trigger": "Passive",
       "description": "Your armor is Water (level 1) for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your armor is **Water** (level 1) for **5:00**"
       ]
@@ -234,6 +291,7 @@
       "trigger": "Passive",
       "description": "Your weapon strikes as Water for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your weapon strikes as **Water** for **5:00**"
       ]
@@ -257,6 +315,7 @@
       "trigger": "Passive",
       "description": "Restores 200 HP at once.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Heals **200** HP"
       ]
@@ -280,6 +339,7 @@
       "trigger": "Passive",
       "description": "Raises attack by 15% for 120s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**15%** attack for **120s**"
       ]
@@ -303,6 +363,7 @@
       "trigger": "Passive",
       "description": "Raises defence by 15% for 120s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**15%** defense for **120s**"
       ]
@@ -326,6 +387,7 @@
       "trigger": "Passive",
       "description": "Restores 80 HP at once.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Heals **80** HP"
       ]
@@ -349,6 +411,7 @@
       "trigger": "Passive",
       "description": "Your armor is Wind (level 1) for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your armor is **Wind** (level 1) for **5:00**"
       ]
@@ -372,6 +435,7 @@
       "trigger": "Passive",
       "description": "Your weapon strikes as Wind for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your weapon strikes as **Wind** for **5:00**"
       ]
@@ -395,6 +459,7 @@
       "trigger": "Passive",
       "description": "Raises crit chance by 5% for 120s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+0.05 crit chance for **120s**"
       ]
@@ -418,6 +483,7 @@
       "trigger": "Passive",
       "description": "Restores 8 MP per second for 5s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+8 MP regen for **5s**"
       ]
@@ -441,6 +507,7 @@
       "trigger": "Passive",
       "description": "Restores 30 HP at once.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Heals **30** HP"
       ]
@@ -464,6 +531,7 @@
       "trigger": "Passive",
       "description": "Restores 4 MP per second for 5s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+4 MP regen for **5s**"
       ]
@@ -487,6 +555,7 @@
       "trigger": "Passive",
       "description": "Your armor is Earth (level 1) for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your armor is **Earth** (level 1) for **5:00**"
       ]
@@ -510,6 +579,7 @@
       "trigger": "Passive",
       "description": "Your weapon strikes as Earth for 5:00.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Your weapon strikes as **Earth** for **5:00**"
       ]
@@ -533,6 +603,7 @@
       "trigger": "Passive",
       "description": "Raises attack speed by 10% for 120s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**10%** attack speed for **120s**"
       ]
@@ -556,6 +627,7 @@
       "trigger": "Passive",
       "description": "Raises movement speed by 20% for 120s.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**20%** movement speed for **120s**"
       ]
@@ -579,6 +651,7 @@
       "trigger": "",
       "description": "A soothing tide.\nRestores 7.5 HP a second for 6s and washes away one debuff.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+7.5 HP regen for **6s**",
         "Removes **1** debuff(s)"
@@ -603,6 +676,7 @@
       "trigger": "",
       "description": "",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**100%** damage per stack for **20.2s**"
       ]
@@ -626,6 +700,7 @@
       "trigger": "",
       "description": "The sky falls.\nCalls down 8x Magic damage across 3 strikes, then a second impact for 8x more. Sets the target burning for 3 a tick over 4s, and each hit has a 25% chance to stun.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Deals **8×** magic damage, **3×** hits",
         "Burn **3**/tick for **4s**",
@@ -652,6 +727,7 @@
       "trigger": "",
       "description": "Calls up this creature's summons, up to as many as its kind keeps out at once.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Calls up its summons"
       ]
@@ -675,6 +751,7 @@
       "trigger": "",
       "description": "Become the storm.\nArms dance charges and half as many parries for 8s, both sized by how fast you swing. Each beat spends a charge to flash to a new angle and strike for 100% Attack, hunting a new target within 3 units. Every charge still held is +1% damage.",
       "trademark": "Thousand Petals",
+      "trademarkRarity": "Legendary",
       "effects": [
         "Deals **1×** physical damage",
         "Parries the next hit within **8s** — no damage taken",
@@ -701,6 +778,7 @@
       "trigger": "",
       "description": "Take it now, pay it later.\nArms 5 charges for 4s. Each holds back one incoming hit and banks the damage instead of paying it in health; the whole bill lands at once when the window ends.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Delays the next **5** hits within **4s** — the delayed damage all lands at once when the window ends"
       ]
@@ -724,6 +802,7 @@
       "trigger": "",
       "description": "Force one enemy to fight you.\nTaunted for 5s: locked onto you, no skills, no pause between swings.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Taunts nearby enemies for **5s**"
       ]
@@ -747,6 +826,7 @@
       "trigger": "",
       "description": "Wind up and commit.\nA slow, telegraphed heavy blow for 200% Attack.",
       "trademark": "Single Petal",
+      "trademarkRarity": "Rare",
       "effects": [
         "Deals **2×** physical damage"
       ]
@@ -770,6 +850,7 @@
       "trigger": "When you parry",
       "description": "A read pays for the next one.\nAfter a parry, MP returns at 2 per second for 4s.",
       "trademark": "Eye of the Storm",
+      "trademarkRarity": "Common",
       "effects": [
         "+2 MP regen for **4s**"
       ]
@@ -793,6 +874,7 @@
       "trigger": "",
       "description": "Everything, in one swing.\nOne massive blow for 600% Attack, +40% per Rising Breeze stack, and spends them all.",
       "trademark": "Last Petal",
+      "trademarkRarity": "Legendary",
       "effects": [
         "Deals **6×** physical damage **+ 0.4 × stacks**"
       ]
@@ -816,6 +898,7 @@
       "trigger": "",
       "description": "Blunt their swing.\nA strike for 100% Attack; their next attack lands 40% weaker, within 6s.",
       "trademark": "Stripped Bough",
+      "trademarkRarity": "Uncommon",
       "effects": [
         "Deals **1×** physical damage",
         "Their next attack deals −**40%** damage within **6s**"
@@ -840,6 +923,7 @@
       "trigger": "When you kill a mob",
       "description": "The dance goes on.\nA kill during Thousand Petals adds 7 more dance charges.",
       "trademark": "Second Bloom",
+      "trademarkRarity": "Epic",
       "effects": [
         "Adds **7** to **Thousand Petals**"
       ]
@@ -863,6 +947,7 @@
       "trigger": "When a basic attack lands",
       "description": "Stay on one foe.\nEvery basic attack grants extra Rising Breeze equal to a third of your unbroken run of hits on that target.",
       "trademark": "Tailwind",
+      "trademarkRarity": "Uncommon",
       "effects": [
         "Adds **1** to **Rising Breeze**"
       ]
@@ -886,6 +971,7 @@
       "trigger": "",
       "description": "Weather it.\nTake 50% less damage for 6 seconds.",
       "trademark": "Still Air",
+      "trademarkRarity": "Common",
       "effects": [
         "+**50%** damage reduction for **6s**"
       ]
@@ -909,6 +995,7 @@
       "trigger": "When your HP drops low",
       "description": "Cornered, you hold the line.\nDropping to low HP arms 5 more Held Breath charges.",
       "trademark": "Bare Branch",
+      "trademarkRarity": "Epic",
       "effects": [
         "Adds **5** to **Held Breath**"
       ]
@@ -932,6 +1019,7 @@
       "trigger": "After casting Piercing Gust",
       "description": "No escape.\nCasting Piercing Gust arms 5 charges, each +2 basic attack range for 5s. Every basic attack you start spends one to lunge at the target again.",
       "trademark": "Crossed Branches",
+      "trademarkRarity": "Common",
       "effects": [
         "+2 basic attack range per stack for **5s**"
       ]
@@ -955,6 +1043,7 @@
       "trigger": "When you start a basic attack",
       "description": "Close the distance.\nDashes to the target and strikes for 100% Attack. With Crossed Branches, casting it also arms 5 charges.",
       "trademark": "Piercing Gust",
+      "trademarkRarity": "Common",
       "effects": [
         "Dashes to the target location",
         "Deals **1×** physical damage"
@@ -979,6 +1068,7 @@
       "trigger": "When a basic attack lands",
       "description": "Every hit adds up.\nEach basic attack that lands grants a stack: +3% damage each, 5s apiece.",
       "trademark": "Rising Breeze",
+      "trademarkRarity": "Common",
       "effects": [
         "+**3%** damage per stack for **5s**"
       ]
@@ -1002,6 +1092,7 @@
       "trigger": "",
       "description": "Break their rhythm.\nA strike for 100% Attack; their attack speed drops 30% for 5s.",
       "trademark": "Scattered Petals",
+      "trademarkRarity": "Uncommon",
       "effects": [
         "Deals **1×** physical damage",
         "−**30%** attack speed for **5s**"
@@ -1026,6 +1117,7 @@
       "trigger": "",
       "description": "Don't let up.\nArms 5 stacks of +1% damage for 5s, then spends them as real basic attacks, two per swing — so every blow feeds Rising Breeze.",
       "trademark": "Petal Storm",
+      "trademarkRarity": "Uncommon",
       "effects": [
         "+**1%** damage per stack for **5s**",
         "Deals **1×** physical damage"
@@ -1050,6 +1142,7 @@
       "trigger": "When you parry",
       "description": "Find the weakness.\nA parry has a 50% chance to charge your next attack with +200% damage, within 5s — spent whether it hits or misses.",
       "trademark": "Parting Clouds",
+      "trademarkRarity": "Rare",
       "effects": [
         "**50%** per hit: your next attack deals +**200%** damage within **5s**"
       ]
@@ -1073,6 +1166,7 @@
       "trigger": "",
       "description": "Go faster, fragile.\n+30% Attack Speed for 8 seconds, but you take double damage for the first 3.",
       "trademark": "Squall",
+      "trademarkRarity": "Epic",
       "effects": [
         "+**30%** attack speed for **8s**",
         "−**100%** damage reduction for **3s**"
@@ -1097,6 +1191,7 @@
       "trigger": "",
       "description": "Read the hit and punish it.\nFully negates the next incoming hit within 3 seconds.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Parries the next hit within **3s** — no damage taken"
       ]
@@ -1120,6 +1215,7 @@
       "trigger": "When you deal damage",
       "description": "Never let them recover.\nEvery hit cuts the target's HP regen by 3 a second for 5s, and the cuts stack.",
       "trademark": "Headwind",
+      "trademarkRarity": "Rare",
       "effects": [
         "−3 HP regen per stack for **5s**"
       ]
@@ -1143,6 +1239,7 @@
       "trigger": "",
       "description": "Answer all of it at once.\nCashes the damage Held Breath banked: five strikes, each landing 100% Attack plus 250% of the banked total, and the debt is erased. With an empty bank it still casts, landing five plain attacks.",
       "trademark": "Returning Wind",
+      "trademarkRarity": "Legendary",
       "effects": [
         "Deals **1×** physical damage, **5×** hits **+ 2.5 × banked total**"
       ]
@@ -1166,6 +1263,7 @@
       "trigger": "After casting Still Air",
       "description": "Stand your ground.\nAfter casting Still Air, nothing stops you for 6s — no flinch, stun, freeze, silence, knockback or pull.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "Nothing stops you for **6s** — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts"
       ]
@@ -1189,6 +1287,7 @@
       "trigger": "",
       "description": "Raise a rallying banner so you and nearby allies deal more damage for a while.",
       "trademark": "",
+      "trademarkRarity": "",
       "effects": [
         "+**130%** damage for **8s**"
       ]

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// One thing lying on the ground, as every player sees it. The SERVER owns the real drop — which particular
 /// sword it is, with its folds, its grade and its cards — and this is the thin thing that crosses the wire: the
-/// item's id, how many, its grade, its folds, which map it lies in and where inside that map. Every watching
+/// item's id, how many, its grade, its folds, its rarity, which map it lies in and where inside that map. Every watching
 /// machine builds its own <see cref="GroundDrop"/> from those, exactly the way <see cref="NetMob"/> builds a
 /// body for a creature and <see cref="NetNpc"/> builds one for a townsperson.
 ///
@@ -22,6 +22,10 @@ public class NetGroundDrop : NetworkBehaviour
     [SyncVar] int count = 1;
     [SyncVar] int qualityIndex;
     [SyncVar] int upgrade;
+
+    /// <summary>How rare it is, which colours its name — worked out on the server, where the copy and its trademark
+    /// are (<see cref="Rarities.Of"/>).</summary>
+    [SyncVar] int rarityIndex;
 
     /// <summary>Which map it lies in. A server holds several at once and parks them apart, so without this every
     /// machine would draw every drop in the world into whichever map its player happened to be standing in.</summary>
@@ -44,6 +48,7 @@ public class NetGroundDrop : NetworkBehaviour
         count = drop.count;
         qualityIndex = (int)drop.quality;
         upgrade = drop.upgrade;
+        rarityIndex = (int)drop.rarity;
         mapName = drop.mapName;
         inMap = MapManager.InMap(drop.transform.position, drop.mapName);
 
@@ -97,7 +102,7 @@ public class NetGroundDrop : NetworkBehaviour
         }
 
         view = GroundDrop.Place(MapManager.InWorld(inMap, mapName), def, count, null,
-                                (Quality)qualityIndex, upgrade, mapName, netId);
+                                (Quality)qualityIndex, upgrade, mapName, netId, (Rarity)rarityIndex);
         if (view == null) return;
         view.ShowOnScreen();
         // DECIDED IN THE SAME BREATH AS IT IS BUILT, not on the next frame. Waiting left a drop in somebody

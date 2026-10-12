@@ -1,41 +1,37 @@
 # Portal/warp color convention (by destination)
 
-Warp portals are colour-coded by the **kind of map they lead to**, using Hovl Studio's upright
-"Portal" ring prefabs (`unity/Assets/Art/Hovl Studio/Magic effects pack/Prefabs/Portals/`).
+Every door is the standing, animated warp ring (the user's standard since 2026-10-11 — never the flat disc),
+colour-coded by the **kind of map it leads to**. The rings live in `unity/Assets/1_Authored/Prefabs/VFX/Portals/`.
 
-- **Town → yellow** (`Portal yellow.prefab`) ✅ available
-- **Field → green** (`Portal green.prefab`) ✅ available
-- **Dungeon → purple** ⚠️ no `Portal purple.prefab` in the pack yet → currently falls back to blue + logs a
-  warning. Drop a purple portal prefab into `Prefabs/Portals/` to enable it.
-- **Special map → red** (`Portal red.prefab`) ✅ available
+- **Town → yellow** (`Portal yellow.prefab`)
+- **Field → green** (`Portal green.prefab`)
+- **Dungeon → purple** (`Portal purple.prefab` — made 2026-10-11 as a copy of the blue ring with its three tinted
+  particle systems set to 0.6, 0.35, 0.9)
+- **Special map → red** (`Portal red.prefab`)
 
 ## Where it lives in code
 
 `unity/Assets/Scripts/Editor/RegionBuilder.cs`:
-- `enum WarpKind { Town, Field, Dungeon, Special }`
-- `KindOfType(mapType)` — maps the DESTINATION map's `type` from the world layout (town | field | dungeon |
-  special) → `WarpKind`. Never the scene name: a map's id (`hlt_dun01`, `lastline`, `old_oak`) says
-  nothing reliable about its kind. (Until 2026-09-26 it matched substrings of the name, so `dg_*` doors came out green.)
-- `PortalPrefabFor(kind)` / `PortalTintFor(kind)` — kind → prefab path / cylinder-fallback tint.
-- `MakePortal(..., destinationType)` → `AddWarpFx(portal, destinationType)`; World Creator passes the target map's
-  `type` on every door it builds.
+- The kind and its colour are the runtime table `MapKinds` (`Of(type)`, `ColorOf`) — shared with the zone-view door
+  marks and the arrival name flash. Kind comes from the DESTINATION map's `type` in the world layout, never the scene
+  name: a map's id (`hlt_dun01`, `lastline`, `old_oak`) says nothing reliable about its kind.
+- `PortalPrefabFor(kind)` — kind → ring prefab path.
+- `DressPortal(portal, destinationType)` — THE one look of a door: strips any old `WarpPad`/`WarpFX` child, adds the
+  ring, grounds it and fits the trigger. `MakePortal` calls it; re-dressing existing scenes calls it too.
+- A missing ring is an error and the door is left alone — there is NO flat fallback. **Why:** the ring folder moved
+  to `1_Authored` while the code still pointed at `0_Raw/Hovl Studio/…`, and the old cylinder fallback silently gave
+  almost every generated door a flat disc until 2026-10-11.
 
-To add a new map kind: add an enum case + a case in `KindOfType` + entries in the two `...For(kind)` maps, and the
+To add a new map kind: add a `MapKind` case + its `MapKinds.Of`/`ColorOf` lines + an entry in `PortalPrefabFor`, and the
 same type in the browser World Creator.
 
 ## Portal transform facts
 - Portal ROOT is always unit scale (`localScale = Vector3.one` pinned in `MakePortal`) so the warp FBX/VFX
-  fits at native size. (An old hand-edited Town portal sat at 0.92929 — fix stray ones to 1,1,1.)
+  fits at native size.
 - **Trigger volume** = a doorway, not a room: `TriggerSize = 1.5×2×1.5`, `TriggerCenter = 0,1,0`
-  (single-source consts in `RegionBuilder.cs`). The old `3×2.4×3` cube was way too big.
-- Warp ring child: `WarpFxScale = 0.5`, `WarpFxHeight = 1.0` (stands upright on the ground) — both
-  eyeball-tunable in `RegionBuilder.cs`.
-- **Relink Region** (`RefreshWarpFxInScene`) now ALSO normalises existing portals: resets root scale to 1
-  and re-fits the trigger — so re-running it fixes stale giant-cube triggers in baked scenes.
-- **`FitTriggerToFx`** (run by the `World ▸ Fit Portal Triggers` menu, Relink, and `MakePortal`) SIMULATES
+  (single-source consts in `RegionBuilder.cs`), used only when the ring cannot be measured.
+- Warp ring child: `WarpFxScale = 0.5`, `WarpFxHeight = 1.0` (stands upright on the ground).
+- **`FitTriggerToFx`** (run by the `World ▸ Fit Portal Triggers` menu and `DressPortal`) SIMULATES
   the warp particles, measures only the **ring core** (particles ≥ 40% of max size — ignores the thin
   sparks), grounds that ring's bottom to the portal origin (= terrain), and sizes the BoxCollider 1:1 to it.
-  ⚠️ Earlier bug: measuring the *whole* particle cloud grounded the spark cloud while the ring kept floating
-  — fixed by the size-filter. The fit is idempotent (re-running converges). It only works in-editor (can't
-  measure particles from a file edit), so applying it to a live scene = run the menu once, then save.
-- Built 2026-06-22, swapping the old flat `Magic circle.prefab` ground decal for upright portals.
+  It only works in-editor (can't measure particles from a file edit).

@@ -107,6 +107,9 @@ new WorldStats(db, maps, config).MapOnto(app);
 // Timed changes a GM makes to the whole world at once — see WorldEvents. Map servers only, behind the server secret.
 new WorldEvents(db, maps).MapOnto(app);
 
+// What an account keeps with the Keeper — the read door; every move in or out rides the progress save below.
+Storage.MapOnto(app, db, maps);
+
 // ---- the map servers' own door ----------------------------------------------------------------------------
 // Reached with the shared SERVER secret, never with a player's token. A person signing in must not be able to
 // register a map server, and a map server does not sign in.
@@ -176,6 +179,11 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     var questCheck = QuestRows.Check(body, handover);
     if (!questCheck.Ok) return Results.Json(new { error = questCheck.Reason }, statusCode: 400);
 
+    // A STORAGE MOVE, riding beside the progress for the same reason the quest rows do (see Storage). Absent, or an
+    // empty move id, is the ordinary case: nothing is going into or out of storage.
+    var storageCheck = Storage.Check(body);
+    if (!storageCheck.Ok) return Results.Json(new { error = storageCheck.Reason }, statusCode: 400);
+
     await using var conn = await db.ConnectAsync();
     await using var tx = await conn.BeginTransactionAsync();
     await using var cmd = new Npgsql.NpgsqlCommand(keepsLook
@@ -200,6 +208,17 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     {
         // Only once the progress itself was taken: the same character, the same hand-over, the same transaction.
         if (questCheck.Rows is { } questRows) await QuestRows.WriteAsync(conn, tx, characterId, questRows);
+        // THE MOVE OR NOTHING: a move that cannot be applied takes the whole save back with it, so the bag that left
+        // an item out is never written without the storage that received it. 422 says which check failed; the map
+        // server puts things back and saves again without the move.
+        if (storageCheck.Move is { } move
+            && await Storage.ApplyAsync(conn, tx, characterId, move, progress) is { } refused)
+        {
+            await tx.RollbackAsync();
+            Console.WriteLine($"[char] refused a storage {(move.Store ? "store" : "take")} of {move.Count} {move.ItemId} "
+                              + $"for character {characterId} — {refused}.");
+            return Results.Json(new { error = refused }, statusCode: 422);
+        }
         await tx.CommitAsync();
         return Results.Ok(new { ok = true });
     }
@@ -217,56 +236,10 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
     return Results.Json(new { error = "that save is from an older hand-over", live = current }, statusCode: 409);
 });
 
-// WHERE A MAP SERVER WRITES A CHARACTER'S HOTBAR DOWN — only when a slot changes, so the progress save above no
-// longer rewrites the bar every time it runs. Guarded exactly as that door is: the SERVER secret, and the same
-// hand-over rule, so a map server the character has already left cannot put an old bar back.
-const int MaxHotbarSlots = 64;
-const int MaxHotbarSlotLength = 160;
-app.MapPut("/server/characters/{id}/hotbar", async (HttpContext http, string id, JsonElement body) =>
-{
-    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
-    if (!Guid.TryParseExact(id, "D", out var characterId))
-        return Results.Json(new { error = "invalid character id" }, statusCode: 400);
-    if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty("slots", out var slots)
-        || slots.ValueKind != JsonValueKind.Array)
-        return Results.Json(new { error = "send { slots: [ … ] }" }, statusCode: 400);
-    if (slots.GetArrayLength() > MaxHotbarSlots)
-        return Results.Json(new { error = $"a hotbar has at most {MaxHotbarSlots} slots" }, statusCode: 400);
-    foreach (var slot in slots.EnumerateArray())
-        if (slot.ValueKind != JsonValueKind.String || (slot.GetString()?.Length ?? 0) > MaxHotbarSlotLength)
-            return Results.Json(new { error = $"every slot is a string of at most {MaxHotbarSlotLength} characters" },
-                                statusCode: 400);
-
-    // The same numbering the progress door reads: 0 (or absent) is not checked, anything else must be the live one.
-    int handover = body.TryGetProperty("handover", out var h) && h.ValueKind == JsonValueKind.Number
-                   && h.TryGetInt32(out var hv) ? hv : 0;
-
-    await using var conn = await db.ConnectAsync();
-    // Written only when the character exists, is not deleted, and (when a number was given) is on that hand-over —
-    // the select finds no row otherwise, so nothing is inserted and nothing is updated.
-    await using var cmd = new NpgsqlCommand(
-        @"insert into character_hotbar (character_id, slots, updated_at)
-          select id, $2, now() from character
-           where id = $1 and deleted_at is null and ($3 = 0 or handover = $3)
-          on conflict (character_id) do update set slots = excluded.slots, updated_at = now()
-          returning character_id", conn);
-    cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
-    cmd.Parameters.Add(new NpgsqlParameter { Value = slots.GetRawText(), NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb });
-    cmd.Parameters.Add(new NpgsqlParameter { Value = handover });
-
-    if (await cmd.ExecuteScalarAsync() is not null) return Results.Ok(new { ok = true });
-    if (handover == 0) return Results.Json(new { error = "no such character" }, statusCode: 404);
-
-    // NOT WRITTEN, AND A NUMBER WAS GIVEN: either the character is gone, or this bar is from an older hand-over.
-    await using var live = new NpgsqlCommand(
-        "select handover from character where id = $1 and deleted_at is null", conn);
-    live.Parameters.Add(new NpgsqlParameter { Value = characterId });
-    if (await live.ExecuteScalarAsync() is not int current)
-        return Results.Json(new { error = "no such character" }, statusCode: 404);
-    Console.WriteLine($"[char] refused a hotbar for character {characterId} from hand-over {handover} — "
-                      + $"they are on hand-over {current} now, so it would have rolled them back.");
-    return Results.Json(new { error = "that hotbar is from an older hand-over", live = current }, statusCode: 409);
-});
+// WHERE A MAP SERVER WRITES A CHARACTER'S OWN ROWS DOWN — the hotbar and the auto-combat settings, each only when it
+// changes, so the progress save above never rewrites them. One door per row, all built from one table (CharacterRows),
+// guarded exactly as the progress door is: the SERVER secret, and the same hand-over rule.
+CharacterRows.MapDoors(app, maps, db);
 
 // WHERE A PLAYER GOES WHEN THEY WALK THROUGH A DOOR INTO A ZONE ANOTHER PROCESS HOLDS. Asked by the map server
 // they are LEAVING, never by the player: only that server knows whether it has finished writing them down, and
@@ -296,40 +269,42 @@ app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, 
     if (await Handover.NextAsync(conn, characterId) is not int handover)
         return Results.Json(new { error = "no such character" }, statusCode: 404);
 
-    // The hotbar rides in the same read: its own row, and none at all for a character that never had one written.
-    // The quest rows come as one sub-selected JSON array (see QuestRows).
+    // The character's own rows ride in the same read (see CharacterRows), none at all for a row never written. The
+    // quest rows come as one sub-selected JSON array (see QuestRows).
     await using var read = new NpgsqlCommand(
-        @"select c.id, c.name, c.progress, h.slots, " + QuestRows.ReadAsJson + @"
-            from character c left join character_hotbar h on h.character_id = c.id
+        @"select c.id, c.name, c.progress, " + QuestRows.ReadAsJson + CharacterRows.ReadAsColumns + @"
+            from character c
            where c.id = $1 and c.deleted_at is null", conn);
     read.Parameters.Add(new NpgsqlParameter { Value = characterId });
 
     string name;
     JsonDocument progress;
-    JsonDocument? hotbar;
+    JsonDocument?[] own;
     JsonDocument quests;
     await using (var rows = await read.ExecuteReaderAsync())
     {
         if (!await rows.ReadAsync()) return Results.Json(new { error = "no such character" }, statusCode: 404);
         name = rows.GetString(1);
         progress = JsonDocument.Parse(rows.GetString(2));
-        hotbar = rows.IsDBNull(3) ? null : JsonDocument.Parse(rows.GetString(3));
-        quests = JsonDocument.Parse(rows.GetString(4));
+        quests = JsonDocument.Parse(rows.GetString(3));
+        own = CharacterRows.Read(rows, 4);
     }
 
     using (progress)
-    using (hotbar)
     using (quests)
+    try
     {
         var ticket = maps.MintTicket(body.accountId ?? "", characterId.ToString());
-        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, hotbar?.RootElement,
-                                              quests.RootElement, body.isGm, handover, signingIn: false, http.RequestAborted);
+        bool taken = await maps.AnnounceAsync(to, ticket, name, body.map!, progress.RootElement,
+                                              CharacterRows.ForAnnouncement(own), quests.RootElement, body.isGm, handover,
+                                              signingIn: false, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
 
         Console.WriteLine($"[char] moving '{name}' to '{body.map}' on map server '{to.Id}'.");
         return Results.Ok(new { host = to.Address, port = to.PlayerPort, ticket = ticket.Value, map = body.map });
     }
+    finally { CharacterRows.Dispose(own); }
 });
 
 // A PRIVATE MESSAGE, passed from the map server its sender is on to the one holding whoever it is for. The sender's

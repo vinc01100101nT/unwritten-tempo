@@ -89,7 +89,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v22";
+    public const string CharacterBuild = "unwritten-character-v23";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -380,14 +380,25 @@ public sealed class MapServers(Config config)
     /// <para>The character travels as the document it is stored as — the same shape the game reads and writes,
     /// so there is no second description of a character to keep in step with the first.</para>
     ///
-    /// <para>The hotbar travels beside it, not inside it: it has its own row, written only when a slot changes.
-    /// <paramref name="hotbar"/> is that stored array, or null when the character has never had one written.</para></summary>
-    public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName,
-                                          JsonElement progress, JsonElement? hotbar, JsonElement quests, bool isGm,
+    /// <para>The character's own rows travel beside it, not inside it (see <see cref="CharacterRows"/>): the hotbar and
+    /// the auto-combat settings, each written only when it changes. <paramref name="rows"/> holds each under its
+    /// announcement key, null when the character has never had that row written.</para></summary>
+    // The announcement's fields plus one per character row, under the row's own key.
+    static Dictionary<string, object?> WithRows(object fields, IReadOnlyDictionary<string, JsonElement?> rows)
+    {
+        var all = new Dictionary<string, object?>();
+        foreach (var p in fields.GetType().GetProperties()) all[p.Name] = p.GetValue(fields);
+        foreach (var kv in rows) all[kv.Key] = kv.Value;
+        return all;
+    }
+
+    public async Task<bool> AnnounceAsync(Registration to, Ticket ticket, string characterName, string map,
+                                          JsonElement progress, IReadOnlyDictionary<string, JsonElement?> rows,
+                                          JsonElement quests, bool isGm,
                                           int handover, bool signingIn,
                                           CancellationToken ct = default)
     {
-        var body = JsonSerializer.Serialize(new
+        var body = JsonSerializer.Serialize(WithRows(new
         {
             build = CharacterBuild,
             ticket = ticket.Value,
@@ -395,8 +406,11 @@ public sealed class MapServers(Config config)
             characterId = ticket.CharacterId,
             characterName,
             isGm,
+            // THE MAP THEY ARE SENT TO — the map server takes it as where they are, and their machine may only confirm
+            // it. The one place it is decided for a character never played, or saved in a map the game no longer has,
+            // whose save then names no map at all.
+            map,
             progress,
-            hotbar,
             // Every quest row the character has, open and finished (see QuestRows) — a finished quest is never given again.
             quests,
             // Every save of this character from that server carries this back — see Handover.
@@ -404,7 +418,7 @@ public sealed class MapServers(Config config)
             // ENTERING THE WORLD rather than walking from one map server to another — the moment the map server tells
             // them which world events are running. Told on every map change, it would repeat at every door.
             signingIn,
-        });
+        }, rows));
 
         using var request = new HttpRequestMessage(HttpMethod.Post,
             $"{to.ArrivalsUrl}/arriving")

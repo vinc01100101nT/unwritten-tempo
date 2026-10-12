@@ -504,6 +504,14 @@ public class SkillDef : ScriptableObject
     [Tooltip("PUBLISHED = a forge may roll this as a weapon's trademark, and a creature may draw it as its extra " +
              "skill. Unpublished or not, it is learned with its weapon's mastery points.")]
     public bool published = false;
+    [Tooltip("How rare this skill is as a forged weapon's TRADEMARK: Common, Uncommon, Rare or Epic. The forge first " +
+             "draws a rarity by its share, then one skill of that rarity evenly — so this decides how often a weapon " +
+             "carrying this skill is forged, and the colour that weapon's name is written in. Ignored on an ULTIMATE, " +
+             "which is always Legendary.")]
+    public Rarity trademarkRarity = Rarity.Common;
+    [Tooltip("ON once somebody has chosen the trademark rarity above. OFF = never chosen, which the skill-data check " +
+             "refuses on any published trademark skill that is not an ultimate.")]
+    public bool trademarkRaritySet = false;
     [Tooltip("The highest level mastery points can raise this skill to. Every level after the first adds the same " +
              "+5% to each number the fight raises. 10 when what grows is mostly damage; 5 when it is a defensive or " +
              "utility percentage or a charge count; 1 when nothing on the skill grows. 0 = never set, which the " +

@@ -9,7 +9,7 @@ metadata:
 **Ported 2026-09-09** from a clickable HTML prototype; made compact on 2026-10-11 (324×296, 20-tall rows) from `prototypes/compact-character-and-bag.html`, which is now its mock.
 
 The bag no longer draws 40 icon squares. `InventoryList.cs` renders **text rows** in three columns — name
-(rarity-coloured, with the `+N` refine prefix), tier, and how many are held — inside the same Inventory window,
+(coloured by `Rarities.Color` — the forge rarity from 2026-10-11 — with the `+N` fold prefix), tier, and how many are held — inside the same Inventory window,
 same `B` key, same tabs, same footer.
 
 **The load-bearing trick: each row carries an `ItemSlot` plus a `SlotDragHandler`.** Both drive themselves from

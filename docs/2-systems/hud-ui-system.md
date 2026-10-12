@@ -31,14 +31,14 @@ Tracking issue: **VIN-22**.
 - Prefab-per-panel, modular (HUD layer / window layer / overlay layer).
 - Event-driven data flow: `Character` owns state → events → UI listens. UI never stores game values.
 - Item definitions = ScriptableObjects; saves store instance IDs + amounts.
-- `EquipmentInstance { ItemID, UpgradeLevel, Rarity, InsertedCards[] }` — each gear piece is a unique instance, not a shared definition.
+- `EquipmentInstance` — each gear piece is a unique instance (its grade, folds, written stats, cards and trademark or word), not a shared definition. Its rarity is never stored: it is read from its trademark (`Rarities.Of`).
 
 ## Status
 
 Visual spec LOCKED (v3, 2026-09-28): the Ragnarok-style light theme below. The token sheet is below, and every
 value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button; both list every mob and NPC that lives in a map with its level, the zone view beside the map it shows and the world view beside the pointer) and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina bar, the status box, the kill combo, the minimap (always shown; it has no key), the Map window (M — the zone you stand in, with the world map behind a button; both list every mob and NPC that lives in a map with its level, the zone view beside the map it shows and the world view beside the pointer, and each mob with how many are alive there now over how many the map keeps ("12/30"), both from the server — alive alone for a creature only a random mix puts there; the zone view also draws every door out of the map it shows, in the colour of the kind of map it leads to and named for it — clicking a door opens that map, and clicking anywhere else on the picture sets the spot the ground arrows lead to, on any map, and a right click drops it), the name of each map flashed across the top of the screen in its kind's colour as you arrive and a settings window all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## The theme rule
 
@@ -68,6 +68,27 @@ was. The front screens (Login, Your Characters, Character Creation) carry neithe
 status box minimises but has no close. The card dialog and the drop prompt carry no bar buttons — each has its
 own Close / Cancel below.
 
+## List windows
+
+**The Shop, the Station and the Keeper are one window shape, built by one set of pieces in `UiKit`** — and the System
+menu's entries are the same button:
+
+- `UiKit.ListWindow` — a window whose body is one scrolling column.
+- `UiKit.ListLine` — a line of text in it, one or more rows tall.
+- `UiKit.ListButton` — a full-width button of a stated height (30 in a list window, 34 in the System menu).
+- `UiKit.ListDeal` — a line that is a deal: what it is on the left, one or two 70-wide presses on the right
+  (Buy 1 / Buy 10, Sell 1 / Sell all, Take 1 / Take all, Store 1 / Store all).
+
+A window that needs a list is built from these, never from a copy of them. On the Shop's rows (For sale, Sell, Buy
+back) and the Keeper's storage rows, an item's **name** is written in the colour of its rarity (`Rarities.Coloured`),
+as the bag writes it; the price, count and time beside it stay in the row's own colour.
+
+**A list that can grow long builds only the rows in view** — `UiListView`, which the Keeper window uses. It draws the
+same three kinds of line at the same sizes, colours and 70-wide presses, keeps only enough rows to fill the view, and
+re-points them as the list scrolls; its owner says how many lines there are, how tall each is, what one shows when it
+comes into view and what a press does. It redraws at most once a frame, after a scroll or a change. 600 stored things
+cost the twenty-odd rows on screen; built line by line they were about 10,800 objects made and destroyed per press.
+
 ## The status box
 
 Top-left by default, draggable by its bar, and it remembers where it was left. Its bar carries the character's
@@ -77,6 +98,36 @@ every HUD window: Inventory, Character, Skills, Quests, Calendar, Map, Chat, Set
 opens its window by the key that already opens it (`Hotkeys.PressOnScreen`, a one-frame press of that key from
 the screen), so it adds no second way into any window. It replaced the experience strip along the bottom of
 the screen and the health and mana bars at the bottom left.
+
+## The kill combo
+
+On the left edge, between the status box and the chat. After a kill, a run of kills starts: every kill within
+**10 seconds** of the one before adds one to it, and a kill after that starts it again at 1. The run multiplies what
+each kill pays — **1% more per kill in it, up to 50% at 50 kills** — the experience, and the zeny a saved character
+pays. Never a flat amount, so the bonus is the same share of a creature at any level.
+
+The count is drawn big in the damage numbers' pixel face and the rising-total yellow, and pops every time it climbs.
+Under it, "COMBO" with the bonus it is worth ("COMBO +12%"), and a thin yellow bar draining towards the moment the
+run ends; at that moment the count, the word and the bar go. Under those, always once the first kill has landed:
+**EXP/h** and **Zeny/h**, what kills paid over the last 10 minutes as a rate per hour (never over less than a
+minute), with thousands separators. A rate is updated with every kill and stays as it was between kills.
+
+Every number is the server's: it counts the run, multiplies the pay and works out the rates, and tells only the
+person who earned the kill (one message per kill, and one when a saved character pays its zeny). Their screen
+copies the numbers and compares the end moment it was sent with the clock to stop drawing the count — the same
+compare the hotbar makes for a cooldown. The run and the meter are not saved: a door or a disconnect starts both
+again. Only kills that pay count — a summon or a training dummy is no part of a run; a kill that pays 0
+experience under a world event, or at level 99, still counts. A kill pays no zeny of its own, so Zeny/h reads 0
+unless saved characters paid some.
+
+## The chat's tabs
+
+The chat window has three tabs: **All**, **PM** and **Combat Log**. All shows said lines, skill calls, arrivals
+and private messages; PM only private messages. **Combat Log** shows every blow you deal and take ("You hit Poring
+for 12", "Poring missed you", "You took 3 from bleeding"), every kill and what it paid ("You defeated Poring",
+"+120 EXP (+12 from combo)", "+30 Zeny (+3 from combo)") and every item you obtain — and none of it ever appears
+under All. Each kind keeps its own last 200 rows. The combat lines are kept as the server's numbers and turned into
+words only while the Combat Log tab is open, so a fight costs nothing while you read another tab.
 
 ## Design tokens — read off the code 2026-09-28
 
@@ -117,6 +168,9 @@ background and veil), not to any window.
 | Good | `#2E7D41` | a stat that went up |
 | Bad | `#B83A3A` | a stat that went down; a refusal |
 | PmText | `#867200` | a private message in the chat — a dark gold yellow, since bright yellow cannot be read on a window |
+| RarityRare | `#2A62B8` | a Rare item's name (5.59:1 on a window) |
+| RarityEpic | `#8A3FB8` | an Epic item's name (5.68:1) |
+| RarityLegendary | `#A85400` | a Legendary item's name — a deep orange gold (5.03:1) |
 
 ### Shapes
 
@@ -125,12 +179,15 @@ There are **no corner ornaments and no divider flourishes** on any window. The s
 game tints — `Resources/UI/Theme`, written by `tools/ui-theme-sprites.py` — so a colour change never touches
 them; a corner-radius change means re-running that script.
 
-### Item colour — retired
+### Item colour — by rarity
 
-**Nothing colours an item by a tier any more.** [V4](gameplay-system-v4/README.md) removed rarity from the game
-on 2026-09-20: an item's name, its bag row, its card and a drop's sparkle are all drawn in the ordinary text
-colour, and what a piece is worth is written in words — its **grade and its folds**, "B +12". The five-tier
-palette that used to live here (Common grey through Legendary gold) is gone from the code with it.
+**An item's name is written in its rarity's colour** (decided 2026-10-12): Common in **TextMain**, Uncommon in
+**Good**, Rare in **RarityRare**, Epic in **RarityEpic**, Legendary in **RarityLegendary**. Rarity is how rare an
+item is to come by — a weapon as rare as its trademark, a material by its kind and tier, everything else Common (see
+[V4 §4](gameplay-system-v4/README.md)) — and one function answers both the rarity and its colour (`Rarities`), so
+every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag rows, the
+worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a
+piece is worth is still written in words — its **grade and its folds**, "B +12" — and a grade is never coloured.
 
 ### Fonts
 

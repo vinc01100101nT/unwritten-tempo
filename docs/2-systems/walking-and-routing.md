@@ -50,6 +50,11 @@ still in its own area — the edge of a cliff above a creature, or the foot of i
   6,000-cell budget each time: 52–57 ms, three times a second.
 - **The labelling is never stricter than the search:** it uses the thinnest possible body, so "different areas" is
   only said when it is certainly true; when in doubt the normal search runs.
+- **A random landing spot comes from the same labels** (`Pathfinder3D.RandomSpotInArea`, what a Fly Wing uses): each
+  area's cells are listed once at labelling (4 bytes per walkable cell — at most about 101 KB for an 80 × 80 m map), a
+  cell of the area the unit stands in is picked evenly with one lookup (measured 1.4 µs a pick), and it is moved to the
+  nearest cell a real body fits when the first is too tight — kept only if that is still the same area, so whoever
+  lands can always walk back. Asked once per use, never per frame.
 - **Where it applies:** only maps with a route-finder setup (every generated map has one). The labels go when the
   map unloads, and are cleared at the start of every Play.
 

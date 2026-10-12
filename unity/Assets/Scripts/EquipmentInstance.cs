@@ -61,12 +61,42 @@ public class EquipmentInstance
     [Tooltip("What this copy's word is worth (server-written, from the grade) — see ArmourWords.Amount for its unit.")]
     public float wordAmount;
 
+    /// <summary>PLAYER'S MACHINE: how rare this copy is, exactly as the server sent it with the bag (<see cref="raritySent"/>
+    /// says it was). Never saved — the server works it out afresh from the trademark every time it sends one.</summary>
+    [System.NonSerialized] public Rarity rarity;
+    [System.NonSerialized] public bool raritySent;
+
     public EquipmentInstance() { }
     public EquipmentInstance(Item def, int upgrade = 0)
     {
         this.def = def;
         this.upgrade = upgrade;
         Recompute();
+    }
+
+    /// <summary>THE ONE WAY a copy becomes the four values a save, a message or a kept sale holds for it beside its item
+    /// id: its folds, its cards, its roll text (grade, written stats, trademark, word) and its own id. Gives the copy
+    /// its id first if it has none, as everything that lets a copy leave the server must.</summary>
+    public void ToSaved(out int folds, out string cardsText, out string roll, out string id)
+    {
+        EnsureCopyId();
+        folds = upgrade;
+        cardsText = ItemCatalog.EncodeCards(cards);
+        roll = EncodeRoll();
+        id = copyId;
+    }
+
+    /// <summary>THE ONE WAY those four values become a copy again. <paramref name="cardsText"/> null = none were
+    /// written, <paramref name="roll"/> null = a save older than v12, which carries no grade, so the piece loads Raw
+    /// with nothing written on it. Loading is not a creation: nothing is rolled here.</summary>
+    public static EquipmentInstance FromSaved(Item def, int folds, string cardsText, string roll, string id)
+    {
+        var inst = new EquipmentInstance(def, folds);
+        if (cardsText != null) ItemCatalog.DecodeCards(cardsText, inst.cards);
+        if (roll != null) inst.DecodeRoll(roll);
+        else inst.Recompute();
+        inst.copyId = id ?? "";
+        return inst;
     }
 
     /// <summary>Work the piece's numbers out ONLY where that is allowed — on the server, and in the editor's own
@@ -86,11 +116,7 @@ public class EquipmentInstance
     {
         var made = new EquipmentInstance(def);
         if (def == null) return made;
-        if (def.slot == EquipSlotType.Weapon)
-        {
-            int total = Trademarks.RollTotal(def.weaponType);
-            if (total > 0) made.trademarkSkillId = Trademarks.Pick(def.weaponType, CombatRng.Range(0, total));
-        }
+        if (def.slot == EquipSlotType.Weapon) made.trademarkSkillId = Trademarks.Roll(def.weaponType);
         else made.RollWord();
         made.Recompute();
         return made;

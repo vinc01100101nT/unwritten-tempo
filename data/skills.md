@@ -14,8 +14,10 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Sanctuary *(unpublished)* | active | MP **10**  CD **4.5s**  Cast **2s**  Range **11** | pressed | Heals **100** HP |
 | — | Hex Field *(unpublished)* | active | MP **16**  CD **10s**  Cast **0.5s**  Range **11** | pressed | Deals **1×** magic damage · Stun for **4s** |
 | — | Antidote *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Removes **3** debuff(s) |
+| — | Butterfly Wing *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Returns you to your save point |
 | — | Flame Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Fire** (level 1) for **5:00** |
 | — | Flame Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Fire** for **5:00** |
+| — | Fly Wing *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Sets you down somewhere random on this map |
 | — | Frost Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Water** (level 1) for **5:00** |
 | — | Frost Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Water** for **5:00** |
 | — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **200** HP |

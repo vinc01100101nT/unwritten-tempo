@@ -16,7 +16,7 @@ How far the game is from being something a stranger can buy and finish. **This d
 
 ## The one-paragraph answer
 
-The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: 29 crafting materials, 15 armour designs to forge from them at three stations, a shop, two quests and sixteen townsfolk with names. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of fifteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
+The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: 29 crafting materials, 15 armour designs to forge from them at three stations, a shop, two quests, sixteen townsfolk with names, and a Keeper in every town who sets your save point, keeps your account's storage and sends you to any other town. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of sixteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
 
 ---
 
@@ -25,7 +25,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 | Thing | Count | What the count means |
 | --- | --- | --- |
 | Game and tooling code files | 454 | C# files in the Unity project, 104 of them editor tools exposing 82 menu commands; the character server is 13 more C# files |
-| Playable maps | 76 | the three-region world: 15 towns (Lastline among them) · 39 fields · 22 dungeon floors, joined by 86 two-way doors. 14 shadow places are in the world layout with no map built. 15 test maps sit outside the world |
+| Playable maps | 77 | the three-region world: 16 towns (Lastline among them) · 39 fields · 22 dungeon floors, joined by 88 two-way doors. 14 shadow places are in the world layout with no map built. 15 test maps sit outside the world |
 | Creature definitions | 98 | 66 normals, 18 elites and 14 shadows |
 | Skills | 51 | see the split below |
 | Items in the whole game | 65 | 2 weapons (a sword and a bow) · 15 armour pieces · 29 crafting materials · 19 to use (11 potions and foods, 8 element converters) |
@@ -44,7 +44,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 - **The numbers behind it**, pinned and checked in about twenty seconds on this PC without opening Unity: among them the experience curve, the stat-point budget, the accuracy window, the stat jumps, the element chart, the ring, the quality ladder, quench odds, Ink, the mastery curve, the walking rule, standing water, saved characters and quest steps.
 - **The world's shape.** Movement, camera, pathfinding, crowd pass-through, doorways, additive map loading, weather on a calendar, day and night with lamps, a music director, a minimap, and a Map window with a view of the map you stand in and a view of the whole world.
 - **The programs that make it online.** A sign-in service; a character keeper that owns every character and every save; a game server that owns the world and never touches the database; one shared database; and a download server that hands out the website, the launcher and every game update. Two people have been watched standing in the same town seeing each other move, and a fight against server-owned creatures has been played. The whole of a skill runs on the server. An area is placed on the least busy machine when somebody wants it and released 45 seconds after the last person leaves. One account can only be signed in once. There is deliberately no offline game.
-- **Saving.** Save format version 18 holds level, experience, the six primaries and unspent points, the full ring walk, gold, each weapon's mastery and the level bought in every skill learned, the bag and worn gear with their folds, grade, written stats, trademark and each piece's own id, the cooldowns (the ultimates' shared cooldown included) and timed effects still running, where the character stands and its save point, and outfit dyes. The hotbar and each quest are stored in rows of their own beside the save.
+- **Saving.** Save format version 18 holds level, experience, the six primaries and unspent points, the full ring walk, gold, each weapon's mastery and the level bought in every skill learned, the bag and worn gear with their folds, grade, written stats, trademark and each piece's own id, the cooldowns (the ultimates' shared cooldown included) and timed effects still running, where the character stands and its save point, and outfit dyes. The hotbar and each quest are stored in rows of their own beside the save, and what an account keeps in storage in a table of its own.
 - **The screens.** Sign-in, character select, loading, inventory, the character sheet with the ring draft beside it, the skills window, the three-row hotbar, the Map window, the Quests window, the crafting station window, the shop window, the calendar, the system menu and settings, the death screen, chat, the dialogue box, tooltips, the target panel, and the right-click item menu. The game is PC-only: Windows and Mac.
 - **The checks.** The game's code compiles in about eight seconds without opening Unity, including once as a shipped PC build sees it; the arithmetic is checked outside the editor entirely; a sweep asks whether everything the game loads still points at something that exists, against 29,168 asset ids, and finds nothing broken. Eleven checks have a prover that breaks them on purpose to confirm they complain.
 
@@ -64,11 +64,11 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 **Elites are placed; shadows are not.** All 18 elites have rows in the world spawn list — 43 rows, 35 on fields and 8 on dungeon floors — beside the ordinary creatures of those maps. None of the 14 shadows has a row, and the 14 places meant for them exist only in the world layout, with no map built and no door leading to them.
 
-**The world is joined up, and nobody has walked it.** Every one of the 76 maps can be reached from Lastline through doors placed in the maps themselves: 172 door ends, every one leading back the way it came. Every field and dungeon floor has creatures; no town does.
+**The world is joined up, and nobody has walked it.** Every one of the 77 maps can be reached from Lastline through doors placed in the maps themselves: 176 door ends, every one leading back the way it came. Every field and dungeon floor has creatures; no town does.
 
-**One town has people.** Lastline has sixteen townsfolk, each with a name and a line saying what they are. The other fourteen towns have none. Outside a quest, talking to any of them gives a conversation picked at random from one shared set, by time of day.
+**Every town has a Keeper; one town has anybody else.** Each of the sixteen towns has one Keeper standing inside one of its doors ([The Keeper and the Wings](../2-systems/keeper-and-wings.md)). Lastline also has sixteen townsfolk, each with a name and a line saying what they are. The other fifteen towns have nobody but their Keeper. Outside a quest, talking to any of them gives a conversation picked at random from one shared set, by time of day.
 
-**Quests and the shop are built and not yet played** (2026-10-04, [Quests and Tutorials](../2-systems/quests-and-tutorials.md)). Three quests exist: two tutorials (crafting your first gear, and buying and drinking healing potions after coming back on low health) and Torvald's side quest. One shop exists: Fenwick the Tool Dealer in Lastline, selling four potions and buying anything with a sell value.
+**Quests and the shop are built and not yet played** (2026-10-04, [Quests and Tutorials](../2-systems/quests-and-tutorials.md)). Three quests exist: two tutorials (crafting your first gear, and buying and drinking healing potions after coming back on low health) and Torvald's side quest. One shop exists: Fenwick the Tool Dealer in Lastline, selling four potions, the Fly Wing and the Butterfly Wing, and buying anything with a sell value.
 
 **No death pays gold:** a creature's gold range is what a character saved from it pays its saver, times its tier — ordinary ×20, helpless ×40, wealthy ×60.
 
@@ -88,7 +88,7 @@ No main-story quest. No class or job advancement. No title screen or new-game fl
 
 **The blocker is not technology, and has not been for months.** Everything left in the shippable version is content and connective tissue: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product. That is work that can be chewed through item by item, which is what the [Action Plan](action-plan/on-going.md) is for.
 
-**Four things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: thirteen of the fourteen weapon families have no skill anybody can obtain; twelve of the fourteen have no weapon; fourteen of the fifteen towns have nobody with a name and no quest; and none of the fourteen shadows has a map to stand on.
+**Four things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: thirteen of the fourteen weapon families have no skill anybody can obtain; twelve of the fourteen have no weapon; fifteen of the sixteen towns have nobody but a Keeper and no quest; and none of the fourteen shadows has a map to stand on.
 
 **The game is online only.** The world runs across several machines, the server owns the fight, and progress is written where a player's own machine cannot forge it. Content has been added on top of that since mid-September, and most of it is waiting to be played.
 
@@ -106,7 +106,7 @@ Fifty-five commits from 5 September to 5 October, in this order: the world split
 
 ## What is open right now
 
-Eighteen tasks in the [Action Plan](action-plan/on-going.md) are built or under way and not yet proven in play — among them weapon mastery and skill levels, the doors between all 76 maps, the field shapes and rain water, quests and the tutorial, the shop, saved characters, and the launcher with the server turning away an outdated game.
+Eighteen tasks in the [Action Plan](action-plan/on-going.md) are built or under way and not yet proven in play — among them weapon mastery and skill levels, the doors between all 77 maps, the field shapes and rain water, quests and the tutorial, the shop, saved characters, and the launcher with the server turning away an outdated game.
 
 ---
 

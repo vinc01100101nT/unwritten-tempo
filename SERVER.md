@@ -62,7 +62,7 @@ checker at the bottom is what makes them stick.
 | Reading a character in the world | **The announcement** (`/arriving` on the map server, sent BY the character server) | The character travels with the ticket; the map server never fetches it. |
 | Every user value in SQL | **`$1`, `$2` …** — never pasted | Both services do this without exception; keep it that way. |
 | A schema change | **A numbered file in `accounts/sql/`**, applied by `npm run migrate` in `accounts/` | Each runs once, in its own transaction, recorded by filename. The checker warns while one is unapplied. |
-| Proving a server change | **`charserver/test.sh`** (end to end, both services) and **`accounts/test/smoke.ts`** | Writes go through the server door in the test, exactly as in the game. |
+| Proving a server change | **`charserver/test.sh`** (end to end, both services), **`charserver/test-storage.sh`** (an account's storage, on a throwaway database it makes and removes) and **`accounts/test/smoke.ts`** | Writes go through the server door in the test, exactly as in the game. |
 
 ---
 

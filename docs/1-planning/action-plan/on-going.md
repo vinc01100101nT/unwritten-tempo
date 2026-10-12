@@ -142,6 +142,9 @@ Each of these is worth doing and none of them blocks the loop above. They are he
 - [ON-GOING] `MT-49` **`[E]` Stop the hover plate throwing on destroyed icons** — its "has been destroyed" errors came from a map change destroying the shared canvas the plate hangs on, while the rebuilt plate kept its list of the old icons.
   *Done when:* a play session with fights and map changes logs none of them.
 
+- [ON-GOING] `MT-59` **`[E]` Draw far props with simpler models** — the game is held back by the graphics card (town, 2026-09-07: 30.3 ms a frame on the graphics card against 2.5 ms of game code, 1.09 million triangles in view). Built 2026-10-11: the 17 families with hand-made simpler copies are wired (`LodGroupWirer.WireAllCore()`), and the 39 other props of 500 triangles or more carry two generated simpler levels (`PropLodBaker.BakeCore(null)`); the simplest level is never hidden. Lastline's props come to 3,287,693 triangles at full detail and 850,791 all at their simplest. Left: measure the same town view again.
+  *Done when:* every placed prop switches to a simpler model at a distance, nothing visibly pops up close, and the town's frame time on the graphics card is measured lower than before.
+
 ---
 
 ## Related

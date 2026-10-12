@@ -39,7 +39,9 @@ checker at the bottom is what makes them stick without anybody remembering.
    the world origin instead. Occludee only.
 7. **A simplified copy is wired, or it is dead weight.** 17 prop families had `_LOD1`/`_LOD2` decimated copies
    sitting beside them, placed zero times; only the full copy was ever drawn. A family is wired when its `_LOD0`
-   prefab carries an `LODGroup` with every sibling level as a child (`LodGroupWirer.WireAllCore()`).
+   prefab carries an `LODGroup` with every sibling level as a child (`LodGroupWirer.WireAllCore()`). Every other
+   palette prop of 500 triangles or more gets two generated simpler levels (`PropLodBaker.BakeCore(null)`), and
+   the simplest level of every prop is never hidden: a far prop is drawn simpler, never left out.
 8. **Every field a script declares is in the baked prefab.** Unity silently drops a field whose type it cannot
    serialize — a `struct` with no `[System.Serializable]` — and the baker writes the rest and says nothing. That is
    how all 84 creatures loaded at level 1 with every stat at 1 while their data said 3 to 46.
@@ -87,7 +89,7 @@ checker at the bottom is what makes them stick without anybody remembering.
 | --- | --- | --- |
 | Import settings for anything under `1_Authored/Art/`, and the textures under `2_Generated/Weapons/` | **The import rule** `Editor/PixelArtImportPostprocessor.cs` | It is the single OWNER of those settings and re-applies them on every import. Hand-editing a `.meta` there is reverted on the next import — change the rule, then reimport the folder. Its `/GroundTiles/` branch is the one non-pixel-art case: Default + Repeat + mipmaps + **Compressed** + ToNearest + **max 1024** + **no alpha**, the same for every tile. |
 | Ground textures for the blended ground, the curbs and the prop materials | **One copy**, in `1_Authored/Art/GroundTiles/` — every ground tile the game uses, new ones included, lives there and nowhere else | The same four images used to live twice, once compressed and once not, and both shipped — 48 MB of the build was the same three pictures twice. |
-| Level-of-detail for a placed prop | **`LodGroupWirer.WireAllCore()`** through the live editor link | Nests each `_LODn` copy's mesh under the `_LOD0` prefab (no collider on the copies — the placed prefab already blocks) and lets Unity compute the switching bounds. Idempotent; re-run after re-decimating. |
+| Level-of-detail for a placed prop | **`LodGroupWirer.WireAllCore()`** for a family with hand-made `_LODn` copies, **`PropLodBaker.BakeCore(null)`** for every other prop — both through the live editor link | The wirer nests each `_LODn` copy's mesh under the `_LOD0` prefab; the baker makes copies at 40% and 25% of the triangles (`MeshDecimation`, texture seams let go — they block almost all reduction on the generated props) into `2_Generated/PropLODs/`. Neither copies a collider (the placed prefab already blocks), both switch on one table (`LodGroupWirer.Levels`) whose last level never culls. Both skip a prop that already switches; re-run after adding props. |
 | Creature stats, gear, drops | **The creature data files** → `Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs` | The bake is the only road from data to a prefab. After ANY change to a struct a baked component holds, re-bake — adding the missing `[Serializable]` alone changes nothing on disk. |
 | Which packages exist and why | **`tools/packages-in-use.txt`** | One line per package, what uses it, measured. The checker refuses an installed package with no line. |
 | Writing a scene, prefab or asset from editor code | **A menu item, or `// editor-write-ok: <why>`** | RULE NOEDITORWRITES. `tools/check-editor-writes.py` follows every load-time / import-time / save-time trigger to the writes it reaches and refuses one that says nothing. |

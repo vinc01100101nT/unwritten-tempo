@@ -40,7 +40,7 @@ Tasks whose status is `[DONE]`. The plan is three files by status — [done](don
 
   - [DONE] `ST-3-G` **`[D]` Gear has no level needed to wear it.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
 
-  - [DONE] `ST-3-H` **`[D]` There is no rarity.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
+  - [DONE] `ST-3-H` **`[D]` Rarity is how rare a piece is to forge, never its grade** — Common, Uncommon, Rare, Epic, Legendary; a weapon takes its trademark's rarity (ultimates always Legendary), materials by kind and step, everything else Common (decided 2026-10-11). — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
 
   - [DONE] `ST-3-I` **`[D]` Nothing is rolled when a piece is made.** — see [Gameplay System V4](../../2-systems/gameplay-system-v4/README.md)
 

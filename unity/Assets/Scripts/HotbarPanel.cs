@@ -32,6 +32,7 @@ public class HotbarPanel : MonoBehaviour
         public Kind kind;
         public IHotbarSkill skill;      // Kind.Skill
         public string itemId;           // Kind.Item
+        public bool itemNoneLeft;       // Kind.Item with none carried: the slot is kept, drawn red
         public string copyId;           // Kind.Gear
         public Image cell, cooldown;
         public TMP_Text mp, label, cdNum;
@@ -78,8 +79,12 @@ public class HotbarPanel : MonoBehaviour
         if (GetComponent<BuffBarPanel>() == null) gameObject.AddComponent<BuffBarPanel>();
         // The shop window — added the same way, so a HUD built before shops existed still has one. Idempotent.
         if (GetComponent<ShopPanel>() == null) gameObject.AddComponent<ShopPanel>();
+        // The Keeper's window — added the same way. Idempotent.
+        if (GetComponent<KeeperPanel>() == null) gameObject.AddComponent<KeeperPanel>();
         // The stamina gauge — added the same way so it appears without a shell rebuild. Idempotent.
         if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
+        // The kill combo and the per-hour rates on the left edge — added the same way. Idempotent.
+        if (GetComponent<KillComboHud>() == null) gameObject.AddComponent<KillComboHud>();
         TryBuild();
     }
 
@@ -285,7 +290,7 @@ public class HotbarPanel : MonoBehaviour
         drag.slotIndex = index;
         drag.tint = s.kind == Kind.Skill && s.skill != null ? s.skill.Tint : UiKit.Accent;
         // An item or a piece sits on a white tile, where the white key letter would vanish; it takes the name's colour.
-        if (s.kind == Kind.Item || s.kind == Kind.Gear) key.color = UiKit.TextMain;
+        if (s.kind == Kind.Item || s.kind == Kind.Gear) key.color = s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TextMain;
         key.transform.SetAsLastSibling();
         return s;
     }
@@ -335,16 +340,19 @@ public class HotbarPanel : MonoBehaviour
     void BuildItem(Slot s, string itemId)
     {
         var stack = Character.Instance.CarriedStack(itemId);
-        if (stack == null) return;
+        // NONE LEFT: the item keeps its slot, drawn red with a 0, until the next one is picked up.
+        var def = stack != null ? stack.def : ItemCatalog.Resolve(itemId);
+        if (def == null || !def.IsUsable) return;
         s.kind = Kind.Item;
         s.itemId = itemId;
-        s.cell.color = UiKit.SlotFill;
-        NameOnTile(s.cell.transform, stack.def.displayName);
+        s.itemNoneLeft = stack == null;
+        s.cell.color = s.itemNoneLeft ? UiKit.Bad : UiKit.SlotFill;
+        var name = NameOnTile(s.cell.transform, def.displayName);
+        if (s.itemNoneLeft) name.color = UiKit.TextOnDim;
         // How many are carried (bottom-right), exactly as the bag the server sent says.
-        var count = NewText("Count", s.cell.transform, stack.count.ToString(), 11, FontStyle.Bold, TextAnchor.LowerRight,
-                            UiKit.TitleText);
+        var count = NewText("Count", s.cell.transform, s.itemNoneLeft ? "0" : stack.count.ToString(), 11, FontStyle.Bold,
+                            TextAnchor.LowerRight, s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TitleText);
         Stretch(count.rectTransform, 3, 2);
-        var def = stack.def;
         HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowFor(def), ItemTooltip.HideTip);
     }
 
@@ -369,7 +377,7 @@ public class HotbarPanel : MonoBehaviour
     }
 
     // A name on a light tile: largest size that fits between NameMinSize and NameMaxSize, then cut with "…".
-    void NameOnTile(Transform cell, string name)
+    TMP_Text NameOnTile(Transform cell, string name)
     {
         var t = UiKit.MakeText("Name", cell, name, NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: true);
         t.color = UiKit.TextMain;
@@ -383,6 +391,7 @@ public class HotbarPanel : MonoBehaviour
         t.rectTransform.anchorMax = Vector2.one;
         t.rectTransform.offsetMin = new Vector2(3, 12);
         t.rectTransform.offsetMax = new Vector2(-3, -12);
+        return t;
     }
 
     void Refresh()

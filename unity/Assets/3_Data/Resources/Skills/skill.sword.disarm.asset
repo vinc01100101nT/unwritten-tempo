@@ -19,6 +19,8 @@ MonoBehaviour:
   masteryLevel: 19
   needsSkillId: 
   published: 1
+  trademarkRarity: 1
+  trademarkRaritySet: 1
   maxLevel: 5
   description: 'Blunt their swing.
 
@@ -70,6 +72,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 0
       useStacks: 0
@@ -81,7 +88,20 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0
@@ -205,7 +225,20 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0

@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name."
+status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name; since 2026-10-12 the forge rolls a rarity first, and a weapon is as rare as its trademark."
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-12
 tags:
   - systems-combat-design
 ---
@@ -116,7 +116,7 @@ skill has no main number to raise and never rolls.
 
 **Every skill with a main number on any of its effects is a trademark skill, automatically, no exception.**
 Decided 2026-09-21. The forge rolls the PUBLISHED ones of the weapon's type. For the sword that is **eighteen**:
-fifteen ordinary skills and all three ultimates.
+fifteen ordinary skills and all three ultimates. Each carries a **rarity** (§4), and the weapon takes it.
 
 ### Why a rule beats a hand-picked list
 
@@ -141,28 +141,29 @@ Cleanse, ImmuneToDisables, ExtendDuration, or a Stun, Freeze or Silence — has 
 
 ### The sword's eighteen
 
-Read off the saved skill data on 2026-09-21, every effect decoded.
+Read off the saved skill data on 2026-09-21, every effect decoded; the rarities were set on 2026-10-12 — the
+ordinary ones by the mastery level each opens at, the earliest the most common.
 
-| Trademark — and the weapon's name | Mastery | What the lift moves |
-| --- | --- | --- |
-| **Piercing Gust** | 1 | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
-| **Rising Breeze** | 3 | its +3%-damage stack |
-| **Still Air** | 5 | its 50% damage reduction |
-| **Crossed Branches** | 7 | its +2 basic attack range per charge |
-| **Eye of the Storm** | 11 | its 2/sec MP return |
-| **Scattered Petals** | 15 | its strike, and the 30% attack-speed cut it puts on them |
-| **Tailwind** | 17 | the Rising Breeze it adds per basic attack |
-| **Stripped Bough** | 19 | its strike, and the 40% weakening of their next attack |
-| **Petal Storm** | 23 | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier |
-| **Parting Clouds** | 25 | the +200% it puts on your next attack after a parry |
-| **Single Petal** | 27 | its 200% Attack blow |
-| **Headwind** | 33 | how far every hit cuts their HP regen |
-| **Squall** | 36 | its +30% Attack Speed, and its take-double-damage drawback |
-| **Bare Branch** | 40 | the 5 Held Breath charges it arms at low HP |
-| **Second Bloom** | 65 | the 7 dance charges a kill adds |
-| **Last Petal** (ultimate) | 30 | its 600% blow |
-| **Returning Wind** (ultimate) | 45 | its damage |
-| **Thousand Petals** (ultimate) | 60 | its damage and its stack buff |
+| Trademark — and the weapon's name | Mastery | Rarity | What the lift moves |
+| --- | --- | --- | --- |
+| **Piercing Gust** | 1 | Common | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
+| **Rising Breeze** | 3 | Common | its +3%-damage stack |
+| **Still Air** | 5 | Common | its 50% damage reduction |
+| **Crossed Branches** | 7 | Common | its +2 basic attack range per charge |
+| **Eye of the Storm** | 11 | Common | its 2/sec MP return |
+| **Scattered Petals** | 15 | Uncommon | its strike, and the 30% attack-speed cut it puts on them |
+| **Tailwind** | 17 | Uncommon | the Rising Breeze it adds per basic attack |
+| **Stripped Bough** | 19 | Uncommon | its strike, and the 40% weakening of their next attack |
+| **Petal Storm** | 23 | Uncommon | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier |
+| **Parting Clouds** | 25 | Rare | the +200% it puts on your next attack after a parry |
+| **Single Petal** | 27 | Rare | its 200% Attack blow |
+| **Headwind** | 33 | Rare | how far every hit cuts their HP regen |
+| **Squall** | 36 | Epic | its +30% Attack Speed, and its take-double-damage drawback |
+| **Bare Branch** | 40 | Epic | the 5 Held Breath charges it arms at low HP |
+| **Second Bloom** | 65 | Epic | the 7 dance charges a kill adds |
+| **Last Petal** (ultimate) | 30 | Legendary | its 600% blow |
+| **Returning Wind** (ultimate) | 45 | Legendary | its damage |
+| **Thousand Petals** (ultimate) | 60 | Legendary | its damage and its stack buff |
 
 ### The four that are not trademarks
 
@@ -177,17 +178,27 @@ That leaves a permanent asymmetry: a player built around parrying and bracing ha
 a damage build. It is softened by **Parting Clouds and Eye of the Storm, which are both parry-gated and both pass**, so the
 parry routine does have weapons of its own.
 
-## 4. Forging: random, as asked
+## 4. Forging: random, as asked — a rarity first, then a name
 
-The forge rolls the name, with these weights:
+**A weapon's rarity is how rare its trademark is to roll — never its grade** (decided 2026-10-12). The forge rolls in
+two steps: first a **rarity**, by these shares of every weapon of one type it makes, then **one trademark of that
+rarity**, every one equally likely.
 
-| Outcome | Each | Together |
-| --- | --- | --- |
-| One of the fifteen ordinary trademarks | **5.7%** | 85% |
-| One of the three ultimate trademarks | **5%** | 15% |
+| Rarity | Share of all forged weapons | Sword trademarks | Each, on a sword |
+| --- | --- | --- | --- |
+| Common | **50%** | 5 | **10%** |
+| Uncommon | **30%** | 4 | **7.5%** |
+| Rare | **14%** | 3 | **4.67%** |
+| Epic | **5%** | 3 | **1.67%** |
+| Legendary | **1%** | 3 — the three ultimates | **0.33%** |
 
-Each ultimate is a fixed 5%, and the ordinary skills share the rest evenly, so adding an ordinary skill to the
-pool never makes an ultimate rarer.
+- **Every ultimate's trademark is Legendary, always** — read from its tier, never authored, so the ultimates are the
+  rarest weapons there are. **Legendary is theirs alone**: an ordinary skill is authored Common to Epic.
+- **An ordinary skill carries its rarity on the skill** (Skill Composer ▸ *trademark rarity*). Adding a skill to a
+  rarity makes the others of that rarity rarer and leaves every other rarity's share alone.
+- **A weapon type with no trademark of some rarity** hands that rarity's share to the rarities it has, in
+  proportion, so its forge still always rolls something.
+- A weapon with no trademark is **Common**.
 
 **Every weapon empowers something.** No blank outcome: a forge is then always a result rather than sometimes a
 nothing, and the question a player asks is "which one did I get", never "did I get anything".
@@ -203,12 +214,15 @@ attempt costs a **net 4 Copper and 400 gold**.
 
 | Chasing | Expected attempts | Net cost |
 | --- | --- | --- |
-| A specific ordinary trademark (5.7%) | ~18 | ~71 Copper, ~7,100 gold |
-| *Any* ultimate (15%) | ~7 | ~28 Copper, ~2,800 gold |
-| A specific ultimate (5%) | ~20 | ~80 Copper, ~8,000 gold |
+| A specific Common trademark (10%) | ~10 | ~40 Copper, ~4,000 gold |
+| A specific Rare trademark (4.67%) | ~21 | ~86 Copper, ~8,600 gold |
+| A specific Epic trademark (1.67%) | ~60 | ~240 Copper, ~24,000 gold |
+| *Any* ultimate — a Legendary (1%) | ~100 | ~400 Copper, ~40,000 gold |
+| A specific ultimate (0.33%) | ~300 | ~1,200 Copper, ~120,000 gold |
 
-Band-1 material and early gold, for a weapon carried to the end of the ladder. That is the number that makes
-pure random defensible — and it only works because recycle exists, which is why the two should ship together.
+Band-1 material and early gold for the common names, a long hunt for a Legendary — for a weapon carried to the end
+of the ladder. That is the number that makes pure random defensible — and it only works because recycle exists,
+which is why the two should ship together.
 
 ## 6. How it is built
 
@@ -219,8 +233,11 @@ pure random defensible — and it only works because recycle exists, which is wh
   weapon raises (`EffectScaling.Boostable`, the same list the skill's level and the ring read), and what the weapon's card
   lists. Change a skill's effects and every weapon carrying it follows at once.
 - **The forge rolls only PUBLISHED skills** of the weapon's type (`Trademarks.Rollable`): publishing is what lets a
-  skill be rolled onto a weapon. The roll is server-side, through `CombatRng`, weighted by
-  `CraftingMath.TrademarkWeight`. Every new weapon comes through that same roll (`EquipmentInstance.CreateFresh`) —
+  skill be rolled onto a weapon. The roll is server-side (`Trademarks.Roll`): two `CombatRng` draws, the rarity by
+  `CraftingMath.TrademarkRarityAt` over the rarities present, then a skill of it evenly; the chance of each is
+  `CraftingMath.TrademarkChance`, pinned in `tools/game-math-tests/Checks.cs`, and `Trademarks.ChanceOf` hands it to
+  the wiki's trademark table. A skill's rarity is `Rarities.OfTrademark` — Legendary for an ultimate, otherwise its
+  authored `trademarkRarity`. Every new weapon comes through that same roll (`EquipmentInstance.CreateFresh`) —
   the forge, a GM's `/weapon`, a creature's gear at any grade — so no weapon exists without one. Only `/weapon` may
   name the skill instead, and only one the forge could roll on that weapon.
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
@@ -234,10 +251,14 @@ pure random defensible — and it only works because recycle exists, which is wh
   — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
   `SkillShout.Words` picks the call from it.
 - **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
+  It is written in the weapon's rarity colour (`Rarities.Color`) in the tooltip, the bag, the worn list and on the
+  floor, and the tooltip names the rarity on its own line.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
   "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
   +20%" on its own line, only when the weapon in hand empowers that skill.
-- **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`).
+- **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`),
+  when a published, non-ultimate trademark skill has no rarity chosen (`trademarkRaritySet`), and when an ordinary
+  skill is set to Legendary.
 
 ## 7. Armour
 

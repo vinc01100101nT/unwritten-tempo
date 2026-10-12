@@ -24,8 +24,9 @@ does not own and a colour palette invented from scratch, and had to be restyled 
 
 Run `tools/ui-tokens.py`. It reads the game's own code and writes `prototypes/ui-tokens.css` — the shared
 palette and the game's real font files, loaded from where the game keeps them. The page links that file
-and uses `var(--window-edge)`, `var(--text-main)`, `var(--font-ui)`. Nothing is coloured by an item tier: V4
-removed rarity from the game on 2026-09-20. **A hand-typed hex in a
+and uses `var(--window-edge)`, `var(--text-main)`, `var(--font-ui)` — and an item's name by its rarity with
+`var(--text-main)`, `var(--good)`, `var(--rarity-rare)`, `var(--rarity-epic)` or `var(--rarity-legendary)`, the same
+rows of the palette the game reads. **A hand-typed hex in a
 mock page is a bug**, because the same value then lives in the code, in the token doc and in the page, and copies
 drift.
 

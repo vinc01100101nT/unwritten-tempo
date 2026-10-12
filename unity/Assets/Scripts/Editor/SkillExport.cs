@@ -118,6 +118,8 @@ public static class SkillExport
             // The name a forged weapon carries when this skill is its trademark — empty unless the forge can roll it,
             // the same test the forge uses, so the page names exactly the skills a weapon can be named for.
             Field(json, "trademark", Trademarks.Rollable(d, d.weaponType) ? (d.displayName ?? "") : "", true);
+            // How rare that weapon is to forge — empty on the same terms.
+            Field(json, "trademarkRarity", Trademarks.Rollable(d, d.weaponType) ? Rarities.Label(Rarities.OfTrademark(d)) : "", true);
 
             json.Append("      \"effects\": [");
             for (int k = 0; k < lines.Count; k++)

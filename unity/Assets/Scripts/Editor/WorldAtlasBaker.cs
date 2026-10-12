@@ -20,7 +20,7 @@ using UnityEngine.SceneManagement;
 public static class WorldAtlasBaker
 {
     // World-space rect of one map. (x,y) = top-left corner; x→east, y→south. w,h in world units.
-    public struct Entry { public string scene; public float x, y, w, h; public string type; }
+    public struct Entry { public string scene; public float x, y, w, h; public string type; public string name; }
 
     const string ResourcesDir = "Assets/3_Data/Resources";
     const string AtlasAssetPath = "Assets/3_Data/Resources/WorldAtlas.asset";
@@ -217,7 +217,7 @@ public static class WorldAtlasBaker
         asset.ppu = ppu;
         asset.maps.Clear();
         foreach (var e in entries)
-            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type });
+            asset.maps.Add(new WorldAtlas.Entry { scene = e.scene, x = e.x, y = e.y, w = e.w, h = e.h, type = e.type, name = e.name });
 
         if (isNew) AssetDatabase.CreateAsset(asset, AtlasAssetPath);
         else EditorUtility.SetDirty(asset);

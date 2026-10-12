@@ -69,11 +69,7 @@ public class SystemWindow : MonoBehaviour
     }
 
     // One menu line. Every entry is the same height, so the list reads as a column whatever is in it.
-    static void Entry(Transform list, string label, System.Action onClick)
-    {
-        var btn = UiKit.Btn(label, list, onClick);
-        btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 34;
-    }
+    static void Entry(Transform list, string label, System.Action onClick) => UiKit.ListButton(list, label, onClick, 34);
 
     void OpenSettings()
     {

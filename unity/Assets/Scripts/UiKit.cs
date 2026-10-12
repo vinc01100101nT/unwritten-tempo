@@ -40,6 +40,45 @@ public static class UiKit
         return ttf != null ? TMP_FontAsset.CreateFontAsset(ttf) : Fallback;
     }
 
+    /// <summary>THE one switch that makes a UI material draw OVER the world — over the ground, grass, trees and walls
+    /// — instead of being hidden by whatever stands in front of it. Everything that floats over a unit is HUD: a name,
+    /// a health or cast bar, a damage number, a battle notice. Every material one of those is drawn with passes through
+    /// here (<see cref="OutlinedMaterial"/> for words, <see cref="MobNameplate.SharedOnTop"/> for bars and tiles), so
+    /// they cannot disagree about it.
+    ///
+    /// <para>WORDS are moved onto their text shader's own always-on-top twin (the same shader with "Overlay" on its
+    /// name, which differs only in testing against nothing). A shader is carried by every copy of a material, and the
+    /// text package copies this material by itself for each letter it has to take from a fallback font — a copy that
+    /// drops the switch below. The twin asks to be drawn later than the original, so the order the original was
+    /// drawn in is put back: nothing changes place against the bars. It is found by name, so it is on Project
+    /// Settings ▸ Graphics ▸ Always Included Shaders (ASSETS.md, rule 12).</para>
+    ///
+    /// <para>EVERYTHING ELSE — the built-in UI shader the bars and tiles use has no such twin — gets the test every UI
+    /// shader names in its own source (<c>ZTest [unity_GUIZTestMode]</c>). No shader lists it as a property, so asking
+    /// the material whether it "has" it answers no for all of them; it is set regardless. For the same reason
+    /// <c>new Material(other)</c> does not copy it: a copy of one of these must be passed through here again.</para></summary>
+    public static void DrawOverTheWorld(Material m)
+    {
+        if (m == null) return;
+        if (m.HasProperty(ShaderUtilities.ID_OutlineWidth))
+        {
+            var onTop = m.shader.name.EndsWith(OnTopTextSuffix) ? m.shader : Shader.Find(m.shader.name + OnTopTextSuffix);
+            if (onTop != null)
+            {
+                if (onTop == m.shader) return;
+                int drawnInOrder = m.renderQueue;
+                m.shader = onTop;
+                m.renderQueue = drawnInOrder;
+                return;
+            }
+            Debug.LogError($"[UiKit] no always-on-top twin of the text shader '{m.shader.name}' — a letter from a fallback font will be hidden behind scenery");
+        }
+        m.SetInt(GuiDepthTest, (int)UnityEngine.Rendering.CompareFunction.Always);
+    }
+
+    const string OnTopTextSuffix = " Overlay";
+    static readonly int GuiDepthTest = Shader.PropertyToID("unity_GUIZTestMode");
+
     // World-space labels (damage numbers, mob nameplates) float over bare terrain with no backing plate,
     // so they need a dark outline to stay legible. TMP outline is a material property — we cache ONE shared
     // outlined material per font asset and outline width (never a per-object instance) so thousands of pooled
@@ -53,10 +92,8 @@ public static class UiKit
         m.EnableKeyword("OUTLINE_ON");
         m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
         m.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0, 0, 0, 0.9f));
-        // World-space labels sit at a unit's feet; ZTest Always makes them draw ON TOP of the terrain they
-        // stand on instead of being clipped into it (replaces the old per-plate "UI/Default on-top" material).
-        if (m.HasProperty("_ZTestMode"))
-            m.SetFloat("_ZTestMode", (float)UnityEngine.Rendering.CompareFunction.Always);
+        // Words floating in the world draw over it, never behind the grass or the ground they stand on.
+        DrawOverTheWorld(m);
         _outlined[(font, width)] = m;
         return m;
     }
@@ -75,6 +112,8 @@ public static class UiKit
         var outlined = OutlinedMaterial(Font, 0.3f);
         if (outlined == null) return null;
         _worldName = new Material(outlined);
+        // Said again for the copy: it keeps the always-on-top shader, but would not keep the fallback switch.
+        DrawOverTheWorld(_worldName);
         _worldName.SetFloat(ShaderUtilities.ID_WeightBold, WorldNameBoldWeight);
         return _worldName;
     }
@@ -165,6 +204,14 @@ public static class UiKit
     public static readonly Color Good = new Color(0.180f, 0.490f, 0.255f);
     // #867200 — a private message in the chat: a dark gold yellow (4.47:1 against PanelFill)
     public static readonly Color PmText = new Color(0.525f, 0.447f, 0.000f);
+    // An item's name by its rarity (Rarities.Color): Common is TextMain and Uncommon is Good; these three are the
+    // rest, each dark enough to read at 4.5:1 or better against PanelFill.
+    // #2A62B8 — a Rare item's name: blue (5.59:1)
+    public static readonly Color RarityRare = new Color(0.165f, 0.384f, 0.722f);
+    // #8A3FB8 — an Epic item's name: purple (5.68:1)
+    public static readonly Color RarityEpic = new Color(0.541f, 0.247f, 0.722f);
+    // #A85400 — a Legendary item's name: a deep orange gold (5.03:1)
+    public static readonly Color RarityLegendary = new Color(0.659f, 0.329f, 0.000f);
 
     /// <summary>A theme colour as a rich-text tag value, "#RRGGBB" — for text that colours part of a line. Read it
     /// into a static field once; never call it per frame (it builds a string).</summary>
@@ -177,9 +224,13 @@ public static class UiKit
     /// returned unchanged when it already reads at <see cref="ReadableContrast"/> against <see cref="PanelFill"/>,
     /// otherwise darkened — same hue, same alpha — just far enough to. Call it when the text is built or changes,
     /// never per frame.</summary>
-    public static Color Readable(Color c)
+    public static Color Readable(Color c) => Readable(c, PanelFill);
+
+    /// <summary>The same, against <paramref name="background"/> — for text whose plate changes colour, like a name on
+    /// the floor turning to the hover fill under the cursor.</summary>
+    public static Color Readable(Color c, Color background)
     {
-        float bg = Luminance(PanelFill);
+        float bg = Luminance(background);
         if ((bg + 0.05f) / (Luminance(c) + 0.05f) >= ReadableContrast) return c;
         float lo = 0f, hi = 1f;
         for (int i = 0; i < 20; i++)
@@ -439,6 +490,74 @@ public static class UiKit
         scroll.viewport = viewport;
         scroll.content = scrt;
         return scrt;
+    }
+
+    // ---- THE LIST WINDOW: one scrolling column of lines, buttons and deals ------------------------------------
+    // The shop, the station and the Keeper are all this one window, and the System menu's entries are its buttons. They
+    // used to be private copies in each; one copy here means a fix to one is a fix to all of them.
+
+    /// <summary>A hidden <see cref="Window"/> of <paramref name="size"/> whose body is one scrolling column; returns the
+    /// column, which every <see cref="ListLine"/>, <see cref="ListButton"/> and <see cref="ListDeal"/> is built into.</summary>
+    public static RectTransform ListWindow(Transform canvas, string title, Vector2 size, out GameObject root)
+    {
+        var viewport = Window(canvas, title, size, Vector2.zero, out root);
+        // A LONG LIST SCROLLS — thirty swords in the bag are a wheel away rather than off the bottom of the window.
+        var content = ScrollColumn(viewport);
+        var vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
+        vlg.spacing = 5;
+        vlg.padding = new RectOffset(6, 6, 6, 6);
+        vlg.childControlWidth = vlg.childControlHeight = true;
+        vlg.childForceExpandWidth = true;
+        vlg.childForceExpandHeight = false;
+        vlg.childAlignment = TextAnchor.UpperCenter;
+        return content;
+    }
+
+    /// <summary>One line of text in a list, <paramref name="rows"/> lines tall — a sentence from the server needs room
+    /// to wrap.</summary>
+    public static TextMeshProUGUI ListLine(Transform list, string s, int size, Color color, int rows = 1)
+    {
+        var t = Label("Line", list, s, size, FontStyle.Normal, rows > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
+        t.color = color;
+        var le = t.gameObject.AddComponent<LayoutElement>();
+        le.preferredHeight = (size + 4) * rows + 4;
+        return t;
+    }
+
+    /// <summary>One full-width button in a list, <paramref name="height"/> tall. Under a vertical layout a control with
+    /// no stated height is given none, so every button was drawn at zero height on top of the next — the 2026-09-21
+    /// screenshot; this states it.</summary>
+    public static Button ListButton(Transform list, string label, Action onClick, float height)
+    {
+        var btn = Btn(label, list, onClick);
+        btn.gameObject.AddComponent<LayoutElement>().preferredHeight = height;
+        return btn;
+    }
+
+    /// <summary>One line of a list that is a deal: what it is on the left, one or two presses on the right. The first
+    /// button is handed back so a guide can point at it; leave the second word null for a single press.</summary>
+    public static Button ListDeal(Transform list, string label, string firstWord, Action first, string secondWord = null,
+                                  Action second = null)
+    {
+        var row = new GameObject("Deal", typeof(RectTransform));
+        row.transform.SetParent(list, false);
+        row.AddComponent<LayoutElement>().preferredHeight = 30;
+        var h = row.AddComponent<HorizontalLayoutGroup>();
+        h.spacing = 4;
+        h.childControlWidth = h.childControlHeight = true;
+        h.childForceExpandWidth = false;
+        h.childForceExpandHeight = true;
+        h.childAlignment = TextAnchor.MiddleLeft;
+
+        var t = Label("What", row.transform, label, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
+        t.color = TextMain;
+        t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+
+        var firstButton = Btn(firstWord, row.transform, first);
+        firstButton.gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
+        if (secondWord != null)
+            Btn(secondWord, row.transform, second).gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
+        return firstButton;
     }
 
     /// <summary>A 20×20 tick box, anchored to the RIGHT edge of <paramref name="parent"/> — the shared

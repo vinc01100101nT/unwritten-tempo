@@ -108,6 +108,8 @@ public static class MapManager
         SceneManager.SetActiveScene(scene);
         // ITS OWN GROUND FIRST, before anything in it takes a step or anything is built into it.
         ParkAwayFromTheOthers(scene);
+        // AND CLOSED IN, where it now stands, so nobody and nothing can walk off its edge.
+        MapEdgeWalls.Build(scene);
         // AND ITS CREATURES, from the one world list, now that the map is standing where it will stay. Server only.
         WorldSpawner.Populate(scene);
         // AND ITS PEOPLE, from the one townsfolk list, the same way. Server only.

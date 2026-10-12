@@ -40,16 +40,22 @@ public class ChatController : MonoBehaviour
 
     // WHICH KIND OF LINE A ROW IS — what a tab shows, and what the row cap counts against. Guild, party and world
     // become members here and tabs below; nothing else about a row changes.
-    enum LineKind { General, Pm }
-    const int LineKinds = 2;
+    enum LineKind { General, Pm, CombatLog }
+    const int LineKinds = 3;
 
     // Each kind's rows, oldest first, so a full kind drops its OWN oldest — a busy fight's skill calls can never push
     // a private message out of the PM tab. Each kind keeps up to MaxLines.
-    readonly Queue<GameObject>[] rowsOfKind = { new Queue<GameObject>(), new Queue<GameObject>() };
+    readonly Queue<GameObject>[] rowsOfKind = { new Queue<GameObject>(), new Queue<GameObject>(), new Queue<GameObject>() };
 
     // The tab showing: null = All, otherwise only rows of that kind.
     LineKind? showing;
-    Button allTab, pmTab;
+    Button allTab, pmTab, combatTab;
+
+    // THE ALL TAB LEAVES THE COMBAT LOG OUT: a fight writes a line per blow, and All is where people's words are read.
+    static bool InAll(int kind) => kind != (int)LineKind.CombatLog;
+
+    // Whether a row of `kind` shows under the tab now chosen.
+    bool Showing(int kind) => showing == null ? InAll(kind) : (int)showing.Value == kind;
 
     // Everyone this person has messaged or been messaged by this session, most recent first — what Up and Down step
     // through in the name box. Bounded, like the log.
@@ -94,6 +100,8 @@ public class ChatController : MonoBehaviour
         string name = upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName;
         if (count > 1) name += " ×" + count;
         instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  {Sanitize(name)}");
+        // And in the combat log, beside what the kill paid.
+        instance.AddCombat(new CombatEntry { line = CombatLine.Obtained, name = name });
     }
 
     /// <summary>THE GAME telling the person at this keyboard something in a sentence — why the server refused a
@@ -253,12 +261,13 @@ public class ChatController : MonoBehaviour
     const float TabsHeight = 26f;
     const float NameBoxWidth = 110f;
 
-    // All and PM, across the top of the window.
+    // All, PM and Combat Log, across the top of the window.
     void BuildTabs(RectTransform content)
     {
         var row = UiKit.TabRow(content, TabsHeight);
         allTab = UiKit.Btn("All", row, () => Show(null));
         pmTab = UiKit.Btn("PM", row, () => Show(LineKind.Pm));
+        combatTab = UiKit.Btn("Combat Log", row, () => Show(LineKind.CombatLog));
         MarkTabs();
     }
 
@@ -267,7 +276,7 @@ public class ChatController : MonoBehaviour
         showing = kind;
         for (int k = 0; k < LineKinds; k++)
         {
-            bool visible = kind == null || (int)kind.Value == k;
+            bool visible = Showing(k);
             foreach (var row in rowsOfKind[k]) if (row != null) row.SetActive(visible);   // perf-ok: a tab click
         }
         MarkTabs();
@@ -278,6 +287,7 @@ public class ChatController : MonoBehaviour
     {
         UiKit.MarkTab(allTab, showing == null);
         UiKit.MarkTab(pmTab, showing == LineKind.Pm);
+        UiKit.MarkTab(combatTab, showing == LineKind.CombatLog);
     }
 
     // The name box (left) and the line box (right), pinned to the bottom of the content area.
@@ -429,7 +439,7 @@ public class ChatController : MonoBehaviour
         // A typed "\n" or "<" stays the characters it is, never a line break or a tag: one row is one line from
         // one person, and nothing typed can draw a second row that looks like it came from somebody else.
         t.parseCtrlCharacters = false;
-        if (showing != null && showing.Value != kind) t.gameObject.SetActive(false);
+        if (!Showing((int)kind)) t.gameObject.SetActive(false);
 
         // Trim each kind's oldest rows so the log stays bounded — a kind never pushes out another kind's rows.
         var rows = rowsOfKind[(int)kind];
@@ -446,13 +456,236 @@ public class ChatController : MonoBehaviour
     }
 
     bool wantsScrollToNewest;
+    float nextCombatDraw;
+    const float CombatDrawSeconds = 0.25f;
 
     void LateUpdate()
     {
+        FlushRewards();
+        // Combat lines become rows only while they can be seen, and at most four times a second: each batch costs a
+        // layout pass over the list, and a fight lands a line every few frames. The ring keeps them meanwhile.
+        if (showing == LineKind.CombatLog && root != null && UiAnim.IsOpen(root) && Time.unscaledTime >= nextCombatDraw)
+        {
+            nextCombatDraw = Time.unscaledTime + CombatDrawSeconds;
+            DrawNewCombat();
+        }
         if (!wantsScrollToNewest) return;
         wantsScrollToNewest = false;
         Canvas.ForceUpdateCanvases();
         if (scroll != null) scroll.verticalNormalizedPosition = 0f;
+    }
+
+    // ---- the combat log ---------------------------------------------------------
+    //
+    // EVERY BLOW THIS PLAYER DEALS OR TAKES, every kill and what it paid — kept as the server's own numbers in a fixed
+    // ring, and turned into words only while the Combat Log tab is the one showing. A fight lands a line per blow, so
+    // nothing here builds a string or an object per blow: the ring is written in place, and the rows are made once and
+    // then reused oldest-first. None of it is raised through LineAdded, and none of it shows under All.
+
+    enum CombatLine : byte
+    {
+        Dealt, Missed, DealtTick, Taken, MissedMe, Dodged, Parried, Blocked, TookTick, Defeated, Experience, Zeny, Obtained,
+    }
+
+    struct CombatEntry
+    {
+        public CombatLine line;
+        public string name;
+        public int amount, fromCombo;
+        public bool crit;
+        public TrueDamageCause cause;
+    }
+
+    readonly CombatEntry[] combat = new CombatEntry[MaxLines];
+    long combatWritten, combatDrawn;
+
+    // The combat log's rows as text, in the same order as its kind's queue of rows, so a reused row needs no lookup.
+    readonly Queue<TMP_Text> combatRows = new Queue<TMP_Text>();
+
+    // A KILL'S PAYMENT WAITS FOR THE END OF THE FRAME. The creature dies inside the blow that kills it, so the server
+    // tells this machine what the kill paid before it tells it about that blow — both in the same frame. Held here, the
+    // blow's line goes in first and the kill's lines follow it; the rescue zeny a turned-back character pays goes last.
+    readonly CombatEntry[] heldRewards = new CombatEntry[8];
+    int heldCount;
+
+    // The words of one row, written by hand so a number never becomes a string.
+    readonly char[] lineChars = new char[160];
+    int lineLength;
+
+    /// <summary>A blow this machine's player landed on a creature, as the server drew it.</summary>
+    public static void CombatDealt(string target, int number, bool missed, bool crit, TrueDamageCause cause)
+    {
+        if (instance == null) return;
+        var line = missed ? CombatLine.Missed : cause != TrueDamageCause.None ? CombatLine.DealtTick : CombatLine.Dealt;
+        instance.AddCombat(new CombatEntry { line = line, name = target, amount = number, crit = crit, cause = cause });
+    }
+
+    /// <summary>A blow on this machine's player, as the server decided it. <paramref name="tick"/> is the cause of a
+    /// damage-over-time tick, or None for a blow.</summary>
+    public static void CombatTaken(string striker, int amount, bool missed, bool dodged, bool crit, TrueDamageCause tick,
+                                   bool parried, bool blocked)
+    {
+        if (instance == null) return;
+        var line = missed ? CombatLine.MissedMe
+                 : dodged ? CombatLine.Dodged
+                 : tick != TrueDamageCause.None ? CombatLine.TookTick
+                 : parried ? CombatLine.Parried
+                 : blocked ? CombatLine.Blocked
+                 : CombatLine.Taken;
+        instance.AddCombat(new CombatEntry { line = line, name = striker, amount = amount, crit = crit, cause = tick });
+    }
+
+    /// <summary>This machine's player killed <paramref name="victim"/>.</summary>
+    public static void CombatDefeated(string victim)
+    {
+        if (instance != null) instance.HoldReward(new CombatEntry { line = CombatLine.Defeated, name = victim });
+    }
+
+    /// <summary>What a kill paid in experience, and how much of it the run of kills added.</summary>
+    public static void CombatExperience(int amount, int fromCombo)
+    {
+        if (instance != null) instance.HoldReward(new CombatEntry { line = CombatLine.Experience, amount = amount, fromCombo = fromCombo });
+    }
+
+    /// <summary>Zeny a kill caused, and how much of it the run of kills added.</summary>
+    public static void CombatZeny(int amount, int fromCombo)
+    {
+        if (instance != null) instance.HoldReward(new CombatEntry { line = CombatLine.Zeny, amount = amount, fromCombo = fromCombo });
+    }
+
+    void AddCombat(in CombatEntry e)
+    {
+        combat[(int)(combatWritten % MaxLines)] = e;
+        combatWritten++;
+    }
+
+    void HoldReward(in CombatEntry e)
+    {
+        if (heldCount == heldRewards.Length) FlushRewards();
+        heldRewards[heldCount++] = e;
+    }
+
+    void FlushRewards()
+    {
+        if (heldCount == 0) return;
+        for (int i = 0; i < heldCount; i++) if (heldRewards[i].line != CombatLine.Zeny) AddCombat(heldRewards[i]);
+        for (int i = 0; i < heldCount; i++) if (heldRewards[i].line == CombatLine.Zeny) AddCombat(heldRewards[i]);
+        heldCount = 0;
+    }
+
+    // Every entry written since the last draw becomes a row — at most the newest MaxLines of them.
+    void DrawNewCombat()
+    {
+        if (logContent == null || combatDrawn == combatWritten) return;
+        if (combatWritten - combatDrawn > MaxLines) combatDrawn = combatWritten - MaxLines;
+        var rows = rowsOfKind[(int)LineKind.CombatLog];
+        for (; combatDrawn < combatWritten; combatDrawn++)
+        {
+            ref readonly var e = ref combat[(int)(combatDrawn % MaxLines)];
+            TMP_Text t;
+            if (rows.Count < MaxLines)
+            {
+                t = UiKit.MakeText("CombatLine", logContent, "", 14, FontStyle.Normal, TextAnchor.UpperLeft);   // perf-ok: grows to MaxLines once, then every row is reused
+                t.richText = false;
+                t.parseCtrlCharacters = false;
+            }
+            else
+            {
+                rows.Dequeue();
+                t = combatRows.Dequeue();
+                t.transform.SetAsLastSibling();
+            }
+            rows.Enqueue(t.gameObject);
+            combatRows.Enqueue(t);
+            WriteCombat(e);
+            t.SetCharArray(lineChars, 0, lineLength);
+            t.color = ColourOf(e.line);
+        }
+        wantsScrollToNewest = true;
+    }
+
+    static Color ColourOf(CombatLine line)
+    {
+        switch (line)
+        {
+            case CombatLine.Taken: case CombatLine.TookTick: return UiKit.Bad;
+            case CombatLine.Defeated: return UiKit.Accent;
+            case CombatLine.Experience: case CombatLine.Zeny: return UiKit.Good;
+            case CombatLine.Obtained: return UiKit.TextDim;
+            default: return UiKit.TextMain;
+        }
+    }
+
+    // One entry in words: "You hit Poring for 12", "+120 EXP (+12 from combo)".
+    void WriteCombat(in CombatEntry e)
+    {
+        lineLength = 0;
+        switch (e.line)
+        {
+            case CombatLine.Dealt:
+                Put("You hit "); Put(e.name ?? "a creature"); Put(" for "); Put(e.amount); if (e.crit) Put(" (critical)"); break;
+            case CombatLine.Missed:
+                Put("You missed "); Put(e.name ?? "a creature"); break;
+            case CombatLine.DealtTick:
+                Put(e.name ?? "A creature"); Put(" took "); Put(e.amount); Put(" from "); Put(CauseWords(e.cause)); break;
+            case CombatLine.Taken:
+                Put(e.name ?? "Something"); Put(" hit you for "); Put(e.amount); if (e.crit) Put(" (critical)"); break;
+            case CombatLine.MissedMe:
+                Put(e.name ?? "Something"); Put(" missed you"); break;
+            case CombatLine.Dodged:
+                Put("You dodged "); Put(e.name ?? "a blow"); break;
+            case CombatLine.Parried:
+                Put("You parried "); Put(e.name ?? "a blow"); break;
+            case CombatLine.Blocked:
+                Put("You blocked "); Put(e.name ?? "a blow"); break;
+            case CombatLine.TookTick:
+                Put("You took "); Put(e.amount); Put(" from "); Put(CauseWords(e.cause)); break;
+            case CombatLine.Defeated:
+                Put("You defeated "); Put(e.name ?? "a creature"); break;
+            case CombatLine.Experience:
+                Put("+"); Put(e.amount); Put(" EXP"); if (e.fromCombo > 0) { Put(" (+"); Put(e.fromCombo); Put(" from combo)"); } break;
+            case CombatLine.Zeny:
+                Put("+"); Put(e.amount); Put(" Zeny"); if (e.fromCombo > 0) { Put(" (+"); Put(e.fromCombo); Put(" from combo)"); } break;
+            case CombatLine.Obtained:
+                Put("Obtained "); Put(e.name); break;
+        }
+    }
+
+    static string CauseWords(TrueDamageCause cause)
+    {
+        switch (cause)
+        {
+            case TrueDamageCause.Poison: return "poison";
+            case TrueDamageCause.Bleed: return "bleeding";
+            case TrueDamageCause.Burn: return "burning";
+            case TrueDamageCause.BraceDebt: return "a brace coming due";
+            case TrueDamageCause.ReflectedByPerson:
+            case TrueDamageCause.ReflectedByCreature: return "reflected damage";
+            case TrueDamageCause.GmKill: return "a GM kill";
+            default: return "damage";
+        }
+    }
+
+    void Put(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return;
+        int n = Mathf.Min(s.Length, lineChars.Length - lineLength);
+        s.CopyTo(0, lineChars, lineLength, n);
+        lineLength += n;
+    }
+
+    // A whole number, digit by digit into the row, so no string is made for it.
+    void Put(int value)
+    {
+        if (value < 0) { Put("-"); value = value == int.MinValue ? int.MaxValue : -value; }
+        int start = lineLength, v = value;
+        do
+        {
+            if (lineLength == lineChars.Length) break;
+            lineChars[lineLength++] = (char)('0' + v % 10);
+            v /= 10;
+        } while (v > 0);
+        System.Array.Reverse(lineChars, start, lineLength - start);
     }
 
     void FocusInput()

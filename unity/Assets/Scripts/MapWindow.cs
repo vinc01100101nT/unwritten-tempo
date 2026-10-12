@@ -100,6 +100,27 @@ public class MapWindow : MonoBehaviour
     Vector2 routeDrawnSize;
     float routeDrawnZoom = -1f;
 
+    // The doors of the map the zone view shows: a mark in the colour of the map each leads to, its name beside it.
+    // Laid when the map or the picture's size changed, resized only when the zoom did. A click on one opens that map.
+    sealed class DoorMark { public Image mark; public TMP_Text label; public string leadsTo; }
+    RectTransform doorRoot;
+    readonly List<DoorMark> doorMarks = new List<DoorMark>();
+    int doorsShown;
+    string doorsDrawnMap;
+    Vector2 doorsDrawnSize;
+    float doorsDrawnZoom = -1f;
+
+    // The spot picked to be led to (MapGuide), as a pin on the zone view of its map.
+    Image guidePin;
+    int guideDrawnVersion = -1;
+    string guideDrawnMap;
+    Vector2 guideDrawnSize;
+    float guideDrawnZoom = -1f;
+    Sprite pinSprite;
+
+    // The creature counts the list was last laid out with.
+    int rosterCountsVersion = -1;
+
     bool gliding;
     float glideT;
     Vector2 glideFrom, glideTo;
@@ -128,7 +149,7 @@ public class MapWindow : MonoBehaviour
     const float MobCardWidth = 380f, MobCardPad = 10f, MobCardFaceSize = 38f, MobCardFaceGap = 8f;
 
     // Sizes on the main screen layer, which is laid out as if every screen were 1280 wide.
-    const float MarkerSize = 11f, RouteMarkSize = 14f;
+    const float MarkerSize = 11f, RouteMarkSize = 14f, DoorMarkSize = 12f, DoorLabelSize = 11f, GuidePinSize = 22f;
 
     void Start()
     {
@@ -213,6 +234,10 @@ public class MapWindow : MonoBehaviour
             zoneImage.enabled = picture != null;
             zoneMissing.gameObject.SetActive(picture == null);
             routeDrawnVersion = -1;
+            doorsDrawnMap = null;
+            guideDrawnVersion = -1;
+            MapCreatureCounts.Ask(map);
+            rosterCountsVersion = MapCreatureCounts.Version;
             zoneRoster.Show(null, map, panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom);
             HideMobCard();
         }
@@ -403,19 +428,173 @@ public class MapWindow : MonoBehaviour
             Pulse(zone);
         }
         DrawRoute();
-        // The screen changed size: the list is laid out again to the height it now has.
+        DrawDoors();
+        DrawGuidePin();
+        // The counts beside the names come from the server, asked again every few seconds while the map is shown; the
+        // list is laid out again only when an answer arrives.
+        MapCreatureCounts.Ask(zoneMap);
+        // The screen changed size, or new counts arrived: the list is laid out again.
         float rosterRoom = panelRect.rect.height - ZoneRosterTop - ZoneRosterBottom;
-        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight)) { zoneRoster.Show(null, zoneMap, rosterRoom); HideMobCard(); }
+        if (!Mathf.Approximately(rosterRoom, zoneRoster.LaidForHeight) || rosterCountsVersion != MapCreatureCounts.Version)
+        {
+            rosterCountsVersion = MapCreatureCounts.Version;
+            zoneRoster.Show(null, zoneMap, rosterRoom);
+            HideMobCard();
+        }
     }
 
     // A spot on the ground of the map you stand in → a point on the zone picture, from its centre.
     Vector2 OnZonePicture(Vector3 worldPos)
     {
         Vector3 p = MapManager.InMap(worldPos, zoneMap);
-        float size = Mathf.Max(1f, zoneEntry.worldSize);
-        float u = (p.x - zoneEntry.worldMin.x) / size, v = (p.z - zoneEntry.worldMin.y) / size;
-        Vector2 pictureSize = zone.picture.rect.size;
+        return MapToPicture(new Vector2(p.x, p.z), zoneEntry.worldMin, zoneEntry.worldSize, zone.picture.rect.size);
+    }
+
+    /// <summary>A spot in a map's own coordinates (x east, y north) → a point on its zone picture, from the picture's
+    /// centre. <paramref name="worldMin"/> and <paramref name="worldSize"/> are the square of ground the picture covers.</summary>
+    static Vector2 MapToPicture(Vector2 inMap, Vector2 worldMin, float worldSize, Vector2 pictureSize)
+    {
+        float size = Mathf.Max(1f, worldSize);
+        float u = (inMap.x - worldMin.x) / size, v = (inMap.y - worldMin.y) / size;
         return new Vector2((u - 0.5f) * pictureSize.x, (v - 0.5f) * pictureSize.y);
+    }
+
+    /// <summary>The other way round: a point on a zone picture, from its centre → the spot in the map's own coordinates.</summary>
+    static Vector2 PictureToMap(Vector2 onPicture, Vector2 worldMin, float worldSize, Vector2 pictureSize)
+    {
+        float size = Mathf.Max(1f, worldSize);
+        float u = onPicture.x / Mathf.Max(1f, pictureSize.x) + 0.5f, v = onPicture.y / Mathf.Max(1f, pictureSize.y) + 0.5f;
+        return new Vector2(worldMin.x + u * size, worldMin.y + v * size);
+    }
+
+    // ── zone view: the doors out of the map it shows ──────────────────────────────────────────────────────────────
+    void DrawDoors()
+    {
+        bool showable = zoneEntry != null && zoneImage.enabled;
+        Vector2 size = zone.picture.rect.size;
+        if (doorsDrawnMap != zoneMap || doorsDrawnSize != size)
+        {
+            doorsDrawnMap = zoneMap;
+            doorsDrawnSize = size;
+            doorsDrawnZoom = -1f;
+            int used = 0;
+            if (showable && data.links != null)
+                foreach (var link in data.links)
+                {
+                    if (link == null) continue;
+                    string leadsTo;
+                    Vector2 at;
+                    if (link.a == zoneMap) { leadsTo = link.b; at = new Vector2(link.ax, link.az); }
+                    else if (link.b == zoneMap) { leadsTo = link.a; at = new Vector2(link.bx, link.bz); }
+                    else continue;
+                    var there = data.Find(leadsTo);
+                    var d = Door(used++);
+                    d.leadsTo = leadsTo;
+                    Color c = MapKinds.ColorOfType(there != null ? there.type : null);
+                    d.mark.color = c;
+                    d.label.color = c;
+                    d.label.text = data.NameOf(leadsTo);
+                    Vector2 p = MapToPicture(at, zoneEntry.worldMin, zoneEntry.worldSize, size);
+                    d.mark.rectTransform.anchoredPosition = p;
+                    d.label.rectTransform.anchoredPosition = p;
+                }
+            for (int i = used; i < doorMarks.Count; i++)
+            {
+                if (doorMarks[i].mark.gameObject.activeSelf) doorMarks[i].mark.gameObject.SetActive(false);
+                if (doorMarks[i].label.gameObject.activeSelf) doorMarks[i].label.gameObject.SetActive(false);
+            }
+            doorsShown = used;
+        }
+        if (!Mathf.Approximately(doorsDrawnZoom, zone.zoom))
+        {
+            doorsDrawnZoom = zone.zoom;
+            var s = new Vector3(1f / zone.zoom, 1f / zone.zoom, 1f);
+            for (int i = 0; i < doorMarks.Count; i++)
+            {
+                doorMarks[i].mark.rectTransform.localScale = s;
+                doorMarks[i].label.rectTransform.localScale = s;
+            }
+        }
+    }
+
+    DoorMark Door(int i)
+    {
+        while (doorMarks.Count <= i)
+        {
+            var mark = NewImage("Door", doorRoot, Color.white);
+            var mrt = mark.rectTransform;
+            mrt.anchorMin = mrt.anchorMax = mrt.pivot = new Vector2(0.5f, 0.5f);
+            mrt.sizeDelta = new Vector2(DoorMarkSize, DoorMarkSize);
+            mark.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            var label = NewText("DoorName", doorRoot, "", (int)DoorLabelSize, TextAnchor.UpperCenter);
+            label.fontStyle = FontStyles.Bold;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            var lrt = label.rectTransform;
+            lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 0.5f);
+            // The name hangs just under its mark, centred on it: the pivot sits above the text by most of a mark, so
+            // the gap shrinks with the zoom exactly as the mark does.
+            const float labelHeight = 20f;
+            lrt.pivot = new Vector2(0.5f, 1f + DoorMarkSize * 0.75f / labelHeight);
+            lrt.sizeDelta = new Vector2(220f, labelHeight);
+            doorMarks.Add(new DoorMark { mark = mark, label = label });
+            doorsDrawnZoom = -1f;
+        }
+        var d = doorMarks[i];
+        if (!d.mark.gameObject.activeSelf) d.mark.gameObject.SetActive(true);
+        if (!d.label.gameObject.activeSelf) d.label.gameObject.SetActive(true);
+        return d;
+    }
+
+    // The door whose mark or name is under the pointer; null over anything else.
+    string DoorUnder(Vector2 screenPoint)
+    {
+        for (int i = 0; i < doorsShown; i++)
+        {
+            var d = doorMarks[i];
+            if (RectTransformUtility.RectangleContainsScreenPoint(d.mark.rectTransform, screenPoint, null)) return d.leadsTo;
+            if (d.label.text.Length > 0 && TMP_TextUtilities.IsIntersectingRectTransform(d.label.rectTransform, screenPoint, null)
+                && TMP_TextUtilities.FindIntersectingCharacter(d.label, screenPoint, null, true) >= 0) return d.leadsTo;
+        }
+        return null;
+    }
+
+    // ── zone view: the spot picked to be led to ───────────────────────────────────────────────────────────────────
+    void DrawGuidePin()
+    {
+        bool here = MapGuide.Active && MapGuide.Map == zoneMap && zoneEntry != null && zoneImage.enabled;
+        Vector2 size = zone.picture.rect.size;
+        if (guideDrawnVersion != MapGuide.Version || guideDrawnMap != zoneMap || guideDrawnSize != size)
+        {
+            guideDrawnVersion = MapGuide.Version;
+            guideDrawnMap = zoneMap;
+            guideDrawnSize = size;
+            if (guidePin.gameObject.activeSelf != here) guidePin.gameObject.SetActive(here);
+            if (here) guidePin.rectTransform.anchoredPosition = MapToPicture(MapGuide.Spot, zoneEntry.worldMin, zoneEntry.worldSize, size);
+        }
+        if (!Mathf.Approximately(guideDrawnZoom, zone.zoom))
+        {
+            guideDrawnZoom = zone.zoom;
+            guidePin.rectTransform.localScale = new Vector3(1f / zone.zoom, 1f / zone.zoom, 1f);
+        }
+    }
+
+    // A click on the zone view: on a door, the view opens the map it leads to; anywhere else on the picture, that spot
+    // becomes the one the ground arrows lead to (MapGuide).
+    void ClickZone(Vector2 screenPoint)
+    {
+        if (zoneEntry == null || !zoneImage.enabled) return;
+        string door = DoorUnder(screenPoint);
+        if (door != null)
+        {
+            UISounds.PlayClick();
+            ShowZone(door);
+            return;
+        }
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(zone.picture, screenPoint, null, out Vector2 local)) return;
+        Vector2 size = zone.picture.rect.size;
+        if (Mathf.Abs(local.x) > size.x * 0.5f || Mathf.Abs(local.y) > size.y * 0.5f) return;
+        UISounds.PlayClick();
+        MapGuide.Set(zoneMap, PictureToMap(local, zoneEntry.worldMin, zoneEntry.worldSize, size));
     }
 
     // The marks are laid only when the route, the map or the picture's size changed, and resized only when the zoom did.
@@ -567,7 +746,16 @@ public class MapWindow : MonoBehaviour
             // A DRAG IS NOT A CLICK. The backdrop both drags and clicks, so the event system still sends the click on
             // release after a drag; it is still marked dragging at that moment, which is how a drag is told apart.
             if (e.dragging) return;
-            if (e.button == PointerEventData.InputButton.Left && owner.active == owner.world) owner.PickZone(e.position);
+            // A right click on the zone view drops the picked spot; the arrows go back to the quest.
+            if (e.button == PointerEventData.InputButton.Right && owner.active == owner.zone && MapGuide.Active)
+            {
+                UISounds.PlayClick();
+                MapGuide.Clear();
+                return;
+            }
+            if (e.button != PointerEventData.InputButton.Left) return;
+            if (owner.active == owner.world) owner.PickZone(e.position);
+            else owner.ClickZone(e.position);
         }
     }
 
@@ -593,6 +781,20 @@ public class MapWindow : MonoBehaviour
         routeRoot = new GameObject("Route", typeof(RectTransform)).GetComponent<RectTransform>();
         routeRoot.SetParent(zone.picture, false);
         routeRoot.anchorMin = routeRoot.anchorMax = routeRoot.pivot = new Vector2(0.5f, 0.5f);
+
+        doorRoot = new GameObject("Doors", typeof(RectTransform)).GetComponent<RectTransform>();
+        doorRoot.SetParent(zone.picture, false);
+        doorRoot.anchorMin = doorRoot.anchorMax = doorRoot.pivot = new Vector2(0.5f, 0.5f);
+
+        pinSprite = BuildPinSprite();
+        guidePin = NewImage("GuidePin", zone.picture, UiKit.Accent);
+        guidePin.sprite = pinSprite;
+        var gprt = guidePin.rectTransform;
+        // The pin's point is its bottom (4 of its 64 pixels up), so that is the spot it stands on.
+        gprt.anchorMin = gprt.anchorMax = new Vector2(0.5f, 0.5f);
+        gprt.pivot = new Vector2(0.5f, 4f / 64f);
+        gprt.sizeDelta = new Vector2(GuidePinSize, GuidePinSize);
+        guidePin.gameObject.SetActive(false);
         zone.marker.SetAsLastSibling();
 
         zoneMissing = NewText("NoPicture", panel.transform, "This map has no picture yet.", 16, TextAnchor.MiddleCenter);
@@ -621,7 +823,7 @@ public class MapWindow : MonoBehaviour
         lrt.sizeDelta = new Vector2(38f, 38f);
         lrt.anchoredPosition = new Vector2(-26f, 26f);
         var pin = NewImage("Pin", locate.transform, UiKit.Accent);
-        pin.sprite = BuildPinSprite();
+        pin.sprite = pinSprite;
         pin.rectTransform.sizeDelta = new Vector2(24f, 24f);
         locateButton = locate.gameObject;
         locateButton.SetActive(false);
@@ -722,8 +924,12 @@ public class MapWindow : MonoBehaviour
             if (mobs.Count > 0)
             {
                 Add("Mobs", true);
+                // How many are alive there right now over how many the map keeps, as the server last said
+                // (MapCreatureCounts) — alive alone for a creature only a random mix puts there; no number until it has.
                 foreach (var m in mobs)
-                    Add(UnitLabel.WithLevel(m.displayName, m.level) + (m.kind == CreatureKind.Elite ? " (Elite)" : ""), false, m);
+                    Add(UnitLabel.WithLevel(m.displayName, m.level) + (m.kind == CreatureKind.Elite ? " (Elite)" : "")
+                        + (!MapCreatureCounts.TryGet(map, m.id, out int alive, out int kept) ? ""
+                           : kept > 0 ? "  " + alive + "/" + kept : "  " + alive), false, m);
             }
             if (people.Count > 0)
             {

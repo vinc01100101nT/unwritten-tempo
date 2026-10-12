@@ -55,8 +55,8 @@ public class MobNameplate : MonoBehaviour
         host = go.transform;
     }
 
-    // One shared UI material that ignores the depth buffer, so a widget draws on top of the terrain behind it
-    // instead of being clipped into it.
+    // One shared UI material that draws over the world (UiKit.DrawOverTheWorld), so a widget is never hidden by
+    // the terrain or scenery in front of it.
     static Material OnTop
     {
         get
@@ -65,7 +65,7 @@ public class MobNameplate : MonoBehaviour
             var sh = Shader.Find("UI/Default");
             if (sh == null) return null;
             onTopMat = new Material(sh) { name = "MobNameplate (on top)" };
-            onTopMat.SetInt("unity_GUIZTestMode", (int)CompareFunction.Always);
+            UiKit.DrawOverTheWorld(onTopMat);
             return onTopMat;
         }
     }

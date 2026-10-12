@@ -3,7 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// THE ARROWS ON THE GROUND that lead to the followed quest's step — a line of them from the player along a walkable
-/// route to the townsperson, or, when the step is on another map, to the door the server says to take next.
+/// route to the townsperson, or, when the step is on another map, to the door the server says to take next. A spot the
+/// player picked on the map window (<see cref="MapGuide"/>) is led to the same way, ahead of the quest, until reached.
 ///
 /// <para><b>What the server decides and what this machine does.</b> WHERE the step happens, and which door leads
 /// there, are the server's answers (<see cref="QuestStore.Target"/>). The ROUTE across the ground is worked out here,
@@ -144,23 +145,50 @@ public class QuestArrows : MonoBehaviour
         RouteVersion++;
     }
 
-    // Where the arrows lead right now, in this machine's world — or false for nothing to show.
+    // Where the arrows lead right now, in this machine's world — or false for nothing to show. A spot picked on the map
+    // window comes first; the followed quest's step otherwise.
     bool Goal(out Vector3 goal)
     {
         goal = default;
-        var t = QuestStore.Target;
-        if (!t.any || string.IsNullOrEmpty(t.map) || PlayerInteractor.Talking) return false;
+        if (PlayerInteractor.Talking) return false;
         if (player == null) { var sc = StatusController.Player; player = sc != null ? sc.transform : null; }
         if (player == null) return false;
         string here = MapManager.CurrentMap;
+
+        if (MapGuide.Active)
+        {
+            if (MapGuide.Map == here)
+            {
+                // Held at one height, so walking up a slope is never read as the goal moving (which re-routes at once).
+                var spot = MapGuide.Spot;
+                goal = MapManager.InWorld(new Vector3(spot.x, 0f, spot.y), here);
+                var flat = goal - player.position; flat.y = 0f;
+                if (flat.sqrMagnitude > CloseEnough * CloseEnough) return true;
+                // ARRIVED: the spot is done with, and the arrows go back to the quest from the next frame.
+                MapGuide.Clear();
+                return false;
+            }
+            string next = WorldRoutes.NextMap(here, MapGuide.Map, out _);
+            return !string.IsNullOrEmpty(next) && DoorInto(next, out goal);
+        }
+
+        var t = QuestStore.Target;
+        if (!t.any || string.IsNullOrEmpty(t.map)) return false;
         if (t.map == here) { goal = MapManager.InWorld(t.at, here); return true; }
         if (string.IsNullOrEmpty(t.nextMap)) return false;
-        // ANOTHER MAP: the door into the next map on the way, chosen from the doors standing in this one.
+        return DoorInto(t.nextMap, out goal);
+    }
+
+    // ANOTHER MAP: the door into the next map on the way, chosen from the doors standing in this one — the nearest when
+    // several lead there.
+    bool DoorInto(string nextMap, out Vector3 goal)
+    {
+        goal = default;
         float best = float.MaxValue;
         bool any = false;
         foreach (var p in Portal3D.Active)
         {
-            if (p == null || p.targetScene != t.nextMap) continue;
+            if (p == null || p.targetScene != nextMap) continue;
             float d = (p.transform.position - player.position).sqrMagnitude;
             if (d < best) { best = d; goal = p.transform.position; any = true; }
         }

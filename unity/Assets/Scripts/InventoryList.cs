@@ -424,7 +424,8 @@ public class InventoryList
         // What you are wearing is listed with what you carry, so it has to say which it is.
         if (e.worn) name += WornTag;
 
-        Set(row, 0, name, UiKit.TextMain);
+        // The name in its rarity's colour (the "worn" tag keeps its own).
+        Set(row, 0, name, Rarities.Color(Rarities.Of(e.def, e.instance)));
         Set(row, 1, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
     }
 

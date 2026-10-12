@@ -293,8 +293,9 @@ public class UnitStatusPanel : MonoBehaviour
                 // perf-ok: runs only when the server's worn text changes, never per frame
                 row.text = (e.quality == Quality.Raw ? "Raw" : e.quality.ToString())
                            + (e.folds > 0 ? " +" + e.folds : "") + "  " + e.def.displayName;
-                // Rows are pooled and reused, so the colour is set every time or a row keeps the last one's.
-                row.color = UiKit.TextMain;
+                // In the rarity the server sent. Rows are pooled and reused, so the colour is set every time or a row
+                // keeps the last one's.
+                row.color = Rarities.Color(e.rarity);
             }
             Layout();
         }

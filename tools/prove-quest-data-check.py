@@ -129,6 +129,36 @@ def main():
                     "  levelNeeded: 5\n  steps:\n", "only a tutorial has Play")
     bad += planted("a quest with no id", r"^  id: ", lambda m: "  id: ", lambda m: "  id_gone: ", "has no quest id")
 
+    # ---- the Keepers: anchors read out of today's townsfolk list and atlas, like every anchor above ----
+    folk_rel = os.path.join("unity", "Assets", "3_Data", "Resources", "WorldTownsfolk.asset")
+    atlas_rel = os.path.join("unity", "Assets", "3_Data", "Resources", "WorldAtlas.asset")
+    with open(os.path.join(REPO, folk_rel), encoding="utf-8") as fh:
+        folk = fh.read()
+    with open(os.path.join(REPO, atlas_rel), encoding="utf-8") as fh:
+        atlas = fh.read()
+    blocks = [b for b in re.split(r"^(?=  - id: )", folk, flags=re.M) if re.search(r"^    keeper: 1$", b, re.M)]
+    field = re.search(r"^  - scene: (\S+)\n(?:^    (?!type:).*\n)*^    type: field\s*$", atlas, re.M)
+    if len(blocks) < 2 or not field:
+        print(RED + " WRONG" + OFF + " the Keeper cases — fewer than two Keepers or no field map to plant them in, "
+              "so this proves nothing")
+        bad += 1
+    else:
+        first, second = blocks[0], blocks[1]
+        map_of = lambda b: re.search(r"^    map: (.*)$", b, re.M).group(1)
+        with_map = lambda b, m: re.sub(r"^    map: .*$", "    map: " + m, b, count=1, flags=re.M)
+        bad += case("a town with no Keeper", folk_rel, first, first.replace("    keeper: 1\n", "    keeper: 0\n"),
+                    "town '%s' has no Keeper" % map_of(first))
+        bad += case("a town with two Keepers", folk_rel, second, with_map(second, map_of(first)),
+                    "town '%s' has more than one Keeper" % map_of(first))
+        bad += case("a Keeper in a map that is not a town", folk_rel, first, with_map(first, field.group(1)),
+                    "which is not a town")
+        bad += case("a Keeper who also keeps a shop", folk_rel, first,
+                    re.sub(r"^    shop: .*$", "    shop: tool-dealer", first, count=1, flags=re.M),
+                    "also keeps a shop or works a station")
+        bad += case("a Keeper who strolls", folk_rel, first,
+                    re.sub(r"^    wanderRadius: .*$", "    wanderRadius: 4", first, count=1, flags=re.M),
+                    "a Keeper stands still")
+
     code_after, out_after = run()
     if code_after != 0 or out_after != out:
         print(RED + " WRONG" + OFF + " the real project's own answer changed while proving, so this proves nothing")

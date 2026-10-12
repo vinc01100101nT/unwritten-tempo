@@ -20,7 +20,8 @@ contract or code until the user says the open items are settled.
 
 Key decisions, so a cold session does not re-argue them: gear is crafted, never dropped; **no Level on gear** —
 a fold IS the existing refine (+N); quality F–A climbed one rung per quench, every quench consumes all folds,
-each grade's fold cap is its quench gate; **no rarity labels or colours**; **no Potential**; stats come from
+each grade's fold cap is its quench gate; **rarity never comes from the grade** — since 2026-10-12 it is how rare an
+item is to come by (a weapon = its trademark's rarity, materials by tier, all else Common); **no Potential**; stats come from
 **Ink** (five tiers Watery→Sharp) rolling one of 16 stats, primaries rarer with a premium; weapon mastery raises
 three ring stats (table in the doc) and unlocks skills, skill mastery lifts output up to +30%, both capped and
 sped by weapon quality, none earned while capped; the ring becomes a character system and its slot is removed;

@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// HOW TO GET FROM ONE MAP TO ANOTHER, through the doors between them (<see cref="WorldAtlas.links"/>). Server only in
-/// practice: a quest step on another map is pointed at the next door to take, and that door is decided here, never on
-/// a player's machine.
+/// HOW TO GET FROM ONE MAP TO ANOTHER, through the doors between them (<see cref="WorldAtlas.links"/>). The server
+/// points a quest step on another map at the next door to take, and that door is decided there, never on a player's
+/// machine. A player's machine asks it only for the way to a spot the player picked on the map window
+/// (<see cref="MapGuide"/>) — where they want to walk, which decides nothing.
 ///
 /// <para>The search itself is a plain function over a table of neighbours (<see cref="NextFrom"/>), so it can be
 /// checked with numbers alone. The table is built once from the atlas.</para>
@@ -12,6 +13,34 @@ using UnityEngine;
 public static class WorldRoutes
 {
     static Dictionary<string, List<string>> neighbours;
+    static WorldAtlas atlasLoaded;
+    static bool atlasLooked;
+
+    /// <summary>The baked world layout, loaded once. Null when none has been baked.</summary>
+    public static WorldAtlas Atlas
+    {
+        get
+        {
+            if (!atlasLooked) { atlasLooked = true; atlasLoaded = Resources.Load<WorldAtlas>("WorldAtlas"); }
+            return atlasLoaded;
+        }
+    }
+
+    /// <summary>Is somebody standing at <paramref name="x"/>, <paramref name="z"/> inside <paramref name="from"/> (the
+    /// map's own coordinates, as a save writes them) within <paramref name="reach"/> metres of a door that leads to
+    /// <paramref name="to"/>? The doors are the world layout's, so a map name with no door to it is always no.</summary>
+    public static bool DoorWithin(string from, string to, float x, float z, float reach)
+    {
+        var atlas = Atlas;
+        if (atlas == null || atlas.links == null || string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to)) return false;
+        foreach (var l in atlas.links)
+        {
+            if (l == null) continue;
+            if (l.a == from && l.b == to && KeeperMath.WithinReach(x - l.ax, z - l.az, reach)) return true;
+            if (l.b == from && l.a == to && KeeperMath.WithinReach(x - l.bx, z - l.bz, reach)) return true;
+        }
+        return false;
+    }
 
     static Dictionary<string, List<string>> Neighbours
     {
@@ -19,7 +48,7 @@ public static class WorldRoutes
         {
             if (neighbours != null) return neighbours;
             neighbours = new Dictionary<string, List<string>>();
-            var atlas = Resources.Load<WorldAtlas>("WorldAtlas");
+            var atlas = Atlas;
             if (atlas != null && atlas.links != null)
                 foreach (var l in atlas.links)
                 {

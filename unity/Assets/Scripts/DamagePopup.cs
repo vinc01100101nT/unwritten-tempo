@@ -292,7 +292,19 @@ public class DamagePopup : MonoBehaviour
     /// <summary>The size boost from the most recent pop, decaying to nothing. ONE timer and ONE curve for both kinds of
     /// pop — a number arriving and a live total taking another hit — so they can only ever differ in strength, and a
     /// moment that is not a pop (a total ending) simply never resets the timer.</summary>
-    float PopScale(float strength) => 1f + strength * Mathf.Clamp01(1f - popAge * PopDecay);
+    float PopScale(float strength) => Pop(strength, popAge);
+
+    /// <summary>THE POP every number on screen makes when it changes — a damage number arriving, a live total taking
+    /// another hit, the kill combo counting another kill (<see cref="KillComboHud"/>): the size it is drawn at,
+    /// <paramref name="secondsSince"/> after the change, for a pop of <paramref name="strength"/> (0.4 = 40% larger at
+    /// the instant it fires). One curve, so every pop in the game feels the same.</summary>
+    public static float Pop(float strength, float secondsSince) => 1f + strength * Mathf.Clamp01(1f - secondsSince * PopDecay);
+
+    /// <summary>How long a pop lasts — past this, <see cref="Pop"/> is 1 and nothing needs redrawing.</summary>
+    public const float PopSeconds = 1f / PopDecay;
+
+    /// <summary>The strength of a fresh number's pop, for anything else that wants to arrive the same way.</summary>
+    public const float ArrivalPop = SpawnPop;
 
     // Face the camera every frame so orbiting the 2.5D camera never skews/edge-ons the number. Runs in
     // LateUpdate so it's applied AFTER CameraFollow3D has moved the camera this frame.

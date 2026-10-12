@@ -24,6 +24,12 @@ public struct BagWire
     /// <summary>Each piece of gear's own id ("" for a stack) — what a hotbar slot names to mean exactly that piece.</summary>
     public string[] copyIds;
 
+    /// <summary>How rare each one is, as the server decided it (<see cref="Rarities.Of"/>) — sent, because a weapon's
+    /// rarity is read off its trademark skill, and a player's machine must not answer that from its own copy of the
+    /// skills. Parallel to <see cref="itemIds"/>; <see cref="wornRarities"/> is the same for what is worn.</summary>
+    public int[] rarities;
+    public int[] wornRarities;
+
     /// <summary>Which of these were picked up since the person last looked. Rebuilt on arrival, so without
     /// carrying it the "new" marker could never appear on anything.</summary>
     public bool[] isNew;
@@ -60,21 +66,37 @@ public struct BagWire
 
     public string[] hotbarBindings;
 
+    // ---- and WHAT THEY CAN BUY BACK, when the server changed it -----------------------------------------
+    //
+    // Sent on arrival and whenever a sale or a buyback changes the list, each line with its finished price. NULL on
+    // every other bag change for the hotbar's reason above: "the list did not change" and "the list is empty" must not
+    // be mistaken for each other, and ten pieces of gear need not ride every potion picked up.
+
+    public SoldLine[] buyback;
+
     /// <summary>Read a character's belongings off it, ready to send. Pass <paramref name="alsoTheBar"/> when the
     /// server has just rewritten this person's hotbar — see the note above; on every other change it is left out
     /// so an arrangement the player has just made cannot be undone by a message that crossed it.</summary>
-    public static BagWire From(Character c, bool alsoTheBar = false)
+    public static BagWire From(Character c, bool alsoTheBar = false, bool alsoTheBuyback = false)
     {
         var wire = new BagWire { gold = c != null ? c.Gold : 0 };
         if (c == null) { wire.itemIds = new string[0]; return wire; }
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
                           out wire.wornCards, out wire.wornRolls, out wire.wornCopyIds);
+        wire.wornRarities = new int[wire.wornCopyIds != null ? wire.wornCopyIds.Length : 0];
+        foreach (var worn in c.Gear.Worn)
+        {
+            int wornAt = System.Array.IndexOf(wire.wornCopyIds, worn.Value.copyId);
+            if (wornAt >= 0) wire.wornRarities[wornAt] = (int)Rarities.Of(worn.Value.def, worn.Value);
+        }
 
         if (alsoTheBar)
         {
             wire.hotbarBindings = c.Hotbar.Capture();
         }
+
+        if (alsoTheBuyback) wire.buyback = c.Buyback.ToWire(WorldClock.EpochSecondsNow);
 
         var bag = c.Bag;
         int n = 0;
@@ -87,6 +109,7 @@ public struct BagWire
         wire.cards = new string[n];
         wire.rolls = new string[n];
         wire.copyIds = new string[n];
+        wire.rarities = new int[n];
         wire.isNew = new bool[n];
 
         int at = 0;
@@ -97,13 +120,10 @@ public struct BagWire
             wire.itemIds[at] = e.def.id;
             wire.counts[at] = Mathf.Max(1, e.count);
             wire.isNew[at] = e.isNew;
+            wire.rarities[at] = (int)Rarities.Of(e.def, e.instance);
             if (e.IsEquip && e.instance != null)
             {
-                e.instance.EnsureCopyId();
-                wire.refines[at] = e.instance.upgrade;
-                wire.cards[at] = ItemCatalog.EncodeCards(e.instance.cards);
-                wire.rolls[at] = e.instance.EncodeRoll();
-                wire.copyIds[at] = e.instance.copyId;
+                e.instance.ToSaved(out wire.refines[at], out wire.cards[at], out wire.rolls[at], out wire.copyIds[at]);
             }
             else
             {
@@ -138,17 +158,20 @@ public struct BagWire
                 if (def.slot != EquipSlotType.None)
                 {
                     entry.count = 1;
-                    entry.instance = new EquipmentInstance(def, At(refines, i, 0));
-                    ItemCatalog.DecodeCards(At(cards, i, ""), entry.instance.cards);
-                    entry.instance.DecodeRoll(At(rolls, i, ""));
-                    entry.instance.copyId = At(copyIds, i, "") ?? "";
+                    entry.instance = EquipmentInstance.FromSaved(def, At(refines, i, 0), At(cards, i, ""),
+                                                                 At(rolls, i, "") ?? "", At(copyIds, i, ""));
+                    TakeRarity(entry.instance, rarities, i);
                 }
                 c.Bag.Add(entry);
             }
         }
 
         c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRolls, wornCopyIds);
+        if (wornCopyIds != null)
+            foreach (var worn in c.Gear.Worn)
+                TakeRarity(worn.Value, wornRarities, System.Array.IndexOf(wornCopyIds, worn.Value.copyId));
         c.SetGold(gold);
+        if (buyback != null) c.Buyback.TakeFromServer(buyback);
 
         // THE BAR LAST, AFTER THE GEAR.
         // What a character can cast is built from the bar AND the weapon they are holding, so rebuilding it
@@ -167,4 +190,15 @@ public struct BagWire
     }
 
     static T At<T>(IList<T> a, int i, T fallback) => a != null && i < a.Count ? a[i] : fallback;
+
+    // The rarity the server sent for one piece, laid on it. A message from a build that sent none leaves it unsent, and
+    // the piece falls back to reading its own data.
+    static void TakeRarity(EquipmentInstance piece, int[] sent, int i)
+    {
+        if (piece == null || sent == null || i < 0 || i >= sent.Length) return;
+        int r = sent[i];
+        if (r < (int)Rarity.Common || r > (int)Rarity.Legendary) return;
+        piece.rarity = (Rarity)r;
+        piece.raritySent = true;
+    }
 }

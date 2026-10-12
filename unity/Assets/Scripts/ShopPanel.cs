@@ -23,6 +23,15 @@ public class ShopPanel : MonoBehaviour
     string lastResult;
     bool lastResultOk;
     bool listening;
+    // When the minutes shown on a buy-back line next change (or one ends), on this machine's steady clock. The one
+    // thing checked each frame while the window is open; infinity while nothing is kept.
+    float redrawAt = float.PositiveInfinity;
+
+    // The buy-back rows on screen: each one's label, the words before its minutes, and the moment it ends — so a minute
+    // ticking over rewrites that label where it stands. Redrawing the whole list for it would destroy every button, and
+    // a press that began before the redraw would land on nothing.
+    struct KeptRow { public TMPro.TMP_Text label; public string before; public double endsAt; }
+    readonly System.Collections.Generic.List<KeptRow> keptRows = new System.Collections.Generic.List<KeptRow>(ShopMath.BuybackMostEntries);
 
     static readonly Color Sub = UiKit.TextDim;
 
@@ -102,20 +111,32 @@ public class ShopPanel : MonoBehaviour
         if (IsOpen) Rebuild();
     }
 
+    // A minute changed on some buy-back row: rewrite the minutes where they stand, and redraw the list only when a row
+    // has ended and must go.
+    void RetimeKept()
+    {
+        redrawAt = float.PositiveInfinity;
+        for (int i = 0; i < keptRows.Count; i++)
+        {
+            var row = keptRows[i];
+            double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(row.endsAt));
+            if (left <= 0 || row.label == null) { Rebuild(); return; }
+            row.label.text = row.before + ShopMath.MinutesShown(left) + " min left";
+            redrawAt = Mathf.Min(redrawAt, Time.unscaledTime + (float)ShopMath.SecondsUntilMinuteChanges(left));
+        }
+    }
+
+    void Update()
+    {
+        if (Time.unscaledTime >= redrawAt && IsOpen) RetimeKept();
+    }
+
     void Build()
     {
         if (root != null) return;
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
-        var viewport = UiKit.Window(canvas.transform, "Shop", new Vector2(420, 460), Vector2.zero, out root);
-        content = UiKit.ScrollColumn(viewport);
-        var vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 5;
-        vlg.padding = new RectOffset(6, 6, 6, 6);
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.childAlignment = TextAnchor.UpperCenter;
+        content = UiKit.ListWindow(canvas.transform, "Shop", new Vector2(420, 460), out root);
     }
 
     void Rebuild()
@@ -142,7 +163,7 @@ public class ShopPanel : MonoBehaviour
             // FREE ONES FIRST, as the server counted them — a tutorial's first run takes nothing it has you buy.
             int free = QuestStore.FreeBuys(id);
             string price = free > 0 ? free + " free, then " + def.buyPrice + "g each" : def.buyPrice + "g each";
-            var buyOne = Deal(def.displayName + "   " + price,
+            var buyOne = Deal(Rarities.Coloured(def, null, def.displayName) + "   " + price,
                               "Buy 1", () => Buy(id, 1),
                               "Buy 10", () => Buy(id, 10));
             GuideMarker.Put(buyOne.gameObject, GuideSpot.ShopBuyButton, id);
@@ -162,13 +183,41 @@ public class ShopPanel : MonoBehaviour
                 int at = i;
                 string id = e.def.id;
                 int all = e.count;
+                // The piece's own id travels with the press, so the server sells exactly the piece on this row.
+                string copy = e.instance != null ? e.instance.copyId ?? "" : "";
                 // A piece of gear goes by its own name, as its bag row reads; a stack by its item name and count.
-                string what = e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName + " ×" + e.count;
+                string what = e.instance != null ? Rarities.Coloured(e.def, e.instance, ItemTooltip.CopyTitle(e.instance))
+                                                 : Rarities.Coloured(e.def, null, e.def.displayName) + " ×" + e.count;
                 Deal(what + "   " + e.def.zeny + "g each",
-                     "Sell 1", () => Sell(at, id, 1),
-                     "Sell all", () => Sell(at, id, all));
+                     "Sell 1", () => Sell(at, id, copy, 1),
+                     "Sell all", () => Sell(at, id, copy, all));
             }
             if (sellable == 0) Line("You are carrying nothing they will buy.", 12, Sub);
+        }
+
+        // ---- what they can buy back -------------------------------------------------------------------
+        // Newest first. Prices and moments are the server's; this only picks which lines are still showing and how
+        // many whole minutes each has left to say.
+        redrawAt = float.PositiveInfinity;
+        keptRows.Clear();
+        var kept = c.Buyback.Entries;
+        bool headed = false;
+        for (int i = kept.Count - 1; i >= 0; i--)
+        {
+            var k = kept[i];
+            double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(k.endsAt));
+            if (left <= 0) continue;
+            if (!headed) { Line("Buy back", 15, UiKit.TitleText); headed = true; }
+            float changesIn = (float)ShopMath.SecondsUntilMinuteChanges(left);
+            redrawAt = Mathf.Min(redrawAt, Time.unscaledTime + changesIn);
+            string itemId = k.def.id;
+            string copy = k.CopyId;
+            string what = k.instance != null ? Rarities.Coloured(k.def, k.instance, ItemTooltip.CopyTitle(k.instance))
+                                             : Rarities.Coloured(k.def, null, k.def.displayName) + " ×" + k.count;
+            string before = what + "   " + k.price + "g   ";
+            var press = Deal(before + ShopMath.MinutesShown(left) + " min left", "Buy back", () => BuyBack(itemId, copy));
+            keptRows.Add(new KeptRow { label = press.transform.parent.GetComponentInChildren<TMPro.TMP_Text>(),
+                                       before = before, endsAt = k.endsAt });
         }
 
         // WHAT THE LAST PRESS DID, last.
@@ -182,43 +231,23 @@ public class ShopPanel : MonoBehaviour
         UISounds.PlayClick();
     }
 
-    void Sell(int bagIndex, string itemId, int howMany)
+    void Sell(int bagIndex, string itemId, string copyId, int howMany)
     {
         var me = GameNetwork.MyPlayer;
-        if (me != null) me.AskToSell(shopId, bagIndex, itemId, howMany);
+        if (me != null) me.AskToSell(shopId, bagIndex, itemId, copyId, howMany);
         UISounds.PlayClick();
     }
 
-    // One line of the list: what it is and its price on the left, two presses on the right.
-    // A row with its two buttons; the first is handed back so a guide can point at it.
-    Button Deal(string label, string firstWord, System.Action first, string secondWord, System.Action second)
+    void BuyBack(string itemId, string copyId)
     {
-        var row = new GameObject("Deal", typeof(RectTransform));
-        row.transform.SetParent(content, false);
-        row.AddComponent<LayoutElement>().preferredHeight = 30;
-        var h = row.AddComponent<HorizontalLayoutGroup>();
-        h.spacing = 4;
-        h.childControlWidth = h.childControlHeight = true;
-        h.childForceExpandWidth = false;
-        h.childForceExpandHeight = true;
-        h.childAlignment = TextAnchor.MiddleLeft;
-
-        var t = UiKit.Label("What", row.transform, label, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        t.color = UiKit.TextMain;
-        t.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
-
-        var firstButton = UiKit.Btn(firstWord, row.transform, first);
-        firstButton.gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
-        UiKit.Btn(secondWord, row.transform, second).gameObject.AddComponent<LayoutElement>().preferredWidth = 70;
-        return firstButton;
+        var me = GameNetwork.MyPlayer;
+        if (me != null) me.AskToBuyBack(shopId, itemId, copyId);
+        UISounds.PlayClick();
     }
 
-    // One line of text, `rows` lines tall — a sentence from the server needs room to wrap.
-    void Line(string s, int size, Color color, int rows = 1)
-    {
-        var t = UiKit.Label("Line", content, s, size, FontStyle.Normal, rows > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
-        t.color = color;
-        var le = t.gameObject.AddComponent<LayoutElement>();
-        le.preferredHeight = (size + 4) * rows + 4;
-    }
+    // A line of the list that is a deal, and a line of text — the list window's own, built into this window's column.
+    Button Deal(string label, string firstWord, System.Action first, string secondWord = null, System.Action second = null)
+        => UiKit.ListDeal(content, label, firstWord, first, secondWord, second);
+
+    void Line(string s, int size, Color color, int rows = 1) => UiKit.ListLine(content, s, size, color, rows);
 }

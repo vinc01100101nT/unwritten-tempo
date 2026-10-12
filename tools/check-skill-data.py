@@ -396,6 +396,8 @@ def main():
     sub_stats = parse_enum(effect_src, "SubStat")
     pile_for_stat = parse_pile_for_stat(effect_src)
     triggers = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "SkillTrigger")
+    tiers = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "SkillTier")
+    rarities = parse_enum(read(os.path.join(SCRIPTS, "Rarity.cs")), "Rarity")
     weapons = parse_enum(read(os.path.join(SCRIPTS, "WeaponType.cs")), "WeaponType")
     target_modes = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "TargetMode")
     jump_cap = re.search(r"const\s+int\s+MaxJumps\s*=\s*(\d+)", read(os.path.join(SCRIPTS, "FlightMath.cs")))
@@ -591,6 +593,20 @@ def main():
             elif top > 1 and not grows(s):
                 problem(s, "can be raised to level %d, but nothing on it grows with its level, so every point past "
                            "the first would do nothing. Its max level must be 1." % top)
+
+        # ---- the trademark's rarity (decided 2026-10-12) ------------------------------------------------
+        # A skill the forge can roll — published, belonging to a weapon, with a main number (what grows with a level
+        # is exactly what a trademark raises) — is drawn by its rarity, so an ordinary one with none chosen would
+        # silently roll as Common. An ultimate is Legendary from its tier, and Legendary is the ultimates' alone.
+        if (as_int(s.get("published")) == 1 and as_int(s.get("weaponType")) != weapons.get("None", 0)
+                and grows(s) and as_int(s.get("tier")) != tiers["Ultimate"]):
+            if as_int(s.get("trademarkRaritySet")) != 1:
+                problem(s, "can be rolled as a forged weapon's trademark, but nobody chose its trademark rarity — it "
+                           "silently rolls as Common. Pick one in the Skill Composer.")
+            elif as_int(s.get("trademarkRarity")) == rarities["Legendary"]:
+                problem(s, "is set to a Legendary trademark, which only an ultimate can be. Pick Common to Epic.")
+            elif as_int(s.get("trademarkRarity")) not in rarities.values():
+                problem(s, "has a trademark rarity (%s) that is not a rarity at all." % s.get("trademarkRarity"))
 
         need = str(s.get("needsSkillId", "")).strip()
         if need:

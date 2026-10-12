@@ -34,11 +34,11 @@ public static class PlayerFighter
     {
         if (announced == null) return false;
         return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar,
-                     announced.quests, announced.isGm);
+                     announced.quests, announced.isGm, announced.map);
     }
 
     static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar,
-                      QuestRowWire[] quests, bool isGm)
+                      QuestRowWire[] quests, bool isGm, string sentToMap)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -89,12 +89,15 @@ public static class PlayerFighter
             // AND WHERE THE CHARACTER SERVER SENT THEM. Their save says which map they were in, and that is the
             // map this server was asked to hold for them — so it is known now, not a second later when their own
             // machine gets round to saying it.
-            shell.SetMapOnArrival(pushed);
+            shell.SetMapOnArrival(pushed, sentToMap);
             GameLog.Info(LogCat.Server, "" + shell.playerName + " is level " + character.Level + " with "
                       + character.Bag.Count + " stack(s) — their character came with them.");
         }
         else
         {
+            // AND THE MAP THEY WERE SENT TO, which for a character never played is the one the character server named —
+            // the starting map. Their save names none.
+            shell.SetMapOnArrival(pushed, sentToMap);
             // NEVER PLAYED, so their starter goods are given HERE — by the thing that owns bags now. It used to
             // be their own machine that decided this, and the two raced: whichever landed last won, so a new
             // player either saw a bag the server did not have (every use silently ignored) or none at all.
@@ -115,6 +118,8 @@ public static class PlayerFighter
         }
         // THE VISIT'S TALLY starts here, or carries on when this is a door into another map this server holds.
         PlaySession.Arrived(character, shell.ServerCharacterId, shell.playerName);
+        // AND THE PER-HOUR METER starts with them, so the walk to the first creature counts as time spent.
+        character.KillCombo.StartMeter(KillCombo.Now);
 
         // THEIR BAR, from its own row — after the save, because what may stay on it is held to the skills they have
         // learned and the things they carry. A character whose bar has never been written to that row carries the
@@ -148,7 +153,7 @@ public static class PlayerFighter
 
         // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
         // empty and only ever learns what it is carrying from here.
-        shell.PushBagToOwner(alsoTheBar: true);
+        shell.PushBagToOwner(alsoTheBar: true, alsoTheBuyback: true);
 
         // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest whose unlock
         // condition is entering the world, that this character has never had, is given now, and anything already true

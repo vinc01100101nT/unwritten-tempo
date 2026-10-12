@@ -223,8 +223,22 @@ public enum SkillEffectKind
     /// the caster gains exactly what was taken. The Scythe's mana drain. Rolls its chance once per hit of the binding's
     /// strike, like every other effect that lands on a body.
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
     DrainMana,
+
+    /// <summary>Sends the unit it lands on back to where it returns to: a person to their SAVE POINT (or, with none set,
+    /// the default one), on whichever map that is; a creature to the home it spawned at. What a Butterfly Wing runs. A
+    /// dead unit goes nowhere. No numbers — where is the unit's own answer.
+    ///
+    /// <para>Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    ReturnToSavePoint,
+
+    /// <summary>Sets the unit it lands on down on a random walkable spot of the map it is in, picked evenly among every
+    /// spot it could walk back from — the same connected stretch of ground it stands on. What a Fly Wing runs. A unit
+    /// on ground the map has no record of goes nowhere. No numbers.
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    TeleportToRandomSpot,
 }
 
 /// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
@@ -658,7 +672,13 @@ public class SkillEffect
     public static bool RollsChance(SkillEffectKind k) =>
         k != SkillEffectKind.Damage && k != SkillEffectKind.Heal && !IsModifier(k) && !NeedsPoint(k) &&
         k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull && k != SkillEffectKind.Summon &&
-        !IsAllInCost(k);
+        !IsAllInCost(k) && !IsTrip(k);
+
+    /// <summary>An effect that moves a unit somewhere of the UNIT'S own choosing rather than to a point the cast names —
+    /// its save point, or a random spot of its map. Never rolls a chance (a wing that sometimes does nothing is a bug)
+    /// and has no numbers.</summary>
+    public static bool IsTrip(SkillEffectKind k) =>
+        k == SkillEffectKind.ReturnToSavePoint || k == SkillEffectKind.TeleportToRandomSpot;
 
     // IsSelfVerb — the list of kinds that were "traditionally self" — is GONE (2026-08-24). It existed only to resolve
     // EffectSide.Auto, and Auto is gone: every effect names its own side now, so a kind no longer has a side at all.

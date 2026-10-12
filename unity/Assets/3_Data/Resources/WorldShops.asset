@@ -19,4 +19,6 @@ MonoBehaviour:
     - item.healing-potion
     - item.greater-healing-potion
     - item.antidote
+    - item.fly-wing
+    - item.butterfly-wing
     buysLoot: 1

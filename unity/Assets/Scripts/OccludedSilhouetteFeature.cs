@@ -5,14 +5,15 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
 
 /// <summary>
-/// URP renderer feature that draws an X-RAY OCCLUSION SILHOUETTE of the player: wherever the player's mesh is
-/// hidden behind opaque geometry (house / tree / wall), a flat coloured silhouette shows through so the player
-/// is never lost behind scenery. Companion to <see cref="CameraOccluderFader"/> — that fades the occluder; this
-/// guarantees the player stays readable regardless of the fade.
+/// URP renderer feature that draws an X-RAY OCCLUSION SILHOUETTE of every marked body — the player, and a creature
+/// in a fight with them (see <see cref="NetMob"/>): wherever the body is hidden behind opaque geometry (house /
+/// tree / wall / grass), a flat coloured silhouette shows through so it is never lost behind scenery. Companion to
+/// <see cref="CameraOccluderFader"/> — that fades the occluder; this guarantees the body stays readable regardless
+/// of the fade. The notes below say "player" for whichever marked body is being drawn.
 ///
 /// <para>How it works: after transparents, it re-draws the objects tagged by <see cref="OccludedSilhouetteTarget"/>
-/// (matched via their <see cref="Renderer.renderingLayerMask"/> bit, so it's player-only without touching the
-/// shared crowd physics layer) using the <c>Unwritten/OccludedSilhouette</c> override material. That material has
+/// (matched via their <see cref="Renderer.renderingLayerMask"/> bit, so only marked bodies are drawn, without
+/// touching the shared crowd physics layer) using the <c>Unwritten/OccludedSilhouette</c> override material. That material has
 /// THREE passes (clear a stencil bit over the player's area → mark where the player is actually visible → paint the
 /// silhouette colour only where the player is present but NOT visible = hidden behind scene geometry). Deciding by
 /// screen AREA rather than per-fragment depth is what avoids the player self-occluding (see the shader header).</para>

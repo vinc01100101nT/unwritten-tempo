@@ -33,22 +33,6 @@ MonoBehaviour:
   cliffPassWidth: 8
   cliffMeetingPoints: 0
   propGroups:
-  - label: Walls
-    prefabs: []
-    category: 0
-    placement: 6
-    amountMode: 0
-    density: 0.02
-    count: 20
-    solid: 1
-    scale: 0.3
-    scaleJitter: 0.15
-    minSpacing: 1.5
-    clearFromCenter: 0
-    avoidPath: 0
-    randomYaw: 1
-    rowOffset: 4
-    sway: 2
   - label: Boulders
     prefabs: []
     category: 3
@@ -64,4 +48,6 @@ MonoBehaviour:
     avoidPath: 1
     randomYaw: 1
     rowOffset: 4
+    cellsPerClump: 6
+    propsPerCell: 10
     sway: 2

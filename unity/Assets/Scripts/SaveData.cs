@@ -151,6 +151,10 @@ public class SaveData
     // SavePoint.DefaultMap's default arrival point. No version bump — "not set" and "not recorded" are one fact.
     public string savePointMap;
     public float  savePointX, savePointY, savePointZ;
+    // SET AT A KEEPER: the save point is savePointMap's Keeper, and the position above is not read — where they stand
+    // back up is worked out at use from where that Keeper stands (KeeperMath.ArrivalSpot), so a town re-laid never
+    // strands anybody. False — every save written before this, and every GM /save — means the position is the spot.
+    public bool   savePointAtKeeper;
 
     // COOLDOWNS STILL RUNNING (v9+), as parallel arrays like the trio-ring walk above: the skill's id, and the
     // MOMENT it becomes ready again, counted in seconds since 1970 on the world's clock.
@@ -171,6 +175,28 @@ public class SaveData
     // next login, or on arrival at a map another server holds. Only death clears them (decided 2026-09-23).
     // Written and read back only by the server (TimedEffectSave). Null = nothing running.
     public TimedEffect[] timedEffects;
+
+    // WHAT THEY SOLD AND CAN STILL BUY BACK (BuybackList): at most ten entries, oldest first, each with the gold the shop
+    // paid and the MOMENT it stops being kept, in seconds since 1970 on the world's clock — a moment, so the hour keeps
+    // running while the character is away, like a cooldown. Kept in this document, beside the bag and the purse, so a
+    // sale is stored whole by the one statement that stores them. Written and read back only by the server.
+    // No version bump: null and empty mean "nothing to buy back", which is also what every older save means.
+    public SoldItem[] buyback;
+
+    /// <summary>One kept sale as the save holds it. A piece of gear carries its own four values exactly as the bag
+    /// does (EquipmentInstance.ToSaved); a stack carries "" for them.</summary>
+    [Serializable]
+    public class SoldItem
+    {
+        public string itemId;
+        public int count;
+        public int refine;
+        public string cards;
+        public string roll;
+        public string copyId;
+        public int paid;
+        public double endsAt;
+    }
 
     /// <summary>One pile of a timed effect, as the save holds it. Its kind is saved BY NAME so a removed state can
     /// never repoint the record at a different one. Each stack is kept on its own, in parallel arrays.</summary>

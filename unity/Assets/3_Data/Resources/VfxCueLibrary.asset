@@ -94,6 +94,6 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 20
-    vfx: {fileID: 11400000, guid: e630af1d489aa06428e5940c7a945415, type: 2}
+    vfx: {fileID: 0}
     offset: {x: 0, y: 0, z: 0}
     scale: 1

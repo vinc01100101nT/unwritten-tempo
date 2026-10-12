@@ -35,6 +35,17 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         return null;
     }
 
+    /// <summary>Every mob shell on this WATCHING machine, found by the shared id a blow report names its striker
+    /// with. A dictionary for the same reason as <see cref="byView"/>: it is asked on every blow that lands on this
+    /// machine's player.</summary>
+    static readonly System.Collections.Generic.Dictionary<uint, NetMob> byNetId =
+        new System.Collections.Generic.Dictionary<uint, NetMob>();
+
+    /// <summary>The mob shell the server calls <paramref name="netId"/>, or null when that id is not a mob this
+    /// machine has been told about (a person, nobody, or a creature out of range).</summary>
+    public static NetMob ShellForNetId(uint netId)
+        => netId != 0u && byNetId.TryGetValue(netId, out var shell) ? shell : null;
+
     /// <summary>Every shell on the SERVER, found by the REAL creature it speaks for — the mirror of
     /// <see cref="byView"/>, which answers the same question on a watching machine. A dictionary for the same
     /// reason: the server has to name the creature a blow landed on in order to announce that blow, which is the
@@ -255,6 +266,10 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     /// one question rather than one per kind of unit.</summary>
     public Transform DrawnBody => view != null ? view.transform : null;
 
+    /// <summary>WATCHING MACHINES ONLY: the name this creature is shown under — its nameplate's, read once when its body
+    /// is built, so the combat log names it on every blow without a lookup. Null before it has a body.</summary>
+    public string ShownName { get; private set; }
+
     const float PushInterval = 0.1f;   // ten times a second, same cadence as a player's position
 
     float nextPush;
@@ -453,6 +468,38 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     int seenMapVersion = -1;
     bool inMyMap;
 
+    // ---- seen through scenery while it and this machine's player are fighting ---------------------------------
+    // A creature hidden behind scenery (tall grass, a tree, a wall) is drawn as the same flat shape the player is
+    // (OccludedSilhouetteTarget), on THIS machine only, from the moment a blow passes between it and this machine's
+    // player until this long after the last one. Chosen here from blows the server reported; nothing is worked out.
+    const float FightShownSeconds = 10f;
+    // When the shape stops, on this machine's own clock; 0 while it is not being drawn.
+    float fightShownUntil;
+    // The body's mark, added the first time it is needed and kept with the body through the pool.
+    OccludedSilhouetteTarget viewSilhouette;
+
+    /// <summary>A PLAYER'S MACHINE: the server reported a blow between this creature and this machine's player — its
+    /// swing at them, hit or miss, or their hit on it. Restarts the time it is drawn through scenery.</summary>
+    public void TradedABlowWithMe()
+    {
+        fightShownUntil = Time.time + FightShownSeconds;
+        ShowThroughScenery(true);
+    }
+
+    void ShowThroughScenery(bool on)
+    {
+        if (view == null) return;
+        if (viewSilhouette == null)
+        {
+            if (!on) return;
+            // perf-ok: once per body, the first time a creature wearing it fights this machine's player
+            viewSilhouette = view.AddComponent<OccludedSilhouetteTarget>();
+            viewSilhouette.Refresh();
+            return;
+        }
+        viewSilhouette.Show(on);
+    }
+
     void FollowTheServer()
     {
         // AM I EVEN IN THE PLACE THIS CREATURE IS? Re-decided when this machine changes map, and while this
@@ -478,6 +525,12 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         if (!inMyMap) return;
 
         if (view == null) { EnsureView(); return; }
+
+        if (fightShownUntil > 0f && Time.time >= fightShownUntil)
+        {
+            fightShownUntil = 0f;
+            ShowThroughScenery(false);
+        }
 
         // The SHARED way a watched body catches up — the same one a watched person uses, so a creature and a
         // player can never drift into gliding differently. It also leaves a body that has arrived completely
@@ -689,6 +742,10 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         viewVisual = go.GetComponent<Agent3DVisual>();
         // A live-3D creature destroys its flat-picture animator at the end of this frame, so it is never cached.
         viewBillboard = isShadow ? null : go.GetComponent<BillboardAnimator3D>();
+        // A banked body keeps its mark, switched off when it was put away; it is on again only while THIS creature's
+        // fight with this machine's player is still running (a body dropped by a map change and taken back).
+        viewSilhouette = go.GetComponent<OccludedSilhouetteTarget>();
+        ShowThroughScenery(fightShownUntil > Time.time);
 
         // AND WHICH BODY THIS CREATURE WEARS, which is the server's to choose and never this machine's. Said even
         // when the name has not arrived yet: an empty one tells the creature to WAIT for it rather than draw one of
@@ -730,6 +787,10 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // AND WHAT IT WEARS. A reused body still wears the last creature's gear until told.
         viewGear = go.GetComponent<UnitEquipment>();
         ApplyWornToView();
+
+        // ITS NAME, after a turned-back character has put its own on, for every line of the combat log about it.
+        var plate = go.GetComponent<MobNameplate>();
+        ShownName = plate != null ? plate.displayName : null;
     }
 
     // A watched mob must not also be a thinking mob. What remains is a body that follows what the server says.
@@ -766,6 +827,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // object in whichever map is current, and travelling unloads that map — so every creature the server had
         // already announced was destroyed on the way through the door and never mentioned again.
         MapManager.KeepAcrossMaps(gameObject);
+        byNetId[netId] = this;
     }
 
     /// <summary>Let this creature's body go and bank it for reuse. The ONE description of "stop drawing this",
@@ -785,6 +847,9 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         levelAura.Stop();
         // …and a move being drawn on it, with any see-through fade that move put on it.
         watchedMove.Stop();
+        // …and the shape it was drawn through scenery with: the next creature to wear this body has fought nobody.
+        ShowThroughScenery(false);
+        viewSilhouette = null;
         byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
         PutBodyBack(BodyKind, view);
         view = null;
@@ -799,6 +864,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     public override void OnStopClient()
     {
         DropTheView();
+        // Only while the entry is still THIS shell's — the same guard as the server's table below.
+        if (byNetId.TryGetValue(netId, out var held) && held == this) byNetId.Remove(netId);
         base.OnStopClient();
     }
 

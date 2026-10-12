@@ -54,13 +54,14 @@ psql "$DATABASE_URL" -c "select count(*) from account"
 
 ## What is in there
 
-Four tables you will actually query, and one rule that explains most of the queries below: **appearance is
-identity, progress is progress.** (A fourth, `schema_migration`, is bookkeeping the migrator owns — it just
+The tables you will actually query, and one rule that explains most of the queries below: **appearance is
+identity, progress is progress.** (One more, `schema_migration`, is bookkeeping the migrator owns — it just
 records which `.sql` files this database has already run.)
 
 - **`account`** — `id`, `email`, `password_hash`, `created_at`, `is_gm`, `session_id` (the one live sign-in). There is no display name here.
-- **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`, and
-  `handover` (which hand-over to a map server the latest save belongs to). **Everything about a character except
+- **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`,
+  `handover` (which hand-over to a map server the latest save belongs to) and `storage_move` (the id of the last
+  storage move applied for this character; null when it has never made one). **Everything about a character except
   its name and its hotbar lives inside the single `progress` JSON document** — level, XP, gear, gold, AND the body
   and its recolour (`modelName`, `dyeSources`, `dyeTargets`). A player changes their look in-game exactly as they change everything else, so it belongs with
   the rest of what they change; keeping it in columns as well meant two homes for one fact that could disagree.
@@ -70,6 +71,13 @@ records which `.sql` files this database has already run.)
   slot, a skill's id, `item:<item id>` for a usable item, or `gear:<copy id>` for one exact piece of gear. A save
   from before version 18 still carries its old bar as `hotbarBindings` inside `progress`; the server reads that once
   to fill this row and never writes it again.
+- **`account_storage`** — `seq`, `account_id`, `item_id`, `count`, `refine`, `cards`, `roll`, `copy_id`, `created_at`.
+  What an **account** keeps with the Keeper, shared by all its characters, one row per stored thing. A stack is one row
+  per item with `copy_id` `''`; a piece of gear is a row of its own carrying the same four values the bag saves for it
+  (`refine` is its folds). A row never holds a count of 0: the move that empties it deletes it.
+  **`account_storage_head`** holds one row per account that has ever stored anything — `revision`, raised by every
+  move. Every move is written in the same transaction as a character's `progress`, so an item is in a bag or in
+  storage, never both.
 - **`world_event`** — `kind`, `multiplier`, `started_at`, `ends_at`, `started_by`. The world events running now
   (a GM's `/exprate`), one row per kind; a row whose time is up is deleted the next time the list is read.
   **`world_event_revision`** holds one number, raised with every start and stop, that every copy of the list carries.
@@ -322,6 +330,53 @@ Read a whole save without it wrapping into unreadable mush:
 ```sql
 \x
 select jsonb_pretty(progress) from character where lower(name) = lower('Ashwalker');
+```
+
+What a character sold and can still buy back — at most ten entries, oldest first, each with the gold the shop paid
+and `endsAt`, the moment it stops being kept, in seconds since 1970. Missing or `[]` means nothing to buy back:
+
+```sql
+select name, jsonb_pretty(progress->'buyback')
+  from character
+ where lower(name) = lower('Ashwalker') and deleted_at is null;
+```
+
+---
+
+## Storage
+
+What one account keeps with the Keeper, in the order it was put in. Storage belongs to the account, so reach it
+through any of its characters:
+
+```sql
+select s.item_id, s.count, s.refine, s.copy_id, s.created_at
+  from account_storage s
+  join character c on c.account_id = s.account_id
+ where lower(c.name) = lower('Ashwalker')
+   and c.deleted_at is null
+ order by s.seq;
+```
+
+How many things each account has stored, fullest first — a stack counts as one thing, and storage holds 600:
+
+```sql
+select a.email, count(*) as things, h.revision
+  from account_storage s
+  join account a on a.id = s.account_id
+  join account_storage_head h on h.account_id = s.account_id
+ group by a.email, h.revision
+ order by things desc
+ limit 20;
+```
+
+Where one exact piece of gear is: in somebody's storage, or nowhere there. A piece's own id is unique across the
+whole game, so this returns one row at most:
+
+```sql
+select a.email, s.item_id, s.refine, s.roll
+  from account_storage s
+  join account a on a.id = s.account_id
+ where s.copy_id = 'the-piece-id';
 ```
 
 ---

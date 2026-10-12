@@ -330,13 +330,13 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
             handover = raised;
         }
 
-        // The hotbar is read in the same query — it has its own row (see 008_character_hotbar.sql), and a
-        // character that has never had one written has none, so it is a LEFT join and may come back null. The quest
-        // rows come as one sub-selected JSON array (see QuestRows), never a join, so the progress is read once.
+        // The character's own rows are read in the same query (see CharacterRows) — the hotbar and the auto-combat
+        // settings, each null for a character that never had it written. The quest rows come as one sub-selected JSON
+        // array (see QuestRows), never a join, so the progress is read once.
         await using var cmd = new NpgsqlCommand(
-            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm, h.slots, " + QuestRows.ReadAsJson + @"
+            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm, " + QuestRows.ReadAsJson
+            + CharacterRows.ReadAsColumns + @"
                 from character c join account a on a.id = c.account_id
-                left join character_hotbar h on h.character_id = c.id
                where c.id = $1 and c.account_id = $2 and c.deleted_at is null", conn);
         cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
         cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
@@ -345,8 +345,10 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         if (!await rows.ReadAsync()) return NoSuchCharacter();
 
         using var progress = JsonDocument.Parse(rows.GetString(2));
-        using var hotbar = rows.IsDBNull(6) ? null : JsonDocument.Parse(rows.GetString(6));
-        using var quests = JsonDocument.Parse(rows.GetString(7));
+        using var quests = JsonDocument.Parse(rows.GetString(6));
+        var ownRows = CharacterRows.Read(rows, 7);
+        try
+        {
         string name = rows.GetString(1);
         bool isGm = rows.GetBoolean(5);
         var sent = progress.RootElement;
@@ -424,8 +426,11 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
 
         // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
         // they are told that here rather than being sent to knock on a door that is going to refuse them.
-        bool taken = await maps.AnnounceAsync(to, ticket, name, sent, hotbar?.RootElement, quests.RootElement, isGm,
-                                              handover, signingIn: true, http.RequestAborted);
+        // THE MAP IS NAMED IN THE ANNOUNCEMENT: the one decided above, or — for a character nobody has played — the
+        // starting map of the process they go to, which is what that process brings up for them.
+        bool taken = await maps.AnnounceAsync(to, ticket, name, map ?? to.StartingMap ?? "", sent,
+                                              CharacterRows.ForAnnouncement(ownRows), quests.RootElement, isGm, handover,
+                                              signingIn: true, http.RequestAborted);
         if (!taken)
             return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
 
@@ -433,6 +438,8 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServe
         // doors on the same machine, and handing over the wrong one sends somebody to knock where nothing is
         // listening for them.
         return Results.Ok(new { host = to.Address, port = to.PlayerPort, ticket = ticket.Value, map });
+        }
+        finally { CharacterRows.Dispose(ownRows); }
     }
 
     public sealed record EnterBody(string? map);

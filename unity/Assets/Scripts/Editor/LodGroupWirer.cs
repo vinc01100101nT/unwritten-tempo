@@ -28,6 +28,22 @@ public static class LodGroupWirer
     // the one family (Tavern) that has four copies.
     static readonly float[] ScreenHeights = { 0.6f, 0.3f, 0.1f, 0.05f };
 
+    /// <summary>THE SWITCHING TABLE for a prop with one renderer list per level, simplest last. Each level takes over
+    /// below its height in <see cref="ScreenHeights"/>, and the LAST level is never hidden however small it gets — a
+    /// prop far away is drawn simpler, never left out (decided by the user 2026-10-11). Shared by the wired families
+    /// and the generated ones (<see cref="PropLodBaker"/>).</summary>
+    public static LOD[] Levels(List<Renderer[]> perLevel)
+    {
+        var lods = new LOD[perLevel.Count];
+        for (int i = 0; i < perLevel.Count; i++)
+        {
+            bool last = i == perLevel.Count - 1;
+            float height = last ? 0f : i < ScreenHeights.Length ? ScreenHeights[i] : ScreenHeights[ScreenHeights.Length - 1] * 0.5f;
+            lods[i] = new LOD(height, perLevel[i]);
+        }
+        return lods;
+    }
+
     public static string WireAllCore()
     {
         var families = new SortedDictionary<string, SortedDictionary<int, string>>();
@@ -76,8 +92,7 @@ public static class LodGroupWirer
                         continue;
                     }
 
-                    var lods = new List<LOD>();
-                    int index = 0;
+                    var perLevel = new List<Renderer[]>();
                     foreach (var lv in levels)
                     {
                         Renderer r;
@@ -91,16 +106,14 @@ public static class LodGroupWirer
                                 continue;
                             }
                         }
-                        float height = index < ScreenHeights.Length ? ScreenHeights[index] : ScreenHeights[ScreenHeights.Length - 1] * 0.5f;
-                        lods.Add(new LOD(height, new[] { r }));
-                        index++;
+                        perLevel.Add(new[] { r });
                     }
 
                     var group = root.AddComponent<LODGroup>();
-                    group.SetLODs(lods.ToArray());
+                    group.SetLODs(Levels(perLevel));
                     group.RecalculateBounds();
                     PrefabUtility.SaveAsPrefabAsset(root, levels[0]);
-                    report.AppendLine(family + ": " + lods.Count + " levels");
+                    report.AppendLine(family + ": " + perLevel.Count + " levels");
                     wired++;
                 }
                 finally

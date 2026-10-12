@@ -19,6 +19,7 @@ public class WorldAtlas : ScriptableObject
         public string scene;    // scene/file name (== sanitized map id)
         public float x, y, w, h; // world-space rect, top-left (x→east, y→south), size in world units
         public string type;     // town | field | dungeon | special
+        public string name;     // what players call it, from the world layout ("Lastline Field 1"); empty = unnamed
     }
 
     [Tooltip("Composited top-down image of the whole world (free-form, world-space rectangles).")]
@@ -52,5 +53,13 @@ public class WorldAtlas : ScriptableObject
         for (int i = 0; i < maps.Count; i++)
             if (maps[i].scene == sceneName) return maps[i];
         return null;
+    }
+
+    /// <summary>What players call <paramref name="sceneName"/> — its name in the world layout, or the scene name itself
+    /// when the layout gives it none.</summary>
+    public string NameOf(string sceneName)
+    {
+        var e = Find(sceneName);
+        return e != null && !string.IsNullOrEmpty(e.name) ? e.name : sceneName;
     }
 }

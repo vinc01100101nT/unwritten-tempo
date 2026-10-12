@@ -21,8 +21,8 @@ using TMPro;
 /// PERFORMANCE (see PERFORMANCE.md): one shared world-space <see cref="Canvas"/> for every bar, built once
 /// (canvases are batch/rebuild boundaries — never one per cast), and bars are pooled rather than made and thrown
 /// away. Per casting frame each one only writes transforms (follow + billboard) and the fill amount — no
-/// allocation, no Find/GetComponent, no per-frame string work (the label is set only when it changes). Same
-/// ZTest-Always material trick as <see cref="MobNameplate"/>, so a bar isn't swallowed by terrain.
+/// allocation, no Find/GetComponent, no per-frame string work (the label is set only when it changes). Drawn with
+/// <see cref="MobNameplate"/>'s shared draws-over-the-world material, so a bar is never hidden by terrain or scenery.
 /// </summary>
 [DisallowMultipleComponent]
 public class CastBar : MonoBehaviour
@@ -56,10 +56,6 @@ public class CastBar : MonoBehaviour
     // entries costs less than hashing one.
     static readonly List<Bar> live = new List<Bar>(4);
     static readonly Stack<Bar> pool = new Stack<Bar>();
-
-    // ---- shared resources (one each, across the whole game) -------------------
-    static Sprite whiteSprite;
-    static Material onTopMat;         // UI/Default with ZTest Always so the bar draws over terrain/props
 
     /// <summary>Show/refresh the cast bar over <paramref name="over"/>'s head, filled to
     /// <paramref name="progress01"/> (0 = just started, 1 = done). Cheap to call every frame, which is how it is
@@ -203,24 +199,6 @@ public class CastBar : MonoBehaviour
         return bar;
     }
 
-    // ---- shared resources (mirrors MobNameplate) ------------------------------
-    static Material OnTop
-    {
-        get
-        {
-            if (onTopMat != null) return onTopMat;
-            var sh = Shader.Find("UI/Default");
-            if (sh == null) return null;
-            onTopMat = new Material(sh) { name = "CastBar (on top)" };
-            onTopMat.SetInt("unity_GUIZTestMode", (int)CompareFunction.Always);
-            return onTopMat;
-        }
-    }
-
-    static Sprite White => whiteSprite != null
-        ? whiteSprite
-        : (whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f)));
-
     static RectTransform NewRect(string name, Transform parent)
     {
         var rt = (RectTransform)new GameObject(name, typeof(RectTransform)).transform;
@@ -233,10 +211,12 @@ public class CastBar : MonoBehaviour
         var go = new GameObject(name, typeof(RectTransform), typeof(Image));
         go.transform.SetParent(parent, false);
         var img = go.GetComponent<Image>();
-        img.sprite = White;
+        // The ONE white sprite and the ONE draws-over-the-world material every floating unit widget shares.
+        img.sprite = MobNameplate.SharedWhite;
         img.color = color;
         img.raycastTarget = false;
-        if (OnTop != null) img.material = OnTop;
+        var onTop = MobNameplate.SharedOnTop;
+        if (onTop != null) img.material = onTop;
         return img;
     }
 }

@@ -40,23 +40,32 @@ public static class Rewards
         // UNDER WHATEVER WORLD EVENT IS RUNNING — an experience rate multiplies what the kill pays, here and nowhere
         // else, so the number paid, logged and shown is one number. A rate small enough to round a kill down to
         // nothing pays nothing, but the kill still counts for any quest below.
-        int paid = WorldEvents.KillExperience(xp);
+        int eventPaid = WorldEvents.KillExperience(xp);
+        // AND UNDER THE RUN OF KILLS THEY ARE ON — a multiplier on top of the event's, so a run is worth the same share
+        // of a creature at any level. Every kill that gets this far steps the run, even one that rounds to nothing.
+        double now = KillCombo.Now;
+        int combo = CountKill(character, victim, now);
+        int paid = KillComboMath.Paid(eventPaid, combo);
         PlaySession.Killed(character, paid);
+        character.KillCombo.Earned(now, paid, 0);
         if (paid > 0)
         {
             int levelsGained = character.AddXP(paid, out int ringLevelsGained);
-            // "field_15 Alpha #1 (id) earned 40 experience from Snake #3" — beside the loot line, so what a kill paid
-            // is all in the log and nothing about it needs a recorder.
+            // "field_15 Alpha #1 (id) earned 44 experience from Snake #3 — combo 12, +4 from it" — beside the loot line,
+            // so what a kill paid is all in the log and nothing about it needs a recorder.
             if (GameLog.On(LogCat.Loot))
                 GameLog.Info(LogCat.Loot, string.Concat(new[]
                 {
                     SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " (", GameNetwork.CharacterIdOf(character),
                     ") earned ", paid.ToString(), " experience from ", victim != null ? SpawnIds.Label(victim) : "somebody",
+                    ComboWords(combo, paid - eventPaid),
                 }));
             // On a server the character being paid is not the one on that player's screen, so their machine has to
             // be told or the kill quietly earns them nothing. Does nothing anywhere else.
             GameNetwork.TellOwnerTheyEarned(character, paid, 0, levelsGained, ringLevelsGained);
         }
+        // Their combo, what this kill paid and their per-hour rates, to their own screen — every kill, paid or not.
+        GameNetwork.TellOwnerTheirKillCombo(character, victim, true, paid, paid - eventPaid, 0, 0);
 
         // AND ANY QUEST COUNTING THIS CREATURE — the same kill, paid to the same person, through this same door.
         // A SAVED CHARACTER is not the creature whose body it wears — the same exclusion SavedCharacters makes.
@@ -66,6 +75,17 @@ public static class Rewards
             GameNetwork.ShellOfFighter(character)?.QuestsMoved();
         }
     }
+
+    /// <summary>THE RUN OF KILLS <paramref name="character"/> is on, counting the death of <paramref name="victim"/> at
+    /// <paramref name="now"/>. Asked by every payment one death makes — its experience here, a turned-back character's
+    /// rescue pay (<see cref="SavedCharacters"/>), whichever runs first — and the death steps the run once.</summary>
+    public static int CountKill(Character character, Health victim, double now)
+        => character.KillCombo.CountKill(victim != null ? victim.GetInstanceID() : 0, Time.frameCount, now);
+
+    /// <summary>The end of a payment's log line saying the run it was paid under: " — combo 12, +4 from it", or
+    /// " — combo 1" when the run added nothing.</summary>
+    public static string ComboWords(int combo, int fromCombo)
+        => fromCombo > 0 ? " — combo " + combo + ", +" + fromCombo + " from it" : " — combo " + combo;
 
     /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the
     /// last unit to land a blow that cost it health, which is the simplest thing a player can predict from what

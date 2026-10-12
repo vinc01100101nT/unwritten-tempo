@@ -371,6 +371,8 @@ public static class SkillTooltip
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
+            case SkillEffectKind.ReturnToSavePoint:    return "Returns you to your save point";
+            case SkillEffectKind.TeleportToRandomSpot: return "Sets you down somewhere random on this map";
             // Magnitude is the amount itself; on a stacking one it is the PER-STACK amount, so say so.
             case SkillEffectKind.SubStatBuff:   return SubStatLine(e, worse: false);
             case SkillEffectKind.SubStatDebuff: return SubStatLine(e, worse: true);

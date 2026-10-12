@@ -68,9 +68,10 @@ public class ItemTooltip : MonoBehaviour
 
     void Show(Item item)
     {
+        previewing = null;
         if (item == null) { group.alpha = 0f; return; }
         titleText.text = item.displayName;
-        titleText.color = UiKit.TitleText;
+        titleText.color = Rarities.Color(Rarities.Of(item, null));
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
         group.alpha = 1f;
@@ -79,50 +80,50 @@ public class ItemTooltip : MonoBehaviour
 
     void Show(EquipmentInstance inst)
     {
+        previewing = null;
         if (inst == null || inst.def == null) { group.alpha = 0f; return; }
         var def = inst.def;
         titleText.text = CopyTitle(inst);
-        titleText.color = UiKit.TitleText;
+        titleText.color = Rarities.Color(Rarities.Of(def, inst));
         bodyText.text = DescribeInstance(inst);
         ShowSkillIcons(null);
         group.alpha = 1f;
         Follow();
     }
 
+    // The piece whose "if equipped" lines are being waited for, and the answers' version when it was drawn — so the
+    // tooltip redraws once, when the server's lines arrive, while the pointer is still on it.
+    EquipmentInstance previewing;
+    EquipSlotType previewingSlot;
+    int previewDrawnVersion = -1;
+
     void ShowPreview(EquipmentInstance inst, EquipSlotType previewSlot)
     {
-        if (inst == null || inst.def == null) { group.alpha = 0f; return; }
-        var c = Character.Instance;
-        var def = inst.def;
+        if (inst == null || inst.def == null) { group.alpha = 0f; previewing = null; return; }
         titleText.text = CopyTitle(inst);
-        titleText.color = UiKit.TitleText;
-
-        var sb = new StringBuilder();
-        sb.Append(DescribeInstance(inst));
-        if (c != null)
-        {
-            var equipped = c.GetEquippedInstance(previewSlot);
-            if (equipped != null && equipped.def != null && equipped != inst)
-                sb.Append("\n\n" + DimTag + "Replaces </color>" + MainTag)
-                  .Append(CopyTitle(equipped)).Append("</color>");
-
-            var before = c.CurrentDerived;
-            var after  = c.DeriveWith(previewSlot, inst);
-            sb.Append("\n" + DimTag + "If equipped:</color>");
-            AppendDelta(sb, "MELEE ATK", before.meleeMax, after.meleeMax);
-            AppendDelta(sb, "RANGED ATK", before.rangedMax, after.rangedMax);
-            AppendDelta(sb, "M.ATK", before.matkMax, after.matkMax);
-            AppendDelta(sb, "DEF", before.def, after.def);
-            AppendDelta(sb, "M.DEF", before.mdef, after.mdef);
-            AppendDelta(sb, "HIT", before.hit, after.hit);
-            AppendDelta(sb, "FLEE", before.flee, after.flee);
-            AppendDelta(sb, "Max HP", before.maxHP, after.maxHP);
-            AppendDeltaPct(sb, "CRIT", before.critChance, after.critChance);
-        }
-        bodyText.text = sb.ToString();
+        titleText.color = Rarities.Color(Rarities.Of(inst.def, inst));
+        previewing = inst;
+        previewingSlot = previewSlot;
+        DrawPreviewBody();
         ShowSkillIcons(null);
         group.alpha = 1f;
         Follow();
+    }
+
+    // The piece's own card, then the server's "if equipped" lines (EquipPreview) — asked for when not yet here.
+    void DrawPreviewBody()
+    {
+        var inst = previewing;
+        previewDrawnVersion = EquipPreview.Version;
+        inst.EnsureCopyId();
+        string body = DescribeInstance(inst);
+        if (EquipPreview.TryGetSent(inst.copyId, previewingSlot, out string ifEquipped)) body += ifEquipped;
+        else
+        {
+            EquipPreview.Ask(inst.copyId, previewingSlot);
+            body += "\n" + DimTag + "If equipped: …</color>";
+        }
+        bodyText.text = body;
     }
 
     // Fill the icon strip with THIS copy's rolled skill icons, or hide it for items that carry none.
@@ -161,7 +162,9 @@ public class ItemTooltip : MonoBehaviour
 
     void Update()
     {
-        if (group.alpha > 0f) Follow();
+        if (group.alpha <= 0f) { previewing = null; return; }
+        Follow();
+        if (previewing != null && previewDrawnVersion != EquipPreview.Version) DrawPreviewBody();
     }
 
     void Follow()
@@ -180,6 +183,7 @@ public class ItemTooltip : MonoBehaviour
     {
         var sb = new StringBuilder();
         AppendHeader(sb, item);
+        AppendRarity(sb, Rarities.Of(item, null));
         AppendAttackKind(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item);
@@ -256,6 +260,7 @@ public class ItemTooltip : MonoBehaviour
         var sb = new StringBuilder();
         var def = inst.def;
         AppendHeader(sb, def);
+        AppendRarity(sb, Rarities.Of(def, inst));
         AppendAttackKind(sb, def);
         AppendCopyStats(sb, inst);
         AppendTrademark(sb, inst);
@@ -274,8 +279,8 @@ public class ItemTooltip : MonoBehaviour
         return sb.ToString();
     }
 
-    // "<Slot/Category>" line. Nothing here is coloured by a tier: a crafted piece says what it is and what it
-    // has been through, and there is no rarity in the game to colour it by.
+    // "<Slot/Category>" line. Its grade is in the title, never a colour: a grade says what the piece is worth, a
+    // rarity only how rare it is to come by (the line below).
     static void AppendHeader(StringBuilder sb, Item item)
     {
         // The slot's name from THE one list of slot words (EquipSlots.Label) — never the enum's own name, which says
@@ -285,13 +290,19 @@ public class ItemTooltip : MonoBehaviour
         sb.Append(DimTag).Append(category).Append("</color>");
     }
 
+    // The rarity named, in its own colour — the same colour the title is written in (Rarities owns both).
+    static void AppendRarity(StringBuilder sb, Rarity rarity)
+    {
+        sb.Append('\n').Append(Rarities.Tag(rarity)).Append(Rarities.Label(rarity)).Append("</color>");
+    }
+
 
     // Rich-text tints, read from the interface theme once: labels, values, a use effect, a slotted card, and a stat
     // going up or down.
-    static readonly string GoodHex = UiKit.Hex(UiKit.Good);
-    static readonly string BadHex = UiKit.Hex(UiKit.Bad);
-    static readonly string DimTag = "<color=" + UiKit.Hex(UiKit.TextDim) + ">";
-    static readonly string MainTag = "<color=" + UiKit.Hex(UiKit.TextMain) + ">";
+    internal static readonly string GoodHex = UiKit.Hex(UiKit.Good);
+    internal static readonly string BadHex = UiKit.Hex(UiKit.Bad);
+    internal static readonly string DimTag = "<color=" + UiKit.Hex(UiKit.TextDim) + ">";
+    internal static readonly string MainTag = "<color=" + UiKit.Hex(UiKit.TextMain) + ">";
     static readonly string UseTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
     static readonly string CardTag = "<color=" + UiKit.Hex(UiKit.Accent) + ">";
     static readonly string GoodTag = "<color=" + GoodHex + ">";
@@ -460,25 +471,4 @@ public class ItemTooltip : MonoBehaviour
           .Append(v.ToString("0.##")).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 
-    // Green/red "LABEL  before → after (+delta)" preview rows. Unchanged rows are skipped.
-    static void AppendDelta(StringBuilder sb, string label, int before, int after)
-    {
-        if (before == after) return;
-        int d = after - before;
-        string color = d > 0 ? GoodHex : BadHex;
-        sb.Append("\n" + DimTag).Append(label).Append("</color>  ")
-          .Append(before).Append(" → ").Append(after)
-          .Append(" <color=").Append(color).Append('>').Append(d > 0 ? "+" : "").Append(d).Append("</color>");
-    }
-
-    static void AppendDeltaPct(StringBuilder sb, string label, float before, float after)
-    {
-        int b = Mathf.RoundToInt(before * 100f), a = Mathf.RoundToInt(after * 100f);
-        if (b == a) return;
-        int d = a - b;
-        string color = d > 0 ? GoodHex : BadHex;
-        sb.Append("\n" + DimTag).Append(label).Append("</color>  ")
-          .Append(b).Append("% → ").Append(a).Append("% <color=").Append(color).Append('>')
-          .Append(d > 0 ? "+" : "").Append(d).Append("%</color>");
-    }
 }

@@ -36,7 +36,7 @@ public class WorldCreator : EditorWindow
     // Free-form: each map has a world-space top-left pos (x→east, y→south) + an INTEGER size [w,h]. Every
     // portal carries explicit edge anchors on both ends (no grid adjacency is assumed any more).
     [Serializable] class WorldJson  { public int version; public int revision; public MapJson[] maps; public PortalJson[] portals; }
-    [Serializable] class MapJson    { public string id; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; public string cliffs; }
+    [Serializable] class MapJson    { public string id; public string name; public float[] pos; public int[] size; public string type; public int seed; public string pathTile; public float pathWidth; public string biome; public string cliffs; }
     // id = the door's permanent number: object names and arrival ids are built from it, never from its place in the list.
     [Serializable] class PortalJson { public int id; public string a; public string b; public AnchorJson anchorA; public AnchorJson anchorB; }
     // at / arriveAt = the door's and the arrival point's exact spot [x east, z north] in metres from the map's centre.
@@ -331,7 +331,7 @@ public class WorldCreator : EditorWindow
         {
             if (m.pos == null || m.pos.Length < 2) continue;
             entries.Add(new WorldAtlasBaker.Entry {
-                scene = SceneName(m.id), type = m.type,
+                scene = SceneName(m.id), type = m.type, name = m.name,
                 x = m.pos[0], y = m.pos[1], w = SizeX(m), h = SizeZ(m),
             });
         }

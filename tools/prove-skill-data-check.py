@@ -160,6 +160,13 @@ CASES = [
     ("a skill that opens before the skill it needs",
      patch("skill.sword.lunge.asset", ("  masteryLevel: 1\n", "  masteryLevel: 9\n")),
      "sits before the skill it needs"),
+    # The forge draws a trademark by its rarity, so a rollable skill with none chosen silently rolls as Common.
+    ("a rollable trademark with no rarity chosen",
+     patch("skill.sword.lunge.asset", ("  trademarkRaritySet: 1\n", "  trademarkRaritySet: 0\n")),
+     "nobody chose its trademark rarity"),
+    ("an ordinary trademark set to Legendary, the ultimates' rarity",
+     patch("skill.sword.lunge.asset", ("  trademarkRarity: 0\n", "  trademarkRarity: 4\n")),
+     "only an ultimate can be"),
     ("a tick left in an older saved format",
      patch("skill.sword.guard_stance.asset",
            ("\n  - tickId:", "\n  - scope: 0\n    tickId:")),

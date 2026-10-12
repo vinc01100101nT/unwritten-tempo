@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23, the world's fourteen biomes in the map generator and the weather a biome always has BUILT 2026-09-25, skills bought and levelled with weapon mastery points BUILT 2026-10-03; not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23, the world's fourteen biomes in the map generator and the weather a biome always has BUILT 2026-09-25, skills bought and levelled with weapon mastery points BUILT 2026-10-03, rarity by how rare a thing is to come by BUILT 2026-10-12; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-12
 tags:
   - systems-combat-design
 ---
@@ -19,8 +19,9 @@ bought in it, and from the trademark of the forged weapon in hand.**
 
 **How it relates to V3.** This is now what the code does. [V3](../active-skill-system-v3/README.md) still
 describes the channels, effects and triggers, which V4 keeps; where the two disagree — rolled
-weapon kits, rarity, equipment drops, the worn ring item, "skills don't level" — V4 is what runs and V3's
-passages on those points are dead. **Not yet play-tested.**
+weapon kits, V3's rarity (a rolled tier that lifted a weapon's numbers), equipment drops, the worn ring item,
+"skills don't level" — V4 is what runs and V3's passages on those points are dead. V4's own rarity (§4) is a
+different thing: how rare an item is to come by, which never moves a number. **Not yet play-tested.**
 
 ## 1. Gear is crafted, not dropped
 
@@ -97,7 +98,7 @@ way further is to quench. *(Example gates, to be tuned:)*
 
 So a B +30 that quenches becomes **A +0** or **C +0**, and the decision to try is the whole game.
 
-**What quality does:** it lifts what the piece's folds buy (as rarity used to), and the size of an armour piece's word, it caps and speeds
+**What quality does:** it lifts what the piece's folds buy, and the size of an armour piece's word, it caps and speeds
 weapon mastery (§5), and it sets **how many stat slots** the piece has (§3). A Raw piece caps mastery **below F**.
 
 **No Potential.** The folds are the budget, and they refill through work.
@@ -132,10 +133,22 @@ whole. Decided 2026-09-21.
 
 ## 4. Materials and rarity
 
-- **Rarity labels are removed from the game**: no Common, Uncommon, Rare, Epic or Legendary, anywhere. Gear has
-  its quality grade; a material's rarity shows only in how often it drops.
-- **No rarity or tier colours anywhere.** The only colour theme kept is on **skills**: each skill is coloured by
-  the weapon it requires, as today (red for sword skills, and so on).
+- **Rarity is how rare a thing is to come by — never how good it is** (decided 2026-10-12). Five rarities: **Common,
+  Uncommon, Rare, Epic, Legendary.** It never changes a number: what a piece is worth is still its grade and its
+  folds, and a grade is never coloured.
+- **A forged weapon is as rare as its trademark** is to roll — the forge draws a rarity first (Common 50%, Uncommon
+  30%, Rare 14%, Epic 5%, Legendary 1% of all weapons of a type), then a trademark of it; every ultimate's trademark
+  is Legendary. The whole roll is in [Weapon Names & Trademarks](weapon-names-and-trademarks.md) §4. A weapon with no
+  trademark is Common.
+- **Armour, consumables, quest and other items are Common.** An armour piece's word is rolled evenly from its slot's
+  words, so no word is rarer than another.
+- **Materials by how hard they are to find:** metal, cloth and leather of every band are Common; Watery Ink and Coarse
+  Salt Uncommon; Thin Ink, Faint Ink and Fine Salt Rare; Clear Ink, Sharp Ink and Pure Salt Epic. No material is
+  Legendary. Read off the material's kind and tier (`Rarities.OfMaterial`), so it can never drift from the item.
+- **An item's name is written in its rarity's colour** — Common the ordinary text colour, Uncommon green, Rare blue,
+  Epic purple, Legendary orange-gold — in the tooltip (which also names the rarity), the bag, the worn list of a unit
+  you select, and on the floor. One function owns the answer and the colour (`Rarities`). Skills keep their own
+  colour theme: each skill is coloured by the weapon it requires (red for sword skills, and so on).
 - **Rare materials are the surprise drop**, and they drop from creatures **of every level**. Only the base
   forging, weaving and tanning materials are level-gated.
 - **Which band a creature drops is its level's answer** (decided 2026-09-22): the seven bands split creature levels
@@ -224,14 +237,16 @@ curve** (§9), and keeps levelling after the character reaches 99. A creature th
 
 A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names & Trademarks](weapon-names-and-trademarks.md).
 
-- **Rolled once, at the forge, and never changed.** Folds, quenches and a failed quench leave it alone. A weapon
-  handed out any other way (a GM grant, a creature's gear) has none.
+- **Rolled once, as the weapon comes into the world, and never changed.** The forge, a GM grant, a reward and a
+  creature's gear all roll it the same way; folds, quenches and a failed quench leave it alone.
 - **Which skills can come up:** every **published** skill of the weapon's type with a **main number** (§7) on
   any of its effects — decided from the skill's own effects every time, so a skill that gains a main number joins
   the roll, and one that loses its last leaves it. For the sword that is 18 skills; Bending Reed, Held Breath, Howling Wind and
-  Deep Roots have no main number. **Each ultimate is 5%; the ordinary skills share the rest evenly.**
-- **Its name lives on the skill** — the **trademark name** field in the Skill Composer, shown only while the
-  skill can be rolled. The skill-data check fails on a rollable skill with no name.
+  Deep Roots have no main number. **The forge rolls a rarity first, then a skill of that rarity evenly** (§4,
+  §9); every ultimate is Legendary, and the weapon is as rare as its trademark.
+- **Its name is the skill's own name** — there is no separate weapon-name field, and the skill-data check fails on a
+  skill file that still carries one. Its rarity is the **trademark rarity** field in the Skill Composer; the check
+  fails on a rollable ordinary skill with none chosen.
 - **What it does:** while the weapon is held, **every main number of that skill** rises by the grade's percentage
   (§9) — added to the skill-level lift (§7), never multiplied onto it. Creatures follow the same rule.
 - **What the cards say.** The weapon's card: "Trademark Skill: Thousand Petals", then one line per raised effect
@@ -244,7 +259,7 @@ A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names
 (level 1); each further point raises it one level. The server decides every spend. Pressing a skill does not
 train it.
 
-- **It powers the skill.** It takes over the job rarity used to have: every level after the first adds **+5%** to
+- **It powers the skill.** It takes over the job V3's rarity used to have: every level after the first adds **+5%** to
   **every main number on every effect** of that skill — level 1 is the skill as authored, level 5 is **+20%**,
   level 10 is **+45%**. Actives, passives and ultimates all grow the same way. It is added to the ring's term,
   never multiplied onto it, and it counts only while a weapon of the skill's type is in hand, so a skill that
@@ -335,8 +350,9 @@ move once it is played. Change it here, in place, when it does.
 
 - **Lift by the weapon's grade:** Raw **+5%** · F **+7%** · E **+10%** · D **+12%** · C **+15%** · B **+18%** ·
   A **+20%**. The server writes the finished lift on the copy; a player's machine only shows it.
-- **Roll weights:** each ultimate **5%**; the ordinary skills share the remaining 85% evenly (**5.7%** each for
-  the sword's fifteen).
+- **The roll:** a rarity by its share — Common **50%** · Uncommon **30%** · Rare **14%** · Epic **5%** · Legendary
+  **1%**, over the rarities the weapon type has — then a trademark of it evenly. The sword's: **10%** each Common,
+  **7.5%** each Uncommon, **4.67%** each Rare, **1.67%** each Epic, **0.33%** each ultimate.
 
 ### Ink values (flat, per tier: Watery / Thin / Faint / Clear / Sharp)
 
@@ -406,7 +422,7 @@ skill.
 ## What V4 replaced in V3
 
 - The rolled weapon kit and its sizes and ultimate chance.
-- Rarity: its drop weights, its lift on skill output, weapon attack and armour, its colours and labels.
+- V3's rarity: its drop weights, its lift on skill output, weapon attack and armour. (V4's rarity, §4, lifts nothing.)
 - Creatures dropping what they wear, including the ring's own drop chance.
 - The worn ring item that switches the ring on.
 - V3's rule that **skills don't level**.

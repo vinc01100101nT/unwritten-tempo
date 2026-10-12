@@ -1,7 +1,8 @@
 // X-ray occlusion silhouette. Used as an OVERRIDE material by OccludedSilhouetteFeature: after transparents,
-// the feature re-draws the player's mesh with this material's THREE passes so that wherever the player is HIDDEN
-// behind opaque geometry (house / tree / wall) a flat coloured silhouette shows through — the classic
-// "see the hero behind the wall" look.
+// the feature re-draws each marked body (OccludedSilhouetteTarget — the player's mesh, or a creature's 3D mesh or
+// flat picture) with this material's THREE passes so that wherever the body is HIDDEN behind opaque geometry
+// (house / tree / wall / grass) a flat coloured silhouette shows through — the classic "see the hero behind the
+// wall" look. The comments below say "player" for whichever marked body is being drawn.
 //
 // WHY THREE PASSES (and not a per-fragment depth compare): a depth test paints a fragment when it sits behind the
 // stored depth, but the stored depth already contains the PLAYER — so the player's own nearer parts (head-cap,
@@ -22,6 +23,11 @@ Shader "Unwritten/OccludedSilhouette"
     Properties
     {
         _OutlineColor ("Silhouette Color", Color) = (0.55, 0.8, 1.0, 1.0)
+        // A FLAT body's picture, handed over by its SpriteRenderer, so the shape is the painted picture and not the
+        // sheet it is painted on. A 3D body hands over nothing and reads this white default: solid everywhere.
+        [PerRendererData] _MainTex ("Shape Texture", 2D) = "white" {}
+        // The cut-out line every flat body's own material is drawn with (Unwritten/BillboardLit).
+        _Cutoff ("Alpha Cutoff", Range(0,1)) = 0.5
     }
 
     // Our private scratch stencil bit is 64 (0x40). It's cleared (Pass 0) before use, so its prior contents never
@@ -35,12 +41,15 @@ Shader "Unwritten/OccludedSilhouette"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+        TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+
         CBUFFER_START(UnityPerMaterial)
             half4 _OutlineColor;
+            half _Cutoff;
         CBUFFER_END
 
-        struct Attributes { float3 positionOS : POSITION; };
-        struct Varyings   { float4 positionCS : SV_POSITION; };
+        struct Attributes { float3 positionOS : POSITION; float2 uv : TEXCOORD0; };
+        struct Varyings   { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
 
         // Skinned positions arrive already posed in object space (the SkinnedMeshRenderer bakes the skin), so the
         // standard transform renders the live animation pose.
@@ -48,10 +57,17 @@ Shader "Unwritten/OccludedSilhouette"
         {
             Varyings OUT;
             OUT.positionCS = GetVertexPositionInputs(IN.positionOS).positionCS;
+            OUT.uv = IN.uv;
             return OUT;
         }
 
-        half4 FragColor (Varyings IN) : SV_Target { return _OutlineColor; }
+        // Every pass keeps only the pixels the body really paints — the same cut-out test the flat body's own
+        // material makes — so all three agree on the body's exact shape.
+        half4 FragColor (Varyings IN) : SV_Target
+        {
+            clip(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv).a - _Cutoff);
+            return _OutlineColor;
+        }
         ENDHLSL
 
         // Pass 0 — clear our stencil bit across the whole on-screen silhouette (ZTest Always = every covered pixel,

@@ -646,6 +646,28 @@ public class GameNetwork : NetworkManager
         public double ringXp;
     }
 
+    /// <summary>A KILL'S PLACE IN ITS KILLER'S RUN, told to the killer alone: the run's count, the moment it ends, what
+    /// the kill paid and how much of that the run added, and the experience and zeny per hour as the server now works
+    /// them out (<see cref="KillComboMath"/>). Sent for every kill that counts, and again when a turned-back character
+    /// pays its rescue zeny. Every number is final; the player's machine copies it onto the screen and into the
+    /// combat log, and only compares the end moment with the clock to stop drawing the count.</summary>
+    public struct KillComboShown : NetworkMessage
+    {
+        /// <summary>The creature that died, for the combat log's name — 0 for a rescue payment.</summary>
+        public uint victimNetId;
+
+        /// <summary>True for the kill itself; false for the rescue zeny a turned-back character paid afterwards.</summary>
+        public bool kill;
+
+        public int combo;
+        public int bonusPercent;
+        public double endsAtEpochSeconds;
+        public float windowSeconds;
+        public int experience, experienceFromCombo;
+        public int zeny, zenyFromCombo;
+        public long experiencePerHour, zenyPerHour;
+    }
+
     /// <summary>A PERSON CASTING A SKILL — the whole of it, named rather than resolved. Which skill, what they
     /// aimed at, and where. Nothing else: no damage, no duration, no charge count, no number of any kind.
     ///
@@ -844,6 +866,25 @@ public class GameNetwork : NetworkManager
         public string text;
     }
 
+    /// <summary>A player's machine asking how many of each creature are alive in one map, by its scene name — sent while
+    /// the map window's zone view shows that map. It carries the map and nothing else.</summary>
+    public struct MapCountsRequest : NetworkMessage
+    {
+        public string map;
+    }
+
+    /// <summary>The server's counts for that map (<see cref="MapCreatureCounts.Count"/>): each creature id there, how
+    /// many are alive and how many the map keeps (0 when it keeps no number of its own), side by side. <c>held</c> is
+    /// false when the server holds no such map. Sent only to the asker.</summary>
+    public struct MapCountsReply : NetworkMessage
+    {
+        public string map;
+        public bool held;
+        public string[] ids;
+        public int[] counts;
+        public int[] kept;
+    }
+
     /// <summary>A LINE SOMEBODY TYPED AND SAID OUT LOUD. It carries the words and nothing else: not who said them
     /// and not where they were standing, because the server already knows which connection this arrived on and
     /// where it holds that person. A machine that named its own speaker could put words in anybody's mouth.</summary>
@@ -934,6 +975,7 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
         NetworkServer.RegisterHandler<MobInfoRequest>(OnMobInfoRequest);
+        NetworkServer.RegisterHandler<MapCountsRequest>(OnMapCountsRequest);
         NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
         NetworkServer.RegisterHandler<PmSend>(OnPmSend);
     }
@@ -947,11 +989,16 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<CooldownStarted>(OnCooldownStarted);
         NetworkClient.RegisterHandler<CastAnswered>(OnCastAnswered);
         NetworkClient.RegisterHandler<XpEarned>(OnXpEarned);
+        // A new connection is a new run and a new meter on the server, so nothing the last one sent is kept.
+        KillComboReadout.Forget();
+        NetworkClient.RegisterHandler<KillComboShown>(OnKillComboShown);
         NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
         // A new connection may be to a server holding different numbers, so nothing an earlier one sent is kept.
         MobInfo.ForgetSent();
         NetworkClient.RegisterHandler<MobInfoReply>(OnMobInfoReply);
+        MapCreatureCounts.ForgetSent();
+        NetworkClient.RegisterHandler<MapCountsReply>(OnMapCountsReply);
         NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
         NetworkClient.RegisterHandler<TimeOfDayShift>(OnTimeOfDayShift);
         NetworkClient.RegisterHandler<WeatherHeld>(OnWeatherHeld);
@@ -1003,6 +1050,17 @@ public class GameNetwork : NetworkManager
         if (!NetworkClient.spawned.TryGetValue(msg.victimNetId, out var identity) || identity == null) return;
         var shell = identity.GetComponent<NetPlayer>();
         if (shell == null) return;
+
+        // A CREATURE THAT JUST STRUCK AT THIS MACHINE'S PLAYER, hit or miss, is drawn through scenery for a while.
+        if (identity.isLocalPlayer)
+        {
+            var striker = NetMob.ShellForNetId(msg.attackerNetId);
+            if (striker != null) striker.TradedABlowWithMe();
+            // AND THE COMBAT LOG'S LINE for it, the server's own numbers stored as they are.
+            ChatController.CombatTaken(striker != null ? striker.ShownName : null, msg.amount, msg.missed, msg.dodged,
+                                       msg.isCrit, msg.tick ? msg.tickCause : TrueDamageCause.None,
+                                       msg.mitigated.parried, msg.mitigated.blocked);
+        }
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
@@ -1060,6 +1118,21 @@ public class GameNetwork : NetworkManager
                                             msg.ringLevel, msg.ringXp, msg.ringBankedPoints, msg.ringLevelsGained);
     }
 
+    // A kill's place in this player's run, as the server worked it out: the combo readout copies it, and the combat log
+    // writes what the kill paid.
+    static void OnKillComboShown(KillComboShown msg)
+    {
+        KillComboReadout.Take(msg.combo, msg.bonusPercent, msg.endsAtEpochSeconds, msg.windowSeconds,
+                              msg.experiencePerHour, msg.zenyPerHour);
+        if (msg.kill)
+        {
+            var shell = NetMob.ShellForNetId(msg.victimNetId);
+            ChatController.CombatDefeated(shell != null ? shell.ShownName : null);
+            if (msg.experience > 0) ChatController.CombatExperience(msg.experience, msg.experienceFromCombo);
+        }
+        if (msg.zeny > 0) ChatController.CombatZeny(msg.zeny, msg.zenyFromCombo);
+    }
+
     void OnReviveRequest(NetworkConnectionToClient conn, ReviveRequest msg)
     {
         // Only a dead person can be brought back, so a live one asking is refused rather than handed a free heal.
@@ -1106,10 +1179,8 @@ public class GameNetwork : NetworkManager
         // COMING BACK THIS WAY IS AN UNLOCK CONDITION — the tutorial that teaches healing plays from here. Written down
         // on the next save, which a move to a map another server holds makes before they leave.
         if (who.Quests.Unlock(QuestUnlock.ReturnToSavePoint, who.CurrentHP, who.MaxHP)) shell.QuestsMoved();
-        // AND COMING BACK MOVES THEM, nowhere near where they fell — a jump the movement check would otherwise read
-        // as the largest lie it has ever seen. Forgiven from HERE because this is the server granting it: nothing a
-        // client says can reach it.
-        shell.ForgiveNextMoveAfterServerMove();
+        // AND COMING BACK MOVES THEM, nowhere near where they fell. The trip holds them where they are sent and
+        // believes no report until one lands there (see NetPlayer.ExpectArrival), so the jump is never read as a lie.
         shell.SendToSavePoint();
     }
 
@@ -1438,6 +1509,63 @@ public class GameNetwork : NetworkManager
         identity.GetComponent<NetPlayer>()?.PushStatsToOwner();
     }
 
+    /// <summary>SERVER ONLY: tell <paramref name="who"/>'s own machine where their run of kills stands after a payment —
+    /// a kill of <paramref name="victim"/> (<paramref name="kill"/>) or a turned-back character's rescue zeny — what that
+    /// payment was and how much of it the run added, and their experience and zeny per hour. Called AFTER the payment is
+    /// made and put into the meter (<see cref="KillCombo"/>). Silent off a server, and for a character that is not
+    /// somebody's.</summary>
+    public static void TellOwnerTheirKillCombo(Character who, Health victim, bool kill, int experience,
+                                               int experienceFromCombo, int zeny, int zenyFromCombo)
+    {
+        if (!NetworkServer.active || who == null) return;
+
+        var identity = IdentityOfFighter(who);
+        if (identity == null || identity.connectionToClient == null) return;
+        var shell = kill && victim != null ? NetMob.ShellForServerMob(victim.gameObject) : null;
+        SendKillCombo(identity, who.KillCombo, shell != null ? shell.netId : 0u, kill, experience, experienceFromCombo,
+                      zeny, zenyFromCombo);
+    }
+
+    /// <summary>SERVER ONLY: if <paramref name="who"/>'s experience or zeny per hour has moved since it was last sent —
+    /// it falls minute by minute once they stop killing — send the rates as they now stand, with no payment in it.
+    /// Asked once a minute per person (<see cref="NetPlayer"/>); sends nothing once the rates rest at their last value,
+    /// which for somebody who stopped is zero, ten minutes on.</summary>
+    public static void TellOwnerTheirRatesIfMoved(Character who)
+    {
+        if (!NetworkServer.active || who == null) return;
+        var run = who.KillCombo;
+        double now = KillCombo.Now;
+        if (run.ExperiencePerHour(now) == run.SentExperiencePerHour && run.ZenyPerHour(now) == run.SentZenyPerHour) return;
+        var identity = IdentityOfFighter(who);
+        if (identity == null || identity.connectionToClient == null) return;
+        SendKillCombo(identity, run, 0u, false, 0, 0, 0, 0);
+    }
+
+    static void SendKillCombo(NetworkIdentity identity, KillCombo run, uint victimNetId, bool kill, int experience,
+                              int experienceFromCombo, int zeny, int zenyFromCombo)
+    {
+        double now = KillCombo.Now;
+        long experiencePerHour = run.ExperiencePerHour(now), zenyPerHour = run.ZenyPerHour(now);
+        run.SentExperiencePerHour = experiencePerHour;
+        run.SentZenyPerHour = zenyPerHour;
+        identity.connectionToClient.Send(new KillComboShown
+        {
+            victimNetId = victimNetId,
+            kill = kill,
+            combo = run.Count,
+            bonusPercent = KillComboMath.BonusPercent(run.Count),
+            // The run's end, measured on the server's steady clock and turned into the world's time as it is sent.
+            endsAtEpochSeconds = WorldClock.EpochSecondsNow + run.SecondsLeft(now),
+            windowSeconds = (float)KillComboMath.WindowSeconds,
+            experience = Mathf.Max(0, experience),
+            experienceFromCombo = Mathf.Max(0, experienceFromCombo),
+            zeny = Mathf.Max(0, zeny),
+            zenyFromCombo = Mathf.Max(0, zenyFromCombo),
+            experiencePerHour = experiencePerHour,
+            zenyPerHour = zenyPerHour,
+        });
+    }
+
     /// <summary>Server-only: hand <paramref name="who"/>'s own machine the bag as it now stands, and write the
     /// change down. TRUE when it was sent — which is also the answer to "was this a server's doing", so a caller
     /// paying somebody knows whether the window still has to be told directly (see <see cref="Rewards.PayLoot"/>).
@@ -1597,6 +1725,11 @@ public class GameNetwork : NetworkManager
         if (!NetworkClient.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
 
         var shell = identity.GetComponent<NetMob>();
+        bool mine = shell != null && NetworkClient.localPlayer != null && NetworkClient.localPlayer.netId == msg.attackerNetId;
+        // A CREATURE THIS MACHINE'S PLAYER JUST HIT — a miss does not count — is drawn through scenery for a while.
+        if (mine && !msg.missed) shell.TradedABlowWithMe();
+        // AND THE COMBAT LOG'S LINE for it — the server's own numbers, stored as they are.
+        if (mine) ChatController.CombatDealt(shell.ShownName, msg.number, msg.missed, msg.crit, msg.tickCause);
         var victim = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
         if (victim == null) { HitResultsWithNoVictim++; return; }
 
@@ -2182,6 +2315,8 @@ public class GameNetwork : NetworkManager
         // read off the bag the SERVER holds — so a request to drink something the person does not own resolves to
         // nothing. The same check every other bag request answers to.
         var shell = ShellFor(conn);
+        // ON THEIR WAY OUT, nothing they send is acted on — the save handing them over has already been taken.
+        if (shell != null && shell.Leaving) return;
         if (!BagStack.StillTheSame(caster, msg.bagIndex, msg.expectedItemId,
                                    shell != null ? shell.playerName : "connection " + conn.connectionId)) return;
         var entryInBag = caster.Bag[msg.bagIndex];
@@ -2193,9 +2328,15 @@ public class GameNetwork : NetworkManager
         var entry = runner != null && runner.def != null ? runner.def.ItemUseEntry : null;
         if (entry == null) return;
 
+        // AN EFFECT THAT HAS NOWHERE TO HAPPEN IS REFUSED BEFORE IT COSTS ANYTHING — a Fly Wing on ground the map has
+        // no record of stays in the bag, and the player is told why. A landing spot found here is the one the effect
+        // uses: it is rolled once.
+        string cannot = SkillEffectApplier.WhyItCannotLand(runner.def, caster);
+        if (cannot != null) { shell?.TellOwner(cannot); return; }
+
         // AN EFFECT THAT DID NOT RUN COSTS NOTHING. The drinker died between the press and its arrival, or the
         // skill has nothing to play: the potion stays in the bag rather than vanishing for no effect.
-        if (!runner.FireAsPassive(entry, null)) return;
+        if (!runner.FireAsPassive(entry, null)) { SkillEffectApplier.ForgetLanding(caster); return; }
 
         // AND IT IS SPENT HERE, where it was drunk. The bag belongs to the server now, so a stack reduced only on
         // the drinker's own machine would be put straight back the next time the server said what they were
@@ -2663,6 +2804,32 @@ public class GameNetwork : NetworkManager
         if (string.IsNullOrEmpty(msg.id) || msg.id.Length > 64) return;
         var d = MonsterCatalog.ById(msg.id);
         conn.Send(new MobInfoReply { id = msg.id, text = d != null ? MobInfo.Text(d) : "No creature called '" + msg.id + "'." });
+    }
+
+    /// <summary>The map window asking how many of each creature live in a map; false when there is no server to ask.</summary>
+    public static bool AskMapCreatureCounts(string map)
+    {
+        if (!NetworkClient.isConnected || string.IsNullOrEmpty(map)) return false;
+        NetworkClient.Send(new MapCountsRequest { map = map });
+        return true;
+    }
+
+    static void OnMapCountsReply(MapCountsReply msg) => MapCreatureCounts.TakeSent(msg.map, msg.held, msg.ids, msg.counts, msg.kept);
+
+    static readonly System.Collections.Generic.List<string> countIds = new System.Collections.Generic.List<string>(32);
+    static readonly System.Collections.Generic.List<int> countNumbers = new System.Collections.Generic.List<int>(32);
+    static readonly System.Collections.Generic.List<int> keptNumbers = new System.Collections.Generic.List<int>(32);
+
+    // Asked BY a player, answered HERE: one walk over the creatures filed under that map. Counted with the other
+    // questions a connection asks, so it cannot be used to flood the server.
+    void OnMapCountsRequest(NetworkConnectionToClient conn, MapCountsRequest msg)
+    {
+        if (conn == null || AskingTooFast(conn.connectionId)) return;
+        if (ShellFor(conn) == null) return;
+        if (string.IsNullOrEmpty(msg.map) || msg.map.Length > 64) return;
+        bool held = MapCreatureCounts.Count(msg.map, countIds, countNumbers, keptNumbers);
+        conn.Send(new MapCountsReply { map = msg.map, held = held, ids = countIds.ToArray(), counts = countNumbers.ToArray(),
+                                       kept = keptNumbers.ToArray() });
     }
 
     // ---- SAYING SOMETHING OUT LOUD ----------------------------------------------------------------------

@@ -59,9 +59,41 @@
       "text": "Monsters walk exactly the ground you walk: any slope you can climb, they can climb after you, and a cliff that stops you stops them too."
     },
     {
+      "type": "heading",
+      "text": "Towns and their Keepers"
+    },
+    {
+      "type": "paragraph",
+      "text": "There are **sixteen towns**, and every one has a **Keeper** standing just inside one of its doors. Walk up and press **F** to open the Keeper's window. A Keeper does three things."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Save Point** — this town becomes the place you come back to, in front of its Keeper. Falling in battle and choosing *Return to last saved point* brings you there, and so does a Butterfly Wing. Until you set one, you come back at Lastline's west door.",
+        "**Storage** — one storage for your whole **account**: every character you play opens the same one. It holds **600** different things; a stack of one item counts as one, and each piece of gear counts as one and comes back out exactly as it went in — its folds, its grade, its written stats, its cards. Quest items cannot be stored.",
+        "**Teleport** — to any other town, for gold. The price grows with every door you would have walked through to get there, so the town next door is cheap and the far side of the world is not. A town you cannot afford is drawn dim. You arrive in front of that town's Keeper."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Wings"
+    },
+    {
+      "type": "paragraph",
+      "text": "Two things you can carry do a little of a Keeper's work anywhere. Both are sold by tool dealers and dropped by monsters, and each is used up when it works."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Butterfly Wing** — returns you to your save point, from any map. If the trip cannot be made, the wing comes back to your bag.",
+        "**Fly Wing** — sets you down on a random spot of the map you are on, always one you can walk back from. If there is nowhere to land, it stays in your bag."
+      ]
+    },
+    {
       "type": "quote",
       "text": [
-        "*Status: all fourteen biomes are in the game, and the world's maps are built and joined to one another by doors. Some biomes are still waiting for props of their own — palm trees, cacti, dead trees, reeds — and the towns for their buildings.*"
+        "*Status: all fourteen biomes are in the game, and the world's maps are built and joined to one another by doors. Every town has its Keeper; Lastline is the only town with other townsfolk and a shop so far. Some biomes are still waiting for props of their own — palm trees, cacti, dead trees, reeds — and the towns for their buildings.*"
       ]
     }
   ]

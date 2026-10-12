@@ -25,546 +25,637 @@ MonoBehaviour:
     w: 80
     h: 80
     type: town
+    name: Lastline
   - scene: old_oak
     x: 610
     y: 320
     w: 80
     h: 80
     type: town
+    name: Old Oak
   - scene: lst_fild01
     x: 708
     y: 402
     w: 64
     h: 56
     type: field
+    name: Lastline Field 1
   - scene: prl_fild01
     x: 608
     y: 432
     w: 64
     h: 56
     type: field
+    name: Parley Field 1
   - scene: olk_fild01
     x: 568
     y: 242
     w: 64
     h: 56
     type: field
+    name: Old Oak Field 1
   - scene: olk_dun01
     x: 500
     y: 170
     w: 40
     h: 40
     type: dungeon
+    name: Old Oak Dungeon 1
   - scene: olk_dun02
     x: 500
     y: 218
     w: 40
     h: 40
     type: dungeon
+    name: Old Oak Dungeon 2
   - scene: lst_fild02
     x: 738
     y: 262
     w: 64
     h: 56
     type: field
+    name: Lastline Field 2
   - scene: gemmara
     x: 970
     y: 360
     w: 80
     h: 80
     type: town
+    name: Gemmara
   - scene: gmr_fild01
     x: 1088
     y: 432
     w: 64
     h: 56
     type: field
+    name: Gemmara Field 1
   - scene: pluvenne
     x: 1179
     y: 484
     w: 80
     h: 80
     type: town
+    name: Pluvenne
   - scene: plv_fild01
     x: 1098
     y: 602
     w: 64
     h: 56
     type: field
+    name: Pluvenne Field 1
   - scene: lst_fild03
     x: 968
     y: 612
     w: 64
     h: 56
     type: field
+    name: Lastline Field 3
   - scene: hilt
     x: 1040
     y: 210
     w: 80
     h: 80
     type: town
+    name: Hilt
   - scene: hlt_fild02
     x: 928
     y: 222
     w: 64
     h: 56
     type: field
+    name: Hilt Field 2
   - scene: hlt_fild01
     x: 1158
     y: 262
     w: 64
     h: 56
     type: field
+    name: Hilt Field 1
   - scene: hlt_dun01
     x: 1240
     y: 180
     w: 40
     h: 40
     type: dungeon
+    name: Hilt Dungeon 1
   - scene: hlt_dun02
     x: 1290
     y: 180
     w: 40
     h: 40
     type: dungeon
+    name: Hilt Dungeon 2
   - scene: hlt_dun03
     x: 1340
     y: 180
     w: 40
     h: 40
     type: dungeon
+    name: Hilt Dungeon 3
   - scene: hrw_fild01
     x: 628
     y: 592
     w: 64
     h: 56
     type: field
+    name: Harrowen Field 1
   - scene: parley
     x: 528
     y: 388
     w: 64
     h: 64
     type: town
+    name: Parley
   - scene: tornel
     x: 458
     y: 488
     w: 64
     h: 64
     type: town
+    name: Tornel
   - scene: harrowen
     x: 543
     y: 608
     w: 64
     h: 64
     type: town
+    name: Harrowen
   - scene: prl_fild02
     x: 438
     y: 392
     w: 64
     h: 56
     type: field
+    name: Parley Field 2
   - scene: pennaryl
     x: 410
     y: 265
     w: 80
     h: 80
     type: town
+    name: Pennaryl
   - scene: pnr_fild01
     x: 328
     y: 257
     w: 64
     h: 56
     type: field
+    name: Pennaryl Field 1
   - scene: vlm_fild01
     x: 258
     y: 342
     w: 64
     h: 56
     type: field
+    name: Velmora Field 1
   - scene: trn_fild01
     x: 348
     y: 362
     w: 64
     h: 56
     type: field
+    name: Tornel Field 1
   - scene: velmora
     x: 260
     y: 420
     w: 80
     h: 80
     type: town
+    name: Velmora
   - scene: vlm_fild02
     x: 168
     y: 442
     w: 64
     h: 56
     type: field
+    name: Velmora Field 2
   - scene: brm_fild02
     x: 58
     y: 517
     w: 64
     h: 56
     type: field
+    name: Brimstone Field 2
   - scene: vlm_fild03
     x: 138
     y: 227
     w: 64
     h: 56
     type: field
+    name: Velmora Field 3
   - scene: vlm_dun01
     x: 80
     y: 330
     w: 40
     h: 40
     type: dungeon
+    name: Velmora Dungeon 1
   - scene: vlm_dun02
     x: 130
     y: 330
     w: 40
     h: 40
     type: dungeon
+    name: Velmora Dungeon 2
   - scene: vlm_dun03
     x: 180
     y: 330
     w: 40
     h: 40
     type: dungeon
+    name: Velmora Dungeon 3
   - scene: brimstone
     x: 248
     y: 528
     w: 64
     h: 64
     type: town
+    name: Brimstone
   - scene: brm_fild01
     x: 333
     y: 572
     w: 64
     h: 56
     type: field
+    name: Brimstone Field 1
   - scene: cindrel
     x: 680
     y: 60
     w: 80
     h: 80
     type: town
+    name: Cindrel
   - scene: cdl_fild01
     x: 583
     y: 112
     w: 64
     h: 56
     type: field
+    name: Cindrel Field 1
   - scene: cdl_fild02
     x: 793
     y: 122
     w: 64
     h: 56
     type: field
+    name: Cindrel Field 2
   - scene: cdl_dun01
     x: 880
     y: 40
     w: 40
     h: 40
     type: dungeon
+    name: Cindrel Dungeon 1
   - scene: cdl_dun02
     x: 930
     y: 40
     w: 40
     h: 40
     type: dungeon
+    name: Cindrel Dungeon 2
   - scene: cdl_dun03
     x: 980
     y: 40
     w: 40
     h: 40
     type: dungeon
+    name: Cindrel Dungeon 3
   - scene: luminhal
     x: 1368
     y: 430
     w: 80
     h: 80
     type: town
+    name: Luminhal
   - scene: lmh_fild01
     x: 1322
     y: 511
     w: 64
     h: 56
     type: field
+    name: Luminhal Field 1
   - scene: kharnel
     x: 218
     y: 758
     w: 64
     h: 64
     type: town
+    name: Kharnel
   - scene: khn_fild02
     x: 98
     y: 697
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 2
   - scene: khn_fild01
     x: 318
     y: 852
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 1
   - scene: khn_dun01
     x: 40
     y: 840
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 1
   - scene: khn_dun02
     x: 40
     y: 890
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 2
   - scene: khn_dun03
     x: 90
     y: 940
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 3
   - scene: khn_dun04
     x: 140
     y: 940
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 4
   - scene: khn_fild03
     x: 588
     y: 817
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 3
   - scene: khn_fild04
     x: 788
     y: 862
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 4
   - scene: khn_fild05
     x: 1124
     y: 804
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 5
   - scene: khn_fild07
     x: 1308
     y: 732
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 7
   - scene: khn_fild06
     x: 1268
     y: 852
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 6
   - scene: halcyra
     x: 205
     y: 45
     w: 80
     h: 80
     type: town
+    name: Halcyra
   - scene: hcr_fild01
     x: 98
     y: 47
     w: 64
     h: 56
     type: field
+    name: Halcyra Field 1
   - scene: hcr_fild02
     x: 328
     y: 47
     w: 64
     h: 56
     type: field
+    name: Halcyra Field 2
   - scene: last_bridge
     x: 25
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Last Bridge
   - scene: hill_of_the_flame
     x: 130
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Hill of the Flame
   - scene: thousand_gates
     x: 235
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Thousand Gates
   - scene: narrowbend
     x: 340
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Narrowbend
   - scene: masked_ballroom
     x: 445
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Masked Ballroom
   - scene: burning_keel
     x: 550
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Burning Keel
   - scene: everburning_plain
     x: 655
     y: 1070
     w: 50
     h: 50
     type: special
+    name: Everburning Plain
   - scene: sky_cairn
     x: 25
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Sky Cairn
   - scene: tide_temple
     x: 130
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Tide Temple
   - scene: dusk_tower
     x: 235
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Dusk Tower
   - scene: walking_road
     x: 340
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Walking Road
   - scene: drowned_chapel
     x: 445
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Drowned Chapel
   - scene: aurora_steps
     x: 550
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Aurora Steps
   - scene: unmarked_path
     x: 655
     y: 1150
     w: 50
     h: 50
     type: special
+    name: Unmarked Path
   - scene: gmr_fild02
     x: 840
     y: 290
     w: 64
     h: 56
     type: field
+    name: Gemmara Field 2
   - scene: lst_fild04
     x: 880
     y: 540
     w: 64
     h: 56
     type: field
+    name: Lastline Field 4
   - scene: hrw_fild02
     x: 730
     y: 600
     w: 64
     h: 56
     type: field
+    name: Harrowen Field 2
   - scene: lst_fild05
     x: 880
     y: 700
     w: 64
     h: 56
     type: field
+    name: Lastline Field 5
   - scene: lst_dun01
     x: 960
     y: 720
     w: 40
     h: 40
     type: dungeon
+    name: Lastline Dungeon 1
   - scene: lst_dun02
     x: 1010
     y: 720
     w: 40
     h: 40
     type: dungeon
+    name: Lastline Dungeon 2
   - scene: pnr_fild02
     x: 228
     y: 232
     w: 64
     h: 56
     type: field
+    name: Pennaryl Field 2
   - scene: brm_fild03
     x: 150
     y: 590
     w: 64
     h: 56
     type: field
+    name: Brimstone Field 3
   - scene: khn_fild08
     x: 380
     y: 770
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 8
   - scene: khn_fild09
     x: 880
     y: 790
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 9
   - scene: khn_dun05
     x: 870
     y: 930
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 5
   - scene: khn_dun06
     x: 920
     y: 930
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 6
   - scene: khn_fild10
     x: 1180
     y: 900
     w: 64
     h: 56
     type: field
+    name: Kharnel Field 10
   - scene: khn_dun07
     x: 1395
     y: 690
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 7
   - scene: khn_dun08
     x: 1445
     y: 690
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 8
   - scene: khn_dun09
     x: 1445
     y: 740
     w: 40
     h: 40
     type: dungeon
+    name: Kharnel Dungeon 9
   - scene: hazemere
     x: 356
     y: 440
     w: 80
     h: 80
     type: town
+    name: Hazemere
   links:
   - a: lastline
     b: lst_fild01

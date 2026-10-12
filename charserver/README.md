@@ -69,6 +69,18 @@ rather than replacing, another account being unable to read or delete it, a dele
 too large for an ordinary integer, a character id written in any spelling but the plain one, a malformed body
 from a stranger leaking no stack trace, and health actually reaching the database.
 
+```bash
+charserver/test-storage.sh
+```
+
+Needs neither server running, and never touches the real database's tables: it makes a throwaway database beside
+it, applies every migration, runs a copy of this server built into a temporary folder on a spare port, and removes
+all three when it ends. It proves an account's **storage** (what it keeps with a Keeper): a store and a take ride
+the map server's progress save and apply once however often that save is sent; a move that cannot be made —
+storage full, a piece already stored or still carried, nothing left to take — answers 422 and writes nothing,
+progress included; every character of an account reads one storage through
+`GET /server/characters/:id/storage` and a stranger's reads none of it; a stack taken to nothing leaves no row.
+
 ## Pointing the game at it
 
 One setting on the game, `CHAR_SERVER_URL`, set in `settings.env` at the top of the project (`http://localhost:8081`

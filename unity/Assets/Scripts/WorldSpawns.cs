@@ -61,6 +61,24 @@ public class WorldSpawns : ScriptableObject
         }
     }
 
+    /// <summary>How many of each creature <paramref name="map"/> keeps alive, by creature id — every row there that names
+    /// the creature, added up. A row that draws a random mix is left out: its count belongs to the whole mix, never to
+    /// one creature in it. Adds to <paramref name="into"/> (cleared first).</summary>
+    public static void KeptIn(string map, Dictionary<string, int> into)
+    {
+        into.Clear();
+        var list = Instance;
+        if (list == null || string.IsNullOrEmpty(map)) return;
+        foreach (var row in list.rows)
+        {
+            if (row == null || row.map != map || row.population <= 0 || string.IsNullOrWhiteSpace(row.creature)) continue;
+            var def = MonsterCatalog.Get(row.creature);
+            if (def == null || string.IsNullOrEmpty(def.id)) continue;
+            into.TryGetValue(def.id, out int n);
+            into[def.id] = n + row.population;
+        }
+    }
+
     static readonly List<MonsterDef> mixScratch = new List<MonsterDef>();
 
     /// <summary>Every creature that can live in <paramref name="map"/>: each one a row names, and each one a mix row

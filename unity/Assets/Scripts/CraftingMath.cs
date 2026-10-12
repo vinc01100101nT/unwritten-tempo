@@ -40,18 +40,53 @@ public static class CraftingMath
     /// Raw to +20% at A. Added to the skill's level lift, never multiplied onto it.</summary>
     public static float TrademarkLift(Quality q) => TrademarkLifts[Index(q)];
 
-    /// <summary>Each ULTIMATE's chance, in percent, of being the trademark a forge rolls. The ordinary skills share
-    /// whatever the ultimates leave.</summary>
-    public const int UltimateTrademarkPercent = 5;
+    // ---- the trademark roll: a rarity first, then a skill of that rarity -----------------------------------
+    // Indexed by (int)Rarity: Common, Uncommon, Rare, Epic, Legendary. Each rarity's share, in percent, of every
+    // weapon of one type the forge makes. Whole numbers summing to 100, so the first draw is one integer draw.
+    static readonly int[] RarityShares = { 50, 30, 14, 5, 1 };
 
-    /// <summary>One candidate's weight in the forge's trademark roll, out of a total of 100 × <paramref name="ordinaries"/>:
-    /// an ultimate is worth <see cref="UltimateTrademarkPercent"/>%, an ordinary skill an even share of the rest.
-    /// Whole numbers, so the roll is one integer draw. With no ordinary skill, or ultimates that would eat the whole
-    /// roll, every candidate weighs the same.</summary>
-    public static int TrademarkWeight(bool ultimate, int ordinaries, int ultimates)
+    /// <summary>How many rarities there are — the length every per-rarity count below must have.</summary>
+    public static int RarityCount => RarityShares.Length;
+
+    /// <summary><paramref name="rarity"/>'s share, in percent, of every forged weapon of a weapon type that has
+    /// trademarks of every rarity.</summary>
+    public static int RarityShare(Rarity rarity) => RarityShares[Mathf.Clamp((int)rarity, 0, RarityShares.Length - 1)];
+
+    /// <summary>The size of the forge's FIRST draw, the rarity: the shares of only the rarities that have at least one
+    /// candidate, so a weapon type with no Epic trademark hands Epic's share to the others in proportion. 0 when
+    /// there is nothing to roll. <paramref name="candidatesByRarity"/> is how many trademarks of each rarity the
+    /// weapon type has, indexed by (int)Rarity.</summary>
+    public static int TrademarkRollTotal(int[] candidatesByRarity)
     {
-        if (ordinaries <= 0 || ultimates * UltimateTrademarkPercent >= 100) return 1;
-        return ultimate ? UltimateTrademarkPercent * ordinaries : 100 - UltimateTrademarkPercent * ultimates;
+        int total = 0;
+        for (int r = 0; r < RarityShares.Length && r < candidatesByRarity.Length; r++)
+            if (candidatesByRarity[r] > 0) total += RarityShares[r];
+        return total;
+    }
+
+    /// <summary>The rarity a first draw of <paramref name="roll"/> (0 to <see cref="TrademarkRollTotal"/> − 1) lands on.
+    /// The second draw then picks evenly among that rarity's candidates.</summary>
+    public static Rarity TrademarkRarityAt(int[] candidatesByRarity, int roll)
+    {
+        int last = 0;
+        for (int r = 0; r < RarityShares.Length && r < candidatesByRarity.Length; r++)
+        {
+            if (candidatesByRarity[r] <= 0) continue;
+            last = r;
+            roll -= RarityShares[r];
+            if (roll < 0) return (Rarity)r;
+        }
+        return (Rarity)last;
+    }
+
+    /// <summary>The chance one trademark of <paramref name="rarity"/> is the one a forge rolls: its rarity's share of
+    /// the first draw, split evenly among that rarity's candidates. 0 when its rarity has no candidate.</summary>
+    public static float TrademarkChance(Rarity rarity, int[] candidatesByRarity)
+    {
+        int r = (int)rarity;
+        if (r < 0 || r >= candidatesByRarity.Length || candidatesByRarity[r] <= 0) return 0f;
+        int total = TrademarkRollTotal(candidatesByRarity);
+        return total > 0 ? RarityShare(rarity) / (float)total / candidatesByRarity[r] : 0f;
     }
 
     /// <summary>The most folds this grade allows — and, because a piece cannot be folded past its grade, also

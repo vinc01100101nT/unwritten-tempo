@@ -34,3 +34,11 @@ component). Passes: Clear+MarkVisible filter `CoverBit` (body+gear cover the vis
 (body only) ⇒ gear covers the body behind it but is never painted. `WeaponSocket.Remount` calls
 `OccludedSilhouetteTarget.Refresh()` after mounting so runtime weapon swaps re-flag. Both bugs CONFIRMED FIXED live
 by the user 2026-07-15.
+
+**Creatures wear it too, per player (2026-10-11).** `NetMob.TradedABlowWithMe()` marks a creature's drawn body for
+10 s (`FightShownSeconds`) after a blow the server reported between it and THIS machine's player: its swing at them
+(hit or miss, `OnPlayerHitResult`) or their hit on it (not a miss, `OnHitResult`). The mark is an
+`OccludedSilhouetteTarget` added to the body on first need and switched with `Show(bool)`; `DropTheView` switches it
+off before the body is banked. Flat creatures get their exact shape because the shader now clips on the sprite's
+`_MainTex` alpha at 0.5 (a 3D body hands over no texture and reads white = solid). Grass (`FoliageWind`, ZWrite On)
+counts as an occluder. Not yet seen in Play when written.

@@ -190,6 +190,41 @@ public static class SaveOutbox
             e.body = null;
             Recovered(characterId, e);
             settledNow = e.settled; e.settled = null;
+            // A storage move this document carried is now written down (see StorageMoves).
+            if (!characterId.EndsWith(HotbarSuffix)) StorageMoves.Landed(IdOf(characterId), sent);
+        }
+        else if (status == 422 && !characterId.EndsWith(HotbarSuffix))
+        {
+            // THE STORAGE MOVE IT CARRIED FAILED A CHECK, and the character server wrote NOTHING — the move took the
+            // whole save back with it. The same document goes again with the move taken out (and a stored thing put
+            // back in its bag, a taken one taken back out), so the progress still lands. A newer document waiting behind
+            // it carries the same move: it goes instead, with that move taken out of it too — the character server is
+            // never asked a move twice once the player has been told it was refused — and inherits who was waiting.
+            string again = StorageMoves.Refused(IdOf(characterId), sent, reply, out string refusedMove);
+            if (e.nextBody != null)
+            {
+                e.nextBody = StorageMoves.WithoutMove(e.nextBody, refusedMove) ?? e.nextBody;
+                e.body = null;
+                e.nextWaiters = told + e.nextWaiters;
+                told = null;
+            }
+            else if (again != null)
+            {
+                e.body = again;
+                e.waiters = told;
+                told = null;
+                Send(characterId, e);
+            }
+            else
+            {
+                string kept = KeepRefused(characterId, sent);
+                GameLog.Error(LogCat.Server, "a save for character " + characterId + " was refused over its storage move ("
+                                  + reply + ") and could not be read back to send again — kept in " + kept + ".");
+                StorageMoves.Abandoned(IdOf(characterId), sent, putBack: true);
+                e.body = null;
+                Recovered(characterId, e);
+                settledNow = e.settled; e.settled = null;
+            }
         }
         else if (status == 409)
         {
@@ -197,6 +232,8 @@ public static class SaveOutbox
             // character server refuses it so it cannot put that player back to an older state. Never resent.
             GameLog.Warn(LogCat.Server, "a save for character " + characterId + " was refused — they have been "
                              + "handed to another server since. Dropped so it cannot roll them back. " + reply);
+            // A storage move it carried goes with it: the server they are on now holds the bag as it really is.
+            if (!characterId.EndsWith(HotbarSuffix)) StorageMoves.Abandoned(IdOf(characterId), sent, putBack: false);
             e.body = null;
             Recovered(characterId, e);
             settledNow = e.settled; e.settled = null;
@@ -207,6 +244,13 @@ public static class SaveOutbox
             string kept = KeepRefused(characterId, sent);
             GameLog.Error(LogCat.Server, "a save for character " + characterId + " was refused for good ("
                               + status + " " + reply + ") — kept in " + kept + " for a person to look at.");
+            // A storage move it carried will never be written: a thing on its way into storage goes back in the bag.
+            if (!characterId.EndsWith(HotbarSuffix))
+            {
+                string letGo = StorageMoves.Abandoned(IdOf(characterId), sent, putBack: true);
+                // A newer document waiting behind this one carries the same move, and must not ask it again.
+                if (e.nextBody != null) e.nextBody = StorageMoves.WithoutMove(e.nextBody, letGo) ?? e.nextBody;
+            }
             e.body = null;
             Recovered(characterId, e);
             // SETTLED TOO: what it carried is in that file for a person, and sending it again would be refused the

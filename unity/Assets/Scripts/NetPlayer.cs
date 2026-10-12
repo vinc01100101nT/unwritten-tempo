@@ -297,10 +297,18 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// server happened to make current last, and the move into the right one used to wait for the player's machine
     /// to name its map — which never moved it, because the name already matched. The body then stayed in the wrong
     /// map: once a field had been opened and let go, everybody arriving with a save was filed somewhere else, saw no
-    /// townsfolk, and was seen by nobody in the town.</para></summary>
-    public void SetMapOnArrival(SaveData pushed)
+    /// townsfolk, and was seen by nobody in the town.</para>
+    ///
+    /// <para>THE MAP IS THE CHARACTER SERVER'S ANSWER, NOT THEIR MACHINE'S. <paramref name="announcedMap"/> is the map
+    /// the character server sent them to — their save's, or this server's starting map for a character never played or
+    /// saved in a map the game no longer has (that save carries no map at all). Their own machine is never asked: it
+    /// may only confirm it (see <see cref="CmdReportMap"/>). And when the save says WHERE in that map, that is where
+    /// their first report must land (see <see cref="ExpectArrival"/>).</para></summary>
+    public void SetMapOnArrival(SaveData pushed, string announcedMap)
     {
-        string map = pushed.sceneName;
+        string map = !string.IsNullOrWhiteSpace(announcedMap) ? announcedMap
+                   : pushed != null && !string.IsNullOrWhiteSpace(pushed.sceneName) ? pushed.sceneName
+                   : MapServerLink.StartingMap;
         if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName))
         {
             mapName = map;
@@ -308,9 +316,20 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         }
         BindMapToFighter();
 
+        if (pushed == null) return;
         storedMap = pushed.sceneName;
         storedPosition = new Vector3(pushed.posX, pushed.posY, pushed.posZ);
         storedSpawnId = pushed.arriveAtSpawnId;
+
+        // WHERE IN THAT MAP THEIR SAVE PUTS THEM, which is where their machine stands them as the map lands: a spot,
+        // or an arrival point of this map. Only when the save's map IS the map they were sent to — a character sent
+        // somewhere else is placed by that map, not by an old spot.
+        if (pushed.sceneName != mapName) return;
+        if (!string.IsNullOrEmpty(pushed.arriveAtSpawnId))
+        {
+            if (ArrivalPointIn(mapName, pushed.arriveAtSpawnId, out var at)) ExpectArrival(at, false);
+        }
+        else ExpectArrival(storedPosition, false);
     }
 
     // WHERE THE STORED CHARACTER STANDS, as it arrived. Written back unchanged until this person's own machine has
@@ -353,23 +372,70 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     public void MarkLeaving() => Leaving = true;
 
     /// <summary>A door. The player's own machine no longer travels by itself, because the map it is walking into
-    /// may be held by a different process — and only the server can find out which, or refuse.</summary>
+    /// may be held by a different process — and only the server can find out which, or refuse.
+    ///
+    /// <para>ONLY A DOOR THAT IS THERE. The map named must be joined to the map they are in by a door in the world
+    /// layout (<see cref="WorldAtlas.links"/>), and they must be standing at it — otherwise any map name sent here was a
+    /// free teleport. Refused, logged, and the curtain their machine raised is lowered.</para></summary>
     [Command]
-    public void CmdWalkThroughPortal(string map, string spawnId) => MoveToMap(map, spawnId);
+    public void CmdWalkThroughPortal(string map, string spawnId)
+    {
+        if (Leaving) return;
+        bool atADoor = WorldRoutes.DoorWithin(mapName, map, netPosition.x, netPosition.z, KeeperMath.DoorReach + ReachSlack);
+        // A GAME MASTER IS LET THROUGH ANY DOOR — the test maps join each other by doors the world layout does not list,
+        // and a GM can already go anywhere with /tp. Said in the log, so nobody mistakes it for a door that exists.
+        if (!atADoor && ServerIsGm)
+        {
+            GameLog.Info(LogCat.Server, "GM " + playerName + " walked through a door to '" + map + "' from '" + mapName
+                         + "' with no door of the world layout in reach — let through");
+            atADoor = true;
+        }
+        if (!atADoor)
+        {
+            GameLog.Warn(LogCat.Server, playerName + " asked to walk through a door to '" + map + "' from '" + mapName
+                         + "' at " + Coords.Text(netPosition, "0.0") + " — there is no such door within "
+                         + KeeperMath.DoorReach + " m of them. Refused.");
+            TargetMoveFailed(connectionToClient, "There is no door here.");
+            return;
+        }
+        MoveToMap(map, spawnId);
+    }
 
     /// <summary>Server-only: take this person to <paramref name="map"/>. The one way anybody changes map — a door
     /// they walked through and a GM's <c>/tp</c> both come here, so a command cannot skip the save that has to
     /// land before they are handed to another process.
     ///
     /// <para>With <paramref name="toSpot"/> they arrive at <paramref name="spot"/> — a position INSIDE the map, the
-    /// same form a save's position is — instead of at an arrival point; a save point has no doorway to name.</para></summary>
-    public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default)
+    /// same form a save's position is — instead of at an arrival point; a save point has no doorway to name.</para>
+    ///
+    /// <para><paramref name="onFailure"/> is told when the move does not happen — refused at once, the save before it
+    /// failed, or the map would not take them — so whoever paid for the trip can be paid back.</para></summary>
+    public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default, Action onFailure = null)
     {
-        if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) return;
+        if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) { onFailure?.Invoke(); return; }
 
         // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
         // exactly as instant as it has always been.
-        if (MapHosting.Holding(map)) { TargetTravelHere(connectionToClient, map, spawnId, toSpot, spot); return; }
+        // AND THE SERVER PUTS THEM THERE ITSELF, before their machine is told: the map is this server's to set, never
+        // their machine's to report, and the spot they will appear at is where it holds them from this moment.
+        if (MapHosting.Holding(map))
+        {
+            bool sameMap = map == mapName;
+            Vector3 at = spot;
+            bool known = toSpot || ArrivalPointIn(map, spawnId, out at);
+            ChangeMapOnServer(map);
+            if (known) ExpectArrival(at, sameMap);
+            else
+            {
+                // AN ARRIVAL POINT THIS SERVER CANNOT NAME (none was given, so their machine picks the map's first) —
+                // the one case still taken on trust: their next report is believed as it comes.
+                ForgiveNextMove();
+                GameLog.Warn(LogCat.Server, playerName + " was sent into '" + map + "' with no arrival point the server "
+                             + "can name — their next position is taken as read");
+            }
+            TargetTravelHere(connectionToClient, map, spawnId, toSpot, spot);
+            return;
+        }
 
         MarkLeaving();
         MapHosting.Want(map);
@@ -378,15 +444,85 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // WRITTEN DOWN, AND THE WRITE CONFIRMED, BEFORE ANYBODY ELSE IS TOLD ABOUT THEM. The process they are
         // going to is handed the stored character, so a move that started before the write landed would hand
         // over whoever they were fifteen seconds ago and lose everything since.
+        // AND WRITTEN DOWN STANDING WHERE THEY ARE GOING — the destination map and spot (or arrival point) — so the
+        // character server hands the other process a character already there, and a player who drops during the
+        // loading screen comes back where they were sent, with whatever they paid for the trip spent on it. If the
+        // move then fails they stay here, and the next save writes them back where they really are.
+        var travel = toSpot || !string.IsNullOrEmpty(spawnId)
+            ? new TravelTo { map = map, spawnId = spawnId ?? "", toSpot = toSpot, spot = spot } : null;
         SaveNow(ok =>
         {
             if (this == null) return;
-            if (!ok) { Leaving = false; TargetMoveFailed(connectionToClient, "could not save your character"); return; }
-            AskTheCharacterServerToMoveMe(map, spawnId, toSpot, spot);
-        });
+            if (!ok)
+            {
+                Leaving = false;
+                SaveNow(null);
+                TargetMoveFailed(connectionToClient, "could not save your character");
+                onFailure?.Invoke();
+                return;
+            }
+            AskTheCharacterServerToMoveMe(map, spawnId, toSpot, spot, onFailure);
+        }, travel);
     }
 
-    void AskTheCharacterServerToMoveMe(string map, string spawnId, bool toSpot, Vector3 spot)
+    // A document stands them in `map`: at `spot` when there is one, otherwise at the arrival point `spawnId`.
+    static void WriteWhere(SaveData save, string map, string spawnId, bool atSpot, Vector3 spot)
+    {
+        save.sceneName = map;
+        if (atSpot)
+        {
+            save.posX = spot.x; save.posY = spot.y; save.posZ = spot.z;
+            save.arriveAtSpawnId = "";
+        }
+        else
+        {
+            save.posX = save.posY = save.posZ = 0f;
+            save.arriveAtSpawnId = spawnId ?? "";
+        }
+    }
+
+    /// <summary>Where a server-decided trip sets somebody down, written into the save that hands them over.</summary>
+    public sealed class TravelTo
+    {
+        public string map, spawnId;
+        public bool toSpot;
+        public Vector3 spot;
+    }
+
+    // SERVER: this person is now in `map`, because the server put them there. The one place their map changes on this
+    // process — everything that follows a map change follows from here.
+    void ChangeMapOnServer(string map)
+    {
+        if (map == mapName) return;
+        mapName = map;
+        FileBodyInto(map);
+        BindMapToFighter();
+        // Where the followed quest's step happens is told from where they stand: a new map can mean a new next door,
+        // and a different nearest smith to mark.
+        SendQuests(true);
+        // The copy of their storage this server held is let go; the next Keeper reads it fresh.
+        serverStorage.Clear();
+        nextStorageReadAt = 0f;
+        SaveSoon();
+    }
+
+    // SERVER: where an arrival point of a map this server holds stands, inside that map — the same choice their machine
+    // makes (PersistentPlayer3D.ResolveSpawn): the point named, or with none named in the default map, its default.
+    // FALSE when it cannot be told: no point of that name, or none named elsewhere (their machine then takes whichever
+    // the map lists first). Asked once per trip, never per frame.
+    static bool ArrivalPointIn(string map, string spawnId, out Vector3 at)
+    {
+        at = default;
+        string want = !string.IsNullOrEmpty(spawnId) ? spawnId : map == SavePoint.DefaultMap ? SavePoint.DefaultSpawnId : null;
+        var scene = SceneManager.GetSceneByName(map);
+        if (want == null || !scene.IsValid() || !scene.isLoaded) return false;
+        foreach (var root in scene.GetRootGameObjects())
+            foreach (var point in root.GetComponentsInChildren<SpawnPoint>(true))   // perf-ok: once per trip
+                if (point.id == want) { at = MapManager.InMap(point.transform.position, map); return true; }
+        return false;
+    }
+
+    void AskTheCharacterServerToMoveMe(string map, string spawnId, bool toSpot, Vector3 spot, Action onFailure)
     {
         TargetMoveStep(connectionToClient, "Finding the map…");
 
@@ -402,7 +538,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
                 // exactly as they were before they touched the door.
                 Leaving = false;
                 GameLog.Warn(LogCat.Server, "could not move " + playerName + " to '" + map + "' — " + error + " " + reply);
+                // The save that went ahead of the move stood them at the destination; this one puts them back, now.
+                SaveNow(null);
                 TargetMoveFailed(connectionToClient, "that place would not take you just now");
+                onFailure?.Invoke();
                 return;
             }
 
@@ -427,12 +566,37 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId, toSpot, spot);
 
     /// <summary>SERVER ONLY: take this person to their save point — or, when they have never set one, to
-    /// <see cref="SavePoint.DefaultMap"/>'s default arrival point.</summary>
-    public void SendToSavePoint()
+    /// <see cref="SavePoint.DefaultMap"/>'s default arrival point. <paramref name="onFailure"/> is told when the trip
+    /// does not happen (see <see cref="MoveToMap"/>).</summary>
+    public void SendToSavePoint(Action onFailure = null)
     {
-        var c = ServerCharacter;
-        if (c != null && c.HasSavePoint) MoveToMap(c.SavePointMap, null, true, c.SavePointPosition);
-        else MoveToMap(SavePoint.DefaultMap, SavePoint.DefaultSpawnId);
+        SavePointTrip(ServerCharacter, out var map, out var spawnId, out bool toSpot, out var spot);
+        MoveToMap(map, spawnId, toSpot, spot, onFailure);
+    }
+
+    /// <summary>Where <paramref name="c"/>'s save point puts them: a spot in a map, or an arrival point. A save point set
+    /// at a Keeper names only the town, so the spot is worked out now from where that town's Keeper stands; a town with
+    /// no Keeper any more, like a character with no save point, sends them to the default arrival point.</summary>
+    static void SavePointTrip(Character c, out string map, out string spawnId, out bool toSpot, out Vector3 spot)
+    {
+        spawnId = null; toSpot = false; spot = default;
+        if (c != null && c.HasSavePoint)
+        {
+            if (!c.SavePointAtKeeper)
+            {
+                map = c.SavePointMap; toSpot = true; spot = c.SavePointPosition;
+                return;
+            }
+            var keeper = WorldTownsfolk.KeeperIn(c.SavePointMap);
+            if (keeper != null)
+            {
+                map = c.SavePointMap; toSpot = true;
+                spot = KeeperMath.ArrivalSpot(keeper.home, keeper.facing, KeeperMath.ArrivalAhead);
+                return;
+            }
+        }
+        map = SavePoint.DefaultMap;
+        spawnId = SavePoint.DefaultSpawnId;
     }
 
     /// <summary>SERVER ONLY: make where this person is standing right now their save point — the GM's <c>/save</c>.
@@ -560,6 +724,8 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         {
             ServerSaveTick();
             SendOwedBag();
+            if (savePointTripOwed) TakeOwedTrip();
+            if (arrivalExpected) StandThemWhereSentIfLate();
             if (questsPushOwed) { questsPushOwed = false; SendQuests(true); }
         }
 
@@ -658,6 +824,38 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     static bool RealStance(StanceId id) => StanceCatalog.Exists(id);
 
     static float SanePose(float seconds) => Mathf.Clamp(seconds, 0f, LongestPose);
+
+    // ---- "if equipped" lines for a piece in the bag (EquipPreview) ------------------------------------------
+    //
+    // The pointer resting on a piece asks; the server derives the sheet as if it were worn and sends the finished
+    // lines back to this connection alone. At most a few a second per person — a hover asks once per piece until the
+    // character next changes, so honest play never comes near it.
+    const int MostPreviewsPerSecond = 8;
+    int previewsThisSecond;
+    float previewSecondStarted;
+
+    /// <summary>PLAYER'S MACHINE: ask what wearing copy <paramref name="copyId"/> in <paramref name="slot"/> would change.</summary>
+    public void AskEquipPreview(string copyId, EquipSlotType slot) => CmdAskEquipPreview(copyId, (int)slot);
+
+    [Command]
+    void CmdAskEquipPreview(string copyId, int slot)
+    {
+        if (Leaving) return;
+        if (Time.time - previewSecondStarted >= 1f) { previewSecondStarted = Time.time; previewsThisSecond = 0; }
+        if (++previewsThisSecond > MostPreviewsPerSecond) return;
+        var c = ServerCharacter;
+        if (c == null || string.IsNullOrEmpty(copyId) || copyId.Length > 64) return;
+        if (!System.Enum.IsDefined(typeof(EquipSlotType), slot) || slot == (int)EquipSlotType.None) return;
+        // Only a piece they carry in the bag: a worn piece has nothing to be compared with.
+        if (!c.FindCopy(copyId, out int bagIndex, out bool worn) || worn) return;
+        var inst = c.Bag[bagIndex].instance;
+        if (inst == null || inst.def == null) return;
+        TargetEquipPreview(connectionToClient, copyId, slot, EquipPreview.Text(c, inst, (EquipSlotType)slot));
+    }
+
+    [TargetRpc]
+    void TargetEquipPreview(NetworkConnectionToClient target, string copyId, int slot, string text)
+        => EquipPreview.TakeSent(copyId, (EquipSlotType)slot, text);
 
     [Command]
     public void CmdActionBegan(StanceId id, float seconds)
@@ -834,6 +1032,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     float nextHealthPush;
 
+    float nextRatesCheck;
+    const float RatesCheckSeconds = 60f;
+
     void PushMyHealth()
     {
         if (Time.time < nextHealthPush) return;
@@ -841,6 +1042,13 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
         var fighter = ServerCombatUnit;
         if (fighter == null) return;
+        // ONCE A MINUTE, their per-hour rates if they moved — they fall as the minutes pass with no kill, and the
+        // player's machine may not lower them itself. Nothing is sent once they rest.
+        if (Time.time >= nextRatesCheck && fighter is Character earner && earner != null)
+        {
+            nextRatesCheck = Time.time + RatesCheckSeconds;
+            GameNetwork.TellOwnerTheirRatesIfMoved(earner);
+        }
         netHealth = fighter.CurrentHP;
         netMaxHealth = Mathf.Max(1, fighter.MaxHP);
         if (fighter is Character person && person != null)
@@ -905,6 +1113,8 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     void TargetSheet(NetworkConnectionToClient target, DerivedSnapshot current, DerivedSnapshot baseline,
                      DerivedSnapshot withStates, int[] raiseCost, int[] gearStat)
     {
+        // A new sheet may change what any piece would do if worn: the kept "if equipped" lines are asked for again.
+        EquipPreview.ForgetSent();
         var me = Character.Instance;
         if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, gearStat); return; }
         // ARRIVED BEFORE THERE WAS A CHARACTER TO GIVE IT TO. The server only sends a sheet when it changes, so a
@@ -1124,9 +1334,15 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // glide, a shove, and the GM commands that ride on them — lands this person somewhere the movement check
         // has no way to reach at walking pace, and the report that follows would look exactly like a lie.
         //
-        // It is forgiven HERE rather than at each of the three kinds, because this is the one door they all pass
+        // It is decided HERE rather than at each of the three kinds, because this is the one door they all pass
         // through: a fourth kind added later inherits it instead of quietly missing it.
-        ForgiveNextMove();
+        //
+        // A TELEPORT IS NOT FORGIVEN — IT IS EXPECTED. The server knows exactly where it put them, so it holds them there
+        // from this moment and believes no report until one lands there: a report already in the air from before the
+        // jump is dropped rather than read as a lie, and a machine that answers with any other spot gets nowhere.
+        // A glide and a shove travel over time to a place their own machine works out, so those are still forgiven.
+        if (motion.kind == Motion.Kind.Teleport) ExpectArrival(motion.destination, true);
+        else ForgiveNextMove();
         // And a move this server ordered is not a sprint either: how long it lasts, from its own distance and speed.
         var spec = CharacterSpec.Active;
         float runSpeed = spec != null ? spec.RunGearSpeed : 1f;
@@ -1335,8 +1551,11 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
 
     /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether the state
     /// captured by THIS call reached the store — the disconnect path waits on it, because a character released
-    /// before the write has finished is how the same items end up in two places.</summary>
-    public void SaveNow(Action<bool> whenDone)
+    /// before the write has finished is how the same items end up in two places.
+    ///
+    /// <para>With <paramref name="travel"/> the document stands them where a trip the server decided is sending them —
+    /// the save that hands them to another process (see <see cref="MoveToMap"/>).</para></summary>
+    public void SaveNow(Action<bool> whenDone, TravelTo travel = null)
     {
         if (!isServer) { whenDone?.Invoke(false); return; }
 
@@ -1396,21 +1615,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // tenth of their health, mana as it was, and nothing timed carried across the death.
         if (c.IsDead)
         {
-            if (c.HasSavePoint)
-            {
-                save.sceneName = c.SavePointMap;
-                save.posX = c.SavePointPosition.x;
-                save.posY = c.SavePointPosition.y;
-                save.posZ = c.SavePointPosition.z;
-            }
-            else
-            {
-                save.sceneName = SavePoint.DefaultMap;
-                save.arriveAtSpawnId = SavePoint.DefaultSpawnId;
-            }
+            SavePointTrip(c, out var spMap, out var spSpawn, out bool spAtSpot, out var spAt);
+            WriteWhere(save, spMap, spSpawn, spAtSpot, spAt);
             save.currentHP = SavePoint.RespawnHealth(c.MaxHP);
             save.timedEffects = null;
         }
+
+        // A TRIP THE SERVER DECIDED: they are written down where it is sending them.
+        if (travel != null) WriteWhere(save, travel.map, travel.spawnId, travel.toSpot, travel.spot);
 
         needsSaving = false;
         // WHICH HAND-OVER THIS COPY BELONGS TO, so the character server can refuse it if the character has been
@@ -1418,7 +1630,12 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // AND EVERY QUEST RECORD THAT CHANGED since the last save that landed — in this same document, so the character
         // server writes the bag and the quest that judged it in one transaction, together or not at all.
         var quests = c.Quests.CapturePending(out int questsUpTo);
-        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save, quests = quests, handover = ServerHandover });
+        // AND A STORAGE MOVE STILL WAITING, in every document until the character server has answered it — a take also
+        // puts the thing in this document's bag (see StorageMoves).
+        var storageMove = StorageMoves.For(ServerCharacterId);
+        StorageMoves.Compose(save, storageMove);
+        var body = JsonUtility.ToJson(new ProgressEnvelope { progress = save, quests = quests, handover = ServerHandover,
+                                                             storage = storageMove ?? new StorageMoveWire() });
 
         // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
         // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
@@ -1438,8 +1655,6 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveHotbarNow(ok => One(ok, true));
     }
 
-    [Serializable]
-    class SaveEnvelope { public SaveData progress; public QuestRowWire[] quests; public int handover; }
 
 
     // ---- the other things a person changes about themselves ---------------------------------------------
@@ -1632,33 +1847,39 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <para>Pass <paramref name="alsoTheBar"/> when the change was a WEAPON going on or coming off, which is the
     /// one thing that makes this side rewrite somebody's hotbar. Their
     /// machine then draws the bar this one decided instead of working the same rule out again. Every other change
-    /// leaves the bar out — see the note in <see cref="BagWire"/>.</para></summary>
-    public void PushBagToOwner(bool alsoTheBar = false)
+    /// leaves the bar out — see the note in <see cref="BagWire"/>.</para>
+    ///
+    /// <para>Pass <paramref name="alsoTheBuyback"/> when what they can buy back changed — arriving, a sale, a buyback —
+    /// for the same reason.</para></summary>
+    public void PushBagToOwner(bool alsoTheBar = false, bool alsoTheBuyback = false)
     {
         if (!isServer) return;
         // OWED, AND SENT ONCE THIS FRAME. A purse change now asks for this by itself (PlayerFighter subscribes it to
         // the character's gold), so a kill that also pushes the bag the old way would otherwise send it twice.
         bagPushOwed = true;
         barPushOwed |= alsoTheBar;
+        buybackPushOwed |= alsoTheBuyback;
     }
 
-    bool bagPushOwed, barPushOwed;
+    bool bagPushOwed, barPushOwed, buybackPushOwed;
 
     void SendOwedBag()
     {
         if (!bagPushOwed) return;
         bool alsoTheBar = barPushOwed;
+        bool alsoTheBuyback = buybackPushOwed;
         bagPushOwed = false;
         barPushOwed = false;
+        buybackPushOwed = false;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
-        // AN ITEM USED UP OR A PIECE GIVEN AWAY LEAVES THE BAR, on the same push that tells them it is gone.
+        // A PIECE GIVEN AWAY LEAVES THE BAR, on the same push that tells them it is gone. (An item used up stays.)
         if (fighter.PruneHotbar()) { alsoTheBar = true; SaveHotbarSoon(); }
         // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the three places
         // that list is built from — so a potion picked up mid-session had nothing behind it here and drinking it
         // did nothing at all. This is the one place every change the server makes to a bag passes through, which
         // is why the rebuild sits here rather than at each of them.
         fighter.RefreshUsableSkills();
-        TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar));
+        TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar, alsoTheBuyback));
         // AND EVERY QUEST STEP JUDGED ON WHAT THEY HOLD, here for the same reason: this is the one place every bag
         // change passes through. What they can pay for moves with the purse, so the followed step's answer is
         // re-sent whenever it changed even when no step moved.
@@ -1799,10 +2020,25 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetBagChanged(NetworkConnectionToClient target, BagWire bag)
     {
+        // A piece's folds, grade or place in the bag may have changed: the kept "if equipped" lines are asked for again.
+        EquipPreview.ForgetSent();
         var me = Character.Instance;
         GiveWaitingMasteryToTheCharacter();
         GiveWaitingRingToTheCharacter();
-        if (me == null) { bagWaitingForACharacter = bag; return; }
+        if (me == null)
+        {
+            // A LATER BAG REPLACES AN EARLIER ONE STILL WAITING — but the bar and the buy-back list ride only the pushes
+            // that changed them (null otherwise), so one the earlier bag carried is kept rather than dropped by a later
+            // push that carried nothing; nothing would ever send it again.
+            if (bagWaitingForACharacter.HasValue)
+            {
+                var earlier = bagWaitingForACharacter.Value;
+                if (bag.hotbarBindings == null) bag.hotbarBindings = earlier.hotbarBindings;
+                if (bag.buyback == null) bag.buyback = earlier.buyback;
+            }
+            bagWaitingForACharacter = bag;
+            return;
+        }
         bag.Onto(me);
         // The window redraws from what just arrived. NOT marked as needing saving: this IS what the server has,
         // so writing it back would be this machine telling the server what the server just told it.
@@ -2041,8 +2277,29 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
-        var inst = c.Bag[index].instance;
-        if (inst == null || inst.def == null) return;
+        Fold(c, c.Bag[index].instance);
+    }
+
+    /// <summary>The same fold, of the piece worn in <paramref name="slot"/> — it stays on while it is worked.</summary>
+    [Command]
+    void CmdFoldWorn(int slot, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        Fold(c, WornPiece(c, slot, expectedItemId));
+    }
+
+    /// <summary>SERVER: the piece worn in <paramref name="slot"/>, when it is the item the asker named; null otherwise.</summary>
+    static EquipmentInstance WornPiece(Character c, int slot, string expectedItemId)
+    {
+        if (c == null || slot == (int)EquipSlotType.None || !System.Enum.IsDefined(typeof(EquipSlotType), slot)) return null;
+        var worn = c.GetEquippedInstance((EquipSlotType)slot);
+        return worn != null && worn.def != null && worn.def.id == expectedItemId ? worn : null;
+    }
+
+    void Fold(Character c, EquipmentInstance inst)
+    {
+        if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (inst.upgrade >= CraftingMath.FoldCap(inst.quality))
         { Refused(ItemTooltip.CopyTitle(inst) + " is folded as far as " + GradeWord(inst.quality) + " allows (+" + CraftingMath.FoldCap(inst.quality) + "). Quench it to go further."); return; }
@@ -2069,8 +2326,21 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
-        var inst = c.Bag[index].instance;
-        if (inst == null || inst.def == null) return;
+        Quench(c, c.Bag[index].instance, saltIndex);
+    }
+
+    /// <summary>The same quench, of the piece worn in <paramref name="slot"/> — it stays on while it is worked.</summary>
+    [Command]
+    void CmdQuenchWorn(int slot, string expectedItemId, int saltIndex)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        Quench(c, WornPiece(c, slot, expectedItemId), saltIndex);
+    }
+
+    void Quench(Character c, EquipmentInstance inst, int saltIndex)
+    {
+        if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (!CraftingMath.CanQuench(inst.quality))
         { Refused(ItemTooltip.CopyTitle(inst) + " is already " + GradeWord(CraftingMath.Best) + " — the best grade there is."); return; }
@@ -2119,8 +2389,21 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
-        var inst = c.Bag[index].instance;
-        if (inst == null || inst.def == null) return;
+        Ink(c, c.Bag[index].instance, inkIndex, slot);
+    }
+
+    /// <summary>The same Ink, on the piece worn in <paramref name="wornSlot"/> — it stays on while it is written.</summary>
+    [Command]
+    void CmdInkWorn(int wornSlot, string expectedItemId, int inkIndex, int slot)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        Ink(c, WornPiece(c, wornSlot, expectedItemId), inkIndex, slot);
+    }
+
+    void Ink(Character c, EquipmentInstance inst, int inkIndex, int slot)
+    {
+        if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (inst.InkSlots <= 0)
         { Refused(ItemTooltip.CopyTitle(inst) + " has no stat slot — a " + GradeWord(inst.quality) + " piece takes no Ink. Quench it first."); return; }
@@ -2161,8 +2444,23 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
-        var inst = c.Bag[index].instance;
-        if (inst == null || inst.def == null) return;
+        Recycle(c, c.Bag[index].instance, index, EquipSlotType.None);
+    }
+
+    /// <summary>The same recycle, of the piece worn in <paramref name="wornSlot"/>: it comes off and is destroyed.</summary>
+    [Command]
+    void CmdRecycleWorn(int wornSlot, string expectedItemId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        var worn = WornPiece(c, wornSlot, expectedItemId);
+        if (worn != null) Recycle(c, worn, -1, (EquipSlotType)wornSlot);
+    }
+
+    // The piece is at bag position `index`, or worn in `wornSlot` (index -1).
+    void Recycle(Character c, EquipmentInstance inst, int index, EquipSlotType wornSlot)
+    {
+        if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
 
         string was = ItemTooltip.CopyTitle(inst);
@@ -2171,8 +2469,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
                                   recycleBands, out int gold);
         CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
 
-        // THE PIECE GOES FIRST, so what comes back can never stack beside the thing it came out of.
-        c.Bag.RemoveAt(index);
+        // THE PIECE GOES FIRST, so what comes back can never stack beside the thing it came out of. A worn piece is
+        // taken off first, exactly as taking it off at the bag does — a weapon's skills and bar go with it.
+        if (wornSlot != EquipSlotType.None) c.SetEquipped(wornSlot, (EquipmentInstance)null);
+        else c.Bag.RemoveAt(index);
 
         var got = new System.Text.StringBuilder();
         for (int b = 1; b < recycleBands.Length; b++)
@@ -2193,8 +2493,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         }
         if (gold > 0) { c.AddGold(gold); Join(got, gold + " gold"); }
 
-        // THE BAG BEFORE THE SENTENCE: the window redraws on the sentence, and must redraw the bag as it now is.
-        PushBagToOwner();
+        // THE BAG BEFORE THE SENTENCE: the window redraws on the sentence, and must redraw the bag as it now is. Taking
+        // a weapon off empties the bar, so the bar goes too then (as CmdUnequipToBag sends it).
+        PushBagToOwner(wornSlot == EquipSlotType.Weapon);
         Done("Recycled " + was + ": got back " + (got.Length > 0 ? got.ToString() : "nothing") + ".", pieceGone: true);
         SaveSoon();
     }
@@ -2278,9 +2579,23 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     // and an offer sent for position 6 would describe whatever moved into it.
     void AfterWorkingOnGear(Character c, EquipmentInstance worked, int saltIndex = -1)
     {
+        // A WORN PIECE IS PUT BACK ON, the same piece in the same slot, so everything a change of worn gear updates —
+        // the stats, the health cap, the skills a weapon brings, what everybody else sees on the body — sees its new
+        // grade and folds. Worked out of the bag, nothing here differs from before.
+        var wornSlot = WornSlotOf(c, worked);
+        if (wornSlot != EquipSlotType.None) c.SetEquipped(wornSlot, worked);
         PushBagToOwner();
-        SendOffer(c, IndexOf(c, worked), saltIndex);
+        if (wornSlot != EquipSlotType.None) SendOffer(c, worked, -1, wornSlot, saltIndex);
+        else SendOffer(c, IndexOf(c, worked), saltIndex);
         SaveSoon();
+    }
+
+    static EquipSlotType WornSlotOf(Character c, EquipmentInstance inst)
+    {
+        if (c == null || inst == null) return EquipSlotType.None;
+        foreach (var kv in c.Gear.Worn)
+            if (ReferenceEquals(kv.Value, inst)) return kv.Key;
+        return EquipSlotType.None;
     }
 
     // Whether the next fold of this copy is one a tutorial's first run gives free — what the offer says it costs.
@@ -2306,11 +2621,26 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         SendOffer(ServerCharacter, index, saltIndex);
     }
 
+    /// <summary>The same, about the piece worn in <paramref name="slot"/>.</summary>
+    [Command]
+    void CmdAskWornOffer(int slot, string expectedItemId, int saltIndex)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        var worn = WornPiece(c, slot, expectedItemId);
+        if (worn != null) SendOffer(c, worn, -1, (EquipSlotType)slot, saltIndex);
+    }
+
     void SendOffer(Character c, int index, int saltIndex = -1)
     {
+        if (c == null || index < 0 || index >= c.Bag.Count) return;
+        SendOffer(c, c.Bag[index].instance, index, EquipSlotType.None, saltIndex);
+    }
+
+    // About ONE piece, wherever it is: at bag position `index`, or worn in `wornSlot` (index -1).
+    void SendOffer(Character c, EquipmentInstance inst, int index, EquipSlotType wornSlot, int saltIndex)
+    {
         if (c == null || connectionToClient == null) return;
-        if (index < 0 || index >= c.Bag.Count) return;
-        var inst = c.Bag[index].instance;
         if (inst == null || inst.def == null) return;
 
         var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
@@ -2344,6 +2674,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             recycleCounts = counts.ToArray(),
             recycleGold = recycleGold,
             bagIndex = index,
+            wornSlot = (int)wornSlot,
             quality = (int)inst.quality,
             folds = inst.upgrade,
             foldCap = CraftingMath.FoldCap(inst.quality),
@@ -2371,6 +2702,11 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToQuench(int index, string itemId, int saltIndex) => CmdQuench(index, itemId, saltIndex);
     public void AskToInk(int index, string itemId, int inkIndex, int slot) => CmdInk(index, itemId, inkIndex, slot);
     public void AskForOffer(int index, int saltIndex) => CmdAskOffer(index, saltIndex);
+    public void AskToFoldWorn(EquipSlotType slot, string itemId) => CmdFoldWorn((int)slot, itemId);
+    public void AskToQuenchWorn(EquipSlotType slot, string itemId, int saltIndex) => CmdQuenchWorn((int)slot, itemId, saltIndex);
+    public void AskForWornOffer(EquipSlotType slot, string itemId, int saltIndex) => CmdAskWornOffer((int)slot, itemId, saltIndex);
+    public void AskToInkWorn(EquipSlotType slot, string itemId, int inkIndex, int inkSlot) => CmdInkWorn((int)slot, itemId, inkIndex, inkSlot);
+    public void AskToRecycleWorn(EquipSlotType slot, string itemId) => CmdRecycleWorn((int)slot, itemId);
     public void AskToRecycle(int index, string itemId) => CmdRecycle(index, itemId);
 
     [Command]
@@ -2420,7 +2756,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you buy: the free ones are counted first, and only the rest are
         // paid for. Checked before anything is used up, so a purse too short for the rest uses up nothing.
         int free = Mathf.Min(count, c.Quests.FreeBuysOf(itemId));
-        long cost = (long)def.buyPrice * (count - free);
+        long cost = ShopMath.BuyCost(def.buyPrice, count - free);
         if (cost > c.Gold) { ShopSaid("Needs " + cost + " gold — you have " + c.Gold + ".", false); return; }
 
         if (free > 0) c.Quests.TakeFreeBuys(itemId, free);
@@ -2438,7 +2774,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <summary>Sell <paramref name="howMany"/> of the stack at bag position <paramref name="index"/> to shop
     /// <paramref name="shopId"/>. Refused unless the asker is at that shop and the shop buys that kind of thing.</summary>
     [Command]
-    void CmdSell(string shopId, int index, string expectedItemId, int howMany)
+    void CmdSell(string shopId, int index, string expectedItemId, string expectedCopyId, int howMany)
     {
         if (Leaving) return;
         var c = ServerCharacter;
@@ -2446,20 +2782,68 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         var shop = WorldShops.Find(shopId);
         if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
         var e = c.Bag[index];
+        // THE VERY PIECE THEY PRESSED, not another of its kind that slid into that position after an earlier sale.
+        if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
         if (!WorldShops.Buys(shop, e)) { ShopSaid("They will not buy that.", false); return; }
 
         int count = Mathf.Clamp(howMany, 1, e.count);
-        long pay = (long)e.def.zeny * count;
+        int pay = ShopMath.SalePay(e.def.zeny, count);
         var def = e.def;
-        string what = e.instance != null ? ItemTooltip.CopyTitle(e.instance) : count + " " + def.displayName;
+        var piece = e.instance;
+        string what = piece != null ? ItemTooltip.CopyTitle(piece) : count + " " + def.displayName;
+        // The piece keeps its own id while it waits to be bought back, so it returns as itself.
+        if (piece != null) piece.EnsureCopyId();
         if (count >= e.count) c.Bag.RemoveAt(index);
         else e.count -= count;
-        c.AddGold((int)Mathf.Min(pay, int.MaxValue));
+        // KEPT TO BE BOUGHT BACK, in the same pass that took it out of the bag — nothing runs between the two.
+        c.Buyback.Keep(def, count, piece, pay, WorldClock.EpochSecondsNow, out var letGo);
+        c.AddGold(pay);
         GameLog.Info(LogCat.Server, playerName + " sold " + count + " " + def.id + " to '" + shopId + "' for " + pay + " gold");
+        if (letGo != null)
+            GameLog.Info(LogCat.Server, playerName + "'s oldest kept sale, " + letGo.count + " " + letGo.def.id
+                         + (letGo.instance != null ? " (copy " + letGo.CopyId + ")" : "") + ", is gone for good: more than "
+                         + ShopMath.BuybackMostEntries + " kept");
         // The bar too: a stack sold to the last one leaves nothing for its hotbar slot to use.
-        PushBagToOwner(alsoTheBar: true);
+        PushBagToOwner(alsoTheBar: true, alsoTheBuyback: true);
         SaveSoon();
         ShopSaid("Sold " + what + " for " + pay + " gold.", true);
+    }
+
+    /// <summary>Buy back something this character sold — named by its item id and, for a piece of gear, the piece's
+    /// own id, never by a position or a price. Refused unless the asker is at that shop, it is still kept, and they can
+    /// pay the price the server works out. The whole entry comes back.</summary>
+    [Command]
+    void CmdBuyBack(string shopId, string itemId, string copyId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        if (WorldShops.Find(shopId) == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
+
+        c.Buyback.DropEnded(WorldClock.EpochSecondsNow);
+        var kept = c.Buyback.Find(itemId, copyId);
+        if (kept == null)
+        {
+            // The line they pressed had already ended: send the list as it now stands, so it goes from their screen too.
+            PushBagToOwner(alsoTheBuyback: true);
+            ShopSaid("That is no longer here to buy back.", false);
+            return;
+        }
+        long price = ShopMath.BuybackPrice(kept.paid);
+        if (price > c.Gold) { ShopSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
+
+        // OFF THE LIST FIRST, so a second press finds nothing; then paid for, then returned through the one door into
+        // the bag. A piece of gear returns as the very copy that was sold.
+        c.Buyback.Remove(kept);
+        c.AddGold(-(int)price);
+        string what = kept.instance != null ? ItemTooltip.CopyTitle(kept.instance) : kept.count + " " + kept.def.displayName;
+        if (kept.instance != null) c.TakeIntoBag(kept.instance);
+        else c.TakeIntoBag(kept.def, kept.count);
+        GameLog.Info(LogCat.Server, playerName + " bought back " + kept.count + " " + kept.def.id
+                     + (kept.instance != null ? " (copy " + kept.CopyId + ")" : "") + " at '" + shopId + "' for " + price + " gold");
+        PushBagToOwner(alsoTheBuyback: true);
+        SaveSoon();
+        ShopSaid("Bought back " + what + " for " + price + " gold.", true);
     }
 
     // The most of one thing a single press may buy. A guard on the number a window sends, not a design limit: a
@@ -2480,7 +2864,339 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     public void AskToBuy(string shopId, string itemId, int howMany) => CmdBuy(shopId, itemId, howMany);
-    public void AskToSell(string shopId, int index, string itemId, int howMany) => CmdSell(shopId, index, itemId, howMany);
+    public void AskToSell(string shopId, int index, string itemId, string copyId, int howMany)
+        => CmdSell(shopId, index, itemId, copyId ?? "", howMany);
+    public void AskToBuyBack(string shopId, string itemId, string copyId) => CmdBuyBack(shopId, itemId, copyId ?? "");
+
+    // ---- the Keeper: save point, storage, teleport ---------------------------------------------------------
+    //
+    // EVERY SERVICE IS DECIDED HERE. The Keeper window only asks — which service, which town, which bag position and
+    // which stored thing — and the asker must be standing at a Keeper, checked here on the server's own positions.
+    // Prices are worked out here and sent finished; what storage holds is the character server's table.
+
+    // True when this asker stands within reach of a Keeper.
+    bool AtAKeeper() => TownNPC.NearestKeeper(transform.position, StationReach + ReachSlack) != null;
+
+    // What storage holds for this character's account, as this server last read it and kept up to date since.
+    readonly StorageList serverStorage = new StorageList();
+    float nextStorageReadAt;
+
+    // How many stored rows one message carries: a full storage list goes in several, never in one large message.
+    const int StorageChunk = 100;
+
+    // Why a Keeper service is refused before anything else is looked at, or null when it may go ahead.
+    string KeeperRefusal(Character c)
+    {
+        if (c == null) return "";
+        if (c.IsDead) return "You cannot do that while dead.";
+        if (!AtAKeeper()) return "You are not at a Keeper.";
+        return null;
+    }
+
+    bool RefusedByKeeper(Character c)
+    {
+        string why = KeeperRefusal(c);
+        if (why == null) return false;
+        if (why.Length > 0) KeeperSaid(why, false);
+        return true;
+    }
+
+    /// <summary>Make where the asker stands, at the Keeper, their save point.</summary>
+    [Command]
+    void CmdKeeperSavePoint()
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (RefusedByKeeper(c)) return;
+        if (string.IsNullOrEmpty(mapName)) { KeeperSaid("You are not standing in a map yet.", false); return; }
+        // THE TOWN, NOT A SPOT. Where they stand back up is worked out each time from where this town's Keeper stands
+        // (see SavePointTrip), so a town that is re-laid never leaves anybody saved inside a wall.
+        c.SetSavePointAtKeeper(mapName);
+        SaveSoon();
+        GameLog.Info(LogCat.Server, playerName + " set their save point at the Keeper in '" + mapName + "'");
+        KeeperSaid("Save point set: " + TownName(mapName) + ".", true);
+    }
+
+    /// <summary>Send the asker every town this Keeper can send them to, each with its finished price.</summary>
+    [Command]
+    void CmdKeeperAskTrips()
+    {
+        if (Leaving) return;
+        if (RefusedByKeeper(ServerCharacter)) return;
+        TargetKeeperTrips(connectionToClient, TripsFrom(mapName));
+    }
+
+    // Every other town with a Keeper that a way of doors reaches, cheapest first, then by name.
+    static KeeperTrip[] TripsFrom(string from)
+    {
+        var atlas = WorldRoutes.Atlas;
+        var trips = new System.Collections.Generic.List<KeeperTrip>();
+        if (atlas != null)
+            foreach (var m in atlas.maps)
+            {
+                if (m == null || m.scene == from || WorldTownsfolk.KeeperIn(m.scene) == null) continue;
+                WorldRoutes.NextMap(from, m.scene, out int doors);
+                if (doors <= 0) continue;
+                trips.Add(new KeeperTrip { map = m.scene, name = atlas.NameOf(m.scene), price = KeeperMath.TeleportPrice(doors) });
+            }
+        trips.Sort((a, b) => a.price != b.price ? a.price.CompareTo(b.price) : string.CompareOrdinal(a.name, b.name));
+        return trips.ToArray();
+    }
+
+    static string TownName(string map)
+    {
+        var atlas = WorldRoutes.Atlas;
+        return atlas != null ? atlas.NameOf(map) : map;
+    }
+
+    /// <summary>Send the asker to the Keeper of <paramref name="map"/>, for the price of the doors between. The gold is
+    /// taken first and handed back if the trip does not happen.</summary>
+    [Command]
+    void CmdKeeperTeleport(string map)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (RefusedByKeeper(c)) return;
+        var keeper = WorldTownsfolk.KeeperIn(map);
+        int doors = -1;
+        if (keeper != null && map != mapName) WorldRoutes.NextMap(mapName, map, out doors);
+        if (doors <= 0) { KeeperSaid("There is no way there.", false); return; }
+        long price = KeeperMath.TeleportPrice(doors);
+        if (price > c.Gold) { KeeperSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
+
+        c.AddGold(-(int)price);
+        // The purse reaches their machine with the bag, so it is sent now: a town this same server holds is entered
+        // without a fresh copy of the character.
+        PushBagToOwner();
+        SaveSoon();
+        GameLog.Info(LogCat.Server, playerName + " paid " + price + " gold for a Keeper's trip from '" + mapName + "' to '"
+                     + map + "' (" + doors + " doors)");
+        KeeperSaid("Off to " + TownName(map) + " for " + price + " gold.", true);
+
+        var spot = KeeperMath.ArrivalSpot(keeper.home, keeper.facing, KeeperMath.ArrivalAhead);
+        MoveToMap(map, null, true, spot, () =>
+        {
+            if (this == null) return;
+            c.AddGold((int)price);
+            PushBagToOwner();
+            SaveSoon();
+            GameLog.Warn(LogCat.Server, playerName + "'s Keeper trip to '" + map + "' did not happen — " + price
+                         + " gold handed back");
+            KeeperSaid("The trip could not be made — your " + price + " gold is back.", false);
+        });
+    }
+
+    /// <summary>Send the asker what their account keeps in storage — read fresh from the character server, at most once
+    /// a second; asked more often, the copy already held is sent.</summary>
+    [Command]
+    void CmdKeeperOpenStorage()
+    {
+        if (Leaving) return;
+        if (RefusedByKeeper(ServerCharacter)) return;
+        // ASKED AGAIN WITHIN THE GAP: nothing is sent. Their machine keeps the list it was last sent, and every move since
+        // reached it as the one row that changed.
+        if (Time.time < nextStorageReadAt) return;
+        nextStorageReadAt = Time.time + KeeperMath.StorageReadGap;
+        ReadStorage();
+    }
+
+    void ReadStorage()
+    {
+        if (string.IsNullOrEmpty(ServerCharacterId)) return;
+        ServerHttp.Send("GET", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId + "/storage",
+                        null, MapServerLink.ServerSecret, (ok, reply, error, _) =>
+        {
+            if (this == null) return;
+            StorageReply r = null;
+            if (ok) { try { r = JsonUtility.FromJson<StorageReply>(reply); } catch { r = null; } }
+            if (r == null)
+            {
+                GameLog.Warn(LogCat.Server, "could not read " + playerName + "'s storage — " + error + " " + reply);
+                KeeperSaid("Storage could not be opened just now.", false);
+                return;
+            }
+            serverStorage.Take(r.rows, 0, false);
+            SendStorage();
+        });
+    }
+
+    [Serializable]
+    class StorageReply { public long revision; public StoredLine[] rows; }
+
+    void SendStorage()
+    {
+        if (connectionToClient == null) return;
+        var all = serverStorage.Entries;
+        int n = all.Count;
+        for (int start = 0; start == 0 || start < n; start += StorageChunk)
+        {
+            int len = Mathf.Max(0, Mathf.Min(StorageChunk, n - start));
+            var lines = new StoredLine[len];
+            for (int i = 0; i < len; i++) lines[i] = StorageList.LineOf(all[start + i]);
+            TargetStorage(connectionToClient, lines, start, serverStorage.Rows, KeeperMath.StorageLimit);
+        }
+    }
+
+    /// <summary>SERVER ONLY: a storage move landed — keep this server's copy of the list in step and send the row that
+    /// changed. <paramref name="stored"/> is true for something put in, false for something taken out.</summary>
+    public void StorageChanged(Item def, int count, EquipmentInstance piece, bool stored)
+    {
+        if (!serverStorage.Known || def == null) return;
+        string copy = piece != null ? piece.copyId ?? "" : "";
+        var held = serverStorage.Find(def.id, copy);
+        int now = stored ? (piece != null ? 1 : (held != null ? held.count : 0) + count)
+                         : (piece != null ? 0 : (held != null ? held.count : 0) - count);
+        var line = new StoredLine { itemId = def.id, count = Mathf.Max(0, now), cards = "", roll = "", copyId = "",
+                                    rarity = (int)Rarities.Of(def, piece) };
+        if (piece != null) piece.ToSaved(out line.refine, out line.cards, out line.roll, out line.copyId);
+        if (piece != null && !stored) line.count = 0;
+        serverStorage.TakeRow(line, false);
+        if (connectionToClient != null) TargetStorageRow(connectionToClient, line, serverStorage.Rows);
+    }
+
+    /// <summary>SERVER ONLY: this server's copy of the storage list may be wrong (a move was refused) — read it again and
+    /// send it.</summary>
+    public void ForgetStorageCopy()
+    {
+        serverStorage.Clear();
+        nextStorageReadAt = Time.time + KeeperMath.StorageReadGap;
+        ReadStorage();
+    }
+
+    /// <summary>Put the stack at bag position <paramref name="index"/> into storage — one of it, or all of it. A piece of
+    /// gear goes as itself. The thing leaves the bag at once and the save that writes it into storage goes now.</summary>
+    [Command]
+    void CmdKeeperStore(int index, string expectedItemId, string expectedCopyId, bool all)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        if (RefusedByKeeper(c)) return;
+        var e = c.Bag[index];
+        if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
+        if (e.def.category == ItemCategory.Quest) { KeeperSaid("That cannot be stored.", false); return; }
+        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false); return; }
+        if (!serverStorage.Known) { KeeperSaid("Storage is not open.", false); return; }
+        var piece = e.instance;
+        if (piece != null) piece.EnsureCopyId();
+        string copy = piece != null ? piece.copyId ?? "" : "";
+        if (!KeeperMath.Fits(serverStorage.Rows, KeeperMath.StorageLimit, serverStorage.NeedsNewRow(e.def, copy)))
+        { KeeperSaid("Storage is full.", false); return; }
+
+        int count = piece != null ? 1 : (all ? e.count : 1);
+        var def = e.def;
+        var move = new StorageMoveWire { moveId = Guid.NewGuid().ToString("D"), kind = "store", itemId = def.id, count = count,
+                                         limit = KeeperMath.StorageLimit };
+        if (piece != null) piece.ToSaved(out move.refine, out move.cards, out move.roll, out move.copyId);
+        // OUT OF THE BAG NOW, so nothing can be done with it while the save is in the air; put back if it is refused.
+        if (count >= e.count) c.Bag.RemoveAt(index);
+        else e.count -= count;
+        StorageMoves.Begin(ServerCharacterId, this, move, def, piece);
+        GameLog.Info(LogCat.Server, playerName + " is storing " + count + " " + def.id
+                     + (copy.Length > 0 ? " (copy " + copy + ")" : "") + " — move " + move.moveId);
+        PushBagToOwner(alsoTheBar: true);
+        SaveNow(null);
+    }
+
+    /// <summary>Take a stored thing — named by its item id and, for gear, the piece's own id — out of storage: one of it,
+    /// or all of it. It arrives in the bag once the save that takes it out has landed.</summary>
+    [Command]
+    void CmdKeeperTake(string itemId, string copyId, bool all)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (RefusedByKeeper(c)) return;
+        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false); return; }
+        var held = serverStorage.Known ? serverStorage.Find(itemId, copyId ?? "") : null;
+        if (held == null) { KeeperSaid("That is no longer in storage.", false); return; }
+
+        int count = held.instance != null ? 1 : (all ? held.count : 1);
+        var move = new StorageMoveWire { moveId = Guid.NewGuid().ToString("D"), kind = "take", itemId = held.def.id,
+                                         count = count, limit = KeeperMath.StorageLimit };
+        if (held.instance != null) held.instance.ToSaved(out move.refine, out move.cards, out move.roll, out move.copyId);
+        StorageMoves.Begin(ServerCharacterId, this, move, held.def, held.instance);
+        GameLog.Info(LogCat.Server, playerName + " is taking " + count + " " + held.def.id
+                     + (move.copyId.Length > 0 ? " (copy " + move.copyId + ")" : "") + " out of storage — move " + move.moveId);
+        SaveNow(null);
+    }
+
+    /// <summary>SERVER ONLY: tell this person what a Keeper did, or why it refused — in the window and in the chat.</summary>
+    public void KeeperSaid(string line, bool ok)
+    {
+        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
+        TargetKeeperSaid(connectionToClient, line, ok);
+    }
+
+    [TargetRpc]
+    void TargetKeeperSaid(NetworkConnectionToClient target, string line, bool ok)
+    {
+        ChatController.GameSaid(line, ok);
+        KeeperPanel.ShowResult(line, ok);
+    }
+
+    [TargetRpc]
+    void TargetKeeperTrips(NetworkConnectionToClient target, KeeperTrip[] trips) => KeeperPanel.TakeTrips(trips);
+
+    [TargetRpc]
+    void TargetStorage(NetworkConnectionToClient target, StoredLine[] lines, int startsAt, int rows, int limit)
+        => KeeperPanel.TakeStorage(lines, startsAt, rows, limit);
+
+    [TargetRpc]
+    void TargetStorageRow(NetworkConnectionToClient target, StoredLine line, int rows) => KeeperPanel.TakeStorageRow(line, rows);
+
+    public void AskKeeperSavePoint() => CmdKeeperSavePoint();
+    public void AskKeeperTrips() => CmdKeeperAskTrips();
+    public void AskKeeperTeleport(string map) => CmdKeeperTeleport(map ?? "");
+    public void AskKeeperStorage() => CmdKeeperOpenStorage();
+    public void AskToStore(int index, string itemId, string copyId, bool all) => CmdKeeperStore(index, itemId, copyId ?? "", all);
+    public void AskToTake(string itemId, string copyId, bool all) => CmdKeeperTake(itemId, copyId ?? "", all);
+
+    // ---- a Butterfly Wing's trip home ------------------------------------------------------------------------
+    // OWED, NOT TAKEN AT ONCE: the wing is spent after its skill fires, and a trip to a map another server holds saves
+    // the character the moment it starts — taken inside the skill, that save would still carry the wing.
+    bool savePointTripOwed;
+    // The item that paid for the owed trip, given back if the trip does not happen; null when nothing paid (the skill
+    // was not run by an item).
+    Item savePointTripPaidWith;
+
+    /// <summary>SERVER ONLY: send this person to their save point on this shell's next server frame.
+    /// <paramref name="paidWith"/> is the item that paid for it, given back if the trip does not happen.</summary>
+    public void OweTripToSavePoint(Item paidWith)
+    {
+        if (!isServer) return;
+        savePointTripOwed = true;
+        savePointTripPaidWith = paidWith;
+    }
+
+    void TakeOwedTrip()
+    {
+        savePointTripOwed = false;
+        var paid = savePointTripPaidWith;
+        savePointTripPaidWith = null;
+        var c = ServerCharacter;
+        if (Leaving || c == null || c.IsDead)
+        {
+            GiveBackWhatPaidForTrip(paid, c != null && c.IsDead ? "You fell before the wing could carry you."
+                                                                : "The wing could not carry you just now.");
+            return;
+        }
+        GameLog.Info(LogCat.Server, playerName + " is going back to their save point"
+                     + (paid != null ? " (" + paid.id + ")" : ""));
+        SendToSavePoint(() => { if (this != null) GiveBackWhatPaidForTrip(paid, "The wing could not carry you just now."); });
+    }
+
+    // The item a trip was paid with goes back into the bag it came out of — the same thing, not a new arrival — and the
+    // player is told why.
+    void GiveBackWhatPaidForTrip(Item paid, string why)
+    {
+        var c = ServerCharacter;
+        if (paid == null || c == null) return;
+        StorageMoves.PutInLiveBag(c, paid, 1, null);
+        PushBagToOwner(alsoTheBar: true);
+        SaveSoon();
+        GameLog.Info(LogCat.Server, playerName + "'s trip did not happen — " + paid.id + " given back");
+        TellOwner(why + " Your " + paid.displayName + " is back in your bag.");
+    }
 
     [Command]
     void CmdDropFromBag(int index, string expectedItemId, int howMany)
@@ -2612,58 +3328,28 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             return;
         }
 
-        // NOTHING TO DO IF THEY ARE STILL WHERE THEY WERE, and saying so matters far more than the work it saves.
-        // The end of this method forgives the next move, because walking through a door is a jump no checker could
-        // tell from a lie. A client that simply repeats its map before every step would therefore be forgiven
-        // before every step — which is the whole movement check switched off, by a client, for free.
-        // THE BODY IS STILL FILED, though, if it is not in that map yet: a map that was not open here the moment they
-        // arrived is open by the time their machine says where it is. Filing forgives nothing.
-        if (map == mapName)
+        // THE SERVER DECIDES WHICH MAP THEY ARE IN — it put them there: the map the character server sent them to on
+        // arrival, or the map of a door, a save point or a Keeper's trip it carried out (see ChangeMapOnServer). Their
+        // machine only CONFIRMS it. Any other name is refused and said in the log: taking it was a free teleport past
+        // every door check, a Keeper's price read from a map they were not in, and a save point set anywhere.
+        if (map != mapName)
         {
-            if (gameObject.scene.name != map) FileBodyInto(map);
+            GameLog.Warn(LogCat.Server, "" + playerName + " said they are in '" + map + "' but the server has them in '"
+                             + mapName + "' — refused.");
             return;
         }
 
-        mapName = map;
-        // Where the followed quest's step happens is told from where they stand: a new map can mean a new next door, and
-        // a different nearest smith to mark.
-        SendQuests(true);
+        // THE BODY IS FILED, if it is not in that map yet: a map that was not open here the moment they arrived is open
+        // by the time their machine says where it is.
+        if (gameObject.scene.name != map) FileBodyInto(map);
 
-        FileBodyInto(map);
-
-        // AND THE FIGHTER IS TOLD TOO. It is the thing creatures actually look at, and it has no body in any map of
-        // its own to be found in — so if this is not pushed across, every creature goes on hunting the whole world.
-        BindMapToFighter();
-
-        // WORTH WRITING DOWN, because where somebody is standing is part of their character — coming back to
-        // the wrong map is the one save mistake a player notices immediately.
-        SaveSoon();
-
-        // A DOOR IS NOT A LIE. Walking into another map puts this person somewhere with no relation at all to where
-        // they were standing a moment ago, and the movement checker would read that as the largest teleport it has
-        // ever seen. The map is reported before the position that follows it, so forgiving here covers the jump.
-        //
-        // RATIONED, because this is a client saying it. A person walks through a door a few times a minute; a
-        // client that wanted free teleports would flip between two real maps as fast as it could and be forgiven
-        // each time. A second between forgivenesses costs an honest player nothing and takes that down to one
-        // jump a second — which is not nothing, and is why the real answer is for the SERVER to decide that
-        // somebody changed map rather than being told. That belongs with the character server and its map
-        // registry; until then this is the narrow version.
-        if (Time.time - lastForgivenMapChangeAt < ForgivenMapChangeGap)
+        // AND THEIR MACHINE NOW HAS THE MAP it was sent into, so the wait for them to appear where they were sent starts.
+        if (arrivalExpected && !arrivalConfirmed)
         {
-            GameLog.Warn(LogCat.Server, "" + playerName + " changed map again after only "
-                             + (Time.time - lastForgivenMapChangeAt).ToString("0.00")
-                             + "s — not forgiving the jump this time.");
-            return;
+            arrivalConfirmed = true;
+            arrivalDue = Time.time + ArrivalWait;
         }
-
-        lastForgivenMapChangeAt = Time.time;
-        ForgiveNextMove();
     }
-
-    // When the last map change was let off the movement check, and how long until another one can be. Server-only.
-    float lastForgivenMapChangeAt = -999f;
-    const float ForgivenMapChangeGap = 1f;
 
     /// <summary>Ask the server to start, or stop, a conversation with a townsperson. Sent from THIS person's own
     /// machine, on the press of F and again when the dialog box closes.
@@ -2868,11 +3554,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)
     {
         if (Leaving) return;
+        // SENT SOMEWHERE BY THE SERVER, AND NOT THERE YET: nothing counts until a report lands where they were sent —
+        // anything else is dropped, and not counted against them (see ExpectArrival).
+        if (arrivalExpected) { if (!ArrivedWhereSent(p)) return; }
         // COULD THEY ACTUALLY HAVE GOT THERE. A person's own machine works out where they are standing and then
         // says so, which is the one thing in the world a player is still trusted about — so this is where that
         // trust is checked. A report that could not be true is DROPPED: nothing is written, so the server goes on
         // holding the last place this person could actually have reached, and that is what everybody else is told.
-        if (!MoveWasPossible(p))
+        else if (!MoveWasPossible(p))
         {
             // PUT BACK only once the refusals have piled up. A single one is the game's own doing far more often
             // than it is a lie — and dropping it already cost the liar the move, so there is no hurry.
@@ -2882,10 +3571,10 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             // somebody who has never successfully said where they are to the corner of their map.
             if (haveAcceptedAPosition && refusedInARow >= RefusalsBeforeCorrecting)
             {
+                // They are being moved by us now, so nothing they say counts until it says they are back there — a
+                // report already on its way is not one more lie, and is not the place they now stand either.
+                ExpectArrival(netPosition, true);
                 TargetReturnTo(connectionToClient, netPosition);
-                // They are being moved by us now, so the next thing they say is measured from there and not
-                // read as one more lie.
-                ForgiveNextMove();
             }
             return;
         }
@@ -2986,10 +3675,74 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         refusedInARow = 0;
     }
 
-    /// <summary>SERVER ONLY, for the places outside this object that move somebody — coming back from the dead is
-    /// granted by the world, not by this body, and the jump to a save point has to be forgiven the same way a
-    /// teleport is. Deliberately NOT reachable from a client: it is the one thing that turns the check off.</summary>
-    public void ForgiveNextMoveAfterServerMove() => ForgiveNextMove();
+    // ---- sent somewhere by the server: where they must appear next ----------------------------------------
+    //
+    // A TRIP THE SERVER ORDERS — a teleport, a save point, a Keeper's trip, a wing, being put back — LANDS THEM WHERE THE
+    // SERVER SAYS, and the server holds them there from that moment. Their machine is told and moves them; until a
+    // report arrives within a step of that spot, every report is DROPPED, and none of them counts as a lie: a report
+    // sent before the jump was still in the air when it happened, and it says nothing about where they are now. A
+    // machine that never arrives there is stood there by the server, ArrivalWait seconds after it has the map loaded.
+    // This replaced forgiving whatever came next, which believed a modified machine anywhere after any trip, and spent
+    // the forgiveness on a report already in the air, so the real arrival was refused and dragged back.
+    //
+    // Costs one true/false test per frame per player, and one distance per report while an arrival is expected.
+
+    bool arrivalExpected;
+    Vector3 expectedArrival;
+    // Their machine has the map they were sent to (said so through CmdReportMap) — only then is it waited for.
+    bool arrivalConfirmed;
+    float arrivalDue = float.PositiveInfinity;
+    bool arrivalNudged;
+
+    // How long a machine that has the map is given to say it stands where it was sent before it is stood there.
+    const float ArrivalWait = 2f;
+
+    /// <summary>SERVER: they are being sent to <paramref name="atInMap"/> in their current map — hold them there, and
+    /// believe nothing until they report it. <paramref name="mapAlreadyLoaded"/> is false for a trip into a map their
+    /// machine still has to load: the wait starts when it says it has.</summary>
+    void ExpectArrival(Vector3 atInMap, bool mapAlreadyLoaded)
+    {
+        arrivalExpected = true;
+        expectedArrival = atInMap;
+        arrivalConfirmed = mapAlreadyLoaded;
+        arrivalDue = mapAlreadyLoaded ? Time.time + ArrivalWait : float.PositiveInfinity;
+        arrivalNudged = false;
+        refusedInARow = 0;
+        netPosition = atInMap;
+        // The server put them there, so there is a real place to hold them at — a save writes it, not where they began.
+        haveAcceptedAPosition = true;
+        acceptedGroundSpeed = 0f;
+        transform.position = MapManager.InWorld(atInMap, mapName);
+    }
+
+    // A report while an arrival is expected: TRUE (and the wait is over) when it lands within a step of where they were
+    // sent. Measured flat, like the movement check — the ground under the spot may sit a little above or below it.
+    bool ArrivedWhereSent(Vector3 p)
+    {
+        if (float.IsNaN(p.x) || float.IsNaN(p.z) || float.IsInfinity(p.x) || float.IsInfinity(p.z)) return false;
+        if (!KeeperMath.WithinReach(p.x - expectedArrival.x, p.z - expectedArrival.z, StepSlack)) return false;
+        arrivalExpected = false;
+        arrivalDue = float.PositiveInfinity;
+        lastAcceptedAt = Time.time;
+        refusedInARow = 0;
+        acceptedGroundSpeed = 0f;
+        return true;
+    }
+
+    // SERVER, once a frame: a machine that has the map and still has not reported the spot is stood on it — and again
+    // every ArrivalWait seconds until it says it is there.
+    void StandThemWhereSentIfLate()
+    {
+        if (Time.time < arrivalDue) return;
+        arrivalDue = Time.time + ArrivalWait;
+        if (!arrivalNudged)
+        {
+            arrivalNudged = true;
+            GameLog.Warn(LogCat.Server, playerName + " did not report arriving where the server sent them in '" + mapName
+                         + "' " + Coords.Text(expectedArrival, "0.0") + " within " + ArrivalWait + "s — standing them there");
+        }
+        if (connectionToClient != null) TargetReturnTo(connectionToClient, expectedArrival);
+    }
 
     bool MoveWasPossible(Vector3 p)
     {

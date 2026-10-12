@@ -117,6 +117,48 @@ public class SkillComposerWindow : EditorWindow
         return kept.ToString();
     }
 
+    // The rarities an ordinary skill may be authored at — Legendary is every ultimate's, from its tier, and no one
+    // else's — behind a first entry that means nobody has chosen yet.
+    static readonly GUIContent[] RarityChoices =
+    {
+        new GUIContent("— not chosen —"),
+        new GUIContent(Rarities.Label(Rarity.Common)),
+        new GUIContent(Rarities.Label(Rarity.Uncommon)),
+        new GUIContent(Rarities.Label(Rarity.Rare)),
+        new GUIContent(Rarities.Label(Rarity.Epic)),
+    };
+
+    static readonly GUIContent TrademarkRarityLabel = new GUIContent("trademark rarity",
+        "How rare this skill is as a forged weapon's trademark. The forge first draws a rarity by its share, then one " +
+        "skill of that rarity evenly — so this decides how often a weapon carrying it is forged, and the colour that " +
+        "weapon's name is written in. An ultimate is always Legendary.");
+
+    // The trademark rarity, under 'published' because both only matter to the forge. An ultimate's is shown, never
+    // chosen. A published skill the forge can roll with no rarity chosen is called out, as the skill-data check does.
+    void DrawTrademarkRarity()
+    {
+        if (sel.IsUltimate)
+        {
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.TextField(TrademarkRarityLabel, Rarities.Label(Rarity.Legendary) + " (every ultimate)");
+            return;
+        }
+        int shown = sel.trademarkRaritySet && sel.trademarkRarity <= Rarity.Epic ? (int)sel.trademarkRarity + 1 : 0;
+        int picked = EditorGUILayout.Popup(TrademarkRarityLabel, shown, RarityChoices);
+        if (picked != shown)
+        {
+            sel.trademarkRaritySet = picked > 0;
+            sel.trademarkRarity = picked > 0 ? (Rarity)(picked - 1) : Rarity.Common;
+            EditorUtility.SetDirty(sel);
+        }
+        if (sel.trademarkRaritySet && sel.trademarkRarity > Rarity.Epic)
+            EditorGUILayout.HelpBox("Saved as " + Rarities.Label(sel.trademarkRarity) + ", which only an ultimate can " +
+                                    "be. Pick Common to Epic.", MessageType.Error);
+        else if (!sel.trademarkRaritySet && Trademarks.Rollable(sel, sel.weaponType))
+            EditorGUILayout.HelpBox("The forge can roll this, but no trademark rarity is chosen — it rolls as Common " +
+                                    "until one is.", MessageType.Warning);
+    }
+
     // Ultimates first, then pressed actives, then pure passives — slotOrder breaks ties within a rank. Re-applied
     // every repaint (never only on load), so flipping a skill's tier or adding its OnCast entry moves the row at once.
     static int ListRank(SkillDef s) => s.IsUltimate ? 0 : s.IsPassive ? 2 : 1;
@@ -968,6 +1010,8 @@ public class SkillComposerWindow : EditorWindow
                 EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
                     MessageType.Warning);
 
+            DrawTrademarkRarity();
+
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
         }
@@ -1435,7 +1479,8 @@ public class SkillComposerWindow : EditorWindow
     // a shove and a blink are the same kind of thing pointed at different people. Their seconds are travel time, not
     // an ongoing condition, which is exactly why they are not States.
     static readonly SkillEffectKind[] MovementKinds =
-        { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
+        { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull,
+          SkillEffectKind.ReturnToSavePoint, SkillEffectKind.TeleportToRandomSpot };
     static readonly SkillEffectKind[] BuffKinds =
         { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage,
           SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
@@ -2141,6 +2186,8 @@ public class SkillComposerWindow : EditorWindow
                                                 return "Each charge makes ONE attack sent by whoever holds it land weaker, and is spent by it, hit or miss. Its own pile — it never spends a boost charge.";
             case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
             case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
+            case SkillEffectKind.ReturnToSavePoint:    return "Sends whoever this lands on back to where they return to: a person to their save point, on whichever map it is; a creature to the home it spawned at. No fields.";
+            case SkillEffectKind.TeleportToRandomSpot: return "Sets whoever this lands on down on a random walkable spot of the map they are in, always one they can walk back from. Nowhere to land = nothing happens, and an item running it is not spent. No fields.";
             case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. Dash speed sets how fast; the skill's range is the max distance.";
             case SkillEffectKind.SubStatBuff:   return "Temporarily RAISES one sub-stat — pick which below. Every timed sub-stat change lives here: movement speed, HP and MP regen, leech, reflect, evasion, all of them.";
             case SkillEffectKind.SubStatDebuff: return "Temporarily LOWERS one sub-stat — the same list as the buff. Author the amount as a positive number; it is subtracted for you.";

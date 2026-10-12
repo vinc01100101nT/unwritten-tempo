@@ -19,11 +19,13 @@ MonoBehaviour:
   masteryLevel: 65
   needsSkillId: skill.sword.blade_dance
   published: 1
+  trademarkRarity: 3
+  trademarkRaritySet: 1
   maxLevel: 5
   description: 'The dance goes on.
 
-    A kill during Thousand Petals adds 7 more dance
-    charges.'
+    A kill during Thousand Petals adds 7 more
+    dance charges.'
   archetype: 1
   family: 2
   shape: 3
@@ -70,6 +72,11 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     stayDuration: 0
+    bounceJumps: 0
+    bounceRange: 2.5
+    bounceDamageKept: 0.75
+    bounceReturns: 0
+    bounceEffectId: 
     effects:
     - kind: 15
       useStacks: 0
@@ -81,7 +88,20 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      damageMultPerPointGivenUp:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      damageMultPerMetre:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       element: 0
+      converts: 3
       amount:
         value: 10
         useStacks: 0

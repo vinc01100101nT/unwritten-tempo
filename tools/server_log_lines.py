@@ -17,7 +17,7 @@ DEATH = re.compile(TIME + r" \[hit\] (?P<map>\S+) (?P<who>.+?) died — killed b
 TOOK = re.compile(TIME + r" \[hit\] (?P<map>\S+) (?P<who>.+?) took (?P<dealt>\d+) from (?P<cause>.+?)"
                          r"(?: by (?P<by>.+? #\d+|.+?))?" + _HP + r"$")
 EXPERIENCE = re.compile(TIME + r" \[loot\] (?P<map>\S+) (?P<who>.+?) \((?P<id>[^)]*)\) earned (?P<xp>\d+) experience "
-                               r"from (?P<victim>.+)$")
+                               r"from (?P<victim>.+?)(?: — combo (?P<combo>\d+)(?:, \+(?P<from_combo>\d+) from it)?)?$")
 LOOT = re.compile(TIME + r" \[loot\] (?P<map>\S+) (?P<who>.+?) \((?P<id>[^)]*)\) earned (?P<what>(?!\d+ experience from ).+) "
                          r"from (?P<victim>.+)$")
 HEAL = re.compile(TIME + r" \[heal\] (?P<map>\S+) (?P<who>.+?) healed (?P<amount>\d+)(?: by (?P<by>.+?))?" + _HP + r"$")

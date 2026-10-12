@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Marks a character (the player) as a target for the x-ray occlusion silhouette drawn by
-/// <see cref="OccludedSilhouetteFeature"/>. It flags each child <see cref="Renderer"/> with dedicated
-/// <see cref="Renderer.renderingLayerMask"/> bits the feature filters on — so the silhouette is PLAYER-ONLY even
-/// though the player shares the crowd physics <b>layer</b> with the mobs (a renderer's rendering-layer mask is
-/// independent of its GameObject layer, so physics is untouched).
+/// Marks a body as a target for the x-ray occlusion silhouette drawn by <see cref="OccludedSilhouetteFeature"/>:
+/// the player always, and a creature for as long as <see cref="Show"/> says so (see <see cref="NetMob"/>). It flags
+/// each child <see cref="Renderer"/> with dedicated <see cref="Renderer.renderingLayerMask"/> bits the feature
+/// filters on — so only marked bodies are drawn, even though every unit shares the crowd physics <b>layer</b> (a
+/// renderer's rendering-layer mask is independent of its GameObject layer, so physics is untouched).
 ///
 /// <para>Two bits, because an equipped weapon must be treated differently from the body:
 /// <list type="bullet">
@@ -31,7 +31,18 @@ public class OccludedSilhouetteTarget : MonoBehaviour
 
     static readonly List<Renderer> scratch = new List<Renderer>(16);
 
+    // Whether this body is drawn through scenery at all. On unless somebody says otherwise, which is the player.
+    bool shown = true;
+
     void Start() => Refresh();
+
+    /// <summary>Start or stop drawing this body through scenery. Asked again with the same answer, it does nothing.</summary>
+    public void Show(bool on)
+    {
+        if (shown == on) return;
+        shown = on;
+        Refresh();
+    }
 
     /// <summary>Re-flag every child renderer. Call after a runtime model swap or equip change.</summary>
     public void Refresh()
@@ -41,6 +52,7 @@ public class OccludedSilhouetteTarget : MonoBehaviour
         {
             var r = scratch[i];
             if (r == null) continue;
+            if (!shown) { r.renderingLayerMask &= ~(Bit | CoverBit); continue; }
             bool isEquipment = r.GetComponentInParent<WeaponGrip>() != null;
             if (isEquipment)
                 r.renderingLayerMask = (r.renderingLayerMask & ~Bit) | CoverBit;   // covers the body, never painted

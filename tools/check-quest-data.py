@@ -18,13 +18,19 @@ Checks, per quest asset in unity/Assets/3_Data/Resources/Quests:
   - a Kill step names a creature the monster catalog has, which the world spawn list really places (by its own id,
     with at least one alive at a time — in the step's map when it names one), and asks for at least one
   - a quest has an unlock condition OR is offered by somebody, never both; a tutorial always has an unlock condition;
-    a giver is listed and keeps no station and no shop (those open a window when F is pressed, never a conversation)
+    a giver is listed, keeps no station and no shop, and is no Keeper (those open a window when F is pressed, never a
+    conversation)
   - every reward item exists, and a rewarded quest has no step judged on holding something (one lent item would
     finish it, and pay it, for everybody)
   - an offered quest has offer text
   - every hint's spot is a real guide spot, a station spot is only on a step whose item is made at a station, and a
     shop's buy button only on a Buy step
   - a hint has text
+
+And, for the townsfolk list itself (WorldTownsfolk.asset against the towns of WorldAtlas.asset):
+  - every map of type town has exactly one Keeper — none, and nobody there can save, store or teleport, and no Keeper
+    elsewhere can send anybody to it; two, and which one a trip arrives at is an accident
+  - a Keeper lives in a town, stands still (wander radius 0), and keeps no shop and works no station
 
 USAGE:   tools/check-quest-data.py [--root <repo>]
 EXIT:    0 = clean, 1 = problems found, 2 = setup problem.
@@ -41,6 +47,7 @@ ASSETS = os.path.join(REPO, "unity", "Assets")
 QUESTS = os.path.join(ASSETS, "3_Data", "Resources", "Quests")
 ITEMS = os.path.join(ASSETS, "3_Data", "Resources", "Items")
 TOWNSFOLK = os.path.join(ASSETS, "3_Data", "Resources", "WorldTownsfolk.asset")
+ATLAS = os.path.join(ASSETS, "3_Data", "Resources", "WorldAtlas.asset")
 SHOPS = os.path.join(ASSETS, "3_Data", "Resources", "WorldShops.asset")
 MONSTERS = os.path.join(ASSETS, "3_Data", "Resources", "Monsters")
 SPAWNS = os.path.join(ASSETS, "3_Data", "Resources", "WorldSpawns.asset")
@@ -162,14 +169,29 @@ def main():
                 slot = re.search(r"^\s*slot: (\d+)$", t, re.M)
                 items[m.group(1).strip()] = (int(made.group(1)) if made else 0, int(slot.group(1)) if slot else 0)
     people, keepers = set(), set()
+    town_keepers = []   # (person id, map, keeps a shop or a station, wander radius) for every row marked Keeper
     if os.path.isfile(TOWNSFOLK):
         for block in re.split(r"^  - (?=id: )", read(TOWNSFOLK), flags=re.M)[1:]:
             pid = re.match(r"id: (.+)", block).group(1).strip()
             people.add(pid)
             station = re.search(r"^\s*station: (\d+)", block, re.M)
             shop = re.search(r"^\s*shop: (.*)$", block, re.M)
-            if (station and station.group(1) != "0") or (shop and shop.group(1).strip()):
+            serves = bool((station and station.group(1) != "0") or (shop and shop.group(1).strip()))
+            is_keeper = re.search(r"^\s*keeper: 1\s*$", block, re.M) is not None
+            if serves or is_keeper:
                 keepers.add(pid)
+            if is_keeper:
+                where_map = re.search(r"^\s*map: (.*)$", block, re.M)
+                wander = re.search(r"^\s*wanderRadius: ([-\d.]+)", block, re.M)
+                town_keepers.append((pid, where_map.group(1).strip() if where_map else "", serves,
+                                     float(wander.group(1)) if wander else 0.0))
+    towns = None   # scene names of every map of type town, or None when the atlas cannot be read
+    if os.path.isfile(ATLAS):
+        towns = [m.group(1) for m in re.finditer(
+            r"^  - scene: (\S+)\n(?:^    (?!type:).*\n)*^    type: town\s*$", read(ATLAS), re.M)]
+    if not towns:
+        print(RED + "could not read any town out of WorldAtlas.asset — fix this checker, it is now blind to Keepers" + OFF)
+        return 2
     placed = set()   # (creature, map) pairs the world spawn list really places
     if os.path.isfile(SPAWNS):
         for block in re.split(r"^  - (?=map: )", read(SPAWNS), flags=re.M)[1:]:
@@ -191,6 +213,20 @@ def main():
                     creatures.add(m.group(1).strip())
 
     faults = []
+    # ---- every town has exactly one Keeper --------------------------------------------------------------
+    for town in towns:
+        here = [pid for pid, where_map, _, _ in town_keepers if where_map == town]
+        if not here:
+            faults.append("WorldTownsfolk.asset: town '%s' has no Keeper" % town)
+        elif len(here) > 1:
+            faults.append("WorldTownsfolk.asset: town '%s' has more than one Keeper (%s)" % (town, ", ".join(here)))
+    for pid, where_map, serves, wander in town_keepers:
+        if where_map not in towns:
+            faults.append("WorldTownsfolk.asset: Keeper '%s' lives in '%s', which is not a town" % (pid, where_map))
+        if serves:
+            faults.append("WorldTownsfolk.asset: Keeper '%s' also keeps a shop or works a station" % pid)
+        if wander != 0.0:
+            faults.append("WorldTownsfolk.asset: Keeper '%s' strolls (wander radius %s) — a Keeper stands still" % (pid, wander))
     seen_ids = {}
     files = sorted(f for f in os.listdir(QUESTS) if f.endswith(".asset")) if os.path.isdir(QUESTS) else []
     for f in files:
@@ -214,7 +250,7 @@ def main():
         if giver and giver not in people:
             faults.append("%s: is offered by '%s', whom the townsfolk list does not have" % (where, giver))
         elif giver in keepers:
-            faults.append("%s: is offered by '%s', who keeps a station or a shop and so never holds a conversation"
+            faults.append("%s: is offered by '%s', who keeps a station or a shop, or is a town's Keeper, and so never holds a conversation"
                           % (where, giver))
         reward = q.get("reward") or {}
         for it in (reward.get("items") or []) if isinstance(reward, dict) else []:
@@ -315,7 +351,7 @@ def main():
         for x in faults:
             print("  " + x)
         return 1
-    print(GRN + "quest data clean: %d quest(s)." % len(files) + OFF)
+    print(GRN + "quest data clean: %d quest(s); %d town(s), each with one Keeper." % (len(files), len(towns)) + OFF)
     return 0
 
 

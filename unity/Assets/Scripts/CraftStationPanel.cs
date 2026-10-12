@@ -19,6 +19,9 @@ public class CraftStationPanel : MonoBehaviour
     RectTransform content;
     CraftStation station = CraftStation.None;
     int picked = -1;                 // bag position of the piece being worked on, or -1
+    // The slot of the WORN piece being worked on, or None when the piece is in the bag (or none is picked). Every page
+    // that works on a piece lists what is worn as well as what is carried.
+    EquipSlotType pickedWorn = EquipSlotType.None;
     int saltPicked = -1;             // bag position of the Salt to put in the next quench, or -1 for none
     CraftStationOffer offer;
     bool haveOffer;
@@ -84,19 +87,21 @@ public class CraftStationPanel : MonoBehaviour
         Instance.lastResult = line;
         Instance.lastResultOk = ok;
         // The piece it was showing no longer exists; pointing at its old position would show whatever slid in.
-        if (pieceGone) { Instance.picked = -1; Instance.haveOffer = false; }
+        if (pieceGone) { Instance.picked = -1; Instance.pickedWorn = EquipSlotType.None; Instance.haveOffer = false; }
         if (IsOpen) Instance.Rebuild();
     }
 
     /// <summary>THE SERVER'S ANSWER about one piece. Kept and drawn; nothing here is worked out from it.</summary>
     public static void TakeOffer(CraftStationOffer o)
     {
-        if (Instance == null || o.bagIndex < 0) return;
+        if (Instance == null || (o.bagIndex < 0 && o.wornSlot == (int)EquipSlotType.None)) return;
         Instance.offer = o;
         Instance.haveOffer = true;
         // THE SERVER SAYS WHERE THE PIECE IS NOW. Paying for a fold empties material stacks out of the bag, so the
-        // piece can move; the offer carries the position it moved to and the window follows it.
+        // piece can move; the offer carries the position it moved to and the window follows it. A worn piece stays
+        // in its slot.
         Instance.picked = o.bagIndex;
+        Instance.pickedWorn = (EquipSlotType)o.wornSlot;
         // A SALT THE SERVER NO LONGER SEES IS NO LONGER CHOSEN. A quench spends the one that was in, so the position
         // remembered here can now hold anything; left as it was, the window read "Using — press to leave it out".
         if (o.saltTier <= 0) Instance.saltPicked = -1;
@@ -107,6 +112,7 @@ public class CraftStationPanel : MonoBehaviour
     {
         station = which;
         picked = -1;
+        pickedWorn = EquipSlotType.None;
         haveOffer = false;
         lastResult = null;
         page = Page.Menu;
@@ -122,17 +128,7 @@ public class CraftStationPanel : MonoBehaviour
         if (root != null) return;
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
-        var viewport = UiKit.Window(canvas.transform, "Station", new Vector2(420, 460), Vector2.zero, out root);
-        // A LONG LIST SCROLLS. The rows are built into the same scroll column the Skills window uses, so thirty swords
-        // in the bag are a wheel away rather than off the bottom of the window.
-        content = UiKit.ScrollColumn(viewport);
-        var vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 5;
-        vlg.padding = new RectOffset(6, 6, 6, 6);
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.childAlignment = TextAnchor.UpperCenter;
+        content = UiKit.ListWindow(canvas.transform, "Station", new Vector2(420, 460), out root);
     }
 
     // ESCAPE, WALKING AWAY AND THE X ARE NOT DECIDED HERE. Opening a station is an interaction with a townsperson,
@@ -181,10 +177,28 @@ public class CraftStationPanel : MonoBehaviour
             int at = i;
             Row((at == picked ? "> " : "") + ItemTooltip.CopyTitle(e.instance), () => Pick(at), GuideSpot.StationPieceRow, e.def.id);
         }
+        // WHAT YOU ARE WEARING can be worked on every page without taking it off (recycling it takes it off for good).
+        foreach (var kv in c.Gear.Worn)
+        {
+            if (CraftStations.For(kv.Value.def) != station) continue;
+            workable++;
+            var slot = kv.Key;
+            Row((slot == pickedWorn ? "> " : "") + ItemTooltip.CopyTitle(kv.Value) + " (equipped)", () => PickWorn(slot));
+        }
         if (workable == 0) { Line("You are carrying nothing this station works on.", 12, Sub); return; }
 
-        if (picked < 0 || !haveOffer || offer.bagIndex != picked) return;
-        var inst = picked < c.Bag.Count ? c.Bag[picked].instance : null;
+        if (!haveOffer) return;
+        EquipmentInstance inst;
+        if (pickedWorn != EquipSlotType.None)
+        {
+            if (offer.wornSlot != (int)pickedWorn) return;
+            inst = c.GetEquippedInstance(pickedWorn);
+        }
+        else
+        {
+            if (picked < 0 || offer.bagIndex != picked) return;
+            inst = picked < c.Bag.Count ? c.Bag[picked].instance : null;
+        }
         if (inst == null || inst.def == null) return;
 
         Line(ItemTooltip.CopyTitle(inst) + "   " + offer.folds + " of " + offer.foldCap + " folds", 14, UiKit.TextMain);
@@ -253,7 +267,13 @@ public class CraftStationPanel : MonoBehaviour
         string itemId = inst.def.id;
         if (offer.canFold)
             Row("Fold   " + (offer.foldFree ? "Free" : offer.foldMaterialCost + " " + BandMaterialName() + " · " + offer.foldGoldCost + "g"),
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToFold(picked, itemId); },
+                () =>
+                {
+                    var me = GameNetwork.MyPlayer;
+                    if (me == null) return;
+                    if (pickedWorn != EquipSlotType.None) me.AskToFoldWorn(pickedWorn, itemId);
+                    else me.AskToFold(picked, itemId);
+                },
                 GuideSpot.StationFoldButton, itemId);
         else
             Line("Folded as far as this grade allows. Quench it to go further.", 12, Sub);
@@ -276,7 +296,13 @@ public class CraftStationPanel : MonoBehaviour
         }
 
         Row("Quench   " + offer.quenchMaterialCost + " " + BandMaterialName() + " · " + offer.quenchGoldCost + "g",
-            () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToQuench(picked, itemId, saltPicked); });
+            () =>
+            {
+                var me = GameNetwork.MyPlayer;
+                if (me == null) return;
+                if (pickedWorn != EquipSlotType.None) me.AskToQuenchWorn(pickedWorn, itemId, saltPicked);
+                else me.AskToQuench(picked, itemId, saltPicked);
+            });
         Line("Up " + offer.up + "%   ·   unchanged " + offer.same + "%   ·   down " + offer.down + "%", 12, Sub);
         Line("A quench spends every fold, whichever way it goes.", 11, Sub);
 
@@ -306,13 +332,13 @@ public class CraftStationPanel : MonoBehaviour
         {
             int slot = i;
             Row("Replace " + ItemTooltip.InkStatLabel(inst.inkStats[i]) + " (slot " + (i + 1) + ") with " + inkName,
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToInk(picked, itemId, ink, slot); });
+                () => AskToInk(itemId, ink, slot));
         }
         if (written < offer.inkSlots)
         {
             int slot = written;
             Row("Write slot " + (written + 1) + " with " + inkName,
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToInk(picked, itemId, ink, slot); });
+                () => AskToInk(itemId, ink, slot));
         }
     }
 
@@ -331,14 +357,41 @@ public class CraftStationPanel : MonoBehaviour
             }
         if (offer.recycleGold > 0) { if (back.Length > 0) back.Append(", "); back.Append(offer.recycleGold).Append(" gold"); }
         Row("Recycle   → " + (back.Length > 0 ? back.ToString() : "nothing"),
-            () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToRecycle(picked, itemId); });
+            () => AskToRecycle(itemId));
         Line("Recycling destroys the piece. What comes back is half of the forge, the quenches it climbed, the folds on it "
              + "and the stats written on it — failed quenches are not counted.", 11, Sub, 2);
+    }
+
+    // Ink and Recycle, sent for the picked piece wherever it is: worn in a slot, or at a bag position.
+    void AskToInk(string itemId, int ink, int slot)
+    {
+        var me = GameNetwork.MyPlayer;
+        if (me == null) return;
+        if (pickedWorn != EquipSlotType.None) me.AskToInkWorn(pickedWorn, itemId, ink, slot);
+        else me.AskToInk(picked, itemId, ink, slot);
+    }
+
+    void AskToRecycle(string itemId)
+    {
+        var me = GameNetwork.MyPlayer;
+        if (me == null) return;
+        if (pickedWorn != EquipSlotType.None) me.AskToRecycleWorn(pickedWorn, itemId);
+        else me.AskToRecycle(picked, itemId);
     }
 
     void Pick(int bagIndex)
     {
         picked = bagIndex;
+        pickedWorn = EquipSlotType.None;
+        saltPicked = -1;
+        haveOffer = false;
+        AskForOffer();
+    }
+
+    void PickWorn(EquipSlotType slot)
+    {
+        picked = -1;
+        pickedWorn = slot;
         saltPicked = -1;
         haveOffer = false;
         AskForOffer();
@@ -348,7 +401,13 @@ public class CraftStationPanel : MonoBehaviour
     void AskForOffer()
     {
         var me = GameNetwork.MyPlayer;
-        if (me != null && picked >= 0) me.AskForOffer(picked, saltPicked);
+        if (me == null) return;
+        if (pickedWorn != EquipSlotType.None)
+        {
+            var worn = Character.Instance != null ? Character.Instance.GetEquippedInstance(pickedWorn) : null;
+            if (worn != null && worn.def != null) me.AskForWornOffer(pickedWorn, worn.def.id, saltPicked);
+        }
+        else if (picked >= 0) me.AskForOffer(picked, saltPicked);
     }
 
     // The best Salt being carried, or -1 — what the "add Salt" press offers. Choosing a cheaper one is not
@@ -378,23 +437,13 @@ public class CraftStationPanel : MonoBehaviour
         return best;
     }
 
-    // One button line. Under this window's vertical layout a control with no stated height is given none, so
-    // every button was drawn at zero height on top of the next — the 2026-09-21 screenshot. The same shape the
-    // System window's entries use.
+    // One button line and one line of text — the list window's own (UiKit.ListButton / ListLine).
     void Row(string label, System.Action onClick, GuideSpot spot = GuideSpot.None, string itemId = "")
     {
-        var btn = UiKit.Btn(label, content, onClick);
-        btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 30;
+        var btn = UiKit.ListButton(content, label, onClick, 30);
         // What the tutorial guide may point at, named for it here where the row is made (see GuideMarker).
         GuideMarker.Put(btn.gameObject, spot, itemId, station);
     }
 
-    // One line of text, `rows` lines tall — a sentence from the server needs room to wrap.
-    void Line(string s, int size, Color color, int rows = 1)
-    {
-        var t = UiKit.Label("Line", content, s, size, FontStyle.Normal, rows > 1 ? TextAnchor.UpperLeft : TextAnchor.MiddleLeft);
-        t.color = color;
-        var le = t.gameObject.AddComponent<LayoutElement>();
-        le.preferredHeight = (size + 4) * rows + 4;
-    }
+    void Line(string s, int size, Color color, int rows = 1) => UiKit.ListLine(content, s, size, color, rows);
 }

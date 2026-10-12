@@ -24,7 +24,7 @@ public static class ItemExport
     [Serializable] class Export { public string note; public string[] grades; public Entry[] items; public Trademark[] trademarks; public Word[] words; }
 
     // One trademark a forge can roll, and what it raises at each grade (grades[] order).
-    [Serializable] class Trademark { public string name, weapon, chance; public Lines[] byGrade; }
+    [Serializable] class Trademark { public string name, weapon, rarity, chance; public Lines[] byGrade; }
     // One armour word, the slot it rolls on, and what it does at each grade (grades[] order).
     [Serializable] class Word { public string name, slot, chance; public int slotOrder; public string[] byGrade; }
     // A weapon's reach as the wiki shows it. A weapon that is melee or ranged by its holder's higher stat reaches
@@ -44,7 +44,7 @@ public static class ItemExport
     [Serializable] class Entry
     {
         public string id, name, description, type, slot, weaponType, element, madeOf, forgeMaterial, reach;
-        public string materialKind, mergesInto;
+        public string materialKind, mergesInto, rarity;
         public int slotOrder, materialKindOrder, forgeUnits, forgeGold, cardSlots, weight, zeny, materialStep;
         public Source[] droppedBy;
     }
@@ -93,6 +93,8 @@ public static class ItemExport
                 materialKindOrder = (int)it.materialKind,
                 materialStep = it.materialStep,
                 mergesInto = it.mergesInto != null ? it.mergesInto.displayName : "",
+                // A weapon's rarity is its copy's trademark's, which the design alone does not have — so none here.
+                rarity = it.slot == EquipSlotType.Weapon ? "" : Rarities.Label(Rarities.Of(it, null)),
                 droppedBy = by,
             });
         }
@@ -102,13 +104,12 @@ public static class ItemExport
         var grades = (Quality[])Enum.GetValues(typeof(Quality));
         var gradeNames = Array.ConvertAll(grades, q => q.ToString());
 
-        // TRADEMARKS: every skill a forge can roll onto each weapon, at the forge's own odds.
+        // TRADEMARKS: every skill a forge can roll onto each weapon, its rarity, and the forge's own odds.
         var trademarks = new List<Trademark>();
         var lines = new List<string>();
         foreach (WeaponType weapon in Enum.GetValues(typeof(WeaponType)))
         {
-            int total = Trademarks.RollTotal(weapon);
-            if (total <= 0) continue;
+            if (!Trademarks.AnyFor(weapon)) continue;
             foreach (var s in SkillCatalog.All)
             {
                 if (!Trademarks.Rollable(s, weapon)) continue;
@@ -122,6 +123,7 @@ public static class ItemExport
                 {
                     name = s.displayName,
                     weapon = WeaponTypes.Label(weapon),
+                    rarity = Rarities.Label(Rarities.OfTrademark(s)),
                     chance = LootDropper.ChanceText(Trademarks.ChanceOf(s, weapon)),
                     byGrade = byGrade,
                 });

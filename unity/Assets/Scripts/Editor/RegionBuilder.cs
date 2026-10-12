@@ -173,8 +173,8 @@ public static class RegionBuilder
     }
 
     // The visible warp marker: Hovl Studio's UPRIGHT "Portal" rings, colour-coded BY DESTINATION so a
-    // doorway's colour tells you where it goes (see WarpKind / PortalPrefabFor below).
-    const string PortalsDir   = "Assets/0_Raw/Hovl Studio/Magic effects pack/Prefabs/Portals/";
+    // doorway's colour tells you where it goes (see PortalPrefabFor below).
+    const string PortalsDir   = "Assets/1_Authored/Prefabs/VFX/Portals/";
     const float  WarpFxScale  = 0.5f;   // tune live in-scene; Hovl portals are ~2 units tall at scale 1
     const float  WarpFxHeight = 1.0f;   // lift the ring so it stands ON the ground at ~doorway height
 
@@ -183,34 +183,15 @@ public static class RegionBuilder
     static readonly Vector3 TriggerSize   = new Vector3(1.5f, 2f, 1.5f);
     static readonly Vector3 TriggerCenter = new Vector3(0f, 1f, 0f);
 
-    // Destination → portal colour. Source of truth is the TYPE of the map the portal leads to (town | field |
-    // dungeon | special, from the world layout) — never its name, since a map's id is its name in snake_case.
-    enum WarpKind { Town, Field, Dungeon, Special }
-
-    static WarpKind KindOfType(string mapType) => mapType switch
+    // Destination → ring. The kind of map a door leads to comes from that map's TYPE in the world layout, never its
+    // name (MapKinds — the same table the zone map and the arrival flash colour by).
+    static string PortalPrefabFor(MapKind kind) => PortalsDir + kind switch
     {
-        "town"    => WarpKind.Town,
-        "dungeon" => WarpKind.Dungeon,
-        "special" => WarpKind.Special,
-        _         => WarpKind.Field,
-    };
-
-    static string PortalPrefabFor(WarpKind kind) => PortalsDir + kind switch
-    {
-        WarpKind.Town    => "Portal yellow.prefab",
-        WarpKind.Field   => "Portal green.prefab",
-        WarpKind.Special => "Portal red.prefab",
-        WarpKind.Dungeon => "Portal purple.prefab",   // not in the Hovl pack yet → falls back to blue + warns
-        _                => "Portal green.prefab",
-    };
-
-    static Color PortalTintFor(WarpKind kind) => kind switch
-    {
-        WarpKind.Town    => new Color(1f,   0.85f, 0.4f),   // yellow/gold
-        WarpKind.Field   => new Color(0.4f, 0.9f,  0.4f),   // green
-        WarpKind.Special => new Color(0.9f, 0.3f,  0.3f),   // red
-        WarpKind.Dungeon => new Color(0.6f, 0.35f, 0.9f),   // purple
-        _                => new Color(0.4f, 0.9f,  0.4f),
+        MapKind.Town    => "Portal yellow.prefab",
+        MapKind.Field   => "Portal green.prefab",
+        MapKind.Special => "Portal red.prefab",
+        MapKind.Dungeon => "Portal purple.prefab",
+        _               => "Portal green.prefab",
     };
 
     public static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, string destinationType)
@@ -229,50 +210,44 @@ public static class RegionBuilder
         portal.targetScene = targetScene;
         portal.spawnId = spawnId;
 
-        AddWarpFx(go, destinationType);
-        FitTriggerToFx(go.transform, box);   // hug the warp ring exactly + drop it onto the ground
+        DressPortal(go, destinationType);
         return go;
     }
 
-    // Attach the visible warp marker so the player can see the doorway in-game: the destination-coloured
-    // upright Hovl "Portal" ring if it's present, otherwise a tinted cylinder fallback (hand-finished later).
-    // The colour is driven by the type of map the portal LEADS to — so World Creator's paired portals are
-    // coloured by their destination map the moment they're placed.
-    static void AddWarpFx(GameObject portal, string destinationType)
+    /// <summary>THE ONE LOOK OF A DOOR: the standing, animated warp ring, coloured by the type of map it leads to.
+    /// Takes off whatever the door wore before (the retired flat disc, or an older ring), puts the ring on, stands it
+    /// on the ground and fits the walk-through trigger to it. Used when a door is made and to re-dress the doors
+    /// already in a scene, so both always end up identical.
+    ///
+    /// <para>There is deliberately no flat stand-in when the ring cannot be found: that fallback is what quietly
+    /// gave almost every door in the world a flat disc for months, after the ring's folder moved. A missing ring
+    /// is now an error, and the door is left as it was.</para></summary>
+    public static bool DressPortal(GameObject portal, string destinationType)
     {
-        var kind = KindOfType(destinationType);
-        var tint = PortalTintFor(kind);
-
-        // Chosen colour first; if that prefab is missing (e.g. no purple in the pack yet), fall back to blue.
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PortalPrefabFor(kind))
-                  ?? AssetDatabase.LoadAssetAtPath<GameObject>(PortalsDir + "Portal blue.prefab");
-        if (prefab != null)
+        var kind = MapKinds.Of(destinationType);
+        var path = PortalPrefabFor(kind);
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (prefab == null)
         {
-            if (kind == WarpKind.Dungeon && prefab.name != "Portal purple")
-                Debug.LogWarning("[unwritten] No 'Portal purple' in the Hovl pack yet; dungeon warp using blue. " +
-                                 "Drop a purple portal prefab in Prefabs/Portals/ to enable the convention.");
-            var fx = (GameObject)PrefabUtility.InstantiatePrefab(prefab, portal.scene);
-            fx.name = "WarpFX";
-            fx.transform.SetParent(portal.transform, false);
-            fx.transform.localPosition = new Vector3(0f, WarpFxHeight, 0f);   // stand the ring up on the ground
-            fx.transform.localScale = Vector3.one * WarpFxScale;
-            return;
+            Debug.LogError($"[unwritten] No warp ring at {path}; door '{portal.name}' left as it was.");
+            return false;
         }
 
-        // Fallback: the old cylinder pad (kept so the bakers still work if the VFX pack is missing).
-        Debug.LogWarning($"[unwritten] No Hovl portal prefab found in {PortalsDir}; using cylinder pad fallback.");
-        var pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        pad.name = "WarpPad";
-        Object.DestroyImmediate(pad.GetComponent<Collider>());   // visual only — the trigger lives on the parent
-        pad.transform.SetParent(portal.transform, false);
-        pad.transform.localPosition = new Vector3(0f, 0.06f, 0f);
-        pad.transform.localScale = new Vector3(1.5f, 0.06f, 1.5f);
-        var mr = pad.GetComponent<MeshRenderer>();
-        var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
-        var mat = new Material(shader);
-        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tint);
-        if (mat.HasProperty("_Color")) mat.SetColor("_Color", tint);
-        mr.sharedMaterial = mat;
+        for (int i = portal.transform.childCount - 1; i >= 0; i--)
+        {
+            var child = portal.transform.GetChild(i).gameObject;
+            if (child.name == "WarpPad" || child.name == "WarpFX") Object.DestroyImmediate(child);
+        }
+
+        var fx = (GameObject)PrefabUtility.InstantiatePrefab(prefab, portal.scene);
+        fx.name = "WarpFX";
+        fx.transform.SetParent(portal.transform, false);
+        fx.transform.localPosition = new Vector3(0f, WarpFxHeight, 0f);
+        fx.transform.localScale = Vector3.one * WarpFxScale;
+
+        var box = portal.GetComponent<BoxCollider>();
+        if (box != null) FitTriggerToFx(portal.transform, box);
+        return true;
     }
 
     // Add a Portal3D only if this scene doesn't already have one pointing at the same target.

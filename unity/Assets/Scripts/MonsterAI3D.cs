@@ -288,6 +288,10 @@ public class MonsterAI3D : MonoBehaviour
     /// new spot (<see cref="FieldMobSpawner"/>) so it wanders around where it reappeared, not its first spawn.</summary>
     public void SetHome(Vector3 p) => home = p;
 
+    /// <summary>Where this creature wanders from — the spot it was last set down at. Where a return-home effect (a
+    /// Butterfly Wing's) sends it.</summary>
+    public Vector3 Home => home;
+
     /// <summary>Follow <paramref name="summoner"/> for this life: wander around it, fight whoever it fights, and never
     /// stray further than <see cref="CreatureKinds.SummonFollowRange"/> from it — past that, drop the target and walk
     /// back. Set by <see cref="CreatureSummons"/> when it calls this creature up.</summary>

@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityMeshSimplifier;
 
 /// <summary>
 /// Author-time mesh decimation with a measured break-point workflow. TRELLIS/Hunyuan props arrive far too
@@ -122,35 +121,13 @@ public class MeshDecimateWindow : EditorWindow
 
     // Solve toward the target tri count: quality is a 0..1 ratio, so seed ratio=target/current and do up to
     // two proportional correction passes (the algorithm won't land exactly on a count).
-    Mesh Decimate(Mesh src, int target)
+    Mesh Decimate(Mesh src, int target) => MeshDecimation.Decimate(src, target, new MeshDecimation.Options
     {
-        int srcTris = Tris(src);
-        if (srcTris <= target) return null;   // already under budget — nothing to do
-
-        Mesh best = null;
-        float quality = Mathf.Clamp01((float)target / srcTris);
-        for (int pass = 0; pass < 3; pass++)
-        {
-            var ms = new MeshSimplifier
-            {
-                PreserveBorderEdges = preserveBorders,
-                PreserveUVSeamEdges = preserveUvSeams,
-                PreserveUVFoldoverEdges = preserveUvFoldover,
-                EnableSmartLink = smartLink,
-                MaxIterationCount = 100,
-            };
-            ms.Initialize(src);
-            ms.SimplifyMesh(Mathf.Clamp01(quality));
-            best = ms.ToMesh();
-            best.name = src.name;
-
-            int got = Tris(best);
-            if (got <= 0) break;
-            if (Mathf.Abs(got - target) <= target * 0.07f) break;   // within 7% — good enough
-            quality *= (float)target / got;                          // proportional correction
-        }
-        return best;
-    }
+        preserveBorders = preserveBorders,
+        preserveUvSeams = preserveUvSeams,
+        preserveUvFoldover = preserveUvFoldover,
+        smartLink = smartLink,
+    });
 
     void Revert()
     {
@@ -170,7 +147,7 @@ public class MeshDecimateWindow : EditorWindow
     static Mesh Source(MeshFilter f) =>
         f != null && s_originals.TryGetValue(f, out var o) ? o : (f != null ? f.sharedMesh : null);
 
-    static int Tris(Mesh m) => m == null ? 0 : m.triangles.Length / 3;
+    static int Tris(Mesh m) => MeshDecimation.Tris(m);
 
     static void EnsureFolder()
     {

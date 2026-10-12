@@ -69,6 +69,10 @@ public class NetNpc : NetworkBehaviour
     /// conversation with a shopkeeper.</summary>
     [SyncVar] public string shopId = "";
 
+    /// <summary>THIS PERSON IS THE TOWN'S KEEPER. It crosses for the same reason the shop does: the body a player presses
+    /// F on is a copy, and a copy that did not know would open a conversation instead of the Keeper's window.</summary>
+    [SyncVar] public bool keeper;
+
     /// <summary>WHO THIS PERSON IS TO A QUEST — their stable id in the townsfolk list. It crosses so a player's machine
     /// can draw the quest mark over the right head and offer the right quest when F is pressed on them.</summary>
     [SyncVar] public string personId = "";
@@ -172,6 +176,7 @@ public class NetNpc : NetworkBehaviour
         personName = serverBrain != null ? serverBrain.DisplayName ?? "" : "";
         personDescription = serverBrain != null ? serverBrain.Description ?? "" : "";
         shopId = serverBrain != null ? serverBrain.Shop ?? "" : "";
+        keeper = serverBrain != null && serverBrain.Keeper;
         personId = serverBrain != null ? serverBrain.PersonId ?? "" : "";
         hair = serverBrain != null ? serverBrain.Hair ?? "" : "";
         headgear = serverBrain != null ? serverBrain.Headgear ?? "" : "";
@@ -352,6 +357,7 @@ public class NetNpc : NetworkBehaviour
             brain.DisplayName = personName;
             brain.Description = personDescription;
             brain.Shop = shopId;
+            brain.Keeper = keeper;
             brain.PersonId = personId;
         }
 

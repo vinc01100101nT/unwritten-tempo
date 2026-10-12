@@ -331,6 +331,10 @@ public static class Pathfinder3D
     {
         public int x0, y0, nx, ny;
         public ushort[] label;   // 0 = not walkable (solid, or nothing underneath)
+        // Every walkable cell, grouped by label (KeeperMath.GroupByLabel): area L's cells are byLabel[firstOf[L]] up to
+        // byLabel[firstOf[L + 1]]. Built once at load so a random landing is one lookup — 4 bytes per walkable cell.
+        public int[] byLabel;
+        public int[] firstOf;
         public ushort At(int x, int y)
         {
             x -= x0; y -= y0;
@@ -392,9 +396,48 @@ public static class Pathfinder3D
                 }
             }
         }
+        g.byLabel = KeeperMath.GroupByLabel(g.label, next, out g.firstOf);
         areaGrids.Add(g);
         return g;
     }
+
+    /// <summary>A random walkable spot on the same connected stretch of ground as <paramref name="from"/> — so whoever
+    /// lands there can always walk back — where a body <paramref name="radius"/> wide fits, picked evenly among that
+    /// stretch's cells, at the ground's height. FALSE when <paramref name="from"/> is not on labelled ground (a map with
+    /// no labels, or a spot off the walkable ground) or no fitting cell turned up in a few tries. Asked once per use
+    /// (a Fly Wing), never per frame: each try is one lookup, plus the fitting test and a ground probe.</summary>
+    public static bool RandomSpotInArea(Vector3 from, float radius, out Vector3 spot)
+    {
+        spot = from;
+        int sx = Floor(from.x), sy = Floor(from.z);
+        for (int a = 0; a < areaGrids.Count; a++)
+        {
+            var g = areaGrids[a];
+            if (!g.Holds(sx, sy)) continue;
+            ushort own = g.At(sx, sy);
+            if (own == 0 || g.firstOf == null || own + 1 >= g.firstOf.Length) return false;
+            int first = g.firstOf[own], count = g.firstOf[own + 1] - first;
+            if (count <= 0) return false;
+            for (int attempt = 0; attempt < RandomSpotTries; attempt++)
+            {
+                int at = g.byLabel[first + CombatRng.Range(0, count)];
+                int gx = g.x0 + at % g.nx, gy = g.y0 + at / g.nx;
+                // The labels were worked out for the thinnest body; a real one may not fit, so it is nudged to the
+                // nearest cell that does — and kept only if that is still the same stretch of ground.
+                if (Blocked(Center(gx, gy), radius) && !FindNearbyOpen(ref gx, ref gy, radius)) continue;
+                if (g.At(gx, gy) != own) continue;
+                Vector2 c = Center(gx, gy);
+                if (!SampleGround(c, out float y, out _)) continue;
+                spot = new Vector3(c.x, y, c.y);
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    // How many cells a random landing tries before giving up — a fitting cell is the rule, so this is rarely reached.
+    const int RandomSpotTries = 8;
 
     /// <summary>Drop a map's labels when the map goes, so a later map set down in the same place is not judged by them.</summary>
     public static void ForgetAreas(object labels)

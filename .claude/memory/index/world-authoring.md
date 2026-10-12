@@ -4,7 +4,7 @@
 - [Mobs/items/maps as data tables](../mob-item-map-data-tables.md) — `MonsterDef` SO in `Resources/Monsters`, kebab `id` via `MonsterCatalog`.
 - [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<id>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
 - [Saved characters + the side system](../saved-characters-and-sides.md) — a beaten mob turns back (10%) into its 2D character on a body of the SAME mob; `Sides.Hostile` is the one enemy question for skills, prey, the server swing refusal and the cursor; deaths pay no gold, rescue does.
-- [Portal/warp color by destination](../portal-color-convention.md) — town=yellow, field=green, dungeon=purple (cylinder pad; blue ring fallback), special=red; chosen by the destination map's TYPE (`KindOfType`), never its name.
+- [Portal/warp color by destination](../portal-color-convention.md) — every door is the standing ring (no flat fallback); colour by destination TYPE via runtime `MapKinds` (town=yellow, field=green, dungeon=purple, special=red), never its name.
 - [World liveliness / ambient life](../world-liveliness-ambient-npcs.md) — SIMULATION: `WorldTownsfolk` list (named, per map, code-spawned)→`TownNPC` on `PathAgent3D` + `NpcBarks`.
 - [Hand-authored world content](../hand-authored-world-content.md) — user authors ART by hand; generator automates LAYOUT.
 - [Maps HAND-AUTHORED via Prop Palette](../authoring-toolkit-prop-palette.md) — `PropPalette` + Authoring menu; DON'T write per-map bakers.
@@ -30,3 +30,4 @@
 - [Creature kinds + world spawn list](../creature-kinds-and-world-spawns.md) — creatures placed by `Resources/WorldSpawns` rows at map load, never scene spawners; kind drives slots/summons/gear/drops/respawn.
 - [Naming: styles, forms and places](../world-names-tie-to-shadows-and-weapons.md) — each shadow is a Kashira with a name, a title and a STYLE, skills are numbered FORMS; real English only, must sound smooth with 'style', no real-country culture, no made-up language, no other franchise's terms.
 - [Wiki Database pages are generated](../wiki-database-generated-pages.md) — Monsters, Skills, Equipment, Materials, World Map and Elements are generated (MobExport/WorldMapExport/ElementExport/ItemExport + the skill export); never hand-edit their json; hooks on save.
+- [Play-test QoL batch 2026-10-11](../playtest-qol-batch-2026-10-11.md) — map edge walls, standing portals only, map-window doors/guide/mob counts, arrival name flash, hotbar keeps used-up items, server equip preview, every station job on worn gear, far-prop LODs; the decisions behind each.

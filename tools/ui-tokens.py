@@ -6,7 +6,7 @@ somewhere a browser can see. Nothing here invents a colour, and nothing here wri
 
 Two outputs, both regenerated from scratch every run:
 
-  prototypes/ui-tokens.css   the shared palette and the rarity table as CSS variables, plus the
+  prototypes/ui-tokens.css   the shared palette as CSS variables (the rarity colours are rows of it), plus the
                              game's own font files loaded from where the game keeps them
   prototypes/ui-tokens.json  the same values, plus which colours each individual screen declares
                              for itself, for check-ui-prototypes.py to read
@@ -25,8 +25,8 @@ OUT_DIR = os.path.join(ROOT, "prototypes")
 FONT_DIR_REL = "../unity/Assets/3_Data/Resources/Fonts"
 
 # The shared palette lives here, and it is the only file whose colours belong to the whole interface rather
-# than to one screen. (There used to be a second: the rarity table. V4 removed rarity from the game on
-# 2026-09-20 — nothing is coloured by a tier any more — so the table and its variables are gone with it.)
+# than to one screen. (There used to be a second: a separate rarity table. Rarity came back on 2026-10-12 as rows
+# of the shared palette — RarityRare, RarityEpic, RarityLegendary — so the json's "rarity" keys stay empty.)
 SHARED = "UiKit.cs"
 
 # The game's two faces, as the game loads them: the one interface face, and the combat numbers' face.
