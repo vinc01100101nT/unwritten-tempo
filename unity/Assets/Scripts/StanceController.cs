@@ -230,6 +230,9 @@ public class StanceController : MonoBehaviour
     /// <see cref="PlayActionFor"/> roots the caster for. Split out so anything that must last "exactly as long as the
     /// animation" reads the clip rather than a seconds field typed next to it: a hurt reaction and the movement stop
     /// that goes with it have to be the same length, and two hand-typed numbers is how they drift apart.</summary>
+    // The slowest pace a held action is timed at — see ActionDuration.
+    const float MinPaceForAHold = 0.25f;
+
     public float ActionDuration(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false)
     {
         var b = StanceCatalog.Get(id);
@@ -243,7 +246,9 @@ public class StanceController : MonoBehaviour
             // speed, so the lock must equal its real play time = natural / that speed. durationScale (an attack-speed
             // hint for FitWindow) does NOT apply — the speed source already owns the timing. This is what stops a
             // MoveGait release stance from over-rooting: the lock now ends exactly when the animation does.
-            dur = natural / ResolveSpeedMult(b, 0f);
+            // NEVER LONGER THAN FOUR TIMES ITS OWN LENGTH: this number roots the caster, and a pace read near 0 once
+            // turned a 1.2 s release into a two-minute freeze. A pace that slow is a fault, not a speed anybody chose.
+            dur = natural / Mathf.Max(MinPaceForAHold, ResolveSpeedMult(b, 0f));
         else
             // FitWindow release stance: the caller feeds the window (seconds, or the natural length), scaled by
             // durationScale; the clip is fit to it, so play time == the window.

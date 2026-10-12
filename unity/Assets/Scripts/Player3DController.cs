@@ -386,7 +386,9 @@ public partial class Player3DController : MonoBehaviour
         float spd = CharacterSpec.Active.FullSpeed * travelTier * liveMove;
         // The playback of the OTHER clips paced by movement (idle, jump, skill releases): the gait baseline × live
         // movement speed × gear. Walk, run and sprint never read it — their legs are locked to the ground.
-        float gait = gaitSpeed * liveMove;
+        // PACED BY SLOW AND HASTE, NOT BY A ROOT: a skill pressed earlier in this frame may already be holding us, and
+        // a pace of 0 written here is what every movement-paced release animation divides by (StatusController.PaceMult).
+        float gait = gaitSpeed * (status != null ? status.PaceMult : 1f);
         float animTier = (Sprinting || WalkingSlow) ? 1f : runSpeedMult;
         GaitSpeedMult = gait * animTier;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)

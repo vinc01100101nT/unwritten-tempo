@@ -313,6 +313,12 @@ public class StatusController : MonoBehaviour
     /// buff (≥1). So a speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move
     /// speed, the footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.GaitSpeedMult"/>).</summary>
     public float MoveMult { get { if (ActionLocked) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }   // store folds Slow × Haste; the action-lock still zeroes it
+    /// <summary>The PACE a body's movement-paced animations play at — Slow × Haste only, NOT zeroed by a root. A root
+    /// stops the feet; it must not stop the clock of a skill's release animation, whose hold is its length ÷ this.
+    /// Read through <see cref="MoveMult"/> instead, a press that rooted the caster in the same frame left the pace at
+    /// 0, and the NEXT release (auto-combat presses on the first free frame) held the caster for 100× its length —
+    /// two minutes for Petal Storm (2026-10-12, measured by the "keys not answered" line).</summary>
+    public float PaceMult { get { if (CannotAct) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }
     /// <summary>The live Haste move-speed multiplier (1 = none), or 1 once the buff has expired. Lets the dev
     /// panel show/drive the current speed buff on a slider.</summary>
     public float HasteMult { get { var st = states; var h = st != null ? st.Get(StateId.MovementSpeed) : null; return h != null ? h.Mult : 1f; } }
