@@ -25,7 +25,9 @@ walks there, swings, presses up to four chosen skills, drinks potions and picks 
   nothing to fight.
 - **Free Roam** — goes for the nearest creature anywhere on the map.
 
-Whichever hunt, the nearest qualifying creature to the character is chosen.
+Whichever hunt, the nearest qualifying creature to the character is chosen. A target that has neither lost health
+nor been walked any closer for **6 seconds** — one the hunt cannot reach or cannot hurt — is given up on and left
+alone for 20 seconds (a taunter never is).
 
 ## Auto-skills
 

@@ -24,6 +24,15 @@ public partial class Player3DController
     float nextAutoSkillLook;
     float nextHomeRepath;
 
+    // THE GIVE-UP WATCH on the current target: when it last lost health or was walked closer to, and what those were.
+    Health watchedTarget;
+    float watchedProgressAt;
+    int watchedHp;
+    float watchedClosestSqr;
+    // Targets given up on, each until a time — a handful at most, so a plain list.
+    readonly System.Collections.Generic.List<Health> givenUp = new System.Collections.Generic.List<Health>(4);
+    readonly System.Collections.Generic.List<float> givenUpUntil = new System.Collections.Generic.List<float>(4);
+
     // Every frame: the body follows the server's word. Off → the hunt stops. On → the hunt runs, and comes back by itself
     // after anything that briefly took the body without the player asking (a skill's dash, a passive's lunge); only the
     // player's own orders end it (EndHuntForAnOrder).
@@ -91,9 +100,65 @@ public partial class Player3DController
             if (attackTarget == null) return AutoIdleStep(mode);
         }
 
+        // GIVE UP ON A TARGET THAT GOES NOWHERE — one the hunt cannot reach or cannot hurt would otherwise hold it for
+        // good. Never on a taunter: the taunt decides that target.
+        if (!taunted && NoProgressOn(attackTarget))
+        {
+            GiveUpOn(attackTarget);
+            LetGoOfTarget();
+            return AutoIdleStep(mode);
+        }
+
         PressAutoSkills();
         if (mode == HuntMode.Standing && !taunted) return StandAndSwing();
         return PursueAttackTarget();
+    }
+
+    // Watch the target: a new one starts the clock; health lost or the gap closed restarts it. TRUE once the clock has
+    // run for GiveUpAfterSeconds with neither.
+    bool NoProgressOn(Health target)
+    {
+        float gapSqr = AutoCombatMath.FlatSqr(transform.position, target.transform.position);
+        if (target != watchedTarget)
+        {
+            watchedTarget = target;
+            watchedProgressAt = Time.time;
+            watchedHp = target.CurrentHP;
+            watchedClosestSqr = gapSqr;
+            return false;
+        }
+        if (AutoCombatMath.MadeProgress(target.CurrentHP, watchedHp, gapSqr, watchedClosestSqr))
+        {
+            watchedProgressAt = Time.time;
+            watchedHp = target.CurrentHP;
+            watchedClosestSqr = Mathf.Min(watchedClosestSqr, gapSqr);
+            return false;
+        }
+        return Time.time - watchedProgressAt > AutoCombatMath.GiveUpAfterSeconds;
+    }
+
+    void GiveUpOn(Health target)
+    {
+        watchedTarget = null;
+        // Said in the log, so a hunt that stood still can be told apart from one that gave up and moved on.
+        GameLog.Info(LogCat.Client, string.Concat("auto-combat gave up on ", target.name, " — no health lost and no step closer in ",
+                                                  AutoCombatMath.GiveUpAfterSeconds.ToString("0"), "s"));
+        int at = givenUp.IndexOf(target);
+        float until = Time.time + AutoCombatMath.IgnoreGivenUpSeconds;
+        if (at >= 0) { givenUpUntil[at] = until; return; }
+        givenUp.Add(target);
+        givenUpUntil.Add(until);
+    }
+
+    // Is this creature still being left alone? Expired entries are dropped as they are met.
+    bool GivenUp(Health h)
+    {
+        for (int i = givenUp.Count - 1; i >= 0; i--)
+        {
+            if (givenUp[i] == null || Time.time >= givenUpUntil[i]) { givenUp.RemoveAt(i); givenUpUntil.RemoveAt(i); continue; }
+            if (givenUp[i] == h) return true;
+        }
+        return false;
     }
 
     void LetGoOfTarget()
@@ -128,6 +193,7 @@ public partial class Player3DController
             if (ai == null) continue;
             var h = ai.Health;
             if (h == null || h.IsDead || !Sides.HostileToPeople(h)) continue;
+            if (givenUp.Count > 0 && GivenUp(h)) continue;
             Vector3 at = ai.transform.position;
             if (mode == HuntMode.Standing && (attacker == null || !attacker.InRange(h))) continue;
             if (mode == HuntMode.Radius && !AutoCombatMath.MayStartFightAt(autoAnchor, at)) continue;

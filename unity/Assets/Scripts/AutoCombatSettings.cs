@@ -81,6 +81,24 @@ public static class AutoCombatMath
     public const float SecondsBetweenDrinks = 1f;
     /// <summary>How often the player's machine looks at its auto-skill slots for one that is ready.</summary>
     public const float SecondsBetweenSkillLooks = 0.25f;
+    /// <summary>A target that has neither lost health nor been walked any closer for this long is given up on — one the
+    /// hunt cannot reach (a ledge, a wall, no route) or cannot hurt.</summary>
+    public const float GiveUpAfterSeconds = 6f;
+    /// <summary>…and is left alone for this long before the hunt may choose it again.</summary>
+    public const float IgnoreGivenUpSeconds = 20f;
+    /// <summary>How much closer (flat, in world units) counts as getting somewhere.</summary>
+    public const float CloserByAtLeast = 0.5f;
+
+    /// <summary>IS THE HUNT GETTING ANYWHERE with its target — has the target lost health, or has the gap closed by at
+    /// least <see cref="CloserByAtLeast"/> on the closest it has been?</summary>
+    public static bool MadeProgress(int targetHpNow, int targetHpBefore, float gapSqrNow, float closestGapSqr)
+    {
+        if (targetHpNow < targetHpBefore) return true;
+        float closest = Mathf.Sqrt(closestGapSqr);
+        float need = Mathf.Max(0f, closest - CloserByAtLeast);
+        return gapSqrNow <= need * need;
+    }
+
     /// <summary>Radius mode walks back to its spot once further from it than this, when nothing is being fought.</summary>
     public const float HomeSlack = 1.5f;
 
