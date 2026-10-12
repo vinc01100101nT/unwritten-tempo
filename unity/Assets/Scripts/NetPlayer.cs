@@ -151,16 +151,13 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // the right one instead of guessing from a threshold.
     [SyncVar] bool netSprinting;
 
-    // HOW FAR OFF THE FLOOR they are, and how fast their legs are churning. Both travel with the POSITION rather
-    // than with the pose, because both change continuously while a pose does not — a jump's height moves every
-    // frame it is in the air, and a cadence follows a Haste up and down.
+    // HOW FAR OFF THE FLOOR they are. It travels with the POSITION rather than with the pose, because it changes
+    // continuously while a pose does not — a jump's height moves every frame it is in the air.
     //
-    // Neither can be worked out at the far end. A watched copy has no physics capsule, so it cannot tell real lift
-    // from the height the capsule sits at when standing; and it has no controller, so it cannot fold this person's
-    // gear, Slow and Haste into a cadence. Both were therefore missing entirely: a jumping player's copy never left
-    // the ground, and its clips played at the bare baseline.
+    // It cannot be worked out at the far end: a watched copy has no physics capsule, so it cannot tell real lift
+    // from the height the capsule sits at when standing. Without it a jumping player's copy never left the ground.
+    // (Their legs need nothing told: a walk, run or sprint plays locked to the travel speed the copy already has.)
     [SyncVar] float netAboveGround;
-    [SyncVar] float netGait;
 
     // A HOP, AS A CURVE RATHER THAN AS SAMPLES OF ONE. A jump's lift is scripted — a symmetric arc that is entirely
     // decided by the moment it began, how tall it goes and how long it lasts — so it is said ONCE and every machine
@@ -651,11 +648,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     Vector3 lastReported;
     float lastReportedYaw;
     float lastReportedAbove;
-    float lastReportedGait;
-
-    // Below this a cadence has not really moved — it is a multiplier around 1, so a hundredth of it is already
-    // finer than anything a leg could show.
-    const float GaitEpsilon = 0.01f;
 
     // The visual that owns "how far off the floor am I". Held rather than looked up, because the report runs ten
     // times a second for the whole of a session; re-resolved after a door builds a new body.
@@ -1460,14 +1452,13 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         Vector3 p = me.transform.position;
         float yaw = FacingYaw(me.transform);
-        // BOTH READ FROM THEIR SINGLE OWNER, never re-derived here: the visual is what separates real lift from the
-        // capsule's resting offset, and the stance choke point is what folds a cadence out of gear, Slow and Haste.
+        // READ FROM ITS SINGLE OWNER, never re-derived here: the visual is what separates real lift from the
+        // capsule's resting offset.
         // perf-ok: resolved once and held. A destroyed object reads as null, so walking through a door re-resolves
         // it against the new body — the same shape the turned part below uses, for the same reason.
         if (playerVisual == null && StanceController.Player != null)
             playerVisual = StanceController.Player.GetComponent<Character3DVisual>();
         float above = playerVisual != null ? playerVisual.HeightAboveGround : 0f;
-        float gait = StanceController.Player != null ? StanceController.Player.LocomotionAnimNow : 1f;
 
         // TURNING COUNTS AS A CHANGE, and it did not before. Only a step used to be worth a packet, so a person
         // who stood their ground and turned to face you never sent anything — they went on facing whichever way
@@ -1478,15 +1469,13 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (hasReportedOnce
             && (p - lastReported).sqrMagnitude < MoveEpsilon * MoveEpsilon
             && Mathf.Abs(Mathf.DeltaAngle(lastReportedYaw, yaw)) < TurnEpsilon
-            && Mathf.Abs(above - lastReportedAbove) < MoveEpsilon
-            && Mathf.Abs(gait - lastReportedGait) < GaitEpsilon) return;
+            && Mathf.Abs(above - lastReportedAbove) < MoveEpsilon) return;
 
         lastReported = p;
         lastReportedYaw = yaw;
         lastReportedAbove = above;
-        lastReportedGait = gait;
         hasReportedOnce = true;
-        CmdReportPosition(p, yaw, above, gait);
+        CmdReportPosition(p, yaw, above);
     }
 
 
@@ -3564,7 +3553,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     [Command]
-    void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)
+    void CmdReportPosition(Vector3 p, float yaw, float aboveGround)
     {
         if (Leaving) return;
         // SENT SOMEWHERE BY THE SERVER, AND NOT THERE YET: nothing counts until a report lands where they were sent —
@@ -3595,11 +3584,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         netPosition = p;
         netYaw = yaw;
         netSpeed = acceptedGroundSpeed;
-        // TWO PICTURES, KEPT SANE RATHER THAN TRUSTED. Neither moves anything the server decides — one lifts a model
-        // and the other paces a clip — so the only thing worth guarding is that a broken or lying machine cannot
-        // leave somebody hanging in the sky or twitching at fifty times speed on everybody else's screen.
+        // A PICTURE, KEPT SANE RATHER THAN TRUSTED. It moves nothing the server decides — it lifts a model — so the
+        // only thing worth guarding is that a broken or lying machine cannot leave somebody hanging in the sky.
         netAboveGround = Mathf.Clamp(aboveGround, 0f, HighestAnybodyGets);
-        netGait = Mathf.Clamp(gait, 0.05f, FastestLegsGet);
 
         // AND THE SERVER'S OWN COPY ACTUALLY STANDS THERE. Writing only the figure above left this object sitting
         // at the world origin on the server for the whole of a player's life — which was harmless while nothing on
@@ -3674,11 +3661,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // arrives after a long silence, where elapsed time alone would justify almost any distance.
     const float NeverThisFarInOneStep = 40f;
 
-    // The ceilings on the two pictures a person's machine paints of its own body. Both are far above anything the
-    // game produces — a jump clears a fraction of a unit and the fastest legs run at a few times normal — and are
-    // here only so that a nonsense number cannot leave somebody floating in the sky or blurring on every screen.
+    // The ceiling on the height a person's machine reports for its own body. Far above anything the game produces —
+    // a jump clears a fraction of a unit — and here only so that a nonsense number cannot leave somebody floating.
     const float HighestAnybodyGets = 20f;
-    const float FastestLegsGet = 8f;
 
     /// <summary>Server-only: accept whatever position comes next without question. Called when the server ITSELF
     /// moved this person — walking through a door is a jump the checker must not read as a lie.</summary>
@@ -3908,11 +3893,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             // something to keep doing rather than something that happened. Told every frame and applied only when it
             // changed — the body's own driver holds it from there.
             bodyVisual.TellPose(netHasDriven, netDriven, netDrivenWindow, netDrivenRelease, netDrivenBeat, netSprinting);
-            // …AND THE TWO THINGS A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
-            // makes a jump actually leave the ground here, and how fast their legs are churning, which is what an
-            // unmeasured walk, run or sprint is played at.
+            // …AND THE ONE THING A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
+            // makes a jump actually leave the ground here.
             bodyVisual.TellHeightAboveGround(HeightRightNow());
-            if (bodyStance != null) bodyStance.TellLocomotionAnim(netGait);
         }
 
         ShowTheirHeldStance();
@@ -3989,7 +3972,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     readonly WatchedCast watchedCast = new WatchedCast();
 
     readonly LevelCapAura levelAura = new LevelCapAura();
-    StanceController bodyStance;   // the watched body's stance choke point, held from the moment it is built
 
     /// <summary>Start showing this person's wind-up. Called when the server says one began.
     ///
@@ -4037,7 +4019,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         bodyDye = null;
         bodyHead = null;
         bodyVisual = null;
-        bodyStance = null;
         bodyLoading = false;
     }
 
@@ -4116,9 +4097,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             // Held so the per-frame follow below can hand this body the server's word without looking a component
             // up on every frame of every person on screen.
             bodyVisual = visual;
-            // AND THE STANCE CHOKE POINT ON IT. Held here rather than looked up when it is wanted, because what
-            // wants it is a per-frame drive; the builder puts one on the root of every character it makes.
-            bodyStance = root.GetComponent<StanceController>();
             // AND THE COLOURS THEY CHOSE, by the same recolouring their own avatar wears on their machine.
             // perf-ok: once per body built.
             bodyDye = CharacterDye3D.AddShowing(pose.gameObject, look);

@@ -160,19 +160,13 @@ public class CharacterSpec : ScriptableObject
     // it has no attacker component to read — it holds a fighter, not an avatar. Two copies of this number would mean
     // the swing on your screen and the blow on the server drifting apart by however far they disagreed.
 
-    // ---- travel + gait ------------------------------------------------------------------------------------------------
+    // ---- travel ------------------------------------------------------------------------------------------------------
 
-    [Header("Travel + gait")]
+    [Header("Travel")]
     [Tooltip("THE movement speed: how fast a bare-footed character sprints, in world units a second before unit scale. " +
              "Every gear travels a fraction of it, and the walk, run and sprint legs follow whatever speed results — " +
              "they are locked to the ground, so nothing else needs changing with it.")]
     public float moveSpeed = 2.4f;
-    [Tooltip("How fast the WALK, RUN and SPRINT animations play — and nothing else. A clip whose stride was measured " +
-             "(the step button in the Stance Composer) locks its legs to the real ground speed instead; this is the pace " +
-             "of one that was not, and the leg pace told to other players' screens. It never changes how fast anyone " +
-             "travels, and no other animation reads it.")]
-    [UnityEngine.Serialization.FormerlySerializedAs("gaitSpeed")]
-    public float locomotionAnimSpeed = 1.5f;
     [Tooltip("Walk gear as a fraction of full speed — the strolling pace. Townsfolk and a wandering shadow use this.")]
     public float walkGearMult = 0.2f;
     [Tooltip("Run gear as a fraction of full speed — the default jog. A chasing shadow uses this.")]
@@ -192,11 +186,6 @@ public class CharacterSpec : ScriptableObject
     /// gears, so every character changes gear at the same pace.</summary>
     public float GearSwitchSpeed => 0.5f * (WalkGearSpeed + RunGearSpeed);
 
-
-    /// <summary>Leg cadence for a character travelling under <paramref name="liveMoveMult"/> (its own live Slow/Haste)
-    /// in a gear whose animation tier is <paramref name="gearAnimTier"/>. ONE rule for every character: the player's
-    /// controller folds exactly this, and an AI unit now folds it too instead of holding a value frozen at spawn.</summary>
-    public float LocomotionAnimMult(float liveMoveMult, float gearAnimTier) => locomotionAnimSpeed * liveMoveMult * gearAnimTier;
 
     // ---- footsteps -----------------------------------------------------------------------------------------------------
 

@@ -311,13 +311,8 @@ public class StatusController : MonoBehaviour
 
     /// <summary>Move-speed multiplier: 0 while rooted (hard-CC or skill lock), else the Slow factor (≤1) × the Haste
     /// buff (≥1). So a speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move
-    /// speed, the footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.LocomotionAnimSpeedMult"/>).</summary>
+    /// speed — and so, through the ground speed, how fast the Walk/Run/Sprint legs play.</summary>
     public float MoveMult { get { if (ActionLocked) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }   // store folds Slow × Haste; the action-lock still zeroes it
-    /// <summary>The PACE an unmeasured walk, run or sprint plays at — Slow × Haste only, NOT zeroed by a root. Read
-    /// through <see cref="MoveMult"/> instead, a press that rooted the caster in the same frame left the pace at 0,
-    /// and while skill releases still followed it the NEXT release held the caster for 100× its length — two minutes
-    /// for Petal Storm (2026-10-12).</summary>
-    public float PaceMult { get { if (CannotAct) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }
     /// <summary>The live Haste move-speed multiplier (1 = none), or 1 once the buff has expired. Lets the dev
     /// panel show/drive the current speed buff on a slider.</summary>
     public float HasteMult { get { var st = states; var h = st != null ? st.Get(StateId.MovementSpeed) : null; return h != null ? h.Mult : 1f; } }
@@ -407,7 +402,7 @@ public class StatusController : MonoBehaviour
 
     /// <summary>Grant (or refresh) a move-SPEED buff: multiply move speed by <paramref name="multiplier"/> (≥1 to
     /// speed up) for <paramref name="seconds"/>. Folds into <see cref="MoveMult"/> on its own channel, so it lifts
-    /// the run/walk animation + footstep cadence (via <see cref="Player3DController.LocomotionAnimSpeedMult"/>) and stacks
+    /// the walk/run/sprint legs (they follow the ground speed) and stacks
     /// multiplicatively with a Slow. A new call replaces the current buff (latest wins).</summary>
     public void Haste(float multiplier, float seconds)
     {

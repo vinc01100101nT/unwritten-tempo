@@ -48,13 +48,10 @@ watched copy has no CharacterController, so it cannot tell real lift from the he
 standing, and using the raw reported Y would leave everybody hovering by that offset. `Character3DVisual` already
 separates the two (`HeightAboveGround`); that is what travels.
 
-**THE LEG CADENCE.** `StanceController.LocomotionAnimFor` reads `playerCtrl.LocomotionAnimSpeedMult` when it has a
-controller and the bare `CharacterSpec` baseline when it does not — and a watched body never has one. So an
-unmeasured walk, run or sprint on somebody else's body ran at the baseline, ignoring their gear, Slow and Haste.
-**Measured on the Jump stance when it was still movement-paced (×2): the owner played it at 1.5× and every watcher
-at 3.0× — exactly twice as fast.** (Since 2026-10-12 only walk cycles read the leg pace; the Jump is Baked ×1.5.)
-Told via `StanceController.TellLocomotionAnim`, and used AS-IS with no gear tier on top: the number already has the
-owner's tier folded in, and re-applying one counts it twice.
+**THE LEG CADENCE — no longer told (2026-10-12).** It used to ride the position report, because a movement-paced Jump
+played at 1.5× on the owner and 3.0× on every watcher. Today no stance follows a movement pace: the Jump is Baked, and
+walk/run/sprint legs are locked to ground speed, which a watched body already has (`TellTravelSpeed`). So the told
+cadence was deleted — see [[gait-speed-sync]].
 
 The cadence rides the POSITION report, and so does the height WHEN GRAVITY IS DOING THE WORK (a fall off a ledge) —
 the report gate had to learn that rising counts as moving, or a jump straight up sent nothing at all.

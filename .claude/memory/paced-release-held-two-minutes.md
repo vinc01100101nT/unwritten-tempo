@@ -1,6 +1,6 @@
 ---
 name: paced-release-held-two-minutes
-description: Auto-combat froze the character for ~2 minutes — a skill's movement-paced release animation divided by a walking pace that a same-frame skill root had left at 0. Fixed with StatusController.PaceMult and a 4× cap in StanceController.ActionDuration.
+description: Auto-combat froze the character for ~2 minutes — a skill's movement-paced release animation divided by a walking pace that a same-frame skill root had left at 0. Fixed by fitting releases to the swing time, deleting the movement pace, and a 4× cap in StanceController.ActionDuration.
 metadata:
   type: project
 ---
@@ -18,7 +18,6 @@ rooted the caster and the same frame then wrote a pace of 0; the next press — 
 pace was rewritten — divided by 0 (clamped to 0.01): 1.2 s × 100 = 120 s. A hand press almost never lands on that frame.
 
 **Fix:** releases no longer follow the gait at all — they are FIT to the caster's swing time, the creatures' rule
-(see [[stance-lock-must-match-speedsource]]). The leg pace now reads `StatusController.PaceMult` (Slow × Haste, not
-zeroed by a root) and is reachable by walk, run and sprint ONLY — the MoveGait source was retired the same day, Idle and
-Jump became Baked ([[gait-speed-sync]]) — and `StanceController.ActionDuration` never times a non-fit hold slower than
+(see [[stance-lock-must-match-speedsource]]). The movement pace itself was deleted the same day — walk, run and sprint
+legs are locked to ground speed, Idle and Jump became Baked ([[gait-speed-sync]]) — and `StanceController.ActionDuration` never times a non-fit hold slower than
 0.25 (at most 4× the clip).

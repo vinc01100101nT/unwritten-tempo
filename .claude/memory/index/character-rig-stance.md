@@ -11,7 +11,7 @@
 - [Player visible model is a SEPARATE object](../player-visual-is-separate-object.md) — root holds only the hidden sprite; the `Character3DVisual` object holds `Body`/weapon renderers. Per-visible-player flags go there (built in `Player3DVisualBuilder.Attach`).
 - [Forcing Humanoid on Quaternius drops clips](../quaternius-humanoid-drops-clips.md) — keep Generic; recover via `git checkout .fbx.meta`.
 - [Stance system (held poses + single driver)](../stance-system.md) — Composer→`StanceLibrary.asset`; `StanceController` is the single pose choke — and the single place every pose is BROADCAST from, so a new stance reaches watchers with no wiring. Locomotion + weapon swings are deliberately excluded (another owner already says them).
-- [Gait speed-sync](../gait-speed-sync.md) — walk/run/sprint leg pace: ground-locked, else `locomotionAnimSpeed` × Slow/Haste × gear; nothing else reads it.
+- [Gait speed-sync](../gait-speed-sync.md) — walk/run/sprint legs locked to real ground speed (every body measured); the gait-speed knob and MoveGait are deleted.
 - [Footstep walk/run gait selection](../footstep-walk-run-threshold-bug.md) — walk SFX/prints desynced; gait must key off active CLIP (`Character3DPose.Gait`/`LocoGait`), never a move-speed/blend threshold.
 - [Sprint anim idle → make it a loco-blend gait](../sprint-loco-blend-gait.md) — distinct Sprint clip went idle (dedicated-state path keys stateHash by clip.name, not composer string); fixed by adding Sprint as 4th blend node (Speed=2) + `LocoGait.Sprint` + sprint footPlants.
 - [NPC footsteps frame-locked (shared detector)](../npc-footsteps-frame-locked.md) — NPC step SFX/ripple was a stale odometer; centralized onto player's `FootstepTracker.DetectPlants` + per-char `Gait`.
