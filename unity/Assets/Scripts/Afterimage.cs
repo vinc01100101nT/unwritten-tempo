@@ -43,7 +43,7 @@ public static class Afterimage
     static readonly List<SkinnedMeshRenderer> sourceScratch = new List<SkinnedMeshRenderer>(8);
     static MaterialPropertyBlock mpb;
 
-    static readonly int ColorId = Shader.PropertyToID("_BaseColor");
+    static readonly int ColorId = Shader.PropertyToID("_Color");
 
     /// <summary>Leave a fading copy of <paramref name="body"/> exactly where it stands right now. No-op when the body
     /// has no skinned renderers (a billboard mob has nothing to snapshot) — silently doing nothing is right here: a
@@ -52,7 +52,7 @@ public static class Afterimage
     /// <param name="tint">Colour of the copy, alpha = how solid it starts.</param>
     public static void Capture(Transform body, float seconds, Color tint)
     {
-        if (body == null || seconds <= 0f) return;
+        if (body == null || seconds <= 0f || EnsureMaterial() == null) return;   // no shader: no ghost, never a throw
         body.GetComponentsInChildren(false, sourceScratch);   // false = skip disabled; a hidden part shouldn't ghost
         for (int i = 0; i < sourceScratch.Count; i++)
         {
@@ -155,17 +155,15 @@ public static class Afterimage
     static Material EnsureMaterial()
     {
         if (ghostMat != null) return ghostMat;
-        var sh = Shader.Find("Universal Render Pipeline/Unlit");
+        // SPRITES/DEFAULT, BECAUSE IT IS ALWAYS IN THE BUILD: unlit, alpha-blended, no depth write, tinted by _Color.
+        // This used URP's Unlit found by name, which no saved material uses — so a built game did not carry it,
+        // Shader.Find answered null, and building the material threw inside the server's "glide now" message. The
+        // network library answers a throw in a message by dropping the connection: every Thousand Petals dash in a
+        // built game disconnected the dasher for a few seconds (2026-10-12; the editor holds every shader, so it never
+        // happened there).
+        var sh = Shader.Find("Sprites/Default");
+        if (sh == null) return null;
         ghostMat = new Material(sh) { hideFlags = HideFlags.HideAndDontSave };
-        // URP's Unlit needs its surface flipped to Transparent explicitly — the keywords and render queue are what
-        // actually decide blending, not the colour's alpha.
-        ghostMat.SetFloat("_Surface", 1f);                 // 0 = Opaque, 1 = Transparent
-        ghostMat.SetFloat("_Blend", 0f);                   // Alpha blend
-        ghostMat.SetFloat("_ZWrite", 0f);
-        ghostMat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        ghostMat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        ghostMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        ghostMat.DisableKeyword("_ALPHATEST_ON");
         ghostMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         return ghostMat;
     }
