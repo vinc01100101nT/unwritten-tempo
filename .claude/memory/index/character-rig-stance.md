@@ -1,7 +1,7 @@
 # Character / rig / stance / animation
 
 - [One-shot stances dead — Mixamo clip.name="mixamo.com"](../oneshot-stance-mixamo-clipname.md) — shared name → stateHash miss; `HumanoidClipPostprocessor` names clip after FILE.
-- [Aftercast lock must match stance speedSource](../stance-lock-must-match-speedsource.md) — MoveGait release stance over-rooted (pause after anim) because `PlayActionFor` locked by attack-speed while `ApplyStance` played at gait; fix = shared `ResolveSpeedMult`, lock = `natural / resolvedSpeed`.
+- [Aftercast lock must match stance speedSource](../stance-lock-must-match-speedsource.md) — lock and playback share `ResolveSpeedMult`; skill releases are FIT to the swing time (attack speed) like creatures', never paced by walking gait.
 - [Caster grounding "stretched foot" — UNSOLVED](../caster-grounding-stretched-foot-notodos.md) — lift/drop-root/SeatStandingFrame FAILED; never re-bake in Play.
 - [Mixamo batch auto-rig via API](../mixamo-batch-autorig-api.md) — `tools/mixamo_batch_rig.py`; id=uuid, markers in `rigging_inputs`, S3 no-auth.
 - [Mixamo caster clips: rebind PATHS onto model](../mixamo-clip-rebind-to-model-paths.md) — extra `CharacterArmature` wrapper; `RebindMixamoToModel`.

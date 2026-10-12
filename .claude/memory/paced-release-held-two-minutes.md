@@ -17,5 +17,7 @@ MoveGait, so its hold = natural length ÷ `Player3DController.GaitSpeedMult`. Th
 rooted the caster and the same frame then wrote a pace of 0; the next press — on the very first free frame, before the
 pace was rewritten — divided by 0 (clamped to 0.01): 1.2 s × 100 = 120 s. A hand press almost never lands on that frame.
 
-**Fix:** the pace reads `StatusController.PaceMult` (Slow × Haste, not zeroed by a root), and
-`StanceController.ActionDuration` never times a paced hold slower than 0.25 (at most 4× the clip).
+**Fix:** releases no longer follow the gait at all — they are FIT to the caster's swing time, the creatures' rule
+(see [[stance-lock-must-match-speedsource]]). The gait itself now reads `StatusController.PaceMult` (Slow × Haste, not
+zeroed by a root) for the stances still on MoveGait (Idle, Jump), and `StanceController.ActionDuration` never times a
+paced hold slower than 0.25 (at most 4× the clip).

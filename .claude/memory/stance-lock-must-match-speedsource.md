@@ -1,16 +1,23 @@
 ---
 name: stance-lock-must-match-speedsource
-description: "A skill's aftercast root lock must be computed from the release stance's ACTUAL speedSource, not always attack-speed — else a MoveGait release stance over-roots (pause after the animation)."
+description: "A skill's aftercast root must come from the same speed resolution that plays the release; releases are now FIT to the swing time (attack speed), like creatures' — never paced by walking gait."
 metadata: 
   node_type: memory
   type: project
   originSessionId: d4cd7234-39ce-4f18-a4c2-4c9be78d7e4d
 ---
 
-**Symptom:** After casting a skill whose release stance uses **MoveGait** speed, the character paused briefly before it could move/cast again — the aftercast root outlasted the visible animation.
+**Today (2026-10-12):** every skill release is FIT to the caster's swing time — `SkillRunner.PlayCycles` plays
+`PlayActionFor(releaseStance, Caster.SwingTime, 1, fitToWindow: true)` and roots for exactly that, the same beat a
+creature's release is announced with; the nine release rows in `StanceLibrary.asset` (ids 14–22) are FitWindow. Attack
+speed shortens a release; movement speed, slows, shoes and the legs' gear do not (they used to, through MoveGait — see
+[[paced-release-held-two-minutes]]).
 
-**Root cause:** `SkillRunner.PlayCycles` roots the caster for `releaseDur = StanceController.PlayActionFor(releaseStance, 0, MotionScale)` where `MotionScale = 1/AttackSpeedMult`. The OLD `PlayActionFor` computed the lock as `naturalDuration × durationScale` — i.e. always **attack-speed**-scaled — while `ApplyStance` actually plays the clip at its `speedSource` multiplier (MoveGait → `speedMult × GaitSpeedMult`). For a MoveGait release stance with fast gait, the animation finished early but the attack-scaled lock lingered → the pause. The two used DIFFERENT speed resolutions.
+**Symptom that taught the rule (earlier):** a release stance played on MoveGait while its aftercast root was timed by
+attack speed, so the root outlasted the animation and the character paused after it.
 
-**Fix:** extracted the speed resolution into one shared `StanceController.ResolveSpeedMult(binding, window)` used by BOTH `ApplyStance` (playback) and `PlayActionFor` (lock). `PlayActionFor` now returns the real play time: for an intrinsic-speed stance (MoveGait/AttackSpeed/CastSpeed/Baked) `dur = natural / ResolveSpeedMult(b)`; only FitWindow keeps the caller-fed `natural × durationScale` window. Lock length == animation length for every speed source. `StanceController.cs`.
+**Fix that stays:** one shared `StanceController.ResolveSpeedMult(binding, window)` drives BOTH playback (`ApplyStance`)
+and the lock (`PlayActionFor` / `ActionDuration`), so lock length == animation length for every speed source. A
+non-fit (intrinsic-speed) hold is never timed slower than quarter speed (`MinPaceForAHold`).
 
-**Lesson / gotcha:** whenever a lock/root/cooldown is meant to last "as long as an animation," it MUST be derived from the SAME speed resolution that drives the animation — a single owner (`ResolveSpeedMult`), not a parallel formula. A second formula that assumes one speed source (attack-speed) silently over/under-roots any stance authored with a different source. Sibling of single-source-of-truth. See [[direction-2p5d-pivot]] (player+NPC share one stance path).
+**Lesson / gotcha:** whenever a lock/root/cooldown is meant to last "as long as an animation," it MUST be derived from the SAME speed resolution that drives the animation — a single owner (`ResolveSpeedMult`), not a parallel formula. And a skill's timing must never hang off how fast its caster WALKS. See [[direction-2p5d-pivot]] (player+NPC share one stance path).

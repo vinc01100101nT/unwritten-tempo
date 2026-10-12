@@ -602,9 +602,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         float releaseDur = 0f;
         if (def.hasReleaseStance && Mine && StanceController.Player != null)
         {
-            // Scale the release beat by the SAME attack-speed motion scale swings use (1 / AttackSpeedMult): a faster
-            // caster plays the release animation faster AND is rooted for less time — one number drives both.
-            releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, 0f, Player3DAttacker.MotionScale);
+            // THE RELEASE IS ONE SWING LONG — the same beat a creature's release is given just below, so a person and a
+            // creature time a skill by one rule. Attack speed shortens it (and the root with it); movement speed,
+            // slows, shoes and which gear the legs are in have no say, because the clip is FIT to the window rather
+            // than paced by the walking gait it used to follow (which once held a caster still for two minutes).
+            releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, Caster.SwingTime, 1f, fitToWindow: true);
             // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
             // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
             var aftercast = Status;
