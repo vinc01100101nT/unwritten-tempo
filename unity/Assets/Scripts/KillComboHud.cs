@@ -189,7 +189,7 @@ public class KillComboHud : MonoBehaviour
     {
         var t = rt.gameObject.AddComponent<TextMeshProUGUI>();
         t.font = UiKit.PixelFont;
-        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.3f);
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.5f);
         t.fontSize = size;
         t.alignment = TextAlignmentOptions.Left;
         t.textWrappingMode = TextWrappingModes.NoWrap;

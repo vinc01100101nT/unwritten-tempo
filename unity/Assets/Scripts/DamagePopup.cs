@@ -213,7 +213,7 @@ public class DamagePopup : MonoBehaviour
         t.font = UiKit.PixelFont;
         // Thick black keyline for the chunky RuneScape/OSRS hitsplat look. ONE shared outlined material
         // across every pooled number, so thousands of them still batch into a single draw call.
-        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.3f);
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.5f);
         t.fontSize = 64;   // BaseScale downscales it on screen; SDF keeps it crisp at any size
         t.fontStyle = FontStyles.Normal;
         t.alignment = TextAlignmentOptions.Center;

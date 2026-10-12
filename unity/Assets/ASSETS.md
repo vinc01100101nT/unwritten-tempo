@@ -70,6 +70,11 @@ checker at the bottom is what makes them stick without anybody remembering.
     `Shader.Find` means adding the shader to that list in the same change. Checked by `tools/check-runtime-shaders.py`
     (proven by `tools/prove-runtime-shaders-check.py`), written after the afterimage's URP Unlit — missing from every
     build — threw inside a network message on 2026-10-12 and disconnected every Thousand Petals dash.
+    **Being on that list ships the shader, not every switch on it.** A switch a shader declares with `shader_feature`
+    (the text shaders' `OUTLINE_ON`) is cut from a build unless a material the build ships has it on, so code that
+    turns one on at runtime needs a saved material with it on: `Resources/Fonts/Floating Text Outline.mat` keeps the
+    black edge on every floating word, which was missing from every build after those words moved to the
+    always-on-top text shader on 2026-10-12.
 13. **Every character model has its outfit parts saved.** Which colours of a model can be recoloured is worked out
     once in the editor and saved (`CharacterDyePartsBaker.BakeAll()`, run through the live editor link, writes
     `3_Data/Resources/CharacterDyeParts.asset`). Working it out in game read the whole texture back from the

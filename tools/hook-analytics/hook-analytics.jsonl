@@ -6055,3 +6055,5 @@
 {"ts": "2026-10-12T10:31:10+00:00", "session_id": "c89a5187-4acf-518e-af73-090b0cf71ebb", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T10:35:24+00:00", "session_id": "c89a5187-4acf-518e-af73-090b0cf71ebb", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/SpawnIds.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T10:40:03+00:00", "session_id": "c89a5187-4acf-518e-af73-090b0cf71ebb", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/NetNpc.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T11:53:40+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T11:53:54+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

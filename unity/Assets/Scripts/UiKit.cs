@@ -83,8 +83,11 @@ public static class UiKit
     // so they need a dark outline to stay legible. TMP outline is a material property — we cache ONE shared
     // outlined material per font asset and outline width (never a per-object instance) so thousands of pooled
     // damage numbers still batch into one draw call. Replaces the old per-object legacy Outline/Shadow components.
+    // The edge is a switch (OUTLINE_ON) a build keeps only if a saved material has it on, and nothing else saved uses
+    // the always-on-top text shader: Resources/Fonts/Floating Text Outline.mat exists only to keep that switch in the
+    // build (ASSETS.md, rule 12). Without it the editor draws the edge and every built game draws none.
     static readonly System.Collections.Generic.Dictionary<(TMP_FontAsset, float), Material> _outlined = new();
-    public static Material OutlinedMaterial(TMP_FontAsset font, float width = 0.2f)
+    public static Material OutlinedMaterial(TMP_FontAsset font, float width = 0.4f)
     {
         if (font == null) return null;
         if (_outlined.TryGetValue((font, width), out var m) && m != null) return m;
@@ -96,13 +99,13 @@ public static class UiKit
         DrawOverTheWorld(m);
         m.EnableKeyword("OUTLINE_ON");
         m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
-        m.SetColor(ShaderUtilities.ID_OutlineColor, new Color(0, 0, 0, 0.9f));
+        m.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
         _outlined[(font, width)] = m;
         return m;
     }
 
     // THE look of a name floating over the world — the name over whoever you point at, and an item's name on the
-    // floor. The interface face, drawn bold, with a heavier black edge than other outlined text (0.3, the width the damage
+    // floor. The interface face, drawn bold, with a heavier black edge than other outlined text (0.5, the width the damage
     // numbers use) so it reads over any ground. The bold is heavier too: the font file holds only the regular
     // weight, so bold is drawn by thickening the letters, and the font's default amount (0.75) is too slight to see
     // at these sizes. 1.5 is double it, and still fits inside the margin the letters are stored with once the edge
@@ -112,7 +115,7 @@ public static class UiKit
     public static Material WorldNameMaterial()
     {
         if (_worldName != null) return _worldName;
-        var outlined = OutlinedMaterial(Font, 0.3f);
+        var outlined = OutlinedMaterial(Font, 0.5f);
         if (outlined == null) return null;
         _worldName = new Material(outlined);
         // Said again for the copy: it keeps the always-on-top shader, but would not keep the fallback switch.

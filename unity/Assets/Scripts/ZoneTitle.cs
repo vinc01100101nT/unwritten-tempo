@@ -129,7 +129,7 @@ public class ZoneTitle : MonoBehaviour
         root.sizeDelta = new Vector2(1000f, 80f);
 
         title = UiKit.MakeText("Name", root, "", FontSize, FontStyle.Bold, TextAnchor.MiddleCenter);
-        title.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font, 0.25f);
+        title.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font, 0.45f);
         title.textWrappingMode = TextWrappingModes.NoWrap;
         title.raycastTarget = false;
         var trt = title.rectTransform;
