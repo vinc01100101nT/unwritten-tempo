@@ -338,10 +338,25 @@ public class NetNpc : NetworkBehaviour
         });
     }
 
+    // THIS MACHINE'S HALF OF THE FLOATING-KEEPER MEASUREMENT (2026-10-12): the server's "appeared" line says where the
+    // server stands a townsperson and where its ground is; this says where this screen put the body and where THIS
+    // screen's ground is under it. A body in the air with ground found is a wrong height; with none found, the body was
+    // built before this map's ground had loaded.
+    void SayWhereTheBodyStands(Vector3 p)
+    {
+        if (!GameLog.On(LogCat.Client)) return;
+        string ground = GroundSnap.TryGroundY(p, GroundSnap.GroundMask, 60f, 200f, out float groundY)
+            ? string.Concat("ground y ", groundY.ToString("0.00"), ", ", (p.y - groundY).ToString("0.00"), " above it")
+            : "NO GROUND FOUND under it";
+        GameLog.Info(LogCat.Client, string.Concat(mapName, " townsperson '", personName, "' drawn at x ",
+            p.x.ToString("0.00"), ", y ", p.y.ToString("0.00"), ", z ", p.z.ToString("0.00"), " — ", ground));
+    }
+
     // Everything true of a body this shell now speaks for. ONE place, so nothing can quietly skip a step.
     void AdoptView(GameObject go)
     {
         if (go == null) return;
+        SayWhereTheBodyStands(go.transform.position);
 
         // Placed AND turned before anybody sees it: a body that appeared facing due north and then swung round to
         // its real heading is the same wrong-first-frame the watched players used to have.
