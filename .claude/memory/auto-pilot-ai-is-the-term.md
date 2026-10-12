@@ -1,11 +1,12 @@
-# "Auto-pilot AI" is the term for both a creature's fighting and the player's T (2026-09-17)
+# "Auto-pilot AI" is a creature's fighting; the player's T is "auto-combat" (2026-09-17, split 2026-10-12)
 
-The user's word, set on 2026-09-17: **auto-pilot AI** covers a creature's combat behaviour AND the mode a person
-hands their character to with **T**. They are one idea — pick a target, close, swing, choose a skill — so they get
-one name. "Auto-combat" is retired; the on-screen tag reads **AUTO-PILOT — press S to stop**
-(`AutoPilotIndicator`, `Player3DController.Order.AutoPilot`).
+**Auto-pilot AI** is a creature's combat behaviour — pick a target, close, swing, choose a skill (`MonsterAI3D`).
+The mode a person hands their character to with **T** was renamed **auto-combat** in the 2026-10-11/12 QoL plan: a
+server-owned on/off, three hunt modes, auto-skills, auto-loot and auto-potion, its own window, and the on-screen tag
+**AUTO-COMBAT — press T to stop** (`AutoPilotIndicator`, `Player3DController.Order.AutoPilot`, `AutoCombatClient`).
+See `docs/2-systems/auto-combat.md`. If the user still wants one word for both, the code names are where to change it.
 
-**How it picks a skill, decided by the user in the same breath:** the ULTIMATE first whenever that is off cooldown
+**How a creature picks a skill, decided by the user on 2026-09-17:** the ULTIMATE first whenever that is off cooldown
 and affordable, then one of the ready ordinary actives at random. Since 2026-09-22 a creature that summons casts its
 SUMMON before either, whenever it is ready and not everything it may have out is out (see [[creature-kinds-and-world-spawns]]). It never saves mana for a bigger skill and never
 reaches for the most expensive one it can pay for. Measured 2026-09-16: a level 3–5 creature holds 17–23 MP, so no

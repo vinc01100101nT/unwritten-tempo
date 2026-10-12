@@ -29,7 +29,7 @@ using UnityEngine.SceneManagement;
 /// camera that can afford it. Nothing here should be read as "the server decides movement", because it does
 /// not — it decides whether to believe it.</para>
 /// </summary>
-public class NetPlayer : NetworkBehaviour, IWatchedShell
+public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 {
     // ---- what the server holds and every client receives ------------------------------------------------
     // Identity is set ONCE when the body is spawned and never changes; position changes constantly. They are
@@ -398,6 +398,14 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
             TargetMoveFailed(connectionToClient, "There is no door here.");
             return;
         }
+        // NOT WHILE AUTO-COMBAT IS ON: a hunt that wandered through a door would carry on in a map nobody chose. Their
+        // own machine already keeps them from walking into one; this is the answer when it did anyway.
+        if (autoCombatOn)
+        {
+            if (GameLog.On(LogCat.Server)) LogDid(ServerCharacter, "was refused a door to '" + map + "' — auto-combat is on");
+            TargetMoveFailed(connectionToClient, "Switch auto-combat off to use a door.");
+            return;
+        }
         MoveToMap(map, spawnId);
     }
 
@@ -413,6 +421,9 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
     public void MoveToMap(string map, string spawnId, bool toSpot = false, Vector3 spot = default, Action onFailure = null)
     {
         if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) { onFailure?.Invoke(); return; }
+
+        // EVERY TRIP ENDS AUTO-COMBAT — a wing home, a Keeper's teleport, a GM's /tp: the hunt was set up where they were.
+        StopAutoCombat("Auto-combat stopped — you travelled.");
 
         // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
         // exactly as instant as it has always been.
@@ -723,6 +734,7 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         if (isServer)
         {
             ServerSaveTick();
+            AutoCombatServerTick();
             SendOwedBag();
             if (savePointTripOwed) TakeOwedTrip();
             if (arrivalExpected) StandThemWhereSentIfLate();
@@ -1640,19 +1652,20 @@ public class NetPlayer : NetworkBehaviour, IWatchedShell
         // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
         // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
         // until it lands — even after this person has logged out, or this server has restarted.
-        // AND THE BAR, IF IT CHANGED, in the same breath — and the answer waits for both, because a hand-over reads
-        // the two rows together.
-        bool progressOk = false, hotbarOk = false;
-        int waiting = 2;
-        void One(bool ok, bool isHotbar)
+        // AND THE BAR AND THE AUTO-COMBAT SETTINGS, IF EITHER CHANGED, in the same breath — and the answer waits for all
+        // three, because a hand-over reads the rows together.
+        bool allOk = true;
+        int waiting = 3;
+        void One(bool ok)
         {
-            if (isHotbar) hotbarOk = ok; else progressOk = ok;
-            if (--waiting == 0) whenDone?.Invoke(progressOk && hotbarOk);
+            allOk &= ok;
+            if (--waiting == 0) whenDone?.Invoke(allOk);
         }
         // Once this document is done with — on whichever attempt — the quest records it carried are no longer owed.
         var questLog = c.Quests;
-        SaveOutbox.Submit(ServerCharacterId, body, ok => One(ok, false), () => questLog.Acknowledge(questsUpTo));
-        SaveHotbarNow(ok => One(ok, true));
+        SaveOutbox.Submit(ServerCharacterId, body, One, () => questLog.Acknowledge(questsUpTo));
+        SaveHotbarNow(One);
+        SaveAutoCombatNow(One);
     }
 
 

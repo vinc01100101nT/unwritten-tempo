@@ -3,7 +3,8 @@ using UnityEngine.UI;
 
 /// <summary>
 /// The <b>System</b> window — what Escape opens when nothing else answers it. Holds the out-of-game menu:
-/// <b>Settings</b> shows the <see cref="SettingsWindow"/>; <b>Select character</b> and <b>Log out</b> leave the
+/// <b>Settings</b> shows the <see cref="SettingsWindow"/>; <b>Auto-Combat</b> shows the <see cref="AutoCombatWindow"/>;
+/// <b>Select character</b> and <b>Log out</b> leave the
 /// world through <see cref="GameRoot"/>, one keeping the account signed in and the other not; <b>Quit game</b>
 /// ends the process through <see cref="GameExit"/>.
 ///
@@ -38,8 +39,9 @@ public class SystemWindow : MonoBehaviour
 
         instance = this;
 
-        var list = EntryList(UiKit.Window(canvas.transform, "System", new Vector2(240, 220), Vector2.zero, out root));
+        var list = EntryList(UiKit.Window(canvas.transform, "System", new Vector2(240, 262), Vector2.zero, out root));
         Entry(list, "Settings", OpenSettings);
+        Entry(list, "Auto-Combat", AutoCombatWindow.Open);
         Entry(list, "Select character", GameRoot.BackToCharacterSelect);
         Entry(list, "Log out", () => GameRoot.LogOut());
         Entry(list, "Quit game", () => GameExit.Quit());

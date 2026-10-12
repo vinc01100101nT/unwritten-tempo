@@ -452,6 +452,28 @@ public class Character : MonoBehaviour, ICombatUnit
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
+    /// <summary>This character's auto-combat settings — the skills it presses, what it loots and drinks, how it hunts.
+    /// On a server, the copy that decides (read with the character, saved to its own row); on the player's machine, the
+    /// copy the server last sent, drawn and nothing else. Never null.</summary>
+    public AutoCombatSettings AutoCombat
+    {
+        get => autoCombat;
+        set => autoCombat = value ?? new AutoCombatSettings();
+    }
+    AutoCombatSettings autoCombat = new AutoCombatSettings();
+
+    /// <summary>Blank, in place, every auto-skill slot holding something this character may not press: the same test a
+    /// hotbar skill is held to (<see cref="MayBind"/>), and nothing that is not a skill at all — no item, no gear.</summary>
+    public void KeepOnlyAutoSkills(string[] slots)
+    {
+        if (slots == null) return;
+        for (int i = 0; i < slots.Length; i++)
+            if (!string.IsNullOrEmpty(slots[i])
+                && (HotbarEntry.IsItem(slots[i], out _) || HotbarEntry.IsGear(slots[i], out _) || !MayBind(slots[i])))
+                slots[i] = "";
+        AutoCombatMath.EmptyRepeats(slots);
+    }
+
     /// <summary>SERVER: this character's quests — every record, and which step each open one is on. A player's machine
     /// never holds one; it is told the open ones (<see cref="QuestStore"/>).</summary>
     public QuestLog Quests { get; } = new QuestLog();
@@ -1289,6 +1311,12 @@ public class Character : MonoBehaviour, ICombatUnit
             var id = Hotbar.SkillAt(i);
             if (!string.IsNullOrEmpty(id)) usableIds.Add(id);
         }
+
+        // THE AUTO-COMBAT SLOTS TOO: a skill pressed only by auto-combat still needs a runner to be pressed with.
+        var autoSlots = autoCombat.slots;
+        if (autoSlots != null)
+            for (int i = 0; i < autoSlots.Length; i++)
+                if (!string.IsNullOrEmpty(autoSlots[i]) && MayBind(autoSlots[i])) usableIds.Add(autoSlots[i]);
 
         // EVERY LEARNED PASSIVE — a passive is live the moment it is learned (PassiveLoadout).
         PassiveSkills.CollectLearned(usableIds);

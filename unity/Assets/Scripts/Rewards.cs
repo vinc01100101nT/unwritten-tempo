@@ -111,6 +111,12 @@ public static class Rewards
     /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>
     /// <param name="items">Item DEFINITIONS the kill gives up — any equipment among them lands as a fresh Raw copy.</param>
     public static void PayLoot(ICombatUnit winner, List<Item> items, int gold, Health victim)
+        => PayLoot(winner, items, null, gold, victim);
+
+    /// <summary>The same, with the drop chance (0–1) each item won its roll at, index for index — so auto-combat's
+    /// loot filter can take what its owner asked for straight into their bag (<see cref="AutoLootTakes"/>), the rest
+    /// going down as usual. Null chances = nothing is auto-looted.</summary>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, List<float> chances, int gold, Health victim)
     {
         if (PlayerUnits.Gone(winner)) return;
 
@@ -123,6 +129,9 @@ public static class Rewards
         {
             var at = victim.transform.position;
             string map = victim.gameObject.scene.name;
+            // AUTO-LOOT FIRST, ENTRY BY ENTRY: what its owner's filter takes leaves the list for their bag, so the
+            // ground below only ever sees what was left.
+            AutoLoot(character, items, chances, map);
             if (items != null)
                 for (int i = 0; i < items.Count; i++)
                 {
@@ -154,6 +163,64 @@ public static class Rewards
         // A KILL THAT PAID NOTHING SAYS SO too — without it "paid nothing" and "the payout never ran" are both silence,
         // and only the second is a bug.
         if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold, dropped, victim));
+    }
+
+    // What auto-loot took, kept between the two halves of one payment; one list because a death is never paid twice at once.
+    static readonly List<Item> autoLooted = new List<Item>(16);
+
+    /// <summary>DOES AUTO-LOOT TAKE THIS ENTRY for <paramref name="killer"/> — they are here to take it (on the map the
+    /// creature fell in, alive, with auto-combat on), and their filter wants a thing of its kind at this drop chance.</summary>
+    static bool AutoLootTakes(Character killer, NetPlayer shell, string map, Item def, float chance01)
+    {
+        if (def == null || shell == null || !shell.AutoCombatOn || killer.IsDead || killer.Map != map) return false;
+        var kind = AutoCombatMath.KindOf(def.slot, def.IsUsable, def.category, def.materialKind);
+        return AutoCombatMath.Takes(killer.AutoCombat, kind, chance01);
+    }
+
+    // Take every entry auto-loot wants out of `items` and into the killer's bag. The count it took; 0 when nothing was
+    // looted, or there were no chances to judge by.
+    static int AutoLoot(Character killer, List<Item> items, List<float> chances, string map)
+    {
+        if (items == null || chances == null || chances.Count != items.Count) return 0;
+        var shell = GameNetwork.ShellFor(killer);
+        if (shell == null || !shell.AutoCombatOn) return 0;
+
+        autoLooted.Clear();
+        for (int i = items.Count - 1; i >= 0; i--)
+        {
+            var def = items[i];
+            if (!AutoLootTakes(killer, shell, map, def, chances[i])) continue;
+            autoLooted.Add(def);
+            items.RemoveAt(i);
+            chances.RemoveAt(i);
+        }
+        if (autoLooted.Count == 0) return 0;
+
+        // INTO THE BAG, a worn piece as its own fresh copy exactly as the ground would have made it, and the owner told
+        // each thing once with how many.
+        for (int i = 0; i < autoLooted.Count; i++)
+        {
+            var def = autoLooted[i];
+            if (def.slot != EquipSlotType.None) { killer.TakeIntoBag(EquipmentInstance.CreateFresh(def)); continue; }
+            if (autoLooted.IndexOf(def) < i) continue;
+            killer.TakeIntoBag(def, CountOf(autoLooted, def));
+        }
+        for (int i = 0; i < autoLooted.Count; i++)
+        {
+            var def = autoLooted[i];
+            if (autoLooted.IndexOf(def) < i) continue;
+            shell.TellOwnerTheyGot(def.id, CountOf(autoLooted, def), 0);
+        }
+        PlaySession.PickedUp(killer);
+        if (GameLog.On(LogCat.Loot))
+            GameLog.Info(LogCat.Loot, string.Concat(SpawnIds.MapOf(killer), " ", SpawnIds.Label(killer), " (",
+                                                    GameNetwork.CharacterIdOf(killer), ") auto-looted ",
+                                                    autoLooted.Count.ToString(), " thing(s) straight into their bag"));
+        shell.PushBagToOwner();
+        shell.SaveSoon();
+        int n = autoLooted.Count;
+        autoLooted.Clear();
+        return n;
     }
 
     // ONE THING DOWN ON THE GROUND for the killer, next to where the creature fell, and every player near enough told.

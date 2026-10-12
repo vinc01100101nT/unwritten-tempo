@@ -42,6 +42,14 @@ public class Portal3D : MonoBehaviour
         if (other.GetComponentInParent<Player3DController>() == null) return;   // only the player triggers it
         fired = true;
 
+        // NOT WHILE AUTO-COMBAT IS ON — a hunt that chased something through a door would carry on in a map nobody
+        // chose. Said once; the latch above keeps it from being said again until they step out of the door.
+        if (AutoCombatClient.On)
+        {
+            BattleNotice.Warn("Switch auto-combat off to use a door.");
+            return;
+        }
+
         // THE CURTAIN GOES UP THE MOMENT THE DOOR IS TOUCHED, before anything is asked. The player has already
         // committed by walking into it, and the world behind them must stop being something they can act on —
         // whether the map on the other side is held by this same server or by another one entirely.

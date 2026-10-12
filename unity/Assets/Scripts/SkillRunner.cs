@@ -333,6 +333,28 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         return true;
     }
 
+    /// <summary>PRESS IT AT <paramref name="target"/>, with no aim on screen — what auto-combat does with its slots. The
+    /// same press as <see cref="Activate"/> in every way that decides anything (the same gates, the same spend, the same
+    /// request to the server), only aimed for the player: a single-target skill at the creature, a ground skill at where
+    /// it stands, a self skill at nobody. Never walks: a target out of the skill's range is no press at all, so the hunt
+    /// keeps its own legs. FALSE when it was not pressed.</summary>
+    public bool ActivateAt(Transform target)
+    {
+        if (target == null || def == null) return false;
+        // ANYTHING ALREADY ON SCREEN WINS: an aim the player started, or a walk into range, is theirs.
+        if (UnitTargeter.Active || GroundTargeter.Active || waitingForRange) return false;
+        // A weapon skill with the weapon away is left for the hunt, which takes the weapon out on its own way in.
+        if (Mine && def.weaponType != WeaponType.None && !WeaponDrawClient.Ready) return false;
+        if (def.NeedsUnitPick && (def.SingleTargetMask & SkillTargets.Mobs) == 0) return false;
+        if ((def.NeedsUnitPick || def.NeedsAimPoint) && TooFarToCast(target)) return false;
+        if (!CanStart()) return false;
+        pendingUnit = null;
+        if (def.NeedsUnitPick) CastResolved(target, target.position);
+        else if (def.NeedsAimPoint) CastResolved(null, target.position);
+        else CastResolved(null, transform.position);
+        return true;
+    }
+
     // Stage 2 of the aim. Entered straight from Activate (no entity to pick) or from the stage-1 confirm below.
     void BeginPointAim() =>
         GroundTargeter.Begin(transform, def.castRange, onGround,

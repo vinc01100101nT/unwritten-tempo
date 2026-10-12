@@ -35,3 +35,14 @@ public interface IHotbarSkill
     /// <summary>Fire the skill now (same target/MP/cooldown rules as the keypress). Returns true if it fired.</summary>
     bool Activate();
 }
+
+/// <summary>
+/// IS A SKILL READY TO PRESS — the one test, read by anything that presses on the player's behalf (auto-combat's
+/// slots). It compares only what the server sent (the cooldown's end, the mana pool) and decides nothing: the press
+/// still goes to the server, which still says yes or no.
+/// </summary>
+public static class HotbarReady
+{
+    public static bool Now(IHotbarSkill skill)
+        => skill != null && skill.CooldownRemaining <= 0f && skill.Affordable;
+}

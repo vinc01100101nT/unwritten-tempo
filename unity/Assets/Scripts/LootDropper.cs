@@ -59,6 +59,8 @@ public class LootDropper : MonoBehaviour
     // because death is not a hot path but it does happen per kill, and there is never a second one being filled at the
     // same time.
     static readonly List<Item> won = new List<Item>(40);
+    // The drop chance (0–1) each entry of `won` won its roll at, index for index — what auto-loot's rate limit reads.
+    static readonly List<float> wonAt = new List<float>(40);
 
     /// <summary>The item a material line gives up for a creature of <paramref name="level"/> — read by the roll below
     /// and by <c>/mobinfo</c>, so what a creature is said to drop is what it drops.</summary>
@@ -88,12 +90,13 @@ public class LootDropper : MonoBehaviour
         var lootKind = saved != null ? SavedCharacterRules.LootKindOfRebel(health.kind) : health.kind;
 
         won.Clear();
+        wonAt.Clear();
 
         // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
         foreach (var entry in lootTable)
         {
             if (entry.item == null) continue;
-            if (Random.value <= entry.chance) won.Add(entry.item);
+            if (Random.value <= entry.chance) { won.Add(entry.item); wonAt.Add(entry.chance); }
         }
 
         // ITS GRADE'S MATERIALS, and the chance of an Ink or a Salt — what its kind and level say it carries.
@@ -106,17 +109,18 @@ public class LootDropper : MonoBehaviour
             var item = MaterialFor(line, level);
             if (item == null) continue;
             int count = CombatRng.Range(line.min, line.max + 1);
-            for (int n = 0; n < count; n++) won.Add(item);
+            for (int n = 0; n < count; n++) { won.Add(item); wonAt.Add(line.chance); }
         }
 
         // AND ONE RANDOM CONSUMABLE, on its own chance.
         if (CombatRng.Chance(RandomItemChance))
         {
             var extra = ItemCatalog.RandomConsumable(health.element);
-            if (extra != null) won.Add(extra);
+            if (extra != null) { won.Add(extra); wonAt.Add(RandomItemChance); }
         }
 
-        Rewards.PayLoot(winner, won, 0, health);
+        Rewards.PayLoot(winner, won, wonAt, 0, health);
         won.Clear();
+        wonAt.Clear();
     }
 }

@@ -85,7 +85,7 @@ Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 | `login <email> <password>` · `create <name>` · `play <name\|number>` | Sign in, make a character, enter the world. `play` answers once nothing new has arrived for a second (or after five seconds in a map that never goes quiet), so the first screen has everything on it. |
 | `move <x> <y>` · `go <id>` | Walk to a spot (x west to east, y south to north), or to a thing. Ends on arrival, a new map (once it has settled), your HP under 30%, death, or 30 s — not on an ordinary hit, because a creature nibbling 1 HP a second would end every walk at once. |
 | `attack <m#>` | Fight a monster until it or you die, your HP drops below 30%, or 30 s. |
-| `auto on\|off [secs]` | The auto-pilot fights nearby monsters; answers after `secs` (default 10). |
+| `auto on\|off [secs]` | Asks the server to switch auto-combat on (or stops it); it hunts by the character's hunt mode; answers after `secs` (default 10). |
 | `stop` | Drop every order. |
 | `cast <slot 1-27\|name> [m#\|p#\|me \| x y]` | Press a hotbar skill, aimed at a creature, a player, yourself, or a spot. Slots count 1–9 along the F-key row, 10–18 along the number row, 19–27 along the third row. |
 | `pickup <g#>` · `talk <n#>` | Reach for a floor item — `picked up …` only when the bag gained it, else `… is gone from the floor` (a kill's drops vanish after 60 s); talk to a villager (returns their lines). |

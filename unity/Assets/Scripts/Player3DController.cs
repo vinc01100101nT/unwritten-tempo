@@ -106,16 +106,11 @@ public partial class Player3DController : MonoBehaviour
     // No step INTERVAL fields anymore: the footstep sound fires on the real foot-plant FRAME via
     // FootstepTracker.PlayerStepped (frame-locked to the walk/run animation), not a per-second timer. See OnPlayerStep.
 
-    [Header("Auto-pilot AI (T to toggle)")]
-    [Tooltip("While the auto-pilot AI roams, it engages the nearest mob within this range and walks to it. " +
-             "Larger = ranges farther from where you stand to find fights.")]
-    public float roamRange = 14f;
-
     /// <summary>True after pressing A, until the next click (the cursor shows the crosshair).</summary>
     public bool AttackArmed { get; private set; }
-    /// <summary>True while the player's AUTO-PILOT AI is fighting for them (drives the on-screen tag). The same
-    /// name the creatures' own fighting goes by: an auto-pilot AI picks a target, closes, swings, and chooses which
-    /// skill to cast — and it is one idea whether it is steering a creature or standing in for a person.</summary>
+    /// <summary>True while AUTO-COMBAT is hunting for the player (drives the on-screen tag) — the order the server's
+    /// "on" puts this body in (<see cref="AutoCombatClient"/>). It picks a target by the hunt mode, closes, swings, and
+    /// presses the auto-skill slots.</summary>
     public bool AutoActive => order == Order.AutoPilot;
 
     /// <summary>The mob the player is currently engaged with — the one wearing the target arrow — or null.
@@ -284,6 +279,9 @@ public partial class Player3DController : MonoBehaviour
         // Clear the free-fall pose each frame; only the normal-movement path (ApplyGravityAndMove) re-asserts
         // it, so locked/dash/jump states below can't leave a stale in-air pose showing.
         falling = false;
+
+        // AUTO-COMBAT FOLLOWS THE SERVER'S WORD, and anything that took the reins from it this frame or last ends it.
+        SyncAutoCombat();
 
         // Dead: no input, no orders — keep the corpse pinned to the ground (gravity) until the death screen
         // respawns us. The lying pose is played by the stance visual.
@@ -525,8 +523,8 @@ public partial class Player3DController : MonoBehaviour
         //     and attack-arm functions are kept intact below — un-comment (and rebind off A/S) to
         //     restore them later.
         // if (KeyS()) { Stop(); return; }      // S = STOP (cancel move / attack-move / swing)
-        // T hands the fight to the auto-pilot AI, and takes it back
-        if (KeyT()) { ToggleAuto(); return; }
+        // T asks the server to start auto-combat, or stops it here and now
+        if (KeyT()) { AutoCombatClient.Toggle(); return; }
         // if (KeyA()) AttackArmed = true;      // A = arm an attack-click (next left-click attacks)
         if (AttackArmed && KeyEsc()) { AttackArmed = false; Hotkeys.MarkCancelHandled(); }
 
@@ -611,30 +609,6 @@ public partial class Player3DController : MonoBehaviour
         }
     }
 
-    // The player's AUTO-PILOT AI: re-acquire the nearest mob within roamRange forever (never goes Idle, never
-    // leaves the AutoPilot order), walking to it and swinging in range. Mirrors AttackStep but loops
-    // back to acquisition instead of stopping when a target dies. Any manual order (move/attack) or S
-    // exits by switching the order out from under it.
-    Vector3 AutoStep()
-    {
-        // A taunt outranks acquisition: while the lock holds, the taunter IS the target and the auto-pilot can't drift
-        // to a nearer mob. Same rule a taunted mob obeys (MonsterAI3D.Taunted) — one aggro concept, both sides.
-        if (Taunted && attackTarget != tauntSource)
-        {
-            attackTarget = tauntSource;
-            if (targetMarker != null) targetMarker.Follow(tauntSource.transform);
-            routing = false; path.Clear();
-        }
-        if (attackTarget == null || attackTarget.IsDead)
-        {
-            attackTarget = NearestMonsterWithin(roamRange);
-            if (targetMarker != null) targetMarker.Follow(attackTarget != null ? attackTarget.transform : null);
-            routing = false; path.Clear();
-            if (attackTarget == null) return Vector3.zero;   // nothing in range — stand and wait for a wanderer
-        }
-        return PursueAttackTarget();
-    }
-
     // The shared body of every basic-attack order (Attack + AutoPilot): announce the attack intent, then either stand
     // and swing (in reach) or route toward the target. ONE body so both orders behave identically and a rule added here
     // can't be forgotten in the other. The announce runs BEFORE reach is judged — that ordering is the whole point of
@@ -677,6 +651,7 @@ public partial class Player3DController : MonoBehaviour
     public void BeginMoveIntoRange(Transform target, float range, System.Action onArrive)
     {
         if (target == null || onArrive == null) return;
+        EndHuntForAnOrder();
         ClearCombat();
         DropTheWait();
         order = Order.MoveIntoRange;
@@ -725,17 +700,6 @@ public partial class Player3DController : MonoBehaviour
         return routing ? FollowRoute() : Vector3.zero;
     }
 
-    // T: hand the fight to the auto-pilot AI, or take it back. Pressing it again (or S, or any manual order) stops it.
-    void ToggleAuto()
-    {
-        if (order == Order.AutoPilot) { Stop(); return; }
-        ClearCombat();              // drop any in-flight swing / stale target / marker
-        AttackArmed = false;
-        routing = false; path.Clear();
-        // AutoStep acquires a target next tick
-        order = Order.AutoPilot;
-    }
-
     Vector3 AttackStep()
     {
         if (attackTarget == null || attackTarget.IsDead)
@@ -750,11 +714,12 @@ public partial class Player3DController : MonoBehaviour
     }
 
     // ---- orders ---------------------------------------------------------------
-    void BeginMove(Vector3 point)       { ClearCombat(); order = Order.Move;       movePoint = point; StartRoute(point); }
-    void BeginAttackMove(Vector3 point) { ClearCombat(); order = Order.AttackMove; movePoint = point; StartRoute(point); }
+    void BeginMove(Vector3 point)       { EndHuntForAnOrder(); ClearCombat(); order = Order.Move;       movePoint = point; StartRoute(point); }
+    void BeginAttackMove(Vector3 point) { EndHuntForAnOrder(); ClearCombat(); order = Order.AttackMove; movePoint = point; StartRoute(point); }
 
     void BeginAttack(Health mob, bool resume)
     {
+        EndHuntForAnOrder();
         if (attacker != null) attacker.Cancel();
         DropTheWait();   // same rule as ClearCombat: a new order calls off a held skill
         order = Order.Attack; attackTarget = mob; resumeAttackMove = resume;
@@ -792,8 +757,12 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>What a left-click on a mob does: lock on and fight it.</summary>
     public void OrderAttack(Health mob) { if (mob != null && !mob.IsDead) BeginAttack(mob, false); }
 
-    /// <summary>What T does, but told which way instead of flipping.</summary>
-    public void OrderAutoPilot(bool on) { if (on != AutoActive) ToggleAuto(); }
+    /// <summary>What T does, but told which way instead of flipping. Turning it on is still only an ask.</summary>
+    public void OrderAutoPilot(bool on)
+    {
+        if (on && !AutoCombatClient.On) AutoCombatClient.AskOn();
+        else if (!on) AutoCombatClient.StopHere();
+    }
 
     /// <summary>Name of the order running right now — Idle, Move, AttackMove, Attack, AutoPilot or MoveIntoRange.</summary>
     public string OrderName => order.ToString();
@@ -824,6 +793,8 @@ public partial class Player3DController : MonoBehaviour
     {
         if (source == null) return;
         tauntSource = source;
+        // A HUNT KEEPS HUNTING, onto the taunter — a taunt is the creature's doing, not the player taking the reins.
+        if (order == Order.AutoPilot) { attackTarget = source; routing = false; path.Clear(); return; }
         BeginAttack(source, false);   // false = don't resume attack-move after the kill; the taunt decided this target
     }
 
@@ -861,6 +832,7 @@ public partial class Player3DController : MonoBehaviour
 
     void Stop()
     {
+        EndHuntForAnOrder();
         AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
         selectedPerson = null;
@@ -1020,7 +992,7 @@ public partial class Player3DController : MonoBehaviour
     }
 
     // Nearest living mob within radius (planar XZ). Scans the MonsterAI3D registry rather than a physics
-    // OverlapSphere — the old fixed 32-collider buffer overflowed with props/terrain at large roamRange in
+    // OverlapSphere — the old fixed 32-collider buffer overflowed with props/terrain at a large search radius in
     // a dense scene, returning colliders in arbitrary order and silently dropping mobs (the auto-pilot then
     // just stood still). The registry is unbounded, prop-free, and cheaper.
     Health NearestMonsterWithin(float radius)

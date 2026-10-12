@@ -60,6 +60,7 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Readiness Audit](2-systems/networking/readiness-audit.md) — the July survey that chose the shape. Historical; kept for the reasoning.
 - [HUD/UI System — Design & Relay](2-systems/hud-ui-system.md) — the HUD/UI workstream.
 - [Quests and Tutorials](2-systems/quests-and-tutorials.md) — the Quests window, unlock conditions, free first runs and replays, ground arrows, the tutorial guide, and how quest progress is saved.
+- [Auto-Combat](2-systems/auto-combat.md) — BUILT 2026-10-12, not play-tested: T or the System menu's window asks the server to hunt for you — Standing, Radius or Free Roam; four auto-skill slots; auto-loot by kind and drop rate; auto-potion; never in town, never through a door; settings saved in their own row, on/off never.
 - [The Keeper and the Wings](2-systems/keeper-and-wings.md) — BUILT 2026-10-12, not play-tested: one Keeper in every town (Save Point, account-wide Storage, Teleport priced by doors), how a storage move rides the character's save, the door check, and the Butterfly Wing and Fly Wing.
 
 ## World & content

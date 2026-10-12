@@ -2,7 +2,7 @@
 
 **Read this before writing or editing any runtime C# in** `unity/Assets/Scripts/`**.**
 
-Performance is a **hard constraint** for this game (3D world + many billboard mobs + an auto-pilot AI that keeps the screen full of action). The frame budget is shared by dozens of mobs, their billboards, depth sorters, pathfinding, and a steady stream of combat FX. Code that's "fine for one object" becomes a frame-time or GC spike when it runs ×N every frame. The rules below are how we keep it smooth.
+Performance is a **hard constraint** for this game (3D world + many billboard mobs + auto-combat keeping the screen full of action). The frame budget is shared by dozens of mobs, their billboards, depth sorters, pathfinding, and a steady stream of combat FX. Code that's "fine for one object" becomes a frame-time or GC spike when it runs ×N every frame. The rules below are how we keep it smooth.
 
 > **Two enemies:** (1) **per-frame CPU** that scales with object count, and (2) **GC allocations** in hot paths (every `new` in `Update`/per-hit eventually triggers a collection → a stutter). Most wins here are about not doing either.
 

@@ -17,8 +17,8 @@ smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill le
 - One save version bump covered both slices: **v14** carries a forged weapon's trademark ([Weapon Names &
   Trademarks](weapon-names-and-trademarks.md)). The save today is **v18** (skill levels bought with mastery points ride
   it since v17; since v18 the hotbar lives in a row of its own and every piece of gear carries its own id) and both
-  sides' build string is **unwritten-character-v20** (v19 carried quests; v20 the world events and the
-  sign-in flag on an arrival).
+  sides' build string is **unwritten-character-v24** (v19 carried quests; v20 the world events and the
+  sign-in flag on an arrival; v24 the auto-combat settings row).
 - Open question 1 was taken as recommended — the server writes a copy's finished attack, magic attack, defence
   and magic defence onto it, and a player's machine only adds them.
 - Open question 2 was NOT taken as written: instead of the bag wire carrying costs for every copy, a station asks

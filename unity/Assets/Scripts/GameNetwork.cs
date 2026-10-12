@@ -2319,29 +2319,42 @@ public class GameNetwork : NetworkManager
         if (shell != null && shell.Leaving) return;
         if (!BagStack.StillTheSame(caster, msg.bagIndex, msg.expectedItemId,
                                    shell != null ? shell.playerName : "connection " + conn.connectionId)) return;
-        var entryInBag = caster.Bag[msg.bagIndex];
-        var item = entryInBag.def;
-        if (!item.IsUsable) return;
+        UseItemOnServer(caster, shell, msg.bagIndex);
+    }
+
+    /// <summary>SERVER: use the item at <paramref name="bagIndex"/> of <paramref name="caster"/>'s bag — run its skill
+    /// and spend one. The one body behind a press of an item (above) and auto-combat's drink (NetPlayer), so a potion
+    /// drunk either way costs and does exactly the same. The caller has already checked the index holds what it meant.
+    /// TRUE when the item was used and spent.</summary>
+    public static bool UseItemOnServer(Character caster, NetPlayer shell, int bagIndex)
+    {
+        if (caster == null || bagIndex < 0 || bagIndex >= caster.Bag.Count) return false;
+        var entryInBag = caster.Bag[bagIndex];
+        var item = entryInBag != null ? entryInBag.def : null;
+        if (item == null || !item.IsUsable) return false;
 
         // THE ITEM NAMES THE SKILL, and the server reads that off the item it holds — never off the message.
         var runner = PlayerFighter.RunnerFor(caster, item.useSkillId);
         var entry = runner != null && runner.def != null ? runner.def.ItemUseEntry : null;
-        if (entry == null) return;
+        if (entry == null) return false;
 
         // AN EFFECT THAT HAS NOWHERE TO HAPPEN IS REFUSED BEFORE IT COSTS ANYTHING — a Fly Wing on ground the map has
         // no record of stays in the bag, and the player is told why. A landing spot found here is the one the effect
         // uses: it is rolled once.
         string cannot = SkillEffectApplier.WhyItCannotLand(runner.def, caster);
-        if (cannot != null) { shell?.TellOwner(cannot); return; }
+        if (cannot != null) { shell?.TellOwner(cannot); return false; }
 
         // AN EFFECT THAT DID NOT RUN COSTS NOTHING. The drinker died between the press and its arrival, or the
         // skill has nothing to play: the potion stays in the bag rather than vanishing for no effect.
-        if (!runner.FireAsPassive(entry, null)) { SkillEffectApplier.ForgetLanding(caster); return; }
+        if (!runner.FireAsPassive(entry, null)) { SkillEffectApplier.ForgetLanding(caster); return false; }
 
         // AND IT IS SPENT HERE, where it was drunk. The bag belongs to the server now, so a stack reduced only on
         // the drinker's own machine would be put straight back the next time the server said what they were
         // carrying — a potion that heals you and is never used up.
-        if (--entryInBag.count <= 0) caster.Bag.RemoveAt(msg.bagIndex);
+        // THE SAME STACK, found again: the skill that just ran can have changed the bag (rarely — but an index held
+        // across it would then spend somebody else's stack).
+        int at = caster.Bag.IndexOf(entryInBag);
+        if (at >= 0 && --entryInBag.count <= 0) caster.Bag.RemoveAt(at);
         if (GameLog.On(LogCat.Server))
             GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(caster), " ", SpawnIds.Label(caster), " used ",
                                                       item.displayName, CombatAuthority.HealthLeft(caster), " — ",
@@ -2351,6 +2364,7 @@ public class GameNetwork : NetworkManager
         // A drunk potion is a change like any other. Without this it was written down only if something ELSE
         // happened to dirty the character, so a server restart handed the potions back.
         shell?.SaveSoon();
+        return true;
     }
 
     /// <summary>Say that one play of a cast is starting NOW, to every machine that can see the caster — the caster's
@@ -2747,8 +2761,18 @@ public class GameNetwork : NetworkManager
 
         // ON THEIR BAR, LEARNED, AND THE RIGHT WEAPON IN HAND — all three, on the server, whatever a window said.
         bool onTheirBar = caster.Hotbar != null && caster.Hotbar.IsBound(skillId);
+        // AN AUTO-COMBAT SLOT IS A BAR TOO — the four skills auto-combat presses, held to the same learned-and-in-hand
+        // test below. Read off the settings this server holds, never off the press.
+        if (!onTheirBar) onTheirBar = InAutoSlots(caster.AutoCombat, skillId);
         if (!onTheirBar) return false;
         return caster.MayUse(skillId);
+    }
+
+    static bool InAutoSlots(AutoCombatSettings s, string skillId)
+    {
+        if (s == null || s.slots == null) return false;
+        for (int i = 0; i < s.slots.Length; i++) if (s.slots[i] == skillId) return true;
+        return false;
     }
 
     // ---- commands a player asks the world to carry out ---------------------------------------------------

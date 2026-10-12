@@ -648,7 +648,12 @@ public static class SkillEffectApplier
             case SkillEffectKind.TeleportToRandomSpot:
                 if (hit == 0 && GameServer.IsServer && !unit.IsDead && body != null)
                 {
-                    if (LandingFor(unit, body, out var spot)) unit.TeleportTo(spot);
+                    if (LandingFor(unit, body, out var spot))
+                    {
+                        unit.TeleportTo(spot);
+                        // AUTO-COMBAT STAYS ON across a Fly Wing, and the spot its Radius hunt keeps to moves with them.
+                        if (unit is Character landed) GameNetwork.ShellFor(landed)?.AutoCombatLandedElsewhere();
+                    }
                     else GameLog.Warn(LogCat.Server, SpawnIds.Label(unit) + " found nowhere to land on a random spot of '"
                                       + SpawnIds.MapOf(unit) + "'");
                 }

@@ -21,9 +21,10 @@ using UnityEngine;
 /// with how many players on this server have a save waiting — and it survives this server crashing during an
 /// outage: a server that starts finds the files and sends them before it tells the character server it exists.</para>
 ///
-/// <para><b>Two documents per character, each on its own.</b> The character's progress, and its hotbar, which has a
-/// row of its own in the character store so the 15-second progress save never rewrites it. They queue, retry and
-/// land independently; a hand-over waits for both (<see cref="Flush"/>).</para>
+/// <para><b>Three documents per character, each on its own.</b> The character's progress, its hotbar and its
+/// auto-combat settings — the last two each have a row of their own in the character store, so the 15-second progress
+/// save never rewrites them. They queue, retry and land independently; a hand-over waits for all three
+/// (<see cref="Flush"/>).</para>
 ///
 /// <para><b>A save refused for good is not retried.</b> A character that no longer exists, a save too large, or a
 /// malformed one is kept in a file for a person to look at, never resent forever. A save from an older hand-over
@@ -51,12 +52,28 @@ public static class SaveOutbox
 
     static readonly Dictionary<string, Entry> entries = new Dictionary<string, Entry>();
 
-    // The hotbar's entries are filed under the character id plus this, which also names its file on disk, so the two
-    // documents of one character can never be mistaken for each other.
+    // A row's entries are filed under the character id plus its suffix, which also names its file on disk, so the
+    // documents of one character can never be mistaken for each other. The suffix is the row's door on the character
+    // server (charserver/CharacterRows.cs) with a dot in front.
     const string HotbarSuffix = ".hotbar";
+    const string AutoCombatSuffix = ".auto-combat";
 
-    static string IdOf(string key) => key.EndsWith(HotbarSuffix) ? key.Substring(0, key.Length - HotbarSuffix.Length) : key;
-    static string PathOf(string key) => key.EndsWith(HotbarSuffix) ? "/hotbar" : "/progress";
+    static string RowSuffixOf(string key)
+        => key.EndsWith(HotbarSuffix) ? HotbarSuffix : key.EndsWith(AutoCombatSuffix) ? AutoCombatSuffix : null;
+    // The progress document is the one with no row suffix — the only one that carries a storage move.
+    static bool IsProgress(string key) => RowSuffixOf(key) == null;
+    static string IdOf(string key)
+    {
+        var suffix = RowSuffixOf(key);
+        return suffix == null ? key : key.Substring(0, key.Length - suffix.Length);
+    }
+    static string PathOf(string key)
+    {
+        var suffix = RowSuffixOf(key);
+        return suffix == null ? "/progress" : "/" + suffix.Substring(1);
+    }
+    static string Keyed(string characterId, string suffix)
+        => string.IsNullOrEmpty(characterId) ? characterId : characterId + suffix;
     static int failedCount;
 
     // The same beat a player's own save runs on: often enough that an outage ends in seconds once the character
@@ -91,7 +108,11 @@ public static class SaveOutbox
 
     /// <summary>Send this character's newest HOTBAR, the same way a save is sent — kept, retried and landed on its own.</summary>
     public static void SubmitHotbar(string characterId, string body, Action<bool> whenDone)
-        => SubmitKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, body, whenDone, null);
+        => SubmitKey(Keyed(characterId, HotbarSuffix), body, whenDone, null);
+
+    /// <summary>Send this character's newest AUTO-COMBAT SETTINGS, the same way — kept, retried and landed on their own.</summary>
+    public static void SubmitAutoCombat(string characterId, string body, Action<bool> whenDone)
+        => SubmitKey(Keyed(characterId, AutoCombatSuffix), body, whenDone, null);
 
     static void SubmitKey(string characterId, string body, Action<bool> whenDone, Action whenSettled)
     {
@@ -119,23 +140,28 @@ public static class SaveOutbox
     /// over reads the newest copy rather than one this server never managed to send.</summary>
     public static void Flush(string characterId, Action<bool> whenDone)
     {
-        // BOTH DOCUMENTS, and the answer only once both have answered: whoever takes over reads the bar and the
-        // progress together, so neither may still be in the air.
-        bool progressOk = false, hotbarOk = false;
-        int waiting = 2;
-        void One(bool ok, bool isHotbar)
+        // EVERY DOCUMENT, and the answer only once all three have answered: whoever takes over reads the rows and the
+        // progress together, so none may still be in the air.
+        bool allOk = true;
+        int waiting = 3;
+        void One(bool ok)
         {
-            if (isHotbar) hotbarOk = ok; else progressOk = ok;
-            if (--waiting == 0) whenDone?.Invoke(progressOk && hotbarOk);
+            allOk &= ok;
+            if (--waiting == 0) whenDone?.Invoke(allOk);
         }
-        FlushKey(characterId, ok => One(ok, false));
-        FlushKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, ok => One(ok, true));
+        FlushKey(characterId, One);
+        FlushKey(Keyed(characterId, HotbarSuffix), One);
+        FlushKey(Keyed(characterId, AutoCombatSuffix), One);
     }
 
     /// <summary>Make sure the hotbar waiting for this character, if any, has landed, then say so — yes at once when
     /// nothing is waiting.</summary>
     public static void FlushHotbar(string characterId, Action<bool> whenDone)
-        => FlushKey(string.IsNullOrEmpty(characterId) ? characterId : characterId + HotbarSuffix, whenDone);
+        => FlushKey(Keyed(characterId, HotbarSuffix), whenDone);
+
+    /// <summary>The same for the auto-combat settings.</summary>
+    public static void FlushAutoCombat(string characterId, Action<bool> whenDone)
+        => FlushKey(Keyed(characterId, AutoCombatSuffix), whenDone);
 
     static void FlushKey(string characterId, Action<bool> whenDone)
     {
@@ -191,9 +217,9 @@ public static class SaveOutbox
             Recovered(characterId, e);
             settledNow = e.settled; e.settled = null;
             // A storage move this document carried is now written down (see StorageMoves).
-            if (!characterId.EndsWith(HotbarSuffix)) StorageMoves.Landed(IdOf(characterId), sent);
+            if (IsProgress(characterId)) StorageMoves.Landed(IdOf(characterId), sent);
         }
-        else if (status == 422 && !characterId.EndsWith(HotbarSuffix))
+        else if (status == 422 && IsProgress(characterId))
         {
             // THE STORAGE MOVE IT CARRIED FAILED A CHECK, and the character server wrote NOTHING — the move took the
             // whole save back with it. The same document goes again with the move taken out (and a stored thing put
@@ -233,7 +259,7 @@ public static class SaveOutbox
             GameLog.Warn(LogCat.Server, "a save for character " + characterId + " was refused — they have been "
                              + "handed to another server since. Dropped so it cannot roll them back. " + reply);
             // A storage move it carried goes with it: the server they are on now holds the bag as it really is.
-            if (!characterId.EndsWith(HotbarSuffix)) StorageMoves.Abandoned(IdOf(characterId), sent, putBack: false);
+            if (IsProgress(characterId)) StorageMoves.Abandoned(IdOf(characterId), sent, putBack: false);
             e.body = null;
             Recovered(characterId, e);
             settledNow = e.settled; e.settled = null;
@@ -245,7 +271,7 @@ public static class SaveOutbox
             GameLog.Error(LogCat.Server, "a save for character " + characterId + " was refused for good ("
                               + status + " " + reply + ") — kept in " + kept + " for a person to look at.");
             // A storage move it carried will never be written: a thing on its way into storage goes back in the bag.
-            if (!characterId.EndsWith(HotbarSuffix))
+            if (IsProgress(characterId))
             {
                 string letGo = StorageMoves.Abandoned(IdOf(characterId), sent, putBack: true);
                 // A newer document waiting behind this one carries the same move, and must not ask it again.

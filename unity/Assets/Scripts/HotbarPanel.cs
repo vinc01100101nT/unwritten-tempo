@@ -85,6 +85,8 @@ public class HotbarPanel : MonoBehaviour
         if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
         // The kill combo and the per-hour rates on the left edge — added the same way. Idempotent.
         if (GetComponent<KillComboHud>() == null) gameObject.AddComponent<KillComboHud>();
+        // The Auto-Combat window (opened from the System window) — added the same way. Idempotent.
+        if (GetComponent<AutoCombatWindow>() == null) gameObject.AddComponent<AutoCombatWindow>();
         TryBuild();
     }
 

@@ -34,11 +34,11 @@ public static class PlayerFighter
     {
         if (announced == null) return false;
         return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar,
-                     announced.quests, announced.isGm, announced.map);
+                     announced.autoCombat, announced.quests, announced.isGm, announced.map);
     }
 
     static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar,
-                      QuestRowWire[] quests, bool isGm, string sentToMap)
+                      AutoCombatSettings autoCombat, QuestRowWire[] quests, bool isGm, string sentToMap)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -140,6 +140,16 @@ public static class PlayerFighter
             shell.SaveHotbarSoon();
         }
 
+        // THEIR AUTO-COMBAT SETTINGS, from their own row — after the save for the same reason as the bar: a slot may
+        // keep only a skill they may press. Whether it is ON is never stored, so every arrival starts with it off.
+        var settings = AutoCombatMath.Clamped(autoCombat);
+        string storedAs = settings.ToJson();
+        character.KeepOnlyAutoSkills(settings.slots);
+        character.AutoCombat = settings;
+        // Stored exactly as it now stands only if nothing had to be emptied; otherwise the trimmed slots are written.
+        if (settings.ToJson() == storedAs) shell.AutoCombatAlreadyStored();
+        else shell.SaveAutoCombatSoon();
+
         // AND THE SHARED COOLDOWN, if one was still running when they left, reaches their screen.
         if (character.Skills.SharedUltimateRemaining > 0f)
             GameNetwork.TellOwnerCooldownStarted(character, SharedCooldown.UltimateKey, character.Skills.SharedUltimateDueAtUtc);
@@ -154,6 +164,8 @@ public static class PlayerFighter
         // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
         // empty and only ever learns what it is carrying from here.
         shell.PushBagToOwner(alsoTheBar: true, alsoTheBuyback: true);
+        // …and their auto-combat settings, off.
+        shell.PushAutoCombatToOwner("");
 
         // AND THEIR QUESTS — after the bag, because every step is judged on what they hold. A quest whose unlock
         // condition is entering the world, that this character has never had, is given now, and anything already true
