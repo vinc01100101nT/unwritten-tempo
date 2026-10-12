@@ -135,6 +135,8 @@ public class StatusController : MonoBehaviour
     /// <summary>Only the self-imposed half of <see cref="ActionLocked"/>: rooted by this unit's own skill — a wind-up, an
     /// aftercast, a run that holds its caster. What a creature's brain waits out before it walks or attacks again.</summary>
     public bool SkillRooted => Time.time < recoverUntil;
+    /// <summary>Seconds left on the self-imposed root (0 when none) — for the log line that says why input is blocked.</summary>
+    public float SkillRootSecondsLeft => Mathf.Max(0f, recoverUntil - Time.time);
 
     /// <summary>The gate for STARTING a skill or combo: <see cref="ActionLocked"/>, PLUS being mid-jump (you can't cast
     /// in the air), PLUS being <see cref="Taunted"/>. Kept SEPARATE from <see cref="ActionLocked"/> on purpose: the

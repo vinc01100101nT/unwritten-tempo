@@ -41,6 +41,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // The run of beats this cast started on this machine, so a press the server refused can be stopped.
     Coroutine runRoutine;
 
+    /// <summary>Is a run of beats of this skill still going on this machine — and how many charges does it see left?
+    /// For the log line that says why input is blocked.</summary>
+    public bool RunInProgress => runRoutine != null;
+    public int RunChargesSeen => StateGate.StackCount(def != null ? def.CastEntry : null, CasterStates);
+
     /// <summary>THE SERVER REFUSED THE LAST PRESS — the skill did not run there, so the picture of it here stops: its run
     /// of beats ends and the hold it put on the caster lets go. Without this a run that lasts while a pile only the
     /// server spends (a charge-driven run) never ended, and held its caster still for good.</summary>

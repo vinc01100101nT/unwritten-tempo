@@ -36,6 +36,54 @@ public partial class Player3DController
     // Every frame: the body follows the server's word. Off → the hunt stops. On → the hunt runs, and comes back by itself
     // after anything that briefly took the body without the player asking (a skill's dash, a passive's lunge); only the
     // player's own orders end it (EndHuntForAnOrder).
+    // ---- the instrument: why the player's keys are not answered -------------------------------------------------
+
+    float inputBlockedReportDue;
+
+    void ReportWhyInputIsBlocked()
+    {
+        string why = WhyInputIsBlocked();
+        if (why == null) return;
+        inputBlockedReportDue = Time.unscaledTime + 1f;
+        GameLog.Warn(LogCat.Client, string.Concat("keys not answered — ", why, " | auto-combat ",
+                                                  AutoCombatClient.On ? "on" : "off", ", order ", order.ToString(),
+                                                  AutoSkillRuns()));
+    }
+
+    // The FIRST reason, in the order Update meets them. Null when nothing is blocking. Only asked while a key is held,
+    // at most once a second — never per frame.
+    string WhyInputIsBlocked()
+    {
+        if (controller == null || !controller.enabled || !gameObject.activeInHierarchy) return "the character controller is switched off";
+        if (Character.Instance != null && Character.Instance.IsDead) return "dead";
+        if (status != null && status.CannotAct) return "stunned or frozen";
+        if (status != null && status.ActionLocked)
+            return "held still by a skill for " + status.SkillRootSecondsLeft.ToString("0.0") + "s more";
+        if (dashing) return "dashing (to a point: " + dashToPoint + ")";
+        if (attacker != null && attacker.Swinging) return "mid-swing";
+        if (eDashing) return "mid-dash (E)";
+        if (jumping) return "mid-jump";
+        if (Taunted) return "taunted";
+        if (PlayerInteractor.Talking) return "talking to somebody";
+        if (GroundTargeter.Active || UnitTargeter.Active) return "aiming a skill";
+        return null;
+    }
+
+    // Every auto-skill still running a run of beats here, with the charges it sees: " | runs: skill.x (3 charges)".
+    string AutoSkillRuns()
+    {
+        var slots = AutoCombatClient.Settings.slots;
+        if (slots == null) return "";
+        string runs = "";
+        for (int i = 0; i < slots.Length; i++)
+        {
+            var runner = string.IsNullOrEmpty(slots[i]) ? null : PlayerSkills.ById(slots[i]) as SkillRunner;
+            if (runner == null || !runner.RunInProgress) continue;
+            runs += " " + slots[i] + " (" + runner.RunChargesSeen + " charges)";
+        }
+        return runs.Length > 0 ? " | runs:" + runs : " | no skill run going";
+    }
+
     void SyncAutoCombat()
     {
         AutoCombatClient.GiveToCharacterIfOwed();

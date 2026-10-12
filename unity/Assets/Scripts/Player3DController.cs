@@ -266,6 +266,10 @@ public partial class Player3DController : MonoBehaviour
 
     void Update()
     {
+        // WHY THE PLAYER CANNOT ACT, said once a second while they press and nothing answers — before every early
+        // return below, so whichever one is holding them is named.
+        if (inputBlockedReportDue <= Time.unscaledTime && (HeldW() || HeldA() || HeldS() || HeldD() || KeyT()))
+            ReportWhyInputIsBlocked();
         if (cam == null) cam = Camera.main;
         baseScale = buildScale * UnitScale.ForPlayer;   // live: track the global unit-size dial
         transform.localScale = baseScale;               // the 3D visual rides this root; keep it on the size dial
