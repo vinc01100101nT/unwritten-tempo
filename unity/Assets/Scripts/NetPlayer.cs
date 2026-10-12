@@ -1780,6 +1780,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         TargetStatsChanged(connectionToClient, (int)c.Level, c.StatPoints, c.CaptureStatsForOwner());
         // The sheet those stats produce follows on the very next beat instead of waiting out its interval.
         nextSheetPush = 0f;
+        // So does the bag: how much they can carry moves with STR (BagRoom), and the bag message carries it.
+        PushBagToOwner();
     }
 
     [TargetRpc]
@@ -2076,6 +2078,23 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetTold(NetworkConnectionToClient target, string line) => ChatController.GameSaid(line);
 
+    /// <summary>SERVER ONLY: say in this person's chat that a thing could not go into their bag, and why. The same line
+    /// pressed again within a second is said once — a pickup held down asks every frame.</summary>
+    public void TellNoRoom(Item def, BagRefusal why, string verb = "take")
+    {
+        if (!isServer || why == BagRefusal.None || ServerCombatUnit is not Character c) return;
+        string line = c.RefusalLine(def, why, verb);
+        if (GameLog.On(LogCat.Server)) LogDid(c, "had no room: " + line);
+        if (connectionToClient == null) return;
+        if (line == lastNoRoomLine && Time.unscaledTime < nextNoRoomLine) return;
+        lastNoRoomLine = line;
+        nextNoRoomLine = Time.unscaledTime + 1f;
+        TargetTold(connectionToClient, line);
+    }
+
+    string lastNoRoomLine;
+    float nextNoRoomLine;
+
     [TargetRpc]
     void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds)
     {
@@ -2179,6 +2198,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         { Refused("Merging needs " + CraftingMath.MergeCount + " " + e.def.displayName + " — you have " + e.count + "."); return; }
 
         var into = e.def.mergesInto;
+        // The ten going out are counted off first: their weight, and their entry when they are the whole stack.
+        int freedSlots = e.count == CraftingMath.MergeCount && into.category == e.def.category ? -1 : 0;
+        var noRoom = c.RoomFor(into, 1, freedSlots, -e.def.weight * CraftingMath.MergeCount);
+        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(into, noRoom, "make")); return; }
         e.count -= CraftingMath.MergeCount;
         if (e.count <= 0) c.Bag.RemoveAt(index);
         c.TakeIntoBag(into, 1);
@@ -2260,6 +2283,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var band1 = MaterialCatalog.Band(def.madeOf, 1);
         if (band1 == null) { Refused("No band-1 material is authored for " + def.displayName + "."); return; }
         // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you make — used up by this press, so a second press pays.
+        // ROOM FOR THE NEW PIECE BEFORE ANYTHING IS SPENT — or a tutorial's free forge is used up — for it.
+        var noRoom = c.RoomFor(def, 1);
+        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(def, noRoom, "forge")); return; }
         bool free = c.Quests.TakeFreeForge(itemId);
         if (!free && !Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
 
@@ -2464,6 +2490,24 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (worn != null) Recycle(c, worn, -1, (EquipSlotType)wornSlot);
     }
 
+    // Entries each bag tab has gained so far in one recycle, indexed by ItemCategory — reused, never rebuilt.
+    readonly int[] recycleTabSlots = new int[System.Enum.GetValues(typeof(ItemCategory)).Length];
+
+    // One thing a recycle gives back: does it fit on top of what the same recycle has already given? Refuses the
+    // recycle out loud when it does not.
+    bool RoomForRecycled(Character c, Item def, int count, ref int addedWeight)
+    {
+        if (def == null) return true;
+        var noRoom = c.RoomFor(def, count, recycleTabSlots[(int)def.category], addedWeight);
+        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(def, noRoom, "get back") + " Nothing was recycled."); return false; }
+        bool held = false;
+        for (int i = 0; i < c.Bag.Count; i++)
+            if (c.Bag[i] != null && c.Bag[i].def == def && !c.Bag[i].IsEquip) { held = true; break; }
+        recycleTabSlots[(int)def.category] += BagRoom.SlotsNeeded(false, count, held);
+        addedWeight += def.weight * count;
+        return true;
+    }
+
     // The piece is at bag position `index`, or worn in `wornSlot` (index -1).
     void Recycle(Character c, EquipmentInstance inst, int index, EquipSlotType wornSlot)
     {
@@ -2475,6 +2519,16 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         CraftingMath.RecycleYield(inst.quality, inst.upgrade, inst.def.forgeMaterialCost, inst.def.forgeGoldCost,
                                   recycleBands, out int gold);
         CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+
+        // ROOM FOR ALL OF WHAT COMES BACK, judged before the piece is destroyed: the piece's own weight and entry are
+        // counted off, and each thing coming back is counted on before the next one is judged.
+        System.Array.Clear(recycleTabSlots, 0, recycleTabSlots.Length);
+        recycleTabSlots[(int)inst.def.category] = -1;
+        int addedWeight = -inst.def.weight;
+        for (int b = 1; b < recycleBands.Length; b++)
+            if (recycleBands[b] > 0 && !RoomForRecycled(c, MaterialCatalog.Band(craft, b), recycleBands[b], ref addedWeight)) return;
+        for (int t = 1; t < recycleTiers.Length; t++)
+            if (recycleTiers[t] > 0 && !RoomForRecycled(c, MaterialCatalog.Ink(t), recycleTiers[t], ref addedWeight)) return;
 
         // THE PIECE GOES FIRST, so what comes back can never stack beside the thing it came out of. A worn piece is
         // taken off first, exactly as taking it off at the bag does — a weapon's skills and bar go with it.
@@ -2765,6 +2819,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         int free = Mathf.Min(count, c.Quests.FreeBuysOf(itemId));
         long cost = ShopMath.BuyCost(def.buyPrice, count - free);
         if (cost > c.Gold) { ShopSaid("Needs " + cost + " gold — you have " + c.Gold + ".", false); return; }
+        var noRoom = c.RoomFor(def, count);
+        if (noRoom != BagRefusal.None) { ShopSaid(c.RefusalLine(def, noRoom, "buy"), false); return; }
 
         if (free > 0) c.Quests.TakeFreeBuys(itemId, free);
         if (cost > 0) c.AddGold(-(int)cost);
@@ -2838,6 +2894,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         }
         long price = ShopMath.BuybackPrice(kept.paid);
         if (price > c.Gold) { ShopSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
+        var noRoom = c.RoomFor(kept.def, kept.instance != null ? 1 : kept.count);
+        if (noRoom != BagRefusal.None) { ShopSaid(c.RefusalLine(kept.def, noRoom, "buy back"), false); return; }
 
         // OFF THE LIST FIRST, so a second press finds nothing; then paid for, then returned through the one door into
         // the bag. A piece of gear returns as the very copy that was sold.
@@ -3118,6 +3176,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (held == null) { KeeperSaid("That is no longer in storage.", false); return; }
 
         int count = held.instance != null ? 1 : (all ? held.count : 1);
+        // ROOM FOR IT IN THE BAG, asked before the move starts; it stays in storage when there is none.
+        var noRoom = c.RoomFor(held.def, count);
+        if (noRoom != BagRefusal.None) { KeeperSaid(c.RefusalLine(held.def, noRoom), false); return; }
         var move = new StorageMoveWire { moveId = Guid.NewGuid().ToString("D"), kind = "take", itemId = held.def.id,
                                          count = count, limit = KeeperMath.StorageLimit };
         if (held.instance != null) held.instance.ToSaved(out move.refine, out move.cards, out move.roll, out move.copyId);
@@ -3270,6 +3331,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             LogPickUpRefused(drop, "it is still kept for " + drop.reservedForName);
             return;
         }
+
+        // ROOM FOR IT, or it stays where it lies and they are told why (BagRoom).
+        var noRoom = c.RoomFor(drop.def, drop.instance != null ? 1 : drop.count);
+        if (noRoom != BagRefusal.None) { TellNoRoom(drop.def, noRoom, "pick up"); return; }
 
         // FIRST COME. The shell is taken away the moment somebody wins it, so a second person asking for the same
         // thing a frame later finds nothing to be given — there is no way for one drop to be handed out twice.

@@ -2023,6 +2023,102 @@ public class Character : MonoBehaviour, ICombatUnit
         ChatController.ItemArrived(def, count, folds);
     }
 
+    // ---- HOW MUCH THE BAG HOLDS (BagRoom) -------------------------------------------------------------------
+    //
+    // Answered by the server's copy of a character, which is the only one that decides what may arrive. A player's
+    // machine is TOLD the totals with every bag it is sent (BagWire) and only draws them. Worn gear counts in both
+    // totals, so putting a piece on or taking it off never changes either one.
+
+    /// <summary>Entries held in one bag tab, worn pieces of that tab included.</summary>
+    public int SlotsUsed(ItemCategory tab)
+    {
+        if (Told) return toldSlots != null && (int)tab < toldSlots.Length ? toldSlots[(int)tab] : 0;
+        int n = 0;
+        for (int i = 0; i < bag.Count; i++)
+            if (bag[i] != null && bag[i].def != null && bag[i].def.category == tab) n++;
+        for (int i = 0; i < WornSlotKinds.Length; i++)
+        {
+            var piece = Gear.Get(WornSlotKinds[i]);
+            if (piece != null && piece.def != null && piece.def.category == tab) n++;
+        }
+        return n;
+    }
+
+    /// <summary>Everything carried and worn, by weight.</summary>
+    public int CarriedWeight
+    {
+        get
+        {
+            if (Told) return toldWeight;
+            int w = 0;
+            for (int i = 0; i < bag.Count; i++)
+                if (bag[i] != null && bag[i].def != null) w += bag[i].def.weight * Math.Max(1, bag[i].count);
+            for (int i = 0; i < WornSlotKinds.Length; i++)
+            {
+                var piece = Gear.Get(WornSlotKinds[i]);
+                if (piece != null && piece.def != null) w += piece.def.weight;
+            }
+            return w;
+        }
+    }
+
+    /// <summary>The most this character can carry — Ragnarok's 2000 + 30 per point of STR, gear's STR included.</summary>
+    public int WeightCap => Told ? toldWeightCap : BagRoom.WeightCap(P(PrimaryStat.STR));
+
+    // Every slot a piece can be worn in, walked by index: asking the gear for its worn list builds a new list walker
+    // each time, and these are asked on every auto-looted thing.
+    static readonly EquipSlotType[] WornSlotKinds = WearableSlots();
+    static EquipSlotType[] WearableSlots()
+    {
+        var all = (EquipSlotType[])Enum.GetValues(typeof(EquipSlotType));
+        var list = new List<EquipSlotType>(all.Length);
+        foreach (var k in all) if (k != EquipSlotType.None) list.Add(k);
+        return list.ToArray();
+    }
+
+    int toldWeight, toldWeightCap;
+    int[] toldSlots;
+
+    /// <summary>The bag totals the server worked out, laid on a player's own copy (<see cref="BagWire.Onto"/>).</summary>
+    public void TakeToldBagRoom(int weight, int weightCap, int[] slots)
+    {
+        toldWeight = weight;
+        toldWeightCap = weightCap;
+        toldSlots = slots;
+    }
+
+    /// <summary>Would <paramref name="count"/> of <paramref name="def"/> fit? Ask it BEFORE anything is spent for the
+    /// thing — every door a thing arrives through does. <paramref name="extraSlots"/> (in <paramref name="def"/>'s tab)
+    /// and <paramref name="extraWeight"/> are what the same action has already added (or, negative, taken away), for an
+    /// action that hands over several things at once.</summary>
+    public BagRefusal RoomFor(Item def, int count, int extraSlots = 0, int extraWeight = 0)
+    {
+        if (def == null || count <= 0) return BagRefusal.None;
+        bool gear = def.slot != EquipSlotType.None;
+        bool held = false;
+        if (!gear)
+            for (int i = 0; i < bag.Count; i++)
+                if (bag[i] != null && bag[i].def == def && !bag[i].IsEquip) { held = true; break; }
+        return BagRoom.Judge(SlotsUsed(def.category) + extraSlots, BagRoom.SlotsNeeded(gear, count, held),
+                             CarriedWeight + extraWeight, def.weight * count, WeightCap);
+    }
+
+    /// <summary>The sentence a refusal is said in, naming the thing and the limit it hit.</summary>
+    public string RefusalLine(Item def, BagRefusal why, string verb = "take")
+    {
+        string what = def != null ? def.displayName : "that";
+        if (why == BagRefusal.SlotsFull)
+            return "Can't " + verb + " " + what + " — your " + TabName(def) + " slots are full ("
+                   + SlotsUsed(def.category) + "/" + BagRoom.SlotsPerCategory + ").";
+        if (why == BagRefusal.TooHeavy)
+            return "Can't " + verb + " " + what + " — too heavy (carrying " + CarriedWeight + " of " + WeightCap + ").";
+        return "";
+    }
+
+    static string TabName(Item def) => def == null ? "bag" : def.category == ItemCategory.Use ? "Use"
+        : def.category == ItemCategory.Equip ? "Equip" : def.category == ItemCategory.Material ? "Material"
+        : def.category == ItemCategory.Quest ? "Quest" : "Etc";
+
     /// <summary>How much money this character has.</summary>
     public int Gold { get; private set; }
 

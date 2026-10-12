@@ -17,7 +17,7 @@
     {
       "type": "list",
       "items": [
-        "**STR** — melee attack power",
+        "**STR** — melee attack power and how much you can carry",
         "**AGI** — attack speed and dodge",
         "**VIT** — health and defense",
         "**INT** — magic power and mana",
@@ -47,7 +47,7 @@
       "rows": [
         [
           "**STR**",
-          "+1 MELEE ATK and +½ RANGED ATK. STR's jump goes to MELEE ATK."
+          "+1 MELEE ATK and +½ RANGED ATK, and +30 to how much you can carry. STR's jump goes to MELEE ATK."
         ],
         [
           "**AGI**",

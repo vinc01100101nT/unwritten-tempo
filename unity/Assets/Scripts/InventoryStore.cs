@@ -50,16 +50,6 @@ public class InventoryStore : MonoBehaviour
 
     void OnDestroy() { if (Instance == this) Instance = null; }
 
-    public int TotalWeight
-    {
-        get
-        {
-            int w = 0;
-            foreach (var e in Entries) if (e.def != null) w += e.def.weight * Mathf.Max(1, e.count);
-            return w;
-        }
-    }
-
     /// <summary>The bag changed — repaint whatever is showing it.
     ///
     /// <para>It used to also flag the bag for writing down from this machine. It no longer can: the server owns

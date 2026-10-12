@@ -235,8 +235,14 @@ public class ProgressionWindows : MonoBehaviour
     void RefreshInventoryFooter()
     {
         if (invFooter == null) return;
-        int w = InventoryStore.Instance != null ? InventoryStore.Instance.TotalWeight : 0;
-        invFooter.text = $"<color={DimHex}>Weight</color> {w}        {Wallet.Gold:n0} z";
+        // Every figure here is the server's, copied (BagWire): what is carried, the most that can be, and how full the
+        // tab on show is. "All" has no limit of its own, so it shows none.
+        var who = Character.Instance;
+        int w = who != null ? who.CarriedWeight : 0;
+        int cap = who != null ? who.WeightCap : 0;
+        string slots = useFilter && who != null
+            ? $"<color={DimHex}>Slots</color> {who.SlotsUsed(tab)}/{BagRoom.SlotsPerCategory}        " : "";
+        invFooter.text = $"{slots}<color={DimHex}>Weight</color> {w}/{cap}        {Wallet.Gold:n0} z";
     }
     // ---- Card insert dialog ---------------------------------------------------
 

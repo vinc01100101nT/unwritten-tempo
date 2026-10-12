@@ -38,6 +38,13 @@ public struct BagWire
     /// coins or an item — and two messages for one event is two chances for a screen to show half of it.</summary>
     public int gold;
 
+    /// <summary>How much the bag holds and how much is in it, worked out by the server (<see cref="BagRoom"/>): what is
+    /// carried, the most that can be, and the entries in each tab (indexed by <see cref="ItemCategory"/>). Sent, so the
+    /// bag window only copies them onto the screen.</summary>
+    public int weight;
+    public int weightCap;
+    public int[] slotsUsed;
+
     // ---- and what they are WEARING --------------------------------------------------------------------
     //
     // It travels with the bag because it MOVES with the bag: equipping takes an item out of one and puts it in
@@ -81,6 +88,11 @@ public struct BagWire
     {
         var wire = new BagWire { gold = c != null ? c.Gold : 0 };
         if (c == null) { wire.itemIds = new string[0]; return wire; }
+
+        wire.weight = c.CarriedWeight;
+        wire.weightCap = c.WeightCap;
+        wire.slotsUsed = new int[TabCount];
+        for (int t = 0; t < TabCount; t++) wire.slotsUsed[t] = c.SlotsUsed((ItemCategory)t);
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
                           out wire.wornCards, out wire.wornRolls, out wire.wornCopyIds);
@@ -171,6 +183,7 @@ public struct BagWire
             foreach (var worn in c.Gear.Worn)
                 TakeRarity(worn.Value, wornRarities, System.Array.IndexOf(wornCopyIds, worn.Value.copyId));
         c.SetGold(gold);
+        c.TakeToldBagRoom(weight, weightCap, slotsUsed);
         if (buyback != null) c.Buyback.TakeFromServer(buyback);
 
         // THE BAR LAST, AFTER THE GEAR.
@@ -188,6 +201,8 @@ public struct BagWire
         // The bar also redraws from inside this, which is what the weapon-swap push above relies on.
         c.RefreshUsableSkills();
     }
+
+    static readonly int TabCount = System.Enum.GetValues(typeof(ItemCategory)).Length;
 
     static T At<T>(IList<T> a, int i, T fallback) => a != null && i < a.Count ? a[i] : fallback;
 

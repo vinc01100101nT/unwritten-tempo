@@ -6057,3 +6057,14 @@
 {"ts": "2026-10-12T10:40:03+00:00", "session_id": "c89a5187-4acf-518e-af73-090b0cf71ebb", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/NetNpc.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T11:53:40+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-12T11:53:54+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/UiKit.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:03:37+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/InventoryList.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:03:50+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/BagRoom.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:04:35+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/Character.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:04:45+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/BagWire.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:05:00+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/ProgressionWindows.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:05:21+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:05:38+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:05:49+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/NetPlayer.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:06:06+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/Character.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:06:22+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/GmCommands.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-12T13:07:16+00:00", "session_id": "8b55299e-ff48-5b2d-94d4-1fd58783e8b7", "file": "/home/user/unwritten-tempo/unity/Assets/Scripts/Rewards.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

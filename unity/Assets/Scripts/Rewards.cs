@@ -177,6 +177,16 @@ public static class Rewards
         return AutoCombatMath.Takes(killer.AutoCombat, kind, chance01);
     }
 
+    // Entries each bag tab has gained so far from one kill's auto-loot, indexed by ItemCategory — reused.
+    static readonly int[] lootTabSlots = new int[System.Enum.GetValues(typeof(ItemCategory)).Length];
+
+    static bool HoldsStackOf(Character c, Item def)
+    {
+        for (int i = 0; i < c.Bag.Count; i++)
+            if (c.Bag[i] != null && c.Bag[i].def == def && !c.Bag[i].IsEquip) return true;
+        return false;
+    }
+
     // Take every entry auto-loot wants out of `items` and into the killer's bag. The count it took; 0 when nothing was
     // looted, or there were no chances to judge by.
     static int AutoLoot(Character killer, List<Item> items, List<float> chances, string map)
@@ -186,10 +196,22 @@ public static class Rewards
         if (shell == null || !shell.AutoCombatOn) return 0;
 
         autoLooted.Clear();
+        System.Array.Clear(lootTabSlots, 0, lootTabSlots.Length);
+        int lootWeight = 0;
         for (int i = items.Count - 1; i >= 0; i--)
         {
             var def = items[i];
             if (!AutoLootTakes(killer, shell, map, def, chances[i])) continue;
+            // NO ROOM, AND IT STAYS IN THE DROP: it falls to the ground like anything auto-loot leaves, and they are
+            // told why. Judged on top of what this kill has already put in.
+            bool gear = def.slot != EquipSlotType.None;
+            bool held = !gear && (autoLooted.Contains(def) || HoldsStackOf(killer, def));
+            int needed = BagRoom.SlotsNeeded(gear, 1, held);
+            var noRoom = BagRoom.Judge(killer.SlotsUsed(def.category) + lootTabSlots[(int)def.category], needed,
+                                       killer.CarriedWeight + lootWeight, def.weight, killer.WeightCap);
+            if (noRoom != BagRefusal.None) { shell.TellNoRoom(def, noRoom, "auto-loot"); continue; }
+            lootTabSlots[(int)def.category] += needed;
+            lootWeight += def.weight;
             autoLooted.Add(def);
             items.RemoveAt(i);
             chances.RemoveAt(i);

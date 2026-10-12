@@ -51,7 +51,9 @@ public class InventoryList
     // narrow enough that a name wrapped and then clipped to nothing inside a 22px row.
     const float NameMinWidth = 140f;
 
-    const int RowPool = 40;          // the bag's own capacity — the same fixed pool the grid used, no per-refresh alloc
+    // The rows built up front. NOT a limit: a view longer than this grows the pool to fit (Refresh), because a pool
+    // that stopped at 40 drew nothing past the 40th row — the rest were in the bag and on no screen.
+    const int RowPool = 40;
     const float HeaderTextSize = 10f;
     const float SearchHeight = 22f;
     const float HeaderHeight = 18f;
@@ -382,6 +384,8 @@ public class InventoryList
             t.color = active ? UiKit.TextMain : HeaderIdle;
             t.text = active ? Columns[i].label + (sortDescending ? " ▼" : " ▲") : Columns[i].label;
         }
+
+        while (rows.Count < view.Count) rows.Add(BuildRow(content));
 
         for (int i = 0; i < rows.Count; i++)
         {

@@ -426,6 +426,9 @@ public static class GmCommands
         var found = FindItem(key);
         if (found == null) { c.Reply($"No item '{key}'."); return; }
 
+        // The same limits as any other way in (BagRoom) — a command does not get to stuff a bag past them.
+        var noRoom = c.Ch.RoomFor(found, count);
+        if (noRoom != BagRefusal.None) { c.Reply(c.Ch.RefusalLine(found, noRoom, "give")); return; }
         GiveTo(c.Ch, found, count);
         c.Reply($"Gave {count}× {found.displayName}.");
     }
@@ -493,6 +496,8 @@ public static class GmCommands
         }
 
         // THROUGH THE FORGE'S OWN DOOR, so the trademark is rolled exactly as a forged piece's is; a named one replaces it.
+        var noRoom = c.Ch.RoomFor(pick, 1);
+        if (noRoom != BagRefusal.None) { c.Reply(c.Ch.RefusalLine(pick, noRoom, "make")); return; }
         var inst = EquipmentInstance.CreateFresh(pick);
         if (trademark != null) inst.trademarkSkillId = trademark.id;
         inst.quality = quality;
