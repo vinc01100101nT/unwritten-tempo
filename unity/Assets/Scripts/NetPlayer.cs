@@ -2246,7 +2246,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     static string NotAtStation(Item item)
         => "You are not at a " + CraftStations.Label(CraftStations.For(item)).ToLowerInvariant() + ".";
 
-    // ---- the craft stations: forge, fold, quench, ink ----------------------------------------------------
+    // ---- the craft stations: fold, quench, ink, recycle --------------------------------------------------
     //
     // EVERY ONE OF THESE HAPPENS HERE, on the server, and nowhere else. A station window asks; it never decides,
     // never rolls and never works out a cost — it draws the offer below and sends a press. The asker must be
@@ -2270,40 +2270,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         var needed = CraftStations.For(item);
         return needed != CraftStation.None && StationInReach(needed) == needed;
-    }
-
-    /// <summary>Forge a fresh piece: pay its base materials and gold, take a Raw, unfolded copy. Refused unless
-    /// the asker is standing at the station that makes that piece and has what it costs.</summary>
-    [Command]
-    void CmdForge(string itemId)
-    {
-        if (Leaving) return;
-        var c = ServerCharacter;
-        if (c == null) return;
-        var def = ItemCatalog.Resolve(itemId);
-        if (def == null || def.forgeMaterialCost <= 0) { Refused("Nothing here can forge that."); return; }
-        if (!AtTheRightStation(def)) { Refused(NotAtStation(def)); return; }
-
-        var band1 = MaterialCatalog.Band(def.madeOf, 1);
-        if (band1 == null) { Refused("No band-1 material is authored for " + def.displayName + "."); return; }
-        // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you make — used up by this press, so a second press pays.
-        // ROOM FOR THE NEW PIECE BEFORE ANYTHING IS SPENT — or a tutorial's free forge is used up — for it.
-        var noRoom = c.RoomFor(def, 1);
-        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(def, noRoom, "forge")); return; }
-        bool free = c.Quests.TakeFreeForge(itemId);
-        if (!free && !Spend(c, band1, def.forgeMaterialCost, def.forgeGoldCost)) return;
-
-        // The weapon's trademark or the armour's word — the one random thing in a piece's whole life — is rolled by
-        // CreateFresh, the one door every new piece comes through.
-        var made = EquipmentInstance.CreateFresh(def);
-        made.EnsureCopyId();
-        c.TakeIntoBag(made);
-        c.Quests.NoteMade(itemId, made.copyId);
-        Done("Forged a " + ItemTooltip.CopyTitle(made) + (free ? " — free, your first time."
-             : " for " + Paid(band1, def.forgeMaterialCost, def.forgeGoldCost) + "."));
-        // ANSWERED LIKE EVERY OTHER PIECE OF WORK, with the new piece picked: the window redraws only when an
-        // offer arrives, so a forge that sent none left the sword in the bag and off the screen until reopened.
-        AfterWorkingOnGear(c, made);
     }
 
     /// <summary>Fold a piece once: it rises by one, and its own numbers are worked out again. Refused at the
@@ -2341,17 +2307,19 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (inst.upgrade >= CraftingMath.FoldCap(inst.quality))
         { Refused(ItemTooltip.CopyTitle(inst) + " is folded as far as " + GradeWord(inst.quality) + " allows (+" + CraftingMath.FoldCap(inst.quality) + "). Quench it to go further."); return; }
 
-        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
-        if (band == null) { Refused("No band-" + CraftingMath.Band(inst.quality) + " material is authored for this craft."); return; }
+        var dust = MaterialCatalog.TemperDust;
+        if (dust == null) { Refused("No Temper Dust is authored."); return; }
+        int units = CraftingMath.FoldMaterialCost(inst.quality);
         int gold = CraftingMath.FoldGoldCost(inst.quality);
         inst.EnsureCopyId();
         bool free = c.Quests.TakeFreeFold(inst.def.id, inst.copyId, inst.quality);
-        if (!free && !Spend(c, band, CraftingMath.FoldMaterialCost, gold)) return;
+        if (!free && !Spend(c, dust, units, gold)) return;
 
+        c.Quests.NoteReplayFold(inst.def.id, inst.copyId, inst.quality, inst.upgrade);
         inst.upgrade++;
         inst.Recompute();
         Done("Folded to " + ItemTooltip.CopyTitle(inst) + (free ? " — free, your first time."
-             : " for " + Paid(band, CraftingMath.FoldMaterialCost, gold) + "."));
+             : " for " + Paid(dust, units, gold) + "."));
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2392,10 +2360,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         int saltTier = salt != null ? salt.def.materialStep : 0;
         string saltName = salt != null ? salt.def.displayName : null;
 
-        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
-        if (band == null) { Refused("No band-" + CraftingMath.Band(inst.quality) + " material is authored for this craft."); return; }
+        var oil = MaterialCatalog.QuenchOil;
+        if (oil == null) { Refused("No Quench Oil is authored."); return; }
+        int units = CraftingMath.QuenchMaterialCost(inst.quality);
         int gold = CraftingMath.QuenchGoldCost(inst.quality);
-        if (!Spend(c, band, CraftingMath.QuenchMaterialCost, gold)) return;
+        if (!Spend(c, oil, units, gold)) return;
         if (salt != null) TakeOne(c, salt);
 
         var before = inst.quality;
@@ -2412,7 +2381,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         inst.Recompute();
 
         string went = inst.quality > before ? "went UP to " : inst.quality < before ? "went DOWN to " : "stayed, now ";
-        Done("Quenched " + was + " for " + Paid(band, CraftingMath.QuenchMaterialCost, gold)
+        Done("Quenched " + was + " for " + Paid(oil, units, gold)
              + (saltName != null ? " and 1 " + saltName : "") + ": it " + went + ItemTooltip.CopyTitle(inst)
              + (lost != null ? ", and lost its " + lost + " stat" : "") + ".");
         AfterWorkingOnGear(c, inst);
@@ -2472,9 +2441,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         AfterWorkingOnGear(c, inst);
     }
 
-    /// <summary>Recycle a piece: it is destroyed, and half of what it provably consumed comes back — the forge
-    /// bill, one quench per rung it climbed, the folds standing on it, and the Inks written on it. Failed quenches
-    /// and the folds they spent are not recorded anywhere, so they come back as nothing.</summary>
+    /// <summary>Recycle a piece: it is destroyed, and half of what it provably consumed comes back — the folds and
+    /// the quench of every grade it climbed, the folds standing on it, and the Inks written on it
+    /// (<see cref="CraftingMath.RecycleYield"/>). Failed quenches and the folds they spent are not recorded anywhere,
+    /// and folds made at Raw were free on a first run, so all of those come back as nothing.</summary>
     [Command]
     void CmdRecycle(int index, string expectedItemId)
     {
@@ -2517,20 +2487,22 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
+        var owing = c.Quests.FirstRunOwing(inst.def.id);
+        if (owing != null) { Refused(StillNeeded(inst.def, owing)); return; }
 
         string was = ItemTooltip.CopyTitle(inst);
-        var craft = inst.def.madeOf;
-        CraftingMath.RecycleYield(inst.quality, inst.upgrade, inst.def.forgeMaterialCost, inst.def.forgeGoldCost,
-                                  recycleBands, out int gold);
+        CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int dust, out int oil, out int gold);
         CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
+        var dustItem = MaterialCatalog.TemperDust;
+        var oilItem = MaterialCatalog.QuenchOil;
 
         // ROOM FOR ALL OF WHAT COMES BACK, judged before the piece is destroyed: the piece's own weight and entry are
         // counted off, and each thing coming back is counted on before the next one is judged.
         System.Array.Clear(recycleTabSlots, 0, recycleTabSlots.Length);
         recycleTabSlots[(int)inst.def.category] = -1;
         int addedWeight = -inst.def.weight;
-        for (int b = 1; b < recycleBands.Length; b++)
-            if (recycleBands[b] > 0 && !RoomForRecycled(c, MaterialCatalog.Band(craft, b), recycleBands[b], ref addedWeight)) return;
+        if (dust > 0 && !RoomForRecycled(c, dustItem, dust, ref addedWeight)) return;
+        if (oil > 0 && !RoomForRecycled(c, oilItem, oil, ref addedWeight)) return;
         for (int t = 1; t < recycleTiers.Length; t++)
             if (recycleTiers[t] > 0 && !RoomForRecycled(c, MaterialCatalog.Ink(t), recycleTiers[t], ref addedWeight)) return;
 
@@ -2540,14 +2512,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         else c.Bag.RemoveAt(index);
 
         var got = new System.Text.StringBuilder();
-        for (int b = 1; b < recycleBands.Length; b++)
-        {
-            if (recycleBands[b] <= 0) continue;
-            var material = MaterialCatalog.Band(craft, b);
-            if (material == null) continue;
-            c.TakeIntoBag(material, recycleBands[b]);
-            Join(got, recycleBands[b] + " " + material.displayName);
-        }
+        if (dust > 0 && dustItem != null) { c.TakeIntoBag(dustItem, dust); Join(got, dust + " " + dustItem.displayName); }
+        if (oil > 0 && oilItem != null) { c.TakeIntoBag(oilItem, oil); Join(got, oil + " " + oilItem.displayName); }
         for (int t = 1; t < recycleTiers.Length; t++)
         {
             if (recycleTiers[t] <= 0) continue;
@@ -2566,7 +2532,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     // Reused across recycles; a craft is a cold path but there is no reason to allocate in it.
-    static readonly int[] recycleBands = new int[8];
     static readonly int[] recycleTiers = new int[6];
 
     static void Join(System.Text.StringBuilder sb, string part)
@@ -2616,7 +2581,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         return true;
     }
 
-    // "8 Copper and 800 gold" — what a craft cost, for the sentence that reports it.
+    // "Your Sword is still needed for Your First Gear — finish it first." Why recycling, selling or dropping a piece a
+    // tutorial's first run still owes a step on is refused.
+    static string StillNeeded(Item def, string questTitle)
+        => "Your " + def.displayName + " is still needed for " + questTitle + " — finish it first.";
+
+    // "3 Temper Dust and 150 gold" — what a craft cost, for the sentence that reports it.
     static string Paid(Item material, int units, int gold)
     {
         string m = units > 0 && material != null ? units + " " + material.displayName : null;
@@ -2708,7 +2678,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (c == null || connectionToClient == null) return;
         if (inst == null || inst.def == null) return;
 
-        var band = MaterialCatalog.Band(inst.def.madeOf, CraftingMath.Band(inst.quality));
+        var dustItem = MaterialCatalog.TemperDust;
+        var oilItem = MaterialCatalog.QuenchOil;
 
         // THE ODDS INCLUDE THE SALT THE PLAYER PICKED, because those are the odds the press will roll. A Salt
         // named by a position that is not one is simply no Salt.
@@ -2717,16 +2688,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         CraftingMath.QuenchOdds(inst.quality, saltTier, out int up, out int same, out int down);
 
         // WHAT RECYCLING WOULD GIVE BACK, as finished item ids and counts — the window only names them.
-        CraftingMath.RecycleYield(inst.quality, inst.upgrade, inst.def.forgeMaterialCost, inst.def.forgeGoldCost,
-                                  recycleBands, out int recycleGold);
+        CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int recycleDust, out int recycleOil, out int recycleGold);
         CraftingMath.RecycleInks(inst.inkStats, inst.inkValues, recycleTiers);
         var ids = new System.Collections.Generic.List<string>();
         var counts = new System.Collections.Generic.List<int>();
-        for (int b = 1; b < recycleBands.Length; b++)
-        {
-            var material = recycleBands[b] > 0 ? MaterialCatalog.Band(inst.def.madeOf, b) : null;
-            if (material != null) { ids.Add(material.id); counts.Add(recycleBands[b]); }
-        }
+        if (recycleDust > 0 && dustItem != null) { ids.Add(dustItem.id); counts.Add(recycleDust); }
+        if (recycleOil > 0 && oilItem != null) { ids.Add(oilItem.id); counts.Add(recycleOil); }
         for (int t = 1; t < recycleTiers.Length; t++)
         {
             var ink = recycleTiers[t] > 0 ? MaterialCatalog.Ink(t) : null;
@@ -2744,10 +2711,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             folds = inst.upgrade,
             foldCap = CraftingMath.FoldCap(inst.quality),
             inkSlots = inst.InkSlots,
-            foldMaterialId = band != null ? band.id : "",
-            foldMaterialCost = CraftingMath.FoldMaterialCost,
+            foldMaterialId = dustItem != null ? dustItem.id : "",
+            foldMaterialCost = CraftingMath.FoldMaterialCost(inst.quality),
             foldGoldCost = CraftingMath.FoldGoldCost(inst.quality),
-            quenchMaterialCost = CraftingMath.QuenchMaterialCost,
+            quenchMaterialId = oilItem != null ? oilItem.id : "",
+            quenchMaterialCost = CraftingMath.QuenchMaterialCost(inst.quality),
             quenchGoldCost = CraftingMath.QuenchGoldCost(inst.quality),
             up = up, same = same, down = down,
             saltTier = saltTier,
@@ -2762,7 +2730,6 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetOffer(NetworkConnectionToClient target, CraftStationOffer offer) => CraftStationPanel.TakeOffer(offer);
 
-    public void AskToForge(string itemId) => CmdForge(itemId);
     public void AskToFold(int index, string itemId) => CmdFold(index, itemId);
     public void AskToQuench(int index, string itemId, int saltIndex) => CmdQuench(index, itemId, saltIndex);
     public void AskToInk(int index, string itemId, int inkIndex, int slot) => CmdInk(index, itemId, inkIndex, slot);
@@ -2865,6 +2832,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // THE VERY PIECE THEY PRESSED, not another of its kind that slid into that position after an earlier sale.
         if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
         if (!WorldShops.Buys(shop, e)) { ShopSaid("They will not buy that.", false); return; }
+        var owing = c.Quests.FirstRunOwing(e.def.id);
+        if (owing != null) { ShopSaid(StillNeeded(e.def, owing), false); return; }
 
         int count = Mathf.Clamp(howMany, 1, e.count);
         long pay = ShopMath.SalePay(e.def.zeny, count);
@@ -3097,7 +3066,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
                 KeeperSaid("Storage could not be opened just now.", false);
                 return;
             }
-            serverStorage.Take(r.rows, 0, false);
+            serverStorage.Take(r.rows, 0);
             SendStorage();
         });
     }
@@ -3128,11 +3097,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var held = serverStorage.Find(def.id, copy);
         int now = stored ? (piece != null ? 1 : (held != null ? held.count : 0) + count)
                          : (piece != null ? 0 : (held != null ? held.count : 0) - count);
-        var line = new StoredLine { itemId = def.id, count = Mathf.Max(0, now), cards = "", roll = "", copyId = "",
-                                    rarity = (int)Rarities.Of(def, piece) };
+        var line = new StoredLine { itemId = def.id, count = Mathf.Max(0, now), cards = "", roll = "", copyId = "" };
         if (piece != null) piece.ToSaved(out line.refine, out line.cards, out line.roll, out line.copyId);
         if (piece != null && !stored) line.count = 0;
-        serverStorage.TakeRow(line, false);
+        serverStorage.TakeRow(line);
         if (connectionToClient != null) TargetStorageRow(connectionToClient, line, serverStorage.Rows);
     }
 
@@ -3297,6 +3265,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // THE ONE THING THAT IS NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
         // A screen can be got round; this is the answer that counts.
         if (e.def.category == ItemCategory.Quest) return;
+        var owing = c.Quests.FirstRunOwing(e.def.id);
+        if (owing != null) { TellOwner(StillNeeded(e.def, owing)); return; }
 
         int take = e.IsEquip ? 1 : Mathf.Clamp(howMany, 1, e.count);
         if (take <= 0) return;
@@ -3581,7 +3551,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         c.Quests.FreeBuys(freeBuyIds, freeBuyCounts);
         TargetQuestsChanged(connectionToClient, c.Quests.Snapshot(c, mapName), target, QuestLog.GuideOf(target),
                             c.Quests.NeedsSnapshot(), c.Quests.Offers(mapName), c.Quests.OngoingAt(mapName),
-                            c.Quests.TakeKills(), c.Quests.FreeForges(), freeBuyIds.ToArray(), freeBuyCounts.ToArray());
+                            c.Quests.TakeKills(), freeBuyIds.ToArray(), freeBuyCounts.ToArray());
     }
 
     readonly System.Collections.Generic.List<string> freeBuyIds = new System.Collections.Generic.List<string>(2);
@@ -3619,11 +3589,18 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     void CmdPlayTutorial(string questId)
     {
         if (Leaving || ServerCombatUnit is not Character c || c == null) return;
-        var answer = c.Quests.Play(questId, c);
+        var answer = c.Quests.Play(questId, c, out string missingItemId);
         switch (answer)
         {
             case QuestPlay.Started: SaveSoon(); questsPushOwed = true; break;
             case QuestPlay.NotMet: TargetRequirementsNotMet(connectionToClient); break;
+            case QuestPlay.MissingPiece:
+            {
+                var missing = ItemCatalog.Resolve(missingItemId);
+                TellOwner("To play this again you need a Raw " + (missing != null ? missing.displayName : missingItemId)
+                          + " with room for all of its folds, worn or carried.");
+                break;
+            }
         }
         if (GameLog.On(LogCat.Server))
             LogDid(c, string.Concat("pressed Play on tutorial ", questId, " — ", answer.ToString()));
@@ -3637,9 +3614,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     [TargetRpc]
     void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide,
                              QuestNeedWire[] needs, string[] offers, string[] ongoingAt, QuestKillWire[] kills,
-                             string[] freeForges, string[] freeBuyIds, int[] freeBuyCounts)
+                             string[] freeBuyIds, int[] freeBuyCounts)
     {
-        QuestStore.Receive(open, target, guide, needs, offers, ongoingAt, freeForges, freeBuyIds, freeBuyCounts);
+        QuestStore.Receive(open, target, guide, needs, offers, ongoingAt, freeBuyIds, freeBuyCounts);
         QuestKillNotice.Show(kills);
     }
 

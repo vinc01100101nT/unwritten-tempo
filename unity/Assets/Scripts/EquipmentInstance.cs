@@ -33,8 +33,8 @@ public class EquipmentInstance
     public int upgrade;
     [Tooltip("Inserted cards (length <= def.cardSlots).")]
     public List<Card> cards = new List<Card>();
-    [Tooltip("What this copy came out of its last quench as. A freshly forged piece is Raw and has never been " +
-             "quenched; F to A is the ladder above it.")]
+    [Tooltip("What this copy came out of its last quench as. A new piece is Raw and has never been quenched; F to A " +
+             "is the ladder above it.")]
     public Quality quality = Quality.Raw;
 
     [Tooltip("The stats written onto this copy with Ink, in the order they were written — the LAST one is the one a " +
@@ -43,28 +43,27 @@ public class EquipmentInstance
     [Tooltip("What each written stat is worth. A percentage stat is whole percent. Parallel to Ink Stats.")]
     public List<float> inkValues = new List<float>();
 
-    // THE SERVER'S FINISHED ANSWER for what this copy's folds and quality are worth, written whenever it is forged,
-    // folded or quenched (Recompute). A player's machine never works these out — it adds what it was sent.
-    [Tooltip("Finished numbers this copy's folds and grade grant (server-written): attack or magic attack on a weapon; " +
+    // THE SERVER'S FINISHED ANSWER for what this copy's folds, grade and rarity are worth, written whenever it is
+    // made, folded or quenched (Recompute). A player's machine never works these out — it adds what it was sent.
+    [Tooltip("Finished numbers this copy's folds, grade and rarity grant (server-written): attack or magic attack on a weapon; " +
              "on armour, what its material buys — defence and HP (metal), attack speed and evasion (leather), magic " +
              "defence and MP (cloth) — and on shoes, movement speed as well.")]
     public CraftingMath.PieceStats piece;
 
-    [Tooltip("The id of this copy's TRADEMARK skill, rolled once at the forge and never changed. Empty = none. Its " +
+    [Tooltip("The id of this copy's TRADEMARK skill, rolled once when the copy is made and never changed. Empty = none. Its " +
              "name and the numbers it raises are read from that skill, never stored here.")]
     public string trademarkSkillId = "";
     [Tooltip("Finished lift this copy's trademark adds to its skill's main numbers (server-written, from the grade).")]
     public float trademarkLift;
 
-    [Tooltip("An armour copy's WORD, rolled once at the forge from its slot's words and never changed. None = none.")]
+    [Tooltip("An armour copy's WORD, rolled once when the copy is made from its slot's words and never changed. None = none.")]
     public ArmourWord word = ArmourWord.None;
     [Tooltip("What this copy's word is worth (server-written, from the grade) — see ArmourWords.Amount for its unit.")]
     public float wordAmount;
 
-    /// <summary>PLAYER'S MACHINE: how rare this copy is, exactly as the server sent it with the bag (<see cref="raritySent"/>
-    /// says it was). Never saved — the server works it out afresh from the trademark every time it sends one.</summary>
-    [System.NonSerialized] public Rarity rarity;
-    [System.NonSerialized] public bool raritySent;
+    [Tooltip("How rare this copy is. The server decides it once, when the copy is made, and it never changes: a piece a " +
+             "creature drops rolls it by the creature's kind, every other piece is Common. It lifts what the folds are worth.")]
+    public Rarity rarity = Rarity.Common;
 
     public EquipmentInstance() { }
     public EquipmentInstance(Item def, int upgrade = 0)
@@ -75,7 +74,7 @@ public class EquipmentInstance
     }
 
     /// <summary>THE ONE WAY a copy becomes the four values a save, a message or a kept sale holds for it beside its item
-    /// id: its folds, its cards, its roll text (grade, written stats, trademark, word) and its own id. Gives the copy
+    /// id: its folds, its cards, its roll text (grade, written stats, trademark, word, rarity) and its own id. Gives the copy
     /// its id first if it has none, as everything that lets a copy leave the server must.</summary>
     public void ToSaved(out int folds, out string cardsText, out string roll, out string id)
     {
@@ -106,12 +105,11 @@ public class EquipmentInstance
         if (GameServer.IsServer || !Application.isPlaying) Recompute();
     }
 
-    /// <summary>A fresh copy of <paramref name="def"/> as it ENTERS THE WORLD, exactly as the forge hands one over:
-    /// Raw, unfolded, no Ink — and its one random thing already rolled, a weapon's trademark or an armour piece's
-    /// word. THE single creation path for anything that enters the world — the forge, a grant, a reward, what a
-    /// creature spawns wearing — so no caller can hand out a copy in a state a forge could not have produced.
-    /// Server only: the roll goes through CombatRng. Loading a saved or sent copy is not a creation and never
-    /// comes here.</summary>
+    /// <summary>A fresh copy of <paramref name="def"/> as it ENTERS THE WORLD: Raw, unfolded, no Ink, Common — and its
+    /// one random thing already rolled, a weapon's trademark or an armour piece's word. THE rolling door every new
+    /// piece comes through — a grant, a reward, what a creature spawns wearing, what a creature drops
+    /// (<see cref="CreateDropped"/>). Server only: the roll goes through CombatRng. Loading a saved or sent copy is not
+    /// a creation and never comes here.</summary>
     public static EquipmentInstance CreateFresh(Item def)
     {
         var made = new EquipmentInstance(def);
@@ -122,15 +120,31 @@ public class EquipmentInstance
         return made;
     }
 
+    /// <summary>A NEW CHARACTER'S PIECE (<see cref="StarterKit.Worn"/>): Raw, unfolded, Common, and made with NO trademark
+    /// and NO word — never through the rolling door, so making a character again can never roll its starting weapon's
+    /// trademark again.</summary>
+    public static EquipmentInstance CreateStarter(Item def) => new EquipmentInstance(def);
+
+    /// <summary>THE PIECE A KILL DROPS: a fresh copy of <paramref name="def"/> exactly as <see cref="CreateFresh"/>
+    /// makes one — Raw, unfolded, its own trademark or word rolled — at <paramref name="rarity"/>, the one thing a
+    /// dropped piece rolls that no other piece does. Server only.</summary>
+    public static EquipmentInstance CreateDropped(Item def, Rarity rarity)
+    {
+        var made = CreateFresh(def);
+        made.rarity = rarity;
+        made.Recompute();
+        return made;
+    }
+
     // Reused: the stats already written while one piece is being filled in. A piece is filled once per creature life.
     static readonly List<InkStat> inkScratch = new List<InkStat>(6);
 
     /// <summary>A copy of <paramref name="def"/> AT AN AUTHORED STATE: grade <paramref name="quality"/>, folded
     /// <paramref name="folds"/> times (never past that grade's cap), every stat slot the grade carries written with
     /// Ink of <paramref name="inkTier"/> — each stat rolled exactly as a station rolls one — and the trademark or
-    /// word <see cref="CreateFresh"/> rolled, at any grade. Nothing here could not come out of a station, so
-    /// <see cref="CreateFresh"/>'s promise holds. WHAT A CREATURE WEARS, from the three settings on its own catalog
-    /// entry. Server only: every roll goes through CombatRng.</summary>
+    /// word <see cref="CreateFresh"/> rolled, at any grade. Common, like everything <see cref="CreateFresh"/> makes.
+    /// WHAT A CREATURE WEARS, from the three settings on its own catalog entry. Server only: every roll goes through
+    /// CombatRng.</summary>
     public static EquipmentInstance CreateAt(Item def, Quality quality, int folds, int inkTier)
     {
         var made = CreateFresh(def);
@@ -147,18 +161,18 @@ public class EquipmentInstance
             inkScratch.Add(stat);
         }
         inkScratch.Clear();
-        // The trademark or the word was rolled by CreateFresh, at every grade — the forge rolls one on a Raw piece too.
+        // The trademark or the word was rolled by CreateFresh, at every grade — a Raw piece carries one too.
         made.Recompute();
         return made;
     }
 
-    /// <summary>Work out what this copy's folds and quality are worth and write the answer onto it. THE SERVER
-    /// calls this after forging, folding or quenching, and a player's machine never does: the finished numbers
+    /// <summary>Work out what this copy's folds, grade and rarity are worth and write the answer onto it. THE SERVER
+    /// calls this after making, folding or quenching a copy, and a player's machine never does: the finished numbers
     /// cross in the same text the grade does, and that side only copies them in.</summary>
     public void Recompute()
     {
         trademarkLift = string.IsNullOrEmpty(trademarkSkillId) ? 0f : CraftingMath.TrademarkLift(quality);
-        piece = def == null ? default : CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, upgrade, quality);
+        piece = def == null ? default : CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, upgrade, quality, rarity);
         wordAmount = word == ArmourWord.None ? 0f : ArmourWords.Amount(word, quality);
     }
 
@@ -219,9 +233,10 @@ public class EquipmentInstance
         while (inkStats.Count < inkValues.Count) inkValues.RemoveAt(inkValues.Count - 1);
     }
 
-    /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats and its
-    /// trademark, joined for the save and the wire:
-    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed,movement speed;stat:value,stat:value;trademark skill id:finished lift".
+    /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats, its
+    /// trademark, its word and its rarity, joined for the save and the wire — always six parts, a missing trademark or
+    /// word written as empty text so every part keeps its place:
+    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed,movement speed;stat:value,stat:value;trademark skill id:finished lift;word:finished amount;rarity".
     /// Paired with <see cref="DecodeRoll"/>. Kept in the same slot the armour roll used, so the save and the wire
     /// need no new array — and carrying the finished numbers here is what lets a player's machine draw them
     /// without working any of them out.</summary>
@@ -241,22 +256,32 @@ public class EquipmentInstance
             if (i > 0) sb.Append(',');
             sb.Append(((int)inkStats[i]).ToString(ci)).Append(':').Append(inkValues[i].ToString("0.###", ci));
         }
-        if (!string.IsNullOrEmpty(trademarkSkillId) || word != ArmourWord.None)
-            sb.Append(';');
+        sb.Append(';');
         if (!string.IsNullOrEmpty(trademarkSkillId))
             sb.Append(trademarkSkillId).Append(':').Append(trademarkLift.ToString("0.####", ci));
         // The armour word, BY NAME, and the finished amount the server wrote for it.
+        sb.Append(';');
         if (word != ArmourWord.None)
-            sb.Append(';').Append(word.ToString()).Append(':').Append(wordAmount.ToString("0.###", ci));
+            sb.Append(word.ToString()).Append(':').Append(wordAmount.ToString("0.###", ci));
+        sb.Append(';').Append(((int)rarity).ToString(ci));
         return sb.ToString();
     }
 
-    /// <summary>Rebuild the grade and the written stats from a saved string. Anything unreadable — "", a save
-    /// written before crafting existed, a damaged entry — leaves the copy Raw with nothing written on it, which
-    /// is exactly what a piece that has never been to a forge is.</summary>
+    /// <summary>Rebuild the grade, the written stats, the trademark, the word and the rarity from a saved string.
+    /// Anything unreadable — "", a save written before crafting existed, a damaged entry — leaves the copy Raw and
+    /// Common with nothing written on it, which is exactly what a piece nobody has worked on is.</summary>
     public void DecodeRoll(string encoded)
     {
+        ReadRoll(encoded);
+        RecomputeIfMine();
+    }
+
+    /// <summary>The reading half of <see cref="DecodeRoll"/>, with no engine call in it — every part laid onto the
+    /// copy exactly as written, and nothing worked out again — so the offline checks can read a roll text back.</summary>
+    public void ReadRoll(string encoded)
+    {
         quality = Quality.Raw;
+        rarity = Rarity.Common;
         piece = default;
         trademarkSkillId = "";
         trademarkLift = 0f;
@@ -337,8 +362,13 @@ public class EquipmentInstance
                         float.TryParse(bits[1], System.Globalization.NumberStyles.Float, ci, out wordAmount);
                 }
             }
+
+            // The rarity, read before the numbers are worked out again below because it lifts them. A text with no
+            // such part is a Common piece.
+            if (parts.Length > 5 && int.TryParse(parts[5], ints, ci, out int r)
+                && r >= (int)Rarity.Common && r <= (int)Rarity.Legendary)
+                rarity = (Rarity)r;
         }
-        RecomputeIfMine();
     }
 
     public int CardSlots => def != null ? def.cardSlots : 0;
@@ -373,7 +403,7 @@ public class EquipmentInstance
 
     /// <summary>What THIS copy itself adds, before its cards — the one place a copy's own numbers are read, by the
     /// stat sheet, the equip preview, the tooltip and the inventory column alike. Two things and no more: the
-    /// finished attack / magic attack / defence / magic defence the server worked out from its folds and its grade,
+    /// finished attack / magic attack / defence / magic defence the server worked out from its folds, grade and rarity,
     /// and whatever Ink has written on it. The item's own bonus fields are not read: a crafted piece IS its work.
     /// Allocation-free.</summary>
     public void AddPieceInto(ref EquipBonuses eb)

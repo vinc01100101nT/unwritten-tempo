@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>An armour piece's rolled WORD — the armour's answer to a weapon's trademark (decided 2026-09-23). Rolled
-/// once at the forge from the words of the piece's SLOT, never changed afterwards, and part of its name. Each word does
+/// once when the copy is made, from the words of the piece's SLOT, never changed afterwards, and part of its name. Each word does
 /// exactly ONE thing, and each lives on only one slot, so a character can never wear the same word twice.
 ///
 /// <para>Saved BY NAME in the copy's roll text, so this list can be reordered without repointing a saved piece.</para></summary>

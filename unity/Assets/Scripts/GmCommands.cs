@@ -242,10 +242,11 @@ public static class GmCommands
         // went from nothing to nothing, and an added coin vanished the instant the server next spoke.
         Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", "gold 5000", CmdGold, false, true, "zeny"));
         Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", "item \"watery ink\" 10", CmdItem, false, true, "give"));
-        Register(new GmCommand("weapon", "weapon [type] [trademark] [folds] [grade]",
-            "Put a forged weapon in your bag. Type = sword/bow/…; trademark = one of that weapon's skills the forge " +
-            "can roll (quote a name with spaces); folds = a number up to the grade's cap; grade = Raw or F to A. " +
-            "Anything left out is random, the trademark rolled exactly as the forge rolls it.", "weapon sword 3 C",
+        Register(new GmCommand("weapon", "weapon [type] [trademark] [folds] [grade] [rarity]",
+            "Put a new weapon in your bag. Type = sword/bow/…; trademark = one of that weapon's skills a new weapon " +
+            "can roll (quote a name with spaces); folds = a number up to the grade's cap; grade = Raw or F to A; " +
+            "rarity = Common to Legendary. Anything left out is random but the rarity, which is Common; the trademark " +
+            "is rolled exactly as a new weapon's is.", "weapon sword 3 C Epic",
             CmdWeapon, false, true));
         Register(new GmCommand("mastery", "mastery [weapon] <n>",
             "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands) — one mastery " +
@@ -433,11 +434,11 @@ public static class GmCommands
         c.Reply($"Gave {count}× {found.displayName}.");
     }
 
-    // /weapon [type] [trademark] [folds] [grade] — the testing door for a forged weapon, in any order. Each word is
-    // read as a weapon type, a grade, a number of folds, or else a trademark. Whatever is left out is random: the
-    // trademark is rolled exactly as the forge rolls it, the grade drawn from Raw to A, the folds from none to that
-    // grade's cap. Nothing it makes is a state a station could not have produced — no Ink is written, which is
-    // what a piece fresh off the quench carries until somebody inks it.
+    // /weapon [type] [trademark] [folds] [grade] [rarity] — the testing door for a new weapon, in any order. Each word
+    // is read as a weapon type, a grade, a rarity, a number of folds, or else a trademark. Whatever is left out is
+    // random — the trademark rolled exactly as a new weapon's is, the grade drawn from Raw to A, the folds from none to
+    // that grade's cap — except the rarity, which is Common unless named. No Ink is written, which is what a piece
+    // fresh off the quench carries until somebody inks it.
     static void CmdWeapon(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
@@ -445,27 +446,29 @@ public static class GmCommands
         WeaponType? type = null;
         Quality? grade = null;
         int folds = -1;
+        var rarity = Rarity.Common;
         SkillDef trademark = null;
         for (int i = 0; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (WeaponTypes.TryParse(a, out var t)) { type = t; continue; }
             if (TryName<Quality>(a, out var q)) { grade = q; continue; }
+            if (TryName<Rarity>(a, out var r)) { rarity = r; continue; }
             if (int.TryParse(a, out var f) && f >= 0) { folds = f; continue; }
             var skill = FindSkill(a);
             if (skill != null && Trademarks.Qualifies(skill)) { trademark = skill; continue; }
             c.Reply($"Don't know '{a}' — expected a weapon type (sword, bow, ...), a grade (Raw, F to A), " +
-                    "a number of folds, or a trademark skill.");
+                    "a rarity (Common to Legendary), a number of folds, or a trademark skill.");
             return;
         }
 
-        // A NAMED TRADEMARK DECIDES THE WEAPON when none was named, and must be one the forge itself could roll on it.
+        // A NAMED TRADEMARK DECIDES THE WEAPON when none was named, and must be one a new weapon could roll.
         if (trademark != null)
         {
             if (!type.HasValue) type = trademark.weaponType;
             if (!Trademarks.Rollable(trademark, type.Value))
             {
-                c.Reply($"{trademark.displayName} can't be a {type.Value} trademark — the forge only rolls a published " +
+                c.Reply($"{trademark.displayName} can't be a {type.Value} trademark — a new weapon only rolls a published " +
                         $"skill of that weapon.");
                 return;
             }
@@ -495,19 +498,20 @@ public static class GmCommands
             return;
         }
 
-        // THROUGH THE FORGE'S OWN DOOR, so the trademark is rolled exactly as a forged piece's is; a named one replaces it.
+        // THROUGH THE ROLLING DOOR, so the trademark is rolled exactly as a new piece's is; a named one replaces it.
         var noRoom = c.Ch.RoomFor(pick, 1);
         if (noRoom != BagRefusal.None) { c.Reply(c.Ch.RefusalLine(pick, noRoom, "make")); return; }
         var inst = EquipmentInstance.CreateFresh(pick);
         if (trademark != null) inst.trademarkSkillId = trademark.id;
         inst.quality = quality;
         inst.upgrade = folds;
+        inst.rarity = rarity;
         inst.Recompute();
         c.Ch.TakeIntoBag(inst);
         AfterChangingTheirBag(c.Ch);
         var rolled = Trademarks.SkillOf(inst);
-        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {pick.displayName}" +
-                (rolled != null ? $", trademark {rolled.displayName}." : $", no trademark ({WeaponTypes.Label(pick.weaponType)} has no skill the forge can roll)."));
+        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {Rarities.Label(rarity)} {pick.displayName}" +
+                (rolled != null ? $", trademark {rolled.displayName}." : $", no trademark ({WeaponTypes.Label(pick.weaponType)} has no skill a new weapon can roll)."));
     }
 
     /// <summary>The skill a player typed: its id, or its name as shown, either case.</summary>
@@ -950,13 +954,11 @@ public static class GmCommands
         var facts = new StringBuilder($"Weight {it.weight} · " + (it.CanBeSold ? $"Sells for {it.zeny} zeny" : Item.CannotBeSoldText));
         if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
         if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
-        // A band material's step is its BAND, an Ink's or a Salt's its TIER — the words the item's own field uses.
+        // An Ink's or a Salt's step is its TIER — the word the item's own field uses.
         if (it.materialKind == MaterialKind.Creature)
             facts.Append(" · Creature material · ").Append(Rarities.Of(it, null));
-        else if (it.materialKind != MaterialKind.None)
-            facts.Append(" · ").Append(it.materialKind)
-                 .Append(it.materialKind == MaterialKind.Ink || it.materialKind == MaterialKind.Salt ? " tier " : " band ")
-                 .Append(it.materialStep);
+        else if (it.materialKind == MaterialKind.Ink || it.materialKind == MaterialKind.Salt)
+            facts.Append(" · ").Append(it.materialKind).Append(" tier ").Append(it.materialStep);
         c.Reply(facts.ToString());
 
         if (it.IsUsable)

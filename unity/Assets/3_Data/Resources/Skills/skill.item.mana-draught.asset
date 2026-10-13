@@ -19,7 +19,7 @@ MonoBehaviour:
   needsSkillId: 
   published: 0
   maxLevel: 1
-  description: Restores 8 MP per second for 5s.
+  description: Restores 15 MP per second for 5s.
   archetype: 3
   family: 0
   shape: 3
@@ -98,7 +98,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       magnitude:
-        value: 8
+        value: 15
         useStacks: 0
         op: 0
         read: 0

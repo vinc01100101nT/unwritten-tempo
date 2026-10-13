@@ -13,10 +13,6 @@ public struct StoredLine
     public string cards;
     public string roll;
     public string copyId;
-    /// <summary>How rare a piece of gear is, as the SERVER decided it (<see cref="Rarities.Of"/>): a player's machine
-    /// never works a weapon's rarity out from its own skill files. Unused on a stack, and absent from the character
-    /// server's rows, which the server reads with <c>wearSentRarity</c> off.</summary>
-    public int rarity;
 }
 
 /// <summary>One stored thing, resolved: its item and, for gear, the piece itself.</summary>
@@ -54,26 +50,25 @@ public class StorageList
     public void Clear() { entries.Clear(); unknown = 0; Known = false; }
 
     /// <summary>Lay <paramref name="lines"/> on, starting at row <paramref name="startsAt"/>: the first chunk of a list
-    /// (startsAt 0) replaces what was held. <paramref name="wearSentRarity"/> is true on a player's machine, where each
-    /// piece wears the rarity the server sent with it; the server reads the character server's rows with it off.</summary>
-    public void Take(StoredLine[] lines, int startsAt, bool wearSentRarity)
+    /// (startsAt 0) replaces what was held.</summary>
+    public void Take(StoredLine[] lines, int startsAt)
     {
         if (startsAt <= 0) { entries.Clear(); unknown = 0; }
         Known = true;
         if (lines == null) return;
         for (int i = 0; i < lines.Length; i++)
         {
-            var e = Resolve(lines[i], wearSentRarity);
+            var e = Resolve(lines[i]);
             if (e != null) entries.Add(e); else unknown++;
         }
     }
 
     /// <summary>One row changed: replaced where it is, added at the end when new, gone when its count is 0.</summary>
-    public void TakeRow(StoredLine line, bool wearSentRarity)
+    public void TakeRow(StoredLine line)
     {
         int at = IndexOf(line.itemId, line.copyId);
         if (line.count <= 0) { if (at >= 0) entries.RemoveAt(at); return; }
-        var e = Resolve(line, wearSentRarity);
+        var e = Resolve(line);
         if (e == null) return;
         if (at >= 0) entries[at] = e; else entries.Add(e);
     }
@@ -91,11 +86,10 @@ public class StorageList
     public bool NeedsNewRow(Item def, string copyId)
         => !string.IsNullOrEmpty(copyId) || def == null || Find(def.id, "") == null;
 
-    /// <summary>SERVER: the line for <paramref name="e"/> as it now stands, with the rarity the server decides.</summary>
+    /// <summary>SERVER: the line for <paramref name="e"/> as it now stands.</summary>
     public static StoredLine LineOf(StoredEntry e)
     {
-        var l = new StoredLine { itemId = e.def.id, count = e.count, cards = "", roll = "", copyId = "",
-                                 rarity = (int)Rarities.Of(e.def, e.instance) };
+        var l = new StoredLine { itemId = e.def.id, count = e.count, cards = "", roll = "", copyId = "" };
         if (e.instance != null) e.instance.ToSaved(out l.refine, out l.cards, out l.roll, out l.copyId);
         return l;
     }
@@ -111,17 +105,12 @@ public class StorageList
         return -1;
     }
 
-    static StoredEntry Resolve(StoredLine l, bool wearSentRarity)
+    static StoredEntry Resolve(StoredLine l)
     {
         var def = ItemCatalog.Resolve(l.itemId);
         if (def == null) return null;
         bool gear = def.slot != EquipSlotType.None;
         var piece = gear ? EquipmentInstance.FromSaved(def, l.refine, l.cards, l.roll ?? "", l.copyId) : null;
-        if (piece != null && wearSentRarity && l.rarity >= (int)Rarity.Common && l.rarity <= (int)Rarity.Legendary)
-        {
-            piece.rarity = (Rarity)l.rarity;
-            piece.raritySent = true;
-        }
         return new StoredEntry { def = def, count = gear ? 1 : Math.Max(1, l.count), instance = piece };
     }
 }

@@ -28,15 +28,17 @@ MonoBehaviour:
   hairStyle: hair10
   hairColour: '#5C3E2A'
   level: 140
-  str: 95
-  agi: 76
-  vit: 95
-  intel: 50
-  dex: 75
-  luk: 50
+  str: 55
+  agi: 54
+  vit: 54
+  intel: 99
+  dex: 98
+  luk: 79
   startingGear:
-  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 5eee4763f7f459b429a5738a204808a8, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 6
   gearFolds: 30

@@ -1,14 +1,14 @@
 ---
-status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name; since 2026-10-12 the forge rolls a rarity first, and a weapon is as rare as its trademark."
+status: "BUILT 2026-09-21 — not play-tested. The shape, the main-numbers rule and the numbers below were agreed with the user on 2026-09-21; since 2026-09-26 a weapon is named by its trademark skill's own form name; since 2026-10-13 weapons are dropped, never forged, and the trademark roll is a class first (an ultimate's 1%), independent of the weapon's rarity."
 owner: vince
-last-updated: 2026-10-12
+last-updated: 2026-10-13
 tags:
   - systems-combat-design
 ---
 
 # Weapon Names & Trademark Skills
 
-A forged weapon rolls one of its weapon's **trademark skills**, is **named after that skill**, and **empowers it**.
+A weapon rolls one of its weapon's **trademark skills** as it comes into the world, is **named after that skill**, and **empowers it**.
 Every skill is a numbered form of its weapon's style (see [Story & Setting](../../3-world/story-setting-canon.md)), so
 a sword that rolled Petal Storm is called Petal Storm. The name is the piece's identity and never changes; the grade
 and the folds are its quality and ride alongside it.
@@ -21,9 +21,10 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
 
 ## 1. What a name is
 
-- **Rolled at the FORGE, once.** It is the only random thing in a weapon's whole life.
+- **Rolled ONCE, as the weapon is dropped.** With the dropped piece's rarity, it is the only random thing in a
+  weapon's whole life.
 - **It never changes.** A quench moves the grade, a fold moves the number, a failed quench drops the grade —
-  none of them touch the name. **This is the point:** you roll the weapon you want at Raw, and then spend the
+  none of them touch the name. **This is the point:** you find the weapon you want at Raw, and then spend the
   whole crafting ladder climbing that one weapon.
 - **It belongs to one weapon type.** *Petal Storm* is a form of Blossom Wind, the sword's style, so it is only ever
   a sword. The name already says what the thing is, and the item's type does not need repeating in the title.
@@ -115,8 +116,8 @@ skill has no main number to raise and never rolls.
 ## 3. Which skills are trademarks
 
 **Every skill with a main number on any of its effects is a trademark skill, automatically, no exception.**
-Decided 2026-09-21. The forge rolls the PUBLISHED ones of the weapon's type. For the sword that is **eighteen**:
-fifteen ordinary skills and all three ultimates. Each carries a **rarity** (§4), and the weapon takes it.
+A new weapon rolls among the PUBLISHED ones of its type. For the sword that is **eighteen**:
+fifteen actives and passives and all three ultimates, in two classes the roll treats apart (§4).
 
 ### Why a rule beats a hand-picked list
 
@@ -129,8 +130,7 @@ variety:
   with nobody remembering to add it. A chosen list is a second list to keep in sync with the pool — exactly the
   kind of parallel copy this project bans everywhere else.
 - **A weak trademark is not a dead one.** A weapon that lifts Eye of the Storm's MP return is a poor prize for most
-  players and the right one for a mana-hungry parry build. That is variety doing its job, and recycling means a
-  roll nobody wants costs half of one forge.
+  players and the right one for a mana-hungry parry build. That is variety doing its job.
 
 ### The one test
 
@@ -141,29 +141,28 @@ Cleanse, ImmuneToDisables, ExtendDuration, or a Stun, Freeze or Silence — has 
 
 ### The sword's eighteen
 
-Read off the saved skill data on 2026-09-21, every effect decoded; the rarities were set on 2026-10-12 — the
-ordinary ones by the mastery level each opens at, the earliest the most common.
+Read off the saved skill data, every effect decoded.
 
-| Trademark — and the weapon's name | Mastery | Rarity | What the lift moves |
-| --- | --- | --- | --- |
-| **Piercing Gust** | 1 | Common | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
-| **Rising Breeze** | 3 | Common | its +3%-damage stack |
-| **Still Air** | 5 | Common | its 50% damage reduction |
-| **Crossed Branches** | 7 | Common | its +2 basic attack range per charge |
-| **Eye of the Storm** | 11 | Common | its 2/sec MP return |
-| **Scattered Petals** | 15 | Uncommon | its strike, and the 30% attack-speed cut it puts on them |
-| **Tailwind** | 17 | Uncommon | the Rising Breeze it adds per basic attack |
-| **Stripped Bough** | 19 | Uncommon | its strike, and the 40% weakening of their next attack |
-| **Petal Storm** | 23 | Uncommon | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier |
-| **Parting Clouds** | 25 | Rare | the +200% it puts on your next attack after a parry |
-| **Single Petal** | 27 | Rare | its 200% Attack blow |
-| **Headwind** | 33 | Rare | how far every hit cuts their HP regen |
-| **Squall** | 36 | Epic | its +30% Attack Speed, and its take-double-damage drawback |
-| **Bare Branch** | 40 | Epic | the 5 Held Breath charges it arms at low HP |
-| **Second Bloom** | 65 | Epic | the 7 dance charges a kill adds |
-| **Last Petal** (ultimate) | 30 | Legendary | its 600% blow |
-| **Returning Wind** (ultimate) | 45 | Legendary | its damage |
-| **Thousand Petals** (ultimate) | 60 | Legendary | its damage and its stack buff |
+| Trademark — and the weapon's name | Mastery | What the lift moves |
+| --- | --- | --- |
+| **Piercing Gust** | 1 | its strike — and every auto-lunge Crossed Branches fires, since those ARE Piercing Gust |
+| **Rising Breeze** | 3 | its +3%-damage stack |
+| **Still Air** | 5 | its 50% damage reduction |
+| **Crossed Branches** | 7 | its +2 basic attack range per charge |
+| **Eye of the Storm** | 11 | its 2/sec MP return |
+| **Scattered Petals** | 15 | its strike, and the 30% attack-speed cut it puts on them |
+| **Tailwind** | 17 | the Rising Breeze it adds per basic attack |
+| **Stripped Bough** | 19 | its strike, and the 40% weakening of their next attack |
+| **Petal Storm** | 23 | its stack buff and its extra swings — measured: those swings are handed the lifted multiplier |
+| **Parting Clouds** | 25 | the +200% it puts on your next attack after a parry |
+| **Single Petal** | 27 | its 200% Attack blow |
+| **Headwind** | 33 | how far every hit cuts their HP regen |
+| **Squall** | 36 | its +30% Attack Speed, and its take-double-damage drawback |
+| **Bare Branch** | 40 | the 5 Held Breath charges it arms at low HP |
+| **Second Bloom** | 65 | the 7 dance charges a kill adds |
+| **Last Petal** (ultimate) | 30 | its 600% blow |
+| **Returning Wind** (ultimate) | 45 | its damage |
+| **Thousand Petals** (ultimate) | 60 | its damage and its stack buff |
 
 ### The four that are not trademarks
 
@@ -178,51 +177,41 @@ That leaves a permanent asymmetry: a player built around parrying and bracing ha
 a damage build. It is softened by **Parting Clouds and Eye of the Storm, which are both parry-gated and both pass**, so the
 parry routine does have weapons of its own.
 
-## 4. Forging: random, as asked — a rarity first, then a name
+## 4. The roll: random — a class first, then a name
 
-**A weapon's rarity is how rare its trademark is to roll — never its grade** (decided 2026-10-12). The forge rolls in
-two steps: first a **rarity**, by these shares of every weapon of one type it makes, then **one trademark of that
-rarity**, every one equally likely.
+**A weapon's trademark has nothing to do with its rarity.** The rarity of a dropped weapon is the answer of the kind
+of creature that dropped it and lifts what its folds buy ([V4](README.md) §4); the trademark is rolled apart from it,
+in two steps: first a **class**, then **one trademark of that class**, every one equally likely.
 
-| Rarity | Share of all forged weapons | Sword trademarks | Each, on a sword |
+| Class | Share of all new weapons of a type | Sword trademarks | Each, on a sword |
 | --- | --- | --- | --- |
-| Common | **50%** | 5 | **10%** |
-| Uncommon | **30%** | 4 | **7.5%** |
-| Rare | **14%** | 3 | **4.67%** |
-| Epic | **5%** | 3 | **1.67%** |
-| Legendary | **1%** | 3 — the three ultimates | **0.33%** |
+| An active's or a passive's | **99%** | 15 | **6.6%** |
+| An ultimate's | **1%** | 3 | **0.33%** |
 
-- **Every ultimate's trademark is Legendary, always** — read from its tier, never authored, so the ultimates are the
-  rarest weapons there are. **Legendary is theirs alone**: an ordinary skill is authored Common to Epic.
-- **An ordinary skill carries its rarity on the skill** (Skill Composer ▸ *trademark rarity*). Adding a skill to a
-  rarity makes the others of that rarity rarer and leaves every other rarity's share alone.
-- **A weapon type with no trademark of some rarity** hands that rarity's share to the rarities it has, in
-  proportion, so its forge still always rolls something.
-- A weapon with no trademark is **Common**.
+- **A weapon type with trademarks of only one class** gives that class every weapon.
+- **A skill carries no trademark rarity.** Adding a skill to a class makes the others of that class rarer and leaves
+  the other class's share alone.
+- **A weapon type with no trademark skills rolls none.** A new character's starting Sword is the one sword made with
+  none, so making a character again can never reroll it.
 
-**Every weapon empowers something.** No blank outcome: a forge is then always a result rather than sometimes a
-nothing, and the question a player asks is "which one did I get", never "did I get anything".
+**Every dropped weapon empowers something.** No blank outcome: the question a player asks is "which one did I get",
+never "did I get anything".
 
 **Why random beats a stone.** A skill stone would make the name a purchase, and a purchased identity is not a
-hunt — it also needs a whole new material, a drop table for it, and a second forge path, which is a second door
-to the same room. The gamble already has its safety net, below.
+hunt — it also needs a whole new material, a drop table for it, and a second door to the same room.
 
-## 5. What a roll actually costs — recycling is the pity mechanism
+## 5. How a wanted trademark is found — by hunting
 
-A forge is **8 Copper + 800 gold**; recycling a Raw +0 piece returns half, **4 Copper + 400 gold**. So one more
-attempt costs a **net 4 Copper and 400 gold**.
+A weapon comes only from a kill: every kill has a **10%** chance to drop one random piece of what the creature
+wears, so a wanted trademark is hunted from creatures that carry that weapon type. Of the swords that drop:
 
-| Chasing | Expected attempts | Net cost |
+| Chasing | Chance on each dropped sword | Dropped swords it takes, on average |
 | --- | --- | --- |
-| A specific Common trademark (10%) | ~10 | ~40 Copper, ~4,000 gold |
-| A specific Rare trademark (4.67%) | ~21 | ~86 Copper, ~8,600 gold |
-| A specific Epic trademark (1.67%) | ~60 | ~240 Copper, ~24,000 gold |
-| *Any* ultimate — a Legendary (1%) | ~100 | ~400 Copper, ~40,000 gold |
-| A specific ultimate (0.33%) | ~300 | ~1,200 Copper, ~120,000 gold |
+| A specific active's or passive's trademark | 6.6% | ~15 |
+| *Any* ultimate's | 1% | ~100 |
+| A specific ultimate's | 0.33% | ~300 |
 
-Band-1 material and early gold for the common names, a long hunt for a Legendary — for a weapon carried to the end
-of the ladder. That is the number that makes pure random defensible — and it only works because recycle exists,
-which is why the two should ship together.
+A dropped piece nobody wants sells to a shop for 5 gold; recycling a Raw piece returns nothing.
 
 ## 6. How it is built
 
@@ -232,35 +221,33 @@ which is why the two should ship together.
   (`Trademarks.Qualifies` — it belongs to a weapon and `EffectScaling.HasMainNumber`), which of its effects the
   weapon raises (`EffectScaling.Boostable`, the same list the skill's level and the ring read), and what the weapon's card
   lists. Change a skill's effects and every weapon carrying it follows at once.
-- **The forge rolls only PUBLISHED skills** of the weapon's type (`Trademarks.Rollable`): publishing is what lets a
-  skill be rolled onto a weapon. The roll is server-side (`Trademarks.Roll`): two `CombatRng` draws, the rarity by
-  `CraftingMath.TrademarkRarityAt` over the rarities present, then a skill of it evenly; the chance of each is
-  `CraftingMath.TrademarkChance`, pinned in `tools/game-math-tests/Checks.cs`, and `Trademarks.ChanceOf` hands it to
-  the wiki's trademark table. A skill's rarity is `Rarities.OfTrademark` — Legendary for an ultimate, otherwise its
-  authored `trademarkRarity`. Every new weapon comes through that same roll (`EquipmentInstance.CreateFresh`) —
-  the forge, a GM's `/weapon`, a creature's gear at any grade — so no weapon exists without one. Only `/weapon` may
-  name the skill instead, and only one the forge could roll on that weapon.
+- **The roll takes only PUBLISHED skills** of the weapon's type (`Trademarks.Rollable`): publishing is what lets a
+  skill be rolled onto a weapon. The roll is server-side (`Trademarks.Roll`): two `CombatRng` draws, the class by
+  `CraftingMath.TrademarkIsUltimate` (`CraftingMath.UltimateTrademarkPercent` = 1), then a skill of it evenly; the
+  chance of each is `CraftingMath.TrademarkChance`, pinned in `tools/game-math-tests/Checks.cs`, and
+  `Trademarks.ChanceOf` hands it to the wiki's trademark table. Each weapon type's candidates are gathered once and
+  forgotten whenever the skill catalog reloads (`Trademarks.Forget`). Every new weapon comes through that same roll
+  (`EquipmentInstance.CreateFresh`) — a dropped piece (`CreateDropped`), a GM's `/weapon`, a creature's gear at any
+  grade. The one weapon made without it is a new character's (`EquipmentInstance.CreateStarter`).
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire. Trademarks arrived with save **v14**; the save today is **v18**, and both servers' build string is
-  `unwritten-character-v18`.
+  the wire, and the copy's rarity rides the same text as its sixth part. The save today is **v19**, and both
+  servers' build string is `unwritten-character-v25`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
   — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
   `SkillShout.Words` picks the call from it.
 - **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
-  It is written in the weapon's rarity colour (`Rarities.Color`) in the tooltip, the bag, the worn list and on the
-  floor, and the tooltip names the rarity on its own line.
+  It is written in the colour of the copy's own rarity (`Rarities.Color`, from `EquipmentInstance.rarity`) in the
+  tooltip, the bag, the worn list and on the floor, and the tooltip names the rarity on its own line.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
   "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
   +20%" on its own line, only when the weapon in hand empowers that skill.
-- **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`),
-  when a published, non-ultimate trademark skill has no rarity chosen (`trademarkRaritySet`), and when an ordinary
-  skill is set to Legendary.
+- **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`).
 
 ## 7. Armour
 
-Armour has no skills, so it has no trademark; it rolls a **word** of its own instead, on the same terms — once, at the
-forge, part of its name — see [Armour Roster, Materials & Words](armour-roster.md).
+Armour has no skills, so it has no trademark; it rolls a **word** of its own instead, on the same terms — once, as
+the piece comes into the world, part of its name — see [Armour Roster, Materials & Words](armour-roster.md).

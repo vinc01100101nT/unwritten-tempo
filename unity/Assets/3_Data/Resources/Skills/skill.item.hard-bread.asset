@@ -19,7 +19,7 @@ MonoBehaviour:
   needsSkillId: 
   published: 0
   maxLevel: 1
-  description: Raises defence by 15% for 120s.
+  description: Raises defence by 15% for 300s.
   archetype: 3
   family: 0
   shape: 3
@@ -86,7 +86,7 @@ MonoBehaviour:
         scaler: 1
       ailment: 0
       seconds:
-        value: 120
+        value: 300
         useStacks: 0
         op: 0
         read: 0

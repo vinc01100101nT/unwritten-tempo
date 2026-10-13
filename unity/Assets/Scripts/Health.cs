@@ -221,7 +221,7 @@ public class Health : MonoBehaviour, ICombatUnit
     /// same rule a player's weapon follows, so a creature carrying a trademark weapon is dangerous the same way.</summary>
     public float TrademarkLift(string skillId) => Trademarks.LiftOn(HeldWeaponCopy, skillId);
 
-    /// <summary>The weapon this creature holds, as a forged copy — null when it holds none.</summary>
+    /// <summary>The weapon this creature holds, as a copy — null when it holds none.</summary>
     public EquipmentInstance HeldWeaponCopy
     {
         get

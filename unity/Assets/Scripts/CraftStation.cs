@@ -1,9 +1,9 @@
 /// <summary>
-/// WHERE A PIECE IS MADE. Each craft has its own station in town and its own materials: a smith forges metal, a
-/// loom weaves cloth, a tannery tans leather. <see cref="None"/> is an ordinary townsperson, who only talks.
+/// WHERE A PIECE IS WORKED. Each craft has its own station in town: a smith works metal, a loom cloth, a tannery
+/// leather. <see cref="None"/> is an ordinary townsperson, who only talks.
 ///
-/// <para>The three actions are the same at every station — forge, fold, quench — and so is Ink. What changes is
-/// which pieces a station will take, and which material band those pieces fold with.</para>
+/// <para>The actions are the same at every station — fold, quench, Ink and recycle — and so are the materials they
+/// take. What changes is which pieces a station will take.</para>
 /// </summary>
 public enum CraftStation { None = 0, Smith = 1, Loom = 2, Tannery = 3 }
 

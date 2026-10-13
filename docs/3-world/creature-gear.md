@@ -1,5 +1,5 @@
 ---
-status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay. Not play-tested."
+status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay; and on the 14 shadows: weapon, armour and stat build. Not play-tested."
 owner: vince
 last-updated: 2026-10-13
 tags:
@@ -33,6 +33,9 @@ tags:
 - **Its weapon is the weapon of a town it lives around** — any town that holds a fifth or more of it. Where it has a
   choice it takes the weapon fewest creatures hold, so the weapons spread across the roster. A weapon decides how a
   creature attacks and which skills it can roll.
+- **Every weapon is held by a normal creature, by an elite and by one shadow**, so each of the fourteen has a wielder
+  of every kind. Toadmaw holds the Shuriken instead of Kharnel's Scythe, because the town rule alone left no elite
+  with one. Each shadow holds the weapon it stands for ([Mob Roster](mob-roster.md)).
 - **Its stats are built for its weapon.** Each weapon has a build, and a creature spends its level's whole stat budget
   in that build's proportions. A weapon with two builds gives the second to a creature in metal armour.
 - **Its grade and its folds each multiply what it pays** ([What a Kill Pays](what-a-kill-pays.md)): its
@@ -154,12 +157,40 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 | Karasu | 58 | Brimstone | Sniper | Leather | D +19 | Marksman | 19 / 19 / 19 / 47 / 39 / 30 | ×3.41 |
 | Blood Ronin | 60 | Velmora | Dagger | Metal | D +19 | Cutthroat | 41 / 48 / 20 / 20 / 31 / 20 | ×3.41 |
 | Great Croak | 66 | Luminhal | Fist | Leather | D +19 | Striker | 53 / 34 / 23 / 34 / 34 / 22 | ×3.41 |
-| Toadmaw | 78 | Kharnel | Scythe | Leather | B +26 | Reaper | 41 / 26 / 53 / 62 / 26 / 26 | ×5.18 |
+| Toadmaw | 78 | Kharnel | Shuriken | Leather | B +26 | Thrower | 26 / 53 / 41 / 26 / 62 / 26 | ×5.18 |
 | Inferno Mask | 80 | Cindrel | Staff | Cloth | C +23 | Mage | 27 / 27 / 42 / 73 / 42 / 26 | ×4.30 |
 | Wraithmother | 90 | Kharnel | Scythe | Cloth | D +20 | Reaper | 47 / 31 / 61 / 72 / 31 / 30 | ×3.50 |
 | Oni Tengu | 92 | Halcyra | Wand | Leather | D +19 | Priest | 31 / 31 / 62 / 74 / 49 / 31 | ×3.41 |
 | Venom Gloop | 95 | Kharnel | Scythe | Cloth | B +26 | Reaper | 50 / 33 / 64 / 76 / 33 / 32 | ×5.18 |
 | Abyss Maw | 99 | Kharnel | Scythe | Metal | D +20 | Reaper | 52 / 34 / 67 / 79 / 34 / 34 | ×3.50 |
+
+## The shadows
+
+Every shadow wears a full set — head, body, shoes and garment — of one material, at grade A +30 with Sharp Ink. Its
+weapon is the one it stands for, and its stats are spent in that weapon's build.
+
+**Its armour is the material that buys what its weapon's mastery raises:** leather (attack speed and evasion) for a
+weapon whose mastery raises attack speed or evasion; otherwise cloth (magic defence and mana) for one whose mastery
+raises mana or magic attack; otherwise metal (defence and health). Asterion is the one exception: the Fist shadow
+wears metal and takes the Fist's Guardian build (decided 2026-10-13). Between them the fourteen wear all twelve
+armour pieces.
+
+| Shadow | Level | Weapon | Armour | Build | STR / AGI / VIT / INT / DEX / LUK |
+| --- | --- | --- | --- | --- | --- |
+| Riven | 105 | Shuriken | Leather | Thrower | 36 / 71 / 56 / 36 / 84 / 36 |
+| Asterion | 110 | Fist | Metal | Guardian | 59 / 39 / 99 / 38 / 59 / 38 |
+| Nysara | 115 | Katar | Leather | Assassin | 78 / 78 / 40 / 40 / 40 / 78 |
+| Seraphine | 120 | Wand | Cloth | Priest | 43 / 42 / 81 / 96 / 64 / 42 |
+| Tharos | 125 | Warhammer | Metal | Breaker | 85 / 45 / 99 / 44 / 67 / 44 |
+| Orion | 130 | Spear | Metal | Lancer | 89 / 46 / 88 / 46 / 88 / 46 |
+| Varkhaz | 135 | Axe | Leather | Berserker | 99 / 94 / 51 / 51 / 51 / 75 |
+| Vael | 140 | Sniper | Cloth | Marksman | 55 / 54 / 54 / 99 / 98 / 79 |
+| Morwen | 145 | Scythe | Cloth | Reaper | 84 / 59 / 99 / 99 / 59 / 59 |
+| Velmora | 150 | Dagger | Leather | Cutthroat | 99 / 99 / 65 / 64 / 88 / 64 |
+| Kaelen | 155 | Staff | Cloth | Mage | 71 / 70 / 95 / 99 / 94 / 70 |
+| Mordane | 160 | Greatsword | Metal | Cleaver | 99 / 73 / 99 / 73 / 73 / 99 |
+| Celestia | 165 | Bow | Leather | Archer | 85 / 99 / 85 / 84 / 99 / 84 |
+| Veyra | 170 | Sword | Leather | Duelist | 99 / 99 / 99 / 78 / 99 / 78 |
 
 ## Still open
 

@@ -1,37 +1,40 @@
 ---
-status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23, the world's fourteen biomes in the map generator and the weather a biome always has BUILT 2026-09-25, skills bought and levelled with weapon mastery points BUILT 2026-10-03, rarity by how rare a thing is to come by BUILT 2026-10-12; not yet play-tested. The numbers in §9 are live in the code."
+status: "BUILT 2026-09-20 (slices 1-6), weapon trademarks and the main-number rule BUILT 2026-09-21, creature drops by level BUILT 2026-09-22, element levels, converters, timed effects surviving logout and the armour roster BUILT 2026-09-23, the world's fourteen biomes in the map generator and the weather a biome always has BUILT 2026-09-25, skills bought and levelled with weapon mastery points BUILT 2026-10-03, gear dropped by creatures, rarity lifting fold values, Temper Dust and Quench Oil BUILT 2026-10-13; not yet play-tested. The numbers in §9 are live in the code."
 owner: vince
-last-updated: 2026-10-12
+last-updated: 2026-10-13
 tags:
   - systems-combat-design
 ---
 
-# Gameplay System — V4 (Forging, Mastery, Trademarks & Ink)
+# Gameplay System — V4 (Folding, Mastery, Trademarks & Ink)
 
 > **Never append. Always update in place.** This page states only what has been AGREED. Anything still being
 > decided lives in **Still open** at the bottom and nowhere else. When a decision lands, rewrite the passage it
 > changes and delete it from Still open.
 
 **What V4 is.** V3 made the weapon the source of a character's skills: a dropped weapon rolled a random kit, and
-its rarity lifted how hard that kit hit. V4 moves progression into the character's own hands. **Gear is made,
-not dropped. Skills are bought with weapon mastery points, not rolled. Power over a skill comes from the level
-bought in it, and from the trademark of the forged weapon in hand.**
+its rarity lifted how hard that kit hit. V4 moves progression into the character's own hands. **Gear drops Raw and
+unfolded, and is made worth more at a station. Skills are bought with weapon mastery points, not rolled. Power over
+a skill comes from the level bought in it, and from the trademark of the weapon in hand.**
 
 **How it relates to V3.** This is now what the code does. [V3](../active-skill-system-v3/README.md) still
 describes the channels, effects and triggers, which V4 keeps; where the two disagree — rolled
-weapon kits, V3's rarity (a rolled tier that lifted a weapon's numbers), equipment drops, the worn ring item,
+weapon kits, V3's rarity (a rolled tier that lifted a weapon's skill output), the worn ring item,
 "skills don't level" — V4 is what runs and V3's passages on those points are dead. V4's own rarity (§4) is a
-different thing: how rare an item is to come by, which never moves a number. **Not yet play-tested.**
+different thing: a dropped piece rolls it by the kind of creature that dropped it, and it adds to the grade's lift
+on what the piece's folds buy. **Not yet play-tested.**
 
-## 1. Gear is crafted, not dropped
+## 1. Gear is dropped Raw, and worked at a station
 
-- **Creatures stop dropping equipment.** They may still wear it, but when they die they drop only **materials,
-  consumables and gold**.
-- **Players make their gear from materials.** Each kind of material has its own craft and its own materials:
-  **metal is forged, cloth is woven, leather is tanned**, and so on. The three actions below are the same for
-  every craft; the words are the forge's.
-- **Crafting happens at a station in town**: a smith for metal, a loom for cloth, a tannery for leather. Never
-  from the bag.
+- **Gear is dropped, never made.** Every kill, of every kind of creature, has a **10%** chance to drop **one**
+  random piece of what the creature wears. The drop is a new copy of that item — nothing leaves the creature — and
+  it is always **Raw, +0**, with its own trademark (a weapon) or word (an armour piece) rolled, and its rarity
+  rolled by the creature's kind (§4). There is no way to make a piece from materials.
+- **A new character starts wearing a Sword, a Chainmail and Iron Sabatons** — Raw, +0, Common, with no trademark
+  and no word.
+- **Players make their gear worth more with materials.** A piece is worked where its material is worked: **metal
+  at a smith, cloth at a loom, leather at a tannery**. The actions below are the same at all three.
+- **The work happens at a station in town.** Never from the bag.
 - **There is no level requirement to wear gear.** Anyone can equip anything.
 - **Weapons and armour scale the same way**: what a piece is worth comes from its **folds** and its **quality**,
   nothing else — attack on a weapon; on armour, what its **material** buys (metal defence and HP, leather attack
@@ -39,10 +42,10 @@ different thing: how rare an item is to come by, which never moves a number. **N
   Garment, Shoes — each in all three materials, and every armour piece rolls one **word** from its slot
   ([Armour Roster, Materials & Words](armour-roster.md)).
 
-## 2. Forge, Fold, Quench
+## 2. Fold, Quench, Recycle
 
-**Forge (make it).** Choose a design, pay base materials and gold. A **Raw** piece is born: **+0, no quality**.
-A weapon rolls ONE thing at forging — its **trademark** (§6) — and nothing else about any piece is rolled.
+**How a piece arrives.** A dropped piece is **Raw: +0, no quality**. Three things are rolled as it comes into the
+world and never again: its **rarity** (§4), and a weapon's **trademark** (§6) or an armour piece's **word**.
 
 **What a piece is called.** A weapon with a trademark goes by its trademark skill's own name: its folds, the name,
 then its grade — **+15 Thousand Petals [C]**. Any other piece: its grade, its folds, then the item — **B +12 Sword**. That one title
@@ -52,21 +55,10 @@ and the chat replies.
 **Fold (raise it).** Each fold costs materials and gold and raises the piece by one: **a fold IS the existing
 refine (+N)**. A sword folded twelve times is a +12 sword. Folding is deterministic work with no luck.
 
-**The material is decided by the piece's GRADE, never by its fold count.** Each craft's base material comes in
-**seven bands, one per grade** (Raw, F, E, D, C, B, A), and a piece folds only with its current grade's band.
-Each band drops from one slice of creature levels, low to high, so the quench ladder walks the player across the
-world: an A-grade piece is folded only with what the strongest creatures drop. After a quench resets a piece to
-+0, it folds with the NEW grade's band. Base bands never merge into one another.
-
-| Band | Metal (forged) | Cloth (woven) | Leather (tanned) |
-| --- | --- | --- | --- |
-| 1 · Raw | Copper | Burlap | Rawhide |
-| 2 · F | Bronze | Hemp | Hide |
-| 3 · E | Iron | Linen | Buckskin |
-| 4 · D | Steel | Wool | Leather |
-| 5 · C | Silver | Cotton | Cordovan |
-| 6 · B | Mithril | Silk | Shagreen |
-| 7 · A | Adamant | Brocade | Wyrmhide |
+**Every fold is paid in Temper Dust, and how much is decided by the piece's GRADE, never by its fold count.**
+Temper Dust is one material shared by all three crafts. A fold costs the grade's step in units — **1 at Raw, 2 at
+F, 3 at E, 4 at D, 5 at C, 6 at B, 7 at A** — plus gold. After a quench resets a piece to +0, it folds at the NEW
+grade's price. Every kill drops Temper Dust (§4), more from stronger creatures.
 
 **Quench (roll its quality).** **Quality** — the one label on every crafted piece, weapon or armour — is a grade
 **F (poorest) to A (highest)**, climbed **one rung at a time**:
@@ -77,7 +69,8 @@ world: an A-grade piece is folded only with what the strongest creatures drop. A
 - **F is the floor.** A failed F stays F. Raw is left once and never returned to.
 - **A piece must be at its grade's fold cap to be quenched at all** — the cap is the gate, and the folds are what
   the quench spends. Enforced in the code from 2026-09-21; before that any piece could be quenched at +0.
-- **A quench costs a larger amount of the piece's current band material, plus gold**, and optionally **one Salt**.
+- **A quench costs Quench Oil — the grade's step in units, 1 at Raw to 6 at B — plus gold**, and optionally **one
+  Salt**. Quench Oil is one material shared by all three crafts.
 - **Salt is a one-use booster**: it shifts that quench's odds toward "up" and is consumed
   either way. It never guarantees success, never removes the "down" outcome, and never adds power. It is **one
   item shared by all three crafts**: **Coarse Salt → Fine Salt → Pure Salt**, each its own item,
@@ -104,11 +97,14 @@ weapon mastery (§5), and it sets **how many stat slots** the piece has (§3). A
 **No Potential.** The folds are the budget, and they refill through work.
 
 **Recycle (take it apart).** At the station of its craft, any piece can be recycled: it is destroyed, and
-**half** of what it provably consumed comes back — the forge bill; for each rung it climbed, that grade's full
-fold cap and one quench (priced at the grade it was made from, which the gate above makes provable); the folds
-standing on it now (at its own band); and the Inks whose stats are written on it. Nothing records a failed quench or the folds it spent, so those come back as nothing;
-Salt is never returned. Each material is halved and rounded down on its own, so a single unit never comes back
-whole. Decided 2026-09-21.
+**half** of what it provably consumed comes back — for each rung it climbed, that grade's full fold cap and one
+quench (priced at the grade it was made from, which the gate above makes provable); the folds standing on it now
+(at its own grade's price); and the Inks whose stats are written on it. That is Temper Dust, Quench Oil, gold and
+Ink. **Folds made at Raw return nothing** — no Temper Dust and no gold, standing or climbed — because the first
+tutorial gives its Raw folds free. Nothing records a failed quench or the folds it spent, so those come back as
+nothing; Salt is never returned. Each material is halved and rounded down on its own, so a single unit never comes
+back whole. A piece the first tutorial still needs cannot be recycled, sold or dropped
+([Quests & Tutorials](../quests-and-tutorials.md)).
 
 ## 3. Stats are written on with Ink
 
@@ -133,33 +129,44 @@ whole. Decided 2026-09-21.
 
 ## 4. Materials and rarity
 
-- **Rarity is how rare a thing is to come by — never how good it is** (decided 2026-10-12). Five rarities: **Common,
-  Uncommon, Rare, Epic, Legendary.** It never changes a number: what a piece is worth is still its grade and its
-  folds, and a grade is never coloured.
-- **A forged weapon is as rare as its trademark** is to roll — the forge draws a rarity first (Common 50%, Uncommon
-  30%, Rare 14%, Epic 5%, Legendary 1% of all weapons of a type), then a trademark of it; every ultimate's trademark
-  is Legendary. The whole roll is in [Weapon Names & Trademarks](weapon-names-and-trademarks.md) §4. A weapon with no
-  trademark is Common.
-- **Armour, consumables, quest and other items are Common.** An armour piece's word is rolled evenly from its slot's
-  words, so no word is rarer than another.
-- **Materials by how hard they are to find:** metal, cloth and leather of every band are Common; Watery Ink and Coarse
-  Salt Uncommon; Thin Ink, Faint Ink and Fine Salt Rare; Clear Ink, Sharp Ink and Pure Salt Epic. No material is
-  Legendary. Read off the material's kind and tier (`Rarities.OfMaterial`), so it can never drift from the item.
+- **Five rarities: Common, Uncommon, Rare, Epic, Legendary.** A piece of gear's rarity is decided once, when the
+  copy is made, saved on the copy, and never changed by a fold or a quench. A grade is never coloured.
+- **On gear, rarity adds to the grade's lift on what the piece's folds buy:** Common **+0%**, Uncommon **+10%**,
+  Rare **+20%**, Epic **+35%**, Legendary **+50%** — added to the grade's lift, never multiplied onto it, so a
+  Legendary piece at grade A is worth **180%** of its plain fold total. Shoes' +2% movement speed a fold is not
+  lifted by either.
+- **Only a dropped piece rolls a rarity, by the kind of creature that dropped it:** a normal creature's is Common,
+  Uncommon or Rare at shares of 50 : 30 : 14 (53.2%, 31.9%, 14.9%); an elite's is always Epic; a shadow's is always
+  Legendary. Every other piece is Common — a new character's three pieces, a GM grant, a reward, and everything a
+  creature WEARS, so no creature's numbers depend on rarity.
+- **A weapon's trademark has nothing to do with its rarity**, and neither has an armour piece's word
+  ([Weapon Names & Trademarks](weapon-names-and-trademarks.md) §4).
+- **Consumables, quest and other items are Common.**
+- **Materials by how hard they are to find:** Temper Dust and Quench Oil are Common; Watery Ink and Coarse
+  Salt Uncommon; Thin Ink, Faint Ink and Fine Salt Rare; Clear Ink, Sharp Ink and Pure Salt Epic. A creature's own
+  material is the tier its step names, the only kind that can be Legendary
+  ([Creature Materials](../../3-world/creature-materials.md)). Read off the material's kind and tier
+  (`Rarities.OfMaterial`), so it can never drift from the item.
 - **An item's name is written in its rarity's colour** — Common the ordinary text colour, Uncommon green, Rare blue,
   Epic purple, Legendary orange-gold — in the tooltip (which also names the rarity), the bag, the worn list of a unit
   you select, and on the floor. One function owns the answer and the colour (`Rarities`). Skills keep their own
   colour theme: each skill is coloured by the weapon it requires (red for sword skills, and so on).
-- **Rare materials are the surprise drop**, and they drop from creatures **of every level**. Only the base
-  forging, weaving and tanning materials are level-gated.
-- **Which band a creature drops is its level's answer** (decided 2026-09-22): the seven bands split creature levels
-  1–99 evenly — 1–14 Raw, 15–28 F, 29–42 E, 43–56 D, 57–70 C, 71–84 B, 85–99 A — and a shadow (105–170) drops band
-  A. A creature drops its band's metal, cloth and leather, and a chance of an Ink or a Salt; how much, and which
-  tiers, is its kind's answer (normal, elite, shadow). The table is in [Mob Roster](../../3-world/mob-roster.md).
-  Every kill also has a 30% chance of one random consumable; materials are never in that roll.
+- **Ink and Salt are the surprise drop**, and they drop from creatures **of every level**; which tiers, and how
+  often, is the creature's kind's answer (normal, elite, shadow).
+- **How much Temper Dust and Quench Oil a kill gives follows what the kill pays.** Creature levels 1–99 split
+  evenly into seven steps — 1–14 is step 1, 15–28 step 2, 29–42 step 3, 43–56 step 4, 57–70 step 5, 71–84 step 6,
+  85–99 step 7 — and everything above 99, the shadows, is step 7. A kill gives **0.6 Temper Dust and 0.06 Quench
+  Oil for each step**, times **10** for an elite and **20** for a shadow, times what the grade and folds of the
+  creature's gear pay ([What a Kill Pays](../../3-world/what-a-kill-pays.md)): whole units, and the part left over
+  is the chance of one more. A level 1 normal creature in Raw unfolded gear gives a 60% chance of one Temper Dust
+  and a 6% chance of one Quench Oil. The level is the one in the creature's file, never one it grew by hitting
+  people. The table is in [Mob Roster](../../3-world/mob-roster.md).
+  Every kill also has a chance of the creature's own find — a food or an element converter, by its element
+  ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)); materials are never in that roll.
 - **Tiered materials merge upward, deterministically**: a fixed number of one tier (e.g. ten) always becomes one
   of the next tier, no failure. This applies to **Ink** and to **Salt**, so surplus low tiers
   are never trash and the top tier is reachable by work as well as by luck. The merge ratio is the dial that
-  keeps the top tier a jackpot. **Base band materials do not merge.**
+  keeps the top tier a jackpot. **Temper Dust and Quench Oil have no tiers, so there is nothing of theirs to merge.**
 
 ## 5. Weapon Mastery
 
@@ -233,20 +240,21 @@ curve** (§9), and keeps levelling after the character reaches 99. A creature th
   point learns it, it fires on its trigger while a weapon of its type is in hand. A passive never goes on
   the hotbar.
 
-### A forged weapon's trademark
+### A weapon's trademark
 
 A weapon does not grant a skill; it **empowers** one. Full design: [Weapon Names & Trademarks](weapon-names-and-trademarks.md).
 
-- **Rolled once, as the weapon comes into the world, and never changed.** The forge, a GM grant, a reward and a
-  creature's gear all roll it the same way; folds, quenches and a failed quench leave it alone.
+- **Rolled once, as the weapon comes into the world, and never changed.** A dropped piece, a GM grant, a reward
+  and a creature's gear all roll it the same way; folds, quenches and a failed quench leave it alone. A new
+  character's starting Sword is the one weapon made with none.
 - **Which skills can come up:** every **published** skill of the weapon's type with a **main number** (§7) on
   any of its effects — decided from the skill's own effects every time, so a skill that gains a main number joins
   the roll, and one that loses its last leaves it. For the sword that is 18 skills; Bending Reed, Held Breath, Howling Wind and
-  Deep Roots have no main number. **The forge rolls a rarity first, then a skill of that rarity evenly** (§4,
-  §9); every ultimate is Legendary, and the weapon is as rare as its trademark.
+  Deep Roots have no main number. **The roll is two draws: a class first — an ultimate's on 1% of weapons, an
+  active's or a passive's on the other 99% — then a skill of that class evenly** (§9). It has nothing to do with the
+  weapon's rarity.
 - **Its name is the skill's own name** — there is no separate weapon-name field, and the skill-data check fails on a
-  skill file that still carries one. Its rarity is the **trademark rarity** field in the Skill Composer; the check
-  fails on a rollable ordinary skill with none chosen.
+  skill file that still carries one. A skill carries no trademark rarity.
 - **What it does:** while the weapon is held, **every main number of that skill** rises by the grade's percentage
   (§9) — added to the skill-level lift (§7), never multiplied onto it. Creatures follow the same rule.
 - **What the cards say.** The weapon's card: "Trademark Skill: Thousand Petals", then one line per raised effect
@@ -315,8 +323,10 @@ move once it is played. Change it here, in place, when it does.
   **+0.45% attack speed and +0.45 evasion**, cloth **+0.9 magic defence and +3.6 MP** on body and garment;
   head and shoes take half. Quality lifts that fold total by the column above. Shoes also gain **+2% movement
   speed** a fold, whatever their material, with no lift. The full table is in [Crafting Tables](crafting-tables.md).
-- **Fold cost:** 1 unit of the grade's band material + 50 gold × band number. **Quench cost:** 10 units of the
-  band + 500 gold × band number, and optionally one Salt.
+- **Rarity lifts that fold total too**, added to the grade's lift: Common **+0%** · Uncommon **+10%** · Rare
+  **+20%** · Epic **+35%** · Legendary **+50%**.
+- **Fold cost:** Temper Dust, the grade's step in units (1 at Raw … 7 at A) + 50 gold × the step. **Quench cost:**
+  Quench Oil, the grade's step in units (1 at Raw … 6 at B) + 500 gold × the step, and optionally one Salt.
 
 ### Quench odds (up / same / down), and Salt
 
@@ -350,9 +360,9 @@ move once it is played. Change it here, in place, when it does.
 
 - **Lift by the weapon's grade:** Raw **+5%** · F **+7%** · E **+10%** · D **+12%** · C **+15%** · B **+18%** ·
   A **+20%**. The server writes the finished lift on the copy; a player's machine only shows it.
-- **The roll:** a rarity by its share — Common **50%** · Uncommon **30%** · Rare **14%** · Epic **5%** · Legendary
-  **1%**, over the rarities the weapon type has — then a trademark of it evenly. The sword's: **10%** each Common,
-  **7.5%** each Uncommon, **4.67%** each Rare, **1.67%** each Epic, **0.33%** each ultimate.
+- **The roll:** a class first — an ultimate's **1%**, an active's or a passive's **99%**; a weapon type with only
+  one class gives that class every weapon — then a trademark of that class evenly. The sword's: **6.6%** each of
+  its fifteen actives and passives, **0.33%** each of its three ultimates.
 
 ### Ink values (flat, per tier: Watery / Thin / Faint / Clear / Sharp)
 
@@ -422,9 +432,8 @@ skill.
 ## What V4 replaced in V3
 
 - The rolled weapon kit and its sizes and ultimate chance.
-- V3's rarity: its drop weights, its lift on skill output, weapon attack and armour. (V4's rarity, §4, lifts nothing.)
-- Creatures dropping what they wear, including the ring's own drop chance.
-- The worn ring item that switches the ring on.
+- V3's rarity: its drop weights and its lift on skill output. (V4's rarity, §4, lifts only what a piece's folds buy.)
+- The worn ring item that switches the ring on, and its drop chance.
 - V3's rule that **skills don't level**.
 - The lore line that a dropped weapon's skills are "the memories that surfaced".
 - The design in [Weapon Crafting & Economy](../active-skill-system-v3/weapon-crafting-economy.md) — rolled kits,
@@ -437,7 +446,7 @@ skill.
 
 - [Implementation Plan](implementation-plan.md) — the six build slices, every file each touches, and the open build questions.
 - [Weapon Names & Trademarks](weapon-names-and-trademarks.md) — the trademark design: the eighteen sword names, the roll, and how it is built.
-- [Crafting Tables](crafting-tables.md) — the numbers only: bands per station, forge bills, fold and quench costs and odds, Salt, Ink values, mastery caps by grade.
+- [Crafting Tables](crafting-tables.md) — the numbers only: fold and quench costs and odds, the rarity lift, Salt, Ink values, mastery caps by grade.
 - [Elements, Element Levels & Converters](elements-and-converters.md) — creatures attack and defend with an element at level 1–4 on Ragnarok's chart, negative values heal, and eight level-1 converters lend players an element for 5:00.
 - [Armour Roster, Materials & Words](armour-roster.md) — five armour slots in three materials; the material decides what a fold buys, and every armour piece rolls one of its slot's words.
 - [Timed Effects Survive Logout](timed-effects-survive-logout.md) — only death ends a timed effect; logging out and changing server pause it with the time it had left.

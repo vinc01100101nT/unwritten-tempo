@@ -24,7 +24,7 @@ public enum CreatureKind
 /// </summary>
 public static class CreatureKinds
 {
-    /// <summary>The skill a summoner casts. It is never published, so no forge rolls it as a trademark. Like every
+    /// <summary>The skill a summoner casts. It is never published, so no weapon rolls it as a trademark. Like every
     /// skill, a creature casts it only once it has bought a level in it (<see cref="Health.Mastery"/>).</summary>
     public const string SummonSkillId = "skill.summon";
 

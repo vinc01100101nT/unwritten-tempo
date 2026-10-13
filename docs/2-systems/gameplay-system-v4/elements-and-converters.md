@@ -79,9 +79,10 @@ Eight consumables, each running one skill with the **Element Converter** effect:
   converter run side by side. It never stacks — one element on one slot has no "twice".
 - **Ghost is deliberately absent:** a level-1 Ghost armour takes 25% from every neutral hit.
 - **The effect works on creatures too** — any creature skill may carry it, with any of the ten elements.
-- **Drops:** a creature with an element adds its own element's two converters to the 30%-per-kill consumable roll; a
+- **Drops:** a creature of Fire, Water, Earth or Wind gives up one of its own element's two converters as its find
+  — 5% a kill for a normal, 50% for an elite, 100% for a shadow ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)); a
   creature whose element has no converter (Neutral, Poison, Holy, Dark, Ghost, Undead) never drops one. The element lives once, on the converter's skill; the item carries no copy.
-- **Weight 8, sell value 150** — the same as a Healing Potion.
+- **Weight 8. No shop sells one and no shop buys one.**
 
 ## 4. Where it lives in the code
 

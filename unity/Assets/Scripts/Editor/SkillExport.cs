@@ -115,11 +115,9 @@ public static class SkillExport
             Num(json, "castRange", d.castRange);
             Field(json, "trigger", SkillTooltip.TriggerLine(d, SkillTooltip.Dialect.Markdown), true);
             Field(json, "description", d.description, true);
-            // The name a forged weapon carries when this skill is its trademark — empty unless the forge can roll it,
-            // the same test the forge uses, so the page names exactly the skills a weapon can be named for.
+            // The name a weapon carries when this skill is its trademark — empty unless a new weapon can roll it, the
+            // same test the roll uses, so the page names exactly the skills a weapon can be named for.
             Field(json, "trademark", Trademarks.Rollable(d, d.weaponType) ? (d.displayName ?? "") : "", true);
-            // How rare that weapon is to forge — empty on the same terms.
-            Field(json, "trademarkRarity", Trademarks.Rollable(d, d.weaponType) ? Rarities.Label(Rarities.OfTrademark(d)) : "", true);
 
             json.Append("      \"effects\": [");
             for (int k = 0; k < lines.Count; k++)

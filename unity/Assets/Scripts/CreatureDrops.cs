@@ -23,7 +23,9 @@ public static class CreatureDrops
     }
 
     /// <summary>Every NAMED drop of <paramref name="def"/>: its hand-authored drops, the materials only it drops
-    /// (<see cref="CreatureMaterials"/>), then its kind's materials at its level's grade. The one random potion or food is not in here — see <see cref="RandomChanceOf"/>.</summary>
+    /// (<see cref="CreatureMaterials"/>), its kind's Inks and Salts, the Temper Dust and Quench Oil every kill gives up
+    /// (how many: the least and the most a kill can roll), each piece it wears at <see cref="CreatureLoot.GearDropChance"/>
+    /// split between them, then its find (<see cref="CreatureFinds"/>).</summary>
     public static void Of(MonsterDef def, List<Drop> into)
     {
         into.Clear();
@@ -43,6 +45,39 @@ public static class CreatureDrops
             var item = LootDropper.MaterialFor(lines[i], def.level);
             if (item != null) into.Add(new Drop(item, lines[i].chance, lines[i].min, lines[i].max));
         }
+        AddUnits(MaterialCatalog.TemperDust, CreatureLoot.TemperDustPerGrade, def, into);
+        AddUnits(MaterialCatalog.QuenchOil, CreatureLoot.QuenchOilPerGrade, def, into);
+        // THE PIECES IT WEARS — what its body seats, one per slot, the last authored for a slot winning — one of them on
+        // one kill in ten.
+        wornScratch.Clear();
+        if (def.startingGear != null)
+            foreach (var piece in def.startingGear)
+                if (piece != null && piece.slot != EquipSlotType.None) wornScratch[piece.slot] = piece;
+        int droppable = 0;
+        foreach (var piece in wornScratch.Values) if (LootDropper.Droppable(piece)) droppable++;
+        if (droppable > 0)
+            foreach (var piece in wornScratch.Values)
+                if (LootDropper.Droppable(piece)) into.Add(new Drop(piece, CreatureLoot.GearDropChance / droppable, 1, 1));
+        wornScratch.Clear();
+        // ITS FIND: one roll at its kind's chance, shared evenly between what its element carries.
+        var finds = CreatureFinds.Of(def.element);
+        float each = CreatureFinds.ChanceOfOne(def.kind, def.element);
+        for (int i = 0; i < finds.Count; i++) into.Add(new Drop(finds[i], each, 1, 1));
+    }
+
+    static readonly Dictionary<EquipSlotType, Item> wornScratch = new Dictionary<EquipSlotType, Item>();
+
+    // Temper Dust or Quench Oil on every kill: the fewest and the most units the roll can give.
+    static void AddUnits(Item material, int perGrade, MonsterDef def, List<Drop> into)
+    {
+        if (material == null) return;
+        int least = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds, 99);
+        int most = CreatureLoot.UnitsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds, 0);
+        if (most <= 0) return;
+        // Under one whole unit a kill, it is a CHANCE of one, not one every kill.
+        if (least == 0)
+            into.Add(new Drop(material, CreatureLoot.HundredthsPerKill(perGrade, def.level, def.kind, def.gearQuality, def.gearFolds) / 100f, 1, 1));
+        else into.Add(new Drop(material, 1f, least, most));
     }
 
     // The same chance and amounts LootDropper rolls a creature's own material at.
@@ -57,8 +92,8 @@ public static class CreatureDrops
         into.Add(new Drop(item, chance, sizeMin, sizeMax, pilesMin, pilesMax));
     }
 
-    /// <summary>Everything a kill of <paramref name="def"/> may give up, written as one line — "Raw Metal 20%, …, a
-    /// random potion or food 30%". The one wording of it: <c>/mobinfo</c> and the wiki's creature table both print
+    /// <summary>Everything a kill of <paramref name="def"/> may give up, written as one line — "Raw Metal 20%, …,
+    /// Hard Bread 5%". The one wording of it: <c>/mobinfo</c> and the wiki's creature table both print
     /// this, so the two can never describe the same creature's drops differently. Never on a hot path.</summary>
     public static string Line(MonsterDef def)
     {
@@ -67,12 +102,11 @@ public static class CreatureDrops
         for (int i = 0; i < lineScratch.Count; i++)
         {
             var drop = lineScratch[i];
+            if (i > 0) sb.Append(", ");
             sb.Append(drop.item.displayName).Append(' ').Append(LootDropper.ChanceText(drop.chance));
             if (drop.max > 1) sb.Append(" ×").Append(CountText(drop.min, drop.max));
             if (drop.pilesMax > 1) sb.Append(" in ").Append(CountText(drop.pilesMin, drop.pilesMax)).Append(" piles");
-            sb.Append(", ");
         }
-        sb.Append("a random potion or food ").Append(LootDropper.ChanceText(LootDropper.RandomItemChance));
         lineScratch.Clear();
         return sb.ToString();
     }
@@ -88,8 +122,7 @@ public static class CreatureDrops
         public Source(MonsterDef creature, float chance, int min, int max) { this.creature = creature; this.chance = chance; this.min = min; this.max = max; }
     }
 
-    /// <summary>Every creature that may give up <paramref name="item"/> — as a named drop or as its one random potion
-    /// or food — in catalog order. The one answer to "who drops this": <c>/whodrops</c>, <c>/iteminfo</c> and the
+    /// <summary>Every creature that may give up <paramref name="item"/>, in catalog order. The one answer to "who drops this": <c>/whodrops</c>, <c>/iteminfo</c> and the
     /// wiki's material table all read it. Never on a hot path.</summary>
     public static void WhoDrops(Item item, List<Source> into)
     {
@@ -101,20 +134,12 @@ public static class CreatureDrops
             Of(d, lineScratch);
             foreach (var drop in lineScratch)
                 if (drop.item == item && drop.chance > 0f) into.Add(new Source(d, drop.chance, drop.min, drop.max));
-            float random = RandomChanceOf(d, item);
-            if (random > 0f) into.Add(new Source(d, random, 1, 1));
         }
         lineScratch.Clear();
     }
 
     /// <summary>A count written the way it is shown: "3", or "5–10" for a range.</summary>
     public static string CountText(int min, int max) => min == max ? min.ToString() : min + "–" + max;
-
-    /// <summary>The chance a kill of <paramref name="def"/> gives up <paramref name="item"/> as its one random potion
-    /// or food: the roll's own chance, times this item's share of what that roll picks from. 0 when the roll can
-    /// never pick it.</summary>
-    public static float RandomChanceOf(MonsterDef def, Item item) =>
-        def == null ? 0f : LootDropper.RandomItemChance * ItemCatalog.ShareOfRandomConsumable(item, def.element);
 
     static Item ByAssetName(string assetName)
     {

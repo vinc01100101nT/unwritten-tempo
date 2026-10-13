@@ -175,7 +175,7 @@ public class InventoryList : IItemBoxOwner
         return e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName;
     }
 
-    // "B +12", "Raw", or nothing for something never forged — what the search matches, so "raw" finds unquenched pieces.
+    // "B +12", "Raw", or nothing for something that is not gear — what the search matches, so "raw" finds unquenched pieces.
     static string GradeText(BagEntry e)
     {
         if (e == null || e.instance == null) return "";

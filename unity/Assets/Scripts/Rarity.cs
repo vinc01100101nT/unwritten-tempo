@@ -1,50 +1,37 @@
 using UnityEngine;
 
-/// <summary>How RARE a thing is to come by — never how good it is. A weapon is as rare as its trademark is to roll at
-/// the forge; a material as rare as it is to find; everything else is <see cref="Common"/>. A piece's grade and folds
-/// say what it is worth, and they never change its rarity.
+/// <summary>How RARE a thing is to come by. A piece of gear's rarity is decided once, when the copy is made: a piece a
+/// creature drops rolls it by the creature's kind, and every other piece is <see cref="Common"/>. It lifts what the
+/// piece's folds are worth (<see cref="CraftingMath.RarityLiftHundredths"/>) and is never changed by a fold or a
+/// quench. A material is as rare as it is to find; everything else is Common.
 ///
-/// <para>⚠️ The numbers are PINNED: a skill's trademark rarity is saved as one, and the server sends one with every
-/// drop and every worn piece. Never reorder; a new rarity takes the next number.</para></summary>
+/// <para>⚠️ The numbers are PINNED: a copy's rarity is saved as one, and the server sends one with every drop and
+/// every worn piece. Never reorder; a new rarity takes the next number.</para></summary>
 public enum Rarity { Common = 0, Uncommon = 1, Rare = 2, Epic = 3, Legendary = 4 }
 
 /// <summary>
 /// THE ONE PLACE that answers "how rare is this", what that rarity is called and what colour it is written in. Every
 /// screen that shows an item asks here, so the bag, the tooltip, the floor, the worn list and the shop can never
-/// disagree. It is decided on the SERVER — off the trademark skill a weapon carries, the kind and step of a material —
-/// and sent with every copy, drop and worn piece. A player's machine reads the sent answer off the copy
-/// (<see cref="EquipmentInstance.raritySent"/>); it falls back to reading the data only for a thing nobody sent it,
-/// like an item named in a shop's stock, which carries no copy.
+/// disagree. It is decided on the SERVER: a piece of gear's is saved on its copy (<see cref="EquipmentInstance.rarity"/>)
+/// and travels in the copy's roll text, so a player's machine reads it off the copy it was sent; a material's is read
+/// off its kind and step.
 /// </summary>
 public static class Rarities
 {
-    /// <summary>How rare <paramref name="def"/> is — and, for a weapon, the particular copy <paramref name="copy"/>
-    /// (null for a bag stack). A weapon is its trademark's rarity, and Common with none; a crafting material goes by
-    /// its kind and step (<see cref="OfMaterial"/>); armour, consumables and everything else are Common.</summary>
+    /// <summary>How rare <paramref name="def"/> is — and, for a piece of gear, the particular copy
+    /// <paramref name="copy"/> (null for a bag stack). A piece of gear is as rare as its copy says, and Common with no
+    /// copy; a crafting material goes by its kind and step (<see cref="OfMaterial"/>); consumables and everything else
+    /// are Common.</summary>
     public static Rarity Of(Item def, EquipmentInstance copy)
     {
         if (def == null) return Rarity.Common;
-        if (copy != null && copy.raritySent) return copy.rarity;
-        if (def.slot == EquipSlotType.Weapon) return OfTrademark(Trademarks.SkillOf(copy));
+        if (def.slot != EquipSlotType.None) return copy != null ? copy.rarity : Rarity.Common;
         if (def.materialKind != MaterialKind.None) return OfMaterial(def.materialKind, def.materialStep);
         return Rarity.Common;
     }
 
-    /// <summary>How rare <paramref name="skill"/> is as a forged weapon's trademark. Every ULTIMATE is Legendary, from
-    /// its tier — never authored, so no ultimate can be made easier to roll. Any other skill carries its own authored
-    /// rarity; one nobody has chosen yet reads Common (the skill-data check refuses it on a skill the forge can
-    /// roll). No skill reads Common for having no trademark at all — a weapon without one is Common in
-    /// <see cref="Of"/>.</summary>
-    public static Rarity OfTrademark(SkillDef skill)
-    {
-        if (skill == null) return Rarity.Common;
-        if (skill.IsUltimate) return Rarity.Legendary;
-        var authored = skill.trademarkRarity;
-        return skill.trademarkRaritySet && authored >= Rarity.Common && authored <= Rarity.Legendary ? authored : Rarity.Common;
-    }
-
-    /// <summary>How rare a crafting material of <paramref name="kind"/> at <paramref name="step"/> is. Metal, cloth and
-    /// leather of every band are Common. Ink by tier: Watery Uncommon, Thin and Faint Rare, Clear and Sharp Epic. Salt
+    /// <summary>How rare a crafting material of <paramref name="kind"/> at <paramref name="step"/> is. Temper Dust and
+    /// Quench Oil are Common. Ink by tier: Watery Uncommon, Thin and Faint Rare, Clear and Sharp Epic. Salt
     /// by tier: Coarse Uncommon, Fine Rare, Pure Epic. A creature's own material is the tier its step names
     /// (<see cref="CreatureMaterials.TierOfStep"/>), the only kind that can be Legendary.</summary>
     public static Rarity OfMaterial(MaterialKind kind, int step)

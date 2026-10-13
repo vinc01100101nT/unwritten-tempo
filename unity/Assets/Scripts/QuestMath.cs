@@ -13,7 +13,7 @@ public struct QuestHeld
 
 /// <summary>Why the step being followed cannot be done right now — what the guide says instead of lighting a button.
 /// NoneLeft: a Health step's item, which is used up, is not in the bag.</summary>
-public enum QuestBlock { None = 0, CannotPay = 1, TakeItOff = 2, NotCarried = 3, NoneLeft = 4 }
+public enum QuestBlock { None = 0, CannotPay = 1, NotCarried = 3, NoneLeft = 4 }
 
 /// <summary>
 /// THE SUMS BEHIND A QUEST STEP — plain functions over what a character holds, so each can be checked by calling it
@@ -51,21 +51,11 @@ public static class QuestMath
         return best;
     }
 
-    /// <summary>Is there a copy in the BAG (not worn) — the only place a station works on a piece.</summary>
-    public static bool InBag(string itemId, List<QuestHeld> held)
+    /// <summary>Add one piece a quest has you fold to its bill: each fold's material and gold.</summary>
+    public static void AddForgedPiece(int folds, int foldMaterialEach, int foldGoldEach, ref int material, ref int gold)
     {
-        if (held == null) return false;
-        for (int i = 0; i < held.Count; i++) if (held[i].itemId == itemId && !held[i].worn) return true;
-        return false;
-    }
-
-    /// <summary>Add one piece a quest has you forge and fold to its bill: the forge's material and gold once, then each
-    /// fold's.</summary>
-    public static void AddForgedPiece(int forgeMaterial, int forgeGold, int folds, int foldMaterialEach, int foldGoldEach,
-                                      ref int material, ref int gold)
-    {
-        material += forgeMaterial + folds * foldMaterialEach;
-        gold += forgeGold + folds * foldGoldEach;
+        material += folds * foldMaterialEach;
+        gold += folds * foldGoldEach;
     }
 
     /// <summary>Is a Health step met: <paramref name="current"/> of <paramref name="max"/> health is at least

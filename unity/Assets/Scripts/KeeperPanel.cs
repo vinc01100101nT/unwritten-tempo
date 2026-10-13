@@ -127,7 +127,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     {
         if (Instance == null) return;
         Instance.KeepStorageFor(Character.Instance);
-        Instance.storage.Take(sent, startsAt, true);
+        Instance.storage.Take(sent, startsAt);
         Instance.storedRows = rows;
         Instance.storageLimit = limit;
         Instance.linesOwed = true;
@@ -138,7 +138,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     {
         if (Instance == null) return;
         Instance.KeepStorageFor(Character.Instance);
-        Instance.storage.TakeRow(line, true);
+        Instance.storage.TakeRow(line);
         Instance.storedRows = rows;
         Instance.linesOwed = true;
     }

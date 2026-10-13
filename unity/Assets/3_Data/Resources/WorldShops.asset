@@ -18,6 +18,13 @@ MonoBehaviour:
     - item.minor-healing-potion
     - item.healing-potion
     - item.greater-healing-potion
+    - item.superior-healing-potion
+    - item.grand-healing-potion
+    - item.minor-mana-draught
+    - item.mana-draught
+    - item.greater-mana-draught
+    - item.superior-mana-draught
+    - item.grand-mana-draught
     - item.antidote
     - item.fly-wing
     - item.butterfly-wing

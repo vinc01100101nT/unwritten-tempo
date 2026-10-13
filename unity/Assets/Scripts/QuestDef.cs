@@ -23,10 +23,8 @@ public enum QuestRequirementKind { Gold = 0, Item = 1, Level = 2 }
 public enum GuideSpot
 {
     None = 0,
-    StationForgePage = 1,
     StationFoldPage = 2,
     StationBack = 3,
-    StationForgeRow = 4,
     StationPieceRow = 5,
     StationFoldButton = 6,
     BagRow = 7,
@@ -128,7 +126,7 @@ public class QuestDef : ScriptableObject
     public Reward reward = new Reward();
     [Tooltip("Tutorials only: the character level Play needs. 0 = none. The gold and items it needs are never typed: " +
              "they are what its steps cost, worked out from the items — nothing on a character's first run, which " +
-             "forges and folds each of its pieces free, and the whole bill on a replay.")]
+             "folds each of its pieces free, and the whole bill on a replay.")]
     [Min(0)] public int levelNeeded;
     public Step[] steps = Array.Empty<Step>();
 

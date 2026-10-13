@@ -28,15 +28,17 @@ MonoBehaviour:
   hairStyle: hair04
   hairColour: '#8B7643'
   level: 120
-  str: 40
-  agi: 61
-  vit: 78
-  intel: 92
-  dex: 61
-  luk: 40
+  str: 43
+  agi: 42
+  vit: 81
+  intel: 96
+  dex: 64
+  luk: 42
   startingGear:
-  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: b363337599ac3d8409304145e366dfa1, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 6
   gearFolds: 30

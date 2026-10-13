@@ -136,11 +136,11 @@ never tells it.
 
 | Item | Does | Buy | Sell |
 | --- | --- | --- | --- |
-| Butterfly Wing | Returns you to your save point, on whichever map it is | 300 | 75 |
-| Fly Wing | Sets you down on a random spot of the map you are on | 60 | 15 |
+| Butterfly Wing | Returns you to your save point, on whichever map it is | 300 | 150 |
+| Fly Wing | Sets you down on a random spot of the map you are on | 50 | 25 |
 
-Both prices are placeholders. Both are in the Tool Dealer's stock, and both join the random consumable a creature may
-drop (the same 30% roll every non-material, non-quest item with no slot is picked from).
+Both are in the Tool Dealer's stock and no creature drops either
+([Town Supplies and Hunting Finds](town-supplies-and-hunting-finds.md)).
 
 Each runs a skill, like every usable item, built from one of two effect kinds:
 
@@ -194,4 +194,4 @@ with "There is nowhere to land here."
 - Not play-tested. The window, a trip between two servers, a wing's use, and the server-decided map and arrival have
   only been checked by compiling, by the tests above, and by measurements made in the editor without Play.
 - Only Lastline has a Tool Dealer, so wings can be bought in one town.
-- Prices are placeholders.
+- The Keeper's prices are placeholders.

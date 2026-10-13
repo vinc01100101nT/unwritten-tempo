@@ -1,7 +1,7 @@
 /// <summary>
 /// WHAT THE SERVER SAYS A PIECE COSTS AND WHAT IT WOULD DO — the whole of what a station window draws. Every
 /// number in it is finished: the window shows these and works nothing out, so what a player is quoted and what
-/// the forge actually charges can never drift apart.
+/// the station actually charges can never drift apart.
 /// </summary>
 public struct CraftStationOffer
 {
@@ -20,7 +20,8 @@ public struct CraftStationOffer
     public int foldMaterialCost, foldGoldCost;
     /// <summary>True when the next fold costs nothing — a tutorial's first run gives it free.</summary>
     public bool foldFree;
-    /// <summary>What ONE quench costs, in the same material.</summary>
+    /// <summary>What ONE quench costs: the material, how many, and the gold beside it.</summary>
+    public string quenchMaterialId;
     public int quenchMaterialCost, quenchGoldCost;
 
     /// <summary>The three chances of the quench AS IT WOULD BE MADE, in whole percent: up a grade, unchanged,
@@ -43,7 +44,7 @@ public struct CraftStationOffer
     public bool canFold;
 
     /// <summary>What recycling this piece gives back, worked out on the server: item ids and counts, parallel, and
-    /// gold — half of what the piece provably consumed (<see cref="CraftingMath.RecycleYield"/>).</summary>
+    /// gold — half of what the piece provably consumed (<see cref="CraftingMath.RecycleYield"/>, <see cref="CraftingMath.RecycleInks"/>).</summary>
     public string[] recycleIds;
     public int[] recycleCounts;
     public int recycleGold;

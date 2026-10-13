@@ -284,7 +284,7 @@ static class Checks
         // A worn word, and the movement speed worn shoes' folds bought, land in the sub-stat table in that stat's own units.
         var table = new float[SubStats.All.Length];
         var eb = default(EquipBonuses);
-        CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw),
+        CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common),
                               null, null, ref eb);
         ArmourWords.AddWord(ArmourWord.Wellspring, 2.5f, ref eb);
         ArmourWords.FoldIntoSubStats(eb, table);
@@ -453,14 +453,38 @@ static class Checks
         }
     }
 
-    // ---- the trademark roll: a rarity by its share, then a skill of it evenly -------------------------------
-    // A weapon's rarity IS how rare its trademark is to roll, so a wrong share silently makes a Legendary weapon common
-    // and nothing on screen says so. The shares are the decided ladder (2026-10-12): Common 50, Uncommon 30, Rare 14,
-    // Epic 5, Legendary 1 — promises, so stated. Everything else is checked in its general form.
+    // ---- the trademark roll: a class, then a skill of it evenly; and the rarity draw ------------------------
+    // A trademark is an ULTIMATE's on 1% of new weapons and an active's or a passive's on the rest, every skill inside
+    // its class equally likely; a weapon type with only one class gives that class everything (decided 2026-10-13).
+    // The rarity shares are the decided ladder: Common 50, Uncommon 30, Rare 14, Epic 5, Legendary 1. Promises, so stated.
     const string RarityF = "unity/Assets/Scripts/Rarity.cs";
 
     static void TrademarkRoll()
     {
+        That(CraftingMath.UltimateTrademarkPercent == 1, CraftF,
+             "an ultimate trademark should come on 1% of new weapons, not " + CraftingMath.UltimateTrademarkPercent + "%");
+
+        // In ANY mix of classes, the class draw over 0..99 hands each class exactly its share, and every candidate's
+        // chances together make certainty.
+        int[][] mixes = { new[] { 3, 15 }, new[] { 1, 1 }, new[] { 0, 7 }, new[] { 4, 0 }, new[] { 2, 40 } };
+        foreach (var mix in mixes)
+        {
+            int ultimates = mix[0], others = mix[1];
+            string name = ultimates + " ultimate(s) and " + others + " other(s)";
+            int toUltimates = 0;
+            for (int roll = 0; roll < 100; roll++) if (CraftingMath.TrademarkIsUltimate(ultimates, others, roll)) toUltimates++;
+            int want = ultimates <= 0 ? 0 : others <= 0 ? 100 : CraftingMath.UltimateTrademarkPercent;
+            That(toUltimates == want, CraftF, "with " + name + ", " + toUltimates + " of 100 class draws land on an ultimate, not " + want);
+            float certain = CraftingMath.TrademarkChance(true, ultimates, others) * ultimates
+                          + CraftingMath.TrademarkChance(false, ultimates, others) * others;
+            That(Math.Abs(certain - 1f) < 1e-5f, CraftF, "with " + name + " every trademark's chance adds up to " + certain + ", not 1");
+        }
+        // The sword as built in this shape: 3 ultimates and 15 others — 1/3% each ultimate, 6.6% each other.
+        That(Math.Abs(CraftingMath.TrademarkChance(true, 3, 15) - 0.01f / 3f) < 1e-6f, CraftF, "one of 3 ultimates should roll at 1/3%");
+        That(Math.Abs(CraftingMath.TrademarkChance(false, 3, 15) - 0.99f / 15f) < 1e-6f, CraftF, "one of 15 others should roll at 6.6%");
+        That(CraftingMath.TrademarkChance(true, 0, 0) == 0f && CraftingMath.TrademarkChance(false, 0, 0) == 0f, CraftF,
+             "a weapon type with nothing to roll still has a trademark chance");
+
         var rarities = (Rarity[])Enum.GetValues(typeof(Rarity));
         That(CraftingMath.RarityCount == rarities.Length, CraftF,
              "there are " + rarities.Length + " rarities but " + CraftingMath.RarityCount + " shares");
@@ -472,57 +496,48 @@ static class Checks
             sum += share;
             if (r < promised.Length)
                 That(share == promised[r], CraftF, rarities[r] + "'s share is " + share + "%, not the decided " + promised[r] + "%");
-            if (r > 0)
-                That(share < CraftingMath.RarityShare(rarities[r - 1]), CraftF, rarities[r] + " is no rarer than " + rarities[r - 1]);
         }
         That(sum == 100, CraftF, "the rarity shares add up to " + sum + "%, not 100%");
 
-        // The sword as built: 5 Common, 4 Uncommon, 3 Rare, 3 Epic, 3 Legendary — 10%, 7.5%, 4.67%, 1.67% and 0.33% each.
-        int[] sword = { 5, 4, 3, 3, 3 };
-        float[] each = { 0.10f, 0.075f, 0.14f / 3f, 0.05f / 3f, 0.01f / 3f };
-        for (int r = 0; r < sword.Length; r++)
+        // In ANY set of rarities taking part, each is drawn exactly as often as its share, the missing ones' share
+        // handed out in proportion.
+        int[][] sets =
         {
-            float got = CraftingMath.TrademarkChance((Rarity)r, sword);
-            That(Math.Abs(got - each[r]) < 1e-6f, CraftF, "one sword trademark of " + (Rarity)r + " rolls at " + got + ", not " + each[r]);
-        }
-
-        // In ANY mix of candidates, every rarity is drawn exactly as often as its share of the rarities present, the
-        // missing ones' share is handed out in proportion, and every candidate's chances together make certainty.
-        int[][] mixes =
-        {
-            new[] { 5, 4, 3, 3, 3 }, new[] { 2, 0, 0, 0, 1 }, new[] { 0, 0, 0, 0, 3 }, new[] { 1, 0, 1, 0, 0 },
-            new[] { 0, 7, 0, 2, 0 }, new[] { 4, 0, 0, 0, 0 },
+            new[] { 1, 1, 1, 1, 1 }, new[] { 1, 1, 1, 0, 0 }, new[] { 0, 0, 0, 0, 1 }, new[] { 1, 0, 1, 0, 0 },
         };
-        foreach (var mix in mixes)
+        foreach (var present in sets)
         {
-            string name = "[" + string.Join(",", mix) + "]";
-            int total = CraftingMath.TrademarkRollTotal(mix);
+            string name = "[" + string.Join(",", present) + "]";
+            int total = CraftingMath.RarityDrawTotal(present);
             int expectTotal = 0;
-            for (int r = 0; r < mix.Length; r++) if (mix[r] > 0) expectTotal += CraftingMath.RarityShare((Rarity)r);
-            That(total == expectTotal, CraftF, "the first draw over " + name + " is " + total + " wide, not " + expectTotal);
-
-            var hits = new int[mix.Length];
-            for (int roll = 0; roll < total; roll++) hits[(int)CraftingMath.TrademarkRarityAt(mix, roll)]++;
-            float certain = 0f;
-            for (int r = 0; r < mix.Length; r++)
+            for (int r = 0; r < present.Length; r++) if (present[r] > 0) expectTotal += CraftingMath.RarityShare((Rarity)r);
+            That(total == expectTotal, CraftF, "the rarity draw over " + name + " is " + total + " wide, not " + expectTotal);
+            var hits = new int[present.Length];
+            for (int roll = 0; roll < total; roll++) hits[(int)CraftingMath.RarityAt(present, roll)]++;
+            for (int r = 0; r < present.Length; r++)
             {
-                int want = mix[r] > 0 ? CraftingMath.RarityShare((Rarity)r) : 0;
+                int want = present[r] > 0 ? CraftingMath.RarityShare((Rarity)r) : 0;
                 That(hits[r] == want, CraftF, "over " + name + ", " + (Rarity)r + " is drawn on " + hits[r] + " of " + total + " rolls, not " + want);
-                certain += CraftingMath.TrademarkChance((Rarity)r, mix) * mix[r];
             }
-            That(Math.Abs(certain - 1f) < 1e-5f, CraftF, "over " + name + " every trademark's chance adds up to " + certain + ", not 1");
         }
+        That(CraftingMath.RarityDrawTotal(new[] { 0, 0, 0, 0, 0 }) == 0, CraftF, "a draw with no rarity in it still has a size");
 
-        int[] none = { 0, 0, 0, 0, 0 };
-        That(CraftingMath.TrademarkRollTotal(none) == 0, CraftF, "a weapon type with nothing to roll still has a first draw");
-        That(CraftingMath.TrademarkChance(Rarity.Common, none) == 0f, CraftF, "a rarity with no candidate has a chance");
+        // THE ROLL TEXT carries the rarity as its sixth part, every part in its place whether or not a trademark or a
+        // word is there, and reads back exactly what was written.
+        RollTextRoundTrip("", ArmourWord.None);
+        RollTextRoundTrip("skill.sword.lunge", ArmourWord.None);
+        RollTextRoundTrip("", ArmourWord.Wellspring);
+        RollTextRoundTrip("skill.sword.lunge", ArmourWord.Wellspring);
+        var old = new EquipmentInstance();
+        old.ReadRoll("2;1,0,0,0,0,0,0,0,0;;skill.sword.lunge:0.1");
+        That(old.rarity == Rarity.Common && old.quality == Quality.E && old.trademarkSkillId == "skill.sword.lunge", EquipF,
+             "a roll text with no rarity part should read back as a Common E piece with its trademark");
 
-        // A material's rarity, as decided: metal, cloth and leather Common at every band; Ink Watery Uncommon, Thin and
-        // Faint Rare, Clear and Sharp Epic; Salt Coarse Uncommon, Fine Rare, Pure Epic. Nothing that is not a material
-        // is rare, and no crafting material is Legendary — only a creature's own material can be (pinned below).
-        for (int band = 1; band <= CreatureLoot.Grades; band++)
-            foreach (var kind in new[] { MaterialKind.Metal, MaterialKind.Cloth, MaterialKind.Leather })
-                That(Rarities.OfMaterial(kind, band) == Rarity.Common, RarityF, kind + " band " + band + " is not Common");
+        // A material's rarity, as decided: Temper Dust and Quench Oil Common; Ink Watery Uncommon, Thin and Faint Rare,
+        // Clear and Sharp Epic; Salt Coarse Uncommon, Fine Rare, Pure Epic. Nothing that is not a material is rare, and
+        // no crafting material is Legendary — only a creature's own material can be (pinned below).
+        That(Rarities.OfMaterial(MaterialKind.TemperDust, 0) == Rarity.Common, RarityF, "Temper Dust is not Common");
+        That(Rarities.OfMaterial(MaterialKind.QuenchOil, 0) == Rarity.Common, RarityF, "Quench Oil is not Common");
         Rarity[] ink = { Rarity.Uncommon, Rarity.Rare, Rarity.Rare, Rarity.Epic, Rarity.Epic };
         for (int tier = 1; tier <= CraftingMath.TopInkTier; tier++)
             That(Rarities.OfMaterial(MaterialKind.Ink, tier) == ink[tier - 1], RarityF,
@@ -532,6 +547,81 @@ static class Checks
             That(Rarities.OfMaterial(MaterialKind.Salt, tier) == salt[tier - 1], RarityF,
                  "Salt tier " + tier + " is " + Rarities.OfMaterial(MaterialKind.Salt, tier) + ", not " + salt[tier - 1]);
         That(Rarities.OfMaterial(MaterialKind.None, 0) == Rarity.Common, RarityF, "something that is not a material is not Common");
+    }
+
+    const string EquipF = "unity/Assets/Scripts/EquipmentInstance.cs";
+
+    // One copy at a non-Common rarity, written to roll text and read back.
+    static void RollTextRoundTrip(string trademark, ArmourWord word)
+    {
+        var made = new EquipmentInstance { quality = Quality.C, upgrade = 7, rarity = Rarity.Epic,
+                                           trademarkSkillId = trademark, trademarkLift = trademark.Length > 0 ? 0.15f : 0f,
+                                           word = word, wordAmount = word != ArmourWord.None ? 2.5f : 0f };
+        made.piece.attack = 12;
+        string text = made.EncodeRoll();
+        string name = "a copy with " + (trademark.Length > 0 ? "a trademark" : "no trademark") + " and "
+                      + (word != ArmourWord.None ? "a word" : "no word");
+        That(text.Split(';').Length == 6, EquipF, name + " is written in " + text.Split(';').Length + " parts, not 6: " + text);
+        var back = new EquipmentInstance();
+        back.ReadRoll(text);
+        That(back.rarity == Rarity.Epic, EquipF, name + " reads back as " + back.rarity + ", not Epic: " + text);
+        That(back.quality == Quality.C && back.trademarkSkillId == trademark && back.word == word, EquipF,
+             name + " does not read back as written: " + text);
+        That(Math.Abs(back.trademarkLift - made.trademarkLift) < 1e-5f && Math.Abs(back.wordAmount - made.wordAmount) < 1e-5f
+             && back.piece.attack == 12, EquipF, name + " loses a finished number on the way back: " + text);
+    }
+
+    // ---- what a kill drops: a piece's rarity by kind, and Temper Dust and Quench Oil ---------------------------
+    // Decided 2026-10-13: one kill in ten drops a piece of what the creature wears; a normal creature's piece is Common,
+    // Uncommon or Rare at 50, 30 and 14 of 94, an elite's always Epic, a shadow's always Legendary. Every kill drops
+    // 0.60 Temper Dust and 0.06 Quench Oil a grade of its file's level, times its kind's multiple and its gear's pay.
+    const string LootF = "unity/Assets/Scripts/CreatureLoot.cs";
+
+    static void KillDropNumbers()
+    {
+        That(Math.Abs(CreatureLoot.GearDropChance - 0.10f) < 1e-6f, LootF, "a kill should drop a worn piece one time in ten");
+        That(CreatureLoot.DropRarityRollSize == 94, LootF, "a normal creature's rarity draw is " + CreatureLoot.DropRarityRollSize + " wide, not 94");
+        var hits = new int[CraftingMath.RarityCount];
+        for (int roll = 0; roll < CreatureLoot.DropRarityRollSize; roll++) hits[(int)CreatureLoot.DropRarity(CreatureKind.Normal, roll)]++;
+        That(hits[0] == 50 && hits[1] == 30 && hits[2] == 14 && hits[3] == 0 && hits[4] == 0, LootF,
+             "a normal creature's piece should be Common, Uncommon or Rare on 50, 30 and 14 of 94 rolls, got "
+             + string.Join(",", hits));
+        for (int roll = 0; roll < CreatureLoot.DropRarityRollSize; roll++)
+        {
+            That(CreatureLoot.DropRarity(CreatureKind.Elite, roll) == Rarity.Epic, LootF, "an elite's piece is not always Epic");
+            That(CreatureLoot.DropRarity(CreatureKind.Shadow, roll) == Rarity.Legendary, LootF, "a shadow's piece is not always Legendary");
+        }
+
+        That(CreatureLoot.TemperDustPerGrade == 60 && CreatureLoot.QuenchOilPerGrade == 6, LootF,
+             "a kill should drop 0.60 Temper Dust and 0.06 Quench Oil a grade");
+        // Over the hundred rolls, a kill pays exactly its hundredths: whole units always, and the rest that often.
+        foreach (CreatureKind kind in Enum.GetValues(typeof(CreatureKind)))
+            foreach (int level in new[] { 1, 15, 50, 99, 120 })
+                foreach (var gear in new[] { (Quality.Raw, 0), (Quality.C, 20), (Quality.A, 35) })
+                    foreach (int perGrade in new[] { CreatureLoot.TemperDustPerGrade, CreatureLoot.QuenchOilPerGrade })
+                    {
+                        long want = CreaturePay.Scaled((long)perGrade * CreatureLoot.GradeForLevel(level) * CreatureKinds.ExperienceMultiplier(kind),
+                                                       gear.Item1, gear.Item2);
+                        long got = 0;
+                        for (int roll = 0; roll < 100; roll++)
+                            got += CreatureLoot.UnitsPerKill(perGrade, level, kind, gear.Item1, gear.Item2, roll);
+                        That(got == want, LootF, "a level " + level + " " + kind + " in " + gear.Item1 + " +" + gear.Item2 + " pays "
+                             + got + " hundredths over 100 kills at " + perGrade + " a grade, not " + want);
+                    }
+        // The pinned cases: a level-1 normal creature in Raw drops a Temper Dust on 60 kills in 100 and a Quench Oil on 6;
+        // a level-99 one 4 Temper Dust, a fifth on 20 in 100; a level-50 elite in C +20 exactly 96.
+        That(CreatureLoot.UnitsPerKill(60, 1, CreatureKind.Normal, Quality.Raw, 0, 59) == 1
+             && CreatureLoot.UnitsPerKill(60, 1, CreatureKind.Normal, Quality.Raw, 0, 60) == 0, LootF,
+             "a level-1 creature should drop a Temper Dust on rolls 0 to 59 only");
+        That(CreatureLoot.UnitsPerKill(6, 1, CreatureKind.Normal, Quality.Raw, 0, 5) == 1
+             && CreatureLoot.UnitsPerKill(6, 1, CreatureKind.Normal, Quality.Raw, 0, 6) == 0, LootF,
+             "a level-1 creature should drop a Quench Oil on rolls 0 to 5 only");
+        That(CreatureLoot.UnitsPerKill(60, 99, CreatureKind.Normal, Quality.Raw, 0, 19) == 5
+             && CreatureLoot.UnitsPerKill(60, 99, CreatureKind.Normal, Quality.Raw, 0, 20) == 4, LootF,
+             "a level-99 creature should drop 4 Temper Dust, and a fifth on rolls 0 to 19");
+        That(CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 20, 0) == 96
+             && CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 20, 99) == 96, LootF,
+             "a level-50 elite in C +20 should drop exactly 96 Temper Dust");
     }
 
     // ---- what a quality grade is worth ------------------------------------------------------------------
@@ -564,51 +654,134 @@ static class Checks
         foreach (var grade in grades)
             for (int folds = 0; folds <= CraftingMath.FoldCap(grade); folds++)
             {
-                int atk = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, folds, grade).attack;
+                int atk = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, folds, grade, Rarity.Common).attack;
                 That(atk >= folds, CraftF, grade + " +" + folds + " is worth " + atk + " attack, below its own folds");
                 if (folds == 0) That(atk == 0, CraftF, "an unfolded " + grade + " piece is worth " + atk);
             }
 
         // A caster's weapon folds into magic attack.
-        var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.Metal, 10, Quality.A);
+        var staff = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Staff, MaterialKind.Metal, 10, Quality.A, Rarity.Common);
         That(staff.attack == 0 && staff.magicAttack > 0, CraftF, "a caster's weapon no longer folds into magic attack");
 
         // An armour piece's MATERIAL decides what a fold buys; its SLOT how much (decided 2026-09-23), every fold worth
         // 1.8 of the original table (decided 2026-10-07). The literals are the agreed table: body armour at A +35 is 41
         // defence and 328 HP in metal, 20.5% attack speed and 20 evasion in leather, 41 magic defence and 164 MP in
         // cloth; a head or shoes take half.
-        var metal = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
+        var metal = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 35, Quality.A, Rarity.Common);
         That(metal.defense == 41 && metal.hp == 328 && metal.magicDefense == 0 && metal.evasion == 0, CraftF,
              "metal body armour at A +35 should be 41 defence and 328 HP, got " + metal.defense + " and " + metal.hp);
-        var leather = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Leather, 35, Quality.A);
+        var leather = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Leather, 35, Quality.A, Rarity.Common);
         That(Math.Abs(leather.attackSpeedPercent - 20.5f) < 0.001f && leather.evasion == 20 && leather.defense == 0, CraftF,
              "leather body armour at A +35 should be 20.5% attack speed and 20 evasion, got " + leather.attackSpeedPercent + " and " + leather.evasion);
-        var cloth = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Cloth, 35, Quality.A);
+        var cloth = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Cloth, 35, Quality.A, Rarity.Common);
         That(cloth.magicDefense == 41 && cloth.mp == 164 && cloth.defense == 0, CraftF,
              "cloth body armour at A +35 should be 41 magic defence and 164 MP, got " + cloth.magicDefense + " and " + cloth.mp);
-        var shoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A);
+        var shoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A, Rarity.Common);
         That(shoes.defense == 20 && shoes.hp == 164, CraftF,
              "metal shoes at A +35 should take half: 20 defence and 164 HP, got " + shoes.defense + " and " + shoes.hp);
         // The +5 starter set the first tutorial makes — what the 1.8 was sized on: the Sword 9 attack, the Chainmail 5
         // defence and 36 HP, the Iron Sabatons 2 defence and 18 HP.
-        var sword5 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 5, Quality.Raw);
-        var mail5 = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw);
-        var boots5 = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw);
+        var sword5 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common);
+        var mail5 = CraftingMath.PieceNumbers(EquipSlotType.Armor, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common);
+        var boots5 = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common);
         That(sword5.attack == 9 && mail5.defense == 5 && mail5.hp == 36 && boots5.defense == 2 && boots5.hp == 18, CraftF,
              "the +5 starter set should be 9 attack, 5 defence / 36 HP, 2 defence / 18 HP, got " + sword5.attack + ", "
              + mail5.defense + " / " + mail5.hp + ", " + boots5.defense + " / " + boots5.hp);
         // A value exactly on .5 rounds UP: an A +25 weapon is 25 × 1.8 × 1.3 = 58.5, which floats summed to 58.
-        int a25 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 25, Quality.A).attack;
+        int a25 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 25, Quality.A, Rarity.Common).attack;
         That(a25 == 59, CraftF, "an A +25 weapon is 58.5 attack and should round up to 59, got " + a25);
         That(Math.Abs(shoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
              "shoes at A +35 should be +70% movement speed — 2% a fold, no grade lift — got " + shoes.moveSpeedPercent);
-        var rawShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Leather, 5, Quality.Raw);
+        var rawShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Leather, 5, Quality.Raw, Rarity.Common);
         That(Math.Abs(rawShoes.moveSpeedPercent - 10f) < 0.001f, CraftF,
              "Raw +5 shoes should be +10% movement speed, got " + rawShoes.moveSpeedPercent);
         That(metal.moveSpeedPercent == 0f && CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.Metal, 5,
-             Quality.Raw).moveSpeedPercent == 0f, CraftF, "only shoes may buy movement speed with a fold");
-        var bare = CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.None, 35, Quality.A);
+             Quality.Raw, Rarity.Common).moveSpeedPercent == 0f, CraftF, "only shoes may buy movement speed with a fold");
+        var bare = CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.None, 35, Quality.A, Rarity.Common);
         That(bare.defense == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should fold into nothing");
+
+        // RARITY LIFTS A PIECE'S FOLD VALUES, added to the grade's lift (decided 2026-10-13): Common 0, Uncommon 10,
+        // Rare 20, Epic 35, Legendary 50 hundredths. Promises, so stated.
+        var rarities = (Rarity[])Enum.GetValues(typeof(Rarity));
+        int[] rarityLift = { 0, 10, 20, 35, 50 };
+        That(rarities.Length == rarityLift.Length, CraftF, "there are " + rarities.Length + " rarities but " + rarityLift.Length + " decided lifts");
+        for (int r = 0; r < rarities.Length && r < rarityLift.Length; r++)
+        {
+            That(CraftingMath.RarityLiftHundredths(rarities[r]) == rarityLift[r], CraftF,
+                 rarities[r] + " lifts a piece by " + CraftingMath.RarityLiftHundredths(rarities[r]) + " hundredths, not " + rarityLift[r]);
+            foreach (var grade in grades)
+            {
+                int want = CraftingMath.LiftHundredths(grade, Rarity.Common) + rarityLift[r];
+                That(CraftingMath.LiftHundredths(grade, rarities[r]) == want, CraftF,
+                     "a " + rarities[r] + " " + grade + " piece is lifted to " + CraftingMath.LiftHundredths(grade, rarities[r]) + ", not " + want);
+            }
+            // Shoes' movement speed is 2% a fold whatever the rarity.
+            var rareShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A, rarities[r]);
+            That(Math.Abs(rareShoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
+                 rarities[r] + " shoes at A +35 should still be +70% movement speed, got " + rareShoes.moveSpeedPercent);
+        }
+        That(CraftingMath.LiftHundredths(Quality.Raw, Rarity.Common) == 100 && CraftingMath.LiftHundredths(Quality.A, Rarity.Common) == 130,
+             CraftF, "a Common piece should be lifted to 100 at Raw and 130 at A");
+        That(CraftingMath.LiftHundredths(Quality.A, Rarity.Legendary) == 180, CraftF,
+             "a Legendary A piece should be lifted to 180, got " + CraftingMath.LiftHundredths(Quality.A, Rarity.Legendary));
+        // An A +25 Legendary weapon is 25 × 1.8 × 1.8 = 81 attack; the same piece Common is 59.
+        int legendary25 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 25, Quality.A, Rarity.Legendary).attack;
+        That(legendary25 == 81, CraftF, "an A +25 Legendary weapon should be 81 attack, got " + legendary25);
+    }
+
+    // ---- what a fold and a quench cost, and what recycling gives back -----------------------------------
+    // A fold takes Temper Dust and a quench takes Quench Oil, each as many units as the grade counted from one
+    // (decided 2026-10-13). Recycling returns half of what the piece provably took — and nothing for a fold made at
+    // Raw, because a tutorial's first run gives those free and a return on them would be paid out of nothing.
+    static void CraftCosts()
+    {
+        var grades = (Quality[])Enum.GetValues(typeof(Quality));
+        for (int g = 0; g < grades.Length; g++)
+        {
+            That(CraftingMath.FoldMaterialCost(grades[g]) == g + 1, CraftF,
+                 "a fold at " + grades[g] + " costs " + CraftingMath.FoldMaterialCost(grades[g]) + " Temper Dust, not " + (g + 1));
+            That(CraftingMath.QuenchMaterialCost(grades[g]) == g + 1, CraftF,
+                 "a quench at " + grades[g] + " costs " + CraftingMath.QuenchMaterialCost(grades[g]) + " Quench Oil, not " + (g + 1));
+        }
+        That(CraftingMath.FoldMaterialCost(Quality.Raw) == 1 && CraftingMath.FoldMaterialCost(Quality.A) == 7, CraftF,
+             "a fold should cost 1 Temper Dust at Raw and 7 at A");
+        That(CraftingMath.FoldGoldCost(Quality.Raw) == 50 && CraftingMath.QuenchGoldCost(Quality.Raw) == 500, CraftF,
+             "a Raw fold should cost 50 gold and a Raw quench 500");
+
+        foreach (var grade in grades)
+            for (int folds = 0; folds <= CraftingMath.FoldCap(grade); folds++)
+            {
+                // What that piece took at the least, counted here on its own: every grade it climbed was folded to its
+                // cap and quenched once, and its standing folds were bought at its own grade.
+                int spentDust = folds * CraftingMath.FoldMaterialCost(grade), spentOil = 0;
+                int spentGold = folds * CraftingMath.FoldGoldCost(grade);
+                for (int g = 0; g < (int)grade; g++)
+                {
+                    var from = (Quality)g;
+                    spentDust += CraftingMath.FoldCap(from) * CraftingMath.FoldMaterialCost(from);
+                    spentOil += CraftingMath.QuenchMaterialCost(from);
+                    spentGold += CraftingMath.FoldCap(from) * CraftingMath.FoldGoldCost(from) + CraftingMath.QuenchGoldCost(from);
+                }
+                CraftingMath.RecycleYield(grade, folds, out int dust, out int oil, out int gold);
+                string piece = grade + " +" + folds;
+                That(dust >= 0 && oil >= 0 && gold >= 0, CraftF, "recycling " + piece + " gives back less than nothing");
+                That(2 * dust <= spentDust, CraftF, "recycling " + piece + " gives back " + dust + " Temper Dust of the " + spentDust + " it took");
+                That(2 * oil <= spentOil, CraftF, "recycling " + piece + " gives back " + oil + " Quench Oil of the " + spentOil + " it took");
+                That(2 * gold <= spentGold, CraftF, "recycling " + piece + " gives back " + gold + " gold of the " + spentGold + " it took");
+                if (grade == Quality.Raw)
+                    That(dust == 0 && oil == 0 && gold == 0, CraftF,
+                         "recycling " + piece + " gives back " + dust + " Temper Dust, " + oil + " Quench Oil and " + gold + " gold — a Raw fold returns nothing");
+            }
+
+        // The five Raw folds an F piece climbed through return nothing either: an unfolded F piece gives back only half
+        // of its one quench — 1 Quench Oil halves to none, 500 gold to 250.
+        CraftingMath.RecycleYield(Quality.F, 0, out int fDust, out int fOil, out int fGold);
+        That(fDust == 0 && fOil == 0 && fGold == 250, CraftF,
+             "an unfolded F piece should recycle to 0 Temper Dust, 0 Quench Oil and 250 gold, got " + fDust + ", " + fOil + " and " + fGold);
+        // The top of the ladder: an A +35 piece took 695 Temper Dust, 21 Quench Oil and 45,250 gold above its Raw folds.
+        CraftingMath.RecycleYield(Quality.A, 35, out int aDust, out int aOil, out int aGold);
+        That(aDust == 347 && aOil == 10 && aGold == 22625, CraftF,
+             "an A +35 piece should recycle to 347 Temper Dust, 10 Quench Oil and 22625 gold, got " + aDust + ", " + aOil + " and " + aGold);
     }
 
     // ---- a quench's odds, with and without Salt ---------------------------------------------------------
@@ -1253,16 +1426,16 @@ static class Checks
         That(QuestMath.Met(QuestObjectiveKind.Have, "item.sword", 1, worn), QuestF, "a worn sword still counts as 'have a sword'");
         That(QuestMath.Met(QuestObjectiveKind.FoldedTo, "item.sword", 2, worn), QuestF, "a sword above Raw counts as folded (a quench spends its folds)");
         That(QuestMath.Met(QuestObjectiveKind.Wear, "item.sword", 1, worn), QuestF, "a worn sword is a sword worn");
-        That(!QuestMath.InBag("item.sword", worn), QuestF, "a worn sword is not in the bag, where a station works");
         That(!QuestMath.Met(QuestObjectiveKind.TalkTo, "item.sword", 1, bag), QuestF, "a talk step is never met by holding something");
         That(QuestMath.CanPay(8, 8, 800, 800) && !QuestMath.CanPay(7, 8, 800, 800) && !QuestMath.CanPay(8, 8, 799, 800),
              QuestF, "a bill is paid only when both the material and the gold cover it");
-        int copper = 0, gold = 0;
-        QuestMath.AddForgedPiece(8, 800, 2, 1, 50, ref copper, ref gold);
-        That(copper == 10 && gold == 900, QuestF, "a Sword forged and folded twice costs 10 Copper and 900 gold");
-        QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
-        QuestMath.AddForgedPiece(5, 400, 2, 1, 50, ref copper, ref gold);
-        That(copper == 24 && gold == 1900, QuestF, "three pieces forged and folded twice each cost 24 Copper and 1,900 gold");
+        // The first tutorial's bill: three Raw pieces folded five times each, at 1 Temper Dust and 50 gold a fold.
+        int dust = 0, gold = 0;
+        QuestMath.AddForgedPiece(5, CraftingMath.FoldMaterialCost(Quality.Raw), CraftingMath.FoldGoldCost(Quality.Raw), ref dust, ref gold);
+        That(dust == 5 && gold == 250, QuestF, "a piece folded five times from Raw costs 5 Temper Dust and 250 gold");
+        QuestMath.AddForgedPiece(5, CraftingMath.FoldMaterialCost(Quality.Raw), CraftingMath.FoldGoldCost(Quality.Raw), ref dust, ref gold);
+        QuestMath.AddForgedPiece(5, CraftingMath.FoldMaterialCost(Quality.Raw), CraftingMath.FoldGoldCost(Quality.Raw), ref dust, ref gold);
+        That(dust == 15 && gold == 750, QuestF, "three pieces folded five times each from Raw cost 15 Temper Dust and 750 gold");
         // A Health step: 80% of 76 is met at 61 and not at 60; from 7 health, potions healing 30 each take two to get there.
         That(QuestMath.HealthMet(61, 76, 80) && !QuestMath.HealthMet(60, 76, 80), QuestF, "80% of 76 health is 61");
         That(QuestMath.HealthNeeded(76, 80) == 61, QuestF, "the least health meeting 80% of 76 is 61");
@@ -1274,8 +1447,8 @@ static class Checks
         That(QuestMath.HealOfOneUse(new List<float> { 30f }) == 30 && QuestMath.HealOfOneUse(new List<float> { 12.5f, 12.5f, 0.5f }) == 26
              && QuestMath.HealOfOneUse(new List<float>()) == 0, QuestF, "one use heals the sum of its heals, rounded half up");
         int c2 = 0, g2 = 0;
-        QuestMath.AddForgedPiece(0, 0, 1, 1, 50, ref c2, ref g2);
-        That(c2 == 1 && g2 == 50, QuestF, "a piece already forged owes only the folds still missing");
+        QuestMath.AddForgedPiece(1, 1, 50, ref c2, ref g2);
+        That(c2 == 1 && g2 == 50, QuestF, "a piece already folded owes only the folds still missing");
 
         var doors = new Dictionary<string, List<string>>
         {
@@ -1615,7 +1788,9 @@ static class Checks
         FlightRules();
         Ring();
         QualityLadder();
+        CraftCosts();
         TrademarkRoll();
+        KillDropNumbers();
         QuenchOdds();
         InkRoll();
         MasteryCurve();

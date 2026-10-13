@@ -18,13 +18,13 @@ public class QuestRowWire
     public bool r;
     /// <summary>The quest that was followed when this one took over, followed again when this one is done; empty when none.</summary>
     public string u = "";
-    /// <summary>The pieces this run forges and folds — empty once the quest is done.</summary>
+    /// <summary>The pieces this run folds — empty once the quest is done.</summary>
     public QuestPieceWire[] a;
 }
 
 /// <summary>ONE PIECE OF A TUTORIAL RUN, as it is saved: which item, the copy this run made or folds (empty until there
-/// is one), and what is still free on it — a character's first run of a tutorial forges and folds each of its pieces
-/// free, once; a replay frees nothing.</summary>
+/// is one), and what is still free on it — a character's first run of a tutorial folds each of its pieces free, once;
+/// a replay frees nothing.</summary>
 [Serializable]
 public class QuestPieceWire
 {
@@ -68,7 +68,7 @@ public struct QuestNeedWire
 }
 
 /// <summary>Why Play did or did not start a tutorial.</summary>
-public enum QuestPlay { Ignored = 0, Started = 1, AlreadyPlaying = 2, NotMet = 3 }
+public enum QuestPlay { Ignored = 0, Started = 1, AlreadyPlaying = 2, NotMet = 3, MissingPiece = 4 }
 
 /// <summary>A kill that counted toward a quest, as its owner is told it: the creature, and the step's count after it.</summary>
 [Serializable]
@@ -110,9 +110,9 @@ public struct QuestTargetWire
 /// finished throughout (its reward was paid once and is never paid again), and its steps count only the pieces made
 /// during the replay, so gear already held cannot finish it at once.</para>
 ///
-/// <para><b>A character's first run of a tutorial is free</b>: each piece it forges and folds carries one free forge and
-/// its free folds, saved on the record and used up by the press that does the work (<see cref="TakeFreeForge"/>,
-/// <see cref="TakeFreeFold"/>), so a quick second press, a door or a restart can never spend it twice.</para>
+/// <para><b>A character's first run of a tutorial is free</b>: each piece it folds carries its free folds, saved on the
+/// record and used up by the press that does the work (<see cref="TakeFreeFold"/>), so a quick second press, a door or
+/// a restart can never spend it twice.</para>
 ///
 /// <para><b>Saving.</b> Every change stamps the record with a rising number. A save carries the records stamped after
 /// the last save that LANDED (<see cref="CapturePending"/>), and a landed save acknowledges up to the number it was
@@ -211,7 +211,7 @@ public sealed class QuestLog
     }
 
     // A quest given for the first time. A tutorial's first run takes nothing its steps use up: every piece it has you
-    // make carries one free forge and its free folds, and every item it has you buy is free — as many as it asks for,
+    // fold carries its free folds, and every item it has you buy is free — as many as it asks for,
     // or, when a Health step after it is healed with that item, as many as it takes to get there from the health the
     // character has now.
     Record NewRecord(QuestDef def, int hp, int maxHp)
@@ -220,7 +220,7 @@ public sealed class QuestLog
         if (def.category == QuestCategory.Tutorial)
         {
             foreach (var p in PiecesOf(def))
-                r.pieces.Add(new QuestPieceWire { i = p.itemId, g = 1, n = p.folds });
+                r.pieces.Add(new QuestPieceWire { i = p.itemId, n = p.folds });
             for (int i = 0; i < def.steps.Length; i++)
             {
                 var o = def.steps[i].objective;
@@ -568,14 +568,22 @@ public sealed class QuestLog
 
     /// <summary>PLAY a tutorial: follow it — its guide and its path — but only when the character has what the rest of
     /// it needs right now (<see cref="CollectNeeds"/>). An open tutorial carries on from its step; a FINISHED one is
-    /// replayed from its first step, which needs its whole bill. Checked at the press only: what is spent afterwards is
-    /// the guide's to explain.</summary>
-    public QuestPlay Play(string questId, Character c)
+    /// replayed from its first step, which needs its whole bill — and, for every piece it folds, a Raw copy held with
+    /// room for that many folds; <paramref name="missingItemId"/> names the first piece without one. Checked at the
+    /// press only: what is spent afterwards is the guide's to explain.</summary>
+    public QuestPlay Play(string questId, Character c, out string missingItemId)
     {
+        missingItemId = "";
         var def = QuestCatalog.Get(questId);
         if (def == null || def.category != QuestCategory.Tutorial || !records.TryGetValue(questId, out var r))
             return QuestPlay.Ignored;
         if (r.tracked && r.Running) return QuestPlay.AlreadyPlaying;
+        if (!r.Running)
+        {
+            ReadHeld(c);
+            foreach (var p in PiecesOf(def))
+                if (!HoldsRoomFor(p)) { missingItemId = p.itemId; return QuestPlay.MissingPiece; }
+        }
         if (!NeedsMet(r, def, c)) return QuestPlay.NotMet;
         if (!r.Running)
         {
@@ -590,6 +598,16 @@ public sealed class QuestLog
         }
         Follow(r);
         return QuestPlay.Started;
+    }
+
+    // Does the character hold — worn or carried — a Raw copy of the piece with room for all of its folds? What a replay
+    // needs: it is folded from Raw again, and only a copy that can take every fold can finish it. Expects `held` read.
+    bool HoldsRoomFor(Piece p)
+    {
+        foreach (var h in held)
+            if (h.itemId == p.itemId && h.quality == Quality.Raw && h.folds + p.folds <= CraftingMath.FoldCap(Quality.Raw))
+                return true;
+        return false;
     }
 
     // Follow `pick` and nothing else — or, given nothing, follow nothing. True when anything changed.
@@ -753,13 +771,13 @@ public sealed class QuestLog
     }
 
     // ---- what a tutorial needs ---------------------------------------------------------------------------------------
-    // THE PIECES A QUEST HAS YOU FORGE AND FOLD, read once per quest from the items' own costs — item data never changes
-    // while the server runs — so the bill is never typed twice and never drifts from what the smith charges.
+    // THE PIECES A QUEST HAS YOU FOLD — every item a Folded To step names — read once per quest, with what one fold of
+    // a Raw piece costs, so the bill is never typed twice and never drifts from what the station charges.
     sealed class Piece
     {
         public string itemId;
         public Item material;
-        public int forgeMaterial, forgeGold, folds, foldMaterialEach, foldGoldEach;
+        public int folds, foldMaterialEach, foldGoldEach;
         public int lastStep;   // the last step that needs this piece: once past it, nothing of it is owed
     }
 
@@ -772,23 +790,20 @@ public sealed class QuestLog
         for (int i = 0; i < def.steps.Length; i++)
         {
             var o = def.steps[i].objective;
-            if (o.kind != QuestObjectiveKind.Have && o.kind != QuestObjectiveKind.FoldedTo) continue;
-            var item = ItemCatalog.Resolve(o.itemId);
-            if (item == null || item.forgeMaterialCost <= 0) continue;
+            if (o.kind != QuestObjectiveKind.FoldedTo || ItemCatalog.Resolve(o.itemId) == null) continue;
             Piece p = null;
             foreach (var q in list) if (q.itemId == o.itemId) { p = q; break; }
             if (p == null)
             {
-                // A forged piece starts Raw, and Raw folds with the same band of material it was forged from.
+                // A tutorial's piece is folded from Raw.
                 p = new Piece
                 {
-                    itemId = o.itemId, material = MaterialCatalog.Band(item.madeOf, CraftingMath.Band(Quality.Raw)),
-                    forgeMaterial = item.forgeMaterialCost, forgeGold = item.forgeGoldCost,
-                    foldMaterialEach = CraftingMath.FoldMaterialCost, foldGoldEach = CraftingMath.FoldGoldCost(Quality.Raw),
+                    itemId = o.itemId, material = MaterialCatalog.TemperDust,
+                    foldMaterialEach = CraftingMath.FoldMaterialCost(Quality.Raw), foldGoldEach = CraftingMath.FoldGoldCost(Quality.Raw),
                 };
                 list.Add(p);
             }
-            if (o.kind == QuestObjectiveKind.FoldedTo) p.folds = Mathf.Max(p.folds, o.folds);
+            p.folds = Mathf.Max(p.folds, o.folds);
             p.lastStep = i;
         }
         piecesOf[def.id] = list;
@@ -836,9 +851,8 @@ public sealed class QuestLog
         return true;
     }
 
-    // What is STILL needed from the step `r` is on to the quest's end: a piece already held is not forged again, folds
-    // already made are not paid again, a piece no step ahead needs costs nothing, and what a first run has free costs
-    // nothing. A finished tutorial is priced as a replay: from its first step, with nothing held counting. Then the
+    // What is STILL needed from the step `r` is on to the quest's end: folds already made are not paid again, a piece no
+    // step ahead needs costs nothing, and what a first run has free costs nothing. A finished tutorial is priced as a replay: from its first step, with nothing held counting. Then the
     // level the quest names. Expects `held` read.
     void AddNeeds(Record r, QuestDef def, Character c)
     {
@@ -850,18 +864,14 @@ public sealed class QuestLog
         foreach (var p in PiecesOf(def))
         {
             if (p.lastStep < at) continue;
-            bool have = QuestMath.Met(QuestObjectiveKind.Have, p.itemId, 1, judged);
             int foldsDone = QuestMath.Met(QuestObjectiveKind.FoldedTo, p.itemId, p.folds, judged)
                 ? p.folds : QuestMath.BestFolds(p.itemId, judged);
-            bool forgeFree = false;
             int foldsFree = 0;
             if (!r.finished)
                 foreach (var q in r.pieces)
-                    if (q.i == p.itemId) { forgeFree = q.g > 0; foldsFree = q.n; break; }
+                    if (q.i == p.itemId) { foldsFree = q.n; break; }
             int material = 0;
-            bool payForge = !have && !forgeFree;
-            QuestMath.AddForgedPiece(payForge ? p.forgeMaterial : 0, payForge ? p.forgeGold : 0,
-                                     Mathf.Max(0, p.folds - foldsDone - foldsFree),
+            QuestMath.AddForgedPiece(Mathf.Max(0, p.folds - foldsDone - foldsFree),
                                      p.foldMaterialEach, p.foldGoldEach, ref material, ref gold);
             AddMaterial(p.material, material);
         }
@@ -943,28 +953,22 @@ public sealed class QuestLog
         return spawnMap != null;
     }
 
-    // What stops the station step from being done now — measured against what the character holds this moment, and
-    // what this run still has free.
+    // What stops a Folded To step from being done now — measured against what the character holds this moment, worn or
+    // carried (a station works on both), and what this run still has free. Any other station step has nothing to pay.
     QuestBlock BlockFor(Record r, QuestDef def, Character c, QuestDef.Objective o, Item item)
     {
-        if (item == null) return QuestBlock.None;
-        if (o.kind == QuestObjectiveKind.Have)
-        {
-            if (FreeForgeOn(r, def, o.itemId) != null) return QuestBlock.None;
-            var material = MaterialCatalog.Band(item.madeOf, 1);
-            return QuestMath.CanPay(Count(c, material), item.forgeMaterialCost, c.Gold, item.forgeGoldCost)
-                ? QuestBlock.None : QuestBlock.CannotPay;
-        }
-        // Folded To: a station works only on a piece in the bag — on a replay, the piece made during it.
+        if (item == null || o.kind != QuestObjectiveKind.FoldedTo) return QuestBlock.None;
+        // On a replay, only the piece the replay is folding counts — once its first fold has named it; before that,
+        // every copy held.
         var judged = HeldFor(r);
-        if (!QuestMath.InBag(o.itemId, judged))
-            return QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, judged) ? QuestBlock.TakeItOff : QuestBlock.NotCarried;
-        var grade = LowestGradeInBag(o.itemId, judged);
+        if (r.replaying && !QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, judged)) judged = held;
+        if (!QuestMath.Met(QuestObjectiveKind.Have, o.itemId, 1, judged)) return QuestBlock.NotCarried;
+        var grade = LowestGradeHeld(o.itemId, judged);
         if (grade == Quality.Raw)
             foreach (var h in judged)
-                if (h.itemId == o.itemId && !h.worn && FreeFoldOn(r, def, o.itemId, h.copyId) != null) return QuestBlock.None;
-        var foldMaterial = MaterialCatalog.Band(item.madeOf, CraftingMath.Band(grade));
-        return QuestMath.CanPay(Count(c, foldMaterial), CraftingMath.FoldMaterialCost, c.Gold, CraftingMath.FoldGoldCost(grade))
+                if (h.itemId == o.itemId && FreeFoldOn(r, def, o.itemId, h.copyId) != null) return QuestBlock.None;
+        return QuestMath.CanPay(Count(c, MaterialCatalog.TemperDust), CraftingMath.FoldMaterialCost(grade), c.Gold,
+                                CraftingMath.FoldGoldCost(grade))
             ? QuestBlock.None : QuestBlock.CannotPay;
     }
 
@@ -977,13 +981,6 @@ public sealed class QuestLog
         if (r == null || r.finished) return 0;
         foreach (var p in r.pieces) if (p.i == itemId) return p.b;
         return 0;
-    }
-
-    QuestPieceWire FreeForgeOn(Record r, QuestDef def, string itemId)
-    {
-        if (r == null || def == null || r.finished || r.replaying || !Owed(r, def, itemId)) return null;
-        foreach (var p in r.pieces) if (p.i == itemId && p.g > 0) return p;
-        return null;
     }
 
     QuestPieceWire FreeFoldOn(Record r, QuestDef def, string itemId, string copyId)
@@ -1003,33 +1000,38 @@ public sealed class QuestLog
         return false;
     }
 
-    /// <summary>SERVER, at the forge: if this character's first run of a tutorial still has a free forge of
-    /// <paramref name="itemId"/>, use it up and say so — the press then charges nothing. Used up here, in the same call
-    /// that does the work, so ten presses in one frame are one free forge and nine paid ones.</summary>
-    public bool TakeFreeForge(string itemId)
+    /// <summary>SERVER: the first run of a tutorial still owes a step on <paramref name="itemId"/> — so recycling, selling
+    /// or dropping one is refused, or a new character could destroy the piece the tutorial needs and nothing could make
+    /// another. The title of that tutorial, or null when none owes it.</summary>
+    public string FirstRunOwing(string itemId)
     {
         foreach (var r in records.Values)
         {
-            var p = FreeForgeOn(r, QuestCatalog.Get(r.questId), itemId);
-            if (p == null) continue;
-            p.g = 0;
-            Touch(r);
-            return true;
+            if (r.finished || r.replaying) continue;
+            var def = QuestCatalog.Get(r.questId);
+            if (def != null && Owed(r, def, itemId)) return def.title;
         }
-        return false;
+        return null;
     }
 
-    /// <summary>SERVER, at the forge: <paramref name="copyId"/> is a new <paramref name="itemId"/>. Every running record
-    /// with that piece and no copy yet takes it as its run's copy — the one a replay's steps count, and the one a first
-    /// run's free folds go on.</summary>
-    public void NoteMade(string itemId, string copyId)
+    /// <summary>SERVER, at the fold: <paramref name="copyId"/>, a <paramref name="itemId"/> of grade
+    /// <paramref name="grade"/> with <paramref name="foldsBefore"/> folds, is being folded. Every REPLAY with that piece
+    /// and no copy yet takes it as its run's copy when it is Raw with room for all the piece's folds — the one the
+    /// replay's fold and wear steps count.</summary>
+    public void NoteReplayFold(string itemId, string copyId, Quality grade, int foldsBefore)
     {
-        if (string.IsNullOrEmpty(copyId)) return;
+        if (string.IsNullOrEmpty(copyId) || grade != Quality.Raw) return;
         foreach (var r in records.Values)
         {
-            if (!r.Running) continue;
-            foreach (var p in r.pieces)
-                if (p.i == itemId && p.c == "") { p.c = copyId; Touch(r); break; }
+            if (!r.replaying) continue;
+            var def = QuestCatalog.Get(r.questId);
+            if (def == null) continue;
+            foreach (var piece in PiecesOf(def))
+            {
+                if (piece.itemId != itemId || foldsBefore + piece.folds > CraftingMath.FoldCap(Quality.Raw)) continue;
+                foreach (var p in r.pieces)
+                    if (p.i == itemId && p.c == "") { p.c = copyId; Touch(r); break; }
+            }
         }
     }
 
@@ -1060,24 +1062,6 @@ public sealed class QuestLog
         return false;
     }
 
-    /// <summary>The items whose next forge is free for this character — what the station's forge rows say.</summary>
-    public string[] FreeForges()
-    {
-        List<string> list = null;
-        foreach (var r in records.Values)
-        {
-            var def = QuestCatalog.Get(r.questId);
-            if (def == null) continue;
-            foreach (var p in r.pieces)
-                if (p.g > 0 && FreeForgeOn(r, def, p.i) != null)
-                {
-                    list ??= new List<string>(4);
-                    if (!list.Contains(p.i)) list.Add(p.i);
-                }
-        }
-        return list != null ? list.ToArray() : Array.Empty<string>();
-    }
-
     // ---- what is watching health ------------------------------------------------------------------------------------
     int watchedAt = -1;
     bool watching;
@@ -1102,10 +1086,10 @@ public sealed class QuestLog
         }
     }
 
-    static Quality LowestGradeInBag(string itemId, List<QuestHeld> from)
+    static Quality LowestGradeHeld(string itemId, List<QuestHeld> from)
     {
         var lowest = Quality.A;
-        foreach (var h in from) if (h.itemId == itemId && !h.worn && h.quality < lowest) lowest = h.quality;
+        foreach (var h in from) if (h.itemId == itemId && h.quality < lowest) lowest = h.quality;
         return lowest;
     }
 

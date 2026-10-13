@@ -45,8 +45,8 @@ public class UnitEquipment : MonoBehaviour
         SeatStartingGear();
     }
 
-    // Every starting piece as a copy AT THE THREE SETTINGS ABOVE — the same door a forged piece and a grant come
-    // through, so nothing here is in a state a station could not have produced.
+    // Every starting piece as a copy AT THE THREE SETTINGS ABOVE — through the same rolling door a grant and a dropped
+    // piece come through (EquipmentInstance.CreateAt), always Common.
     void SeatStartingGear()
     {
         equipped.Clear();
@@ -77,8 +77,8 @@ public class UnitEquipment : MonoBehaviour
     public int Version { get { EnsureSpawnedGear(); return version; } }
 
     /// <summary>A respawn is a fresh creature, so it wears fresh copies: everything is re-rolled from the authored
-    /// starting gear. New objects, never the old ones edited — a copy the last life gave up as a drop may be sitting in
-    /// somebody's bag. Called from <c>MobRespawn.Reactivate</c>, the one revive choke point.</summary>
+    /// starting gear. New objects, never the old ones edited. Called from <c>MobRespawn.Reactivate</c>, the one revive
+    /// choke point.</summary>
     public void ReseatForNewLife()
     {
         spawned = true;

@@ -76,11 +76,11 @@ public class GuideMarker : MonoBehaviour
     }
 
     static bool NeedsItem(GuideSpot s) =>
-        s == GuideSpot.StationForgeRow || s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton
+        s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton
         || s == GuideSpot.BagRow || s == GuideSpot.ShopBuyButton;
 
     /// <summary>A part of a station's window — it counts only in the station the step is worked at.</summary>
     public static bool NeedsStation(GuideSpot s) =>
-        s == GuideSpot.StationForgePage || s == GuideSpot.StationFoldPage || s == GuideSpot.StationBack
-        || s == GuideSpot.StationForgeRow || s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton;
+        s == GuideSpot.StationFoldPage || s == GuideSpot.StationBack
+        || s == GuideSpot.StationPieceRow || s == GuideSpot.StationFoldButton;
 }

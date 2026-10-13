@@ -23,7 +23,7 @@ MonoBehaviour:
   category: 1
   cardSlots: 0
   weight: 8
-  zeny: 150
+  zeny: 0
   madeOf: 0
   forgeMaterialCost: 0
   forgeGoldCost: 0
@@ -44,4 +44,4 @@ MonoBehaviour:
     volume: 1
     pitch: {x: 0.95, y: 1.05}
   blockChance: 0
-  description: The standard field remedy. Bitter, and worth it.
+  description: A sliver of ice that will not melt. Whatever it touches bites cold.

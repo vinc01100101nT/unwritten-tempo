@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// THE STATION WINDOW — what opens when you press F on a smith, a loom or a tannery. It lists what that station
-/// can forge, and what you are carrying that it will work on; picking a piece shows what a fold and a quench
-/// would cost and what a quench would do.
+/// THE STATION WINDOW — what opens when you press F on a smith, a loom or a tannery. It lists what you are wearing
+/// and carrying that the station will work on; picking a piece shows what a fold and a quench would cost and what a
+/// quench would do.
 ///
 /// <para><b>It works nothing out.</b> Every number on it — the costs, the odds, the fold cap — arrives from the
 /// server in one <see cref="CraftStationOffer"/>, and the four buttons only ask. Which stat an Ink writes, which
@@ -29,9 +29,9 @@ public class CraftStationPanel : MonoBehaviour
     string lastResult;
     bool lastResultOk;
 
-    // WHICH PAGE IS OPEN. The window opens on a menu of the five things a station does, and each opens its own
+    // WHICH PAGE IS OPEN. The window opens on a menu of the four things a station does, and each opens its own
     // page in the same window with a Back row — one thing on screen at a time, instead of every list at once.
-    enum Page { Menu, Forge, Fold, Quench, Ink, Recycle }
+    enum Page { Menu, Fold, Quench, Ink, Recycle }
     Page page = Page.Menu;
 
     static readonly Color Sub = UiKit.TextDim;
@@ -153,7 +153,6 @@ public class CraftStationPanel : MonoBehaviour
         if (page == Page.Menu)
         {
             Line(CraftStations.Label(station), 18, UiKit.TitleText);
-            Row("Forge", () => Open(Page.Forge), GuideSpot.StationForgePage);
             Row("Fold", () => Open(Page.Fold), GuideSpot.StationFoldPage);
             Row("Quench", () => Open(Page.Quench));
             Row("Ink", () => Open(Page.Ink));
@@ -164,9 +163,7 @@ public class CraftStationPanel : MonoBehaviour
         Line(CraftStations.Label(station) + "  ·  " + PageWord(page), 18, UiKit.TitleText);
         Row("← Back", () => Open(Page.Menu), GuideSpot.StationBack);
 
-        if (page == Page.Forge) { ForgePage(); return; }
-
-        // ---- every other page starts with the pieces this station works on ---------------------------
+        // ---- every page starts with the pieces this station works on ---------------------------------
         int workable = 0;
         for (int i = 0; i < c.Bag.Count; i++)
         {
@@ -183,7 +180,8 @@ public class CraftStationPanel : MonoBehaviour
             if (CraftStations.For(kv.Value.def) != station) continue;
             workable++;
             var slot = kv.Key;
-            Row((slot == pickedWorn ? "> " : "") + ItemTooltip.CopyTitle(kv.Value) + " (equipped)", () => PickWorn(slot));
+            Row((slot == pickedWorn ? "> " : "") + ItemTooltip.CopyTitle(kv.Value) + " (equipped)", () => PickWorn(slot),
+                GuideSpot.StationPieceRow, kv.Value.def.id);
         }
         if (workable == 0) { Line("You are carrying nothing this station works on.", 12, Sub); return; }
 
@@ -225,7 +223,6 @@ public class CraftStationPanel : MonoBehaviour
     {
         switch (p)
         {
-            case Page.Forge:   return "Forge";
             case Page.Fold:    return "Fold";
             case Page.Quench:  return "Quench";
             case Page.Ink:     return "Ink";
@@ -234,39 +231,18 @@ public class CraftStationPanel : MonoBehaviour
         }
     }
 
-    // ---- what this station can make -----------------------------------------------------------------
-    void ForgePage()
+    // The name of the material a price is in, by the id the server sent.
+    static string MaterialName(string id)
     {
-        int forgeable = 0;
-        foreach (var def in ItemCatalog.All)
-        {
-            if (def == null || def.forgeMaterialCost <= 0) continue;
-            if (CraftStations.For(def) != station) continue;
-            forgeable++;
-            var d = def;
-            var band1 = MaterialCatalog.Band(d.madeOf, 1);
-            string forgeMaterial = band1 != null ? band1.displayName : "material";
-            // FREE when the server says so — a tutorial's first run takes nothing it has you make.
-            string price = QuestStore.FreeForge(d.id) ? "Free"
-                : d.forgeMaterialCost + " " + forgeMaterial + " · " + d.forgeGoldCost + "g";
-            Row(d.displayName + "   " + price,
-                () => { var me = GameNetwork.MyPlayer; if (me != null) me.AskToForge(d.id); },
-                GuideSpot.StationForgeRow, d.id);
-        }
-        if (forgeable == 0) Line("Nothing here is made of this.", 12, Sub);
-    }
-
-    string BandMaterialName()
-    {
-        var material = ItemCatalog.Resolve(offer.foldMaterialId);
-        return material != null ? material.displayName : offer.foldMaterialId;
+        var material = ItemCatalog.Resolve(id);
+        return material != null ? material.displayName : id;
     }
 
     void FoldControls(EquipmentInstance inst)
     {
         string itemId = inst.def.id;
         if (offer.canFold)
-            Row("Fold   " + (offer.foldFree ? "Free" : offer.foldMaterialCost + " " + BandMaterialName() + " · " + offer.foldGoldCost + "g"),
+            Row("Fold   " + (offer.foldFree ? "Free" : offer.foldMaterialCost + " " + MaterialName(offer.foldMaterialId) + " · " + offer.foldGoldCost + "g"),
                 () =>
                 {
                     var me = GameNetwork.MyPlayer;
@@ -295,7 +271,7 @@ public class CraftStationPanel : MonoBehaviour
             return;
         }
 
-        Row("Quench   " + offer.quenchMaterialCost + " " + BandMaterialName() + " · " + offer.quenchGoldCost + "g",
+        Row("Quench   " + offer.quenchMaterialCost + " " + MaterialName(offer.quenchMaterialId) + " · " + offer.quenchGoldCost + "g",
             () =>
             {
                 var me = GameNetwork.MyPlayer;
@@ -358,8 +334,8 @@ public class CraftStationPanel : MonoBehaviour
         if (offer.recycleGold > 0) { if (back.Length > 0) back.Append(", "); back.Append(offer.recycleGold).Append(" gold"); }
         Row("Recycle   → " + (back.Length > 0 ? back.ToString() : "nothing"),
             () => AskToRecycle(itemId));
-        Line("Recycling destroys the piece. What comes back is half of the forge, the quenches it climbed, the folds on it "
-             + "and the stats written on it — failed quenches are not counted.", 11, Sub, 2);
+        Line("Breaks the piece down. You get back half the Temper Dust, Quench Oil and gold its folds and quenches took. "
+             + "Folds made at Raw return nothing.", 11, Sub, 2);
     }
 
     // Ink and Recycle, sent for the picked piece wherever it is: worn in a slot, or at a bag position.

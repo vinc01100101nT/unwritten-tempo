@@ -52,7 +52,7 @@ public class WorldShops : ScriptableObject
     }
 
     /// <summary>Does <paramref name="shop"/> sell <paramref name="def"/>: it is on the stock list, has a price, and is not
-    /// gear — gear is forged at a station, never bought (decided 2026-09-20).</summary>
+    /// gear — gear is never bought (decided 2026-09-20).</summary>
     public static bool Sells(Row shop, Item def)
     {
         if (shop == null || def == null || def.buyPrice <= 0 || def.slot != EquipSlotType.None) return false;

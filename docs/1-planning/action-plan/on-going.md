@@ -121,7 +121,7 @@ Every task carries:
 - [ON-GOING] `MT-28` **`[E]` Build a shop screen** — a buy price of 0 means no shop sells the item; a sell value of 0 means no shopkeeper buys it. — **4–5 days** — see [Roadmap to Launch](../roadmap-to-launch.md)
   *Done when:* you can sell a piece of loot for gold, buy a potion back, and both the gold and the bag survive a restart.
 
-- [ON-GOING] `MT-29` **`[A]` Stock the first shops** — Lastline's potions cost twice their sell value (chosen 2026-10-04, yours to change). — **1 day** — see [Roadmap to Launch](../roadmap-to-launch.md)
+- [ON-GOING] `MT-29` **`[A]` Stock the first shops** — a shop buys a potion back for half its price, rounded down ([Healing Potions and Mana Draughts](../../2-systems/healing-and-mana-potions.md)). — **1 day** — see [Roadmap to Launch](../roadmap-to-launch.md)
   *Done when:* every town with a shopkeeper sells a list you chose, not a list the game made up.
 
 ---

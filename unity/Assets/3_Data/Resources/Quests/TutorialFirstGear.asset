@@ -15,9 +15,8 @@ MonoBehaviour:
   id: tutorial.first-gear
   title: Your First Gear
   category: 0
-  description: Gunnar the Smith makes gear from Copper and gold. The first time you
-    play this, forging a sword, a chainmail and a pair of iron sabatons, and the folds
-    that make them stronger, costs you nothing.
+  description: Gunnar the smith shows you how to fold the gear you arrived in. A fold
+    makes a piece worth more, and the first time you play this your folds are free.
   unlockCondition: 1
   steps:
   - id: talk-gunnar
@@ -30,20 +29,6 @@ MonoBehaviour:
     hints:
     - spot: 0
       text: Go to Gunnar the Smith and press F beside him.
-  - id: forge-sword
-    text: Forge a Sword.
-    objective:
-      kind: 1
-      townspersonId: 
-      itemId: item.sword
-      folds: 1
-    hints:
-    - spot: 3
-      text: Go back to the smith's list.
-    - spot: 1
-      text: Forge makes a new piece from Copper and gold.
-    - spot: 4
-      text: Forge a Sword here. What it costs is on the row.
   - id: fold-sword
     text: Fold your Sword five times.
     objective:
@@ -60,20 +45,6 @@ MonoBehaviour:
       text: Pick your Sword.
     - spot: 6
       text: Fold it. What a fold costs is on the button.
-  - id: forge-chainmail
-    text: Forge a Chainmail.
-    objective:
-      kind: 1
-      townspersonId: 
-      itemId: item.chainmail
-      folds: 1
-    hints:
-    - spot: 3
-      text: Go back to the smith's list.
-    - spot: 1
-      text: Forge makes a new piece from Copper and gold.
-    - spot: 4
-      text: Forge a Chainmail here. What it costs is on the row.
   - id: fold-chainmail
     text: Fold your Chainmail five times.
     objective:
@@ -90,20 +61,6 @@ MonoBehaviour:
       text: Pick your Chainmail.
     - spot: 6
       text: Fold it. What a fold costs is on the button.
-  - id: forge-sabatons
-    text: Forge Iron Sabatons.
-    objective:
-      kind: 1
-      townspersonId: 
-      itemId: item.iron-sabatons
-      folds: 1
-    hints:
-    - spot: 3
-      text: Go back to the smith's list.
-    - spot: 1
-      text: Forge makes a new piece from Copper and gold.
-    - spot: 4
-      text: Forge Iron Sabatons here. What they cost is on the row.
   - id: fold-sabatons
     text: Fold your Iron Sabatons five times.
     objective:

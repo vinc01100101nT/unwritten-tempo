@@ -32,7 +32,9 @@ public class SaveData
     // it changes — `hotbarBindings` below is read once from an older save to carry its bar across and never written
     // again. Every piece of gear carries its own id (equipCopyIds / bagCopyIds), and the moment every ultimate is
     // ready again rides the save (sharedUltimateDueAt).
-    public const int CurrentVersion = 18;
+    // v19: every piece of gear's roll text carries its rarity as a sixth part, and Copper to Wyrmhide are gone — a fold
+    // takes Temper Dust and a quench Quench Oil.
+    public const int CurrentVersion = 19;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero

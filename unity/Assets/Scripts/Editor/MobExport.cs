@@ -14,7 +14,8 @@ using UnityEngine;
 ///
 /// <para><b>Every value comes from the game's own functions, never from here:</b> combat numbers from
 /// <see cref="MonsterDefStats"/> (what the Mob Table and <c>/mobinfo</c> show), the size group from
-/// <see cref="MobSizes"/>, drops from <see cref="CreatureDrops.Line"/>, and homes from
+/// <see cref="MobSizes"/>, the weapon, gear grade, folds and stat points straight off the catalog entry, drops from
+/// <see cref="CreatureDrops.Line"/>, and homes from
 /// <see cref="WorldSpawns.HomesOf"/> — so a row that draws a random mix is left out exactly as <c>/where</c> leaves
 /// it out. Map names come from the world layout, the one home of them.</para>
 ///
@@ -31,8 +32,8 @@ public static class MobExport
 
     [Serializable] class Creature
     {
-        public string id, name, kind, element, size, biome, drops;
-        public int level, elementLevel, hp, atk, def, flee, xp;
+        public string id, name, kind, element, size, biome, drops, weapon, gear;
+        public int level, elementLevel, hp, atk, def, flee, xp, str, agi, vit, intel, dex, luk;
         public Home[] homes;
     }
 
@@ -77,6 +78,9 @@ public static class MobExport
                 def = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def),
                 flee = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee),
                 xp = CreatureKinds.KillExperience(d),
+                weapon = d.Weapon != null ? d.Weapon.displayName : "",
+                gear = d.startingGear != null && d.startingGear.Length > 0 ? d.gearQuality + " +" + d.gearFolds : "",
+                str = d.str, agi = d.agi, vit = d.vit, intel = d.intel, dex = d.dex, luk = d.luk,
                 drops = CreatureDrops.Line(d),
                 homes = h,
             });

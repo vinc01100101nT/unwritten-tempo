@@ -78,7 +78,7 @@ public class InventoryStore : MonoBehaviour
     }
 
     /// <summary>Add ONE fresh copy of a piece of equipment to this machine's own bag and hand it back — Raw,
-    /// unfolded, nothing written on it, which is what a piece that has not been to a forge is.</summary>
+    /// unfolded, nothing written on it, which is what a piece nobody has worked on is.</summary>
     public EquipmentInstance GiveEquipment(Item def)
     {
         if (def == null || def.slot == EquipSlotType.None || Character.Instance == null) return null;

@@ -24,12 +24,6 @@ public struct BagWire
     /// <summary>Each piece of gear's own id ("" for a stack) — what a hotbar slot names to mean exactly that piece.</summary>
     public string[] copyIds;
 
-    /// <summary>How rare each one is, as the server decided it (<see cref="Rarities.Of"/>) — sent, because a weapon's
-    /// rarity is read off its trademark skill, and a player's machine must not answer that from its own copy of the
-    /// skills. Parallel to <see cref="itemIds"/>; <see cref="wornRarities"/> is the same for what is worn.</summary>
-    public int[] rarities;
-    public int[] wornRarities;
-
     /// <summary>Which of these were picked up since the person last looked. Rebuilt on arrival, so without
     /// carrying it the "new" marker could never appear on anything.</summary>
     public bool[] isNew;
@@ -96,12 +90,6 @@ public struct BagWire
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
                           out wire.wornCards, out wire.wornRolls, out wire.wornCopyIds);
-        wire.wornRarities = new int[wire.wornCopyIds != null ? wire.wornCopyIds.Length : 0];
-        foreach (var worn in c.Gear.Worn)
-        {
-            int wornAt = System.Array.IndexOf(wire.wornCopyIds, worn.Value.copyId);
-            if (wornAt >= 0) wire.wornRarities[wornAt] = (int)Rarities.Of(worn.Value.def, worn.Value);
-        }
 
         if (alsoTheBar)
         {
@@ -121,7 +109,6 @@ public struct BagWire
         wire.cards = new string[n];
         wire.rolls = new string[n];
         wire.copyIds = new string[n];
-        wire.rarities = new int[n];
         wire.isNew = new bool[n];
 
         int at = 0;
@@ -132,7 +119,6 @@ public struct BagWire
             wire.itemIds[at] = e.def.id;
             wire.counts[at] = Mathf.Max(1, e.count);
             wire.isNew[at] = e.isNew;
-            wire.rarities[at] = (int)Rarities.Of(e.def, e.instance);
             if (e.IsEquip && e.instance != null)
             {
                 e.instance.ToSaved(out wire.refines[at], out wire.cards[at], out wire.rolls[at], out wire.copyIds[at]);
@@ -172,16 +158,12 @@ public struct BagWire
                     entry.count = 1;
                     entry.instance = EquipmentInstance.FromSaved(def, At(refines, i, 0), At(cards, i, ""),
                                                                  At(rolls, i, "") ?? "", At(copyIds, i, ""));
-                    TakeRarity(entry.instance, rarities, i);
                 }
                 c.Bag.Add(entry);
             }
         }
 
         c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRolls, wornCopyIds);
-        if (wornCopyIds != null)
-            foreach (var worn in c.Gear.Worn)
-                TakeRarity(worn.Value, wornRarities, System.Array.IndexOf(wornCopyIds, worn.Value.copyId));
         c.SetGold(gold);
         c.TakeToldBagRoom(weight, weightCap, slotsUsed);
         if (buyback != null) c.Buyback.TakeFromServer(buyback);
@@ -205,15 +187,4 @@ public struct BagWire
     static readonly int TabCount = System.Enum.GetValues(typeof(ItemCategory)).Length;
 
     static T At<T>(IList<T> a, int i, T fallback) => a != null && i < a.Count ? a[i] : fallback;
-
-    // The rarity the server sent for one piece, laid on it. A message from a build that sent none leaves it unsent, and
-    // the piece falls back to reading its own data.
-    static void TakeRarity(EquipmentInstance piece, int[] sent, int i)
-    {
-        if (piece == null || sent == null || i < 0 || i >= sent.Length) return;
-        int r = sent[i];
-        if (r < (int)Rarity.Common || r > (int)Rarity.Legendary) return;
-        piece.rarity = (Rarity)r;
-        piece.raritySent = true;
-    }
 }

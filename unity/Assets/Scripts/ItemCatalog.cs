@@ -15,24 +15,22 @@ public static class ItemCatalog
     static Dictionary<string, Item> itemsById;
     static Dictionary<string, Card> cardsByName;
 
-    // Every item, split once into what is worn in each place and what is not worn at all. Built on first ask and kept.
+    // Every worn item, filed under the place it is worn. Built on first ask and kept.
     static Dictionary<EquipSlotType, List<Item>> wornBySlot;
-    static List<Item> unworn;
-    // The element converters, filed under the element each one gives: a creature's roll adds only its own element's.
+    // The element converters, filed under the element each one gives: a creature's find is only its own element's.
     static Dictionary<Element, List<Item>> convertersByElement;
 
     static void EnsurePools()
     {
         if (wornBySlot != null) return;
         wornBySlot = new Dictionary<EquipSlotType, List<Item>>();
-        unworn = new List<Item>();
         convertersByElement = new Dictionary<Element, List<Item>>();
         foreach (var it in Resources.LoadAll<Item>("Items"))
         {
             if (it == null) continue;
             if (it.slot == EquipSlotType.None)
             {
-                // A quest item is never put down, so it is never handed out at random either.
+                // A quest item is never put down, and a material comes from its own rolls, so neither is a find.
                 if (it.category == ItemCategory.Quest || it.materialKind != MaterialKind.None) continue;
                 if (ConverterElement(it, out var element))
                 {
@@ -40,7 +38,6 @@ public static class ItemCatalog
                         convertersByElement[element] = own = new List<Item>();
                     own.Add(it);
                 }
-                else unworn.Add(it);
                 continue;
             }
             // A worn piece made of nothing is worn for its look alone and is not handed out at random.
@@ -69,34 +66,15 @@ public static class ItemCatalog
         return wornBySlot.TryGetValue(slot, out var list) && list.Count > 0 ? list[CombatRng.Range(0, list.Count)] : null;
     }
 
-    /// <summary>A random item that is neither worn nor a material — a potion, a food — and never a quest item, plus the
-    /// element converters of <paramref name="creatureElement"/> alone, all equally likely. Null when none exists.
-    /// Materials are left out on purpose: which grade a creature drops is its level's answer (<see cref="CreatureLoot"/>),
-    /// and a random one would hand a level-3 creature's killer the top grade. A converter comes only from a creature of
-    /// its own element, so a Neutral creature never drops one.</summary>
-    public static Item RandomConsumable(Element creatureElement)
+    /// <summary>The element converters that give <paramref name="element"/> — what a creature of that element gives up
+    /// as its find (<see cref="CreatureFinds"/>). Empty for an element that has no converter.</summary>
+    public static IReadOnlyList<Item> ConvertersOf(Element element)
     {
         EnsurePools();
-        convertersByElement.TryGetValue(creatureElement, out var own);
-        int ownCount = own != null ? own.Count : 0;
-        int total = unworn.Count + ownCount;
-        if (total == 0) return null;
-        int pick = CombatRng.Range(0, total);
-        return pick < unworn.Count ? unworn[pick] : own[pick - unworn.Count];
+        return convertersByElement.TryGetValue(element, out var own) ? own : NoItems;
     }
 
-    /// <summary><paramref name="item"/>'s share of what <see cref="RandomConsumable"/> picks from for a creature of
-    /// <paramref name="creatureElement"/> — one over the size of that pool, or 0 when the pool never holds it. The same
-    /// pool the pick reads, so what a creature is said to drop is what it drops.</summary>
-    public static float ShareOfRandomConsumable(Item item, Element creatureElement)
-    {
-        if (item == null) return 0f;
-        EnsurePools();
-        convertersByElement.TryGetValue(creatureElement, out var own);
-        int total = unworn.Count + (own != null ? own.Count : 0);
-        if (total == 0) return 0f;
-        return unworn.Contains(item) || (own != null && own.Contains(item)) ? 1f / total : 0f;
-    }
+    static readonly List<Item> NoItems = new List<Item>();
 
     /// <summary>The element a converter item gives, read off the skill it runs — the effect is the ONE place a
     /// converter's element lives, so the item carries no second copy of it.</summary>
@@ -118,11 +96,43 @@ public static class ItemCatalog
         return false;
     }
 
+    public struct Restores { public bool health, mana, healthOverTime, manaOverTime; }
+
+    // What an item's skill gives back, read off its effects once per skill and kept: an instant heal restores health; a
+    // timed health or mana regeneration restores that one over time. Auto-potion asks this to find a drink.
+    static readonly Dictionary<string, Restores> restoresBySkill = new Dictionary<string, Restores>();
+
+    public static Restores WhatItRestores(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return default;
+        if (restoresBySkill.TryGetValue(skillId, out var known)) return known;
+        var r = new Restores();
+        var def = SkillCatalog.Get(skillId);
+        if (def != null && def.bindings != null)
+            for (int b = 0; b < def.bindings.Count; b++)
+            {
+                var fx = def.bindings[b]?.effects;
+                if (fx == null) continue;
+                for (int i = 0; i < fx.Count; i++)
+                {
+                    var e = fx[i];
+                    if (e == null) continue;
+                    if (e.kind == SkillEffectKind.Heal) r.health = true;
+                    else if (e.kind == SkillEffectKind.SubStatBuff && e.subStat == SubStat.HPRegen) { r.health = true; r.healthOverTime = true; }
+                    else if (e.kind == SkillEffectKind.SubStatBuff && e.subStat == SubStat.MPRegen) { r.mana = true; r.manaOverTime = true; }
+                }
+            }
+        restoresBySkill[skillId] = r;
+        return r;
+    }
+
     /// <summary>Forget every cached list, so a newly authored or changed item is picked up. The editor calls this before
     /// writing the wiki's tables; the game never needs to.</summary>
     public static void Reload()
     {
-        itemsById = null; cardsByName = null; wornBySlot = null; unworn = null; convertersByElement = null; all = null;
+        itemsById = null; cardsByName = null; wornBySlot = null; convertersByElement = null; all = null;
+        restoresBySkill.Clear();
+        CreatureFinds.Reload();
     }
 
     /// <summary>The shared <see cref="Item"/> definition for a saved id, or null if it no longer exists.</summary>

@@ -644,11 +644,13 @@ function mobTable() {
   if (!all.length) return '<p><em>No creatures exported yet — run the Mob Table\'s Save All in the editor.</em></p>';
   const where = m => (m.homes || []).length ? m.homes.map(h => `${esc(h.name)} ×${h.count}`).join(', ') : '—';
   return '<div class="dbscroll"><table><thead><tr>' +
-    ['Name', 'Lv', 'Locations', 'Kind', 'Element', 'Size', 'Biome', 'HP', 'ATK', 'DEF', 'FLEE', 'XP', 'Drops'].map(h => `<th>${h}</th>`).join('') +
+    ['Name', 'Lv', 'Locations', 'Kind', 'Element', 'Size', 'Biome', 'Weapon', 'Gear', 'STR / AGI / VIT / INT / DEX / LUK', 'HP', 'ATK', 'DEF', 'FLEE', 'XP', 'Drops'].map(h => `<th>${h}</th>`).join('') +
     '</tr></thead><tbody>' +
     all.map(m => '<tr>' +
       `<td><b>${esc(m.name || m.id)}</b></td><td>${m.level}</td><td class="long">${where(m)}</td><td>${esc(m.kind)}</td>` +
       `<td>${esc(m.element)} ${m.elementLevel}</td><td>${esc(m.size)}</td><td>${esc(m.biome)}</td>` +
+      `<td>${esc(m.weapon || '—')}</td><td>${esc(m.gear || '—')}</td>` +
+      `<td>${m.str === undefined ? '—' : [m.str, m.agi, m.vit, m.intel, m.dex, m.luk].join(' / ')}</td>` +
       `<td>${m.hp}</td><td>${m.atk}</td><td>${m.def}</td><td>${m.flee}</td><td>${m.xp}</td>` +
       `<td class="long">${esc(m.drops || '')}</td></tr>`).join('') +
     '</tbody></table></div>';
@@ -732,10 +734,9 @@ function itemRows(headers, list, row) {
 function equipmentTable() {
   const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Weapon' || it.type === 'Armor')
     .sort((a, b) => a.slotOrder - b.slotOrder || a.name.localeCompare(b.name));
-  return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Forge cost', 'Card slots', 'Weight', 'Sells for'], list, it =>
+  return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Card slots', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>` +
     `<td>${esc(dash(it.weaponType))}</td><td>${esc(dash(it.reach))}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
-    `<td>${it.forgeUnits > 0 ? `${it.forgeUnits} ${esc(it.forgeMaterial)} + ${it.forgeGold} gold` : '—'}</td>` +
     `<td>${dash(it.cardSlots)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
 }
 function materialTable() {
@@ -751,14 +752,14 @@ function materialTable() {
   };
   return itemRows(['Name', 'Description', 'Kind', 'Band / Tier', 'Rarity', 'Merges into', 'Dropped by', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.materialKind)}</td>` +
-    `<td>${it.materialKind === 'Ink' || it.materialKind === 'Salt' ? 'Tier' : 'Band'} ${it.materialStep}</td><td>${esc(dash(it.rarity))}</td>` +
+    `<td>${it.materialStep > 0 ? `${it.materialKind === 'Ink' || it.materialKind === 'Salt' ? 'Tier' : 'Band'} ${it.materialStep}` : '—'}</td><td>${esc(dash(it.rarity))}</td>` +
     `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
 }
-// Every trademark a forge can roll, its rarity, and what it raises at each grade.
+// Every trademark a new weapon can roll, its chance, and what it raises at each grade.
 function trademarkTable() {
   const grades = (ITEMS && ITEMS.grades) || [], list = (ITEMS && ITEMS.trademarks) || [];
-  return itemRows(['Name', 'Weapon', 'Rarity', 'Chance'].concat(grades), list, t =>
-    `<td><b>${esc(t.name)}</b></td><td>${esc(t.weapon)}</td><td>${esc(dash(t.rarity))}</td><td>${esc(t.chance)}</td>` +
+  return itemRows(['Name', 'Weapon', 'Chance'].concat(grades), list, t =>
+    `<td><b>${esc(t.name)}</b></td><td>${esc(t.weapon)}</td><td>${esc(t.chance)}</td>` +
     (t.byGrade || []).map(g => `<td>${(g.lines || []).length ? g.lines.map(l => `<div>${esc(l)}</div>`).join('') : '—'}</td>`).join(''));
 }
 // Every armour word, the slot that rolls it, the pieces worn there, and what it does at each grade.
@@ -809,7 +810,7 @@ function skillTable(b) {
     const all = (SKILLS && SKILLS.skills) || [];
     list = all.filter(s => s.weapon === b.source && (!b.group || skillGroup(s) === b.group))
       .map(s => ({ name: s.name, form: s.form, symbol: s.symbol, color: (SKILLS.weaponColors || {})[s.weapon], cost: s.cost,
-                   flavor: s.description, effects: s.effects || [], trigger: s.trigger, trademark: s.trademark, trademarkRarity: s.trademarkRarity, unpublished: !s.published }));
+                   flavor: s.description, effects: s.effects || [], trigger: s.trigger, trademark: s.trademark, unpublished: !s.published }));
     if (!list.length) return h + `<p class="skill-sub"><em>No ${esc(b.group || '')} skills exported for ${esc(b.source)} yet — run the Skill Composer's export.</em></p>`;
   }
   h += '<div class="skillgrid">';
@@ -819,7 +820,7 @@ function skillTable(b) {
       (s.unpublished ? '<span class="cost"><em>not in the game yet</em></span>' : (s.cost ? `<span class="cost">${inline(s.cost)}</span>` : '')) + '</div>' +
       (s.form ? `<div class="flavor"><em>${inline(s.form)}</em></div>` : '') +
       (s.trigger ? `<div class="flavor"><b>${inline(s.trigger)}</b></div>` : '') +
-      (s.trademark ? `<div class="flavor">Trademark weapon: <b>${inline(s.trademark)}</b>${s.trademarkRarity ? ` — ${esc(s.trademarkRarity)}` : ''}</div>` : '') +
+      (s.trademark ? `<div class="flavor">Trademark weapon: <b>${inline(s.trademark)}</b></div>` : '') +
       (s.flavor ? String(s.flavor).split('\n').filter(x => x.trim()).map(x => `<div class="flavor">${inline(x)}</div>`).join('') : '') +
       (s.effects && s.effects.length
         ? '<ul class="effect">' + s.effects.map(e => `<li>${inline(e)}</li>`).join('') + '</ul>'

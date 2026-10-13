@@ -1,79 +1,74 @@
 ---
-status: "LIVE — every number below was read from the saved item assets and the crafting arithmetic on 2026-09-21. Change the asset or the code, then this page."
+status: "LIVE — every number below was read from the saved item assets and the crafting arithmetic on 2026-10-13. Change the asset or the code, then this page."
 owner: vince
-last-updated: 2026-10-03
+last-updated: 2026-10-13
 tags:
   - systems-combat-design
 ---
 
-# Crafting Tables — what every station takes, band by band
+# Crafting Tables — what every station takes, grade by grade
 
 The reference companion to [the V4 design](README.md). That page says WHY; this one is only the numbers as
-they are in the game today. Costs live on the item assets under `unity/Assets/3_Data/Resources/Items/`; every
-per-grade rule lives in `unity/Assets/Scripts/CraftingMath.cs`. Nothing here is typed from memory.
+they are in the game today. Sell prices live on the item assets under `unity/Assets/3_Data/Resources/Items/`; every
+cost and per-grade rule lives in `unity/Assets/Scripts/CraftingMath.cs`, and what a kill drops in
+`unity/Assets/Scripts/CreatureLoot.cs`. Nothing here is typed from memory.
 
-## 1. The three stations and their bands
+## 1. The three stations and their two materials
 
-A piece is worked at the station of its own material, and every fold or quench is paid in the band material
-of the piece's CURRENT grade. A design is always forged from band 1.
+A piece is worked at the station of its own material — metal at a smith, cloth at a loom, leather at a tannery. A
+station does four things: **Fold, Quench, Ink, Recycle**. All three stations take the same two materials: every
+fold is paid in **Temper Dust** and every quench in **Quench Oil**, the amount set by the piece's CURRENT grade.
 
-| Band | Grade it folds and quenches | Smith (metal) | Loom (cloth) | Tannery (leather) |
-| --- | --- | --- | --- | --- |
-| 1 | Raw | Copper | Burlap | Rawhide |
-| 2 | F | Bronze | Hemp | Hide |
-| 3 | E | Iron | Linen | Buckskin |
-| 4 | D | Steel | Wool | Leather |
-| 5 | C | Silver | Cotton | Cordovan |
-| 6 | B | Mithril | Silk | Shagreen |
-| 7 | A | Adamant | Brocade | Wyrmhide |
+Neither has tiers, so neither merges. Both come from creatures only, and no shop sells them. Each kill gives 0.6
+Temper Dust and 0.06 Quench Oil for each step of the creature's level (1–14 is step 1, 15–28 step 2, 29–42 step 3,
+43–56 step 4, 57–70 step 5, 71–84 step 6, 85 and above step 7), times 10 for an elite and 20 for a shadow, times
+what the grade and folds of its gear pay ([What a Kill Pays](../../3-world/what-a-kill-pays.md)) — whole units,
+and the part left over is the chance of one more (see [Mob Roster](../../3-world/mob-roster.md)).
 
-Band materials never merge into each other. They come from creatures only — each creature drops the band its level
-falls in (see [Mob Roster](../../3-world/mob-roster.md)).
+| What a shop pays for one | Gold |
+| --- | --- |
+| Any weapon or armour piece | 5 |
+| Temper Dust | 2 |
+| Quench Oil | 10 |
+| Watery / Thin / Faint / Clear / Sharp Ink | 2 / 4 / 8 / 16 / 32 |
+| Coarse / Fine / Pure Salt | 2 / 6 / 18 |
 
-## 2. Forge — what each design costs
+No shop sells any of these.
 
-Paid once, in the band-1 material of its craft, plus gold. The result is always a **Raw +0** piece with nothing
-written on it. These are every design in the game today.
+## 2. Where a piece comes from — dropped, never made
 
-| Design | Slot | Station | Material | Units | Gold | Card slots |
-| --- | --- | --- | --- | --- | --- | --- |
-| Sword | Weapon | Smith | Copper | 8 | 800 | 2 |
-| Bow | Weapon | Smith | Copper | 8 | 800 | 2 |
-| Iron Helm | Head | Smith | Copper | 5 | 400 | 0 |
-| Leather Cap | Head | Tannery | Rawhide | 5 | 400 | 0 |
-| Padded Hood | Head | Loom | Burlap | 5 | 400 | 0 |
-| Chainmail | Body | Smith | Copper | 5 | 400 | 0 |
-| Leather Jerkin | Body | Tannery | Rawhide | 5 | 400 | 0 |
-| Padded Vest | Body | Loom | Burlap | 5 | 400 | 0 |
-| Chain Mantle | Garment | Smith | Copper | 5 | 400 | 0 |
-| Hide Cloak | Garment | Tannery | Rawhide | 5 | 400 | 0 |
-| Traveller's Cloak | Garment | Loom | Burlap | 5 | 400 | 0 |
-| Iron Sabatons | Shoes | Smith | Copper | 5 | 400 | 0 |
-| Leather Boots | Shoes | Tannery | Rawhide | 5 | 400 | 0 |
-| Woven Shoes | Shoes | Loom | Burlap | 5 | 400 | 0 |
+Every kill has a **10%** chance to drop **one** random piece of what the creature wears, as a new copy: always
+**Raw +0**, its trademark (a weapon) or word (an armour piece) rolled, and its rarity rolled by the creature's kind.
+A new character starts wearing a Raw +0 Common Sword, Chainmail and Iron Sabatons with no trademark and no word.
 
-Every armour slot comes in all three materials.
+| Dropped by | Rarity of the piece |
+| --- | --- |
+| A normal creature | Common 53.2% · Uncommon 31.9% · Rare 14.9% (shares of 50 : 30 : 14) |
+| An elite | always Epic |
+| A shadow | always Legendary |
 
-## 3. Fold — one unit of the band, plus gold
+What a creature wears, and every piece that was not dropped, is Common.
 
-Each fold costs **1 unit** of the grade's band material and **50 gold × band number**. A piece cannot be folded
+## 3. Fold — Temper Dust by the grade, plus gold
+
+Each fold costs the grade's step in **Temper Dust** and **50 gold × the step**. A piece cannot be folded
 past its grade's cap; past there the only way on is a quench.
 
-| Grade | Band material (smith / loom / tannery) | Gold per fold | Fold cap | Ink slots |
+| Grade | Temper Dust per fold | Gold per fold | Fold cap | Ink slots |
 | --- | --- | --- | --- | --- |
-| Raw | Copper / Burlap / Rawhide | 50 | +5 | 0 |
-| F | Bronze / Hemp / Hide | 100 | +10 | 1 |
-| E | Iron / Linen / Buckskin | 150 | +15 | 2 |
-| D | Steel / Wool / Leather | 200 | +20 | 3 |
-| C | Silver / Cotton / Cordovan | 250 | +25 | 4 |
-| B | Mithril / Silk / Shagreen | 300 | +30 | 5 |
-| A | Adamant / Brocade / Wyrmhide | 350 | +35 | 6 |
+| Raw | 1 | 50 | +5 | 0 |
+| F | 2 | 100 | +10 | 1 |
+| E | 3 | 150 | +15 | 2 |
+| D | 4 | 200 | +20 | 3 |
+| C | 5 | 250 | +25 | 4 |
+| B | 6 | 300 | +30 | 5 |
+| A | 7 | 350 | +35 | 6 |
 
 ### What one fold is worth on the piece
 
-The finished number is `folds × what one fold buys × (1 + quality lift)`, rounded half up (attack speed to one
-decimal) — except shoes' movement speed, which is exactly `folds × 2%` at every grade. The server writes it onto the
-copy.
+The finished number is `folds × what one fold buys × (1 + quality lift + rarity lift)`, rounded half up (attack
+speed to one decimal) — except shoes' movement speed, which is exactly `folds × 2%` at every grade and every rarity.
+The server writes it onto the copy.
 
 A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body
 and garment take the full amount, head and shoes half. Priced with Ink's own exchange rate — 1 defence =
@@ -89,10 +84,10 @@ level-1 creatures attacking together.
 | Metal armour | +0.9 Defence and +7.2 HP | +0.45 Defence and +3.6 HP |
 | Leather armour | +0.45% Attack Speed and +0.45 Evasion | +0.225% Attack Speed and +0.225 Evasion |
 | Cloth armour | +0.9 Magic Defence and +3.6 MP | +0.45 Magic Defence and +1.8 MP |
-| Shoes, any material — on top of their material's row | — | +2% Movement Speed, the grade's lift not applied |
+| Shoes, any material — on top of their material's row | — | +2% Movement Speed, neither lift applied |
 
-Body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack Speed and 20 Evasion** (leather), **41 Magic
-Defence and 164 MP** (cloth).
+Common body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack Speed and 20 Evasion** (leather),
+**41 Magic Defence and 164 MP** (cloth).
 
 | Grade | Quality lift on the fold total |
 | --- | --- |
@@ -104,24 +99,32 @@ Defence and 164 MP** (cloth).
 | B | +22% |
 | A | +30% |
 
-Example: an A-grade sword at +35 is 35 × 1.8 × 1.30 = 81.9 → **+82 Attack**; at +25 it is 25 × 1.8 × 1.30 = 58.5,
-which rounds up to **+59 Attack**.
+| Rarity | Rarity lift on the fold total, added to the quality lift |
+| --- | --- |
+| Common | +0% |
+| Uncommon | +10% |
+| Rare | +20% |
+| Epic | +35% |
+| Legendary | +50% |
 
-## 4. Quench — ten units of the band, plus gold, plus an optional Salt
+Example: a Common A-grade sword at +35 is 35 × 1.8 × 1.30 = 81.9 → **+82 Attack**; at +25 it is 25 × 1.8 × 1.30 =
+58.5, which rounds up to **+59 Attack**. A Legendary one at +35 is 35 × 1.8 × 1.80 = 113.4 → **+113 Attack**.
+
+## 4. Quench — Quench Oil by the grade, plus gold, plus an optional Salt
 
 **A piece must be folded to its grade's cap before it can be quenched** — the cap IS the gate, because the folds
-are what a quench spends. Each quench then costs **10 units** of the grade's band material and **500 gold ×
-band number**. Every fold is spent whichever way it goes. A grade that falls also loses the LAST stat written on
+are what a quench spends. Each quench then costs the grade's step in **Quench Oil** and **500 gold × the
+step**. Every fold is spent whichever way it goes. A grade that falls also loses the LAST stat written on
 the piece. A is never quenched — it is the top.
 
-| From | Band material (smith / loom / tannery) | Gold | Up | Unchanged | Down |
+| From | Quench Oil | Gold | Up | Unchanged | Down |
 | --- | --- | --- | --- | --- | --- |
-| Raw → F | 10 Copper / Burlap / Rawhide | 500 | 80% | 20% | — |
-| F → E | 10 Bronze / Hemp / Hide | 1,000 | 60% | 40% | — (F is the floor) |
-| E → D | 10 Iron / Linen / Buckskin | 1,500 | 50% | 30% | 20% |
-| D → C | 10 Steel / Wool / Leather | 2,000 | 40% | 35% | 25% |
-| C → B | 10 Silver / Cotton / Cordovan | 2,500 | 35% | 35% | 30% |
-| B → A | 10 Mithril / Silk / Shagreen | 3,000 | 25% | 40% | 35% |
+| Raw → F | 1 | 500 | 80% | 20% | — |
+| F → E | 2 | 1,000 | 60% | 40% | — (F is the floor) |
+| E → D | 3 | 1,500 | 50% | 30% | 20% |
+| D → C | 4 | 2,000 | 40% | 35% | 25% |
+| C → B | 5 | 2,500 | 35% | 35% | 30% |
+| B → A | 6 | 3,000 | 25% | 40% | 35% |
 
 ### Salt
 
@@ -190,30 +193,31 @@ type. Training speed applies to Weapon Mastery.
 
 ## 7. Recycle — half of what the piece provably consumed
 
-Recycling destroys the piece and returns, each halved and rounded down: the forge bill (band 1); for **every
-grade below the current one**, that grade's full fold cap AND one quench (both at that grade's own band and
-prices — the gate above is what makes those folds provable); the folds standing on the piece now, at its own
-band; and one Ink per written stat, its tier read off the value. Failed quenches, the folds they spent, and Salt
-are not recorded and come back as nothing.
+Recycling destroys the piece and returns, each halved and rounded down: for **every grade below the current
+one**, that grade's full fold cap AND one quench (both at that grade's own prices — the gate above is what makes
+those folds provable); the folds standing on the piece now, at its own grade's price; and one Ink per written stat,
+its tier read off the value. **Folds made at Raw return nothing**, standing or climbed — no Temper Dust and no gold
+— though the Raw quench does. Failed quenches, the folds they spent, and Salt are not recorded and come back as
+nothing. A piece the first tutorial still needs cannot be recycled.
 
 | Piece | Comes back |
 | --- | --- |
-| Raw +3 Sword | 5 Copper, 475 g |
-| Raw +5 Sword (ready to quench) | 6 Copper, 525 g |
-| E +0 Sword | 11 Copper, 10 Bronze, 1,775 g |
-| A +35 Sword | 11 Copper, 10 Bronze, 12 Iron, 15 Steel, 17 Silver, 20 Mithril, 17 Adamant, 23,150 g |
+| Raw +5 Sword (ready to quench) | nothing |
+| F +4 Sword | 4 Temper Dust, 450 g |
+| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,250 g |
+| A +35 Sword | 347 Temper Dust, 10 Quench Oil, 22,625 g |
 | … with 2 Watery Ink stats written | + 1 Watery Ink |
 
-## 8. Worked example — a sword from nothing to A
+## 8. Worked example — a dropped Common sword from Raw to A
 
 | Step | Pays | Result |
 | --- | --- | --- |
-| Forge | 8 Copper + 800 g | Raw +0 |
-| Fold ×5 | 5 Copper + 250 g | Raw +5 (+9 Attack) |
-| Quench (allowed: at the +5 cap) | 10 Copper + 500 g, 80% | F +0 |
-| Fold ×10 | 10 Bronze + 1,000 g | F +10 (+18 Attack) |
-| Quench | 10 Bronze + 1,000 g, 60% | E +0 (2 Ink slots) |
-| Fold ×15 | 15 Iron + 2,250 g | E +15 (+28 Attack) |
-| Quench | 10 Iron + 1,500 g, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
+| A kill drops it | nothing | Raw +0 |
+| Fold ×5 | 5 Temper Dust + 250 g | Raw +5 (+9 Attack) |
+| Quench (allowed: at the +5 cap) | 1 Quench Oil + 500 g, 80% | F +0 |
+| Fold ×10 | 20 Temper Dust + 1,000 g | F +10 (+18 Attack) |
+| Quench | 2 Quench Oil + 1,000 g, 60% | E +0 (2 Ink slots) |
+| Fold ×15 | 45 Temper Dust + 2,250 g | E +15 (+28 Attack) |
+| Quench | 3 Quench Oil + 1,500 g, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
 | … | | |
-| Fold ×35 at A | 35 Adamant + 12,250 g | A +35 (+82 Attack), 6 Ink slots |
+| Fold ×35 at A | 245 Temper Dust + 12,250 g | A +35 (+82 Attack), 6 Ink slots |

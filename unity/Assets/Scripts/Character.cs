@@ -2270,12 +2270,12 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def.slot != EquipSlotType.None)
             {
                 // FOLDS, NOT REFINES. A save written before crafting carries +N bought under the old rule, which
-                // would leave a Raw piece folded past what a forge could ever fold it to — so it starts at none.
+                // would leave a Raw piece folded past what a station could ever fold it to — so it starts at none.
                 int folds = d.version >= 13 && d.bagRefines != null && i < d.bagRefines.Length ? d.bagRefines[i] : 0;
                 entry.count = 1;
                 // v12+: the copy's grade and the stats written on it. A save older than that carries the old
                 // rolled-armour text, which does not read as a grade — so the piece loads Raw with nothing
-                // written, which is what a piece that has never been forged is.
+                // written, which is what a piece nobody has worked on is.
                 entry.instance = EquipmentInstance.FromSaved(def, folds,
                     d.bagCards != null && i < d.bagCards.Length ? d.bagCards[i] : null,
                     d.bagRolls != null && i < d.bagRolls.Length ? d.bagRolls[i] ?? "" : null,
@@ -2295,6 +2295,12 @@ public class Character : MonoBehaviour, ICombatUnit
             var def = ItemCatalog.Resolve(itemId);
             if (def == null) continue;
             bag.Add(new BagEntry { def = def, count = count });
+        }
+        foreach (var itemId in StarterKit.Worn)
+        {
+            var def = ItemCatalog.Resolve(itemId);
+            if (def == null || def.slot == EquipSlotType.None) continue;
+            SetEquipped(def.slot, EquipmentInstance.CreateStarter(def));
         }
         SetGold(StarterKit.Gold);
     }

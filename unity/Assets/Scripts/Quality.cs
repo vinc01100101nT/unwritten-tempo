@@ -1,6 +1,6 @@
 /// <summary>
 /// What a crafted piece came out of its QUENCH as — the one grade every weapon and every piece of armour carries.
-/// <see cref="Raw"/> is a freshly forged piece that has never been quenched; after that the ladder is F (poorest)
+/// <see cref="Raw"/> is a new piece that has never been quenched; after that the ladder is F (poorest)
 /// to A (highest), climbed ONE RUNG AT A TIME. There is no S, SS or anything above A.
 ///
 /// <para>The order is the ladder, so a grade can be stepped with +1 / −1 and compared with &lt; and &gt;.

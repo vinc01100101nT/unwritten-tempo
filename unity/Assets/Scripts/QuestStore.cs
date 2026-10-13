@@ -27,15 +27,9 @@ public static class QuestStore
     /// <summary>The townspeople where one of this character's open quests' current step happens, by id.</summary>
     public static string[] OngoingAt { get; private set; } = Array.Empty<string>();
 
-    /// <summary>The items whose next forge is free — a tutorial's first run takes nothing it has you make. The server's list.</summary>
-    public static string[] FreeForges { get; private set; } = Array.Empty<string>();
-
     // The items a first run still gives free at a shop, and how many of each — parallel, as the server sent them.
     static string[] freeBuyIds = Array.Empty<string>();
     static int[] freeBuyCounts = Array.Empty<int>();
-
-    /// <summary>Is the next forge of <paramref name="itemId"/> free — the server's answer.</summary>
-    public static bool FreeForge(string itemId) => Array.IndexOf(FreeForges, itemId) >= 0;
 
     /// <summary>How many of <paramref name="itemId"/> a shop gives this character free — the server's number.</summary>
     public static int FreeBuys(string itemId)
@@ -50,7 +44,7 @@ public static class QuestStore
     public static event Action Changed;
 
     // THE GUIDE WAITS FOR THE SERVER after its lit spot is pressed, so a quick second press cannot spend the same
-    // materials twice (two forges, two folds) before the answer comes back. Cleared by the next list, or after a moment in
+    // materials twice (two folds) before the answer comes back. Cleared by the next list, or after a moment in
     // case the press changed nothing the server needed to say.
     static float awaitingUntil;
     const float LongestWait = 2f;
@@ -60,9 +54,8 @@ public static class QuestStore
     public static void PressedLitSpot() => awaitingUntil = Time.unscaledTime + LongestWait;
 
     public static void Receive(QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide, QuestNeedWire[] needs,
-                               string[] offers, string[] ongoingAt, string[] freeForges, string[] buyIds, int[] buyCounts)
+                               string[] offers, string[] ongoingAt, string[] buyIds, int[] buyCounts)
     {
-        FreeForges = freeForges ?? Array.Empty<string>();
         freeBuyIds = buyIds ?? Array.Empty<string>();
         freeBuyCounts = buyCounts ?? Array.Empty<int>();
         Open = open ?? Array.Empty<QuestOpenWire>();

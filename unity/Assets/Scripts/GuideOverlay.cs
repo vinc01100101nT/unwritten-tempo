@@ -219,14 +219,14 @@ public class GuideOverlay : MonoBehaviour
             found = m; foundAt = i; textOnly = -1;
         }
         // ONLY THE CHOSEN PART IS SCROLLED TO. Scrolling to every hint's part in turn made two parts of one list —
-        // Back at its top, the row to forge near its bottom — each scroll the other out of view, every frame, so
+        // Back at its top, the piece to fold near its bottom — each scroll the other out of view, every frame, so
         // neither was ever lit and the list was held where the last one left it.
         if (found != null && !InView(found)) found = null;
         if (found != null)
         {
             target = found;
             text = step.hints[foundAt].text;
-            costs = found.spot == GuideSpot.StationForgeRow || found.spot == GuideSpot.StationFoldButton;
+            costs = found.spot == GuideSpot.StationFoldButton;
             return true;
         }
         if (textOnly >= 0) { text = step.hints[textOnly].text; return true; }
@@ -270,7 +270,6 @@ public class GuideOverlay : MonoBehaviour
         switch (block)
         {
             case QuestBlock.CannotPay: return "You are carrying too little to pay for this. Creatures in the fields drop what you need.";
-            case QuestBlock.TakeItOff: return "Your " + name + " is being worn. Take it off in your bag first — a station works only on what you carry.";
             case QuestBlock.NotCarried: return "You are not carrying a " + name + ".";
             case QuestBlock.NoneLeft: return "You have no " + name + " left. Buy more at a shop that sells them.";
             default: return null;

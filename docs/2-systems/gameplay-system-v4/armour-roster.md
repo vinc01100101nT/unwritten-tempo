@@ -8,7 +8,7 @@ tags:
 
 # Armour Roster, Materials & Words
 
-Armour has **four slots**, every slot comes in **three materials**, and every forged piece rolls **one word** from its
+Armour has **four slots**, every slot comes in **three materials**, and every piece rolls **one word** from its
 slot. The material decides what a piece's folds buy; the slot decides how much, and which words it can roll.
 
 ## 1. The slots
@@ -51,20 +51,20 @@ HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players a
 | Garment | Chain Mantle | Hide Cloak | Traveller's Cloak |
 | Shoes | Iron Sabatons | Leather Boots | Woven Shoes |
 
-Every design forges for 5 band-1 units of its material and 400 gold. Weight and sell value copy an existing design
-(shoes copy the Leather Cap's).
+No design is made from materials: a piece is dropped by a creature that wears it. Every piece sells to a shop for
+5 gold. Weight copies an existing design (shoes copy the Leather Cap's).
 
 ## 4. Words — the armour's trademark
 
-- **Rolled once, at the forge**, every word of the piece's slot equally likely, through the one random source; never
+- **Rolled once, as the piece comes into the world**, every word of the piece's slot equally likely, through the one random source; never
   changed afterwards. A creature's armour rolls one too, at every grade, every life, the way its weapon rolls a trademark.
 - **Each word does exactly one thing, and lives on exactly one slot**, so a character can never wear the same word
   twice — which is also why one word's size never has to allow for stacking with itself.
 - **Part of the name**: `+15 Tireless Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
   piece's size.
 - **Its size grows with grade** — the finished amount is written by the server; a player's machine only shows it.
-- **Saved by name** in the copy's roll text, beside the trademark. A piece forged before words existed has none and
-  keeps its old name.
+- **Saved by name** in the copy's roll text, beside the trademark. A new character's starting Chainmail and Iron
+  Sabatons are made with none.
 
 | Slot | Word | Its one job | Raw → A |
 | --- | --- | --- | --- |
@@ -95,7 +95,7 @@ Ironblood; 0.5 / 0.75 / 1 / 1.25 / 1.5 / 2 / 2.5 for Wellspring. **First guesses
 - The new numbers each have one read site: crit shield (`CritShieldLuk`), ailment length (`StatusController.Apply`),
   the element wards (`Elements.Warded`, in each unit's element lookup) and sprint
   drain (`Player3DController`).
-- Rolled at `NetPlayer.CmdForge` (players) and `EquipmentInstance.CreateAt` (creatures), stored as
+- Rolled in `EquipmentInstance.CreateFresh` — a dropped piece, a grant, a creature's gear — stored as
   `EquipmentInstance.word` / `wordAmount`, named by `ItemTooltip.CopyTitle`.
 
 ## Related

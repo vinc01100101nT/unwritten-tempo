@@ -1,6 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>One thing a kill gives up: the item, how many, the very copy when it is a piece of gear (made once, before
+/// the kill is paid, so the ground and the bag are handed the same piece), and the chance it won its roll at — what
+/// auto-loot's filter judges it by.</summary>
+public struct LootEntry
+{
+    public Item item;
+    public int count;
+    public EquipmentInstance copy;
+    public float chance;
+}
+
 /// <summary>
 /// WHAT A KILL IS WORTH, and who gets it — the one door every reward passes through.
 ///
@@ -136,24 +147,19 @@ public static class Rewards
     }
 
     /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: <paramref name="gold"/> Zeny straight
-    /// into their purse, and every item in <paramref name="items"/> onto the ground where
-    /// <paramref name="victim"/> fell — kept for <paramref name="winner"/> for <see cref="GroundDrop.KillerOnlySeconds"/>,
-    /// then anybody's, and gone after <see cref="GroundDrop.KillDropLifetimeSeconds"/>.
-    ///
-    /// <para>ONE CALL PER KILL, not one per thing dropped: on a server the purse is handed to its owner and written down
-    /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>
-    /// <param name="items">Item DEFINITIONS the kill gives up — any equipment among them lands as a fresh Raw copy.</param>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, int gold, Health victim)
-        => PayLoot(winner, items, null, gold, victim);
-
-    /// <summary>The same, with the drop chance (0–1) each item won its roll at, index for index — so auto-combat's
-    /// loot filter can take what its owner asked for straight into their bag (<see cref="AutoLootTakes"/>), the rest
-    /// going down as usual. Null chances = nothing is auto-looted.
+    /// into their purse, and every entry in <paramref name="entries"/> onto the ground where <paramref name="victim"/>
+    /// fell — kept for <paramref name="winner"/> for <see cref="GroundDrop.KillerOnlySeconds"/>, then anybody's, and gone
+    /// after <see cref="GroundDrop.KillDropLifetimeSeconds"/>. Auto-combat's loot filter first takes what its owner asked
+    /// for straight into their bag (<see cref="AutoLootTakes"/>), unless <paramref name="neverAutoLoot"/> — an elite's
+    /// kill, hunted by hand.
     ///
     /// <para><paramref name="pileItems"/> and <paramref name="pileCounts"/>, index for index, are piles that go down
     /// APART and are never auto-looted — an elite's ordinary material, so each of the people who brought it down can
-    /// reach for one. Everything in <paramref name="items"/> still lands as one pile per kind.</para></summary>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, List<float> chances, int gold, Health victim,
+    /// reach for one. Everything in <paramref name="entries"/> lands as one pile per item.</para>
+    ///
+    /// <para>ONE CALL PER KILL, not one per thing dropped: on a server the purse is handed to its owner and written down
+    /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>
+    public static void PayLoot(ICombatUnit winner, List<LootEntry> entries, bool neverAutoLoot, int gold, Health victim,
                                List<Item> pileItems = null, List<int> pileCounts = null)
     {
         if (PlayerUnits.Gone(winner)) return;
@@ -169,22 +175,21 @@ public static class Rewards
             string map = victim.gameObject.scene.name;
             // AUTO-LOOT FIRST, ENTRY BY ENTRY: what its owner's filter takes leaves the list for their bag, so the
             // ground below only ever sees what was left.
-            AutoLoot(character, items, chances, map);
-            if (items != null)
-                for (int i = 0; i < items.Count; i++)
+            if (!neverAutoLoot) AutoLoot(character, entries, map);
+            if (entries != null)
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    var def = items[i];
-                    if (def == null) continue;
-                    // SEVERAL OF ONE THING GO DOWN AS ONE PILE — an elite's ten Iron is one drop of ten, not ten drops. A
-                    // worn piece is always one of its own.
-                    int count = 1;
-                    if (def.slot == EquipSlotType.None)
+                    var e = entries[i];
+                    if (e.item == null || e.count <= 0) continue;
+                    // SEVERAL OF ONE THING GO DOWN AS ONE PILE — two rolls that both gave up Watery Ink are one drop. A
+                    // piece of gear is always one of its own: the very copy the kill made.
+                    int count = e.count;
+                    if (e.copy == null)
                     {
-                        if (IndexOf(items, def) < i) continue;   // already put down with the first of its kind
-                        count = CountOf(items, def);
+                        if (FirstStackOf(entries, e.item) < i) continue;   // already put down with the first of its kind
+                        count = StackCount(entries, e.item);
                     }
-                    var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateFresh(def) : null;
-                    if (DropForKiller(at, map, def, count, copy, character)) dropped++;
+                    if (DropForKiller(at, map, e.item, count, e.copy, character)) dropped++;
                 }
             if (pileItems != null && pileCounts != null)
                 for (int i = 0; i < pileItems.Count && i < pileCounts.Count; i++)
@@ -204,11 +209,11 @@ public static class Rewards
 
         // A KILL THAT PAID NOTHING SAYS SO too — without it "paid nothing" and "the payout never ran" are both silence,
         // and only the second is a bug.
-        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold, dropped, victim, pileItems, pileCounts));
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, entries, gold, dropped, victim, pileItems, pileCounts));
     }
 
     // What auto-loot took, kept between the two halves of one payment; one list because a death is never paid twice at once.
-    static readonly List<Item> autoLooted = new List<Item>(16);
+    static readonly List<LootEntry> autoLooted = new List<LootEntry>(16);
 
     /// <summary>DOES AUTO-LOOT TAKE THIS ENTRY for <paramref name="killer"/> — they are here to take it (on the map the
     /// creature fell in, alive, with auto-combat on), and their filter wants a thing of its kind at this drop chance.</summary>
@@ -232,11 +237,17 @@ public static class Rewards
         return false;
     }
 
-    // Take every entry auto-loot wants out of `items` and into the killer's bag. The count it took; 0 when nothing was
-    // looted, or there were no chances to judge by.
-    static int AutoLoot(Character killer, List<Item> items, List<float> chances, string map)
+    static bool TookStackOf(Item def)
     {
-        if (items == null || chances == null || chances.Count != items.Count) return 0;
+        for (int i = 0; i < autoLooted.Count; i++) if (autoLooted[i].item == def && autoLooted[i].copy == null) return true;
+        return false;
+    }
+
+    // Take every entry auto-loot wants out of `entries` and into the killer's bag. The number of entries it took; 0 when
+    // nothing was looted.
+    static int AutoLoot(Character killer, List<LootEntry> entries, string map)
+    {
+        if (entries == null) return 0;
         var shell = GameNetwork.ShellFor(killer);
         if (shell == null || !shell.AutoCombatOn) return 0;
 
@@ -245,39 +256,36 @@ public static class Rewards
         for (int t = 0; t < lootTabSlots.Length; t++) lootTabSlots[t] = killer.SlotsUsed((ItemCategory)t);
         int lootWeight = killer.CarriedWeight;
         int weightCap = killer.WeightCap;
-        for (int i = items.Count - 1; i >= 0; i--)
+        for (int i = entries.Count - 1; i >= 0; i--)
         {
-            var def = items[i];
-            if (!AutoLootTakes(killer, shell, map, def, chances[i])) continue;
+            var e = entries[i];
+            var def = e.item;
+            if (def == null || e.count <= 0 || !AutoLootTakes(killer, shell, map, def, e.chance)) continue;
             // NO ROOM, AND IT STAYS IN THE DROP: it falls to the ground like anything auto-loot leaves, and they are
-            // told why. Judged on top of what this kill has already put in.
-            bool gear = def.slot != EquipSlotType.None;
-            bool held = !gear && (autoLooted.Contains(def) || HoldsStackOf(killer, def));
-            int needed = BagRoom.SlotsNeeded(gear, 1, held);
-            var noRoom = BagRoom.Judge(lootTabSlots[(int)def.category], needed, lootWeight, def.weight, weightCap);
+            // told why. Judged on everything the entry holds, on top of what this kill has already put in.
+            bool gear = e.copy != null;
+            bool held = !gear && (TookStackOf(def) || HoldsStackOf(killer, def));
+            int needed = BagRoom.SlotsNeeded(gear, gear ? 1 : e.count, held);
+            int weight = def.weight * (gear ? 1 : e.count);
+            var noRoom = BagRoom.Judge(lootTabSlots[(int)def.category], needed, lootWeight, weight, weightCap);
             if (noRoom != BagRefusal.None) { shell.TellNoRoom(def, noRoom, "auto-loot", AutoLootQuietSeconds); continue; }
             lootTabSlots[(int)def.category] += needed;
-            lootWeight += def.weight;
-            autoLooted.Add(def);
-            items.RemoveAt(i);
-            chances.RemoveAt(i);
+            lootWeight += weight;
+            autoLooted.Add(e);
+            entries.RemoveAt(i);
         }
         if (autoLooted.Count == 0) return 0;
 
-        // INTO THE BAG, a worn piece as its own fresh copy exactly as the ground would have made it, and the owner told
-        // each thing once with how many.
+        // INTO THE BAG — a piece of gear as the very copy the kill made, the same one the ground would have been handed —
+        // and the owner told each thing once with how many.
         for (int i = 0; i < autoLooted.Count; i++)
         {
-            var def = autoLooted[i];
-            if (def.slot != EquipSlotType.None) { killer.TakeIntoBag(EquipmentInstance.CreateFresh(def)); continue; }
-            if (autoLooted.IndexOf(def) < i) continue;
-            killer.TakeIntoBag(def, CountOf(autoLooted, def));
-        }
-        for (int i = 0; i < autoLooted.Count; i++)
-        {
-            var def = autoLooted[i];
-            if (autoLooted.IndexOf(def) < i) continue;
-            shell.TellOwnerTheyGot(def.id, CountOf(autoLooted, def), 0);
+            var e = autoLooted[i];
+            if (e.copy != null) { killer.TakeIntoBag(e.copy); shell.TellOwnerTheyGot(e.item.id, 1, 0); continue; }
+            if (FirstStackOf(autoLooted, e.item) < i) continue;
+            int count = StackCount(autoLooted, e.item);
+            killer.TakeIntoBag(e.item, count);
+            shell.TellOwnerTheyGot(e.item.id, count, 0);
         }
         PlaySession.PickedUp(killer);
         if (GameLog.On(LogCat.Loot))
@@ -301,23 +309,25 @@ public static class Rewards
         return true;
     }
 
-    static int IndexOf(List<Item> items, Item def)
+    // The first entry that is a stack of `def` (not a piece of gear), or -1.
+    static int FirstStackOf(List<LootEntry> entries, Item def)
     {
-        for (int i = 0; i < items.Count; i++) if (items[i] == def) return i;
+        for (int i = 0; i < entries.Count; i++) if (entries[i].item == def && entries[i].copy == null) return i;
         return -1;
     }
 
-    static int CountOf(List<Item> items, Item def)
+    // How many of `def` every stack entry holds together.
+    static int StackCount(List<LootEntry> entries, Item def)
     {
         int n = 0;
-        for (int i = 0; i < items.Count; i++) if (items[i] == def) n++;
+        for (int i = 0; i < entries.Count; i++) if (entries[i].item == def && entries[i].copy == null) n += entries[i].count;
         return n;
     }
 
     /// <summary>What a kill paid, as one line: who got it, how much Zeny, every item put down for them by name, and which
     /// unit it came from — "field_15 Alpha #1 (id) earned 6 Zeny and dropped Jellopy for them from Snake #3", or "earned
     /// nothing from Snake #3". Builds a string, so it is only ever called behind <see cref="GameLog.On"/>.</summary>
-    static string Describe(Character who, List<Item> items, int gold, int dropped, Health victim,
+    static string Describe(Character who, List<LootEntry> entries, int gold, int dropped, Health victim,
                            List<Item> pileItems, List<int> pileCounts)
     {
         var sb = new System.Text.StringBuilder();
@@ -330,19 +340,19 @@ public static class Rewards
         {
             sb.Append(gold > 0 ? " and dropped " : "dropped ");
             bool first = true;
-            if (items != null)
-                for (int i = 0; i < items.Count; i++)
+            if (entries != null)
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    var def = items[i];
-                    if (def == null) continue;
+                    var e = entries[i];
+                    if (e.item == null || e.count <= 0) continue;
                     int count = 1;
-                    if (def.slot == EquipSlotType.None)
+                    if (e.copy == null)
                     {
-                        if (IndexOf(items, def) < i) continue;
-                        count = CountOf(items, def);
+                        if (FirstStackOf(entries, e.item) < i) continue;
+                        count = StackCount(entries, e.item);
                     }
                     if (!first) sb.Append(", ");
-                    sb.Append(def.displayName);
+                    sb.Append(e.copy != null ? ItemTooltip.CopyTitle(e.copy) : e.item.displayName);
                     if (count > 1) sb.Append(" ×").Append(count);
                     first = false;
                 }

@@ -49,8 +49,8 @@ public class TownNPC : MonoBehaviour
     public int Level { get; private set; } = 1;
 
     [Header("Craft station")]
-    [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith forges metal, " +
-             "a loom weaves cloth, a tannery tans leather — pressing F on one opens their station instead of a " +
+    [Tooltip("What this townsperson WORKS at. None = an ordinary villager who only talks. A smith works metal, " +
+             "a loom cloth, a tannery leather — pressing F on one opens their station instead of a " +
              "conversation, and a piece may only be worked on at a station of its own craft.")]
     public CraftStation station = CraftStation.None;
 

@@ -29,11 +29,15 @@ public enum EquipSlotType
 /// is every item that is not a crafting material at all — the zero value, so the seventeen items authored before
 /// crafting existed read correctly without being touched.
 ///
-/// <para>The three crafts are the material a piece is made of: metal is forged, cloth is woven, leather is tanned.
-/// <see cref="MaterialKind.Ink"/> writes a stat onto a piece and <see cref="MaterialKind.Salt"/> boosts a quench;
-/// both are shared by all three crafts. <see cref="MaterialKind.Creature"/> is the material only one creature drops
-/// (<see cref="CreatureMaterials"/>): no station works it, and its step is its rarity tier.</para></summary>
-public enum MaterialKind { None = 0, Metal = 1, Cloth = 2, Leather = 3, Ink = 4, Salt = 5, Creature = 6 }
+/// <para>The three crafts are the material a piece is made of: metal at a smith, cloth at a loom, leather at a
+/// tannery. <see cref="MaterialKind.TemperDust"/> is what every fold takes and <see cref="MaterialKind.QuenchOil"/>
+/// what every quench takes; <see cref="MaterialKind.Ink"/> writes a stat onto a piece and
+/// <see cref="MaterialKind.Salt"/> boosts a quench — all four shared by the three crafts.
+/// <see cref="MaterialKind.Creature"/> is the material only one creature drops (<see cref="CreatureMaterials"/>): no
+/// station works it, and its step is its rarity tier.</para>
+///
+/// <para>⚠️ The numbers are saved on every item: never renumber, and a new kind takes the next number.</para></summary>
+public enum MaterialKind { None = 0, Metal = 1, Cloth = 2, Leather = 3, Ink = 4, Salt = 5, Creature = 6, TemperDust = 7, QuenchOil = 8 }
 
 /// <summary>The words a slot goes by on screen. A text inventory has to name the slot, because with no icon the
 /// slot is the only thing telling a helm from a sword at a glance.
@@ -140,32 +144,27 @@ public class Item : ScriptableObject
     [Tooltip("What a shop charges for one, in gold. 0 = no shop sells it — a shop that lists it anyway leaves it out.")]
     [Min(0)] public int buyPrice;
 
-    // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds
-    // and its quality, worked out by the server when it is forged, folded or quenched, plus whatever Ink has
+    // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds,
+    // its quality and its rarity, worked out by the server when it is made, folded or quenched, plus whatever Ink has
     // written on it — all of it on the COPY (EquipmentInstance), never on the shared design. The flat bonus fields
     // and the armour roll ranges that used to sit here are gone for that reason; do not add either back.
 
     [Header("Crafting")]
-    [Tooltip("What this PIECE is made of, which decides where it is made and which material band it folds with: " +
-             "Metal at a smith, Cloth at a loom, Leather at a tannery. None = not something anyone crafts " +
-             "(a consumable, a material, or a piece nobody has given a craft to yet). A worn piece made of None is " +
-             "worn for its look alone: it rolls no word and is never handed out at random.")]
+    [Tooltip("What this PIECE is made of, which decides the station that works it: Metal at a smith, Cloth at a " +
+             "loom, Leather at a tannery. None = not something any station works (a consumable, a material, or a " +
+             "piece nobody has given a craft to yet). A worn piece made of None is worn for its look alone: it rolls " +
+             "no word and is never handed out at random.")]
     public MaterialKind madeOf = MaterialKind.None;
-    [Tooltip("What it costs to FORGE one, in units of its craft's band-1 material, plus gold. 0 units = nobody " +
-             "can forge this piece.")]
-    public int forgeMaterialCost;
-    [Tooltip("Gold one forge of this piece costs.")]
-    public int forgeGoldCost;
 
     [Header("Crafting material")]
     [Tooltip("What kind of crafting material this is. None = not a material at all (every non-material item).")]
     public MaterialKind materialKind = MaterialKind.None;
-    [Tooltip("Which step of its kind this is. A Metal/Cloth/Leather material: the BAND, 1 (Raw) to 7 (A) — a piece " +
-             "folds only with the band of its own quality. An Ink: its tier, 1 (Watery) to 5 (Sharp). A Salt: its " +
-             "tier, 1 (Coarse) to 3 (Pure). A Creature material: its rarity, 1 (Common) to 5 (Legendary). Ignored when Material Kind is None; 0 there means nothing was chosen.")]
+    [Tooltip("Which step of its kind this is. An Ink: its tier, 1 (Watery) to 5 (Sharp). A Salt: its tier, 1 " +
+             "(Coarse) to 3 (Pure). A Creature material: its rarity, 1 (Common) to 5 (Legendary). Temper Dust and " +
+             "Quench Oil have no steps. Ignored when Material Kind is None; 0 there means nothing was chosen.")]
     public int materialStep;
-    [Tooltip("The material ten of this one merge into — the next tier up. Only Ink and Salt merge; a band material " +
-             "leaves this empty, and so does the top tier of Ink and Salt.")]
+    [Tooltip("The material ten of this one merge into — the next tier up. Only Ink and Salt merge; every other " +
+             "material leaves this empty, and so does the top tier of Ink and Salt.")]
     public Item mergesInto;
 
     [Header("Consumable")]

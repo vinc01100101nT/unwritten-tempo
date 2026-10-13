@@ -20,20 +20,26 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Fly Wing *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Sets you down somewhere random on this map |
 | — | Frost Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Water** (level 1) for **5:00** |
 | — | Frost Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Water** for **5:00** |
-| — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **200** HP |
-| — | Grilled Fish *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** attack for **120s** |
-| — | Hard Bread *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** defense for **120s** |
-| — | Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **80** HP |
+| — | Grand Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **2500** HP |
+| — | Grand Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +250 MP regen for **5s** |
+| — | Greater Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **400** HP |
+| — | Greater Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +40 MP regen for **5s** |
+| — | Grilled Fish *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** attack for **300s** |
+| — | Hard Bread *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** defense for **300s** |
+| — | Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **150** HP |
 | — | Lightning Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Wind** (level 1) for **5:00** |
 | — | Lightning Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Wind** for **5:00** |
-| — | Lucky Dumpling *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +0.05 crit chance for **120s** |
-| — | Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +8 MP regen for **5s** |
-| — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **30** HP |
-| — | Minor Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +4 MP regen for **5s** |
+| — | Lucky Dumpling *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +0.05 crit chance for **300s** |
+| — | Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +15 MP regen for **5s** |
+| — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **50** HP |
+| — | Minor Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +5 MP regen for **5s** |
+| — | Sage Stew *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** magic attack for **300s** |
 | — | Seismic Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Earth** (level 1) for **5:00** |
 | — | Seismic Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Earth** for **5:00** |
-| — | Spiced Broth *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**10%** attack speed for **120s** |
-| — | Traveller's Tea *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**20%** movement speed for **120s** |
+| — | Spiced Broth *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**10%** attack speed for **300s** |
+| — | Superior Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **1000** HP |
+| — | Superior Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +100 MP regen for **5s** |
+| — | Traveller's Tea *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**20%** movement speed for **300s** |
 | — | Mending Tide *(unpublished)* | active | MP **18**  CD **12s**  Cast **0.5s**  Range **6** | pressed | +7.5 HP regen for **6s** · Removes **1** debuff(s) |
 | — | Heal *(unpublished)* | active | MP **5**  CD **0.7s**  Instant | pressed | +**100%** damage per stack for **20.2s** |
 | — | Summon *(unpublished)* | active | MP **0**  CD **20s**  Instant | pressed | Calls up its summons |

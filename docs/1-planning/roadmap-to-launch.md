@@ -28,7 +28,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 | Playable maps | 77 | the three-region world: 16 towns (Lastline among them) · 39 fields · 22 dungeon floors, joined by 88 two-way doors. 14 shadow places are in the world layout with no map built. 15 test maps sit outside the world |
 | Creature definitions | 98 | 66 normals, 18 elites and 14 shadows |
 | Skills | 51 | see the split below |
-| Items in the whole game | 65 | 2 weapons (a sword and a bow) · 15 armour pieces · 29 crafting materials · 19 to use (11 potions and foods, 8 element converters) |
+| Items in the whole game | 223 | 14 weapons · 27 other worn pieces · 29 crafting materials · 126 creature materials · 27 to use (10 potions, 6 foods, 2 wings, the Antidote and 8 element converters) |
 | Cards | 0 | no card exists, and the card roster has not been decided |
 | Quests | 2 | a crafting tutorial given to every character, and one side quest from Torvald in Lastline; no main-story quest |
 | Townsfolk with a name | 16 | all in Lastline: three keep a crafting station (smith, loom, tannery) and one keeps the only shop |
@@ -54,7 +54,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 **Making gear is built and not yet played** ([Gameplay System V4](../2-systems/gameplay-system-v4/README.md)). Gear is forged at a smith, a loom or a tannery from materials, then folded, quenched up the quality ladder and written on with Ink.
 
-**Loot follows the creature's kind and level.** A creature gives up **no gear at all** — materials and consumables only. Every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a 30% chance of one random consumable ([Mob Roster](../3-world/mob-roster.md)). What drops is worked out at the moment of death from the creature's kind and level, so a change to the rule needs no rebuild of the creatures. Every creature's own hand-written drop list is empty. It lands on the ground, held for the killer for 10 seconds, and is gone after 60.
+**Loot follows the creature's kind and level.** A creature gives up **no gear at all** — materials and consumables only. Every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a chance of the creature's own find, a food or an element converter ([Town Supplies and Hunting Finds](../2-systems/town-supplies-and-hunting-finds.md)). What drops is worked out at the moment of death from the creature's kind and level, so a change to the rule needs no rebuild of the creatures. Every creature's own hand-written drop list is empty. It lands on the ground, held for the killer for 10 seconds, and is gone after 60.
 
 **Only the shadows wear anything.** Each of the 14 shadows wears gear authored for it, at grade A with 30 folds. None of the 66 normals and 18 elites has a piece authored for it.
 

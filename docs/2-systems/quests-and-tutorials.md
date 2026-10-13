@@ -41,7 +41,7 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
     and no gold;
   - every item it has you **buy** is free — as many as the step asks for, or, when a Health step after it is healed
     with that item, as many as it takes to get from the health the character came back on to that step's share (the
-    item's own written heal, e.g. 30 HP a Minor Healing Potion).
+    item's own written heal, e.g. 50 HP a Minor Healing Potion).
 - **What is free is saved on the record and used up by the press that does the work** — the forge, the fold or the
   purchase itself, in the same call — so a quick double press, a door to another map server or a restart can never
   spend it twice. A free fold goes only on a Raw piece, and only on the copy the run made (or the first one it folded).

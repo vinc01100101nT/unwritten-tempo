@@ -129,7 +129,7 @@ Every slice: run `tools/check-unity-code.sh` after each C# edit; read the editor
 
 **Deletes:** nothing. **Saved data upgrade:** none (items are `id + count` in the bag, SaveData.cs:88-89).
 
-**Touches but does not alter:** the `/item` command's name matching; the bag's stacking rule for non-equipment (Character.cs:1729-1731); the 30%-per-kill random-item roll (now `ItemCatalog.RandomConsumable`, consumables only since 2026-09-22 — see open question 6).
+**Touches but does not alter:** the `/item` command's name matching; the bag's stacking rule for non-equipment (Character.cs:1729-1731); the per-kill consumable (a creature's find, `CreatureFinds` — see open question 6).
 
 **Rebuild:** game server yes (new command); char server no.
 
@@ -228,7 +228,7 @@ docs/2-systems/active-skill-system-v3/README.md (rarity lift §1, "Weapon = gran
 3. **Ink Critical is 0.6%–3% but `EquipBonuses.critPercent` is a whole-percent int** (EquipmentInstance.cs:226; UnitStatMath.cs:290 divides by 100). *Recommend:* widen `critPercent` to a float (same name, same unit), and add three new `EquipBonuses` fields — accuracy, evasion, castSpeedPercent — with `Hit`, `Flee`, `CastTimeMult` taking `EquipBonuses`.
 4. **What a "design" is.** *Recommend:* a base-cost list on the `Item` itself (which band-1 material, how many, how much gold), so the existing gear items are the designs; empty list = not forgeable.
 5. **Whether `EquipSlotType.Ring = 12` is deleted or left unread.** Its integer is pinned (Item.cs:4-10) and no asset holds it. *Recommend:* delete the member and the `ItemType.Ring` bucket.
-6. **Materials in the random-item roll.** Settled 2026-09-22: the 30%-per-kill roll (`ItemCatalog.RandomConsumable`) hands out consumables only, and materials come from the creature's level and kind (`CreatureLoot`, [Mob Roster](../../3-world/mob-roster.md)).
+6. **Materials and the per-kill consumable.** Settled: the per-kill consumable is the creature's find (`CreatureFinds`, [Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)) — a food or a converter, by its element — and materials come from the creature's level and kind (`CreatureLoot`, [Mob Roster](../../3-world/mob-roster.md)).
 7. **What creatures wear.** Settled 2026-09-22: no random wardrobe — a creature wears exactly its authored pieces, at the grade, folds and Ink authored on its own catalog entry ([Mob Roster](../../3-world/mob-roster.md), Gear state).
 8. **Starter gear.** Settled 2026-10-07: a new character starts with nothing — no items, no gold. Gear is made, never seeded: the crafting tutorial's first run forges a Sword, a Chainmail and Iron Sabatons and folds each to +5 free, and the healing tutorial's first run gives the first potions free (`StarterKit.cs`, [Quests and Tutorials](../quests-and-tutorials.md)).
 9. **Existing copies on old saves.** *Recommend:* every pre-V4 copy loads as Raw, folds 0, no Ink — not keeping `upgrade` as folds, because those refines were bought under the +3 attack rule.

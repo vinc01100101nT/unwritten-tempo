@@ -15,9 +15,8 @@ public static class CraftingMath
     /// Deterministic: ten always become one, and nothing can fail.</summary>
     public const int MergeCount = 10;
 
-    /// <summary>True when <paramref name="kind"/> is a material whose tiers merge upward. A band material never
-    /// merges: its band is gated by the creatures that drop it, and merging would let a starter field feed a
-    /// top-grade piece.</summary>
+    /// <summary>True when <paramref name="kind"/> is a material whose tiers merge upward. Temper Dust and Quench Oil
+    /// have no tiers, so there is nothing of theirs to merge.</summary>
     public static bool Merges(MaterialKind kind) => kind == MaterialKind.Ink || kind == MaterialKind.Salt;
 
     // ---- the grade ladder ---------------------------------------------------------------------------------
@@ -40,38 +39,62 @@ public static class CraftingMath
     /// Raw to +20% at A. Added to the skill's level lift, never multiplied onto it.</summary>
     public static float TrademarkLift(Quality q) => TrademarkLifts[Index(q)];
 
-    // ---- the trademark roll: a rarity first, then a skill of that rarity -----------------------------------
-    // Indexed by (int)Rarity: Common, Uncommon, Rare, Epic, Legendary. Each rarity's share, in percent, of every
-    // weapon of one type the forge makes. Whole numbers summing to 100, so the first draw is one integer draw.
+    // ---- the trademark roll: a class first, then a skill of that class -------------------------------------
+    /// <summary>The share, in percent, of new weapons whose trademark is an ULTIMATE's, for a weapon type that has
+    /// trademarks of both classes. Every other new weapon carries an active's or a passive's.</summary>
+    public const int UltimateTrademarkPercent = 1;
+
+    /// <summary>Whether a class draw of <paramref name="roll0To99"/> lands on an ultimate, for a weapon type with
+    /// <paramref name="ultimates"/> ultimate trademarks and <paramref name="others"/> active or passive ones. A type
+    /// with only one class gives that class every weapon. The second draw then picks evenly inside the class.</summary>
+    public static bool TrademarkIsUltimate(int ultimates, int others, int roll0To99)
+    {
+        if (ultimates <= 0) return false;
+        if (others <= 0) return true;
+        return roll0To99 < UltimateTrademarkPercent;
+    }
+
+    /// <summary>The chance one trademark is the one a new weapon rolls: its class's share, split evenly among that
+    /// class's candidates. <paramref name="ultimate"/> says which class it is in. 0 when its class has no candidate.</summary>
+    public static float TrademarkChance(bool ultimate, int ultimates, int others)
+    {
+        int mine = ultimate ? ultimates : others;
+        if (mine <= 0) return 0f;
+        int theirs = ultimate ? others : ultimates;
+        int share = theirs <= 0 ? 100 : ultimate ? UltimateTrademarkPercent : 100 - UltimateTrademarkPercent;
+        return share / 100f / mine;
+    }
+
+    // ---- the rarity draw ----------------------------------------------------------------------------------
+    // Indexed by (int)Rarity: Common, Uncommon, Rare, Epic, Legendary. Each rarity's share, in percent, of a draw
+    // every rarity takes part in. Whole numbers summing to 100, so the draw is one integer draw.
     static readonly int[] RarityShares = { 50, 30, 14, 5, 1 };
 
-    /// <summary>How many rarities there are — the length every per-rarity count below must have.</summary>
+    /// <summary>How many rarities there are — the length every per-rarity array below must have.</summary>
     public static int RarityCount => RarityShares.Length;
 
-    /// <summary><paramref name="rarity"/>'s share, in percent, of every forged weapon of a weapon type that has
-    /// trademarks of every rarity.</summary>
+    /// <summary><paramref name="rarity"/>'s share, in percent, of a draw every rarity takes part in.</summary>
     public static int RarityShare(Rarity rarity) => RarityShares[Mathf.Clamp((int)rarity, 0, RarityShares.Length - 1)];
 
-    /// <summary>The size of the forge's FIRST draw, the rarity: the shares of only the rarities that have at least one
-    /// candidate, so a weapon type with no Epic trademark hands Epic's share to the others in proportion. 0 when
-    /// there is nothing to roll. <paramref name="candidatesByRarity"/> is how many trademarks of each rarity the
-    /// weapon type has, indexed by (int)Rarity.</summary>
-    public static int TrademarkRollTotal(int[] candidatesByRarity)
+    /// <summary>The size of a rarity draw among only the rarities <paramref name="present"/> marks (above 0, indexed by
+    /// (int)Rarity): their shares added up, so a rarity left out hands its share to the others in proportion. 0 when
+    /// none is present.</summary>
+    public static int RarityDrawTotal(int[] present)
     {
         int total = 0;
-        for (int r = 0; r < RarityShares.Length && r < candidatesByRarity.Length; r++)
-            if (candidatesByRarity[r] > 0) total += RarityShares[r];
+        for (int r = 0; r < RarityShares.Length && r < present.Length; r++)
+            if (present[r] > 0) total += RarityShares[r];
         return total;
     }
 
-    /// <summary>The rarity a first draw of <paramref name="roll"/> (0 to <see cref="TrademarkRollTotal"/> − 1) lands on.
-    /// The second draw then picks evenly among that rarity's candidates.</summary>
-    public static Rarity TrademarkRarityAt(int[] candidatesByRarity, int roll)
+    /// <summary>The rarity a draw of <paramref name="roll"/> (0 to <see cref="RarityDrawTotal"/> − 1) lands on, among
+    /// the rarities <paramref name="present"/> marks.</summary>
+    public static Rarity RarityAt(int[] present, int roll)
     {
         int last = 0;
-        for (int r = 0; r < RarityShares.Length && r < candidatesByRarity.Length; r++)
+        for (int r = 0; r < RarityShares.Length && r < present.Length; r++)
         {
-            if (candidatesByRarity[r] <= 0) continue;
+            if (present[r] <= 0) continue;
             last = r;
             roll -= RarityShares[r];
             if (roll < 0) return (Rarity)r;
@@ -79,15 +102,12 @@ public static class CraftingMath
         return (Rarity)last;
     }
 
-    /// <summary>The chance one trademark of <paramref name="rarity"/> is the one a forge rolls: its rarity's share of
-    /// the first draw, split evenly among that rarity's candidates. 0 when its rarity has no candidate.</summary>
-    public static float TrademarkChance(Rarity rarity, int[] candidatesByRarity)
-    {
-        int r = (int)rarity;
-        if (r < 0 || r >= candidatesByRarity.Length || candidatesByRarity[r] <= 0) return 0f;
-        int total = TrademarkRollTotal(candidatesByRarity);
-        return total > 0 ? RarityShare(rarity) / (float)total / candidatesByRarity[r] : 0f;
-    }
+    // What a rarity adds to the grade's lift on a piece of gear, in hundredths of the piece's value.
+    static readonly int[] RarityLifts = { 0, 10, 20, 35, 50 };
+
+    /// <summary>What <paramref name="rarity"/> adds to a piece's fold values, in hundredths: 0 at Common, 50 at
+    /// Legendary. Added to the grade's lift, never multiplied onto it.</summary>
+    public static int RarityLiftHundredths(Rarity rarity) => RarityLifts[Mathf.Clamp((int)rarity, 0, RarityLifts.Length - 1)];
 
     /// <summary>The most folds this grade allows — and, because a piece cannot be folded past its grade, also
     /// the point at which the only way further is a quench.</summary>
@@ -105,19 +125,16 @@ public static class CraftingMath
     /// <summary>How fast a weapon of this grade trains its weapon mastery (1 = par).</summary>
     public static float TrainingSpeed(Quality q) => Speeds[Index(q)];
 
-    /// <summary>Which material band this grade folds with: Raw folds with band 1, A with band 7. Also the
-    /// multiplier on what a fold and a quench cost in gold.</summary>
+    /// <summary>The grade counted from one: 1 at Raw, 7 at A. How many Temper Dust a fold of this grade costs, how
+    /// many Quench Oil a quench of it costs, and the multiplier on what each costs in gold.</summary>
     public static int Band(Quality q) => Index(q) + 1;
-
-    /// <summary>The grade that folds with material band <paramref name="band"/> — <see cref="Band"/> read backwards.</summary>
-    public static Quality GradeOfBand(int band) => (Quality)Mathf.Clamp(band - 1, 0, FoldCaps.Length - 1);
 
     // ---- what a fold and a quench cost --------------------------------------------------------------------
     const int GoldPerFoldPerBand = 50, GoldPerQuenchPerBand = 500;
-    /// <summary>Units of the grade's band material one fold costs.</summary>
-    public const int FoldMaterialCost = 1;
-    /// <summary>Units of the grade's band material one quench costs.</summary>
-    public const int QuenchMaterialCost = 10;
+    /// <summary>Units of Temper Dust one fold of a piece of grade <paramref name="q"/> costs: 1 at Raw, 7 at A.</summary>
+    public static int FoldMaterialCost(Quality q) => Band(q);
+    /// <summary>Units of Quench Oil one quench of a piece of grade <paramref name="q"/> costs: 1 at Raw, 7 at A.</summary>
+    public static int QuenchMaterialCost(Quality q) => Band(q);
 
     public static int FoldGoldCost(Quality q) => GoldPerFoldPerBand * Band(q);
     public static int QuenchGoldCost(Quality q) => GoldPerQuenchPerBand * Band(q);
@@ -139,8 +156,8 @@ public static class CraftingMath
     const int MetalDefensePerFold = 90, MetalHPPerFold = 720;
     const int LeatherAttackSpeedPerFold = 45, LeatherEvasionPerFold = 45;
     const int ClothMagicDefensePerFold = 90, ClothMPPerFold = 360;
-    // SHOES ALSO BUY MOVEMENT SPEED (decided 2026-10-05): exactly +2% a fold at every grade — the grade's lift does
-    // not touch it — on top of what their material buys. It is the only source of movement speed a piece has, so a
+    // SHOES ALSO BUY MOVEMENT SPEED (decided 2026-10-05): exactly +2% a fold at every grade and every rarity — neither
+    // lift touches it — on top of what their material buys. It is the only source of movement speed a piece has, so a
     // bare-footed unit moves at the shared base speed.
     const float ShoesMoveSpeedPercentPerFold = 2f;
 
@@ -158,14 +175,16 @@ public static class CraftingMath
     public static float SlotShare(EquipSlotType slot) =>
         slot == EquipSlotType.Head || slot == EquipSlotType.Boots ? 0.5f : 1f;
 
-    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/> — the finished
-    /// numbers, lift included, as the server writes them onto the copy. An armour piece with no material has nothing a
-    /// fold could buy. Rounds half UP, deliberately: <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
-    public static PieceStats PieceNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int folds, Quality q)
+    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/> and rarity
+    /// <paramref name="rarity"/> — the finished numbers, lift included, as the server writes them onto the copy. An
+    /// armour piece with no material has nothing a fold could buy. Rounds half UP, deliberately:
+    /// <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
+    public static PieceStats PieceNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int folds, Quality q,
+                                          Rarity rarity)
     {
         var p = default(PieceStats);
         if (folds <= 0 || slot == EquipSlotType.None) return p;
-        int lift = LiftHundredths(q);
+        int lift = LiftHundredths(q, rarity);
         if (slot == EquipSlotType.Weapon)
         {
             int atk = FoldValue(folds * 2, WeaponAttackPerFold, lift);
@@ -194,8 +213,10 @@ public static class CraftingMath
         return p;
     }
 
-    /// <summary>The grade's lift as whole hundredths of the piece's value: 100 at Raw and F, up to 130 at A.</summary>
-    static int LiftHundredths(Quality q) => 100 + Mathf.RoundToInt(QualityLift(q) * 100f);
+    /// <summary>The grade's and the rarity's lift together, as whole hundredths of the piece's value: 100 for a Common
+    /// piece at Raw or F, 130 for a Common one at A, 180 for a Legendary one at A.</summary>
+    public static int LiftHundredths(Quality q, Rarity rarity) =>
+        100 + Mathf.RoundToInt(QualityLift(q) * 100f) + RarityLiftHundredths(rarity);
 
     /// <summary>What <paramref name="halves"/> half-folds buy at <paramref name="perFoldHundredths"/> a fold, lifted by
     /// <paramref name="liftHundredths"/>, rounded half UP — all whole-number maths, so a value exactly on .5 rounds up.</summary>
@@ -361,29 +382,34 @@ public static class CraftingMath
     /// single unit never comes back whole.</summary>
     public const float RecycleShare = 0.5f;
 
-    /// <summary>What a piece of grade <paramref name="q"/> at <paramref name="folds"/> folds provably consumed,
-    /// counted from what SUCCEEDED — nothing records the quenches that failed or the folds they spent, so those
-    /// are not counted. Counted: the forge bill (band 1); for every rung climbed, one successful quench AND the
-    /// full set of folds that grade's gate required before it (<see cref="ReadyToQuench"/>), each at the grade it
-    /// was made from; and the folds standing on the piece now, at its own band. Written as units per band into
-    /// <paramref name="unitsPerBand"/> (places 1..7; place 0 unused) and gold, all already halved.</summary>
-    public static void RecycleYield(Quality q, int folds, int forgeUnits, int forgeGold, int[] unitsPerBand, out int gold)
+    /// <summary>What recycling a piece of grade <paramref name="q"/> at <paramref name="folds"/> folds gives back:
+    /// half, floored, of what it provably consumed, counted from what SUCCEEDED — nothing records the quenches that
+    /// failed or the folds they spent, so those are not counted. Counted: for every grade climbed, one successful
+    /// quench AND the full set of folds that grade's gate required before it (<see cref="ReadyToQuench"/>), each at
+    /// the grade it was made from; and the folds standing on the piece now. Priced by the same two functions the
+    /// spend reads (<see cref="FoldMaterialCost"/>, <see cref="QuenchMaterialCost"/>).
+    ///
+    /// <para>FOLDS BOUGHT AT RAW RETURN NOTHING, standing or climbed — no Temper Dust and no gold. A tutorial's first
+    /// run gives its Raw folds free, so a Raw fold that paid back would pay out of nothing.</para></summary>
+    public static void RecycleYield(Quality q, int folds, out int dust, out int oil, out int gold)
     {
-        System.Array.Clear(unitsPerBand, 0, unitsPerBand.Length);
-        int spentGold = forgeGold;
-        unitsPerBand[1] += forgeUnits;
+        int spentDust = 0, spentOil = 0, spentGold = 0;
         for (int g = (int)Quality.Raw; g < (int)q; g++)
         {
             var from = (Quality)g;
-            // THE FOLDS THAT RUNG COST, not only the quench: the gate means a piece cannot have climbed without
-            // first folding to that grade's cap, so those folds are as provable as the quench itself.
-            unitsPerBand[Band(from)] += FoldCap(from) * FoldMaterialCost + QuenchMaterialCost;
-            spentGold += FoldCap(from) * FoldGoldCost(from) + QuenchGoldCost(from);
+            spentOil += QuenchMaterialCost(from);
+            spentGold += QuenchGoldCost(from);
+            if (from == Quality.Raw) continue;
+            spentDust += FoldCap(from) * FoldMaterialCost(from);
+            spentGold += FoldCap(from) * FoldGoldCost(from);
         }
-        unitsPerBand[Band(q)] += Mathf.Max(0, folds) * FoldMaterialCost;
-        spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);
-
-        for (int b = 1; b < unitsPerBand.Length; b++) unitsPerBand[b] = Mathf.FloorToInt(unitsPerBand[b] * RecycleShare);
+        if (q != Quality.Raw)
+        {
+            spentDust += Mathf.Max(0, folds) * FoldMaterialCost(q);
+            spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);
+        }
+        dust = Mathf.FloorToInt(spentDust * RecycleShare);
+        oil = Mathf.FloorToInt(spentOil * RecycleShare);
         gold = Mathf.FloorToInt(spentGold * RecycleShare);
     }
 

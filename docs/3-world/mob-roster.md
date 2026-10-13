@@ -158,7 +158,8 @@ map, and the map generator no longer puts any there.
 
   The four lowest elites (8 to 22) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
   not share its element or place.
-- A complete set of gear at **A +30**, and ring ranks. Normals and elites have no ring ranks.
+- A complete set of gear at **A +30** — its weapon and a full set of one armour material, chosen by its weapon
+  ([Creature Gear](creature-gear.md)) — and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
   shadows can be seen in the game.
 - **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
@@ -168,8 +169,9 @@ map, and the map generator no longer puts any there.
 - **Drops:** the same as an elite, at higher chances. When weapon transcending exists, its materials are
   **specific to each weapon**, and **each shadow drops only its own weapon's**.
 - **They are meant to need a whole guild to bring down.**
-- **All fourteen exist.** Only **Veyra** (the Sword shadow) holds a weapon; the other thirteen fight with basic
-  attacks until their weapon's skills exist, and then each is handed its weapon.
+- **All fourteen exist, and each holds its weapon**, with its stats spent in that weapon's build
+  ([Creature Gear](creature-gear.md)). Only the Sword has skills today, so the other thirteen fight with basic
+  attacks until their weapon's skills exist.
 - They carry their name and title and an always-visible health bar.
 - **Each shadow wears one fixed look of its own** — a body and its outfit colours, the same every life and in front of
   everybody (decided and built 2026-10-06). Both are set on its catalog entry, and only in the **Mob Table**: open a
@@ -215,9 +217,11 @@ its own grade's **metal, cloth and leather**, plus a chance of an Ink or a Salt:
 | Elite | 60%, 5 to 10 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% |
 | Shadow | 100%, 5 to 10 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% |
 
-Every kill also has a 30% chance of one random consumable (a potion or a food), and a creature with an element adds its
-own element's two converters to that roll — a fire creature can drop the Flame Elemental Converter or the Flame Armor
-Converter; a creature whose element has no converter (Neutral, Poison, Holy, Dark, Ghost, Undead) never drops one. Materials are never in that roll.
+Every kill also has a chance of the creature's own find — 5% for a normal, 50% for an elite, 100% for a shadow. A
+creature of Fire, Water, Earth or Wind gives up one of its element's two converters — a fire creature the Flame
+Elemental Converter or the Flame Armor Converter; a creature of any other element gives up that element's food
+([Town Supplies and Hunting Finds](../2-systems/town-supplies-and-hunting-finds.md)). Potions, wings and the Antidote
+are sold by the Tool Dealer and never dropped. Materials are never in that roll.
 Several of one material go down as one pile.
 
 **Every normal creature and elite also drops a material nothing else does**, and 24 normal creatures and all 18 elites a

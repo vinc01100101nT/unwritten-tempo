@@ -221,7 +221,7 @@ public partial class NetPlayer
         {
             var def = bag[i] != null ? bag[i].def : null;
             if (def == null || !def.IsUsable) continue;
-            var what = WhatItRestores(def.useSkillId);
+            var what = ItemCatalog.WhatItRestores(def.useSkillId);
             bool restores = mana ? what.mana : what.health;
             if (!restores) continue;
             // A DRAUGHT ALREADY RUNNING is not stacked with a second.
@@ -233,35 +233,5 @@ public partial class NetPlayer
                 return;
             }
         }
-    }
-
-    struct Restores { public bool health, mana, healthOverTime, manaOverTime; }
-
-    // What an item's skill gives back, read off its effects once per skill and kept: an instant heal restores health; a
-    // timed health or mana regeneration restores that one over time. The skill table never changes while a server runs.
-    static readonly Dictionary<string, Restores> restoresBySkill = new Dictionary<string, Restores>();
-
-    static Restores WhatItRestores(string skillId)
-    {
-        if (string.IsNullOrEmpty(skillId)) return default;
-        if (restoresBySkill.TryGetValue(skillId, out var known)) return known;
-        var r = new Restores();
-        var def = SkillCatalog.Get(skillId);
-        if (def != null && def.bindings != null)
-            for (int b = 0; b < def.bindings.Count; b++)
-            {
-                var fx = def.bindings[b]?.effects;
-                if (fx == null) continue;
-                for (int i = 0; i < fx.Count; i++)
-                {
-                    var e = fx[i];
-                    if (e == null) continue;
-                    if (e.kind == SkillEffectKind.Heal) r.health = true;
-                    else if (e.kind == SkillEffectKind.SubStatBuff && e.subStat == SubStat.HPRegen) { r.health = true; r.healthOverTime = true; }
-                    else if (e.kind == SkillEffectKind.SubStatBuff && e.subStat == SubStat.MPRegen) { r.mana = true; r.manaOverTime = true; }
-                }
-            }
-        restoresBySkill[skillId] = r;
-        return r;
     }
 }

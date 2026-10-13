@@ -19,7 +19,7 @@ MonoBehaviour:
   needsSkillId: 
   published: 0
   maxLevel: 1
-  description: Restores 200 HP at once.
+  description: Restores 400 HP at once.
   archetype: 3
   family: 0
   shape: 3
@@ -79,7 +79,7 @@ MonoBehaviour:
         scaler: 1
       element: 0
       amount:
-        value: 200
+        value: 400
         useStacks: 0
         op: 0
         read: 0

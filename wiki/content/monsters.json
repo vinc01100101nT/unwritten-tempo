@@ -66,7 +66,7 @@
    "items": [
     "**Materials** — the metal, cloth and leather of the monster's own grade, which rises with its level, and now and then an **Ink** or a **Salt**. Elites drop far more, and rarer Inks and Salts; shadows more again. No stats of their own; they feed **Crafting & Recycling**.",
     "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns gold. Some monsters also carry a second, rarer one with a coloured name. An elite's falls as several separate piles, and auto-loot never takes anything an elite drops.",
-    "**Consumables** — potions and food, now and then; a monster with an element also drops the **converters** of its own element."
+    "**Its find** — now and then, the one consumable its element carries: Fire, Water, Earth and Wind monsters drop a **converter** of their own element, every other monster drops its element's **food**. Potions, wings and antidotes are only sold by Tool Dealers."
    ]
   },
   {

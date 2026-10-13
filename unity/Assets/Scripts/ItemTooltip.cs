@@ -217,23 +217,12 @@ public class ItemTooltip : MonoBehaviour
         string use;
         switch (item.materialKind)
         {
-            case MaterialKind.Metal:
-            case MaterialKind.Cloth:
-            case MaterialKind.Leather:
-            {
-                if (item.materialStep < 1) return;
-                var grade = CraftingMath.GradeOfBand(item.materialStep);
-                string gear = item.materialKind.ToString().ToLowerInvariant() + " gear";
-                string graded = (grade == Quality.Raw ? "Raw" : grade.ToString()) + "-grade " + gear;
-                string station = CraftStations.Label(StationThatWorks(item.materialKind));
-                if (item.materialStep == 1)
-                    use = "Forges new " + gear + " at the " + station + ", and folds and quenches " + graded + ".";
-                else if (CraftingMath.CanQuench(grade))
-                    use = "Folds and quenches " + graded + " at the " + station + ".";
-                else
-                    use = "Folds " + graded + " at the " + station + ".";
+            case MaterialKind.TemperDust:
+                use = "Used to fold a piece at a smith, loom or tannery.";
                 break;
-            }
+            case MaterialKind.QuenchOil:
+                use = "Used to quench a piece at a smith, loom or tannery.";
+                break;
             case MaterialKind.Ink:
                 use = "Writes one random stat onto a piece of gear. Stronger Ink writes a bigger number.";
                 break;
@@ -248,14 +237,6 @@ public class ItemTooltip : MonoBehaviour
         if (CraftingMath.Merges(item.materialKind) && item.mergesInto != null)
             sb.Append("\nMerge ").Append(CraftingMath.MergeCount).Append(" into 1 ").Append(item.mergesInto.displayName).Append('.');
         sb.Append("</color>");
-    }
-
-    // CraftStations.Works read backwards, so which station works which material stays written in one place.
-    static CraftStation StationThatWorks(MaterialKind kind)
-    {
-        for (var s = CraftStation.Smith; s <= CraftStation.Tannery; s++)
-            if (CraftStations.Works(s) == kind) return s;
-        return CraftStation.None;
     }
 
     // What a consumable DOES, in the same words the skill's own card uses — read straight off the skill it runs

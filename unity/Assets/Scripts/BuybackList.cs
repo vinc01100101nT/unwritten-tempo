@@ -147,19 +147,11 @@ public class BuybackList
         {
             var e = entries[i];
             var line = new SoldLine { itemId = e.def.id, count = e.count, price = ShopMath.BuybackPrice(e.paid),
-                                      endsAt = e.endsAt, cards = "", roll = "", copyId = "",
-                                      rarity = (int)Rarities.Of(e.def, e.instance) };
+                                      endsAt = e.endsAt, cards = "", roll = "", copyId = "" };
             if (e.instance != null) e.instance.ToSaved(out line.refine, out line.cards, out line.roll, out line.copyId);
             lines[i] = line;
         }
         return lines;
-    }
-
-    // A piece off the wire, wearing the rarity the server sent with it.
-    static EquipmentInstance Sent(EquipmentInstance piece, int rarity)
-    {
-        if (rarity >= (int)Rarity.Common && rarity <= (int)Rarity.Legendary) { piece.rarity = (Rarity)rarity; piece.raritySent = true; }
-        return piece;
     }
 
     /// <summary>PLAYER'S MACHINE: replace the list with what the server sent. Nothing is worked out here.</summary>
@@ -177,7 +169,7 @@ public class BuybackList
             {
                 def = def,
                 count = l.count,
-                instance = gear ? Sent(EquipmentInstance.FromSaved(def, l.refine, l.cards, l.roll ?? "", l.copyId), l.rarity) : null,
+                instance = gear ? EquipmentInstance.FromSaved(def, l.refine, l.cards, l.roll ?? "", l.copyId) : null,
                 price = l.price,
                 endsAt = l.endsAt,
             });
@@ -186,8 +178,7 @@ public class BuybackList
 }
 
 /// <summary>One kept sale as its owner is sent it: the thing (with a piece of gear's own four values, so its row can
-/// name it exactly, and its rarity as the server decided it), the finished price to buy it back, and the moment it stops
-/// being kept.</summary>
+/// name it exactly), the finished price to buy it back, and the moment it stops being kept.</summary>
 public struct SoldLine
 {
     public string itemId;
@@ -198,5 +189,4 @@ public struct SoldLine
     public string copyId;
     public long price;
     public double endsAt;
-    public int rarity;
 }

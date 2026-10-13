@@ -152,7 +152,7 @@ public static class SavedCharacters
         }
         if ((gold > 0 || restItems.Count > 0) && saverHere)
         {
-            Rewards.PayLoot(c.saver, null, null, gold, health, restItems, restCounts);
+            Rewards.PayLoot(c.saver, null, true, gold, health, restItems, restCounts);
             c.saver.KillCombo.Earned(KillCombo.Now, 0, gold);
             GameNetwork.TellOwnerTheirKillCombo(c.saver, health, false, 0, 0, gold, gold - rescued);
         }
