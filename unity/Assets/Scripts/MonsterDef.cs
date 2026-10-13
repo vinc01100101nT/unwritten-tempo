@@ -154,11 +154,11 @@ public class MonsterDef : ScriptableObject
     public float onHitAilmentMagnitude = 0f;
 
     [Header("Loot")]
-    [Tooltip("The gold range a saved character that never fights pays its saver, before its tier multiplies it. A death " +
-             "itself pays no gold.")]
-    public int goldMin = 0;
-    [Tooltip("The top of that range.")]
-    public int goldMax = 0;
+    [Tooltip("The material only this creature drops, on a chance and in an amount its kind decides " +
+             "(CreatureMaterials). Empty = it has none.")]
+    public Item material;
+    [Tooltip("Its second, rarer material of its own. The item's own tier decides the chance. Empty = it has none.")]
+    public Item rareMaterial;
     [Tooltip("Item drops. Each entry is rolled independently on death. Names must match a Resources/Items/*.asset.")]
     public string[] itemDropNames = System.Array.Empty<string>();
     [Tooltip("Drop chance (0–1) parallel to Item Drop Names.")]

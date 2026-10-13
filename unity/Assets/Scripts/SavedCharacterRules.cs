@@ -34,22 +34,43 @@ public static class SavedCharacterRules
     /// <summary>Whether a creature of <paramref name="kind"/> can turn back at all. A shadow never does.</summary>
     public static bool CanTurnBack(CreatureKind kind) => kind == CreatureKind.Normal || kind == CreatureKind.Elite;
 
-    /// <summary>What saving a never-fights character of <paramref name="tier"/> multiplies the mob's gold by.</summary>
-    public static int GoldMultiplier(GoldTier tier)
+    /// <summary>How many kills of its creature the gold for saving a never-fights character of <paramref name="tier"/>
+    /// is worth.</summary>
+    public static int RescueKills(GoldTier tier)
     {
         switch (tier)
         {
-            case GoldTier.Ordinary: return 20;
-            case GoldTier.Helpless: return 40;
-            case GoldTier.Wealthy: return 60;
+            case GoldTier.Ordinary: return 4;
+            case GoldTier.Helpless: return 8;
+            case GoldTier.Wealthy: return 12;
             default: return 0;
         }
     }
 
-    /// <summary>The gold paid for saving a character of <paramref name="tier"/>, given <paramref name="rolledMobGold"/> —
-    /// one roll inside the mob's own gold range. Only a never-fights character pays.</summary>
-    public static int RescueGold(SavedBehaviour behaviour, GoldTier tier, int rolledMobGold)
-        => behaviour == SavedBehaviour.NeverFights ? System.Math.Max(0, rolledMobGold) * GoldMultiplier(tier) : 0;
+    /// <summary>The gold paid for saving a character of <paramref name="tier"/> that came out of a creature whose FILE
+    /// says <paramref name="creatureLevel"/> — never the level it grew to in the fight, so feeding a creature blows
+    /// cannot raise the pay. A kill is worth <see cref="CreatureMaterials.GoldPerLevel"/> gold a level. Only a
+    /// never-fights character pays, and a kill of a creature in better gear is worth more by its grade and folds
+    /// (<see cref="CreaturePay"/>).</summary>
+    public static long RescueGold(SavedBehaviour behaviour, GoldTier tier, int creatureLevel, Quality gearGrade, int gearFolds)
+        => behaviour == SavedBehaviour.NeverFights
+            ? CreaturePay.Scaled((long)RescueKills(tier) * CreatureMaterials.GoldPerLevel * System.Math.Max(1, creatureLevel),
+                                 gearGrade, gearFolds)
+            : 0;
+
+    /// <summary>How many of its creature's ordinary material a saved never-fights character of <paramref name="tier"/>
+    /// hands over with the gold. Each is worth two kills, so gold and material together come to 10, 20 or 30.</summary>
+    public static int RescueMaterials(SavedBehaviour behaviour, GoldTier tier)
+    {
+        if (behaviour != SavedBehaviour.NeverFights) return 0;
+        switch (tier)
+        {
+            case GoldTier.Ordinary: return 3;
+            case GoldTier.Helpless: return 6;
+            case GoldTier.Wealthy: return 9;
+            default: return 0;
+        }
+    }
 
     /// <summary>The kind whose drops a rebel from a creature of <paramref name="kind"/> gives up: one kind up.</summary>
     public static CreatureKind LootKindOfRebel(CreatureKind kind) =>

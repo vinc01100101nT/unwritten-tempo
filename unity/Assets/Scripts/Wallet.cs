@@ -15,16 +15,16 @@ using System;
 public static class Wallet
 {
     /// <summary>Fires whenever the local player's money changes. Arg = the new total.</summary>
-    public static event Action<int> OnChanged;
+    public static event Action<long> OnChanged;
 
     /// <summary>What the local player has. Nothing, before there is a character.</summary>
-    public static int Gold => Character.Instance != null ? Character.Instance.Gold : 0;
+    public static long Gold => Character.Instance != null ? Character.Instance.Gold : 0;
 
     /// <summary>Add money to the local player, or take it away with a negative amount.</summary>
-    public static void Add(int amount) => Character.Instance?.AddGold(amount);
+    public static void Add(long amount) => Character.Instance?.AddGold(amount);
 
     /// <summary>Set the local player's balance outright.</summary>
-    public static void Set(int amount) => Character.Instance?.SetGold(amount);
+    public static void Set(long amount) => Character.Instance?.SetGold(amount);
 
     // ---- how the character's own event reaches the screen ------------------------------------------------
     //
@@ -54,5 +54,5 @@ public static class Wallet
         listeningTo = null;
     }
 
-    static void Relay(int total) => OnChanged?.Invoke(total);
+    static void Relay(long total) => OnChanged?.Invoke(total);
 }

@@ -36,7 +36,7 @@ public struct BagWire
 
     /// <summary>The purse rides along, because it changes at the same moments the bag does — one drop pays out
     /// coins or an item — and two messages for one event is two chances for a screen to show half of it.</summary>
-    public int gold;
+    public long gold;
 
     /// <summary>How much the bag holds and how much is in it, worked out by the server (<see cref="BagRoom"/>): what is
     /// carried, the most that can be, and the entries in each tab (indexed by <see cref="ItemCategory"/>). Sent, so the

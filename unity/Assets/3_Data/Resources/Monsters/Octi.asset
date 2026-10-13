@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Octi
   kind: 0
   size: 0.9
+  flies: 0
   biome: 10
   artFolder: be8742476b86fcd458160722ff9fd575
   faceset: {fileID: 2800000, guid: 72d3f68f92568de429fd324a4251852a, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 63
-  str: 44
-  agi: 31
-  vit: 42
-  intel: 22
-  dex: 31
-  luk: 22
-  startingGear: []
+  str: 51
+  agi: 33
+  vit: 22
+  intel: 32
+  dex: 32
+  luk: 21
+  startingGear:
+  - {fileID: 11400000, guid: 5296fef8d7a735b408311057c8184f90, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
   gearQuality: 1
-  gearFolds: 9
+  gearFolds: 8
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 5
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
+  material: {fileID: 11400000, guid: 6284fd3da043438d9339f04cd016b56b, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 58b739dcfdb747829b933c60ee918869, type: 2}
   itemDropNames: []
   itemDropChances: []

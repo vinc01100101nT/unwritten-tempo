@@ -191,7 +191,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
     }
 
     void OnChanged() => linesOwed = true;
-    void OnGoldChanged(int _) => linesOwed = true;
+    void OnGoldChanged(long _) => linesOwed = true;
 
     void Build()
     {

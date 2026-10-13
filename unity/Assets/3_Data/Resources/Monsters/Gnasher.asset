@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Gnasher
   kind: 0
   size: 2.8
+  flies: 0
   biome: 10
   artFolder: afd0d90557d4b6540b539c780820cdef
   faceset: {fileID: 2800000, guid: 378af2742d1d8ce4d93a0d1ac8ebfdc2, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 65
-  str: 41
-  agi: 35
-  vit: 41
-  intel: 24
-  dex: 35
-  luk: 24
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 10
-  gearInkTier: 1
+  str: 34
+  agi: 21
+  vit: 60
+  intel: 21
+  dex: 34
+  luk: 21
+  startingGear:
+  - {fileID: 11400000, guid: 5296fef8d7a735b408311057c8184f90, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 2
+  gearFolds: 13
+  gearInkTier: 2
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 5
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
+  material: {fileID: 11400000, guid: 2ca855dff5264bff996a398ce0dbffd4, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 8496683e580840c0853e2e4bfda7edf5, type: 2}
   itemDropNames: []
   itemDropChances: []

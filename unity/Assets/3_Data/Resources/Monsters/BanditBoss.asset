@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Bandit Boss
   kind: 1
   size: 1.8
+  flies: 0
   biome: 0
   artFolder: faa7254c574825c48bccc5ee13808c1f
   faceset: {fileID: 2800000, guid: b4ffd177e1d64604ab2ee538618c0267, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 22
   str: 17
-  agi: 10
-  vit: 19
+  agi: 17
+  vit: 13
   intel: 7
-  dex: 13
+  dex: 12
   luk: 7
-  startingGear: []
-  gearQuality: 3
-  gearFolds: 5
-  gearInkTier: 3
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  gearQuality: 4
+  gearFolds: 23
+  gearInkTier: 4
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 600
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 750
-  goldMax: 1500
+  material: {fileID: 11400000, guid: 8998fb1ebe304eef924c4d596329f0e0, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 49bf9114336742d48c0821432a00b2a4, type: 2}
   itemDropNames: []
   itemDropChances: []

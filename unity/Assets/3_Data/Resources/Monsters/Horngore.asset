@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Horngore
   kind: 0
   size: 2
+  flies: 0
   biome: 3
   artFolder: 39477c9f2dd0fb140a58675237af0639
   faceset: {fileID: 2800000, guid: d3df95658cad8f842befbe463e9c8ae7, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 73
-  str: 49
-  agi: 40
-  vit: 48
-  intel: 26
-  dex: 35
-  luk: 26
-  startingGear: []
-  gearQuality: 2
-  gearFolds: 11
-  gearInkTier: 2
+  str: 24
+  agi: 24
+  vit: 38
+  intel: 67
+  dex: 38
+  luk: 24
+  startingGear:
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 3
+  gearFolds: 16
+  gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: c500324f9d6941ac91d304ed0590c05d, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 71fb058995674b119131266e7cea5286, type: 2}
   itemDropNames: []
   itemDropChances: []

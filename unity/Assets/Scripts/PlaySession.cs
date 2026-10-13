@@ -26,7 +26,8 @@ public static class PlaySession
         public string name;
         public float startedAt;
         public int startLevel, level;
-        public int kills, experience, gold, deaths;
+        public int kills, experience, deaths;
+        public long gold;
         public int fellForThem, pickedUp, vanished, questsFinished;
         public readonly List<string> maps = new List<string>(4);
         // -1 while they are playing here; otherwise when they walked through a door to somewhere.
@@ -80,7 +81,7 @@ public static class PlaySession
     }
 
     public static void ReachedLevel(Character c, int level) { var t = Of(c); if (t != null) t.level = level; }
-    public static void EarnedGold(Character c, int gold) { var t = Of(c); if (t != null) t.gold += gold; }
+    public static void EarnedGold(Character c, long gold) { var t = Of(c); if (t != null) t.gold += gold; }
     public static void Died(Character c) { var t = Of(c); if (t != null) t.deaths++; }
     public static void ThingsFell(Character c, int piles) { var t = Of(c); if (t != null) t.fellForThem += piles; }
     public static void PickedUp(Character c) { var t = Of(c); if (t != null) t.pickedUp++; }

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Autumn Stalk
   kind: 1
   size: 3
+  flies: 0
   biome: 6
   artFolder: dd285ec69ce588c48adf9bd23460b577
   faceset: {fileID: 2800000, guid: 7362be9ccb36dfb468f7a1c2ce4a18f7, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 15
-  str: 13
-  agi: 7
-  vit: 15
-  intel: 6
-  dex: 10
-  luk: 5
-  startingGear: []
-  gearQuality: 3
-  gearFolds: 3
-  gearInkTier: 3
+  str: 16
+  agi: 13
+  vit: 6
+  intel: 5
+  dex: 5
+  luk: 10
+  startingGear:
+  - {fileID: 11400000, guid: 6d2ebac137a76e34f9f470f698bcffbb, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 5
+  gearFolds: 25
+  gearInkTier: 5
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 400
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 500
-  goldMax: 1000
+  material: {fileID: 11400000, guid: 4e5b97e21fdc4053a19ff3df9eb35f9f, type: 2}
+  rareMaterial: {fileID: 11400000, guid: ac078852b269497dbea233e29222ad4c, type: 2}
   itemDropNames: []
   itemDropChances: []

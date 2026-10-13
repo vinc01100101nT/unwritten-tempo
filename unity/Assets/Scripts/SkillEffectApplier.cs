@@ -553,7 +553,18 @@ public static class SkillEffectApplier
                 // Same one formula as the Damage side, so a lifesteal read off a pile can't drift from the hit that
                 // read the same pile — one cast, one snapshot, two effects.
                 // The pile-or-authored choice now lives in ScaledAmount, the same place every other flat number asks it.
-                if (hit == 0) unit.Heal(ScaledAmount(e, caster, vars));
+                if (hit == 0)
+                {
+                    // HEALTH GIVEN BACK TO SOMEBODY ELSE is credited to the healer on whichever creature took it
+                    // (KillLedger) — what was really restored, never what the skill offered.
+                    var healed = unit as Character;
+                    int hpBefore = healed != null ? healed.CurrentHP : 0;
+                    int hpMax = healed != null ? healed.MaxHP : 0;
+                    unit.Heal(ScaledAmount(e, caster, vars));
+                    var healer = healed != null ? KillLedger.PersonBehind(caster) : null;
+                    if (healer != null && !ReferenceEquals(healer, healed))
+                        healed.Hurts.Credit(healer, healed.CurrentHP - hpBefore, hpMax - hpBefore);
+                }
                 break;
             case SkillEffectKind.Status:
                 if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, OutputMagnitude(e, caster, vars), caster);

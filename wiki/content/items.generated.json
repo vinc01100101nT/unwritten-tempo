@@ -11,6 +11,68 @@
     ],
     "items": [
         {
+            "id": "item.abyss-maw-fang",
+            "name": "Abyss Maw Fang",
+            "description": "Dropped only by Abyss Maw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 6930,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Abyss Maw",
+                    "level": 99,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.abyss-maw-heart",
+            "name": "Abyss Maw Heart",
+            "description": "Dropped only by Abyss Maw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 43313,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Abyss Maw",
+                    "level": 99,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.adamant",
             "name": "Adamant",
             "description": "It gives way to nothing. Working it is the whole of the skill.",
@@ -200,6 +262,37 @@
                     "level": 90,
                     "chance": "60%",
                     "count": "5–10"
+                }
+            ]
+        },
+        {
+            "id": "item.adder-fang",
+            "name": "Adder Fang",
+            "description": "Dropped only by Adder.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1368,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Adder",
+                    "level": 57,
+                    "chance": "50%",
+                    "count": "1"
                 }
             ]
         },
@@ -841,6 +934,68 @@
             "droppedBy": []
         },
         {
+            "id": "item.autumn-stalk-leaf",
+            "name": "Autumn Stalk Leaf",
+            "description": "Dropped only by Autumn Stalk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1519,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Autumn Stalk",
+                    "level": 15,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.autumn-stalk-seed",
+            "name": "Autumn Stalk Seed",
+            "description": "Dropped only by Autumn Stalk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 189844,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Autumn Stalk",
+                    "level": 15,
+                    "chance": "5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.axe",
             "name": "Axe",
             "description": "",
@@ -863,6 +1018,316 @@
             "zeny": 5000,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.bandit-bosss-loot-sack",
+            "name": "Bandit Boss's Loot Sack",
+            "description": "Dropped only by Bandit Boss.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 47300,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Bandit Boss",
+                    "level": 22,
+                    "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.bandit-bosss-mask",
+            "name": "Bandit Boss's Mask",
+            "description": "Dropped only by Bandit Boss.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1892,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Bandit Boss",
+                    "level": 22,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.bittersweet-seed",
+            "name": "Bittersweet Seed",
+            "description": "Dropped only by Bittersweet.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1700,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Bittersweet",
+                    "level": 68,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.blazeskull-flame-core",
+            "name": "Blazeskull Flame Core",
+            "description": "Dropped only by Blazeskull.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 22088,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Blazeskull",
+                    "level": 76,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.blazeskull-jaw",
+            "name": "Blazeskull Jaw",
+            "description": "Dropped only by Blazeskull.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3534,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Blazeskull",
+                    "level": 76,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.blinkbat-eye",
+            "name": "Blinkbat Eye",
+            "description": "Dropped only by Blinkbat.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2325,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Blinkbat",
+                    "level": 8,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.blinkbat-wing",
+            "name": "Blinkbat Wing",
+            "description": "Dropped only by Blinkbat.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 372,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Blinkbat",
+                    "level": 8,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.blood-ronin-blade-shard",
+            "name": "Blood Ronin Blade Shard",
+            "description": "Dropped only by Blood Ronin.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4095,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Blood Ronin",
+                    "level": 60,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.blood-ronin-crest",
+            "name": "Blood Ronin Crest",
+            "description": "Dropped only by Blood Ronin.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 25594,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Blood Ronin",
+                    "level": 60,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.bloodshot-eye",
+            "name": "Bloodshot Eye",
+            "description": "Dropped only by Bloodshot.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1392,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Bloodshot",
+                    "level": 58,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.bow",
@@ -1374,6 +1839,37 @@
                     "name": "Tarantix",
                     "level": 11,
                     "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.burrowbo-claw",
+            "name": "Burrowbo Claw",
+            "description": "Dropped only by Burrowbo.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 575,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Burrowbo",
+                    "level": 25,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -1992,6 +2488,99 @@
             ]
         },
         {
+            "id": "item.canewick-blossom",
+            "name": "Canewick Blossom",
+            "description": "Dropped only by Canewick.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 11756,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Canewick",
+                    "level": 38,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.canewick-stalk",
+            "name": "Canewick Stalk",
+            "description": "Dropped only by Canewick.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1881,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Canewick",
+                    "level": 38,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.capling-spore",
+            "name": "Capling Spore",
+            "description": "Dropped only by Capling.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 125,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Capling",
+                    "level": 5,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.chain-mantle",
             "name": "Chain Mantle",
             "description": "",
@@ -2062,6 +2651,99 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.chomper-golden-tooth",
+            "name": "Chomper Golden Tooth",
+            "description": "Dropped only by Chomper.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 73500,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Chomper",
+                    "level": 48,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.chomper-tooth",
+            "name": "Chomper Tooth",
+            "description": "Dropped only by Chomper.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2940,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Chomper",
+                    "level": 48,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.cinder-ash",
+            "name": "Cinder Ash",
+            "description": "Dropped only by Cinder.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1608,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Cinder",
+                    "level": 67,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.clear-ink",
@@ -2702,6 +3384,37 @@
             ]
         },
         {
+            "id": "item.coily-scale",
+            "name": "Coily Scale",
+            "description": "Dropped only by Coily.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1075,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Coily",
+                    "level": 43,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.copper",
             "name": "Copper",
             "description": "Soft and easy to work. Every first blade is copper.",
@@ -3047,6 +3760,99 @@
             "droppedBy": []
         },
         {
+            "id": "item.crawlet-bristle",
+            "name": "Crawlet Bristle",
+            "description": "Dropped only by Crawlet.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 140,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Crawlet",
+                    "level": 4,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.crawlet-cocoon",
+            "name": "Crawlet Cocoon",
+            "description": "Dropped only by Crawlet.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 175,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Crawlet",
+                    "level": 4,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.cyclo-horn",
+            "name": "Cyclo Horn",
+            "description": "Dropped only by Cyclo.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1587,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Cyclo",
+                    "level": 69,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.dagger",
             "name": "Dagger",
             "description": "",
@@ -3069,6 +3875,347 @@
             "zeny": 5000,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.deep-maw-pearl",
+            "name": "Deep Maw Pearl",
+            "description": "Dropped only by Deep Maw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 10238,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Deep Maw",
+                    "level": 24,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.deep-maw-tongue",
+            "name": "Deep Maw Tongue",
+            "description": "Dropped only by Deep Maw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1638,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Deep Maw",
+                    "level": 24,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.dewdrop-bead",
+            "name": "Dewdrop Bead",
+            "description": "Dropped only by Dewdrop.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 975,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Dewdrop",
+                    "level": 39,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.digger-snout",
+            "name": "Digger Snout",
+            "description": "Dropped only by Digger.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 900,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Digger",
+                    "level": 36,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.drizzle-droplet",
+            "name": "Drizzle Droplet",
+            "description": "Dropped only by Drizzle.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1702,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Drizzle",
+                    "level": 74,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.elder-stalk-bark",
+            "name": "Elder Stalk Bark",
+            "description": "Dropped only by Elder Stalk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3290,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Elder Stalk",
+                    "level": 47,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.elder-stalk-heartwood",
+            "name": "Elder Stalk Heartwood",
+            "description": "Dropped only by Elder Stalk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 20563,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Elder Stalk",
+                    "level": 47,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.emberhoot-plume",
+            "name": "Emberhoot Plume",
+            "description": "Dropped only by Emberhoot.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1035,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Emberhoot",
+                    "level": 45,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.emberlurk-golden-eye",
+            "name": "Emberlurk Golden Eye",
+            "description": "Dropped only by Emberlurk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 710000,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Emberlurk",
+                    "level": 71,
+                    "chance": "0.1%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.emberlurk-scale",
+            "name": "Emberlurk Scale",
+            "description": "Dropped only by Emberlurk.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 5680,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Emberlurk",
+                    "level": 71,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.emberwyrm-hide",
+            "name": "Emberwyrm Hide",
+            "description": "Dropped only by Emberwyrm.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1150,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Emberwyrm",
+                    "level": 46,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.faint-ink",
@@ -3718,6 +4865,68 @@
                     "name": "Willo",
                     "level": 54,
                     "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.flutterby-scale-dust",
+            "name": "Flutterby Scale Dust",
+            "description": "Dropped only by Flutterby.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 88,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Flutterby",
+                    "level": 2,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.flutterby-wing",
+            "name": "Flutterby Wing",
+            "description": "Dropped only by Flutterby.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 70,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Flutterby",
+                    "level": 2,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4578,6 +5787,471 @@
             ]
         },
         {
+            "id": "item.frost-ronin-blade-shard",
+            "name": "Frost Ronin Blade Shard",
+            "description": "Dropped only by Frost Ronin.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2252,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Frost Ronin",
+                    "level": 33,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.frost-ronin-crest",
+            "name": "Frost Ronin Crest",
+            "description": "Dropped only by Frost Ronin.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 14077,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Frost Ronin",
+                    "level": 33,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.frostcap-spore",
+            "name": "Frostcap Spore",
+            "description": "Dropped only by Frostcap.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2139,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Frostcap",
+                    "level": 93,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.frostskull-crown",
+            "name": "Frostskull Crown",
+            "description": "Dropped only by Frostskull.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 26447,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Frostskull",
+                    "level": 91,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.frostskull-shard",
+            "name": "Frostskull Shard",
+            "description": "Dropped only by Frostskull.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4232,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Frostskull",
+                    "level": 91,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.frostwick-cold-ember",
+            "name": "Frostwick Cold Ember",
+            "description": "Dropped only by Frostwick.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2280,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Frostwick",
+                    "level": 95,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.gillie-fin",
+            "name": "Gillie Fin",
+            "description": "Dropped only by Gillie.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 425,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Gillie",
+                    "level": 17,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.gloop-kings-eye",
+            "name": "Gloop King's Eye",
+            "description": "Dropped only by Gloop King.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 17200,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Gloop King",
+                    "level": 8,
+                    "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.gloop-kings-jelly",
+            "name": "Gloop King's Jelly",
+            "description": "Dropped only by Gloop King.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 688,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Gloop King",
+                    "level": 8,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.glowcoil-gland",
+            "name": "Glowcoil Gland",
+            "description": "Dropped only by Glowcoil.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 5390,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Glowcoil",
+                    "level": 88,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.glowcoil-glowing-eye",
+            "name": "Glowcoil Glowing Eye",
+            "description": "Dropped only by Glowcoil.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 134750,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Glowcoil",
+                    "level": 88,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.gnasher-fin",
+            "name": "Gnasher Fin",
+            "description": "Dropped only by Gnasher.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3218,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Gnasher",
+                    "level": 65,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.gnasher-jaw",
+            "name": "Gnasher Jaw",
+            "description": "Dropped only by Gnasher.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 20109,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Gnasher",
+                    "level": 65,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.golden-bandits-gold-tooth",
+            "name": "Golden Bandit's Gold Tooth",
+            "description": "Dropped only by Golden Bandit.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 94600,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Golden Bandit",
+                    "level": 44,
+                    "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.golden-bandits-mask",
+            "name": "Golden Bandit's Mask",
+            "description": "Dropped only by Golden Bandit.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3784,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Golden Bandit",
+                    "level": 44,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
             "id": "item.golden-horned-helm",
             "name": "Golden Horned Helm",
             "description": "",
@@ -4600,6 +6274,99 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.goopie-goo",
+            "name": "Goopie Goo",
+            "description": "Dropped only by Goopie.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1974,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Goopie",
+                    "level": 94,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.great-croak-skin",
+            "name": "Great Croak Skin",
+            "description": "Dropped only by Great Croak.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4505,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Great Croak",
+                    "level": 66,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.great-croak-throat-sac",
+            "name": "Great Croak Throat Sac",
+            "description": "Dropped only by Great Croak.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 28153,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Great Croak",
+                    "level": 66,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.greater-healing-potion",
@@ -5847,6 +7614,130 @@
                     "name": "Wyrmlet",
                     "level": 34,
                     "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.grubble-chrysalis",
+            "name": "Grubble Chrysalis",
+            "description": "Dropped only by Grubble.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 900000,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Grubble",
+                    "level": 90,
+                    "chance": "0.1%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.grubble-spine",
+            "name": "Grubble Spine",
+            "description": "Dropped only by Grubble.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 7200,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Grubble",
+                    "level": 90,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.grumbear-claw",
+            "name": "Grumbear Claw",
+            "description": "Dropped only by Grumbear.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 47469,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Grumbear",
+                    "level": 31,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.grumbear-pelt",
+            "name": "Grumbear Pelt",
+            "description": "Dropped only by Grumbear.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1899,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Grumbear",
+                    "level": 31,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -7356,6 +9247,68 @@
             "droppedBy": []
         },
         {
+            "id": "item.hisser-fang",
+            "name": "Hisser Fang",
+            "description": "Dropped only by Hisser.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 144,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Hisser",
+                    "level": 6,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.hootie-feather",
+            "name": "Hootie Feather",
+            "description": "Dropped only by Hootie.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 312,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Hootie",
+                    "level": 13,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.horned-helm",
             "name": "Horned Helm",
             "description": "",
@@ -7378,6 +9331,285 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.horngore-crown-horn",
+            "name": "Horngore Crown Horn",
+            "description": "Dropped only by Horngore.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 114975,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Horngore",
+                    "level": 73,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.horngore-tusk",
+            "name": "Horngore Tusk",
+            "description": "Dropped only by Horngore.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4599,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Horngore",
+                    "level": 73,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.hornscale-horn",
+            "name": "Hornscale Horn",
+            "description": "Dropped only by Hornscale.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2065,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Hornscale",
+                    "level": 59,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.hornscale-scale",
+            "name": "Hornscale Scale",
+            "description": "Dropped only by Hornscale.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2581,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Hornscale",
+                    "level": 59,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.inferno-mask-ember-eye",
+            "name": "Inferno Mask Ember Eye",
+            "description": "Dropped only by Inferno Mask.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 172000,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Inferno Mask",
+                    "level": 80,
+                    "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.inferno-mask-fragment",
+            "name": "Inferno Mask Fragment",
+            "description": "Dropped only by Inferno Mask.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 6880,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Inferno Mask",
+                    "level": 80,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.inky-fin",
+            "name": "Inky Fin",
+            "description": "Dropped only by Inky.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3369,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Inky",
+                    "level": 77,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.inky-ink-sac",
+            "name": "Inky Ink Sac",
+            "description": "Dropped only by Inky.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2695,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Inky",
+                    "level": 77,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.iris-lens",
+            "name": "Iris Lens",
+            "description": "Dropped only by Iris.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1536,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Iris",
+                    "level": 64,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.iron",
@@ -7517,6 +9749,130 @@
             "zeny": 800,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.kappi-beak",
+            "name": "Kappi Beak",
+            "description": "Dropped only by Kappi.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 680,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Kappi",
+                    "level": 15,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.kappi-dish",
+            "name": "Kappi Dish",
+            "description": "Dropped only by Kappi.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 544,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Kappi",
+                    "level": 15,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.karasu-black-plume",
+            "name": "Karasu Black Plume",
+            "description": "Dropped only by Karasu.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 24741,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Karasu",
+                    "level": 58,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.karasu-feather",
+            "name": "Karasu Feather",
+            "description": "Dropped only by Karasu.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 3959,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Karasu",
+                    "level": 58,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
         },
         {
             "id": "item.katar",
@@ -7920,6 +10276,68 @@
                     "name": "Wyrmlet",
                     "level": 34,
                     "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.lovebite-heart",
+            "name": "Lovebite Heart",
+            "description": "Dropped only by Lovebite.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 147000,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Lovebite",
+                    "level": 96,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.lovebite-petal",
+            "name": "Lovebite Petal",
+            "description": "Dropped only by Lovebite.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 5880,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Lovebite",
+                    "level": 96,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -10468,6 +12886,316 @@
             ]
         },
         {
+            "id": "item.moldy-slime",
+            "name": "Moldy Slime",
+            "description": "Dropped only by Moldy.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1800,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Moldy",
+                    "level": 72,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mossgore-antler",
+            "name": "Mossgore Antler",
+            "description": "Dropped only by Mossgore.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1190,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Mossgore",
+                    "level": 34,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mossgore-moss-tuft",
+            "name": "Mossgore Moss Tuft",
+            "description": "Dropped only by Mossgore.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1488,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Mossgore",
+                    "level": 34,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mossmaw-eye",
+            "name": "Mossmaw Eye",
+            "description": "Dropped only by Mossmaw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 15313,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Mossmaw",
+                    "level": 35,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mossmaw-moss",
+            "name": "Mossmaw Moss",
+            "description": "Dropped only by Mossmaw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2450,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Mossmaw",
+                    "level": 35,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.mossnail-shell",
+            "name": "Mossnail Shell",
+            "description": "Dropped only by Mossnail.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 250,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Mossnail",
+                    "level": 10,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mudpup-crest",
+            "name": "Mudpup Crest",
+            "description": "Dropped only by Mudpup.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 7116,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Mudpup",
+                    "level": 23,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.mudpup-gill",
+            "name": "Mudpup Gill",
+            "description": "Dropped only by Mudpup.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1139,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Mudpup",
+                    "level": 23,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.newtie-tail",
+            "name": "Newtie Tail",
+            "description": "Dropped only by Newtie.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 480,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Newtie",
+                    "level": 20,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.nightsqueak-tail",
+            "name": "Nightsqueak Tail",
+            "description": "Dropped only by Nightsqueak.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2116,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Nightsqueak",
+                    "level": 92,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.ninja-hood",
             "name": "Ninja Hood",
             "description": "",
@@ -10490,6 +13218,192 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.octi-beak",
+            "name": "Octi Beak",
+            "description": "Dropped only by Octi.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Uncommon",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2756,
+            "materialStep": 2,
+            "droppedBy": [
+                {
+                    "name": "Octi",
+                    "level": 63,
+                    "chance": "10%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.octi-tentacle",
+            "name": "Octi Tentacle",
+            "description": "Dropped only by Octi.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2205,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Octi",
+                    "level": 63,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.oculord-iris",
+            "name": "Oculord Iris",
+            "description": "Dropped only by Oculord.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 5972,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Oculord",
+                    "level": 14,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.oculord-pupil",
+            "name": "Oculord Pupil",
+            "description": "Dropped only by Oculord.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 956,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Oculord",
+                    "level": 14,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.oni-tengu-horn",
+            "name": "Oni Tengu Horn",
+            "description": "Dropped only by Oni Tengu.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 39244,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Oni Tengu",
+                    "level": 92,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.oni-tengu-mask",
+            "name": "Oni Tengu Mask",
+            "description": "Dropped only by Oni Tengu.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 6279,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Oni Tengu",
+                    "level": 92,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
         },
         {
             "id": "item.open-golden-helm",
@@ -10564,6 +13478,130 @@
             "droppedBy": []
         },
         {
+            "id": "item.pando-fur",
+            "name": "Pando Fur",
+            "description": "Dropped only by Pando.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 504,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Pando",
+                    "level": 21,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.peeper-horn",
+            "name": "Peeper Horn",
+            "description": "Dropped only by Peeper.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1025,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Peeper",
+                    "level": 41,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.pilfer-lucky-coin",
+            "name": "Pilfer Lucky Coin",
+            "description": "Dropped only by Pilfer.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Epic",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 44100,
+            "materialStep": 4,
+            "droppedBy": [
+                {
+                    "name": "Pilfer",
+                    "level": 28,
+                    "chance": "0.5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.pilfer-pouch",
+            "name": "Pilfer Pouch",
+            "description": "Dropped only by Pilfer.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1764,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Pilfer",
+                    "level": 28,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.pirate-hat",
             "name": "Pirate Hat",
             "description": "",
@@ -10586,6 +13624,37 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.plopling-jelly",
+            "name": "Plopling Jelly",
+            "description": "Dropped only by Plopling.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 24,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Plopling",
+                    "level": 1,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.plumed-helm",
@@ -10853,6 +13922,37 @@
             ]
         },
         {
+            "id": "item.rascal-tail",
+            "name": "Rascal Tail",
+            "description": "Dropped only by Rascal.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 294,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Rascal",
+                    "level": 14,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.rawhide",
             "name": "Rawhide",
             "description": "Untreated and stiff. It must be worked before it is worn.",
@@ -10951,6 +14051,68 @@
                     "name": "Tarantix",
                     "level": 11,
                     "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.rivershell-carapace",
+            "name": "Rivershell Carapace",
+            "description": "Dropped only by Rivershell.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1380,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Rivershell",
+                    "level": 60,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.scaly-shed-skin",
+            "name": "Scaly Shed Skin",
+            "description": "Dropped only by Scaly.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 888,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Scaly",
+                    "level": 37,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -11590,6 +14752,68 @@
             ]
         },
         {
+            "id": "item.shellby-spiral",
+            "name": "Shellby Spiral",
+            "description": "Dropped only by Shellby.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 450,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Shellby",
+                    "level": 18,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.shootling-sprout",
+            "name": "Shootling Sprout",
+            "description": "Dropped only by Shootling.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 384,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Shootling",
+                    "level": 16,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.shuriken",
             "name": "Shuriken",
             "description": "",
@@ -11809,6 +15033,68 @@
                     "name": "Snapper",
                     "level": 62,
                     "chance": "20%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.skywing-dust",
+            "name": "Skywing Dust",
+            "description": "Dropped only by Skywing.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 2088,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Skywing",
+                    "level": 87,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.snapper-lid",
+            "name": "Snapper Lid",
+            "description": "Dropped only by Snapper.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1488,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Snapper",
+                    "level": 62,
+                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -12475,6 +15761,68 @@
             ]
         },
         {
+            "id": "item.squeak-whisker",
+            "name": "Squeak Whisker",
+            "description": "Dropped only by Squeak.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 72,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Squeak",
+                    "level": 3,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.squirt-tentacle",
+            "name": "Squirt Tentacle",
+            "description": "Dropped only by Squirt.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1659,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Squirt",
+                    "level": 79,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.staff",
             "name": "Staff",
             "description": "",
@@ -12572,6 +15920,99 @@
             ]
         },
         {
+            "id": "item.sucker-cup",
+            "name": "Sucker Cup",
+            "description": "Dropped only by Sucker.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1794,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Sucker",
+                    "level": 78,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.sunscale-plate",
+            "name": "Sunscale Plate",
+            "description": "Dropped only by Sunscale.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1200,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Sunscale",
+                    "level": 50,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.swampfang-hide",
+            "name": "Swampfang Hide",
+            "description": "Dropped only by Swampfang.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1840,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Swampfang",
+                    "level": 80,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.sword",
             "name": "Sword",
             "description": "A dependable blade. What it becomes is decided at the anvil.",
@@ -12618,6 +16059,37 @@
             "zeny": 0,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.tarantix-leg",
+            "name": "Tarantix Leg",
+            "description": "Dropped only by Tarantix.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 231,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Tarantix",
+                    "level": 11,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
         },
         {
             "id": "item.thin-ink",
@@ -13037,6 +16509,68 @@
                     "level": 34,
                     "chance": "1%",
                     "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.toadmaw-toadstone",
+            "name": "Toadmaw Toadstone",
+            "description": "Dropped only by Toadmaw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1009125,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Toadmaw",
+                    "level": 78,
+                    "chance": "5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.toadmaw-wart",
+            "name": "Toadmaw Wart",
+            "description": "Dropped only by Toadmaw.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 8073,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Toadmaw",
+                    "level": 78,
+                    "chance": "100%",
+                    "count": "4–7"
                 }
             ]
         },
@@ -13702,6 +17236,99 @@
             ]
         },
         {
+            "id": "item.venom-gloop-core",
+            "name": "Venom Gloop Core",
+            "description": "Dropped only by Venom Gloop.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 9833,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Venom Gloop",
+                    "level": 95,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
+        },
+        {
+            "id": "item.venom-gloop-eye",
+            "name": "Venom Gloop Eye",
+            "description": "Dropped only by Venom Gloop.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1229063,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Venom Gloop",
+                    "level": 95,
+                    "chance": "5%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.viper-venom-sac",
+            "name": "Viper Venom Sac",
+            "description": "Dropped only by Viper.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1050,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Viper",
+                    "level": 42,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.wand",
             "name": "Wand",
             "description": "",
@@ -14171,6 +17798,192 @@
             ]
         },
         {
+            "id": "item.webber-silk",
+            "name": "Webber Silk",
+            "description": "Dropped only by Webber.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 1520,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Webber",
+                    "level": 19,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.webber-spinneret",
+            "name": "Webber Spinneret",
+            "description": "Dropped only by Webber.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 190000,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Webber",
+                    "level": 19,
+                    "chance": "0.1%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.willo-ember",
+            "name": "Willo Ember",
+            "description": "Dropped only by Willo.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4320,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Willo",
+                    "level": 54,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.willo-heartflame",
+            "name": "Willo Heartflame",
+            "description": "Dropped only by Willo.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Legendary",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 540000,
+            "materialStep": 5,
+            "droppedBy": [
+                {
+                    "name": "Willo",
+                    "level": 54,
+                    "chance": "0.1%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.wisp-core",
+            "name": "Wisp Core",
+            "description": "Dropped only by Wisp.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 26297,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Wisp",
+                    "level": 85,
+                    "chance": "2%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.wisp-light",
+            "name": "Wisp Light",
+            "description": "Dropped only by Wisp.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 4208,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Wisp",
+                    "level": 85,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
             "id": "item.witch-hat",
             "name": "Witch Hat",
             "description": "",
@@ -14290,6 +18103,68 @@
             "zeny": 800,
             "materialStep": 0,
             "droppedBy": []
+        },
+        {
+            "id": "item.wraithmother-tear",
+            "name": "Wraithmother Tear",
+            "description": "Dropped only by Wraithmother.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Rare",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 39375,
+            "materialStep": 3,
+            "droppedBy": [
+                {
+                    "name": "Wraithmother",
+                    "level": 90,
+                    "chance": "50%",
+                    "count": "1"
+                }
+            ]
+        },
+        {
+            "id": "item.wraithmother-veil",
+            "name": "Wraithmother Veil",
+            "description": "Dropped only by Wraithmother.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 6300,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Wraithmother",
+                    "level": 90,
+                    "chance": "100%",
+                    "count": "4–7"
+                }
+            ]
         },
         {
             "id": "item.wyrmhide",
@@ -14481,6 +18356,37 @@
                     "level": 90,
                     "chance": "60%",
                     "count": "5–10"
+                }
+            ]
+        },
+        {
+            "id": "item.wyrmlet-skin",
+            "name": "Wyrmlet Skin",
+            "description": "Dropped only by Wyrmlet.",
+            "type": "Misc",
+            "slot": "",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "forgeMaterial": "",
+            "reach": "",
+            "materialKind": "Creature",
+            "mergesInto": "",
+            "rarity": "Common",
+            "slotOrder": 99,
+            "materialKindOrder": 6,
+            "forgeUnits": 0,
+            "forgeGold": 0,
+            "cardSlots": 0,
+            "weight": 10,
+            "zeny": 782,
+            "materialStep": 1,
+            "droppedBy": [
+                {
+                    "name": "Wyrmlet",
+                    "level": 34,
+                    "chance": "50%",
+                    "count": "1"
                 }
             ]
         }

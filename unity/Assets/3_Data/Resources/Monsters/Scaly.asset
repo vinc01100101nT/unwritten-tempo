@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Scaly
   kind: 0
   size: 0.3
+  flies: 0
   biome: 7
   artFolder: 463dea05eafc11b47a8f454726da08da
   faceset: {fileID: 2800000, guid: b812ab68760bc4e419ee0a7cc1aac8a1, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 37
-  str: 26
-  agi: 19
-  vit: 25
-  intel: 13
-  dex: 19
+  str: 12
+  agi: 25
+  vit: 12
+  intel: 12
+  dex: 36
   luk: 12
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 6
+  startingGear:
+  - {fileID: 11400000, guid: f1204015c4ba457f8ab0049fecae8d55, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 0
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: d1ac039384ed4fe8b77945ee45954037, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

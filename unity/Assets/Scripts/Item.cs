@@ -31,8 +31,9 @@ public enum EquipSlotType
 ///
 /// <para>The three crafts are the material a piece is made of: metal is forged, cloth is woven, leather is tanned.
 /// <see cref="MaterialKind.Ink"/> writes a stat onto a piece and <see cref="MaterialKind.Salt"/> boosts a quench;
-/// both are shared by all three crafts.</para></summary>
-public enum MaterialKind { None = 0, Metal = 1, Cloth = 2, Leather = 3, Ink = 4, Salt = 5 }
+/// both are shared by all three crafts. <see cref="MaterialKind.Creature"/> is the material only one creature drops
+/// (<see cref="CreatureMaterials"/>): no station works it, and its step is its rarity tier.</para></summary>
+public enum MaterialKind { None = 0, Metal = 1, Cloth = 2, Leather = 3, Ink = 4, Salt = 5, Creature = 6 }
 
 /// <summary>The words a slot goes by on screen. A text inventory has to name the slot, because with no icon the
 /// slot is the only thing telling a helm from a sword at a glance.
@@ -161,7 +162,7 @@ public class Item : ScriptableObject
     public MaterialKind materialKind = MaterialKind.None;
     [Tooltip("Which step of its kind this is. A Metal/Cloth/Leather material: the BAND, 1 (Raw) to 7 (A) — a piece " +
              "folds only with the band of its own quality. An Ink: its tier, 1 (Watery) to 5 (Sharp). A Salt: its " +
-             "tier, 1 (Coarse) to 3 (Pure). Ignored when Material Kind is None; 0 there means nothing was chosen.")]
+             "tier, 1 (Coarse) to 3 (Pure). A Creature material: its rarity, 1 (Common) to 5 (Legendary). Ignored when Material Kind is None; 0 there means nothing was chosen.")]
     public int materialStep;
     [Tooltip("The material ten of this one merge into — the next tier up. Only Ink and Salt merge; a band material " +
              "leaves this empty, and so does the top tier of Ink and Salt.")]

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Goopie
   kind: 0
   size: 0.3
+  flies: 0
   biome: 4
   artFolder: 43a31231774ab594a8824cf8083f2600
   faceset: {fileID: 2800000, guid: 251fe165edcc59748b533796f76f28bf, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 94
-  str: 62
-  agi: 50
-  vit: 60
-  intel: 36
-  dex: 50
-  luk: 35
-  startingGear: []
-  gearQuality: 2
-  gearFolds: 14
-  gearInkTier: 2
+  str: 50
+  agi: 33
+  vit: 63
+  intel: 75
+  dex: 32
+  luk: 32
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 0
+  gearFolds: 1
+  gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 907c0bd2c59b4ca8ba41b749134385d7, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

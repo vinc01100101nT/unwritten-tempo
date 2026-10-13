@@ -84,11 +84,11 @@ static class Checks
         That(UnitStatMath.KillXp(1) == 2, StatMath, "a level-1 kill no longer pays 2: " + UnitStatMath.KillXp(1));
         That(UnitStatMath.KillXp(30) == 508, StatMath, "a level-30 kill no longer pays 508: " + UnitStatMath.KillXp(30));
         That(UnitStatMath.KillXp(90) == 15191, StatMath, "a level-90 kill no longer pays 15,191: " + UnitStatMath.KillXp(90));
-        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50) == UnitStatMath.KillXp(50), StatMath,
+        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50, 50, Quality.Raw, 0) == UnitStatMath.KillXp(50), StatMath,
              "a normal creature does not pay its level's amount");
-        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50) == 10 * UnitStatMath.KillXp(50), StatMath,
+        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50, 50, Quality.Raw, 0) == 10 * UnitStatMath.KillXp(50), StatMath,
              "an elite does not pay ten times its level's amount");
-        That(CreatureKinds.KillExperience(CreatureKind.Shadow, 150) == 20 * UnitStatMath.KillXp(150), StatMath,
+        That(CreatureKinds.KillExperience(CreatureKind.Shadow, 150, 150, Quality.Raw, 0) == 20 * UnitStatMath.KillXp(150), StatMath,
              "a shadow does not pay twenty times its level's amount");
 
         // THE RING IS PAID A THIRD OF EVERY KILL, on the character's own curve and with no cap: a third of what a
@@ -519,7 +519,7 @@ static class Checks
 
         // A material's rarity, as decided: metal, cloth and leather Common at every band; Ink Watery Uncommon, Thin and
         // Faint Rare, Clear and Sharp Epic; Salt Coarse Uncommon, Fine Rare, Pure Epic. Nothing that is not a material
-        // is rare, and no material is Legendary.
+        // is rare, and no crafting material is Legendary — only a creature's own material can be (pinned below).
         for (int band = 1; band <= CreatureLoot.Grades; band++)
             foreach (var kind in new[] { MaterialKind.Metal, MaterialKind.Cloth, MaterialKind.Leather })
                 That(Rarities.OfMaterial(kind, band) == Rarity.Common, RarityF, kind + " band " + band + " is not Common");
@@ -1100,6 +1100,105 @@ static class Checks
         That(!UnitStatMath.IsCreationSpread(null), StatMath, "no spread at all was accepted");
     }
 
+    // WHO A KILL BELONGS TO: the points each person collects for one creature, and how its experience is split by
+    // them. Pinned from docs/2-systems/loot-owner-pointing.md, agreed 2026-10-13.
+    static void KillPointNumbers()
+    {
+        const string F = "unity/Assets/Scripts/KillLedger.cs";
+        bool Near(float a, float b) => System.Math.Abs(a - b) < 0.001f;
+        That(KillPointsMath.DealtPoints == 60f && KillPointsMath.HeldPoints == 15f && KillPointsMath.HealedPoints == 15f
+             && KillPointsMath.FirstHitPoints == 5f && KillPointsMath.LastHitPoints == 5f, F,
+             "the points are 60 damage, 15 holding its attention, 15 healing, 5 first hit, 5 last hit");
+        // Alone, at range, never touched: 70 points exist and all of them are theirs, so the whole kill is.
+        float solo = KillPointsMath.Points(500, 500, 0, 0, 0, 0, true, true);
+        That(Near(solo, 70f), F, "a solo kill of a creature that never came after them is " + solo + " points, not 70");
+        That(KillPointsMath.Share(1000, solo, solo) == 1000, F, "a solo kill no longer pays the whole of its experience");
+        // The agreed example: three who dealt 30% each have 18; a healer with 10% of the damage and all the healing has 21.
+        float dealer = KillPointsMath.Points(300, 1000, 0, 0, 0, 400, false, false);
+        float healer = KillPointsMath.Points(100, 1000, 0, 0, 400, 400, false, false);
+        That(Near(dealer, 18f) && Near(healer, 21f), F, "three dealers at 30% and a healer no longer score 18 and 21");
+        // All 15 for holding its attention are shared by the time it spent after each person, hit or not.
+        That(Near(KillPointsMath.Points(0, 500, 80, 80, 0, 0, false, false), 15f), F, "holding it the whole fight is not 15 points");
+        That(Near(KillPointsMath.Points(0, 500, 20, 80, 0, 0, false, false), 3.75f), F, "holding it a quarter of the fight is not 3.75 points");
+        That(KillPointsMath.Points(0, 0, 0, 0, 0, 0, false, false) == 0f, F, "somebody who did nothing has points");
+        That(KillPointsMath.Share(10, 1f, 3f) == 3 && KillPointsMath.Share(10, 0f, 3f) == 0 && KillPointsMath.Share(0, 1f, 3f) == 0
+             && KillPointsMath.Share(10, 3f, 3f) == 10, F, "a share is not the kill's worth x points / all points, rounded down");
+        That(Near(KillPointsMath.KeptAfterRegain(100, 50), 0.5f) && KillPointsMath.KeptAfterRegain(100, 0) == 0f
+             && KillPointsMath.KeptAfterRegain(0, 0) == 0f && Near(KillPointsMath.KeptAfterRegain(100, 100), 1f), F,
+             "a creature that heals half its missing health back no longer halves every claim on it");
+    }
+
+    // WHAT A CREATURE'S GEAR PAYS: 25% more a grade, 5% more a fold, two separate terms. Pinned from
+    // docs/3-world/what-a-kill-pays.md, agreed 2026-10-13.
+    static void CreaturePayNumbers()
+    {
+        const string F = "unity/Assets/Scripts/CreaturePay.cs";
+        That(CreaturePay.GradePercent(Quality.Raw) == 100 && CreaturePay.GradePercent(Quality.F) == 125 && CreaturePay.GradePercent(Quality.D) == 175
+             && CreaturePay.GradePercent(Quality.A) == 250, F, "a grade does not pay 25% more for each grade above Raw");
+        That(CreaturePay.FoldPercent(Quality.A, 0) == 100 && CreaturePay.FoldPercent(Quality.F, 10) == 150 && CreaturePay.FoldPercent(Quality.A, 35) == 275, F,
+             "a fold does not pay 5% more");
+        That(CreaturePay.FoldPercent(Quality.Raw, 9) == CreaturePay.FoldPercent(Quality.Raw, 5) && CreaturePay.FoldPercent(Quality.Raw, -3) == 100, F,
+             "folds past the grade's cap, which nothing wears, are paid — or a negative count pays less than none");
+        That(CreaturePay.Scaled(1000, Quality.Raw, 0) == 1000, F, "Raw gear with no folds does not pay exactly what the level gives");
+        That(CreaturePay.Scaled(1000, Quality.D, 19) == 3413 && CreaturePay.Scaled(1000, Quality.C, 20) == 4000 && CreaturePay.Scaled(1000, Quality.A, 35) == 6875, F,
+             "pay is not the amount x the grade's percent x the folds' percent");
+        That(CreaturePay.Scaled(1000, Quality.B, 0) == 2250 && CreaturePay.Scaled(1000, Quality.Raw, 5) == 1250, F, "grade and folds are not two separate terms");
+        That(CreaturePay.Scaled(20, Quality.F, 8) == 35 && CreaturePay.Scaled(2, Quality.Raw, 5) == 3 && CreaturePay.Scaled(0, Quality.A, 35) == 0, F,
+             "an amount x the two percents is not rounded half up");
+        // What a kill pays: gear on the file level's experience; levels grown in the fight add their plain difference.
+        int at50 = UnitStatMath.KillXp(50), at60 = UnitStatMath.KillXp(60);
+        That(CreatureKinds.KillExperience(CreatureKind.Normal, 50, 50, Quality.C, 20) == 4 * at50, F, "a creature in C +20 does not pay 4 times");
+        That(CreatureKinds.KillExperience(CreatureKind.Normal, 60, 50, Quality.C, 20) == 4 * at50 + (at60 - at50), F,
+             "levels a creature grew in the fight are multiplied by its gear");
+        That(CreatureKinds.KillExperience(CreatureKind.Elite, 50, 50, Quality.C, 20) == 40 * at50, F, "an elite's ten times and its gear do not multiply");
+        That(CreatureMaterials.SellValue(40, Rarity.Common, Quality.Raw, 0) == 800 && CreatureMaterials.SellValue(40, Rarity.Common, Quality.D, 19) == 2730
+             && CreatureMaterials.SellValue(1, Rarity.Uncommon, Quality.Raw, 1) == 26, F, "a material's price is not its plain price x what the gear pays, half up");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, Quality.C, 20) == 800, F, "a rescue from a creature in C +20 does not pay 4 times");
+    }
+
+    // A CREATURE'S OWN MATERIAL: what a tier sells for, how often it falls and in how many piles. Pinned from
+    // docs/3-world/creature-materials.md, agreed 2026-10-13.
+    static void CreatureMaterialNumbers()
+    {
+        const string F = "unity/Assets/Scripts/CreatureMaterials.cs";
+        That(CreatureMaterials.SellValue(1, Rarity.Common) == 20 && CreatureMaterials.SellValue(99, Rarity.Common) == 1980, F,
+             "an ordinary material sells for 20 x its creature's level");
+        That(CreatureMaterials.SellValue(40, Rarity.Uncommon) == 1000 && CreatureMaterials.SellValue(40, Rarity.Rare) == 5000
+             && CreatureMaterials.SellValue(40, Rarity.Epic) == 20000 && CreatureMaterials.SellValue(40, Rarity.Legendary) == 100000, F,
+             "a rare material sells for 25, 125, 500 or 2,500 x level by its tier");
+        That(CreatureMaterials.SellValue(0, Rarity.Common) == 20, F, "a creature with no level still sells as level 1");
+        That(CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Common) == 0.5f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Uncommon) == 0.1f
+             && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Rare) == 0.02f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Epic) == 0.005f
+             && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Legendary) == 0.001f, F,
+             "a normal creature drops its tiers at 1 in 2, 10, 50, 200 and 1,000");
+        That(CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Common) == 1f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Uncommon) == 0f
+             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Rare) == 0.5f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Epic) == 0.2f
+             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Legendary) == 0.05f, F,
+             "an elite always drops its ordinary material, never an Uncommon, and its rare tiers at 1 in 2, 5 and 20");
+        foreach (Rarity tier in System.Enum.GetValues(typeof(Rarity)))
+            That(CreatureMaterials.Chance(CreatureKind.Shadow, tier) == 0f, F, "a shadow dropped a " + tier + " material of its own");
+        // The rule the whole table rests on: a normal kill's ordinary material is worth 10 gold x level on average, and
+        // a rare one adds a quarter of that whatever its tier.
+        foreach (Rarity tier in new[] { Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary })
+            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Normal, tier) * CreatureMaterials.SellValue(40, tier) - 100.0) < 0.01, F,
+                 "a normal creature's " + tier + " material no longer adds a quarter of a kill's gold");
+        That(CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Common) * CreatureMaterials.SellValue(40, Rarity.Common) == 400f, F,
+             "a normal kill is no longer worth 10 gold x level");
+        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Common, out int pMin, out int pMax);
+        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Common, out int sMin, out int sMax);
+        That(pMin == 3 && pMax == 5 && sMin == 4 && sMax == 7, F, "an elite's ordinary material falls as 3 to 5 piles of 4 to 7");
+        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Legendary, out pMin, out pMax);
+        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Legendary, out sMin, out sMax);
+        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "an elite's rare material is one single drop");
+        CreatureMaterials.Piles(CreatureKind.Normal, Rarity.Common, out pMin, out pMax);
+        CreatureMaterials.PileSize(CreatureKind.Normal, Rarity.Common, out sMin, out sMax);
+        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "a normal creature's material is one single drop");
+        for (int step = 1; step <= 5; step++)
+            That(Rarities.OfMaterial(MaterialKind.Creature, step) == (Rarity)(step - 1)
+                 && CreatureMaterials.StepOfTier((Rarity)(step - 1)) == step, RarityCheckFile, "a creature material's step " + step + " is not its tier");
+    }
+    const string RarityCheckFile = "unity/Assets/Scripts/Rarity.cs";
+
     // SAVED CHARACTERS: the gold a rescue pays, the drops a rebel gives up, the side each behaviour stands on, and the
     // one question every targeting path asks. Pinned from docs/3-world/saved-characters.md, agreed 2026-09-30.
     static void SavedCharacterNumbers()
@@ -1107,11 +1206,24 @@ static class Checks
         const string F = "unity/Assets/Scripts/SavedCharacterRules.cs";
         const string S = "unity/Assets/Scripts/Side.cs";
         That(SavedCharacterRules.TransformChance == 0.15f, F, "a beaten normal or elite turns back 15% of the time");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5) == 100, F, "an ordinary rescue pays the mob's gold x20");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Helpless, 5) == 200, F, "a helpless rescue pays x40");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Wealthy, 5) == 300, F, "a wealthy rescue pays x60");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.Ally, GoldTier.Wealthy, 5) == 0, F, "an ally pays no gold");
-        That(SavedCharacterRules.RescueGold(SavedBehaviour.Rebel, GoldTier.Ordinary, 5) == 0, F, "a rebel pays no gold");
+        // Decided 2026-10-13: gold worth 4, 8 or 12 kills of the creature (10 gold a level) plus 3, 6 or 9 of its
+        // ordinary material (two kills each), so a rescue is worth 10, 20 or 30 kills in all.
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, Quality.Raw, 0) == 200, F, "an ordinary rescue pays gold worth 4 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Helpless, 5, Quality.Raw, 0) == 400, F, "a helpless rescue pays gold worth 8 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Wealthy, 5, Quality.Raw, 0) == 600, F, "a wealthy rescue pays gold worth 12 kills");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 0, Quality.Raw, 0) == 40, F, "a creature with no level pays as level 1");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Ally, GoldTier.Wealthy, 5, Quality.Raw, 0) == 0, F, "an ally pays no gold");
+        That(SavedCharacterRules.RescueGold(SavedBehaviour.Rebel, GoldTier.Ordinary, 5, Quality.Raw, 0) == 0, F, "a rebel pays no gold");
+        That(SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Ordinary) == 3
+             && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Helpless) == 6
+             && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Wealthy) == 9, F,
+             "a rescue hands over 3, 6 or 9 of the creature's material");
+        That(SavedCharacterRules.RescueMaterials(SavedBehaviour.Rebel, GoldTier.Wealthy) == 0
+             && SavedCharacterRules.RescueMaterials(SavedBehaviour.Ally, GoldTier.Wealthy) == 0, F, "an ally or a rebel hands over material");
+        foreach (GoldTier tier in new[] { GoldTier.Ordinary, GoldTier.Helpless, GoldTier.Wealthy })
+            That(SavedCharacterRules.RescueKills(tier) + 2 * SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, tier)
+                 == 10 * (tier == GoldTier.Ordinary ? 1 : tier == GoldTier.Helpless ? 2 : 3), F,
+                 "a " + tier + " rescue is no longer worth 10, 20 or 30 kills in all");
         That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Normal) == CreatureKind.Elite, F, "a rebel from a normal drops as an elite");
         That(SavedCharacterRules.LootKindOfRebel(CreatureKind.Elite) == CreatureKind.Shadow, F, "a rebel from an elite drops as a shadow");
         That(!SavedCharacterRules.CanTurnBack(CreatureKind.Shadow), F, "a shadow never turns back");
@@ -1186,7 +1298,7 @@ static class Checks
     static void ShopNumbers()
     {
         That(ShopMath.SalePay(7, 3) == 21, ShopF, "3 sold at 7 each must pay 21");
-        That(ShopMath.SalePay(int.MaxValue, 2) == int.MaxValue, ShopF, "a sale past the largest purse must stop there, not wrap negative");
+        That(ShopMath.SalePay(int.MaxValue, 2) == 2L * int.MaxValue, ShopF, "a sale bigger than 2,147,483,647 must pay in full, not stop or wrap");
         That(ShopMath.SalePay(5, 0) == 0, ShopF, "selling none must pay nothing");
         That(ShopMath.BuyCost(25, 4) == 100, ShopF, "4 bought at 25 each must cost 100");
         That(ShopMath.BuybackPrice(100) == 125, ShopF, "buying back what paid 100 must cost 125");
@@ -1195,7 +1307,7 @@ static class Checks
         That(ShopMath.BuybackPrice(4) == 5, ShopF, "4 x 1.25 is exactly 5");
         That(ShopMath.BuybackPrice(0) == 1, ShopF, "even a thing that paid nothing must cost a gold back");
         That(ShopMath.BuybackPrice(int.MaxValue) > int.MaxValue, ShopF, "the price of the largest sale must stay above what it paid, not wrap");
-        That(ShopMath.PaidTogether(int.MaxValue, 5) == int.MaxValue, ShopF, "two payments past the largest purse must stop there");
+        That(ShopMath.PaidTogether(int.MaxValue, 5) == int.MaxValue + 5L && ShopMath.PaidTogether(long.MaxValue, 5) == long.MaxValue, ShopF, "two payments add in full, and stop at the most a purse can hold rather than wrap");
         That(ShopMath.BuybackEndsAt(1000) == 4600, ShopF, "a thing sold at 1000 must be kept until 4600");
         That(ShopMath.MinutesShown(3600) == 60, ShopF, "a full hour must read 60 min");
         That(ShopMath.MinutesShown(61) == 2, ShopF, "61 seconds must read 2 min");
@@ -1514,6 +1626,9 @@ static class Checks
         WalkingRule();
         WaterRules();
         SavedCharacterNumbers();
+        CreatureMaterialNumbers();
+        KillPointNumbers();
+        CreaturePayNumbers();
         QuestSteps();
         StrideRules();
         WorldEventNumbers();

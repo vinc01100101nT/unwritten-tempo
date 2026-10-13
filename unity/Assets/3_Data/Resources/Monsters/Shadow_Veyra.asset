@@ -56,7 +56,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 3000
-  goldMax: 6000
+  material: {fileID: 0}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

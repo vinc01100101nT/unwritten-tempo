@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Plopling
   kind: 0
   size: 0.3
+  flies: 0
   biome: 0
   artFolder: 9665fdb626f6618408a76b3fd08a0aeb
   faceset: {fileID: 2800000, guid: d03a48ee8b81de54e9036986d996eac3, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 1
-  str: 6
-  agi: 5
-  vit: 6
-  intel: 4
+  str: 7
+  agi: 7
+  vit: 5
+  intel: 3
   dex: 5
-  luk: 4
-  startingGear: []
+  luk: 3
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 0
-  gearFolds: 0
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 4994dcb16f5b4bcdb96a2f4991b8bd70, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

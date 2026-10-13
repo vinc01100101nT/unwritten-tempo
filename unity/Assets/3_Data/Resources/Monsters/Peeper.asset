@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Peeper
   kind: 0
   size: 2.4
+  flies: 0
   biome: 7
   artFolder: 4887f2dab9b6a0149b941dfa607aecb9
   faceset: {fileID: 2800000, guid: b9543e8ff01009a49b150514c482f89b, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 41
-  str: 29
-  agi: 21
-  vit: 28
-  intel: 14
-  dex: 20
-  luk: 14
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 6
+  str: 14
+  agi: 28
+  vit: 13
+  intel: 13
+  dex: 39
+  luk: 13
+  startingGear:
+  - {fileID: 11400000, guid: f1204015c4ba457f8ab0049fecae8d55, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 0
+  gearFolds: 5
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 25c09470de8f442f8f9d6045c3cc8036, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Mossgore
   kind: 0
   size: 2
+  flies: 0
   biome: 7
   artFolder: b254c8b53851d2b4fbc657bcc6cc6c7c
   faceset: {fileID: 2800000, guid: b03b6ca9800b6cc47a34b6f9746c5f45, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 34
-  str: 24
-  agi: 17
+  str: 29
+  agi: 12
   vit: 23
-  intel: 12
-  dex: 17
-  luk: 12
-  startingGear: []
-  gearQuality: 0
-  gearFolds: 5
+  intel: 11
+  dex: 11
+  luk: 18
+  startingGear:
+  - {fileID: 11400000, guid: 2d080866095130541b53ce9bb733fb2a, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 1
+  gearFolds: 8
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: 1c9219ab17dc45efbb872c886c6cc70e, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 1c3a191a81054a75b23a13ded8e5f9a2, type: 2}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Sunscale
   kind: 0
   size: 0.3
+  flies: 0
   biome: 2
   artFolder: f17ad60a25d50b1498ab6fcd460279ed
   faceset: {fileID: 2800000, guid: 2cc09c76d03ee984a9955f35f962b72d, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 50
-  str: 32
-  agi: 27
-  vit: 31
-  intel: 19
-  dex: 27
-  luk: 18
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 8
+  str: 33
+  agi: 41
+  vit: 17
+  intel: 16
+  dex: 26
+  luk: 16
+  startingGear:
+  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 0
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: dae74ee4330f455d96e4890318ef7dcd, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

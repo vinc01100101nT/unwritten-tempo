@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Capling
   kind: 0
   size: 0.7
+  flies: 0
   biome: 6
   artFolder: 889406a585982384eac8e75b10b52771
   faceset: {fileID: 2800000, guid: 7824e953b210d344b8764db2d7a2a6ed, type: 3}
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 5
   str: 8
-  agi: 6
-  vit: 7
-  intel: 5
+  agi: 8
+  vit: 6
+  intel: 4
   dex: 6
   luk: 4
-  startingGear: []
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 0
-  gearFolds: 1
+  gearFolds: 5
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 40
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 8
-  goldMax: 24
+  material: {fileID: 11400000, guid: 0b9b609363ca48438acb5d071db8b9b8, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

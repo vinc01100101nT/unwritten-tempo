@@ -70,7 +70,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 **Quests and the shop are built and not yet played** (2026-10-04, [Quests and Tutorials](../2-systems/quests-and-tutorials.md)). Three quests exist: two tutorials (crafting your first gear, and buying and drinking healing potions after coming back on low health) and Torvald's side quest. One shop exists: Fenwick the Tool Dealer in Lastline, selling four potions, the Fly Wing and the Butterfly Wing, and buying anything with a sell value.
 
-**No death pays gold:** a creature's gold range is what a character saved from it pays its saver, times its tier — ordinary ×20, helpless ×40, wealthy ×60.
+**No death pays gold:** hunting earns it by selling each creature's own material to a shop, and by saving a character that never fights — gold worth 4, 8 or 12 kills of its creature (ordinary, helpless, wealthy) plus 3, 6 or 9 of that creature's material.
 
 **Saved characters are built and not yet played** (2026-09-30, [Saved Characters](../3-world/saved-characters.md)): 15% of normal and elite kills turn the creature back into one of 91 characters for 30 seconds — one that never fights, an ally or a rebel — on one rule for who is whose enemy.
 

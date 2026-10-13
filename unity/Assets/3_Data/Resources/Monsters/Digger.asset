@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Digger
   kind: 0
   size: 0.3
+  flies: 0
   biome: 7
   artFolder: 819a7959d6b9517419c7b42b69d2a63e
   faceset: {fileID: 2800000, guid: bb897ecada9c91043a1586d931a6380e, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 36
-  str: 24
-  agi: 19
-  vit: 24
-  intel: 13
-  dex: 19
-  luk: 13
-  startingGear: []
+  str: 30
+  agi: 12
+  vit: 25
+  intel: 12
+  dex: 11
+  luk: 19
+  startingGear:
+  - {fileID: 11400000, guid: 2d080866095130541b53ce9bb733fb2a, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
   gearQuality: 0
   gearFolds: 5
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 04b05b06ed9a468393907f58f523ad1d, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Frost Ronin
   kind: 1
   size: 3
+  flies: 0
   biome: 1
   artFolder: f9f7b3dfe7d3ae142b201e40df7e87e6
   faceset: {fileID: 2800000, guid: 03b12db46bf17374f9bc6fca91feaca7, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 33
-  str: 23
-  agi: 13
-  vit: 26
+  str: 28
+  agi: 11
+  vit: 23
   intel: 11
-  dex: 18
-  luk: 11
-  startingGear: []
+  dex: 11
+  luk: 17
+  startingGear:
+  - {fileID: 11400000, guid: 2d080866095130541b53ce9bb733fb2a, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 3
-  gearFolds: 9
+  gearFolds: 19
   gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 400
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 500
-  goldMax: 1000
+  material: {fileID: 11400000, guid: 133f9f1ab1334d4d926e0bac0f932ac5, type: 2}
+  rareMaterial: {fileID: 11400000, guid: ab4c37ce7566423482d6b2e9322033d2, type: 2}
   itemDropNames: []
   itemDropChances: []

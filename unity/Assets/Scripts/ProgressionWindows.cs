@@ -96,7 +96,7 @@ public class ProgressionWindows : MonoBehaviour
         PlayerPrefs.SetInt("pw_char_ring_v1", 1);
     }
 
-    void OnGold(int _) => RefreshInventoryFooter();
+    void OnGold(long _) => RefreshInventoryFooter();
 
     void Update()
     {

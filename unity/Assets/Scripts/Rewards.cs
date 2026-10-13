@@ -10,15 +10,15 @@ using UnityEngine;
 /// standing there rather than whoever did the work. Paying the killer is a decision, and a decision needs one
 /// place to live.</para>
 ///
-/// <para><b>The rule:</b> the last unit to land a blow that cost the creature health takes the reward. That is the
-/// simplest thing a player can predict from what they can see, and it is what the damage door already knows —
-/// nothing new is tracked to answer it.</para>
+/// <para><b>The rule:</b> everyone who fought a creature collects points for it (<see cref="KillLedger"/>) — damage
+/// dealt, blows taken, health restored to others, the first hit and the last. The most points owns its loot;
+/// its experience is split among everyone by points.</para>
 ///
 /// <para>On a server the person being paid is the fighter it holds for that connection, and their machine is told
 /// so their own character records it (see <see cref="GameNetwork"/>). On a single machine it is simply themselves.</para>
 ///
-/// <para><b>Experience and loot are paid to the SAME person, always</b>, because both ask <see cref="WhoEarned"/>
-/// and there is no second answer anywhere.</para>
+/// <para><b>Loot and experience are decided off the SAME ledger, always</b>: <see cref="WhoEarned"/> names its top
+/// scorer and <see cref="PayKill"/> splits by it, and there is no second count anywhere.</para>
 /// </summary>
 public static class Rewards
 {
@@ -36,7 +36,35 @@ public static class Rewards
         // Only a CHARACTER has a progression to pay into; a creature killing a creature earns nothing today.
         var character = killer as Character;
         if (character == null) return;
+        PayShare(character, xp, victim);
+    }
 
+    // Who one death pays and how much each, filled and emptied inside PayKill.
+    static readonly List<Character> paidWho = new List<Character>(8);
+    static readonly List<int> paidPart = new List<int>(8);
+
+    /// <summary>PAY A KILL'S EXPERIENCE TO EVERYONE WHO FOUGHT FOR IT, each by their share of the points
+    /// (<see cref="KillLedger"/>) — the parts add up to exactly <paramref name="xp"/>, before each person's own event
+    /// rate and run of kills. With nobody on the ledger it falls back to <see cref="WhoEarned"/>'s one person.</summary>
+    public static void PayKill(Health victim, int xp)
+    {
+        if (victim == null || xp <= 0 || victim.IsSummoned) return;
+        var ledger = victim.Ledger;
+        if (ledger != null && !ledger.IsEmpty)
+            ledger.Split(xp, KillLedger.PersonBehind(victim.LastAttacker), victim.gameObject.scene.name, paidWho, paidPart);
+        else
+            paidWho.Clear();
+        if (paidWho.Count == 0) { PayForKill(WhoEarned(victim), xp, victim); return; }
+        for (int i = 0; i < paidWho.Count; i++)
+            if (!PlayerUnits.Gone(paidWho[i])) PayShare(paidWho[i], paidPart[i], victim);
+        paidWho.Clear();
+        paidPart.Clear();
+    }
+
+    // One person's part of a kill that is worth something. A part that rounded down to nothing still steps their run
+    // of kills and counts for their quests: they fought for it.
+    static void PayShare(Character character, int xp, Health victim)
+    {
         // UNDER WHATEVER WORLD EVENT IS RUNNING — an experience rate multiplies what the kill pays, here and nowhere
         // else, so the number paid, logged and shown is one number. A rate small enough to round a kill down to
         // nothing pays nothing, but the kill still counts for any quest below.
@@ -87,16 +115,21 @@ public static class Rewards
     public static string ComboWords(int combo, int fromCombo)
         => fromCombo > 0 ? " — combo " + combo + ", +" + fromCombo + " from it" : " — combo " + combo;
 
-    /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the
-    /// last unit to land a blow that cost it health, which is the simplest thing a player can predict from what
-    /// they can see and costs nothing to track: the damage door already writes it down.
+    /// <summary>WHO OWNS WHAT THIS UNIT WAS CARRYING — the person with the most points for it (<see cref="KillLedger"/>:
+    /// damage dealt, blows taken, health restored to others, the first hit and the last). Its loot is kept for them
+    /// and a turned-back character is theirs; its experience is split among everyone with points
+    /// (<see cref="PayKill"/>). When nobody is on the ledger, it is the last unit to land a blow that cost it health.
     ///
-    /// <para>THE ONE PLACE THIS IS DECIDED. When a share of the work is worked out properly — how much damage each
-    /// person did, who healed, who held it still — it is worked out HERE, and every payment follows it without
-    /// another line changing.</para></summary>
+    /// <para>THE ONE PLACE THIS IS DECIDED, and the same answer every time it is asked during one death: the ledger
+    /// does not change between the questions.</para></summary>
     public static ICombatUnit WhoEarned(Health victim)
     {
         var last = victim != null ? victim.LastAttacker : null;
+        if (victim != null && victim.Ledger != null && !victim.Ledger.IsEmpty)
+        {
+            var top = victim.Ledger.Top(KillLedger.PersonBehind(last), victim.gameObject.scene.name);
+            if (top != null) return top;
+        }
         // A CREATURE FIGHTING FOR SOMEBODY earns for them: a saved character's kills are its saver's.
         if (last is Health fighter && fighter.owner != null && !PlayerUnits.Gone(fighter.owner)) return fighter.owner;
         return last;
@@ -115,8 +148,13 @@ public static class Rewards
 
     /// <summary>The same, with the drop chance (0–1) each item won its roll at, index for index — so auto-combat's
     /// loot filter can take what its owner asked for straight into their bag (<see cref="AutoLootTakes"/>), the rest
-    /// going down as usual. Null chances = nothing is auto-looted.</summary>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, List<float> chances, int gold, Health victim)
+    /// going down as usual. Null chances = nothing is auto-looted.
+    ///
+    /// <para><paramref name="pileItems"/> and <paramref name="pileCounts"/>, index for index, are piles that go down
+    /// APART and are never auto-looted — an elite's ordinary material, so each of the people who brought it down can
+    /// reach for one. Everything in <paramref name="items"/> still lands as one pile per kind.</para></summary>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, List<float> chances, int gold, Health victim,
+                               List<Item> pileItems = null, List<int> pileCounts = null)
     {
         if (PlayerUnits.Gone(winner)) return;
 
@@ -148,6 +186,10 @@ public static class Rewards
                     var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateFresh(def) : null;
                     if (DropForKiller(at, map, def, count, copy, character)) dropped++;
                 }
+            if (pileItems != null && pileCounts != null)
+                for (int i = 0; i < pileItems.Count && i < pileCounts.Count; i++)
+                    if (pileItems[i] != null && pileCounts[i] > 0
+                        && DropForKiller(at, map, pileItems[i], pileCounts[i], null, character)) dropped++;
         }
 
         PlaySession.ThingsFell(character, dropped);
@@ -162,7 +204,7 @@ public static class Rewards
 
         // A KILL THAT PAID NOTHING SAYS SO too — without it "paid nothing" and "the payout never ran" are both silence,
         // and only the second is a bug.
-        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold, dropped, victim));
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold, dropped, victim, pileItems, pileCounts));
     }
 
     // What auto-loot took, kept between the two halves of one payment; one list because a death is never paid twice at once.
@@ -275,7 +317,8 @@ public static class Rewards
     /// <summary>What a kill paid, as one line: who got it, how much Zeny, every item put down for them by name, and which
     /// unit it came from — "field_15 Alpha #1 (id) earned 6 Zeny and dropped Jellopy for them from Snake #3", or "earned
     /// nothing from Snake #3". Builds a string, so it is only ever called behind <see cref="GameLog.On"/>.</summary>
-    static string Describe(Character who, List<Item> items, int gold, int dropped, Health victim)
+    static string Describe(Character who, List<Item> items, int gold, int dropped, Health victim,
+                           List<Item> pileItems, List<int> pileCounts)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append(SpawnIds.MapOf(who)).Append(' ').Append(SpawnIds.Label(who))
@@ -301,6 +344,14 @@ public static class Rewards
                     if (!first) sb.Append(", ");
                     sb.Append(def.displayName);
                     if (count > 1) sb.Append(" ×").Append(count);
+                    first = false;
+                }
+            if (pileItems != null && pileCounts != null)
+                for (int i = 0; i < pileItems.Count && i < pileCounts.Count; i++)
+                {
+                    if (pileItems[i] == null || pileCounts[i] <= 0) continue;
+                    if (!first) sb.Append(", ");
+                    sb.Append("a pile of ").Append(pileItems[i].displayName).Append(" ×").Append(pileCounts[i]);
                     first = false;
                 }
             sb.Append(" for them");

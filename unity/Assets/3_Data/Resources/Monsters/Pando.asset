@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Pando
   kind: 0
   size: 1.1
+  flies: 0
   biome: 6
   artFolder: 7f2e5208c1354a44e97a1567b186ba0b
   faceset: {fileID: 2800000, guid: 42ef854ac8273f54e94199eb8790170d, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 21
-  str: 15
-  agi: 12
-  vit: 15
-  intel: 10
-  dex: 12
-  luk: 8
-  startingGear: []
+  str: 20
+  agi: 16
+  vit: 8
+  intel: 7
+  dex: 7
+  luk: 12
+  startingGear:
+  - {fileID: 11400000, guid: 6d2ebac137a76e34f9f470f698bcffbb, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
   gearQuality: 0
-  gearFolds: 3
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: 0e5303feceeb4191aa993431ca6170af, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Bittersweet
   kind: 0
   size: 0.4
+  flies: 0
   biome: 11
   artFolder: 945d9b116524b534f892842b7a88d90d
   faceset: {fileID: 2800000, guid: 7f5c4181c85034e468fa163632a5a817, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 68
-  str: 44
-  agi: 36
-  vit: 44
-  intel: 24
-  dex: 36
-  luk: 24
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 10
+  str: 35
+  agi: 22
+  vit: 46
+  intel: 55
+  dex: 22
+  luk: 22
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 0
+  gearFolds: 5
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 5
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
+  material: {fileID: 11400000, guid: 695cb4b8622c4cacba861ad250c1e7cf, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

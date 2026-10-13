@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Mossnail
   kind: 0
   size: 0.3
+  flies: 0
   biome: 6
   artFolder: ef2ddfd8942d38c40b9986681e8d5b54
   faceset: {fileID: 2800000, guid: 7eec01b16e3805d4dba682f2c30883b2, type: 3}
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 10
-  str: 10
-  agi: 9
-  vit: 10
-  intel: 5
+  str: 11
+  agi: 11
+  vit: 8
+  intel: 4
   dex: 8
-  luk: 5
-  startingGear: []
+  luk: 4
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 0
-  gearFolds: 1
+  gearFolds: 5
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 40
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 8
-  goldMax: 24
+  material: {fileID: 11400000, guid: e749d7d2afce42b7acb1fabcdf44747d, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Iris
   kind: 0
   size: 0.3
+  flies: 0
   biome: 8
   artFolder: 14f387cffebf54e46972a576f12e9c48
   faceset: {fileID: 2800000, guid: f05c34b0e6f7d234db158d44e95535a8, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 64
-  str: 40
-  agi: 34
-  vit: 40
-  intel: 25
-  dex: 34
-  luk: 24
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 10
+  str: 21
+  agi: 21
+  vit: 21
+  intel: 52
+  dex: 43
+  luk: 33
+  startingGear:
+  - {fileID: 11400000, guid: 5eee4763f7f459b429a5738a204808a8, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 0
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 927fd33ab2b3492791708fa78d1558fb, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

@@ -143,6 +143,12 @@ public static class MobSpawner
             var gear = go.GetComponent<UnitEquipment>();   // perf-ok: once per creature made
             var block = go.GetComponent<UnitStatBlock>();   // perf-ok: once per creature made
             bool rederive = false;
+            // ITS LEVEL AND STAT POINTS come from its catalog entry too, for the same reason: the entry owns them and
+            // the prefab holds only what the baker saw, so stats edited without re-baking are corrected here. Whoever
+            // made it may still replace them afterwards (a summon at a typed level, a saved character's own).
+            var authored = def.StatInputs;
+            // perf-ok: once per creature made
+            if (block != null && !block.inputs.Equals(authored)) block.SetSpawnInputs(authored);
             // The pieces themselves too, not only their settings: the weapon picked in the table is worn without a re-bake.
             if (gear != null && (gear.gearQuality != def.gearQuality || gear.gearFolds != def.gearFolds ||
                                  gear.gearInkTier != def.gearInkTier || !SamePieces(gear.startingGear, def.startingGear)))

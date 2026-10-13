@@ -951,7 +951,9 @@ public static class GmCommands
         if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
         if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
         // A band material's step is its BAND, an Ink's or a Salt's its TIER — the words the item's own field uses.
-        if (it.materialKind != MaterialKind.None)
+        if (it.materialKind == MaterialKind.Creature)
+            facts.Append(" · Creature material · ").Append(Rarities.Of(it, null));
+        else if (it.materialKind != MaterialKind.None)
             facts.Append(" · ").Append(it.materialKind)
                  .Append(it.materialKind == MaterialKind.Ink || it.materialKind == MaterialKind.Salt ? " tier " : " band ")
                  .Append(it.materialStep);

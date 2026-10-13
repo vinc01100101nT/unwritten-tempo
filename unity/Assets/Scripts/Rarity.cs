@@ -45,11 +45,14 @@ public static class Rarities
 
     /// <summary>How rare a crafting material of <paramref name="kind"/> at <paramref name="step"/> is. Metal, cloth and
     /// leather of every band are Common. Ink by tier: Watery Uncommon, Thin and Faint Rare, Clear and Sharp Epic. Salt
-    /// by tier: Coarse Uncommon, Fine Rare, Pure Epic. No material is Legendary.</summary>
+    /// by tier: Coarse Uncommon, Fine Rare, Pure Epic. A creature's own material is the tier its step names
+    /// (<see cref="CreatureMaterials.TierOfStep"/>), the only kind that can be Legendary.</summary>
     public static Rarity OfMaterial(MaterialKind kind, int step)
     {
         switch (kind)
         {
+            case MaterialKind.Creature:
+                return CreatureMaterials.TierOfStep(step);
             case MaterialKind.Ink:
                 return step >= 4 ? Rarity.Epic : step >= 2 ? Rarity.Rare : Rarity.Uncommon;
             case MaterialKind.Salt:

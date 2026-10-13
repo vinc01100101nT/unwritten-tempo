@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Glowcoil
   kind: 0
   size: 0.35
+  flies: 0
   biome: 13
   artFolder: b40e83038e15e9249af7574d19b1c51f
   faceset: {fileID: 2800000, guid: b1843655e783ad64e9c86c5c73057636, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 88
-  str: 57
-  agi: 47
-  vit: 56
-  intel: 33
-  dex: 47
-  luk: 33
-  startingGear: []
-  gearQuality: 2
-  gearFolds: 13
-  gearInkTier: 2
+  str: 46
+  agi: 30
+  vit: 59
+  intel: 71
+  dex: 30
+  luk: 30
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
+  gearQuality: 3
+  gearFolds: 15
+  gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: c7050161deaf4f5c9c20c237c6be1166, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 87cf92b6e72a435eb595d168bd2f4122, type: 2}
   itemDropNames: []
   itemDropChances: []

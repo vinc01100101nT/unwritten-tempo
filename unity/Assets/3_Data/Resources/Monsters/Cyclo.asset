@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Cyclo
   kind: 0
   size: 2.4
+  flies: 0
   biome: 3
   artFolder: 4d6b2d833d159f643ad7ec1dba711223
   faceset: {fileID: 2800000, guid: e82f434decbc00149be9cf7ffd2e08e1, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 69
-  str: 47
-  agi: 36
-  vit: 44
-  intel: 24
+  str: 23
+  agi: 23
+  vit: 36
+  intel: 63
   dex: 36
-  luk: 24
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 10
+  luk: 22
+  startingGear:
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 0
+  gearFolds: 3
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 5fe7eb9b1cff47489aa15637d49cbf86, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

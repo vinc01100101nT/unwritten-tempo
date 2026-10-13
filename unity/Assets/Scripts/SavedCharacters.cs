@@ -49,7 +49,6 @@ public static class SavedCharacters
             map = died.gameObject.scene,
             hasInputs = block != null,
             inputs = block != null ? block.inputs : default,
-            rolledGold = CombatRng.Range(Mathf.Min(def.goldMin, def.goldMax), Mathf.Max(def.goldMin, def.goldMax) + 1),
             combo = combo,
         };
 
@@ -82,9 +81,12 @@ public static class SavedCharacters
         public Scene map;
         public bool hasInputs;
         public UnitStatInputs inputs;
-        public int rolledGold;
         public int combo;
     }
+
+    // The part of a rescue's material the saver's bag had no room for, filled and emptied inside one rescue.
+    static readonly List<Item> restItems = new List<Item>(1);
+    static readonly List<int> restCounts = new List<int>(1);
 
     // Make `go` — a fresh or banked body of the creature that died — into its character, announce it, and say its line.
     static void Become(GameObject go, in Carried c)
@@ -123,12 +125,34 @@ public static class SavedCharacters
         life.Say(SavedCharacterLines.Pick(SavedCharacterLines.Appears(behaviour, c.who.group), CombatRng.Range(0, int.MaxValue)));
 
         // THE ONE ZENY A KILL CAUSES, so the saver's run of kills multiplies it exactly as it does the kill's experience.
-        int rescued = SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.rolledGold);
+        // The creature's own material comes with it, never multiplied: into the saver's bag, and whatever the bag has
+        // no room for falls where the character stands, kept for them like any drop.
+        int rescued = (int)System.Math.Min(int.MaxValue,
+            SavedCharacterRules.RescueGold(behaviour, c.who.goldTier, c.def.level, c.def.gearQuality, c.def.gearFolds));
         int gold = KillComboMath.Paid(rescued, c.combo);
         bool saverHere = !PlayerUnits.Gone(c.saver);
-        if (gold > 0 && saverHere)
+        restItems.Clear();
+        restCounts.Clear();
+        int handed = SavedCharacterRules.RescueMaterials(behaviour, c.who.goldTier);
+        if (handed > 0 && saverHere && CreatureMaterials.Is(c.def.material))
         {
-            Rewards.PayLoot(c.saver, null, gold, health);
+            int fits = c.saver.MostThatFits(c.def.material, handed);
+            if (fits > 0)
+            {
+                c.saver.TakeIntoBag(c.def.material, fits);
+                var shell = GameNetwork.ShellFor(c.saver);
+                if (shell != null)
+                {
+                    shell.TellOwnerTheyGot(c.def.material.id, fits, 0);
+                    shell.PushBagToOwner();
+                    shell.SaveSoon();
+                }
+            }
+            if (handed > fits) { restItems.Add(c.def.material); restCounts.Add(handed - fits); }
+        }
+        if ((gold > 0 || restItems.Count > 0) && saverHere)
+        {
+            Rewards.PayLoot(c.saver, null, null, gold, health, restItems, restCounts);
             c.saver.KillCombo.Earned(KillCombo.Now, 0, gold);
             GameNetwork.TellOwnerTheirKillCombo(c.saver, health, false, 0, 0, gold, gold - rescued);
         }

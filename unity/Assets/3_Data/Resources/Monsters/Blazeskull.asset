@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Blazeskull
   kind: 0
   size: 0.3
+  flies: 0
   biome: 13
   artFolder: 75b009f811eefb147a33d9815a65aaba
   faceset: {fileID: 2800000, guid: 12fe25c9e5e4f0445853d495d3569023, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 76
-  str: 49
-  agi: 40
-  vit: 49
-  intel: 29
+  str: 25
+  agi: 25
+  vit: 40
+  intel: 70
   dex: 40
-  luk: 29
-  startingGear: []
+  luk: 25
+  startingGear:
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 2
   gearFolds: 11
   gearInkTier: 2
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 97079c33e836419faa55be74755a7482, type: 2}
+  rareMaterial: {fileID: 11400000, guid: b0e873ca94754b8b8075a9ca3474aeb0, type: 2}
   itemDropNames: []
   itemDropChances: []

@@ -67,7 +67,7 @@ public class MobTableWindow : EditorWindow
             "hp"     => (a, b) => Derived(a, MonsterDefStats.Stat.HP).CompareTo(Derived(b, MonsterDefStats.Stat.HP)),
             "atk"    => (a, b) => Derived(a, MonsterDefStats.Stat.Atk).CompareTo(Derived(b, MonsterDefStats.Stat.Atk)),
             "weight" => (a, b) => a.weight.CompareTo(b.weight),
-            "xp"     => (a, b) => CreatureKinds.KillExperience(a.kind, a.level).CompareTo(CreatureKinds.KillExperience(b.kind, b.level)),
+            "xp"     => (a, b) => CreatureKinds.KillExperience(a).CompareTo(CreatureKinds.KillExperience(b)),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
             "elemlv" => (a, b) => a.elementLevel.CompareTo(b.elementLevel),
             _        => (a, b) => string.Compare(a.id, b.id, System.StringComparison.OrdinalIgnoreCase),
@@ -138,8 +138,6 @@ public class MobTableWindow : EditorWindow
         new Col("Element Lv", "elemlv", 70),
         new Col("wt",    "weight", 38),
         new Col("XP",    "xp",     46),
-        new Col("g.min", null,     46),
-        new Col("g.max", null,     46),
         new Col("",      null,     28),   // select asset
     };
     static float TotalWidth => Cols.Sum(c => c.w) + 8;
@@ -620,9 +618,7 @@ public class MobTableWindow : EditorWindow
         int elemLv   = EditorGUI.IntField(VCenter(Next(), 18), def.elementLevel);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
         // What a kill pays is worked out from the level and kind, never typed (decided 2026-09-30).
-        DrawDerived(Next(), CreatureKinds.KillExperience(def.kind, def.level));
-        int gMin     = EditorGUI.IntField(VCenter(Next(), 18), def.goldMin);
-        int gMax     = EditorGUI.IntField(VCenter(Next(), 18), def.goldMax);
+        DrawDerived(Next(), CreatureKinds.KillExperience(def));
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(def, "Edit Mob");
@@ -639,7 +635,6 @@ public class MobTableWindow : EditorWindow
             def.str = typed[0]; def.agi = typed[1]; def.vit = typed[2];
             def.intel = typed[3]; def.dex = typed[4]; def.luk = typed[5];
             def.element = elem; def.elementLevel = Mathf.Clamp(elemLv, 1, Elements.MaxLevel); def.weight = wt;
-            def.goldMin = gMin; def.goldMax = gMax;
             // Never above what the best grade lets count, since no weapon could use more.
             def.weaponMastery = holds ? Mathf.Clamp(mastery, 0, CraftingMath.WeaponMasteryCap(Quality.A)) : 0;
             EditorUtility.SetDirty(def);

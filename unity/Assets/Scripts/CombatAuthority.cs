@@ -49,6 +49,16 @@ public static class CombatAuthority
                          + "out damage where it must not.");
     }
 
+    // A creature's blow cost a PERSON health: they remember which creature, so that somebody who heals it back is
+    // credited on that creature (HurtBy). A person who died of it remembers nothing.
+    static void NoteHurtBy(ICombatUnit attacker, IDamageable target, int dealt)
+    {
+        if (dealt <= 0 || !(target is Character person)) return;
+        if (person.IsDead) { person.Hurts.Clear(); return; }
+        if (attacker is Health creature && !PlayerUnits.Gone(attacker) && creature.owner == null)
+            person.Hurts.Note(creature, dealt, person.MaxHP - person.CurrentHP);
+    }
+
     // The door itself, once. Everything above decides WHETHER this machine is the one that gets to open it.
     static int Land(IDamageable target, in DamageInfo info)
     {
@@ -75,6 +85,7 @@ public static class CombatAuthority
         lastNoDamage = NoDamageReason.None;
         int dealt = target.ApplyDamage(info);
         if (hurt != null && dealt <= 0) hurt.NoteAttacker(priorAttacker);
+        if (!presentationOnly) NoteHurtBy(info.attacker, target, dealt);
 
         // WHAT A BLOW ACTUALLY DID, written where the answer is real. A player's own machine reads zero for every
         // blow it throws — that is by design a few lines up — so three separate play-tests read that zero and
@@ -264,6 +275,7 @@ public static class CombatAuthority
 
         int dealt = target.ApplyTrueDamage(amount);
         if (credited != null && dealt <= 0) credited.NoteAttacker(priorAttacker);
+        NoteHurtBy(attacker, target, dealt);
 
         // "field_15 Snake #3 took 4 from Poison by Alpha #1 [HP 40/60]" — damage that is not a blow still writes a line,
         // or a bar drops in the log with nothing to explain it.

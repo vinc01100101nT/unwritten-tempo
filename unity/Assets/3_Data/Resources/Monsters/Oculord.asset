@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Oculord
   kind: 1
   size: 3.5
+  flies: 0
   biome: 7
   artFolder: a680a7d70eed26d48a206dc8ebc2d81b
   faceset: {fileID: 2800000, guid: 87e16facbcb897e4ca17db9789d04d31, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 14
-  str: 12
-  agi: 6
-  vit: 14
-  intel: 6
+  str: 13
+  agi: 5
+  vit: 15
+  intel: 5
   dex: 10
-  luk: 6
-  startingGear: []
+  luk: 5
+  startingGear:
+  - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 3
-  gearFolds: 3
+  gearFolds: 19
   gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 200
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 250
-  goldMax: 500
+  material: {fileID: 11400000, guid: f9f56df7e49942e6bb3f80df24e3acfe, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 0c1daff874944b5b807c836e82040df4, type: 2}
   itemDropNames: []
   itemDropChances: []

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Mossmaw
   kind: 1
   size: 3.5
+  flies: 0
   biome: 7
   artFolder: 08f1b263a99136848881d02567ae370f
   faceset: {fileID: 2800000, guid: 00eb1994cb692e04a99e93f66deb8d4c, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 35
-  str: 24
-  agi: 13
-  vit: 28
-  intel: 12
-  dex: 18
-  luk: 12
-  startingGear: []
+  str: 30
+  agi: 11
+  vit: 24
+  intel: 11
+  dex: 11
+  luk: 19
+  startingGear:
+  - {fileID: 11400000, guid: 2d080866095130541b53ce9bb733fb2a, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 3
-  gearFolds: 9
+  gearFolds: 20
   gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 200
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 250
-  goldMax: 500
+  material: {fileID: 11400000, guid: 6d71ae772cc34acfb2e4c9e2cb4fa436, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 465543a423e54daf93aa8db3ef87e4cb, type: 2}
   itemDropNames: []
   itemDropChances: []

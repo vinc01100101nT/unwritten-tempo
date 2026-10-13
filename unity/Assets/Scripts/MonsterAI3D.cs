@@ -400,7 +400,14 @@ public class MonsterAI3D : MonoBehaviour
                 // The kill's experience also trains the killer's weapon mastery — Character.AddXP pays both. Read
                 // at the moment of death, so a creature that levelled up in the fight pays its new level.
                 if (paysExperience)
-                    Rewards.PayForKill(Rewards.WhoEarned(Health), CreatureKinds.KillExperience(Health.kind, Health.Level), Health);
+                {
+                    // The gear that pays is its FILE's; a creature with no file (a hand-placed one) pays as ungeared.
+                    var file = MonsterCatalog.ById(Health.creatureId);
+                    int level = Health.Level;
+                    Rewards.PayKill(Health, CreatureKinds.KillExperience(Health.kind, level, file != null ? file.level : level,
+                                                                         file != null ? file.gearQuality : Quality.Raw,
+                                                                         file != null ? file.gearFolds : 0));
+                }
             });
 
         nextWander = Time.time + Random.value;
@@ -584,6 +591,14 @@ public class MonsterAI3D : MonoBehaviour
         if (Taunted && playerAlive) chasing = true;   // taunt overrides leash — locked onto the player
         else if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
         else if (!chasing && toPlayerSqr <= NoticeSqr()) chasing = true;
+
+        // THE TIME IT SPENDS AFTER SOMEBODY counts for them when it dies (KillLedger), from the moment it gives chase:
+        // holding a creature's attention is work, whether or not it ever lands a blow.
+        if (Health != null && !Health.IsWatchedCopy)
+        {
+            if (chasing && playerAlive) Health.LedgerForWriting().NoteHeld(Prey, Time.deltaTime);
+            else if (was && !chasing && Health.Ledger != null) Health.Ledger.StoppedChasing();
+        }
 
         // ITS WEAPON OUT WHILE IT HUNTS, AWAY WHILE IT DOES NOT — the rule a person plays by, decided here on the
         // server and drawn on every screen. A swing and a weapon skill wait for the weapon to be in hand.

@@ -37,7 +37,7 @@ map, and the map generator no longer puts any there.
 | --- | --- | --- | --- |
 | How many | the rest of the roster | 18 | 14, one per weapon type |
 | Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 170**, one every 5 levels |
-| Wears | its authored pieces, **Raw +0** at level 1 rising to **E +15** at 99 | its authored pieces, **D +0** at level 6 rising to **B +30** at 99 | a complete set at **A +30**, plus ring ranks |
+| Wears | a full set, **Raw to C** by the rarest thing it drops, folded by how hard it is to find | a full set, **D to B** by the rarest thing it drops, folded by how few maps it lives on | a complete set at **A +30**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today |
 | Summons, once it has bought the summon skill | nothing | normals | elites |
@@ -56,11 +56,10 @@ map, and the map generator no longer puts any there.
 - **Which stats are written, a weapon's trademark and an armour piece's word are rolled fresh every life**, exactly
   as a station rolls them, at every grade — a Raw piece included, as a forged one is.
 - **A creature wears exactly the pieces authored for it and nothing else.** An empty slot stays empty.
-- **The starting values follow level.** Folds rise evenly with level across each kind's range, and the grade is the
-  lowest one (from that kind's starting grade) whose cap holds those folds; the Ink follows the grade — F Watery,
-  E Thin, D Faint, C Clear, B and A Sharp (Raw writes nothing). So normals run Raw +0 at level 1, F from level
-  37, E from level 70, E +15 at 99; elites run D +0 at level 6, C from level 72, B from level 88, B +30 at 99; every
-  shadow is A +30.
+- **Grade and folds are the only difficulty dial, and neither follows level.** A normal creature's or an elite's
+  grade comes from the rarest thing it drops and its folds from how hard it is to find; the rule and every
+  creature's values are in [Creature Gear](creature-gear.md). The Ink follows the grade — F Watery, E Thin, D Faint,
+  C Clear, B and A Sharp (Raw writes nothing). Every shadow is A +30.
   Any single creature can be changed after that.
 
 ## Sizes
@@ -92,19 +91,19 @@ map, and the map generator no longer puts any there.
 
 ## Normal
 
-- The creatures that fill the field, wearing whatever pieces are authored for them — from **Raw +0**
-  at level 1 to **E +15** at level 99 (see Gear state).
+- The creatures that fill the field, wearing whatever pieces are authored for them — **Raw** with no rare
+  material, up to **C** with a Legendary one (see Gear state).
 - **Each of the 66 normals has its own home biome, element and level**, set from what it is (2026-09-26): critters
   low, large beasts higher. It lives in every map where it belongs, not in one. The full table is
-  [Creatures and Where They Live](biome-mob-families.md). Each one's stats were re-spent to its level's full point
-  budget in the same proportions it had.
+  [Creatures and Where They Live](biome-mob-families.md). Each one's stats are spent in the build of the weapon it holds, to its level's full point
+  budget; its weapon, armour, build and what its gear pays are in [Creature Gear](creature-gear.md).
 
 ## Elite
 
 - The stronger creatures of each area. The 18 creatures that were bosses are the 18 elites.
 - **Each elite has its own home biome, element and level** (8 to 99), and at least one elite calls each biome home;
   the table is [Creatures and Where They Live](biome-mob-families.md).
-- Whatever pieces are authored for them — from **D +0** at level 6 to **B +30** at level 99 (see Gear state) — and,
+- Whatever pieces are authored for them — **D** with a Rare material, **C** with an Epic one, **B** with a Legendary one (see Gear state) — and,
   once they have bought the summon skill, they **summon normals**: the three nearest their level at or below it, from their own home
   biome first.
 - **They drop much more folding material, and the rarer Inks and Salts** (see Drops).
@@ -221,6 +220,11 @@ own element's two converters to that roll — a fire creature can drop the Flame
 Converter; a creature whose element has no converter (Neutral, Poison, Holy, Dark, Ghost, Undead) never drops one. Materials are never in that roll.
 Several of one material go down as one pile.
 
+**Every normal creature and elite also drops a material nothing else does**, and 24 normal creatures and all 18 elites a
+second, rarer one — the chances, the prices and the full list are [Creature Materials](creature-materials.md). An
+elite's ordinary material is the one thing that falls as several separate piles. A rebel rolls them again at the creature's own chances; only its
+grade materials, Inks and Salts are lifted one kind up.
+
 ## Server restarts
 
 - **A map server restart wipes every respawn timer**, and **every elite and every shadow is present when the
@@ -233,11 +237,9 @@ Several of one material go down as one pile.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
   spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience.
-- **Normals' and elites' experience and gold ranges were not changed** when they were re-levelled, so a creature moved
-  from its old level to its current one still pays the experience it did before — the Octi, now level 63, still gives
-  5 experience — and its gold range (2 to 6 for the Octi) is still what a character saved from it is multiplied from.
-- **No death pays gold** (decided 2026-09-30): gold comes only from saving a character that never fights — see
-  [Saved Characters](saved-characters.md).
+- **No death pays gold** (decided 2026-09-30). Hunting earns gold by selling what creatures drop
+  ([Creature Materials](creature-materials.md)) and by saving a character that never fights
+  ([Saved Characters](saved-characters.md)); both follow the level in the creature's file and the grade and folds of its gear ([What a Kill Pays](what-a-kill-pays.md)).
 - **The fourteen shadows' bodies are starting picks** (set 2026-10-06 from each Kashira's gender and theme, no colours
   changed yet), listed under Shadow; each is the user's to change in the Mob Table.
 - **TODO — the shadows' places and the elites' spots** are designed in the [World Map](world-map.md) and not built.

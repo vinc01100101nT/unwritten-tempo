@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Blood Ronin
   kind: 1
   size: 3
+  flies: 0
   biome: 2
   artFolder: 741dbe7b2d335b44dbc4c91710d670c2
   faceset: {fileID: 2800000, guid: ec9754c3e94100640b3fe885eda52c5c, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 60
-  str: 38
-  agi: 23
-  vit: 43
-  intel: 23
-  dex: 33
-  luk: 23
-  startingGear: []
+  str: 41
+  agi: 48
+  vit: 20
+  intel: 20
+  dex: 31
+  luk: 20
+  startingGear:
+  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 3
-  gearFolds: 17
+  gearFolds: 19
   gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 600
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 750
-  goldMax: 1500
+  material: {fileID: 11400000, guid: 42d47fa7805b4ff4aa90f580244649e9, type: 2}
+  rareMaterial: {fileID: 11400000, guid: d0791bb5da9f4333a8691051ede39d5d, type: 2}
   itemDropNames: []
   itemDropChances: []

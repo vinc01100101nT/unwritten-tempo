@@ -1761,6 +1761,10 @@ public class Character : MonoBehaviour, ICombatUnit
         SavePointAtKeeper = !string.IsNullOrEmpty(town);
     }
 
+    /// <summary>Which creatures have taken health from this person that nobody has restored yet — what somebody
+    /// else's heal is credited against (<see cref="KillLedger"/>). Server only; empty everywhere else.</summary>
+    public readonly HurtBy Hurts = new HurtBy();
+
     public void Heal(int amount)
     {
         if (amount <= 0 || IsDead) return;
@@ -2127,22 +2131,23 @@ public class Character : MonoBehaviour, ICombatUnit
         : def.category == ItemCategory.Quest ? "Quest" : "Etc";
 
     /// <summary>How much money this character has.</summary>
-    public int Gold { get; private set; }
+    public long Gold { get; private set; }
 
     /// <summary>Fires when this character's money changes. Arg = the new total.</summary>
-    public event Action<int> OnGoldChanged;
+    public event Action<long> OnGoldChanged;
 
-    /// <summary>Add money, or take it away with a negative amount. Never goes below nothing.</summary>
-    public void AddGold(int amount)
+    /// <summary>Add money, or take it away with a negative amount. Never goes below nothing, and stops at the most a
+    /// purse can hold rather than wrapping round to nothing.</summary>
+    public void AddGold(long amount)
     {
         if (amount == 0) return;
-        SetGold(Gold + amount);
+        SetGold(amount > 0 && Gold > long.MaxValue - amount ? long.MaxValue : Gold + amount);
     }
 
     /// <summary>Set the balance outright — loading a save, or a GM setting it.</summary>
-    public void SetGold(int amount)
+    public void SetGold(long amount)
     {
-        int next = Mathf.Max(0, amount);
+        long next = amount < 0 ? 0 : amount;
         if (next == Gold) return;
         Gold = next;
         OnGoldChanged?.Invoke(Gold);

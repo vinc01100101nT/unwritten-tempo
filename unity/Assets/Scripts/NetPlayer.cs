@@ -2840,7 +2840,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (noRoom != BagRefusal.None) { ShopSaid(c.RefusalLine(def, noRoom, "buy"), false); return; }
 
         if (free > 0) c.Quests.TakeFreeBuys(itemId, free);
-        if (cost > 0) c.AddGold(-(int)cost);
+        if (cost > 0) c.AddGold(-cost);
         c.TakeIntoBag(def, count);
         GameLog.Info(LogCat.Server, playerName + " bought " + count + " " + def.id + " from '" + shopId + "' for " + cost + " gold"
                      + (free > 0 ? " (" + free + " free, a tutorial's first run)" : ""));
@@ -2867,7 +2867,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (!WorldShops.Buys(shop, e)) { ShopSaid("They will not buy that.", false); return; }
 
         int count = Mathf.Clamp(howMany, 1, e.count);
-        int pay = ShopMath.SalePay(e.def.zeny, count);
+        long pay = ShopMath.SalePay(e.def.zeny, count);
         var def = e.def;
         var piece = e.instance;
         string what = piece != null ? ItemTooltip.CopyTitle(piece) : count + " " + def.displayName;
@@ -2917,7 +2917,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // OFF THE LIST FIRST, so a second press finds nothing; then paid for, then returned through the one door into
         // the bag. A piece of gear returns as the very copy that was sold.
         c.Buyback.Remove(kept);
-        c.AddGold(-(int)price);
+        c.AddGold(-price);
         string what = kept.instance != null ? ItemTooltip.CopyTitle(kept.instance) : kept.count + " " + kept.def.displayName;
         if (kept.instance != null) c.TakeIntoBag(kept.instance);
         else c.TakeIntoBag(kept.def, kept.count);
@@ -3046,7 +3046,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         long price = KeeperMath.TeleportPrice(doors);
         if (price > c.Gold) { KeeperSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
 
-        c.AddGold(-(int)price);
+        c.AddGold(-price);
         // The purse reaches their machine with the bag, so it is sent now: a town this same server holds is entered
         // without a fresh copy of the character.
         PushBagToOwner();
@@ -3059,7 +3059,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         MoveToMap(map, null, true, spot, () =>
         {
             if (this == null) return;
-            c.AddGold((int)price);
+            c.AddGold(price);
             PushBagToOwner();
             SaveSoon();
             GameLog.Warn(LogCat.Server, playerName + "'s Keeper trip to '" + map + "' did not happen — " + price

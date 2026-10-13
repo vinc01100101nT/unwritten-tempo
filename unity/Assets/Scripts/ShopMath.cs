@@ -17,13 +17,9 @@ public static class ShopMath
     /// <summary>How many different sold things are kept at once. A stack is one, however many it holds.</summary>
     public const int BuybackMostEntries = 10;
 
-    /// <summary>What a shop pays for <paramref name="count"/> of a thing worth <paramref name="sellValueEach"/> —
-    /// stopped at the most gold a purse can hold rather than wrapping round.</summary>
-    public static int SalePay(int sellValueEach, int count)
-    {
-        long pay = (long)System.Math.Max(0, sellValueEach) * System.Math.Max(0, count);
-        return pay > int.MaxValue ? int.MaxValue : (int)pay;
-    }
+    /// <summary>What a shop pays for <paramref name="count"/> of a thing worth <paramref name="sellValueEach"/>.</summary>
+    public static long SalePay(int sellValueEach, int count) =>
+        (long)System.Math.Max(0, sellValueEach) * System.Math.Max(0, count);
 
     /// <summary>What <paramref name="paidCount"/> of a thing at <paramref name="priceEach"/> costs.</summary>
     public static long BuyCost(int priceEach, int paidCount) =>
@@ -39,10 +35,11 @@ public static class ShopMath
     }
 
     /// <summary>Two amounts paid for one kept stack, added — stopped at the most gold a purse can hold.</summary>
-    public static int PaidTogether(int a, int b)
+    public static long PaidTogether(long a, long b)
     {
-        long sum = (long)a + b;
-        return sum > int.MaxValue ? int.MaxValue : (int)System.Math.Max(0, sum);
+        if (a < 0) a = 0;
+        if (b < 0) b = 0;
+        return a > long.MaxValue - b ? long.MaxValue : a + b;
     }
 
     /// <summary>The moment a thing sold at <paramref name="soldAtEpoch"/> stops being kept, in world seconds.</summary>

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Wisp
   kind: 0
   size: 0.9
+  flies: 0
   biome: 12
   artFolder: 0c5cbf1cbc6aec64d999d9fbff9d498d
   faceset: {fileID: 2800000, guid: aed89cfdf14238045800539ae935f1c7, type: 3}
   weight: 4
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 85
-  str: 67
-  agi: 45
-  vit: 60
-  intel: 22
-  dex: 37
-  luk: 22
-  startingGear: []
+  str: 29
+  agi: 29
+  vit: 57
+  intel: 68
+  dex: 45
+  luk: 28
+  startingGear:
+  - {fileID: 11400000, guid: b363337599ac3d8409304145e366dfa1, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 2
   gearFolds: 13
   gearInkTier: 2
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 5
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
+  material: {fileID: 11400000, guid: a2e8dd69cd4243a8ab50fe668c9c1d11, type: 2}
+  rareMaterial: {fileID: 11400000, guid: fc4f3271f9604bf4985f51908b9626d6, type: 2}
   itemDropNames: []
   itemDropChances: []

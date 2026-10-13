@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Inferno Mask
   kind: 1
   size: 2.5
+  flies: 0
   biome: 3
   artFolder: 14399e3563b21bb49afe4fcf7c3c9280
   faceset: {fileID: 2800000, guid: e300417f48d68e144a17305ad366abcd, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 80
-  str: 51
-  agi: 31
-  vit: 59
-  intel: 31
-  dex: 43
-  luk: 31
-  startingGear: []
+  str: 27
+  agi: 27
+  vit: 42
+  intel: 73
+  dex: 42
+  luk: 26
+  startingGear:
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 4
-  gearFolds: 24
+  gearFolds: 23
   gearInkTier: 4
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 400
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 500
-  goldMax: 1000
+  material: {fileID: 11400000, guid: 23ec99568880405eaa0e56d076c977c2, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 5c3011f2f52e413bb3ce2f85b0c06b7d, type: 2}
   itemDropNames: []
   itemDropChances: []

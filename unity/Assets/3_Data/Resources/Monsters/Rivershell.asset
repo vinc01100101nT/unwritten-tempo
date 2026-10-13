@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Rivershell
   kind: 0
   size: 0.7
+  flies: 0
   biome: 10
   artFolder: df92af463dd6cd64dba4cc9841863c1f
   faceset: {fileID: 2800000, guid: 902df3be1d0461c4a9152a1750e739a2, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 60
-  str: 41
-  agi: 31
-  vit: 41
+  str: 31
+  agi: 21
+  vit: 55
   intel: 20
-  dex: 30
+  dex: 31
   luk: 20
-  startingGear: []
-  gearQuality: 1
-  gearFolds: 9
+  startingGear:
+  - {fileID: 11400000, guid: 5296fef8d7a735b408311057c8184f90, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 0
+  gearFolds: 3
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: 0c14f8cb4761490ab07a3105c02d9daf, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

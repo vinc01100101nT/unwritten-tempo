@@ -23,7 +23,7 @@
    "type": "list",
    "items": [
     "**By biome** — each of the fourteen biomes has creatures of its own, and the biome decides which element most of them carry. See *World & Maps*.",
-    "**By level** — every monster has a level, exactly like you do. That single number is what makes it dangerous; there is no separate difficulty rating. Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in field after field.",
+    "**By level** — every monster has a level, exactly like you do. Its level sets its body — its health, its attack, its defence — and its gear sets how hard it is for that level (see *Its gear is its difficulty* below). Ordinary monsters and elites run from level 1 to 99, and the shadows from 105 to 170. Every place has its own creatures, most of them near one level with the odd weaker or stronger visitor, and a monster lives wherever it belongs — you will meet the same slime in field after field.",
     "**By kind** — most monsters are ordinary. A few in each area are **elites**: stronger than the rest. Stronger still are the fourteen **shadows**, one for each weapon, each with a name of its own and gear at the highest grade — they are meant to take a whole guild to bring down. A monster uses only the skills it has learned, exactly as you do, and for now none has learned any — so no elite or shadow calls helpers to its side yet.",
     "**By element** — a monster's element grows stronger with its kind: ordinary monsters are **level 1**, elites **level 2**, shadows **level 3**. Where a monster lives says what it probably is: the plains are mostly Neutral, the forests and hills Earth, the sea and snow Water, the volcano Fire, and the dark lands overseas Poison, Holy, Dark, Ghost and Undead. The shadows between them carry all ten elements, and a converter only answers the four it comes in — Water, Earth, Fire and Wind (see *Combat Mechanics*).",
     "**By size** — every monster has a size of its own, set by what it is: the smallest, like a mouse or a raccoon, stand about a third of your height and nothing is ever smaller, a bear stands taller than you and a giant squid towers four times your height. Every size falls into one of three groups — **Small, Medium or Large**. A Medium monster stands about as tall as you; a Small one under two-thirds of your height, a Large one more than one and a half times it. A bigger monster also reaches further with its blows — and you reach it from further away. Most ordinary monsters are Small or Medium; most elites are Large; every shadow is exactly your size. Winged monsters — butterflies, bats, birds — fly at about your head height; you click and strike them up there, and they reach you exactly as far as they would on the ground. The size group is also meant to interact with your weapon type (see *Combat Mechanics*)."
@@ -41,7 +41,9 @@
   {
    "type": "list",
    "items": [
-    "**It wears real equipment** — the same gear you can wear, in the same slots. A monster's strength is its level, its stats, and its kit.",
+    "**It wears real equipment** — a weapon, a head piece, a body piece, shoes and a garment, the same gear you can wear, in the same slots. Its armour follows what it is — metal for shell, scale, horn or bone, leather for hide, fur or feather, cloth for soft, plant, flame or spirit — and its six stats are spent for the weapon it holds.",
+    "**Its gear is its difficulty** — a monster's gear has a **grade** and **folds**, exactly like yours, and neither follows its level. The rarer the thing a monster drops, the higher its grade; the harder it is to find, the more folds. So a low-level monster guarding a Legendary material is far harder than its level says, and a common one in plain gear is not.",
+    "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the gold a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**.",
     "**It can carry Ring investment** — scaling it on the same soft-cap curve yours uses. A monster with a Ring behind it is a genuinely different fight.",
     "**Its stats are visible in its numbers** — a monster that hits hard has the attack to prove it. There is no hidden multiplier making things tougher."
    ]
@@ -63,6 +65,7 @@
    "type": "list",
    "items": [
     "**Materials** — the metal, cloth and leather of the monster's own grade, which rises with its level, and now and then an **Ink** or a **Salt**. Elites drop far more, and rarer Inks and Salts; shadows more again. No stats of their own; they feed **Crafting & Recycling**.",
+    "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns gold. Some monsters also carry a second, rarer one with a coloured name. An elite's falls as several separate piles, and auto-loot never takes anything an elite drops.",
     "**Consumables** — potions and food, now and then; a monster with an element also drops the **converters** of its own element."
    ]
   },
@@ -78,10 +81,19 @@
   {
    "type": "list",
    "items": [
-    "**Some never fight.** They thank you, stay a while and leave — and saving one is the only way to earn **gold**: the monster's own gold range, times more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans).",
+    "**Some never fight.** They thank you, stay a while and leave — and saving one is the only time a fight itself pays **gold**, and it hands you some of that monster's own material too: more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans). The higher the monster's level and the better its gear, the more gold.",
     "**Some fight beside you** against monsters and rebels, then say goodbye. You cannot hit them, and what they beat counts as yours.",
     "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. A rebel carries **more and rarer loot** — as if it were one kind stronger — and the experience of the monster it came from. An elite always turns into the same ninja, and every ninja rebels."
    ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Who a kill belongs to"
+  },
+  {
+   "type": "paragraph",
+   "text": "Everyone who fights a monster earns points for it: **60** shared by damage dealt, **15** by how long it was chasing you, **15** by healing other players it hurt, **5** for the first hit and **5** for the last. The **experience is split** among everyone by their points, so a healer and whoever holds the monster's attention are paid too. Whoever has the **most points owns the loot** for the first 10 seconds."
   },
   {
    "type": "heading",

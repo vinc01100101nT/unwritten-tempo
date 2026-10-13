@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Hornscale
   kind: 0
   size: 1
+  flies: 0
   biome: 8
   artFolder: bf7712469f68dca489c23f3430539d95
   faceset: {fileID: 2800000, guid: 19cfe2c9bfc8a4f48847f5bf7c13e789, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 59
-  str: 38
-  agi: 31
-  vit: 37
-  intel: 22
-  dex: 31
-  luk: 22
-  startingGear: []
+  str: 40
+  agi: 40
+  vit: 20
+  intel: 19
+  dex: 19
+  luk: 40
+  startingGear:
+  - {fileID: 11400000, guid: eb821c722710f794881eb933b2236650, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 1
-  gearFolds: 9
+  gearFolds: 8
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: 614e8b63b47842a4939cc2b1a16c1177, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 320d543de2c34ca6823eb287d973e8db, type: 2}
   itemDropNames: []
   itemDropChances: []

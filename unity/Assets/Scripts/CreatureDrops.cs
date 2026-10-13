@@ -6,17 +6,24 @@ using System.Collections.Generic;
 /// </summary>
 public static class CreatureDrops
 {
-    /// <summary>One thing a kill may give up: the item, its chance, and how many come when it does.</summary>
+    /// <summary>One thing a kill may give up: the item, its chance, how many come in a pile when it does, and how many
+    /// separate piles of it fall (one for everything but an elite's ordinary material).</summary>
     public readonly struct Drop
     {
         public readonly Item item;
         public readonly float chance;
         public readonly int min, max;
-        public Drop(Item item, float chance, int min, int max) { this.item = item; this.chance = chance; this.min = min; this.max = max; }
+        public readonly int pilesMin, pilesMax;
+        public Drop(Item item, float chance, int min, int max) : this(item, chance, min, max, 1, 1) { }
+        public Drop(Item item, float chance, int min, int max, int pilesMin, int pilesMax)
+        {
+            this.item = item; this.chance = chance; this.min = min; this.max = max;
+            this.pilesMin = pilesMin; this.pilesMax = pilesMax;
+        }
     }
 
-    /// <summary>Every NAMED drop of <paramref name="def"/>: its hand-authored drops, then its kind's materials at its
-    /// level's grade. The one random potion or food is not in here — see <see cref="RandomChanceOf"/>.</summary>
+    /// <summary>Every NAMED drop of <paramref name="def"/>: its hand-authored drops, the materials only it drops
+    /// (<see cref="CreatureMaterials"/>), then its kind's materials at its level's grade. The one random potion or food is not in here — see <see cref="RandomChanceOf"/>.</summary>
     public static void Of(MonsterDef def, List<Drop> into)
     {
         into.Clear();
@@ -28,12 +35,26 @@ public static class CreatureDrops
                 var item = ByAssetName(def.itemDropNames[i]);
                 if (item != null) into.Add(new Drop(item, def.itemDropChances[i], 1, 1));
             }
+        AddOwnMaterial(def.material, def.kind, into);
+        AddOwnMaterial(def.rareMaterial, def.kind, into);
         var lines = CreatureLoot.LinesFor(def.kind);
         for (int i = 0; i < lines.Count; i++)
         {
             var item = LootDropper.MaterialFor(lines[i], def.level);
             if (item != null) into.Add(new Drop(item, lines[i].chance, lines[i].min, lines[i].max));
         }
+    }
+
+    // The same chance and amounts LootDropper rolls a creature's own material at.
+    static void AddOwnMaterial(Item item, CreatureKind kind, List<Drop> into)
+    {
+        if (!CreatureMaterials.Is(item)) return;
+        var tier = CreatureMaterials.TierOfStep(item.materialStep);
+        float chance = CreatureMaterials.Chance(kind, tier);
+        if (chance <= 0f) return;
+        CreatureMaterials.Piles(kind, tier, out int pilesMin, out int pilesMax);
+        CreatureMaterials.PileSize(kind, tier, out int sizeMin, out int sizeMax);
+        into.Add(new Drop(item, chance, sizeMin, sizeMax, pilesMin, pilesMax));
     }
 
     /// <summary>Everything a kill of <paramref name="def"/> may give up, written as one line — "Raw Metal 20%, …, a
@@ -48,6 +69,7 @@ public static class CreatureDrops
             var drop = lineScratch[i];
             sb.Append(drop.item.displayName).Append(' ').Append(LootDropper.ChanceText(drop.chance));
             if (drop.max > 1) sb.Append(" ×").Append(CountText(drop.min, drop.max));
+            if (drop.pilesMax > 1) sb.Append(" in ").Append(CountText(drop.pilesMin, drop.pilesMax)).Append(" piles");
             sb.Append(", ");
         }
         sb.Append("a random potion or food ").Append(LootDropper.ChanceText(LootDropper.RandomItemChance));

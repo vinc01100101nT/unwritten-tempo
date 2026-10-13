@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Kappi
   kind: 0
   size: 0.7
+  flies: 0
   biome: 10
   artFolder: 107077d1cd181564c9114378e9075886
   faceset: {fileID: 2800000, guid: 6f7ea68751b744446a68194347b1b413, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 15
   str: 13
-  agi: 10
-  vit: 12
-  intel: 6
-  dex: 10
-  luk: 6
-  startingGear: []
-  gearQuality: 0
-  gearFolds: 2
+  agi: 6
+  vit: 13
+  intel: 5
+  dex: 13
+  luk: 5
+  startingGear:
+  - {fileID: 11400000, guid: 67c79ac3f007e7f46b8b27bff6ccedfd, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 1
+  gearFolds: 9
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: b8db85a26a1a459fa87a224613c96077, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 216d31a3e8034f30ab7d72d0bbc1f47b, type: 2}
   itemDropNames: []
   itemDropChances: []

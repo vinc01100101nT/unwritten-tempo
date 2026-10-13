@@ -219,6 +219,22 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    # The material only one creature drops. Its price is saved on the item and its creature's level, gear grade and
+    # folds are saved on the creature, so either can be changed alone and the shop would pay a price the rule never gave.
+    "creature-materials": {
+        "roots": [(os.path.join(DATA, "Resources", "Items"), ".asset"),
+                  (os.path.join(DATA, "Resources", "Monsters"), ".asset")],
+        "files": [os.path.join(SCRIPTS, "CreatureMaterials.cs"), os.path.join(SCRIPTS, "CreaturePay.cs")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-creature-materials.py")],
+        "headline": "A creature's own material is missing, shared, or sells for a price the rule does not give:",
+    },
+    "creature-materials-checker": {
+        "files": [os.path.join(TOOLS, "check-creature-materials.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-creature-materials-check.py")],
+        "headline": "The creature material checker no longer sees every planted fault, so its silence proves nothing "
+                    "until this passes:",
+        "mine_by_construction": True,
+    },
     "editor-writes": {
         "roots": [(SCRIPTS, ".cs")],
         "run": [sys.executable, os.path.join(TOOLS, "check-editor-writes.py")],

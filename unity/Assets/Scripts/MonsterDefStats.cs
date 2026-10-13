@@ -27,15 +27,15 @@ public static class MonsterDefStats
         return max;
     }
 
-    /// <summary><paramref name="which"/> of <paramref name="def"/>'s combat numbers, as it spawns.</summary>
-    public static int Derived(MonsterDef def, Stat which)
+    // What the creature wears, added up at ITS OWN grade and folds, and the weapon type it holds.
+    static void Worn(MonsterDef def, out EquipBonuses gear, out WeaponType held)
     {
         System.Array.Clear(wornScratch, 0, wornScratch.Length);
         if (def.startingGear != null)
             foreach (var item in def.startingGear)
                 if (item != null && item.slot != EquipSlotType.None) wornScratch[(int)item.slot] = item;
 
-        var gear = default(EquipBonuses);
+        gear = default;
         foreach (var item in wornScratch)
         {
             if (item == null) continue;
@@ -50,7 +50,13 @@ public static class MonsterDefStats
         }
         pieceScratch.def = null;
         var weapon = wornScratch[(int)EquipSlotType.Weapon];
-        var held = weapon != null ? weapon.weaponType : WeaponType.None;
+        held = weapon != null ? weapon.weaponType : WeaponType.None;
+    }
+
+    /// <summary><paramref name="which"/> of <paramref name="def"/>'s combat numbers, as it spawns.</summary>
+    public static int Derived(MonsterDef def, Stat which)
+    {
+        Worn(def, out var gear, out var held);
 
         bool hasRanks = def.ringRankStats != null && def.ringRankValues != null && def.ringRankStats.Length > 0;
         if (hasRanks) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);

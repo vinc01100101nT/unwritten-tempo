@@ -76,7 +76,7 @@ public static class MobExport
                 atk = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Atk),
                 def = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Def),
                 flee = MonsterDefStats.Derived(d, MonsterDefStats.Stat.Flee),
-                xp = CreatureKinds.KillExperience(d.kind, d.level),
+                xp = CreatureKinds.KillExperience(d),
                 drops = CreatureDrops.Line(d),
                 homes = h,
             });

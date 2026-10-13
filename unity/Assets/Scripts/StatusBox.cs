@@ -39,7 +39,8 @@ public class StatusBox : MonoBehaviour
 
     // change-detection: the text is only rewritten when a number it shows actually moves
     int lastHp = -1, lastMaxHp = -1, lastMp = -1, lastMaxMp = -1;
-    int lastCharLvl = -1, lastCharToNext = -1, lastRingLvl = -1, lastGold = -1;
+    int lastCharLvl = -1, lastCharToNext = -1, lastRingLvl = -1;
+    long lastGold = -1;
     double lastCharXp = -1.0, lastRingXp = -1.0;
     string lastName;
     WeaponType lastMasteryWeapon = (WeaponType)(-1);
@@ -206,7 +207,7 @@ public class StatusBox : MonoBehaviour
         ch.Mastery.OnChanged -= Refresh;
     }
 
-    void OnGold(int _) => Refresh();
+    void OnGold(long _) => Refresh();
 
     void Refresh()
     {

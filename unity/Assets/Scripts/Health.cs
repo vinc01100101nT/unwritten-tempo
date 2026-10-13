@@ -474,7 +474,30 @@ public class Health : MonoBehaviour, ICombatUnit
     void SubtractHealth(int dmg)
     {
         if (IsWatchedCopy) return;
+        int before = Current;
         Current = Mathf.Max(0, Current - dmg);
+        // WHO TOOK IT OFF is written here, before anything can decide this unit is dead: a death pays out the moment it
+        // happens, so the blow that kills has to be on the ledger already. The attacker is whoever the door recorded
+        // just before it opened (CombatAuthority).
+        KillLedger.NoteDealt(this, LastAttacker, before - Current);
+    }
+
+    KillLedger ledger;
+
+    /// <summary>Who has fought this creature this life, or null when nobody has (<see cref="KillLedger"/>).</summary>
+    public KillLedger Ledger => ledger;
+
+    /// <summary>The same ledger, made the first time anybody fights this body and kept for every life of it.</summary>
+    public KillLedger LedgerForWriting() => ledger ?? (ledger = new KillLedger());
+
+    /// <summary>Which life of this body this is — it goes up each time the body comes back, so a note about an earlier
+    /// life can be told from one about this one.</summary>
+    public int Life { get; private set; }
+
+    // Health came back: every claim on this creature shrinks with it (KillLedger.Regained).
+    void Regained(int before)
+    {
+        if (ledger != null && Current > before) ledger.Regained(maxHealth - before, maxHealth - Current);
     }
 
     /// <summary>Play what a death LOOKS like, with none of what a death MEANS. A watched copy must not announce a
@@ -778,12 +801,21 @@ public class Health : MonoBehaviour, ICombatUnit
 
     /// <summary>Refill to full HP silently — no popup, no color reset (used on a mob LEVEL-UP, which fully
     /// heals like the player's, but shouldn't spam a giant green heal number).</summary>
-    public void RefillToMax() => Current = maxHealth;
+    public void RefillToMax()
+    {
+        int before = Current;
+        Current = maxHealth;
+        Regained(before);
+    }
 
     /// <summary>Reset to full HP (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
     public void Revive()
     {
         Current = maxHealth;
+        // A NEW LIFE OWES NOTHING TO THE LAST ONE: nobody has fought it yet, and a note anybody still holds about the
+        // old life no longer matches.
+        Life++;
+        if (ledger != null) ledger.Clear();
 
         // Coming back to life hands this unit's mover + animator back to the simulate-near switch, which stood down
         // while it was a corpse. Done HERE, at the one revive choke, rather than only at the respawn call site: several
@@ -809,7 +841,9 @@ public class Health : MonoBehaviour, ICombatUnit
         if (amount <= 0 || IsDead) return;
         // A watched copy's health is the server's to state, gains included — the same rule as SubtractHealth.
         if (IsWatchedCopy) return;
+        int before = Current;
         Current = Mathf.Min(maxHealth, Current + amount);
+        Regained(before);
         CombatAuthority.NoteHPAdded(this, amount);
     }
 
@@ -823,7 +857,9 @@ public class Health : MonoBehaviour, ICombatUnit
     public void LeechHeal(int amount)
     {
         if (amount <= 0 || IsDead || IsWatchedCopy) return;
+        int before = Current;
         Current = Mathf.Min(maxHealth, Current + amount);
+        Regained(before);
         CombatAuthority.LogHeal(this, amount, "life steal");
     }
 
@@ -841,6 +877,9 @@ public class Health : MonoBehaviour, ICombatUnit
         PassiveEvents.Fire(LastAttacker, SkillTrigger.OnKill, PassiveEvents.CurrentSkillId, transform);
         VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
+        // EVERYTHING THIS DEATH PAYS HAS NOW BEEN PAID — its experience, its loot and whether it turns back all asked
+        // the ledger inside that call. Emptied here, in the one place, never by one of the listeners.
+        if (ledger != null) ledger.Clear();
         // Let the remains lie out their time if the body has them (every screen draws the death from the health the
         // server sends), and once that is over either RECYCLE the mob (if it has a MobRespawn) or remove it (the
         // original Phase D behavior). With no remains, do the same immediately.

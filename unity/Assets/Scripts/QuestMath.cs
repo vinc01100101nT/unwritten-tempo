@@ -106,6 +106,6 @@ public static class QuestMath
     }
 
     /// <summary>Can a bill of <paramref name="needMaterial"/> material and <paramref name="needGold"/> gold be paid.</summary>
-    public static bool CanPay(int haveMaterial, int needMaterial, int haveGold, int needGold)
+    public static bool CanPay(int haveMaterial, int needMaterial, long haveGold, long needGold)
         => haveMaterial >= needMaterial && haveGold >= needGold;
 }

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Gloop King
   kind: 1
   size: 2
+  flies: 0
   biome: 0
   artFolder: 10a9aeff20de49548ade63fe1902658d
   faceset: {fileID: 2800000, guid: 268d3e5af7f8e91458962127d753d8df, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 8
-  str: 9
-  agi: 5
-  vit: 10
-  intel: 5
-  dex: 8
-  luk: 5
-  startingGear: []
-  gearQuality: 3
-  gearFolds: 1
-  gearInkTier: 3
+  str: 10
+  agi: 10
+  vit: 7
+  intel: 4
+  dex: 7
+  luk: 4
+  startingGear:
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
+  gearQuality: 4
+  gearFolds: 23
+  gearInkTier: 4
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 600
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 750
-  goldMax: 1500
+  material: {fileID: 11400000, guid: 2d26f4b43cc84393ba207b7301d543a4, type: 2}
+  rareMaterial: {fileID: 11400000, guid: e6734fb61147487c8644425bbbfb7a5f, type: 2}
   itemDropNames: []
   itemDropChances: []

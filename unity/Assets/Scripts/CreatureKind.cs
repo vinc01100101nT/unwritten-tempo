@@ -61,10 +61,23 @@ public static class CreatureKinds
     public static int ExperienceMultiplier(CreatureKind k) =>
         k == CreatureKind.Shadow ? 20 : k == CreatureKind.Elite ? 10 : 1;
 
-    /// <summary>The experience one kill of a creature of this kind and <paramref name="level"/> pays. The ONE place a
-    /// kill's worth is decided — by level and kind only, never by a number typed onto the creature.</summary>
-    public static int KillExperience(CreatureKind k, int level)
-        => (int)System.Math.Min(int.MaxValue, (long)UnitStatMath.KillXp(level) * ExperienceMultiplier(k));
+    /// <summary>The experience one kill pays. The ONE place a kill's worth is decided — by the creature's kind, its
+    /// level and the grade and folds of its gear (<see cref="CreaturePay"/>), never by a number typed onto the creature.
+    ///
+    /// <para>The gear multiplies the experience of <paramref name="fileLevel"/>, the level in the creature's FILE, only.
+    /// Levels a creature gained by hitting people in this fight add their plain difference on top — letting a geared
+    /// creature hit you never multiplies what its gear pays.</para></summary>
+    public static int KillExperience(CreatureKind k, int level, int fileLevel, Quality gearGrade, int gearFolds)
+    {
+        long atFile = UnitStatMath.KillXp(fileLevel);
+        long grown = System.Math.Max(0L, (long)UnitStatMath.KillXp(level) - atFile);
+        long worth = (CreaturePay.Scaled(atFile, gearGrade, gearFolds) + grown) * ExperienceMultiplier(k);
+        return (int)System.Math.Min(int.MaxValue, worth);
+    }
+
+    /// <summary>The experience a kill of <paramref name="def"/> pays as it spawns.</summary>
+    public static int KillExperience(MonsterDef def)
+        => def != null ? KillExperience(def.kind, def.level, def.level, def.gearQuality, def.gearFolds) : 0;
 
     /// <summary>A shadow is a 3D character; the other two kinds are flat.</summary>
     public static bool Is3D(CreatureKind k) => k == CreatureKind.Shadow;

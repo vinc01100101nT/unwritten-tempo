@@ -73,7 +73,7 @@ public class SaveData
     public double ringXp;   // to two decimals, like xp
 
     // Currency (M2 loot slice).
-    public int gold;
+    public long gold;
 
     // THE OLD HOTBAR (v3–v17): numbered skill ids followed by the ultimate. Read ONCE, by the server, to carry a
     // bar saved before v18 into the bar's own row (HotbarBindings.RestoreLegacy); never written from v18 on.
@@ -194,7 +194,7 @@ public class SaveData
         public string cards;
         public string roll;
         public string copyId;
-        public int paid;
+        public long paid;
         public double endsAt;
     }
 

@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Wyrmlet
   kind: 0
   size: 2
+  flies: 0
   biome: 0
   artFolder: 262c82820b5342448a693a383480e4e0
   faceset: {fileID: 2800000, guid: db7d169441a3bf646a8ab33102b403c4, type: 3}
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 34
-  str: 22
-  agi: 19
-  vit: 22
-  intel: 13
-  dex: 18
-  luk: 12
-  startingGear: []
+  str: 29
+  agi: 23
+  vit: 12
+  intel: 11
+  dex: 11
+  luk: 18
+  startingGear:
+  - {fileID: 11400000, guid: 6d2ebac137a76e34f9f470f698bcffbb, type: 2}
+  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
+  - {fileID: 11400000, guid: 6c6999f89f6ae4077a02c6bf2dd9ed50, type: 2}
+  - {fileID: 11400000, guid: c10473e6eb2e346efb0386601d3a167d, type: 2}
+  - {fileID: 11400000, guid: a4aa6d0953822400582682bc25bf0dc5, type: 2}
   gearQuality: 0
-  gearFolds: 5
+  gearFolds: 3
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 20
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 6
-  goldMax: 18
+  material: {fileID: 11400000, guid: 7e38a7f3382e4ef49c4bae8f576ea550, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

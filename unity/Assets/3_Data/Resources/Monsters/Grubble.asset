@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Grubble
   kind: 0
   size: 0.3
+  flies: 0
   biome: 4
   artFolder: c9664ae77de347e408bf3ee98233d479
   faceset: {fileID: 2800000, guid: 871c5dc5e31e744489ce488a20c1c4dd, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 90
-  str: 58
-  agi: 48
-  vit: 57
-  intel: 36
-  dex: 48
-  luk: 33
-  startingGear: []
-  gearQuality: 2
-  gearFolds: 14
-  gearInkTier: 2
+  str: 47
+  agi: 31
+  vit: 61
+  intel: 72
+  dex: 31
+  luk: 30
+  startingGear:
+  - {fileID: 11400000, guid: e2921b3c64336c846905dd34a8af73e1, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 4
+  gearFolds: 20
+  gearInkTier: 4
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: 7483c4bc5efc4d97a8449748cb1750b0, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 2af73ebae58948948858a0287c2caf36, type: 2}
   itemDropNames: []
   itemDropChances: []

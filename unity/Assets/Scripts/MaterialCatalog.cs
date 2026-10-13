@@ -53,6 +53,8 @@ public static class MaterialCatalog
             if (it == null) continue;
             // The three band ladders, and Ink's and Salt's tier ladders beside them, all in the same eight-place row.
             if (it.materialKind == MaterialKind.None) continue;
+            // A creature's own material is found through its creature, never by kind and step: dozens share each step.
+            if (it.materialKind == MaterialKind.Creature) continue;
             if (it.materialStep < 1 || it.materialStep >= Bands) continue;
             if (!bands.TryGetValue(it.materialKind, out var row)) bands[it.materialKind] = row = new Item[Bands];
             row[it.materialStep] = it;

@@ -149,8 +149,6 @@ public static class MobBiomeImporter
             var u = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 1f, wVit: 4f, wInt: 1f, wDex: 2f, wLuk: 1f);
             WriteStats(def, u);
             def.weight = 0;   // never rolled by the field spawner; placed deliberately
-            def.goldMin = 250 * (b + 1);
-            def.goldMax = 500 * (b + 1);
             return;
         }
 
@@ -159,8 +157,6 @@ public static class MobBiomeImporter
         var n = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 2f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f);
         WriteStats(def, n);
         def.weight = common ? 4 : (b <= 1 ? 3 : b == 2 ? 2 : 1);
-        def.goldMin = 2 * (b + 1);
-        def.goldMax = 6 * (b + 1);
     }
 
     static void WriteStats(MonsterDef def, in UnitStatInputs u)

@@ -60,6 +60,7 @@ The folders match the sections below, so the file tree and this index say the sa
   - [Readiness Audit](2-systems/networking/readiness-audit.md) — the July survey that chose the shape. Historical; kept for the reasoning.
 - [HUD/UI System — Design & Relay](2-systems/hud-ui-system.md) — the HUD/UI workstream.
 - [Quests and Tutorials](2-systems/quests-and-tutorials.md) — the Quests window, unlock conditions, free first runs and replays, ground arrows, the tutorial guide, and how quest progress is saved.
+- [Loot-Owner Pointing System](2-systems/loot-owner-pointing.md) — BUILT 2026-10-13, not play-tested: everyone who fights a creature collects points (damage 60, holding its attention 15, healing 15, first hit 5, last hit 5); the most points owns the loot and the experience is split by points.
 - [Auto-Combat](2-systems/auto-combat.md) — BUILT 2026-10-12, not play-tested: T or the System menu's window asks the server to hunt for you — Standing, Radius or Free Roam; four auto-skill slots; auto-loot by kind and drop rate; auto-potion; never in town, never through a door; settings saved in their own row, on/off never.
 - [The Keeper and the Wings](2-systems/keeper-and-wings.md) — BUILT 2026-10-12, not play-tested: one Keeper in every town (Save Point, account-wide Storage, Teleport priced by doors), how a storage move rides the character's save, the door check, and the Butterfly Wing and Fly Wing.
 
@@ -67,6 +68,9 @@ The folders match the sections below, so the file tree and this index say the sa
 
 - [World Creator — Spec](3-world/world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
 - [Mob Roster — Normal, Elite, Shadow](3-world/mob-roster.md) — the three kinds of creature: levels, skill slots, gear, summoning, respawn and drops (design, not built).
+- [Creature Materials — What Each Creature Drops and What It Sells For](3-world/creature-materials.md) — built 2026-10-13, not play-tested: no gold from kills; every creature's own material, its sale price by level, the five drop tiers and why, a rare material on 24 normal creatures and on all 18 elites, and what an hour on each map sells for.
+- [Creature Gear — What Every Creature Wears and Wields](3-world/creature-gear.md) — built 2026-10-13, not play-tested: a full set for all 84 normal creatures and elites, armour by what the creature is, weapon by the towns it lives around, stats built for the weapon, grade by the rarest thing it drops, folds by how hard it is to find, and what the grade and folds pay.
+- [What a Kill Pays — Level, Kind, Grade and Folds](3-world/what-a-kill-pays.md) — built 2026-10-13, not play-tested: pay is what the level and kind give, times 25% more a gear grade, times 5% more a fold, on experience, material prices and saved-character gold; nothing measured, no cap.
 - [Saved Characters — When a Mob Transforms Back](3-world/saved-characters.md) — a beaten mob can turn back into the character the artist drew: never-fights (pays gold), allies, rebels; the gold rule, the elite-to-ninja table and how each behaves (built, not play-tested).
 - [Creatures and Where They Live](3-world/biome-mob-families.md) — every creature's home biome, element and level, and the creatures each map holds (the sandbox layout).
 - [Biomes — Ground Tiles and Props](3-world/biomes.md) — every biome's main ground, patch and road tiles, the props that fit it, and the props still to make; the all-biome map generator plan.

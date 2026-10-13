@@ -119,8 +119,46 @@ public class LootDropper : MonoBehaviour
             if (extra != null) { won.Add(extra); wonAt.Add(RandomItemChance); }
         }
 
-        Rewards.PayLoot(winner, won, wonAt, 0, health);
+        // THE MATERIALS ONLY THIS CREATURE DROPS. A rebel rolls them AGAIN at the creature's own chances — its own kind,
+        // never the one-kind-up its grade loot above is lifted to, or a normal creature's rarest material would fall
+        // fifty times as often from its rebel.
+        pileItems.Clear();
+        pileCounts.Clear();
+        var def = MonsterCatalog.ById(health.creatureId);
+        if (def != null)
+        {
+            RollOwnMaterial(def.material, health.kind);
+            RollOwnMaterial(def.rareMaterial, health.kind);
+        }
+
+        // NOTHING AN ELITE DROPS IS AUTO-LOOTED: no chances handed over means all of it falls, so an elite is hunted by
+        // hand and never farmed by standing in its field with auto-combat on.
+        Rewards.PayLoot(winner, won, health.kind == CreatureKind.Elite ? null : wonAt, 0, health, pileItems, pileCounts);
         won.Clear();
         wonAt.Clear();
+        pileItems.Clear();
+        pileCounts.Clear();
+    }
+
+    // Piles that go down APART, one entry each — an elite's ordinary material. Filled and emptied inside one death.
+    static readonly List<Item> pileItems = new List<Item>(8);
+    static readonly List<int> pileCounts = new List<int>(8);
+
+    void RollOwnMaterial(Item item, CreatureKind kind)
+    {
+        if (!CreatureMaterials.Is(item)) return;
+        var tier = CreatureMaterials.TierOfStep(item.materialStep);
+        float chance = CreatureMaterials.Chance(kind, tier);
+        if (chance <= 0f || !CombatRng.Chance(chance)) return;
+        if (!CreatureMaterials.InPiles(kind, tier)) { won.Add(item); wonAt.Add(chance); return; }
+
+        CreatureMaterials.Piles(kind, tier, out int pilesMin, out int pilesMax);
+        CreatureMaterials.PileSize(kind, tier, out int sizeMin, out int sizeMax);
+        int piles = CombatRng.Range(pilesMin, pilesMax + 1);
+        for (int p = 0; p < piles; p++)
+        {
+            pileItems.Add(item);
+            pileCounts.Add(CombatRng.Range(sizeMin, sizeMax + 1));
+        }
     }
 }

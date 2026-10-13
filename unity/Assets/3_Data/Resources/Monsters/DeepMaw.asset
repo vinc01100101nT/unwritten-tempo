@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Deep Maw
   kind: 1
   size: 4
+  flies: 0
   biome: 10
   artFolder: cb4c27c400c4ed1478db60a978fca9bf
   faceset: {fileID: 2800000, guid: b25e50c914f53f340932f77eca645e73, type: 3}
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 24
-  str: 17
-  agi: 10
-  vit: 20
-  intel: 9
-  dex: 14
-  luk: 9
-  startingGear: []
+  str: 18
+  agi: 9
+  vit: 18
+  intel: 8
+  dex: 17
+  luk: 8
+  startingGear:
+  - {fileID: 11400000, guid: 67c79ac3f007e7f46b8b27bff6ccedfd, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
   gearQuality: 3
-  gearFolds: 6
+  gearFolds: 19
   gearInkTier: 3
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 800
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 1000
-  goldMax: 2000
+  material: {fileID: 11400000, guid: fb6801582b8447079bafca071374dbf0, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 5bdb8fdf60a046e994be44c6b6f6bc6d, type: 2}
   itemDropNames: []
   itemDropChances: []

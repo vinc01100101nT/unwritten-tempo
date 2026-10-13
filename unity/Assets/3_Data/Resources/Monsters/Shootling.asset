@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Shootling
   kind: 0
   size: 0.8
+  flies: 0
   biome: 6
   artFolder: 93ea6bf11916e0c4dbdb77761d8d0a9a
   faceset: {fileID: 2800000, guid: 82dd3f8515468e74f85ed167462b5dae, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 16
-  str: 14
-  agi: 10
-  vit: 12
-  intel: 7
-  dex: 10
-  luk: 7
-  startingGear: []
+  str: 17
+  agi: 13
+  vit: 6
+  intel: 6
+  dex: 6
+  luk: 10
+  startingGear:
+  - {fileID: 11400000, guid: 6d2ebac137a76e34f9f470f698bcffbb, type: 2}
+  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
+  - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
+  - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
+  - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 0
-  gearFolds: 2
+  gearFolds: 4
   gearInkTier: 1
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 5
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
+  material: {fileID: 11400000, guid: f0086555b5994910981729cafca59c73, type: 2}
+  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

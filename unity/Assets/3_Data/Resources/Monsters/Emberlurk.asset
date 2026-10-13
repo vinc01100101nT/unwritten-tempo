@@ -16,25 +16,36 @@ MonoBehaviour:
   displayName: Emberlurk
   kind: 0
   size: 0.35
+  flies: 0
   biome: 13
   artFolder: 3e1369d93772b8c4cb26ef5fb3dfafe3
   faceset: {fileID: 2800000, guid: 7b82c2b18a4fc0048ac12b2dff35f48b, type: 3}
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
+  modelName: 
+  dyeSources: []
+  dyeTargets: []
+  hairStyle: 
+  hairColour: 
   level: 71
-  str: 46
-  agi: 38
-  vit: 45
-  intel: 27
+  str: 24
+  agi: 23
+  vit: 37
+  intel: 65
   dex: 37
-  luk: 26
-  startingGear: []
-  gearQuality: 2
-  gearFolds: 11
-  gearInkTier: 2
+  luk: 23
+  startingGear:
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
+  - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
+  - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
+  - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}
+  - {fileID: 11400000, guid: ab2b96072fb4344bf9adec68ff30d651, type: 2}
+  gearQuality: 4
+  gearFolds: 20
+  gearInkTier: 4
+  weaponMastery: 0
   ringRankStats: 
   ringRankValues: 
-  xpReward: 10
   aggroRadius: 6
   leashRadius: 11
   wanderRadius: 3
@@ -46,7 +57,7 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 4
-  goldMax: 12
+  material: {fileID: 11400000, guid: e529e616f9fb476e8d44c2cb5218ca0e, type: 2}
+  rareMaterial: {fileID: 11400000, guid: 03e0aa08ceea43b6892f086b537d340b, type: 2}
   itemDropNames: []
   itemDropChances: []

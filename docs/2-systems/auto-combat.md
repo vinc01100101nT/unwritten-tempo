@@ -39,10 +39,11 @@ server's "is this skill theirs" check. A skill the server refuses is left alone 
 
 ## Auto-loot
 
-Decided on the server at the moment a creature falls, **entry by entry**, for the killer only — and only when they are
+Decided on the server at the moment a creature falls, **entry by entry**, for whoever the kill's loot belongs to — and only when they are
 on that map, alive, with auto-combat on. An entry goes straight into the bag when its kind is ticked (Gear, Potions and
 food, Materials, or Everything) **and** the chance it was won at is at most the player's **drop rate** limit
-(0–100%; 0 takes nothing). Everything else falls to the ground as usual.
+(0–100%; 0 takes nothing). Everything else falls to the ground as usual. A creature's own material counts as
+Materials. **Nothing an elite drops is ever auto-looted**: all of it falls, so an elite is hunted by hand.
 
 ## Auto-potion
 

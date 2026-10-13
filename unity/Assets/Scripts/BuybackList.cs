@@ -11,7 +11,7 @@ public class SoldEntry
     public EquipmentInstance instance;
     /// <summary>SERVER: the gold the shop paid for everything in this entry — what its buyback price is worked out
     /// from. Never sent: a player's machine is sent the finished price instead.</summary>
-    public int paid;
+    public long paid;
     /// <summary>PLAYER'S MACHINE: the price to buy it back, exactly as the server sent it. Unused on the server.</summary>
     public long price;
     /// <summary>The moment it stops being kept, in world seconds (<see cref="WorldClock"/>).</summary>
@@ -49,7 +49,7 @@ public class BuybackList
     /// paid added, its hour started again, moved to the newest end — so selling one at a time cannot push everything
     /// else out. A piece of gear is always its own entry. When that makes one too many, the oldest is let go and
     /// handed back in <paramref name="letGo"/> so the caller can say so.</summary>
-    public void Keep(Item def, int count, EquipmentInstance piece, int paid, double nowEpoch, out SoldEntry letGo)
+    public void Keep(Item def, int count, EquipmentInstance piece, long paid, double nowEpoch, out SoldEntry letGo)
     {
         letGo = null;
         DropEnded(nowEpoch);
