@@ -112,6 +112,7 @@ public class MobTableWindow : EditorWindow
         new Col("biome", "biome",  90),
         new Col("kind",  null,     64),
         new Col("size",  null,     100),
+        new Col("movement speed", null, 150),
         // The AUTHORED stat block — a mob is a level and six primaries, exactly like the player.
         new Col("LVL",   "lvl",    38),
         new Col("STR",   null,     38),
@@ -596,6 +597,9 @@ public class MobTableWindow : EditorWindow
         EditorGUI.EndDisabledGroup();
         GUI.Label(VCenter(new Rect(sizeCell.x + 48f, sizeCell.y, sizeCell.width - 48f, sizeCell.height), 18),
                   MobSizes.GroupOf(MobSizes.Of(def.kind, def.size)).ToString(), EditorStyles.miniLabel);
+        // Its own movement speed: 1 is the shared pace, 0 never moves, 2 is the fastest there is.
+        float moveSpeed = EditorGUI.Slider(VCenter(Next(), 18), def.moveSpeed,
+                                           UnitStatMath.MinCreatureMoveSpeed, UnitStatMath.MaxCreatureMoveSpeed);
         int lvl      = EditorGUI.IntField(VCenter(Next(), 18), def.level);
         int str      = EditorGUI.IntField(VCenter(Next(), 18), def.str);
         int agi      = EditorGUI.IntField(VCenter(Next(), 18), def.agi);
@@ -625,6 +629,7 @@ public class MobTableWindow : EditorWindow
             def.id = id; def.displayName = name; def.biome = biome;
             def.kind = kind;
             def.size = MobSizes.Clamp(size);
+            def.moveSpeed = Mathf.Clamp(moveSpeed, UnitStatMath.MinCreatureMoveSpeed, UnitStatMath.MaxCreatureMoveSpeed);
             def.level = Mathf.Max(1, lvl);
             // Budget guard: an entry the level can't afford SNAPS to the highest value that fits, rather than being
             // stored as an over-budget spread. Each stat is checked against what's left once the other five are paid

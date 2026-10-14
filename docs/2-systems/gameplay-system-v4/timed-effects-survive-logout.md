@@ -36,7 +36,7 @@ character is away**: a converter with 3:12 left still has 3:12.
 - **A pile from a skill that no longer exists is dropped.**
 - **Saved by name, one stack at a time** — each stack keeps its own time, strength and amount; the totals are rebuilt.
   A state renamed or removed from the game simply drops out of old saves.
-- **Save v15**, build string `unwritten-character-v15`. A save older than v15 carries none, which loads as "nothing
+- Saved from **save v15** on; the save today is v19 and the build string `unwritten-character-v25`. A save older than v15 carries none, which loads as "nothing
   running".
 - The server log writes one `buff` line per pile put back: `… restored from the save, <seconds>s left`.
 

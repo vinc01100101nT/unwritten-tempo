@@ -353,7 +353,6 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f312d1ff96d6581408e5692e4287b9ab, type: 3}
     volume: 0.65
     pitch: {x: 0.95, y: 1.05}
-  roamRange: 14
   skillDashSpeedMult: 8
   skillDashMaxTime: 1
 --- !u!114 &236044107
@@ -584,7 +583,7 @@ MonoBehaviour:
   lookAtHeight: 0.18
   smoothTime: 0.35
   minDistance: 0.4
-  maxDistance: 7
+  maxDistance: 4.6666665
   minHeight: 0.1
   maxHeight: 10
   maxPitch: 50

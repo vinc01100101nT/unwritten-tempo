@@ -31,7 +31,7 @@ Tracking issue: **VIN-22**.
 - Prefab-per-panel, modular (HUD layer / window layer / overlay layer).
 - Event-driven data flow: `Character` owns state → events → UI listens. UI never stores game values.
 - Item definitions = ScriptableObjects; saves store instance IDs + amounts.
-- `EquipmentInstance` — each gear piece is a unique instance (its grade, folds, written stats, cards and trademark or word), not a shared definition. Its rarity is never stored: it is read from its trademark (`Rarities.Of`).
+- `EquipmentInstance` — each gear piece is a unique instance (its grade, folds, written stats, cards and trademark or word), not a shared definition. Its rarity is saved on the copy (`EquipmentInstance.rarity`), travels in the copy's roll text, and is what `Rarities.Of` answers.
 
 ## Status
 
@@ -182,9 +182,10 @@ them; a corner-radius change means re-running that script.
 
 ### Item colour — by rarity
 
-**An item's name is written in its rarity's colour** (decided 2026-10-12): Common in **TextMain**, Uncommon in
-**Good**, Rare in **RarityRare**, Epic in **RarityEpic**, Legendary in **RarityLegendary**. Rarity is how rare an
-item is to come by — a weapon as rare as its trademark, a material by its kind and tier, everything else Common (see
+**An item's name is written in its rarity's colour**: Common in **TextMain**, Uncommon in
+**Good**, Rare in **RarityRare**, Epic in **RarityEpic**, Legendary in **RarityLegendary**. A piece of gear is as
+rare as its own copy says — rolled when a creature dropped it, Common otherwise — a material goes by its kind and
+tier, and everything else is Common (see
 [V4 §4](gameplay-system-v4/README.md)) — and one function answers both the rarity and its colour (`Rarities`), so
 every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag's boxes, an item
 linked in chat, the worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a

@@ -267,7 +267,9 @@ public static class GmCommands
                                + "enormous health that never fights back, for measuring what your build actually does. "
                                + "The server owns it, so everybody can see and hit the same one.", "dummy", CmdDummy,
                                anyoneMayRun: false, changesTheWorld: true));
-        Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns.", "summon 3 adder 10", CmdSummon,
+        Register(new GmCommand("summon", "summon <count> <normal|elite|shadow|creature> [level] [norespawn]", "Summon N creatures near you: random ones of a kind (normal, elite or shadow), or a named creature by id or name. Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'norespawn' and each one, killed once, never comes back.", "summon 3 adder 10 norespawn", CmdSummon,
+                               anyoneMayRun: false, changesTheWorld: true));
+        Register(new GmCommand("unsummon", "unsummon", "Remove every creature /summon made in your map. They vanish without dying — no drops, no experience — and never come back. The map's own creatures are not touched.", "unsummon", CmdUnsummon,
                                anyoneMayRun: false, changesTheWorld: true));
         // ANY PLAYER MAY ASK THESE, and the SERVER answers both: a creature's numbers are worked out on the machine that
         // owns the world, never on a player's, so these ride the server's door although they change nothing.
@@ -725,6 +727,34 @@ public static class GmCommands
         c.Reply($"Killed {n} mob(s) in {map}.");
     }
 
+    // THE CREATURES /summon MADE, AND NOTHING ELSE — the only ones 'unsummon' may touch. A creature a map spawns for
+    // itself, a dummy, and a helper another creature called up are never put here, so none of them can be removed by it.
+    static readonly List<GameObject> summonedByCommand = new List<GameObject>();
+
+    // TAKEN OUT OF THE WORLD, NOT KILLED: no death, so no drops, no experience and nothing waiting to come back. The
+    // creature's object is destroyed outright, which also ends a return it was already waiting on; its shell on every
+    // screen sees it gone and goes with it. Helpers it called up are its own, and go with it (CreatureSummons.OnDestroy).
+    static void CmdUnsummon(GmContext c)
+    {
+        if (!TryAskersMap(c, out var map)) return;
+
+        int removed = 0;
+        for (int i = summonedByCommand.Count - 1; i >= 0; i--)
+        {
+            var go = summonedByCommand[i];
+            if (go == null) { summonedByCommand.RemoveAt(i); continue; }
+            // ONLY THE ASKER'S MAP, the same line /killall draws.
+            if (go.scene != map) continue;
+
+            UnityEngine.Object.Destroy(go);
+            summonedByCommand.RemoveAt(i);
+            removed++;
+        }
+
+        c.Reply(removed == 0 ? $"No summoned creatures in {c.MapName}."
+                             : $"Removed {removed} summoned creature(s) from {c.MapName}. They will not come back.");
+    }
+
     // A dummy is a creature the SERVER makes and every player is told about, exactly like any other creature — which
     // is the whole point. The editor tool used to place one straight into a scene, and a scene fixture has no shared
     // identity, so a swing at it reached nothing the server had heard of and was refused: no damage, no number. Born
@@ -780,10 +810,14 @@ public static class GmCommands
         // the highest level any creature has (the top shadow).
         // A shadow is a 3D character because it is a shadow — MobSpawner decides that from its kind.
         int level = 0;
+        // 'norespawn' — killed once, it never comes back: without the part that brings a creature back, its death
+        // ends in its object being destroyed (Health.Die).
+        bool noRespawn = false;
         for (int i = 2; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, MonsterCatalog.HighestLevel); continue; }
+            if (string.Equals(a, "norespawn", System.StringComparison.OrdinalIgnoreCase)) { noRespawn = true; continue; }
             c.ReplyUsage(); return;
         }
 
@@ -812,6 +846,12 @@ public static class GmCommands
                 if (go != null)
                 {
                     spawned++;
+                    summonedByCommand.Add(go);
+                    if (noRespawn)
+                    {
+                        var comesBack = go.GetComponent<MobRespawn>();
+                        if (comesBack != null) UnityEngine.Object.Destroy(comesBack);
+                    }
                     // A level was asked for: re-stat this mob at that level with a RANDOMLY WEIGHTED spread. The
                     // spread is bought through UnitStatMath.Allocate — the same point economy the player spends in —
                     // so the mob's primaries vary but always cost exactly the points its level has earned.
@@ -838,6 +878,7 @@ public static class GmCommands
                     reply?.Invoke($"Summoned {spawned} " +
                                   (named != null ? named.displayName : "random " + kind.ToString().ToLowerInvariant() + " creature(s)") +
                                   (level > 0 ? $" at level {level}" : "") +
+                                  (noRespawn ? ", not coming back once killed" : "") +
                                   (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
             });
         }

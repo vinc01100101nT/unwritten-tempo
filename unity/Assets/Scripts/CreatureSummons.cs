@@ -84,6 +84,25 @@ public class CreatureSummons : MonoBehaviour
         go.SetActive(false);
     }
 
+    // THIS SUMMONER NO LONGER EXISTS — removed by a command, or dead with nothing to bring it back — so every body it
+    // made goes with it: the ones standing and the ones kept for its next cast. Nothing is left switched off with
+    // nobody to call it.
+    void OnDestroy()
+    {
+        for (int i = live.Count - 1; i >= 0; i--)
+            if (live[i] != null) Destroy(live[i].gameObject);
+        live.Clear();
+        for (int g = 0; g < banked.Count; g++)
+        {
+            var stack = banked[g];
+            while (stack.Count > 0)
+            {
+                var s = stack.Pop();
+                if (s != null) Destroy(s.gameObject);
+            }
+        }
+    }
+
     // THE SUMMONER DIED: every summon still standing goes at once. One already dying finishes its fade and is banked then.
     void DismissAll()
     {
@@ -141,7 +160,8 @@ public class CreatureSummons : MonoBehaviour
             if (this == null || health == null || health.IsDead)
             {
                 if (this != null) { var s = go.AddComponent<SummonedCreature>(); s.group = group; s.summoner = this; Bank(s); }   // perf-ok: once per summon made
-                else Hide(go);
+                // The summoner no longer exists at all, so nobody will ever call this body: it is not kept.
+                else Destroy(go);
                 return;
             }
             Adopt(go, group);

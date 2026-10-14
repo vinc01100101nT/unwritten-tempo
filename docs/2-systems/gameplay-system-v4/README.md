@@ -133,8 +133,7 @@ back whole. A piece the first tutorial still needs cannot be recycled, sold or d
   copy is made, saved on the copy, and never changed by a fold or a quench. A grade is never coloured.
 - **On gear, rarity adds to the grade's lift on what the piece's folds buy:** Common **+0%**, Uncommon **+10%**,
   Rare **+20%**, Epic **+35%**, Legendary **+50%** — added to the grade's lift, never multiplied onto it, so a
-  Legendary piece at grade A is worth **180%** of its plain fold total. Shoes' +2% movement speed a fold is not
-  lifted by either.
+  Legendary piece at grade A is worth **180%** of its plain fold total.
 - **Only a dropped piece rolls a rarity, by the kind of creature that dropped it:** a normal creature's is Common,
   Uncommon or Rare at shares of 50 : 30 : 14 (53.2%, 31.9%, 14.9%); an elite's is always Epic; a shadow's is always
   Legendary. Every other piece is Common — a new character's three pieces, a GM grant, a reward, and everything a

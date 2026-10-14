@@ -31,6 +31,9 @@ public class MonsterDef : ScriptableObject
              "it can go and how far it reaches are unchanged. A creature twice a character's height or taller is not " +
              "raised. A Shadow never flies.")]
     public bool flies;
+    [Tooltip("Movement speed: how many times the shared pace this creature travels at, wandering and chasing alike. " +
+             "1 is the pace a person travels at, 2 the fastest there is, 0 never moves from where it stands.")]
+    [Range(UnitStatMath.MinCreatureMoveSpeed, UnitStatMath.MaxCreatureMoveSpeed)] public float moveSpeed = 1f;
 
     [Header("Biome (spawn grouping)")]
     [Tooltip("Which biome this mob spawns in. The map generator spawns a map's mobs from its recipe Biome. " +

@@ -1,5 +1,5 @@
 ---
-status: "Agreed 2026-10-13. BUILT, not play-tested: the 126 materials, their prices, the drops, an elite's piles and no auto-loot on an elite. Also built: what a saved character pays ([Saved Characters](saved-characters.md))."
+status: "Agreed 2026-10-13. BUILT, not play-tested: the 124 materials, their prices, the drops, an elite's piles and no auto-loot on an elite. Also built: what a saved character pays ([Saved Characters](saved-characters.md))."
 owner: vince
 last-updated: 2026-10-13
 tags:
@@ -73,9 +73,9 @@ and the time is how long one rare drop takes there when killing everything on th
 | Creature | Level | Ordinary material | Sells for | Rare material | Tier | Sells for | Alive | Maps | Best map (share) | One rare drop there |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plopling | 1 | Plopling Jelly | 20 | — | — | — | 15 | 3 | `lst_fild01` (23%) | — |
-| Flutterby | 2 | Flutterby Wing | 40 | Flutterby Scale Dust | Uncommon | 50 | 23 | 3 | `lst_fild01` (32%) | 4 min |
+| Flutterby | 2 | Flutterby Wing | 40 | — | — | — | 23 | 3 | `lst_fild01` (32%) | — |
 | Squeak | 3 | Squeak Whisker | 60 | — | — | — | 13 | 6 | `lst_fild01` (13%) | — |
-| Crawlet | 4 | Crawlet Bristle | 80 | Crawlet Cocoon | Uncommon | 100 | 29 | 4 | `lst_fild04` (29%) | 4 min |
+| Crawlet | 4 | Crawlet Bristle | 80 | — | — | — | 29 | 4 | `lst_fild04` (29%) | — |
 | Capling | 5 | Capling Spore | 100 | — | — | — | 3 | 1 | `olk_fild01` (10%) | — |
 | Hisser | 6 | Hisser Fang | 120 | — | — | — | 16 | 5 | `lst_fild04` (16%) | — |
 | Blinkbat | 8 | Blinkbat Wing | 160 | Blinkbat Eye | Rare | 1,000 | 50 | 5 | `olk_dun01` (42%) | 14 min |
@@ -139,7 +139,7 @@ and the time is how long one rare drop takes there when killing everything on th
 | Frostwick | 95 | Frostwick Cold Ember | 1,900 | — | — | — | 14 | 5 | `khn_fild06` (16%) | — |
 | Lovebite | 96 | Lovebite Petal | 1,920 | Lovebite Heart | Epic | 48,000 | 71 | 9 | `khn_dun04` (38%) | 1.0 h |
 
-66 normal creatures; 24 of them have a rare material: 7 Uncommon, 7 Rare, 6 Epic, 4 Legendary.
+66 normal creatures; 22 of them have a rare material: 5 Uncommon, 7 Rare, 6 Epic, 4 Legendary.
 
 **Which creatures got a rare material, and why:** the rarer the tier, the more of the creature the world keeps alive.
 A low drop chance is rolled by each player separately, so it stays rare however many players hunt; putting it on a
@@ -232,18 +232,18 @@ Elites and saved characters are not counted. "Rare share" is how much of the map
 | `lmh_fild01` | 31 | 62 | 58% | 715 | 357,500 |
 | `lst_dun01` | 26 | 62 | 54% | 702 | 350,962 |
 | `lst_dun02` | 26 | 63 | 62% | 729 | 364,519 |
-| `lst_fild01` | 31 | 3 | 55% | 31 | 15,645 |
+| `lst_fild01` | 31 | 3 | 0% | 27 | 13,710 |
 | `lst_fild02` | 31 | 11 | 26% | 116 | 58,226 |
 | `lst_fild03` | 31 | 22 | 45% | 254 | 127,097 |
-| `lst_fild04` | 31 | 11 | 39% | 118 | 58,871 |
+| `lst_fild04` | 31 | 11 | 10% | 115 | 57,419 |
 | `lst_fild05` | 31 | 19 | 52% | 211 | 105,645 |
 | `olk_dun01` | 26 | 8 | 42% | 93 | 46,346 |
 | `olk_dun02` | 26 | 13 | 62% | 148 | 74,231 |
-| `olk_fild01` | 31 | 6 | 71% | 74 | 37,177 |
+| `olk_fild01` | 31 | 6 | 42% | 72 | 35,968 |
 | `plv_fild01` | 31 | 19 | 52% | 211 | 105,645 |
 | `pnr_fild01` | 31 | 35 | 52% | 399 | 199,355 |
 | `pnr_fild02` | 31 | 40 | 45% | 447 | 223,468 |
-| `prl_fild01` | 31 | 3 | 55% | 32 | 16,129 |
+| `prl_fild01` | 31 | 3 | 0% | 28 | 14,194 |
 | `prl_fild02` | 31 | 28 | 52% | 319 | 159,677 |
 | `trn_fild01` | 31 | 45 | 55% | 517 | 258,629 |
 | `vlm_dun01` | 26 | 50 | 54% | 570 | 285,192 |

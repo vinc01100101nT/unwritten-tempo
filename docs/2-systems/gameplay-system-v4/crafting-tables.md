@@ -67,7 +67,7 @@ past its grade's cap; past there the only way on is a quench.
 ### What one fold is worth on the piece
 
 The finished number is `folds × what one fold buys × (1 + quality lift + rarity lift)`, rounded half up (attack
-speed to one decimal) — except shoes' movement speed, which is exactly `folds × 2%` at every grade and every rarity.
+speed to one decimal).
 The server writes it onto the copy.
 
 A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body
@@ -84,7 +84,6 @@ level-1 creatures attacking together.
 | Metal armour | +0.9 Defence and +7.2 HP | +0.45 Defence and +3.6 HP |
 | Leather armour | +0.45% Attack Speed and +0.45 Evasion | +0.225% Attack Speed and +0.225 Evasion |
 | Cloth armour | +0.9 Magic Defence and +3.6 MP | +0.45 Magic Defence and +1.8 MP |
-| Shoes, any material — on top of their material's row | — | +2% Movement Speed, neither lift applied |
 
 Common body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack Speed and 20 Evasion** (leather),
 **41 Magic Defence and 164 MP** (cloth).

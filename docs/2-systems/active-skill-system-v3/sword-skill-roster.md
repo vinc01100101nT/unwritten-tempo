@@ -75,7 +75,7 @@ are for that argument's sake; when one disagrees with the generated table, the t
 
 ## Pool status
 
-**22 sword skills are composed** (read off the assets 2026-08-24): 3 ultimates, 10 actives, 9 passives. **All 22 are** `published = 1` (publishing opens a skill to the forge's trademark roll) — Headwind was the last holdout and was published on 2026-08-24.
+**22 sword skills are composed** (read off the assets 2026-08-24): 3 ultimates, 10 actives, 9 passives. **All 22 are** `published = 1` (publishing opens a skill to a new weapon's trademark roll) — Headwind was the last holdout and was published on 2026-08-24.
 
 **Composed 2026-08-24 — the last five, so nothing in this roster is design-only any more:** **Stripped Bough**, **Howling Wind** and **Scattered Petals** (actives), **Bare Branch** and **Eye of the Storm** (passives). Howling Wind and Scattered Petals fill the two open active slots (the unresolved one and the one Feint vacated). Bare Branch and Eye of the Storm were both re-shaped to reach something the engine actually has — see their blocks below.
 

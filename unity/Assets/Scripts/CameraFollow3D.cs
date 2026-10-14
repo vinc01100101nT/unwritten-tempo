@@ -31,7 +31,7 @@ public class CameraFollow3D : MonoBehaviour
     public float smoothTime = 0.35f;
 
     [Header("Limits")]
-    public float minDistance = 0.4f, maxDistance = 7f;
+    public float minDistance = 0.4f, maxDistance = 14f / 3f;
     // minHeight lets right-drag tilt all the way down to a near-horizontal, ground-level view.
     public float minHeight = 0.1f, maxHeight = 10f;
     [Tooltip("Cap the camera's downward tilt (degrees from horizontal) so right-drag can't reach a full top-down view.")]

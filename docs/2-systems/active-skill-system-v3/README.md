@@ -23,7 +23,7 @@ tags:
 > - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier and no mob-only multiplier — so an effect never has to ask what kind of thing it hit. See the companion *Unified Unit Stats*.
 > - **Later:** ring behavioral *voices* → v-next; **Cards** (enemy matchup) → v3-content, with mob categories.
 
-***This doc owns the CHANNELS, the EFFECTS, the TRIGGERS and the role-lock — and those are still what the game runs.*** *[V4](../gameplay-system-v4/README.md), built 2026-09-20, replaced its rolled weapon kits, rarity, equipment drops, the worn ring item and "skills don't level"; every passage on those points below has been rewritten to what the code now does, and V4 is where the detail lives.* *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
+***This doc owns the CHANNELS, the EFFECTS, the TRIGGERS and the role-lock — and those are still what the game runs.*** *[V4](../gameplay-system-v4/README.md), built 2026-09-20, replaced its rolled weapon kits, its rarity lift on skill output, the worn ring item and "skills don't level"; every passage on those points below has been rewritten to what the code now does, and V4 is where the detail lives.* *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
 
 ## Why V3 (the redundancy we found)
 
@@ -66,7 +66,7 @@ fit together — stays authored, and lives around the generated cards rather tha
 
 A channel is a **stat-agnostic numeric output** — the common language every other system references. A skill exposes **only the channels it owns**. Channels split into two tiers by who owns them. *(Live view: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects**.)*
 
-**Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the skill's own LEVEL, bought with weapon mastery points (a forged weapon's trademark raises the same channels — [V4](../gameplay-system-v4/README.md)). Which channels each one moves is `EffectScaling` in `SkillEffect.cs`.
+**Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the skill's own LEVEL, bought with weapon mastery points (a weapon's trademark raises the same channels — [V4](../gameplay-system-v4/README.md)). Which channels each one moves is `EffectScaling` in `SkillEffect.cs`.
 
 | Channel | Meaning | Unit | Ring-scales? | Level-scales? |
 | --- | --- | --- | --- | --- |

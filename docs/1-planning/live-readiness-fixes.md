@@ -36,7 +36,7 @@ how the 19 item effects happen to be set up today: each fires only on "item used
 passive, and the cast door refuses passives. No rule says an item's effect may only come from the item.
 
 Everything else about items is already safe. The map server holds the bag, the gold and the worn gear, and checks
-every item request against its own copy before acting — using, equipping, unequipping, merging, forging, folding,
+every item request against its own copy before acting — using, equipping, unequipping, merging, folding,
 quenching, inking, recycling, reordering, dropping and picking up. A player's machine has no way to write a bag.
 The line in the networking notes saying otherwise is out of date. The same "is this still the stack they meant"
 check is also written twice, once for item use and once for every other bag request.

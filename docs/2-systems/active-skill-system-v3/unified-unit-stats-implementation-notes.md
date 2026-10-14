@@ -53,7 +53,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **Worn gear is serialized on the component, not the dictionary.** `UnitEquipment.startingGear` is the serialized half; the live dictionary is runtime-only. Gear is equipped **lazily on first access**, not in `Awake`, so component wake order between `UnitEquipment` and `UnitStatBlock` cannot matter. Getting this wrong makes mob rings silently do nothing.
 
-**A creature drops NONE of what it wears** (V4). The worn roll and its table are gone from `LootDropper`, and so is the ring's own chance — a ring is not an item any more. `itemDropNames`/`itemDropChances` carry **materials, consumables and gold**, and `Rewards.PayLoot` puts what they pay on the ground, held for the killer.
+**A creature keeps what it wears; on `CreatureLoot.GearDropChance` (10%) of kills `LootDropper` drops a NEW copy of one random piece it wears** (`EquipmentInstance.CreateDropped`: Raw, unfolded, its rarity from `CreatureLoot.DropRarity`). The ring has no drop chance — a ring is not an item any more. `itemDropNames`/`itemDropChances` carry **materials, consumables and gold**, and `Rewards.PayLoot` puts what they pay on the ground, held for the killer.
 
 **Removed dead fields.** `MonsterDef`'s hand-authored `maxHealth`/`attack`/`defense`/`magicDefense`/`hit`/`flee`/`damageSpread` are deleted — all seven are derived in `ToArchetype`, so storing them was a second copy that could disagree.
 

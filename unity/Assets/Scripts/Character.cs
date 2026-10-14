@@ -668,7 +668,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>Owned HERE for the same reason reach is (see <see cref="MeleeReachFullSize"/>): a cadence is a fact about
     /// the character, and it has to have an answer on a machine where that character has no body standing in a
     /// scene.</para></summary>
-    public float SwingTime => UnitOffense.AttackInterval(CharacterSpec.Active.swingInterval, AttackSpeedMult);
+    public float SwingTime => UnitOffense.AttackInterval(CharacterSpec.Active.SwingInterval(HeldWeaponType), AttackSpeedMult);
 
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;

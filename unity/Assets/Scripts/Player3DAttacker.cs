@@ -158,7 +158,7 @@ public class Player3DAttacker : MonoBehaviour
         attemptOpen = false;   // the announced attack is happening — this attempt is resolved
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
-        nextSwing = Time.time + cooldown * MotionScale;
+        nextSwing = Time.time + SwingTime;
 
         // ASK AT THE START, not at the contact frame. The server decides when this blow lands, on its own clock, and
         // announces the swing to everybody watching from the moment it accepts it — so their view of the swing and

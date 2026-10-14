@@ -763,7 +763,7 @@ psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "select email, is
 
 ### Where each command actually runs
 
-**Every command except `/help` and `/where` is carried out by the server** — `/summon`, `/dummy`, `/kill`, `/killall`,
+**Every command except `/help` and `/where` is carried out by the server** — `/summon`, `/unsummon`, `/dummy`, `/kill`, `/killall`,
 `/log`, `/gold`, `/item`, `/weapon`, `/mastery`, `/resetskills`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
 `/revive`, `/save`, `/invuln`, `/bind`, `/tp`, `/exprate`, `/speed`, `/model`, `/time`, `/weather`, `/whereis`, `/mobinfo`, `/whodrops`
 and `/iteminfo`. Your game
@@ -1165,7 +1165,8 @@ Mac runs through Apple's translation layer.
 1. Build the game: `tools/build-game.sh client` builds this computer's own copy; add `--mac` for the Mac copy on any
    computer, into `builds/mac/`. It switches the editor to the macOS build profile for the build and back afterwards.
    Unity needs its Mac build module installed, and the editor restarted after installing it.
-2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first.
+2. Write the news, if any, in `launcher/news.json` — a list of `{ "date", "title", "text" }`, newest first,
+   with one patch-notes entry per date: a date that already has one gets the new changes added to it.
 3. Publish: `tools/publish-update.py`. With no option it publishes `builds/client` as the platform of the computer
    it runs on; add `--windows <folder>` and `--mac <folder>` to publish both at once. It stamps one version into
    every build it is given, writes `builds/patch/` with the website, and warns if a build still points at

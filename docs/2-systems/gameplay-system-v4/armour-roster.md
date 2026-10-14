@@ -35,9 +35,8 @@ rounded half up (attack speed to one decimal). Full table: [Crafting Tables](cra
 | **Leather** | 0.45% attack speed + 0.45 evasion | 0.225% attack speed + 0.225 evasion |
 | **Cloth** | 0.9 magic defence + 3.6 MP | 0.45 magic defence + 1.8 MP |
 
-**Shoes also buy movement speed: +2% a fold, whatever their material, on top of the row above** (decided 2026-10-05).
-It is exactly 2% at every grade — the grade's lift does not touch it — so +5 shoes are +10% and A +35 shoes +70%. It is
-the only movement speed a piece gives: a bare-footed person or creature moves at the shared base speed.
+**No piece gives movement speed** (decided 2026-10-14). A person moves at the shared pace, changed only by timed
+effects such as a Haste or a Slow; a creature moves at that pace times its own movement speed.
 
 **Worn accuracy and evasion reach the hit roll** — Ink's Accuracy and Evasion lines and leather's evasion are added into
 HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players and creatures alike.

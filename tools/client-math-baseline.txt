@@ -22,7 +22,6 @@ unity/Assets/Scripts/PassiveRanks.cs 46335817e3da
 unity/Assets/Scripts/PassiveRanks.cs 88412d6d7328
 unity/Assets/Scripts/PassiveRanks.cs ce7f7ceb2cd5
 unity/Assets/Scripts/PassiveRanks.cs e0552ea91d00
-unity/Assets/Scripts/Player3DAttacker.cs 490a4463b1af
 unity/Assets/Scripts/Player3DController.Traversal.cs ce8a3b557075
 unity/Assets/Scripts/RingProgress.cs 64801a728e62
 unity/Assets/Scripts/RingProgress.cs 996fcf99bd88

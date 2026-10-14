@@ -12,7 +12,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Nothing you wear is ever found.** Creatures give up materials, never equipment — so a sword exists because you made one. You forge it at a smith, fold it with the metal of its own grade, and quench it when it will fold no further."
+      "text": "**Every piece starts as a drop.** One kill in ten, a monster drops one piece of what it wears — always **Raw +0**. What it becomes is your work: you fold it with **Temper Dust** at the station of its craft, and quench it with **Quench Oil** when it will fold no further. As it drops, a weapon rolls its **trademark**, an armour piece rolls one **word** from its slot, and the piece takes its **rarity** from the kind of monster that dropped it (see *Weapons & Equipment*); nothing else about a piece is ever rolled."
     },
     {
       "type": "paragraph",
@@ -25,10 +25,10 @@
     {
       "type": "list",
       "items": [
-        "**Forge** — pay a design's base materials and gold, and take a **Raw +0** piece. A weapon rolls one thing, once — its **trademark** — and an armour piece rolls one **word** from its slot (see *Weapons & Equipment*); nothing else about a piece is ever rolled.",
-        "**Fold** — 1 unit of your grade's band material and gold. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
-        "**Quench** — 10 units of the band and more gold. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
-        "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced."
+        "**Fold** — Temper Dust and gold: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
+        "**Quench** — Quench Oil and more gold: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
+        "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced.",
+        "**Recycle** — destroys the piece and gives back half of what its folds and quenches took (below)."
       ]
     },
     {
@@ -37,11 +37,11 @@
     },
     {
       "type": "heading",
-      "text": "Where a piece is made"
+      "text": "Where a piece is worked"
     },
     {
       "type": "paragraph",
-      "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. Each craft's material comes in **seven bands, one per grade** — Copper to Adamant, Burlap to Brocade, Rawhide to Wyrmhide — and a piece folds only with the band of its own grade. Band materials never merge into each other; the better ones drop from stronger creatures, so climbing the grades walks you across the world."
+      "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. All three take the same two materials. **Temper Dust** and **Quench Oil** drop from every monster — more from higher-level monsters, far more from elites and shadows, and more again from monsters in better gear — and no shop sells them. Neither merges into anything."
     },
     {
       "type": "heading",
@@ -65,7 +65,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back: the forge bill, every quench it successfully climbed, the folds standing on it now, and the Ink for the stats written on it."
+      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, gold and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. **Folds made at Raw return nothing.** A shop pays 5 gold for any piece of gear. A piece your first tutorial still needs cannot be recycled, sold or dropped."
     },
     {
       "type": "paragraph",
@@ -74,7 +74,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: forging, folding, quenching, Ink, merging, recycling and weapon trademarks are all built. The costs, the odds, the Ink values and the trademark bonuses are first numbers, to be tuned in play.*"
+        "*Status: gear drops, folding, quenching, Ink, merging, recycling and weapon trademarks are all built. The costs, the odds, the Ink values and the trademark bonuses are first numbers, to be tuned in play.*"
       ]
     }
   ]

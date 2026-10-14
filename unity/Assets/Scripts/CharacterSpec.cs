@@ -141,8 +141,61 @@ public class CharacterSpec : ScriptableObject
     [Tooltip("Bare-handed reach, in world units at full size. A weapon's own attack range replaces it while one is " +
              "held — for a person and a creature alike.")]
     public float unarmedReach = 0.5f;
-    [Tooltip("Seconds between ordinary swings before attack speed is applied — for a person and a creature alike.")]
-    public float swingInterval = 0.6f;
+    [Tooltip("Seconds between ordinary bare-handed swings before attack speed is applied — for a person and a " +
+             "creature alike. A weapon listed below swings at its own pace instead.")]
+    public float swingInterval = 1f;
+
+    [System.Serializable]
+    public struct WeaponSwing
+    {
+        public WeaponType weapon;
+        [Tooltip("Seconds between ordinary swings while this weapon is held, before attack speed is applied.")]
+        public float seconds;
+    }
+
+    [Tooltip("Seconds between ordinary swings for each weapon, before attack speed is applied — for a person and a " +
+             "creature alike. A weapon not listed swings at the bare-handed pace above.")]
+    public WeaponSwing[] weaponSwingIntervals =
+    {
+        new WeaponSwing { weapon = WeaponType.Dagger,       seconds = 0.8f },
+        new WeaponSwing { weapon = WeaponType.Knuckle,      seconds = 0.8f },
+        new WeaponSwing { weapon = WeaponType.Katar,        seconds = 0.85f },
+        new WeaponSwing { weapon = WeaponType.Shuriken,     seconds = 0.9f },
+        new WeaponSwing { weapon = WeaponType.Sword,        seconds = 1f },
+        new WeaponSwing { weapon = WeaponType.Wand,         seconds = 1f },
+        new WeaponSwing { weapon = WeaponType.Axe,          seconds = 1.1f },
+        new WeaponSwing { weapon = WeaponType.Spear,        seconds = 1.1f },
+        new WeaponSwing { weapon = WeaponType.Bow,          seconds = 1.1f },
+        new WeaponSwing { weapon = WeaponType.Staff,        seconds = 1.2f },
+        new WeaponSwing { weapon = WeaponType.Scythe,       seconds = 1.25f },
+        new WeaponSwing { weapon = WeaponType.Mace,         seconds = 1.3f },
+        new WeaponSwing { weapon = WeaponType.TwoHandSword, seconds = 1.3f },
+        new WeaponSwing { weapon = WeaponType.Firearm,      seconds = 1.4f },
+    };
+
+    // Indexed by (int)WeaponType, 0 = not listed. Built on the first ask and after an edit in the Inspector, so a
+    // swing reads one array entry.
+    [System.NonSerialized] float[] swingByWeapon;
+
+    /// <summary>Seconds between ordinary swings while holding <paramref name="weapon"/>, before attack speed is
+    /// applied: the weapon's own pace, or the bare-handed one for empty hands and a weapon not listed. The one answer
+    /// a person's swing and a creature's both read.</summary>
+    public float SwingInterval(WeaponType weapon)
+    {
+        if (swingByWeapon == null)
+        {
+            int largest = 0;
+            foreach (int v in System.Enum.GetValues(typeof(WeaponType))) if (v > largest) largest = v;
+            swingByWeapon = new float[largest + 1];
+            if (weaponSwingIntervals != null)
+                foreach (var each in weaponSwingIntervals)
+                    if ((int)each.weapon > 0 && (int)each.weapon <= largest) swingByWeapon[(int)each.weapon] = each.seconds;
+        }
+        int i = (int)weapon;
+        return i > 0 && i < swingByWeapon.Length && swingByWeapon[i] > 0f ? swingByWeapon[i] : swingInterval;
+    }
+
+    void OnValidate() => swingByWeapon = null;
 
     [Tooltip("How far inside reach a fighter stops walking in: it stops at reach divided by this, then stays put " +
              "until the target moves past its full reach, and chases again. Stops the stand-vs-chase decision " +
@@ -163,24 +216,30 @@ public class CharacterSpec : ScriptableObject
     // ---- travel ------------------------------------------------------------------------------------------------------
 
     [Header("Travel")]
-    [Tooltip("THE movement speed: how fast a bare-footed character sprints, in world units a second before unit scale. " +
-             "Every gear travels a fraction of it, and the walk, run and sprint legs follow whatever speed results — " +
-             "they are locked to the ground, so nothing else needs changing with it.")]
-    public float moveSpeed = 2.4f;
-    [Tooltip("Walk gear as a fraction of full speed — the strolling pace. Townsfolk and a wandering shadow use this.")]
-    public float walkGearMult = 0.2f;
-    [Tooltip("Run gear as a fraction of full speed — the default jog. A chasing shadow uses this.")]
-    [Range(0.1f, 1f)] public float runGearMult = 0.5f;
+    [Tooltip("THE movement speed: how fast a character runs — the default jog — in world units a second before unit " +
+             "scale. The walk and the sprint are multiples of it, and the walk, run and sprint legs follow whatever " +
+             "speed results — they are locked to the ground, so nothing else needs changing with it.")]
+    public float moveSpeed = 1f;
+    [Tooltip("Walk gear as a fraction of the run — the strolling pace. Townsfolk and a wandering creature use this.")]
+    [Range(0.1f, 1f)] public float walkGearMult = 0.4f;
+    [Tooltip("Sprint gear as a multiple of the run — the fastest gear a person has.")]
+    [Range(1f, 4f)] public float sprintGearMult = 2f;
 
-    /// <summary>Travel speed of the SPRINT gear — full speed. THE single owner of that composition (base x unit scale),
-    /// so nothing re-derives the chain and drifts from it; every other gear is a fraction of it.</summary>
-    public float FullSpeed => moveSpeed * UnitScale.ForPlayer;
+    /// <summary>Travel speed of the RUN gear — the base every other gear is a multiple of. THE single owner of that
+    /// composition (base x unit scale), so nothing re-derives the chain and drifts from it.</summary>
+    public float RunGearSpeed => moveSpeed * UnitScale.ForPlayer;
+
+    /// <summary>Travel speed of the SPRINT gear — full speed.</summary>
+    public float FullSpeed => RunGearSpeed * sprintGearMult;
 
     /// <summary>Travel speed of the WALK gear.</summary>
-    public float WalkGearSpeed => FullSpeed * walkGearMult;
+    public float WalkGearSpeed => RunGearSpeed * walkGearMult;
 
-    /// <summary>Travel speed of the RUN gear.</summary>
-    public float RunGearSpeed => FullSpeed * runGearMult;
+    /// <summary>The run gear as a share of full speed, for a mover that scales full speed by its gear.</summary>
+    public float RunShareOfFull => 1f / Mathf.Max(1f, sprintGearMult);
+
+    /// <summary>The walk gear as a share of full speed, for a mover that scales full speed by its gear.</summary>
+    public float WalkShareOfFull => walkGearMult / Mathf.Max(1f, sprintGearMult);
 
     /// <summary>Ground speed at which a character switches from the Walk clip to the Run clip: midway between the two
     /// gears, so every character changes gear at the same pace.</summary>

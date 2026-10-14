@@ -71,7 +71,7 @@
         "**Combat Mechanics** — damage types, elements, and matchups",
         "**Weapons & Equipment** — gear, weapon types, folds, the quality ladder and trademarks",
         "**The Sword** — how the first fully-authored weapon plays, and how its builds fit together",
-        "**Crafting & Recycling** — forge, fold, quench, write stats with Ink, and recycle",
+        "**Crafting & Recycling** — fold, quench, write stats with Ink, and recycle",
         "**Cards** — monster-matchup specialization *(planned feature)*"
       ]
     },
@@ -96,7 +96,7 @@
       "items": [
         "**Monsters** — every monster's numbers and where it lives",
         "**Skills** — every skill's numbers and effects",
-        "**Equipment** — every weapon and piece of armour, what it costs to forge, every trademark and every armour variant",
+        "**Equipment** — every weapon and piece of armour, every trademark and every armour variant",
         "**Materials** — every crafting material and every monster that drops it",
         "**World Map** — every map, its view from above, and the monsters on it",
         "**Elements** — the element chart at levels 1 to 4"

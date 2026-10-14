@@ -16,7 +16,7 @@ How far the game is from being something a stranger can buy and finish. **This d
 
 ## The one-paragraph answer
 
-The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: 29 crafting materials, 15 armour designs to forge from them at three stations, a shop, two quests, sixteen townsfolk with names, and a Keeper in every town who sets your save point, keeps your account's storage and sends you to any other town. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of sixteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
+The technology is built and the game has started to fill. Fighting is finished and deep, and the whole of a fight runs on a server. Since mid-September a fight pays something worth having: ten crafting materials (Temper Dust, Quench Oil, five Inks, three Salts), gear that drops from what creatures wear to fold and quench with them at three stations, a shop, two quests, sixteen townsfolk with names, and a Keeper in every town who sets your save point, keeps your account's storage and sends you to any other town. What is still thin is breadth. Only the sword, one of fourteen weapon families, has skills anybody can learn, and only the sword and the bow exist as weapons to hold. Every named person and both quests are in one town of sixteen. None of the fourteen shadows has a place to stand. And most of what was added this month is built but has not yet been played.
 
 ---
 
@@ -36,7 +36,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 | Live characters in the database | 7 | the furthest is level 8; two test characters hold 99,987,850 gold each |
 | Builds that exist | 6 | made on this PC: the Windows game (847 MB), the Windows game server (420 MB) and the Mac game (1,009 MB), all on 5 Oct; the launcher for Windows (99 MB), Mac with an Apple chip (108 MB) and Mac with an Intel chip (101 MB), on 4 Oct. The sizes leave out the debugging folder Unity writes beside a build, which never ships |
 
-**The 51 skills, split by what can reach them:** 22 belong to the sword and all 22 are published, so each can be learned with sword mastery points and rolled as a forged sword's trademark. 19 are carried by items you use — the 11 potions and foods and the 8 element converters. 1 belongs to the staff and is unpublished, and no staff exists to earn staff mastery with. 1 is the summon, which only creatures cast. The remaining 8 — two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink — belong to no weapon and no item, so nothing in the game can grant them.
+**The 51 skills, split by what can reach them:** 22 belong to the sword and all 22 are published, so each can be learned with sword mastery points and rolled as a dropped sword's trademark. 19 are carried by items you use — the 11 potions and foods and the 8 element converters. 1 belongs to the staff and is unpublished, and no staff exists to earn staff mastery with. 1 is the summon, which only creatures cast. The remaining 8 — two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink — belong to no weapon and no item, so nothing in the game can grant them.
 
 **The parts that are genuinely finished:**
 
@@ -52,7 +52,7 @@ The technology is built and the game has started to fill. Fighting is finished a
 
 ## What is half-built — measured, each one
 
-**Making gear is built and not yet played** ([Gameplay System V4](../2-systems/gameplay-system-v4/README.md)). Gear is forged at a smith, a loom or a tannery from materials, then folded, quenched up the quality ladder and written on with Ink.
+**Making gear is built and not yet played** ([Gameplay System V4](../2-systems/gameplay-system-v4/README.md)). Gear is dropped by the creatures that wear it, always Raw, then folded, quenched up the quality ladder and written on with Ink at a smith, a loom or a tannery.
 
 **Loot follows the creature's kind and level.** A creature gives up **no gear at all** — materials and consumables only. Every creature drops its own level's grade of metal, cloth and leather with a chance of an Ink or a Salt — elites much more, shadows more again — and every kill has a chance of the creature's own find, a food or an element converter ([Town Supplies and Hunting Finds](../2-systems/town-supplies-and-hunting-finds.md)). What drops is worked out at the moment of death from the creature's kind and level, so a change to the rule needs no rebuild of the creatures. Every creature's own hand-written drop list is empty. It lands on the ground, held for the killer for 10 seconds, and is gone after 60.
 
@@ -114,7 +114,7 @@ Eighteen tasks in the [Action Plan](action-plan/on-going.md) are built or under 
 
 - [Action Plan](action-plan/on-going.md) — the trackable list of what to do next, phase by phase, in three files by status.
 - [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — what the finished combat actually is.
-- [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — forging, folding, quenching, Ink and mastery; built, not yet played.
+- [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — dropped gear, folding, quenching, Ink and mastery; built, not yet played.
 - [Weapon Roster — 14 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — twelve families with no skill at all, and the staff's single unpublished one.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.
 - [Quests and Tutorials](../2-systems/quests-and-tutorials.md) — the quest system and the crafting tutorial.

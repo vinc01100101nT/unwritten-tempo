@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
+status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial), the first-gear tutorial reworked 2026-10-13 (it folds the gear a character arrives in); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
 owner: vince
-last-updated: 2026-10-07
+last-updated: 2026-10-13
 tags:
   - systems
 ---
@@ -37,24 +37,27 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
 ## Free the first time, paid on a replay
 
 - **A character's first run of a tutorial takes nothing its steps use up** (decided 2026-10-07). It hands out nothing:
-  - every piece it has you make carries **one free forge and its free folds** — the forge and the folds cost no Copper
-    and no gold;
+  - every piece it has you fold carries **its free folds** — they cost no Temper Dust and no gold;
   - every item it has you **buy** is free — as many as the step asks for, or, when a Health step after it is healed
     with that item, as many as it takes to get from the health the character came back on to that step's share (the
     item's own written heal, e.g. 50 HP a Minor Healing Potion).
-- **What is free is saved on the record and used up by the press that does the work** — the forge, the fold or the
+- **What is free is saved on the record and used up by the press that does the work** — the fold or the
   purchase itself, in the same call — so a quick double press, a door to another map server or a restart can never
-  spend it twice. A free fold goes only on a Raw piece, and only on the copy the run made (or the first one it folded).
+  spend it twice. A free fold goes only on a Raw piece, and only on the first copy the run folded.
+- **A piece a first run still needs cannot be recycled, sold or dropped** — any copy of an item a step ahead still
+  names — and the refusal says which tutorial needs it. Nothing can make a new character another Sword, so the
+  station the tutorial sends them to must not be able to destroy it.
 - **Free lasts until the tutorial is first finished.** Stopping and playing again carries on with whatever is still free.
-- **The station and the shop say so**: a forge row or the Fold button reads "Free", and a shop row says how many are
+- **The station and the shop say so**: the Fold button reads "Free", and a shop row says how many are
   free before its price — the server's answer.
 - **A finished tutorial can be played again** (a **replay**): Play from its first step, paying its whole bill. A replay
-  never pays the reward again and never makes the quest unfinished; its steps count **only the pieces made during the
-  replay**, so gear already held cannot finish it at once.
-- A new character's starting kit is **empty** — no items, no gold — because the tutorials give the first gear and the
-  first potions free.
-- Characters that already had a tutorial before 2026-10-07 have nothing free on it: they were handed the old starting
-  kit (33 Copper, 2,350 gold, 10 potions) that paid for it.
+  never pays the reward again and never makes the quest unfinished; its steps count **only the copy the replay
+  folds**, so gear already folded cannot finish it at once. **Play refuses to start a replay unless the character
+  holds, worn or carried, a Raw unfolded copy of every piece it folds**, and says which piece is missing; the first
+  fold of such a copy makes it the replay's copy.
+- A new character arrives **wearing a Sword, a Chainmail and Iron Sabatons** — Raw, unfolded, Common, with no
+  trademark and no word — and carrying nothing: no items, no gold (`StarterKit`). The tutorials give the first folds
+  and the first potions free.
 
 ## Play, Show path and requirements
 
@@ -67,10 +70,10 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   explain ("you are carrying too little to pay").
 - **A tutorial's requirements are what the rest of it still needs**, from the step it is on to its end (from its first
   step for a finished one, which a replay starts):
-  - The forging and folding its steps name, worked out from the items' own costs, and what its Buy steps cost at the
-    shop's price. A piece already held is not forged again, folds already made are not paid again, a piece no step
+  - The folding its steps name, at a Raw fold's own cost, and what its Buy steps cost at the
+    shop's price. Folds already made are not paid again, a piece no step
     ahead needs costs nothing, and whatever a first run still has free costs nothing. A first run of "Your First Gear"
-    therefore needs nothing; a replay needs 33 Copper and 2,350 gold.
+    therefore needs nothing; a replay needs 15 Temper Dust and 750 gold.
   - The character level the quest names, if any. Gold and items are never typed on a quest: they are only ever what
     its steps cost.
   - Each tutorial shows its list in the Quests window, every line green when the character has it and red when not —
@@ -111,8 +114,8 @@ numbers are the server's. Kills that land in the same moment make one line per q
 | Health, a share of full health | your health is at least that share, e.g. 80%. Judged whenever your health goes up or down while this is the current step — a drink, a heal, regeneration. |
 
 - **Holding steps judge what you hold, not what you did** (decided 2026-10-04). A Have, Folded To or Wear step
-  already true when it is reached finishes at once — a Sword forged early, or given to you, counts. On a replay they
-  judge only the pieces made during it. Kill and Buy steps count only what happens after reaching them.
+  already true when it is reached finishes at once — a Sword folded early counts, and so does a piece already worn.
+  On a replay they judge only the copy the replay folds. Kill and Buy steps count only what happens after reaching them.
 - **Forward only.** A finished step never comes undone (selling the Sword later changes nothing), and a finished quest
   is never given again — a replay is the same quest played again, never given again.
 - Checked by the server whenever your bag changes, when you talk to someone, when you defeat a creature, when you buy
@@ -130,7 +133,7 @@ numbers are the server's. Kills that land in the same moment make one line per q
 
 - **"!"** over a townsperson who offers a quest this character can accept — told only for the map you are standing in.
 - **"?"** over a townsperson where one of this character's open quests' current step happens — someone to talk to,
-  the nearest smith (by doors) for a forge or fold step, or the nearest shopkeeper selling a Buy step's item.
+  the nearest smith (by doors) for a fold step, or the nearest shopkeeper selling a Buy step's item.
 - When both are true, "?" shows. Both are the server's lists; a player's machine only draws them.
 
 ## Rewards
@@ -152,17 +155,18 @@ potions are their reward.
   over your own head is framed and pointed at with nothing dark** — it is on screen the whole time, so a dark there
   would stop the mouse for as long as the step lasts.
 - **When the step cannot be done right now** the server says why, and the guide shows a sentence instead of lighting
-  a button: you are carrying too little to pay; the piece is being worn (a station works only on what you carry); you
-  are not carrying it; or, on a Health step, you have none of its item left — buy more at a shop that sells them.
-- **After a press that spends something** (a forge, a fold), the lit part cannot be pressed again until the server
+  a button: you are carrying too little to pay; you are not carrying it; or, on a Health step, you have none of its item left — buy more at a shop that sells them.
+- **After a press that spends something** (a fold), the lit part cannot be pressed again until the server
   answers, so a quick double press cannot spend the same materials twice.
 - A row scrolled out of view is scrolled into view.
 
 ## The crafting tutorial — "Your First Gear"
 
-Unlocks on entering the world. Ten steps: talk to Gunnar the Smith; forge a Sword and fold it five times; forge a
-Chainmail and fold it five times; forge Iron Sabatons and fold them five times; wear all three. The first run forges
-and folds all three free; a replay's bill is 33 Copper and 2,350 gold.
+Unlocks on entering the world. Seven steps: talk to Gunnar the Smith; fold your Sword five times; fold your
+Chainmail five times; fold your Iron Sabatons five times; wear each of the three. The pieces are the ones a new
+character arrives wearing, and the station lists worn pieces beside carried ones, so nothing has to be taken off.
+The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 750 gold, and it needs a Raw unfolded
+copy of each piece.
 
 ## The healing tutorial — "Low on Health"
 
@@ -188,7 +192,7 @@ Minor Healing Potions.
 
 Every quest record lives in its own row of `character_quest` (migrations `009` and `011`) — step, progress, followed,
 finished, replaying, the quest to follow again when it is done, and the run's pieces (what each is, the copy the run
-made, and the free forges, folds and purchases left). The rows that changed since the last
+folds, and the free folds and purchases left). The rows that changed since the last
 save that landed ride **inside the progress save** and are written in the same transaction, after the progress was
 taken under the same hand-over check — so the bag and the quest that judged it land together or not at all. A save
 refused for good is kept in a file for a person and not resent. The rows travel with the character on every hand-over
@@ -203,7 +207,7 @@ until the character itself is purged — and that purge does not exist yet (SERV
 
 One asset in `unity/Assets/3_Data/Resources/Quests` (Create ▸ unwritten ▸ Quest). Ids are stable: never rename or reuse
 a quest id or a step id in a live quest — add new ones. A step points at a part of the screen only if that part is
-marked in code (`GuideMarker`): today the station window's rows (Forge and Fold pages, Back, each forge row, each piece
+marked in code (`GuideMarker`): today the station window's rows (the Fold page, Back, each piece
 row, the Fold button), the bag's rows, a shop's "Buy 1" button, and the health bar over your own head. A quest with a
 fault — an item the game does not have, a townsperson nobody lists, two steps with one id, an item to buy that no shop
 sells, a tutorial with no unlock condition — is **suspended**: nobody is given it or shown it until the data is fixed.

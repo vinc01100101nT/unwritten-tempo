@@ -156,18 +156,16 @@ public static class CraftingMath
     const int MetalDefensePerFold = 90, MetalHPPerFold = 720;
     const int LeatherAttackSpeedPerFold = 45, LeatherEvasionPerFold = 45;
     const int ClothMagicDefensePerFold = 90, ClothMPPerFold = 360;
-    // SHOES ALSO BUY MOVEMENT SPEED (decided 2026-10-05): exactly +2% a fold at every grade and every rarity — neither
-    // lift touches it — on top of what their material buys. It is the only source of movement speed a piece has, so a
-    // bare-footed unit moves at the shared base speed.
-    const float ShoesMoveSpeedPercentPerFold = 2f;
+    // NO PIECE BUYS MOVEMENT SPEED (decided 2026-10-14): a person moves at the shared pace, and only a timed effect
+    // changes it.
 
     /// <summary>The finished numbers one piece's folds and grade grant — what the server writes onto the copy and a
-    /// player's machine only ever adds up. Attack speed and movement speed are whole percent, one decimal.</summary>
+    /// player's machine only ever adds up. Attack speed is whole percent, one decimal.</summary>
     [System.Serializable]
     public struct PieceStats
     {
         public int attack, magicAttack, defense, magicDefense, hp, mp, evasion;
-        public float attackSpeedPercent, moveSpeedPercent;
+        public float attackSpeedPercent;
     }
 
     /// <summary>How much of its material's fold an armour slot takes: the full amount for body, off-hand and garment,
@@ -192,8 +190,6 @@ public static class CraftingMath
             else p.attack = atk;
             return p;
         }
-        if (slot == EquipSlotType.Boots)
-            p.moveSpeedPercent = folds * ShoesMoveSpeedPercentPerFold;
         int halves = folds * (SlotShare(slot) < 1f ? 1 : 2);
         switch (material)
         {
@@ -361,7 +357,6 @@ public static class CraftingMath
         eb.mp += piece.mp;
         eb.evasion += piece.evasion;
         eb.aspdPercent += piece.attackSpeedPercent;
-        eb.moveSpeedPercent += piece.moveSpeedPercent;
         if (stats == null || values == null) return;
         int n = Mathf.Min(stats.Count, values.Count);
         for (int i = 0; i < n; i++) AddInk(stats[i], values[i], ref eb);

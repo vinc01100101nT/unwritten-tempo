@@ -110,6 +110,6 @@ Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Ma
 - [Sword — Skill Roster](sword-skill-roster.md) — the one identity taken all the way to a composed pool.
 - [Active Skill System — V3](README.md) — the channels, effects and scaling every pool is built from.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands to author the other thirteen pools within.
-- [Gameplay System — V4](../gameplay-system-v4/README.md) — how a weapon is forged, and how its skills are learned.
+- [Gameplay System — V4](../gameplay-system-v4/README.md) — how a weapon is dropped, folded and quenched, and how its skills are learned.
 - [The Three-Brain Design Process](../../0-process/design-process.md) — the flow to run each remaining pool through.
 - [GPT Concept Prompts — Paste-Me](../../4-art/gpt-concept-prompts.md) — the Part 2 prompts that give these fourteen a look.

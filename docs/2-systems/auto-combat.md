@@ -57,7 +57,7 @@ The settings are one row per character, `character_auto_combat` (`accounts/sql/0
 written only when the player changes a setting, the same way the hotbar's row is — through the character server's
 `PUT /server/characters/{id}/auto-combat` door, guarded by the server secret and the hand-over number. The row travels
 to a map server with the character. A character that never changed a setting has no row and reads as: empty slots, no
-auto-loot, no auto-potion, Radius. The shared character build string is `unwritten-character-v24`.
+auto-loot, no auto-potion, Radius. The shared character build string is `unwritten-character-v25`.
 
 ## Where it lives in the code
 

@@ -401,7 +401,6 @@ public class ItemTooltip : MonoBehaviour
         AppendStat(sb, "CRIT DMG", eb.critDamagePercent, "%");
         AppendStat(sb, "ASPD", eb.aspdPercent, "%");
         AppendStat(sb, "CAST SPEED", eb.castSpeedPercent, "%");
-        AppendStat(sb, "MOVEMENT SPEED", eb.moveSpeedPercent, "%");
         AppendInkSlots(sb, inst);
     }
 

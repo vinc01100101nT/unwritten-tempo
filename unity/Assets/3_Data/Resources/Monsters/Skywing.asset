@@ -17,6 +17,7 @@ MonoBehaviour:
   kind: 0
   size: 0.3
   flies: 1
+  moveSpeed: 1.6
   biome: 12
   artFolder: 9833de26a22b1744e97e0f8e1eda6d08
   faceset: {fileID: 2800000, guid: d54eac920f4143e4abaa870fc7725962, type: 3}

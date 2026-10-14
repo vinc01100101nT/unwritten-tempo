@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-22, not yet play-tested. First-guess numbers are listed under Still open."
+status: "BUILT 2026-09-22, drops reworked 2026-10-13 (Temper Dust, Quench Oil, one piece of worn gear); not yet play-tested. First-guess numbers are listed under Still open."
 owner: vince
-last-updated: 2026-10-06
+last-updated: 2026-10-13
 tags:
   - world-content
 ---
@@ -54,7 +54,7 @@ map, and the map generator no longer puts any there.
   piece (Raw none, F one, up to A six); the Ink decides what each is worth. They are edited in the Mob Table's
   equipment panel, and no rule in the code overrides them for any kind.
 - **Which stats are written, a weapon's trademark and an armour piece's word are rolled fresh every life**, exactly
-  as a station rolls them, at every grade — a Raw piece included, as a forged one is.
+  as a station rolls them, at every grade — a Raw piece included, as a dropped one is.
 - **A creature wears exactly the pieces authored for it and nothing else.** An empty slot stays empty.
 - **Grade and folds are the only difficulty dial, and neither follows level.** A normal creature's or an elite's
   grade comes from the rarest thing it drops and its folds from how hard it is to find; the rule and every
@@ -85,6 +85,19 @@ map, and the map generator no longer puts any there.
   exactly a ground creature's. One twice a character's height or taller is not raised (its middle is already
   there); a shadow never flies.
 - **Size changes nothing else**: not movement speed, not stats. The weapon-vs-size damage chart is not switched on.
+- **A creature's movement speed is its own number, 0 to 2**, set in the Mob Table's **movement speed** column beside
+  its size. It multiplies the shared pace: **1** is the pace a person travels at (a run of 1 unit a second, a walk of
+  0.4), **2** the fastest there is, and **0** never moves from where it stands — it still fights whatever comes into
+  its reach, and cannot be pushed or pulled. A creature wanders at the walk and chases at the run, each times this
+  number. Set from what the creature is: **0** Canewick, Shootling · **0.3** Mossnail · **0.4** Capling, Frostcap, Moldy, Shellby · **0.5**
+  Bittersweet, Dewdrop, Goopie, Plopling, Rivershell · **0.6** Crawlet, Grubble, Elder Stalk,
+  Gloop King, Venom Gloop · **0.7** Emberlurk, Emberwyrm, Wyrmlet, Autumn Stalk · **0.8** Cyclo, Iris, Octi, Pando,
+  Peeper, Sucker, Abyss Maw, Oculord · **0.9** Bloodshot, Frostwick, Inky, Kappi, Mudpup, Snapper, Deep Maw, Mossmaw,
+  Toadmaw · **1** Burrowbo, Digger, Drizzle, Frostskull, Gillie, Hornscale, Lovebite, Squirt, Willo, Inferno Mask,
+  Wraithmother and every shadow · **1.1** Chomper, Cinder, Coily, Flutterby, Glowcoil, Grumbear, Horngore, Swampfang,
+  Great Croak · **1.2** Blazeskull, Gnasher, Hisser, Hootie, Mossgore, Newtie, Wisp, Bandit Boss · **1.3** Adder,
+  Emberhoot, Scaly, Viper, Frost Ronin · **1.4** Rascal, Sunscale, Tarantix, Webber, Blood Ronin, Golden Bandit,
+  Oni Tengu · **1.5** Blinkbat, Squeak, Karasu · **1.6** Nightsqueak, Pilfer, Skywing.
 - **The split:** normals **40 Small, 17 Medium, 9 Large**; elites **16 Large, 2 Medium**; all shadows **1**
   (Medium). Each creature's size is set on its own catalog entry, in the Mob Table's **size** column, with its group
   shown beside it; a shadow is always 1 whatever its entry says, so its size is locked there.
@@ -106,7 +119,7 @@ map, and the map generator no longer puts any there.
 - Whatever pieces are authored for them — **D** with a Rare material, **C** with an Epic one, **B** with a Legendary one (see Gear state) — and,
   once they have bought the summon skill, they **summon normals**: the three nearest their level at or below it, from their own home
   biome first.
-- **They drop much more folding material, and the rarer Inks and Salts** (see Drops).
+- **They drop ten times the Temper Dust and Quench Oil of a normal creature, and the rarer Inks and Salts** (see Drops).
 
 ## Shadow
 
@@ -207,15 +220,25 @@ map, and the map generator no longer puts any there.
 
 ## Drops
 
-**The grade a creature drops follows its level.** The seven material grades split levels 1 to 99 into seven even
-stretches (1–14 Raw, 15–28 F, 29–42 E, 43–56 D, 57–70 C, 71–84 B, 85–99 A); a shadow drops grade A. A creature drops
-its own grade's **metal, cloth and leather**, plus a chance of an Ink or a Salt:
+**How much Temper Dust and Quench Oil a kill gives follows what the kill pays.** Levels 1 to 99 split into seven even
+steps (1–14 is step 1, 15–28 step 2, 29–42 step 3, 43–56 step 4, 57–70 step 5, 71–84 step 6, 85–99 step 7); a shadow
+is step 7. The level is the one in the creature's file, never one it grew by hitting people. The amount in the table
+is multiplied by the step, then by what the grade and folds of the creature's gear pay — +25% for each grade above
+Raw and +5% for each fold ([What a Kill Pays](what-a-kill-pays.md)). The whole part is given; the part left over is
+the chance of one more. Each kill also has a chance of an Ink or a Salt, and of one piece of what the creature wears:
 
-| | Each of its grade's metal, cloth, leather | Ink | Salt |
-| --- | --- | --- | --- |
-| Normal | 20%, 1 | Watery 4%, Thin 1% | Coarse 2% |
-| Elite | 60%, 5 to 10 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% |
-| Shadow | 100%, 5 to 10 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% |
+| | Temper Dust, per step | Quench Oil, per step | Ink | Salt | One piece of its gear |
+| --- | --- | --- | --- | --- | --- |
+| Normal | 0.6 | 0.06 | Watery 4%, Thin 1% | Coarse 2% | 10% — Common, Uncommon or Rare at 50 : 30 : 14 |
+| Elite | 6 | 0.6 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% | 10% — always Epic |
+| Shadow | 12 | 1.2 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% | 10% — always Legendary |
+
+A level 1 normal creature in Raw unfolded gear gives a 60% chance of one Temper Dust and a 6% chance of one Quench
+Oil. A shadow at A +30 gives 525 Temper Dust, and 52 Quench Oil with a 50% chance of one more.
+
+**The piece of gear** is one of the pieces the creature wears, picked at random, as a NEW copy — nothing leaves the
+creature. It is always Raw and unfolded whatever the creature's own gear was, rolls its own trademark (a weapon) or
+word (an armour piece), and takes the rarity in the table. What the creature itself wears is always Common.
 
 Every kill also has a chance of the creature's own find — 5% for a normal, 50% for an elite, 100% for a shadow. A
 creature of Fire, Water, Earth or Wind gives up one of its element's two converters — a fire creature the Flame
@@ -224,10 +247,11 @@ Elemental Converter or the Flame Armor Converter; a creature of any other elemen
 are sold by the Tool Dealer and never dropped. Materials are never in that roll.
 Several of one material go down as one pile.
 
-**Every normal creature and elite also drops a material nothing else does**, and 24 normal creatures and all 18 elites a
+**Every normal creature and elite also drops a material nothing else does**, and 22 normal creatures and all 18 elites a
 second, rarer one — the chances, the prices and the full list are [Creature Materials](creature-materials.md). An
 elite's ordinary material is the one thing that falls as several separate piles. A rebel rolls them again at the creature's own chances; only its
-grade materials, Inks and Salts are lifted one kind up.
+Temper Dust, Quench Oil, Inks and Salts are lifted one kind up, and a piece of gear it drops takes its rarity from the
+creature's own kind.
 
 ## Server restarts
 
@@ -250,7 +274,7 @@ grade materials, Inks and Salts are lifted one kind up.
 
 ## Related
 
-- [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — forging, the seven material grades, Ink, Salt
+- [Gameplay System — V4](../2-systems/gameplay-system-v4/README.md) — dropped gear, folding, the seven grades, Ink, Salt
   and mastery: what creatures drop and what shadows wear.
 - [Creatures and Where They Live](biome-mob-families.md) — every creature's home biome, element and level, and every map's creatures.
 - [Story & Setting (Canon)](story-setting-canon.md) — the artist, Chaos and the Fourteen Kashira.

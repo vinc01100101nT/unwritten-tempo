@@ -73,6 +73,14 @@ public static class UnitStatMath
     public const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
     /// <summary>Hard ceiling on the attack-speed multiplier — bounds the Momentum/Deathblow equilibrium.</summary>
     public const float MaxAttackSpeedMult = 3f;
+    /// <summary>The range of a creature's own movement speed, in multiples of the shared pace: 0 never moves, 1 is the
+    /// pace a person travels at, 2 the fastest there is.</summary>
+    public const float MinCreatureMoveSpeed = 0f, MaxCreatureMoveSpeed = 2f;
+
+    /// <summary>How fast a creature travels, in world units a second: the shared gear it is in (walk or run) times its
+    /// own movement speed (held inside its range) times its live movement-speed effects (Slow, Haste). Never below 0.</summary>
+    public static float CreatureTravelSpeed(float gearSpeed, float ownMoveSpeed, float moveMult) =>
+        Mathf.Max(0f, gearSpeed * Mathf.Clamp(ownMoveSpeed, MinCreatureMoveSpeed, MaxCreatureMoveSpeed) * moveMult);
     /// <summary>Pre-renewal "crit shield": the TARGET's LUK lowers an attacker's crit chance 0.3%/pt.</summary>
     public const float CritShieldPerLuk = 0.003f;
     /// <summary>DEX at which a spell's wind-up reaches zero: castTime = baseCast × (1 − DEX/150).</summary>

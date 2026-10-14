@@ -237,12 +237,6 @@
                     "count": "1"
                 },
                 {
-                    "name": "Shootling",
-                    "level": 16,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
                     "name": "Wyrmlet",
                     "level": 34,
                     "chance": "2%",
@@ -1904,41 +1898,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 140,
+            "zeny": 92,
             "materialStep": 1,
             "droppedBy": [
                 {
                     "name": "Crawlet",
                     "level": 4,
                     "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.crawlet-cocoon",
-            "name": "Crawlet Cocoon",
-            "description": "Dropped only by Crawlet.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Uncommon",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "zeny": 175,
-            "materialStep": 2,
-            "droppedBy": [
-                {
-                    "name": "Crawlet",
-                    "level": 4,
-                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -3000,34 +2966,6 @@
             ]
         },
         {
-            "id": "item.flutterby-scale-dust",
-            "name": "Flutterby Scale Dust",
-            "description": "Dropped only by Flutterby.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Uncommon",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "zeny": 88,
-            "materialStep": 2,
-            "droppedBy": [
-                {
-                    "name": "Flutterby",
-                    "level": 2,
-                    "chance": "10%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
             "id": "item.flutterby-wing",
             "name": "Flutterby Wing",
             "description": "Dropped only by Flutterby.",
@@ -3044,7 +2982,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 70,
+            "zeny": 46,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8004,7 +7942,7 @@
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "11%",
+                    "chance": "7%",
                     "count": "1"
                 },
                 {
@@ -8064,7 +8002,7 @@
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "11%",
+                    "chance": "7%",
                     "count": "1"
                 },
                 {
@@ -9480,6 +9418,12 @@
                     "count": "1"
                 },
                 {
+                    "name": "Shootling",
+                    "level": 16,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
                     "name": "Willo",
                     "level": 54,
                     "chance": "2%",
@@ -10117,8 +10061,8 @@
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "100%",
-                    "count": "1–2"
+                    "chance": "69%",
+                    "count": "1"
                 },
                 {
                     "name": "Cyclo",
@@ -10177,8 +10121,8 @@
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "100%",
-                    "count": "1–2"
+                    "chance": "69%",
+                    "count": "1"
                 },
                 {
                     "name": "Frostcap",

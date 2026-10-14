@@ -55,16 +55,16 @@
   {
    "type": "heading",
    "level": 2,
-   "text": "Drops — materials, never gear"
+   "text": "Drops — materials, and sometimes its gear"
   },
   {
    "type": "paragraph",
-   "text": "A monster **keeps what it wears** — its gear dies with it, because gear is made, not taken off a corpse. What it gives up is **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."
+   "text": "**One kill in ten, a monster drops one piece of what it wears** — a new copy of one piece picked at random, always **Raw +0** however good the monster's own was. An ordinary monster's piece is Common, Uncommon or Rare; an elite's is always Epic; a shadow's always Legendary (see *Weapons & Equipment*). Besides that it gives up **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."
   },
   {
    "type": "list",
    "items": [
-    "**Materials** — the metal, cloth and leather of the monster's own grade, which rises with its level, and now and then an **Ink** or a **Salt**. Elites drop far more, and rarer Inks and Salts; shadows more again. No stats of their own; they feed **Crafting & Recycling**.",
+    "**Materials** — **Temper Dust** and, a tenth as often, **Quench Oil**: more the higher the monster's level and the better its gear; and now and then an **Ink** or a **Salt**. Elites drop ten times as much Temper Dust and Quench Oil, and rarer Inks and Salts; shadows twenty times. No stats of their own; they feed **Crafting & Recycling**.",
     "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns gold. Some monsters also carry a second, rarer one with a coloured name. An elite's falls as several separate piles, and auto-loot never takes anything an elite drops.",
     "**Its find** — now and then, the one consumable its element carries: Fire, Water, Earth and Wind monsters drop a **converter** of their own element, every other monster drops its element's **food**. Potions, wings and antidotes are only sold by Tool Dealers."
    ]

@@ -1,6 +1,6 @@
 ---
 name: no-typed-sub-stats-on-any-unit
-description: "HARD LAW 2026-10-02 — no unit (player, creature, elite, shadow, NPC) carries a hand-typed sub-stat; every one is computed from level, primaries, gear, ring or a shared spec."
+description: "HARD LAW 2026-10-02 — no unit carries a hand-typed sub-stat; every one is computed from level, primaries, gear, ring or a shared spec. ONE exception the user made 2026-10-14: a creature's own movement speed (0 to 2)."
 metadata:
   type: feedback
 ---
@@ -11,6 +11,11 @@ primaries, worn gear (and its words), the ring, timed states, or one shared valu
 (`CharacterSpec`, `UnitStatInputs.Default`, `UnitStatMath` constants). A field that lets someone type one of these
 onto a creature, the player, or a body is a bug, not a design knob. Ruled by the user 2026-10-02: "that is an absolute
 bug we must remove. delete any fields that allows inputting substats manually."
+
+**The one exception, made by the user on 2026-10-14:** a creature's own MOVEMENT SPEED is typed on its catalog
+entry (0 to 2, default 1, a slider in the Mob Table beside size) and multiplies the shared pace. The user asked for
+it in those words; it is not a precedent for typing any other sub-stat. Players have no such number: they move at the
+shared pace, changed only by timed effects, and no gear gives movement speed.
 
 **Why:** a typed number is a second answer the formulas never see. The scar: every creature carried a typed "armour
 cut" (hard DEF %, 0–32%) that nothing computed and no player could ever get, which alone turned a fresh player's

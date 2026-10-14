@@ -70,7 +70,7 @@ before any game code runs, has no time and no category.
 | `server` | `<map> <player> used <item> [HP <now>/<max>] — <n> left` — a potion or food eaten; the health is after it took effect |
 | `server` | `<map> <player> changed their hotbar: set slot <n> to <entry>, cleared slot <n>` — only the slots that moved |
 | `server` | `<map> <player> spent a skill point on <skill id>` · `<map> <player> was refused a skill point on <skill id> — <why>` |
-| `server` | `<map> <player> crafted: <sentence>` · `<map> <player> was refused a craft: <sentence>` — every forge, fold, quench, ink, recycle and merge press, in the same sentence the player was shown |
+| `server` | `<map> <player> crafted: <sentence>` · `<map> <player> was refused a craft: <sentence>` — every fold, quench, ink, recycle and merge press, in the same sentence the player was shown |
 | `server` | `<map> <player> started talking to <townsperson id>` · `… stopped talking to <townsperson id>` |
 | `server` | `<map> <player> accepted quest <quest id> from <townsperson id>` · `… started following quest <quest id>` / `stopped following any quest` · `… pressed Play on tutorial <quest id> — <Started / NotMet / …>` · `… reached step <i> of <n> (<step id>) of quest <quest id>` — the gap between two step lines is how long the step took |
 | `server` | `<map> <player> reached level <n>` · `<map> <player> was killed by <unit> at level <n>` — a player's death is written here even with `hit` off |

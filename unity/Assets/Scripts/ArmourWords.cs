@@ -99,7 +99,7 @@ public static class ArmourWords
         }
     }
 
-    /// <summary>Add a worn total's words — and the movement speed its shoes' folds bought — into a unit's sub-stat table
+    /// <summary>Add a worn total's words into a unit's sub-stat table
     /// (indexed by <see cref="SubStat"/>), each in that stat's own units: a fraction for the percentage stats, HP or MP
     /// a second for regeneration. The ONE place worn gear becomes a sub-stat, called by the state
     /// store's recompute.</summary>
@@ -110,7 +110,6 @@ public static class ArmourWords
         table[(int)SubStat.LifeSteal]        += eb.wordLifeStealPercent / 100f;
         table[(int)SubStat.MPRegen]          += eb.wordMPRegen;
         table[(int)SubStat.HPRegen]          += eb.wordHPRegen;
-        table[(int)SubStat.MovementSpeed]    += eb.moveSpeedPercent / 100f;
     }
 
     /// <summary><paramref name="value"/> cut by <paramref name="cut"/> (a fraction, 0.25 = a quarter less) — Steadfast on

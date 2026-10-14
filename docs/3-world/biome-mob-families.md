@@ -39,8 +39,8 @@ there.
 6. **Elites** have a home biome, element and level too. Each stands in the fields of its home biome within 12 levels
    of its own; a dungeon's bottom floor holds the elite named for it. **Once it has bought the summon skill, an elite summons the
    normals of its own home biome** nearest its level at or below it, and only reaches outside its biome when its biome has too few.
-7. **Drops are unchanged**: what a creature drops still follows its own level (the material grade bands in the
-   [Mob Roster](mob-roster.md)), so grade-C quench material still comes only from creatures of levels 57–70, wherever
+7. **Drops are unchanged**: what a creature drops still follows its own level (the seven level steps in the
+   [Mob Roster](mob-roster.md)), so a creature of levels 57–70 still gives five steps' worth of Temper Dust and Quench Oil, wherever
    they live.
 
 ## The normals

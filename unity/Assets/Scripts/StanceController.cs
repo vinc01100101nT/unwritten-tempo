@@ -74,6 +74,11 @@ public class StanceController : MonoBehaviour
     // Where in the clip this override must START, as a 0→1 fraction; negative = at the beginning. Set when a beat
     // that began before we heard about it is joined part-way through, and spent on the first frame it is applied.
     float overrideSeekTo = -1f;
+    // The override that was ON SCREEN last frame. A new play of the same one starts its clip over from the first
+    // frame — the state is already current, so entering it the ordinary way does nothing, and back-to-back beats of
+    // a clip that does not loop left the body holding its last frame for as long as the beats kept coming.
+    bool shownOverride;
+    StanceId shownOverrideId;
 
     bool driving;                    // a stance is overriding self-drive — so we hand back to it ONCE
     StanceId currentResolved;
@@ -160,7 +165,8 @@ public class StanceController : MonoBehaviour
 
         overrideId = id; overrideWindow = played; overrideUntil = Time.time + left; overrideFit = fitToWindow;
         // The clip is still fit to its WHOLE length, so it plays at the right speed; only the entry point moves.
-        overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / played) : -1f;
+        overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / played)
+                       : shownOverride && shownOverrideId == id ? 0f : -1f;
 
         // SAID OUT LOUD, so a skill's release swing happens on every screen and not only the caster's. It travels as
         // a MOMENT — what, and when it began — because that is the shape it is: it plays once and it is over.
@@ -363,6 +369,7 @@ public class StanceController : MonoBehaviour
         // on screen" and the next action enters the ordinary way.
         bool actionWasShown = shownAction;
         shownAction = false;
+        shownOverride = false;
 
         // 0) One-shot action override (skill release) — beats even the brain's per-frame action until it expires.
         if (Time.time < overrideUntil)
@@ -371,6 +378,7 @@ public class StanceController : MonoBehaviour
             if (ob != null)
             {
                 driving = true; currentResolved = overrideId;
+                shownOverride = true; shownOverrideId = overrideId;
                 float seek = overrideSeekTo;
                 // Spent here, not in the setter: it must be applied on the first frame this override actually
                 // renders, and cleared so the following frames do not keep snapping back to the entry point.

@@ -175,7 +175,8 @@ public class MonsterAI3D : MonoBehaviour
     }
 
     /// <summary>Seconds between our swings at our current attack speed — the same interval the attack site waits.</summary>
-    public float SwingTime => UnitOffense.AttackInterval(CharacterSpec.Active.swingInterval,
+    public float SwingTime => UnitOffense.AttackInterval(
+        CharacterSpec.Active.SwingInterval(Equipment != null ? Equipment.WeaponType : WeaponType.None),
         attackSpeedMult > 0f ? attackSpeedMult : (MobStates != null ? MobStates.AttackSpeedBuffMult : 1f));
 
     /// <summary>Our swing speed, stamped by <see cref="UnitStatBlock"/> through the player's own formula — AGI, DEX, worn
@@ -377,11 +378,25 @@ public class MonsterAI3D : MonoBehaviour
     }
     // A swing still on its way in dies with the life that began it — a body switched off for death or the pool must not
     // land it when it comes back.
-    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; offSwingAt = null; }
+    void OnDisable() { Active.Remove(this); Unfile(); swingAt = null; offSwingAt = null; ownMoveSpeed = -1f; }
+
+    // ITS OWN MOVEMENT SPEED, from its catalog entry, asked once per life: a body is used again for the next life, and
+    // the entry may have been edited in between. A creature with no entry (a hand-placed one) travels at the shared pace.
+    float ownMoveSpeed = -1f;
+    float OwnMoveSpeed
+    {
+        get
+        {
+            if (ownMoveSpeed >= 0f) return ownMoveSpeed;
+            if (Health == null || string.IsNullOrEmpty(Health.creatureId)) return 1f;
+            var file = MonsterCatalog.ById(Health.creatureId);
+            return ownMoveSpeed = file != null ? file.moveSpeed : 1f;
+        }
+    }
 
     void Start()
     {
-        agent.moveSpeed = CharacterSpec.Active.WalkGearSpeed;
+        agent.moveSpeed = UnitStatMath.CreatureTravelSpeed(CharacterSpec.Active.WalkGearSpeed, OwnMoveSpeed, 1f);
 
         // NOBODY IS PICKED HERE, on purpose. This used to look the world over for "the" player and hold whatever it
         // found for life — which on a server is nothing, because a server has no avatar of its own, so every creature
@@ -574,10 +589,10 @@ public class MonsterAI3D : MonoBehaviour
 
         // Move-speed states (Slow × Haste) come from the unified store's MoveMult — the SINGLE source, same as the
         // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. Every creature travels on the
-        // character gears a person does — chasing on the run gear, wandering on the walk gear — so its speed is the
-        // shared one, never a number typed onto it, and its size does not change it.
+        // character gears a person does — chasing on the run gear, wandering on the walk gear — times its own
+        // movement speed from its catalog entry. Its size does not change it.
         float travel = chasing ? CharacterSpec.Active.RunGearSpeed : CharacterSpec.Active.WalkGearSpeed;
-        agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * travel;
+        agent.moveSpeed = UnitStatMath.CreatureTravelSpeed(travel, OwnMoveSpeed, Health != null ? Health.States.MoveMult : 1f);
 
         Vector3 pos = transform.position;
         if (FollowLeader(pos)) return;
@@ -711,6 +726,14 @@ public class MonsterAI3D : MonoBehaviour
         // which is why this sits BELOW the touch attack and only skips the steering. Same rule the player plays by, so
         // chaining hits on a mob keeps it off you exactly as a pack keeps you pinned.
         if (status != null && status.MovementFlinched) { agent.Halt(); return; }
+
+        // A CREATURE THAT NEVER MOVES stands where it was put: it asks for no route, and turns to whoever it fights.
+        if (OwnMoveSpeed <= 0f)
+        {
+            agent.Halt();
+            if (chasing && player != null) FaceToward(player.position - pos); else FaceNothing();
+            return;
+        }
 
         if (chasing)
         {

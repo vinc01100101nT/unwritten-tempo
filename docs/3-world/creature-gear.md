@@ -32,7 +32,8 @@ tags:
 - **Its armour follows what the creature is**: metal for shell, scale, horn, bone or bark; leather for hide, fur, feather or a fast body; cloth for soft, plant, flame or spirit.
 - **Its weapon is the weapon of a town it lives around** — any town that holds a fifth or more of it. Where it has a
   choice it takes the weapon fewest creatures hold, so the weapons spread across the roster. A weapon decides how a
-  creature attacks and which skills it can roll.
+  creature attacks and which skills it can roll. Shootling holds the Sniper instead of Harrowen's Axe (decided
+  2026-10-14): it never moves, so it shoots from where it stands.
 - **Every weapon is held by a normal creature, by an elite and by one shadow**, so each of the fourteen has a wielder
   of every kind. Toadmaw holds the Shuriken instead of Kharnel's Scythe, because the town rule alone left no elite
   with one. Each shadow holds the weapon it stands for ([Mob Roster](mob-roster.md)).
@@ -75,9 +76,9 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 | Creature | Level | Lives around | Weapon | Armour | Grade and folds | Build | STR / AGI / VIT / INT / DEX / LUK | Pays |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plopling | 1 | Lastline | Sword | Cloth | Raw +4 | Duelist | 7 / 7 / 5 / 3 / 5 / 3 | ×1.20 |
-| Flutterby | 2 | Lastline | Sword | Leather | F +8 | Duelist | 8 / 7 / 5 / 3 / 5 / 3 | ×1.75 |
+| Flutterby | 2 | Lastline | Sword | Leather | Raw +3 | Duelist | 8 / 7 / 5 / 3 / 5 / 3 | ×1.15 |
 | Squeak | 3 | Lastline | Sword | Leather | Raw +4 | Duelist | 8 / 8 / 6 / 3 / 5 / 3 | ×1.20 |
-| Crawlet | 4 | Lastline | Sword | Metal | F +8 | Duelist | 8 / 8 / 6 / 3 / 6 / 3 | ×1.75 |
+| Crawlet | 4 | Lastline | Sword | Metal | Raw +3 | Duelist | 8 / 8 / 6 / 3 / 6 / 3 | ×1.15 |
 | Capling | 5 | Old Oak | Sword | Cloth | Raw +5 | Duelist | 8 / 8 / 6 / 4 / 6 / 4 | ×1.25 |
 | Hisser | 6 | Lastline | Sword | Leather | Raw +4 | Duelist | 9 / 9 / 6 / 4 / 6 / 4 | ×1.20 |
 | Blinkbat | 8 | Gemmara | Warhammer | Leather | E +11 | Breaker | 10 / 4 / 12 / 4 / 7 / 4 | ×2.33 |
@@ -86,7 +87,7 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 | Hootie | 13 | Gemmara | Warhammer | Leather | Raw +4 | Breaker | 12 / 5 / 15 / 5 / 9 / 5 | ×1.20 |
 | Rascal | 14 | Lastline | Sword | Leather | Raw +1 | Duelist | 13 / 13 / 9 / 5 / 9 / 5 | ×1.05 |
 | Kappi | 15 | Pluvenne | Spear | Metal | F +9 | Lancer | 13 / 6 / 13 / 5 / 13 / 5 | ×1.81 |
-| Shootling | 16 | Harrowen | Axe | Cloth | Raw +4 | Berserker | 17 / 13 / 6 / 6 / 6 / 10 | ×1.20 |
+| Shootling | 16 | Harrowen | Sniper | Cloth | Raw +4 | Marksman | 6 / 6 / 6 / 17 / 13 / 10 | ×1.20 |
 | Gillie | 17 | Pluvenne | Spear | Leather | Raw +5 | Lancer | 14 / 6 / 14 / 6 / 14 / 6 | ×1.25 |
 | Shellby | 18 | Pluvenne | Spear | Metal | Raw +5 | Lancer | 15 / 6 / 15 / 6 / 14 / 6 | ×1.25 |
 | Webber | 19 | Gemmara | Warhammer | Leather | C +20 | Breaker | 15 / 7 / 19 / 6 / 11 / 6 | ×4.00 |

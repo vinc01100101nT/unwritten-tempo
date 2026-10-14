@@ -26,7 +26,7 @@ public partial class Player3DController : MonoBehaviour
     // TRAVEL and the gear fractions come from the shared CharacterSpec, so the player, the townsfolk and the shadow
     // mobs cannot disagree about how fast a character travels. The legs follow that speed over the ground.
     /// <summary>The player's CURRENT full (sprint) speed in world units/sec — the shared movement speed scaled by
-    /// <see cref="UnitScale.ForPlayer"/> and the live movement-speed sub-stat (shoes, Slow, Haste), but NOT the gear.
+    /// <see cref="UnitScale.ForPlayer"/> and the live movement-speed sub-stat (Slow, Haste), but NOT the gear.
     /// The dodge roll (E) reads this so it's always exactly 2× the current full speed.</summary>
     public float CurrentRunSpeed => RawRunSpeed * (status != null ? status.MoveMult : 1f);
     /// <summary>Full speed WITHOUT the movement gate (<see cref="StatusController.MoveMult"/> drops to 0 under an
@@ -34,7 +34,7 @@ public partial class Player3DController : MonoBehaviour
     /// release-animation lock can't zero it — the glide is a fixed A→B move, not gated locomotion.</summary>
     public float RawRunSpeed => CharacterSpec.Active.FullSpeed;
     /// <summary>Speed fraction while holding Shift to walk — the shared walk gear.</summary>
-    public float walkSpeedMult => CharacterSpec.Active.walkGearMult;
+    public float walkSpeedMult => CharacterSpec.Active.WalkShareOfFull;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
@@ -42,7 +42,7 @@ public partial class Player3DController : MonoBehaviour
     // ── Sprint (V) + stamina ──────────────────────────────────────────────────
     /// <summary>Run gear as a fraction of Sprint. The shared run gear;
     /// Sprint (V) is the full-speed run on top of it.</summary>
-    public float runSpeedMult => CharacterSpec.Active.runGearMult;
+    public float runSpeedMult => CharacterSpec.Active.RunShareOfFull;
     [Tooltip("Stamina drained per second while V-sprinting.")]
     public float sprintDrainPerSec = 25f;
     [Tooltip("Stamina recharged per second while standing idle (fast).")]

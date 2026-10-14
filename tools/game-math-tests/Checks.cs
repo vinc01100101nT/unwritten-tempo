@@ -281,14 +281,14 @@ static class Checks
         That(Math.Abs(Elements.Warded(1.5f, 0.1f) - 1.35f) < 0.001f, ElementF, "a 10% ward on 150% should leave 135%");
         That(Elements.Warded(0f, 0.5f) == 0f && Elements.Warded(-0.5f, 0.5f) == -0.5f, ElementF,
              "a ward must never change an immune or a healing answer");
-        // A worn word, and the movement speed worn shoes' folds bought, land in the sub-stat table in that stat's own units.
+        // A worn word lands in the sub-stat table in that stat's own units, and worn shoes buy no movement speed.
         var table = new float[SubStats.All.Length];
         var eb = default(EquipBonuses);
         CraftingMath.AddPiece(CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 5, Quality.Raw, Rarity.Common),
                               null, null, ref eb);
         ArmourWords.AddWord(ArmourWord.Wellspring, 2.5f, ref eb);
         ArmourWords.FoldIntoSubStats(eb, table);
-        That(Math.Abs(table[(int)SubStat.MovementSpeed] - 0.1f) < 0.0001f, WordsF, "+5 shoes should be +0.10 movement speed");
+        That(table[(int)SubStat.MovementSpeed] == 0f, WordsF, "+5 shoes should buy no movement speed");
         That(Math.Abs(table[(int)SubStat.MPRegen] - 2.5f) < 0.0001f, WordsF, "Wellspring 2.5 should be +2.5 MP a second");
         // Block chance — only a skill grants it — never makes a wall.
         That(Math.Abs(Combat.BlockChance(0.13f) - 0.13f) < 0.001f, CombatF, "a 13% block chance should stay 13%");
@@ -690,13 +690,14 @@ static class Checks
         // A value exactly on .5 rounds UP: an A +25 weapon is 25 × 1.8 × 1.3 = 58.5, which floats summed to 58.
         int a25 = CraftingMath.PieceNumbers(EquipSlotType.Weapon, WeaponType.Sword, MaterialKind.Metal, 25, Quality.A, Rarity.Common).attack;
         That(a25 == 59, CraftF, "an A +25 weapon is 58.5 attack and should round up to 59, got " + a25);
-        That(Math.Abs(shoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
-             "shoes at A +35 should be +70% movement speed — 2% a fold, no grade lift — got " + shoes.moveSpeedPercent);
-        var rawShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Leather, 5, Quality.Raw, Rarity.Common);
-        That(Math.Abs(rawShoes.moveSpeedPercent - 10f) < 0.001f, CraftF,
-             "Raw +5 shoes should be +10% movement speed, got " + rawShoes.moveSpeedPercent);
-        That(metal.moveSpeedPercent == 0f && CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.Metal, 5,
-             Quality.Raw, Rarity.Common).moveSpeedPercent == 0f, CraftF, "only shoes may buy movement speed with a fold");
+        // A creature's travel speed: its gear, times its own movement speed held inside 0 to 2, times its live effects.
+        That(Math.Abs(UnitStatMath.CreatureTravelSpeed(1f, 1.5f, 1f) - 1.5f) < 0.0001f
+             && Math.Abs(UnitStatMath.CreatureTravelSpeed(0.4f, 1.5f, 0.5f) - 0.3f) < 0.0001f, StatMath,
+             "a creature at 1.5 should run at 1.5 and walk half-slowed at 0.3");
+        That(UnitStatMath.CreatureTravelSpeed(1f, 0f, 1f) == 0f && UnitStatMath.CreatureTravelSpeed(1f, 0f, 3f) == 0f, StatMath,
+             "a creature at 0 never moves, whatever speeds it up");
+        That(Math.Abs(UnitStatMath.CreatureTravelSpeed(1f, 5f, 1f) - 2f) < 0.0001f && UnitStatMath.CreatureTravelSpeed(1f, -1f, 1f) == 0f, StatMath,
+             "a creature's own movement speed is held inside 0 to 2");
         var bare = CraftingMath.PieceNumbers(EquipSlotType.Head, WeaponType.None, MaterialKind.None, 35, Quality.A, Rarity.Common);
         That(bare.defense == 0 && bare.hp == 0 && bare.mp == 0, CraftF, "armour with no material should fold into nothing");
 
@@ -715,10 +716,6 @@ static class Checks
                 That(CraftingMath.LiftHundredths(grade, rarities[r]) == want, CraftF,
                      "a " + rarities[r] + " " + grade + " piece is lifted to " + CraftingMath.LiftHundredths(grade, rarities[r]) + ", not " + want);
             }
-            // Shoes' movement speed is 2% a fold whatever the rarity.
-            var rareShoes = CraftingMath.PieceNumbers(EquipSlotType.Boots, WeaponType.None, MaterialKind.Metal, 35, Quality.A, rarities[r]);
-            That(Math.Abs(rareShoes.moveSpeedPercent - 70f) < 0.001f, CraftF,
-                 rarities[r] + " shoes at A +35 should still be +70% movement speed, got " + rareShoes.moveSpeedPercent);
         }
         That(CraftingMath.LiftHundredths(Quality.Raw, Rarity.Common) == 100 && CraftingMath.LiftHundredths(Quality.A, Rarity.Common) == 130,
              CraftF, "a Common piece should be lifted to 100 at Raw and 130 at A");

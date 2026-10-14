@@ -47,7 +47,7 @@ public class EquipmentInstance
     // made, folded or quenched (Recompute). A player's machine never works these out — it adds what it was sent.
     [Tooltip("Finished numbers this copy's folds, grade and rarity grant (server-written): attack or magic attack on a weapon; " +
              "on armour, what its material buys — defence and HP (metal), attack speed and evasion (leather), magic " +
-             "defence and MP (cloth) — and on shoes, movement speed as well.")]
+             "defence and MP (cloth).")]
     public CraftingMath.PieceStats piece;
 
     [Tooltip("The id of this copy's TRADEMARK skill, rolled once when the copy is made and never changed. Empty = none. Its " +
@@ -249,8 +249,7 @@ public class EquipmentInstance
           .Append(piece.attack.ToString(ci)).Append(',').Append(piece.magicAttack.ToString(ci)).Append(',')
           .Append(piece.defense.ToString(ci)).Append(',').Append(piece.magicDefense.ToString(ci)).Append(',')
           .Append(piece.hp.ToString(ci)).Append(',').Append(piece.mp.ToString(ci)).Append(',')
-          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(',')
-          .Append(piece.moveSpeedPercent.ToString("0.#", ci)).Append(';');
+          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(';');
         for (int i = 0; i < inkStats.Count; i++)
         {
             if (i > 0) sb.Append(',');
@@ -302,9 +301,9 @@ public class EquipmentInstance
             // no such part; the server works them out again below, and nothing else ever does.
             if (parts.Length > 1)
             {
-                // Four numbers from a save written before armour's material decided its folds; eight before shoes'
-                // folds bought movement speed; nine since. The server works a piece's numbers out again on load
-                // either way (RecomputeIfMine, below).
+                // Four numbers from a save written before armour's material decided its folds; eight since. A save
+                // from the days shoes bought movement speed carries a ninth, which nothing reads. The server works a
+                // piece's numbers out again on load either way (RecomputeIfMine, below).
                 var nums = parts[1].Split(',');
                 if (nums.Length == 4 || nums.Length >= 8)
                 {
@@ -320,8 +319,6 @@ public class EquipmentInstance
                     int.TryParse(nums[6], ints, ci, out piece.evasion);
                     float.TryParse(nums[7], System.Globalization.NumberStyles.Float, ci, out piece.attackSpeedPercent);
                 }
-                if (nums.Length >= 9)
-                    float.TryParse(nums[8], System.Globalization.NumberStyles.Float, ci, out piece.moveSpeedPercent);
             }
 
             if (parts.Length > 2 && !string.IsNullOrEmpty(parts[2]))
@@ -436,9 +433,6 @@ public struct EquipBonuses
     /// into the same sub-stat table a timed buff moves — so every reader of those stats gets worn words for free.</summary>
     public float wordCritShieldPercent, wordDisableCutPercent, wordMPRegen, wordDamageCutPercent, wordLifeStealPercent,
                  wordDamagePercent, wordStaminaCutPercent, wordShoveCutPercent, wordHPRegen;
-    /// <summary>Whole-percent movement speed the worn shoes' folds bought (see <see cref="CraftingMath.PieceNumbers"/>),
-    /// read through the same sub-stat table as the words above.</summary>
-    public float moveSpeedPercent;
     /// <summary>Whole-percent cut to damage of one element, from a garment's ward word.</summary>
     public float wardFirePercent, wardWaterPercent, wardEarthPercent, wardWindPercent;
 

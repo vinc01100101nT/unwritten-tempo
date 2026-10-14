@@ -82,11 +82,11 @@ The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's o
 
 ### Mobs never drop what they wear
 
-**A creature gives up NOTHING it wears.** Since V4 gear is made, not taken off a corpse: a kill pays materials and consumables, and the creature's own gear dies with it (no death pays gold — see [Saved Characters](../../3-world/saved-characters.md)). Its loot table carries those; each kill also has a 30% chance of one random item that is not equipment. Everything lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
+**A creature keeps what it wears, and 1 kill in 10 drops a copy of one piece.** Nothing is taken off the creature: on 10% of kills a new copy of one random piece it wears falls — Raw, unfolded, at a rarity its kind decides ([V4 §1](../gameplay-system-v4/README.md)). A kill also pays materials and consumables (no death pays gold — see [Saved Characters](../../3-world/saved-characters.md)). Its loot table carries those; each kill also has a chance of the creature's own find, a food or an element converter ([Town Supplies and Hunting Finds](../town-supplies-and-hunting-finds.md)). Everything lands on the ground where it fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)). What it wears still shows on the hover and target panel — its grade and folds beside each piece — because what a creature is holding is what its mastery works with.
 
 ### What state a mob's gear is in
 
-A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, the same station rolls a forge uses. Which stats the Ink lands on, a weapon's trademark and an armour piece's word (at every grade, Raw included), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
+A creature wears exactly the pieces authored on its catalog entry and nothing else; an empty slot stays empty. The same entry carries three settings every one of those pieces comes to life at — `gearQuality` (the grade), `gearFolds` (clamped to the grade's cap) and `gearInkTier` (1 Watery to 5 Sharp) — built through `EquipmentInstance.CreateAt`, rolling each stat exactly as a station rolls one. Which stats the Ink lands on, a weapon's trademark and an armour piece's word (at every grade, Raw included), are re-rolled every life. No creature kind overrides them. The starting values per level are in [Mob Roster](../../3-world/mob-roster.md) (Gear state). The server decides it; a watching machine is told what each creature wears.
 
 ### There is no such thing as mob-only gear
 
@@ -107,7 +107,7 @@ With tier and the throttle gone there is no single number to turn when playtesti
 
 Only behaviour and inputs: level, the six primaries, worn gear and its state, ring ranks, weapon mastery, `aggroRadius`, `leashRadius`, wander knobs, `preferredRange`, `fleeHpFraction`, element, on-hit ailment, loot, sheet/tint/size.
 
-**No sub-stat is ever typed onto a unit** — not on a creature, not on the player. Movement speed, bare-handed reach and the base swing interval are one shared value each on `CharacterSpec`, read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear exactly as a person moves, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `swingInterval` (0.6 s) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
+**No sub-stat is typed onto a unit, with one exception: a creature's own movement speed** (decided 2026-10-14) — a number from 0 to 2 on its catalog entry, set in the Mob Table, that multiplies the shared pace; 1 is a person's pace and 0 never moves. Everything else is shared: the movement pace and bare-handed reach are one value each on `CharacterSpec`, and the base swing interval is one value per weapon there, read by players and creatures alike: a creature chases on the run gear and wanders on the walk gear, each times its own movement speed, reaches `unarmedReach` (0.5) bare-handed or its weapon's `attackRange`, and swings every `SwingInterval(weapon)` (1 s bare-handed) before attack speed. The combat numbers on a creature's body (`Health`, `MonsterAI3D`) are written only by `UnitStatBlock` and are never saved.
 
 ## Migration — reset to a level template
 
@@ -181,9 +181,9 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 
 | Stat | Where it comes from |
 | --- | --- |
-| Movement speed | `CharacterSpec` gear speeds (sprint 2.4, run gear 1.2, walk gear 0.48 world units/s — one movement speed, no gait term), the same for every person and creature, × `UnitStates.MoveMult` — which carries timed movement-speed effects and worn shoes' folds (+2% a fold) |
+| Movement speed | `CharacterSpec` gear speeds — the run gear is the base at 1 world unit/s, the walk gear 0.4 of it and the sprint gear 2 times it (one movement speed, no gait term) — × `UnitStates.MoveMult`, which carries timed movement-speed effects only; no gear gives movement speed. A creature also multiplies by its own movement speed, 0 to 2 (`MonsterDef.moveSpeed`, through `UnitStatMath.CreatureTravelSpeed`) |
 | Attack reach | `CharacterSpec.unarmedReach` (0.5) bare-handed, or the held weapon's `attackRange`; blended by the pair's body sizes |
-| Base swing interval | `CharacterSpec.swingInterval` (0.6 s) for every unit, divided by attack speed |
+| Base swing interval | `CharacterSpec.SwingInterval(weapon)` for every unit, divided by attack speed — 1 s bare-handed and each weapon its own: Dagger and Fist 0.8 s, Katar 0.85 s, Shuriken 0.9 s, Sword and Wand 1 s, Axe, Spear and Bow 1.1 s, Staff 1.2 s, Scythe 1.25 s, Warhammer and Greatsword 1.3 s, Sniper 1.4 s |
 | Mana leech | 0; a timed sub-stat change only |
 | Life steal | worn words + a timed LifeSteal change; nothing typed |
 | Damage reflect | worn words + a timed Reflect change; nothing typed |
