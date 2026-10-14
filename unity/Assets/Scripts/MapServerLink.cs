@@ -60,7 +60,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v26";
+    public const string CharacterBuild = "unwritten-character-v27";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";

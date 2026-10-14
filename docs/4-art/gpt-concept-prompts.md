@@ -137,27 +137,26 @@ Generate **Tier 1 first**, eyeball all three together in Unity as a set — conf
 1. **One-hand sword** *(WeaponType.Sword)* — a knightly arming sword, broad straight double-edged blade with a wide central fuller, a chunky straight crossguard, leather-wrapped grip, round steel pommel. The Swordsman baseline — clean, heroic, balanced.
 2. **Two-hand greatsword** *(TwoHandSword)* — a massive zweihänder, wide heavy blade with a long ricasso, big swept crossguard, a long two-hand leather grip, heavy counterweight pommel. Slow, monumental bruiser silhouette.
 3. **One-hand axe** *(Axe)* — a stout bearded hand-axe, thick single crescent steel head with iron banding, chunky short wooden haft, leather grip wrap. Reckless berserker feel.
-4. **Two-hand battle-axe** *(TwoHandAxe)* — a huge double-bitted battle-axe, two broad crescent blades, a thick reinforced haft with iron langets and an end spike. Anti-large cleaver.
-5. **Mace** *(Mace)* — a heavy flanged mace, chunky faceted steel head, short stout haft, warm gold/bronze accents for a holy read. Blunt stagger/CC weapon.
-6. **Spear / halberd** *(Spear)* — a stout polearm, a broad leaf-shaped spearhead **with real width and thickness**, a thick wooden shaft bound in iron langets, optionally a small side axe-blade for a halberd read. Reach controller — keep the shaft stout, never a stick.
+4. **Mace** *(Mace)* — a heavy flanged mace, chunky faceted steel head, short stout haft, warm gold/bronze accents for a holy read. Blunt stagger/CC weapon.
+5. **Spear / halberd** *(Spear)* — a stout polearm, a broad leaf-shaped spearhead **with real width and thickness**, a thick wooden shaft bound in iron langets, optionally a small side axe-blade for a halberd read. Reach controller — keep the shaft stout, never a stick.
 
 ### :dagger: Finesse — crit, lean but not thin (scales off Atk-crit)
 
-7. **Dagger** *(Dagger)* — a fantasy assassin's dagger, a broad tapering blade with clear edge thickness, a small chunky guard, tightly wrapped grip, jeweled pommel. Poison/bleed knife.
-8. **Katar** *(Katar)* — a punch-dagger, a wide triangular blade riding over an H-frame handle held crosswise in the fist, all chunky steel. Crit assassin's fist-blade.
-9. **Bow** *(Bow)* — a recurve hunter's bow, thick carved wooden limbs curving to reinforced tips, a leather-wrapped central grip, subtle rune inlay. **Stringless / string painted on** — thick limbs carry the silhouette.
-10. **Sniper** *(Firearm)* — a long fantasy sniper rifle, a thick carved wooden stock, a long stout iron barrel, a chunky brass scope fused solid to the barrel, brass fittings. One-shot marksman's weapon. No thin ramrod, scope struts or wire trigger.
+6. **Dagger** *(Dagger)* — a fantasy assassin's dagger, a broad tapering blade with clear edge thickness, a small chunky guard, tightly wrapped grip, jeweled pommel. Poison/bleed knife.
+7. **Katar** *(Katar)* — a punch-dagger, a wide triangular blade riding over an H-frame handle held crosswise in the fist, all chunky steel. Crit assassin's fist-blade.
+8. **Bow** *(Bow)* — a recurve hunter's bow, thick carved wooden limbs curving to reinforced tips, a leather-wrapped central grip, subtle rune inlay. **Stringless / string painted on** — thick limbs carry the silhouette.
+9. **Sniper** *(Firearm)* — a long fantasy sniper rifle, a thick carved wooden stock, a long stout iron barrel, a chunky brass scope fused solid to the barrel, brass fittings. One-shot marksman's weapon. No thin ramrod, scope struts or wire trigger.
 
 ### :crystal_ball: Arcane — magic, wood + crystal (scales off MAtk / MP)
 
-11. **Caster staff** *(Staff)* — a tall wizard's staff, a stout gnarled wooden shaft (thick, not a stick), a chunky faceted crystal or orb cradled in carved wooden claws at the top, iron banding. The MAtk nuker's focus.
-12. **Support wand** *(Wand)* — a short one-hand focus wand, a thick carved wooden handle, a glowing gem head set in a chunky metal cradle, soft warm light. The healer's tool — cozy, not menacing.
-13. **Scythe** *(Scythe)* — a fantasy reaping scythe, a broad curved blade **with real thickness**, a stout wooden snaith bound in iron braces, a subtle sickly-green rune glow. The curse/DoT necromancer weapon.
-14. **Shuriken** *(Shuriken)* — a large many-bladed throwing star, four to six broad leaf-shaped steel blades **with real thickness** around a chunky central hub with a leather-wrapped grip ring, so it can be held to slash or thrown. Autumn-leaf etching on the blades. One solid connected object.
+10. **Caster staff** *(Staff)* — a tall wizard's staff, a stout gnarled wooden shaft (thick, not a stick), a chunky faceted crystal or orb cradled in carved wooden claws at the top, iron banding. The MAtk nuker's focus.
+11. **Support wand** *(Wand)* — a short one-hand focus wand, a thick carved wooden handle, a glowing gem head set in a chunky metal cradle, soft warm light. The healer's tool — cozy, not menacing.
+12. **Scythe** *(Scythe)* — a fantasy reaping scythe, a broad curved blade **with real thickness**, a stout wooden snaith bound in iron braces, a subtle sickly-green rune glow. The curse/DoT necromancer weapon.
+13. **Shuriken** *(Shuriken)* — a large many-bladed throwing star, four to six broad leaf-shaped steel blades **with real thickness** around a chunky central hub with a leather-wrapped grip ring, so it can be held to slash or thrown. Autumn-leaf etching on the blades. One solid connected object.
 
 ## Weapon-type mapping (keep the art honest)
 
-Concept art is decoupled from code, but only some of these are wieldable **today**. Real `WeaponType` members: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm, Wand, Scythe, Shuriken**.
+Concept art is decoupled from code, but only some of these are wieldable **today**. Real `WeaponType` members: **Sword, TwoHandSword, Dagger, Axe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm, Wand, Scythe, Shuriken**.
 
 - **Wand** and **Scythe** have their own types and their own attack animations.
 - **Shuriken** has its own type and two attack animations: a swing and a throw.

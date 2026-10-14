@@ -92,7 +92,9 @@ public static class CreatureLoot
     {
         new Line(MaterialKind.Ink,     1, 0.04f, 1, 1),   // Watery
         new Line(MaterialKind.Ink,     2, 0.01f, 1, 1),   // Thin
-        new Line(MaterialKind.Salt,    1, 0.02f, 1, 1),   // Coarse
+        new Line(MaterialKind.Salt,    1, 0.10f, 1, 1),   // Coarse
+        new Line(MaterialKind.Salt,    2, 0.005f, 1, 1),  // Fine
+        new Line(MaterialKind.Salt,    3, 0.001f, 1, 1),  // Pure
     };
 
     static readonly Line[] EliteLines =

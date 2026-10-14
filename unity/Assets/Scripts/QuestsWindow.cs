@@ -238,6 +238,8 @@ public class QuestsWindow : MonoBehaviour
             if (me == null) return;
             if (playing) me.AskToTrackQuest(""); else me.AskToPlayTutorial(questId);
         });
+        // Play says yes to a tutorial: it is marked as the affirming button. Stop is not.
+        if (!playing) UiKit.MarkPrimary(button);
         var rt = (RectTransform)button.transform;
         rt.anchorMin = new Vector2(1f, 0f); rt.anchorMax = new Vector2(1f, 1f); rt.pivot = new Vector2(1f, 0.5f);
         rt.sizeDelta = new Vector2(PlayWidth - 4f, 0f);

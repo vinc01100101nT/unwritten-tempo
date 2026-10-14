@@ -79,7 +79,7 @@ public class CharacterSelectScreen : MonoBehaviour
         status.color = UiKit.TitleText;
         FrontScreen.Row(status.rectTransform, -462, 18);
 
-        enterButton = UiKit.Btn("Enter World", panel, OnEnter);
+        enterButton = UiKit.PrimaryBtn("Enter World", panel, OnEnter);
         FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-267, -500), new Vector2(150, 34));
 
         var newButton = UiKit.Btn("New", panel, OpenCreate);
@@ -270,7 +270,7 @@ public class CharacterSelectScreen : MonoBehaviour
         createStatus = UiKit.Label("Status", inner, "", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         createStatus.color = UiKit.TitleText;
         FrontScreen.Row(createStatus.rectTransform, -514, 18, 20, 340);
-        var create = UiKit.Btn("Create", inner, OnCreate);
+        var create = UiKit.PrimaryBtn("Create", inner, OnCreate);
         FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(213, -506), new Vector2(140, 34));
         var cancel = UiKit.Btn("Cancel", inner, CloseCreate);
         FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(365, -506), new Vector2(140, 34));

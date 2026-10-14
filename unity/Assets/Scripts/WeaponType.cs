@@ -19,7 +19,6 @@ public enum WeaponType
     TwoHandSword = 2,   // heavy two-hander, anti-Large
     Dagger = 3,         // fast, low per-hit, shines vs Small / swarms
     Axe = 4,            // one-handed axe
-    TwoHandAxe = 5,     // slow, huge, anti-Large
     Mace = 6,           // blunt / holy flavor
     Spear = 7,          // reach / anti-Large
     Staff = 8,          // the magic vector (MATK / Element)
@@ -162,7 +161,7 @@ public static class WeaponSizes
         /* TwoHandSword */        { 0.75f, 0.75f, 1.00f },
         /* Dagger       */        { 1.00f, 0.75f, 0.50f },
         /* Axe          */        { 0.50f, 0.75f, 1.00f },
-        /* TwoHandAxe   */        { 0.50f, 0.75f, 1.00f },
+        /* 5, no weapon */        { 1.00f, 1.00f, 1.00f },
         /* Mace         */        { 0.75f, 1.00f, 1.00f },
         /* Spear        */        { 0.75f, 0.75f, 1.00f },
         /* Staff        */        { 1.00f, 1.00f, 1.00f },

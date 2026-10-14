@@ -29,7 +29,7 @@ public class EquipmentInstance
         copyId = System.Guid.NewGuid().ToString("N");
     }
     [Tooltip("How many times this copy has been FOLDED (+N). A fold is the piece's one unit of work: it raises the " +
-             "piece's own attack or defence, and a quench spends every fold it has.")]
+             "piece's own attack or defence. A fold from +4 can fail; a quench is allowed only at +10.")]
     public int upgrade;
     [Tooltip("Inserted cards (length <= def.cardSlots).")]
     public List<Card> cards = new List<Card>();
@@ -62,8 +62,15 @@ public class EquipmentInstance
     public float wordAmount;
 
     [Tooltip("How rare this copy is. The server decides it once, when the copy is made, and it never changes: a piece a " +
-             "creature drops rolls it by the creature's kind, every other piece is Common. It lifts what the folds are worth.")]
+             "creature drops rolls it by the creature's kind, every other piece is Common. It multiplies the piece's base.")]
     public Rarity rarity = Rarity.Common;
+
+    [Tooltip("What this copy's base rolled, in whole percent (85 to 115), when a creature dropped it — rolled once and " +
+             "never changed. 0 = never rolled: what a creature wears, a starter, shop, reward or GM piece, counted as 100.")]
+    public int basePercent;
+    [Tooltip("Finished numbers of this copy's base alone — base × roll, before rarity, folds and quenches " +
+             "(server-written): what the tooltip's Base line shows.")]
+    public CraftingMath.PieceStats baseStats;
 
     public EquipmentInstance() { }
     public EquipmentInstance(Item def, int upgrade = 0)
@@ -126,12 +133,13 @@ public class EquipmentInstance
     public static EquipmentInstance CreateStarter(Item def) => new EquipmentInstance(def);
 
     /// <summary>THE PIECE A KILL DROPS: a fresh copy of <paramref name="def"/> exactly as <see cref="CreateFresh"/>
-    /// makes one — Raw, unfolded, its own trademark or word rolled — at <paramref name="rarity"/>, the one thing a
-    /// dropped piece rolls that no other piece does. Server only.</summary>
+    /// makes one — Raw, unfolded, its own trademark or word rolled — at <paramref name="rarity"/>, with its base rolled
+    /// from 85% to 115%: the two things a dropped piece rolls that no other piece does. Server only.</summary>
     public static EquipmentInstance CreateDropped(Item def, Rarity rarity)
     {
         var made = CreateFresh(def);
         made.rarity = rarity;
+        made.basePercent = CombatRng.Range(CraftingMath.RollMin, CraftingMath.RollMax + 1); // server-math: a drop is made on the server only (LootDropper)
         made.Recompute();
         return made;
     }
@@ -172,8 +180,32 @@ public class EquipmentInstance
     public void Recompute()
     {
         trademarkLift = string.IsNullOrEmpty(trademarkSkillId) ? 0f : CraftingMath.TrademarkLift(quality);
-        piece = def == null ? default : CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, upgrade, quality, rarity);
+        if (def == null) { piece = default; baseStats = default; }
+        else
+        {
+            piece = NumbersAt(upgrade, quality);
+            Swing(def.weaponType, out int ms, out int offHand);
+            baseStats = CraftingMath.BaseNumbers(def.slot, def.weaponType, def.madeOf, basePercent, ms, offHand);
+        }
         wordAmount = word == ArmourWord.None ? 0f : ArmourWords.Amount(word, quality);
+    }
+
+    /// <summary>What this copy would be worth at <paramref name="folds"/> folds of grade <paramref name="q"/> — its own
+    /// base, roll and rarity kept. The one function both its own numbers and a station's "after this press" preview read.
+    /// Server and editor only, like <see cref="Recompute"/>.</summary>
+    public CraftingMath.PieceStats NumbersAt(int folds, Quality q)
+    {
+        if (def == null) return default;
+        Swing(def.weaponType, out int ms, out int offHand);
+        return CraftingMath.PieceNumbers(def.slot, def.weaponType, def.madeOf, folds, q, rarity, basePercent, ms, offHand);
+    }
+
+    // A weapon's swing time and its off hand's power, as the whole thousandths a piece's worth is worked out from.
+    static void Swing(WeaponType weapon, out int ms, out int offHand)
+    {
+        var spec = CharacterSpec.Active;
+        ms = spec != null ? CraftingMath.Thousandths(spec.SwingInterval(weapon)) : 0;
+        offHand = spec != null ? CraftingMath.Thousandths(spec.offHandPower) : 0;
     }
 
     /// <summary>Roll this ARMOUR copy's word — every word of its slot equally likely, through the one random source.
@@ -234,9 +266,9 @@ public class EquipmentInstance
     }
 
     /// <summary>This copy's grade, THE FINISHED NUMBERS the server worked out for it, its written stats, its
-    /// trademark, its word and its rarity, joined for the save and the wire — always six parts, a missing trademark or
-    /// word written as empty text so every part keeps its place:
-    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed,movement speed;stat:value,stat:value;trademark skill id:finished lift;word:finished amount;rarity".
+    /// trademark, its word, its rarity and its base, joined for the save and the wire — always seven parts, a missing
+    /// trademark or word written as empty text so every part keeps its place:
+    /// "grade;attack,magic attack,defence,magic defence,HP,MP,evasion,attack speed;stat:value,stat:value;trademark skill id:finished lift;word:finished amount;rarity;base roll:base attack,…,base attack speed".
     /// Paired with <see cref="DecodeRoll"/>. Kept in the same slot the armour roll used, so the save and the wire
     /// need no new array — and carrying the finished numbers here is what lets a player's machine draw them
     /// without working any of them out.</summary>
@@ -245,11 +277,9 @@ public class EquipmentInstance
         EnsureInkLists();
         var ci = System.Globalization.CultureInfo.InvariantCulture;
         var sb = new System.Text.StringBuilder();
-        sb.Append(((int)quality).ToString(ci)).Append(';')
-          .Append(piece.attack.ToString(ci)).Append(',').Append(piece.magicAttack.ToString(ci)).Append(',')
-          .Append(piece.defense.ToString(ci)).Append(',').Append(piece.magicDefense.ToString(ci)).Append(',')
-          .Append(piece.hp.ToString(ci)).Append(',').Append(piece.mp.ToString(ci)).Append(',')
-          .Append(piece.evasion.ToString(ci)).Append(',').Append(piece.attackSpeedPercent.ToString("0.#", ci)).Append(';');
+        sb.Append(((int)quality).ToString(ci)).Append(';');
+        AppendNumbers(sb, piece, ci);
+        sb.Append(';');
         for (int i = 0; i < inkStats.Count; i++)
         {
             if (i > 0) sb.Append(',');
@@ -263,7 +293,34 @@ public class EquipmentInstance
         if (word != ArmourWord.None)
             sb.Append(word.ToString()).Append(':').Append(wordAmount.ToString("0.###", ci));
         sb.Append(';').Append(((int)rarity).ToString(ci));
+        // The base's roll and the finished base numbers the tooltip's Base line copies.
+        sb.Append(';').Append(basePercent.ToString(ci)).Append(':');
+        AppendNumbers(sb, baseStats, ci);
         return sb.ToString();
+    }
+
+    static void AppendNumbers(System.Text.StringBuilder sb, in CraftingMath.PieceStats p, System.IFormatProvider ci)
+    {
+        sb.Append(p.attack.ToString(ci)).Append(',').Append(p.magicAttack.ToString(ci)).Append(',')
+          .Append(p.defense.ToString(ci)).Append(',').Append(p.magicDefense.ToString(ci)).Append(',')
+          .Append(p.hp.ToString(ci)).Append(',').Append(p.mp.ToString(ci)).Append(',')
+          .Append(p.evasion.ToString(ci)).Append(',').Append(p.attackSpeedPercent.ToString("0.#", ci));
+    }
+
+    static void ReadNumbers(string text, ref CraftingMath.PieceStats p)
+    {
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var ints = System.Globalization.NumberStyles.Integer;
+        var nums = text.Split(',');
+        if (nums.Length < 8) return;
+        int.TryParse(nums[0], ints, ci, out p.attack);
+        int.TryParse(nums[1], ints, ci, out p.magicAttack);
+        int.TryParse(nums[2], ints, ci, out p.defense);
+        int.TryParse(nums[3], ints, ci, out p.magicDefense);
+        int.TryParse(nums[4], ints, ci, out p.hp);
+        int.TryParse(nums[5], ints, ci, out p.mp);
+        int.TryParse(nums[6], ints, ci, out p.evasion);
+        float.TryParse(nums[7], System.Globalization.NumberStyles.Float, ci, out p.attackSpeedPercent);
     }
 
     /// <summary>Rebuild the grade, the written stats, the trademark, the word and the rarity from a saved string.
@@ -281,6 +338,8 @@ public class EquipmentInstance
     {
         quality = Quality.Raw;
         rarity = Rarity.Common;
+        basePercent = 0;
+        baseStats = default;
         piece = default;
         trademarkSkillId = "";
         trademarkLift = 0f;
@@ -365,6 +424,17 @@ public class EquipmentInstance
             if (parts.Length > 5 && int.TryParse(parts[5], ints, ci, out int r)
                 && r >= (int)Rarity.Common && r <= (int)Rarity.Legendary)
                 rarity = (Rarity)r;
+
+            // The base's roll and its finished numbers. A text with no such part never rolled: 0, counted as 100.
+            if (parts.Length > 6)
+            {
+                int colon = parts[6].IndexOf(':');
+                string pct = colon >= 0 ? parts[6].Substring(0, colon) : parts[6];
+                if (int.TryParse(pct, ints, ci, out int roll)
+                    && (roll == 0 || (roll >= CraftingMath.RollMin && roll <= CraftingMath.RollMax)))
+                    basePercent = roll;
+                if (colon >= 0) ReadNumbers(parts[6].Substring(colon + 1), ref baseStats);
+            }
         }
     }
 

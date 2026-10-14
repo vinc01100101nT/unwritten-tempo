@@ -21,7 +21,6 @@ public static class WeaponMasteryStats
                 return stat == StatId.Atk || stat == StatId.Critical || stat == StatId.HP;
             // Axe — relentless aggression.
             case WeaponType.Axe:
-            case WeaponType.TwoHandAxe:
                 return stat == StatId.AttackSpeed || stat == StatId.Atk || stat == StatId.Critical;
             // Warhammer (Mace) — deny enemy actions.
             case WeaponType.Mace:

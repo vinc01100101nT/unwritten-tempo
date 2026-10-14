@@ -81,7 +81,7 @@ public static class CharacterRows
 
             app.MapPut($"/server/characters/{{id}}/{r.Door}", async (HttpContext http, string id, JsonElement body) =>
             {
-                if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+                if (!maps.IsCurrentServer(http.Request)) return maps.RefuseCaller(http.Request);
                 if (!Guid.TryParseExact(id, "D", out var characterId))
                     return Results.Json(new { error = "invalid character id" }, statusCode: 400);
                 if (body.ValueKind != JsonValueKind.Object || !body.TryGetProperty(r.BodyKey, out var value))

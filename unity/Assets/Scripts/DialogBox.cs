@@ -103,7 +103,7 @@ public class DialogBox : MonoBehaviour
         nextLabel = btn.GetComponentInChildren<TMP_Text>();
 
         // THE CHOICE, beside it — shown only on the last line of a conversation that offers one.
-        var accept = UiKit.Btn("Accept", fill.transform, Choose);
+        var accept = UiKit.PrimaryBtn("Accept", fill.transform, Choose);
         var art = accept.GetComponent<RectTransform>();
         art.anchorMin = art.anchorMax = new Vector2(1, 0); art.pivot = new Vector2(1, 0);
         art.sizeDelta = new Vector2(140f, 40f); art.anchoredPosition = new Vector2(-164f, 12f);

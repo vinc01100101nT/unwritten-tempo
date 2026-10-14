@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-10-12 (red-team holes closed the same day), not play-tested. Every one of the 16 towns has a Keeper; the storage tables are in migration 012, which must be applied before a server built from this code is used."
 owner: vince
-last-updated: 2026-10-12
+last-updated: 2026-10-14
 tags:
   - systems
 ---
@@ -45,9 +45,10 @@ come back at Lastline's west door.
 The page shows the character's Unsigned ("You have 1,220u") and one line per town: its name and its price. A town whose price is more than the
 Unsigned the server last sent is drawn dim; pressing it still asks, and the server answers.
 
-- **Price: 100u for each door on the shortest way there on foot.** One number (`KeeperMath.PerDoorPrice`), a
-  placeholder until prices are balanced. Today the nearest pair of towns is 1 door apart (100u) and the farthest 13
-  (1,300u); every town can be reached from every other.
+- **Price: 4 kills of income for each door on the shortest way there on foot — 40u × the character's level per
+  door** (`KeeperMath.KillsPerDoor`, a kill being worth 10u × the level). A level 1 character pays 40u a door, a
+  level 99 character 3,960u. Today the nearest pair of towns is 1 door apart and the farthest 13; every town can be
+  reached from every other. Setting a save point and using storage are free.
 - The Unsigned is taken first, then the character is moved through the one door every map change uses (see **Where the
   server puts you** below). They arrive 1.5 m in front of that town's Keeper.
 - A trip to a town another server holds is written down with the character already standing there, before anybody is
@@ -194,4 +195,3 @@ with "There is nowhere to land here."
 - Not play-tested. The window, a trip between two servers, a wing's use, and the server-decided map and arrival have
   only been checked by compiling, by the tests above, and by measurements made in the editor without Play.
 - Only Lastline has a Tool Dealer, so wings can be bought in one town.
-- The Keeper's prices are placeholders.

@@ -159,7 +159,7 @@ public class DropAmountPrompt
         var le = row.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = 26f;
 
-        UiKit.Btn("Confirm", row, Confirm);
+        UiKit.PrimaryBtn("Confirm", row, Confirm);
         UiKit.Btn("Cancel", row, Close);
     }
 

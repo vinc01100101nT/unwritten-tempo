@@ -198,7 +198,7 @@ public class AutoCombatWindow : MonoBehaviour
 
     // ---- the skill list -------------------------------------------------------------------------------------------
 
-    // Every skill this character may press — learned, or belonging to no weapon — and never a passive or an item's.
+    // Every learned weapon skill this character may press — never a skill of no weapon, a passive or an item's.
     // The server holds each slot to the same test whatever is sent.
     void OpenSkillPicker(int slot)
     {
@@ -210,7 +210,7 @@ public class AutoCombatWindow : MonoBehaviour
         for (int i = 0; i < all.Count; i++)
         {
             var def = all[i];
-            if (def == null || string.IsNullOrEmpty(def.id) || !me.MayBind(def.id)) continue;
+            if (def == null || string.IsNullOrEmpty(def.id) || !me.MayAutoPress(def.id)) continue;
             string id = def.id;
             PickerChoice(SkillName(id), () => SetSlot(slot, id));
         }

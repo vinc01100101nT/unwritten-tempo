@@ -600,12 +600,13 @@ public sealed class QuestLog
         return QuestPlay.Started;
     }
 
-    // Does the character hold — worn or carried — a Raw copy of the piece with room for all of its folds? What a replay
-    // needs: it is folded from Raw again, and only a copy that can take every fold can finish it. Expects `held` read.
+    // Does the character hold — worn or carried — an UNFOLDED Raw copy of the piece? What a replay needs: it is folded
+    // from Raw +0 again, every fold of it. Room under the cap is not enough — with a cap of 10, a Raw +5 copy would meet
+    // a "fold five times" step in one fold. Expects `held` read.
     bool HoldsRoomFor(Piece p)
     {
         foreach (var h in held)
-            if (h.itemId == p.itemId && h.quality == Quality.Raw && h.folds + p.folds <= CraftingMath.FoldCap(Quality.Raw))
+            if (h.itemId == p.itemId && h.quality == Quality.Raw && h.folds == 0)
                 return true;
         return false;
     }
@@ -966,7 +967,7 @@ public sealed class QuestLog
         var grade = LowestGradeHeld(o.itemId, judged);
         if (grade == Quality.Raw)
             foreach (var h in judged)
-                if (h.itemId == o.itemId && FreeFoldOn(r, def, o.itemId, h.copyId) != null) return QuestBlock.None;
+                if (h.itemId == o.itemId && FreeFoldOn(r, def, o.itemId, h.copyId, h.folds) != null) return QuestBlock.None;
         return QuestMath.CanPay(Count(c, MaterialCatalog.TemperDust), CraftingMath.FoldMaterialCost(grade), c.Gold,
                                 CraftingMath.FoldGoldCost(grade))
             ? QuestBlock.None : QuestBlock.CannotPay;
@@ -983,13 +984,21 @@ public sealed class QuestLog
         return 0;
     }
 
-    QuestPieceWire FreeFoldOn(Record r, QuestDef def, string itemId, string copyId)
+    // Free only below the piece's own target: with a cap of 10, a free fold spent past the tutorial's +5 would turn
+    // the folds that can fail into free retries the tutorial never asked for.
+    QuestPieceWire FreeFoldOn(Record r, QuestDef def, string itemId, string copyId, int foldsNow)
     {
         if (r == null || def == null || r.finished || r.replaying || string.IsNullOrEmpty(copyId)
-            || !Owed(r, def, itemId)) return null;
+            || !Owed(r, def, itemId) || foldsNow >= TargetFolds(def, itemId)) return null;
         foreach (var p in r.pieces)
             if (p.i == itemId && p.n > 0 && (p.c == "" || p.c == copyId)) return p;
         return null;
+    }
+
+    static int TargetFolds(QuestDef def, string itemId)
+    {
+        foreach (var p in PiecesOf(def)) if (p.itemId == itemId) return p.folds;
+        return 0;
     }
 
     static bool Owed(Record r, QuestDef def, string itemId)
@@ -1016,11 +1025,11 @@ public sealed class QuestLog
 
     /// <summary>SERVER, at the fold: <paramref name="copyId"/>, a <paramref name="itemId"/> of grade
     /// <paramref name="grade"/> with <paramref name="foldsBefore"/> folds, is being folded. Every REPLAY with that piece
-    /// and no copy yet takes it as its run's copy when it is Raw with room for all the piece's folds — the one the
-    /// replay's fold and wear steps count.</summary>
+    /// and no copy yet takes it as its run's copy when it is Raw and unfolded — the one the replay's fold and wear steps
+    /// count.</summary>
     public void NoteReplayFold(string itemId, string copyId, Quality grade, int foldsBefore)
     {
-        if (string.IsNullOrEmpty(copyId) || grade != Quality.Raw) return;
+        if (string.IsNullOrEmpty(copyId) || grade != Quality.Raw || foldsBefore != 0) return;
         foreach (var r in records.Values)
         {
             if (!r.replaying) continue;
@@ -1028,7 +1037,7 @@ public sealed class QuestLog
             if (def == null) continue;
             foreach (var piece in PiecesOf(def))
             {
-                if (piece.itemId != itemId || foldsBefore + piece.folds > CraftingMath.FoldCap(Quality.Raw)) continue;
+                if (piece.itemId != itemId) continue;
                 foreach (var p in r.pieces)
                     if (p.i == itemId && p.c == "") { p.c = copyId; Touch(r); break; }
             }
@@ -1036,23 +1045,25 @@ public sealed class QuestLog
     }
 
     /// <summary>Is the next fold of <paramref name="copyId"/>, a <paramref name="itemId"/> of grade
-    /// <paramref name="grade"/>, free? Only a Raw piece's fold is ever free. What the station's offer says it costs.</summary>
-    public bool FoldIsFree(string itemId, string copyId, Quality grade)
+    /// <paramref name="grade"/> at <paramref name="foldsNow"/> folds, free? Only a Raw piece's fold is ever free, and only
+    /// below the tutorial's own target. What the station's offer says it costs, and what a fold checks BEFORE its roll.</summary>
+    public bool FoldIsFree(string itemId, string copyId, Quality grade, int foldsNow)
     {
         if (grade != Quality.Raw) return false;
         foreach (var r in records.Values)
-            if (FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId) != null) return true;
+            if (FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId, foldsNow) != null) return true;
         return false;
     }
 
-    /// <summary>SERVER, at the fold: use up one free fold on <paramref name="copyId"/> if a first run has one. The copy
-    /// becomes that run's copy, so its other free folds can go on no other piece.</summary>
-    public bool TakeFreeFold(string itemId, string copyId, Quality grade)
+    /// <summary>SERVER, after a free fold SUCCEEDED: use up one free fold on <paramref name="copyId"/>. The copy becomes
+    /// that run's copy, so its other free folds can go on no other piece. A free fold that fails is never used up — a
+    /// new character has no gold to pay for the try again.</summary>
+    public bool TakeFreeFold(string itemId, string copyId, Quality grade, int foldsNow)
     {
         if (grade != Quality.Raw) return false;
         foreach (var r in records.Values)
         {
-            var p = FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId);
+            var p = FreeFoldOn(r, QuestCatalog.Get(r.questId), itemId, copyId, foldsNow);
             if (p == null) continue;
             p.n--;
             p.c = copyId;

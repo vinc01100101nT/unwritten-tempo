@@ -27,7 +27,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 6930,
+            "sellsFor": 5198,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -55,7 +55,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 43313,
+            "sellsFor": 32484,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -83,7 +83,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1368,
+            "sellsFor": 1596,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -153,7 +153,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1519,
+            "sellsFor": 945,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -181,7 +181,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 189844,
+            "sellsFor": 118125,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -273,7 +273,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 47300,
+            "sellsFor": 31900,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -301,7 +301,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1892,
+            "sellsFor": 1276,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -329,7 +329,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1700,
+            "sellsFor": 2040,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -357,7 +357,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 22088,
+            "sellsFor": 19238,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -385,7 +385,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3534,
+            "sellsFor": 3078,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -413,7 +413,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2325,
+            "sellsFor": 2025,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -441,7 +441,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 372,
+            "sellsFor": 324,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -469,7 +469,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4095,
+            "sellsFor": 3150,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -497,7 +497,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 25594,
+            "sellsFor": 19688,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -525,7 +525,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1392,
+            "sellsFor": 1624,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -617,7 +617,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 575,
+            "sellsFor": 650,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -666,7 +666,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 11756,
+            "sellsFor": 10331,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -694,7 +694,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1881,
+            "sellsFor": 1653,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -722,7 +722,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 125,
+            "sellsFor": 150,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1151,7 +1151,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 73500,
+            "sellsFor": 58800,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -1179,7 +1179,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2940,
+            "sellsFor": 2352,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1207,7 +1207,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1608,
+            "sellsFor": 1876,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1455,397 +1455,397 @@
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Mossgore",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -1867,7 +1867,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1075,
+            "sellsFor": 1290,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1916,7 +1916,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 92,
+            "sellsFor": 104,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1944,7 +1944,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1587,
+            "sellsFor": 1794,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2036,7 +2036,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 10238,
+            "sellsFor": 7875,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -2064,7 +2064,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1638,
+            "sellsFor": 1260,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2092,7 +2092,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 975,
+            "sellsFor": 1170,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2120,7 +2120,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 900,
+            "sellsFor": 1080,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2148,7 +2148,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1702,
+            "sellsFor": 1924,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2176,7 +2176,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3290,
+            "sellsFor": 2468,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2204,7 +2204,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 20563,
+            "sellsFor": 15422,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -2232,7 +2232,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1035,
+            "sellsFor": 1170,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2260,7 +2260,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 710000,
+            "sellsFor": 497000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -2288,7 +2288,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 5680,
+            "sellsFor": 3976,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2316,7 +2316,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1150,
+            "sellsFor": 1380,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2553,7 +2553,7 @@
             "reach": "",
             "materialKind": "Salt",
             "mergesInto": "Pure Salt",
-            "rarity": "Rare",
+            "rarity": "Epic",
             "slotOrder": 99,
             "materialKindOrder": 5,
             "cardSlots": 0,
@@ -2565,6 +2565,12 @@
                     "name": "Abyss Maw",
                     "level": 99,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Adder",
+                    "level": 57,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2580,9 +2586,81 @@
                     "count": "1"
                 },
                 {
+                    "name": "Bittersweet",
+                    "level": 68,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Blazeskull",
+                    "level": 76,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Blinkbat",
+                    "level": 8,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Blood Ronin",
                     "level": 60,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Bloodshot",
+                    "level": 58,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Burrowbo",
+                    "level": 25,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Canewick",
+                    "level": 38,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Capling",
+                    "level": 5,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Chomper",
+                    "level": 48,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Cinder",
+                    "level": 67,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Coily",
+                    "level": 43,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Crawlet",
+                    "level": 4,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Cyclo",
+                    "level": 69,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2592,9 +2670,57 @@
                     "count": "1"
                 },
                 {
+                    "name": "Dewdrop",
+                    "level": 39,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Digger",
+                    "level": 36,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Drizzle",
+                    "level": 74,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Elder Stalk",
                     "level": 47,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberhoot",
+                    "level": 45,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberlurk",
+                    "level": 71,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberwyrm",
+                    "level": 46,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Flutterby",
+                    "level": 2,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Frostcap",
+                    "level": 93,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2604,9 +2730,39 @@
                     "count": "1"
                 },
                 {
+                    "name": "Frostskull",
+                    "level": 91,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Frostwick",
+                    "level": 95,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Gillie",
+                    "level": 17,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Gloop King",
                     "level": 8,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Glowcoil",
+                    "level": 88,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Gnasher",
+                    "level": 65,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2616,9 +2772,51 @@
                     "count": "1"
                 },
                 {
+                    "name": "Goopie",
+                    "level": 94,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Great Croak",
                     "level": 66,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Grubble",
+                    "level": 90,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Grumbear",
+                    "level": 31,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hisser",
+                    "level": 6,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hootie",
+                    "level": 13,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Horngore",
+                    "level": 73,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hornscale",
+                    "level": 59,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2628,15 +2826,81 @@
                     "count": "1"
                 },
                 {
+                    "name": "Inky",
+                    "level": 77,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Iris",
+                    "level": 64,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Kappi",
+                    "level": 15,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Karasu",
                     "level": 58,
                     "chance": "20%",
                     "count": "1"
                 },
                 {
+                    "name": "Lovebite",
+                    "level": 96,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Moldy",
+                    "level": 72,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mossgore",
+                    "level": 34,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Mossmaw",
                     "level": 35,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mossnail",
+                    "level": 10,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mudpup",
+                    "level": 23,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Newtie",
+                    "level": 20,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Nightsqueak",
+                    "level": 92,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Octi",
+                    "level": 63,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2649,6 +2913,48 @@
                     "name": "Oni Tengu",
                     "level": 92,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pando",
+                    "level": 21,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Peeper",
+                    "level": 41,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pilfer",
+                    "level": 28,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Plopling",
+                    "level": 1,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Rascal",
+                    "level": 14,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Rivershell",
+                    "level": 60,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Scaly",
+                    "level": 37,
+                    "chance": "0.5%",
                     "count": "1"
                 },
                 {
@@ -2736,6 +3042,66 @@
                     "count": "1"
                 },
                 {
+                    "name": "Shellby",
+                    "level": 18,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Shootling",
+                    "level": 16,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Skywing",
+                    "level": 87,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Snapper",
+                    "level": 62,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squeak",
+                    "level": 3,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squirt",
+                    "level": 79,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Sucker",
+                    "level": 78,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Sunscale",
+                    "level": 50,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Swampfang",
+                    "level": 80,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Tarantix",
+                    "level": 11,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Toadmaw",
                     "level": 78,
                     "chance": "20%",
@@ -2748,9 +3114,39 @@
                     "count": "1"
                 },
                 {
+                    "name": "Viper",
+                    "level": 42,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Webber",
+                    "level": 19,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Willo",
+                    "level": 54,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wisp",
+                    "level": 85,
+                    "chance": "0.5%",
+                    "count": "1"
+                },
+                {
                     "name": "Wraithmother",
                     "level": 90,
                     "chance": "20%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wyrmlet",
+                    "level": 34,
+                    "chance": "0.5%",
                     "count": "1"
                 }
             ]
@@ -3024,7 +3420,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 46,
+            "sellsFor": 52,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3309,7 +3705,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2252,
+            "sellsFor": 1733,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3337,7 +3733,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 14077,
+            "sellsFor": 10828,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3365,7 +3761,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2139,
+            "sellsFor": 2418,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3393,7 +3789,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 26447,
+            "sellsFor": 23034,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3421,7 +3817,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4232,
+            "sellsFor": 3686,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3449,7 +3845,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2280,
+            "sellsFor": 2660,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3477,7 +3873,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 425,
+            "sellsFor": 510,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3505,7 +3901,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 17200,
+            "sellsFor": 11600,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3533,7 +3929,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 688,
+            "sellsFor": 464,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3561,7 +3957,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 5390,
+            "sellsFor": 4312,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3589,7 +3985,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 134750,
+            "sellsFor": 107800,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3617,7 +4013,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3218,
+            "sellsFor": 2828,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3645,7 +4041,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 20109,
+            "sellsFor": 17672,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3673,7 +4069,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 94600,
+            "sellsFor": 63800,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3701,7 +4097,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3784,
+            "sellsFor": 2552,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3750,7 +4146,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1974,
+            "sellsFor": 2068,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3820,7 +4216,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4505,
+            "sellsFor": 3465,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3848,7 +4244,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 28153,
+            "sellsFor": 21656,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -4034,7 +4430,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 900000,
+            "sellsFor": 630000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -4062,7 +4458,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 7200,
+            "sellsFor": 5040,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4090,7 +4486,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 47469,
+            "sellsFor": 37975,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4118,7 +4514,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1899,
+            "sellsFor": 1519,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4589,7 +4985,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 144,
+            "sellsFor": 168,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4617,7 +5013,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 312,
+            "sellsFor": 364,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4666,7 +5062,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 114975,
+            "sellsFor": 89425,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4694,7 +5090,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4599,
+            "sellsFor": 3577,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4778,7 +5174,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 172000,
+            "sellsFor": 116000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4806,7 +5202,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 6880,
+            "sellsFor": 4640,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4890,7 +5286,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1536,
+            "sellsFor": 1792,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5354,7 +5750,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 24741,
+            "sellsFor": 19031,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -5382,7 +5778,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3959,
+            "sellsFor": 3045,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6436,7 +6832,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 147000,
+            "sellsFor": 117600,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -6464,7 +6860,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 5880,
+            "sellsFor": 4704,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6613,7 +7009,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1800,
+            "sellsFor": 2160,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6697,7 +7093,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 15313,
+            "sellsFor": 11484,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6725,7 +7121,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2450,
+            "sellsFor": 1838,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6753,7 +7149,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 250,
+            "sellsFor": 300,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6781,7 +7177,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 7116,
+            "sellsFor": 6253,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6809,7 +7205,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1139,
+            "sellsFor": 1001,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6837,7 +7233,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 480,
+            "sellsFor": 560,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6865,7 +7261,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2116,
+            "sellsFor": 2392,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6970,7 +7366,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 5972,
+            "sellsFor": 4594,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6998,7 +7394,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 956,
+            "sellsFor": 735,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7026,7 +7422,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 39244,
+            "sellsFor": 30188,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -7054,7 +7450,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 6279,
+            "sellsFor": 4830,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7483,7 +7879,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 504,
+            "sellsFor": 588,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7511,7 +7907,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1025,
+            "sellsFor": 1230,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7539,7 +7935,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 44100,
+            "sellsFor": 34300,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -7567,7 +7963,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1764,
+            "sellsFor": 1372,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7616,7 +8012,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 24,
+            "sellsFor": 28,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7681,7 +8077,7 @@
             "reach": "",
             "materialKind": "Salt",
             "mergesInto": "",
-            "rarity": "Epic",
+            "rarity": "Legendary",
             "slotOrder": 99,
             "materialKindOrder": 5,
             "cardSlots": 0,
@@ -7693,6 +8089,12 @@
                     "name": "Abyss Maw",
                     "level": 99,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Adder",
+                    "level": 57,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7708,9 +8110,81 @@
                     "count": "1"
                 },
                 {
+                    "name": "Bittersweet",
+                    "level": 68,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Blazeskull",
+                    "level": 76,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Blinkbat",
+                    "level": 8,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Blood Ronin",
                     "level": 60,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Bloodshot",
+                    "level": 58,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Burrowbo",
+                    "level": 25,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Canewick",
+                    "level": 38,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Capling",
+                    "level": 5,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Chomper",
+                    "level": 48,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Cinder",
+                    "level": 67,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Coily",
+                    "level": 43,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Crawlet",
+                    "level": 4,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Cyclo",
+                    "level": 69,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7720,9 +8194,57 @@
                     "count": "1"
                 },
                 {
+                    "name": "Dewdrop",
+                    "level": 39,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Digger",
+                    "level": 36,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Drizzle",
+                    "level": 74,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Elder Stalk",
                     "level": 47,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberhoot",
+                    "level": 45,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberlurk",
+                    "level": 71,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Emberwyrm",
+                    "level": 46,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Flutterby",
+                    "level": 2,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Frostcap",
+                    "level": 93,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7732,9 +8254,39 @@
                     "count": "1"
                 },
                 {
+                    "name": "Frostskull",
+                    "level": 91,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Frostwick",
+                    "level": 95,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Gillie",
+                    "level": 17,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Gloop King",
                     "level": 8,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Glowcoil",
+                    "level": 88,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Gnasher",
+                    "level": 65,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7744,9 +8296,51 @@
                     "count": "1"
                 },
                 {
+                    "name": "Goopie",
+                    "level": 94,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Great Croak",
                     "level": 66,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Grubble",
+                    "level": 90,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Grumbear",
+                    "level": 31,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hisser",
+                    "level": 6,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hootie",
+                    "level": 13,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Horngore",
+                    "level": 73,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hornscale",
+                    "level": 59,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7756,15 +8350,81 @@
                     "count": "1"
                 },
                 {
+                    "name": "Inky",
+                    "level": 77,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Iris",
+                    "level": 64,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Kappi",
+                    "level": 15,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Karasu",
                     "level": 58,
                     "chance": "5%",
                     "count": "1"
                 },
                 {
+                    "name": "Lovebite",
+                    "level": 96,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Moldy",
+                    "level": 72,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mossgore",
+                    "level": 34,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Mossmaw",
                     "level": 35,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mossnail",
+                    "level": 10,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mudpup",
+                    "level": 23,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Newtie",
+                    "level": 20,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Nightsqueak",
+                    "level": 92,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Octi",
+                    "level": 63,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7777,6 +8437,48 @@
                     "name": "Oni Tengu",
                     "level": 92,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pando",
+                    "level": 21,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Peeper",
+                    "level": 41,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pilfer",
+                    "level": 28,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Plopling",
+                    "level": 1,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Rascal",
+                    "level": 14,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Rivershell",
+                    "level": 60,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Scaly",
+                    "level": 37,
+                    "chance": "0.1%",
                     "count": "1"
                 },
                 {
@@ -7864,6 +8566,66 @@
                     "count": "1"
                 },
                 {
+                    "name": "Shellby",
+                    "level": 18,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Shootling",
+                    "level": 16,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Skywing",
+                    "level": 87,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Snapper",
+                    "level": 62,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squeak",
+                    "level": 3,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squirt",
+                    "level": 79,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Sucker",
+                    "level": 78,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Sunscale",
+                    "level": 50,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Swampfang",
+                    "level": 80,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Tarantix",
+                    "level": 11,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Toadmaw",
                     "level": 78,
                     "chance": "5%",
@@ -7876,9 +8638,39 @@
                     "count": "1"
                 },
                 {
+                    "name": "Viper",
+                    "level": 42,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Webber",
+                    "level": 19,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Willo",
+                    "level": 54,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wisp",
+                    "level": 85,
+                    "chance": "0.1%",
+                    "count": "1"
+                },
+                {
                     "name": "Wraithmother",
                     "level": 90,
                     "chance": "5%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wyrmlet",
+                    "level": 34,
+                    "chance": "0.1%",
                     "count": "1"
                 }
             ]
@@ -7907,138 +8699,138 @@
                     "name": "Abyss Maw",
                     "level": 99,
                     "chance": "100%",
-                    "count": "14–15"
+                    "count": "11–12"
                 },
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "36%",
+                    "chance": "42%",
                     "count": "1"
                 },
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
                     "chance": "100%",
-                    "count": "6–7"
+                    "count": "3–4"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
                     "chance": "100%",
-                    "count": "5–6"
+                    "count": "3–4"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "38%",
+                    "chance": "45%",
                     "count": "1"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "84%",
+                    "chance": "73%",
                     "count": "1"
                 },
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "14%",
+                    "chance": "12%",
                     "count": "1"
                 },
                 {
                     "name": "Blood Ronin",
                     "level": 60,
                     "chance": "100%",
-                    "count": "10–11"
+                    "count": "7–8"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "36%",
+                    "chance": "42%",
                     "count": "1"
                 },
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "14%",
+                    "chance": "16%",
                     "count": "1"
                 },
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "45%",
+                    "chance": "39%",
                     "count": "1"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "8%",
+                    "chance": "9%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "74%",
+                    "chance": "59%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "36%",
+                    "chance": "42%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "30%",
+                    "chance": "36%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "35%",
+                    "chance": "39%",
                     "count": "1"
                 },
                 {
                     "name": "Deep Maw",
                     "level": 24,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "3–4"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "23%",
+                    "chance": "27%",
                     "count": "1"
                 },
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "23%",
+                    "chance": "27%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "41%",
+                    "chance": "47%",
                     "count": "1"
                 },
                 {
                     "name": "Elder Stalk",
                     "level": 47,
                     "chance": "100%",
-                    "count": "8–9"
+                    "count": "6–7"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "28%",
+                    "chance": "31%",
                     "count": "1"
                 },
                 {
@@ -8050,50 +8842,50 @@
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "30%",
+                    "chance": "36%",
                     "count": "1"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "48%",
+                    "chance": "55%",
                     "count": "1"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
                     "chance": "100%",
-                    "count": "6–7"
+                    "count": "4–5"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "98%",
+                    "chance": "85%",
                     "count": "1"
                 },
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "50%",
+                    "chance": "59%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "15%",
+                    "chance": "18%",
                     "count": "1"
                 },
                 {
                     "name": "Gloop King",
                     "level": 8,
                     "chance": "100%",
-                    "count": "2–3"
+                    "count": "1–2"
                 },
                 {
                     "name": "Glowcoil",
@@ -8104,26 +8896,26 @@
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "74%",
+                    "chance": "65%",
                     "count": "1"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
                     "chance": "100%",
-                    "count": "10–11"
+                    "count": "6–7"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "44%",
+                    "chance": "46%",
                     "count": "1"
                 },
                 {
                     "name": "Great Croak",
                     "level": 66,
                     "chance": "100%",
-                    "count": "10–11"
+                    "count": "7–8"
                 },
                 {
                     "name": "Grubble",
@@ -8134,26 +8926,26 @@
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "55%",
+                    "chance": "44%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "100%",
-                    "count": "1–2"
+                    "chance": "88%",
+                    "count": "1"
                 },
                 {
                     "name": "Hornscale",
@@ -8165,7 +8957,7 @@
                     "name": "Inferno Mask",
                     "level": 80,
                     "chance": "100%",
-                    "count": "15–16"
+                    "count": "10–11"
                 },
                 {
                     "name": "Inky",
@@ -8176,7 +8968,7 @@
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "36%",
+                    "chance": "42%",
                     "count": "1"
                 },
                 {
@@ -8189,7 +8981,7 @@
                     "name": "Karasu",
                     "level": 58,
                     "chance": "100%",
-                    "count": "10–11"
+                    "count": "7–8"
                 },
                 {
                     "name": "Lovebite",
@@ -8200,7 +8992,7 @@
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "45%",
+                    "chance": "54%",
                     "count": "1"
                 },
                 {
@@ -8213,30 +9005,30 @@
                     "name": "Mossmaw",
                     "level": 35,
                     "chance": "100%",
-                    "count": "6–7"
+                    "count": "4–5"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "8%",
+                    "chance": "9%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "30%",
+                    "chance": "26%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "14%",
+                    "chance": "17%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "48%",
+                    "chance": "55%",
                     "count": "1"
                 },
                 {
@@ -8249,246 +9041,246 @@
                     "name": "Oculord",
                     "level": 14,
                     "chance": "100%",
-                    "count": "2–3"
+                    "count": "1–2"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
                     "chance": "100%",
-                    "count": "14–15"
+                    "count": "11–12"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "14%",
+                    "chance": "17%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "23%",
+                    "chance": "27%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "38%",
+                    "chance": "29%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "6%",
+                    "chance": "7%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "35%",
+                    "chance": "39%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "22%",
+                    "chance": "25%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
                     "chance": "100%",
-                    "count": "52–53"
+                    "count": "30–31"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "15%",
+                    "chance": "18%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "14%",
+                    "chance": "17%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "50%",
+                    "chance": "59%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "36%",
+                    "chance": "42%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "7%",
+                    "chance": "8%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "38%",
+                    "chance": "40%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "41%",
+                    "chance": "47%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "29%",
+                    "chance": "34%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "41%",
+                    "chance": "47%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "6%",
+                    "chance": "7%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
                     "chance": "100%",
-                    "count": "18–19"
+                    "count": "11–12"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
                     "chance": "100%",
-                    "count": "21–22"
+                    "count": "13–14"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "23%",
+                    "chance": "27%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "48%",
+                    "chance": "34%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "96%",
+                    "chance": "67%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "100%",
-                    "count": "1–2"
+                    "chance": "91%",
+                    "count": "1"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
                     "chance": "100%",
-                    "count": "14–15"
+                    "count": "11–12"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "21%",
+                    "chance": "23%",
                     "count": "1"
                 }
             ]
@@ -8510,7 +9302,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 294,
+            "sellsFor": 308,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8538,7 +9330,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1380,
+            "sellsFor": 1560,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8618,7 +9410,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 888,
+            "sellsFor": 1036,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9220,7 +10012,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 450,
+            "sellsFor": 540,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9248,7 +10040,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 384,
+            "sellsFor": 448,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9340,7 +10132,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2088,
+            "sellsFor": 2436,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9368,7 +10160,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1488,
+            "sellsFor": 1736,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9588,7 +10380,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 72,
+            "sellsFor": 84,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9616,7 +10408,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1659,
+            "sellsFor": 1738,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9708,7 +10500,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1794,
+            "sellsFor": 2028,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9736,7 +10528,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1200,
+            "sellsFor": 1400,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9806,7 +10598,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1840,
+            "sellsFor": 2080,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9919,7 +10711,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 231,
+            "sellsFor": 242,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9954,37 +10746,37 @@
                     "name": "Abyss Maw",
                     "level": 99,
                     "chance": "100%",
-                    "count": "147"
+                    "count": "110–111"
                 },
                 {
                     "name": "Adder",
                     "level": 57,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
                     "chance": "100%",
-                    "count": "60–61"
+                    "count": "37–38"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
                     "chance": "100%",
-                    "count": "51–52"
+                    "count": "34–35"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
                     "chance": "100%",
-                    "count": "8–9"
+                    "count": "7–8"
                 },
                 {
                     "name": "Blinkbat",
@@ -9996,13 +10788,13 @@
                     "name": "Blood Ronin",
                     "level": 60,
                     "chance": "100%",
-                    "count": "102–103"
+                    "count": "78–79"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Burrowbo",
@@ -10014,36 +10806,36 @@
                     "name": "Canewick",
                     "level": 38,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "3–4"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "75%",
+                    "chance": "90%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
                     "chance": "100%",
-                    "count": "7–8"
+                    "count": "5–6"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
                     "chance": "100%",
-                    "count": "3"
+                    "count": "3–4"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "69%",
+                    "chance": "78%",
                     "count": "1"
                 },
                 {
@@ -10056,7 +10848,7 @@
                     "name": "Deep Maw",
                     "level": 24,
                     "chance": "100%",
-                    "count": "40–41"
+                    "count": "31–32"
                 },
                 {
                     "name": "Dewdrop",
@@ -10080,49 +10872,49 @@
                     "name": "Elder Stalk",
                     "level": 47,
                     "chance": "100%",
-                    "count": "84"
+                    "count": "63"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
                     "chance": "100%",
-                    "count": "2–3"
+                    "count": "3–4"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
                     "chance": "100%",
-                    "count": "14–15"
+                    "count": "10–11"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
                     "chance": "100%",
-                    "count": "3"
+                    "count": "3–4"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "69%",
+                    "chance": "78%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "5–6"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
                     "chance": "100%",
-                    "count": "61–62"
+                    "count": "47–48"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
                     "chance": "100%",
-                    "count": "9–10"
+                    "count": "8–9"
                 },
                 {
                     "name": "Frostwick",
@@ -10140,25 +10932,25 @@
                     "name": "Gloop King",
                     "level": 8,
                     "chance": "100%",
-                    "count": "25–26"
+                    "count": "17–18"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
                     "chance": "100%",
-                    "count": "12–13"
+                    "count": "10–11"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
                     "chance": "100%",
-                    "count": "7–8"
+                    "count": "6–7"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
                     "chance": "100%",
-                    "count": "103–104"
+                    "count": "69–70"
                 },
                 {
                     "name": "Goopie",
@@ -10170,37 +10962,37 @@
                     "name": "Great Croak",
                     "level": 66,
                     "chance": "100%",
-                    "count": "102–103"
+                    "count": "78–79"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
                     "chance": "100%",
-                    "count": "16–17"
+                    "count": "11–12"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
                     "chance": "100%",
-                    "count": "5–6"
+                    "count": "4–5"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "72%",
+                    "chance": "84%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "72%",
+                    "chance": "84%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
                     "chance": "100%",
-                    "count": "11–12"
+                    "count": "8–9"
                 },
                 {
                     "name": "Hornscale",
@@ -10212,7 +11004,7 @@
                     "name": "Inferno Mask",
                     "level": 80,
                     "chance": "100%",
-                    "count": "154–155"
+                    "count": "104–105"
                 },
                 {
                     "name": "Inky",
@@ -10224,7 +11016,7 @@
                     "name": "Iris",
                     "level": 64,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Kappi",
@@ -10236,19 +11028,19 @@
                     "name": "Karasu",
                     "level": 58,
                     "chance": "100%",
-                    "count": "102–103"
+                    "count": "78–79"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
                     "chance": "100%",
-                    "count": "12–13"
+                    "count": "10–11"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "5–6"
                 },
                 {
                     "name": "Mossgore",
@@ -10260,12 +11052,12 @@
                     "name": "Mossmaw",
                     "level": 35,
                     "chance": "100%",
-                    "count": "63"
+                    "count": "47–48"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "75%",
+                    "chance": "90%",
                     "count": "1"
                 },
                 {
@@ -10284,7 +11076,7 @@
                     "name": "Nightsqueak",
                     "level": 92,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "5–6"
                 },
                 {
                     "name": "Octi",
@@ -10296,13 +11088,13 @@
                     "name": "Oculord",
                     "level": 14,
                     "chance": "100%",
-                    "count": "20–21"
+                    "count": "15–16"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
                     "chance": "100%",
-                    "count": "143–144"
+                    "count": "110–111"
                 },
                 {
                     "name": "Pando",
@@ -10320,18 +11112,18 @@
                     "name": "Pilfer",
                     "level": 28,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "2–3"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "72%",
+                    "chance": "84%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "63%",
+                    "chance": "66%",
                     "count": "1"
                 },
                 {
@@ -10350,85 +11142,85 @@
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
                     "chance": "100%",
-                    "count": "525"
+                    "count": "304–305"
                 },
                 {
                     "name": "Shellby",
@@ -10452,12 +11244,12 @@
                     "name": "Snapper",
                     "level": 62,
                     "chance": "100%",
-                    "count": "3–4"
+                    "count": "4–5"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "72%",
+                    "chance": "84%",
                     "count": "1"
                 },
                 {
@@ -10476,7 +11268,7 @@
                     "name": "Sunscale",
                     "level": 50,
                     "chance": "100%",
-                    "count": "2–3"
+                    "count": "3–4"
                 },
                 {
                     "name": "Swampfang",
@@ -10487,20 +11279,20 @@
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "63%",
+                    "chance": "66%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
                     "chance": "100%",
-                    "count": "186–187"
+                    "count": "117–118"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
                     "chance": "100%",
-                    "count": "217–218"
+                    "count": "137–138"
                 },
                 {
                     "name": "Viper",
@@ -10512,25 +11304,25 @@
                     "name": "Webber",
                     "level": 19,
                     "chance": "100%",
-                    "count": "4–5"
+                    "count": "3–4"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
                     "chance": "100%",
-                    "count": "9–10"
+                    "count": "6–7"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
                     "chance": "100%",
-                    "count": "10–11"
+                    "count": "9–10"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
                     "chance": "100%",
-                    "count": "147"
+                    "count": "110–111"
                 },
                 {
                     "name": "Wyrmlet",
@@ -10975,7 +11767,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1009125,
+            "sellsFor": 636188,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11003,7 +11795,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 8073,
+            "sellsFor": 5090,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11288,7 +12080,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 9833,
+            "sellsFor": 6199,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11316,7 +12108,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1229063,
+            "sellsFor": 774844,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11344,7 +12136,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1050,
+            "sellsFor": 1260,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11918,7 +12710,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1520,
+            "sellsFor": 1064,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11946,7 +12738,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 190000,
+            "sellsFor": 133000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11974,7 +12766,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4320,
+            "sellsFor": 3024,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12002,7 +12794,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 540000,
+            "sellsFor": 378000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -12030,7 +12822,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 26297,
+            "sellsFor": 23109,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -12058,7 +12850,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4208,
+            "sellsFor": 3698,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12297,7 +13089,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 39375,
+            "sellsFor": 29531,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -12325,7 +13117,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 6300,
+            "sellsFor": 4725,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12353,7 +13145,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 782,
+            "sellsFor": 884,
             "materialStep": 1,
             "droppedBy": [
                 {

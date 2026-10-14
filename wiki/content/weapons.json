@@ -269,7 +269,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every armour piece rolls **one word** as it drops, from its own slot's words, and wears it in its name — *+15 Tireless Iron Sabatons [C]*. A word does one thing, grows with the piece's grade, and never changes. No word appears on two slots, so you can never wear the same word twice. The Chainmail and Iron Sabatons you start in have none."
+      "text": "Every armour piece rolls **one word** as it drops, from its own slot's words, and wears it in its name — *+7 Tireless Iron Sabatons [C]*. A word does one thing, grows with the piece's grade, and never changes. No word appears on two slots, so you can never wear the same word twice. The Chainmail and Iron Sabatons you start in have none."
     },
     {
       "type": "table",
@@ -337,23 +337,23 @@
     },
     {
       "type": "paragraph",
-      "text": "Each piece adds what its **folds** and its **quality** make it worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*)."
+      "text": "Each piece adds what it is worth — attack on a weapon; on armour, what its material buys — plus its word, plus any stats written onto it with **Ink** (see *Crafting & Recycling*). What it is worth starts from its **base**, and its **rarity**, its **folds** and its **quality** build on that."
     },
     {
       "type": "heading",
-      "text": "Folds (+N)"
+      "text": "The base, and folds (+N)"
     },
     {
       "type": "paragraph",
-      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus Unsigned, and adds to what the piece is worth: **attack** on a weapon (a staff, wand or scythe gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour or a garment add."
+      "text": "**Every piece has a base.** A weapon's base follows how long its swing takes, so every weapon deals the same damage a second at equal gear: a Common sword's is **50** attack, a dagger's **40**, a greatsword's **65** (a staff, wand or scythe gives magic attack instead). On armour, the **material** decides what the base buys — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes give half of what body armour or a garment give. A piece a monster drops rolls its base at **85% to 115%**; anything else — what you start in, what a shop sells, a reward — has the usual 100%. Hover a piece to see it: *Base 54 (108%)*."
     },
     {
       "type": "paragraph",
-      "text": "That fold total is then **lifted by the grade** — nothing at Raw and F, rising to **+30% at A**. So an A-grade piece at its full thirty-five folds carries 82 attack, where the same thirty-five folds on an E-grade piece carry 66. **Rarity adds to that lift** — up to **+50%** on a Legendary piece (see *Quality*, below)."
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus Unsigned, and adds a share of the base: **10%** a fold at Raw, rising to **70%** a fold at A. A quench that succeeds adds far more — **100%** of the base to reach F, up to **600%** to reach A — and everything a piece has climbed through stays on it. So a Common sword is **100** attack at Raw +10, **250** at F +10 and **2,500** at A +10."
     },
     {
       "type": "paragraph",
-      "text": "**A quench spends every fold**, whichever way it goes. Folds are not lost work: half of what a piece's folds and quenches took comes back if you recycle it, except for folds made at Raw (see *Crafting & Recycling*)."
+      "text": "**Every grade stops at +10**, and a piece is quenched only from there. From +4 a fold can fail and take one fold back. Nothing is wasted for good: half of what a piece's folds and quenches took comes back if you recycle it, except for folds made at Raw (see *Crafting & Recycling*)."
     },
     {
       "type": "heading",
@@ -362,25 +362,27 @@
     },
     {
       "type": "paragraph",
-      "text": "Every piece carries a **quality grade**. A freshly dropped piece is **Raw**; above that the ladder runs **F, E, D, C, B, A**, and A is the best there is. Quality is decided by the **quench** — the one gamble a station offers — and it moves one rung at a time, up or down, never in a jump."
+      "text": "Every piece carries a **quality grade**. A freshly dropped piece is **Raw**; above that the ladder runs **F, E, D, C, B, A**, and A is the best there is. Quality is decided by the **quench**: it lifts a piece one rung, to +0, or fails — never a jump. **A higher grade is always stronger**: an A +0 piece is worth more than eight times an F +10 one."
     },
     {
       "type": "paragraph",
-      "text": "**Quality decides five things.** How far a piece can be **folded**, which is what its attack — or its armour's material stats — are made of; how much that fold total is **lifted**; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A. A fine blade does not swing harder by itself — it lets you become better with it than a poor one ever will."
+      "text": "**Quality decides five things.** How much each **fold** adds and what the quench that reached it added; how big an armour piece's **word** is; how many **stats** can be written onto it with Ink; how far your **mastery** with it can go; and, on a weapon, how much its **trademark** raises its skill — **+5%** at Raw up to **+20%** at A."
     },
     {
       "type": "table",
       "headers": [
         "Quality",
         "Folds it allows",
-        "Lift on the fold total",
+        "Each fold adds",
+        "Its quench added",
         "Stats it can carry",
         "Weapon mastery it allows"
       ],
       "rows": [
         [
           "**Raw**",
-          "+5",
+          "+10",
+          "10% of the base",
           "—",
           "—",
           "10"
@@ -388,42 +390,48 @@
         [
           "**F**",
           "+10",
-          "—",
+          "20%",
+          "100%",
           "1",
           "20"
         ],
         [
           "**E**",
-          "+15",
-          "+5%",
+          "+10",
+          "30%",
+          "200%",
           "2",
           "30"
         ],
         [
           "**D**",
-          "+20",
-          "+10%",
+          "+10",
+          "40%",
+          "300%",
           "3",
           "40"
         ],
         [
           "**C**",
-          "+25",
-          "+15%",
+          "+10",
+          "50%",
+          "400%",
           "4",
           "50"
         ],
         [
           "**B**",
-          "+30",
-          "+22%",
+          "+10",
+          "60%",
+          "500%",
           "5",
           "60"
         ],
         [
           "**A**",
-          "+35",
-          "+30%",
+          "+10",
+          "70%",
+          "600%",
           "6",
           "70"
         ]
@@ -440,11 +448,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +15 at grade C it reads **+15 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The trademark has nothing to do with the weapon's rarity, and the Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Hover the weapon to see which skill and which numbers; hover the skill to see the bonus on its own line."
+      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +7 at grade C it reads **+7 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The trademark has nothing to do with the weapon's rarity, and the Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Hover the weapon to see which skill and which numbers; hover the skill to see the bonus on its own line."
     },
     {
       "type": "paragraph",
-      "text": "**Rarity makes a piece's folds worth more.** A piece of gear takes its rarity as it drops, from the kind of monster that dropped it: an ordinary monster's piece is **Common**, **Uncommon** or **Rare** (about 53%, 32% and 15% of the time), an elite's is always **Epic** and a shadow's always **Legendary**. Rarity adds to the grade's lift on what the folds are worth — **+0%** Common, **+10%** Uncommon, **+20%** Rare, **+35%** Epic, **+50%** Legendary — so a Legendary A-grade sword at thirty-five folds carries 113 attack where a Common one carries 82. A piece's rarity never changes, and the gear you start in is Common. An item's name is written in its rarity's colour, on its card (which also names the rarity), in your bag and on the ground: **Common** in the ordinary text colour, **Uncommon** green, **Rare** blue, **Epic** purple, **Legendary** orange-gold. Potions, food and everything else are Common. Materials go by how hard they are to find: **Temper Dust** and **Quench Oil** are Common; **Watery Ink** and **Coarse Salt** Uncommon; **Thin Ink**, **Faint Ink** and **Fine Salt** Rare; **Clear Ink**, **Sharp Ink** and **Pure Salt** Epic."
+      "text": "**Rarity makes a piece worth more.** A piece of gear takes its rarity as it drops, from the kind of monster that dropped it: an ordinary monster's piece is **Common**, **Uncommon** or **Rare** (about 53%, 32% and 15% of the time), an elite's is always **Epic** and a shadow's always **Legendary**. Rarity multiplies the base, and with it everything the folds and quenches add — **×1** Common, **×1.1** Uncommon, **×1.2** Rare, **×1.35** Epic, **×1.5** Legendary — so a Legendary A +10 sword carries **3,750** attack where a Common one carries 2,500, and **4,313** at the best roll. A piece's rarity never changes, and the gear you start in is Common. An item's name is written in its rarity's colour, on its card (which also names the rarity), in your bag and on the ground: **Common** in the ordinary text colour, **Uncommon** green, **Rare** blue, **Epic** purple, **Legendary** orange-gold. Potions, food and everything else are Common. Materials go by how hard they are to find: **Temper Dust** and **Quench Oil** are Common; **Watery Ink** and **Coarse Salt** Uncommon; **Thin Ink** and **Faint Ink** Rare; **Clear Ink**, **Sharp Ink** and **Fine Salt** Epic; **Pure Salt** Legendary."
     },
     {
       "type": "paragraph",

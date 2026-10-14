@@ -29,6 +29,7 @@ command -v psql >/dev/null 2>&1 || { echo "psql is not on the PATH"; exit 2; }
   || { echo "port $PORT is taken — set STORAGE_TEST_PORT to a free one"; exit 2; }
 
 SECRET=storage-test-secret-used-by-this-run-only
+BUILD="$(grep -oE 'unwritten-character-v[0-9]+' "$REPO/charserver/MapServers.cs" | head -1)"
 BASE="http://127.0.0.1:$PORT"
 WORK="$(mktemp -d)"
 started=0
@@ -82,14 +83,14 @@ echo "  ok    answering"
 uuid() { "$PY" -c "import uuid;print(uuid.uuid4())"; }
 # put <character> <level> <bagCopyIds as json> <storage as json>  → prints the http code; the body is in $WORK/reply.json
 put() {
-  curl -s -o "$WORK/reply.json" -w '%{http_code}' -X PUT "$BASE/server/characters/$1/progress" -H "x-server-secret: $SECRET" \
+  curl -s -o "$WORK/reply.json" -w '%{http_code}' -X PUT "$BASE/server/characters/$1/progress" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" \
     -H 'content-type: application/json' \
     -d "{\"progress\":{\"version\":18,\"level\":$2,\"bagItemIds\":[],\"bagCopyIds\":$3,\"equipCopyIds\":[]},\"quests\":[],\"handover\":0,\"storage\":$4}"
 }
 # move <id> <kind> <item> <count> <folds> <roll> <copy id> <limit>
 move() { echo "{\"moveId\":\"$1\",\"kind\":\"$2\",\"itemId\":\"$3\",\"count\":$4,\"refine\":$5,\"cards\":\"\",\"roll\":\"$6\",\"copyId\":\"$7\",\"limit\":$8}"; }
 stored() {
-  curl -s "$BASE/server/characters/$1/storage" -H "x-server-secret: $SECRET" | "$PY" -c "
+  curl -s "$BASE/server/characters/$1/storage" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" | "$PY" -c "
 import sys, json
 d = json.load(sys.stdin)
 print('rev', d['revision'], ';'.join('%s x%d %s' % (r['itemId'], r['count'], r['copyId']) for r in d['rows']))"
@@ -114,7 +115,7 @@ check "  storage untouched" "$(stored "$C1")" "rev 2 item.fly-wing x8 "
 check "  progress written" "$(level "$C1")" "4"
 check "a piece of gear goes in as itself" "$(put "$C1" 5 '[]' "$(move "$(uuid)" store item.sword 1 3 rollA sw-1 600)")" "200"
 check "  storage" "$(stored "$C1")" "rev 3 item.fly-wing x8 ;item.sword x1 sw-1"
-check "  with its folds and its roll" "$(curl -s "$BASE/server/characters/$C1/storage" -H "x-server-secret: $SECRET" \
+check "  with its folds and its roll" "$(curl -s "$BASE/server/characters/$C1/storage" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" \
   | "$PY" -c "import sys, json; r = json.load(sys.stdin)['rows'][1]; print(r['refine'], r['roll'])")" "3 rollA"
 
 echo "5. a store that cannot be made takes the whole save back with it"

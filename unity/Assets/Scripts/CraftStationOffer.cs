@@ -24,10 +24,16 @@ public struct CraftStationOffer
     public string quenchMaterialId;
     public int quenchMaterialCost, quenchGoldCost;
 
-    /// <summary>The three chances of the quench AS IT WOULD BE MADE, in whole percent: up a grade, unchanged,
-    /// down a grade. Already includes whatever Salt the player has chosen to put in, so the window shows the odds
-    /// it is about to roll rather than a different set.</summary>
-    public int up, same, down;
+    /// <summary>The chance, in whole percent, that the next fold succeeds, and the folds the piece stands at if it
+    /// fails. 100 and the same folds while a fold cannot fail.</summary>
+    public int foldChance, foldsIfFoldFails;
+
+    /// <summary>The chance, in percent (up to three decimals), that the quench AS IT WOULD BE MADE goes up a grade.
+    /// Already includes whatever Salt the player has chosen to put in, so the window shows the odds it is about to
+    /// roll rather than a different set.</summary>
+    public float upChancePercent;
+    /// <summary>Where a failed quench would leave the piece: its grade and its folds.</summary>
+    public int qualityIfQuenchFails, foldsIfQuenchFails;
 
     /// <summary>The Salt those odds include: 0 none, 1 Coarse, 2 Fine, 3 Pure.</summary>
     public int saltTier;

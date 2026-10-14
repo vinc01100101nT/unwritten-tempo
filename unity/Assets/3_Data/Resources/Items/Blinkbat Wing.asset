@@ -23,10 +23,8 @@ MonoBehaviour:
   category: 3
   cardSlots: 0
   weight: 10
-  value: 558
+  value: 486
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 6
   materialStep: 1
   mergesInto: {fileID: 0}

@@ -11,6 +11,7 @@ LOGIN="${ACCOUNTS_URL:?ACCOUNTS_URL is not set in settings.env}"
 CHAR="${CHAR_SERVER_URL:?CHAR_SERVER_URL is not set in settings.env}"
 PY="$(find_python)"
 SECRET="${SERVER_SECRET:-}"
+BUILD="$(grep -oE 'unwritten-character-v[0-9]+' "$REPO/charserver/MapServers.cs" | head -1)"
 [ -n "$SECRET" ] || { echo "FAIL: no SERVER_SECRET in settings.env"; exit 1; }
 EMAIL="e2e-$(date +%s)-$$@example.com"
 NAME="E2E$(date +%s | tail -c 6)"
@@ -88,7 +89,7 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/characters/$CID/prog
   -H 'content-type: application/json' -d "{\"progress\":$SAVE}")
 [ "$CODE" = "405" ] || fail "a player's own save write got $CODE (expected 405 — no player-side write exists)"
 ok "player-side save write refused ($CODE)"
-curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
+curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" \
   -H 'content-type: application/json' -d "{\"progress\":$SAVE}" >/dev/null
 BACK=$(curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK")
 echo "$BACK" | "$PY" -c '
@@ -104,12 +105,12 @@ print("  ok  save round-tripped: level",p["level"],"gold",p["gold"],"bag",p["bag
 
 echo "10. a save with no version is refused, even from the server door"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$CID/progress" \
-  -H "x-server-secret: $SECRET" -H 'content-type: application/json' -d '{"progress":{"level":99}}')
+  -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" -H 'content-type: application/json' -d '{"progress":{"level":99}}')
 [ "$CODE" = "400" ] || fail "expected 400 for an unversioned save, got $CODE"
 ok "unversioned save refused ($CODE)"
 
 echo "11. a save that names no body keeps the look already stored"
-curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" \
+curl -s -X PUT "$CHAR/server/characters/$CID/progress" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" \
   -H 'content-type: application/json' -d '{"progress":{"version":9,"level":43}}' >/dev/null
 curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
@@ -158,7 +159,7 @@ print("  ok  colours trimmed, not refused")'
 
 echo "17. a very large version is accepted through the server door"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$CID/progress" \
-  -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
+  -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" -H 'content-type: application/json' \
   -d '{"progress":{"version":3000000000,"level":3000000000}}')
 [ "$CODE" = "200" ] || fail "a version above two billion was refused ($CODE)"
 curl -s "$CHAR/characters" -H "authorization: Bearer $TOK" | "$PY" -c '

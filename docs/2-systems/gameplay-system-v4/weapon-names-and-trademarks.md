@@ -13,7 +13,7 @@ Every skill is a numbered form of its weapon's style (see [Story & Setting](../.
 a sword that rolled Petal Storm is called Petal Storm. The name is the piece's identity and never changes; the grade
 and the folds are its quality and ride alongside it.
 
-**The format:** `+15 Petal Storm [C]` — folds, name, grade. Any weapon can be folded, quenched
+**The format:** `+7 Petal Storm [C]` — folds, name, grade. Any weapon can be folded, quenched
 and recycled exactly as now, whatever its name.
 
 This replaces the earlier idea of a name-per-grade, which could not work: a name tied to the grade would be
@@ -21,9 +21,9 @@ destroyed by the very quench that improved the weapon, and nobody would ever cli
 
 ## 1. What a name is
 
-- **Rolled ONCE, as the weapon is dropped.** With the dropped piece's rarity, it is the only random thing in a
-  weapon's whole life.
-- **It never changes.** A quench moves the grade, a fold moves the number, a failed quench drops the grade —
+- **Rolled ONCE, as the weapon is dropped**, together with the piece's rarity and its base roll; nothing rolls
+  any of the three again.
+- **It never changes.** A quench moves the grade, a fold moves the number, a failed fold or quench takes some back —
   none of them touch the name. **This is the point:** you find the weapon you want at Raw, and then spend the
   whole crafting ladder climbing that one weapon.
 - **It belongs to one weapon type.** *Petal Storm* is a form of Blossom Wind, the sword's style, so it is only ever
@@ -180,7 +180,7 @@ parry routine does have weapons of its own.
 ## 4. The roll: random — a class first, then a name
 
 **A weapon's trademark has nothing to do with its rarity.** The rarity of a dropped weapon is the answer of the kind
-of creature that dropped it and lifts what its folds buy ([V4](README.md) §4); the trademark is rolled apart from it,
+of creature that dropped it and multiplies its base ([V4](README.md) §4); the trademark is rolled apart from it,
 in two steps: first a **class**, then **one trademark of that class**, every one equally likely.
 
 | Class | Share of all new weapons of a type | Sword trademarks | Each, on a sword |
@@ -232,14 +232,14 @@ A dropped piece nobody wants sells to a shop for 5u; recycling a Raw piece retur
 - **The copy stores two things:** the trademark's **skill id**, and the **finished lift** the server works out from
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
-  the wire, and the copy's rarity rides the same text as its sixth part. The save today is **v19**, and both
-  servers' build string is `unwritten-character-v26`.
+  the wire; the copy's rarity rides the same text as its sixth part, and its base roll as its seventh. The save today is **v19**, and both
+  servers' build string is `unwritten-character-v27`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
   — happens once at the cast's release in `SkillRunner.PlayCycles` and is handed to every burst of that cast, and
   `SkillShout.Words` picks the call from it.
-- **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
+- **The title** is `+7 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
   It is written in the colour of the copy's own rarity (`Rarities.Color`, from `EquipmentInstance.rarity`) in the
   tooltip, the bag, the worn list and on the floor, and the tooltip names the rarity on its own line.
 - **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect, each naming the skill

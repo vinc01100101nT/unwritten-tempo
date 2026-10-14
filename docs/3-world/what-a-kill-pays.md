@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-10-13 and compiled; not play-tested. Every creature's grade and folds, and every material price, are written."
+status: "BUILT 2026-10-13 and compiled; folds on the +10 limit and material prices re-baked 2026-10-14; not play-tested. Every creature's grade and folds, and every material price, are written."
 owner: vince
-last-updated: 2026-10-13
+last-updated: 2026-10-14
 tags:
   - world-content
   - economy
@@ -28,8 +28,9 @@ tags:
 - **Gear is the only difficulty dial.** The grade and the folds of what a creature wears are chosen for that
   creature. They do not have to follow its level: a low-level creature can wear high-grade, heavily folded gear and
   be hard for its level, and a high-level one can wear raw unfolded gear and be easy for its level.
-- **Grade and folds are two separate variables.** Folds raise what each piece gives. Grade raises the fold limit
-  and what each fold buys, and also opens ink slots and a higher weapon mastery limit.
+- **Grade and folds are two separate variables.** Folds raise what each piece gives. Grade raises what each fold
+  adds and what the quench that reached it added, and also opens ink slots and a higher weapon mastery limit. Every
+  grade stops at +10 folds.
 
 ## The rule
 
@@ -40,13 +41,13 @@ tags:
 | Grade multiplier | 1.00 | 1.25 | 1.50 | 1.75 | 2.00 | 2.25 | 2.50 |
 
 - **Grade multiplier:** 25% more for each grade above Raw.
-- **Fold multiplier:** 1 plus 5% for each fold. No folds is 1.00; ten folds is 1.50; thirty-five folds is 2.75.
+- **Fold multiplier:** 1 plus 5% for each fold. No folds is 1.00; ten folds, the most any grade takes, is 1.50.
 - **A creature in Raw gear with no folds pays exactly what its level and kind give.**
 - **The two are separate terms**, each read off the creature's gear and multiplied together.
-- **There is no cap.** Grade A gear at its full 35 folds pays 2.50 × 2.75 = about 6.9 times.
+- **The most a kill's gear can pay** is grade A at +10: 2.50 × 1.50 = 3.75 times.
 
-**Example.** Blood Ronin is a level 60 elite in grade D gear with 19 folds. Grade D is 1.75. Nineteen folds is
-1 + 19 × 5% = 1.95. So it pays 1.75 × 1.95 = about 3.41 times what a level 60 elite in Raw unfolded gear pays.
+**Example.** Blood Ronin is a level 60 elite in grade D gear with 10 folds. Grade D is 1.75. Ten folds is
+1 + 10 × 5% = 1.50. So it pays 1.75 × 1.50 = about 2.63 times what a level 60 elite in Raw unfolded gear pays.
 
 ## What it multiplies
 
@@ -71,16 +72,16 @@ tags:
 - **Each material's price is saved on its item**, so a player's machine works nothing out. After changing a
   creature's level, grade or folds, run `CreatureMaterialPriceBake.BakeAll(true)` through the live editor;
   `BakeAll(false)` only reports. Nothing runs it by itself.
-- **`tools/check-creature-materials.py`** names every price that is not the rule's, every creature folded past its
-  grade's cap, and any creature file that carries a measured number of its own. It needs no Unity.
+- **`tools/check-creature-materials.py`** names every price that is not the rule's, every creature folded past
+  +10, and any creature file that carries a measured number of its own. It needs no Unity.
 - `CreaturePay` holds the rule as plain arithmetic, pinned in `tools/game-math-tests/Checks.cs`.
 
 ## Still open
 
 - **The 25% a grade and the 5% a fold are first guesses.**
-- **A fold is not worth the same at every level.** Five folds on a metal body piece add 36 health: 70% of a bare
-  level 5 creature's 51 health, and 2.5% of a bare level 99 creature's 1,423. So a flat percent a fold pays a
-  high-level creature more than its gear makes it harder, and a low-level one less. This is a fault in what gear
+- **A fold is not worth the same at every level.** A Common metal body piece at Raw +5 gives 50 health on a level 5
+  creature and on a level 99 one alike — a large share of the small creature's health and a sliver of the big one's.
+  So a flat percent a fold pays a high-level creature more than its gear makes it harder, and a low-level one less. This is a fault in what gear
   gives, to be fixed there, not by bending the pay rule.
 - **Which grade and how many folds each creature wears** ([Creature Gear](creature-gear.md)) rests on first
   guesses: which grade each drop tier gives, and the five bands of how hard a creature is to find.

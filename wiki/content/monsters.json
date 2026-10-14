@@ -43,7 +43,7 @@
    "items": [
     "**It wears real equipment** — a weapon, a head piece, a body piece, shoes and a garment, the same gear you can wear, in the same slots. Its armour follows what it is — metal for shell, scale, horn or bone, leather for hide, fur or feather, cloth for soft, plant, flame or spirit — and its six stats are spent for the weapon it holds.",
     "**Its gear is its difficulty** — a monster's gear has a **grade** and **folds**, exactly like yours, and neither follows its level. The rarer the thing a monster drops, the higher its grade; the harder it is to find, the more folds. So a low-level monster guarding a Legendary material is far harder than its level says, and a common one in plain gear is not.",
-    "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the Unsigned a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**.",
+    "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the Unsigned a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**, up to **50%** more at +10.",
     "**It can carry Ring investment** — scaling it on the same soft-cap curve yours uses. A monster with a Ring behind it is a genuinely different fight.",
     "**Its stats are visible in its numbers** — a monster that hits hard has the attack to prove it. There is no hidden multiplier making things tougher."
    ]
@@ -59,7 +59,7 @@
   },
   {
    "type": "paragraph",
-   "text": "**One kill in ten, a monster drops one piece of what it wears** — a new copy of one piece picked at random, always **Raw +0** however good the monster's own was. An ordinary monster's piece is Common, Uncommon or Rare; an elite's is always Epic; a shadow's always Legendary (see *Weapons & Equipment*). Besides that it gives up **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."
+   "text": "**One kill in ten, a monster drops one piece of what it wears** — a new copy of one piece picked at random, always **Raw +0** however good the monster's own was, with its base rolled anew. An ordinary monster's piece is Common, Uncommon or Rare; an elite's is always Epic; a shadow's always Legendary (see *Weapons & Equipment*). Besides that it gives up **materials** and **consumables** — never coin. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does."
   },
   {
    "type": "list",

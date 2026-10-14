@@ -12,11 +12,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**Every piece starts as a drop.** One kill in ten, a monster drops one piece of what it wears — always **Raw +0**. What it becomes is your work: you fold it with **Temper Dust** at the station of its craft, and quench it with **Quench Oil** when it will fold no further. As it drops, a weapon rolls its **trademark**, an armour piece rolls one **word** from its slot, and the piece takes its **rarity** from the kind of monster that dropped it (see *Weapons & Equipment*); nothing else about a piece is ever rolled."
+      "text": "**Every piece starts as a drop.** One kill in ten, a monster drops one piece of what it wears — always **Raw +0**. What it becomes is your work: you fold it with **Temper Dust** at the station of its craft, and quench it with **Quench Oil** once it reaches **+10**. As it drops, the piece rolls its **base** — 85% to 115% of the usual — a weapon rolls its **trademark**, an armour piece rolls one **word** from its slot, and the piece takes its **rarity** from the kind of monster that dropped it (see *Weapons & Equipment*). Two drops of the same item are rarely the same, and the better roll is worth more."
     },
     {
       "type": "paragraph",
-      "text": "**The quench is the gamble, and it is the only one.** It moves the piece's quality one rung up, leaves it where it is, or knocks it one rung down — and it spends **every fold** either way. That is why a B-grade piece at its full thirty folds is a real decision: going for A means putting all thirty on the fire. **Salt** shifts the odds your way and is used up whichever way it goes."
+      "text": "**Higher grades are always stronger.** Each fold adds a share of the piece's base — a small one — and a quench that succeeds adds a big one, so an **A +0** piece is worth more than eight times an **F +10** one, and every grade at +0 beats the grade below it at +10. Climbing from Raw +0 to A +10 is a long road: about two months of eight hours a day."
     },
     {
       "type": "heading",
@@ -25,15 +25,15 @@
     {
       "type": "list",
       "items": [
-        "**Fold** — Temper Dust and Unsigned: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
-        "**Quench** — Quench Oil and more Unsigned: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
+        "**Fold** — Temper Dust and Unsigned: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold makes the piece worth more. **+0 to +4 always work**; from +4 a fold can fail, more often the higher the grade and the folds, and a failed fold takes **one fold off**, never below **+4**. Every grade stops at **+10**, and only a quench moves you on.",
+        "**Quench** — at **+10** only. Quench Oil and more Unsigned: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. It either lifts the piece **one grade, to +0**, or fails. With no Salt, a failure drops the piece one grade, to +0 (a Raw piece just goes back to +0), and takes the last stat Ink wrote on it. **A is the top.**",
         "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced.",
         "**Recycle** — destroys the piece and gives back half of what its folds and quenches took (below)."
       ]
     },
     {
       "type": "paragraph",
-      "text": "**What a piece is called.** A weapon goes by the name of its trademark skill, its folds and its grade — **+15 Thousand Petals [C]**. Anything else goes by its grade, its folds and what it is — **B +12 Padded Vest**. The bag lists every piece by that title, and its search finds it."
+      "text": "**What a piece is called.** A weapon goes by the name of its trademark skill, its folds and its grade — **+7 Thousand Petals [C]**. Anything else goes by its grade, its folds and what it is — **B +6 Padded Vest**. The bag lists every piece by that title, and its search finds it."
     },
     {
       "type": "heading",
@@ -41,7 +41,7 @@
     },
     {
       "type": "paragraph",
-      "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. All three take the same two materials. **Temper Dust** and **Quench Oil** drop from every monster — more from higher-level monsters, far more from elites and shadows, and more again from monsters in better gear — and no shop sells them. Neither merges into anything."
+      "text": "A piece is worked where its material is worked: **metal at the smith, cloth at the loom, leather at the tannery**. All three take the same two materials. **Temper Dust** and **Quench Oil** drop from every monster — more from higher-level monsters, far more from elites and shadows, and more again from monsters in better gear — and no shop sells them. Neither merges into anything. Every try at a station is paid for, whether it works or not, and the station's window shows the chance before you press: \"Chance: 90% · If it fails: back to +4\"."
     },
     {
       "type": "heading",
@@ -53,11 +53,11 @@
     },
     {
       "type": "paragraph",
-      "text": "**Salt** comes in three — Coarse, Fine, Pure — and does one thing: it shifts a quench's odds toward going up. It is used up whichever way the quench goes, it never makes success certain, and it never removes the chance of dropping a grade."
+      "text": "**Salt** comes in three — Coarse, Fine, Pure — and decides what a failed quench costs you. **Coarse Salt** keeps the grade and puts the piece at **+4**; **Fine Salt** does the same and makes the quench more likely to work; **Pure Salt** keeps the grade at **+9** and makes it more likely still. A Salt is used up whichever way the quench goes, and no quench is ever more than **95%** sure. Coarse Salt drops from ordinary monsters; Fine and Pure are rare from them and far more common from elites and shadows."
     },
     {
       "type": "paragraph",
-      "text": "**Ten of one tier merge into one of the next**, for Ink and Salt both, with nothing to fail. Surplus low tiers are never trash."
+      "text": "**Ten of one Ink tier merge into one of the next**, with nothing to fail. Salt merges by what it is worth: **20 Coarse** make a Fine, and **5 Fine** make a Pure. Surplus low tiers are never trash."
     },
     {
       "type": "heading",
@@ -69,7 +69,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Quenches that failed are not counted** — nothing anywhere remembers them — and Salt never comes back. Each material is halved on its own and rounded down, so a single unit does not survive the trip."
+      "text": "**Tries that failed are not counted** — nothing anywhere remembers them — and Salt never comes back. Each material is halved on its own and rounded down, so a single unit does not survive the trip."
     },
     {
       "type": "quote",

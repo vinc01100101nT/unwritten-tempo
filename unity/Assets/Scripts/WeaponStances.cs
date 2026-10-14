@@ -17,8 +17,7 @@ public static class WeaponStances
         switch (w)
         {
             case WeaponType.Sword:    return StanceId.AttackOneHandSword;
-            case WeaponType.TwoHandSword:
-            case WeaponType.TwoHandAxe: return StanceId.AttackSword;
+            case WeaponType.TwoHandSword: return StanceId.AttackSword;
             case WeaponType.Axe:      return StanceId.AttackAxe;
             case WeaponType.Mace:     return StanceId.AttackMace;
             case WeaponType.Dagger:   return StanceId.AttackDagger;

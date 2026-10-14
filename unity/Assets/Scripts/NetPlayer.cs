@@ -2184,7 +2184,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             LogDid(c, string.Concat("took off ", worn.def.displayName, " (", ((EquipSlotType)slot).ToString(), ")"));
     }
 
-    /// <summary>Ten of one Ink or Salt become one of the next tier up. Deterministic — nothing is rolled and
+    /// <summary>A pile of one Ink or Salt becomes one of the next tier up (CraftingMath.MergeCount). Deterministic — nothing is rolled and
     /// nothing can fail — so the only answers are "done" and "not enough", and the bag that comes back says
     /// which. The stack is named by position AND id, like every other bag command, so a bag that moved under
     /// the asker cannot merge the wrong pile.</summary>
@@ -2198,20 +2198,22 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (e == null || e.def == null) return;
         if (!CraftingMath.Merges(e.def.materialKind) || e.def.mergesInto == null)
         { Refused(e.def.displayName + " does not merge."); return; }
-        if (e.count < CraftingMath.MergeCount)
-        { Refused("Merging needs " + CraftingMath.MergeCount + " " + e.def.displayName + " — you have " + e.count + ".",
-                  "Merging needs " + CraftingMath.MergeCount + " — you have " + e.count); return; }
+        int need = CraftingMath.MergeCount(e.def.materialKind, e.def.materialStep);
+        if (need <= 0) { Refused(e.def.displayName + " does not merge."); return; }
+        if (e.count < need)
+        { Refused("Merging needs " + need + " " + e.def.displayName + " — you have " + e.count + ".",
+                  "Merging needs " + need + " — you have " + e.count); return; }
 
         var into = e.def.mergesInto;
-        // The ten going out are counted off first: their weight, and their entry when they are the whole stack.
-        int freedSlots = e.count == CraftingMath.MergeCount && into.category == e.def.category ? -1 : 0;
-        var noRoom = c.RoomFor(into, 1, freedSlots, -e.def.weight * CraftingMath.MergeCount);
+        // The pile going out is counted off first: its weight, and its entry when it is the whole stack.
+        int freedSlots = e.count == need && into.category == e.def.category ? -1 : 0;
+        var noRoom = c.RoomFor(into, 1, freedSlots, -e.def.weight * need);
         if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(into, noRoom, "make"), "No room in your bag"); return; }
-        e.count -= CraftingMath.MergeCount;
+        e.count -= need;
         if (e.count <= 0) c.Bag.RemoveAt(index);
         c.TakeIntoBag(into, 1);
         PushBagToOwner();
-        Done("Merged " + CraftingMath.MergeCount + " " + e.def.displayName + " into 1 " + into.displayName + ".", "Merged");
+        Done("Merged " + need + " " + e.def.displayName + " into 1 " + into.displayName + ".", "Merged");
         SaveSoon();
     }
 
@@ -2225,13 +2227,15 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // A refusal already short enough is its own short form.
     void Refused(string why, string notice = null) => TellOwnerAboutCraft(why, notice ?? why, false, false);
     void Done(string what, string notice, bool pieceGone = false) => TellOwnerAboutCraft(what, notice, true, pieceGone);
+    // A try that went through and was paid for, but whose luck failed: logged as a craft, shown in the failure colour.
+    void Failed(string what, string notice) => TellOwnerAboutCraft(what, notice, false, false, true);
 
-    void TellOwnerAboutCraft(string line, string notice, bool ok, bool pieceGone)
+    void TellOwnerAboutCraft(string line, string notice, bool ok, bool pieceGone, bool pressWentThrough = false)
     {
         // THE SAME SENTENCE IN THE LOG, refusals included — every craft press ends here, so what a tester tried at a
         // station, and what stopped them, is written once for all of them.
         if (isServer && !string.IsNullOrEmpty(line) && GameLog.On(LogCat.Server))
-            LogDid(ServerCharacter, (ok ? "crafted: " : "was refused a craft: ") + line);
+            LogDid(ServerCharacter, (ok || pressWentThrough ? "crafted: " : "was refused a craft: ") + line);
         if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
         TargetCraftResult(connectionToClient, line, notice, ok, pieceGone);
     }
@@ -2317,19 +2321,34 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         int units = CraftingMath.FoldMaterialCost(inst.quality);
         int gold = CraftingMath.FoldGoldCost(inst.quality);
         inst.EnsureCopyId();
-        bool free = c.Quests.TakeFreeFold(inst.def.id, inst.copyId, inst.quality);
+        // A FREE FOLD IS ASKED ABOUT BEFORE THE ROLL AND USED UP ONLY ON A SUCCESS: a new character has no gold to pay
+        // for the try again, so a failed free fold stays free.
+        int before = inst.upgrade;
+        bool free = c.Quests.FoldIsFree(inst.def.id, inst.copyId, inst.quality, before);
         if (!free && !Spend(c, dust, units, gold)) return;
 
-        c.Quests.NoteReplayFold(inst.def.id, inst.copyId, inst.quality, inst.upgrade);
-        inst.upgrade++;
+        bool landed = CombatRng.Range(0, 100) < CraftingMath.FoldChancePct(inst.quality, before);
+        if (!landed)
+        {
+            inst.upgrade = CraftingMath.FoldFailFolds(before);
+            inst.Recompute();
+            Failed("The fold failed — " + ItemTooltip.CopyTitle(inst) + " is now +" + inst.upgrade
+                   + (free ? ". The free fold is still yours." : ", and the " + Paid(dust, units, gold) + " is spent."),
+                   "Fold failed: +" + inst.upgrade);
+            AfterWorkingOnGear(c, inst);
+            return;
+        }
+        if (free) c.Quests.TakeFreeFold(inst.def.id, inst.copyId, inst.quality, before);
+        c.Quests.NoteReplayFold(inst.def.id, inst.copyId, inst.quality, before);
+        inst.upgrade = before + 1;
         inst.Recompute();
         Done("Folded to " + ItemTooltip.CopyTitle(inst) + (free ? " — free, your first time."
              : " for " + Paid(dust, units, gold) + "."), "Folded to +" + inst.upgrade);
         AfterWorkingOnGear(c, inst);
     }
 
-    /// <summary>Quench a piece: its grade goes up one, stays, or goes down one, and every fold it had is spent
-    /// either way. A Salt named by bag position shifts the odds toward "up" and is consumed with it.</summary>
+    /// <summary>Quench a piece at its cap: it goes up one grade to +0, or fails — and what a failure does is the Salt's
+    /// answer (CraftingMath.QuenchFail). A Salt named by bag position is consumed whatever happens.</summary>
     [Command]
     void CmdQuench(int index, string expectedItemId, int saltIndex)
     {
@@ -2376,9 +2395,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         var before = inst.quality;
         string was = ItemTooltip.CopyTitle(inst);
-        inst.quality = CraftingMath.QuenchResult(before, saltTier, CombatRng.Range(0, 100));
-        // EVERY FOLD IS SPENT, whichever way it went: a quench reworks the whole piece.
-        inst.upgrade = 0;
+        bool rose = CombatRng.Range(0, CraftingMath.QuenchChanceDen) < CraftingMath.QuenchUpChance(before, saltTier);
+        if (rose) { inst.quality = (Quality)((int)before + 1); inst.upgrade = 0; }
+        else
+        {
+            CraftingMath.QuenchFail(before, saltTier, out var grade, out int folds);
+            inst.quality = grade;
+            inst.upgrade = folds;
+        }
         // A grade that fell takes the last stat written on the piece with it.
         string lost = null;
         if (inst.quality < before && inst.inkStats != null && inst.inkStats.Count > 0)
@@ -2387,12 +2411,18 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         inst.TrimInkToSlots();
         inst.Recompute();
 
-        string went = inst.quality > before ? "went UP to " : inst.quality < before ? "went DOWN to " : "stayed, now ";
-        Done("Quenched " + was + " for " + Paid(oil, units, gold)
-             + (saltName != null ? " and 1 " + saltName : "") + ": it " + went + ItemTooltip.CopyTitle(inst)
-             + (lost != null ? ", and lost its " + lost + " stat" : "") + ".",
-             (inst.quality > before ? "Quench: up to " : inst.quality < before ? "Quench: down to " : "Quench: stayed ")
-             + GradeWord(inst.quality));
+        string paid = " for " + Paid(oil, units, gold) + (saltName != null ? " and 1 " + saltName : "");
+        if (rose)
+            Done("Quenched " + was + paid + ": it rose to " + ItemTooltip.CopyTitle(inst) + ".",
+                 "Quench: up to " + GradeWord(inst.quality));
+        else if (inst.quality < before)
+            Failed("The quench failed — " + was + " fell to " + ItemTooltip.CopyTitle(inst)
+                   + (lost != null ? ", and lost its " + lost + " stat" : "") + ". Spent" + paid.Substring(4) + ".",
+                   "Quench failed: down to " + GradeWord(inst.quality));
+        else
+            Failed("The quench failed — " + ItemTooltip.CopyTitle(inst) + " stays " + GradeWord(inst.quality) + ", at +"
+                   + inst.upgrade + ". Spent" + paid.Substring(4) + ".",
+                   "Quench failed: stays " + GradeWord(inst.quality));
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2605,7 +2635,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         return m != null && g != null ? m + " and " + g : m ?? g ?? "nothing";
     }
 
-    static string GradeWord(Quality q) => q == Quality.Raw ? "Raw" : q.ToString();
+    /// <summary>A grade as the player reads it: "Raw", or its letter.</summary>
+    public static string GradeWord(Quality q) => q == Quality.Raw ? "Raw" : q.ToString();
 
     // The stats an Ink writes as a percentage — the same four the tooltip draws with a % sign.
 
@@ -2649,7 +2680,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     static bool FoldIsFree(Character c, EquipmentInstance inst)
     {
         inst.EnsureCopyId();
-        return c.Quests.FoldIsFree(inst.def.id, inst.copyId, inst.quality);
+        return c.Quests.FoldIsFree(inst.def.id, inst.copyId, inst.quality, inst.upgrade);
     }
 
     static int IndexOf(Character c, EquipmentInstance inst)
@@ -2697,7 +2728,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // named by a position that is not one is simply no Salt.
         var salt = SaltAt(c, saltIndex);
         int saltTier = salt != null ? salt.def.materialStep : 0;
-        CraftingMath.QuenchOdds(inst.quality, saltTier, out int up, out int same, out int down);
+        CraftingMath.QuenchFail(inst.quality, saltTier, out var failGrade, out int failFolds);
+        int foldChance = CraftingMath.FoldChancePct(inst.quality, inst.upgrade);
 
         // WHAT RECYCLING WOULD GIVE BACK, as finished item ids and counts — the window only names them.
         CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int recycleDust, out int recycleOil, out int recycleGold);
@@ -2729,7 +2761,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             quenchMaterialId = oilItem != null ? oilItem.id : "",
             quenchMaterialCost = CraftingMath.QuenchMaterialCost(inst.quality),
             quenchGoldCost = CraftingMath.QuenchGoldCost(inst.quality),
-            up = up, same = same, down = down,
+            foldChance = foldChance,
+            foldsIfFoldFails = foldChance >= 100 ? inst.upgrade : CraftingMath.FoldFailFolds(inst.upgrade),
+            upChancePercent = CraftingMath.QuenchUpChance(inst.quality, saltTier) * 100f / CraftingMath.QuenchChanceDen,
+            qualityIfQuenchFails = (int)failGrade,
+            foldsIfQuenchFails = failFolds,
             saltTier = saltTier,
             saltName = salt != null ? salt.def.displayName : "",
             canQuench = CraftingMath.ReadyToQuench(inst.quality, inst.upgrade),
@@ -2738,7 +2774,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             foldFree = FoldIsFree(c, inst),
             pieceNow = inst.piece,
             pieceNext = inst.upgrade < CraftingMath.FoldCap(inst.quality)
-                ? CraftingMath.PieceNumbers(inst.def.slot, inst.def.weaponType, inst.def.madeOf, inst.upgrade + 1, inst.quality, inst.rarity)
+                ? inst.NumbersAt(inst.upgrade + 1, inst.quality)
                 : inst.piece,
         });
     }
@@ -3026,11 +3062,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         if (Leaving) return;
         if (RefusedByKeeper(ServerCharacter)) return;
-        TargetKeeperTrips(connectionToClient, TripsFrom(mapName));
+        TargetKeeperTrips(connectionToClient, TripsFrom(mapName, ServerCharacter.Level));
     }
 
-    // Every other town with a Keeper that a way of doors reaches, cheapest first, then by name.
-    static KeeperTrip[] TripsFrom(string from)
+    // Every other town with a Keeper that a way of doors reaches, cheapest first, then by name — priced for a
+    // traveller of `level`.
+    static KeeperTrip[] TripsFrom(string from, int level)
     {
         var atlas = WorldRoutes.Atlas;
         var trips = new System.Collections.Generic.List<KeeperTrip>();
@@ -3040,7 +3077,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
                 if (m == null || m.scene == from || WorldTownsfolk.KeeperIn(m.scene) == null) continue;
                 WorldRoutes.NextMap(from, m.scene, out int doors);
                 if (doors <= 0) continue;
-                trips.Add(new KeeperTrip { map = m.scene, name = atlas.NameOf(m.scene), price = KeeperMath.TeleportPrice(doors) });
+                trips.Add(new KeeperTrip { map = m.scene, name = atlas.NameOf(m.scene), price = KeeperMath.TeleportPrice(doors, level) });
             }
         trips.Sort((a, b) => a.price != b.price ? a.price.CompareTo(b.price) : string.CompareOrdinal(a.name, b.name));
         return trips.ToArray();
@@ -3064,7 +3101,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         int doors = -1;
         if (keeper != null && map != mapName) WorldRoutes.NextMap(mapName, map, out doors);
         if (doors <= 0) { KeeperSaid("There is no way there.", false); return; }
-        long price = KeeperMath.TeleportPrice(doors);
+        long price = KeeperMath.TeleportPrice(doors, c.Level);
         if (price > c.Gold) { KeeperSaid("Needs " + Wallet.Amount(price) + " — you have " + Wallet.Amount(c.Gold) + ".", false); return; }
 
         c.AddGold(-price);

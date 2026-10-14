@@ -151,7 +151,7 @@ app.MapDelete("/map-servers/{id}", (HttpContext http, string id) =>
 // character id alone, because a map server is not a person and has no account to be scoped to.
 app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string id, JsonElement body) =>
 {
-    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+    if (!maps.IsCurrentServer(http.Request)) return maps.RefuseCaller(http.Request);
     if (!Guid.TryParseExact(id, "D", out var characterId))
         return Results.Json(new { error = "invalid character id" }, statusCode: 400);
     if (!body.TryGetProperty("progress", out var progress))

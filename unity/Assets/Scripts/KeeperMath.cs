@@ -7,9 +7,10 @@ using UnityEngine;
 /// </summary>
 public static class KeeperMath
 {
-    /// <summary>Gold per door on the shortest way between two towns. A placeholder: gold balancing comes later, and this
-    /// is the one number to change.</summary>
-    public const int PerDoorPrice = 100;
+    /// <summary>A TELEPORT IS PRICED IN KILLS OF INCOME (decided 2026-10-14): each door on the way costs this many kills
+    /// of a creature at the traveller's own level, a kill being worth <see cref="CreatureMaterials.GoldPerLevel"/> gold a
+    /// level — 40 gold a door at level 1, 3,960 at level 99.</summary>
+    public const int KillsPerDoor = 4;
 
     /// <summary>How many separate things an account's storage holds: a stack of one item is one, each piece of gear is
     /// one. Sent with every move, so the character server refuses against the same number.</summary>
@@ -27,9 +28,10 @@ public static class KeeperMath
     /// the copy already held.</summary>
     public const float StorageReadGap = 1f;
 
-    /// <summary>The price of a trip that takes <paramref name="doors"/> doors on foot. Nothing for no doors (the same
-    /// town), and never below nothing.</summary>
-    public static long TeleportPrice(int doors) => doors <= 0 ? 0L : (long)PerDoorPrice * doors;
+    /// <summary>The price of a trip that takes <paramref name="doors"/> doors on foot, for a traveller of
+    /// <paramref name="level"/>. Nothing for no doors (the same town), and never below nothing.</summary>
+    public static long TeleportPrice(int doors, int level) =>
+        doors <= 0 ? 0L : (long)KillsPerDoor * CreatureMaterials.GoldPerLevel * System.Math.Max(1, level) * doors;
 
     /// <summary>Where a trip to a Keeper standing at <paramref name="home"/>, facing <paramref name="facingDegrees"/>
     /// (clockwise from north), sets you down: <paramref name="ahead"/> metres in front of them, at their height.</summary>

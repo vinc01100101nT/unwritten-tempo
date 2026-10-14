@@ -94,8 +94,8 @@ public class MonsterDef : ScriptableObject
     [Tooltip("THE GRADE every piece this creature wears comes to life at — Raw through A, the same ladder a quench " +
              "climbs. It decides the fold cap and HOW MANY stats Ink writes on each piece (Raw none, F one, up to A six).")]
     public Quality gearQuality = Quality.Raw;
-    [Tooltip("How many times every piece this creature wears is folded. Each fold is the piece's own attack or " +
-             "defence. Never past the grade's cap: Raw 5, F 10, E 15, D 20, C 25, B 30, A 35.")]
+    [Tooltip("How many times every piece this creature wears is folded. Each fold adds a share of the piece's base to " +
+             "its attack or defence. Never past the cap of +10, at every grade.")]
     public int gearFolds;
     [Tooltip("Which Ink writes the stats on every piece this creature wears — 1 Watery, 2 Thin, 3 Faint, 4 Clear, " +
              "5 Sharp. WHICH stats are written is rolled fresh each life, exactly as a station rolls one.")]

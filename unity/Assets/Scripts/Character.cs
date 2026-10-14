@@ -467,16 +467,25 @@ public class Character : MonoBehaviour, ICombatUnit
     }
     AutoCombatSettings autoCombat = new AutoCombatSettings();
 
-    /// <summary>Blank, in place, every auto-skill slot holding something this character may not press: the same test a
-    /// hotbar skill is held to (<see cref="MayBind"/>), and nothing that is not a skill at all — no item, no gear.</summary>
+    /// <summary>Blank, in place, every auto-skill slot holding something auto-combat may not press
+    /// (<see cref="MayAutoPress"/>) — nothing that is not a skill at all, no item, no gear.</summary>
     public void KeepOnlyAutoSkills(string[] slots)
     {
         if (slots == null) return;
         for (int i = 0; i < slots.Length; i++)
             if (!string.IsNullOrEmpty(slots[i])
-                && (HotbarEntry.IsItem(slots[i], out _) || HotbarEntry.IsGear(slots[i], out _) || !MayBind(slots[i])))
+                && (HotbarEntry.IsItem(slots[i], out _) || HotbarEntry.IsGear(slots[i], out _) || !MayAutoPress(slots[i])))
                 slots[i] = "";
         AutoCombatMath.EmptyRepeats(slots);
+    }
+
+    /// <summary>May auto-combat press this skill: one the hotbar may hold (<see cref="MayBind"/>) that belongs to a
+    /// weapon — a skill of no weapon is pressed by hand only.</summary>
+    public bool MayAutoPress(string skillId)
+    {
+        if (!MayBind(skillId)) return false;
+        var def = SkillCatalog.Get(skillId);
+        return def != null && def.weaponType != WeaponType.None;
     }
 
     /// <summary>SERVER: this character's quests — every record, and which step each open one is on. A player's machine

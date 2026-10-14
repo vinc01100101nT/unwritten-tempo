@@ -191,7 +191,7 @@ tier, and everything else is Common (see
 [V4 §4](gameplay-system-v4/README.md)) — and one function answers both the rarity and its colour (`Rarities`), so
 every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag's boxes, an item
 linked in chat, the worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a
-piece is worth is still written in words — its **grade and its folds**, "B +12" — and a grade is never coloured.
+piece is worth is still written in words — its **grade and its folds**, "B +6" — and a grade is never coloured.
 
 ### Fonts
 

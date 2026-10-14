@@ -92,11 +92,15 @@ public class SignInScreen : MonoBehaviour
         FrontScreen.Row(status.rectTransform, y, 18);
         y -= ButtonGap;
 
-        enterButton = UiKit.Btn("Enter", panel, OnEnter);
-        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-80, y), new Vector2(140, 34));
+        enterButton = UiKit.PrimaryBtn("Enter", panel, OnEnter);
+        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-130, y), new Vector2(120, 34));
 
         createButton = UiKit.Btn("New Account", panel, OnCreate);
-        FrontScreen.Place(createButton.GetComponent<RectTransform>(), new Vector2(80, y), new Vector2(140, 34));
+        FrontScreen.Place(createButton.GetComponent<RectTransform>(), new Vector2(0, y), new Vector2(120, 34));
+
+        // Never greyed while a sign-in is in flight: leaving is always allowed.
+        var exitButton = UiKit.Btn("Exit", panel, () => GameExit.Quit());
+        FrontScreen.Place(exitButton.GetComponent<RectTransform>(), new Vector2(130, y), new Vector2(120, 34));
 
         accountField.ActivateInputField();
 

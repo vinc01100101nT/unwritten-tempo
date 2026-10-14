@@ -89,7 +89,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v26";
+    public const string CharacterBuild = "unwritten-character-v27";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -103,6 +103,24 @@ public sealed class MapServers(Config config)
                       System.Text.Encoding.UTF8.GetBytes(given),
                       System.Text.Encoding.UTF8.GetBytes(config.ServerSecret));
     }
+
+    /// <summary>The header every map server names its <see cref="CharacterBuild"/> in, on every call.</summary>
+    public const string BuildHeader = "x-character-build";
+
+    /// <summary>Does this caller hold the shared secret AND run the character build this server understands. The doors
+    /// that read or write a character's things ask this, not <see cref="IsAServer"/>: a map server still running the
+    /// build before a deploy would read a piece's newer saved text, drop what it does not know, and write it back
+    /// without it. Registering is refused for the same reason, but an old server registered before the deploy keeps
+    /// its registration — this is what stops it.</summary>
+    public bool IsCurrentServer(HttpRequest request) =>
+        IsAServer(request) && request.Headers[BuildHeader].ToString() == CharacterBuild;
+
+    /// <summary>The answer a door gives a caller <see cref="IsCurrentServer"/> refuses.</summary>
+    public IResult RefuseCaller(HttpRequest request) =>
+        !IsAServer(request)
+            ? Results.Json(new { error = "not a server" }, statusCode: 401)
+            : Results.Json(new { error = "a different character build: restart this map server on " + CharacterBuild },
+                           statusCode: 409);
 
     public Registration Register(string id, string address, string? arrivalsAddress, int port, int playerPort,
                                  string[] maps, string build, int players, int creatures, string? startingMap)

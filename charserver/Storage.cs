@@ -195,7 +195,7 @@ public static class Storage
     {
         app.MapGet("/server/characters/{id}/storage", async (HttpContext http, string id) =>
         {
-            if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+            if (!maps.IsCurrentServer(http.Request)) return maps.RefuseCaller(http.Request);
             if (!Guid.TryParseExact(id, "D", out var characterId))
                 return Results.Json(new { error = "invalid character id" }, statusCode: 400);
 

@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-09-23 — not play-tested. Decided with the user on 2026-09-23; the word amounts are first guesses. Off-hand removed and two shoe words added 2026-10-06."
+status: "BUILT 2026-09-23 — not play-tested. Decided with the user on 2026-09-23; the word amounts are first guesses. Off-hand removed and two shoe words added 2026-10-06; a piece's base by material and slot built 2026-10-14."
 owner: vince
-last-updated: 2026-10-06
+last-updated: 2026-10-14
 tags:
   - systems-combat-design
 ---
@@ -9,7 +9,7 @@ tags:
 # Armour Roster, Materials & Words
 
 Armour has **four slots**, every slot comes in **three materials**, and every piece rolls **one word** from its
-slot. The material decides what a piece's folds buy; the slot decides how much, and which words it can roll.
+slot. The material decides what a piece's base buys; the slot decides how much, and which words it can roll.
 
 ## 1. The slots
 
@@ -21,19 +21,19 @@ equipment window.
 defence skills (block chance is a sub-stat only a skill grants), and extra ordinary-attack reach to the Sniper's own
 long reach.
 
-## 2. What a fold buys — the material decides, the slot scales
+## 2. What a piece's base buys — the material decides, the slot scales
 
-Priced with Ink's own exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double defence,
-since each point takes 1% off the hits that land — so a fold is worth 1.8 defence, split between two stats (sized
-2026-10-07 so a level-1 character in the +5 starter set beats four ungeared level-1 creatures attacking together).
-Body and garment take the full amount; head and shoes half. The grade's lift applies on top,
-rounded half up (attack speed to one decimal). Full table: [Crafting Tables](crafting-tables.md).
+A body or a garment is worth one sixth of a sword's base, priced with Ink's own exchange rate — 1 defence = 8 HP =
+4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — split
+between its material's two stats. Head and shoes take half. Sized so a full metal set's defence at equal gear is 25%
+of a sword's attack. The roll, the rarity, and every fold and quench multiply that base the way they do a weapon's,
+rounded half up once (attack speed to one decimal). Full table: [Crafting Tables](crafting-tables.md).
 
-| Each fold buys | Body, garment | Head, shoes |
+| Base, Common, Raw +0, unrolled | Body, garment | Head, shoes |
 | --- | --- | --- |
-| **Metal** | 0.9 defence + 7.2 HP | 0.45 defence + 3.6 HP |
-| **Leather** | 0.45% attack speed + 0.45 evasion | 0.225% attack speed + 0.225 evasion |
-| **Cloth** | 0.9 magic defence + 3.6 MP | 0.45 magic defence + 1.8 MP |
+| **Metal** | 4 defence + 33 HP | 2 defence + 17 HP |
+| **Leather** | 2.1% attack speed + 2 evasion | 1% attack speed + 1 evasion |
+| **Cloth** | 4 magic defence + 17 MP | 2 magic defence + 8 MP |
 
 **No piece gives movement speed** (decided 2026-10-14). A person moves at the shared pace, changed only by timed
 effects such as a Haste or a Slow; a creature moves at that pace times its own movement speed.
@@ -59,7 +59,7 @@ No design is made from materials: a piece is dropped by a creature that wears it
   changed afterwards. A creature's armour rolls one too, at every grade, every life, the way its weapon rolls a trademark.
 - **Each word does exactly one thing, and lives on exactly one slot**, so a character can never wear the same word
   twice — which is also why one word's size never has to allow for stacking with itself.
-- **Part of the name**: `+15 Tireless Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
+- **Part of the name**: `+7 Tireless Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
   piece's size.
 - **Its size grows with grade** — the finished amount is written by the server; a player's machine only shows it.
 - **Saved by name** in the copy's roll text, beside the trademark. A new character's starting Chainmail and Iron
@@ -85,12 +85,12 @@ Ironblood; 0.5 / 0.75 / 1 / 1.25 / 1.5 / 2 / 2.5 for Wellspring. **First guesses
 
 ## 5. How it is built
 
-- The numbers: `CraftingMath.PieceNumbers` (what a fold buys, returning `PieceStats`) and `ArmourWords` (the slots'
+- The numbers: `CraftingMath.PieceNumbers` (what a piece is worth, returning `PieceStats`) and `ArmourWords` (the slots'
   words, their sizes, the card line). Pinned by the game-maths tests.
 - **One lift for the words that move an existing stat**: the unit's state store reads what the unit wears
   (`UnitStates.WornChanged`) and `ArmourWords.FoldIntoSubStats` adds each word into the same sub-stat table a timed buff
-  moves — so damage dealt, damage taken, reflect, life steal, MP regeneration and reach take worn words, and movement
-  speed takes worn shoes' folds, wherever they are read, for players and creatures. Death clears timed effects, never what is worn.
+  moves — so damage dealt, damage taken, life steal, and HP and MP regeneration take worn words wherever they are read, for
+  players and creatures. Death clears timed effects, never what is worn.
 - The new numbers each have one read site: crit shield (`CritShieldLuk`), ailment length (`StatusController.Apply`),
   the element wards (`Elements.Warded`, in each unit's element lookup) and sprint
   drain (`Player3DController`).

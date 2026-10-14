@@ -1,7 +1,7 @@
 ---
 status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial), the first-gear tutorial reworked 2026-10-13 (it folds the gear a character arrives in); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
 owner: vince
-last-updated: 2026-10-13
+last-updated: 2026-10-14
 tags:
   - systems
 ---
@@ -43,12 +43,14 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
     item's own written heal, e.g. 50 HP a Minor Healing Potion).
 - **What is free is saved on the record and used up by the press that does the work** — the fold or the
   purchase itself, in the same call — so a quick double press, a door to another map server or a restart can never
-  spend it twice. A free fold goes only on a Raw piece, and only on the first copy the run folded.
+  spend it twice. A free fold goes only on a Raw piece, only on the first copy the run folded, and only while that
+  piece is below its step's own fold target. **It is checked before the fold's roll and used up only on a success**,
+  so a fold that fails from +4 costs nothing and the free fold is still there for the next press.
 - **A piece a first run still needs cannot be recycled, sold or dropped** — any copy of an item a step ahead still
   names — and the refusal says which tutorial needs it. Nothing can make a new character another Sword, so the
   station the tutorial sends them to must not be able to destroy it.
 - **Free lasts until the tutorial is first finished.** Stopping and playing again carries on with whatever is still free.
-- **The station and the shop say so**: the Fold button reads "Free", and a shop row says how many are
+- **The station and the shop say so**: the station's cost line reads "Costs nothing — your first time", and a shop row says how many are
   free before its price — the server's answer.
 - **A finished tutorial can be played again** (a **replay**): Play from its first step, paying its whole bill. A replay
   never pays the reward again and never makes the quest unfinished; its steps count **only the copy the replay
@@ -73,7 +75,8 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   - The folding its steps name, at a Raw fold's own cost, and what its Buy steps cost at the
     shop's price. Folds already made are not paid again, a piece no step
     ahead needs costs nothing, and whatever a first run still has free costs nothing. A first run of "Your First Gear"
-    therefore needs nothing; a replay needs 15 Temper Dust and 750u.
+    therefore needs nothing; a replay needs 15 Temper Dust and 630u — the bill with every fold landing, since a fold
+    that fails from +4 is paid again on the next try.
   - The character level the quest names, if any. Unsigned and items are never typed on a quest: they are only ever what
     its steps cost.
   - Each tutorial shows its list in the Quests window, every line green when the character has it and red when not —
@@ -165,8 +168,8 @@ potions are their reward.
 Unlocks on entering the world. Seven steps: talk to Gunnar the Smith; fold your Sword five times; fold your
 Chainmail five times; fold your Iron Sabatons five times; wear each of the three. The pieces are the ones a new
 character arrives wearing, and the station lists worn pieces beside carried ones, so nothing has to be taken off.
-The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 750u, and it needs a Raw unfolded
-copy of each piece.
+The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 630u, and it needs a Raw unfolded
+(+0) copy of each piece.
 
 ## The healing tutorial — "Low on Health"
 
@@ -215,7 +218,7 @@ sells, a tutorial with no unlock condition — is **suspended**: nobody is given
 spawn list places nowhere (it could never be finished); an offered quest with no offer text; a giver who keeps a
 station or a shop, or is a town's Keeper; **a rewarded quest with any step judged on holding something** — one lent item would finish
 it, and pay it, for every character it passes through; **hints or a level needed on a quest that is not a tutorial**;
-a tutorial's fold step asking for more folds than a Raw piece takes (5), whose bill would need a quench; a Health step
+a tutorial's fold step asking for more folds than a Raw piece takes (10), whose bill would need a quench; a Health step
 asking for less than 1% or more than 100%; and a shop's buy button lit on a step that buys nothing.
 
 ## Not built yet

@@ -37,8 +37,8 @@ The ten Healing Potions and Mana Draughts are town supplies too:
 
 - **Fly Wing** costs what the smallest potion costs: it is used many times an hour.
 - **Antidote** sits between the size 1 and size 2 potions.
-- **Butterfly Wing** is three doors of the Keeper's teleport, which charges 100u a door
-  ([The Keeper and the Wings](keeper-and-wings.md)).
+- **Butterfly Wing** costs 300u at the shop, the same for every character, while the Keeper's teleport charges
+  40u × the character's level a door ([The Keeper and the Wings](keeper-and-wings.md)).
 
 ## Hunting finds
 
@@ -94,3 +94,5 @@ that element's two converters; a creature of any other element gives up that ele
 - **Which food goes with which element is a first pick.**
 - **Only Lastline has a Tool Dealer**, so every town supply is bought in one town.
 - **Sage Stew's and the eight converters' descriptions are drafts.**
+- **Whether the Butterfly Wing's price should follow the level**, as the Keeper's teleport does, is to be decided: at
+  300u it is the price of two and a half doors at level 3, and of less than one door from level 8 up.

@@ -13,6 +13,7 @@ export SCRATCH
 CHAR="${CHAR_SERVER_URL:?CHAR_SERVER_URL is not set in settings.env}"
 LOGIN="${ACCOUNTS_URL:?ACCOUNTS_URL is not set in settings.env}"
 SECRET="${SERVER_SECRET:?SERVER_SECRET is not set in settings.env}"
+BUILD="$(grep -oE 'unwritten-character-v[0-9]+' "$REPO/charserver/MapServers.cs" | head -1)"
 BUILD="$(sed -n 's/.*CharacterBuild = "\([^"]*\)".*/\1/p' "$REPO/charserver/MapServers.cs")"
 [ -n "$BUILD" ] || { echo "FAIL: could not read CharacterBuild from charserver/MapServers.cs"; exit 1; }
 # The stand-in map server must never outlive this script, however it ends — a leftover one holds the
@@ -49,13 +50,13 @@ kill $STUB 2>/dev/null || true
 i=0; while [ $i -lt 60 ]; do curl -s -m 1 -o /dev/null http://127.0.0.1:7788/ 2>/dev/null && break; i=$((i+1)); done
 
 echo "1. a map server registers"
-R=$(curl -s -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" -H 'content-type: application/json' \
+R=$(curl -s -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" -H 'content-type: application/json' \
   -d "{\"id\":\"stub-1\",\"address\":\"127.0.0.1\",\"port\":7788,\"playerPort\":7777,\"maps\":[\"lastline\",\"lv_1_3\"],\"build\":\"$BUILD\"}")
 echo "$R" | grep -q '"holding":2' || fail "register: $R"
 ok "registered, holding 2 maps"
 
 echo "2. a map server built against a different character is REFUSED"
-CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" \
+CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$CHAR/map-servers" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" \
   -H 'content-type: application/json' -d '{"id":"old","address":"127.0.0.1","port":9,"maps":[],"build":"unwritten-character-v1"}')
 [ "$CODE" = "409" ] || fail "a mismatched build was accepted (got $CODE)"
 ok "mismatched build refused ($CODE) — the half-deploy guard works"
@@ -96,7 +97,7 @@ print('  ok  the announcement carries the account, the character and a ticket th
 echo "7. the map server writes the character back, as a SERVER"
 SAVE='{"version":9,"level":77,"gold":4242,"bagItemIds":["potion_red"],"bagCounts":[9],"modelName":"BaseCharacter"}'
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$CID/progress" \
-  -H "x-server-secret: $SECRET" -H 'content-type: application/json' -d "{\"progress\":$SAVE}")
+  -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD" -H 'content-type: application/json' -d "{\"progress\":$SAVE}")
 [ "$CODE" = "200" ] || fail "the map server could not write the character down (got $CODE)"
 curl -s "$CHAR/characters/$CID/progress" -H "authorization: Bearer $TOK" | "$PY" -c '
 import sys,json
@@ -113,7 +114,7 @@ CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT "$CHAR/server/characters/$C
 ok "a player cannot write through the server door ($CODE)"
 
 echo "9. a map server that has gone is never handed a player again"
-curl -s -o /dev/null -X DELETE "$CHAR/map-servers/stub-1" -H "x-server-secret: $SECRET"
+curl -s -o /dev/null -X DELETE "$CHAR/map-servers/stub-1" -H "x-server-secret: $SECRET" -H "x-character-build: $BUILD"
 rm -f "$SCRATCH"/arrival.json
 E2=$(curl -s -X POST "$CHAR/characters/$CID/enter" -H "authorization: Bearer $TOK" -H 'content-type: application/json' -d '{"map":"lastline"}')
 case "$E2" in

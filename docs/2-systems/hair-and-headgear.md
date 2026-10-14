@@ -153,7 +153,7 @@ It does nothing outside Play or on the map server.
   (`HeadPieces.Pack`). Their Head item arrives in the worn list they already receive.
 - **Townsfolk** rows carry `hairStyle`, `hairColour` and `headgear` (a Head item id), sent to watchers by `NetNpc`.
 - **Shadow creatures** carry `hairStyle` and `hairColour` on their creature entry.
-- **The shared character string** moved to `unwritten-character-v22` with this work; both sides say `unwritten-character-v26` today.
+- **The shared character string** moved to `unwritten-character-v22` with this work; both sides say `unwritten-character-v27` today.
 
 ### Head items made of nothing
 

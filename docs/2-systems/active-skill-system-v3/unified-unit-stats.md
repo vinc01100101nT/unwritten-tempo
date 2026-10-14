@@ -165,7 +165,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Max health | level curve × (1 + VIT×0.02), gear, the HP ring node, a timed MaxHP change |
 | Max mana | level curve × (1 + INT×0.015), gear, the MP ring node, a timed MaxMP change |
 | Accuracy | level + DEX×1 + LUK÷3 + worn accuracy (Ink), the Accuracy ring node, a timed Accuracy change |
-| Evasion | level + AGI×1 + AGI's jump + LUK÷5 + worn evasion (Ink, leather folds), the Evasion ring node, a timed Evasion change |
+| Evasion | level + AGI×1 + AGI's jump + LUK÷5 + worn evasion (Ink, leather armour), the Evasion ring node, a timed Evasion change |
 | Attack speed | AGI 0.5%/pt + DEX at 0.25× that, gear, the AttackSpeed ring node, a timed AttackSpeed change; capped ×3 |
 | Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change |
 | Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |

@@ -227,15 +227,18 @@ public class ItemTooltip : MonoBehaviour
                 use = "Writes one random stat onto a piece of gear. Stronger Ink writes a bigger number.";
                 break;
             case MaterialKind.Salt:
-                use = "Put into a quench to raise its chance of going up a grade. Spent whether it works or not. " +
-                      "Stronger Salt raises it more.";
+                use = item.materialStep >= 3
+                    ? "Put into a quench: if the quench fails, the piece keeps its grade, back to +9, and the chance to rise is 50% higher. Spent whether it works or not."
+                    : item.materialStep == 2
+                        ? "Put into a quench: if the quench fails, the piece keeps its grade, back to +4. Also raises the chance to rise by 25%. Spent whether it works or not."
+                        : "Put into a quench: if the quench fails, the piece keeps its grade, back to +4. Spent whether it works or not.";
                 break;
             default:
                 return;
         }
         sb.Append("\n\n" + UseTag).Append(use);
         if (CraftingMath.Merges(item.materialKind) && item.mergesInto != null)
-            sb.Append("\nMerge ").Append(CraftingMath.MergeCount).Append(" into 1 ").Append(item.mergesInto.displayName).Append('.');
+            sb.Append("\nMerge ").Append(CraftingMath.MergeCount(item.materialKind, item.materialStep)).Append(" into 1 ").Append(item.mergesInto.displayName).Append('.');
         sb.Append("</color>");
     }
 
@@ -397,6 +400,7 @@ public class ItemTooltip : MonoBehaviour
         AppendStatList(sb, own);
         if (sb.Length == opened) sb.Length = before;
         else sb.Append("</size></b>");
+        AppendBase(sb, inst);
 
         var ink = default(EquipBonuses);
         int n = inst.inkStats != null && inst.inkValues != null ? Mathf.Min(inst.inkStats.Count, inst.inkValues.Count) : 0;
@@ -407,6 +411,19 @@ public class ItemTooltip : MonoBehaviour
         AppendStatList(sb, ink);
         AppendInkSlots(sb, inst);
         if (sb.Length == opened) sb.Length = before;
+    }
+
+    // The piece's base as the server wrote it — base × roll, before rarity, folds and quenches: "Base 54 (108%)" for a
+    // piece that rolled, "Base 50" for one that never did. An armour piece shows its first stat. Nothing is worked out.
+    static void AppendBase(StringBuilder sb, EquipmentInstance inst)
+    {
+        var b = inst.baseStats;
+        float first = b.attack != 0 ? b.attack : b.magicAttack != 0 ? b.magicAttack : b.defense != 0 ? b.defense
+                    : b.magicDefense != 0 ? b.magicDefense : b.hp != 0 ? b.hp : b.mp != 0 ? b.mp
+                    : b.evasion != 0 ? b.evasion : b.attackSpeedPercent;
+        if (Mathf.Approximately(first, 0f)) return;
+        sb.Append('\n').Append("Base ").Append(first.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture));
+        if (inst.basePercent > 0) sb.Append(" (").Append(inst.basePercent).Append("%)");
     }
 
     static void AppendStatList(StringBuilder sb, in EquipBonuses eb)

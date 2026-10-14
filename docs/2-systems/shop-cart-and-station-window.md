@@ -102,7 +102,8 @@ carries the item card on hover and can be dragged.
 Tabs **Fold / Quench / Ink / Recycle** over the bag's own grid (`ItemGrid`) of what this station works on — what is
 carried, then what is worn with its slot's word on its box. The picked box is lit. Under the grid, a section that
 never scrolls: the piece's name in its rarity colour, bold, its folds small beside it; "Costs …" with the amounts
-bold; Quench odds Up green / Unchanged grey / Down red; warnings in red; Salt as the game's checkbox; Ink as one
+bold; a fold that can fail, "Chance: X% · If it fails: back to +N"; Quench's "Chance to rise" in green with what a
+failure does — "drops to E +0" in red, or "stays F, back to +4" in grey; warnings in red; Salt as the game's checkbox; Ink as one
 small button per slot showing the stat it holds ("+80 Max HP"), the next empty one "Slot N"; Recycle's "Gives back
 …"; and the **fold preview** — each of the piece's own stats now → after one more fold, both numbers the server's
 (`CraftStationOffer.pieceNow / pieceNext`). One button, fixed to the bottom, one word: Fold / Quench / Write /

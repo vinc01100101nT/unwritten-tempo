@@ -1,9 +1,8 @@
 using UnityEngine;
 
 /// <summary>How RARE a thing is to come by. A piece of gear's rarity is decided once, when the copy is made: a piece a
-/// creature drops rolls it by the creature's kind, and every other piece is <see cref="Common"/>. It lifts what the
-/// piece's folds are worth (<see cref="CraftingMath.RarityLiftHundredths"/>) and is never changed by a fold or a
-/// quench. A material is as rare as it is to find; everything else is Common.
+/// creature drops rolls it by the creature's kind, and every other piece is <see cref="Common"/>. It multiplies the
+/// piece's base (<see cref="CraftingMath.RarityBaseHundredths"/>) and is never changed by a fold or a quench. A material is as rare as it is to find; everything else is Common.
 ///
 /// <para>⚠️ The numbers are PINNED: a copy's rarity is saved as one, and the server sends one with every drop and
 /// every worn piece. Never reorder; a new rarity takes the next number.</para></summary>
@@ -32,8 +31,8 @@ public static class Rarities
 
     /// <summary>How rare a crafting material of <paramref name="kind"/> at <paramref name="step"/> is. Temper Dust and
     /// Quench Oil are Common. Ink by tier: Watery Uncommon, Thin and Faint Rare, Clear and Sharp Epic. Salt
-    /// by tier: Coarse Uncommon, Fine Rare, Pure Epic. A creature's own material is the tier its step names
-    /// (<see cref="CreatureMaterials.TierOfStep"/>), the only kind that can be Legendary.</summary>
+    /// by tier, at its drop chance (decided 2026-10-14): Coarse Uncommon, Fine Epic, Pure Legendary. A creature's own
+    /// material is the tier its step names (<see cref="CreatureMaterials.TierOfStep"/>).</summary>
     public static Rarity OfMaterial(MaterialKind kind, int step)
     {
         switch (kind)
@@ -43,7 +42,7 @@ public static class Rarities
             case MaterialKind.Ink:
                 return step >= 4 ? Rarity.Epic : step >= 2 ? Rarity.Rare : Rarity.Uncommon;
             case MaterialKind.Salt:
-                return step >= 3 ? Rarity.Epic : step >= 2 ? Rarity.Rare : Rarity.Uncommon;
+                return step >= 3 ? Rarity.Legendary : step >= 2 ? Rarity.Epic : Rarity.Uncommon;
             default:
                 return Rarity.Common;
         }

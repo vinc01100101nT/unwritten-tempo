@@ -33,12 +33,12 @@ tags:
 
 ## The rules behind the numbers
 
-- **The sizes follow how big a health bar can be.** Maximum health runs from 20 on a new character to about 5,500
-  on a level 99 character with every stat point in VIT, five grade A +35 metal pieces, a top health Ink and a top VIT
-  Ink on each, and a level 70 weapon mastery that raises health. Size 1 fills a new character's bar (20 to 74 health
+- **The sizes follow how big a health bar can be.** Maximum health runs from 20 on a new character to its most on
+  a level 99 character with every stat point in VIT, a full set of grade A +10 metal armour, a top health Ink and a
+  top VIT Ink on each piece, and a level 70 weapon mastery that raises health. Size 1 fills a new character's bar (20 to 74 health
   over the first ten levels); size 2 fills a level 25 bar with nothing invested (167); size 3 a level 25 to 50 bar
   with the points in VIT (295 to 785); size 4 a level 50 to 75 bar with the points in VIT (785 to 1,383); size 5 is
-  for geared characters (1,400 to 5,500).
+  for geared characters (1,400 and up).
 - **Mana is half the points for the same price** because the mana bar is about half the health bar: a character has
   20 health and 10 mana at level 1 and gains 6 health and 3 mana a level, so each size fills the same share of
   either bar.
@@ -69,3 +69,5 @@ tags:
 - **The amounts and the price for each point are first picks.** How much health a player loses for each kill has
   not been measured, so nothing says yet how many potions an hour of hunting uses.
 - **The five new potions' descriptions are drafts.**
+- **The top of the health range is not measured since gear gained a base.** A full Common A +10 metal set alone gives
+  5,000 health, so size 5's reach, and whether a sixth size is needed, is checked again.

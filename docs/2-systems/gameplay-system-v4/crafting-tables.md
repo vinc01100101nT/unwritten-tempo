@@ -1,7 +1,7 @@
 ---
-status: "LIVE — every number below was read from the saved item assets and the crafting arithmetic on 2026-10-13. Change the asset or the code, then this page."
+status: "LIVE — every number below was read from the saved item assets, the character settings and the crafting arithmetic on 2026-10-14. Change the asset or the code, then this page."
 owner: vince
-last-updated: 2026-10-13
+last-updated: 2026-10-14
 tags:
   - systems-combat-design
 ---
@@ -10,7 +10,7 @@ tags:
 
 The reference companion to [the V4 design](README.md). That page says WHY; this one is only the numbers as
 they are in the game today. Sell prices live on the item assets under `unity/Assets/3_Data/Resources/Items/`; every
-cost and per-grade rule lives in `unity/Assets/Scripts/CraftingMath.cs`, and what a kill drops in
+base, cost, chance and per-grade rule lives in `unity/Assets/Scripts/CraftingMath.cs`, and what a kill drops in
 `unity/Assets/Scripts/CreatureLoot.cs`. Nothing here is typed from memory.
 
 ## 1. The three stations and their two materials
@@ -38,7 +38,8 @@ No shop sells any of these.
 ## 2. Where a piece comes from — dropped, never made
 
 Every kill has a **10%** chance to drop **one** random piece of what the creature wears, as a new copy: always
-**Raw +0**, its trademark (a weapon) or word (an armour piece) rolled, and its rarity rolled by the creature's kind.
+**Raw +0**, its base (§3) and its trademark (a weapon) or word (an armour piece) rolled, and its rarity rolled by
+the creature's kind.
 A new character starts wearing a Raw +0 Common Sword, Chainmail and Iron Sabatons with no trademark and no word.
 
 | Dropped by | Rarity of the piece |
@@ -47,104 +48,160 @@ A new character starts wearing a Raw +0 Common Sword, Chainmail and Iron Sabaton
 | An elite | always Epic |
 | A shadow | always Legendary |
 
-What a creature wears, and every piece that was not dropped, is Common.
+What a creature wears, and every piece that was not dropped, is Common and unrolled (§3).
 
-## 3. Fold — Temper Dust by the grade, plus Unsigned
+## 3. What a piece is worth
 
-Each fold costs the grade's step in **Temper Dust** and **50u × the step**. A piece cannot be folded
-past its grade's cap; past there the only way on is a quench.
+**Worth = base × roll × rarity × (1 + every fold and quench percentage, added together)**, rounded half up once, at
+the end (attack speed to one decimal). The server writes it onto the copy.
 
-| Grade | Temper Dust per fold | Unsigned per fold | Fold cap | Ink slots |
-| --- | --- | --- | --- | --- |
-| Raw | 1 | 50 | +5 | 0 |
-| F | 2 | 100 | +10 | 1 |
-| E | 3 | 150 | +15 | 2 |
-| D | 4 | 200 | +20 | 3 |
-| C | 5 | 250 | +25 | 4 |
-| B | 6 | 300 | +30 | 5 |
-| A | 7 | 350 | +35 | 6 |
+### The base, Common, at a 100% roll
 
-### What one fold is worth on the piece
+A weapon's base is **50 × its swing time in seconds**, divided by 1 + the off hand's power (0.5) for a pair weapon,
+so every weapon deals the same damage a second at equal gear. The swing times are the character settings' own.
 
-The finished number is `folds × what one fold buys × (1 + quality lift + rarity lift)`, rounded half up (attack
-speed to one decimal).
-The server writes it onto the copy.
-
-A weapon's fold buys attack. **An armour piece's MATERIAL decides what a fold buys, and its SLOT how much**: body
-and garment take the full amount, head and shoes half. Priced with Ink's own exchange rate — 1 defence =
-8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point takes 1% off the hits that land — so
-a fold is worth 1.8 defence, split between two stats. The 1.8 was sized on 2026-10-07 so a level-1 character in the +5
-starter set (Sword 9 attack, Chainmail 5 defence and 36 HP, Iron Sabatons 2 defence and 18 HP) beats four ungeared
-level-1 creatures attacking together.
-
-| Piece | Each fold adds (body, garment) | Head and shoes |
+| Weapon | Swing time | Base |
 | --- | --- | --- |
-| Weapon (sword, bow, …) | +1.8 Attack | — |
-| Weapon — Staff | +1.8 Magic Attack | — |
-| Metal armour | +0.9 Defence and +7.2 HP | +0.45 Defence and +3.6 HP |
-| Leather armour | +0.45% Attack Speed and +0.45 Evasion | +0.225% Attack Speed and +0.225 Evasion |
-| Cloth armour | +0.9 Magic Defence and +3.6 MP | +0.45 Magic Defence and +1.8 MP |
+| Katar (a pair) | 0.85 s | 28 |
+| Axe (a pair) | 1.1 s | 37 |
+| Dagger, Fist | 0.8 s | 40 |
+| Shuriken | 0.9 s | 45 |
+| Sword, Wand | 1.0 s | 50 |
+| Spear, Bow | 1.1 s | 55 |
+| Staff | 1.2 s | 60 |
+| Scythe | 1.25 s | 63 |
+| Greatsword, Warhammer | 1.3 s | 65 |
+| Sniper | 1.4 s | 70 |
 
-Common body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack Speed and 20 Evasion** (leather),
-**41 Magic Defence and 164 MP** (cloth).
+Staff, Wand and Scythe give Magic Attack; every other weapon gives Attack.
 
-| Grade | Quality lift on the fold total |
-| --- | --- |
-| Raw | +0% |
-| F | +0% |
-| E | +5% |
-| D | +10% |
-| C | +15% |
-| B | +22% |
-| A | +30% |
+**An armour piece's MATERIAL decides what its base buys, and its SLOT how much.** A body or a garment is worth one
+sixth of a sword's base on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double
+defence — split between its material's two stats; head and shoes half. Sized so a full metal set's defence at
+equal gear is 25% of a sword's attack. No piece gives movement speed.
 
-| Rarity | Rarity lift on the fold total, added to the quality lift |
-| --- | --- |
-| Common | +0% |
-| Uncommon | +10% |
-| Rare | +20% |
-| Epic | +35% |
-| Legendary | +50% |
+| Material | Body or garment | Head or shoes |
+| --- | --- | --- |
+| Metal | 4 Defence and 33 HP | 2 Defence and 17 HP |
+| Leather | 2.1% Attack Speed and 2 Evasion | 1% Attack Speed and 1 Evasion |
+| Cloth | 4 Magic Defence and 17 MP | 2 Magic Defence and 8 MP |
 
-Example: a Common A-grade sword at +35 is 35 × 1.8 × 1.30 = 81.9 → **+82 Attack**; at +25 it is 25 × 1.8 × 1.30 =
-58.5, which rounds up to **+59 Attack**. A Legendary one at +35 is 35 × 1.8 × 1.80 = 113.4 → **+113 Attack**.
+### The roll
 
-## 4. Quench — Quench Oil by the grade, plus Unsigned, plus an optional Salt
+Only a piece a creature **drops** rolls its base, at **85% to 115%** in whole percents, evenly, on the server, saved
+on the copy. A new character's pieces, a shop's, a reward, a GM grant and what a creature wears are unrolled and
+count as 100%. The tooltip's Base line is base × roll, before rarity: **Base 54 (108%)**; an armour piece shows its
+first stat; an unrolled piece shows **Base 50**, with no percent; gear shown with no copy behind it (a shop's row for
+sale) has no Base line.
 
-**A piece must be folded to its grade's cap before it can be quenched** — the cap IS the gate, because the folds
-are what a quench spends. Each quench then costs the grade's step in **Quench Oil** and **500u × the
-step**. Every fold is spent whichever way it goes. A grade that falls also loses the LAST stat written on
-the piece. A is never quenched — it is the top.
+### Rarity multiplies the base
 
-| From | Quench Oil | Unsigned | Up | Unchanged | Down |
+| Rarity | Common | Uncommon | Rare | Epic | Legendary |
 | --- | --- | --- | --- | --- | --- |
-| Raw → F | 1 | 500 | 80% | 20% | — |
-| F → E | 2 | 1,000 | 60% | 40% | — (F is the floor) |
-| E → D | 3 | 1,500 | 50% | 30% | 20% |
-| D → C | 4 | 2,000 | 40% | 35% | 25% |
-| C → B | 5 | 2,500 | 35% | 35% | 30% |
-| B → A | 6 | 3,000 | 25% | 40% | 35% |
+| × base | 1.00 | 1.10 | 1.20 | 1.35 | 1.50 |
+
+### Folds and quenches add percentages of the base
+
+| Grade | Each fold adds | The quench that reached it adds | Total at +0 | Total at +10 | A Common sword at +10 | Ink slots |
+| --- | --- | --- | --- | --- | --- | --- |
+| Raw | 10% | — | 0% | 100% | 100 | 0 |
+| F | 20% | 100% | 200% | 400% | 250 | 1 |
+| E | 30% | 200% | 600% | 900% | 500 | 2 |
+| D | 40% | 300% | 1,200% | 1,600% | 850 | 3 |
+| C | 50% | 400% | 2,000% | 2,500% | 1,300 | 4 |
+| B | 60% | 500% | 3,000% | 3,600% | 1,850 | 5 |
+| A | 70% | 600% | 4,200% | 4,900% | **2,500** | 6 |
+
+Common body armour at A +10: **208 Defence and 1,667 HP** (metal), **104.2% Attack Speed and 104 Evasion**
+(leather), **208 Magic Defence and 833 MP** (cloth). A full Common A +10 metal set is **624 Defence**, 25% of the
+sword's 2,500. A Legendary A +10 sword at a 115% roll is 50 × 1.15 × 1.50 × 50 = 4,312.5 → **4,313 Attack**.
+
+## 4. Fold and quench — what each try costs, and its odds
+
+A station's fee is priced in **kills of income at the grade's level**: a normal kill is worth 10u × the creature's
+level ([Creature Materials](../../3-world/creature-materials.md)), and a grade's level is the middle of its seventh
+of levels 1–99. **A fold try costs 0.6 kills of income, a quench try 6.** Each try also costs the grade's step in
+**Temper Dust** (a fold) or **Quench Oil** (a quench). Every try is paid for, whether it succeeds or not.
+
+| Grade | Raw | F | E | D | C | B | A |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Level it is priced at | 7 | 21 | 35 | 50 | 64 | 78 | 92 |
+| Temper Dust per fold | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+| Unsigned per fold | 42 | 126 | 210 | 300 | 384 | 468 | 552 |
+| Quench Oil per quench | 1 | 2 | 3 | 4 | 5 | 6 | — |
+| Unsigned per quench | 420 | 1,260 | 2,100 | 3,000 | 3,840 | 4,680 | — |
+
+### Fold
+
+Every grade's fold cap is **+10**. A piece cannot be folded past it, and **a piece must be at +10 to be quenched** —
+the cap is the gate. **+0 to +4 always succeed.** From +4 a fold can fail; **a failed fold takes off one fold and
+never goes below +4.** The station shows "Chance: X% · If it fails: back to +N".
+
+| Grade | +4→5 | +5→6 | +6→7 | +7→8 | +8→9 | +9→10 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Raw | 90% | 80% | 70% | 60% | 50% | 40% |
+| F | 76% | 68% | 60% | 51% | 42% | 34% |
+| E | 65% | 58% | 50% | 43% | 36% | 29% |
+| D | 54% | 48% | 42% | 36% | 30% | 24% |
+| C | 45% | 40% | 35% | 30% | 25% | 20% |
+| B | 36% | 32% | 28% | 24% | 20% | 16% |
+| A | 22% | 20% | 17% | 15% | 12% | 10% |
+
+A tutorial's free fold is checked before the roll and used up only on a success, so a failed free fold stays free;
+it is free only while the piece is below the tutorial step's own fold target.
+
+### Quench
+
+A quench either moves the piece **up one grade, to +0**, or fails — there is no "unchanged" outcome. A is the top
+and is never quenched.
+
+| From | Raw | F | E | D | C | B |
+| --- | --- | --- | --- | --- | --- | --- |
+| Chance to go up | 40% | 30% | 18% | 11% | 6.5% | 3.5% |
 
 ### Salt
 
-One Salt may be put in, chosen in the window; it is spent whatever the quench does. Its points move into
-**Up**, taken from **Unchanged** first and then from **Down**; Down never goes below **5%** where it exists, and
-Up never passes **95%** (anything past that stays with Unchanged).
+One Salt may go in, chosen in the window, and it is spent whatever happens. **What a failure does is the Salt's
+answer**, and the better Salts also raise the chance. The chance to go up never passes **95%**.
 
-| Salt | Tier | Shift into Up | Merges |
-| --- | --- | --- | --- |
-| Coarse Salt | 1 | +10 points | 10 → 1 Fine Salt |
-| Fine Salt | 2 | +20 points | 10 → 1 Pure Salt |
-| Pure Salt | 3 | +30 points | — |
+| Salt | Rarity | If the quench fails | Chance to go up | Merges |
+| --- | --- | --- | --- | --- |
+| None | — | Drops one grade, to +0 (a Raw piece stays Raw, at +0), and the last Ink stat is lost | as the table | — |
+| Coarse Salt | Uncommon | Keeps its grade, at +4 | as the table | 20 → 1 Fine Salt |
+| Fine Salt | Epic | Keeps its grade, at +4 | × 1.25 | 5 → 1 Pure Salt |
+| Pure Salt | Legendary | Keeps its grade, at +9 | × 1.5 | — |
 
-Worked example, B → A with Pure Salt: 25 / 40 / 35 becomes **55 / 10 / 35** (30 points taken from Unchanged, none
-needed from Down).
+The station shows "Chance to rise: X% · If it fails: drops to E +0", or "… stays F, back to +4".
+
+**Where Salt drops, and what it is worth.** A Salt's worth is the kills of a normal creature it takes to find one,
+at the yardstick of 500 kills an hour ([Creature Materials](../../3-world/creature-materials.md)); the merges follow
+that worth.
+
+| Salt | A normal kill | An elite kill | A shadow kill | Kills to find one |
+| --- | --- | --- | --- | --- |
+| Coarse | 10% | — | — | 10 |
+| Fine | 0.5% | 20% | 40% | 200 |
+| Pure | 0.1% | 5% | 15% | 1,000 |
+
+Nobody is told which Salt to use. Each is the cheapest at some grades, worked out from what it saves against what it
+costs:
+
+| Climb | Cheapest Salt | Average kills for the climb, Salt and fees included |
+| --- | --- | --- |
+| Raw → F | none | 210 |
+| F → E | Coarse | 430 |
+| E → D | Coarse | 1,250 |
+| D → C | Coarse | 4,730 |
+| C → B | Fine | 19,800 |
+| B → A | Pure | 102,700 |
+| A +0 → A +10 | — | 110,200 |
+| **Raw +0 → A +10** | | **239,300 kills, about 479 hours**, of which the fees are about 116 |
 
 ## 5. Ink — one stat per Ink, the player picks the slot
 
 Using an Ink writes **one** stat at the slot chosen: an empty slot is filled, an occupied one is replaced. A stat
 already on the piece cannot roll again. The Ink is always spent; there is no failure outcome. The grade sets how
-many slots the piece has (table in §3).
+many slots the piece has (the last column of the table in §3).
 
 | Ink | Tier | Merges |
 | --- | --- | --- |
@@ -193,30 +250,36 @@ type. Training speed applies to Weapon Mastery.
 ## 7. Recycle — half of what the piece provably consumed
 
 Recycling destroys the piece and returns, each halved and rounded down: for **every grade below the current
-one**, that grade's full fold cap AND one quench (both at that grade's own prices — the gate above is what makes
+one**, that grade's ten folds AND one quench (both at that grade's own prices — the gate above is what makes
 those folds provable); the folds standing on the piece now, at its own grade's price; and one Ink per written stat,
 its tier read off the value. **Folds made at Raw return nothing**, standing or climbed — no Temper Dust and no Unsigned
-— though the Raw quench does. Failed quenches, the folds they spent, and Salt are not recorded and come back as
-nothing. A piece the first tutorial still needs cannot be recycled.
+— though the Raw quench does. Failed tries, folds or quenches, and Salt are not recorded and come back as nothing.
+A piece the first tutorial still needs cannot be recycled.
 
 | Piece | Comes back |
 | --- | --- |
-| Raw +5 Sword (ready to quench) | nothing |
-| F +4 Sword | 4 Temper Dust, 450u |
-| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,250u |
-| A +35 Sword | 347 Temper Dust, 10 Quench Oil, 22,625u |
+| Raw +10 Sword (ready to quench) | nothing |
+| F +0 Sword | 210u |
+| F +4 Sword | 4 Temper Dust, 462u |
+| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,470u |
+| A +10 Sword | 135 Temper Dust, 10 Quench Oil, 17,850u |
 | … with 2 Watery Ink stats written | + 1 Watery Ink |
 
 ## 8. Worked example — a dropped Common sword from Raw to A
 
-| Step | Pays | Result |
+Attack is the sword's own, at a 100% roll.
+
+| Step | Pays, each try | Result |
 | --- | --- | --- |
-| A kill drops it | nothing | Raw +0 |
-| Fold ×5 | 5 Temper Dust + 250u | Raw +5 (+9 Attack) |
-| Quench (allowed: at the +5 cap) | 1 Quench Oil + 500u, 80% | F +0 |
-| Fold ×10 | 20 Temper Dust + 1,000u | F +10 (+18 Attack) |
-| Quench | 2 Quench Oil + 1,000u, 60% | E +0 (2 Ink slots) |
-| Fold ×15 | 45 Temper Dust + 2,250u | E +15 (+28 Attack) |
-| Quench | 3 Quench Oil + 1,500u, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
+| A kill drops it | nothing | Raw +0 (50 Attack) |
+| Fold ×4 | 1 Temper Dust + 42u, always lands | Raw +4 (70) |
+| Fold to +10 | 1 Temper Dust + 42u, 90% down to 40%; a failure back one, never below +4 | Raw +10 (100) |
+| Quench | 1 Quench Oil + 420u, 40% | F +0 (150, 1 Ink slot) — or Raw +0 with no Salt |
+| Fold to +10 | 2 Temper Dust + 126u | F +10 (250) |
+| Quench | 2 Quench Oil + 1,260u, 30% | E +0 (350, 2 slots) — or with Coarse Salt, F +4 |
 | … | | |
-| Fold ×35 at A | 245 Temper Dust + 12,250u | A +35 (+82 Attack), 6 Ink slots |
+| Fold to +10 at A | 7 Temper Dust + 552u, 22% down to 10% | A +10 (2,500 Attack), 6 Ink slots |
+
+A level 99 character with 99 STR, 30 DEX and 1 LUK swinging that Common A +10 sword has 2,824 Attack. A Thousand
+Petals dash strikes for 100% of Attack, so it deals about **2,000** to a level 99 creature in Common A +10 metal
+armour (624 Defence from the armour and about 200 from its stats), before crits, elements and held charges.

@@ -11,9 +11,16 @@ using UnityEngine;
 public static class CraftingMath
 {
     // ---- merging ------------------------------------------------------------------------------------------
-    /// <summary>How many of one tier make one of the next, for the two materials that merge (Ink and Salt).
-    /// Deterministic: ten always become one, and nothing can fail.</summary>
-    public const int MergeCount = 10;
+    /// <summary>How many of one tier make one of the next, for the two materials that merge. Deterministic, and nothing
+    /// can fail. Ink merges ten into one. SALT MERGES AT ITS WORTH (decided 2026-10-14): a Fine Salt is worth 20 Coarse
+    /// and a Pure 5 Fine, counted in the kills it takes to find each, so a merge costs what a find does.
+    /// 0 for a tier that merges into nothing.</summary>
+    public static int MergeCount(MaterialKind kind, int step)
+    {
+        if (kind == MaterialKind.Ink) return 10;
+        if (kind == MaterialKind.Salt) return step == 1 ? 20 : step == 2 ? 5 : 0;
+        return 0;
+    }
 
     /// <summary>True when <paramref name="kind"/> is a material whose tiers merge upward. Temper Dust and Quench Oil
     /// have no tiers, so there is nothing of theirs to merge.</summary>
@@ -24,9 +31,9 @@ public static class CraftingMath
     public const Quality Best = Quality.A;
 
     // Indexed by (int)Quality: Raw, F, E, D, C, B, A.
-    static readonly int[] FoldCaps      = { 5, 10, 15, 20, 25, 30, 35 };
-    static readonly float[] Lifts       = { 0f, 0f, 0.05f, 0.10f, 0.15f, 0.22f, 0.30f };
-    static readonly int[] Slots         = { 0, 1, 2, 3, 4, 5, 6 };
+    // EVERY GRADE FOLDS TO +10 (decided 2026-10-14).
+    static readonly int[] FoldCaps      = { 10, 10, 10, 10, 10, 10, 10 };
+    static readonly int[] Slots        = { 0, 1, 2, 3, 4, 5, 6 };
     static readonly int[] WeaponCaps    = { 10, 20, 30, 40, 50, 60, 70 };
     static readonly float[] Speeds      = { 0.5f, 0.75f, 1f, 1.1f, 1.2f, 1.35f, 1.5f };
 
@@ -102,19 +109,16 @@ public static class CraftingMath
         return (Rarity)last;
     }
 
-    // What a rarity adds to the grade's lift on a piece of gear, in hundredths of the piece's value.
-    static readonly int[] RarityLifts = { 0, 10, 20, 35, 50 };
+    // What a rarity multiplies a piece's base by, in hundredths: Common 100 … Legendary 150.
+    static readonly int[] RarityBases = { 100, 110, 120, 135, 150 };
 
-    /// <summary>What <paramref name="rarity"/> adds to a piece's fold values, in hundredths: 0 at Common, 50 at
-    /// Legendary. Added to the grade's lift, never multiplied onto it.</summary>
-    public static int RarityLiftHundredths(Rarity rarity) => RarityLifts[Mathf.Clamp((int)rarity, 0, RarityLifts.Length - 1)];
+    /// <summary>What <paramref name="rarity"/> multiplies a piece's base by, in hundredths: 100 at Common, 150 at
+    /// Legendary.</summary>
+    public static int RarityBaseHundredths(Rarity rarity) => RarityBases[Mathf.Clamp((int)rarity, 0, RarityBases.Length - 1)];
 
     /// <summary>The most folds this grade allows — and, because a piece cannot be folded past its grade, also
     /// the point at which the only way further is a quench.</summary>
     public static int FoldCap(Quality q) => FoldCaps[Index(q)];
-
-    /// <summary>What this grade adds to the piece's fold total, as a fraction (0.30 = +30%).</summary>
-    public static float QualityLift(Quality q) => Lifts[Index(q)];
 
     /// <summary>How many stats this grade lets a piece carry.</summary>
     public static int InkSlots(Quality q) => Slots[Index(q)];
@@ -130,37 +134,73 @@ public static class CraftingMath
     public static int Band(Quality q) => Index(q) + 1;
 
     // ---- what a fold and a quench cost --------------------------------------------------------------------
-    const int GoldPerFoldPerBand = 50, GoldPerQuenchPerBand = 500;
     /// <summary>Units of Temper Dust one fold of a piece of grade <paramref name="q"/> costs: 1 at Raw, 7 at A.</summary>
     public static int FoldMaterialCost(Quality q) => Band(q);
     /// <summary>Units of Quench Oil one quench of a piece of grade <paramref name="q"/> costs: 1 at Raw, 7 at A.</summary>
     public static int QuenchMaterialCost(Quality q) => Band(q);
 
-    public static int FoldGoldCost(Quality q) => GoldPerFoldPerBand * Band(q);
-    public static int QuenchGoldCost(Quality q) => GoldPerQuenchPerBand * Band(q);
+    // A STATION'S FEE IS PRICED IN KILLS OF INCOME AT THE GRADE'S LEVEL (decided 2026-10-14): a fold try costs 0.6 of
+    // a kill, a quench try 6, a kill being worth CreatureMaterials.GoldPerLevel × the creature's level. Tenths of a kill.
+    const int FoldFeeTenthsOfAKill = 6, QuenchFeeTenthsOfAKill = 60;
 
-    // ---- what a fold is worth on the piece ----------------------------------------------------------------
-    // A weapon gains attack per fold — magic attack instead when it is a caster's weapon, which is the only
-    // place a weapon TYPE changes what a fold means.
+    /// <summary>The creature level a grade's fees are priced at: the middle of the grade's seventh of levels
+    /// 1–<see cref="CreatureLoot.LadderTop"/>, rounded half up — 7, 21, 35, 50, 64, 78, 92.</summary>
+    public static int GradePriceLevel(Quality q)
+    {
+        long num = (2L * Band(q) - 1) * CreatureLoot.LadderTop, den = 2L * CreatureLoot.Grades;
+        return (int)((2 * num + den) / (2 * den));
+    }
+
+    /// <summary>What one fold try of grade <paramref name="q"/> costs in gold, paid whether it succeeds or not.</summary>
+    public static int FoldGoldCost(Quality q) => FoldFeeTenthsOfAKill * CreatureMaterials.GoldPerLevel * GradePriceLevel(q) / 10;
+    /// <summary>What one quench try of grade <paramref name="q"/> costs in gold, paid whether it succeeds or not.</summary>
+    public static int QuenchGoldCost(Quality q) => QuenchFeeTenthsOfAKill * CreatureMaterials.GoldPerLevel * GradePriceLevel(q) / 10;
+
+    // ---- what a piece is worth ----------------------------------------------------------------------------
+    // WORTH = BASE × ROLL × RARITY × (1 + EVERY FOLD AND QUENCH PERCENTAGE, ADDED TOGETHER) (decided 2026-10-14). The
+    // percentages add, never multiply each other. A Raw +0 piece is worth its base × roll × rarity.
     //
-    // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT A FOLD BUYS, AND ITS SLOT HOW MUCH (decided 2026-09-23): metal buys
-    // defence and health, leather attack speed and evasion, cloth magic defence and mana. Priced with Ink's own
-    // exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed, and evasion at double defence, since each point
-    // takes 1% off the hits that land — so a fold is worth 1.8 defence, split between two stats.
+    // A WEAPON'S BASE IS 50 × ITS SWING TIME IN SECONDS, divided by (1 + the off hand's power) for a pair weapon, so
+    // every weapon deals the same damage a second at equal gear. A caster's weapon gives magic attack instead — the
+    // only place a weapon TYPE changes what its number means. The swing time and the off hand's power come in as
+    // whole thousandths, rounded once by the caller: 1.3 as a float is 1.2999999, which truncated would cost 0.1%.
     //
-    // EVERY FOLD IS WORTH 1.8 OF WHAT IT ONCE BOUGHT (decided 2026-10-07): sized so a level-1 character wearing the
-    // +5 starter set — Sword, Chainmail, Iron Sabatons — beats four ungeared level-1 creatures attacking together.
-    // Held in HUNDREDTHS and summed as whole numbers: 0.9, 0.45, 3.6, 7.2 and 1.8 have no exact float, and summed as
-    // floats 19 of the values the folds can reach (an A +25 weapon's 58.5 among them) landed below the .5 they sit on.
-    const int WeaponAttackPerFold = 180;
-    const int MetalDefensePerFold = 90, MetalHPPerFold = 720;
-    const int LeatherAttackSpeedPerFold = 45, LeatherEvasionPerFold = 45;
-    const int ClothMagicDefensePerFold = 90, ClothMPPerFold = 360;
+    // AN ARMOUR PIECE'S MATERIAL DECIDES WHAT ITS BASE BUYS, AND ITS SLOT HOW MUCH: a body or a garment is worth one
+    // sixth of a sword's base (the constant 50) on Ink's exchange rate — 1 defence = 8 HP = 4 MP = 0.5% attack speed,
+    // evasion at double defence — split evenly between its material's two stats; head and shoes half. Sized so a full
+    // metal set's defence at equal gear is 25% of a sword's attack. Each stat is a numerator over 12: metal 50 defence
+    // + 400 HP, leather 25 attack speed + 25 evasion, cloth 50 magic defence + 200 MP.
+    //
     // NO PIECE BUYS MOVEMENT SPEED (decided 2026-10-14): a person moves at the shared pace, and only a timed effect
     // changes it.
+    const int WeaponBase = 50;
+    const int Twelfths = 12;
+    const int MetalDefense12 = 50, MetalHP12 = 400;
+    const int LeatherAttackSpeed12 = 25, LeatherEvasion12 = 25;
+    const int ClothMagicDefense12 = 50, ClothMP12 = 200;
 
-    /// <summary>The finished numbers one piece's folds and grade grant — what the server writes onto the copy and a
-    /// player's machine only ever adds up. Attack speed is whole percent, one decimal.</summary>
+    // What each fold adds at each grade, and what the quench that reached each grade adds, in percent of the base.
+    static readonly int[] FoldPercents   = { 10, 20, 30, 40, 50, 60, 70 };
+    static readonly int[] QuenchPercents = { 0, 100, 200, 300, 400, 500, 600 };
+
+    /// <summary>The lowest and highest roll a dropped piece's base can take, in whole percent.</summary>
+    public const int RollMin = 85, RollMax = 115;
+
+    /// <summary>A piece's roll in percent: what it rolled, or 100 for a piece that never rolled (0).</summary>
+    public static int RollOrPar(int rollPercent) => rollPercent > 0 ? rollPercent : 100;
+
+    /// <summary>Every fold and quench percentage of a piece of grade <paramref name="q"/> at <paramref name="folds"/>
+    /// folds, added together: every grade below's full folds and the quench that left it, plus this grade's folds.
+    /// 4,900 at A +10.</summary>
+    public static int TotalPercent(Quality q, int folds)
+    {
+        int at = Index(q), sum = 0;
+        for (int g = 0; g < at; g++) sum += FoldCaps[g] * FoldPercents[g] + QuenchPercents[g + 1];
+        return sum + Mathf.Clamp(folds, 0, FoldCaps[at]) * FoldPercents[at];
+    }
+
+    /// <summary>The finished numbers one piece is worth — what the server writes onto the copy and a player's machine
+    /// only ever adds up. Attack speed is whole percent, one decimal.</summary>
     [System.Serializable]
     public struct PieceStats
     {
@@ -173,74 +213,101 @@ public static class CraftingMath
     public static float SlotShare(EquipSlotType slot) =>
         slot == EquipSlotType.Head || slot == EquipSlotType.Boots ? 0.5f : 1f;
 
-    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/> and rarity
-    /// <paramref name="rarity"/> — the finished numbers, lift included, as the server writes them onto the copy. An
-    /// armour piece with no material has nothing a fold could buy. Rounds half UP, deliberately:
-    /// <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
+    /// <summary>A swing time or an off hand's power as the whole thousandths <see cref="PieceNumbers"/> takes, rounded
+    /// once — never truncated, since 1.3 and 1.4 as floats sit just below themselves.</summary>
+    public static int Thousandths(float value) => Mathf.RoundToInt(value * 1000f);
+
+    /// <summary>The piece's own numbers at <paramref name="folds"/> folds of grade <paramref name="q"/>, rarity
+    /// <paramref name="rarity"/> and base roll <paramref name="rollPercent"/> (0 = never rolled, counted as 100) — the
+    /// finished numbers, as the server writes them onto the copy. A weapon's base follows its swing time
+    /// (<paramref name="swingMs"/>, whole milliseconds) and, for a pair weapon, its off hand's power
+    /// (<paramref name="offHandThousandths"/>). An armour piece with no material is worth nothing. Rounds half UP,
+    /// deliberately: <c>Mathf.RoundToInt</c> rounds .5 to the even number.</summary>
     public static PieceStats PieceNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int folds, Quality q,
-                                          Rarity rarity)
+                                          Rarity rarity, int rollPercent, int swingMs, int offHandThousandths)
     {
         var p = default(PieceStats);
-        if (folds <= 0 || slot == EquipSlotType.None) return p;
-        int lift = LiftHundredths(q, rarity);
+        if (slot == EquipSlotType.None) return p;
+        long scale = (long)RollOrPar(rollPercent) * RarityBaseHundredths(rarity) * (100 + TotalPercent(q, folds));
+        const long Percents = 100L * 100 * 100;
         if (slot == EquipSlotType.Weapon)
         {
-            int atk = FoldValue(folds * 2, WeaponAttackPerFold, lift);
+            long hands = WeaponTypes.IsDualWield(weapon) ? 1000 + Mathf.Max(0, offHandThousandths) : 1000;
+            int ms = swingMs > 0 ? swingMs : 1000;
+            int atk = HalfUp((long)WeaponBase * ms * scale, hands * Percents);
             if (IsCasterWeapon(weapon)) p.magicAttack = atk;
             else p.attack = atk;
             return p;
         }
-        int halves = folds * (SlotShare(slot) < 1f ? 1 : 2);
+        long den = Twelfths * (SlotShare(slot) < 1f ? 2L : 1L) * Percents;
         switch (material)
         {
             case MaterialKind.Metal:
-                p.defense = FoldValue(halves, MetalDefensePerFold, lift);
-                p.hp = FoldValue(halves, MetalHPPerFold, lift);
+                p.defense = HalfUp(MetalDefense12 * scale, den);
+                p.hp = HalfUp(MetalHP12 * scale, den);
                 break;
             case MaterialKind.Leather:
-                p.attackSpeedPercent = FoldValue(halves, LeatherAttackSpeedPerFold * 10, lift) / 10f;
-                p.evasion = FoldValue(halves, LeatherEvasionPerFold, lift);
+                p.attackSpeedPercent = HalfUp(LeatherAttackSpeed12 * 10L * scale, den) / 10f;
+                p.evasion = HalfUp(LeatherEvasion12 * scale, den);
                 break;
             case MaterialKind.Cloth:
-                p.magicDefense = FoldValue(halves, ClothMagicDefensePerFold, lift);
-                p.mp = FoldValue(halves, ClothMPPerFold, lift);
+                p.magicDefense = HalfUp(ClothMagicDefense12 * scale, den);
+                p.mp = HalfUp(ClothMP12 * scale, den);
                 break;
         }
         return p;
     }
 
-    /// <summary>The grade's and the rarity's lift together, as whole hundredths of the piece's value: 100 for a Common
-    /// piece at Raw or F, 130 for a Common one at A, 180 for a Legendary one at A.</summary>
-    public static int LiftHundredths(Quality q, Rarity rarity) =>
-        100 + Mathf.RoundToInt(QualityLift(q) * 100f) + RarityLiftHundredths(rarity);
+    /// <summary>The piece's BASE alone — base × roll, before rarity, folds and quenches: what a tooltip's Base line shows.</summary>
+    public static PieceStats BaseNumbers(EquipSlotType slot, WeaponType weapon, MaterialKind material, int rollPercent,
+                                         int swingMs, int offHandThousandths) =>
+        PieceNumbers(slot, weapon, material, 0, Quality.Raw, Rarity.Common, rollPercent, swingMs, offHandThousandths);
 
-    /// <summary>What <paramref name="halves"/> half-folds buy at <paramref name="perFoldHundredths"/> a fold, lifted by
-    /// <paramref name="liftHundredths"/>, rounded half UP — all whole-number maths, so a value exactly on .5 rounds up.</summary>
-    static int FoldValue(int halves, int perFoldHundredths, int liftHundredths)
-    {
-        const long Den = 2L * 100 * 100;
-        long num = (long)halves * perFoldHundredths * liftHundredths;
-        return (int)((2 * num + Den) / (2 * Den));
-    }
+    /// <summary><paramref name="num"/> ÷ <paramref name="den"/>, rounded half UP, in whole numbers.</summary>
+    static int HalfUp(long num, long den) => (int)((2 * num + den) / (2 * den));
 
     /// <summary>A caster's weapon gains MAGIC attack from a fold rather than attack.</summary>
     public static bool IsCasterWeapon(WeaponType w) => w == WeaponType.Staff || w == WeaponType.Wand || w == WeaponType.Scythe;
 
+    // ---- the fold's luck ----------------------------------------------------------------------------------
+    /// <summary>Folds up to this many always succeed, and a failed fold never takes a piece below it.</summary>
+    public const int SafeFolds = 4;
+
+    // The chance in whole percent that a fold from +4, +5 … +9 succeeds, by grade (Raw … A). Below +4 every fold does.
+    static readonly int[,] FoldChances =
+    {
+        { 90, 80, 70, 60, 50, 40 },
+        { 76, 68, 60, 51, 42, 34 },
+        { 65, 58, 50, 43, 36, 29 },
+        { 54, 48, 42, 36, 30, 24 },
+        { 45, 40, 35, 30, 25, 20 },
+        { 36, 32, 28, 24, 20, 16 },
+        { 22, 20, 17, 15, 12, 10 },
+    };
+
+    /// <summary>The chance, in whole percent, that one fold of a grade <paramref name="q"/> piece standing at
+    /// <paramref name="foldsBefore"/> succeeds: 100 below +4, then the grade's own row. 0 at the cap.</summary>
+    public static int FoldChancePct(Quality q, int foldsBefore)
+    {
+        if (foldsBefore >= FoldCap(q)) return 0;
+        if (foldsBefore < SafeFolds) return 100;
+        return FoldChances[Index(q), Mathf.Clamp(foldsBefore - SafeFolds, 0, FoldChances.GetLength(1) - 1)];
+    }
+
+    /// <summary>Where a piece at <paramref name="foldsBefore"/> folds lands when a fold fails: one fold down, never below
+    /// <see cref="SafeFolds"/>.</summary>
+    public static int FoldFailFolds(int foldsBefore) => Mathf.Max(SafeFolds, foldsBefore - 1);
+
     // ---- the quench ---------------------------------------------------------------------------------------
-    // Chance in whole percent that a quench of THIS grade goes up, stays, or goes down. F is the floor: a failed
-    // F stays F. A is the top and is never quenched at all.
-    static readonly int[] UpPct   = { 80, 60, 50, 40, 35, 25 };
-    static readonly int[] DownPct = {  0,  0, 20, 25, 30, 35 };
+    /// <summary>Quench chances are counted out of this many — fine enough that 6.5% × 1.25 is exact.</summary>
+    public const int QuenchChanceDen = 100000;
 
-    /// <summary>Salt's shift toward "up", in whole percentage points, by its tier (1 Coarse, 2 Fine, 3 Pure).
-    /// 0 for no Salt at all.</summary>
-    public static int SaltShift(int tier) => tier <= 0 ? 0 : tier >= 3 ? 30 : tier == 2 ? 20 : 10;
+    // The chance, out of QuenchChanceDen, that a quench of THIS grade goes up, Raw … B. A is the top and is never
+    // quenched. A quench either goes up or fails; nothing stays "unchanged".
+    static readonly int[] UpChances = { 40000, 30000, 18000, 11000, 6500, 3500 };
 
-    /// <summary>The floor "down" can never be pushed below by Salt, where a down outcome exists at all.</summary>
-    public const int DownFloorPct = 5;
-
-    /// <summary>The most "up" a quench can ever be, however much Salt goes in. A quench is never a certainty.</summary>
-    public const int MaxUpPct = 95;
+    /// <summary>The most a quench's chance can ever be, out of <see cref="QuenchChanceDen"/>, however good the Salt.</summary>
+    public const int MaxUpChance = 95000;
 
     /// <summary>True when a piece of this grade could ever be quenched. A is the top of the ladder.</summary>
     public static bool CanQuench(Quality q) => q < Best;
@@ -250,36 +317,25 @@ public static class CraftingMath
     /// has not done the work cannot buy the roll.</summary>
     public static bool ReadyToQuench(Quality q, int folds) => CanQuench(q) && folds >= FoldCap(q);
 
-    /// <summary>The three chances of one quench, in whole percent, summing to 100: up a grade, unchanged, down a
-    /// grade. <paramref name="saltTier"/> shifts points into "up", taken from "same" first and then from "down",
-    /// and never pushes "down" below <see cref="DownFloorPct"/> where a down outcome exists.</summary>
-    public static void QuenchOdds(Quality q, int saltTier, out int up, out int same, out int down)
+    /// <summary>The chance, out of <see cref="QuenchChanceDen"/>, that a quench of a grade <paramref name="q"/> piece goes
+    /// up a grade with a Salt of <paramref name="saltTier"/> (0 none, 1 Coarse, 2 Fine, 3 Pure): Fine makes it × 1.25,
+    /// Pure × 1.5, and nothing takes it past <see cref="MaxUpChance"/>. 0 for a grade that cannot be quenched.</summary>
+    public static int QuenchUpChance(Quality q, int saltTier)
     {
-        int i = Index(q);
-        if (i >= UpPct.Length) { up = 0; same = 100; down = 0; return; }
-        up = UpPct[i]; down = DownPct[i]; same = 100 - up - down;
-
-        int shift = SaltShift(saltTier);
-        int fromSame = Mathf.Min(shift, same);
-        same -= fromSame; shift -= fromSame;
-        if (shift > 0 && down > 0)
-        {
-            int fromDown = Mathf.Min(shift, Mathf.Max(0, down - DownFloorPct));
-            down -= fromDown; shift -= fromDown;
-        }
-        up = 100 - same - down;
-        // However much Salt goes in, a quench is never a certainty — the excess goes back to "unchanged".
-        if (up > MaxUpPct) { same += up - MaxUpPct; up = MaxUpPct; }
+        if (!CanQuench(q)) return 0;
+        int up = UpChances[Mathf.Clamp(Index(q), 0, UpChances.Length - 1)];
+        if (saltTier == 2) up = up * 5 / 4;
+        else if (saltTier >= 3) up = up * 3 / 2;
+        return Mathf.Min(up, MaxUpChance);
     }
 
-    /// <summary>The grade a quench lands on, given a roll of 0..99. Never moves more than one rung, and never
-    /// below F once F has been reached.</summary>
-    public static Quality QuenchResult(Quality q, int saltTier, int roll0To99)
+    /// <summary>Where a failed quench leaves a grade <paramref name="q"/> piece, by its Salt: none drops it one grade to
+    /// +0 (a Raw piece stays Raw, at +0); Coarse and Fine keep its grade at +4; Pure keeps it at +9.</summary>
+    public static void QuenchFail(Quality q, int saltTier, out Quality grade, out int folds)
     {
-        QuenchOdds(q, saltTier, out int up, out _, out int down);
-        if (roll0To99 < up) return (Quality)Mathf.Min((int)Best, (int)q + 1);
-        if (roll0To99 >= 100 - down) return (Quality)Mathf.Max((int)Quality.F, (int)q - 1);
-        return q;
+        if (saltTier <= 0) { grade = (Quality)Mathf.Max((int)Quality.Raw, (int)q - 1); folds = 0; return; }
+        grade = q;
+        folds = saltTier >= 3 ? 9 : SafeFolds;
     }
 
     // ---- Ink ----------------------------------------------------------------------------------------------

@@ -17,6 +17,7 @@ using UnityEngine;
 public static class GameSettings
 {
     const string SmoothCameraFollowKey = "set_smooth_camera_follow";
+    const string DontAskQuantityKey = "set_shop_dont_ask_quantity";
     const string QuickCastSingleKey    = "set_quickcast_single";
     const string QuickCastGroundKey    = "set_quickcast_ground";
     const string MasterVolumeKey       = "set_volume_master";
@@ -30,6 +31,8 @@ public static class GameSettings
 
     static bool smoothCameraFollowValue;
     static bool smoothCameraFollowLoaded;
+    static bool dontAskQuantityValue;
+    static bool dontAskQuantityLoaded;
     static bool? quickCastSingle, quickCastGround, hideOtherCalls;
     static float? master, sfx, music, scrollSensitivity;
 
@@ -51,6 +54,28 @@ public static class GameSettings
             if (scrollSensitivity != null && Mathf.Approximately(scrollSensitivity.Value, value)) return;
             scrollSensitivity = value;
             PlayerPrefs.SetFloat(ScrollSensitivityKey, value);
+        }
+    }
+
+    /// <summary>The shop's "Don't ask quantity": a stack goes into the cart without the "how many?" box — the whole stack
+    /// to sell, one to buy. Off by default.</summary>
+    public static bool DontAskQuantity
+    {
+        get
+        {
+            if (!dontAskQuantityLoaded)
+            {
+                dontAskQuantityValue = PlayerPrefs.GetInt(DontAskQuantityKey, 0) != 0;
+                dontAskQuantityLoaded = true;
+            }
+            return dontAskQuantityValue;
+        }
+        set
+        {
+            if (dontAskQuantityLoaded && dontAskQuantityValue == value) return;
+            dontAskQuantityValue = value;
+            dontAskQuantityLoaded = true;
+            PlayerPrefs.SetInt(DontAskQuantityKey, value ? 1 : 0);
         }
     }
 

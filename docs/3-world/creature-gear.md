@@ -21,13 +21,10 @@ tags:
   Uncommon material wears F, a Rare one E, an Epic one D, a Legendary one C. An elite wears D for a Rare material,
   C for an Epic one, B for a Legendary one. The more a creature's drop is worth, the harder it is to take.
 - **Its Ink follows its grade**: F Watery, E Thin, D Faint, C Clear, B Sharp. Raw writes nothing.
-- **Its folds start at the limit of the grade below its own**, because a piece only reaches a grade by being folded
-  through every grade under it: Raw starts at 0, F at 5, E at 10, D at 15, C at 20, B at 25. A piece with no folds
-  gives nothing from folds whatever its grade, so a higher grade is never the weaker gear.
-- **How hard it is to find adds up to 5 more folds**, rounded to the nearest fold, which reaches its own grade's
-  limit. A normal creature gets all 5 at 10 or fewer alive in the whole world, three quarters of them at 11 to 20,
-  half at 21 to 35, a quarter at 36 to 50, and none above 50. An elite gets all 5 on 1 map, three quarters on 2,
-  half on 3, a quarter on 4, and none on 5.
+- **Its folds run up to the +10 every grade stops at.** The Raw creatures wear +2 to +10 and every higher grade
+  +7 to +10, so a higher grade is never the weaker gear, and the harder a creature is to find the higher it sits:
+  a normal creature by how few are alive in the whole world, an elite by how few maps it lives on. Every creature's
+  folds are in the tables below.
 - **The drop tiers, the numbers alive and the maps are those in [Creature Materials](creature-materials.md).**
 - **Its armour follows what the creature is**: metal for shell, scale, horn, bone or bark; leather for hide, fur, feather or a fast body; cloth for soft, plant, flame or spirit.
 - **Its weapon is its own**, the same on every map it lives in, and has nothing to do with the towns nearby
@@ -78,99 +75,99 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 
 | Creature | Level | Lives around | Weapon | Armour | Grade and folds | Build | STR / AGI / VIT / INT / DEX / LUK | Pays |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plopling | 1 | Lastline | Warhammer | Cloth | Raw +4 | Breaker | 7 / 3 / 9 / 3 / 5 / 3 | ×1.20 |
-| Flutterby | 2 | Lastline | Greatsword | Leather | Raw +3 | Cleaver | 10 / 3 / 7 / 3 / 3 / 5 | ×1.15 |
-| Squeak | 3 | Lastline | Shuriken | Leather | Raw +4 | Thrower | 4 / 8 / 5 / 3 / 10 / 3 | ×1.20 |
-| Crawlet | 4 | Lastline | Dagger | Metal | Raw +3 | Cutthroat | 8 / 10 / 4 / 3 / 6 / 3 | ×1.15 |
-| Capling | 5 | Old Oak | Sniper | Cloth | Raw +5 | Marksman | 4 / 4 / 3 / 11 / 8 / 6 | ×1.25 |
-| Hisser | 6 | Lastline | Sword | Leather | Raw +4 | Duelist | 9 / 9 / 6 / 4 / 6 / 4 | ×1.20 |
-| Blinkbat | 8 | Gemmara | Katar | Leather | E +11 | Assassin | 10 / 10 / 4 / 4 / 4 / 10 | ×2.33 |
-| Mossnail | 10 | Old Oak | Staff | Metal | Raw +5 | Mage | 5 / 4 / 8 / 15 / 8 / 4 | ×1.25 |
-| Tarantix | 11 | Gemmara | Fist | Leather | Raw +1 | Striker | 13 / 9 / 5 / 8 / 8 / 5 | ×1.05 |
-| Hootie | 13 | Gemmara | Dagger | Leather | Raw +4 | Cutthroat | 12 / 15 / 5 / 5 / 9 / 5 | ×1.20 |
-| Rascal | 14 | Lastline | Spear | Leather | Raw +1 | Lancer | 13 / 5 / 13 / 5 / 12 / 5 | ×1.05 |
+| Plopling | 1 | Lastline | Warhammer | Cloth | Raw +8 | Breaker | 7 / 3 / 9 / 3 / 5 / 3 | ×1.40 |
+| Flutterby | 2 | Lastline | Greatsword | Leather | Raw +6 | Cleaver | 10 / 3 / 7 / 3 / 3 / 5 | ×1.30 |
+| Squeak | 3 | Lastline | Shuriken | Leather | Raw +8 | Thrower | 4 / 8 / 5 / 3 / 10 / 3 | ×1.40 |
+| Crawlet | 4 | Lastline | Dagger | Metal | Raw +6 | Cutthroat | 8 / 10 / 4 / 3 / 6 / 3 | ×1.30 |
+| Capling | 5 | Old Oak | Sniper | Cloth | Raw +10 | Marksman | 4 / 4 / 3 / 11 / 8 / 6 | ×1.50 |
+| Hisser | 6 | Lastline | Sword | Leather | Raw +8 | Duelist | 9 / 9 / 6 / 4 / 6 / 4 | ×1.40 |
+| Blinkbat | 8 | Gemmara | Katar | Leather | E +7 | Assassin | 10 / 10 / 4 / 4 / 4 / 10 | ×2.03 |
+| Mossnail | 10 | Old Oak | Staff | Metal | Raw +10 | Mage | 5 / 4 / 8 / 15 / 8 / 4 | ×1.50 |
+| Tarantix | 11 | Gemmara | Fist | Leather | Raw +2 | Striker | 13 / 9 / 5 / 8 / 8 / 5 | ×1.10 |
+| Hootie | 13 | Gemmara | Dagger | Leather | Raw +8 | Cutthroat | 12 / 15 / 5 / 5 / 9 / 5 | ×1.40 |
+| Rascal | 14 | Lastline | Spear | Leather | Raw +2 | Lancer | 13 / 5 / 13 / 5 / 12 / 5 | ×1.10 |
 | Kappi | 15 | Pluvenne | Scythe | Metal | F +9 | Reaper | 10 / 6 / 13 / 16 / 5 / 5 | ×1.81 |
-| Shootling | 16 | Harrowen | Sniper | Cloth | Raw +4 | Marksman | 6 / 6 / 6 / 17 / 13 / 10 | ×1.20 |
-| Gillie | 17 | Pluvenne | Spear | Leather | Raw +5 | Lancer | 14 / 6 / 14 / 6 / 14 / 6 | ×1.25 |
-| Shellby | 18 | Pluvenne | Shuriken | Metal | Raw +5 | Blade Dancer | 18 / 15 / 11 / 6 / 6 / 6 | ×1.25 |
-| Webber | 19 | Gemmara | Wand | Leather | C +20 | Priest | 7 / 7 / 15 / 18 / 11 / 7 | ×4.00 |
-| Newtie | 20 | Pluvenne | Axe | Leather | Raw +4 | Berserker | 19 / 15 / 7 / 7 / 7 / 12 | ×1.20 |
-| Pando | 21 | Harrowen | Warhammer | Leather | Raw +4 | Breaker | 16 / 8 / 20 / 7 / 12 / 7 | ×1.20 |
-| Mudpup | 23 | Hilt | Bow | Leather | E +13 | Archer | 8 / 17 / 8 / 8 / 24 / 8 | ×2.48 |
-| Burrowbo | 25 | Hilt | Scythe | Leather | Raw +3 | Reaper | 14 / 8 / 18 / 23 / 8 / 8 | ×1.15 |
-| Pilfer | 28 | Lastline | Sniper | Leather | D +16 | Marksman | 10 / 9 / 9 / 25 / 20 / 15 | ×3.15 |
-| Grumbear | 31 | Harrowen | Katar | Leather | D +15 | Assassin | 22 / 22 / 11 / 10 / 10 / 22 | ×3.06 |
+| Shootling | 16 | Harrowen | Sniper | Cloth | Raw +8 | Marksman | 6 / 6 / 6 / 17 / 13 / 10 | ×1.40 |
+| Gillie | 17 | Pluvenne | Spear | Leather | Raw +10 | Lancer | 14 / 6 / 14 / 6 / 14 / 6 | ×1.50 |
+| Shellby | 18 | Pluvenne | Shuriken | Metal | Raw +10 | Blade Dancer | 18 / 15 / 11 / 6 / 6 / 6 | ×1.50 |
+| Webber | 19 | Gemmara | Wand | Leather | C +8 | Priest | 7 / 7 / 15 / 18 / 11 / 7 | ×2.80 |
+| Newtie | 20 | Pluvenne | Axe | Leather | Raw +8 | Berserker | 19 / 15 / 7 / 7 / 7 / 12 | ×1.40 |
+| Pando | 21 | Harrowen | Warhammer | Leather | Raw +8 | Breaker | 16 / 8 / 20 / 7 / 12 / 7 | ×1.40 |
+| Mudpup | 23 | Hilt | Bow | Leather | E +9 | Archer | 8 / 17 / 8 / 8 / 24 / 8 | ×2.18 |
+| Burrowbo | 25 | Hilt | Scythe | Leather | Raw +6 | Reaper | 14 / 8 / 18 / 23 / 8 / 8 | ×1.30 |
+| Pilfer | 28 | Lastline | Sniper | Leather | D +8 | Marksman | 10 / 9 / 9 / 25 / 20 / 15 | ×2.45 |
+| Grumbear | 31 | Harrowen | Katar | Leather | D +8 | Assassin | 22 / 22 / 11 / 10 / 10 / 22 | ×2.45 |
 | Mossgore | 34 | Hilt | Warhammer | Metal | F +8 | Breaker | 23 / 12 / 29 / 11 / 18 / 11 | ×1.75 |
-| Wyrmlet | 34 | Harrowen | Fist | Leather | Raw +3 | Striker | 29 / 18 / 11 / 18 / 18 / 11 | ×1.15 |
-| Digger | 36 | Hilt | Shuriken | Leather | Raw +5 | Thrower | 12 / 25 / 19 / 12 / 30 / 11 | ×1.25 |
-| Scaly | 37 | Pennaryl | Greatsword | Metal | Raw +4 | Cleaver | 31 / 12 / 26 / 12 / 12 / 19 | ×1.20 |
-| Canewick | 38 | Pennaryl | Bow | Cloth | E +13 | Archer | 12 / 26 / 12 / 12 / 37 / 12 | ×2.48 |
-| Dewdrop | 39 | Luminhal | Wand | Cloth | Raw +5 | Priest | 13 / 12 / 27 / 32 / 21 / 12 | ×1.25 |
-| Peeper | 41 | Pennaryl | Axe | Cloth | Raw +5 | Berserker | 34 / 28 / 14 / 13 / 13 / 21 | ×1.25 |
-| Viper | 42 | Hazemere | Wand | Leather | Raw +5 | Priest | 13 / 13 / 29 / 35 / 22 / 13 | ×1.25 |
-| Coily | 43 | Pennaryl | Staff | Leather | Raw +5 | Mage | 14 / 14 / 22 / 41 / 22 / 14 | ×1.25 |
-| Emberhoot | 45 | Tornel | Sword | Leather | Raw +3 | Duelist | 31 / 31 / 23 / 15 / 23 / 14 | ×1.15 |
-| Emberwyrm | 46 | Hazemere | Fist | Leather | Raw +5 | Striker | 38 / 24 / 14 / 24 / 24 / 14 | ×1.25 |
-| Chomper | 48 | Tornel | Katar | Metal | D +15 | Assassin | 33 / 33 / 15 / 15 / 15 / 32 | ×3.06 |
-| Sunscale | 50 | Velmora | Greatsword | Metal | Raw +4 | Cleaver | 41 / 17 / 33 / 16 / 16 / 26 | ×1.20 |
-| Willo | 54 | Brimstone | Sword | Cloth | C +20 | Duelist | 37 / 36 / 28 / 18 / 28 / 17 | ×4.00 |
-| Adder | 57 | Brimstone | Axe | Leather | Raw +4 | Berserker | 46 / 39 / 19 / 18 / 18 / 30 | ×1.20 |
-| Bloodshot | 58 | Brimstone | Staff | Cloth | Raw +4 | Mage | 19 / 19 / 30 / 54 / 30 / 19 | ×1.20 |
+| Wyrmlet | 34 | Harrowen | Fist | Leather | Raw +6 | Striker | 29 / 18 / 11 / 18 / 18 / 11 | ×1.30 |
+| Digger | 36 | Hilt | Shuriken | Leather | Raw +10 | Thrower | 12 / 25 / 19 / 12 / 30 / 11 | ×1.50 |
+| Scaly | 37 | Pennaryl | Greatsword | Metal | Raw +8 | Cleaver | 31 / 12 / 26 / 12 / 12 / 19 | ×1.40 |
+| Canewick | 38 | Pennaryl | Bow | Cloth | E +9 | Archer | 12 / 26 / 12 / 12 / 37 / 12 | ×2.18 |
+| Dewdrop | 39 | Luminhal | Wand | Cloth | Raw +10 | Priest | 13 / 12 / 27 / 32 / 21 / 12 | ×1.50 |
+| Peeper | 41 | Pennaryl | Axe | Cloth | Raw +10 | Berserker | 34 / 28 / 14 / 13 / 13 / 21 | ×1.50 |
+| Viper | 42 | Hazemere | Wand | Leather | Raw +10 | Priest | 13 / 13 / 29 / 35 / 22 / 13 | ×1.50 |
+| Coily | 43 | Pennaryl | Staff | Leather | Raw +10 | Mage | 14 / 14 / 22 / 41 / 22 / 14 | ×1.50 |
+| Emberhoot | 45 | Tornel | Sword | Leather | Raw +6 | Duelist | 31 / 31 / 23 / 15 / 23 / 14 | ×1.30 |
+| Emberwyrm | 46 | Hazemere | Fist | Leather | Raw +10 | Striker | 38 / 24 / 14 / 24 / 24 / 14 | ×1.50 |
+| Chomper | 48 | Tornel | Katar | Metal | D +8 | Assassin | 33 / 33 / 15 / 15 / 15 / 32 | ×2.45 |
+| Sunscale | 50 | Velmora | Greatsword | Metal | Raw +8 | Cleaver | 41 / 17 / 33 / 16 / 16 / 26 | ×1.40 |
+| Willo | 54 | Brimstone | Sword | Cloth | C +8 | Duelist | 37 / 36 / 28 / 18 / 28 / 17 | ×2.80 |
+| Adder | 57 | Brimstone | Axe | Leather | Raw +8 | Berserker | 46 / 39 / 19 / 18 / 18 / 30 | ×1.40 |
+| Bloodshot | 58 | Brimstone | Staff | Cloth | Raw +8 | Mage | 19 / 19 / 30 / 54 / 30 / 19 | ×1.40 |
 | Hornscale | 59 | Hazemere | Dagger | Metal | F +8 | Cutthroat | 40 / 48 / 19 / 19 / 31 / 19 | ×1.75 |
-| Rivershell | 60 | Luminhal | Sword | Metal | Raw +3 | Duelist | 41 / 40 / 31 / 20 / 31 / 20 | ×1.15 |
-| Snapper | 62 | Velmora | Katar | Cloth | Raw +4 | Assassin | 42 / 42 / 20 / 20 / 20 / 42 | ×1.20 |
+| Rivershell | 60 | Luminhal | Sword | Metal | Raw +6 | Duelist | 41 / 40 / 31 / 20 / 31 / 20 | ×1.30 |
+| Snapper | 62 | Velmora | Katar | Cloth | Raw +8 | Assassin | 42 / 42 / 20 / 20 / 20 / 42 | ×1.40 |
 | Octi | 63 | Luminhal | Greatsword | Leather | F +8 | Cleaver | 51 / 21 / 42 / 21 / 21 / 32 | ×1.75 |
-| Iris | 64 | Brimstone | Shuriken | Cloth | Raw +4 | Thrower | 21 / 43 / 33 / 21 / 52 / 21 | ×1.20 |
-| Gnasher | 65 | Luminhal | Bow | Metal | E +13 | Archer | 22 / 44 / 21 / 21 / 60 / 21 | ×2.48 |
-| Cinder | 67 | Cindrel | Wand | Cloth | Raw +4 | Priest | 22 / 22 / 45 / 54 / 35 / 22 | ×1.20 |
-| Bittersweet | 68 | Kharnel | Fist | Cloth | Raw +5 | Striker | 55 / 35 / 23 / 35 / 35 / 22 | ×1.25 |
-| Cyclo | 69 | Cindrel | Spear | Metal | Raw +3 | Lancer | 46 / 24 / 46 / 23 / 46 / 23 | ×1.15 |
-| Emberlurk | 71 | Cindrel | Fist | Metal | C +20 | Guardian | 37 / 24 / 65 / 23 / 37 / 23 | ×4.00 |
-| Moldy | 72 | Kharnel | Spear | Cloth | Raw +5 | Lancer | 49 / 24 / 48 / 24 / 48 / 24 | ×1.25 |
-| Horngore | 73 | Cindrel | Bow | Metal | D +16 | Archer | 24 / 49 / 24 / 24 / 67 / 24 | ×3.15 |
-| Drizzle | 74 | Kharnel | Katar | Cloth | Raw +3 | Assassin | 50 / 50 / 25 / 24 / 24 / 50 | ×1.15 |
-| Blazeskull | 76 | Cindrel | Sword | Metal | E +11 | Duelist | 51 / 51 / 40 / 26 / 40 / 25 | ×2.33 |
+| Iris | 64 | Brimstone | Shuriken | Cloth | Raw +8 | Thrower | 21 / 43 / 33 / 21 / 52 / 21 | ×1.40 |
+| Gnasher | 65 | Luminhal | Bow | Metal | E +9 | Archer | 22 / 44 / 21 / 21 / 60 / 21 | ×2.18 |
+| Cinder | 67 | Cindrel | Wand | Cloth | Raw +8 | Priest | 22 / 22 / 45 / 54 / 35 / 22 | ×1.40 |
+| Bittersweet | 68 | Kharnel | Fist | Cloth | Raw +10 | Striker | 55 / 35 / 23 / 35 / 35 / 22 | ×1.50 |
+| Cyclo | 69 | Cindrel | Spear | Metal | Raw +6 | Lancer | 46 / 24 / 46 / 23 / 46 / 23 | ×1.30 |
+| Emberlurk | 71 | Cindrel | Fist | Metal | C +8 | Guardian | 37 / 24 / 65 / 23 / 37 / 23 | ×2.80 |
+| Moldy | 72 | Kharnel | Spear | Cloth | Raw +10 | Lancer | 49 / 24 / 48 / 24 / 48 / 24 | ×1.50 |
+| Horngore | 73 | Cindrel | Bow | Metal | D +8 | Archer | 24 / 49 / 24 / 24 / 67 / 24 | ×2.45 |
+| Drizzle | 74 | Kharnel | Katar | Cloth | Raw +6 | Assassin | 50 / 50 / 25 / 24 / 24 / 50 | ×1.30 |
+| Blazeskull | 76 | Cindrel | Sword | Metal | E +7 | Duelist | 51 / 51 / 40 / 26 / 40 / 25 | ×2.03 |
 | Inky | 77 | Kharnel | Axe | Leather | F +8 | Berserker | 62 / 52 / 26 / 26 / 25 / 40 | ×1.75 |
-| Sucker | 78 | Cindrel | Dagger | Leather | Raw +3 | Cutthroat | 53 / 62 / 26 / 26 / 41 / 26 | ×1.15 |
-| Squirt | 79 | Kharnel | Shuriken | Leather | Raw +1 | Thrower | 27 / 53 / 42 / 26 / 63 / 26 | ×1.05 |
-| Swampfang | 80 | Kharnel | Dagger | Metal | Raw +3 | Cutthroat | 54 / 64 / 27 / 27 / 42 / 26 | ×1.15 |
-| Wisp | 85 | Halcyra | Staff | Cloth | E +13 | Mage | 30 / 29 / 45 / 77 / 44 / 29 | ×2.48 |
-| Skywing | 87 | Halcyra | Spear | Leather | Raw +4 | Lancer | 59 / 30 / 59 / 30 / 58 / 29 | ×1.20 |
-| Glowcoil | 88 | Kharnel | Greatsword | Leather | D +15 | Cleaver | 71 / 30 / 59 / 30 / 30 / 46 | ×3.06 |
-| Grubble | 90 | Kharnel | Warhammer | Metal | C +20 | Breaker | 61 / 31 / 72 / 31 / 47 / 30 | ×4.00 |
-| Frostskull | 91 | Kharnel | Bow | Metal | E +11 | Archer | 31 / 61 / 31 / 31 / 83 / 31 | ×2.33 |
-| Nightsqueak | 92 | Kharnel | Sniper | Leather | Raw +3 | Marksman | 31 / 31 / 31 / 74 / 62 / 49 | ×1.15 |
-| Frostcap | 93 | Halcyra | Scythe | Cloth | Raw +3 | Reaper | 49 / 32 / 63 / 74 / 32 / 31 | ×1.15 |
-| Goopie | 94 | Kharnel | Scythe | Cloth | Raw +1 | Reaper | 50 / 33 / 63 / 75 / 32 / 32 | ×1.05 |
-| Frostwick | 95 | Kharnel | Warhammer | Cloth | Raw +4 | Breaker | 64 / 33 / 76 / 33 / 50 / 32 | ×1.20 |
-| Lovebite | 96 | Kharnel | Axe | Leather | D +15 | Berserker | 76 / 65 / 33 / 33 / 33 / 51 | ×3.06 |
+| Sucker | 78 | Cindrel | Dagger | Leather | Raw +6 | Cutthroat | 53 / 62 / 26 / 26 / 41 / 26 | ×1.30 |
+| Squirt | 79 | Kharnel | Shuriken | Leather | Raw +2 | Thrower | 27 / 53 / 42 / 26 / 63 / 26 | ×1.10 |
+| Swampfang | 80 | Kharnel | Dagger | Metal | Raw +6 | Cutthroat | 54 / 64 / 27 / 27 / 42 / 26 | ×1.30 |
+| Wisp | 85 | Halcyra | Staff | Cloth | E +9 | Mage | 30 / 29 / 45 / 77 / 44 / 29 | ×2.18 |
+| Skywing | 87 | Halcyra | Spear | Leather | Raw +8 | Lancer | 59 / 30 / 59 / 30 / 58 / 29 | ×1.40 |
+| Glowcoil | 88 | Kharnel | Greatsword | Leather | D +8 | Cleaver | 71 / 30 / 59 / 30 / 30 / 46 | ×2.45 |
+| Grubble | 90 | Kharnel | Warhammer | Metal | C +8 | Breaker | 61 / 31 / 72 / 31 / 47 / 30 | ×2.80 |
+| Frostskull | 91 | Kharnel | Bow | Metal | E +7 | Archer | 31 / 61 / 31 / 31 / 83 / 31 | ×2.03 |
+| Nightsqueak | 92 | Kharnel | Sniper | Leather | Raw +6 | Marksman | 31 / 31 / 31 / 74 / 62 / 49 | ×1.30 |
+| Frostcap | 93 | Halcyra | Scythe | Cloth | Raw +6 | Reaper | 49 / 32 / 63 / 74 / 32 / 31 | ×1.30 |
+| Goopie | 94 | Kharnel | Scythe | Cloth | Raw +2 | Reaper | 50 / 33 / 63 / 75 / 32 / 32 | ×1.10 |
+| Frostwick | 95 | Kharnel | Warhammer | Cloth | Raw +8 | Breaker | 64 / 33 / 76 / 33 / 50 / 32 | ×1.40 |
+| Lovebite | 96 | Kharnel | Axe | Leather | D +8 | Berserker | 76 / 65 / 33 / 33 / 33 / 51 | ×2.45 |
 
 ## The elites
 
 | Creature | Level | Lives around | Weapon | Armour | Grade and folds | Build | STR / AGI / VIT / INT / DEX / LUK | Pays |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Gloop King | 8 | Lastline | Scythe | Cloth | C +23 | Reaper | 7 / 4 / 10 / 12 / 4 / 4 | ×4.30 |
-| Oculord | 14 | Gemmara | Bow | Cloth | D +19 | Archer | 5 / 13 / 5 / 5 / 18 / 5 | ×3.41 |
-| Autumn Stalk | 15 | Harrowen | Axe | Cloth | B +25 | Berserker | 16 / 13 / 6 / 5 / 5 / 10 | ×5.06 |
-| Bandit Boss | 22 | Lastline | Wand | Leather | C +23 | Priest | 8 / 7 / 17 / 21 / 12 / 7 | ×4.30 |
-| Deep Maw | 24 | Pluvenne | Fist | Metal | D +19 | Guardian | 14 / 8 / 25 / 8 / 13 / 8 | ×3.41 |
-| Frost Ronin | 33 | Hilt | Sword | Metal | D +19 | Duelist | 23 / 23 / 18 / 11 / 17 / 11 | ×3.41 |
-| Mossmaw | 35 | Hilt | Sniper | Metal | D +20 | Marksman | 11 / 11 / 11 / 30 / 24 / 19 | ×3.50 |
-| Golden Bandit | 44 | Hazemere | Scythe | Leather | C +23 | Reaper | 23 / 14 / 30 / 36 / 14 / 14 | ×4.30 |
-| Elder Stalk | 47 | Pennaryl | Shuriken | Metal | D +20 | Blade Dancer | 38 / 32 / 25 / 15 / 15 / 15 | ×3.50 |
-| Karasu | 58 | Brimstone | Warhammer | Leather | D +19 | Breaker | 39 / 19 / 47 / 19 / 30 / 19 | ×3.41 |
-| Blood Ronin | 60 | Velmora | Dagger | Metal | D +19 | Cutthroat | 41 / 48 / 20 / 20 / 31 / 20 | ×3.41 |
-| Great Croak | 66 | Luminhal | Spear | Leather | D +19 | Lancer | 44 / 23 / 44 / 22 / 44 / 22 | ×3.41 |
-| Toadmaw | 78 | Kharnel | Staff | Leather | B +26 | Mage | 26 / 26 / 41 / 71 / 41 / 26 | ×5.18 |
-| Inferno Mask | 80 | Cindrel | Katar | Cloth | C +23 | Assassin | 54 / 54 / 27 / 27 / 27 / 53 | ×4.30 |
-| Wraithmother | 90 | Kharnel | Greatsword | Cloth | D +20 | Cleaver | 72 / 31 / 61 / 31 / 30 / 47 | ×3.50 |
-| Oni Tengu | 92 | Halcyra | Sniper | Leather | D +19 | Marksman | 31 / 31 / 31 / 74 / 62 / 49 | ×3.41 |
-| Venom Gloop | 95 | Kharnel | Staff | Cloth | B +26 | Mage | 33 / 33 / 50 / 86 / 50 / 33 | ×5.18 |
-| Abyss Maw | 99 | Kharnel | Wand | Metal | D +20 | Priest | 34 / 34 / 67 / 79 / 52 / 34 | ×3.50 |
+| Gloop King | 8 | Lastline | Scythe | Cloth | C +9 | Reaper | 7 / 4 / 10 / 12 / 4 / 4 | ×2.90 |
+| Oculord | 14 | Gemmara | Bow | Cloth | D +10 | Archer | 5 / 13 / 5 / 5 / 18 / 5 | ×2.63 |
+| Autumn Stalk | 15 | Harrowen | Axe | Cloth | B +8 | Berserker | 16 / 13 / 6 / 5 / 5 / 10 | ×3.15 |
+| Bandit Boss | 22 | Lastline | Wand | Leather | C +9 | Priest | 8 / 7 / 17 / 21 / 12 / 7 | ×2.90 |
+| Deep Maw | 24 | Pluvenne | Fist | Metal | D +10 | Guardian | 14 / 8 / 25 / 8 / 13 / 8 | ×2.63 |
+| Frost Ronin | 33 | Hilt | Sword | Metal | D +10 | Duelist | 23 / 23 / 18 / 11 / 17 / 11 | ×2.63 |
+| Mossmaw | 35 | Hilt | Sniper | Metal | D +10 | Marksman | 11 / 11 / 11 / 30 / 24 / 19 | ×2.63 |
+| Golden Bandit | 44 | Hazemere | Scythe | Leather | C +9 | Reaper | 23 / 14 / 30 / 36 / 14 / 14 | ×2.90 |
+| Elder Stalk | 47 | Pennaryl | Shuriken | Metal | D +10 | Blade Dancer | 38 / 32 / 25 / 15 / 15 / 15 | ×2.63 |
+| Karasu | 58 | Brimstone | Warhammer | Leather | D +10 | Breaker | 39 / 19 / 47 / 19 / 30 / 19 | ×2.63 |
+| Blood Ronin | 60 | Velmora | Dagger | Metal | D +10 | Cutthroat | 41 / 48 / 20 / 20 / 31 / 20 | ×2.63 |
+| Great Croak | 66 | Luminhal | Spear | Leather | D +10 | Lancer | 44 / 23 / 44 / 22 / 44 / 22 | ×2.63 |
+| Toadmaw | 78 | Kharnel | Staff | Leather | B +9 | Mage | 26 / 26 / 41 / 71 / 41 / 26 | ×3.26 |
+| Inferno Mask | 80 | Cindrel | Katar | Cloth | C +9 | Assassin | 54 / 54 / 27 / 27 / 27 / 53 | ×2.90 |
+| Wraithmother | 90 | Kharnel | Greatsword | Cloth | D +10 | Cleaver | 72 / 31 / 61 / 31 / 30 / 47 | ×2.63 |
+| Oni Tengu | 92 | Halcyra | Sniper | Leather | D +10 | Marksman | 31 / 31 / 31 / 74 / 62 / 49 | ×2.63 |
+| Venom Gloop | 95 | Kharnel | Staff | Cloth | B +9 | Mage | 33 / 33 / 50 / 86 / 50 / 33 | ×3.26 |
+| Abyss Maw | 99 | Kharnel | Wand | Metal | D +10 | Priest | 34 / 34 / 67 / 79 / 52 / 34 | ×2.63 |
 
 ## The shadows
 
-Every shadow wears a full set — head, body, shoes and garment — of one material, at grade A +30 with Sharp Ink. Its
+Every shadow wears a full set — head, body, shoes and garment — of one material, at grade A +9 with Sharp Ink. Its
 weapon is the one it stands for, and its stats are spent in that weapon's build.
 
 **Its armour is the material that buys what its weapon's mastery raises:** leather (attack speed and evasion) for a
@@ -198,10 +195,11 @@ armour pieces.
 
 ## Still open
 
-- **The grade ladder and the fold shares are first guesses**: which grade each drop tier gives, and the five
-  bands of how many are alive.
+- **The grade ladder and the fold shares are first guesses**: which grade each drop tier gives, and how many
+  folds being hard to find adds. The folds each creature wears were set on a smaller limit per grade and scaled to
+  +10; a rule of their own for the +10 limit is to be decided.
 - **A low-level creature in high-grade gear is far harder for its level than a high-level one in the same gear**,
-  because a fold gives the same amount at every level. Gloop King, level 8, wears C +23.
+  because a piece's base and its folds give the same amount at every level. Gloop King, level 8, wears C +9.
 - **A weapon's skill is rolled fresh each life**, and what a creature pays does not count it.
 - **Each armour material is a first reading of the creature's portrait, and each build's shares are first guesses.**
 

@@ -50,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 6
-  gearFolds: 30
+  gearFolds: 9
   gearInkTier: 5
   weaponMastery: 0
   ringRankStats: 010000000600000003000000

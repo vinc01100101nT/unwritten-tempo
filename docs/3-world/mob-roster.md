@@ -1,5 +1,5 @@
 ---
-status: "BUILT 2026-09-22, drops reworked 2026-10-13 (Temper Dust, Quench Oil, one piece of worn gear); not yet play-tested. First-guess numbers are listed under Still open."
+status: "BUILT 2026-09-22, drops reworked 2026-10-13 (Temper Dust, Quench Oil, one piece of worn gear), Salt chances and gear folds on the +10 limit 2026-10-14; not yet play-tested. First-guess numbers are listed under Still open."
 owner: vince
 last-updated: 2026-10-13
 tags:
@@ -37,7 +37,7 @@ map, and the map generator no longer puts any there.
 | --- | --- | --- | --- |
 | How many | the rest of the roster | 18 | 14, one per weapon type |
 | Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 170**, one every 5 levels |
-| Wears | a full set, **Raw to C** by the rarest thing it drops, folded by how hard it is to find | a full set, **D to B** by the rarest thing it drops, folded by how few maps it lives on | a complete set at **A +30**, plus ring ranks |
+| Wears | a full set, **Raw to C** by the rarest thing it drops, folded by how hard it is to find | a full set, **D to B** by the rarest thing it drops, folded by how few maps it lives on | a complete set at **A +9**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today |
 | Summons, once it has bought the summon skill | nothing | normals | elites |
@@ -49,8 +49,7 @@ map, and the map generator no longer puts any there.
 ## Gear state
 
 - **Every creature's gear state is authored on its own catalog entry**, as three settings shared by every piece it
-  wears: its **grade** (Raw to A), its **folds** (never past the grade's cap: Raw 5, F 10, E 15, D 20, C 25, B 30,
-  A 35), and its **Ink** (Watery, Thin, Faint, Clear or Sharp). The grade decides how many stats are written on each
+  wears: its **grade** (Raw to A), its **folds** (never past +10, every grade's cap), and its **Ink** (Watery, Thin, Faint, Clear or Sharp). The grade decides how many stats are written on each
   piece (Raw none, F one, up to A six); the Ink decides what each is worth. They are edited in the Mob Table's
   equipment panel, and no rule in the code overrides them for any kind.
 - **Which stats are written, a weapon's trademark and an armour piece's word are rolled fresh every life**, exactly
@@ -59,7 +58,7 @@ map, and the map generator no longer puts any there.
 - **Grade and folds are the only difficulty dial, and neither follows level.** A normal creature's or an elite's
   grade comes from the rarest thing it drops and its folds from how hard it is to find; the rule and every
   creature's values are in [Creature Gear](creature-gear.md). The Ink follows the grade — F Watery, E Thin, D Faint,
-  C Clear, B and A Sharp (Raw writes nothing). Every shadow is A +30.
+  C Clear, B and A Sharp (Raw writes nothing). Every shadow is A +9.
   Any single creature can be changed after that.
 
 ## Sizes
@@ -171,11 +170,11 @@ map, and the map generator no longer puts any there.
 
   The four lowest elites (8 to 22) are summoned by no shadow. The pairing follows level only, so a shadow's elite need
   not share its element or place.
-- A complete set of gear at **A +30** — its weapon and a full set of one armour material, chosen by its weapon
+- A complete set of gear at **A +9** — its weapon and a full set of one armour material, chosen by its weapon
   ([Creature Gear](creature-gear.md)) — and ring ranks. Normals and elites have no ring ranks.
 - **They give off an aura**, so a shadow looks intimidating. **Not built yet** — the look is chosen once the
   shadows can be seen in the game.
-- **Its gear:** every piece at grade A, folded to +30, every one of its six stat slots written with Sharp Ink, and a
+- **Its gear:** every piece at grade A, folded to +9, every one of its six stat slots written with Sharp Ink, and a
   trademark on the weapon — each roll made the way a station makes it.
 - **Weapon mastery: 0 today**, set in the Mob Table like every creature's.
 - **Ring ranks:** 40 in each of the three stats its weapon's mastery raises.
@@ -229,16 +228,18 @@ the chance of one more. Each kill also has a chance of an Ink or a Salt, and of 
 
 | | Temper Dust, per step | Quench Oil, per step | Ink | Salt | One piece of its gear |
 | --- | --- | --- | --- | --- | --- |
-| Normal | 0.6 | 0.06 | Watery 4%, Thin 1% | Coarse 2% | 10% — Common, Uncommon or Rare at 50 : 30 : 14 |
+| Normal | 0.6 | 0.06 | Watery 4%, Thin 1% | Coarse 10%, Fine 0.5%, Pure 0.1% | 10% — Common, Uncommon or Rare at 50 : 30 : 14 |
 | Elite | 6 | 0.6 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% | 10% — always Epic |
 | Shadow | 12 | 1.2 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% | 10% — always Legendary |
 
 A level 1 normal creature in Raw unfolded gear gives a 60% chance of one Temper Dust and a 6% chance of one Quench
-Oil. A shadow at A +30 gives 525 Temper Dust, and 52 Quench Oil with a 50% chance of one more.
+Oil. A shadow at A +9 gives 304 Temper Dust with a 50% chance of one more, and 30 Quench Oil with a 45% chance of
+one more.
 
 **The piece of gear** is one of the pieces the creature wears, picked at random, as a NEW copy — nothing leaves the
-creature. It is always Raw and unfolded whatever the creature's own gear was, rolls its own trademark (a weapon) or
-word (an armour piece), and takes the rarity in the table. What the creature itself wears is always Common.
+creature. It is always Raw and unfolded whatever the creature's own gear was, rolls its own base (85% to 115%) and its
+own trademark (a weapon) or word (an armour piece), and takes the rarity in the table. What the creature itself
+wears is always Common and unrolled.
 
 Every kill also has a chance of the creature's own find — 5% for a normal, 50% for an elite, 100% for a shadow. A
 creature of Fire, Water, Earth or Wind gives up one of its element's two converters — a fire creature the Flame

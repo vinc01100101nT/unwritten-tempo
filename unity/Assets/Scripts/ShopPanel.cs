@@ -27,6 +27,9 @@ public class ShopPanel : MonoBehaviour
     public static ShopPanel Instance { get; private set; }
 
     // The window's measures: two item columns either side of a narrower cart, the purse and the two buttons under them.
+    // How wide the totals' longest word ("Tax (33%)") is drawn; the amounts start right of it.
+    const float SumWordWidth = 64f;
+    const float PurseWidth = 200f;
     const float CartWidth = 200f, ColumnGap = 8f, HeaderHeight = 20f, SumHeight = 72f, ActionHeight = 30f, ActionWidth = 120f;
     static readonly Vector2 Size = new Vector2(724f, 430f);
     // How long the cart must sit still before it is priced — a flurry of drags is one quote, of the cart as it ends up.
@@ -61,6 +64,8 @@ public class ShopPanel : MonoBehaviour
     readonly List<BagEntry> stock = new List<BagEntry>(16);
     readonly List<int> stockPrice = new List<int>(16);
     readonly List<SoldEntry> backs = new List<SoldEntry>(10);
+    // The bag as the Inventory list shows it: every entry not wholly in the cart to be sold.
+    readonly List<BagEntry> bagShown = new List<BagEntry>(64);
     readonly List<BagEntry> backShown = new List<BagEntry>(10);
 
     UiListView shopView, cartView, bagView;
@@ -220,9 +225,28 @@ public class ShopPanel : MonoBehaviour
         purse = UiKit.MakeText("Purse", body, "", 12, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
         purse.raycastTarget = false;
         var prt = purse.rectTransform;
-        prt.anchorMin = new Vector2(0f, 0f); prt.anchorMax = new Vector2(0.5f, 0f); prt.pivot = new Vector2(0f, 0f);
-        prt.offsetMin = Vector2.zero; prt.offsetMax = new Vector2(0f, ActionHeight);
+        prt.anchorMin = prt.anchorMax = new Vector2(0f, 0f); prt.pivot = new Vector2(0f, 0f);
+        prt.sizeDelta = new Vector2(PurseWidth, ActionHeight);
+        prt.anchoredPosition = Vector2.zero;
+
+        // "DON'T ASK QUANTITY", in the footer's free space: ticked, a stack goes straight into the cart — the whole stack
+        // to sell, one to buy — with no "how many?" box. The game's own checkbox; remembered between sessions.
+        var ask = new GameObject("DontAskQuantity", typeof(RectTransform)).GetComponent<RectTransform>();
+        ask.SetParent(body, false);
+        ask.anchorMin = ask.anchorMax = new Vector2(0f, 0f); ask.pivot = new Vector2(0f, 0f);
+        ask.sizeDelta = new Vector2(180f, ActionHeight);
+        ask.anchoredPosition = new Vector2(PurseWidth + 10f, 0f);
+        var tick = UiKit.Checkbox(ask, GameSettings.DontAskQuantity);
+        var trt = (RectTransform)tick.transform;
+        trt.anchorMin = trt.anchorMax = trt.pivot = new Vector2(0f, 0.5f);
+        trt.anchoredPosition = Vector2.zero;
+        tick.onValueChanged.AddListener(on => { GameSettings.DontAskQuantity = on; UISounds.PlayClick(); });
+        var words = UiKit.MakeText("Words", ask, "Don't ask quantity", 12, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
+        words.raycastTarget = false;
+        UiKit.Fill(words.rectTransform, new Vector2(26f, 0f), Vector2.zero);
+
         confirm = BottomButton("Confirm", 0f, Confirm);
+        UiKit.MarkPrimary(confirm);
         cancel = BottomButton("Cancel", -(ActionWidth + 6f), () => { cart.Clear(); UISounds.PlayClick(); CartChanged(); });
     }
 
@@ -270,6 +294,12 @@ public class ShopPanel : MonoBehaviour
         n.color = UiKit.TitleText;
         n.raycastTarget = false;
         Place(n.rectTransform, top, lineH + (row == 3 ? 4f : 0f));
+        // A LONG AMOUNT NEVER RUNS OVER ITS WORD: the number has the room right of the longest word, and shrinks to fit
+        // it — down to 8 — rather than spill.
+        n.rectTransform.offsetMin = new Vector2(SumWordWidth, n.rectTransform.offsetMin.y);
+        n.enableAutoSizing = true;
+        n.fontSizeMax = size;
+        n.fontSizeMin = 8f;
         return n;
     }
 
@@ -325,8 +355,25 @@ public class ShopPanel : MonoBehaviour
             }
         }
         shopView.Changed();
-        bagView.Changed();
+        RefillBag();
         DrawPurse();
+    }
+
+    // A STACK OR PIECE PUT WHOLLY IN THE CART LEAVES THE INVENTORY LIST; part of a stack keeps its row.
+    void RefillBag()
+    {
+        bagShown.Clear();
+        var c = Character.Instance;
+        if (c != null)
+            for (int i = 0; i < c.Bag.Count; i++)
+            {
+                var e = c.Bag[i];
+                if (e == null || e.def == null) continue;
+                var sale = FindSale(e);
+                if (sale != null && sale.count >= (e.instance != null ? 1 : e.count)) continue;
+                bagShown.Add(e);
+            }
+        if (bagView != null) bagView.Changed();
     }
 
     int ShopRows => stock.Count + backs.Count;
@@ -449,6 +496,9 @@ public class ShopPanel : MonoBehaviour
 
     void AskHowMany(string heading, int start, int most, Vector2 at, System.Action<int> confirmed)
     {
+        // TICKED "DON'T ASK QUANTITY": straight in, at what the box would have opened holding — the whole stack to sell,
+        // one to buy.
+        if (GameSettings.DontAskQuantity) { UISounds.PlayClick(); confirmed(start); return; }
         var box = DropAmountPrompt.Shared(GetComponentInParent<Canvas>());
         if (box != null) box.Ask(heading, start, most, at, confirmed, GuideSpot.ShopAmountBox);
     }
@@ -460,7 +510,7 @@ public class ShopPanel : MonoBehaviour
         quoted = false;
         quoteAt = cart.Count > 0 ? Time.unscaledTime + QuoteAfterSeconds : float.PositiveInfinity;
         cartView.Changed();
-        bagView.Changed();
+        RefillBag();
         DrawSums();
     }
 
@@ -609,8 +659,8 @@ public class ShopPanel : MonoBehaviour
     {
         readonly ShopPanel p;
         public BagList(ShopPanel owner) { p = owner; }
-        List<BagEntry> Bag => Character.Instance != null ? Character.Instance.Bag : null;
-        public int Count => Bag != null ? Bag.Count : 0;
+        List<BagEntry> Bag => p.bagShown;
+        public int Count => p.bagShown.Count;
         public float HeightOf(int index) => UiListView.RowHeight;
         public void Bind(int index, UiListView.Slot slot)
         {

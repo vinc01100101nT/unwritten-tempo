@@ -447,6 +447,39 @@ public static class UiKit
         return btn;
     }
 
+    /// <summary>A button that says YES — Confirm, Accept, Enter, Create, Play: <see cref="Btn"/>, marked with
+    /// <see cref="MarkPrimary"/>. Every affirming button in the game is made here, so it stands out from Cancel the same
+    /// way everywhere.</summary>
+    public static Button PrimaryBtn(string label, Transform parent, Action onClick)
+    {
+        var b = Btn(label, parent, onClick);
+        MarkPrimary(b);
+        return b;
+    }
+
+    /// <summary>Make a <see cref="Btn"/> the affirming one: filled with the accent colour, its word white and bold —
+    /// the chosen tab's look — so it is told from Cancel at a glance. Its fill is what the button tints, so switched off
+    /// it dims, and pressed it darkens, like any other.</summary>
+    public static void MarkPrimary(Button button)
+    {
+        if (button == null) return;
+        var edge = button.GetComponent<Image>();
+        if (edge != null) edge.color = Accent;
+        var fill = button.transform.Find("Fill");
+        var fillImg = fill != null ? fill.GetComponent<Image>() : null;
+        if (fillImg != null)
+        {
+            fillImg.color = Accent;
+            button.targetGraphic = fillImg;
+        }
+        var word = fill != null ? fill.GetComponentInChildren<TMP_Text>() : null;
+        if (word != null)
+        {
+            word.color = TextOnDim;
+            word.fontStyle = FontStyles.Bold;
+        }
+    }
+
     /// <summary>THE ONE ROW OF TABS every tabbed window uses — the bag, Settings and Quests: a strip
     /// <paramref name="height"/> tall across the top of <paramref name="parent"/>, its buttons sharing the width.
     /// Add the tabs with <see cref="Btn"/>; show which is chosen with <see cref="MarkTab"/>.</summary>

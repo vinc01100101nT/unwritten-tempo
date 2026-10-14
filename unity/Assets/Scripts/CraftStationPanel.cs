@@ -373,6 +373,11 @@ public class CraftStationPanel : MonoBehaviour
         sb.Clear();
         if (offer.foldFree) sb.Append(DimTag).Append("Costs</color> <b>").Append(NumTag).Append("nothing</color></b> — your first time");
         else Costs(offer.foldMaterialCost, offer.foldMaterialId, offer.foldGoldCost);
+        // A fold that can fail says how likely it is to land and where a failure leaves the piece, both as the server sent them.
+        if (offer.foldChance < 100)
+            sb.Append("\n<size=13>").Append(DimTag).Append("Chance:</color> <b>").Append(NumTag).Append(offer.foldChance)
+              .Append("%</color></b>  ").Append(DimTag).Append("· If it fails: back to +").Append(offer.foldsIfFoldFails)
+              .Append("</color></size>");
         Write(lines, sb.ToString());
 
         // WHAT ONE MORE FOLD MAKES OF IT, row by row: the piece's own numbers now and after, both the server's.
@@ -417,7 +422,6 @@ public class CraftStationPanel : MonoBehaviour
         Costs(offer.quenchMaterialCost, offer.quenchMaterialId, offer.quenchGoldCost);
         sb.Append('\n');
         Odds();
-        sb.Append("\n<size=11>").Append(DimTag).Append("A quench ").Append(BadTag).Append("spends every fold</color>, whichever way it goes.</color></size>");
         Write(lines, sb.ToString());
 
         // THE SALT IS A CHOICE, spent whatever the quench does. Ticking it asks the server again; the odds above are the
@@ -435,9 +439,17 @@ public class CraftStationPanel : MonoBehaviour
 
     void Odds()
     {
-        sb.Append("<size=13><b>").Append(GoodTag).Append("Up ").Append(offer.up).Append("%</color></b> ")
-          .Append(DimTag).Append("· Unchanged ").Append(offer.same).Append("% ·</color> <b>")
-          .Append(BadTag).Append("Down ").Append(offer.down).Append("%</color></b></size>");
+        var failGrade = (Quality)offer.qualityIfQuenchFails;
+        sb.Append("<size=13>").Append(DimTag).Append("Chance to rise:</color> <b>").Append(GoodTag)
+          .Append(offer.upChancePercent.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture))
+          .Append("%</color></b>  ").Append(DimTag).Append("· If it fails: ");
+        if (offer.qualityIfQuenchFails < offer.quality)
+            sb.Append("</color><b>").Append(BadTag).Append("drops to ").Append(NetPlayer.GradeWord(failGrade)).Append(" +")
+              .Append(offer.foldsIfQuenchFails).Append("</color></b>");
+        else
+            sb.Append("stays ").Append(NetPlayer.GradeWord(failGrade)).Append(", back to +").Append(offer.foldsIfQuenchFails)
+              .Append("</color>");
+        sb.Append("</size>");
     }
 
     void DrawInk(Character c, EquipmentInstance inst)

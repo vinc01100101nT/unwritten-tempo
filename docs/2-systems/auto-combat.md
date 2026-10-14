@@ -31,7 +31,9 @@ alone for 20 seconds (a taunter never is).
 
 ## Auto-skills
 
-Four slots, skills only (never an item or a piece of gear), chosen from every skill the character may put on the bar.
+Four slots, skills only (never an item or a piece of gear), chosen from every skill the character may put on the bar that belongs to a weapon — a skill of no
+weapon (a heal, a summon, a banner) is pressed by hand only, and a slot saved holding one is emptied when the
+character is loaded.
 A few times a second the first slot whose skill is ready — off cooldown and affordable, the same test the hotbar draws
 by — is pressed at the current target. A target outside the skill's range is no press: auto-combat never walks for a
 skill. Every press is an ordinary cast the server judges; a skill in an auto-skill slot counts as on the bar for the
@@ -57,7 +59,7 @@ The settings are one row per character, `character_auto_combat` (`accounts/sql/0
 written only when the player changes a setting, the same way the hotbar's row is — through the character server's
 `PUT /server/characters/{id}/auto-combat` door, guarded by the server secret and the hand-over number. The row travels
 to a map server with the character. A character that never changed a setting has no row and reads as: empty slots, no
-auto-loot, no auto-potion, Radius. The shared character build string is `unwritten-character-v26`.
+auto-loot, no auto-potion, Radius. The shared character build string is `unwritten-character-v27`.
 
 ## Where it lives in the code
 

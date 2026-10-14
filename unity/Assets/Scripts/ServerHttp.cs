@@ -32,7 +32,14 @@ public static class ServerHttp
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
             request.SetRequestHeader("Content-Type", "application/json");
         }
-        if (!string.IsNullOrEmpty(serverSecret)) request.SetRequestHeader("x-server-secret", serverSecret);
+        if (!string.IsNullOrEmpty(serverSecret))
+        {
+            request.SetRequestHeader("x-server-secret", serverSecret);
+            // Which character build this server runs: the character server refuses its saves and storage reads when it
+            // is not the one it understands, so a server left running the old build after a deploy cannot rewrite a
+            // piece without the parts it does not know.
+            request.SetRequestHeader("x-character-build", MapServerLink.CharacterBuild);
+        }
 
         request.SendWebRequest().completed += _ =>
         {
