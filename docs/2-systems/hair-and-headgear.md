@@ -9,10 +9,12 @@ user decided the open questions the same day.
 - **Every character wears its head the same way, with no special cases:** a hairstyle (one of 13, or none), a hair
   colour, and whatever Head item it wears. That covers players, other players, townsfolk and Shadow creatures.
 - **Character creation:**
-  - The body picker is unchanged.
-  - Under it, a **Hair** picker steps through "No hair" and "Hair 1 of 13" … "Hair 13 of 13", using the same
-    stepper as the body picker.
-  - When there is hair, the Colours row gains one more swatch, painted with the same colour picker the clothes use.
+  - The colours sit under two tabs, **Head** and **Body**, each with a "<" and ">" either side of its swatches and
+    the same colour picker below. On **Body** the arrows step the body ("Body 1 of N") and the swatches are the
+    clothes. On **Head** the arrows step "No hair" and "Hair 1 of 13" … "Hair 13 of 13", the one swatch is the
+    hair (none with no hair), and the preview eases in to frame the head.
+  - While the window is open, each body keeps the clothes colours painted on it and each hairstyle keeps its hair
+    colour, so paging away and back finds them as they were left. A hairstyle not yet painted shows its own colour.
   - A new character starts with no hair chosen, so each body first shows the hair it was made with.
   - An animal's head (Cow, Pug) is offered no hair.
 - **Hats are items.** Fifteen Head items, one per headgear model, worn in the Head slot and seen by every other

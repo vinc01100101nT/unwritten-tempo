@@ -232,6 +232,9 @@ the chance of one more. Each kill also has a chance of an Ink or a Salt, and of 
 | Elite | 6 | 0.6 | Faint 30%, Clear 15%, Sharp 5% | Fine 20%, Pure 5% | 10% — always Epic |
 | Shadow | 12 | 1.2 | Faint 60%, Clear 30%, Sharp 15% | Fine 40%, Pure 15% | 10% — always Legendary |
 
+An Ink or a Salt drops only from a creature of the level it is used at and up: Watery Ink 15, Thin 43, Faint 57, Clear
+71, Sharp 85; Coarse Salt 15, Fine 57, Pure 71.
+
 A level 1 normal creature in Raw unfolded gear gives a 60% chance of one Temper Dust and a 6% chance of one Quench
 Oil. A shadow at A +9 gives 304 Temper Dust with a 50% chance of one more, and 30 Quench Oil with a 45% chance of
 one more.

@@ -110,7 +110,7 @@ public class LootDropper : MonoBehaviour
         for (int i = 0; i < lines.Count; i++)
         {
             var line = lines[i];
-            if (!CombatRng.Chance(line.chance)) continue;
+            if (!CreatureLoot.DropsAt(line, level) || !CombatRng.Chance(line.chance)) continue;
             var item = MaterialFor(line, level);
             if (item == null) continue;
             Won(item, CombatRng.Range(line.min, line.max + 1), null, line.chance);

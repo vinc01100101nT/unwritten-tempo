@@ -254,30 +254,30 @@ public static class FrontScreen
         veil.raycastTarget = true;   // swallow every click so nothing behind the door can be reached
         UiKit.Fill(veil.rectTransform, Vector2.zero, Vector2.zero);
 
-        Emblem(veil.transform);
+        Backdrop(veil.transform);
+        TitleLettering.Place(veil.transform);
         return veil.rectTransform;
     }
 
-    // The game's mark, behind everything the screen puts on top of it. It is a SQUARE image, so it is placed as a
-    // large centred emblem rather than stretched across a wide screen — stretching it would distort the logo, and
-    // tiling it would read as wallpaper. Dimmed, because it is a backdrop and not the thing being read.
-    static void Emblem(Transform veil)
+    // The picture behind every front screen. It COVERS the screen at its own shape — cropped at the edges on a
+    // screen of another shape, never stretched. Missing, the dark veil under it is the whole backdrop.
+    static void Backdrop(Transform veil)
     {
-        var art = Resources.Load<Texture2D>("UI/unwritten-logo");
-        if (art == null) return;   // no mark shipped — the screen is still perfectly usable without it
+        var art = Resources.Load<Texture2D>("UI/front-screen-background");
+        if (art == null) return;
 
-        var go = new GameObject("Emblem", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        var go = new GameObject("Backdrop", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         go.transform.SetParent(veil, false);
         var image = go.GetComponent<RawImage>();
         image.texture = art;
-        image.color = new Color(1f, 1f, 1f, 0.10f);
         image.raycastTarget = false;
 
         var rt = (RectTransform)go.transform;
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(900, 900);   // square art, square box — the ratio is never touched
-        rt.anchoredPosition = Vector2.zero;
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+        // Added here, at runtime: a layout component saved into a scene rewrites itself in the editor.
+        var fit = go.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        fit.aspectRatio = (float)art.width / art.height;
     }
 
     /// <summary>A centred window with <paramref name="title"/> in its blue bar — no close, no minimise, no drag,
@@ -336,17 +336,27 @@ public static class FrontScreen
         rt.anchoredPosition = topCentreOffset;
     }
 
-    /// <summary>A labelled single-line text box. <paramref name="secret"/> masks what is typed.</summary>
+    /// <summary>A labelled single-line text box. <paramref name="secret"/> masks what is typed. The label sits above
+    /// the box, or — given a <paramref name="captionWidth"/> — that wide on the box's own line, to its left.</summary>
     public static TMP_InputField Field(Transform panel, string label, float top, bool secret,
-                                       float left = 24f, float right = 24f)
+                                       float left = 24f, float right = 24f, float captionWidth = 0f)
     {
+        bool beside = captionWidth > 0f;
         var caption = UiKit.Label(label + "Label", panel, label, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         caption.color = UiKit.TextDim;
-        Row(caption.rectTransform, top, 18, left, right);
+        if (beside)
+        {
+            var c = caption.rectTransform;
+            c.anchorMin = c.anchorMax = c.pivot = new Vector2(0f, 1f);
+            c.sizeDelta = new Vector2(captionWidth, 32f);
+            c.anchoredPosition = new Vector2(left, top);
+        }
+        else Row(caption.rectTransform, top, 18, left, right);
 
         var box = UiKit.Field(UiKit.Img(label + "Box", panel, UiKit.SlotFill));
         box.raycastTarget = true;
-        Row(box.rectTransform, top - 20, 32, left, right);
+        if (beside) Row(box.rectTransform, top, 32, left + captionWidth, right);
+        else Row(box.rectTransform, top - 20, 32, left, right);
 
         var text = UiKit.Label("Text", box.transform, "", 15, FontStyle.Normal, TextAnchor.MiddleLeft);
         text.richText = false;   // typed text is literal, never markup

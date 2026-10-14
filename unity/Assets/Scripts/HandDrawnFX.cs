@@ -54,6 +54,17 @@ public class HandDrawnFX : MonoBehaviour
     [Range(0f, 1f)] [Tooltip("Faint paper-fibre grain over the whole frame (subtle).")]
     public float paperGrain = 0.30f;
 
+    [Header("Character preview")]
+    [Tooltip("Crease sensitivity for the character-creation preview only. Lower than the world's, so a body there " +
+             "shows fewer lines inside it; its outline is unchanged.")]
+    public float previewCrease = 20f;
+    [Range(0f, 1f)] [Tooltip("Paper grain for the character-creation preview only.")]
+    public float previewPaperGrain = 0f;
+
+    /// <summary>The camera of the character-creation preview while one is open. It draws with the preview's ink
+    /// (<see cref="previewCrease"/>, <see cref="previewPaperGrain"/>); every other camera draws with the world's.</summary>
+    public static Camera PreviewCamera;
+
     [Header("Colour (HandDrawnGrade renderer feature)")]
     [Range(MinSaturation, 1f)] [Tooltip("1 = untouched colour. Lower = muted, illustrated palette. Clamped at " +
              "MinSaturation so it can never go full greyscale.")]
@@ -131,8 +142,21 @@ public class HandDrawnFX : MonoBehaviour
         }
     }
 
+    void OnEnable() => UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += BeforeCamera;
+
+    // The one ink material serves every camera, so the two settings that differ are set again before each camera
+    // draws — the preview's for the preview camera, the world's for every other.
+    void BeforeCamera(UnityEngine.Rendering.ScriptableRenderContext context, Camera cam)
+    {
+        if (mat == null) return;
+        bool preview = cam != null && cam == PreviewCamera;
+        mat.SetFloat(NormalEdgeID, preview ? previewCrease : crease);
+        mat.SetFloat(PaperID, preview ? previewPaperGrain : paperGrain);
+    }
+
     void OnDisable()
     {
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering -= BeforeCamera;
         if (quad != null) quad.gameObject.SetActive(false);
         GradeActive = false;   // stop the feature blitting while we're off
     }

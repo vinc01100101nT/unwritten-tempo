@@ -45,9 +45,21 @@ public class CharacterPreview : MonoBehaviour
     const float ZoomIn = 0.45f;
     const float ZoomOut = 1.9f;
 
+    // Framing the head instead of the whole body: 0 = whole body, 1 = head, eased between over FocusSeconds. The head
+    // is measured once per body (its centre in the stage's space, and its height), never per frame.
+    float focus, focusTarget;
+    Vector3 headCentre;
+    float headHeight;
+    const float FocusSeconds = 0.25f;
+    // How much of the picture's height the head fills when framed: the picture shows this many head-heights.
+    const float HeadsInView = 2.4f;
+
     /// <summary>Raised once a new body is standing and its recolourable parts are known, so a colour picker can
     /// rebuild for the body actually on show rather than the one before it.</summary>
     public event System.Action OnBodyChanged;
+
+    /// <summary>The model of the body standing in the picture right now — not the one still loading.</summary>
+    public string BodyOnStage { get; private set; }
 
     /// <summary>The parts of the body on show that can be recoloured, or an empty list before one is up.</summary>
     public System.Collections.Generic.IReadOnlyList<Color> Parts =>
@@ -99,6 +111,8 @@ public class CharacterPreview : MonoBehaviour
         cam.orthographic = false;
         cam.fieldOfView = PortraitFov;
         cam.nearClipPlane = 0.01f;
+        // The preview draws with its own, lighter ink.
+        HandDrawnFX.PreviewCamera = cam;
         world = FindWorldCamera();
         shownIn = into;
         FitPicture();
@@ -151,6 +165,22 @@ public class CharacterPreview : MonoBehaviour
         ApplyView();
     }
 
+    /// <summary>Frame the head (<paramref name="on"/>) or the whole body, easing there over a quarter second.</summary>
+    public void FocusHead(bool on)
+    {
+        focusTarget = on ? 1f : 0f;
+        MeasureHead();
+    }
+
+    // The head of the body on show: from its head bone up to the top of the bare body.
+    void MeasureHead()
+    {
+        var socket = body != null ? body.GetComponent<HeadSocket>() : null;
+        if (socket == null || stageRoot == null || !socket.TryHead(out var headBase, out var top)) return;
+        headHeight = Mathf.Max(0.05f, top - headBase.y);
+        headCentre = stageRoot.InverseTransformPoint(new Vector3(headBase.x, (headBase.y + top) * 0.5f, headBase.z));
+    }
+
     /// <summary>Back to the straight-on portrait the preview opens with.</summary>
     public void ResetView()
     {
@@ -169,7 +199,17 @@ public class CharacterPreview : MonoBehaviour
         // in the middle of the picture stays there however narrow the view is.
         var fwd = cam.transform.localRotation * Vector3.forward;
         float along = -portrait.z / fwd.z;
-        cam.transform.localPosition = portrait + fwd * (along * (1f - spread));
+        var whole = portrait + fwd * (along * (1f - spread));
+        if (focus <= 0f || headHeight <= 0f) { cam.transform.localPosition = whole; }
+        else
+        {
+            // Backed off from the head's centre along the same line of sight, far enough that the view holds
+            // HeadsInView head-heights — the wheel's zoom still moves in and out from there.
+            float halfTan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float distance = headHeight * HeadsInView * 0.5f / halfTan * zoom;
+            var head = headCentre - fwd * distance;
+            cam.transform.localPosition = Vector3.Lerp(whole, head, Mathf.SmoothStep(0f, 1f, focus));
+        }
         // Only just past the furthest the camera can be pulled back to, so nothing but the staged body can be
         // in shot. Measured against the zoom limit rather than guessed, or a body vanishes when zoomed out.
         cam.farClipPlane = height * (2.6f * ZoomOut * spread + 2f);
@@ -233,6 +273,7 @@ public class CharacterPreview : MonoBehaviour
             dye = null;
 
             body = Instantiate(model, bodyPivot);
+            BodyOnStage = modelName;
             body.hideFlags = HideFlags.DontSaveInEditor;
             // Hung from the pivot's middle, so its feet still land on the stage floor.
             body.transform.localPosition = new Vector3(0f, -Character3DBody.BodyHeight * 0.5f, 0f);
@@ -255,13 +296,23 @@ public class CharacterPreview : MonoBehaviour
             dye = body.AddComponent<CharacterDye3D>();
             // …and the hair being chosen, held by that same character.
             body.AddComponent<HeadSocket>();
-            ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
+            // A body just paged to is shown as itself, not still held at the last one's angle — framed the way the
+            // screen asks, on its own head.
+            ResetView();
+            MeasureHead();
+            ApplyView();
             OnBodyChanged?.Invoke();
             return body;
         });
     }
 
-    void LateUpdate() => FitPicture();
+    void LateUpdate()
+    {
+        FitPicture();
+        if (focus == focusTarget) return;
+        focus = Mathf.MoveTowards(focus, focusTarget, Time.unscaledDeltaTime / FocusSeconds);
+        ApplyView();
+    }
 
     // THE SAME PIXELS IT IS SHOWN AT. The game's ink outline (HandDrawnFX) is drawn a set number of PIXELS thick
     // into whatever picture a camera renders, so a picture smaller than its box is stretched up and its lines grow
@@ -290,6 +341,7 @@ public class CharacterPreview : MonoBehaviour
 
     void OnDestroy()
     {
+        if (HandDrawnFX.PreviewCamera == cam) HandDrawnFX.PreviewCamera = null;
         if (cam != null) cam.targetTexture = null;
         if (picture != null) { picture.Release(); Destroy(picture); }
     }

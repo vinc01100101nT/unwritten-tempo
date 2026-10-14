@@ -28,10 +28,17 @@ and the part left over is the chance of one more (see [Mob Roster](../../3-world
 | What a shop pays for one | Unsigned |
 | --- | --- |
 | Any weapon or armour piece | 5 |
-| Temper Dust | 2 |
-| Quench Oil | 10 |
-| Watery / Thin / Faint / Clear / Sharp Ink | 2 / 4 / 8 / 16 / 32 |
-| Coarse / Fine / Pure Salt | 2 / 6 / 18 |
+| Temper Dust | 104 |
+| Quench Oil | 1,042 |
+| Watery / Thin / Faint / Clear / Sharp Ink | 2,625 / 25,000 / 10,666 / 26,000 / 92,000 |
+| Coarse / Fine / Pure Salt | 1,750 / 64,000 / 390,000 |
+
+**A material sells for half of what the kills it takes to find one earn** (decided 2026-10-14), a kill being worth 10u ×
+the creature's level and an elite's ten of them, at the level the material is used at: Temper Dust and Quench Oil at
+level 50; Watery Ink at 21, Thin at 50, Faint at 64, Clear at 78, Sharp at 92; Coarse Salt at 35, Fine at 64, Pure at
+78. Half, so a material is worth more used than sold. **Each Ink and Salt drops only from the levels it is used at and
+above:** Watery from 15, Thin from 43, Faint from 57, Clear from 71, Sharp from 85; Coarse from 15, Fine from 57, Pure
+from 71.
 
 No shop sells any of these.
 

@@ -42,6 +42,7 @@ public static class CreatureDrops
         var lines = CreatureLoot.LinesFor(def.kind);
         for (int i = 0; i < lines.Count; i++)
         {
+            if (!CreatureLoot.DropsAt(lines[i], def.level)) continue;
             var item = LootDropper.MaterialFor(lines[i], def.level);
             if (item != null) into.Add(new Drop(item, lines[i].chance, lines[i].min, lines[i].max));
         }

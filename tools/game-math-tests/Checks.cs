@@ -629,6 +629,24 @@ static class Checks
         That(CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 10, 0) == 72
              && CreatureLoot.UnitsPerKill(60, 50, CreatureKind.Elite, Quality.C, 10, 99) == 72, LootF,
              "a level-50 elite in C +10 should drop exactly 72 Temper Dust");
+        // A Salt drops from the levels it is used at and above: Coarse from 15, Fine from 57, Pure from 71.
+        foreach (var line in CreatureLoot.LinesFor(CreatureKind.Normal))
+        {
+            if (line.kind != MaterialKind.Salt) continue;
+            int from = line.step == 1 ? 15 : line.step == 2 ? 57 : 71;
+            That(!CreatureLoot.DropsAt(line, from - 1) && CreatureLoot.DropsAt(line, from) && CreatureLoot.DropsAt(line, 99), LootF,
+                 "Salt tier " + line.step + " should drop from level " + from + " up, and not below");
+        }
+        // An Ink drops from the grade it is used at: Watery from 15, Thin from 43; an elite's Faint from 57, Clear from 71,
+        // Sharp from 85.
+        foreach (var kind in new[] { CreatureKind.Normal, CreatureKind.Elite })
+            foreach (var line in CreatureLoot.LinesFor(kind))
+            {
+                if (line.kind != MaterialKind.Ink) continue;
+                int from = line.step == 1 ? 15 : line.step == 2 ? 43 : line.step == 3 ? 57 : line.step == 4 ? 71 : 85;
+                That(!CreatureLoot.DropsAt(line, from - 1) && CreatureLoot.DropsAt(line, from), LootF,
+                     "Ink tier " + line.step + " should drop from level " + from + " up, and not below");
+            }
     }
 
     // ---- what a quality grade is worth ------------------------------------------------------------------

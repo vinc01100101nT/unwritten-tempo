@@ -166,6 +166,18 @@ public class HeadSocket : MonoBehaviour
         return top == float.MinValue ? 0f : top - feet.position.y;
     }
 
+    /// <summary>Where the head starts (its bone) and where the bare body ends at the top, in world space, for
+    /// framing the head. Read when the framing changes, never per frame.</summary>
+    public bool TryHead(out Vector3 headBase, out float bodyTop)
+    {
+        headBase = default;
+        bodyTop = 0f;
+        if (!FindBody()) return false;
+        headBase = headBone.position;
+        bodyTop = body.bounds.max.y;
+        return true;
+    }
+
     static float TopOf(GameObject piece)
     {
         var r = piece != null ? piece.GetComponent<Renderer>() : null;

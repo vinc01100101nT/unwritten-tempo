@@ -31,7 +31,6 @@ public class CharacterSelectScreen : MonoBehaviour
     GameObject createPanel;
     TextMeshProUGUI createStatus;
     TMP_InputField nameField;
-    TextMeshProUGUI modelLabel;
     StatHexagon hexagon;
     ColourPicker picker;
     CharacterPreview preview;
@@ -39,8 +38,18 @@ public class CharacterSelectScreen : MonoBehaviour
     int modelIndex;
 
     // The hairstyles the body on show may wear ("none" first). The choice itself is held on the persistent character.
-    TextMeshProUGUI hairLabel;
     List<string> hairs = new List<string>();
+
+    // The Head and Body tabs. Head holds the hair's colour and its arrows change the hairstyle; Body holds the
+    // clothes' colours and its arrows change the body. The label above the colours names the choice on show.
+    Button headTab, bodyTab;
+    bool headOpen;
+    TextMeshProUGUI choiceLabel;
+
+    // What was painted on each body (by model) and on each hairstyle (by id) while this window is open, so paging
+    // away and back finds it as it was left. Forgotten when the window closes.
+    readonly Dictionary<string, Color[]> bodyLooks = new Dictionary<string, Color[]>();
+    readonly Dictionary<string, string> hairLooks = new Dictionary<string, string>();
 
     // The recolour being chosen: which part is selected, and the swatches showing each part's current colour.
     Transform partsRow;
@@ -225,67 +234,74 @@ public class CharacterSelectScreen : MonoBehaviour
     {
         if (createPanel != null) return;
 
-        // Its own window, in place of the list: the preview and its turn buttons on the left, the stat hexagon in the
-        // middle, name, body and colours on the right.
+        // Its own window, in place of the list: the name across the top; under it the preview with a turn button
+        // either side, the stat hexagon, and the Head / Body tabs holding the colours.
         var canvas = (Transform)selectWindow.transform.parent;
         var inner = FrontScreen.Panel(canvas, new Vector2(900, 560), "Character Creation", out createPanel);
         selectWindow.SetActive(false);
 
-        // The body, shown as itself, with the two buttons that turn it.
+        nameField = FrontScreen.Field(inner, "Name", -14, false, 356, 20, NameCaptionWidth);
+
+        // The body, shown as itself, between the two buttons that turn it.
         var frame = UiKit.Img("PreviewFrame", inner, UiKit.ButtonEdge);
-        FrontScreen.Place(frame.rectTransform, new Vector2(-324, -20), new Vector2(212, 300));
+        FrontScreen.Place(frame.rectTransform, new Vector2(-272, -60), new Vector2(212, 300));
         var shot = new GameObject("Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         shot.transform.SetParent(frame.transform, false);
         UiKit.Fill((RectTransform)shot.transform, new Vector2(2, 2), new Vector2(-2, -2));
         preview = CharacterPreview.Create(shot.GetComponent<RawImage>(), transform);
-        preview.OnBodyChanged += RebuildParts;
+        preview.OnBodyChanged += OnBodyShown;
         var turnLeft = UiKit.Btn("⟲", inner, () => preview?.Turn(TurnStep));
-        FrontScreen.Place((RectTransform)turnLeft.transform, new Vector2(-351, -330), new Vector2(44, 32));
+        FrontScreen.Place((RectTransform)turnLeft.transform, new Vector2(-408, -194), new Vector2(44, 32));
         var turnRight = UiKit.Btn("⟳", inner, () => preview?.Turn(-TurnStep));
-        FrontScreen.Place((RectTransform)turnRight.transform, new Vector2(-297, -330), new Vector2(44, 32));
+        FrontScreen.Place((RectTransform)turnRight.transform, new Vector2(-136, -194), new Vector2(44, 32));
 
         // The six stats, pulled on the hexagon.
         var statsCaption = UiKit.Label("StatsLabel", inner, "Stats", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         statsCaption.color = UiKit.TextDim;
-        FrontScreen.Row(statsCaption.rectTransform, -20, 18, 256, 394);
+        FrontScreen.Row(statsCaption.rectTransform, -60, 18, 356, 294);
         hexagon = StatHexagon.Build(inner);
-        FrontScreen.Place(hexagon.rectTransform, new Vector2(-69, -44), hexagon.rectTransform.sizeDelta);
+        FrontScreen.Place(hexagon.rectTransform, new Vector2(31, -80), hexagon.rectTransform.sizeDelta);
 
-        // Name, body, colours — the right-hand column.
-        const float Left = 530f, Right = 20f;
-        nameField = FrontScreen.Field(inner, "Name", -20, false, Left, Right);
+        // The tabs, the choice on show between its two arrows with the colours, and the colour picker.
+        const float Left = 626f, Right = 20f;
+        headTab = UiKit.Btn("Head", inner, () => OpenTab(true));
+        FrontScreen.Place((RectTransform)headTab.transform, new Vector2(238.5f, -60), new Vector2(125, 30));
+        bodyTab = UiKit.Btn("Body", inner, () => OpenTab(false));
+        FrontScreen.Place((RectTransform)bodyTab.transform, new Vector2(367.5f, -60), new Vector2(125, 30));
 
-        modelLabel = Stepper(inner, "Body", -76, Left, Right, StepModel);
-        hairLabel = Stepper(inner, "Hair", -136, Left, Right, StepHair);
-
-        var colourCaption = UiKit.Label("ColourLabel", inner, "Colours", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        colourCaption.color = UiKit.TextDim;
-        FrontScreen.Row(colourCaption.rectTransform, -196, 18, Left, Right);
-        partsRow = MakeSwatchRow(inner, -218, Left, Right).transform;
+        choiceLabel = UiKit.Label("Choice", inner, "…", 15, FontStyle.Normal, TextAnchor.MiddleCenter);
+        choiceLabel.color = UiKit.TextMain;
+        FrontScreen.Row(choiceLabel.rectTransform, -98, 22, Left, Right);
+        var prev = UiKit.Btn("<", inner, () => Step(-1));
+        FrontScreen.Place((RectTransform)prev.transform, new Vector2(191, -126), new Vector2(30, 30));
+        var next = UiKit.Btn(">", inner, () => Step(1));
+        FrontScreen.Place((RectTransform)next.transform, new Vector2(415, -126), new Vector2(30, 30));
+        partsRow = MakeSwatchRow(inner, -128, Left + 38, Right + 38).transform;
 
         picker = ColourPicker.Build(inner);
-        FrontScreen.Row(picker.Root, -254, ColourPicker.Height, Left, Right);
+        FrontScreen.Row(picker.Root, -166, ColourPicker.Height, Left, Right);
         picker.OnChanged += PaintSelectedPart;
 
         createStatus = UiKit.Label("Status", inner, "", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         createStatus.color = UiKit.TitleText;
         FrontScreen.Row(createStatus.rectTransform, -514, 18, 20, 340);
+        var back = UiKit.Btn("Back", inner, CloseCreate);
+        FrontScreen.Place(back.GetComponent<RectTransform>(), new Vector2(208, -506), new Vector2(140, 34));
         var create = UiKit.PrimaryBtn("Create", inner, OnCreate);
-        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(213, -506), new Vector2(140, 34));
-        var cancel = UiKit.Btn("Cancel", inner, CloseCreate);
-        FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(365, -506), new Vector2(140, 34));
+        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(360, -506), new Vector2(140, 34));
 
         nameField.ActivateInputField();
 
         // A new character starts with nothing chosen — each body shows the hair it was made with — never with the
         // hair of whichever character this screen was last left from.
         ChooseHair("", "");
+        OpenTab(false);
 
         // Ask the SERVER which bodies are allowed — it is what will refuse one it doesn't recognise, so it is
         // the only list worth offering.
         AccountClient.ListModels((list, error) =>
         {
-            if (this == null || modelLabel == null) return;
+            if (this == null || choiceLabel == null) return;
             if (list == null || list.Length == 0) { Say(error ?? "Could not read the list of bodies."); return; }
             models = list;
             modelIndex = 0;
@@ -293,22 +309,38 @@ public class CharacterSelectScreen : MonoBehaviour
         });
     }
 
-    // A caption with "<" and ">" either side of a label naming the choice — the body's and the hair's, built by one
-    // function so the two can never come to look or behave differently.
-    static TextMeshProUGUI Stepper(Transform inner, string caption, float top, float left, float right,
-                                   System.Action<int> step)
+    // The width of the "Name" caption, which sits on the box's own line.
+    const float NameCaptionWidth = 44f;
+
+    void OpenTab(bool head)
     {
-        var cap = UiKit.Label(caption + "Label", inner, caption, 13, FontStyle.Normal, TextAnchor.MiddleLeft);
-        cap.color = UiKit.TextDim;
-        FrontScreen.Row(cap.rectTransform, top, 18, left, right);
-        var label = UiKit.Label(caption, inner, "…", 15, FontStyle.Normal, TextAnchor.MiddleCenter);
-        label.color = UiKit.TextMain;
-        FrontScreen.Place(label.rectTransform, new Vector2(255, top - 20), new Vector2(160, 30));
-        var prev = UiKit.Btn("<", inner, () => step(-1));
-        FrontScreen.Place(prev.GetComponent<RectTransform>(), new Vector2(150, top - 20), new Vector2(40, 30));
-        var next = UiKit.Btn(">", inner, () => step(1));
-        FrontScreen.Place(next.GetComponent<RectTransform>(), new Vector2(360, top - 20), new Vector2(40, 30));
-        return label;
+        headOpen = head;
+        UiKit.MarkTab(headTab, head);
+        UiKit.MarkTab(bodyTab, !head);
+        preview?.FocusHead(head);
+        ShowChoice();
+        RebuildParts();
+    }
+
+    // The arrows beside the colours: the hairstyle on the Head tab, the body on the Body tab.
+    void Step(int step)
+    {
+        if (headOpen) StepHair(step);
+        else StepModel(step);
+    }
+
+    // The label and the choice on show are two views of one choice, so they are set together. The label is the
+    // choice's place in its list; a model's own file name is never shown.
+    void ShowChoice()
+    {
+        if (choiceLabel == null) return;
+        if (headOpen)
+        {
+            string id = ChosenHair();
+            int at = hairs.IndexOf(id);
+            choiceLabel.text = id == HeadPieces.NoHair || at < 0 ? "No hair" : "Hair " + at + " of " + (hairs.Count - 1);
+        }
+        else choiceLabel.text = models == null || models.Length == 0 ? "…" : "Body " + (modelIndex + 1) + " of " + models.Length;
     }
 
     // How far one press of a turn button turns the body.
@@ -316,7 +348,7 @@ public class CharacterSelectScreen : MonoBehaviour
 
     const int SwatchSize = 26;
 
-    // A left-aligned strip beside the preview that swatches are laid into.
+    // A strip between the two arrows that swatches are laid into, centred.
     static GameObject MakeSwatchRow(Transform inner, float top, float left, float right)
     {
         var go = new GameObject("Row", typeof(RectTransform));
@@ -325,7 +357,7 @@ public class CharacterSelectScreen : MonoBehaviour
         group.spacing = 6;
         group.childForceExpandWidth = false;
         group.childForceExpandHeight = false;
-        group.childAlignment = TextAnchor.MiddleLeft;
+        group.childAlignment = TextAnchor.MiddleCenter;
         FrontScreen.Row((RectTransform)go.transform, top, SwatchSize, left, right);
         return go;
     }
@@ -338,9 +370,8 @@ public class CharacterSelectScreen : MonoBehaviour
         partSwatches.Clear();
         selectedPart = 0;
 
-        var parts = preview.Parts;
-        // The clothes, then the hair — one more swatch, painted by the same picker, whenever there is hair.
-        int count = parts.Count + (HasHair ? 1 : 0);
+        // The hair's one swatch on the Head tab (none with no hair), the clothes on the Body tab.
+        int count = headOpen ? (HasHair ? 1 : 0) : preview.Parts.Count;
         for (int i = 0; i < count; i++)
         {
             int index = i;
@@ -361,12 +392,9 @@ public class CharacterSelectScreen : MonoBehaviour
         if (count > 0) picker?.Set(ColourOf(0));
     }
 
-    // The swatch after the last clothes part is the hair's.
-    bool IsHairSwatch(int index) => preview != null && index == preview.Parts.Count && HasHair;
-
     Color ColourOf(int index)
     {
-        if (IsHairSwatch(index)) return HairColour();
+        if (headOpen) return HairColour();
         var parts = preview.Parts;
         return index >= 0 && index < parts.Count ? preview.TargetFor(parts[index]) : Color.white;
     }
@@ -386,7 +414,7 @@ public class CharacterSelectScreen : MonoBehaviour
     {
         if (preview == null) return;
         var parts = preview.Parts;
-        if (IsHairSwatch(selectedPart)) ChooseHair(ChosenHair(), "#" + ColorUtility.ToHtmlStringRGB(colour));
+        if (headOpen) { if (HasHair) ChooseHair(ChosenHair(), "#" + ColorUtility.ToHtmlStringRGB(colour)); else return; }
         else if (selectedPart < 0 || selectedPart >= parts.Count) return;
         else preview.SetPartColor(parts[selectedPart], colour);
         if (selectedPart < partSwatches.Count && partSwatches[selectedPart] != null)
@@ -416,21 +444,43 @@ public class CharacterSelectScreen : MonoBehaviour
     void StepModel(int step)
     {
         if (models == null || models.Length == 0) return;
+        KeepBodyLook();
         modelIndex = ((modelIndex + step) % models.Length + models.Length) % models.Length;
         ShowModel();
     }
 
-    // The label and the body in the frame are two views of one choice, so they are set together and never apart.
-    // The label is the body's place in the list; the model's own file name is never shown.
     void ShowModel()
     {
         if (models == null || models.Length == 0) return;
-        if (modelLabel != null) modelLabel.text = "Body " + (modelIndex + 1) + " of " + models.Length;
         // The hair the new body may wear. A hair it cannot wear (an animal's head) becomes no hair.
         hairs = HeadPieces.ChoicesFor(models[modelIndex]);
         if (!hairs.Contains(ChosenHair())) ChooseHair(HeadPieces.NoHair, "");
-        ShowHair();
+        ShowChoice();
         if (preview != null) preview.Show(models[modelIndex]);
+        RebuildParts();
+    }
+
+    // Remember what the body on show is wearing before paging away from it.
+    void KeepBodyLook()
+    {
+        if (preview == null || string.IsNullOrEmpty(preview.BodyOnStage)) return;
+        var parts = preview.Parts;
+        if (parts.Count == 0) return;
+        var worn = new Color[parts.Count];
+        for (int i = 0; i < worn.Length; i++) worn[i] = preview.TargetFor(parts[i]);
+        bodyLooks[preview.BodyOnStage] = worn;
+    }
+
+    // A body just put up wears what was painted on it earlier in this window, if anything was.
+    void OnBodyShown()
+    {
+        if (preview != null && !string.IsNullOrEmpty(preview.BodyOnStage)
+            && bodyLooks.TryGetValue(preview.BodyOnStage, out var worn))
+        {
+            var parts = preview.Parts;
+            for (int i = 0; i < parts.Count && i < worn.Length; i++)
+                if (preview.TargetFor(parts[i]) != worn[i]) preview.SetPartColor(parts[i], worn[i]);
+        }
         RebuildParts();
     }
 
@@ -441,20 +491,15 @@ public class CharacterSelectScreen : MonoBehaviour
     void StepHair(int step)
     {
         if (hairs.Count == 0) return;
-        int at = Mathf.Max(0, hairs.IndexOf(ChosenHair()));
+        string from = ChosenHair();
+        if (from != HeadPieces.NoHair) hairLooks[from] = "#" + ColorUtility.ToHtmlStringRGB(HairColour());
+        int at = Mathf.Max(0, hairs.IndexOf(from));
         at = ((at + step) % hairs.Count + hairs.Count) % hairs.Count;
         string id = hairs[at];
-        ChooseHair(id, id == HeadPieces.NoHair ? "" : "#" + ColorUtility.ToHtmlStringRGB(HairColour()));
-        ShowHair();
+        // The colour this hairstyle was given earlier in this window, or else its own colour.
+        ChooseHair(id, id != HeadPieces.NoHair && hairLooks.TryGetValue(id, out var hex) ? hex : "");
+        ShowChoice();
         RebuildParts();
-    }
-
-    void ShowHair()
-    {
-        if (hairLabel == null) return;
-        string id = ChosenHair();
-        int at = hairs.IndexOf(id);
-        hairLabel.text = id == HeadPieces.NoHair || at < 0 ? "No hair" : "Hair " + at + " of " + (hairs.Count - 1);
     }
 
     bool HasHair => ChosenHair() != HeadPieces.NoHair;
@@ -493,8 +538,10 @@ public class CharacterSelectScreen : MonoBehaviour
         createPanel = null;
         createStatus = null;
         nameField = null;
-        modelLabel = null;
-        hairLabel = null;
+        choiceLabel = null;
+        headTab = bodyTab = null;
+        bodyLooks.Clear();
+        hairLooks.Clear();
         hexagon = null;
         picker = null;
         if (selectWindow != null) selectWindow.SetActive(true);

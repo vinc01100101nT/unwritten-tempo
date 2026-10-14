@@ -81,38 +81,52 @@ public static class CreatureLoot
         public readonly int step;
         public readonly float chance;
         public readonly int min, max;
+        /// <summary>The lowest grade of creature level (1 = Raw … 7 = A, <see cref="GradeForLevel"/>) that drops this
+        /// line; any creature at or above it does. A SALT OR AN INK DROPS FROM THE LEVELS IT IS USED AT AND ABOVE (decided
+        /// 2026-10-14): priced at the level it is cheapest to use at, a Pure Salt from a level-1 creature would be worth a
+        /// thousand of its kills.</summary>
+        public readonly int fromGrade;
 
-        public Line(MaterialKind kind, int step, float chance, int min, int max)
+        public Line(MaterialKind kind, int step, float chance, int min, int max, int fromGrade = 1)
         {
             this.kind = kind; this.step = step; this.chance = chance; this.min = min; this.max = max;
+            this.fromGrade = fromGrade;
         }
     }
 
+    /// <summary>Does a creature of <paramref name="fileLevel"/> drop <paramref name="line"/> at all.</summary>
+    public static bool DropsAt(in Line line, int fileLevel) => GradeForLevel(fileLevel) >= line.fromGrade;
+
+    // The grade each Salt and each Ink starts dropping from — the grade it is used at: Coarse from F, Fine from C, Pure
+    // from B; Watery from F, Thin from D, Faint from C, Clear from B, Sharp from A.
+    const int CoarseFrom = 2, FineFrom = 5, PureFrom = 6;
+    const int WateryFrom = 2, ThinFrom = 4, FaintFrom = 5, ClearFrom = 6, SharpFrom = 7;
+
     static readonly Line[] NormalLines =
     {
-        new Line(MaterialKind.Ink,     1, 0.04f, 1, 1),   // Watery
-        new Line(MaterialKind.Ink,     2, 0.01f, 1, 1),   // Thin
-        new Line(MaterialKind.Salt,    1, 0.10f, 1, 1),   // Coarse
-        new Line(MaterialKind.Salt,    2, 0.005f, 1, 1),  // Fine
-        new Line(MaterialKind.Salt,    3, 0.001f, 1, 1),  // Pure
+        new Line(MaterialKind.Ink,     1, 0.04f, 1, 1, WateryFrom),   // Watery
+        new Line(MaterialKind.Ink,     2, 0.01f, 1, 1, ThinFrom),   // Thin
+        new Line(MaterialKind.Salt,    1, 0.10f, 1, 1, CoarseFrom),   // Coarse
+        new Line(MaterialKind.Salt,    2, 0.005f, 1, 1, FineFrom),  // Fine
+        new Line(MaterialKind.Salt,    3, 0.001f, 1, 1, PureFrom),  // Pure
     };
 
     static readonly Line[] EliteLines =
     {
-        new Line(MaterialKind.Ink,     3, 0.30f, 1, 1),   // Faint
-        new Line(MaterialKind.Ink,     4, 0.15f, 1, 1),   // Clear
-        new Line(MaterialKind.Ink,     5, 0.05f, 1, 1),   // Sharp
-        new Line(MaterialKind.Salt,    2, 0.20f, 1, 1),   // Fine
-        new Line(MaterialKind.Salt,    3, 0.05f, 1, 1),   // Pure
+        new Line(MaterialKind.Ink,     3, 0.30f, 1, 1, FaintFrom),   // Faint
+        new Line(MaterialKind.Ink,     4, 0.15f, 1, 1, ClearFrom),   // Clear
+        new Line(MaterialKind.Ink,     5, 0.05f, 1, 1, SharpFrom),   // Sharp
+        new Line(MaterialKind.Salt,    2, 0.20f, 1, 1, FineFrom),   // Fine
+        new Line(MaterialKind.Salt,    3, 0.05f, 1, 1, PureFrom),   // Pure
     };
 
     static readonly Line[] ShadowLines =
     {
-        new Line(MaterialKind.Ink,     3, 0.60f, 1, 1),   // Faint
-        new Line(MaterialKind.Ink,     4, 0.30f, 1, 1),   // Clear
-        new Line(MaterialKind.Ink,     5, 0.15f, 1, 1),   // Sharp
-        new Line(MaterialKind.Salt,    2, 0.40f, 1, 1),   // Fine
-        new Line(MaterialKind.Salt,    3, 0.15f, 1, 1),   // Pure
+        new Line(MaterialKind.Ink,     3, 0.60f, 1, 1, FaintFrom),   // Faint
+        new Line(MaterialKind.Ink,     4, 0.30f, 1, 1, ClearFrom),   // Clear
+        new Line(MaterialKind.Ink,     5, 0.15f, 1, 1, SharpFrom),   // Sharp
+        new Line(MaterialKind.Salt,    2, 0.40f, 1, 1, FineFrom),   // Fine
+        new Line(MaterialKind.Salt,    3, 0.15f, 1, 1, PureFrom),   // Pure
     };
 
     /// <summary>Every Ink and Salt line a creature of <paramref name="kind"/> rolls on death.</summary>

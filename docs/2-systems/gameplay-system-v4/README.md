@@ -183,8 +183,11 @@ back whole. A piece the first tutorial still needs cannot be recycled, sold or d
   Epic purple, Legendary orange-gold — in the tooltip (which also names the rarity), the bag, the worn list of a unit
   you select, and on the floor. One function owns the answer and the colour (`Rarities`). Skills keep their own
   colour theme: each skill is coloured by the weapon it requires (red for sword skills, and so on).
-- **Ink and Salt are the surprise drop**, and they drop from creatures **of every level**; which tiers, and how
-  often, is the creature's kind's answer (normal, elite, shadow).
+- **Ink and Salt are the surprise drop**, and **each drops only from the levels it is used at and above** — Watery
+  Ink from level 15, Thin from 43, Faint from 57, Clear from 71, Sharp from 85; Coarse Salt from 15, Fine from 57,
+  Pure from 71 — so a low-level hunter never finds one worth a thousand of their kills
+  ([Crafting Tables](crafting-tables.md) §1). Which tiers, and how often, is the creature's kind's answer (normal,
+  elite, shadow).
 - **How much Temper Dust and Quench Oil a kill gives follows what the kill pays.** Creature levels 1–99 split
   evenly into seven steps — 1–14 is step 1, 15–28 step 2, 29–42 step 3, 43–56 step 4, 57–70 step 5, 71–84 step 6,
   85–99 step 7 — and everything above 99, the shadows, is step 7. A kill gives **0.6 Temper Dust and 0.06 Quench
@@ -393,7 +396,8 @@ move once it is played. Change it here, in place, when it does.
 
 - **Up never passes 95%**, however good the Salt — a quench is never a certainty.
 - **Where Salt drops:** a normal kill Coarse **10%**, Fine **0.5%**, Pure **0.1%**; an elite Fine **20%**, Pure
-  **5%**; a shadow Fine **40%**, Pure **15%**. A Salt's worth is the kills it takes to find one: Coarse 10, Fine 200,
+  **5%**; a shadow Fine **40%**, Pure **15%** — each only from a creature of level 15 and up (Coarse), 57 and up
+  (Fine) or 71 and up (Pure). A Salt's worth is the kills it takes to find one: Coarse 10, Fine 200,
   Pure 1,000.
 - **Merging:** Ink 10 of a tier → 1 of the next; Salt 20 Coarse → 1 Fine, 5 Fine → 1 Pure.
 - **The cheapest Salt by climb**, worked out from what it saves against what it costs, and the average kills each
@@ -489,7 +493,6 @@ skill.
 - **The starter balance is checked in play.** A level 1 character in Raw +0 gear swings for 55 Attack; whether that
   is right against level 1 creatures, which wear gear by the same rules, is decided in play.
 - **The equal-gear check was made at A +10 only.** It is made at the lower grades in play.
-- **What a shop pays for a Salt** is decided with every other price.
 - **Skill trees for the other thirteen weapons** — written when each pool is authored. Only the Sword's 22 skills
   carry a mastery level today, and only the sword's have trademark names; the other weapons roll no trademark
   until their pools exist.

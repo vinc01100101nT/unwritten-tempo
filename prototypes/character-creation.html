@@ -16,7 +16,10 @@
           background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom));
           color: var(--title-text); font: 700 14px var(--font-ui); }
   .inner { padding: 14px 20px 18px; }
-  .cols { display: grid; grid-template-columns: 212px 250px 1fr; gap: 24px; align-items: start; }
+  .namerow { display: flex; align-items: center; gap: 12px; margin: 0 0 14px 336px; }
+  .namerow .cap { margin: 0; }
+  .namerow .field { flex: 1; margin: 0; }
+  .cols { display: grid; grid-template-columns: 316px 250px minmax(0, 1fr); gap: 20px; align-items: start; }
   .cap { font: 13px var(--font-ui); color: var(--text-dim); margin: 0 0 4px; }
 
   button {
@@ -25,12 +28,14 @@
   }
   button:hover { background: var(--hover); border-color: var(--accent); }
 
-  /* preview */
-  .frame { height: 300px; background: #ffffff; border: 2px solid var(--button-edge); display: grid; place-items: center;
-           perspective: 600px; overflow: hidden; }
-  .figure { transition: transform .25s; transform-style: preserve-3d; }
-  .turn { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
-  .turn button { width: 44px; height: 32px; font-size: 18px; }
+  /* preview, a turn button either side */
+  .stage { display: flex; align-items: center; gap: 8px; }
+  .stage > button { width: 44px; height: 32px; font-size: 18px; flex: none; }
+  .frame { width: 212px; height: 300px; background: #ffffff; border: 2px solid var(--button-edge); box-sizing: border-box;
+           perspective: 600px; overflow: hidden; display: flex; justify-content: center; align-items: flex-start; }
+  .zoom { transition: transform .25s ease-out; transform-origin: 50% 13%; margin-top: 18px; }
+  .zoom.head { transform: scale(2.4); }
+  .figure { display: block; transition: transform .25s; transform-style: preserve-3d; }
 
   /* stats hexagon */
   .hex svg { display: block; touch-action: none; }
@@ -38,20 +43,23 @@
   .hex .val { font: 700 12px var(--font-ui); fill: var(--title-text); }
   .hex .knob { cursor: grab; }
 
-  /* name / body / colours */
+  /* name / tabs / colours */
   .field { height: 30px; border: 1px solid var(--button-edge); border-radius: 3px; background: var(--slot-fill);
            display: flex; align-items: center; padding: 0 8px; font: 14px var(--font-ui); color: var(--text-main); margin-bottom: 12px; }
-  .body-pick { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
-  .body-pick button { width: 40px; height: 30px; }
-  .body-pick span { width: 140px; text-align: center; font: 15px var(--font-ui); color: var(--text-main); }
-  .swatches { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .tabs button { flex: 1; height: 30px; }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--text-on-dim); font-weight: 700; }
+  .pick-label { text-align: center; font: 15px var(--font-ui); color: var(--text-main); margin-bottom: 8px; }
+  .stepper { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .stepper button { width: 30px; height: 30px; flex: none; }
+  .swatches { flex: 1; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; min-height: 26px; }
+  .swatches .none { font: 13px var(--font-ui); color: var(--text-dim); line-height: 26px; }
   .swatch { width: 26px; height: 26px; border: 2px solid var(--button-edge); cursor: pointer; box-sizing: border-box; }
   .swatch.on { border-color: var(--accent); }
 
   /* colour picker (square + hue strip + HEX) */
   .picker { border: 1px solid var(--button-edge); border-radius: 3px; overflow: hidden; background: var(--slot-fill); }
   .pick-top { display: grid; grid-template-columns: 90px 1fr; height: 130px; }
-  .chosen { }
   .sv { position: relative; cursor: crosshair; }
   .sv::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, #fff, rgba(255,255,255,0)); }
   .sv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, #000, rgba(0,0,0,0)); }
@@ -63,7 +71,7 @@
                transform: translate(-50%, -50%); box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none; }
   .hexrow { display: flex; align-items: center; gap: 6px; margin: 0 14px 12px; }
   .hexrow label { font: 12px var(--font-ui); color: var(--text-dim); }
-  .hexrow input { flex: 1; height: 26px; border: 1px solid var(--button-edge); border-radius: 3px; text-align: center;
+  .hexrow input { flex: 1; min-width: 0; height: 26px; border: 1px solid var(--button-edge); border-radius: 3px; text-align: center;
                   font: 14px var(--font-ui); color: var(--text-main); background: var(--slot-fill); }
   .hexrow button { width: 30px; height: 28px; font-size: 13px; }
 
@@ -72,17 +80,20 @@
 </style>
 </head>
 <body>
-<p class="note">Drag a corner of the hexagon (or click a stat's name) to shift points between it and the stat opposite.
-Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D character; the arrows turn it.</p>
+<p class="note">Head / Body tabs: the arrows beside the colours change the hairstyle (Head) or the body (Body). Colours are
+remembered per body and per hairstyle: paint one, page away, page back. The Head tab zooms the preview on the head.
+Drag a hexagon corner to shift stat points. The figure is a stand-in for the 3D character; ⟲ ⟳ turn it.</p>
 
 <section class="create" data-mocks="Character Select">
   <div class="fill">
     <div class="head">Character Creation</div>
     <div class="inner">
+    <div class="namerow"><p class="cap">Name</p><div class="field">Ariona</div></div>
     <div class="cols">
-      <div>
-        <div class="frame"><svg class="figure" id="fig" width="120" height="260" viewBox="0 0 120 260"></svg></div>
-        <div class="turn"><button id="left" title="Turn left">⟲</button><button id="right" title="Turn right">⟳</button></div>
+      <div class="stage">
+        <button id="left" title="Turn left">⟲</button>
+        <div class="frame"><div class="zoom" id="zoom"><svg class="figure" id="fig" width="120" height="260" viewBox="0 0 120 260"></svg></div></div>
+        <button id="right" title="Turn right">⟳</button>
       </div>
 
       <div class="hex">
@@ -91,20 +102,17 @@ Click a colour swatch, then pick its colour. The figure is a stand-in for the 3D
       </div>
 
       <div>
-        <p class="cap">Name</p>
-        <div class="field">Ariona</div>
-        <p class="cap">Body</p>
-        <div class="body-pick"><button id="prev">&lt;</button><span id="bodyn">Body 1 of 6</span><button id="next">&gt;</button></div>
-        <p class="cap">Colours</p>
-        <div class="swatches" id="swatches"></div>
+        <div class="tabs"><button id="tabHead">Head</button><button id="tabBody">Body</button></div>
+        <div class="pick-label" id="pickn">Body 1 of 6</div>
+        <div class="stepper"><button id="prev">&lt;</button><div class="swatches" id="swatches"></div><button id="next">&gt;</button></div>
         <div class="picker">
-          <div class="pick-top"><div class="chosen" id="chosen"></div><div class="sv" id="sv"><div class="ring" id="svring"></div></div></div>
+          <div class="pick-top"><div id="chosen"></div><div class="sv" id="sv"><div class="ring" id="svring"></div></div></div>
           <div class="hue" id="hue"><div class="ring" id="huering"></div></div>
           <div class="hexrow"><label>HEX</label><input id="hexin" spellcheck="false"><button id="copy" title="Copy">⧉</button></div>
         </div>
       </div>
     </div>
-    <div class="actions"><button>Create</button><button>Cancel</button></div>
+    <div class="actions"><button>Back</button><button>Create</button></div>
     </div>
   </div>
 </section>
@@ -147,9 +155,19 @@ function drag(i, e) {
 }
 drawHex();
 
-/* ---------- colours: part swatches + picker ---------- */
-const parts = ["#3b5ba5", "#6b4a2e", "#2f2f35", "#c9a14a"];
-let part = 0, H = 0, S = 0, V = 0;
+/* ---------- bodies, hairstyles, and the colours each one remembers ---------- */
+const BODIES = 6, HAIRS = 5;                             // hairstyle 0 = no hair
+const BODY_PARTS = ["#3b5ba5", "#6b4a2e", "#2f2f35"];    // a body's own art colours: shirt, legs, shoes
+const HAIR_ART = "#c9a14a";
+const bodyColours = {};                                  // body number -> its painted parts
+const hairColours = {};                                  // hairstyle number -> its painted colour
+let body = 1, hair = 1, tab = "body", part = 0, H = 0, S = 0, V = 0;
+const partsOf = b => bodyColours[b] || (bodyColours[b] = BODY_PARTS.slice());
+const hairOf = h => hairColours[h] || (hairColours[h] = HAIR_ART);
+// The swatches the open tab shows: the clothes on Body, the hair on Head (none when there is no hair).
+function shown() { return tab === "body" ? partsOf(body) : (hair === 0 ? [] : [hairOf(hair)]); }
+function paint(c) { if (tab === "body") partsOf(body)[part] = c; else if (hair !== 0) hairColours[hair] = c; }
+
 const sw = document.getElementById("swatches");
 function hsv2hex(h, s, v) {
   const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
@@ -164,13 +182,15 @@ function hex2hsv(hx) {
 }
 function drawSwatches() {
   sw.innerHTML = "";
-  parts.forEach((c, i) => {
+  const list = shown();
+  if (!list.length) { sw.innerHTML = '<span class="none">No hair</span>'; return; }
+  list.forEach((c, i) => {
     const d = document.createElement("div"); d.className = "swatch" + (i === part ? " on" : ""); d.style.background = c;
-    d.onclick = () => { part = i; [H, S, V] = hex2hsv(parts[i]); drawSwatches(); drawPicker(); };
+    d.onclick = () => { part = i; [H, S, V] = hex2hsv(c); drawSwatches(); drawPicker(false); };
     sw.appendChild(d);
   });
 }
-function drawPicker() {
+function drawPicker(write) {
   const c = hsv2hex(H, S, V);
   document.getElementById("sv").style.background = hsv2hex(H, 1, 1);
   document.getElementById("svring").style.left = S * 100 + "%";
@@ -179,7 +199,8 @@ function drawPicker() {
   document.getElementById("huering").style.background = hsv2hex(H, 1, 1);
   document.getElementById("chosen").style.background = c;
   const hi = document.getElementById("hexin"); if (document.activeElement !== hi) hi.value = c;
-  parts[part] = c; sw.children[part].style.background = c; drawFigure();
+  if (write && shown().length) { paint(c); if (sw.children[part]) sw.children[part].style.background = c; }
+  drawFigure();
 }
 function track(el, fn) {
   el.onpointerdown = e => { fn(e); el.onpointermove = fn; try { el.setPointerCapture(e.pointerId); } catch (_) {} };
@@ -188,40 +209,63 @@ function track(el, fn) {
 const clamp = v => Math.max(0, Math.min(1, v));
 track(document.getElementById("sv"), e => {
   const b = e.currentTarget.getBoundingClientRect();
-  S = clamp((e.clientX - b.left) / b.width); V = 1 - clamp((e.clientY - b.top) / b.height); drawPicker();
+  S = clamp((e.clientX - b.left) / b.width); V = 1 - clamp((e.clientY - b.top) / b.height); drawPicker(true);
 });
 track(document.getElementById("hue"), e => {
-  const b = e.currentTarget.getBoundingClientRect(); H = clamp((e.clientX - b.left) / b.width) * 359.9; drawPicker();
+  const b = e.currentTarget.getBoundingClientRect(); H = clamp((e.clientX - b.left) / b.width) * 359.9; drawPicker(true);
 });
 document.getElementById("hexin").oninput = e => {
-  const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { [H, S, V] = hex2hsv(v.toLowerCase()); drawPicker(); }
+  const v = e.target.value.trim(); if (/^#[0-9a-fA-F]{6}$/.test(v)) { [H, S, V] = hex2hsv(v.toLowerCase()); drawPicker(true); }
 };
 document.getElementById("copy").onclick = () => navigator.clipboard && navigator.clipboard.writeText(document.getElementById("hexin").value);
 
-/* ---------- stand-in figure + turning ---------- */
+/* ---------- stand-in figure: each body a different build, each hairstyle a different shape ---------- */
 const fig = document.getElementById("fig");
+const HAIR_SHAPES = [
+  "",
+  "M38 22 Q60 -4 82 22 L82 30 Q60 18 38 30 Z",
+  "M36 30 Q34 0 60 4 Q86 0 84 30 L84 52 L78 52 L78 26 Q60 16 42 26 L42 52 L36 52 Z",
+  "M40 18 L46 2 L54 14 L60 0 L66 14 L74 2 L80 18 Q60 12 40 18 Z",
+  "M38 24 Q60 -6 82 24 Q90 30 86 40 Q80 14 60 12 Q40 14 34 40 Q30 30 38 24 Z",
+];
 let turn = 0;
 function drawFigure() {
+  const p = partsOf(body), w = 40 + body * 4, x = 60 - w / 2;
   fig.innerHTML =
     `<circle cx="60" cy="34" r="22" fill="#e8c4a0"/>` +
-    `<path d="M38 22 Q60 -4 82 22 L82 30 Q60 18 38 30 Z" fill="${parts[3]}"/>` +
-    `<rect x="34" y="60" width="52" height="80" rx="10" fill="${parts[0]}"/>` +
-    `<rect x="36" y="140" width="22" height="80" rx="6" fill="${parts[1]}"/>` +
-    `<rect x="62" y="140" width="22" height="80" rx="6" fill="${parts[1]}"/>` +
-    `<rect x="32" y="218" width="28" height="16" rx="5" fill="${parts[2]}"/>` +
-    `<rect x="60" y="218" width="28" height="16" rx="5" fill="${parts[2]}"/>`;
+    (hair ? `<path d="${HAIR_SHAPES[hair]}" fill="${hairOf(hair)}"/>` : "") +
+    `<rect x="${x}" y="60" width="${w}" height="80" rx="10" fill="${p[0]}"/>` +
+    `<rect x="36" y="140" width="22" height="80" rx="6" fill="${p[1]}"/>` +
+    `<rect x="62" y="140" width="22" height="80" rx="6" fill="${p[1]}"/>` +
+    `<rect x="32" y="218" width="28" height="16" rx="5" fill="${p[2]}"/>` +
+    `<rect x="60" y="218" width="28" height="16" rx="5" fill="${p[2]}"/>`;
 }
 function spin(d) { turn += d; fig.style.transform = `rotateY(${turn}deg)`; }
 document.getElementById("left").onclick = () => spin(-45);
 document.getElementById("right").onclick = () => spin(45);
 
-/* ---------- body stepper (no model name shown) ---------- */
-let body = 1; const BODIES = 6;
-function showBody() { document.getElementById("bodyn").textContent = `Body ${body} of ${BODIES}`; }
-document.getElementById("prev").onclick = () => { body = body === 1 ? BODIES : body - 1; showBody(); };
-document.getElementById("next").onclick = () => { body = body === BODIES ? 1 : body + 1; showBody(); };
+/* ---------- tabs + the arrows beside the colours ---------- */
+function showTab() {
+  document.getElementById("tabHead").classList.toggle("on", tab === "head");
+  document.getElementById("tabBody").classList.toggle("on", tab === "body");
+  document.getElementById("zoom").classList.toggle("head", tab === "head");
+  document.getElementById("pickn").textContent = tab === "body" ? `Body ${body} of ${BODIES}`
+    : hair === 0 ? "No hair" : `Hair ${hair} of ${HAIRS - 1}`;
+  part = 0;
+  const list = shown(); if (list.length) [H, S, V] = hex2hsv(list[0]);
+  drawSwatches(); drawPicker(false);
+}
+function step(d) {
+  if (tab === "body") body = ((body - 1 + d) % BODIES + BODIES) % BODIES + 1;
+  else hair = ((hair + d) % HAIRS + HAIRS) % HAIRS;
+  showTab();
+}
+document.getElementById("tabHead").onclick = () => { tab = "head"; showTab(); };
+document.getElementById("tabBody").onclick = () => { tab = "body"; showTab(); };
+document.getElementById("prev").onclick = () => step(-1);
+document.getElementById("next").onclick = () => step(1);
 
-[H, S, V] = hex2hsv(parts[0]); drawSwatches(); drawPicker();
+showTab();
 </script>
 </body>
 </html>
