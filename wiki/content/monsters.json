@@ -43,7 +43,7 @@
    "items": [
     "**It wears real equipment** — a weapon, a head piece, a body piece, shoes and a garment, the same gear you can wear, in the same slots. Its armour follows what it is — metal for shell, scale, horn or bone, leather for hide, fur or feather, cloth for soft, plant, flame or spirit — and its six stats are spent for the weapon it holds.",
     "**Its gear is its difficulty** — a monster's gear has a **grade** and **folds**, exactly like yours, and neither follows its level. The rarer the thing a monster drops, the higher its grade; the harder it is to find, the more folds. So a low-level monster guarding a Legendary material is far harder than its level says, and a common one in plain gear is not.",
-    "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the gold a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**.",
+    "**Better gear pays more** — a kill's experience, what a shop pays for the monster's own materials, and the Unsigned a saved character hands you all rise with the monster's gear: **25% more for each grade** above Raw, and **5% more for each fold**.",
     "**It can carry Ring investment** — scaling it on the same soft-cap curve yours uses. A monster with a Ring behind it is a genuinely different fight.",
     "**Its stats are visible in its numbers** — a monster that hits hard has the attack to prove it. There is no hidden multiplier making things tougher."
    ]
@@ -65,7 +65,7 @@
    "type": "list",
    "items": [
     "**Materials** — **Temper Dust** and, a tenth as often, **Quench Oil**: more the higher the monster's level and the better its gear; and now and then an **Ink** or a **Salt**. Elites drop ten times as much Temper Dust and Quench Oil, and rarer Inks and Salts; shadows twenty times. No stats of their own; they feed **Crafting & Recycling**.",
-    "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns gold. Some monsters also carry a second, rarer one with a coloured name. An elite's falls as several separate piles, and auto-loot never takes anything an elite drops.",
+    "**Its own material** — every ordinary monster and every elite drops one material that nothing else drops. A shop pays more for it the higher the monster's level and the better the monster's gear, and selling these is how hunting earns Unsigned. Some monsters also carry a second, rarer one with a coloured name. An elite's falls as several separate piles, and auto-loot never takes anything an elite drops.",
     "**Its find** — now and then, the one consumable its element carries: Fire, Water, Earth and Wind monsters drop a **converter** of their own element, every other monster drops its element's **food**. Potions, wings and antidotes are only sold by Tool Dealers."
    ]
   },
@@ -81,7 +81,7 @@
   {
    "type": "list",
    "items": [
-    "**Some never fight.** They thank you, stay a while and leave — and saving one is the only time a fight itself pays **gold**, and it hands you some of that monster's own material too: more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans). The higher the monster's level and the better its gear, the more gold.",
+    "**Some never fight.** They thank you, stay a while and leave — and saving one is the only time a fight itself pays **Unsigned**, and it hands you some of that monster's own material too: more for the helpless (children, the old) and more again for the wealthy (the princess, nobles, sultans). The higher the monster's level and the better its gear, the more Unsigned.",
     "**Some fight beside you** against monsters and rebels, then say goodbye. You cannot hit them, and what they beat counts as yours.",
     "**Some rebel.** Cured of Chaos but choosing to fight, they attack anyone nearby like a monster does. A rebel carries **more and rarer loot** — as if it were one kind stronger — and the experience of the monster it came from. An elite always turns into the same ninja, and every ninja rebels."
    ]
@@ -102,7 +102,7 @@
   },
   {
    "type": "paragraph",
-   "text": "Every kill starts a run, shown big on the left of your screen: kill again within **10 seconds** and the run climbs by one; wait longer and the next kill starts it again at 1. Each kill pays **1% more experience for every kill in the run, up to 50%** at a run of 50 — and the gold a saved character pays you grows the same way. Under the run you see your **EXP/h** and **Zeny/h**, what your kills paid over the last 10 minutes. A summon or a training dummy is no part of a run, and walking through a door starts it again."
+   "text": "Every kill starts a run, shown big on the left of your screen: kill again within **10 seconds** and the run climbs by one; wait longer and the next kill starts it again at 1. Each kill pays **1% more experience for every kill in the run, up to 50%** at a run of 50 — and the Unsigned a saved character pays you grows the same way. Under the run you see your **EXP/h** and **u/h**, what your kills paid over the last 10 minutes. A summon or a training dummy is no part of a run, and walking through a door starts it again."
   },
   {
    "type": "heading",

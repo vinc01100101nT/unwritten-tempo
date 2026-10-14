@@ -13,6 +13,10 @@
       "hex": "#FFFFFF",
       "alpha": 1.0
     },
+    "SlotEmpty": {
+      "hex": "#52525E",
+      "alpha": 0.6
+    },
     "WindowEdge": {
       "hex": "#7F97BD",
       "alpha": 1.0
@@ -81,6 +85,18 @@
       "hex": "#867200",
       "alpha": 1.0
     },
+    "NoticeSuccess": {
+      "hex": "#66E673",
+      "alpha": 1.0
+    },
+    "NoticeFailure": {
+      "hex": "#FF5F5F",
+      "alpha": 1.0
+    },
+    "NoticeWarning": {
+      "hex": "#FFD940",
+      "alpha": 1.0
+    },
     "RarityRare": {
       "hex": "#2A62B8",
       "alpha": 1.0
@@ -101,7 +117,9 @@
     "#22324D",
     "#2A62B8",
     "#2E7D41",
+    "#52525E",
     "#5B86C9",
+    "#66E673",
     "#6C7380",
     "#7F97BD",
     "#867200",
@@ -117,6 +135,8 @@
     "#E9EBEF",
     "#EDF1F7",
     "#F7F8FA",
+    "#FF5F5F",
+    "#FFD940",
     "#FFFFFF"
   ],
   "rarity_hexes": [],
@@ -138,13 +158,13 @@
         0.95
       ]
     },
-    "AutoPilotIndicator": {
-      "#FF8066": [
-        1.0
+    "AutoCombatWindow": {
+      "#000000": [
+        0.0
       ]
     },
-    "Battle Notice": {
-      "#FF8C4C": [
+    "AutoPilotIndicator": {
+      "#FF8066": [
         1.0
       ]
     },
@@ -381,9 +401,6 @@
       "#000000": [
         0.55
       ],
-      "#52525E": [
-        0.6
-      ],
       "#99C7FF": [
         1.0
       ],
@@ -393,9 +410,6 @@
     },
     "Inventory": {
       "#000000": [
-        0.0
-      ],
-      "#FFFFFF": [
         0.0
       ]
     },
@@ -530,6 +544,11 @@
         0.0
       ]
     },
+    "ShopPanel": {
+      "#000000": [
+        0.0
+      ]
+    },
     "Sign In": {
       "#0D0E10": [
         1.0
@@ -587,14 +606,6 @@
         1.0
       ]
     },
-    "SkillRunner": {
-      "#8C99FF": [
-        1.0
-      ],
-      "#B280FF": [
-        1.0
-      ]
-    },
     "SkillSymbol": {
       "#6B7380": [
         1.0
@@ -632,11 +643,6 @@
       ],
       "#FFFFFF": [
         1.0
-      ]
-    },
-    "SlotDragHandler": {
-      "#FFFFFF": [
-        0.9
       ]
     },
     "SnowGround": {
@@ -812,7 +818,6 @@
   },
   "screen_names": [
     "Auto Combat Indicator",
-    "Battle Notice",
     "Buff Bar",
     "Calendar",
     "Cast Bar",
@@ -828,6 +833,7 @@
     "Map",
     "Minimap",
     "Mob Nameplate",
+    "Overhead Notice",
     "Reconnect Notice",
     "Settings",
     "Sign In",

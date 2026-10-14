@@ -85,7 +85,7 @@ public class KillComboHud : MonoBehaviour
         }
         if (zeny != shownZeny)
         {
-            zenyText.text = "Zeny/h " + zeny.ToString("N0", CultureInfo.InvariantCulture);
+            zenyText.text = "u/h " + zeny.ToString("N0", CultureInfo.InvariantCulture);
             shownZeny = zeny;
         }
 

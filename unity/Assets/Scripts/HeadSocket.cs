@@ -261,7 +261,30 @@ public class HeadSocket : MonoBehaviour
                 if (bodyBones[b] != null && bodyBones[b].name == names[i]) { bind[i] = bodyBind[b]; break; }
         mesh.bindposes = bind;
         bound[key] = mesh;
+        if (!dropsUnwornCopies)
+        {
+            dropsUnwornCopies = true;
+            AddressablePrefabs.MapLeft += DropCopiesOfGoneBodies;
+        }
         return mesh;
+    }
+
+    // A body leaves memory with its model once nobody has worn it for two maps (AddressablePrefabs); the copies of
+    // pieces fitted to it would otherwise stay forever, and a fresh copy be made beside them on the next visit.
+    static bool dropsUnwornCopies;
+    static readonly List<(Mesh, Mesh)> goneCopies = new List<(Mesh, Mesh)>();
+
+    // Once per map left, never per frame.
+    static void DropCopiesOfGoneBodies()
+    {
+        goneCopies.Clear();
+        foreach (var pair in bound)
+            if (pair.Key.Item1 == null || pair.Key.Item2 == null) goneCopies.Add(pair.Key);
+        foreach (var k in goneCopies)
+        {
+            if (bound[k] != null) Destroy(bound[k]);
+            bound.Remove(k);
+        }
     }
 
     /// <summary>Show <paramref name="hair"/> (worn from <paramref name="hairPrefab"/>) cut at the brim of

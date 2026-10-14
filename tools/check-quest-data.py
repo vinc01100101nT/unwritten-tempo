@@ -341,7 +341,7 @@ def main():
                                               or items.get(item, (0, 0))[0] == 0):
                     faults.append("%s: a hint points at a station's %s, but this step's item is not made at a station"
                                   % (sw, spots[spot]))
-                if spots[spot] == "ShopBuyButton" and kind != "Buy":
+                if spots[spot].startswith("Shop") and kind != "Buy":
                     faults.append("%s: a hint points at a shop's buy button, but this step is not to buy anything" % sw)
                 if not (h.get("text") or "").strip():
                     faults.append("%s: a hint has no text" % sw)

@@ -1,5 +1,6 @@
 # HUD / UI
 
+- [Overhead notice (the term)](../overhead-notice-term.md) — the stacking flashing text, fixed centred on screen (green/red/yellow); default notification for warnings + every transaction result.
 - [UI click-shield](../ui-click-shield.md) — `UiKit.ClickShield(rootRect)` transparent raycast; once per NEW root.
 - [GM commands are the test tool](../gm-commands-are-the-test-tool.md) — the P-key dev panel was deleted 2026-09-13; test through `/` commands, which all run on the server.
 - [HUD windows + the one interface theme](../hud-progression-windows.md) — `ProgressionWindows.cs` on `UiKit`; Ragnarok-style light theme, every colour/shape from `UiKit` (2026-09-28).

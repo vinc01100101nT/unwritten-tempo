@@ -47,6 +47,14 @@ public static class MobPrefabBaker
         var group = settings.FindGroup(GroupName)
                     ?? settings.CreateGroup(GroupName, false, false, true, null,
                                             typeof(BundledAssetGroupSchema), typeof(ContentUpdateGroupSchema));
+        // ONE FILE PER CREATURE, so a creature nobody has seen for two maps can leave memory on its own
+        // (AddressablePrefabs). What every creature shares sits once in the Shared group instead of in each file.
+        var packing = group.GetSchema<BundledAssetGroupSchema>();
+        if (packing != null && packing.BundleMode != BundledAssetGroupSchema.BundlePackingMode.PackSeparately)
+        {
+            packing.BundleMode = BundledAssetGroupSchema.BundlePackingMode.PackSeparately;
+            EditorUtility.SetDirty(packing);
+        }
 
         EnsureFolder(OutDir);
         var billboardMat = EnsureBillboardMaterial();   // a PERSISTED .mat — a prefab can't reference RigBuilder's in-memory material (→ fileID:0 = pink)

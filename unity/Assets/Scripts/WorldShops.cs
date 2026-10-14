@@ -6,9 +6,9 @@ using UnityEngine;
 /// whose row in <see cref="WorldTownsfolk"/> names a shop from here by its id, so every town's tool dealer can share
 /// one stock list and changing what they sell never means touching the person.
 ///
-/// <para>Lives at <c>Resources/WorldShops</c>. What a thing costs is the item's own <see cref="Item.buyPrice"/>, and
-/// what a shop pays for one is its <see cref="Item.zeny"/>: a price is a fact about the item, written once, and the
-/// server is the only one that multiplies it by a count.</para>
+/// <para>Lives at <c>Resources/WorldShops</c>. What a thing costs and what a shop pays for one both come from the item's
+/// one <see cref="Item.value"/> and the Tax (<see cref="ShopMath"/>): a price is a fact about the item, written once, and
+/// the server is the only one that works a total out.</para>
 /// </summary>
 [CreateAssetMenu(fileName = "WorldShops", menuName = "unwritten/World Shops", order = 4)]
 public class WorldShops : ScriptableObject
@@ -51,11 +51,11 @@ public class WorldShops : ScriptableObject
         return null;
     }
 
-    /// <summary>Does <paramref name="shop"/> sell <paramref name="def"/>: it is on the stock list, has a price, and is not
-    /// gear — gear is never bought (decided 2026-09-20).</summary>
+    /// <summary>Does <paramref name="shop"/> sell <paramref name="def"/>: it is on the stock list, is worth something, and
+    /// is not gear — gear is never bought (decided 2026-09-20).</summary>
     public static bool Sells(Row shop, Item def)
     {
-        if (shop == null || def == null || def.buyPrice <= 0 || def.slot != EquipSlotType.None) return false;
+        if (shop == null || def == null || def.value <= 0 || def.slot != EquipSlotType.None) return false;
         for (int i = 0; i < shop.stock.Count; i++)
             if (ItemCatalog.Resolve(shop.stock[i]) == def) return true;
         return false;

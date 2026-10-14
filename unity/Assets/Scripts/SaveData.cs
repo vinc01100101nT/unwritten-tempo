@@ -190,6 +190,9 @@ public class SaveData
     [Serializable]
     public class SoldItem
     {
+        /// <summary>The sale's own number in its list (<see cref="SoldEntry.id"/>). 0 in a save from before sales were
+        /// numbered — numbered on load.</summary>
+        public int id;
         public string itemId;
         public int count;
         public int refine;

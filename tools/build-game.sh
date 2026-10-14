@@ -160,6 +160,15 @@ build_one() {
 // mobs where the one before it held 33, because this content build had refused to run over an unsaved scene.
 // The refusal leaves a note beside the build rather than stopping it, so the failure is loud and immediate
 // instead of being a wait for something that was never going to appear.
+// THE CONTENT REPORT IS SWITCHED OFF FIRST, EVERY BUILD. It is a per-machine preference kept outside the repo, so
+// it cannot be trusted to be off. MEASURED 2026-10-14: with it on, the report window's own code threw "Object
+// reference not set" after the content was packed, Unity counted that as the content build failing, and the
+// server came out with no mobs.
+var reportSwitch = typeof(UnityEditor.AddressableAssets.Settings.AddressableAssetSettings).Assembly
+    .GetType("UnityEditor.AddressableAssets.Settings.ProjectConfigData")
+    ?.GetProperty("GenerateBuildLayout", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+if (reportSwitch != null) reportSwitch.SetValue(null, false);
+else UnityEngine.Debug.LogError("[build-game] could not switch the Addressables content report off: its preference was not found.");
 UnityEditor.AddressableAssets.Settings.AddressableAssetSettings.BuildPlayerContent(out var content);
 if (!string.IsNullOrEmpty(content.Error))
     System.IO.File.WriteAllText("$out.no-content.txt", content.Error);

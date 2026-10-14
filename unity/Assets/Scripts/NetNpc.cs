@@ -325,16 +325,18 @@ public class NetNpc : NetworkBehaviour
         {
             // NOBODY LEFT TO SPEAK FOR THEM. A shell can be taken away while its body is still being fetched —
             // an ordinary event, because somebody who walks out of range is dismissed and taken back again.
-            if (this == null) return;
+            if (this == null) return null;
             viewLoading = false;
             if (model == null)
             {
                 GameLog.Warn(LogCat.Net, "no character model called '" + wanted
                                  + "' — a townsperson will be invisible.");
-                return;
+                return null;
             }
-            AdoptView(Townsperson.Build(wanted, personName, MapManager.InWorld(netPosition, mapName),
-                                        MapManager.CurrentScene, model));
+            var built = Townsperson.Build(wanted, personName, MapManager.InWorld(netPosition, mapName),
+                                          MapManager.CurrentScene, model);
+            AdoptView(built);
+            return built;
         });
     }
 

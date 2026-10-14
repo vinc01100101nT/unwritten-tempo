@@ -10,22 +10,27 @@ using UnityEngine.UI;
 /// <para>Their size is the size they had when they were drawn in the world, at the zoom the camera starts the
 /// game at — so nothing looks different until you scroll.</para>
 ///
-/// <para>Drawn BENEATH every window: the game's HUD canvas sits at sorting order 0, so an open bag or the chat
-/// box covers a bubble rather than the other way round.</para>
+/// <para>Drawn BENEATH every window by default: the game's HUD canvas sits at sorting order 0, so an open bag or the
+/// chat box covers a bubble rather than the other way round. <see cref="AboveWindows"/> is the one exception — words
+/// about your own character that must be read whatever is open.</para>
 /// </summary>
 public static class OverheadScreenLayer
 {
     const int SortingOrder = -10;
 
+    /// <summary>Over every window of the game's HUD (sorting order 0), and under the item tooltip's layer (200) and
+    /// the conversation box (30000), so a hovered card is never covered.</summary>
+    public const int AboveWindows = 150;
+
     /// <summary>Build one screen-drawn canvas for a system's words. Scaled with the window exactly as the game's
     /// HUD canvas is (1280×720, matched on width), so these words and the HUD grow and shrink together when the
     /// window is resized. <paramref name="clickable"/> adds the raycaster that lets the cursor find them.</summary>
-    public static Canvas CreateCanvas(string name, bool clickable)
+    public static Canvas CreateCanvas(string name, bool clickable, int sortingOrder = SortingOrder)
     {
         var go = new GameObject(name) { hideFlags = HideFlags.DontSaveInEditor };
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = SortingOrder;
+        canvas.sortingOrder = sortingOrder;
         var scaler = go.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);

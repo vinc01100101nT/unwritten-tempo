@@ -37,7 +37,7 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
 ## Free the first time, paid on a replay
 
 - **A character's first run of a tutorial takes nothing its steps use up** (decided 2026-10-07). It hands out nothing:
-  - every piece it has you fold carries **its free folds** — they cost no Temper Dust and no gold;
+  - every piece it has you fold carries **its free folds** — they cost no Temper Dust and no Unsigned;
   - every item it has you **buy** is free — as many as the step asks for, or, when a Health step after it is healed
     with that item, as many as it takes to get from the health the character came back on to that step's share (the
     item's own written heal, e.g. 50 HP a Minor Healing Potion).
@@ -56,7 +56,7 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   holds, worn or carried, a Raw unfolded copy of every piece it folds**, and says which piece is missing; the first
   fold of such a copy makes it the replay's copy.
 - A new character arrives **wearing a Sword, a Chainmail and Iron Sabatons** — Raw, unfolded, Common, with no
-  trademark and no word — and carrying nothing: no items, no gold (`StarterKit`). The tutorials give the first folds
+  trademark and no word — and carrying nothing: no items, no Unsigned (`StarterKit`). The tutorials give the first folds
   and the first potions free.
 
 ## Play, Show path and requirements
@@ -73,8 +73,8 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   - The folding its steps name, at a Raw fold's own cost, and what its Buy steps cost at the
     shop's price. Folds already made are not paid again, a piece no step
     ahead needs costs nothing, and whatever a first run still has free costs nothing. A first run of "Your First Gear"
-    therefore needs nothing; a replay needs 15 Temper Dust and 750 gold.
-  - The character level the quest names, if any. Gold and items are never typed on a quest: they are only ever what
+    therefore needs nothing; a replay needs 15 Temper Dust and 750u.
+  - The character level the quest names, if any. Unsigned and items are never typed on a quest: they are only ever what
     its steps cost.
   - Each tutorial shows its list in the Quests window, every line green when the character has it and red when not —
     the server's numbers and the server's yes or no, refreshed when the bag, the purse or the level changes.
@@ -86,8 +86,8 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
 
 ## Kill counts
 
-Every kill that counts toward a quest is said over your head, in the same stacking lines as "No MP", in the quest
-marks' yellow: the creature's name and the step's count after it — "Plopling 3 / 10", up to "Plopling 10 / 10". The
+Every kill that counts toward a quest is said in the stacking notice — fixed on the screen, centred a little above the
+middle, the same lines as "No MP" — in green, as something done: the creature's name and the step's count after it — "Plopling 3 / 10", up to "Plopling 10 / 10". The
 numbers are the server's. Kills that land in the same moment make one line per quest, carrying the latest count.
 
 ## What decides what
@@ -138,7 +138,7 @@ numbers are the server's. Kills that land in the same moment make one line per q
 
 ## Rewards
 
-A quest's reward — gold, experience, items — is paid the moment its last step is first done, by the server, once: a
+A quest's reward — Unsigned, experience, items — is paid the moment its last step is first done, by the server, once: a
 finished quest never finishes again, and a replay pays nothing. Experience goes through the same door a kill's does, so
 the weapon in hand earns its share of mastery. The reward and the finished record are written in the same save, so
 neither can land without the other. The chat says the quest is complete and what it paid — and, since handing in is a
@@ -165,7 +165,7 @@ potions are their reward.
 Unlocks on entering the world. Seven steps: talk to Gunnar the Smith; fold your Sword five times; fold your
 Chainmail five times; fold your Iron Sabatons five times; wear each of the three. The pieces are the ones a new
 character arrives wearing, and the station lists worn pieces beside carried ones, so nothing has to be taken off.
-The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 750 gold, and it needs a Raw unfolded
+The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 750u, and it needs a Raw unfolded
 copy of each piece.
 
 ## The healing tutorial — "Low on Health"
@@ -174,8 +174,8 @@ Unlocks on coming back through "Return to last saved point" — which always bri
 Two steps:
 
 1. **Buy a Minor Healing Potion from a Tool Dealer.** The guide frames the health bar over your head (the red bar is
-   your health, the blue bar under it your mana) while the arrows lead to a Tool Dealer, then lights "Buy 1" on the
-   potion in the shop window. On the first run the potions it takes to get back to 80% cost nothing — 2 for a level-1
+   your health, the blue bar under it your mana) while the arrows lead to a Tool Dealer, then lights the
+   potion's row in the shop's For sale list, then the "how many?" box, then Confirm once the potion is in the cart. On the first run the potions it takes to get back to 80% cost nothing — 2 for a level-1
    character in the +5 starter set, who comes back on 7 of 76 health.
 2. **Drink potions until your health is back to 80%.** The guide lights the potion in your bag; double-click drinks.
 
@@ -185,7 +185,7 @@ their health without unlocking it; it unlocks the next time they come back throu
 ## Torvald's Ploplings — a side quest
 
 Offered by Torvald, the off-duty raider who wanders Lastline. Two steps: defeat 10 Ploplings (they live in Lastline
-Field 1, west of town — the arrows lead there), then tell Torvald. Reward, first guess: 25 experience, 300 gold and 5
+Field 1, west of town — the arrows lead there), then tell Torvald. Reward, first guess: 25 experience, 300u and 5
 Minor Healing Potions.
 
 ## Saving
@@ -208,7 +208,7 @@ until the character itself is purged — and that purge does not exist yet (SERV
 One asset in `unity/Assets/3_Data/Resources/Quests` (Create ▸ unwritten ▸ Quest). Ids are stable: never rename or reuse
 a quest id or a step id in a live quest — add new ones. A step points at a part of the screen only if that part is
 marked in code (`GuideMarker`): today the station window's rows (the Fold page, Back, each piece
-row, the Fold button), the bag's rows, a shop's "Buy 1" button, and the health bar over your own head. A quest with a
+row, the Fold button), the bag's rows, a shop's For sale row, its "how many?" box and its Confirm, and the health bar over your own head. A quest with a
 fault — an item the game does not have, a townsperson nobody lists, two steps with one id, an item to buy that no shop
 sells, a tutorial with no unlock condition — is **suspended**: nobody is given it or shown it until the data is fixed.
 `tools/check-quest-data.py` catches all of these before they ship, and also: a Kill step for a creature the world

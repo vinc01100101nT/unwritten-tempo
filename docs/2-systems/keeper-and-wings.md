@@ -42,21 +42,21 @@ come back at Lastline's west door.
 
 ## Teleport
 
-The page shows the character's gold and one line per town: its name and its price. A town whose price is more than the
-gold the server last sent is drawn dim; pressing it still asks, and the server answers.
+The page shows the character's Unsigned ("You have 1,220u") and one line per town: its name and its price. A town whose price is more than the
+Unsigned the server last sent is drawn dim; pressing it still asks, and the server answers.
 
-- **Price: 100 gold for each door on the shortest way there on foot.** One number (`KeeperMath.PerDoorPrice`), a
-  placeholder until gold is balanced. Today the nearest pair of towns is 1 door apart (100 gold) and the farthest 13
-  (1,300 gold); every town can be reached from every other.
-- The gold is taken first, then the character is moved through the one door every map change uses (see **Where the
+- **Price: 100u for each door on the shortest way there on foot.** One number (`KeeperMath.PerDoorPrice`), a
+  placeholder until prices are balanced. Today the nearest pair of towns is 1 door apart (100u) and the farthest 13
+  (1,300u); every town can be reached from every other.
+- The Unsigned is taken first, then the character is moved through the one door every map change uses (see **Where the
   server puts you** below). They arrive 1.5 m in front of that town's Keeper.
 - A trip to a town another server holds is written down with the character already standing there, before anybody is
   told: a player who drops during the loading screen comes back in that town, with the trip paid for and made.
-- If the move does not happen — the save before it failed, or the other server would not take them — the gold is handed
-  back, the true position is written straight back, and they are told "The trip could not be made — your *N* gold is
+- If the move does not happen — the save before it failed, or the other server would not take them — the Unsigned is handed
+  back, the true position is written straight back, and they are told "The trip could not be made — your *N*u is
   back."
-- Refusals: "There is no way there." (not a town with a Keeper, the town they are in, or no way of doors) and "Needs *N*
-  gold — you have *M*."
+- Refusals: "There is no way there." (not a town with a Keeper, the town they are in, or no way of doors) and "Needs *N*u —
+  you have *M*u."
 
 ## Storage
 

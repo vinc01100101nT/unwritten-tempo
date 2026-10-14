@@ -62,7 +62,7 @@ records which `.sql` files this database has already run.)
 - **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`,
   `handover` (which hand-over to a map server the latest save belongs to) and `storage_move` (the id of the last
   storage move applied for this character; null when it has never made one). **Everything about a character except
-  its name and its hotbar lives inside the single `progress` JSON document** — level, XP, gear, gold, AND the body
+  its name and its hotbar lives inside the single `progress` JSON document** — level, XP, gear, Unsigned, AND the body
   and its recolour (`modelName`, `dyeSources`, `dyeTargets`). A player changes their look in-game exactly as they change everything else, so it belongs with
   the rest of what they change; keeping it in columns as well meant two homes for one fact that could disagree.
   Reach into the document with `->>` for a value and `->` for an array or object.
@@ -332,8 +332,8 @@ Read a whole save without it wrapping into unreadable mush:
 select jsonb_pretty(progress) from character where lower(name) = lower('Ashwalker');
 ```
 
-What a character sold and can still buy back — at most ten entries, oldest first, each with the gold the shop paid
-and `endsAt`, the moment it stops being kept, in seconds since 1970. Missing or `[]` means nothing to buy back:
+What a character sold and can still buy back — at most ten entries, oldest first, one per sale (never two sales joined),
+each with its own number `id`, the Unsigned the shop paid and `endsAt`, the moment it stops being kept, in seconds since 1970. Missing or `[]` means nothing to buy back:
 
 ```sql
 select name, jsonb_pretty(progress->'buyback')

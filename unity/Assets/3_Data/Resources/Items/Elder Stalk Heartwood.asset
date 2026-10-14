@@ -23,8 +23,7 @@ MonoBehaviour:
   category: 3
   cardSlots: 0
   weight: 10
-  zeny: 20563
-  buyPrice: 0
+  value: 30845
   madeOf: 0
   forgeMaterialCost: 0
   forgeGoldCost: 0

@@ -115,8 +115,8 @@ def main():
     bad += planted("a buy step for an item no shop sells", r"^      kind: 6\n(?:^      .*\n)*?^      itemId: [\w.-]+$",
                    lambda m: m.group(0) + "\n", lambda m: m.group(0).rsplit(":", 1)[0] + ": item.sword\n",
                    "which no shop sells")
-    bad += planted("a shop's buy button lit on a step that buys nothing", r"^    - spot: 7$",
-                   lambda m: "    - spot: 7\n", lambda m: "    - spot: 9\n", "not to buy anything")
+    bad += planted("a shop's item row lit on a step that buys nothing", r"^    - spot: 7$",
+                   lambda m: "    - spot: 7\n", lambda m: "    - spot: 10\n", "not to buy anything")
     side = next((rel for rel, text in texts.items() if re.search(r"^  category: 2$", text, re.M)
                  and "    hints: []\n" in text), None)
     if side is None:

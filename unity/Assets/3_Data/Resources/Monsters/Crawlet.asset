@@ -30,13 +30,13 @@ MonoBehaviour:
   hairColour: 
   level: 4
   str: 8
-  agi: 8
-  vit: 6
+  agi: 10
+  vit: 4
   intel: 3
   dex: 6
   luk: 3
   startingGear:
-  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
+  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
   - {fileID: 11400000, guid: dc46b8a890b5944b291e3f05e0925284, type: 2}
   - {fileID: 11400000, guid: d332cae30b30c428089073581ca31121, type: 2}
   - {fileID: 11400000, guid: 7f6feed1ef0864bbc8813c70a3f44ac7, type: 2}

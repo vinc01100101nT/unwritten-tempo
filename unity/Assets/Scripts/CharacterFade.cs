@@ -66,6 +66,23 @@ public static class CharacterFade
     static readonly List<DressedBody> dressedBodies = new List<DressedBody>(4);
     static readonly Stack<DressedBody> spareBodies = new Stack<DressedBody>(4);
     static readonly Dictionary<Material, Material> transparentOf = new Dictionary<Material, Material>();
+    static readonly List<Material> goneMaterials = new List<Material>();
+
+    // A body's materials leave memory with its model once nobody has worn it for two maps (AddressablePrefabs); the
+    // see-through copy of each would otherwise stay forever, and a fresh one be made beside it on the next visit.
+    static CharacterFade() => AddressablePrefabs.MapLeft += DropCopiesOfGoneMaterials;
+
+    // Once per map left, never per frame.
+    static void DropCopiesOfGoneMaterials()
+    {
+        goneMaterials.Clear();
+        foreach (var pair in transparentOf) if (pair.Key == null) goneMaterials.Add(pair.Key);
+        foreach (var k in goneMaterials)
+        {
+            if (transparentOf[k] != null) Object.Destroy(transparentOf[k]);
+            transparentOf.Remove(k);
+        }
+    }
     static readonly List<Renderer> scratch = new List<Renderer>(8);
     static MaterialPropertyBlock mpb;
 

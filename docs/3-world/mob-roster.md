@@ -265,7 +265,7 @@ creature's own kind.
 - **First guesses, all to be tuned in play:** the summon skill's 20-second cooldown; a summon strays at most 8 units
   from its summoner before walking back; every drop number in the Drops table; each shadow's stat spread (a physical
   spread for most, an INT-heavy one for the Staff, Wand and Scythe), its ring ranks, and its 2,000 experience.
-- **No death pays gold** (decided 2026-09-30). Hunting earns gold by selling what creatures drop
+- **No death pays Unsigned** (decided 2026-09-30). Hunting earns Unsigned by selling what creatures drop
   ([Creature Materials](creature-materials.md)) and by saving a character that never fights
   ([Saved Characters](saved-characters.md)); both follow the level in the creature's file and the grade and folds of its gear ([What a Kill Pays](what-a-kill-pays.md)).
 - **The fourteen shadows' bodies are starting picks** (set 2026-10-06 from each Kashira's gender and theme, no colours

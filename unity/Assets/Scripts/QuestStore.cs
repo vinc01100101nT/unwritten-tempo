@@ -91,7 +91,7 @@ public static class QuestKillNotice
         {
             var creature = MonsterCatalog.Get(k.creatureId);
             string name = creature != null && !string.IsNullOrEmpty(creature.displayName) ? creature.displayName : k.creatureId;
-            BattleNotice.Warn(name + " " + k.have + " / " + k.need, QuestMarks.Color);
+            OverheadNotice.Success(name + " " + k.have + " / " + k.need);
         }
     }
 }

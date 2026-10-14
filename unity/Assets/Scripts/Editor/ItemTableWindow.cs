@@ -25,7 +25,7 @@ public class ItemTableWindow : EditorWindow
     // ---- The buckets -----------------------------------------------------------------------------------------
     // Adding a table later is this list plus a menu entry — never another copy of the window.
 
-    enum ColId { Icon, Id, Name, Type, Kind, Elem, Reach, Sockets, Weight, Zeny, UseSkill, Select, Material }
+    enum ColId { Icon, Id, Name, Type, Kind, Elem, Reach, Sockets, Weight, Value, UseSkill, Select, Material }
 
     struct Col
     {
@@ -45,7 +45,7 @@ public class ItemTableWindow : EditorWindow
         new Col(ColId.Reach,   "reach",   null,     52),
         new Col(ColId.Sockets, "◇",       null,     32),
         new Col(ColId.Weight,  "wt",      null,     38),
-        new Col(ColId.Zeny,    "zeny",    "zeny",   52),
+        new Col(ColId.Value,    "value",   "value",  52),
         new Col(ColId.UseSkill,"runs skill", null,  200),
         // A piece of armour rolls inside RANGES per copy, so its table shows the ranges — not a single number.
         new Col(ColId.Select,  "",        null,     28),
@@ -58,21 +58,21 @@ public class ItemTableWindow : EditorWindow
         {
             case ItemType.Weapon:
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem,
-                               ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+                               ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Value, ColId.Select };
             case ItemType.Armor:
                 // A piece of armour has no numbers of its own: what it is worth comes from its folds and its
                 // grade, decided when a player makes it.
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem,
-                               ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+                               ColId.Sockets, ColId.Weight, ColId.Value, ColId.Select };
             case ItemType.Consumable:
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.UseSkill,
-                               ColId.Weight, ColId.Zeny, ColId.Select };
+                               ColId.Weight, ColId.Value, ColId.Select };
             case ItemType.Material:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Zeny, ColId.Select };
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Value, ColId.Select };
             case ItemType.Quest:
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Select };
             default:   // Misc — the catch-all, so it shows the coarse Type to explain why a row landed here
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Type, ColId.Weight, ColId.Zeny, ColId.Select };
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Type, ColId.Weight, ColId.Value, ColId.Select };
         }
     }
 
@@ -152,7 +152,7 @@ public class ItemTableWindow : EditorWindow
             "type"   => (a, b) => ItemTypes.Of(a).CompareTo(ItemTypes.Of(b)),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
             "material" => (a, b) => ((int)a.materialKind * 100 + a.materialStep).CompareTo((int)b.materialKind * 100 + b.materialStep),
-            "zeny"   => (a, b) => a.zeny.CompareTo(b.zeny),
+            "value"  => (a, b) => a.value.CompareTo(b.value),
             _        => (a, b) => string.Compare(a.id, b.id, System.StringComparison.OrdinalIgnoreCase),
         };
         _items.Sort((a, b) => (_sortAsc ? 1 : -1) * cmp(a, b));
@@ -278,7 +278,7 @@ public class ItemTableWindow : EditorWindow
                 case ColId.Reach:   it.attackRange = EditorGUI.FloatField(Field(), it.attackRange); break;
                 case ColId.Sockets: it.cardSlots = EditorGUI.IntField(Field(), it.cardSlots); break;
                 case ColId.Weight:  it.weight = EditorGUI.IntField(Field(), it.weight); break;
-                case ColId.Zeny:    it.zeny = EditorGUI.IntField(Field(), it.zeny); break;
+                case ColId.Value:    it.value = EditorGUI.IntField(Field(), it.value); break;
                 case ColId.UseSkill: DrawUseSkill(Field(), it); break;
 
                 case ColId.Select:

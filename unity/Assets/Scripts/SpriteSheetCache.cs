@@ -65,6 +65,7 @@ public static class SpriteSheetCache
             frames[i] = Sprite.Create(sheet, new Rect(i * frameSize, 0, frameSize, frameSize),
                                       new Vector2(0.5f, 0.5f), frameSize);
         strips[key] = frames;
+        sources[key.Item1] = sheet;
         return frames;
     }
 
@@ -102,6 +103,7 @@ public static class SpriteSheetCache
 
         var dirs = new[] { Column(0), Column(1), Column(2), Column(3) };
         walk4[key] = dirs;
+        sources[key.Item1] = sheet;
         return dirs;
     }
 
@@ -125,6 +127,7 @@ public static class SpriteSheetCache
         for (int i = 0; i < frames; i++)
             arr[i] = Sprite.Create(sheet, new Rect(i * w, 0, w, h), new Vector2(0.5f, (float)footPx / h), ppu);
         rows[key] = arr;
+        sources[key.Item1] = sheet;
         return arr;
     }
 
@@ -143,6 +146,7 @@ public static class SpriteSheetCache
             arr[c] = Sprite.Create(sheet, new Rect(c * cell, sheet.height - (row + 1) * cell, cell, cell),
                                    new Vector2(0.5f, footPivot), cell);
         footRows[key] = arr;
+        sources[key.Item1] = sheet;
         return arr;
     }
 
@@ -169,6 +173,51 @@ public static class SpriteSheetCache
             arr[i] = Sprite.Create(sheet, rect, new Vector2(0.5f, 0.5f), ppu);
         }
         grids[key] = arr;
+        sources[key.Item1] = sheet;
         return arr;
+    }
+
+    // THE SHEET BEHIND EACH CUT, so a cut whose sheet has left memory can be found and thrown away. A creature's sheet
+    // leaves with its creature once nobody has seen one for two maps (AddressablePrefabs); its cut frames would
+    // otherwise stay forever, and a fresh set be cut beside them on the next visit.
+    static readonly Dictionary<EntityId, Texture2D> sources = new Dictionary<EntityId, Texture2D>();
+    static readonly HashSet<EntityId> gone = new HashSet<EntityId>();
+
+    static SpriteSheetCache() => AddressablePrefabs.MapLeft += DropCutsOfGoneSheets;
+
+    // Once per map left, never per frame.
+    static void DropCutsOfGoneSheets()
+    {
+        gone.Clear();
+        foreach (var pair in sources) if (pair.Value == null) gone.Add(pair.Key);
+        if (gone.Count == 0) return;
+        foreach (var id in gone) sources.Remove(id);
+        Drop(strips, k => k.tex);
+        Drop(rows, k => k.tex);
+        Drop(footRows, k => k.tex);
+        Drop(grids, k => k.tex);
+        var deadWalks = new List<(EntityId, int, int, float)>();
+        foreach (var pair in walk4) if (gone.Contains(pair.Key.tex)) deadWalks.Add(pair.Key);
+        foreach (var k in deadWalks)
+        {
+            foreach (var column in walk4[k]) DestroyAll(column);
+            walk4.Remove(k);
+        }
+    }
+
+    static void Drop<TKey>(Dictionary<TKey, Sprite[]> cuts, System.Func<TKey, EntityId> sheetOf)
+    {
+        var dead = new List<TKey>();
+        foreach (var pair in cuts) if (gone.Contains(sheetOf(pair.Key))) dead.Add(pair.Key);
+        foreach (var k in dead)
+        {
+            DestroyAll(cuts[k]);
+            cuts.Remove(k);
+        }
+    }
+
+    static void DestroyAll(Sprite[] cut)
+    {
+        foreach (var sprite in cut) if (sprite != null) Object.Destroy(sprite);
     }
 }

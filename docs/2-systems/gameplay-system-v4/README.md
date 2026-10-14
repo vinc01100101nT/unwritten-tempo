@@ -52,12 +52,12 @@ then its grade — **+15 Thousand Petals [C]**. Any other piece: its grade, its 
 is used everywhere a piece is named: the bag list (which sorts and searches by it), its card, the station window
 and the chat replies.
 
-**Fold (raise it).** Each fold costs materials and gold and raises the piece by one: **a fold IS the existing
+**Fold (raise it).** Each fold costs materials and Unsigned and raises the piece by one: **a fold IS the existing
 refine (+N)**. A sword folded twelve times is a +12 sword. Folding is deterministic work with no luck.
 
 **Every fold is paid in Temper Dust, and how much is decided by the piece's GRADE, never by its fold count.**
 Temper Dust is one material shared by all three crafts. A fold costs the grade's step in units — **1 at Raw, 2 at
-F, 3 at E, 4 at D, 5 at C, 6 at B, 7 at A** — plus gold. After a quench resets a piece to +0, it folds at the NEW
+F, 3 at E, 4 at D, 5 at C, 6 at B, 7 at A** — plus Unsigned. After a quench resets a piece to +0, it folds at the NEW
 grade's price. Every kill drops Temper Dust (§4), more from stronger creatures.
 
 **Quench (roll its quality).** **Quality** — the one label on every crafted piece, weapon or armour — is a grade
@@ -69,7 +69,7 @@ grade's price. Every kill drops Temper Dust (§4), more from stronger creatures.
 - **F is the floor.** A failed F stays F. Raw is left once and never returned to.
 - **A piece must be at its grade's fold cap to be quenched at all** — the cap is the gate, and the folds are what
   the quench spends. Enforced in the code from 2026-09-21; before that any piece could be quenched at +0.
-- **A quench costs Quench Oil — the grade's step in units, 1 at Raw to 6 at B — plus gold**, and optionally **one
+- **A quench costs Quench Oil — the grade's step in units, 1 at Raw to 6 at B — plus Unsigned**, and optionally **one
   Salt**. Quench Oil is one material shared by all three crafts.
 - **Salt is a one-use booster**: it shifts that quench's odds toward "up" and is consumed
   either way. It never guarantees success, never removes the "down" outcome, and never adds power. It is **one
@@ -99,8 +99,8 @@ weapon mastery (§5), and it sets **how many stat slots** the piece has (§3). A
 **Recycle (take it apart).** At the station of its craft, any piece can be recycled: it is destroyed, and
 **half** of what it provably consumed comes back — for each rung it climbed, that grade's full fold cap and one
 quench (priced at the grade it was made from, which the gate above makes provable); the folds standing on it now
-(at its own grade's price); and the Inks whose stats are written on it. That is Temper Dust, Quench Oil, gold and
-Ink. **Folds made at Raw return nothing** — no Temper Dust and no gold, standing or climbed — because the first
+(at its own grade's price); and the Inks whose stats are written on it. That is Temper Dust, Quench Oil, Unsigned and
+Ink. **Folds made at Raw return nothing** — no Temper Dust and no Unsigned, standing or climbed — because the first
 tutorial gives its Raw folds free. Nothing records a failed quench or the folds it spent, so those come back as
 nothing; Salt is never returned. Each material is halved and rounded down on its own, so a single unit never comes
 back whole. A piece the first tutorial still needs cannot be recycled, sold or dropped
@@ -324,8 +324,8 @@ move once it is played. Change it here, in place, when it does.
   speed** a fold, whatever their material, with no lift. The full table is in [Crafting Tables](crafting-tables.md).
 - **Rarity lifts that fold total too**, added to the grade's lift: Common **+0%** · Uncommon **+10%** · Rare
   **+20%** · Epic **+35%** · Legendary **+50%**.
-- **Fold cost:** Temper Dust, the grade's step in units (1 at Raw … 7 at A) + 50 gold × the step. **Quench cost:**
-  Quench Oil, the grade's step in units (1 at Raw … 6 at B) + 500 gold × the step, and optionally one Salt.
+- **Fold cost:** Temper Dust, the grade's step in units (1 at Raw … 7 at A) + 50u × the step. **Quench cost:**
+  Quench Oil, the grade's step in units (1 at Raw … 6 at B) + 500u × the step, and optionally one Salt.
 
 ### Quench odds (up / same / down), and Salt
 

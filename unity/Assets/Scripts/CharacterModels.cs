@@ -35,17 +35,15 @@ public static class CharacterModels
     /// <summary>The Addressable address for a model's short name ("BlueSoldier_Male" → "Characters/BlueSoldier_Male").</summary>
     public static string AddressOf(string modelName) => AddressPrefix + modelName;
 
-    /// <summary>Deliver the model asset for <paramref name="modelName"/>, or null when the roster has no such name.
-    /// Fires this frame if that model is already loaded, a few frames later the first time.</summary>
-    public static void Load(string modelName, Action<GameObject> onModel)
+    /// <summary>Deliver the model asset for <paramref name="modelName"/>, or null when the roster has no such name, to
+    /// <paramref name="use"/>, which returns the object now wearing it (null if it built nothing) — that object being
+    /// alive is what keeps the model loaded (<see cref="AddressablePrefabs"/>). Fires this frame if that model is
+    /// already loaded, a few frames later the first time.</summary>
+    public static void Load(string modelName, Func<GameObject, UnityEngine.Object> use)
     {
-        if (string.IsNullOrWhiteSpace(modelName)) { onModel?.Invoke(null); return; }
-        AddressablePrefabs.Load(AddressOf(modelName), onModel);
+        if (string.IsNullOrWhiteSpace(modelName)) { use?.Invoke(null); return; }
+        AddressablePrefabs.Load(AddressOf(modelName), use);
     }
-
-    /// <summary>The model asset for <paramref name="modelName"/> if it is already loaded, else null.</summary>
-    public static GameObject Cached(string modelName)
-        => string.IsNullOrWhiteSpace(modelName) ? null : AddressablePrefabs.Cached(AddressOf(modelName));
 
     /// <summary>Every model name in the roster, sorted. Listing does NOT load any model — only their addresses.
     /// The list is fetched once and cached; every caller after that is answered immediately.</summary>

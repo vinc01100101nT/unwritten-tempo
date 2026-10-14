@@ -65,8 +65,13 @@ public class UnitStatBlock : MonoBehaviour
     float Lift(StatId ringNode, SubStat stat)
     {
         float sub = health != null && health.States != null ? health.States.SubStatBonus(stat) : 0f;
-        return RingPercent(ringNode) + MasteryPercent(ringNode) + sub;
+        return RingAndMastery(ringNode) + sub;
     }
+
+    /// <summary>Ring investment plus weapon mastery on one ring stat — the mob-side twin of
+    /// <c>Character.RingAndMastery</c>, read directly by attack speed and cast speed, whose sub-stat window is a
+    /// multiplier of its own.</summary>
+    float RingAndMastery(StatId ringNode) => RingPercent(ringNode) + MasteryPercent(ringNode);
 
     /// <summary>What this creature's weapon mastery adds to one ring stat — the player's own rule
     /// (<see cref="Character"/>'s MasteryPercent), read off the same store (<see cref="Health.Mastery"/>): the held
@@ -163,13 +168,13 @@ public class UnitStatBlock : MonoBehaviour
     }
 
     /// <summary>What this creature's cast wind-ups are multiplied by — the player's own formula fed this creature's DEX,
-    /// its ring's cast speed and any cast speed window on it.</summary>
+    /// its ring and weapon mastery's cast speed and any cast speed window on it.</summary>
     public float CastTimeMult
     {
         get
         {
             float buff = health != null && health.States != null ? health.States.CastSpeedBuffMult : 1f;
-            return UnitStatMath.CastTimeMult(Effective, RingPercent(StatId.CastSpeed), buff);
+            return UnitStatMath.CastTimeMult(Effective, RingAndMastery(StatId.CastSpeed), buff);
         }
     }
 
@@ -234,9 +239,9 @@ public class UnitStatBlock : MonoBehaviour
             ai.hit          = UnitStatMath.Hit(u, eb, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
             ai.critMultiplier = UnitStatMath.CritMultiplier(u, eb, Lift(StatId.Critical, SubStat.CritDamage));
-            // Swing speed from AGI, DEX, worn attack speed, the ring and any live attack-speed buff — the player's own
+            // Swing speed from AGI, DEX, worn attack speed, the ring, weapon mastery and any live attack-speed buff — the player's own
             // formula, cap included, so a creature's gear and agility speed its swings exactly as a player's do.
-            ai.attackSpeedMult = UnitStatMath.AttackSpeedMult(u, eb, RingPercent(StatId.AttackSpeed),
+            ai.attackSpeedMult = UnitStatMath.AttackSpeedMult(u, eb, RingAndMastery(StatId.AttackSpeed),
                                                               health.States != null ? health.States.AttackSpeedBuffMult : 1f);
             ai.magicAttack       = UnitStatMath.MagicAttack(u, eb, Lift(StatId.MAtk, SubStat.MagicAttack));
             ai.magicDamageSpread = 1f - UnitStatMath.MinFraction(u.intel);

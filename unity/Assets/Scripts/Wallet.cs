@@ -17,6 +17,13 @@ public static class Wallet
     /// <summary>Fires whenever the local player's money changes. Arg = the new total.</summary>
     public static event Action<long> OnChanged;
 
+    /// <summary>THE CURRENCY'S NAME, as a player reads it — the one place it is written.</summary>
+    public const string Name = "Unsigned";
+
+    /// <summary>An amount as every screen and every sentence shows it — "1,220u". The one place the short form lives,
+    /// so a price, a purse, a reward and a server's sentence can never write money two ways.</summary>
+    public static string Amount(long n) => n.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + "u";
+
     /// <summary>What the local player has. Nothing, before there is a character.</summary>
     public static long Gold => Character.Instance != null ? Character.Instance.Gold : 0;
 

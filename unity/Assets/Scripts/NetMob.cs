@@ -913,11 +913,12 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     {
         if (string.IsNullOrEmpty(kind) || !spare.TryGetValue(kind, out var stack)) return null;
 
-        // A body destroyed under us (a scene change) leaves a hole in the stack, so keep taking until one is real.
+        // A body destroyed under us (a scene change, or its creature let go of after two maps unseen) leaves a hole in
+        // the stack, so keep taking until one is real.
         while (stack.Count > 0)
         {
             var body = stack.Pop();
-            if (body != null) return body;
+            if (body != null && AddressablePrefabs.Unpark(body)) return body;
         }
         return null;
     }
@@ -934,6 +935,8 @@ public class NetMob : NetworkBehaviour, IWatchedShell
         // A body banked while its blade was in the air would hand the next creature of its kind an empty hand forever.
         var socket = body.GetComponentInChildren<WeaponSocket>(true);   // perf-ok: once per body banked
         if (socket != null) socket.ResetFlights();
+        // Waiting here is not being used: it must not keep its creature loaded once nobody has seen one for two maps.
+        AddressablePrefabs.Park(body);
         stack.Push(body);
     }
 }

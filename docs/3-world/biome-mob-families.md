@@ -212,7 +212,7 @@ Levels is the range the map was laid out for; creatures are listed with their ow
   each; creatures made for the thinner biomes are what closes the rest.
 - **A shadow's summons still go by rank**: the highest shadow calls the highest elite, whatever either one is (the
   Blossom Wind shadow calls the drowned squid of Kharnel Dungeon 4).
-- **What a kill pays follows the creature's level**: its experience, what its own material sells for, and the gold a
+- **What a kill pays follows the creature's level**: its experience, what its own material sells for, and the Unsigned a
   character saved from it pays are all worked out from the level in its file, so a creature moved from level 40 to 63
   pays as a level-63 creature.
 

@@ -33,7 +33,7 @@ public static class AutoCombatClient
         // the same rebuild a change to the bar asks for.
         owedToCharacter = true;
         GiveToCharacterIfOwed();
-        if (!string.IsNullOrEmpty(why)) BattleNotice.Warn(why);
+        if (!string.IsNullOrEmpty(why)) OverheadNotice.Warn(why);
         Version++;
     }
 

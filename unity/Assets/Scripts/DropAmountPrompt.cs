@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// "How many?" — the small box that opens when you choose Drop on a stack of more than one. It asks for a
-/// number, refuses anything outside 1…however many you are holding, and hands the answer back.
+/// "How many?" — THE one small box in the game that asks for a number: when you drop a stack of more than one, and
+/// when a stack goes into the shop's cart to buy or sell. It refuses anything outside 1…the most it was given, and hands
+/// the answer back on Confirm.
 ///
 /// <para>It exists because dropping is the one bag action that CANNOT be undone by clicking again: what leaves
 /// your bag is on the floor, and anybody standing there can take it. A single item needs no box — there is
@@ -70,6 +71,8 @@ public class DropAmountPrompt
     Canvas canvas;
     Action<int> onConfirm;
     int most = 1;
+    // What the box opened holding — what an empty or unreadable field means on Confirm.
+    int startedAt = 1;
     int openedFrame = -1;
 
     public bool IsOpen => root != null && root.gameObject.activeSelf;
@@ -156,7 +159,7 @@ public class DropAmountPrompt
         var le = row.gameObject.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = 26f;
 
-        UiKit.Btn("Drop", row, Confirm);
+        UiKit.Btn("Confirm", row, Confirm);
         UiKit.Btn("Cancel", row, Close);
     }
 
@@ -164,12 +167,31 @@ public class DropAmountPrompt
     /// opens holding the WHOLE stack, because dropping the lot is what the number is most often meant to be.</summary>
     public void Open(BagEntry entry, Vector2 screenPos, Action<int> confirmed)
     {
-        if (root == null || entry == null || entry.def == null) return;
+        if (entry == null || entry.def == null) return;
+        int all = Mathf.Max(1, entry.count);
+        Ask("Drop how many? (1–" + all + ")", all, all, screenPos, confirmed);
+    }
 
-        most = Mathf.Max(1, entry.count);
+    /// <summary>The most a box ever accepts when it is given no most of its own — a guard on what is typed, the same
+    /// as the server's own cap on one deal.</summary>
+    public const int MostEverTyped = 999;
+
+    /// <summary>Ask for a number under <paramref name="heading"/>, starting at <paramref name="start"/>, from 1 to
+    /// <paramref name="mostAllowed"/> (0 = no most of its own, <see cref="MostEverTyped"/>). <paramref name="guide"/> is
+    /// the part of the tutorial guide the box counts as while it is open — none, unless the asker says.</summary>
+    public void Ask(string heading, int start, int mostAllowed, Vector2 screenPos, Action<int> confirmed,
+                    GuideSpot guide = GuideSpot.None)
+    {
+        if (root == null) return;
+        var marker = root.GetComponent<GuideMarker>();
+        if (guide != GuideSpot.None) GuideMarker.Put(root.gameObject, guide);
+        else if (marker != null) marker.spot = GuideSpot.None;
+
+        most = mostAllowed > 0 ? mostAllowed : MostEverTyped;
         onConfirm = confirmed;
-        title.text = "Drop how many? (1–" + most + ")";
-        field.text = most.ToString();
+        title.text = heading;
+        startedAt = Mathf.Clamp(start, 1, most);
+        field.text = startedAt.ToString();
 
         UiLayers.Raise(root, UiLayers.Layer.Menu);
         root.gameObject.SetActive(true);
@@ -192,7 +214,7 @@ public class DropAmountPrompt
         // CLOSED FIRST. The box is taken down before the drop happens, so the window redrawing underneath cannot
         // leave a prompt standing over a stack that is no longer there.
         int typed;
-        if (!int.TryParse(field.text, out typed)) typed = most;
+        if (!int.TryParse(field.text, out typed)) typed = startedAt;
         int amount = Mathf.Clamp(typed, 1, most);
         Close();
         act?.Invoke(amount);

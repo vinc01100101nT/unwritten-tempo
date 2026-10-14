@@ -152,7 +152,7 @@ public class UnitTargeter : MonoBehaviour
         bool allowed = isPlayer ? (inst.mask & SkillTargets.Player) != 0 : (inst.mask & SkillTargets.Mobs) != 0;
         if (!allowed)
         {
-            BattleNotice.Warn(isPlayer ? "Can't target yourself" : "Can't target mobs");
+            OverheadNotice.Warn(isPlayer ? "Can't target yourself" : "Can't target mobs");
             return false;
         }
         // OUT OF RANGE IS NO LONGER A REFUSAL. Clicking a legal target too far away confirms it and the cast

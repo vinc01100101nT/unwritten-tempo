@@ -15,7 +15,7 @@ tags:
 ## What the player gets
 
 - **A creature in better gear is worth more.** Its kill pays more experience, its own materials sell for more, and
-  a character saved from it pays more gold — all three by the same rule.
+  a character saved from it pays more Unsigned — all three by the same rule.
 - **Four things decide what a kill pays, and nothing else does:** the creature's level, its kind, the grade of its
   gear and the folds on its gear.
 - **Nothing is measured.** No fight is simulated and no number is worked out per creature; the pay can be read
@@ -54,8 +54,8 @@ tags:
   by hitting people during the fight add their plain difference on top, so letting a geared creature hit you is not
   multiplied by its gear.
 - **Material prices.** Each of the creature's own materials sells for its rule price times the two multipliers,
-  rounded to the nearest whole gold.
-- **Saved-character gold.** The gold a never-fights character pays is counted in kills of its creature, times the
+  rounded to the nearest whole Unsigned.
+- **Saved-character Unsigned.** The Unsigned a never-fights character pays is counted in kills of its creature, times the
   two multipliers.
 - **Kind.** An elite's 10 times and a shadow's 20 times still apply on top.
 
@@ -89,5 +89,5 @@ tags:
 
 - [Creature Gear](creature-gear.md) — what every creature wears, its stat build, and what its grade and folds pay.
 - [Creature Materials](creature-materials.md) — the materials whose prices the rule multiplies.
-- [Saved Characters](saved-characters.md) — the gold a saved character pays.
+- [Saved Characters](saved-characters.md) — the Unsigned a saved character pays.
 - [Loot-Owner Pointing System](../2-systems/loot-owner-pointing.md) — who a kill's experience is split among.

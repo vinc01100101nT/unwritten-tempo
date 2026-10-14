@@ -23,8 +23,7 @@ MonoBehaviour:
   category: 2
   cardSlots: 0
   weight: 1
-  zeny: 2
-  buyPrice: 0
+  value: 3
   madeOf: 0
   materialKind: 7
   materialStep: 0

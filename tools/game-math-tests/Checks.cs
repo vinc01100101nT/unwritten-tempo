@@ -1467,17 +1467,24 @@ static class Checks
 
     static void ShopNumbers()
     {
-        That(ShopMath.SalePay(7, 3) == 21, ShopF, "3 sold at 7 each must pay 21");
-        That(ShopMath.SalePay(int.MaxValue, 2) == 2L * int.MaxValue, ShopF, "a sale bigger than 2,147,483,647 must pay in full, not stop or wrap");
+        That(ShopMath.TaxEach(75) == 25 && ShopMath.TaxEach(76) == 26 && ShopMath.TaxEach(1) == 1 && ShopMath.TaxEach(0) == 0,
+             ShopF, "the Tax on one is a third of its value, rounded up: 75 -> 25, 76 -> 26, 1 -> 1, nothing on 0");
+        That(ShopMath.SalePay(75, 3) == 150, ShopF, "3 sold worth 75 each must pay 150 (75 less 25 Tax, three times)");
+        That(ShopMath.BuyCost(168, 4) == 896, ShopF, "4 bought worth 168 each must cost 896 (168 and 56 Tax, four times)");
+        That(ShopMath.TaxOn(168, 4) == 224, ShopF, "the Tax on 4 worth 168 must be 224 — per unit, never on the total");
+        That(ShopMath.SalePay(int.MaxValue, 2) > int.MaxValue, ShopF, "a sale bigger than 2,147,483,647 must pay in full, not stop or wrap");
         That(ShopMath.SalePay(5, 0) == 0, ShopF, "selling none must pay nothing");
-        That(ShopMath.BuyCost(25, 4) == 100, ShopF, "4 bought at 25 each must cost 100");
-        That(ShopMath.BuybackPrice(100) == 125, ShopF, "buying back what paid 100 must cost 125");
-        That(ShopMath.BuybackPrice(1) == 2, ShopF, "what paid 1 must cost 2 back — never free storage");
-        That(ShopMath.BuybackPrice(3) == 4, ShopF, "3 x 1.25 is 3.75, which must round UP to 4");
-        That(ShopMath.BuybackPrice(4) == 5, ShopF, "4 x 1.25 is exactly 5");
-        That(ShopMath.BuybackPrice(0) == 1, ShopF, "even a thing that paid nothing must cost a gold back");
-        That(ShopMath.BuybackPrice(int.MaxValue) > int.MaxValue, ShopF, "the price of the largest sale must stay above what it paid, not wrap");
-        That(ShopMath.PaidTogether(int.MaxValue, 5) == int.MaxValue + 5L && ShopMath.PaidTogether(long.MaxValue, 5) == long.MaxValue, ShopF, "two payments add in full, and stop at the most a purse can hold rather than wrap");
+        bool everySellPriceKept = true;
+        for (int z = 0; z <= 20000; z++)
+            if (ShopMath.SalePay(ShopMath.ValueForSellPrice(z), 1) != z) { everySellPriceKept = false; break; }
+        That(everySellPriceKept, ShopF, "every old sell price 0..20,000 must still be exactly what one sells for after the move to one value");
+        That(ShopMath.ValueForSellPrice(25) == 38 && ShopMath.ValueForSellPrice(112) == 168, ShopF,
+             "the move to one value: sell price 25 -> worth 38, 112 -> 168");
+        That(ShopMath.BuybackPrice(112, 1) == 150, ShopF, "a Healing Potion sold for 112 must cost 150 back (112 and 38 Tax)");
+        That(ShopMath.BuybackPrice(1120, 10) == 1500, ShopF, "ten sold for 112 each must cost 1,500 back — the Tax per unit, never on the total");
+        That(ShopMath.BuybackPrice(1, 1) == 2, ShopF, "what paid 1 must cost 2 back — never free storage");
+        That(ShopMath.BuybackPrice(0, 1) == 1, ShopF, "even a thing that paid nothing must cost one back");
+        That(ShopMath.BuybackPrice(int.MaxValue, 1) > int.MaxValue, ShopF, "the price of the largest sale must stay above what it paid, not wrap");
         That(ShopMath.BuybackEndsAt(1000) == 4600, ShopF, "a thing sold at 1000 must be kept until 4600");
         That(ShopMath.MinutesShown(3600) == 60, ShopF, "a full hour must read 60 min");
         That(ShopMath.MinutesShown(61) == 2, ShopF, "61 seconds must read 2 min");

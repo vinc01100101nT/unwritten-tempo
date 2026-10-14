@@ -146,7 +146,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // fall-in meteor can never be multiplied by a count meant for a bolt.
     System.Func<string, ProjectileFan> FanFor => fanFor ??= tid => def.FanForTick(tid);
     Player3DController body;            // caster's mover — turned to face the cast point on release
-    static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
     // ---- state gate + no-self-feeding chain -----------------------------------------------------------------------
     // castChain = the causal chain this cast belongs to (0 for a player-pressed active — a press starts a fresh chain).
@@ -252,7 +251,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (CasterGone || Caster.IsDead) return Refused("the caster is gone or dead");
         var gate = Status;
         if (gate != null && gate.Silenced)
-        { if (Mine) BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return Refused("silenced"); }
+        { if (Mine) OverheadNotice.Warn("Silenced"); return Refused("silenced"); }
         if (gate != null && gate.CannotStartSkill) return Refused("stunned, frozen, already casting, or mid-jump");
         if (castRoutine != null) return Refused("already winding up a cast");
         if (Time.time < nextUse) return Refused("still on cooldown");
@@ -341,7 +340,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // (warns in-game on an illegal / absent pick).
             var mask = def.SingleTargetMask;
             if (mask == SkillTargets.None)
-            { BattleNotice.Warn("No valid target"); return false; }
+            { OverheadNotice.Warn("No valid target"); return false; }
             UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
             return true;   // MP/cooldown spent on the FINAL confirm, so cancelling any stage costs nothing
         }
@@ -803,14 +802,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
         if (!StateGate.IsMet(def.CastEntry, CasterStates))
         {
-            if (Mine) BattleNotice.Warn("Not ready");
+            if (Mine) OverheadNotice.Warn("Not ready");
             return Refused("the pile this skill spends is not there yet");
         }
         // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
         // the cooldown, never the mana — you never got the skill off.
         if (Caster.CurrentMP < def.manaCost)
         {
-            if (Mine) BattleNotice.Warn("No MP", NoManaColor);
+            if (Mine) OverheadNotice.Warn("No MP");
             return Refused("not enough mana — " + Caster.CurrentMP + " held, " + def.manaCost + " needed");
         }
         // A PLAYER'S MACHINE STARTS NO COOLDOWN AND BILLS NO MANA. Everything above only compared numbers the server

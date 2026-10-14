@@ -74,8 +74,8 @@ claims** — "works" here only ever meant "compiles, pinned numbers hold, Unity 
   stat points from the creature file on the server (added 2026-10-13 19:31). Measured before that: 84 of 98 baked
   mob prefabs held the OLD stat points, so every spawn and `/summon` came out with them. The server builds the user
   made at 19:23 and 19:28 predate this and need remaking.
-- Armour by what the creature is (metal / leather / cloth, from its portrait). Weapon by a town it lives around,
-  spread so weapons are even; Katar given to Viper, Emberwyrm, Hornscale, Golden Bandit (Hazemere has no fields).
+- Armour by what the creature is (metal / leather / cloth, from its portrait). Weapon (re-spread 2026-10-14): each
+  creature's own, no two creatures on one map share one, six holders per weapon; stats re-spent for the new builds.
 - Builds (weights STR:AGI:VIT:INT:DEX:LUK) are in that page; Fist and Shuriken have two builds, the second for metal.
 
 ### 7. Consumables: prices and where each one comes from (built 2026-10-13 evening, agreed)
@@ -102,7 +102,7 @@ claims** — "works" here only ever meant "compiles, pinned numbers hold, Unity 
 - **A new character starts wearing** a Raw Common Sword, Chainmail and Iron Sabatons (no trademark, no word), and the
   first tutorial is talk, fold, wear. A piece the first tutorial still needs cannot be recycled, sold or dropped.
 - **Prices:** every gear piece sells for 5, Temper Dust 2, Quench Oil 10, Inks 2/4/8/16/32, Salts 2/6/18.
-- Save version 19; the servers' shared build string is `unwritten-character-v25`.
+- Save version 19; the servers' shared build string is `unwritten-character-v26`.
 - Built by a builder agent from a planner's map, after a red team's 11 findings were folded in. All checkers pass and
   the editor loads it. **Every existing character and stored item was deleted by the user on 2026-10-13**, so no old
   save is converted.

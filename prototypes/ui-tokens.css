@@ -23,6 +23,9 @@
   --close-fill: #d9dfe8;
   --good: #2e7d41;
   --hover: #d6e5fb;
+  --notice-failure: #ff5f5f;
+  --notice-success: #66e673;
+  --notice-warning: #ffd940;
   --panel-fill: #f7f8fa;
   --panel-raise: #edf1f7;
   --pm-text: #867200;
@@ -30,6 +33,7 @@
   --rarity-legendary: #a85400;
   --rarity-rare: #2a62b8;
   --rule: #c9d3e2;
+  --slot-empty: rgba(82, 82, 94, 0.6);
   --slot-fill: #ffffff;
   --text-dim: #6c7380;
   --text-main: #1b1b1b;

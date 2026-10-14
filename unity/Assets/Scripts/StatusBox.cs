@@ -238,7 +238,7 @@ public class StatusBox : MonoBehaviour
         if (Wallet.Gold != lastGold)
         {
             lastGold = Wallet.Gold;
-            zeny.text = Wallet.Gold.ToString("N0") + " z";
+            zeny.text = Wallet.Amount(Wallet.Gold);
         }
 
         RefreshMastery();

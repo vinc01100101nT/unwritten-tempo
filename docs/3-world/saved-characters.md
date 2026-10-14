@@ -28,27 +28,27 @@ some fight beside you for a moment, and some choose to fight you. The lore is in
 
 ## The three behaviours
 
-| Behaviour | What it does | Gold | Items | Experience |
+| Behaviour | What it does | Unsigned | Items | Experience |
 | --- | --- | --- | --- | --- |
-| **Never fights** | Stays on its spot, says its line, and after **30 seconds** says a goodbye line and vanishes. | Pays its saver gold (below). | Its creature's own material (below). | — |
+| **Never fights** | Stays on its spot, says its line, and after **30 seconds** says a goodbye line and vanishes. | Pays its saver Unsigned (below). | Its creature's own material (below). | — |
 | **Ally** | Fights on its saver's side for **30 seconds**, then says a goodbye line and vanishes. It attacks mobs, rebels, and anything that treats its saver as an enemy. | — | — | — |
 | **Rebel** | Attacks straight away, with the same aggression as a mob: it is not tied to the player who freed it. If nobody beats it within **30 seconds**, it leaves. | None. | Drops loot **one kind up**: a rebel from a normal drops as an elite does, a rebel from an elite drops as a shadow does. | As a mob of its level. |
 
 **Sides are a general feature, not an ally special case.** Every unit belongs to a side, and anything that treats a
 player as an enemy — a mob, a rebel, and later a player in PvP — is an enemy of that player's allies too.
 
-## Gold
+## Unsigned
 
-- **A mob's death pays no gold.** Normals, elites and shadows all stop paying gold on death.
-- **A never-fights character pays the player who saved it**, the moment it appears: gold, and some of its creature's
+- **A mob's death pays no Unsigned.** Normals, elites and shadows all stop paying Unsigned on death.
+- **A never-fights character pays the player who saved it**, the moment it appears: Unsigned, and some of its creature's
   own ordinary material. Only a normal can become one.
-- **The gold is worth a number of kills of that creature**, at 10 gold a level of the level its file gives it — never
+- **The Unsigned is worth a number of kills of that creature**, at 10u a level of the level its file gives it — never
   the level it grew to in the fight — times its gear's grade multiplier and fold multiplier ([What a Kill Pays](what-a-kill-pays.md)). The saver's run of kills
-  multiplies the gold, as it does a kill's experience.
+  multiplies the Unsigned, as it does a kill's experience.
 - **The material goes into the saver's bag**, and whatever the bag has no room for falls where the character stands,
   kept for the saver like any drop. The run of kills does not multiply it.
 
-| Tier | Gold worth | Material | Together worth | Characters |
+| Tier | Unsigned worth | Material | Together worth | Characters |
 | --- | --- | --- | --- | --- |
 | **Wealthy** | 12 kills | 9 | 30 kills | Princess, Noble, Sultan, SultanWhite |
 | **Helpless** | 8 kills | 6 | 20 kills | Child, Boy, EggBoy, EggGirl, OldMan, OldManCap, OldManStraw, OldWoman |
@@ -56,7 +56,7 @@ player as an enemy — a mob, a rebel, and later a player in PvP — is an enemy
 
 **What that comes to:** a normal kill turns back (15%) into one of the 23 never-fights characters out of the 73 a normal
 can become — 1 kill in about 21. One ordinary material sells for two kills' worth, so over many kills a rescue adds
-about 0.8 of a kill's worth to every kill: roughly 44% of all the gold hunting earns, arriving as rare large sums,
+about 0.8 of a kill's worth to every kill: roughly 44% of all the Unsigned hunting earns, arriving as rare large sums,
 with selling what creatures drop as the larger part. Prices and chances: [Creature Materials](creature-materials.md).
 
 ## The roster — every character, by who they were in the book
@@ -138,13 +138,13 @@ them there.
 
 ## Still open
 
-- **First guesses, to be tuned in play:** the 4 / 8 / 12 kills of gold and the 3 / 6 / 9 materials a rescue pays, the 2 seconds a goodbye stays readable, and
+- **First guesses, to be tuned in play:** the 4 / 8 / 12 kills of Unsigned and the 3 / 6 / 9 materials a rescue pays, the 2 seconds a goodbye stays readable, and
   how long a swing (0.3 seconds) and a release (0.4 seconds) picture stays on screen.
 - **Which mixed characters are allies and which are rebels** is a first pass by look: mostly, the re-coloured twin of a
   pair is the rebel.
 - **The names shown** are the art folder names, spaced, until real names are chosen; each is one field on the
   character's asset.
-- **Calls made while building, each a one-line change if wrong:** a character's strength is its mob's; the rescue gold is
+- **Calls made while building, each a one-line change if wrong:** a character's strength is its mob's; the rescue Unsigned is
   paid as the character appears; an ally's kills are its saver's; a rebel from an elite never summons; a goodbye line is
   readable for 2 seconds before the character vanishes.
 - **The dialog lines** are a first draft.

@@ -20,6 +20,7 @@ public struct DerivedSnapshot
         a.barrierHP == b.barrierHP &&
         UnityEngine.Mathf.Approximately(a.critChance, b.critChance) && UnityEngine.Mathf.Approximately(a.critMult, b.critMult) &&
         UnityEngine.Mathf.Approximately(a.aspdMult, b.aspdMult) && UnityEngine.Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
+        UnityEngine.Mathf.Approximately(a.swingsPerSecond, b.swingsPerSecond) &&
         UnityEngine.Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
         UnityEngine.Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && UnityEngine.Mathf.Approximately(a.reflectPct, b.reflectPct) &&
         UnityEngine.Mathf.Approximately(a.manaLeechPct, b.manaLeechPct) &&
@@ -36,6 +37,7 @@ public struct DerivedSnapshot
     public float critChance;   // 0..1
     public float critMult;     // e.g. 1.4 = 140%
     public float aspdMult;     // >1 = faster
+    public float swingsPerSecond;   // basic attacks a second with the weapon in hand — its own pace and aspdMult together
     public float castTimeMult; // the one cast-speed value: 1 = full wind-up, 0 = instant cast. LOWER is faster.
     public float guardCutPct;  // 0..1 incoming-damage cut while Guard is up (a state; 0 at rest)
     public float lifeStealPct; // fraction of damage dealt returned as HP

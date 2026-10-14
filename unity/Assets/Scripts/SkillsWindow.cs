@@ -321,7 +321,7 @@ public class SkillsWindow : MonoBehaviour
         if (learned && !def.IsPassive)
         {
             var drag = node.gameObject.AddComponent<SkillDragSource>();
-            drag.skillId = def.id; drag.tint = SkillSymbol.ColorFor(def);
+            drag.skillId = def.id;
         }
     }
 

@@ -30,13 +30,13 @@ MonoBehaviour:
   hairColour: 
   level: 62
   str: 42
-  agi: 50
-  vit: 21
+  agi: 42
+  vit: 20
   intel: 20
-  dex: 32
-  luk: 20
+  dex: 20
+  luk: 42
   startingGear:
-  - {fileID: 11400000, guid: 897c7d54c6280f348b0c74364aa9f64e, type: 2}
+  - {fileID: 11400000, guid: eb821c722710f794881eb933b2236650, type: 2}
   - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}

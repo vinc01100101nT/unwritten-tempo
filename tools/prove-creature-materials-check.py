@@ -101,7 +101,7 @@ def main():
     bad = 0
     bad += case("a material given another description passes", ord_rel, line(ord_text, "description"),
                 "  description: Something else entirely.", None, must_pass=True)
-    bad += case("a material whose saved price is not the rule's", ord_rel, line(ord_text, "zeny"), "  zeny: 7",
+    bad += case("a material whose saved price is not the rule's", ord_rel, line(ord_text, "value"), "  value: 7",
                 "but the rule says")
     bad += case("a creature with its material taken away", two[0], line(two[1], "material"), "  material: {fileID: 0}",
                 "has no material of its own")

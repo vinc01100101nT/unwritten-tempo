@@ -129,7 +129,7 @@ public class HotbarPanel : MonoBehaviour
             case Kind.Gear:
             {
                 if (!me.FindCopy(s.copyId, out _, out bool worn)) return;
-                if (worn) { BattleNotice.Warn("Already equipped"); return; }
+                if (worn) { OverheadNotice.Warn("Already equipped"); return; }
                 var net = GameNetwork.MyPlayer;
                 if (net != null) { net.AskToEquipCopy(s.copyId); UISounds.PlayClick(); }
                 return;
@@ -282,7 +282,6 @@ public class HotbarPanel : MonoBehaviour
             {
                 var keep = staleDrag != null ? staleDrag : cell.gameObject.AddComponent<HotbarSlotDragSource>();
                 keep.slotIndex = index;
-                keep.tint = CellEmpty;
             }
             return s;
         }
@@ -290,7 +289,6 @@ public class HotbarPanel : MonoBehaviour
         // Drag this filled slot onto another to rearrange the bar, or off the bar to empty it (a click still presses).
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = index;
-        drag.tint = s.kind == Kind.Skill && s.skill != null ? s.skill.Tint : UiKit.Accent;
         // An item or a piece sits on a white tile, where the white key letter would vanish; it takes the name's colour.
         if (s.kind == Kind.Item || s.kind == Kind.Gear) key.color = s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TextMain;
         key.transform.SetAsLastSibling();

@@ -42,8 +42,13 @@ MonoBehaviour:
     - spot: 8
       text: This red bar is your health, and it is low. The blue bar under it is your
         mana. Follow the arrows to a Tool Dealer, who sells healing potions.
-    - spot: 9
-      text: Buy a Minor Healing Potion here. What it costs is on its row.
+    - spot: 10
+      text: Buy a Minor Healing Potion here. Double-click its row to put it in your
+        cart.
+    - spot: 11
+      text: One is enough. Press Confirm.
+    - spot: 12
+      text: Press Confirm to buy what is in your cart.
   - id: drink-potions
     text: Drink potions until your health is back to 80%.
     objective:

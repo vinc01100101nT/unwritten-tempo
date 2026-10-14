@@ -155,16 +155,18 @@ public class MobShadow3DVisual : Agent3DVisual
         building = true;
         CharacterModels.Load(modelName, model =>
         {
-            if (this == null) return;   // mob died/recycled while its model was loading
+            if (this == null) return null;   // mob died/recycled while its model was loading
             building = false;
             if (model == null)
             {
                 GameLog.Warn(LogCat.Unwritten, "No character model registered as '" + modelName + "' — '" + name +
                                  "' stays a billboard.");
                 enabled = false;
-                return;
+                return null;
             }
             SwapToBody(spec, model);
+            // The creature keeps the body for life, through every pooled respawn — so it is the creature that wears it.
+            return gameObject;
         });
     }
 

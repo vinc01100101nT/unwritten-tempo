@@ -53,7 +53,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **Worn gear is serialized on the component, not the dictionary.** `UnitEquipment.startingGear` is the serialized half; the live dictionary is runtime-only. Gear is equipped **lazily on first access**, not in `Awake`, so component wake order between `UnitEquipment` and `UnitStatBlock` cannot matter. Getting this wrong makes mob rings silently do nothing.
 
-**A creature keeps what it wears; on `CreatureLoot.GearDropChance` (10%) of kills `LootDropper` drops a NEW copy of one random piece it wears** (`EquipmentInstance.CreateDropped`: Raw, unfolded, its rarity from `CreatureLoot.DropRarity`). The ring has no drop chance — a ring is not an item any more. `itemDropNames`/`itemDropChances` carry **materials, consumables and gold**, and `Rewards.PayLoot` puts what they pay on the ground, held for the killer.
+**A creature keeps what it wears; on `CreatureLoot.GearDropChance` (10%) of kills `LootDropper` drops a NEW copy of one random piece it wears** (`EquipmentInstance.CreateDropped`: Raw, unfolded, its rarity from `CreatureLoot.DropRarity`). The ring has no drop chance — a ring is not an item any more. `itemDropNames`/`itemDropChances` carry **materials, consumables and Unsigned**, and `Rewards.PayLoot` puts what they pay on the ground, held for the killer.
 
 **Removed dead fields.** `MonsterDef`'s hand-authored `maxHealth`/`attack`/`defense`/`magicDefense`/`hit`/`flee`/`damageSpread` are deleted — all seven are derived in `ToArchetype`, so storing them was a second copy that could disagree.
 
@@ -61,7 +61,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 `Tools ▸ unwritten ▸ Catalogs ▸ Mob Table`:
 
-- **Inline:** id, name, biome, kind, size (a number, its Small / Medium / Large group shown beside it; a shadow's is locked — it is always 1), **LVL + STR/AGI/VIT/INT/DEX/LUK**, element, Element Lv, weight, XP, gold.
+- **Inline:** id, name, biome, kind, size (a number, its Small / Medium / Large group shown beside it; a shadow's is locked — it is always 1), **LVL + STR/AGI/VIT/INT/DEX/LUK**, element, Element Lv, weight, XP.
 - **`pts` column:** `spent/budget` — green on budget, **red over**, amber when a real chunk is unspent. Typing a value the level can't afford **snaps** to the highest that fits (`FitSpreadToBudget`), and only the field you edited is adjusted — untouched stats are never knocked down.
 - **Derived readouts** (`=HP/=ATK/=DEF/=FLEE`): read-only, computed live through `UnitStatMath`, so you edit the cause and see the effect. Sorting on them sorts the derived value.
 - **`▸` expander:** per-mob **equipment** (one object field per slot; an item is rejected if its slot doesn't match), when a ring is worn its **ranks** with the % each is worth, and on a shadow its **appearance** — a turning 3D preview, a body picker over every body in the roster, and one colour swatch per part of the chosen body, saved by Save All.

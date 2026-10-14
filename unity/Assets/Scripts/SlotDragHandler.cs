@@ -41,22 +41,13 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         ItemTooltip.Suppressed = true;          // no tooltips flickering over slots mid-drag
         ItemTooltip.HideTip();
 
-        // Floating ghost that follows the cursor above the windows.
-        ghost = new GameObject("DragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
-        ghost.transform.SetParent(canvas.transform, false);
-        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
-        var gi = ghost.GetComponent<Image>();
-        gi.raycastTarget = false;
-        gi.preserveAspect = true;
-        gi.color = new Color(1f, 1f, 1f, 0.9f);
-        var grt = (RectTransform)ghost.transform;
-        grt.sizeDelta = new Vector2(48, 48);
-        grt.position = e.position;
+        // The one drag picture every drag in the game shows (DragPicture).
+        ghost = DragPicture.Begin((RectTransform)transform, canvas, e.position);
     }
 
     public void OnDrag(PointerEventData e)
     {
-        if (ghost != null) ghost.transform.position = e.position;
+        DragPicture.Move(ghost, e.position);
     }
 
     public void OnEndDrag(PointerEventData e)
@@ -66,7 +57,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         ItemDrag.End();
 
         ItemTooltip.Suppressed = false;
-        if (ghost != null) { Destroy(ghost); ghost = null; }
+        DragPicture.End(ref ghost, (RectTransform)transform);
 
         // LET GO OVER THE HOTBAR: a usable item goes on it by kind, a piece of gear as that exact piece.
         if (HotbarSlotTarget.SlotUnder(e) >= 0)
@@ -102,7 +93,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         dragging = false;
         ItemDrag.End();
         ItemTooltip.Suppressed = false;
-        if (ghost != null) { Destroy(ghost); ghost = null; }
+        DragPicture.End(ref ghost, (RectTransform)transform);
     }
 
     /// <summary>What a bag row stands for on the hotbar: one exact piece of gear (worn or carried), a usable item by its

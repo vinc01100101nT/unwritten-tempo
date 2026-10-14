@@ -19,24 +19,25 @@ tags:
   or a **hunting find**, dropped by creatures and never sold in a shop.
 - **Town supplies are the reason to go back to town.** Potions, wings and the Antidote run out, and only the Tool
   Dealer has more.
-- **A hunting find is worth using or trading.** No shop buys one, so it adds nothing to what a kill pays in gold.
+- **A hunting find is worth using or trading.** No shop buys one, so it adds nothing to what a kill pays in Unsigned.
 
 ## Town supplies
 
-Flat prices, the same for every character. A shop buys one back for half its price, rounded down.
+Flat prices, the same for every character. Each item has one value; the shop adds Tax (a third of the value, rounded
+up, per unit) when it sells one and takes it when it buys one back.
 
-| Item | Does | Buy | Sells back for | Weight |
-| --- | --- | --- | --- | --- |
-| Fly Wing | Sets you down on a random spot of the map you are on | 50 | 25 | 5 |
-| Antidote | Removes 3 debuffs | 100 | 50 | 5 |
-| Butterfly Wing | Returns you to your save point, on whichever map it is | 300 | 150 | 5 |
+| Item | Does | Value | Buy (with Tax) | Sells back for | Weight |
+| --- | --- | --- | --- | --- | --- |
+| Fly Wing | Sets you down on a random spot of the map you are on | 38 | 51 | 25 | 5 |
+| Antidote | Removes 3 debuffs | 75 | 100 | 50 | 5 |
+| Butterfly Wing | Returns you to your save point, on whichever map it is | 225 | 300 | 150 | 5 |
 
 The ten Healing Potions and Mana Draughts are town supplies too:
 [Healing Potions and Mana Draughts](healing-and-mana-potions.md).
 
 - **Fly Wing** costs what the smallest potion costs: it is used many times an hour.
 - **Antidote** sits between the size 1 and size 2 potions.
-- **Butterfly Wing** is three doors of the Keeper's teleport, which charges 100 gold a door
+- **Butterfly Wing** is three doors of the Keeper's teleport, which charges 100u a door
   ([The Keeper and the Wings](keeper-and-wings.md)).
 
 ## Hunting finds
@@ -81,8 +82,8 @@ that element's two converters; a creature of any other element gives up that ele
 - The kill's roll: `LootDropper.GiveLoot`. What `/mobinfo`, `/whodrops` and the wiki say a creature drops:
   `CreatureDrops.cs` — both read `CreatureFinds`.
 - A converter's element is read off the effect it runs (`ItemCatalog.ConvertersOf`); the item carries no copy.
-- Prices, sell values and weights: the item files in `unity/Assets/3_Data/Resources/Items/`. A sell value of 0 is
-  what makes a shop refuse an item.
+- Values and weights: the item files in `unity/Assets/3_Data/Resources/Items/`. A value of 0 is what makes a shop
+  refuse an item.
 - The Tool Dealer's stock: `unity/Assets/3_Data/Resources/WorldShops.asset`.
 
 ## Still open

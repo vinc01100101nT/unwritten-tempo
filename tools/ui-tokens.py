@@ -71,7 +71,7 @@ SCREEN_NAMES = {
     "DialogBox.cs": "Dialog Box",
     "SettingsWindow.cs": "Settings",
     "SystemWindow.cs": "System Menu",
-    "BattleNotice.cs": "Battle Notice",
+    "OverheadNotice.cs": "Overhead Notice",
     "ReconnectNotice.cs": "Reconnect Notice",
     "AutoCombatIndicator.cs": "Auto Combat Indicator",
 }

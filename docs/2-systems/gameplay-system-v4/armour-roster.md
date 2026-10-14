@@ -51,7 +51,7 @@ HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players a
 | Shoes | Iron Sabatons | Leather Boots | Woven Shoes |
 
 No design is made from materials: a piece is dropped by a creature that wears it. Every piece sells to a shop for
-5 gold. Weight copies an existing design (shoes copy the Leather Cap's).
+5u. Weight copies an existing design (shoes copy the Leather Cap's).
 
 ## 4. Words — the armour's trademark
 

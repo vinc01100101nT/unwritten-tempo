@@ -48,4 +48,9 @@ public struct CraftStationOffer
     public string[] recycleIds;
     public int[] recycleCounts;
     public int recycleGold;
+
+    /// <summary>The piece's own numbers now, and after one more fold — both the finished numbers the server writes on
+    /// a copy (<see cref="CraftingMath.PieceNumbers"/>), so the Fold tab can show what the press buys without working
+    /// anything out. The same as now when the piece cannot be folded further.</summary>
+    public CraftingMath.PieceStats pieceNow, pieceNext;
 }

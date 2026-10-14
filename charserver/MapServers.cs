@@ -89,7 +89,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v25";
+    public const string CharacterBuild = "unwritten-character-v26";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 

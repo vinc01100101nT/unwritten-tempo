@@ -106,18 +106,18 @@ can move, and it is why a drop is still worth opening when you can forge the res
 | Resource           | Scope                                  | Role                                                                                                                                             |
 | ------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Potential**      | per-weapon, finite, **non-refillable** | gates **only** skill **Add + Reforge** (the RNG part). Spent out → that weapon's *skills* freeze; you keep using, refining, and transmogging it. |
-| **Weapon Essence** | account-wide                           | universal "powder" recycled from unwanted weapons; **required by all weapon modifications** (with Gold). The thing every bad weapon becomes.     |
+| **Weapon Essence** | account-wide                           | universal "powder" recycled from unwanted weapons; **required by all weapon modifications** (with Unsigned). The thing every bad weapon becomes.     |
 | **Stones**         | account-wide, per-activity             | material for the heavier mods (e.g. Refinement Stone); reserved for big mods, not every reforge.                                                 |
-| **Gold**           | account-wide                           | soft sink on everything.                                                                                                                         |
+| **Unsigned**       | account-wide                           | soft sink on everything.                                                                                                                         |
 
 ## Actions & their costs
 
 | Action              | What it does                                                                                                                                               | Potential? | Other cost                        |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------- |
-| **Add**             | fill an **empty slot** with a **random** skill from the weapon's pool — the ult slot included, since an ultimate can be forged in; never player-chosen                                     | **yes**    | Essence + Gold                    |
-| **Reforge**         | reroll unlocked **normal** skills; lock a skill at a rising Potential cost                                                                                 | **yes**    | Essence + Gold                    |
-| **Refinement (+N)** | +Attack (weapon) / +Defense; the existing refine system                                                                                                    | **no**     | Essence + Refinement Stone + Gold |
-| **Transmog**        | wear a **same-type** weapon's appearance (Sword look on a Sword only) — **appearance only**, never carries skills/stats/Potential; unlocks into a wardrobe | **no**     | Essence + Gold                    |
+| **Add**             | fill an **empty slot** with a **random** skill from the weapon's pool — the ult slot included, since an ultimate can be forged in; never player-chosen                                     | **yes**    | Essence + Unsigned                |
+| **Reforge**         | reroll unlocked **normal** skills; lock a skill at a rising Potential cost                                                                                 | **yes**    | Essence + Unsigned                |
+| **Refinement (+N)** | +Attack (weapon) / +Defense; the existing refine system                                                                                                    | **no**     | Essence + Refinement Stone + Unsigned |
+| **Transmog**        | wear a **same-type** weapon's appearance (Sword look on a Sword only) — **appearance only**, never carries skills/stats/Potential; unlocks into a wardrobe | **no**     | Essence + Unsigned                |
 
 **Add & Reforge are stochastic** (random results, gated by finite Potential) — you steer and retry fate, you don't dictate it. That keeps naturally-good drops exciting. Deliberate agency comes from **which ult-base you choose to invest in**, not from hand-picking skills.
 
@@ -130,7 +130,7 @@ An unwanted weapon has two exits:
 
 ## The loop
 
-> Drop (a rolled kit + Potential; the tier sets how hard it hits) → keep the ult you want (build) → Add/Reforge the normals with Potential+Essence+Gold → Refine & Transmog freely → recycle the rest into Essence to fuel the next weapon.
+> Drop (a rolled kit + Potential; the tier sets how hard it hits) → keep the ult you want (build) → Add/Reforge the normals with Potential+Essence+Unsigned → Refine & Transmog freely → recycle the rest into Essence to fuel the next weapon.
 
 ## Health guards (why it doesn't break)
 
@@ -159,7 +159,7 @@ The failure case: a great base with a great ult, Potential spent, but the suppor
 
 - **Bad-luck protection** — a reforge quality/synergy floor that rises after consecutive poor rolls, so a full Potential budget can't whiff entirely.
 - **Size the Potential budget** so a weapon has enough attempts to reasonably land a kit worth keeping — bricking should be rare, not a coin-flip.
-- *(Optional — has a tradeoff)* **Ult Transfer** — move an ult (the anchor) onto a fresh same-type base at a high Essence/Gold cost, so a bricked-but-great-ult isn't lost forever. Tradeoff: you can keep carrying one lucky anchor onto better and better bases, which softens the reason to open the next drop.
+- *(Optional — has a tradeoff)* **Ult Transfer** — move an ult (the anchor) onto a fresh same-type base at a high Essence/Unsigned cost, so a bricked-but-great-ult isn't lost forever. Tradeoff: you can keep carrying one lucky anchor onto better and better bases, which softens the reason to open the next drop.
 
 ## Open tuning items
 

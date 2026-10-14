@@ -22,7 +22,7 @@ forward the picture — pass the data that identifies the event (e.g. `Relocatio
 flight's thrown weapon + skill id + binding index; a tick's `TrueDamageCause`) and let each client read the look from
 its own data. Sound counts as drawing (user, 2026-10-07).
 
-**How it is enforced (sweep of 2026-10-07):** every drawing door (`Vfx`, `DamagePopup`, `Sfx`, `BattleNotice`,
+**How it is enforced (sweep of 2026-10-07):** every drawing door (`Vfx`, `DamagePopup`, `Sfx`, `OverheadNotice`,
 `GroundDrop`) asks `GameServer.CaughtDrawing(door)`, which on the server writes ONE error per door to the server log
 with the stack that reached it — an error line there is a bug to fix, never noise. Scene parts that only draw or sound
 remove themselves on the server (`GameServer.RemovesPresentation(this)` as Awake's first line). Server-made creatures

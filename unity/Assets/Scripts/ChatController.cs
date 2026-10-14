@@ -682,7 +682,7 @@ public class ChatController : MonoBehaviour
             case CombatLine.Experience:
                 Put("+"); Put(e.amount); Put(" EXP"); if (e.fromCombo > 0) { Put(" (+"); Put(e.fromCombo); Put(" from combo)"); } break;
             case CombatLine.Zeny:
-                Put("+"); Put(e.amount); Put(" Zeny"); if (e.fromCombo > 0) { Put(" (+"); Put(e.fromCombo); Put(" from combo)"); } break;
+                Put("+"); Put(e.amount); Put("u"); if (e.fromCombo > 0) { Put(" (+"); Put(e.fromCombo); Put(" from combo)"); } break;
             case CombatLine.Obtained:
                 Put("Obtained "); Put(e.name); break;
         }

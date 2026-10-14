@@ -133,16 +133,15 @@ public class Item : ScriptableObject
     [Tooltip("How heavy it is. A weapon's weight sets how long it takes to draw and to put away: 0.2 s plus 0.006 s " +
              "per point.")]
     public int weight;
-    [Tooltip("Sell value in zeny — what a shop pays for one. 0 = it cannot be sold to an NPC, whatever kind of item it is.")]
-    public int zeny;
+    [Tooltip("What one is worth, in Unsigned — the ONE price of this item. A shop sells it for this plus Tax, and buys " +
+             "it for this less Tax (ShopMath). 0 = no shop sells it and no shop buys it.")]
+    public int value;
 
-    /// <summary>Can a shop buy this: its sell value is above 0. The one rule, for every kind of item.</summary>
-    public bool CanBeSold => zeny > 0;
+    /// <summary>Can a shop buy this: it is worth something. The one rule, for every kind of item.</summary>
+    public bool CanBeSold => value > 0;
 
     /// <summary>What every readout says in place of a sell value of 0.</summary>
     public const string CannotBeSoldText = "Cannot be sold to NPC";
-    [Tooltip("What a shop charges for one, in gold. 0 = no shop sells it — a shop that lists it anyway leaves it out.")]
-    [Min(0)] public int buyPrice;
 
     // A CRAFTED PIECE HAS NO NUMBERS OF ITS OWN. What a weapon or a piece of armour is worth comes from its folds,
     // its quality and its rarity, worked out by the server when it is made, folded or quenched, plus whatever Ink has

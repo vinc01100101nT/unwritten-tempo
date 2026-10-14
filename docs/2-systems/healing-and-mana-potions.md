@@ -23,13 +23,13 @@ tags:
 
 ## The ten potions
 
-| Size | Healing Potion | Health restored | Mana Draught | Mana restored | Buy price | Sells back for | Weight |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Minor Healing Potion | 50 | Minor Mana Draught | 25 (5 a second) | 50 | 25 | 7 |
-| 2 | Healing Potion | 150 | Mana Draught | 75 (15 a second) | 225 | 112 | 8 |
-| 3 | Greater Healing Potion | 400 | Greater Mana Draught | 200 (40 a second) | 800 | 400 | 10 |
-| 4 | Superior Healing Potion | 1,000 | Superior Mana Draught | 500 (100 a second) | 2,500 | 1,250 | 12 |
-| 5 | Grand Healing Potion | 2,500 | Grand Mana Draught | 1,250 (250 a second) | 7,500 | 3,750 | 15 |
+| Size | Healing Potion | Health restored | Mana Draught | Mana restored | Value | Buy (with Tax) | Sells back for | Weight |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Minor Healing Potion | 50 | Minor Mana Draught | 25 (5 a second) | 38 | 51 | 25 | 7 |
+| 2 | Healing Potion | 150 | Mana Draught | 75 (15 a second) | 168 | 224 | 112 | 8 |
+| 3 | Greater Healing Potion | 400 | Greater Mana Draught | 200 (40 a second) | 600 | 800 | 400 | 10 |
+| 4 | Superior Healing Potion | 1,000 | Superior Mana Draught | 500 (100 a second) | 1,875 | 2,500 | 1,250 | 12 |
+| 5 | Grand Healing Potion | 2,500 | Grand Mana Draught | 1,250 (250 a second) | 5,625 | 7,500 | 3,750 | 15 |
 
 ## The rules behind the numbers
 
@@ -42,9 +42,11 @@ tags:
 - **Mana is half the points for the same price** because the mana bar is about half the health bar: a character has
   20 health and 10 mana at level 1 and gains 6 health and 3 mana a level, so each size fills the same share of
   either bar.
-- **A bigger potion costs more for each point:** 1 gold a health point at size 1, then 1.5, 2, 2.5 and 3. A big bar
+- **A bigger potion costs more for each point:** 1u a health point at size 1, then 1.5, 2, 2.5 and 3. A big bar
   can still be filled with small potions, at the cost of more drinks and more weight carried.
-- **A shop buys a potion back for half its price, rounded down.**
+- **Each potion has one value; the shop adds Tax when it sells one and takes Tax when it buys one back** — a third of
+  the value, rounded up, on each unit ([The Shop Cart, the Tax, and the Station Window](shop-cart-and-station-window.md)).
+  Selling one back therefore pays about half of what buying it cost.
 - **Weight rises with size** — 7, 8, 10, 12, 15 — and a Mana Draught weighs what the Healing Potion of its size
   weighs. A character carries 2,000 weight plus 30 for each point of STR.
 
@@ -58,7 +60,7 @@ tags:
 
 ## Where it lives
 
-- The ten items: `unity/Assets/3_Data/Resources/Items/` — price (`buyPrice`), sell value (`zeny`), `weight`.
+- The ten items: `unity/Assets/3_Data/Resources/Items/` — `value`, `weight`.
 - What each restores: the effect its item runs, `unity/Assets/3_Data/Resources/Skills/skill.item.<name>.asset`.
 - The Tool Dealer's stock: `unity/Assets/3_Data/Resources/WorldShops.asset`.
 

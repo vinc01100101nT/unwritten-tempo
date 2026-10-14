@@ -30,8 +30,12 @@ public enum GuideSpot
     BagRow = 7,
     /// <summary>The health bar over your own character's head.</summary>
     OwnHealthBar = 8,
-    /// <summary>"Buy 1" on the step's item, in a shop window.</summary>
-    ShopBuyButton = 9,
+    /// <summary>The step's item's row in a shop's For sale list.</summary>
+    ShopItemRow = 10,
+    /// <summary>The "how many?" box, while it asks how many of something go into a shop's cart.</summary>
+    ShopAmountBox = 11,
+    /// <summary>A shop's Confirm, while its cart holds the step's item to buy.</summary>
+    ShopConfirm = 12,
 }
 
 /// <summary>

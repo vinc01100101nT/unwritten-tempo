@@ -14,7 +14,7 @@ tags:
 
 ## What the player gets
 
-- **No kill drops gold.** A player earns gold by selling what creatures drop to a shop.
+- **No kill drops Unsigned.** A player earns Unsigned by selling what creatures drop to a shop.
 - **Every creature has one material that only it drops.** Some normal creatures also have a second, rarer one with a
   coloured name.
 - **A material sells for more the higher its creature's level, and the better its creature's gear.** The price follows from
@@ -26,10 +26,10 @@ tags:
 
 ## The price rule
 
-- **A normal kill is worth 10 gold × the creature's level, on average.**
+- **A normal kill is worth 10u × the creature's level, on average.**
 - **The ordinary material** drops on 1 kill in 2, so one sells for **20 × level**.
 - **A rare material sells by its tier**, whichever creature drops it: 25 × level for Uncommon, 125 for Rare, 500 for Epic,
-  2,500 for Legendary. At a normal creature's drop chances that adds a quarter more gold per kill, on average.
+  2,500 for Legendary. At a normal creature's drop chances that adds a quarter more Unsigned per kill, on average.
 - **An elite** drops its ordinary material on every kill as 3 to 5 separate piles of 4 to 7 each, 22 on average, and each
   one sells by the same 20 × level. That is 44 times a normal kill. Every elite also has a rare material, always one single drop.
 - **Nothing an elite drops is ever auto-looted.** It all falls on the ground, so an elite has to be hunted by hand.
@@ -189,7 +189,7 @@ Every elite drops its ordinary material on every kill, in 3 to 5 piles of 4 to 7
 Killing the map's normal creatures in the proportions it keeps them, at 500 kills an hour, and selling every material.
 Elites and saved characters are not counted. "Rare share" is how much of the map's normal creatures have a rare material.
 
-| Map | Normal creatures alive | Average level | Rare share | Gold per kill | Gold per hour |
+| Map | Normal creatures alive | Average level | Rare share | Unsigned per kill | Unsigned per hour |
 | --- | --- | --- | --- | --- | --- |
 | `brm_fild01` | 31 | 60 | 45% | 660 | 330,242 |
 | `brm_fild02` | 31 | 60 | 45% | 662 | 331,210 |
@@ -254,7 +254,7 @@ Elites and saved characters are not counted. "Rare share" is how much of the map
 | `vlm_fild03` | 31 | 60 | 45% | 662 | 331,210 |
 
 The rare share runs from 23% (`gmr_fild02`) to 77% (`khn_dun04`). A rare material adds a quarter, so the most a map's
-mix can lift its gold over a map of the same level with none is 19%.
+mix can lift its Unsigned over a map of the same level with none is 19%.
 
 ## Still open
 
@@ -274,5 +274,5 @@ mix can lift its gold over a map of the same level with none is 19%.
 - [Mob Roster](mob-roster.md) — the three kinds of creature and what they drop today.
 - [Where Each Creature Lives](biome-mob-families.md) — every creature's level, element and maps.
 - [What a Kill Pays](what-a-kill-pays.md) — the grade and fold multipliers a geared creature's prices are multiplied by.
-- [Saved Characters](saved-characters.md) — the gold and material a saved character pays.
+- [Saved Characters](saved-characters.md) — the Unsigned and material a saved character pays.
 - [Hair and Headgear](../2-systems/hair-and-headgear.md) — the fifteen hats the hat quests will hand out.

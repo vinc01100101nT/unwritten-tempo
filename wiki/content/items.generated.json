@@ -27,7 +27,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 6930,
+            "sellsFor": 6930,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -55,7 +55,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 43313,
+            "sellsFor": 43313,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -83,7 +83,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1368,
+            "sellsFor": 1368,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -111,7 +111,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 5,
-            "zeny": 50,
+            "sellsFor": 50,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -132,7 +132,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -153,7 +153,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1519,
+            "sellsFor": 1519,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -181,7 +181,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 189844,
+            "sellsFor": 189844,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -209,9 +209,15 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
+                {
+                    "name": "Adder",
+                    "level": 57,
+                    "chance": "2%",
+                    "count": "1"
+                },
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
@@ -219,26 +225,32 @@
                     "count": "1"
                 },
                 {
-                    "name": "Grumbear",
-                    "level": 31,
+                    "name": "Inky",
+                    "level": 77,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Pando",
-                    "level": 21,
+                    "name": "Lovebite",
+                    "level": 96,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Newtie",
+                    "level": 20,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Peeper",
+                    "level": 41,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Wyrmlet",
-                    "level": 34,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -261,7 +273,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 47300,
+            "sellsFor": 47300,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -289,7 +301,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1892,
+            "sellsFor": 1892,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -317,7 +329,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1700,
+            "sellsFor": 1700,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -345,7 +357,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 22088,
+            "sellsFor": 22088,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -373,7 +385,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3534,
+            "sellsFor": 3534,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -401,7 +413,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2325,
+            "sellsFor": 2325,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -429,7 +441,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 372,
+            "sellsFor": 372,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -457,7 +469,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4095,
+            "sellsFor": 4095,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -485,7 +497,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 25594,
+            "sellsFor": 25594,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -513,7 +525,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1392,
+            "sellsFor": 1392,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -541,7 +553,7 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 60,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -551,26 +563,32 @@
                     "count": "1"
                 },
                 {
-                    "name": "Coily",
-                    "level": 43,
+                    "name": "Frostskull",
+                    "level": 91,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Elder Stalk",
-                    "level": 47,
+                    "name": "Gnasher",
+                    "level": 65,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Peeper",
-                    "level": 41,
+                    "name": "Horngore",
+                    "level": 73,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Scaly",
-                    "level": 37,
+                    "name": "Mudpup",
+                    "level": 23,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Oculord",
+                    "level": 14,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -599,7 +617,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 575,
+            "sellsFor": 575,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -627,7 +645,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 5,
-            "zeny": 150,
+            "sellsFor": 150,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -648,7 +666,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 11756,
+            "sellsFor": 11756,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -676,7 +694,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1881,
+            "sellsFor": 1881,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -704,7 +722,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 125,
+            "sellsFor": 125,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -732,7 +750,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 40,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -922,7 +940,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 100,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -1112,7 +1130,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -1133,7 +1151,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 73500,
+            "sellsFor": 73500,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -1161,7 +1179,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2940,
+            "sellsFor": 2940,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1189,7 +1207,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1608,
+            "sellsFor": 1608,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1217,7 +1235,7 @@
             "materialKindOrder": 4,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 16,
+            "sellsFor": 16,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -1431,7 +1449,7 @@
             "materialKindOrder": 5,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 2,
+            "sellsFor": 2,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1849,7 +1867,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1075,
+            "sellsFor": 1075,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1877,7 +1895,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -1898,7 +1916,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 92,
+            "sellsFor": 92,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1926,7 +1944,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1587,
+            "sellsFor": 1587,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1954,12 +1972,30 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
                     "name": "Blood Ronin",
                     "level": 60,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Crawlet",
+                    "level": 4,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hootie",
+                    "level": 13,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Hornscale",
+                    "level": 59,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -1970,14 +2006,14 @@
                     "count": "1"
                 },
                 {
-                    "name": "Snapper",
-                    "level": 62,
+                    "name": "Sucker",
+                    "level": 78,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Sunscale",
-                    "level": 50,
+                    "name": "Swampfang",
+                    "level": 80,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -2000,7 +2036,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 10238,
+            "sellsFor": 10238,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -2028,7 +2064,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1638,
+            "sellsFor": 1638,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2056,7 +2092,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 975,
+            "sellsFor": 975,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2084,7 +2120,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 900,
+            "sellsFor": 900,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2112,7 +2148,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1702,
+            "sellsFor": 1702,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2140,7 +2176,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3290,
+            "sellsFor": 3290,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2168,7 +2204,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 20563,
+            "sellsFor": 20563,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -2196,7 +2232,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1035,
+            "sellsFor": 1035,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2224,7 +2260,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 710000,
+            "sellsFor": 710000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -2252,7 +2288,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 5680,
+            "sellsFor": 5680,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2280,7 +2316,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1150,
+            "sellsFor": 1150,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -2308,7 +2344,7 @@
             "materialKindOrder": 4,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 8,
+            "sellsFor": 8,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -2522,7 +2558,7 @@
             "materialKindOrder": 5,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 6,
+            "sellsFor": 6,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -2736,42 +2772,48 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Dewdrop",
-                    "level": 39,
+                    "name": "Bittersweet",
+                    "level": 68,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Gnasher",
-                    "level": 65,
+                    "name": "Deep Maw",
+                    "level": 24,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Great Croak",
-                    "level": 66,
+                    "name": "Emberlurk",
+                    "level": 71,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Octi",
-                    "level": 63,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Rivershell",
-                    "level": 60,
+                    "name": "Emberwyrm",
+                    "level": 46,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Tarantix",
+                    "level": 11,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wyrmlet",
+                    "level": 34,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -2794,7 +2836,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -2888,7 +2930,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -2982,7 +3024,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 46,
+            "sellsFor": 46,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3010,7 +3052,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 5,
-            "zeny": 25,
+            "sellsFor": 25,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3031,7 +3073,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -3149,7 +3191,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -3267,7 +3309,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2252,
+            "sellsFor": 2252,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3295,7 +3337,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 14077,
+            "sellsFor": 14077,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3323,7 +3365,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2139,
+            "sellsFor": 2139,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3351,7 +3393,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 26447,
+            "sellsFor": 26447,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3379,7 +3421,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4232,
+            "sellsFor": 4232,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3407,7 +3449,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2280,
+            "sellsFor": 2280,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3435,7 +3477,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 425,
+            "sellsFor": 425,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3463,7 +3505,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 17200,
+            "sellsFor": 17200,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3491,7 +3533,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 688,
+            "sellsFor": 688,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3519,7 +3561,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 5390,
+            "sellsFor": 5390,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3547,7 +3589,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 134750,
+            "sellsFor": 134750,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3575,7 +3617,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3218,
+            "sellsFor": 3218,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3603,7 +3645,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 20109,
+            "sellsFor": 20109,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3631,7 +3673,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 94600,
+            "sellsFor": 94600,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -3659,7 +3701,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3784,
+            "sellsFor": 3784,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3687,7 +3729,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3708,7 +3750,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1974,
+            "sellsFor": 1974,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3736,7 +3778,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 15,
-            "zeny": 3750,
+            "sellsFor": 3750,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3757,7 +3799,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 15,
-            "zeny": 3750,
+            "sellsFor": 3750,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3778,7 +3820,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4505,
+            "sellsFor": 4505,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3806,7 +3848,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 28153,
+            "sellsFor": 28153,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3834,7 +3876,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 400,
+            "sellsFor": 400,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3855,7 +3897,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 400,
+            "sellsFor": 400,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -3876,48 +3918,48 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 133,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Burrowbo",
-                    "level": 25,
+                    "name": "Flutterby",
+                    "level": 2,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Digger",
-                    "level": 36,
+                    "name": "Glowcoil",
+                    "level": 88,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Frost Ronin",
-                    "level": 33,
+                    "name": "Octi",
+                    "level": 63,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Mossgore",
-                    "level": 34,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mossmaw",
-                    "level": 35,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mudpup",
-                    "level": 23,
+                    "name": "Scaly",
+                    "level": 37,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Sunscale",
+                    "level": 50,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wraithmother",
+                    "level": 90,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -3940,7 +3982,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 12,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -3992,7 +4034,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 900000,
+            "sellsFor": 900000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -4020,7 +4062,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 7200,
+            "sellsFor": 7200,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4048,7 +4090,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 47469,
+            "sellsFor": 47469,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4076,7 +4118,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1899,
+            "sellsFor": 1899,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4104,7 +4146,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 12,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4210,7 +4252,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -4231,7 +4273,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -4252,7 +4294,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 112,
+            "sellsFor": 112,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -4273,7 +4315,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 40,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -4547,7 +4589,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 144,
+            "sellsFor": 144,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4575,7 +4617,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 312,
+            "sellsFor": 312,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4603,7 +4645,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -4624,7 +4666,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 114975,
+            "sellsFor": 114975,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4652,7 +4694,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4599,
+            "sellsFor": 4599,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4680,7 +4722,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2065,
+            "sellsFor": 2065,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4708,7 +4750,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2581,
+            "sellsFor": 2581,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -4736,7 +4778,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 172000,
+            "sellsFor": 172000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -4764,7 +4806,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 6880,
+            "sellsFor": 6880,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4792,7 +4834,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3369,
+            "sellsFor": 3369,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -4820,7 +4862,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2695,
+            "sellsFor": 2695,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4848,7 +4890,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1536,
+            "sellsFor": 1536,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4876,7 +4918,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5066,7 +5108,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5256,7 +5298,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 680,
+            "sellsFor": 680,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -5284,7 +5326,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 544,
+            "sellsFor": 544,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5312,7 +5354,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 24741,
+            "sellsFor": 24741,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -5340,7 +5382,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 3959,
+            "sellsFor": 3959,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -5368,24 +5410,36 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Emberwyrm",
-                    "level": 46,
+                    "name": "Blinkbat",
+                    "level": 8,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Golden Bandit",
-                    "level": 44,
+                    "name": "Chomper",
+                    "level": 48,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Hornscale",
-                    "level": 59,
+                    "name": "Drizzle",
+                    "level": 74,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Grumbear",
+                    "level": 31,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Inferno Mask",
+                    "level": 80,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -5396,8 +5450,8 @@
                     "count": "1"
                 },
                 {
-                    "name": "Viper",
-                    "level": 42,
+                    "name": "Snapper",
+                    "level": 62,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -5420,7 +5474,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5694,7 +5748,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -5968,7 +6022,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 100,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -6242,7 +6296,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -6312,7 +6366,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -6382,7 +6436,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 147000,
+            "sellsFor": 147000,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -6410,7 +6464,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 5880,
+            "sellsFor": 5880,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6438,7 +6492,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -6496,7 +6550,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 112,
+            "sellsFor": 112,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6517,7 +6571,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 7,
-            "zeny": 25,
+            "sellsFor": 25,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6538,7 +6592,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 7,
-            "zeny": 25,
+            "sellsFor": 25,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6559,7 +6613,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1800,
+            "sellsFor": 1800,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6587,7 +6641,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1190,
+            "sellsFor": 1190,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6615,7 +6669,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1488,
+            "sellsFor": 1488,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -6643,7 +6697,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 15313,
+            "sellsFor": 15313,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6671,7 +6725,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2450,
+            "sellsFor": 2450,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6699,7 +6753,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 250,
+            "sellsFor": 250,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6727,7 +6781,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 7116,
+            "sellsFor": 7116,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6755,7 +6809,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1139,
+            "sellsFor": 1139,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6783,7 +6837,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 480,
+            "sellsFor": 480,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6811,7 +6865,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2116,
+            "sellsFor": 2116,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6839,7 +6893,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -6860,7 +6914,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2756,
+            "sellsFor": 2756,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -6888,7 +6942,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2205,
+            "sellsFor": 2205,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6916,7 +6970,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 5972,
+            "sellsFor": 5972,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6944,7 +6998,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 956,
+            "sellsFor": 956,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -6972,7 +7026,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 39244,
+            "sellsFor": 39244,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -7000,7 +7054,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 6279,
+            "sellsFor": 6279,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7028,7 +7082,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -7049,7 +7103,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7239,7 +7293,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 100,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -7429,7 +7483,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 504,
+            "sellsFor": 504,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7457,7 +7511,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1025,
+            "sellsFor": 1025,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7485,7 +7539,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 44100,
+            "sellsFor": 44100,
             "materialStep": 4,
             "droppedBy": [
                 {
@@ -7513,7 +7567,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1764,
+            "sellsFor": 1764,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7541,7 +7595,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -7562,7 +7616,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 24,
+            "sellsFor": 24,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7590,7 +7644,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -7611,7 +7665,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -7632,7 +7686,7 @@
             "materialKindOrder": 5,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 18,
+            "sellsFor": 18,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -7846,7 +7900,7 @@
             "materialKindOrder": 8,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 10,
+            "sellsFor": 10,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -8456,7 +8510,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 294,
+            "sellsFor": 294,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8484,7 +8538,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1380,
+            "sellsFor": 1380,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8512,7 +8566,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 12,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -8564,7 +8618,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 888,
+            "sellsFor": 888,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -8592,42 +8646,30 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Abyss Maw",
-                    "level": 99,
+                    "name": "Burrowbo",
+                    "level": 25,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Bittersweet",
-                    "level": 68,
+                    "name": "Frostcap",
+                    "level": 93,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Drizzle",
-                    "level": 74,
+                    "name": "Gloop King",
+                    "level": 8,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Frostskull",
-                    "level": 91,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Frostwick",
-                    "level": 95,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Glowcoil",
-                    "level": 88,
+                    "name": "Golden Bandit",
+                    "level": 44,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -8638,62 +8680,14 @@
                     "count": "1"
                 },
                 {
-                    "name": "Grubble",
-                    "level": 90,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Inky",
-                    "level": 77,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Lovebite",
-                    "level": 96,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Moldy",
-                    "level": 72,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Nightsqueak",
-                    "level": 92,
+                    "name": "Kappi",
+                    "level": 15,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Squirt",
-                    "level": 79,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Swampfang",
-                    "level": 80,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Venom Gloop",
-                    "level": 95,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Wraithmother",
-                    "level": 90,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -8716,7 +8710,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -8864,7 +8858,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 8,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -9012,7 +9006,7 @@
             "materialKindOrder": 4,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 32,
+            "sellsFor": 32,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -9226,7 +9220,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 450,
+            "sellsFor": 450,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9254,7 +9248,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 384,
+            "sellsFor": 384,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9282,18 +9276,24 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Chomper",
-                    "level": 48,
+                    "name": "Digger",
+                    "level": 36,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Emberhoot",
-                    "level": 45,
+                    "name": "Elder Stalk",
+                    "level": 47,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Iris",
+                    "level": 64,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9304,8 +9304,20 @@
                     "count": "1"
                 },
                 {
-                    "name": "Toadmaw",
-                    "level": 78,
+                    "name": "Shellby",
+                    "level": 18,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squeak",
+                    "level": 3,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Squirt",
+                    "level": 79,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -9328,7 +9340,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 2088,
+            "sellsFor": 2088,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9356,7 +9368,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1488,
+            "sellsFor": 1488,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9384,30 +9396,36 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 60,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Adder",
-                    "level": 57,
+                    "name": "Capling",
+                    "level": 5,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Bloodshot",
-                    "level": 58,
+                    "name": "Mossmaw",
+                    "level": 35,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Iris",
-                    "level": 64,
+                    "name": "Nightsqueak",
+                    "level": 92,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Karasu",
-                    "level": 58,
+                    "name": "Oni Tengu",
+                    "level": 92,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pilfer",
+                    "level": 28,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9420,12 +9438,6 @@
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Willo",
-                    "level": 54,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -9448,12 +9460,12 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Deep Maw",
-                    "level": 24,
+                    "name": "Cyclo",
+                    "level": 69,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9464,14 +9476,20 @@
                     "count": "1"
                 },
                 {
-                    "name": "Kappi",
-                    "level": 15,
+                    "name": "Great Croak",
+                    "level": 66,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Newtie",
-                    "level": 20,
+                    "name": "Moldy",
+                    "level": 72,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Rascal",
+                    "level": 14,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9482,8 +9500,8 @@
                     "count": "1"
                 },
                 {
-                    "name": "Shellby",
-                    "level": 18,
+                    "name": "Skywing",
+                    "level": 87,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -9506,7 +9524,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -9570,7 +9588,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 72,
+            "sellsFor": 72,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9598,7 +9616,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1659,
+            "sellsFor": 1659,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9626,42 +9644,24 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Blazeskull",
-                    "level": 76,
+                    "name": "Bloodshot",
+                    "level": 58,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Cinder",
-                    "level": 67,
+                    "name": "Coily",
+                    "level": 43,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Cyclo",
-                    "level": 69,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Emberlurk",
-                    "level": 71,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Horngore",
-                    "level": 73,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Inferno Mask",
-                    "level": 80,
+                    "name": "Mossnail",
+                    "level": 10,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9672,8 +9672,20 @@
                     "count": "1"
                 },
                 {
-                    "name": "Sucker",
+                    "name": "Toadmaw",
                     "level": 78,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Venom Gloop",
+                    "level": 95,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Wisp",
+                    "level": 85,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -9696,7 +9708,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1794,
+            "sellsFor": 1794,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9724,7 +9736,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1200,
+            "sellsFor": 1200,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9752,7 +9764,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 12,
-            "zeny": 1250,
+            "sellsFor": 1250,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -9773,7 +9785,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 12,
-            "zeny": 1250,
+            "sellsFor": 1250,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -9794,7 +9806,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1840,
+            "sellsFor": 1840,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9822,36 +9834,24 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Bandit Boss",
-                    "level": 22,
+                    "name": "Blazeskull",
+                    "level": 76,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Capling",
-                    "level": 5,
+                    "name": "Emberhoot",
+                    "level": 45,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Crawlet",
-                    "level": 4,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Flutterby",
-                    "level": 2,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Gloop King",
-                    "level": 8,
+                    "name": "Frost Ronin",
+                    "level": 33,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9862,26 +9862,8 @@
                     "count": "1"
                 },
                 {
-                    "name": "Mossnail",
-                    "level": 10,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Pilfer",
-                    "level": 28,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Plopling",
-                    "level": 1,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Rascal",
-                    "level": 14,
+                    "name": "Rivershell",
+                    "level": 60,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -9892,8 +9874,8 @@
                     "count": "1"
                 },
                 {
-                    "name": "Squeak",
-                    "level": 3,
+                    "name": "Willo",
+                    "level": 54,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -9916,7 +9898,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -9937,7 +9919,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 231,
+            "sellsFor": 231,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9965,7 +9947,7 @@
             "materialKindOrder": 7,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 2,
+            "sellsFor": 2,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -10575,7 +10557,7 @@
             "materialKindOrder": 4,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 4,
+            "sellsFor": 4,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -10993,7 +10975,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1009125,
+            "sellsFor": 1009125,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11021,7 +11003,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 8073,
+            "sellsFor": 8073,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11049,7 +11031,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -11070,7 +11052,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 40,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -11260,7 +11242,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 6,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -11306,7 +11288,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 9833,
+            "sellsFor": 9833,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11334,7 +11316,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1229063,
+            "sellsFor": 1229063,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11362,7 +11344,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1050,
+            "sellsFor": 1050,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11390,18 +11372,30 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Frostcap",
-                    "level": 93,
+                    "name": "Abyss Maw",
+                    "level": 99,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Oni Tengu",
-                    "level": 92,
+                    "name": "Bandit Boss",
+                    "level": 22,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Cinder",
+                    "level": 67,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Dewdrop",
+                    "level": 39,
                     "chance": "2%",
                     "count": "1"
                 },
@@ -11412,14 +11406,14 @@
                     "count": "1"
                 },
                 {
-                    "name": "Skywing",
-                    "level": 87,
+                    "name": "Viper",
+                    "level": 42,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Wisp",
-                    "level": 85,
+                    "name": "Webber",
+                    "level": 19,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -11442,42 +11436,48 @@
             "materialKindOrder": 0,
             "cardSlots": 2,
             "weight": 90,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
-                    "name": "Blinkbat",
-                    "level": 8,
+                    "name": "Frostwick",
+                    "level": 95,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Hootie",
-                    "level": 13,
+                    "name": "Grubble",
+                    "level": 90,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
-                    "name": "Oculord",
-                    "level": 14,
+                    "name": "Karasu",
+                    "level": 58,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Mossgore",
+                    "level": 34,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Pando",
+                    "level": 21,
+                    "chance": "2%",
+                    "count": "1"
+                },
+                {
+                    "name": "Plopling",
+                    "level": 1,
                     "chance": "2%",
                     "count": "1"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Tarantix",
-                    "level": 11,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Webber",
-                    "level": 19,
                     "chance": "2%",
                     "count": "1"
                 }
@@ -11500,7 +11500,7 @@
             "materialKindOrder": 4,
             "cardSlots": 0,
             "weight": 1,
-            "zeny": 2,
+            "sellsFor": 2,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11918,7 +11918,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 1520,
+            "sellsFor": 1520,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -11946,7 +11946,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 190000,
+            "sellsFor": 190000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11974,7 +11974,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4320,
+            "sellsFor": 4320,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12002,7 +12002,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 540000,
+            "sellsFor": 540000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -12030,7 +12030,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 26297,
+            "sellsFor": 26297,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -12058,7 +12058,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 4208,
+            "sellsFor": 4208,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12086,7 +12086,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 0,
-            "zeny": 0,
+            "sellsFor": 0,
             "materialStep": 0,
             "droppedBy": []
         },
@@ -12107,7 +12107,7 @@
             "materialKindOrder": 0,
             "cardSlots": 0,
             "weight": 30,
-            "zeny": 5,
+            "sellsFor": 5,
             "materialStep": 0,
             "droppedBy": [
                 {
@@ -12297,7 +12297,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 39375,
+            "sellsFor": 39375,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -12325,7 +12325,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 6300,
+            "sellsFor": 6300,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -12353,7 +12353,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "zeny": 782,
+            "sellsFor": 782,
             "materialStep": 1,
             "droppedBy": [
                 {

@@ -269,12 +269,13 @@ public class ItemTooltip : MonoBehaviour
         int slots = def.cardSlots;
         if (slots > 0)
         {
-            sb.Append("\n" + DimTag + "Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
+            sb.Append("\n\n" + DimTag + "Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
             if (inst.cards != null)
                 foreach (var card in inst.cards)
                     if (card != null)
                         sb.Append("\n  " + CardTag + "◇ ").Append(card.displayName).Append("</color>");
         }
+        sb.Append('\n');
         AppendFooter(sb, def);
         return sb.ToString();
     }
@@ -333,7 +334,7 @@ public class ItemTooltip : MonoBehaviour
         var skill = Trademarks.SkillOf(inst);
         if (skill == null) return;
         sb.Append("\n\n" + DimTag + "Trademark Skill: </color>").Append(skill.displayName);
-        TrademarkLines(skill, inst.trademarkLift, trademarkScratch);
+        TrademarkLines(skill, inst.trademarkLift, trademarkScratch, true);
         foreach (var line in trademarkScratch) sb.Append('\n').Append(line);
         trademarkScratch.Clear();
     }
@@ -341,12 +342,17 @@ public class ItemTooltip : MonoBehaviour
     static readonly System.Collections.Generic.List<string> trademarkScratch = new System.Collections.Generic.List<string>();
 
     /// <summary>What a trademark of <paramref name="skill"/> at <paramref name="lift"/> raises, one line per effect with a
-    /// main number — "+12% damage". The one wording of it: this card and the wiki's trademark table both print it.</summary>
-    public static void TrademarkLines(SkillDef skill, float lift, System.Collections.Generic.List<string> into)
+    /// main number — "+12% damage". The one wording of it: this card and the wiki's trademark table both print it.
+    /// <paramref name="nameTheSkill"/> says whose number it is — "+12% to Petal Storm's damage" — for the card, where a
+    /// line stands alone; the wiki's table already names the skill on the row.</summary>
+    public static void TrademarkLines(SkillDef skill, float lift, System.Collections.Generic.List<string> into,
+                                      bool nameTheSkill = false)
     {
         into.Clear();
         if (skill == null) return;
-        string pct = "+" + Mathf.RoundToInt(lift * 100f) + "% ";
+        string owner = !nameTheSkill ? ""
+                     : "to " + skill.displayName + (skill.displayName.EndsWith("s") ? "' " : "'s ");
+        string pct = "+" + Mathf.RoundToInt(lift * 100f) + "% " + owner;
         for (int b = 0; b < skill.bindings.Count; b++)
         {
             var fx = skill.bindings[b]?.effects;
@@ -377,12 +383,34 @@ public class ItemTooltip : MonoBehaviour
             sb.Append('\n').Append(WeaponTypes.SwingsRanged(item.weaponType, 0, 0) ? "RANGED attack" : "MELEE attack");
     }
 
-    // THIS COPY's own numbers — what it really adds, read from the same sum the stat sheet uses, so the card and
-    // the sheet can never disagree. Its grade and folds are already inside them; cards have their own lines below.
+    // THIS COPY's numbers, in two groups a blank line apart: first what the piece itself gives (the folds' numbers,
+    // grade and rarity already inside them), large and bold — then what Ink wrote on it, at ordinary weight, with how
+    // many it may carry. Both read through the same sums the stat sheet uses (CraftingMath.AddPiece / AddInk), so
+    // the card and the sheet can never disagree. Cards and the trademark have their own groups below.
     static void AppendCopyStats(StringBuilder sb, EquipmentInstance inst)
     {
-        var eb = default(EquipBonuses);
-        inst.AddPieceInto(ref eb);
+        var own = default(EquipBonuses);
+        CraftingMath.AddPiece(inst.piece, null, null, ref own);
+        int before = sb.Length;
+        sb.Append("\n<b><size=115%>");
+        int opened = sb.Length;
+        AppendStatList(sb, own);
+        if (sb.Length == opened) sb.Length = before;
+        else sb.Append("</size></b>");
+
+        var ink = default(EquipBonuses);
+        int n = inst.inkStats != null && inst.inkValues != null ? Mathf.Min(inst.inkStats.Count, inst.inkValues.Count) : 0;
+        for (int i = 0; i < n; i++) CraftingMath.AddInk(inst.inkStats[i], inst.inkValues[i], ref ink);
+        before = sb.Length;
+        sb.Append('\n');
+        opened = sb.Length;
+        AppendStatList(sb, ink);
+        AppendInkSlots(sb, inst);
+        if (sb.Length == opened) sb.Length = before;
+    }
+
+    static void AppendStatList(StringBuilder sb, in EquipBonuses eb)
+    {
         AppendStat(sb, "ATK", eb.atk);
         AppendStat(sb, "DEF", eb.def);
         AppendStat(sb, "M.ATK", eb.matk);
@@ -401,7 +429,6 @@ public class ItemTooltip : MonoBehaviour
         AppendStat(sb, "CRIT DMG", eb.critDamagePercent, "%");
         AppendStat(sb, "ASPD", eb.aspdPercent, "%");
         AppendStat(sb, "CAST SPEED", eb.castSpeedPercent, "%");
-        AppendInkSlots(sb, inst);
     }
 
     /// <summary>The label a written stat goes by on screen — the SAME word the stat line above uses for it, so the
@@ -432,6 +459,15 @@ public class ItemTooltip : MonoBehaviour
         }
     }
 
+    /// <summary>One written stat as a line — "+80 Max HP", "+2.4% CRIT DMG" — the words the item card's stat lines use,
+    /// for the station's slot buttons and the server's "Wrote …" sentence.</summary>
+    public static string InkStatLine(InkStat stat, float value)
+        => "+" + value.ToString("0.##") + (IsPercentStat(stat) ? "% " : " ") + InkStatLabel(stat);
+
+    /// <summary>The written stats that are whole percents rather than flat numbers.</summary>
+    public static bool IsPercentStat(InkStat s)
+        => s == InkStat.CritChance || s == InkStat.CritDamage || s == InkStat.AttackSpeed || s == InkStat.CastSpeed;
+
     // How many stats this copy's grade lets it carry, and how many are written — so an empty slot reads as room
     // rather than as nothing.
     static void AppendInkSlots(StringBuilder sb, EquipmentInstance inst)
@@ -449,7 +485,7 @@ public class ItemTooltip : MonoBehaviour
             sb.Append("\n" + DimTag + "Weight ").Append(item.weight).Append("</color>");
         // A SELL VALUE OF 0 IS NOT SHOWN AS A 0: it means no shop will buy it, and it says so.
         if (item.CanBeSold)
-            sb.Append("\n" + DimTag + "Value ").Append(item.zeny).Append("z</color>");
+            sb.Append("\n" + DimTag + "Value ").Append(Wallet.Amount(item.value)).Append("</color>");
         else
             sb.Append("\n" + DimTag).Append(Item.CannotBeSoldText).Append("</color>");
         if (!string.IsNullOrWhiteSpace(item.description))

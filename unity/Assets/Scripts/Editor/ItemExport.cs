@@ -44,7 +44,7 @@ public static class ItemExport
     {
         public string id, name, description, type, slot, weaponType, element, madeOf, reach;
         public string materialKind, mergesInto, rarity;
-        public int slotOrder, materialKindOrder, cardSlots, weight, zeny, materialStep;
+        public int slotOrder, materialKindOrder, cardSlots, weight, sellsFor, materialStep;
         public Source[] droppedBy;
     }
 
@@ -83,7 +83,7 @@ public static class ItemExport
                 madeOf = it.madeOf == MaterialKind.None ? "" : it.madeOf.ToString(),
                 cardSlots = it.cardSlots,
                 weight = it.weight,
-                zeny = it.zeny,
+                sellsFor = (int)ShopMath.SalePay(it.value, 1),
                 materialKind = it.materialKind == MaterialKind.None ? "" : it.materialKind.ToString(),
                 materialKindOrder = (int)it.materialKind,
                 materialStep = it.materialStep,

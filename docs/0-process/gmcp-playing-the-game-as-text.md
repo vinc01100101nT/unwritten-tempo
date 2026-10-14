@@ -101,7 +101,7 @@ Fish`, `revived`, `5s passed`. A wait may be up to 120 s.
 
 ## The screen
 
-One short block: the map; your name, level, HP, MP, XP, gold, position, current order, stat points and target;
+One short block: the map; your name, level, HP, MP, XP, Unsigned, position, current order, stat points and target;
 each of the 27 hotbar slots — a skill with its mana cost and **ready**, **cd** *N*s or **noMP**, an item by name with how many are carried, a piece of gear by name, or `-` when empty; your states with seconds left and stacks; the nearest
 monsters (up to 10, within 25 m) with HP and distance — never their states, because the server sends a machine only
 its own player's states; players, villagers, floor items and doors within 15 m; an open dialogue; and **since

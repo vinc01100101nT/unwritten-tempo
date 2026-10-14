@@ -219,7 +219,7 @@ public class QuestsWindow : MonoBehaviour
     {
         switch (n.kind)
         {
-            case QuestRequirementKind.Gold: return n.amount.ToString("N0") + " gold";
+            case QuestRequirementKind.Gold: return Wallet.Amount(n.amount);
             case QuestRequirementKind.Level: return "Level " + n.amount;
             default:
                 var item = ItemCatalog.Resolve(n.itemId);
@@ -244,13 +244,13 @@ public class QuestsWindow : MonoBehaviour
         rt.anchoredPosition = Vector2.zero;
     }
 
-    // "Reward: 25 experience, 300 gold, 5 Minor Healing Potion" — the quest data's own numbers, as written.
+    // "Reward: 25 experience, 300u, 5 Minor Healing Potion" — the quest data's own numbers, as written.
     static string RewardLine(QuestDef.Reward r)
     {
         if (r == null || !r.Any) return null;
         var parts = new List<string>();
         if (r.experience > 0) parts.Add(r.experience + " experience");
-        if (r.gold > 0) parts.Add(r.gold + " gold");
+        if (r.gold > 0) parts.Add(Wallet.Amount(r.gold));
         if (r.items != null)
             foreach (var it in r.items)
             {

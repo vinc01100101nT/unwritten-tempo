@@ -77,11 +77,13 @@ menu's entries are the same button:
 - `UiKit.ListLine` — a line of text in it, one or more rows tall.
 - `UiKit.ListButton` — a full-width button of a stated height (30 in a list window, 34 in the System menu).
 - `UiKit.ListDeal` — a line that is a deal: what it is on the left, one or two 70-wide presses on the right
-  (Buy 1 / Buy 10, Sell 1 / Sell all, Take 1 / Take all, Store 1 / Store all).
+  (Take 1 / Take all, Store 1 / Store all).
 
-A window that needs a list is built from these, never from a copy of them. On the Shop's rows (For sale, Sell, Buy
-back) and the Keeper's storage rows, an item's **name** is written in the colour of its rarity (`Rarities.Coloured`),
-as the bag writes it; the price, count and time beside it stay in the row's own colour.
+A window that needs a list is built from these, never from a copy of them. On the Keeper's storage rows, an item's
+**name** is written in the colour of its rarity (`Rarities.Coloured`), as the bag writes it. The Shop's three lists (For
+sale, Cart, Inventory) use the list's **item row** (`UiListView.Slot.ShowItem`): the name in its rarity's colour, cut
+with "…" when room runs short, the count, a small tag ("Buy back", "2 free", "Buy"/"Sell"), and the price of one, whole,
+at the right — the row carries the item card on hover and can be dragged.
 
 **A list that can grow long builds only the rows in view** — `UiListView`, which the Keeper window uses. It draws the
 same three kinds of line at the same sizes, colours and 70-wide presses, keeps only enough rows to fill the view, and
@@ -93,7 +95,7 @@ cost the twenty-odd rows on screen; built line by line they were about 10,800 ob
 
 Top-left by default, draggable by its bar, and it remembers where it was left. Its bar carries the character's
 name, HP and MP. Its body shows **Lv**, **Ring Lv** and **[held weapon] Mastery Lv**, each with its experience bar
-(the mastery row only while a weapon is held), then the zeny with a + beside it that shows or hides a button for
+(the mastery row only while a weapon is held), then the character's Unsigned — the game's currency, every amount written as the number and a u, "250u" — with a + beside it that shows or hides a button for
 every HUD window: Inventory, Character, Skills, Quests, Calendar, Map, Chat, Settings, System. Each button
 opens its window by the key that already opens it (`Hotkeys.PressOnScreen`, a one-frame press of that key from
 the screen), so it adds no second way into any window. It replaced the experience strip along the bottom of
@@ -103,21 +105,21 @@ the screen and the health and mana bars at the bottom left.
 
 On the left edge, between the status box and the chat. After a kill, a run of kills starts: every kill within
 **10 seconds** of the one before adds one to it, and a kill after that starts it again at 1. The run multiplies what
-each kill pays — **1% more per kill in it, up to 50% at 50 kills** — the experience, and the zeny a saved character
+each kill pays — **1% more per kill in it, up to 50% at 50 kills** — the experience, and the Unsigned a saved character
 pays. Never a flat amount, so the bonus is the same share of a creature at any level.
 
 The count is drawn big in the damage numbers' pixel face and the rising-total yellow, and pops every time it climbs.
 Under it, "COMBO" with the bonus it is worth ("COMBO +12%"), and a thin yellow bar draining towards the moment the
 run ends; at that moment the count, the word and the bar go. Under those, always once the first kill has landed:
-**EXP/h** and **Zeny/h**, what kills paid over the last 10 minutes as a rate per hour (never over less than a
+**EXP/h** and **u/h**, what kills paid over the last 10 minutes as a rate per hour (never over less than a
 minute), with thousands separators. A rate is updated with every kill and stays as it was between kills.
 
 Every number is the server's: it counts the run, multiplies the pay and works out the rates, and tells only the
-person who earned the kill (one message per kill, and one when a saved character pays its zeny). Their screen
+person who earned the kill (one message per kill, and one when a saved character pays its Unsigned). Their screen
 copies the numbers and compares the end moment it was sent with the clock to stop drawing the count — the same
 compare the hotbar makes for a cooldown. The run and the meter are not saved: a door or a disconnect starts both
 again. Only kills that pay count — a summon or a training dummy is no part of a run; a kill that pays 0
-experience under a world event, or at level 99, still counts. A kill pays no zeny of its own, so Zeny/h reads 0
+experience under a world event, or at level 99, still counts. A kill pays no Unsigned of its own, so u/h reads 0
 unless saved characters paid some.
 
 ## The chat's tabs
@@ -125,7 +127,7 @@ unless saved characters paid some.
 The chat window has three tabs: **All**, **PM** and **Combat Log**. All shows said lines, skill calls, arrivals
 and private messages; PM only private messages. **Combat Log** shows every blow you deal and take ("You hit Poring
 for 12", "Poring missed you", "You took 3 from bleeding"), every kill and what it paid ("You defeated Poring",
-"+120 EXP (+12 from combo)", "+30 Zeny (+3 from combo)") and every item you obtain — and none of it ever appears
+"+120 EXP (+12 from combo)", "+30u (+3u from combo)") and every item you obtain — and none of it ever appears
 under All. Each kind keeps its own last 200 rows. The combat lines are kept as the server's numbers and turned into
 words only while the Combat Log tab is open, so a fight costs nothing while you read another tab.
 

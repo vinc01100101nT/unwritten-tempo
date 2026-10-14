@@ -29,7 +29,7 @@ public static class QuestRewards
             if (r.gold > 0)
             {
                 c.AddGold(r.gold);
-                Part(said, ref first, r.gold + " gold");
+                Part(said, ref first, Wallet.Amount(r.gold));
             }
             if (r.items != null)
                 foreach (var it in r.items)
@@ -53,7 +53,7 @@ public static class QuestRewards
         PlaySession.QuestFinished(c);
         GameLog.Info(LogCat.Loot, string.Concat(SpawnIds.MapOf(c), " ", SpawnIds.Label(c), " (",
                                                  GameNetwork.CharacterIdOf(c), ") finished quest ", def.id, " — ", said.ToString()));
-        shell?.TellQuestLine(said.ToString());
+        shell?.TellQuestLine(said.ToString(), "Quest complete");
     }
 
     static void Part(StringBuilder sb, ref bool first, string what)

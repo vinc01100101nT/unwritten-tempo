@@ -345,7 +345,7 @@
     },
     {
       "type": "paragraph",
-      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus gold, and adds to what the piece is worth: **attack** on a weapon (a staff, wand or scythe gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour or a garment add."
+      "text": "The **+N** on a piece is how many times it has been **folded** at its station. Each fold costs **Temper Dust** — one at Raw, and one more for each grade — plus Unsigned, and adds to what the piece is worth: **attack** on a weapon (a staff, wand or scythe gains magic attack instead). On armour, the **material** decides what a fold adds — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes add half of what body armour or a garment add."
     },
     {
       "type": "paragraph",

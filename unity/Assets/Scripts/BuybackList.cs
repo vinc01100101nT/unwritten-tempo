@@ -5,6 +5,9 @@ using System.Collections.Generic;
 /// not another of its kind. A stack is held as its item and how many.</summary>
 public class SoldEntry
 {
+    /// <summary>This sale's own number in its character's list — what a buy-back names it by, because two sales of the
+    /// same thing are two entries and an item id cannot tell them apart.</summary>
+    public int id;
     public Item def;
     public int count;
     /// <summary>The piece itself, for gear; null for a stack.</summary>
@@ -34,6 +37,8 @@ public class SoldEntry
 public class BuybackList
 {
     readonly List<SoldEntry> entries = new List<SoldEntry>(ShopMath.BuybackMostEntries + 1);
+    // The number the next sale is given. Only ever goes up, so a number is never used twice in one list.
+    int nextId = 1;
 
     /// <summary>Oldest first.</summary>
     public IReadOnlyList<SoldEntry> Entries => entries;
@@ -45,32 +50,17 @@ public class BuybackList
             if (entries[i].endsAt <= nowEpoch) entries.RemoveAt(i);
     }
 
-    /// <summary>SERVER: keep what was just sold. A stack of something already kept joins that entry — counts and gold
-    /// paid added, its hour started again, moved to the newest end — so selling one at a time cannot push everything
-    /// else out. A piece of gear is always its own entry. When that makes one too many, the oldest is let go and
-    /// handed back in <paramref name="letGo"/> so the caller can say so.</summary>
+    /// <summary>SERVER: keep what was just sold, as an entry of its own — EVERY sale is one, never added onto an earlier
+    /// sale of the same thing, so buying one back returns exactly that sale, at what that sale paid, on its own hour.
+    /// When that makes one too many, the oldest is let go and handed back in <paramref name="letGo"/> so the caller can
+    /// say so.</summary>
     public void Keep(Item def, int count, EquipmentInstance piece, long paid, double nowEpoch, out SoldEntry letGo)
     {
         letGo = null;
         DropEnded(nowEpoch);
         double endsAt = ShopMath.BuybackEndsAt(nowEpoch);
 
-        if (piece == null)
-        {
-            for (int i = 0; i < entries.Count; i++)
-            {
-                var kept = entries[i];
-                if (kept.instance != null || kept.def != def) continue;
-                entries.RemoveAt(i);
-                kept.count += count;
-                kept.paid = ShopMath.PaidTogether(kept.paid, paid);
-                kept.endsAt = endsAt;
-                entries.Add(kept);
-                return;
-            }
-        }
-
-        entries.Add(new SoldEntry { def = def, count = piece != null ? 1 : count, instance = piece, paid = paid, endsAt = endsAt });
+        entries.Add(new SoldEntry { id = nextId++, def = def, count = piece != null ? 1 : count, instance = piece, paid = paid, endsAt = endsAt });
         if (entries.Count > ShopMath.BuybackMostEntries)
         {
             letGo = entries[0];
@@ -78,16 +68,12 @@ public class BuybackList
         }
     }
 
-    /// <summary>The entry named by its item id and, for gear, the piece's own id — what a buyback press sends, because
-    /// a position would point at the wrong entry the moment one ended. Null when there is none.</summary>
-    public SoldEntry Find(string itemId, string copyId)
+    /// <summary>The entry with this sale's own number — what a buy-back sends, because a position would point at the
+    /// wrong entry the moment one ended. Null when there is none.</summary>
+    public SoldEntry Find(int saleId)
     {
-        copyId ??= "";
         for (int i = 0; i < entries.Count; i++)
-        {
-            var e = entries[i];
-            if (e.def != null && e.def.id == itemId && e.CopyId == copyId) return e;
-        }
+            if (entries[i].id == saleId) return entries[i];
         return null;
     }
 
@@ -104,7 +90,7 @@ public class BuybackList
         for (int i = 0; i < entries.Count; i++)
         {
             var e = entries[i];
-            var s = new SaveData.SoldItem { itemId = e.def.id, count = e.count, paid = e.paid, endsAt = e.endsAt,
+            var s = new SaveData.SoldItem { id = e.id, itemId = e.def.id, count = e.count, paid = e.paid, endsAt = e.endsAt,
                                             cards = "", roll = "", copyId = "" };
             if (e.instance != null) e.instance.ToSaved(out s.refine, out s.cards, out s.roll, out s.copyId);
             saved[i] = s;
@@ -117,7 +103,12 @@ public class BuybackList
     public void Restore(SaveData.SoldItem[] saved, double nowEpoch)
     {
         entries.Clear();
+        nextId = 1;
         if (saved == null) return;
+        // A save from before sales had numbers carries 0: each such entry is numbered here, after the highest number the
+        // save does carry, so no two entries ever share one.
+        for (int i = 0; i < saved.Length; i++)
+            if (saved[i] != null && saved[i].id >= nextId) nextId = saved[i].id + 1;
         for (int i = 0; i < saved.Length; i++)
         {
             var s = saved[i];
@@ -127,6 +118,7 @@ public class BuybackList
             bool gear = def.slot != EquipSlotType.None;
             entries.Add(new SoldEntry
             {
+                id = s.id > 0 && Find(s.id) == null ? s.id : nextId++,
                 def = def,
                 count = gear ? 1 : System.Math.Max(1, s.count),
                 instance = gear ? EquipmentInstance.FromSaved(def, s.refine, s.cards, s.roll ?? "", s.copyId) : null,
@@ -146,7 +138,7 @@ public class BuybackList
         for (int i = 0; i < entries.Count; i++)
         {
             var e = entries[i];
-            var line = new SoldLine { itemId = e.def.id, count = e.count, price = ShopMath.BuybackPrice(e.paid),
+            var line = new SoldLine { id = e.id, itemId = e.def.id, count = e.count, price = ShopMath.BuybackPrice(e.paid, e.count),
                                       endsAt = e.endsAt, cards = "", roll = "", copyId = "" };
             if (e.instance != null) e.instance.ToSaved(out line.refine, out line.cards, out line.roll, out line.copyId);
             lines[i] = line;
@@ -167,6 +159,7 @@ public class BuybackList
             bool gear = def.slot != EquipSlotType.None;
             entries.Add(new SoldEntry
             {
+                id = l.id,
                 def = def,
                 count = l.count,
                 instance = gear ? EquipmentInstance.FromSaved(def, l.refine, l.cards, l.roll ?? "", l.copyId) : null,
@@ -181,6 +174,7 @@ public class BuybackList
 /// name it exactly), the finished price to buy it back, and the moment it stops being kept.</summary>
 public struct SoldLine
 {
+    public int id;
     public string itemId;
     public int count;
     public int refine;

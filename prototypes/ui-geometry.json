@@ -2,20 +2,13 @@
   "generated_by": "tools/ui-geometry.py \u2014 measured from the running editor; re-run it",
   "Inventory": {
     "parts": {
-      "window": 292.0,
-      "header_size": 10.0,
-      "row": 20.0,
+      "window": 288.0,
+      "row": 48.0,
       "search": 22.0,
-      "list": 160.0
+      "list": 192.0
     },
-    "columns": {
-      "Name": 234.0,
-      "Held": 34.0
-    },
-    "cell_sizes": {
-      "Name": 12.0,
-      "Held": 10.0
-    },
-    "note": "the bag window is 324x296; its frame leaves 292x246 inside"
+    "columns": {},
+    "cell_sizes": {},
+    "note": "the bag window is 320x336; its frame leaves 288x286 inside"
   }
 }

@@ -743,7 +743,7 @@ public sealed class QuestLog
             // WHERE IT IS SOLD, and whether it can be paid for: free on a first run while its free purchases last.
             var item = ItemCatalog.Resolve(o.itemId);
             person = WorldTownsfolkIds.Selling(item, map);
-            if (item != null && FreeBuysLeft(r, o.itemId) <= 0 && !QuestMath.CanPay(0, 0, c.Gold, item.buyPrice))
+            if (item != null && FreeBuysLeft(r, o.itemId) <= 0 && !QuestMath.CanPay(0, 0, c.Gold, ShopMath.BuyCost(item.value, 1)))
                 t.block = (int)QuestBlock.CannotPay;
         }
         else if (o.kind != QuestObjectiveKind.Wear)
@@ -883,7 +883,7 @@ public sealed class QuestLog
             var item = ItemCatalog.Resolve(o.itemId);
             if (item == null) continue;
             int bought = r.Running && i == def.IndexOf(r.stepId) ? r.progress : 0;
-            QuestMath.AddBought(item.buyPrice, o.count, bought, FreeBuysLeft(r, o.itemId), ref gold);
+            QuestMath.AddBought((int)ShopMath.BuyCost(item.value, 1), o.count, bought, FreeBuysLeft(r, o.itemId), ref gold);
         }
         foreach (var (material, amount) in materialScratch)
             needs.Add(new QuestNeedWire { questId = r.questId, kind = QuestRequirementKind.Item, itemId = material.id,

@@ -783,7 +783,7 @@ position, so it runs in your own game too, but only a GM may type it.
 the server takes from a non-GM. All four only read. `/whereis <creature>` lists every map the world spawn list places that creature in by name,
 with how many of it each map keeps alive; a test map that fills from a random mix is left out. `/mobinfo <creature>`
 shows its catalog entry as it spawns: level, size, element, health, attack, defence, flee, its six stats, experience
-and drops — a kill pays no gold. The server answers them because a creature's combat numbers are worked out on the server, never on a
+and drops — a kill pays no Unsigned. The server answers them because a creature's combat numbers are worked out on the server, never on a
 player's machine — the same numbers the Mob Table shows.
 
 **`/model`, `/time` and `/weather` change what everybody sees.** `/model` changes your body on every screen that

@@ -628,7 +628,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     void TargetMoveFailed(NetworkConnectionToClient target, string why)
     {
         LoadingScreen.Hide();
-        BattleNotice.Warn(why);
+        OverheadNotice.Fail(why);
     }
 
     [System.Serializable]
@@ -2199,18 +2199,19 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (!CraftingMath.Merges(e.def.materialKind) || e.def.mergesInto == null)
         { Refused(e.def.displayName + " does not merge."); return; }
         if (e.count < CraftingMath.MergeCount)
-        { Refused("Merging needs " + CraftingMath.MergeCount + " " + e.def.displayName + " — you have " + e.count + "."); return; }
+        { Refused("Merging needs " + CraftingMath.MergeCount + " " + e.def.displayName + " — you have " + e.count + ".",
+                  "Merging needs " + CraftingMath.MergeCount + " — you have " + e.count); return; }
 
         var into = e.def.mergesInto;
         // The ten going out are counted off first: their weight, and their entry when they are the whole stack.
         int freedSlots = e.count == CraftingMath.MergeCount && into.category == e.def.category ? -1 : 0;
         var noRoom = c.RoomFor(into, 1, freedSlots, -e.def.weight * CraftingMath.MergeCount);
-        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(into, noRoom, "make")); return; }
+        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(into, noRoom, "make"), "No room in your bag"); return; }
         e.count -= CraftingMath.MergeCount;
         if (e.count <= 0) c.Bag.RemoveAt(index);
         c.TakeIntoBag(into, 1);
         PushBagToOwner();
-        Done("Merged " + CraftingMath.MergeCount + " " + e.def.displayName + " into 1 " + into.displayName + ".");
+        Done("Merged " + CraftingMath.MergeCount + " " + e.def.displayName + " into 1 " + into.displayName + ".", "Merged");
         SaveSoon();
     }
 
@@ -2220,25 +2221,28 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // side a refused press and a broken button look the same (2026-09-21: a forge short of Copper did nothing
     // and said nothing). The reason carries its numbers — what was needed and what they have.
 
-    void Refused(string why) => TellOwnerAboutCraft(why, false, false);
-    void Done(string what, bool pieceGone = false) => TellOwnerAboutCraft(what, true, pieceGone);
+    // `notice` is the short form for the stacking notice (OverheadNotice.MostCharacters); the chat gets the whole sentence.
+    // A refusal already short enough is its own short form.
+    void Refused(string why, string notice = null) => TellOwnerAboutCraft(why, notice ?? why, false, false);
+    void Done(string what, string notice, bool pieceGone = false) => TellOwnerAboutCraft(what, notice, true, pieceGone);
 
-    void TellOwnerAboutCraft(string line, bool ok, bool pieceGone)
+    void TellOwnerAboutCraft(string line, string notice, bool ok, bool pieceGone)
     {
         // THE SAME SENTENCE IN THE LOG, refusals included — every craft press ends here, so what a tester tried at a
         // station, and what stopped them, is written once for all of them.
         if (isServer && !string.IsNullOrEmpty(line) && GameLog.On(LogCat.Server))
             LogDid(ServerCharacter, (ok ? "crafted: " : "was refused a craft: ") + line);
         if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
-        TargetCraftResult(connectionToClient, line, ok, pieceGone);
+        TargetCraftResult(connectionToClient, line, notice, ok, pieceGone);
     }
 
     // `pieceGone` says the piece the window had picked no longer exists (it was recycled), so the window lets go
     // of it rather than pointing at whatever slid into its place.
     [TargetRpc]
-    void TargetCraftResult(NetworkConnectionToClient target, string line, bool ok, bool pieceGone)
+    void TargetCraftResult(NetworkConnectionToClient target, string line, string notice, bool ok, bool pieceGone)
     {
         ChatController.GameSaid(line, ok);
+        OverheadNotice.Result(notice, ok);
         CraftStationPanel.ShowResult(line, ok, pieceGone);
     }
 
@@ -2305,7 +2309,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (inst.upgrade >= CraftingMath.FoldCap(inst.quality))
-        { Refused(ItemTooltip.CopyTitle(inst) + " is folded as far as " + GradeWord(inst.quality) + " allows (+" + CraftingMath.FoldCap(inst.quality) + "). Quench it to go further."); return; }
+        { Refused(ItemTooltip.CopyTitle(inst) + " is folded as far as " + GradeWord(inst.quality) + " allows (+" + CraftingMath.FoldCap(inst.quality) + "). Quench it to go further.",
+                  "Folded as far as it goes"); return; }
 
         var dust = MaterialCatalog.TemperDust;
         if (dust == null) { Refused("No Temper Dust is authored."); return; }
@@ -2319,7 +2324,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         inst.upgrade++;
         inst.Recompute();
         Done("Folded to " + ItemTooltip.CopyTitle(inst) + (free ? " — free, your first time."
-             : " for " + Paid(dust, units, gold) + "."));
+             : " for " + Paid(dust, units, gold) + "."), "Folded to +" + inst.upgrade);
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2348,12 +2353,14 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (!CraftingMath.CanQuench(inst.quality))
-        { Refused(ItemTooltip.CopyTitle(inst) + " is already " + GradeWord(CraftingMath.Best) + " — the best grade there is."); return; }
+        { Refused(ItemTooltip.CopyTitle(inst) + " is already " + GradeWord(CraftingMath.Best) + " — the best grade there is.",
+                  "Already the best grade"); return; }
         // THE FOLD CAP IS THE GATE (V4 §2): the folds are what a quench spends, so a piece that has not been
         // folded to its grade's cap has not done the work the roll costs.
         if (!CraftingMath.ReadyToQuench(inst.quality, inst.upgrade))
         { Refused(ItemTooltip.CopyTitle(inst) + " must be folded to +" + CraftingMath.FoldCap(inst.quality)
-                  + " before it can be quenched — it is at +" + inst.upgrade + "."); return; }
+                  + " before it can be quenched — it is at +" + inst.upgrade + ".",
+                  "Fold to +" + CraftingMath.FoldCap(inst.quality) + " before quenching"); return; }
 
         // The Salt, if the player chose one: it is spent whatever the quench does.
         var salt = SaltAt(c, saltIndex);
@@ -2383,7 +2390,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         string went = inst.quality > before ? "went UP to " : inst.quality < before ? "went DOWN to " : "stayed, now ";
         Done("Quenched " + was + " for " + Paid(oil, units, gold)
              + (saltName != null ? " and 1 " + saltName : "") + ": it " + went + ItemTooltip.CopyTitle(inst)
-             + (lost != null ? ", and lost its " + lost + " stat" : "") + ".");
+             + (lost != null ? ", and lost its " + lost + " stat" : "") + ".",
+             (inst.quality > before ? "Quench: up to " : inst.quality < before ? "Quench: down to " : "Quench: stayed ")
+             + GradeWord(inst.quality));
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2412,9 +2421,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         if (inst.InkSlots <= 0)
-        { Refused(ItemTooltip.CopyTitle(inst) + " has no stat slot — a " + GradeWord(inst.quality) + " piece takes no Ink. Quench it first."); return; }
+        { Refused(ItemTooltip.CopyTitle(inst) + " has no stat slot — a " + GradeWord(inst.quality) + " piece takes no Ink. Quench it first.",
+                  "No stat slot — quench it first"); return; }
         if (slot < 0 || slot >= inst.InkSlots)
-        { Refused(ItemTooltip.CopyTitle(inst) + " has " + inst.InkSlots + " stat slot(s); there is no slot " + (slot + 1) + "."); return; }
+        { Refused(ItemTooltip.CopyTitle(inst) + " has " + inst.InkSlots + " stat slot(s); there is no slot " + (slot + 1) + ".",
+                  "No such stat slot"); return; }
         if (inkIndex < 0 || inkIndex >= c.Bag.Count) { Refused("No Ink at that bag position."); return; }
 
         var ink = c.Bag[inkIndex];
@@ -2427,7 +2438,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             for (int i = 0; i < inst.inkStats.Count; i++)
                 if (i != slot) inkScratch.Add(inst.inkStats[i]);
         int weight = CraftingMath.RemainingInkWeight(inkScratch);
-        if (weight <= 0) { Refused(ItemTooltip.CopyTitle(inst) + " already carries every stat there is."); return; }
+        if (weight <= 0) { Refused(ItemTooltip.CopyTitle(inst) + " already carries every stat there is.", "Every stat is already on it"); return; }
         if (!CraftingMath.RollInkStat(CombatRng.Range(0, weight), inkScratch, out var stat)) return;
 
         string inkName = ink.def.displayName;
@@ -2435,9 +2446,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         float value = CraftingMath.InkValue(stat, ink.def.materialStep);
         TakeOne(c, ink);
         inst.WriteInk(slot, stat, value);
-        Done("Wrote +" + value.ToString("0.##") + (IsPercentStat(stat) ? "% " : " ") + ItemTooltip.InkStatLabel(stat)
+        Done("Wrote " + ItemTooltip.InkStatLine(stat, value)
              + " on " + ItemTooltip.CopyTitle(inst) + " (slot " + (slot + 1) + ") with 1 " + inkName
-             + (replaced != null ? ", replacing " + replaced : "") + ".");
+             + (replaced != null ? ", replacing " + replaced : "") + ".", "Wrote " + ItemTooltip.InkStatLine(stat, value));
         AfterWorkingOnGear(c, inst);
     }
 
@@ -2473,7 +2484,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     {
         if (def == null) return true;
         var noRoom = c.RoomFor(def, count, recycleTabSlots[(int)def.category], addedWeight);
-        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(def, noRoom, "get back") + " Nothing was recycled."); return false; }
+        if (noRoom != BagRefusal.None) { Refused(c.RefusalLine(def, noRoom, "get back") + " Nothing was recycled.", "No room for what comes back"); return false; }
         bool held = false;
         for (int i = 0; i < c.Bag.Count; i++)
             if (c.Bag[i] != null && c.Bag[i].def == def && !c.Bag[i].IsEquip) { held = true; break; }
@@ -2488,7 +2499,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (c == null || inst == null || inst.def == null) return;
         if (!AtTheRightStation(inst.def)) { Refused(NotAtStation(inst.def)); return; }
         var owing = c.Quests.FirstRunOwing(inst.def.id);
-        if (owing != null) { Refused(StillNeeded(inst.def, owing)); return; }
+        if (owing != null) { Refused(StillNeeded(inst.def, owing), "Still needed for a quest"); return; }
 
         string was = ItemTooltip.CopyTitle(inst);
         CraftingMath.RecycleYield(inst.quality, inst.upgrade, out int dust, out int oil, out int gold);
@@ -2522,12 +2533,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             c.TakeIntoBag(ink, recycleTiers[t]);
             Join(got, recycleTiers[t] + " " + ink.displayName);
         }
-        if (gold > 0) { c.AddGold(gold); Join(got, gold + " gold"); }
+        if (gold > 0) { c.AddGold(gold); Join(got, Wallet.Amount(gold)); }
 
         // THE BAG BEFORE THE SENTENCE: the window redraws on the sentence, and must redraw the bag as it now is. Taking
         // a weapon off empties the bar, so the bar goes too then (as CmdUnequipToBag sends it).
         PushBagToOwner(wornSlot == EquipSlotType.Weapon);
-        Done("Recycled " + was + ": got back " + (got.Length > 0 ? got.ToString() : "nothing") + ".", pieceGone: true);
+        Done("Recycled " + was + ": got back " + (got.Length > 0 ? got.ToString() : "nothing") + ".", "Recycled", pieceGone: true);
         SaveSoon();
     }
 
@@ -2565,7 +2576,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             { Refused("Needs " + units + " " + material.displayName + " — you have " + held + "."); return false; }
         }
         if (gold > 0 && c.Gold < gold)
-        { Refused("Needs " + gold + " gold — you have " + c.Gold + "."); return false; }
+        { Refused("Needs " + Wallet.Amount(gold) + " — you have " + Wallet.Amount(c.Gold) + "."); return false; }
 
         int left = units;
         for (int i = c.Bag.Count - 1; i >= 0 && left > 0; i--)
@@ -2586,19 +2597,17 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     static string StillNeeded(Item def, string questTitle)
         => "Your " + def.displayName + " is still needed for " + questTitle + " — finish it first.";
 
-    // "3 Temper Dust and 150 gold" — what a craft cost, for the sentence that reports it.
+    // "3 Temper Dust and 150u" — what a craft cost, for the sentence that reports it.
     static string Paid(Item material, int units, int gold)
     {
         string m = units > 0 && material != null ? units + " " + material.displayName : null;
-        string g = gold > 0 ? gold + " gold" : null;
+        string g = gold > 0 ? Wallet.Amount(gold) : null;
         return m != null && g != null ? m + " and " + g : m ?? g ?? "nothing";
     }
 
     static string GradeWord(Quality q) => q == Quality.Raw ? "Raw" : q.ToString();
 
     // The stats an Ink writes as a percentage — the same four the tooltip draws with a % sign.
-    static bool IsPercentStat(InkStat s)
-        => s == InkStat.CritChance || s == InkStat.CritDamage || s == InkStat.AttackSpeed || s == InkStat.CastSpeed;
 
     static void TakeOne(Character c, BagEntry e)
     {
@@ -2619,7 +2628,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // grade and folds. Worked out of the bag, nothing here differs from before.
         var wornSlot = WornSlotOf(c, worked);
         if (wornSlot != EquipSlotType.None) c.SetEquipped(wornSlot, worked);
+        // THE BAG GOES FIRST, NOW — not at the end of the frame with the other owed pushes — so the piece's new folds and
+        // name reach the window before the offer that describes them. Sent once either way: this clears what was owed.
         PushBagToOwner();
+        SendOwedBag();
         if (wornSlot != EquipSlotType.None) SendOffer(c, worked, -1, wornSlot, saltIndex);
         else SendOffer(c, IndexOf(c, worked), saltIndex);
         SaveSoon();
@@ -2724,6 +2736,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             atTheTop = !CraftingMath.CanQuench(inst.quality),
             canFold = inst.upgrade < CraftingMath.FoldCap(inst.quality),
             foldFree = FoldIsFree(c, inst),
+            pieceNow = inst.piece,
+            pieceNext = inst.upgrade < CraftingMath.FoldCap(inst.quality)
+                ? CraftingMath.PieceNumbers(inst.def.slot, inst.def.weaponType, inst.def.madeOf, inst.upgrade + 1, inst.quality, inst.rarity)
+                : inst.piece,
         });
     }
 
@@ -2784,140 +2800,176 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     bool AtTheShop(string shopId)
         => TownNPC.NearestShop(transform.position, StationReach + ReachSlack, shopId) != null;
 
-    /// <summary>Buy <paramref name="howMany"/> of <paramref name="itemId"/> from shop <paramref name="shopId"/>.
-    /// Refused unless the asker is at that shop, the shop sells it, and they can pay for all of them.</summary>
+    // ---- the shop: one cart, one trade --------------------------------------------------------------------------
+    //
+    // THE CART IS THE ONLY DOOR. The shop window keeps a list of intents (buy this, sell that position, buy that back) and
+    // sends it whole: first to be quoted as it changes, then once, on Confirm, to be carried out. Both go through the one
+    // check (ShopCart.Check), so the quote and the trade can never judge a cart two ways. The trade does all of it or
+    // none of it, in this one call, with nothing awaited between the check and the change.
+
+    // The last cart this player's trade carried out, by the window's own count — so a second Confirm sent before the
+    // first answer arrived buys nothing twice.
+    int lastTradeVersion = -1;
+
+    /// <summary>Price a cart without carrying it out: the four finished numbers, or why it would be refused.</summary>
     [Command]
-    void CmdBuy(string shopId, string itemId, int howMany)
+    void CmdQuoteCart(string shopId, CartLine[] lines, int version)
     {
         if (Leaving) return;
         var c = ServerCharacter;
-        if (c == null) return;
+        if (c == null || connectionToClient == null) return;
         var shop = WorldShops.Find(shopId);
-        var def = ItemCatalog.Resolve(itemId);
-        if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
-        if (!WorldShops.Sells(shop, def)) { ShopSaid("That is not for sale here.", false); return; }
-
-        int count = Mathf.Clamp(howMany, 1, MostInOneDeal);
-        // A TUTORIAL'S FIRST RUN TAKES NOTHING it has you buy: the free ones are counted first, and only the rest are
-        // paid for. Checked before anything is used up, so a purse too short for the rest uses up nothing.
-        int free = Mathf.Min(count, c.Quests.FreeBuysOf(itemId));
-        long cost = ShopMath.BuyCost(def.buyPrice, count - free);
-        if (cost > c.Gold) { ShopSaid("Needs " + cost + " gold — you have " + c.Gold + ".", false); return; }
-        var noRoom = c.RoomFor(def, count);
-        if (noRoom != BagRefusal.None) { ShopSaid(c.RefusalLine(def, noRoom, "buy"), false); return; }
-
-        if (free > 0) c.Quests.TakeFreeBuys(itemId, free);
-        if (cost > 0) c.AddGold(-cost);
-        c.TakeIntoBag(def, count);
-        GameLog.Info(LogCat.Server, playerName + " bought " + count + " " + def.id + " from '" + shopId + "' for " + cost + " gold"
-                     + (free > 0 ? " (" + free + " free, a tutorial's first run)" : ""));
-        // A STEP TO BUY IT counts the purchase; the bag push below judges every step on what they now hold.
-        if (c.Quests.CountBought(itemId, count)) QuestsMoved();
-        PushBagToOwner();
-        SaveSoon();
-        ShopSaid("Bought " + count + " " + def.displayName + (cost > 0 ? " for " + cost + " gold." : " — free, your first time."), true);
-    }
-
-    /// <summary>Sell <paramref name="howMany"/> of the stack at bag position <paramref name="index"/> to shop
-    /// <paramref name="shopId"/>. Refused unless the asker is at that shop and the shop buys that kind of thing.</summary>
-    [Command]
-    void CmdSell(string shopId, int index, string expectedItemId, string expectedCopyId, int howMany)
-    {
-        if (Leaving) return;
-        var c = ServerCharacter;
-        if (!StillTheSameStack(c, index, expectedItemId)) return;
-        var shop = WorldShops.Find(shopId);
-        if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
-        var e = c.Bag[index];
-        // THE VERY PIECE THEY PRESSED, not another of its kind that slid into that position after an earlier sale.
-        if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
-        if (!WorldShops.Buys(shop, e)) { ShopSaid("They will not buy that.", false); return; }
-        var owing = c.Quests.FirstRunOwing(e.def.id);
-        if (owing != null) { ShopSaid(StillNeeded(e.def, owing), false); return; }
-
-        int count = Mathf.Clamp(howMany, 1, e.count);
-        long pay = ShopMath.SalePay(e.def.zeny, count);
-        var def = e.def;
-        var piece = e.instance;
-        string what = piece != null ? ItemTooltip.CopyTitle(piece) : count + " " + def.displayName;
-        // The piece keeps its own id while it waits to be bought back, so it returns as itself.
-        if (piece != null) piece.EnsureCopyId();
-        if (count >= e.count) c.Bag.RemoveAt(index);
-        else e.count -= count;
-        // KEPT TO BE BOUGHT BACK, in the same pass that took it out of the bag — nothing runs between the two.
-        c.Buyback.Keep(def, count, piece, pay, WorldClock.EpochSecondsNow, out var letGo);
-        c.AddGold(pay);
-        GameLog.Info(LogCat.Server, playerName + " sold " + count + " " + def.id + " to '" + shopId + "' for " + pay + " gold");
-        if (letGo != null)
-            GameLog.Info(LogCat.Server, playerName + "'s oldest kept sale, " + letGo.count + " " + letGo.def.id
-                         + (letGo.instance != null ? " (copy " + letGo.CopyId + ")" : "") + ", is gone for good: more than "
-                         + ShopMath.BuybackMostEntries + " kept");
-        // The bar too: a stack sold to the last one leaves nothing for its hotbar slot to use.
-        PushBagToOwner(alsoTheBar: true, alsoTheBuyback: true);
-        SaveSoon();
-        ShopSaid("Sold " + what + " for " + pay + " gold.", true);
-    }
-
-    /// <summary>Buy back something this character sold — named by its item id and, for a piece of gear, the piece's
-    /// own id, never by a position or a price. Refused unless the asker is at that shop, it is still kept, and they can
-    /// pay the price the server works out. The whole entry comes back.</summary>
-    [Command]
-    void CmdBuyBack(string shopId, string itemId, string copyId)
-    {
-        if (Leaving) return;
-        var c = ServerCharacter;
-        if (c == null) return;
-        if (WorldShops.Find(shopId) == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); return; }
-
-        c.Buyback.DropEnded(WorldClock.EpochSecondsNow);
-        var kept = c.Buyback.Find(itemId, copyId);
-        if (kept == null)
+        ShopCart.Plan plan = null;
+        string why = shop == null || !AtTheShop(shopId) ? "You are not at that shop."
+                   : ShopCart.Check(c, shop, lines, WorldClock.EpochSecondsNow, out plan);
+        if (why != null) plan = null;
+        TargetCartQuote(connectionToClient, new CartQuote
         {
-            // The line they pressed had already ended: send the list as it now stands, so it goes from their screen too.
+            version = version,
+            buying = plan != null ? plan.buying : 0,
+            selling = plan != null ? plan.selling : 0,
+            tax = plan != null ? plan.tax : 0,
+            net = plan != null ? plan.net : 0,
+            refusal = why ?? "",
+        });
+    }
+
+    /// <summary>Carry a cart out — everything in it, or nothing.</summary>
+    [Command]
+    void CmdTrade(string shopId, CartLine[] lines, int version)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        if (version == lastTradeVersion) return;
+        var shop = WorldShops.Find(shopId);
+        if (shop == null || !AtTheShop(shopId)) { ShopSaid("You are not at that shop.", false); TradeAnswered(version, false); return; }
+
+        double now = WorldClock.EpochSecondsNow;
+        string why = ShopCart.Check(c, shop, lines, now, out var plan);
+        if (why != null)
+        {
+            // What the cart named may have ended or moved: the window gets the list as it now stands to fix the cart by.
             PushBagToOwner(alsoTheBuyback: true);
-            ShopSaid("That is no longer here to buy back.", false);
+            // The reason in full goes to the chat and under the cart; the notice says only that it was turned down.
+            ShopSaid(why, false, "Trade refused");
+            TradeAnswered(version, false);
             return;
         }
-        long price = ShopMath.BuybackPrice(kept.paid);
-        if (price > c.Gold) { ShopSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
-        var noRoom = c.RoomFor(kept.def, kept.instance != null ? 1 : kept.count);
-        if (noRoom != BagRefusal.None) { ShopSaid(c.RefusalLine(kept.def, noRoom, "buy back"), false); return; }
+        lastTradeVersion = version;
 
-        // OFF THE LIST FIRST, so a second press finds nothing; then paid for, then returned through the one door into
-        // the bag. A piece of gear returns as the very copy that was sold.
-        c.Buyback.Remove(kept);
-        c.AddGold(-price);
-        string what = kept.instance != null ? ItemTooltip.CopyTitle(kept.instance) : kept.count + " " + kept.def.displayName;
-        if (kept.instance != null) c.TakeIntoBag(kept.instance);
-        else c.TakeIntoBag(kept.def, kept.count);
-        GameLog.Info(LogCat.Server, playerName + " bought back " + kept.count + " " + kept.def.id
-                     + (kept.instance != null ? " (copy " + kept.CopyId + ")" : "") + " at '" + shopId + "' for " + price + " gold");
-        PushBagToOwner(alsoTheBuyback: true);
+        // BUY-BACKS OFF THE LIST FIRST, so nothing sold in this same trade can merge into an entry being handed back.
+        for (int i = 0; i < plan.backs.Count; i++) c.Buyback.Remove(plan.backs[i]);
+
+        // SALES, highest bag position first, so taking one out never shifts the position the next one names.
+        plan.sells.Sort((a, b) => b.bagIndex.CompareTo(a.bagIndex));
+        bool emptiedAStack = false;
+        for (int i = 0; i < plan.sells.Count; i++)
+        {
+            var s = plan.sells[i];
+            var e = s.entry;
+            var piece = e.instance;
+            // The piece keeps its own id while it waits to be bought back, so it returns as itself.
+            if (piece != null) piece.EnsureCopyId();
+            if (s.count >= e.count) { c.Bag.RemoveAt(s.bagIndex); emptiedAStack = true; }
+            else e.count -= s.count;
+            c.Buyback.Keep(e.def, s.count, piece, s.pay, now, out var letGo);
+            GameLog.Info(LogCat.Server, playerName + " sold " + s.count + " " + e.def.id + " to '" + shopId + "' for " + s.pay + " gold");
+            if (letGo != null)
+                GameLog.Info(LogCat.Server, playerName + "'s oldest kept sale, " + letGo.count + " " + letGo.def.id
+                             + (letGo.instance != null ? " (copy " + letGo.CopyId + ")" : "") + ", is gone for good: more than "
+                             + ShopMath.BuybackMostEntries + " kept");
+        }
+
+        // THE PURSE MOVES ONCE, by the whole of what changes hands.
+        c.AddGold(-plan.net);
+
+        bool questsMoved = false;
+        for (int i = 0; i < plan.buys.Count; i++)
+        {
+            var b = plan.buys[i];
+            if (b.free > 0) c.Quests.TakeFreeBuys(b.def.id, b.free);
+            c.TakeIntoBag(b.def, b.count);
+            long cost = ShopMath.BuyCost(b.def.value, b.count - b.free);
+            GameLog.Info(LogCat.Server, playerName + " bought " + b.count + " " + b.def.id + " from '" + shopId + "' for " + cost + " gold"
+                         + (b.free > 0 ? " (" + b.free + " free, a tutorial's first run)" : ""));
+            // A STEP TO BUY IT counts the purchase; the bag push below judges every step on what they now hold.
+            if (c.Quests.CountBought(b.def.id, b.count)) questsMoved = true;
+        }
+        for (int i = 0; i < plan.backs.Count; i++)
+        {
+            var k = plan.backs[i];
+            // A piece of gear returns as the very copy that was sold.
+            if (k.instance != null) c.TakeIntoBag(k.instance);
+            else c.TakeIntoBag(k.def, k.count);
+            GameLog.Info(LogCat.Server, playerName + " bought back " + k.count + " " + k.def.id
+                         + (k.instance != null ? " (copy " + k.CopyId + ")" : "") + " at '" + shopId + "' for "
+                         + ShopMath.BuybackPrice(k.paid, k.count) + " gold");
+        }
+        if (questsMoved) QuestsMoved();
+
+        // The bar too: a stack sold to its last one leaves nothing for its hotbar slot to use.
+        PushBagToOwner(alsoTheBar: emptiedAStack, alsoTheBuyback: true);
         SaveSoon();
-        ShopSaid("Bought back " + what + " for " + price + " gold.", true);
+        ShopSaid(TradeSentence(plan), true, plan.net > 0 ? "Trade done — paid " + Wallet.Amount(plan.net)
+                                          : plan.net < 0 ? "Trade done — got " + Wallet.Amount(-plan.net) : "Trade done");
+        TradeAnswered(version, true);
     }
 
-    // The most of one thing a single press may buy. A guard on the number a window sends, not a design limit: a
-    // count is the asker's to choose, and an absurd one must not turn into an absurd sum.
-    const int MostInOneDeal = 999;
-
-    void ShopSaid(string line, bool ok)
+    // "Bought 10 Healing Potion, sold 23 Blinkbat Wing — you got 6,316u." One sentence for the whole cart.
+    static string TradeSentence(ShopCart.Plan plan)
     {
-        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
-        TargetShopResult(connectionToClient, line, ok);
+        var sb = new System.Text.StringBuilder(128);
+        for (int i = 0; i < plan.buys.Count; i++)
+        {
+            var b = plan.buys[i];
+            sb.Append(sb.Length == 0 ? "Bought " : ", bought ").Append(b.count).Append(' ').Append(b.def.displayName);
+            if (b.free > 0) sb.Append(" (").Append(b.free).Append(" free)");
+        }
+        for (int i = 0; i < plan.sells.Count; i++)
+        {
+            var e = plan.sells[i].entry;
+            sb.Append(sb.Length == 0 ? "Sold " : ", sold ")
+              .Append(e.instance != null ? ItemTooltip.CopyTitle(e.instance) : plan.sells[i].count + " " + e.def.displayName);
+        }
+        for (int i = 0; i < plan.backs.Count; i++)
+        {
+            var k = plan.backs[i];
+            sb.Append(sb.Length == 0 ? "Bought back " : ", bought back ")
+              .Append(k.instance != null ? ItemTooltip.CopyTitle(k.instance) : k.count + " " + k.def.displayName);
+        }
+        if (plan.net > 0) sb.Append(" — you paid ").Append(Wallet.Amount(plan.net)).Append('.');
+        else if (plan.net < 0) sb.Append(" — you got ").Append(Wallet.Amount(-plan.net)).Append('.');
+        else sb.Append(" — nothing changed hands.");
+        return sb.ToString();
+    }
+
+    void TradeAnswered(int version, bool done)
+    {
+        if (connectionToClient != null) TargetTradeAnswered(connectionToClient, version, done);
     }
 
     [TargetRpc]
-    void TargetShopResult(NetworkConnectionToClient target, string line, bool ok)
+    void TargetCartQuote(NetworkConnectionToClient target, CartQuote quote) => ShopPanel.TakeQuote(quote);
+
+    [TargetRpc]
+    void TargetTradeAnswered(NetworkConnectionToClient target, int version, bool done) => ShopPanel.TradeAnswered(version, done);
+
+    void ShopSaid(string line, bool ok, string notice = null)
     {
-        ChatController.GameSaid(line, ok);
-        ShopPanel.ShowResult(line, ok);
+        if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
+        TargetShopResult(connectionToClient, line, notice ?? line, ok);
     }
 
-    public void AskToBuy(string shopId, string itemId, int howMany) => CmdBuy(shopId, itemId, howMany);
-    public void AskToSell(string shopId, int index, string itemId, string copyId, int howMany)
-        => CmdSell(shopId, index, itemId, copyId ?? "", howMany);
-    public void AskToBuyBack(string shopId, string itemId, string copyId) => CmdBuyBack(shopId, itemId, copyId ?? "");
+    [TargetRpc]
+    void TargetShopResult(NetworkConnectionToClient target, string line, string notice, bool ok)
+    {
+        ChatController.GameSaid(line, ok);
+        OverheadNotice.Result(notice, ok);
+    }
+
+    public void AskForCartQuote(string shopId, CartLine[] lines, int version) => CmdQuoteCart(shopId, lines, version);
+    public void AskToTrade(string shopId, CartLine[] lines, int version) => CmdTrade(shopId, lines, version);
 
     // ---- the Keeper: save point, storage, teleport ---------------------------------------------------------
     //
@@ -3013,7 +3065,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (keeper != null && map != mapName) WorldRoutes.NextMap(mapName, map, out doors);
         if (doors <= 0) { KeeperSaid("There is no way there.", false); return; }
         long price = KeeperMath.TeleportPrice(doors);
-        if (price > c.Gold) { KeeperSaid("Needs " + price + " gold — you have " + c.Gold + ".", false); return; }
+        if (price > c.Gold) { KeeperSaid("Needs " + Wallet.Amount(price) + " — you have " + Wallet.Amount(c.Gold) + ".", false); return; }
 
         c.AddGold(-price);
         // The purse reaches their machine with the bag, so it is sent now: a town this same server holds is entered
@@ -3022,7 +3074,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
         GameLog.Info(LogCat.Server, playerName + " paid " + price + " gold for a Keeper's trip from '" + mapName + "' to '"
                      + map + "' (" + doors + " doors)");
-        KeeperSaid("Off to " + TownName(map) + " for " + price + " gold.", true);
+        KeeperSaid("Off to " + TownName(map) + " for " + Wallet.Amount(price) + ".", true);
 
         var spot = KeeperMath.ArrivalSpot(keeper.home, keeper.facing, KeeperMath.ArrivalAhead);
         MoveToMap(map, null, true, spot, () =>
@@ -3033,7 +3085,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             SaveSoon();
             GameLog.Warn(LogCat.Server, playerName + "'s Keeper trip to '" + map + "' did not happen — " + price
                          + " gold handed back");
-            KeeperSaid("The trip could not be made — your " + price + " gold is back.", false);
+            KeeperSaid("The trip could not be made — your " + Wallet.Amount(price) + " is back.", false,
+                       "Trip failed — " + Wallet.Amount(price) + " back");
         });
     }
 
@@ -3125,7 +3178,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var e = c.Bag[index];
         if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
         if (e.def.category == ItemCategory.Quest) { KeeperSaid("That cannot be stored.", false); return; }
-        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false); return; }
+        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false, "Still saving your last move"); return; }
         if (!serverStorage.Known) { KeeperSaid("Storage is not open.", false); return; }
         var piece = e.instance;
         if (piece != null) piece.EnsureCopyId();
@@ -3156,7 +3209,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (Leaving) return;
         var c = ServerCharacter;
         if (RefusedByKeeper(c)) return;
-        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false); return; }
+        if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false, "Still saving your last move"); return; }
         var held = serverStorage.Known ? serverStorage.Find(itemId, copyId ?? "") : null;
         if (held == null) { KeeperSaid("That is no longer in storage.", false); return; }
 
@@ -3166,7 +3219,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         int count = c.MostThatFits(held.def, wanted);
         if (count <= 0) { KeeperSaid(c.RefusalLine(held.def, c.RoomFor(held.def, wanted)), false); return; }
         if (count < wanted)
-            KeeperSaid("Took " + count + " of " + wanted + " " + held.def.displayName + " — that is all you can carry.", true);
+            KeeperSaid("Took " + count + " of " + wanted + " " + held.def.displayName + " — that is all you can carry.", true,
+                       "Took " + count + " of " + wanted + " — bag full");
         var move = new StorageMoveWire { moveId = Guid.NewGuid().ToString("D"), kind = "take", itemId = held.def.id,
                                          count = count, limit = KeeperMath.StorageLimit };
         if (held.instance != null) held.instance.ToSaved(out move.refine, out move.cards, out move.roll, out move.copyId);
@@ -3177,16 +3231,17 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     }
 
     /// <summary>SERVER ONLY: tell this person what a Keeper did, or why it refused — in the window and in the chat.</summary>
-    public void KeeperSaid(string line, bool ok)
+    public void KeeperSaid(string line, bool ok, string notice = null)
     {
         if (!isServer || connectionToClient == null || string.IsNullOrEmpty(line)) return;
-        TargetKeeperSaid(connectionToClient, line, ok);
+        TargetKeeperSaid(connectionToClient, line, notice ?? line, ok);
     }
 
     [TargetRpc]
-    void TargetKeeperSaid(NetworkConnectionToClient target, string line, bool ok)
+    void TargetKeeperSaid(NetworkConnectionToClient target, string line, string notice, bool ok)
     {
         ChatController.GameSaid(line, ok);
+        OverheadNotice.Result(notice, ok);
         KeeperPanel.ShowResult(line, ok);
     }
 
@@ -3514,14 +3569,15 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToAcceptQuest(string questId, uint npcNetId) { if (isOwned) CmdAcceptQuest(questId, npcNetId); }
 
     /// <summary>Server-only: a line for this player's chat about their quests — a reward paid, say.</summary>
-    public void TellQuestLine(string line) { if (isServer && connectionToClient != null) TargetQuestLine(connectionToClient, line); }
+    public void TellQuestLine(string line, string notice) { if (isServer && connectionToClient != null) TargetQuestLine(connectionToClient, line, notice); }
 
     // In the chat, and — since handing a quest in is a conversation, with the chat hidden behind it — in the open
     // conversation box too.
     [TargetRpc]
-    void TargetQuestLine(NetworkConnection _, string line)
+    void TargetQuestLine(NetworkConnection _, string line, string notice)
     {
         ChatController.GameSaid(line, true);
+        OverheadNotice.Result(notice, true);
         DialogBox.Interject(line);
     }
 
@@ -3609,7 +3665,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToPlayTutorial(string questId) { if (isOwned) CmdPlayTutorial(questId); }
 
     [TargetRpc]
-    void TargetRequirementsNotMet(NetworkConnection _) => BattleNotice.Warn("Requirements are not met");
+    void TargetRequirementsNotMet(NetworkConnection _) => OverheadNotice.Warn("Requirements are not met");
 
     [TargetRpc]
     void TargetQuestsChanged(NetworkConnection _, QuestOpenWire[] open, QuestTargetWire target, QuestTargetWire guide,
@@ -4132,15 +4188,15 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         string wanted = modelName;
         CharacterModels.Load(wanted, model =>
         {
-            if (this == null) return;                   // player left while their model was loading
+            if (this == null) return null;                   // player left while their model was loading
             // A GM's /model landed while this was loading. The hook already dropped the body and started loading the
             // new one, so this stale load builds nothing and leaves that load's latch alone.
-            if (wanted != modelName) return;
+            if (wanted != modelName) return null;
             if (model == null)
             {
                 GameLog.Warn(LogCat.Net, "no character model called '" + wanted + "' — "
                                  + playerName + " will be invisible.");
-                return;
+                return null;
             }
 
             var spec = CharacterSpec.Active;
@@ -4219,6 +4275,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
             body = root;
             bodyLoading = false;
+            return root;
         });
     }
 

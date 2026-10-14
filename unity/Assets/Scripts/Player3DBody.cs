@@ -46,9 +46,9 @@ public static class Player3DBody
             {
                 GameLog.Warn(LogCat.Client, "could not put on '" + modelName + "' — no character model by that name.");
                 onDone?.Invoke(null);
-                return;
+                return null;
             }
-            if (player == null) { onDone?.Invoke(null); return; }   // player went away while the model loaded
+            if (player == null) { onDone?.Invoke(null); return null; }   // player went away while the model loaded
 
             var built = Configure(player, Object.Instantiate(model), modelName,
                                   CharacterSpec.Active.animatorController);
@@ -58,6 +58,7 @@ public static class Player3DBody
                 GameLog.Info(LogCat.Client, "wearing '" + modelName + "'");
             }
             onDone?.Invoke(built != null ? modelName : null);
+            return built;
         });
     }
 

@@ -23,7 +23,7 @@ MonoBehaviour:
   category: 0
   cardSlots: 0
   weight: 40
-  zeny: 5
+  value: 8
   madeOf: 1
   forgeMaterialCost: 5
   forgeGoldCost: 400

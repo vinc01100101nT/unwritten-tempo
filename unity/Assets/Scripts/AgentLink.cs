@@ -109,7 +109,7 @@ public class AgentLink : MonoBehaviour
         acceptThread.Start();
         Debug.Log("[AgentLink] listening on 127.0.0.1:" + port);
         ChatController.LineAdded += OnChatLine;
-        BattleNotice.Warned += OnWarning;
+        OverheadNotice.Warned += OnWarning;
         DamagePopup.Shown += OnPopup;
     }
 
@@ -147,7 +147,7 @@ public class AgentLink : MonoBehaviour
     {
         closing = true;
         ChatController.LineAdded -= OnChatLine;
-        BattleNotice.Warned -= OnWarning;
+        OverheadNotice.Warned -= OnWarning;
         DamagePopup.Shown -= OnPopup;
         try { listener?.Stop(); } catch (Exception) { }
     }

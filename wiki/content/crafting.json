@@ -25,8 +25,8 @@
     {
       "type": "list",
       "items": [
-        "**Fold** — Temper Dust and gold: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
-        "**Quench** — Quench Oil and more gold: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
+        "**Fold** — Temper Dust and Unsigned: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold raises a weapon's attack by 1.8; on armour it adds what the piece's material buys — defence and HP from metal, attack speed and evasion from leather, magic defence and MP from cloth. A grade has a fold cap, and the cap is the gate: past it, only a quench moves you on.",
+        "**Quench** — Quench Oil and more Unsigned: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. The grade goes up one, stays, or drops one, and every fold is spent either way. **F is the floor** and **A is the top**.",
         "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced.",
         "**Recycle** — destroys the piece and gives back half of what its folds and quenches took (below)."
       ]
@@ -65,7 +65,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, gold and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. **Folds made at Raw return nothing.** A shop pays 5 gold for any piece of gear. A piece your first tutorial still needs cannot be recycled, sold or dropped."
+      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, Unsigned and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. **Folds made at Raw return nothing.** A shop pays 5u for any piece of gear. A piece your first tutorial still needs cannot be recycled, sold or dropped."
     },
     {
       "type": "paragraph",

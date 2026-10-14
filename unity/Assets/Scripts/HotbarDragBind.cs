@@ -65,7 +65,6 @@ public class HotbarSlotTarget : MonoBehaviour
 public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public int slotIndex;
-    public Color tint = Color.white;
 
     GameObject ghost;
 
@@ -79,21 +78,15 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        ghost = new GameObject("HotbarDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
-        ghost.transform.SetParent(canvas.transform, false);
-        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
-        var img = ghost.GetComponent<Image>();
-        img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
-        img.raycastTarget = false;
-        ((RectTransform)ghost.transform).sizeDelta = new Vector2(44, 44);
-        Position(e);
+        // The one drag picture every drag in the game shows (DragPicture): this cell, see-through.
+        ghost = DragPicture.Begin((RectTransform)transform, canvas, e.position);
     }
 
-    public void OnDrag(PointerEventData e) => Position(e);
+    public void OnDrag(PointerEventData e) => DragPicture.Move(ghost, e.position);
 
     public void OnEndDrag(PointerEventData e)
     {
-        if (ghost != null) { Destroy(ghost); ghost = null; }
+        DragPicture.End(ref ghost, (RectTransform)transform);
         if (Character.Instance == null || EventSystem.current == null) return;
 
         // Dropped ON a hotbar cell: swap (rearrange). Dropped anywhere else: the slot is emptied — the bar is the
@@ -107,16 +100,6 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
         if (changed) HotbarCommit.Now();
     }
 
-
-    void Position(PointerEventData e)
-    {
-        if (ghost == null) return;
-        var canvas = ghost.GetComponentInParent<Canvas>();
-        if (canvas == null) return;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            (RectTransform)canvas.transform, e.position, canvas.worldCamera, out var local);
-        ((RectTransform)ghost.transform).anchoredPosition = local;
-    }
 }
 
 /// <summary>
@@ -128,7 +111,6 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
 public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public string skillId;
-    public Color tint = Color.white;
 
     GameObject ghost;
 
@@ -140,8 +122,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     void OnDisable()
     {
         if (ghost == null) return;
-        Destroy(ghost);
-        ghost = null;
+        DragPicture.End(ref ghost, (RectTransform)transform);
         AnyDragging = false;
     }
 
@@ -151,35 +132,19 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        ghost = new GameObject("SkillDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
-        ghost.transform.SetParent(canvas.transform, false);
-        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
-        var img = ghost.GetComponent<Image>();
-        img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
-        img.raycastTarget = false;
-        ((RectTransform)ghost.transform).sizeDelta = new Vector2(44, 44);
+        // The one drag picture every drag in the game shows (DragPicture): this skill, see-through.
+        ghost = DragPicture.Begin((RectTransform)transform, canvas, e.position);
         AnyDragging = true;
-        Position(e);
     }
 
-    public void OnDrag(PointerEventData e) => Position(e);
+    public void OnDrag(PointerEventData e) => DragPicture.Move(ghost, e.position);
 
     public void OnEndDrag(PointerEventData e)
     {
-        if (ghost != null) { Destroy(ghost); ghost = null; }
+        DragPicture.End(ref ghost, (RectTransform)transform);
         AnyDragging = false;
         if (string.IsNullOrEmpty(skillId) || Character.Instance == null) return;
         HotbarSlotTarget.DropOnto(e, skillId);
-    }
-
-    void Position(PointerEventData e)
-    {
-        if (ghost == null) return;
-        var canvas = ghost.GetComponentInParent<Canvas>();
-        if (canvas == null) return;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            (RectTransform)canvas.transform, e.position, canvas.worldCamera, out var local);
-        ((RectTransform)ghost.transform).anchoredPosition = local;
     }
 }
 

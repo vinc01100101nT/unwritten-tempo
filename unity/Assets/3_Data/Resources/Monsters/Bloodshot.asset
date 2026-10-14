@@ -31,12 +31,12 @@ MonoBehaviour:
   level: 58
   str: 19
   agi: 19
-  vit: 19
-  intel: 47
-  dex: 39
-  luk: 30
+  vit: 30
+  intel: 54
+  dex: 30
+  luk: 19
   startingGear:
-  - {fileID: 11400000, guid: 5eee4763f7f459b429a5738a204808a8, type: 2}
+  - {fileID: 11400000, guid: d7167c21dd6222e489e1805ecd3704fe, type: 2}
   - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}

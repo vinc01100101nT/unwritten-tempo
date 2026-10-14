@@ -24,8 +24,7 @@ MonoBehaviour:
   category: 1
   cardSlots: 0
   weight: 5
-  zeny: 50
-  buyPrice: 100
+  value: 75
   bonusHP: 0
   bonusAttack: 0
   bonusDefense: 0

@@ -318,7 +318,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
                               18, UiKit.TitleText);
                 break;
             case Kind.Gold:
-                slot.ShowLine("Your gold: " + (c != null ? c.Gold : 0), 13, UiKit.TextMain);
+                slot.ShowLine("You have " + Wallet.Amount(c != null ? c.Gold : 0), 13, UiKit.TextMain);
                 break;
             case Kind.Note:
                 slot.ShowLine(Notes[line.index], 12, Sub);
@@ -330,7 +330,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
             {
                 var t = trips[line.index];
                 // TOO DEAR FOR THE PURSE THE SERVER SENT, drawn dim. The press still asks; the server still decides.
-                slot.ShowButton(t.name + " — " + t.price + "g", c != null && t.price > c.Gold);
+                slot.ShowButton(t.name + " — " + Wallet.Amount(t.price), c != null && t.price > c.Gold);
                 break;
             }
             case Kind.Result:

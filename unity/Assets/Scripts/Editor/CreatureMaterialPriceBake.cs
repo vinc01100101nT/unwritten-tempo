@@ -32,10 +32,12 @@ public static class CreatureMaterialPriceBake
     static int Price(MonsterDef d, Item material, bool write, StringBuilder said)
     {
         if (!CreatureMaterials.Is(material)) return 0;
-        int price = CreatureMaterials.SellValue(d.level, CreatureMaterials.TierOfStep(material.materialStep), d.gearQuality, d.gearFolds);
-        if (material.zeny == price) return 0;
-        said.Append(material.displayName).Append(": ").Append(material.zeny).Append(" -> ").Append(price).Append('\n');
-        if (write) { material.zeny = price; EditorUtility.SetDirty(material); }
+        // THE RULE NAMES WHAT A SHOP PAYS; the item keeps the value that pays exactly that once the Tax is taken.
+        int sells = CreatureMaterials.SellValue(d.level, CreatureMaterials.TierOfStep(material.materialStep), d.gearQuality, d.gearFolds);
+        int price = ShopMath.ValueForSellPrice(sells);
+        if (material.value == price) return 0;
+        said.Append(material.displayName).Append(": ").Append(material.value).Append(" -> ").Append(price).Append('\n');
+        if (write) { material.value = price; EditorUtility.SetDirty(material); }
         return 1;
     }
 }

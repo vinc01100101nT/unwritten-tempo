@@ -46,7 +46,7 @@ public class Portal3D : MonoBehaviour
         // chose. Said once; the latch above keeps it from being said again until they step out of the door.
         if (AutoCombatClient.On)
         {
-            BattleNotice.Warn("Switch auto-combat off to use a door.");
+            OverheadNotice.Warn("Switch auto-combat off to use a door.");
             return;
         }
 

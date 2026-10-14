@@ -1,9 +1,4 @@
 {
-  "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
-    "counts": {
-      "editor_play": 1
-    }
-  },
   "bc571848-6027-42d4-891e-df021205133e": {
     "counts": {
       "editor_play \\": 1
@@ -134,6 +129,11 @@
     "told": [
       "build-game.sh client"
     ]
+  },
+  "e5737125-595b-4d97-a26f-2f8fe0215ebd": {
+    "counts": {
+      "build-game.sh": 1
+    }
   },
   "e93c2c38-4af9-4a71-9dae-74795556cf6d": {
     "counts": {

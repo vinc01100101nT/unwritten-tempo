@@ -1,13 +1,23 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// THE SHOP WINDOW — what opens when you press F on a shopkeeper. It lists what that shop sells, each at the price of
-/// one, and — when the shop buys — what you are carrying that it will take, each at what one fetches.
+/// THE SHOP WINDOW — what opens when you press F on a shopkeeper. One window, three lists side by side: <b>For sale</b>
+/// (her stock, then what you sold her and can still buy back), the <b>Cart</b>, and your <b>Inventory</b>. Every row shows
+/// the price of one, whole, at its right.
 ///
-/// <para><b>It works nothing out.</b> The price of one is the item's own number, read as it is; every press only asks,
-/// and the server decides whether the deal goes through and what it came to, which arrives as a sentence. Gold and the
-/// bag on screen are the server's, redrawn whenever it sends them.</para>
+/// <para><b>Everything goes through the cart.</b> Dragging a row from For sale to your Inventory (or into the Cart), or
+/// double-clicking it, puts it in to buy; dragging from your Inventory to For sale (or into the Cart), or double-clicking it,
+/// puts it in to sell; double-clicking a cart row, or dragging it out, takes it back out. A stack asks how many in the one
+/// "how many?" box. Nothing is bought or sold until Confirm, which sends the whole cart at once (<see cref="CartLine"/>).</para>
+///
+/// <para><b>It works nothing out.</b> A row's price is the item's own value; the totals under the cart — Buying, Selling,
+/// Tax, You pay — are the server's (<see cref="CartQuote"/>), asked for every time the cart changes and drawn as they come.
+/// Confirm waits for the quote of the cart as it stands, and stays pressed-down until the server answers, so a second
+/// press can never send the same cart twice.</para>
 ///
 /// <para>Opening a shop is an interaction with a townsperson, exactly as a station is: <see cref="PlayerInteractor"/>
 /// holds the player, frames the camera and closes this window when the interaction ends.</para>
@@ -16,26 +26,58 @@ public class ShopPanel : MonoBehaviour
 {
     public static ShopPanel Instance { get; private set; }
 
+    // The window's measures: two item columns either side of a narrower cart, the purse and the two buttons under them.
+    const float CartWidth = 200f, ColumnGap = 8f, HeaderHeight = 20f, SumHeight = 72f, ActionHeight = 30f, ActionWidth = 120f;
+    static readonly Vector2 Size = new Vector2(724f, 430f);
+    // How long the cart must sit still before it is priced — a flurry of drags is one quote, of the cart as it ends up.
+    const float QuoteAfterSeconds = 0.2f;
+
     GameObject root;
-    RectTransform content;
+    RectTransform body;
     string shopId;
-    string keeper;
-    string lastResult;
-    bool lastResultOk;
     bool listening;
-    // When the minutes shown on a buy-back line next change (or one ends), on this machine's steady clock. The one
-    // thing checked each frame while the window is open; infinity while nothing is kept.
+
+    // ---- the cart: intents only ----------------------------------------------------------------------------------
+    sealed class CartItem
+    {
+        public CartKind kind;
+        public BagEntry shown;       // the thing itself: the bag's own entry for a sale, the shelf's for a buy
+        // WHAT THE CART'S ROW HOLDS: a copy, never the bag's own entry — so dragging a cart row out over the world can
+        // never put the real stack down on the ground.
+        public BagEntry row;
+        public string itemId, copyId;
+        public int count;
+        public int price;            // the price of one, as its row shows it: the item's value, or a buy-back's price
+        public int saleId;           // which sale a buy-back line buys back
+    }
+    readonly List<CartItem> cart = new List<CartItem>(16);
+    int version;
+    bool quoted;                     // the quote for the cart as it stands has arrived
+    CartQuote quote;
+    bool trading;                    // Confirm was pressed and the server has not answered yet
+    float quoteAt = float.PositiveInfinity;
+
+    // ---- what the three lists show, rebuilt when the bag, the buy-backs or the free tutorial buys change ----------
+    readonly List<BagEntry> stock = new List<BagEntry>(16);
+    readonly List<int> stockPrice = new List<int>(16);
+    readonly List<SoldEntry> backs = new List<SoldEntry>(10);
+    readonly List<BagEntry> backShown = new List<BagEntry>(10);
+
+    UiListView shopView, cartView, bagView;
+    ShopList shopList; CartList cartList; BagList bagList;
+    // The cart's totals: four words on the left, the server's four numbers on the right.
+    readonly TextMeshProUGUI[] sumWords = new TextMeshProUGUI[4], sumNumbers = new TextMeshProUGUI[4];
+    TextMeshProUGUI refusal, purse;
+    Button confirm, cancel;
     float redrawAt = float.PositiveInfinity;
 
-    // The buy-back rows on screen: each one's label, the words before its minutes, and the moment it ends — so a minute
-    // ticking over rewrites that label where it stands. Redrawing the whole list for it would destroy every button, and
-    // a press that began before the redraw would land on nothing.
-    struct KeptRow { public TMPro.TMP_Text label; public string before; public double endsAt; }
-    readonly System.Collections.Generic.List<KeptRow> keptRows = new System.Collections.Generic.List<KeptRow>(ShopMath.BuybackMostEntries);
-
-    static readonly Color Sub = UiKit.TextDim;
-
-    void Awake() => Instance = this;
+    void Awake()
+    {
+        Instance = this;
+        shopList = new ShopList(this);
+        cartList = new CartList(this);
+        bagList = new BagList(this);
+    }
 
     void OnDestroy()
     {
@@ -57,35 +99,48 @@ public class ShopPanel : MonoBehaviour
         if (Instance == null || Instance.root == null) return;
         UiAnim.Close(Instance.root);
         Instance.StopListening();
+        DropAmountPrompt.CloseShared();
     }
 
     /// <summary>True while it is on screen.</summary>
     public static bool IsOpen => Instance != null && Instance.root != null && UiAnim.IsOpen(Instance.root);
 
-    /// <summary>What the server said a deal did, or why it refused. The chat carries the same sentence.</summary>
-    public static void ShowResult(string line, bool ok)
+    /// <summary>THE SERVER'S TOTALS for a cart. Drawn only when they are for the cart as it stands now.</summary>
+    public static void TakeQuote(CartQuote q)
+    {
+        if (Instance == null || q.version != Instance.version) return;
+        Instance.quote = q;
+        Instance.quoted = true;
+        Instance.DrawSums();
+    }
+
+    /// <summary>The server carried out (<paramref name="done"/>) or refused the cart sent as <paramref name="sentAs"/>.
+    /// Done empties the cart; refused keeps it, fixed against the bag as it now stands, and asks again.</summary>
+    public static void TradeAnswered(int sentAs, bool done)
     {
         if (Instance == null) return;
-        Instance.lastResult = line;
-        Instance.lastResultOk = ok;
-        if (IsOpen) Instance.Rebuild();
+        Instance.trading = false;
+        if (done) Instance.cart.Clear();
+        Instance.CartChanged();
     }
 
     void Show(string id, string keeperTitle)
     {
         shopId = id;
-        keeper = keeperTitle;
-        lastResult = null;
-        Build();
+        cart.Clear();
+        trading = false;
+        Build(keeperTitle);
         if (root == null) return;
         UiAnim.Open(root);
         UISounds.PlayOpen();
         StartListening();
-        Rebuild();
+        Refill();
+        shopView.ToTop(); cartView.ToTop(); bagView.ToTop();
+        CartChanged();
     }
 
-    // THE BAG AND THE PURSE ARRIVE FROM THE SERVER after a deal, a moment after the sentence saying what it did — so
-    // the lists redraw when they do, not when the sentence lands.
+    // THE BAG, THE PURSE AND THE BUY-BACKS ARRIVE FROM THE SERVER after a trade, a moment after the sentence saying what it
+    // did — so the lists redraw when they do, and the cart is checked against what is now there.
     void StartListening()
     {
         if (listening) return;
@@ -108,146 +163,507 @@ public class ShopPanel : MonoBehaviour
 
     void OnBagChanged()
     {
-        if (IsOpen) Rebuild();
-    }
-
-    // A minute changed on some buy-back row: rewrite the minutes where they stand, and redraw the list only when a row
-    // has ended and must go.
-    void RetimeKept()
-    {
-        redrawAt = float.PositiveInfinity;
-        for (int i = 0; i < keptRows.Count; i++)
-        {
-            var row = keptRows[i];
-            double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(row.endsAt));
-            if (left <= 0 || row.label == null) { Rebuild(); return; }
-            row.label.text = row.before + ShopMath.MinutesShown(left) + " min left";
-            redrawAt = Mathf.Min(redrawAt, Time.unscaledTime + (float)ShopMath.SecondsUntilMinuteChanges(left));
-        }
+        if (!IsOpen) return;
+        Refill();
+        if (FixCart()) CartChanged();
+        else DrawPurse();
     }
 
     void Update()
     {
-        if (Time.unscaledTime >= redrawAt && IsOpen) RetimeKept();
+        if (!IsOpen) return;
+        if (Time.unscaledTime >= quoteAt) AskForQuote();
+        if (Time.unscaledTime >= redrawAt) { Refill(); if (FixCart()) CartChanged(); }
+        shopView.RedrawIfNeeded();
+        cartView.RedrawIfNeeded();
+        bagView.RedrawIfNeeded();
     }
 
-    void Build()
+    // ---- building, once --------------------------------------------------------------------------------------------
+
+    void Build(string title)
     {
-        if (root != null) return;
+        if (root != null) { SetTitle(title); return; }
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
-        content = UiKit.ListWindow(canvas.transform, "Shop", new Vector2(420, 460), out root);
+        body = UiKit.Window(canvas.transform, "Shop", Size, Vector2.zero, out root);
+        SetTitle(title);
+
+        float bodyWidth = Size.x - 32f;
+        float itemWidth = (bodyWidth - CartWidth - 2 * ColumnGap) / 2f;
+        float columnsHeight = Size.y - UiKit.TitleBarHeight - 8f - 18f - ActionHeight - 8f;
+
+        var shopCol = Column("For sale", 0f, itemWidth, columnsHeight, ColumnDrop.Into.Shop, out var shopPort);
+        var cartCol = Column("Cart", itemWidth + ColumnGap, CartWidth, columnsHeight, ColumnDrop.Into.Cart, out var cartPort);
+        Column("Inventory", itemWidth + ColumnGap + CartWidth + ColumnGap, itemWidth, columnsHeight, ColumnDrop.Into.Bag, out var bagPort);
+        shopView = new UiListView(shopPort, shopList);
+        cartView = new UiListView(cartPort, cartList);
+        bagView = new UiListView(bagPort, bagList);
+
+        // THE CART'S TOTALS, under its rows — the server's four numbers, the last of them larger.
+        var cartPortRect = cartPort;
+        cartPortRect.offsetMin = new Vector2(cartPortRect.offsetMin.x, SumHeight);
+        var sums = new GameObject("Totals", typeof(RectTransform)).GetComponent<RectTransform>();
+        sums.SetParent(cartCol, false);
+        sums.anchorMin = new Vector2(0f, 0f); sums.anchorMax = new Vector2(1f, 0f); sums.pivot = new Vector2(0.5f, 0f);
+        sums.offsetMin = new Vector2(8f, 6f); sums.offsetMax = new Vector2(-8f, SumHeight);
+        sumNumbers[0] = SumRow(sums, "Buying", 0, 12, out sumWords[0]);
+        sumNumbers[1] = SumRow(sums, "Selling", 1, 12, out sumWords[1]);
+        sumNumbers[2] = SumRow(sums, "Tax (33%)", 2, 12, out sumWords[2]);
+        sumNumbers[3] = SumRow(sums, "You pay", 3, 14, out sumWords[3]);
+        refusal = UiKit.MakeText("Refusal", sums, "", 11, FontStyle.Normal, TextAnchor.UpperLeft, null, true);
+        refusal.color = UiKit.Bad;
+        refusal.raycastTarget = false;
+        UiKit.Fill(refusal.rectTransform, Vector2.zero, Vector2.zero);
+
+        // THE PURSE AND THE TWO BUTTONS, fixed to the bottom.
+        purse = UiKit.MakeText("Purse", body, "", 12, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
+        purse.raycastTarget = false;
+        var prt = purse.rectTransform;
+        prt.anchorMin = new Vector2(0f, 0f); prt.anchorMax = new Vector2(0.5f, 0f); prt.pivot = new Vector2(0f, 0f);
+        prt.offsetMin = Vector2.zero; prt.offsetMax = new Vector2(0f, ActionHeight);
+        confirm = BottomButton("Confirm", 0f, Confirm);
+        cancel = BottomButton("Cancel", -(ActionWidth + 6f), () => { cart.Clear(); UISounds.PlayClick(); CartChanged(); });
     }
 
-    void Rebuild()
+    void SetTitle(string title)
     {
-        if (content == null) return;
-        for (int i = content.childCount - 1; i >= 0; i--) Destroy(content.GetChild(i).gameObject);
+        var header = root.transform.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (header != null && !string.IsNullOrEmpty(title)) header.text = title;
+    }
 
-        var c = Character.Instance;
-        var shop = WorldShops.Find(shopId);
-        if (c == null || shop == null) { Line("Nobody here.", 13, Sub); return; }
+    RectTransform Column(string heading, float x, float width, float height, ColumnDrop.Into into, out RectTransform viewport)
+    {
+        var frame = UiKit.Framed(UiKit.Img(heading, body, UiKit.Rule), UiKit.Rule, UiKit.PanelRaise, UiKit.ButtonRadius);
+        var rt = frame.rectTransform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+        rt.pivot = new Vector2(0f, 1f);
+        rt.sizeDelta = new Vector2(width, height);
+        rt.anchoredPosition = new Vector2(x, 0f);
+        var drop = frame.gameObject.AddComponent<ColumnDrop>();
+        drop.panel = this;
+        drop.into = into;
+        drop.edge = frame;
 
-        Line(keeper, 18, UiKit.TitleText);
-        Line("Your gold: " + c.Gold, 13, UiKit.TextMain);
+        var h = UiKit.MakeText("Heading", rt, heading, 13, FontStyle.Bold, TextAnchor.MiddleLeft, null, false);
+        h.color = UiKit.TitleText;
+        h.raycastTarget = false;
+        var hrt = h.rectTransform;
+        hrt.anchorMin = new Vector2(0f, 1f); hrt.anchorMax = new Vector2(1f, 1f); hrt.pivot = new Vector2(0.5f, 1f);
+        hrt.offsetMin = new Vector2(8f, -(HeaderHeight + 4f)); hrt.offsetMax = new Vector2(-8f, -4f);
 
-        // ---- what they sell ---------------------------------------------------------------------------
-        Line("For sale", 15, UiKit.TitleText);
-        int selling = 0;
-        for (int i = 0; i < shop.stock.Count; i++)
-        {
-            var def = ItemCatalog.Resolve(shop.stock[i]);
-            if (!WorldShops.Sells(shop, def)) continue;
-            selling++;
-            string id = def.id;
-            // FREE ONES FIRST, as the server counted them — a tutorial's first run takes nothing it has you buy.
-            int free = QuestStore.FreeBuys(id);
-            string price = free > 0 ? free + " free, then " + def.buyPrice + "g each" : def.buyPrice + "g each";
-            var buyOne = Deal(Rarities.Coloured(def, null, def.displayName) + "   " + price,
-                              "Buy 1", () => Buy(id, 1),
-                              "Buy 10", () => Buy(id, 10));
-            GuideMarker.Put(buyOne.gameObject, GuideSpot.ShopBuyButton, id);
-        }
-        if (selling == 0) Line("Nothing for sale.", 12, Sub);
+        var port = UiKit.Img("List", rt, new Color(0, 0, 0, 0));
+        viewport = port.rectTransform;
+        viewport.anchorMin = Vector2.zero; viewport.anchorMax = Vector2.one;
+        viewport.offsetMin = new Vector2(0f, 2f); viewport.offsetMax = new Vector2(0f, -(HeaderHeight + 6f));
+        return rt;
+    }
 
-        // ---- what they buy ----------------------------------------------------------------------------
-        if (shop.buysLoot)
-        {
-            Line("Sell", 15, UiKit.TitleText);
-            int sellable = 0;
-            for (int i = 0; i < c.Bag.Count; i++)
-            {
-                var e = c.Bag[i];
-                if (!WorldShops.Buys(shop, e)) continue;
-                sellable++;
-                int at = i;
-                string id = e.def.id;
-                int all = e.count;
-                // The piece's own id travels with the press, so the server sells exactly the piece on this row.
-                string copy = e.instance != null ? e.instance.copyId ?? "" : "";
-                // A piece of gear goes by its own name, as its bag row reads; a stack by its item name and count.
-                string what = e.instance != null ? Rarities.Coloured(e.def, e.instance, ItemTooltip.CopyTitle(e.instance))
-                                                 : Rarities.Coloured(e.def, null, e.def.displayName) + " ×" + e.count;
-                Deal(what + "   " + e.def.zeny + "g each",
-                     "Sell 1", () => Sell(at, id, copy, 1),
-                     "Sell all", () => Sell(at, id, copy, all));
-            }
-            if (sellable == 0) Line("You are carrying nothing they will buy.", 12, Sub);
-        }
+    static TextMeshProUGUI SumRow(RectTransform parent, string word, int row, float size, out TextMeshProUGUI label)
+    {
+        float lineH = 16f, top = row * lineH;
+        label = UiKit.MakeText(word, parent, word, size, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
+        label.color = row < 3 ? UiKit.TextDim : UiKit.TextMain;
+        label.raycastTarget = false;
+        Place(label.rectTransform, top, lineH + (row == 3 ? 4f : 0f));
+        var n = UiKit.MakeText(word + "Amount", parent, "", size, FontStyle.Bold, TextAnchor.MiddleRight, null, false);
+        n.color = UiKit.TitleText;
+        n.raycastTarget = false;
+        Place(n.rectTransform, top, lineH + (row == 3 ? 4f : 0f));
+        return n;
+    }
 
-        // ---- what they can buy back -------------------------------------------------------------------
-        // Newest first. Prices and moments are the server's; this only picks which lines are still showing and how
-        // many whole minutes each has left to say.
+    static void Place(RectTransform rt, float top, float height)
+    {
+        rt.anchorMin = new Vector2(0f, 1f); rt.anchorMax = new Vector2(1f, 1f); rt.pivot = new Vector2(0.5f, 1f);
+        rt.offsetMin = new Vector2(0f, -(top + height)); rt.offsetMax = new Vector2(0f, -top);
+    }
+
+    Button BottomButton(string word, float fromRight, System.Action onClick)
+    {
+        var b = UiKit.Btn(word, body, onClick);
+        var r = (RectTransform)b.transform;
+        r.anchorMin = r.anchorMax = new Vector2(1f, 0f);
+        r.pivot = new Vector2(1f, 0f);
+        r.sizeDelta = new Vector2(ActionWidth, ActionHeight);
+        r.anchoredPosition = new Vector2(fromRight, 0f);
+        var t = b.GetComponentInChildren<TextMeshProUGUI>();
+        if (t != null) t.fontStyle = FontStyles.Bold;
+        return b;
+    }
+
+    // ---- what the lists show ---------------------------------------------------------------------------------------
+
+    void Refill()
+    {
+        stock.Clear(); stockPrice.Clear(); backs.Clear(); backShown.Clear();
         redrawAt = float.PositiveInfinity;
-        keptRows.Clear();
-        var kept = c.Buyback.Entries;
-        bool headed = false;
-        for (int i = kept.Count - 1; i >= 0; i--)
+        var shop = WorldShops.Find(shopId);
+        var c = Character.Instance;
+        if (shop != null)
+            for (int i = 0; i < shop.stock.Count; i++)
+            {
+                var def = ItemCatalog.Resolve(shop.stock[i]);
+                if (!WorldShops.Sells(shop, def)) continue;
+                // perf-ok: one entry per stocked thing, made when the window redraws — never per frame
+                stock.Add(new BagEntry { def = def, count = 1 });
+                stockPrice.Add(def.value);
+            }
+        // What can still be bought back, newest first — prices and moments are the server's.
+        if (c != null)
         {
-            var k = kept[i];
-            double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(k.endsAt));
-            if (left <= 0) continue;
-            if (!headed) { Line("Buy back", 15, UiKit.TitleText); headed = true; }
-            float changesIn = (float)ShopMath.SecondsUntilMinuteChanges(left);
-            redrawAt = Mathf.Min(redrawAt, Time.unscaledTime + changesIn);
-            string itemId = k.def.id;
-            string copy = k.CopyId;
-            string what = k.instance != null ? Rarities.Coloured(k.def, k.instance, ItemTooltip.CopyTitle(k.instance))
-                                             : Rarities.Coloured(k.def, null, k.def.displayName) + " ×" + k.count;
-            string before = what + "   " + k.price + "g   ";
-            var press = Deal(before + ShopMath.MinutesShown(left) + " min left", "Buy back", () => BuyBack(itemId, copy));
-            keptRows.Add(new KeptRow { label = press.transform.parent.GetComponentInChildren<TMPro.TMP_Text>(),
-                                       before = before, endsAt = k.endsAt });
+            var kept = c.Buyback.Entries;
+            for (int i = kept.Count - 1; i >= 0; i--)
+            {
+                var k = kept[i];
+                double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(k.endsAt));
+                if (left <= 0 || k.def == null) continue;
+                backs.Add(k);
+                // perf-ok: one entry per kept sale, at most ten, made when the window redraws
+                backShown.Add(new BagEntry { def = k.def, count = k.count, instance = k.instance });
+                redrawAt = Mathf.Min(redrawAt, Time.unscaledTime + (float)ShopMath.SecondsUntilMinuteChanges(left));
+            }
         }
-
-        // WHAT THE LAST PRESS DID, last.
-        if (!string.IsNullOrEmpty(lastResult)) Line(lastResult, 12, lastResultOk ? UiKit.TextMain : UiKit.Bad, 2);
+        shopView.Changed();
+        bagView.Changed();
+        DrawPurse();
     }
 
-    void Buy(string itemId, int howMany)
+    int ShopRows => stock.Count + backs.Count;
+
+    // THE CART AGAINST WHAT IS THERE NOW: a sold stack gone or shrunk, a buy-back ended — the line goes, or its count is
+    // capped. True when anything changed.
+    bool FixCart()
     {
-        var me = GameNetwork.MyPlayer;
-        if (me != null) me.AskToBuy(shopId, itemId, howMany);
-        UISounds.PlayClick();
+        var c = Character.Instance;
+        if (c == null) return false;
+        bool changed = false;
+        for (int i = cart.Count - 1; i >= 0; i--)
+        {
+            var line = cart[i];
+            if (line.kind == CartKind.Sell)
+            {
+                if (!c.Bag.Contains(line.shown)) { cart.RemoveAt(i); changed = true; continue; }
+                int most = line.shown.instance != null ? 1 : line.shown.count;
+                if (line.count > most) { line.count = most; changed = true; }
+            }
+            else if (line.kind == CartKind.BuyBack)
+            {
+                int at = BackIndex(line.saleId);
+                if (at < 0) { cart.RemoveAt(i); changed = true; }
+                else { line.shown = backShown[at]; line.row.instance = backShown[at].instance; }
+            }
+        }
+        return changed;
     }
 
-    void Sell(int bagIndex, string itemId, string copyId, int howMany)
+    int BackIndex(int saleId)
     {
-        var me = GameNetwork.MyPlayer;
-        if (me != null) me.AskToSell(shopId, bagIndex, itemId, copyId, howMany);
-        UISounds.PlayClick();
+        for (int i = 0; i < backs.Count; i++)
+            if (backs[i].id == saleId) return i;
+        return -1;
     }
 
-    void BuyBack(string itemId, string copyId)
+    // ---- the cart --------------------------------------------------------------------------------------------------
+
+    /// <summary>Put the shop's row <paramref name="row"/> in the cart to buy (or buy back). A stack asks how many.</summary>
+    void AddFromShop(int row, Vector2 at)
     {
-        var me = GameNetwork.MyPlayer;
-        if (me != null) me.AskToBuyBack(shopId, itemId, copyId);
-        UISounds.PlayClick();
+        if (trading || row < 0 || row >= ShopRows) return;
+        if (row >= stock.Count)
+        {
+            var k = backs[row - stock.Count];
+            // EACH SALE IS ITS OWN ENTRY: the same one twice is refused, a different sale of the same thing is its own line.
+            for (int i = 0; i < cart.Count; i++) if (cart[i].kind == CartKind.BuyBack && cart[i].saleId == k.id) return;
+            var back = Line(CartKind.BuyBack, backShown[row - stock.Count], k.def.id, k.CopyId, k.count,
+                            (int)System.Math.Min(int.MaxValue, k.price));
+            back.saleId = k.id;
+            cart.Add(back);
+            UISounds.PlayClick();
+            CartChanged();
+            return;
+        }
+        var def = stock[row].def;
+        AskHowMany("Buy how many?", 1, 0, at, n =>
+        {
+            var line = FindLine(CartKind.Buy, def.id, "");
+            if (line != null) line.count = Mathf.Min(ShopCart.MostInOneLine, line.count + n);
+            else cart.Add(Line(CartKind.Buy, stock[row], def.id, "", n, def.value));
+            CartChanged();
+        });
     }
 
-    // A line of the list that is a deal, and a line of text — the list window's own, built into this window's column.
-    Button Deal(string label, string firstWord, System.Action first, string secondWord = null, System.Action second = null)
-        => UiKit.ListDeal(content, label, firstWord, first, secondWord, second);
+    /// <summary>Put the bag's <paramref name="entry"/> in the cart to sell. A stack asks how many.</summary>
+    void AddFromBag(BagEntry entry, Vector2 at)
+    {
+        if (trading || entry == null || entry.def == null || !entry.def.CanBeSold) return;
+        var shop = WorldShops.Find(shopId);
+        if (!WorldShops.Buys(shop, entry)) return;
+        var existing = FindSale(entry);
+        if (entry.instance != null)
+        {
+            if (existing != null) return;
+            cart.Add(Line(CartKind.Sell, entry, entry.def.id, entry.instance.copyId ?? "", 1, entry.def.value));
+            UISounds.PlayClick();
+            CartChanged();
+            return;
+        }
+        int left = entry.count - (existing != null ? existing.count : 0);
+        if (left <= 0) return;
+        AskHowMany("Sell how many? (1–" + left + ")", left, left, at, n =>
+        {
+            if (existing != null && cart.Contains(existing)) existing.count = Mathf.Min(entry.count, existing.count + n);
+            else cart.Add(Line(CartKind.Sell, entry, entry.def.id, "", Mathf.Min(entry.count, n), entry.def.value));
+            CartChanged();
+        });
+    }
 
-    void Line(string s, int size, Color color, int rows = 1) => UiKit.ListLine(content, s, size, color, rows);
+    static CartItem Line(CartKind kind, BagEntry shown, string itemId, string copyId, int count, int price) =>
+        new CartItem
+        {
+            kind = kind, shown = shown, itemId = itemId, copyId = copyId ?? "", count = count, price = price,
+            row = new BagEntry { def = shown.def, count = count, instance = shown.instance },
+        };
+
+    void TakeOut(int line)
+    {
+        if (trading || line < 0 || line >= cart.Count) return;
+        cart.RemoveAt(line);
+        UISounds.PlayClick();
+        CartChanged();
+    }
+
+    CartItem FindLine(CartKind kind, string itemId, string copyId)
+    {
+        for (int i = 0; i < cart.Count; i++)
+            if (cart[i].kind == kind && cart[i].itemId == itemId && cart[i].copyId == (copyId ?? "")) return cart[i];
+        return null;
+    }
+
+    CartItem FindSale(BagEntry entry)
+    {
+        for (int i = 0; i < cart.Count; i++)
+            if (cart[i].kind == CartKind.Sell && cart[i].shown == entry) return cart[i];
+        return null;
+    }
+
+    void AskHowMany(string heading, int start, int most, Vector2 at, System.Action<int> confirmed)
+    {
+        var box = DropAmountPrompt.Shared(GetComponentInParent<Canvas>());
+        if (box != null) box.Ask(heading, start, most, at, confirmed, GuideSpot.ShopAmountBox);
+    }
+
+    // The cart changed: a new count, a new quote asked for once the cart sits still, and Confirm waits for it.
+    void CartChanged()
+    {
+        version++;
+        quoted = false;
+        quoteAt = cart.Count > 0 ? Time.unscaledTime + QuoteAfterSeconds : float.PositiveInfinity;
+        cartView.Changed();
+        bagView.Changed();
+        DrawSums();
+    }
+
+    void AskForQuote()
+    {
+        quoteAt = float.PositiveInfinity;
+        var me = GameNetwork.MyPlayer;
+        if (me == null || cart.Count == 0) return;
+        me.AskForCartQuote(shopId, Lines(), version);
+    }
+
+    void Confirm()
+    {
+        if (trading || !quoted || cart.Count == 0 || !string.IsNullOrEmpty(quote.refusal)) return;
+        var me = GameNetwork.MyPlayer;
+        if (me == null) return;
+        trading = true;
+        UISounds.PlayClick();
+        me.AskToTrade(shopId, Lines(), version);
+        DrawSums();
+    }
+
+    // The cart as the server reads it. A sale names where its stack sits now.
+    CartLine[] Lines()
+    {
+        var c = Character.Instance;
+        // perf-ok: one small array per quote or trade, sent at most five times a second while the cart is being changed
+        var lines = new CartLine[cart.Count];
+        for (int i = 0; i < cart.Count; i++)
+        {
+            var it = cart[i];
+            lines[i] = new CartLine
+            {
+                kind = (byte)it.kind,
+                itemId = it.itemId,
+                copyId = it.copyId ?? "",
+                saleId = it.kind == CartKind.BuyBack ? it.saleId : 0,
+                bagIndex = it.kind == CartKind.Sell && c != null ? c.Bag.IndexOf(it.shown) : -1,
+                count = it.count,
+            };
+        }
+        return lines;
+    }
+
+    // ---- drawing the totals, the purse and the buttons -------------------------------------------------------------
+
+    void DrawSums()
+    {
+        if (root == null) return;
+        bool show = quoted && cart.Count > 0;
+        bool refused = show && !string.IsNullOrEmpty(quote.refusal);
+        // A REFUSED CART SHOWS WHY in place of its totals; an empty or unpriced one shows the words and no numbers.
+        Write(sumNumbers[0], show && !refused ? Wallet.Amount(quote.buying) : "");
+        Write(sumNumbers[1], show && !refused ? Wallet.Amount(quote.selling) : "");
+        Write(sumNumbers[2], show && !refused ? Wallet.Amount(quote.tax) : "");
+        Write(sumNumbers[3], show && !refused ? Wallet.Amount(quote.net < 0 ? -quote.net : quote.net) : "");
+        Write(sumWords[3], show && !refused && quote.net < 0 ? "You get" : "You pay");
+        for (int i = 0; i < 4; i++)
+            if (sumWords[i].gameObject.activeSelf == refused) sumWords[i].gameObject.SetActive(!refused);
+        Write(refusal, refused ? quote.refusal : "");
+        confirm.interactable = show && !refused && !trading;
+        cancel.interactable = cart.Count > 0 && !trading;
+
+        // THE GUIDE MAY LIGHT CONFIRM only while the cart holds something to buy — the item named is the first one.
+        var marker = confirm.GetComponent<GuideMarker>();
+        string buying = null;
+        for (int i = 0; i < cart.Count && buying == null; i++) if (cart[i].kind == CartKind.Buy) buying = cart[i].itemId;
+        if (buying != null) GuideMarker.Put(confirm.gameObject, GuideSpot.ShopConfirm, buying);
+        else if (marker != null) marker.spot = GuideSpot.None;
+        DrawPurse();
+    }
+
+    void DrawPurse()
+    {
+        if (purse == null) return;
+        var c = Character.Instance;
+        Write(purse, "<color=" + UiKit.Hex(UiKit.TextDim) + ">You have</color> " + Wallet.Amount(c != null ? c.Gold : 0));
+    }
+
+    static void Write(TMP_Text t, string s)
+    {
+        if (t != null && t.text != s) t.text = s;
+    }
+
+    // ---- the three lists -------------------------------------------------------------------------------------------
+
+    // A row's price, whole: "1,250,000u".
+    static string Price(long n) => Wallet.Amount(n);
+
+    sealed class ShopList : UiListView.ISource, UiListView.IItemSource
+    {
+        readonly ShopPanel p;
+        public ShopList(ShopPanel owner) { p = owner; }
+        public int Count => p.ShopRows;
+        public float HeightOf(int index) => UiListView.RowHeight;
+        public void Bind(int index, UiListView.Slot slot)
+        {
+            if (index < p.stock.Count)
+            {
+                var e = p.stock[index];
+                int free = QuestStore.FreeBuys(e.def.id);
+                slot.ShowItem(e, "", null, UiKit.TextDim, free > 0 ? free + " free" : null, Price(p.stockPrice[index]));
+                p.MarkRow(slot, GuideSpot.ShopItemRow, e.def.id);
+                return;
+            }
+            int b = index - p.stock.Count;
+            var k = p.backs[b];
+            double left = WorldClock.SecondsUntil(WorldClock.FromEpochSeconds(k.endsAt));
+            slot.ShowItem(p.backShown[b], k.instance != null ? "" : "×" + k.count, null, UiKit.TextDim,
+                          "Buy back · " + ShopMath.MinutesShown(left) + "m", Price(k.price));
+            p.MarkRow(slot, GuideSpot.None, "");
+        }
+        public void Press(int index, int which) { }
+        public void ItemClicked(int index, PointerEventData e)
+        {
+            if (e.button != PointerEventData.InputButton.Left) return;
+            if (Hotkeys.ShiftHeld) { ChatController.InsertItemLink(index < p.stock.Count ? p.stock[index] : p.backShown[index - p.stock.Count]); return; }
+            if (e.clickCount >= 2) p.AddFromShop(index, e.position);
+        }
+    }
+
+    sealed class CartList : UiListView.ISource, UiListView.IItemSource
+    {
+        readonly ShopPanel p;
+        public CartList(ShopPanel owner) { p = owner; }
+        public int Count => p.cart.Count;
+        public float HeightOf(int index) => UiListView.RowHeight;
+        public void Bind(int index, UiListView.Slot slot)
+        {
+            var it = p.cart[index];
+            bool selling = it.kind == CartKind.Sell;
+            it.row.count = it.count;
+            slot.ShowItem(it.row, it.row.instance != null ? "" : "×" + it.count,
+                          selling ? "Sell" : it.kind == CartKind.BuyBack ? "Buy back" : "Buy",
+                          selling ? UiKit.Bad : UiKit.Good, null, Price(it.price));
+            p.MarkRow(slot, GuideSpot.None, "");
+        }
+        public void Press(int index, int which) { }
+        public void ItemClicked(int index, PointerEventData e)
+        {
+            if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2) p.TakeOut(index);
+        }
+    }
+
+    sealed class BagList : UiListView.ISource, UiListView.IItemSource
+    {
+        readonly ShopPanel p;
+        public BagList(ShopPanel owner) { p = owner; }
+        List<BagEntry> Bag => Character.Instance != null ? Character.Instance.Bag : null;
+        public int Count => Bag != null ? Bag.Count : 0;
+        public float HeightOf(int index) => UiListView.RowHeight;
+        public void Bind(int index, UiListView.Slot slot)
+        {
+            var e = Bag[index];
+            slot.ShowItem(e, e.instance != null ? "" : "×" + e.count, null, UiKit.TextDim, null,
+                          e.def != null && e.def.CanBeSold ? Price(e.def.value) : "");
+            p.MarkRow(slot, GuideSpot.None, "");
+        }
+        public void Press(int index, int which) { }
+        public void ItemClicked(int index, PointerEventData e)
+        {
+            var bag = Bag;
+            if (bag == null || index >= bag.Count || e.button != PointerEventData.InputButton.Left) return;
+            if (Hotkeys.ShiftHeld) { ChatController.InsertItemLink(bag[index]); return; }
+            if (e.clickCount >= 2) p.AddFromBag(bag[index], e.position);
+        }
+    }
+
+    // A reused row is told every time what the guide may light on it — or that it is nothing, now.
+    void MarkRow(UiListView.Slot slot, GuideSpot spot, string itemId) => slot.MarkForGuide(spot, itemId);
+
+    // ---- drops: a column takes what is let go over it --------------------------------------------------------------
+
+    /// <summary>What a drag let go over one of the three columns means: from the shop into the cart or the bag = buy;
+    /// from the bag into the cart or the shop = sell; from the cart into either side = take it back out.</summary>
+    internal void Dropped(ColumnDrop.Into into, ItemSlot from, Vector2 at)
+    {
+        var entry = from != null ? from.boundEntry : null;
+        if (entry == null) return;
+        int fromShop = stock.IndexOf(entry);
+        if (fromShop < 0) { int b = backShown.IndexOf(entry); if (b >= 0) fromShop = stock.Count + b; }
+        int fromCart = -1;
+        for (int i = 0; i < cart.Count && fromCart < 0; i++) if (cart[i].row == entry) fromCart = i;
+
+        if (fromCart >= 0) { if (into != ColumnDrop.Into.Cart) TakeOut(fromCart); return; }
+        if (fromShop >= 0) { if (into != ColumnDrop.Into.Shop) AddFromShop(fromShop, at); return; }
+        var c = Character.Instance;
+        if (c != null && c.Bag.Contains(entry) && into != ColumnDrop.Into.Bag) AddFromBag(entry, at);
+    }
+
+    /// <summary>One column of the shop window as somewhere to let a dragged row go.</summary>
+    public sealed class ColumnDrop : MonoBehaviour, IItemDropTarget
+    {
+        public enum Into { Shop, Cart, Bag }
+        internal ShopPanel panel;
+        internal Into into;
+        internal Image edge;
+
+        public bool TakeDrop(ItemSlot from, PointerEventData e)
+        {
+            if (panel == null) return false;
+            panel.Dropped(into, from, e.position);
+            return true;
+        }
+    }
 }

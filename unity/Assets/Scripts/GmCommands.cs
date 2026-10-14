@@ -240,7 +240,7 @@ public static class GmCommands
         // THE FOUR BELOW CHANGE WHAT SOMEBODY OWNS, and what somebody owns is the server's. Run on a player's own
         // machine they said they had worked and had not: the reply read "Gave 5x Healing Potion" while the bag
         // went from nothing to nothing, and an added coin vanished the instant the server next spoke.
-        Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", "gold 5000", CmdGold, false, true, "zeny"));
+        Register(new GmCommand("gold", "gold <n>", "Add " + Wallet.Name + " (may be negative).", "gold 5000", CmdGold, false, true, "zeny"));
         Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", "item \"watery ink\" 10", CmdItem, false, true, "give"));
         Register(new GmCommand("weapon", "weapon [type] [trademark] [folds] [grade] [rarity]",
             "Put a new weapon in your bag. Type = sword/bow/…; trademark = one of that weapon's skills a new weapon " +
@@ -415,7 +415,7 @@ public static class GmCommands
         // share, which on a server is nobody's.
         if (c.Ch == null) { c.Reply("No character."); return; }
         c.Ch.AddGold(n);
-        c.Reply($"Zeny → {c.Ch.Gold}.");
+        c.Reply(Wallet.Name + " → " + Wallet.Amount(c.Ch.Gold) + ".");
     }
 
     static void CmdItem(GmContext c)
@@ -992,7 +992,7 @@ public static class GmCommands
         if (it.element != Element.Neutral) head.Append(" · ").Append(it.element);
         c.Reply(head.ToString());
 
-        var facts = new StringBuilder($"Weight {it.weight} · " + (it.CanBeSold ? $"Sells for {it.zeny} zeny" : Item.CannotBeSoldText));
+        var facts = new StringBuilder($"Weight {it.weight} · " + (it.CanBeSold ? "Value " + Wallet.Amount(it.value) : Item.CannotBeSoldText));
         if (it.cardSlots > 0) facts.Append(" · Card slots ").Append(it.cardSlots);
         if (it.madeOf != MaterialKind.None) facts.Append(" · Made of ").Append(it.madeOf);
         // An Ink's or a Salt's step is its TIER — the word the item's own field uses.

@@ -29,6 +29,13 @@ public sealed class UiListView
         void Press(int index, int which);
     }
 
+    /// <summary>What a list of THINGS answers besides — the clicks on one of its item rows (<see cref="Slot.ShowItem"/>):
+    /// a double-click, a shift-click. A list that shows no item rows need not be one.</summary>
+    public interface IItemSource
+    {
+        void ItemClicked(int index, UnityEngine.EventSystems.PointerEventData e);
+    }
+
     // The list window's measures (UiKit.ListWindow / ListDeal), so this column and a built one look the same.
     public const float Pad = 6f, Spacing = 5f, RowHeight = 30f, PressWidth = 70f, PressGap = 4f;
 
@@ -46,10 +53,132 @@ public sealed class UiListView
         internal TextMeshProUGUI wideText, firstText, secondText;
         internal int index = -1;
         internal int boundVersion = -1;
+        internal UiListView owner;
+
+        // THE ITEM ROW, made the first time this row shows a thing: the list button's look, and inside it the thing's name
+        // (cut with "…" when room runs short — never the price), its count, a small tag on either side, and the price of
+        // one, whole, at the right. It carries the item card on hover and can be dragged, as a box in the bag can.
+        RectTransform item;
+        ItemSlot itemSlot;
+        TextMeshProUGUI itemName, itemCount, itemPrice, tagBefore, tagAfter;
+        GameObject tagBeforeBox, tagAfterBox;
+
+        /// <summary>A thing: <paramref name="entry"/>'s name in its rarity's colour, <paramref name="count"/> beside it
+        /// (empty for none), a tag before the name and one after it (null for none), and <paramref name="price"/> at the
+        /// right. Hovering shows its card; dragging it hands <paramref name="entry"/> to whatever it is let go over.</summary>
+        public void ShowItem(BagEntry entry, string count, string before, Color beforeColour, string after, string price)
+        {
+            label.gameObject.SetActive(false);
+            wide.gameObject.SetActive(false);
+            first.gameObject.SetActive(false);
+            second.gameObject.SetActive(false);
+            if (item == null) MakeItemRow();
+            item.gameObject.SetActive(true);
+
+            itemSlot.boundEntry = entry;
+            if (entry != null && entry.instance != null) itemSlot.SetInstance(entry.instance);
+            else itemSlot.SetItem(entry != null ? entry.def : null);
+            string name = entry == null || entry.def == null ? ""
+                        : entry.instance != null ? ItemTooltip.CopyTitle(entry.instance) : entry.def.displayName;
+            Write(itemName, name);
+            if (entry != null && entry.def != null) itemName.color = Rarities.Color(Rarities.Of(entry.def, entry.instance));
+            Write(itemCount, count ?? "");
+            Write(itemPrice, price ?? "");
+            Tag(tagBeforeBox, tagBefore, before, beforeColour);
+            Tag(tagAfterBox, tagAfter, after, UiKit.TextDim);
+        }
+
+        static void Tag(GameObject box, TextMeshProUGUI text, string word, Color colour)
+        {
+            bool on = !string.IsNullOrEmpty(word);
+            if (box.activeSelf != on) box.SetActive(on);
+            if (!on) return;
+            Write(text, word);
+            text.color = colour;
+        }
+
+        // A text write rebuilds its mesh; written only when the words change.
+        static void Write(TextMeshProUGUI t, string s)
+        {
+            if (t.text != s) t.text = s;
+        }
+
+        void MakeItemRow()
+        {
+            var edge = UiKit.Round(UiKit.Img("Item", rect, UiKit.ButtonEdge), UiKit.ButtonRadius);
+            item = edge.rectTransform;
+            UiKit.Fill(item, Vector2.zero, Vector2.zero);
+            var fill = UiKit.Round(UiKit.Img("Fill", item, UiKit.ButtonFill), UiKit.ButtonRadius);
+            UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+            fill.raycastTarget = false;
+            edge.gameObject.AddComponent<UiButtonFx>();
+
+            var h = fill.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.padding = new RectOffset(8, 8, 0, 0);
+            h.spacing = 6f;
+            h.childAlignment = TextAnchor.MiddleLeft;
+            h.childControlWidth = h.childControlHeight = true;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+
+            tagBeforeBox = MakeTag(fill.transform, "Before", out tagBefore);
+            itemName = Part(fill.transform, "Name", 13, FontStyles.Bold);
+            itemName.overflowMode = TextOverflowModes.Ellipsis;
+            var grow = itemName.gameObject.AddComponent<LayoutElement>();
+            grow.flexibleWidth = 1f;
+            grow.minWidth = 0f;
+            itemCount = Part(fill.transform, "Count", 12, FontStyles.Normal);
+            itemCount.color = UiKit.TextDim;
+            tagAfterBox = MakeTag(fill.transform, "After", out tagAfter);
+            itemPrice = Part(fill.transform, "Price", 13, FontStyles.Bold);
+            itemPrice.color = UiKit.TitleText;
+
+            itemSlot = edge.gameObject.AddComponent<ItemSlot>();
+            itemSlot.clickOverride = e => { if (index >= 0 && owner != null) owner.ItemClicked(index, e); };
+            edge.gameObject.AddComponent<SlotDragHandler>();
+        }
+
+        static TextMeshProUGUI Part(Transform parent, string name, float size, FontStyles style)
+        {
+            var t = UiKit.MakeText(name, parent, "", size, FontStyle.Normal, TextAnchor.MiddleLeft, null, false);
+            t.fontStyle = style;
+            t.raycastTarget = false;
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            return t;
+        }
+
+        // A small word on a white chip — "Buy back", "2 free", "Buy", "Sell".
+        static GameObject MakeTag(Transform parent, string name, out TextMeshProUGUI word)
+        {
+            var chip = UiKit.Round(UiKit.Img(name, parent, UiKit.SlotFill), 2);
+            chip.raycastTarget = false;
+            var h = chip.gameObject.AddComponent<HorizontalLayoutGroup>();
+            h.padding = new RectOffset(4, 4, 1, 1);
+            h.childControlWidth = h.childControlHeight = true;
+            h.childForceExpandWidth = h.childForceExpandHeight = false;
+            word = Part(chip.transform, "Word", 10, FontStyles.Bold);
+            chip.gameObject.SetActive(false);
+            return chip.gameObject;
+        }
+
+        /// <summary>What the tutorial guide may light on this row's item, set every time the row is filled — a reused row
+        /// never keeps the mark of the thing it showed before. None clears it.</summary>
+        public void MarkForGuide(GuideSpot spot, string itemId)
+        {
+            if (item == null) return;
+            if (spot != GuideSpot.None) { GuideMarker.Put(item.gameObject, spot, itemId); return; }
+            var marker = item.GetComponent<GuideMarker>();
+            if (marker != null) marker.spot = GuideSpot.None;
+        }
+
+        void HideItem()
+        {
+            if (item != null && item.gameObject.activeSelf) item.gameObject.SetActive(false);
+        }
 
         /// <summary>A line of text, <paramref name="rows"/> lines tall.</summary>
         public void ShowLine(string text, int size, Color color, int rows = 1)
         {
+            HideItem();
             wide.gameObject.SetActive(false);
             first.gameObject.SetActive(false);
             second.gameObject.SetActive(false);
@@ -64,6 +193,7 @@ public sealed class UiListView
         /// <summary>A full-width press; its words drawn <paramref name="dim"/> when the owner says so.</summary>
         public void ShowButton(string text, bool dim = false)
         {
+            HideItem();
             label.gameObject.SetActive(false);
             first.gameObject.SetActive(false);
             second.gameObject.SetActive(false);
@@ -76,6 +206,7 @@ public sealed class UiListView
         /// the right.</summary>
         public void ShowDeal(string text, string firstWord, string secondWord = null)
         {
+            HideItem();
             wide.gameObject.SetActive(false);
             label.gameObject.SetActive(true);
             label.text = text;
@@ -198,7 +329,7 @@ public sealed class UiListView
 
     Slot MakeSlot()
     {
-        var s = new Slot();
+        var s = new Slot { owner = this };
         var go = new GameObject("Line", typeof(RectTransform));
         s.rect = (RectTransform)go.transform;
         s.rect.SetParent(content, false);
@@ -230,6 +361,11 @@ public sealed class UiListView
         r.anchoredPosition = new Vector2(fromRight, 0f);
         text = b.GetComponentInChildren<TextMeshProUGUI>(true);
         return b;
+    }
+
+    void ItemClicked(int index, UnityEngine.EventSystems.PointerEventData e)
+    {
+        if (index < counted && source is IItemSource items) items.ItemClicked(index, e);
     }
 
     void Pressed(Slot s, int which)

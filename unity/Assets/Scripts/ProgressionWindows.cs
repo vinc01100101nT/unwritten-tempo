@@ -223,7 +223,7 @@ public class ProgressionWindows : MonoBehaviour
         int cap = who != null ? who.WeightCap : 0;
         string slots = useFilter && who != null
             ? $"<color={DimHex}>Slots</color> {who.SlotsUsed(tab)}/{BagRoom.SlotsPerCategory}        " : "";
-        invFooter.text = $"{slots}<color={DimHex}>Weight</color> {w}/{cap}        {Wallet.Gold:n0} z";
+        invFooter.text = $"{slots}<color={DimHex}>Weight</color> {w}/{cap}        {Wallet.Amount(Wallet.Gold)}";
     }
     // ---- Character window -----------------------------------------------------
 
@@ -405,7 +405,7 @@ public class ProgressionWindows : MonoBehaviour
         charDerived[1].text = DerivedSkip +
             $"{b.def}{Delta(d.def - b.def)}\n" +
             $"{b.hit}{Delta(d.hit - b.hit)}\n" +
-            $"×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}\n" +
+            $"{b.swingsPerSecond:0.00}/s{Delta(d.swingsPerSecond - b.swingsPerSecond)}\n" +
             $"{b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}\n" +
             $"{Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}\n" +
             $"{Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}\n" +
@@ -457,7 +457,7 @@ public class ProgressionWindows : MonoBehaviour
         return $" <color={hex}>({sign}{Mathf.Abs(lo)}-{Mathf.Abs(hi)})</color>";
     }
 
-    // Multiplier stats (ASPD, CAST) read as a ×delta rather than a flat number.
+    // Fractional stats (ASPD in swings a second, the CAST multiplier) read as a two-decimal delta.
     static string Delta(float diff)
     {
         if (Mathf.Abs(diff) < 0.005f) return "";

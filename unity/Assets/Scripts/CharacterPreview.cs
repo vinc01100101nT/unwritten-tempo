@@ -226,8 +226,8 @@ public class CharacterPreview : MonoBehaviour
 
         CharacterModels.Load(modelName, model =>
         {
-            if (this == null || model == null) return;
-            if (modelName != shownModel) return;   // paged on while this one was loading — it is no longer wanted
+            if (this == null || model == null) return null;
+            if (modelName != shownModel) return null;   // paged on while this one was loading — it is no longer wanted
 
             if (body != null) Destroy(body);
             dye = null;
@@ -257,6 +257,7 @@ public class CharacterPreview : MonoBehaviour
             body.AddComponent<HeadSocket>();
             ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
             OnBodyChanged?.Invoke();
+            return body;
         });
     }
 

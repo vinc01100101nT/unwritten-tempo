@@ -437,7 +437,12 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The whole percentage lift on one stat: ring investment, weapon mastery, and any live sub-stat
     /// window. The single place the three are added, so no formula has to know they exist and none can be
     /// forgotten. Mastery is ADDED to the ring's term, never multiplied onto it.</summary>
-    float Lift(StatId ringNode, SubStat stat) => PassivePercent(ringNode) + MasteryPercent(ringNode) + SubBonus(stat);
+    float Lift(StatId ringNode, SubStat stat) => RingAndMastery(ringNode) + SubBonus(stat);
+
+    /// <summary>Ring investment plus weapon mastery on one ring stat — the part of <see cref="Lift"/> every stat shares.
+    /// Attack speed and cast speed read this directly, because their sub-stat window is a multiplier of its own
+    /// rather than a term in the sum; reading the ring alone there is how mastery once went missing from both.</summary>
+    float RingAndMastery(StatId ringNode) => PassivePercent(ringNode) + MasteryPercent(ringNode);
 
     /// <summary>What the weapon in hand's mastery adds to one ring stat — 0 unless that weapon's own three stats
     /// include it. Reads a fixed table and a derived level, so it is a lookup, not a search.</summary>
@@ -758,12 +763,12 @@ public class Character : MonoBehaviour, ICombatUnit
     public int Flee => Told ? toldCurrent.flee : UnitStatMath.Flee(Inputs, equipBonuses, Lift(StatId.Evasion, SubStat.Evasion));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
-    public float AttackSpeedMult => Told ? toldCurrent.aspdMult : UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
+    public float AttackSpeedMult => Told ? toldCurrent.aspdMult : UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, RingAndMastery(StatId.AttackSpeed), AspdBuffMult);
 
     /// <summary>The ONE cast-speed number: the multiplier applied to a spell's base wind-up, so a spell's real cast
     /// time is <c>baseCast × CastTimeMult</c>. 1 at 0 DEX, 0 (instant) at DEX 150; the CastSpeed ring node and the
     /// cast-speed buff shorten it further. Lower is faster.</summary>
-    public float CastTimeMult => Told ? toldCurrent.castTimeMult : UnitStatMath.CastTimeMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);
+    public float CastTimeMult => Told ? toldCurrent.castTimeMult : UnitStatMath.CastTimeMult(Inputs, RingAndMastery(StatId.CastSpeed), CastBuffMult);
 
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
@@ -829,6 +834,7 @@ public class Character : MonoBehaviour, ICombatUnit
         moveSpeed = 100,
         critChance = CritChance01, critMult = CritMultiplier,
         aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
+        swingsPerSecond = 1f / SwingTime,
         guardCutPct = DamageCutNow, lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
         basicAttackRange = ReachNow,

@@ -737,7 +737,7 @@ function equipmentTable() {
   return itemRows(['Name', 'Description', 'Slot', 'Weapon', 'Reach', 'Element', 'Made of', 'Card slots', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.slot)}</td>` +
     `<td>${esc(dash(it.weaponType))}</td><td>${esc(dash(it.reach))}</td><td>${esc(it.element)}</td><td>${esc(dash(it.madeOf))}</td>` +
-    `<td>${dash(it.cardSlots)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
+    `<td>${dash(it.cardSlots)}</td><td>${it.weight}</td><td>${it.sellsFor > 0 ? it.sellsFor.toLocaleString('en-US') + 'u' : 'Cannot be sold to NPC'}</td>`);
 }
 function materialTable() {
   const list = ((ITEMS && ITEMS.items) || []).filter(it => it.type === 'Material')
@@ -753,7 +753,7 @@ function materialTable() {
   return itemRows(['Name', 'Description', 'Kind', 'Band / Tier', 'Rarity', 'Merges into', 'Dropped by', 'Weight', 'Sells for'], list, it =>
     `<td><b>${esc(it.name)}</b></td><td class="long">${descCell(it.description)}</td><td>${esc(it.materialKind)}</td>` +
     `<td>${it.materialStep > 0 ? `${it.materialKind === 'Ink' || it.materialKind === 'Salt' ? 'Tier' : 'Band'} ${it.materialStep}` : '—'}</td><td>${esc(dash(it.rarity))}</td>` +
-    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.zeny > 0 ? it.zeny + ' zeny' : 'Cannot be sold to NPC'}</td>`);
+    `<td>${esc(dash(it.mergesInto))}</td><td class="long">${droppers(it)}</td><td>${it.weight}</td><td>${it.sellsFor > 0 ? it.sellsFor.toLocaleString('en-US') + 'u' : 'Cannot be sold to NPC'}</td>`);
 }
 // Every trademark a new weapon can roll, its chance, and what it raises at each grade.
 function trademarkTable() {

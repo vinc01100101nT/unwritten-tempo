@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 /// in one place.
 ///
 /// Loading is ASYNC and runs through <see cref="AddressablePrefabs"/> — the shared address→prefab cache the
-/// character models use too, so the "load once, keep for the session, never retry a dead address" rule has one
+/// character models use too, so the "load once, let go once unused for two maps, never retry a dead address" rule has one
 /// owner rather than a copy per system. The first spawn of a given mob loads its prefab off the main path and
 /// every later spawn is an immediate <see cref="UnityEngine.Object.Instantiate"/>. Instances are plain clones
 /// (NOT Addressables-managed), so a mob's death/recycle lifecycle (<c>MobRespawn</c>, <c>DeathDissolve</c>) is
@@ -62,8 +62,12 @@ public static class MobSpawner
     }
 
     static void LoadAndClone(MonsterDef def, Vector3 foot, Scene map, Action<GameObject> onSpawned)
-        => AddressablePrefabs.Load(AddressPrefix + def.id,
-                                   prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot, map, def) : null));
+        => AddressablePrefabs.Load(AddressPrefix + def.id, prefab =>
+        {
+            var go = prefab != null ? Clone(prefab, foot, map, def) : null;
+            onSpawned?.Invoke(go);
+            return go;
+        });
 
     // Each creature refused for a body it cannot wear is written to the log once, not once per attempt: a field
     // spawner retries an empty slot, and the reason is the same every time.

@@ -211,7 +211,7 @@ wears, so a wanted trademark is hunted from creatures that carry that weapon typ
 | *Any* ultimate's | 1% | ~100 |
 | A specific ultimate's | 0.33% | ~300 |
 
-A dropped piece nobody wants sells to a shop for 5 gold; recycling a Raw piece returns nothing.
+A dropped piece nobody wants sells to a shop for 5u; recycling a Raw piece returns nothing.
 
 ## 6. How it is built
 
@@ -233,7 +233,7 @@ A dropped piece nobody wants sells to a shop for 5 gold; recycling a Raw piece r
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
   the wire, and the copy's rarity rides the same text as its sixth part. The save today is **v19**, and both
-  servers' build string is `unwritten-character-v25`.
+  servers' build string is `unwritten-character-v26`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`
@@ -242,8 +242,9 @@ A dropped piece nobody wants sells to a shop for 5 gold; recycling a Raw piece r
 - **The title** is `+15 Petal Storm [C]` (`ItemTooltip.CopyTitle`); a weapon with no trademark keeps its old title.
   It is written in the colour of the copy's own rarity (`Rarities.Color`, from `EquipmentInstance.rarity`) in the
   tooltip, the bag, the worn list and on the floor, and the tooltip names the rarity on its own line.
-- **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect ("+20% damage",
-  "+20% damage buff"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
+- **The weapon's card** reads "Trademark Skill: Thousand Petals" and one line per raised effect, each naming the skill
+  it is for ("+20% to Thousand Petals' damage", "+20% to Thousand Petals' damage buff"); the wiki's trademark table,
+  which names the skill on the row, keeps the short form ("+20% damage"). **The skill's card** shows each effect's base number, then "Trademark skill bonus damage:
   +20%" on its own line, only when the weapon in hand empowers that skill.
 - **The skill-data check** fails when a skill file still carries the retired separate weapon name (`trademarkName`).
 

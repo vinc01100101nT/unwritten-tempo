@@ -28,7 +28,7 @@ nobody, charges were spent on a copy, and the server took the full hit off the r
 (`EffectHandle.ReturnAt`), which a server cannot know. `EffectTiming` now owns the one formula; `EffectTimingBaker`
 writes `measuredPlaySeconds` / `measuredFadeSeconds` / `measuredLoops` into every `EffectDef` automatically (editor
 load + any prefab/asset import). Verified: all 106 baked values equal a live instantiated measurement, and every
-authored sequence step's window is identical old-vs-new. `Vfx.Blind`, `Sfx.Deaf`, `BattleNotice` and
+authored sequence step's window is identical old-vs-new. `Vfx.Blind`, `Sfx.Deaf`, `OverheadNotice` and
 `RepeatsDamageTotal.Begin` all no-op on a server.
 
 **Passives became per-unit.** `PassiveEvents.Fire` now takes the ACTOR first and walks `ICombatUnit.SkillRunners`

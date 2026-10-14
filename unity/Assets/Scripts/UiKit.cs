@@ -42,7 +42,7 @@ public static class UiKit
 
     /// <summary>THE one switch that makes a UI material draw OVER the world — over the ground, grass, trees and walls
     /// — instead of being hidden by whatever stands in front of it. Everything that floats over a unit is HUD: a name,
-    /// a health or cast bar, a damage number, a battle notice. Every material one of those is drawn with passes through
+    /// a health or cast bar, a damage number, an overhead notice. Every material one of those is drawn with passes through
     /// here (<see cref="OutlinedMaterial"/> for words, <see cref="MobNameplate.SharedOnTop"/> for bars and tiles), so
     /// they cannot disagree about it.
     ///
@@ -212,6 +212,11 @@ public static class UiKit
     public static readonly Color Good = new Color(0.180f, 0.490f, 0.255f);
     // #867200 — a private message in the chat: a dark gold yellow (4.47:1 against PanelFill)
     public static readonly Color PmText = new Color(0.525f, 0.447f, 0.000f);
+    /// <summary>The stacking notice's three colours (<see cref="OverheadNotice"/>) — bright, because they are read over the
+    /// world, on a dark edge: something done, something refused or broken, and a "you can't do that right now".</summary>
+    public static readonly Color NoticeSuccess = new Color(0.400f, 0.902f, 0.451f);
+    public static readonly Color NoticeFailure = new Color(1.000f, 0.373f, 0.373f);
+    public static readonly Color NoticeWarning = new Color(1.000f, 0.851f, 0.251f);
     // An item's name by its rarity (Rarities.Color): Common is TextMain and Uncommon is Good; these three are the
     // rest, each dark enough to read at 4.5:1 or better against PanelFill.
     // #2A62B8 — a Rare item's name: blue (5.59:1)

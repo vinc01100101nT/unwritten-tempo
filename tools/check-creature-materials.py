@@ -136,10 +136,13 @@ def main():
             if is_rare and kind == "1" and step == 2:
                 faults.append("%s is an elite's rare material but is Uncommon, which an elite never drops" % item_name)
             # The game's own rounding: whole numbers, half up (CreaturePay.Scaled).
-            want = (per_level[step] * max(1, level) * grade_percent * fold_percent + 5000) // 10000
-            if field(item, "zeny") != str(want):
-                faults.append("%s sells for %s but the rule says %d (%d x level %d of %s, x %d%% for its grade, x %d%% for its folds)"
-                              % (item_name, field(item, "zeny"), want, per_level[step], level, name, grade_percent, fold_percent))
+            sells = (per_level[step] * max(1, level) * grade_percent * fold_percent + 5000) // 10000
+            # The rule names what a shop PAYS; the item keeps the value that pays exactly that once the Tax is taken
+            # (ShopMath.ValueForSellPrice: the price and half of it again, rounded up).
+            want = 0 if sells <= 0 else sells + (sells + 1) // 2
+            if field(item, "value") != str(want):
+                faults.append("%s is worth %s but the rule says %d, to sell for %d (%d x level %d of %s, x %d%% for its grade, x %d%% for its folds)"
+                              % (item_name, field(item, "value"), want, sells, per_level[step], level, name, grade_percent, fold_percent))
             if field(item, "category") != ETC_TAB:
                 faults.append("%s is not in the Etc tab" % item_name)
             if field(item, "weight") != WEIGHT:

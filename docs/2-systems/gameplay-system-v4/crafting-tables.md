@@ -25,7 +25,7 @@ Temper Dust and 0.06 Quench Oil for each step of the creature's level (1–14 is
 what the grade and folds of its gear pay ([What a Kill Pays](../../3-world/what-a-kill-pays.md)) — whole units,
 and the part left over is the chance of one more (see [Mob Roster](../../3-world/mob-roster.md)).
 
-| What a shop pays for one | Gold |
+| What a shop pays for one | Unsigned |
 | --- | --- |
 | Any weapon or armour piece | 5 |
 | Temper Dust | 2 |
@@ -49,12 +49,12 @@ A new character starts wearing a Raw +0 Common Sword, Chainmail and Iron Sabaton
 
 What a creature wears, and every piece that was not dropped, is Common.
 
-## 3. Fold — Temper Dust by the grade, plus gold
+## 3. Fold — Temper Dust by the grade, plus Unsigned
 
-Each fold costs the grade's step in **Temper Dust** and **50 gold × the step**. A piece cannot be folded
+Each fold costs the grade's step in **Temper Dust** and **50u × the step**. A piece cannot be folded
 past its grade's cap; past there the only way on is a quench.
 
-| Grade | Temper Dust per fold | Gold per fold | Fold cap | Ink slots |
+| Grade | Temper Dust per fold | Unsigned per fold | Fold cap | Ink slots |
 | --- | --- | --- | --- | --- |
 | Raw | 1 | 50 | +5 | 0 |
 | F | 2 | 100 | +10 | 1 |
@@ -109,14 +109,14 @@ Common body armour at A +35: **41 Defence and 328 HP** (metal), **20.5% Attack S
 Example: a Common A-grade sword at +35 is 35 × 1.8 × 1.30 = 81.9 → **+82 Attack**; at +25 it is 25 × 1.8 × 1.30 =
 58.5, which rounds up to **+59 Attack**. A Legendary one at +35 is 35 × 1.8 × 1.80 = 113.4 → **+113 Attack**.
 
-## 4. Quench — Quench Oil by the grade, plus gold, plus an optional Salt
+## 4. Quench — Quench Oil by the grade, plus Unsigned, plus an optional Salt
 
 **A piece must be folded to its grade's cap before it can be quenched** — the cap IS the gate, because the folds
-are what a quench spends. Each quench then costs the grade's step in **Quench Oil** and **500 gold × the
+are what a quench spends. Each quench then costs the grade's step in **Quench Oil** and **500u × the
 step**. Every fold is spent whichever way it goes. A grade that falls also loses the LAST stat written on
 the piece. A is never quenched — it is the top.
 
-| From | Quench Oil | Gold | Up | Unchanged | Down |
+| From | Quench Oil | Unsigned | Up | Unchanged | Down |
 | --- | --- | --- | --- | --- | --- |
 | Raw → F | 1 | 500 | 80% | 20% | — |
 | F → E | 2 | 1,000 | 60% | 40% | — (F is the floor) |
@@ -195,16 +195,16 @@ type. Training speed applies to Weapon Mastery.
 Recycling destroys the piece and returns, each halved and rounded down: for **every grade below the current
 one**, that grade's full fold cap AND one quench (both at that grade's own prices — the gate above is what makes
 those folds provable); the folds standing on the piece now, at its own grade's price; and one Ink per written stat,
-its tier read off the value. **Folds made at Raw return nothing**, standing or climbed — no Temper Dust and no gold
+its tier read off the value. **Folds made at Raw return nothing**, standing or climbed — no Temper Dust and no Unsigned
 — though the Raw quench does. Failed quenches, the folds they spent, and Salt are not recorded and come back as
 nothing. A piece the first tutorial still needs cannot be recycled.
 
 | Piece | Comes back |
 | --- | --- |
 | Raw +5 Sword (ready to quench) | nothing |
-| F +4 Sword | 4 Temper Dust, 450 g |
-| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,250 g |
-| A +35 Sword | 347 Temper Dust, 10 Quench Oil, 22,625 g |
+| F +4 Sword | 4 Temper Dust, 450u |
+| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,250u |
+| A +35 Sword | 347 Temper Dust, 10 Quench Oil, 22,625u |
 | … with 2 Watery Ink stats written | + 1 Watery Ink |
 
 ## 8. Worked example — a dropped Common sword from Raw to A
@@ -212,11 +212,11 @@ nothing. A piece the first tutorial still needs cannot be recycled.
 | Step | Pays | Result |
 | --- | --- | --- |
 | A kill drops it | nothing | Raw +0 |
-| Fold ×5 | 5 Temper Dust + 250 g | Raw +5 (+9 Attack) |
-| Quench (allowed: at the +5 cap) | 1 Quench Oil + 500 g, 80% | F +0 |
-| Fold ×10 | 20 Temper Dust + 1,000 g | F +10 (+18 Attack) |
-| Quench | 2 Quench Oil + 1,000 g, 60% | E +0 (2 Ink slots) |
-| Fold ×15 | 45 Temper Dust + 2,250 g | E +15 (+28 Attack) |
-| Quench | 3 Quench Oil + 1,500 g, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
+| Fold ×5 | 5 Temper Dust + 250u | Raw +5 (+9 Attack) |
+| Quench (allowed: at the +5 cap) | 1 Quench Oil + 500u, 80% | F +0 |
+| Fold ×10 | 20 Temper Dust + 1,000u | F +10 (+18 Attack) |
+| Quench | 2 Quench Oil + 1,000u, 60% | E +0 (2 Ink slots) |
+| Fold ×15 | 45 Temper Dust + 2,250u | E +15 (+28 Attack) |
+| Quench | 3 Quench Oil + 1,500u, 50/30/20 | D +0 (3 slots) — or back to F +0, and the last written stat gone |
 | … | | |
-| Fold ×35 at A | 245 Temper Dust + 12,250 g | A +35 (+82 Attack), 6 Ink slots |
+| Fold ×35 at A | 245 Temper Dust + 12,250u | A +35 (+82 Attack), 6 Ink slots |

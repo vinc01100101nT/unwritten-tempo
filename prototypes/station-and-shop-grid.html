@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Station and Shop Grid</title>
+<link rel="stylesheet" href="ui-tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #2b3140; font-family: var(--font-ui), sans-serif; }
+  .stage { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; padding: 32px; }
+  .note { color: #c8cfdc; font-size: 13px; max-width: 300px; line-height: 1.5; }
+  .note b { color: #fff; }
+  .note ul { margin: 6px 0 0; padding-left: 18px; }
+
+  /* ---- the shared window frame (UiKit.DressWindow / UiKit.Header) ---- */
+  .win { width: 330px; height: 468px; display: flex; flex-direction: column; border: 1px solid var(--window-edge);
+         border-radius: 5px; background: var(--panel-fill); color: var(--text-main); font-size: 12px; overflow: hidden;
+         user-select: none; }
+  .bar { height: 24px; flex: none; display: flex; align-items: center; padding: 0 2px 0 10px;
+         background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  .bar b { flex: 1; font-size: 13px; color: var(--title-text); }
+  .bar i { width: 18px; height: 18px; margin: 0 3px; border-radius: 3px; background: var(--close-fill);
+           color: var(--title-text); font: bold 12px/18px var(--font-ui); text-align: center; font-style: normal; }
+  .btn { border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill);
+         color: var(--button-text); font-family: inherit; padding: 0; cursor: pointer; }
+  .btn:hover { background: var(--hover); }
+  .btn.chosen { background: var(--accent); border-color: var(--accent); color: var(--text-on-dim); font-weight: bold; }
+  .dim { color: var(--text-dim); }
+
+  .body { flex: 1; display: flex; flex-direction: column; padding: 8px 15px 0; min-height: 0; }
+  .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; margin-bottom: 6px; }
+  .tabs .btn { height: 20px; font-size: 11px; }
+
+  /* THE GRID: the bag's own (ItemGrid) — hotbar boxes six across, four down, no gap, the scroll lane outside. */
+  .grid { display: grid; grid-template-columns: repeat(6, 48px); grid-auto-rows: 48px; gap: 0; flex: none;
+          width: 298px; margin-right: -10px; height: 192px; overflow-x: hidden; overflow-y: auto;
+          scrollbar-gutter: stable; align-content: start; }
+  .grid::-webkit-scrollbar { width: 6px; }
+  .grid::-webkit-scrollbar-thumb { background: var(--button-edge); border-radius: 3px; }
+  .grid::-webkit-scrollbar-track { background: transparent; }
+  .cell { position: relative; width: 48px; height: 48px; border-radius: 3px; border: 1px solid var(--button-edge);
+          background: var(--slot-fill); cursor: pointer; }
+  .cell:hover { background: var(--hover); }
+  .cell.empty { background: var(--slot-empty); border-color: transparent; cursor: default; }
+  /* the picked box: ItemBox.Light, the same lit look a slot gets while a piece is dragged over it */
+  .cell.picked { border-color: var(--accent); background: var(--hover); }
+  .cell .name { position: absolute; left: 2px; right: 2px; top: 11px; bottom: 11px; display: flex;
+                align-items: center; justify-content: center; text-align: center; font-weight: bold;
+                font-size: 10px; line-height: 11px; overflow: hidden; pointer-events: none; }
+  .cell .name span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+                     overflow-wrap: anywhere; }
+  .cell .count { position: absolute; right: 3px; bottom: 1px; font: bold 11px var(--font-ui); color: var(--title-text); }
+  .cell .corner { position: absolute; left: 0; right: 0; top: 1px; text-align: center; font-size: 9px; color: var(--text-dim); }
+  .r0 { color: var(--text-main); } .r1 { color: var(--good); } .r2 { color: var(--rarity-rare); }
+  .r3 { color: var(--rarity-epic); } .r4 { color: var(--rarity-legendary); }
+
+  /* what the picked thing costs and does — scrolls on its own if a page says more than fits */
+  .detail { flex: none; height: 132px; overflow: hidden; margin-top: 8px; border-top: 1px solid var(--rule); padding-top: 6px;
+            font-size: 12px; line-height: 17px; }
+  /* WHAT TO READ FIRST: the piece in its rarity's colour, large and bold; its folds small and dim beside it */
+  .detail .head { font-size: 15px; font-weight: bold; margin-bottom: 3px; }
+  .detail .head .folds { font-size: 11px; font-weight: normal; color: var(--text-dim); margin-left: 6px; white-space: nowrap; }
+  /* a line's word in dim, the amounts in it bold — so "4" and "120u" are what the eye lands on */
+  .detail .lbl { color: var(--text-dim); margin-right: 4px; }
+  .detail .num { font-weight: bold; color: var(--title-text); font-size: 13px; }
+  .detail .odds { font-size: 13px; margin: 2px 0; }
+  .detail .up { color: var(--good); font-weight: bold; }
+  .detail .down { color: var(--bad); font-weight: bold; }
+  /* the fold's result: one row per own stat — name, now, arrow, after */
+  .detail .after { display: grid; grid-template-columns: auto auto auto 1fr; column-gap: 8px; row-gap: 1px;
+                   margin-top: 5px; font-size: 13px; align-items: baseline; }
+  /* THE GAME'S OWN CHECKBOX (UiKit.Checkbox): a 20px box, the button edge, a white well, an accent square when on */
+  .detail .tick { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; cursor: pointer; }
+  .detail .tick .box { flex: none; width: 20px; height: 20px; border-radius: 3px; background: var(--button-edge); padding: 1px; }
+  .detail .tick .box i { display: block; width: 100%; height: 100%; border-radius: 3px; background: var(--slot-fill); position: relative; }
+  .detail .tick .box.on i::after { content: ""; position: absolute; inset: 3px; border-radius: 3px; background: var(--accent); }
+  .detail .small { font-size: 11px; color: var(--text-dim); line-height: 14px; }
+  .detail .warn { color: var(--bad); }
+  .detail .row { display: block; width: 100%; height: 22px; margin: 3px 0; font-size: 12px; text-align: left; padding: 0 8px; }
+  /* the Ink slots: one small button per slot, three to a row — six slots at A still fit in two rows */
+  .detail .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 4px; }
+  .detail .slots .btn { height: 22px; font-size: 11px; }
+
+  /* THE ACTION, fixed to the window's bottom edge, whatever the list above it holds */
+  .act { flex: none; display: flex; gap: 4px; align-items: center; padding: 8px 15px 12px; border-top: 1px solid var(--rule);
+         min-height: 50px; }
+  /* the button says only what it does — one word; every cost and number sits in the section above it */
+  .act .btn { height: 30px; font-size: 13px; font-weight: bold; flex: 1; white-space: nowrap; }
+  /* THE "HOW MANY?" BOX — the bag's Drop box (DropAmountPrompt), the one box in the game that asks for a number:
+     210 wide, one thin edge, the blue title bar, a number field, two buttons. Opened over the window it was asked from. */
+  #amount { position: absolute; width: 210px; border: 1px solid var(--window-edge); border-radius: 5px;
+            background: var(--panel-fill); overflow: hidden; font-size: 12px; color: var(--text-main); display: none; }
+  #amount.open { display: block; }
+  #amount .tb { height: 24px; line-height: 24px; padding: 0 8px; font-weight: bold; color: var(--title-text);
+                background: linear-gradient(var(--title-bar-top), var(--title-bar-bottom)); }
+  #amount .in { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+  #amount input { height: 26px; border: 1px solid var(--button-edge); border-radius: 3px; background: var(--slot-fill);
+                  color: var(--text-main); font: 14px var(--font-ui); padding: 0 6px; outline: 0; caret-color: var(--accent); }
+  #amount .row { display: flex; gap: 6px; }
+  #amount .row .btn { flex: 1; height: 26px; font-size: 12px; }
+  #shop { width: 724px; height: 430px; }
+  #shop .act .btn { flex: none; width: 120px; }
+  .cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 200px 1fr; gap: 8px; padding: 8px 15px 0; }
+  .col { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--rule); border-radius: 3px;
+         background: var(--panel-raise); padding: 6px; }
+  .col.drop-here { border-color: var(--accent); }
+  .col .h { font: bold 13px var(--font-ui); color: var(--title-text); margin: 0 0 6px 2px; }
+  /* the list scrolls on its own; the bar only shows when the rows do not fit */
+  .list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  .list::-webkit-scrollbar { width: 6px; } .list::-webkit-scrollbar-thumb { background: var(--button-edge); border-radius: 3px; }
+  .item { flex: none; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 8px; cursor: grab;
+          border: 1px solid var(--button-edge); border-radius: 3px; background: var(--button-fill); font-size: 13px; }
+  .item:hover { background: var(--hover); }
+  .item.lifted { opacity: .4; }
+  /* THE NAME GIVES WAY, NEVER THE PRICE: a long name is cut with "…", the price always shows whole */
+  .item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+  .item .ct { flex: none; color: var(--text-dim); font-size: 12px; }
+  .item .pr { flex: none; font-weight: bold; color: var(--title-text); white-space: nowrap; }
+  .item .tag { flex: none; font-size: 10px; font-weight: bold; padding: 0 4px; border-radius: 2px; background: var(--slot-fill);
+               color: var(--text-dim); border: 1px solid var(--rule); }
+  .item .tag.buy { color: var(--good); } .item .tag.sell { color: var(--bad); }
+  .sum { margin-top: 6px; font-size: 12px; display: grid; grid-template-columns: 1fr auto; row-gap: 2px; }
+  .sum b { color: var(--title-text); text-align: right; } .sum .big { font-size: 14px; }
+  .emptyhint { color: var(--text-dim); font-size: 11px; text-align: center; margin-top: 30px; line-height: 15px; }
+  .pair { display: flex; gap: 6px; align-items: flex-start; }
+  .cell.lifted { opacity: .4; }
+  .grid.drop-here { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .act .gold { font-size: 12px; margin-right: auto; padding-right: 8px; white-space: nowrap; }
+
+  /* ---- the item card (ItemTooltip): 264 wide, title 18, body 15 ---- */
+  #tip { width: 264px; border: 2px solid var(--window-edge); border-radius: 5px; background: var(--panel-fill);
+         padding: 8px 12px 10px; color: var(--text-main); font-size: 15px; line-height: 19px; }
+  #tip .t { font-size: 18px; line-height: 23px; margin-bottom: 2px; }
+  #tip .own { font-weight: bold; font-size: 115%; line-height: 22px; }
+  #tip .g { color: var(--good); }
+  #tip .acc { color: var(--accent); }
+  #tip .gap { height: 19px; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <section class="win" id="station" data-mocks="Station">
+    <div class="bar"><b>Smith</b><i>X</i></div>
+    <div class="body">
+      <div class="tabs" id="sTabs"></div>
+      <div class="grid" id="sGrid" data-part="list"></div>
+      <div class="detail" id="sDetail"></div>
+    </div>
+    <div class="act" id="sAct"></div>
+  </section>
+
+  <section class="win" id="shop" data-mocks="Shop">
+    <div class="bar"><b>Mara · Tool Dealer</b><i>X</i></div>
+    <div class="cols">
+      <div class="col" id="colShop"><div class="h">For sale</div><div class="list" id="lShop" data-part="list"></div></div>
+      <div class="col cartcol" id="colCart"><div class="h">Cart</div><div class="list" id="lCart"></div>
+        <div class="sum" id="cSum"></div></div>
+      <div class="col" id="colBag"><div class="h">Inventory</div><div class="list" id="lBag"></div></div>
+    </div>
+    <div class="act" id="pAct"></div>
+  </section>
+
+  <div id="tip" data-mocks="Item Tooltip"></div>
+
+  <div id="amount" data-mocks="Drop Amount Prompt">
+    <div class="tb" id="amountTitle"></div>
+    <div class="in">
+      <input id="amountField" inputmode="numeric">
+      <div class="row"><button class="btn" id="amountOk">Confirm</button><button class="btn" id="amountCancel">Cancel</button></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Try:</b>
+    <ul>
+      <li>Switch <b>tabs</b>: the picked piece stays picked across Fold, Quench, Ink and Recycle, as today.</li>
+      <li><b>Click a box</b> to pick it; the card beside the windows shows whatever box the pointer is on
+          (in the game it follows the pointer, exactly as in the bag).</li>
+      <li>The <b>bottom button</b> never moves. Pressing it would ask the server; what came back is said over your
+          head and in chat, not in the window.</li>
+      <li>Hover the <b>Raw +0 Chainmail</b>: it has no stat of its own yet — that is today's rule.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// name, rarity 0..4, corner word (worn slot) or "", stack count or 0 for gear, and its card
+const P = (name, r, corner, card) => ({ name, r, corner, count: 0, card });
+const S = (name, r, count, extra) => Object.assign({ name, r, corner: "", count }, extra || {});
+
+const weaponCard = {
+  slot: "Weapon", rarity: "Rare", kind: "MELEE attack", own: ["+17 ATK"], ink: ["+6 STR", "+1.2% CRIT"], written: "2/4",
+  trademark: ["Petal Storm", "+12% to Petal Storm's damage"], cards: ["1/2", "Fluff Card"], weight: 80, value: "1,200u" };
+const PIECES = [
+  Object.assign(P("+7 Petal Storm [C]", 2, "Weapon", weaponCard), { slots: 4, folds: [7, 25], next: [["ATK", 17, 19]], written: [["STR", "+6 STR"], ["CRIT", "+1.2% CRIT"]] }),
+  Object.assign(P("+3 Tireless Iron Sabatons [F]", 1, "", { slot: "Shoes", rarity: "Uncommon", own: ["+1 DEF", "+12 Max HP"], ink: [],
+     written: "0/1", word: ["Tireless", "Sprint drains stamina: 6% slower"], weight: 40, value: "300u" }), { slots: 1, folds: [3, 10], next: [["DEF", 1, 2], ["Max HP", 12, 16]], written: [] }),
+  Object.assign(P("Raw Chainmail", 0, "", { slot: "Body", rarity: "Common", own: [], ink: [], weight: 120, value: "250u" }), { slots: 0, folds: [0, 5], next: [["DEF", 0, 1], ["Max HP", 0, 7]], written: [] }),
+  Object.assign(P("A +10 Iron Helm", 0, "Head", { slot: "Head", rarity: "Common", own: ["+6 DEF", "+47 Max HP"],
+     ink: ["+80 Max HP", "+8 DEF", "+15 VIT", "+6 ACC", "+2.4% CRIT DMG", "+5% CAST SPEED"],
+     written: "6/6", weight: 30, value: "180u" }), { slots: 6, folds: [10, 35], next: [["DEF", 6, 6], ["Max HP", 47, 51]], written: [["Max HP", "+80 Max HP"], ["DEF", "+8 DEF"], ["VIT", "+15 VIT"], ["ACC", "+6 ACC"], ["CRIT DMG", "+2.4% CRIT DMG"], ["CAST SPEED", "+5% CAST SPEED"]] }),
+];
+const pageInfo = {
+  Fold:    p => ({ lines: ['<span class="lbl">Costs</span><b class="num">4</b> Temper Dust · <b class="num">120u</b>',
+                           '<div class="after">' + p.next.map(([w, a, b]) =>
+                             `<span class="lbl">${w}</span><span>${a}</span><span class="dim">→</span>` +
+                             `<b class="${b > a ? "up" : "num"}">${b}</b>`).join("") + "</div>"],
+                   act: [["Fold"]] }),
+  Quench:  p => ({ lines: ['<span class="lbl">Costs</span><b class="num">3</b> Quench Oil · <b class="num">400u</b>',
+                           '<div class="odds"><span class="up">Up 50%</span> <span class="dim">· Unchanged 30% ·</span> <span class="down">Down 20%</span></div>',
+                           '<span class="small">A quench <span class="warn">spends every fold</span>, whichever way it goes.</span>',
+                           `<label class="tick" data-salt><span class="box${salt ? " on" : ""}"><i></i></span>` +
+                           `Add Fine Salt <span class="small">(spent either way)</span></label>`],
+                   act: [["Quench"]] }),
+  Ink:     p => {
+    if (!p.slots) return { lines: ['<span class="dim">A Raw piece has no stat slot. Quench it first.</span>'], act: [] };
+    // one button per written stat, and one for the next empty slot while the grade has room — as the window does today
+    const n = p.written.length + (p.written.length < p.slots ? 1 : 0);
+    const k = Math.min(inkSlot, n - 1);
+    const word = i => i < p.written.length ? p.written[i][1] : "Slot " + (i + 1);
+    return { lines: ['<span class="lbl">Using</span><b class="num">Sharp Ink</b>', '<div class="slots">' + Array.from({ length: n }, (_, i) =>
+                       `<button class="btn${i === k ? " chosen" : ""}" data-ink="${i}">${word(i)}</button>`).join("") + "</div>"],
+             act: [[k < p.written.length ? "Replace" : "Write"]] };
+  },
+  Recycle: p => ({ lines: ['<span class="lbl">Gives back</span><b class="num">6</b> Temper Dust, <b class="num">1</b> Quench Oil, <b class="num">340u</b>', '<span class="small"><span class="warn">Breaks the piece down.</span> You get back half the Temper Dust, Quench Oil and gold its folds and quenches took. Folds made at Raw return nothing.</span>'],
+                   act: [["Recycle"]] }),
+};
+let sPage = "Fold", sPicked = 0, salt = false, inkSlot = 99;
+
+// THE TOOL DEALER'S REAL STOCK, each at its one value (the old sell price + half of it, rounded up).
+const STOCK = [S("Minor Healing Potion", 0, 0, { unit: 38, tag: "2 free" }), S("Healing Potion", 0, 0, { unit: 168 }),
+               S("Greater Healing Potion", 0, 0, { unit: 600 }), S("Superior Healing Potion", 0, 0, { unit: 1875 }),
+               S("Grand Healing Potion", 0, 0, { unit: 5625 }), S("Minor Mana Draught", 0, 0, { unit: 38 }),
+               S("Mana Draught", 0, 0, { unit: 168 }), S("Greater Mana Draught", 0, 0, { unit: 600 }),
+               S("Superior Mana Draught", 0, 0, { unit: 1875 }), S("Grand Mana Draught", 0, 0, { unit: 5625 }),
+               S("Antidote", 0, 0, { unit: 75 }), S("Fly Wing", 0, 0, { unit: 38 }), S("Butterfly Wing", 0, 0, { unit: 225 })];
+// WHAT YOU SOLD HERE AND CAN STILL BUY BACK comes after the stock — at the buy-back price, never taxed.
+const BACK = [S("Glowcoil Gland", 0, 1, { unit: 6738, tag: "Buy back", back: true })];
+const SHOP = STOCK.concat(BACK);
+// The bag's rows carry each thing's one value — the same number the shop's list would show for it.
+const BAG = [S("Blinkbat Wing", 0, 23, { unit: 558 }), S("Coily Scale", 0, 9, { unit: 1613 }),
+             Object.assign(P("Raw Chainmail", 0, "", PIECES[2].card), { unit: 375 }),
+             S("Inky Ink Sac", 1, 4, { unit: 4043 }), S("Healing Potion", 0, 12, { unit: 168 }), S("Temper Dust", 0, 31, { unit: 3 })];
+// THE CART: { it, amount, selling }. Starts with one of each kind so the page shows it filled.
+let CART = [{ it: STOCK[1], amount: 10, selling: false }, { it: BAG[0], amount: 23, selling: true }];
+const money = n => n.toLocaleString("en-US") + "u";
+const row = (it, i, extra) => `<div class="item" draggable="true" data-i="${i}">` + (extra || "") +
+  `<span class="nm r${it.r}">${it.name}</span>` + (it.count ? `<span class="ct">×${it.count}</span>` : "") +
+  (it.tag ? `<span class="tag">${it.tag}</span>` : "") + `<span class="pr">${money(it.unit)}</span></div>`;
+
+const box = (it, i, picked) => `<div class="cell${picked ? " picked" : ""}" data-i="${i}" draggable="true">` +
+  (it.corner ? `<span class="corner">${it.corner}</span>` : "") +
+  `<span class="name r${it.r}"><span>${it.name}</span></span>` +
+  (it.count ? `<span class="count">${it.count}</span>` : "") + "</div>";
+const fill = (list, picked, least = 24) => {
+  let h = list.map((it, i) => box(it, i, i === picked)).join("");
+  for (let k = list.length; k < Math.max(least, Math.ceil(list.length / 6) * 6); k++) h += '<div class="cell empty"></div>';
+  return h;
+};
+const tabs = (names, on) => names.map(t => `<button class="btn${t === on ? " chosen" : ""}" data-t="${t}">${t}</button>`).join("");
+
+function drawStation() {
+  $("sTabs").innerHTML = tabs(Object.keys(pageInfo), sPage);
+  $("sGrid").innerHTML = fill(PIECES, sPicked);
+  const p = PIECES[sPicked];
+  if (!p) { $("sDetail").innerHTML = ""; $("sAct").innerHTML = ""; return; }
+  const info = pageInfo[sPage](p);
+  $("sDetail").innerHTML = `<div class="head r${p.r}">${p.name}<span class="folds">${p.folds[0]} of ${p.folds[1]} folds</span></div>` + info.lines.map(l => /^<(div|button)/.test(l) ? l : `<div>${l}</div>`).join("");
+  $("sAct").innerHTML = info.act.map(a => `<button class="btn">${a[0]}</button>`).join("");
+}
+function drawShop() {
+  $("lShop").innerHTML = SHOP.map((it, i) => row(it, i)).join("");
+  $("lBag").innerHTML = BAG.map((it, i) => row(it, i)).join("");
+  $("lCart").innerHTML = CART.length
+    ? CART.map((c, i) => row(Object.assign({}, c.it, { count: c.it.card ? 0 : c.amount, tag: null }), i,
+                             `<span class="tag ${c.selling ? "sell" : "buy"}">${c.selling ? "Sell" : "Buy"}</span>`)).join("")
+    : '<div class="emptyhint">Drag here, or double-click,<br>to buy or sell.</div>';
+  // THE TOTALS ARE THE SERVER'S: each change to the cart asks it, and it answers with the three finished numbers.
+  // Worked out here only because this page has no server.
+  const buy = CART.filter(c => !c.selling).reduce((t, c) => t + c.it.unit * c.amount, 0);
+  const taxable = CART.filter(c => !c.selling && !c.it.back).reduce((t, c) => t + c.it.unit * c.amount, 0);
+  const sell = CART.filter(c => c.selling).reduce((t, c) => t + c.it.unit * c.amount, 0);
+  // TAX: one third, on what is bought and on what is sold, each side rounded up — never on the difference.
+  const tax = Math.ceil(taxable / 3) + Math.ceil(sell / 3);
+  const net = buy - sell + tax;
+  $("cSum").innerHTML = `<span class="dim">Buying</span><b>${money(buy)}</b><span class="dim">Selling</span><b>${money(sell)}</b>` +
+                        `<span class="dim">Tax (33%)</span><b>${money(tax)}</b>` +
+                        `<span class="big">${net >= 0 ? "You pay" : "You get"}</span><b class="big">${money(Math.abs(net))}</b>`;
+  $("pAct").innerHTML = '<span class="gold"><span class="dim">You have</span> 1,220u</span>' +
+    '<button class="btn" id="cartCancel">Cancel</button><button class="btn" id="cartOk">Confirm</button>';
+}
+
+function drawTip(it) {
+  if (!it) return;
+  const c = it.card;
+  if (!c) {
+    $("tip").innerHTML = `<div class="t r${it.r}">${it.name}</div><div class="dim">${it.count ? "Etc" : ""}</div>` +
+      `<div class="r${it.r}">${it.r ? "Uncommon" : "Common"}</div><div class="gap"></div><div class="dim">Weight 1</div><div class="dim">Value 6u</div>`;
+    return;
+  }
+  let h = `<div class="t r${it.r}">${it.name}</div><div class="dim">${c.slot}</div><div class="r${it.r}">${c.rarity}</div>`;
+  if (c.kind) h += `<div>${c.kind}</div>`;
+  if (c.own.length) h += '<div class="gap"></div>' + c.own.map(s => `<div class="own g">${s}</div>`).join("");
+  if (c.ink.length || c.written) h += '<div class="gap"></div>' + c.ink.map(s => `<div class="g">${s}</div>`).join("") +
+    (c.written ? `<div class="dim">Written ${c.written}</div>` : "");
+  if (c.trademark) h += `<div class="gap"></div><div><span class="dim">Trademark Skill: </span>${c.trademark[0]}</div><div>${c.trademark[1]}</div>`;
+  if (c.word) h += `<div class="gap"></div><div><span class="dim">${c.word[0]}: </span>${c.word[1]}</div>`;
+  if (c.cards) h += `<div class="gap"></div><div class="dim">Cards ${c.cards[0]}</div><div class="acc">&nbsp;&nbsp;◇ ${c.cards[1]}</div>`;
+  h += `<div class="gap"></div><div class="dim">Weight ${c.weight}</div><div class="dim">Value ${c.value}</div>`;
+  $("tip").innerHTML = h;
+}
+
+$("sTabs").addEventListener("click", e => { if (e.target.dataset.t) { sPage = e.target.dataset.t; drawStation(); } });
+$("sGrid").addEventListener("click", e => { const c = e.target.closest("[data-i]"); if (c) { sPicked = +c.dataset.i; salt = false; inkSlot = 99; drawStation(); } });
+$("sDetail").addEventListener("click", e => {
+  if (e.target.closest("[data-salt]")) { salt = !salt; drawStation(); }
+  const k = e.target.closest("[data-ink]"); if (k) { inkSlot = +k.dataset.ink; drawStation(); }
+});
+$("sGrid").addEventListener("mouseover", e => { const c = e.target.closest("[data-i]"); if (c) drawTip(PIECES[+c.dataset.i]); });
+$("lShop").addEventListener("mouseover", e => { const c = e.target.closest("[data-i]"); if (c) drawTip(SHOP[+c.dataset.i]); });
+$("lCart").addEventListener("mouseover", e => { const c = e.target.closest("[data-i]"); if (c) drawTip(CART[+c.dataset.i].it); });
+$("lBag").addEventListener("mouseover", e => { const c = e.target.closest("[data-i]"); if (c) drawTip(BAG[+c.dataset.i]); });
+
+drawStation(); drawShop(); drawTip(PIECES[0]);
+
+// EVERYTHING GOES THROUGH THE CART. Dragging a row from the shop's list to your Inventory (or into the Cart) puts it in to
+// buy; from your Inventory to the shop's list (or into the Cart) puts it in to sell. A double-click does the same. A stack
+// asks how many in the Drop box first; a piece of gear or a buy-back goes in whole. Nothing is bought or sold until
+// Confirm, which sends the whole cart as ONE request: the server does all of it or none of it, and answers with one
+// sentence over your head and in chat. Double-clicking a row in the Cart, or dragging it out, takes it back out.
+let pending = null;
+function toCart(it, selling, at) {
+  if (!it) return;
+  // THE SAME THING TWICE STACKS onto its line already in the cart — a piece of gear or a buy-back is only ever in once.
+  const same = CART.find(c => c.it === it && c.selling === selling);
+  if (it.back || it.card) { if (!same) CART.push({ it, amount: it.count || 1, selling }); drawShop(); return; }
+  pending = { it, selling };
+  $("amountTitle").textContent = selling ? "Sell how many? (1–" + it.count + ")" : "Buy how many?";
+  $("amountField").value = selling ? it.count : 1;
+  $("amount").style.left = (at.x + window.scrollX) + "px";
+  $("amount").style.top = (at.y + window.scrollY) + "px";
+  $("amount").classList.add("open");
+  $("amountField").select();
+}
+const near = el => { const b = el.getBoundingClientRect(); return { x: b.left, y: b.bottom + 4 }; };
+$("amountOk").addEventListener("click", () => {
+  $("amount").classList.remove("open");
+  if (pending) {
+    const n = Math.max(1, +$("amountField").value || 1);
+    const same = CART.find(c => c.it === pending.it && c.selling === pending.selling);
+    if (same) same.amount = pending.selling ? Math.min(pending.it.count, same.amount + n) : same.amount + n;
+    else CART.push({ it: pending.it, amount: n, selling: pending.selling });
+  }
+  pending = null; drawShop();
+});
+$("amountCancel").addEventListener("click", () => { $("amount").classList.remove("open"); pending = null; });
+$("lShop").addEventListener("dblclick", e => { const c = e.target.closest("[data-i]"); if (c) toCart(SHOP[+c.dataset.i], false, near(c)); });
+$("lBag").addEventListener("dblclick", e => { const c = e.target.closest("[data-i]"); if (c) toCart(BAG[+c.dataset.i], true, near(c)); });
+$("lCart").addEventListener("dblclick", e => { const c = e.target.closest("[data-i]"); if (c) { CART.splice(+c.dataset.i, 1); drawShop(); } });
+$("pAct").addEventListener("click", e => { if (e.target.id === "cartCancel" || e.target.id === "cartOk") { CART = []; drawShop(); } });
+
+// DRAG: the column that would take the drop lights its edge while the row is held over it.
+let dragged = null;
+const target = (from, el) => {
+  const col = el.closest(".col"); if (!col) return null;
+  if (from === "lShop" && (col.id === "colBag" || col.id === "colCart")) return col;
+  if (from === "lBag" && (col.id === "colShop" || col.id === "colCart")) return col;
+  return null;
+};
+document.addEventListener("dragstart", e => {
+  const c = e.target.closest(".list [data-i]"); if (!c) return;
+  dragged = { from: c.closest(".list").id, i: +c.dataset.i };
+  c.classList.add("lifted"); e.dataTransfer.setData("text/plain", "");
+});
+document.addEventListener("dragend", () => { dragged = null; drawShop(); document.querySelectorAll(".drop-here").forEach(g => g.classList.remove("drop-here")); });
+document.addEventListener("dragover", e => {
+  if (!dragged) return;
+  document.querySelectorAll(".drop-here").forEach(g => g.classList.remove("drop-here"));
+  if (dragged.from === "lCart") { if (!e.target.closest("#colCart")) e.preventDefault(); return; }
+  const col = target(dragged.from, e.target);
+  if (col) { e.preventDefault(); col.classList.add("drop-here"); }
+});
+document.addEventListener("drop", e => {
+  if (!dragged) return; e.preventDefault();
+  if (dragged.from === "lCart") { CART.splice(dragged.i, 1); drawShop(); return; }
+  const it = dragged.from === "lShop" ? SHOP[dragged.i] : BAG[dragged.i];
+  toCart(it, dragged.from === "lBag", { x: e.clientX - 20, y: e.clientY + 10 });
+});
+drawShop();
+</script>
+</body>
+</html>
