@@ -52,6 +52,11 @@ all three halves, the editor's own error list empty, every assembly present on d
 cache cleared rebuilt everything, came back clean, and the flag went False. Nothing in the project had been
 wrong for either of the two failed builds.
 
+2026-10-16, the same skip with brand-new files: four new scripts passed the offline checker, and the server build
+ran straight away. The editor had not taken the new files in yet, so the build stopped on "type not found" for a class
+defined in one of them. The second try met the editor's link down mid-reload; only the third, after a recompile had
+finished, built. Three runs of a several-minute build for a step this page already lists first.
+
 ## How to apply it
 
 1. **Recompile first, and WAIT for it.** Fire the editor's recompile, then poll its status until it says
