@@ -199,7 +199,21 @@ public class Character3DPose : MonoBehaviour, IStancePose
     bool travel;            // the stance shown this frame is Idle/Walk/Run/Sprint
     bool standing;          // the stance shown this frame is Idle
 
-    public void SetShownStance(StanceId id) { travel = StanceCatalog.IsLocomotion(id); standing = id == StanceId.Idle; }
+    public void SetShownStance(StanceId id)
+    {
+        travel = StanceCatalog.IsLocomotion(id);
+        standing = id == StanceId.Idle;
+        bool dying = id == StanceId.Die;
+        if (dying == showingDeath) return;
+        showingDeath = dying;
+        DeathShown?.Invoke(dying);
+    }
+
+    bool showingDeath;
+
+    /// <summary>This body started (true) or stopped (false) showing its death — said once at each change, never per
+    /// frame. The weapon socket drops the weapon on it (<see cref="WeaponSocket"/>).</summary>
+    public event System.Action<bool> DeathShown;
 
     /// <summary>The weapon type this body holds — told by its <see cref="WeaponSocket"/> whenever the weapon changes.</summary>
     public void SetHeldWeapon(WeaponType w) { heldWeapon = w; ResolveWeaponLayers(); }

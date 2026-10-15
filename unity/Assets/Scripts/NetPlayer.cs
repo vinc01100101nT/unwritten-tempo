@@ -447,7 +447,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
         MarkLeaving();
         MapHosting.Want(map);
-        TargetMoveStep(connectionToClient, "Saving your character…");
+        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Asked);
 
         // WRITTEN DOWN, AND THE WRITE CONFIRMED, BEFORE ANYBODY ELSE IS TOLD ABOUT THEM. The process they are
         // going to is handed the stored character, so a move that started before the write landed would hand
@@ -532,7 +532,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     void AskTheCharacterServerToMoveMe(string map, string spawnId, bool toSpot, Vector3 spot, Action onFailure)
     {
-        TargetMoveStep(connectionToClient, "Finding the map…");
+        TargetMoveStage(connectionToClient, LoadingScreen.Stage.Saved);
 
         var body = JsonUtility.ToJson(new MoveAsk { map = map, accountId = ServerAccountId ?? "", isGm = ServerIsGm });
         ServerHttp.Send("POST", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId + "/move",
@@ -565,8 +565,20 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SceneTravel.ArriveLocally(map, toSpot ? null : spawnId);
     }
 
+    // The loading screen goes up at Asked — the server started this move, whether or not anybody pressed for it.
     [TargetRpc]
-    void TargetMoveStep(NetworkConnectionToClient target, string what) => LoadingScreen.SetStep(what);
+    void TargetMoveStage(NetworkConnectionToClient target, LoadingScreen.Stage stage)
+    {
+        if (stage == LoadingScreen.Stage.Asked) LoadingScreen.Show();
+        else LoadingScreen.Reached(stage);
+    }
+
+    /// <summary>SERVER ONLY: a move this person's machine asked for will not happen — the loading screen it raised on
+    /// the press comes down, and <paramref name="why"/> is said.</summary>
+    public void RefuseTrip(string why)
+    {
+        if (isServer && connectionToClient != null) TargetMoveFailed(connectionToClient, why);
+    }
 
     [TargetRpc]
     void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map, string spawnId,
@@ -1330,6 +1342,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         /// <summary>Teleport / Glide: the authored effect behind it, so the owner's machine can read its afterimage
         /// and fade out of its own copy of the skill. <see cref="RelocationLook.None"/> otherwise.</summary>
         public RelocationLook look;
+        /// <summary>Teleport: a wing's trip — the owner's screen fades to black, they are moved and the camera put on
+        /// them while it is black, then it fades back.</summary>
+        public bool fadeThroughBlack;
     }
 
     /// <summary>SERVER ONLY: hand this motion to the machine that owns the legs.</summary>
@@ -1374,13 +1389,32 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         Vector3 face = MapManager.InWorld(motion.faceAt, MapManager.CurrentMap);
         switch (motion.kind)
         {
-            case Motion.Kind.Teleport: me.TeleportTo(dest, motion.look); break;
+            case Motion.Kind.Teleport:
+                if (motion.fadeThroughBlack) TeleportThroughBlack(dest, motion.look);
+                else me.TeleportTo(dest, motion.look);
+                break;
             case Motion.Kind.Glide:
                 me.GlideTo(dest, motion.speed, motion.easeIn, motion.easeOut, motion.seconds,
                            motion.facing ? face : (Vector3?)null, motion.look);
                 break;
             case Motion.Kind.Shove: me.Shove(dest, motion.speed, motion.seconds, motion.stagger); break;
         }
+    }
+
+    // A WING'S TRIP: the screen goes black, the body is moved and the camera put straight on it — smooth follow would
+    // otherwise pan the whole way there — and the screen comes back. The server already holds them at the landing
+    // spot and drops reports from the old one, so moving a fade later loses nothing.
+    static void TeleportThroughBlack(Vector3 dest, RelocationLook look)
+    {
+        string map = MapManager.CurrentMap;
+        ScreenFade.Through(() =>
+        {
+            var me = Character.Instance;
+            // Left the map while the screen went dark: that landing spot belongs to a map no longer here.
+            if (me == null || MapManager.CurrentMap != map) return;
+            me.TeleportTo(dest, look);
+            if (CameraFollow3D.Main != null) CameraFollow3D.Main.SnapToTarget();
+        });
     }
 
     /// <summary>SERVER ONLY: tell the owner's machine which creature a taunt has locked them onto.</summary>

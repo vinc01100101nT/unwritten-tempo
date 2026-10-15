@@ -22,8 +22,9 @@ public static class SceneTravel
             return;
         }
 
-        // ANOTHER MAP: the curtain stays up until it has loaded and they stand in it, then the new map fades in.
-        // Lowered here instead, it showed the map being left for the whole load.
+        // ANOTHER MAP: the curtain goes up — a move the server started, a Keeper's trip or a wing, was not pressed
+        // for here — and stays up until it has loaded and they stand in it, then the new map fades in.
+        LoadingScreen.Show();
         LoadingScreen.HideWhenMapArrives();
         MapManager.Travel(map, spawnId);
     }

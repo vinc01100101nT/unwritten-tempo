@@ -143,7 +143,6 @@ public static class SavedCharacters
                 var shell = GameNetwork.ShellFor(c.saver);
                 if (shell != null)
                 {
-                    shell.TellOwnerTheyGot(c.def.material.id, fits, 0);
                     shell.PushBagToOwner();
                     shell.SaveSoon();
                 }

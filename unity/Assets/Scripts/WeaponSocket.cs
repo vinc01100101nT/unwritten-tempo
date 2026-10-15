@@ -86,8 +86,117 @@ public class WeaponSocket : MonoBehaviour
     void ApplyFlights()
     {
         bool canRest = grip != null && grip.stowAuthored;   // a weapon with nowhere to rest is hidden while put away
-        if (mounted != null) mounted.SetActive(bladesOut == 0 && (mainInHand || canRest));
-        if (mountedPair != null) mountedPair.SetActive(bladesOut == 0 && (pairInHand || canRest));
+        if (mounted != null) mounted.SetActive(!fallen && bladesOut == 0 && (mainInHand || canRest));
+        if (mountedPair != null) mountedPair.SetActive(!fallen && bladesOut == 0 && (pairInHand || canRest));
+    }
+
+    // ---- Dropped: while this body shows its death, its weapon lies on the ground instead of in its hand ----
+    // Only a picture: the item never leaves the bag. Each copy is made the first time this body dies holding that
+    // model and used again on every later death, so a creature killed over and over builds nothing new.
+    struct Dropped
+    {
+        public GameObject copy;
+        public GameObject madeFrom;
+        public Bounds box;
+        public WeaponTumble.State fall;
+        public float groundY;
+        public int groundAtBounce;
+        public bool falling;
+    }
+
+    bool fallen;
+    Dropped droppedMain, droppedPair;
+    Character3DPose deathPose;
+
+    /// <summary>This body started (true) or stopped (false) showing its death. Dying, each weapon it shows leaves the
+    /// hand as a copy that tumbles to the ground and lies there; coming back, the copies go and the hand holds it again.</summary>
+    public void ShowFallen(bool down)
+    {
+        if (down == fallen) return;
+        fallen = down;
+        if (down)
+        {
+            if (!Application.isBatchMode)
+            {
+                Drop(ref droppedMain, mounted);
+                Drop(ref droppedPair, mountedPair);
+            }
+        }
+        else
+        {
+            PickUp(ref droppedMain);
+            PickUp(ref droppedPair);
+        }
+        ApplyFlights();
+    }
+
+    void Drop(ref Dropped d, GameObject held)
+    {
+        if (held == null || !held.activeInHierarchy) return;
+        var model = shown != null ? shown.equipModel : null;
+        if (d.copy == null || d.madeFrom != model)
+        {
+            if (d.copy != null) Destroy(d.copy);
+            d.copy = Instantiate(held, transform, true);
+            d.copy.name = held.name + " (dropped)";
+            d.copy.hideFlags = HideFlags.DontSaveInEditor;
+            d.madeFrom = model;
+            d.box = BoxIn(d.copy.transform);
+        }
+        var from = held.transform;
+        d.copy.transform.SetPositionAndRotation(from.position, from.rotation);
+        d.copy.SetActive(true);
+        var away = from.position - transform.position;
+        d.fall = WeaponTumble.Begin(from.position, from.rotation, d.box, d.copy.transform.lossyScale, away,
+                                    (uint)Random.Range(1, int.MaxValue));
+        d.groundY = GroundUnder(from.position);
+        d.groundAtBounce = 0;
+        d.falling = true;
+    }
+
+    void PickUp(ref Dropped d)
+    {
+        d.falling = false;
+        if (d.copy != null) d.copy.SetActive(false);
+    }
+
+    void StepDrop(ref Dropped d, float dt)
+    {
+        if (!d.falling || d.copy == null) return;
+        if (d.fall.bounces != d.groundAtBounce)
+        {
+            d.groundAtBounce = d.fall.bounces;
+            d.groundY = GroundUnder(d.fall.position);
+        }
+        d.falling = WeaponTumble.Step(ref d.fall, dt, d.groundY);
+        d.copy.transform.SetPositionAndRotation(d.fall.position, d.fall.rotation);
+    }
+
+    float GroundUnder(Vector3 p) =>
+        GroundSnap.TryGroundY(p, GroundSnap.GroundMask, out float y) ? y : transform.position.y;
+
+    // The box every mesh of the copy fills, in the copy's own space — read once when the copy is made.
+    static Bounds BoxIn(Transform root)
+    {
+        var rs = root.GetComponentsInChildren<Renderer>(true);
+        bool any = false;
+        var box = new Bounds(Vector3.zero, Vector3.one * 0.05f);
+        var toRoot = root.worldToLocalMatrix;
+        foreach (var r in rs)
+        {
+            var lb = r.localBounds;
+            var m = toRoot * r.transform.localToWorldMatrix;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = lb.center + Vector3.Scale(lb.extents, new Vector3((i & 1) == 0 ? -1 : 1,
+                                                                             (i & 2) == 0 ? -1 : 1,
+                                                                             (i & 4) == 0 ? -1 : 1));
+                var p = m.MultiplyPoint3x4(corner);
+                if (!any) { box = new Bounds(p, Vector3.zero); any = true; }
+                else box.Encapsulate(p);
+            }
+        }
+        return box;
     }
 
     /// <summary>The server's word on this body's weapon: on the body, coming out, in hand, or going back. Each copy
@@ -97,6 +206,12 @@ public class WeaponSocket : MonoBehaviour
     void Update()
     {
         if (said.Phase == DrawPhase.Drawing || said.Phase == DrawPhase.Sheathing) ApplyDraw();
+        if (droppedMain.falling || droppedPair.falling)
+        {
+            float dt = Time.deltaTime;
+            StepDrop(ref droppedMain, dt);
+            StepDrop(ref droppedPair, dt);
+        }
     }
 
     void ApplyDraw()
@@ -261,6 +376,8 @@ public class WeaponSocket : MonoBehaviour
     void Awake()
     {
         if (anim == null) anim = GetComponentInChildren<Animator>();
+        deathPose = anim != null ? anim.GetComponent<Character3DPose>() : null;
+        if (deathPose != null) deathPose.DeathShown += ShowFallen;
     }
 
     /// <summary>Show the weapon <paramref name="worn"/> holds instead of the player's — a creature's 3D body. Redrawn
@@ -286,6 +403,7 @@ public class WeaponSocket : MonoBehaviour
     {
         if (subscribed != null) subscribed.OnStatsChanged -= Refresh;
         if (gear != null) gear.OnChanged -= Refresh;
+        if (deathPose != null) deathPose.DeathShown -= ShowFallen;
     }
 
     void Refresh()

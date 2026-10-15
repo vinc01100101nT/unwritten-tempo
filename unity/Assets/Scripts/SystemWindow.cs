@@ -8,8 +8,8 @@ using UnityEngine.UI;
 /// world through <see cref="GameRoot"/>, one keeping the account signed in and the other not; <b>Quit game</b>
 /// ends the process through <see cref="GameExit"/>.
 ///
-/// <para><b>While the player is dead, the death window takes System's place.</b> It opens by itself at the moment of
-/// death, holds <b>Return to last saved point</b> (asks the server to stand them up at their save point) and the same
+/// <para><b>While the player is dead, the death window takes System's place.</b> It opens by itself once the death
+/// animation has played through, holds <b>Return to last saved point</b> (asks the server to stand them up at their save point) and the same
 /// three ways out, and Escape opens and closes IT instead of System until they stand back up — then it closes by
 /// itself. The server alone decides the death and the return; this only watches the character's health.</para>
 ///
@@ -28,6 +28,8 @@ public class SystemWindow : MonoBehaviour
     GameObject deathRoot;
     SettingsWindow settings;
     bool wasDead;
+    bool deathWindowPending;
+    float deathWindowAt;
 
     static SystemWindow instance;
 
@@ -82,7 +84,10 @@ public class SystemWindow : MonoBehaviour
     static void ReturnToSavePoint()
     {
         var me = Character.Instance;
-        if (me != null && me.IsDead) me.Revive();
+        if (me == null || !me.IsDead) return;
+        // THE CURTAIN GOES UP ON THE PRESS, not when the server's answer arrives.
+        LoadingScreen.Show();
+        me.Revive();
     }
 
     /// <summary>Press "Return to last saved point", if there is anybody dead to press it for. For a player who is not
@@ -111,14 +116,29 @@ public class SystemWindow : MonoBehaviour
             {
                 if (settings != null && settings.IsOpen) settings.Close();
                 if (UiAnim.IsOpen(root)) UiAnim.Close(root);
-                UiAnim.Open(deathRoot);
+                // THE DEATH WINDOW WAITS FOR THE FALL: it opens once the body's death animation has played through,
+                // its length read off the clip this body plays (0 with no clip, so it opens at once).
+                var body = StanceController.Player;
+                deathWindowAt = Time.time + (body != null ? body.NaturalDurationOf(StanceId.Die) : 0f);
+                deathWindowPending = true;
             }
-            else if (UiAnim.IsOpen(deathRoot)) UiAnim.Close(deathRoot);
+            else
+            {
+                deathWindowPending = false;
+                if (UiAnim.IsOpen(deathRoot)) UiAnim.Close(deathRoot);
+            }
+        }
+        if (deathWindowPending && Time.time >= deathWindowAt)
+        {
+            deathWindowPending = false;
+            UiAnim.Open(deathRoot);
         }
 
         if (!Hotkeys.CancelDown()) return;
         // a panel/aim already spent this Escape
         if (Hotkeys.CancelHandledThisFrame) return;
+        // While the death animation plays, Escape opens nothing: the death window has not arrived yet.
+        if (deathWindowPending) return;
 
         Hotkeys.MarkCancelHandled();
 

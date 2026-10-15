@@ -21,6 +21,8 @@ public static class ReconnectNotice
 
     public static void Show()
     {
+        // The loading screen already covers everything, and a move behind it goes on with its own bar.
+        if (LoadingScreen.Showing) return;
         if (root == null) Build();
         if (root != null) root.SetActive(true);
     }

@@ -57,11 +57,11 @@ public class GameRoot : MonoBehaviour
 
         // A server IS the world and waits for nobody. A player waits to be let in (see OnJoinedWorld).
         if (GameServer.IsServer) BringTheWorldUp();
-        // SOMETHING IS HAPPENING AND IT IS NOT NOTHING — but only while we are still trying. Asking to enter
-        // can fail before the line above has even returned: with no character server to ask, the answer comes
-        // back on the spot, and it signs the player out and puts the front door back up. Saying "reconnecting"
-        // after that would be a veil over a door nobody is knocking on.
-        else if (AccountSession.IsActive) ReconnectNotice.Show();
+        // THE LOADING SCREEN, from the press of "Enter World" until they stand in the map — but only while we are
+        // still trying. Asking to enter can fail before the line above has even returned: with no character server
+        // to ask, the answer comes back on the spot, and it signs the player out and puts the front door back up,
+        // which takes the curtain down with it.
+        else if (AccountSession.IsActive) LoadingScreen.Show();
     }
 
     // The wire came up. THIS is the moment a player is allowed to be somewhere.
@@ -177,6 +177,11 @@ public class GameRoot : MonoBehaviour
                 adopted = true;
                 break;
             }
+        }
+        if (!GameServer.IsServer)
+        {
+            if (adopted) LoadingScreen.Hide();
+            else LoadingScreen.HideWhenMapArrives();
         }
         if (!adopted) MapManager.LoadMap(first, null);
 

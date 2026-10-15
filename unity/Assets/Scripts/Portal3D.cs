@@ -53,7 +53,7 @@ public class Portal3D : MonoBehaviour
         // THE CURTAIN GOES UP THE MOMENT THE DOOR IS TOUCHED, before anything is asked. The player has already
         // committed by walking into it, and the world behind them must stop being something they can act on —
         // whether the map on the other side is held by this same server or by another one entirely.
-        LoadingScreen.Show("Stepping through…");
+        LoadingScreen.Show();
 
         // AND THE SERVER DECIDES, not this machine. The map on the other side may be held by a different
         // process, and only the server can find out which, bring it up, or refuse — so this asks instead of

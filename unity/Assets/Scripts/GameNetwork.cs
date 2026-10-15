@@ -1150,9 +1150,11 @@ public class GameNetwork : NetworkManager
         // IT SAYS WHY IT REFUSED. This used to do nothing at all when it would not grant a revive, which from
         // the player's seat is a Respawn button that does not work and a death screen that never goes away, with
         // nothing anywhere saying so. A refusal that cannot be explained is the same as a crash you cannot see.
+        // AND IT TELLS THEIR MACHINE, which raised the loading screen on the press and would otherwise keep it up.
         if (fighter == null)
         {
             GameLog.Warn(LogCat.Server, "somebody asked to be revived but this server holds no fighter for them.");
+            RefuseTripOf(conn, "Nobody here to return.");
             return;
         }
         if (!fighter.IsDead)
@@ -1160,11 +1162,18 @@ public class GameNetwork : NetworkManager
             GameLog.Warn(LogCat.Server, "" + (conn.identity != null ? conn.identity.name : "somebody")
                              + " asked to be revived but this server has them alive on "
                              + fighter.CurrentHP + " health — nothing to do.");
+            RefuseTripOf(conn, "You are already standing.");
             return;
         }
         GameLog.Info(LogCat.Server, "returning " + NameOf(fighter) + " (" + CharacterIdOf(fighter) + "), who was dead, "
                          + "to their save point.");
         RespawnOnServer(fighter);
+    }
+
+    static void RefuseTripOf(NetworkConnectionToClient conn, string why)
+    {
+        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        if (shell != null) shell.RefuseTrip(why);
     }
 
     /// <summary>Server-only: stand <paramref name="who"/> back up where they fell, at full HP and MP — the GM's
@@ -3390,6 +3399,7 @@ public class GameNetwork : NetworkManager
         // swallow the next REAL drop and leave somebody staring at a world that is not there.
         spawned.hangingUpToMove = false;
         ReconnectNotice.Hide();
+        LoadingScreen.Reached(LoadingScreen.Stage.Connected);
         OnJoinedWorld?.Invoke();
 
         // ARRIVED SOMEWHERE ELSE. The map is loaded only now, with a body already granted on the far side: if the
@@ -3398,7 +3408,6 @@ public class GameNetwork : NetworkManager
         if (string.IsNullOrEmpty(movingToMap)) return;
         string map = movingToMap;
         movingToMap = null;
-        LoadingScreen.SetStep("Arriving…");
 
         // AND THE CURTAIN COMES DOWN WHEN THE MAP IS ACTUALLY THERE, not when it was asked for. Travel only
         // STARTS a load; without waiting for it to land the screen stayed up on "Arriving…" forever, because
@@ -3460,7 +3469,7 @@ public class GameNetwork : NetworkManager
     {
         if (spawned == null || string.IsNullOrEmpty(ticket)) return;
 
-        LoadingScreen.SetStep("Arriving…");
+        LoadingScreen.Reached(LoadingScreen.Stage.Saved);
         movingToMap = map;
         movingToSpawn = spawnId;
         movingToSpot = toSpot;

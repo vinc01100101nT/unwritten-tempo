@@ -277,15 +277,14 @@ public static class Rewards
         if (autoLooted.Count == 0) return 0;
 
         // INTO THE BAG — a piece of gear as the very copy the kill made, the same one the ground would have been handed —
-        // and the owner told each thing once with how many.
+        // and the owner told each thing once with how many, by the bag's own door (Character.Arrived) and nowhere else.
         for (int i = 0; i < autoLooted.Count; i++)
         {
             var e = autoLooted[i];
-            if (e.copy != null) { killer.TakeIntoBag(e.copy); shell.TellOwnerTheyGot(e.item.id, 1, 0); continue; }
+            if (e.copy != null) { killer.TakeIntoBag(e.copy); continue; }
             if (FirstStackOf(autoLooted, e.item) < i) continue;
             int count = StackCount(autoLooted, e.item);
             killer.TakeIntoBag(e.item, count);
-            shell.TellOwnerTheyGot(e.item.id, count, 0);
         }
         PlaySession.PickedUp(killer);
         if (GameLog.On(LogCat.Loot))

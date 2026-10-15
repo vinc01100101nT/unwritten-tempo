@@ -35,6 +35,8 @@ public class SignInScreen : MonoBehaviour
     public static void Open()
     {
         if (GameServer.IsServer) return;       // a server has nobody sitting at it to sign in
+        // BACK AT THE FRONT DOOR, no move is going on — whatever was loading failed or was left.
+        LoadingScreen.Hide();
         if (Object.FindAnyObjectByType<SignInScreen>() != null) return;   // already up; never a second one
 
         var go = new GameObject("SignInScreen") { hideFlags = HideFlags.DontSaveInEditor };

@@ -2,25 +2,41 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// The curtain over a doorway that leads to another server. It goes up the instant a player touches the portal
-/// and comes down when they have a body on the far side.
+/// The curtain over every move between maps and into the world. It goes up the instant the player commits — a
+/// portal touched, "Enter World", "Return to last saved point" — or the instant the server starts a move nobody
+/// pressed for (a wing, a Keeper's trip, a GM's teleport), and comes down when they stand in the new map.
 ///
-/// <para><b>Named steps, not a percentage.</b> Most of what happens between the two doors is on machines this
-/// one cannot see — a character being written down, a zone being placed, a map being brought up — and none of
-/// it can report how far along it is. A bar over that would crawl to nine tenths and then sit still, which is
-/// worse than no bar. So the step is NAMED and changes when something has genuinely happened, and the one
-/// stretch that has a real number — this machine loading the map — gets a real bar.</para>
+/// <para><b>A bar, filled by what has genuinely happened.</b> Most of a move happens on machines this one cannot
+/// see — a character being written down, a zone being placed — and none of it can report how far along it is. So
+/// the bar jumps to a fixed point as each <see cref="Stage"/> is reached, and only the last stretch, this machine
+/// loading the map, moves with a real number. It never goes backwards.</para>
 ///
 /// <para>It borrows the sign-in screen's own look rather than copying it, so the two always match.</para>
 /// </summary>
 public static class LoadingScreen
 {
+    /// <summary>The steps of a move this machine can see happen, in order.</summary>
+    public enum Stage
+    {
+        /// <summary>The move was asked for — the press, or the server saying it has started one.</summary>
+        Asked,
+        /// <summary>The character is written down and the server is finding the map.</summary>
+        Saved,
+        /// <summary>This machine is joined to the world the map is in; only loading the map is left.</summary>
+        Connected,
+    }
+
+    // How full the bar is once each stage is reached. Loading the map fills the rest with its real amount.
+    const float AskedFill = 0.2f;
+    const float SavedFill = 0.4f;
+    const float ConnectedFill = 0.6f;
+
     static RectTransform root;
-    static TMPro.TMP_Text stepLabel;
-    static Image barFill;
-    static string step = "";
+    static RectTransform barFill;
+    static float filled;
     static CanvasGroup group;
-    static LoadingScreenFade fade;
+    static LoadingScreenTicker ticker;
+    static bool fading;
 
     // The map the player was standing in when the curtain went up. Lowering it in a DIFFERENT map fades the new one
     // in; lowering it in the same map — a door within one map, or a move that was refused — just takes it away.
@@ -31,44 +47,45 @@ public static class LoadingScreen
 
     /// <summary>True while the curtain is up. False once it has started fading away: the new map is already being
     /// shown and played in by then.</summary>
-    public static bool Showing => root != null && root.gameObject.activeSelf && (fade == null || !fade.enabled);
+    public static bool Showing => root != null && root.gameObject.activeSelf && !fading;
 
-    /// <summary>Raise the curtain and say what is happening. Called the moment a portal is touched, before any
-    /// asking begins — the player has already committed by walking into it, and the world they are leaving must
-    /// stop being something they can act on.</summary>
-    public static void Show(string firstStep)
+    /// <summary>Raise the curtain, at <see cref="Stage.Asked"/>. Already up, it stays as it is, so a press and the
+    /// server's word about the same move cannot pull the bar back. Still fading from the last move, it comes
+    /// straight back up, whole.</summary>
+    public static void Show()
     {
+        if (Showing) return;
         Build();
         if (root == null) return;
-        // A curtain still fading from the last door comes straight back up, whole.
-        if (fade != null) fade.enabled = false;
+        fading = false;
         group.alpha = 1f;
         group.blocksRaycasts = true;
         shownInMap = MapManager.CurrentMap;
+        SetFill(0f);
         root.gameObject.SetActive(true);
         UiLayers.Raise(root, UiLayers.Layer.Loading);
-        SetStep(firstStep);
-        SetBar(-1f);
+        ticker.enabled = true;
+        Reached(Stage.Asked);
     }
 
-    /// <summary>Say what is happening now. Ignored when the curtain is down, so a late answer to a move that
-    /// already finished cannot put words on a screen nobody is looking at.</summary>
-    public static void SetStep(string what)
-    {
-        if (!Showing || stepLabel == null || what == step) return;
-        step = what;
-        stepLabel.text = what;
-    }
+    /// <summary>Fill the bar to where <paramref name="stage"/> puts it. Ignored when the curtain is down, so a late
+    /// answer to a move that already finished cannot raise anything.</summary>
+    public static void Reached(Stage stage)
+        => Fill(stage == Stage.Asked ? AskedFill : stage == Stage.Saved ? SavedFill : ConnectedFill);
 
-    /// <summary>How far the map load has got, 0 to 1. Below zero hides the bar — for the stretches that have no
-    /// number, where drawing an empty bar would be a promise this cannot keep.</summary>
-    public static void SetBar(float amount01)
+    // Only ever forwards, and only written when it actually moves.
+    static void Fill(float amount)
     {
         if (!Showing || barFill == null) return;
-        var strip = barFill.transform.parent as RectTransform;
-        bool has = amount01 >= 0f;
-        if (strip != null && strip.gameObject.activeSelf != has) strip.gameObject.SetActive(has);
-        if (has) barFill.fillAmount = Mathf.Clamp01(amount01);
+        amount = Mathf.Min(1f, amount);
+        if (amount > filled) SetFill(amount);
+    }
+
+    // The fill is the bar's own width cut short, so it needs no picture behind it.
+    static void SetFill(float amount)
+    {
+        filled = amount;
+        barFill.anchorMax = new Vector2(amount, 1f);
     }
 
     /// <summary>Lower the curtain. Called when the player has a body on the far side, or when the move failed
@@ -76,18 +93,19 @@ public static class LoadingScreen
     /// <see cref="FadeInSeconds"/>; anything else takes the curtain away at once.</summary>
     public static void Hide()
     {
-        step = "";
-        if (root == null) return;
-        bool landedElsewhere = Showing && !string.IsNullOrEmpty(MapManager.CurrentMap)
+        if (root == null || !root.gameObject.activeSelf) return;
+        bool landedElsewhere = !fading && !string.IsNullOrEmpty(MapManager.CurrentMap)
                                && MapManager.CurrentMap != shownInMap;
-        if (landedElsewhere && fade != null)
+        if (landedElsewhere)
         {
+            SetFill(1f);
             // Clicks reach the new map from the first frame of the fade, not the last.
             group.blocksRaycasts = false;
-            fade.enabled = true;
+            fading = true;
             return;
         }
-        if (fade != null) fade.enabled = false;
+        fading = false;
+        ticker.enabled = false;
         root.gameObject.SetActive(false);
     }
 
@@ -109,13 +127,20 @@ public static class LoadingScreen
         Hide();
     }
 
-    // One frame of the fade, driven by LoadingScreenFade while it runs. Done: the curtain is put away.
-    internal static void StepFade(float seconds)
+    // One frame, driven by LoadingScreenTicker while the curtain is up or fading: the map load's real amount while
+    // it is up, the fade while it is going. Done fading: the curtain is put away.
+    internal static void Tick(float seconds)
     {
         if (group == null) return;
+        if (!fading)
+        {
+            if (MapManager.ArrivingAt != null) Fill(ConnectedFill + (1f - ConnectedFill) * MapManager.LoadProgress01);
+            return;
+        }
         group.alpha = Mathf.Max(0f, group.alpha - seconds / FadeInSeconds);
         if (group.alpha > 0f) return;
-        fade.enabled = false;
+        fading = false;
+        ticker.enabled = false;
         root.gameObject.SetActive(false);
     }
 
@@ -129,15 +154,14 @@ public static class LoadingScreen
         if (root == null) return;
         Object.DontDestroyOnLoad(root.GetComponentInParent<Canvas>().gameObject);
 
-        stepLabel = UiKit.MakeText("Step", root, "", 18, FontStyle.Normal, TextAnchor.MiddleCenter, wrap: false);
-        FrontScreen.Place(stepLabel.rectTransform, new Vector2(0f, -40f), new Vector2(520f, 34f));
-        stepLabel.color = UiKit.TextOnDim;
-        stepLabel.raycastTarget = false;
-
+        // In the middle of the screen, a little below centre.
         var stripGO = new GameObject("Bar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         var stripRT = (RectTransform)stripGO.transform;
         stripRT.SetParent(root, false);
-        FrontScreen.Place(stripRT, new Vector2(0f, -84f), new Vector2(320f, 6f));
+        stripRT.anchorMin = stripRT.anchorMax = new Vector2(0.5f, 0.5f);
+        stripRT.pivot = new Vector2(0.5f, 0.5f);
+        stripRT.sizeDelta = new Vector2(420f, 8f);
+        stripRT.anchoredPosition = new Vector2(0f, -60f);
         var strip = stripGO.GetComponent<Image>();
         strip.color = UiKit.Rule;
         strip.raycastTarget = false;
@@ -146,28 +170,26 @@ public static class LoadingScreen
         var fillRT = (RectTransform)fillGO.transform;
         fillRT.SetParent(stripRT, false);
         fillRT.anchorMin = Vector2.zero;
-        fillRT.anchorMax = Vector2.one;
+        fillRT.anchorMax = new Vector2(0f, 1f);
         fillRT.offsetMin = Vector2.zero;
         fillRT.offsetMax = Vector2.zero;
-        barFill = fillGO.GetComponent<Image>();
-        barFill.color = UiKit.Accent;
-        barFill.type = Image.Type.Filled;
-        barFill.fillMethod = Image.FillMethod.Horizontal;
-        barFill.fillAmount = 0f;
-        barFill.raycastTarget = false;
+        var fill = fillGO.GetComponent<Image>();
+        fill.color = UiKit.Accent;
+        fill.raycastTarget = false;
+        barFill = fillRT;
 
         group = root.gameObject.AddComponent<CanvasGroup>();
-        fade = root.gameObject.AddComponent<LoadingScreenFade>();
-        fade.enabled = false;
+        ticker = root.gameObject.AddComponent<LoadingScreenTicker>();
+        ticker.enabled = false;
 
         root.gameObject.SetActive(false);
     }
 }
 
-/// <summary>Ticks <see cref="LoadingScreen"/>'s fade-in, and only while one is running — switched off the rest of
-/// the time, so it costs nothing between doors.</summary>
-public sealed class LoadingScreenFade : MonoBehaviour
+/// <summary>Ticks <see cref="LoadingScreen"/> while the curtain is up or fading — switched off the rest of the
+/// time, so it costs nothing between moves.</summary>
+public sealed class LoadingScreenTicker : MonoBehaviour
 {
     // Unscaled: a fade is screen time, not game time.
-    void Update() => LoadingScreen.StepFade(Time.unscaledDeltaTime);
+    void Update() => LoadingScreen.Tick(Time.unscaledDeltaTime);
 }

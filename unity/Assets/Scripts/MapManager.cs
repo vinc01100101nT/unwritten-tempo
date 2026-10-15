@@ -56,13 +56,21 @@ public static class MapManager
     /// by <see cref="CurrentMap"/> is about to be left, so nothing standing in it is where it will end up.</summary>
     public static string ArrivingAt { get; private set; }
 
+    // The load behind ArrivingAt, read by the loading screen's bar.
+    static AsyncOperation loading;
+
+    /// <summary>How far the map in <see cref="ArrivingAt"/> has loaded, 0 to 1. Unity stops a load's own number at
+    /// 0.9 until the map switches on, so that is read as full.</summary>
+    public static float LoadProgress01 => loading != null ? Mathf.Clamp01(loading.progress / 0.9f) : 0f;
+
     static void StartLoading(string sceneName, string spawnId)
     {
         if (string.IsNullOrEmpty(sceneName)) return;
         SceneTravel.Target = spawnId;                     // PersistentPlayer3D reads this on arrival
         ArrivingAt = sceneName;
         // A map that cannot be loaded at all is never going to arrive, so nothing may go on waiting for it.
-        if (SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive) == null) ArrivingAt = null;
+        loading = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        if (loading == null) ArrivingAt = null;
     }
 
     /// <summary>Park <paramref name="go"/> in the scene that is never unloaded, so a map swap cannot take it.
@@ -125,7 +133,7 @@ public static class MapManager
             CurrentMap = scene.name;
             MapVersion++;
         }
-        if (ArrivingAt == scene.name) ArrivingAt = null;
+        if (ArrivingAt == scene.name) { ArrivingAt = null; loading = null; }
         StripForeignGlobals(scene);
     }
 

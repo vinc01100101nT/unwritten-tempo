@@ -383,7 +383,7 @@ MonoBehaviour:
     speedPerHumanScale: 0
   - id: 12
     action: 6
-    clip: 
+    clip: Death
     mirrored: 0
     speedSource: 0
     speedMult: 1

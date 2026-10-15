@@ -661,7 +661,8 @@ public static class SkillEffectApplier
                 {
                     if (LandingFor(unit, body, out var spot))
                     {
-                        unit.TeleportTo(spot);
+                        if (unit is Character person) person.TripTo(spot);
+                        else unit.TeleportTo(spot);
                         // AUTO-COMBAT STAYS ON across a Fly Wing, and the spot its Radius hunt keeps to moves with them.
                         if (unit is Character landed) GameNetwork.ShellFor(landed)?.AutoCombatLandedElsewhere();
                     }

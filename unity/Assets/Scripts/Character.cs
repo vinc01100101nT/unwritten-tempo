@@ -694,10 +694,16 @@ public class Character : MonoBehaviour, ICombatUnit
     // A CHARACTER THE SERVER HOLDS HAS NO LEGS OF ITS OWN. Walking is still the owner's machine to do, so a skill
     // that hauls them somewhere is decided here and performed there — otherwise a dash resolved on a server moved
     // nothing at all, silently, and the person stood where they were while the skill reported success.
-    public void TeleportTo(Vector3 dest, RelocationLook look = default)
+    public void TeleportTo(Vector3 dest, RelocationLook look = default) => Teleport(dest, look, false);
+
+    /// <summary>A wing's trip: the same blink as <see cref="TeleportTo"/>, but the owner's screen fades through black
+    /// and the camera is put straight on the landing spot instead of following there.</summary>
+    public void TripTo(Vector3 dest) => Teleport(dest, default, true);
+
+    void Teleport(Vector3 dest, RelocationLook look, bool fadeThroughBlack)
     {
         if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
-            { kind = NetPlayer.Motion.Kind.Teleport, destination = dest, look = look })) return;
+            { kind = NetPlayer.Motion.Kind.Teleport, destination = dest, look = look, fadeThroughBlack = fadeThroughBlack })) return;
         var r = Rig(); if (r != null) r.Teleport(dest, look);
     }
 
