@@ -14,7 +14,8 @@ using UnityEngine;
 /// reads each frame. We use a renderer feature (not a Color-Adjustments volume) because a volume only applies when
 /// the camera has post-processing on AND its Volume-Mask matches — fragile per project; the feature always runs.
 /// <see cref="saturation"/> is CLAMPED to <see cref="MinSaturation"/> so it can mute the palette but <b>never</b>
-/// reach greyscale — colour always survives.</item>
+/// reach greyscale — colour always survives, except while the person at this keyboard is dead
+/// (<see cref="DeathGrey"/>).</item>
 /// </list>
 ///
 /// Self-booting + decoupled like the weather renderers: <see cref="Ensure"/> creates it on demand. Zero-cost when
@@ -79,8 +80,14 @@ public class HandDrawnFX : MonoBehaviour
     /// <summary>True while the grade is doing something (saturation &lt; 1 or contrast ≠ 0) — the feature skips its
     /// blit entirely when false, so the look is genuinely zero-cost when off.</summary>
     public static bool  GradeActive;
-    /// <summary>Current saturation (MinSaturation..1) the feature applies; 1 = untouched.</summary>
+    /// <summary>Current saturation (0..1) the feature applies; 1 = untouched. Never below MinSaturation except while
+    /// <see cref="DeathGrey"/> takes the colour away.</summary>
     public static float GradeSaturation = 1f;
+    /// <summary>How grey the person at this keyboard's death has made the screen: 0 = not at all, 1 = fully grey. A
+    /// separate reason from <see cref="saturation"/>, whose floor keeps the art style's colour; this one takes all
+    /// of it away, and only while they are dead (<see cref="SystemWindow"/> writes it, fading in over
+    /// <see cref="DeathScreenMath.GreyFadeSeconds"/>).</summary>
+    public static float DeathGrey;
     /// <summary>Current contrast (-0.3..0.3) the feature applies; 0 = untouched.</summary>
     public static float GradeContrast;
 
@@ -217,8 +224,8 @@ public class HandDrawnFX : MonoBehaviour
 
         // ---- Colour grade: just publish the values; HandDrawnGradeFeature does the actual blit ----
         saturation = Mathf.Clamp(saturation, MinSaturation, 1f);   // never let it reach greyscale
-        GradeSaturation = saturation;
+        GradeSaturation = saturation * (1f - Mathf.Clamp01(DeathGrey));
         GradeContrast   = contrast;
-        GradeActive     = enabled && (saturation < 0.999f || Mathf.Abs(contrast) > 0.001f);
+        GradeActive     = enabled && (GradeSaturation < 0.999f || Mathf.Abs(contrast) > 0.001f);
     }
 }

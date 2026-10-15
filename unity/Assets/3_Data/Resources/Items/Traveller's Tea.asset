@@ -14,31 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.travellers-tea
   displayName: Traveller's Tea
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 7fd6c8775809e7b479d8446529f58ce2, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
   equipModel: {fileID: 0}
   element: 0
-  rarity: 0
   category: 1
   cardSlots: 0
   weight: 6
   value: 0
-  bonusHP: 0
-  bonusAttack: 0
-  bonusDefense: 0
-  bonusMP: 0
-  bonusMAtk: 0
-  bonusMDef: 0
-  bonusStr: 0
-  bonusAgi: 0
-  bonusVit: 0
-  bonusInt: 0
-  bonusDex: 0
-  bonusLuk: 0
-  bonusCritPercent: 0
-  bonusAspdPercent: 0
+  madeOf: 0
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
   useSkillId: skill.item.travellers-tea
   attackSfx:
     clips: []
@@ -48,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: Brewed for the road by people who never stop walking it.

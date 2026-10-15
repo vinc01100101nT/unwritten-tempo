@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// A chat row that names items (<see cref="ChatLinks"/>): while the pointer is on one of them, its tooltip shows —
-/// the card the sender's own bag shows for it, built by the server and drawn here as given.
+/// A chat row that names items (<see cref="ChatLinks"/>): while the pointer is on one of them its full name shows,
+/// and a right-click on it opens its card — the card the sender's own bag shows for it, built by the server and drawn
+/// here as given (<see cref="ItemTooltip"/>).
 /// </summary>
-public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandler
+public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandler, IPointerClickHandler
 {
     TMP_Text text;
     readonly List<string> titles = new List<string>(ChatLinks.MostLinksInALine);
@@ -38,7 +39,13 @@ public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandl
         if (which == showing) return;
         showing = which;
         if (which < 0) ItemTooltip.HideTip();
-        else ItemTooltip.ShowText(titles[which], colours[which], bodies[which]);
+        else ItemTooltip.ShowName(titles[which]);
+    }
+
+    public void OnPointerClick(PointerEventData e)
+    {
+        if (e.button != PointerEventData.InputButton.Right || showing < 0) return;
+        ItemTooltip.PinText(titles[showing], colours[showing], bodies[showing]);
     }
 
     public void OnPointerExit(PointerEventData e)

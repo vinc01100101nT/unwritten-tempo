@@ -5,10 +5,17 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// A single shared tooltip that shows an item's name + stats while you hover an
-/// <see cref="ItemSlot"/>. Lives on the persistent UI canvas (built by
-/// UIShellBuilder); slots call the static <see cref="ShowFor"/> / <see cref="HideTip"/>.
-/// It follows the cursor and clamps itself to the screen.
+/// THE item card, and the small name strip beside it. Every place an item is shown answers the pointer the same way:
+/// HOVERING it puts up only its full name, white on a dark see-through strip by the cursor (<see cref="ShowName"/>);
+/// RIGHT-CLICKING it opens this card and leaves it open (<see cref="Pin"/>). The card is Ragnarok's item window, at
+/// one fixed size: the item's picture at the left; its name in a bar along the top — drag the bar to move the card —
+/// with the × at the corner; its details under the name, with a scrollbar once they run longer than the card; and its
+/// card slots along the bottom, a diamond each. It closes from its ×, by clicking anywhere else, or by right-clicking
+/// another item, which opens that one instead.
+///
+/// <para>THE TRIGGERS, every one of them — keep this list whole when adding a new place items are drawn:
+/// <see cref="ItemSlot"/> (every bag, worn, storage, crafting and progression box, every shop row, and the hotbar's
+/// item and gear tiles) and <see cref="ChatLinkRow"/> (an item named in chat).</para>
 /// </summary>
 public class ItemTooltip : MonoBehaviour
 {
@@ -29,8 +36,27 @@ public class ItemTooltip : MonoBehaviour
     [Tooltip("Pixel offset from the cursor, before screen clamping.")]
     public Vector2 cursorOffset = new Vector2(18, -18);
 
+    [Tooltip("The item's picture, in the panel at the card's left.")]
+    public Image icon;
+
+    [Tooltip("The scrolling part holding the details.")]
+    public ScrollRect detailsScroll;
+
+    [Tooltip("One diamond per card slot, along the bottom strip.")]
+    public Image[] slotDiamonds;
+
+    /// <summary>The most card slots any piece has, and so how many diamonds the strip carries.</summary>
+    public const int MostCardSlots = 4;
+
+    [Tooltip("The hover strip: the item's full name, white on a dark see-through strip by the cursor.")]
+    public RectTransform namePanel;
+    public TMP_Text nameText;
+
     Canvas canvas;
-    CanvasGroup group;
+    CanvasGroup group, nameGroup;
+    // Open from a right-click: it stays where it opened and catches the pointer, so its details can be scrolled.
+    bool pinned;
+    int pinnedFrame = -1;
 
     void Awake()
     {
@@ -44,6 +70,14 @@ public class ItemTooltip : MonoBehaviour
         group.alpha = 0f;
         group.blocksRaycasts = false;
         group.interactable = false;
+        if (namePanel != null)
+        {
+            nameGroup = namePanel.GetComponent<CanvasGroup>();
+            if (nameGroup == null) nameGroup = namePanel.gameObject.AddComponent<CanvasGroup>();
+            nameGroup.alpha = 0f;
+            nameGroup.blocksRaycasts = false;
+            nameGroup.interactable = false;
+        }
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -69,6 +103,9 @@ public class ItemTooltip : MonoBehaviour
         Instance.titleText.color = titleColour;
         Instance.bodyText.text = body ?? "";
         Instance.ShowSkillIcons(null);
+        Instance.ShowPicture(null, null);
+        Instance.ShowSlots(null, null);
+        Instance.FitDetails();
         Instance.group.alpha = 1f;
         Instance.Follow();
     }
@@ -78,11 +115,69 @@ public class ItemTooltip : MonoBehaviour
     public static string BodyFor(Item def, EquipmentInstance piece)
         => piece != null && piece.def != null ? DescribeInstance(piece) : def != null ? Describe(def) : "";
 
-    /// <summary>Hide the tooltip (no-op if the UI isn't up yet).</summary>
+    /// <summary>HOVER: the item's full name on the dark strip by the cursor.</summary>
+    public static void ShowName(string title)
+    {
+        var t = Instance;
+        if (Suppressed || t == null || t.nameGroup == null || string.IsNullOrEmpty(title)) return;
+        if (t.nameText.text != title) t.nameText.text = title;
+        t.nameGroup.alpha = 1f;
+        t.FollowName();
+    }
+
+    public static void HideName()
+    {
+        if (Instance != null && Instance.nameGroup != null) Instance.nameGroup.alpha = 0f;
+    }
+
+    /// <summary>RIGHT-CLICK: open the card for <paramref name="item"/>, or <paramref name="copy"/> when it is a piece of
+    /// gear — with the "if equipped" lines against <paramref name="previewSlot"/> when that is given — and leave it
+    /// open.</summary>
+    public static void Pin(Item item, EquipmentInstance copy, EquipSlotType? previewSlot = null)
+    {
+        if (Instance == null || (item == null && copy == null)) return;
+        Suppressed = false;
+        if (copy != null && previewSlot.HasValue && Character.Instance != null) Instance.ShowPreview(copy, previewSlot.Value);
+        else if (copy != null) Instance.Show(copy);
+        else Instance.Show(item);
+        Instance.PinHere();
+    }
+
+    /// <summary>RIGHT-CLICK on words built elsewhere — an item linked in chat. The same card, with no picture.</summary>
+    public static void PinText(string title, Color titleColour, string body)
+    {
+        if (Instance == null) return;
+        Suppressed = false;
+        ShowText(title, titleColour, body);
+        Instance.PinHere();
+    }
+
+    /// <summary>Close the card.</summary>
+    public static void Unpin()
+    {
+        if (Instance == null) return;
+        Instance.pinned = false;
+        Instance.group.alpha = 0f;
+        Instance.group.blocksRaycasts = false;
+        Instance.group.interactable = false;
+    }
+
+    void PinHere()
+    {
+        HideName();
+        pinned = true;
+        pinnedFrame = Time.frameCount;
+        group.blocksRaycasts = true;
+        group.interactable = true;
+        Follow();
+    }
+
+    /// <summary>Take down what hovering put up: the name strip. An open card stays until it is closed.</summary>
     public static void HideTip()
     {
         if (Instance == null) return;
-        Instance.group.alpha = 0f;
+        HideName();
+        if (!Instance.pinned) Instance.group.alpha = 0f;
     }
 
     void Show(Item item)
@@ -93,6 +188,9 @@ public class ItemTooltip : MonoBehaviour
         titleText.color = Rarities.Color(Rarities.Of(item, null));
         bodyText.text = Describe(item);
         ShowSkillIcons(null);   // a kit belongs to a COPY, not the shared def — nothing to show without an instance
+        ShowPicture(item, null);
+        ShowSlots(item, null);
+        FitDetails();
         group.alpha = 1f;
         Follow();   // place it now so it doesn't flash at the previous spot for a frame
     }
@@ -106,6 +204,9 @@ public class ItemTooltip : MonoBehaviour
         titleText.color = Rarities.Color(Rarities.Of(def, inst));
         bodyText.text = DescribeInstance(inst);
         ShowSkillIcons(null);
+        ShowPicture(def, inst);
+        ShowSlots(def, inst);
+        FitDetails();
         group.alpha = 1f;
         Follow();
     }
@@ -125,8 +226,41 @@ public class ItemTooltip : MonoBehaviour
         previewingSlot = previewSlot;
         DrawPreviewBody();
         ShowSkillIcons(null);
+        ShowPicture(inst.def, inst);
+        ShowSlots(inst.def, inst);
         group.alpha = 1f;
         Follow();
+    }
+
+    // The item's picture in the panel at the card's left; an empty panel when there is none.
+    void ShowPicture(Item def, EquipmentInstance copy)
+    {
+        if (icon != null) ItemIcon.Show(icon, def);
+    }
+
+    // A diamond per card slot the piece has: grey when empty, the accent colour with the card's name on hover when
+    // a card sits in it. A thing with no slots shows none.
+    void ShowSlots(Item def, EquipmentInstance copy)
+    {
+        if (slotDiamonds == null) return;
+        int slots = def != null ? Mathf.Min(def.cardSlots, slotDiamonds.Length) : 0;
+        for (int i = 0; i < slotDiamonds.Length; i++)
+        {
+            var d = slotDiamonds[i];
+            bool on = i < slots;
+            if (d.gameObject.activeSelf != on) d.gameObject.SetActive(on);
+            if (!on) continue;
+            var card = copy != null && copy.cards != null && i < copy.cards.Count ? copy.cards[i] : null;
+            d.color = card != null ? UiKit.Accent : UiKit.ButtonEdge;
+            string cardName = card != null ? card.displayName : null;
+            HoverRelay.Set(d.gameObject, cardName != null ? () => ShowName(cardName) : (System.Action)null, HideName);
+        }
+    }
+
+    // A new card's details start from the top.
+    void FitDetails()
+    {
+        if (detailsScroll != null) detailsScroll.verticalNormalizedPosition = 1f;
     }
 
     // The piece's own card, then the server's "if equipped" lines (EquipPreview) — asked for when not yet here.
@@ -143,6 +277,7 @@ public class ItemTooltip : MonoBehaviour
             body += "\n" + DimTag + "If equipped: …</color>";
         }
         bodyText.text = body;
+        FitDetails();
     }
 
     // Fill the icon strip with THIS copy's rolled skill icons, or hide it for items that carry none.
@@ -181,9 +316,30 @@ public class ItemTooltip : MonoBehaviour
 
     void Update()
     {
-        if (group.alpha <= 0f) { previewing = null; return; }
-        Follow();
+        if (nameGroup != null && nameGroup.alpha > 0f) FollowName();
+        if (group.alpha <= 0f) { previewing = null; pinned = false; return; }
+        if (pinned)
+        {
+            // A click anywhere off the card closes it — not the click that opened it, and not a click on the card.
+            if ((PointerInput.PrimaryDown || PointerInput.SecondaryDown) && Time.frameCount != pinnedFrame
+                && !RectTransformUtility.RectangleContainsScreenPoint(panel, PointerInput.Position, EventCamera()))
+                Unpin();
+        }
+        else Follow();
         if (previewing != null && previewDrawnVersion != EquipPreview.Version) DrawPreviewBody();
+    }
+
+    Camera EventCamera() => canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+
+    void FollowName()
+    {
+        Vector2 pos = (Vector2)Input.mousePosition + cursorOffset;
+        float scale = canvas != null ? canvas.scaleFactor : 1f;
+        float w = namePanel.rect.width * scale;
+        float h = namePanel.rect.height * scale;
+        pos.x = Mathf.Clamp(pos.x, 0f, Mathf.Max(0f, Screen.width - w));
+        pos.y = Mathf.Clamp(pos.y, h, Screen.height);
+        namePanel.position = pos;
     }
 
     void Follow()
@@ -523,4 +679,26 @@ public class ItemTooltip : MonoBehaviour
           .Append(v.ToString("0.##")).Append(suffix).Append(' ').Append(label).Append("</color>");
     }
 
+}
+
+/// <summary>The item card's ×. Acts on pointer DOWN, as every window's close does, so a small drag cannot eat it.</summary>
+public class ItemCardClose : MonoBehaviour, UnityEngine.EventSystems.IPointerDownHandler
+{
+    public void OnPointerDown(UnityEngine.EventSystems.PointerEventData e) => ItemTooltip.Unpin();
+}
+
+/// <summary>An arrow at an end of the item card's scrollbar: each press moves the details one line that way.</summary>
+public class ItemCardScrollStep : MonoBehaviour, UnityEngine.EventSystems.IPointerDownHandler
+{
+    public ScrollRect scroll;
+    public int direction;
+    const float Line = 18f;
+
+    public void OnPointerDown(UnityEngine.EventSystems.PointerEventData e)
+    {
+        if (scroll == null || scroll.content == null || scroll.viewport == null) return;
+        float hidden = scroll.content.rect.height - scroll.viewport.rect.height;
+        if (hidden <= 0f) return;
+        scroll.verticalNormalizedPosition = Mathf.Clamp01(scroll.verticalNormalizedPosition + direction * Line / hidden);
+    }
 }

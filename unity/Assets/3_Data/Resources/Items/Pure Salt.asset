@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.pure-salt
   displayName: Pure Salt
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e022cf4bf91bc4a4bbce5303df6f46be, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 1
   value: 585000
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 5
   materialStep: 3
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: White to the last grain. A smith saves this for the blade that matters.

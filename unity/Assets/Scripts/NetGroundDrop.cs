@@ -35,6 +35,13 @@ public class NetGroundDrop : NetworkBehaviour
     /// adds back its own answer for where the map is (see <see cref="MapManager.InWorld"/>).</summary>
     [SyncVar] Vector3 inMap;
 
+    /// <summary>Who it fell from (their network id, 0 for nobody), where their feet stood inside the map, and when on
+    /// the network clock — so a watcher that sees it within its hop throws the picture out of that body, and one that
+    /// arrives later sees it already lying there.</summary>
+    [SyncVar] uint thrownBy;
+    [SyncVar] Vector3 thrownFromInMap;
+    [SyncVar] double thrownAt;
+
     /// <summary>SERVER ONLY: the real drop, with the rolled copy. Null on every watching machine.</summary>
     public GroundDrop ServerDrop { get; private set; }
 
@@ -51,6 +58,9 @@ public class NetGroundDrop : NetworkBehaviour
         rarityIndex = (int)drop.rarity;
         mapName = drop.mapName;
         inMap = MapManager.InMap(drop.transform.position, drop.mapName);
+        thrownBy = drop.thrownBy;
+        thrownFromInMap = MapManager.InMap(drop.thrownFrom, drop.mapName);
+        thrownAt = NetworkTime.time;
 
         // AND THE SHELL ITSELF LIES THERE TOO. Where the object IS decides who the server tells about it; a
         // shell left at the origin would be announced to whoever stood near the origin and to nobody else.
@@ -89,6 +99,23 @@ public class NetGroundDrop : NetworkBehaviour
         if (ServerDrop != null) { ServerDrop.Remove(); ServerDrop = null; }
     }
 
+    // Throw the icon onto its spot if it fell moments ago — every drop, whatever dropped it. Out of the waist of the
+    // body it fell from as this machine draws it, the arc rising a body's height; a body this machine does not have
+    // throws from where its feet stood, and a drop nobody threw springs up off its own spot.
+    void Toss()
+    {
+        if (thrownAt <= 0) return;
+        float elapsed = (float)(NetworkTime.time - thrownAt);
+        if (elapsed >= GroundDrop.TossSeconds) return;
+        if (thrownBy != 0 && NetworkClient.spawned.TryGetValue(thrownBy, out var body) && body != null)
+        {
+            var t = body.transform;
+            view.Toss(UnitAnchor.Center(t), 2f * UnitAnchor.HalfHeight(t), elapsed);
+        }
+        else if (thrownBy != 0) view.Toss(MapManager.InWorld(thrownFromInMap, mapName), 0f, elapsed);
+        else view.Toss(view.transform.position, 0f, elapsed);
+    }
+
     void TryBuildView()
     {
         if (view != null || givenUp || string.IsNullOrEmpty(itemId) || string.IsNullOrEmpty(mapName)) return;
@@ -105,6 +132,7 @@ public class NetGroundDrop : NetworkBehaviour
                                 (Quality)qualityIndex, upgrade, mapName, netId, (Rarity)rarityIndex);
         if (view == null) return;
         view.ShowOnScreen();
+        Toss();
         // DECIDED IN THE SAME BREATH AS IT IS BUILT, not on the next frame. Waiting left a drop in somebody
         // else's map lit up and reachable for a frame, in a place this machine parks that map and the player
         // is not.

@@ -31,8 +31,7 @@ public class BuffBarPanel : MonoBehaviour
     static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);   // warm gold — reads as "count", distinct from the white timer
     // Pre-built "x1".."x99" labels: the count changes on every stack gain/expiry, and building the string there would
     // allocate during combat. Indexed by count, so a refresh is a lookup (PERFORMANCE.md: no per-frame/per-hit strings).
-    /// <summary>Shared with <see cref="UnitStatusPanel"/> (the target/hover readouts) so both status displays read one
-    /// table rather than each building its own.</summary>
+    /// <summary>The "x1".."x99" labels, built once.</summary>
     public static readonly string[] StackLabels = BuildStackLabels();
     static string[] BuildStackLabels()
     {

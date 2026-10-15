@@ -26,6 +26,9 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     /// <summary>When true, hovering an equipment instance shows the live equip→stat-delta preview
     /// against <see cref="previewSlot"/> (instead of the plain item tooltip).</summary>
     public bool previewOnHover;
+
+    /// <summary>False where the name is already written beside the picture — a shop row — so hovering adds nothing.</summary>
+    public bool nameOnHover = true;
     public EquipSlotType previewSlot;
 
     // Closing a window (X / B-C toggle / Esc) deactivates its rows. uGUI does NOT fire
@@ -59,20 +62,24 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         // screen, which reached none of the character's real belongings. Its sibling — the one that put a
         // picked-up item into a square — was losing loot for exactly that reason. Removed rather than left
         // sitting here looking like a working path into somebody's bag.
+        // RIGHT-CLICK opens the item's card, and is never handed to the window: no window reads a right click as an
+        // action, and a double right-click must not count as the double-click that equips or uses.
+        if (e.button == PointerEventData.InputButton.Right)
+        {
+            if (instance != null) ItemTooltip.Pin(item, instance, previewOnHover ? previewSlot : (EquipSlotType?)null);
+            else if (item != null) ItemTooltip.Pin(item, null);
+            return;
+        }
         if (clickOverride != null) clickOverride(e);
         ItemTooltip.HideTip();   // whatever it described may have moved/vanished
     }
 
-    /// <summary>Hovering a filled row shows the item's tooltip (instance-aware, so equipment shows its +N /
-    /// cards / grade).</summary>
+    /// <summary>Hovering a filled box shows only the item's full name — a piece of gear by its whole title.</summary>
     public void OnPointerEnter(PointerEventData e)
     {
-        if (instance != null)
-        {
-            if (previewOnHover && Character.Instance != null) ItemTooltip.ShowForPreview(instance, previewSlot);
-            else ItemTooltip.ShowFor(instance);
-        }
-        else if (item != null) ItemTooltip.ShowFor(item);
+        if (!nameOnHover) return;
+        if (instance != null) ItemTooltip.ShowName(ItemTooltip.CopyTitle(instance));
+        else if (item != null) ItemTooltip.ShowName(item.displayName);
     }
 
     public void OnPointerExit(PointerEventData e)

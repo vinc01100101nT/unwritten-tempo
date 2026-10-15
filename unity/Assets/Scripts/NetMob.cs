@@ -713,7 +713,7 @@ public class NetMob : NetworkBehaviour, IWatchedShell
             // is now an ordinary event rather than a rare one, because a creature that walks out of range is
             // dismissed and taken back again. Left standing, this body would keep its own brain and its own
             // respawn timer: a monster only this machine can see, hunting people nobody else can watch it hunt.
-            if (this == null) { Destroy(go); return; }
+            if (this == null) { MapManager.DeleteWhenNoMapIsMoving(go); return; }
             AdoptView(go);
         });
     }
@@ -926,10 +926,10 @@ public class NetMob : NetworkBehaviour, IWatchedShell
     static void PutBodyBack(string kind, GameObject body)
     {
         if (body == null) return;
-        if (string.IsNullOrEmpty(kind)) { Destroy(body); return; }
+        if (string.IsNullOrEmpty(kind)) { MapManager.DeleteWhenNoMapIsMoving(body); return; }
 
         if (!spare.TryGetValue(kind, out var stack)) { spare[kind] = stack = new System.Collections.Generic.Stack<GameObject>(); }
-        if (stack.Count >= SpareBodiesPerKind) { Destroy(body); return; }
+        if (stack.Count >= SpareBodiesPerKind) { MapManager.DeleteWhenNoMapIsMoving(body); return; }
 
         body.SetActive(false);
         // A body banked while its blade was in the air would hand the next creature of its kind an empty hand forever.

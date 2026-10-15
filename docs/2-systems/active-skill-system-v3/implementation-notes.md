@@ -74,7 +74,7 @@ rule "duration &gt; 0 ⇒ show an icon" is exact and needs no kind checks.
 ## The unified state store
 
 ONE `UnitStates` per unit — player and mob alike — holding every buff, debuff and ailment, and serving as the single
-source for BOTH gameplay queries AND display (player buff tray + the target panel's icons). It absorbed the old scattered
+source for BOTH gameplay queries AND display (the player's buff tray). It absorbed the old scattered
 ailment arrays, the eight hand-written buff windows on `Character`, and the separate mob vulnerability field; all of
 those are deleted.
 
@@ -93,9 +93,8 @@ the tray the other, so a move-speed buff sped the player up while showing no ico
 player's store **lazily from `Character.Instance.States`** for this reason. Mobs are one GameObject and were always
 fine. See memory `player-two-gameobjects-one-store`.
 
-*Where another unit's icons show:* only on the target panel at the top of the screen, for the unit you clicked — a
-creature you are fighting or a person you selected — damaged or not. While a unit is on that panel the server keeps
-this machine told about its states, so the icons stay live. No floating plate draws icons: the plate over the
+*Where another unit's icons show:* nowhere — nothing on screen draws another unit's states, and nothing asks the
+server to keep this machine told about them. No floating plate draws icons: the plate over the
 creature you point at and the plates kept up over you and every other player show a name, health and mana only.
 Your own icons are on the tray.
 

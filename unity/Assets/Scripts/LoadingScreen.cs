@@ -33,7 +33,14 @@ public static class LoadingScreen
 
     static RectTransform root;
     static RectTransform barFill;
-    static float filled;
+    static TMPro.TMP_Text percentLabel;
+    // Where the bar is heading, and where it is drawn on its way there.
+    static float target;
+    static float shown;
+    static int shownPercent = -1;
+
+    // How quickly the drawn bar closes the gap to where it is heading: most of the way in a quarter of a second.
+    const float BarCatchUpPerSecond = 12f;
     static CanvasGroup group;
     static LoadingScreenTicker ticker;
     static bool fading;
@@ -61,7 +68,8 @@ public static class LoadingScreen
         group.alpha = 1f;
         group.blocksRaycasts = true;
         shownInMap = MapManager.CurrentMap;
-        SetFill(0f);
+        target = 0f;
+        Draw(0f);
         root.gameObject.SetActive(true);
         UiLayers.Raise(root, UiLayers.Layer.Loading);
         ticker.enabled = true;
@@ -73,19 +81,24 @@ public static class LoadingScreen
     public static void Reached(Stage stage)
         => Fill(stage == Stage.Asked ? AskedFill : stage == Stage.Saved ? SavedFill : ConnectedFill);
 
-    // Only ever forwards, and only written when it actually moves.
+    // Only ever forwards. The drawn bar slides there over the next frames (see Tick).
     static void Fill(float amount)
     {
         if (!Showing || barFill == null) return;
         amount = Mathf.Min(1f, amount);
-        if (amount > filled) SetFill(amount);
+        if (amount > target) target = amount;
     }
 
-    // The fill is the bar's own width cut short, so it needs no picture behind it.
-    static void SetFill(float amount)
+    // The fill is the bar's own width cut short, so it needs no picture behind it. The number under it is rewritten
+    // only when the whole percent changes — at most a hundred times a move.
+    static void Draw(float amount)
     {
-        filled = amount;
+        shown = amount;
         barFill.anchorMax = new Vector2(amount, 1f);
+        int percent = Mathf.RoundToInt(amount * 100f); // server-math: this machine's own map-load amount, never a game number
+        if (percent == shownPercent) return;
+        shownPercent = percent;
+        percentLabel.text = percent + "%";
     }
 
     /// <summary>Lower the curtain. Called when the player has a body on the far side, or when the move failed
@@ -98,7 +111,7 @@ public static class LoadingScreen
                                && MapManager.CurrentMap != shownInMap;
         if (landedElsewhere)
         {
-            SetFill(1f);
+            target = 1f;
             // Clicks reach the new map from the first frame of the fade, not the last.
             group.blocksRaycasts = false;
             fading = true;
@@ -132,6 +145,11 @@ public static class LoadingScreen
     internal static void Tick(float seconds)
     {
         if (group == null) return;
+        if (shown < target)
+        {
+            float next = shown + (target - shown) * (1f - Mathf.Exp(-BarCatchUpPerSecond * seconds));
+            Draw(target - next < 0.002f ? target : next);
+        }
         if (!fading)
         {
             if (MapManager.ArrivingAt != null) Fill(ConnectedFill + (1f - ConnectedFill) * MapManager.LoadProgress01);
@@ -154,14 +172,25 @@ public static class LoadingScreen
         if (root == null) return;
         Object.DontDestroyOnLoad(root.GetComponentInParent<Canvas>().gameObject);
 
-        // In the middle of the screen, a little below centre.
+        // In the middle of the screen, a little below centre, inside a white border two units wide.
+        var borderGO = new GameObject("Border", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        var borderRT = (RectTransform)borderGO.transform;
+        borderRT.SetParent(root, false);
+        borderRT.anchorMin = borderRT.anchorMax = new Vector2(0.5f, 0.5f);
+        borderRT.pivot = new Vector2(0.5f, 0.5f);
+        borderRT.sizeDelta = new Vector2(424f, 12f);
+        borderRT.anchoredPosition = new Vector2(0f, -60f);
+        var border = borderGO.GetComponent<Image>();
+        border.color = Color.white;
+        border.raycastTarget = false;
+
         var stripGO = new GameObject("Bar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         var stripRT = (RectTransform)stripGO.transform;
-        stripRT.SetParent(root, false);
+        stripRT.SetParent(borderRT, false);
         stripRT.anchorMin = stripRT.anchorMax = new Vector2(0.5f, 0.5f);
         stripRT.pivot = new Vector2(0.5f, 0.5f);
         stripRT.sizeDelta = new Vector2(420f, 8f);
-        stripRT.anchoredPosition = new Vector2(0f, -60f);
+        stripRT.anchoredPosition = Vector2.zero;
         var strip = stripGO.GetComponent<Image>();
         strip.color = UiKit.Rule;
         strip.raycastTarget = false;
@@ -177,6 +206,15 @@ public static class LoadingScreen
         fill.color = UiKit.Accent;
         fill.raycastTarget = false;
         barFill = fillRT;
+
+        percentLabel = UiKit.MakeText("Percent", root, "0%", 18, FontStyle.Normal, TextAnchor.MiddleCenter, wrap: false);
+        var percentRT = percentLabel.rectTransform;
+        percentRT.anchorMin = percentRT.anchorMax = new Vector2(0.5f, 0.5f);
+        percentRT.pivot = new Vector2(0.5f, 0.5f);
+        percentRT.sizeDelta = new Vector2(120f, 28f);
+        percentRT.anchoredPosition = new Vector2(0f, -86f);
+        percentLabel.color = UiKit.TextOnDim;
+        percentLabel.raycastTarget = false;
 
         group = root.gameObject.AddComponent<CanvasGroup>();
         ticker = root.gameObject.AddComponent<LoadingScreenTicker>();

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.butterfly-wing
   displayName: Butterfly Wing
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a14a7f87941fd1e4996c113a5fc5d174, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 5
   value: 225
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

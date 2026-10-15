@@ -22,6 +22,16 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class HeadSocket : MonoBehaviour
 {
+    /// <summary>The head of the person at this keyboard. Their model is a SEPARATE object riding their avatar, so the
+    /// body builder names it here, as it names their hand (<see cref="WeaponSocket.OnMyAvatar"/>).</summary>
+    public static HeadSocket OnMyAvatar { get; private set; }
+
+    public static void MarkMine(HeadSocket socket) => OnMyAvatar = socket;
+
+    /// <summary>How tall the head is, head bone to the top of the bare body, in world units; 0 before the body is
+    /// built. Read when something is sized to a head, never per frame.</summary>
+    public float HeadSize() => TryHead(out var headBase, out float top) ? Mathf.Max(0f, top - headBase.y) : 0f;
+
     SkinnedMeshRenderer body;
     Transform headBone;
     string bodyModel;

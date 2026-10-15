@@ -474,12 +474,19 @@ public class ProgressionWindows : MonoBehaviour
 
     // ---- helpers --------------------------------------------------------------
 
+    // THE ITEM CARD'S MEASURES, copied off Ragnarok's own item window, in canvas units: the card, the picture panel at its
+    // left, the top part (picture, title and details) above the card-slot strip, the title bar, the scrollbar, the strip.
+    const float CardW = 344f, CardH = 180f, PicW = 104f, TopH = 146f, TitleH = 22f, BarW = 14f, SlotsH = 28f, Pad = 6f;
+
     void EnsureTooltip()
     {
         // Always build our own tooltip on a TOP-sorting nested canvas: an existing tooltip from the
         // old GameUICanvas sits at a lower sort order and would render BEHIND these windows. Building
-        // ours (its Awake claims ItemTooltip.Instance) keeps hover visible above everything.
-        var layer = new GameObject("TooltipLayer", typeof(RectTransform), typeof(Canvas)) { hideFlags = HideFlags.DontSaveInEditor };
+        // ours (its Awake claims ItemTooltip.Instance) keeps hover visible above everything. A nested canvas that sorts
+        // itself is never searched by its parent's pointer finder, so it carries its OWN — without it the card could be
+        // neither dragged, scrolled nor closed.
+        var layer = new GameObject("TooltipLayer", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster))
+            { hideFlags = HideFlags.DontSaveInEditor };
         layer.transform.SetParent(canvas, false);
         UiKit.Fill((RectTransform)layer.transform, Vector2.zero, Vector2.zero);
         var lc = layer.GetComponent<Canvas>();
@@ -487,50 +494,162 @@ public class ProgressionWindows : MonoBehaviour
         lc.sortingOrder = 200;
         var host = layer.transform;
 
-        // The edge IS the layout root: VerticalLayoutGroup + ContentSizeFitter MUST live on
-        // the SAME object (and own the title/body children). The old setup split them — VLG on the
-        // inner fill, fitter on the border — so the panel never sized to its content and the title
-        // rendered ON TOP of the body's first line (the "doubled title / overlapping header" bug).
+        // RAGNAROK'S ITEM WINDOW, one fixed size: the picture panel at the left; the name in a bar along the top (drag it
+        // to move the card) with the × at the corner; the details under it with a scrollbar when they run long; the
+        // card-slot strip along the bottom.
         var border = UiKit.Round(UiKit.Img("ItemTooltip", host, UiKit.WindowEdge), UiKit.WindowRadius);
         var rt = border.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0, 1);
-        rt.sizeDelta = new Vector2(264, 90);   // width is kept (horizontal fit = Unconstrained); height auto-fits
-        border.raycastTarget = false;
+        rt.sizeDelta = new Vector2(CardW, CardH);
         var cg = border.gameObject.AddComponent<CanvasGroup>();
         cg.blocksRaycasts = false; cg.interactable = false;
-        var vlg = border.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(14, 14, 10, 12); vlg.spacing = 2;   // 2px edge + inner pad
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
-        var fitter = border.gameObject.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        // Inner panel: a background that fills the edge but is IGNORED by the layout
-        // (otherwise the VLG would try to stack it) and drawn behind the text.
         var fill = UiKit.Round(UiKit.Img("Fill", border.transform, UiKit.PanelFill), UiKit.WindowRadius - 1);
-        UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+        UiKit.Fill(fill.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         fill.raycastTarget = false;
-        fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
-        fill.transform.SetAsFirstSibling();
 
-        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Normal, TextAnchor.UpperLeft);
+        var picture = UiKit.Round(UiKit.Img("Picture", border.transform, Color.white), 3);
+        picture.raycastTarget = false;
+        Place(picture.rectTransform, Pad, Pad, PicW - Pad, TopH - Pad);
+        var icon = ItemIcon.Make(picture.transform, 8f);
+
+        // The thin rule between the picture and the words.
+        var rule = UiKit.Img("Rule", border.transform, UiKit.WindowEdge);
+        rule.raycastTarget = false;
+        Place(rule.rectTransform, PicW + 2f, Pad, 1f, TopH - Pad);
+
+        var bar = UiKit.Img("TitleBar", border.transform, new Color(0f, 0f, 0f, 0f));
+        Place(bar.rectTransform, PicW + 6f, 4f, CardW - PicW - 6f - 28f, TitleH);
+        bar.gameObject.AddComponent<WindowDragHandle>().window = rt;
+        var title = UiKit.Label("Title", bar.transform, "Item", 15, FontStyle.Normal, TextAnchor.MiddleLeft);
         title.raycastTarget = false;
-        var body = UiKit.Label("Body", border.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
+        title.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+        title.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+        UiKit.Fill(title.rectTransform, Vector2.zero, Vector2.zero);
+
+        var close = UiKit.BarButton(border.transform, "Close", "X", 2f, 24f, 24f);
+        var closeRt = close.rectTransform;
+        closeRt.anchorMin = closeRt.anchorMax = new Vector2(1, 1);
+        closeRt.pivot = new Vector2(1, 1);
+        closeRt.anchoredPosition = new Vector2(-2f, -2f);
+        close.gameObject.AddComponent<ItemCardClose>();
+
+        float detailsTop = 4f + TitleH + 4f, detailsHeight = TopH - detailsTop;
+        float detailsWidth = CardW - (PicW + 8f) - BarW - 2f * Pad;
+        var details = UiKit.Img("Details", border.transform, new Color(0f, 0f, 0f, 0f));
+        Place(details.rectTransform, PicW + 8f, detailsTop, detailsWidth, detailsHeight);
+        var content = UiKit.ScrollColumn(details.rectTransform);
+        var contentLayout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+        contentLayout.spacing = 2;
+        contentLayout.childControlWidth = contentLayout.childControlHeight = true;
+        contentLayout.childForceExpandWidth = true; contentLayout.childForceExpandHeight = false;
+        var body = UiKit.Label("Body", content, "", 13, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;
 
-        // Horizontal strip that ItemTooltip fills with the weapon's granted-skill icons (V2: weapon owns its kit).
-        // A layout child of the same VLG so it stacks under the body and the panel auto-sizes to include it.
+        // Horizontal strip that ItemTooltip fills with the weapon's granted-skill icons (V2: weapon owns its kit),
+        // under the details so it scrolls with them.
         var skillRow = new GameObject("SkillIcons", typeof(RectTransform)).GetComponent<RectTransform>();
-        skillRow.SetParent(border.transform, false);
+        skillRow.SetParent(content, false);
         var hlg = skillRow.gameObject.AddComponent<HorizontalLayoutGroup>();
         hlg.spacing = 3; hlg.childAlignment = TextAnchor.MiddleLeft;
         hlg.childControlWidth = hlg.childControlHeight = true;
         hlg.childForceExpandWidth = hlg.childForceExpandHeight = false;
         skillRow.gameObject.SetActive(false);
 
+        var scroll = details.GetComponent<ScrollRect>();
+        scroll.verticalScrollbar = MakeCardScrollbar(border.transform, scroll, CardW - Pad - BarW, detailsTop, detailsHeight);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+
+        // THE CARD SLOTS, as Ragnarok draws them: a white strip with a diamond per slot the piece has.
+        var slots = UiKit.Round(UiKit.Img("Slots", border.transform, Color.white), 3);
+        slots.raycastTarget = false;
+        Place(slots.rectTransform, Pad, TopH + 2f, CardW - 2f * Pad, SlotsH);
+        var diamonds = new Image[ItemTooltip.MostCardSlots];
+        for (int i = 0; i < diamonds.Length; i++)
+        {
+            var d = UiKit.Img("Slot" + i, slots.transform, UiKit.ButtonEdge);
+            var drt = d.rectTransform;
+            drt.anchorMin = drt.anchorMax = new Vector2(0f, 0.5f);
+            drt.pivot = new Vector2(0.5f, 0.5f);
+            drt.sizeDelta = new Vector2(13f, 13f);
+            drt.anchoredPosition = new Vector2(20f + i * 30f, 0f);
+            drt.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            diamonds[i] = d;
+        }
+
+        // THE HOVER STRIP: only the item's full name, white on a dark see-through strip by the cursor.
+        var strip = UiKit.Img("ItemName", host, new Color(0f, 0f, 0f, 0.72f));
+        strip.raycastTarget = false;
+        var stripRt = strip.rectTransform;
+        stripRt.anchorMin = stripRt.anchorMax = new Vector2(0, 1); stripRt.pivot = new Vector2(0, 1);
+        var stripLayout = strip.gameObject.AddComponent<HorizontalLayoutGroup>();
+        stripLayout.padding = new RectOffset(8, 8, 4, 4);
+        stripLayout.childControlWidth = stripLayout.childControlHeight = true;
+        stripLayout.childForceExpandWidth = stripLayout.childForceExpandHeight = false;
+        var stripFit = strip.gameObject.AddComponent<ContentSizeFitter>();
+        stripFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        stripFit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var name = UiKit.Label("Name", strip.transform, "", 14, FontStyle.Bold, TextAnchor.MiddleLeft);
+        name.raycastTarget = false;
+        name.color = Color.white;
+        name.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+
         var tip = border.gameObject.AddComponent<ItemTooltip>();
         tip.panel = rt; tip.titleText = title; tip.bodyText = body; tip.skillRow = skillRow;
+        tip.icon = icon;
+        tip.detailsScroll = scroll;
+        tip.slotDiamonds = diamonds;
+        tip.namePanel = stripRt; tip.nameText = name;
+    }
+
+    // Lay `r` at (x, y) from the top-left of its parent, w × h.
+    static void Place(RectTransform r, float x, float y, float w, float h)
+    {
+        r.anchorMin = r.anchorMax = new Vector2(0, 1);
+        r.pivot = new Vector2(0, 1);
+        r.anchoredPosition = new Vector2(x, -y);
+        r.sizeDelta = new Vector2(w, h);
+    }
+
+    // Ragnarok's scrollbar: an arrow at each end, a track between them and a coloured thumb that shows where you are.
+    static Scrollbar MakeCardScrollbar(Transform parent, ScrollRect scroll, float x, float y, float h)
+    {
+        const float W = BarW;
+        var root = new GameObject("Scrollbar", typeof(RectTransform)).GetComponent<RectTransform>();
+        root.SetParent(parent, false);
+        Place(root, x, y, W, h);
+
+        var up = Arrow(root, "Up", 0f, W, scroll, +1);
+        var down = Arrow(root, "Down", h - W, W, scroll, -1);
+
+        var track = UiKit.Round(UiKit.Img("Track", root, UiKit.ButtonEdge), 3);
+        Place(track.rectTransform, 2f, W + 1f, W - 4f, h - 2f * W - 2f);
+        var area = new GameObject("Sliding Area", typeof(RectTransform)).GetComponent<RectTransform>();
+        area.SetParent(track.transform, false);
+        UiKit.Fill(area, Vector2.zero, Vector2.zero);
+        var handle = UiKit.Round(UiKit.Img("Handle", area, UiKit.Accent), 3);
+        UiKit.Fill(handle.rectTransform, Vector2.zero, Vector2.zero);
+
+        var bar = track.gameObject.AddComponent<Scrollbar>();
+        bar.handleRect = handle.rectTransform;
+        bar.targetGraphic = handle;
+        bar.direction = Scrollbar.Direction.BottomToTop;
+        up.transform.SetParent(root, false);
+        down.transform.SetParent(root, false);
+        return bar;
+    }
+
+    static Image Arrow(RectTransform root, string name, float y, float size, ScrollRect scroll, int direction)
+    {
+        var a = UiKit.Round(UiKit.Img(name, root, UiKit.TextDim), 2);
+        Place(a.rectTransform, 0f, y, size, size);
+        var glyph = UiKit.Label("Glyph", a.transform, direction > 0 ? "▲" : "▼", 9, FontStyle.Bold, TextAnchor.MiddleCenter);
+        glyph.raycastTarget = false;
+        glyph.color = Color.white;
+        UiKit.Fill(glyph.rectTransform, Vector2.zero, Vector2.zero);
+        var step = a.gameObject.AddComponent<ItemCardScrollStep>();
+        step.scroll = scroll;
+        step.direction = direction;
+        return a;
     }
 
     // Green/red "+v LABEL" stat line; skipped when zero.

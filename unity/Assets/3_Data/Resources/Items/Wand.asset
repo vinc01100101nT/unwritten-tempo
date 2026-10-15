@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.wand
   displayName: Wand
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a146aef636843f3478886ad7a29ee63c, type: 3}
   slot: 3
   weaponType: 13
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 90
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

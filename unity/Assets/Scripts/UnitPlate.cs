@@ -10,7 +10,7 @@ using TMPro;
 /// <item>a health bar — left off for a unit with no health to show, a townsperson, whose plate is its name alone</item>
 /// <item>a mana bar under it, for a unit that has mana</item>
 /// </list>
-/// A unit's buffs and debuffs are not drawn here: they show only on the target panel (<see cref="UnitStatusPanel"/>).
+/// A unit's buffs and debuffs are not drawn here.
 ///
 /// <para><b>Drawing only.</b> Whoever owns a plate decides which unit it rides and hands it the numbers the server
 /// sent; nothing here works a number out. <see cref="HoverPlate"/> owns one and points it at whatever is under the

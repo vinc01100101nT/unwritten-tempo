@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.padded-hood
   displayName: Padded Hood
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 73eaf5e48fd89f44b9b1e0d45fe7fc5f, type: 3}
   slot: 1
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 30
   value: 8
   madeOf: 2
-  forgeMaterialCost: 5
-  forgeGoldCost: 400
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: 

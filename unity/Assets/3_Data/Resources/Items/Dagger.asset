@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.dagger
   displayName: Dagger
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 091ff0278e456e24186751f6121c7dcb, type: 3}
   slot: 3
   weaponType: 3
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 90
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

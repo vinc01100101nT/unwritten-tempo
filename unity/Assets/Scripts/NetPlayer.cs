@@ -1241,8 +1241,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     // not a hundred. The server ignores a repeat as well; this simply stops it ever being asked.
     NetworkIdentity lastPointedSent;
 
-    /// <summary>Tell the server which unit's details the person at this keyboard has up — the one on their target
-    /// panel (<see cref="UnitStatusPanel"/>), named by the body this machine drew for it — or nothing at all. The server
+    /// <summary>Tell the server which unit's details the person at this keyboard has up, named by the body this
+    /// machine drew for it — or nothing at all. Nothing on screen calls this today. The server
     /// then keeps sending that unit's buffs and debuffs. Safe to call every frame: it sends only when the answer
     /// changes.
     ///
@@ -2095,10 +2095,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <para>The ITEM'S NAME is not sent: what crosses is its id and the two numbers that decide how the line
     /// reads, and the other machine looks the rest up in the catalog it already has — the same way it builds the
     /// words for a thing lying on the ground.</para></summary>
-    public void TellOwnerTheyGot(string itemId, int count, int folds)
+    public void TellOwnerTheyGot(string itemId, int count, int folds, Rarity rarity)
     {
         if (!isServer || connectionToClient == null) return;
-        TargetGotItem(connectionToClient, itemId, count, folds);
+        TargetGotItem(connectionToClient, itemId, count, folds, (int)rarity);
     }
 
     /// <summary>Server-only: a sentence from the game to the person playing here, in their chat log — why a press
@@ -2130,11 +2130,12 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         new System.Collections.Generic.Dictionary<string, float>();
 
     [TargetRpc]
-    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds)
+    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int folds, int rarity)
     {
         var def = ItemCatalog.Resolve(itemId);
         if (def == null) return;
         ChatController.ItemArrived(def, count, folds);
+        LootCards.Show(def, count, folds, (Rarity)rarity);
     }
 
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
@@ -3402,6 +3403,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         var where = GroundDrop.FreeSpotNear(MapManager.InWorld(netPosition, mapName), mapName);
         var drop = GroundDrop.Place(where, e.def, take, e.instance, Quality.Raw, 0, mapName, 0);
         if (drop == null) return;
+        drop.ThrownBy(netId, MapManager.InWorld(netPosition, mapName));
 
         // OUT OF THE BAG ONLY ONCE IT IS ON THE FLOOR. Taking it out first and failing to place it would be an
         // item that existed in neither place.

@@ -6,9 +6,8 @@ using UnityEngine;
 /// <see cref="MonsterAI3D"/> (so it's targetable by click-attack and the caster) and a big
 /// <see cref="Health"/>. Placed in the world by the <c>/dummy</c> GM command, which the server runs, so every player sees and hits the same one.
 ///
-/// <para>It shows NO readout of its own: its HP reads through the same target and hover panels as any other mob
-/// (<see cref="UnitStatusPanel"/>, <see cref="HoverPlate"/>), so what you measure on the dummy is what you'd see in a
-/// real fight.</para>
+/// <para>It shows NO readout of its own: its HP reads through the same hover plate as any other mob
+/// (<see cref="HoverPlate"/>), so what you measure on the dummy is what you'd see in a real fight.</para>
 /// </summary>
 [RequireComponent(typeof(Health))]
 public class TrainingDummy : MonoBehaviour

@@ -173,6 +173,8 @@ public static class Rewards
         {
             var at = victim.transform.position;
             string map = victim.gameObject.scene.name;
+            // Who it all fell from, so every watcher throws the pictures out of that body.
+            uint fromId = victim.TryGetComponent<Mirror.NetworkIdentity>(out var victimId) ? victimId.netId : 0;
             // AUTO-LOOT FIRST, ENTRY BY ENTRY: what its owner's filter takes leaves the list for their bag, so the
             // ground below only ever sees what was left.
             if (!neverAutoLoot) AutoLoot(character, entries, map);
@@ -189,12 +191,12 @@ public static class Rewards
                         if (FirstStackOf(entries, e.item) < i) continue;   // already put down with the first of its kind
                         count = StackCount(entries, e.item);
                     }
-                    if (DropForKiller(at, map, e.item, count, e.copy, character)) dropped++;
+                    if (DropForKiller(at, map, e.item, count, e.copy, character, fromId)) dropped++;
                 }
             if (pileItems != null && pileCounts != null)
                 for (int i = 0; i < pileItems.Count && i < pileCounts.Count; i++)
                     if (pileItems[i] != null && pileCounts[i] > 0
-                        && DropForKiller(at, map, pileItems[i], pileCounts[i], null, character)) dropped++;
+                        && DropForKiller(at, map, pileItems[i], pileCounts[i], null, character, fromId)) dropped++;
         }
 
         PlaySession.ThingsFell(character, dropped);
@@ -299,10 +301,12 @@ public static class Rewards
     }
 
     // ONE THING DOWN ON THE GROUND for the killer, next to where the creature fell, and every player near enough told.
-    static bool DropForKiller(Vector3 at, string map, Item def, int count, EquipmentInstance copy, Character killer)
+    static bool DropForKiller(Vector3 at, string map, Item def, int count, EquipmentInstance copy, Character killer,
+                              uint fromId)
     {
         var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, count, copy, Quality.Raw, 0, map, 0);
         if (drop == null) return false;
+        drop.ThrownBy(fromId, at);
         drop.ReserveFor(killer, GroundDrop.KillerOnlySeconds, GroundDrop.KillDropLifetimeSeconds);
         GameNetwork.PublishDrop(drop);
         return true;

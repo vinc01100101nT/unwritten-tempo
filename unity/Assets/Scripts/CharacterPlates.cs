@@ -6,8 +6,7 @@ using UnityEngine;
 /// screen show their name, their health and their mana; every townsperson shows their name, and under it in smaller
 /// letters what they are. The plate is the same
 /// <see cref="UnitPlate"/> a creature gets when you point at it (<see cref="HoverPlate"/>, which leaves people alone).
-/// A player's buffs and debuffs show on the target panel when you click them (<see cref="UnitStatusPanel"/>), never
-/// here.
+/// A player's buffs and debuffs are not shown here.
 ///
 /// <para><b>Nothing is worked out here.</b> Your own numbers are the ones the server sent your character; another
 /// person's are the ones it sent the copy of their body this machine draws; a townsperson's name is the one the server

@@ -73,6 +73,39 @@ public static class MapManager
         if (loading == null) ArrivingAt = null;
     }
 
+    /// <summary>Delete <paramref name="go"/> — now, or, while a map is loading or closing, switched off now and deleted
+    /// once nothing is.
+    ///
+    /// <para>THE ONE WAY TO DELETE ANYTHING DURING PLAY THAT A MAP CHANGE CAN MEET. Deleting an object that draws a
+    /// picture while Unity loads a map in the background can freeze the editor for good: MEASURED 2026-10-15 by
+    /// reading the frozen editor's threads, the loading thread held the asset lock and waited for the main thread,
+    /// while the main thread, deleting a creature body with a picture, waited for that same lock. Every return to a
+    /// save point deleted two Flutterby bodies in the very frame the town started loading, and one return in two to
+    /// four froze. Hidden first and deleted afterwards, the same object costs nothing extra and meets no load.</para></summary>
+    public static void DeleteWhenNoMapIsMoving(GameObject go)
+    {
+        if (go == null) return;
+        if (!MapIsMoving) { Object.Destroy(go); return; }
+        go.SetActive(false);
+        waitingToBeDeleted.Add(go);
+    }
+
+    // Maps asked to close and not closed yet. While any are, or a map is on its way, deleting waits.
+    static int closing;
+    static bool MapIsMoving => !string.IsNullOrEmpty(ArrivingAt) || closing > 0;
+    static readonly System.Collections.Generic.List<GameObject> waitingToBeDeleted =
+        new System.Collections.Generic.List<GameObject>();
+
+    // Asked whenever a map has arrived or closed. Once nothing is moving, what waited goes — a few objects, once per
+    // map change; and an object that already went with its scene is simply skipped.
+    static void DeleteWhatWaitedIfQuiet()
+    {
+        if (MapIsMoving || waitingToBeDeleted.Count == 0) return;
+        for (int i = 0; i < waitingToBeDeleted.Count; i++)
+            if (waitingToBeDeleted[i] != null) Object.Destroy(waitingToBeDeleted[i]);
+        waitingToBeDeleted.Clear();
+    }
+
     /// <summary>Park <paramref name="go"/> in the scene that is never unloaded, so a map swap cannot take it.
     ///
     /// <para>THE one place that answers "this object must outlive the map I am standing in". Anything a SERVER
@@ -135,6 +168,7 @@ public static class MapManager
         }
         if (ArrivingAt == scene.name) { ArrivingAt = null; loading = null; }
         StripForeignGlobals(scene);
+        DeleteWhatWaitedIfQuiet();
     }
 
     // A map that goes away takes its place with it. Nothing unloads a map on a server today, so this is here
@@ -143,6 +177,8 @@ public static class MapManager
     // saying so.
     static void OnSceneUnloaded(Scene scene)
     {
+        if (closing > 0) closing--;
+        DeleteWhatWaitedIfQuiet();
         DestroyWhatOutlivedItsScene("closed");
         parked.Remove(scene.name);
         WorldSpawner.Forget(scene);
@@ -232,7 +268,7 @@ public static class MapManager
         {
             var s = SceneManager.GetSceneAt(i);
             if (!s.isLoaded || s.name == SystemsScene || s == keep) continue;
-            SceneManager.UnloadSceneAsync(s);
+            if (SceneManager.UnloadSceneAsync(s) != null) closing++;
         }
     }
 

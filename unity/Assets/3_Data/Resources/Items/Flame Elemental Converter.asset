@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.flame-elemental-converter
   displayName: Flame Elemental Converter
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 398a4d09e10940541b710e728661d0a2, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 8
   value: 0
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
@@ -39,9 +37,5 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
-  description: A coal that never cools. Rub it down the blade and the edge remembers fire.
+  description: A coal that never cools. Rub it down the blade and the edge remembers
+    fire.

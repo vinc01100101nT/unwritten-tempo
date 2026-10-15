@@ -122,7 +122,8 @@ def main():
              lambda t: t.replace("  m_StaticEditorFlags: 16\n", "  m_StaticEditorFlags: 22\n", 1)),
             ("LOD group missing a level that exists beside it",
              "unity/Assets/1_Authored/Prefabs/Props/Outdoor/Stone1_LOD0.prefab",
-             lambda t: t + "--- !u!205 &998\nLODGroup:\n  m_GameObject: {fileID: 0}\n"),
+             # Stone1 is wired (its LODGroup names LOD1 and LOD2), so the fault is a level dropped from that group.
+             lambda t: t.replace("  m_Name: LOD1\n", "  m_Name: LODX\n", 1)),
             ("shadow map above the pin",
              "unity/Assets/Settings/UniversalRP.asset",
              lambda t: t.replace("  m_MainLightShadowmapResolution: 1024\n", "  m_MainLightShadowmapResolution: 4096\n", 1)),

@@ -3,9 +3,8 @@ using TMPro;
 
 /// <summary>
 /// The ONE hover card that explains a buff/debuff — its name, its one-line "what it does", and its live remaining
-/// time. Shared by every icon tray in the game: the player's own status bar (<see cref="BuffBarPanel"/>) and the
-/// engaged target's readout (<see cref="UnitStatusPanel"/>). It was born inside the player's bar; extracting it is
-/// what lets a target's icons explain themselves in exactly the same words, with no second copy to keep in sync.
+/// time. Used by every icon tray in the game — today the player's own status bar (<see cref="BuffBarPanel"/>) — so
+/// any tray added later explains its icons in exactly the same words, with no second copy to keep in sync.
 ///
 /// <para>One instance for the whole game, created on first hover and reparented to whichever canvas is asking, so it
 /// always draws above the tray that opened it. It ticks its own remaining-time line (rewritten only on a whole-second

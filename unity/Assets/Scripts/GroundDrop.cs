@@ -6,11 +6,11 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// ONE THING LYING ON THE GROUND. You see it as a SPARKLE at the spot, and you
-/// read WHAT it is by pointing at the sparkle — which puts its name on a small plate above it and turns the cursor
-/// into a hand — or by holding <b>Alt</b>, which puts up every name at once. Clicking the sparkle or the name picks
-/// it up. There is still no icon and no model: the name is the only description of the item anywhere in this game,
-/// on the floor exactly as in the bag.
+/// ONE THING LYING ON THE GROUND. You see it as its ICON standing on the spot, one head tall — and when you see it
+/// fall, it is THROWN there (<see cref="Toss"/>): out of the waist of whatever dropped it, or up off the spot when
+/// nothing did, spinning through a high arc and bouncing once where it lands. You read WHAT it is by pointing at the
+/// icon, which puts its name on a small plate above it and turns the cursor into a hand, or by holding <b>Alt</b>,
+/// which puts up every name at once. Clicking the icon or the name picks it up.
 ///
 /// <para><b>Alt is already this game's "tell me more" key</b> — the item tooltip opens a weapon's skill details on
 /// it, and dashing is deliberately suppressed while it is held — so a floor that answers to it is the key doing
@@ -80,6 +80,23 @@ public class GroundDrop : MonoBehaviour
     /// <summary>When it was put down, on this machine's clock (<c>Time.time</c>) — so a pick-up's log line can say how
     /// long it lay there first.</summary>
     public float placedAt;
+
+    /// <summary>SERVER: who it fell from — their network id (0 for none) and where their feet stood — sent so every
+    /// watcher can throw its picture out of that body (<see cref="Toss"/>).</summary>
+    public uint thrownBy;
+    public Vector3 thrownFrom;
+
+    /// <summary>SERVER: say it fell from the body with network id <paramref name="whoNetId"/>, whose feet stand at
+    /// <paramref name="feet"/> in the world.</summary>
+    public void ThrownBy(uint whoNetId, Vector3 feet)
+    {
+        thrownBy = whoNetId;
+        thrownFrom = feet;
+    }
+
+    /// <summary>How long a throw takes, the bounce included, in seconds. A watcher that hears of a drop later than
+    /// this sees it already lying there.</summary>
+    public const float TossSeconds = 0.85f;
 
     /// <summary>How long a kill's drops are kept for whoever earned the kill, in seconds.</summary>
     public const float KillerOnlySeconds = 10f;
@@ -233,7 +250,7 @@ public class GroundDrop : MonoBehaviour
     /// <summary>Put a thing on the ground at <paramref name="worldPos"/> and hand it back. A server passes the
     /// copy; a watching machine passes null and gives the grade, the folds and the <paramref name="rarity"/> it was
     /// sent instead. With no rarity given it is read off the item and the copy. Nothing is drawn here: a watching
-    /// machine puts its plate and sparkle up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
+    /// machine puts its plate and icon up with <see cref="ShowOnScreen"/>, and the server never does.</summary>
     public static GroundDrop Place(Vector3 worldPos, Item def, int count, EquipmentInstance instance,
                                    Quality quality, int upgrade, string mapName, uint netId, Rarity? rarity = null)
     {
@@ -288,7 +305,7 @@ public class GroundDrop : MonoBehaviour
         InventoryStore.Instance?.Notify();
     }
 
-    /// <summary>What a click on a drop does — on its name or on its sparkle, the same thing: take it if you are
+    /// <summary>What a click on a drop does — on its name or on its icon, the same thing: take it if you are
     /// standing over it, otherwise walk there and take it on arrival, the same answer a skill cast from too far
     /// gives. ONE function for both, so the two ways of clicking can never come to behave differently.</summary>
     public static void ReachFor(GroundDrop drop)
@@ -313,7 +330,7 @@ public class GroundDrop : MonoBehaviour
 
     // ---- pointing at it --------------------------------------------------------------------------------------
 
-    /// <summary>How close to a drop's sparkle the cursor must be to point at it, in screen pixels. Smaller than a
+    /// <summary>How close to a drop's icon the cursor must be to point at it, in screen pixels. Smaller than a
     /// creature's 72 because drops lie only <see cref="Spacing"/> apart: a wide circle would pick a drop from
     /// across a pile, and would steal a click meant for the ground beside it.</summary>
     public const float HoverPixels = 24f;
@@ -322,11 +339,11 @@ public class GroundDrop : MonoBehaviour
     static GroundDrop hoverPick;
 
     // The drop whose NAME the pointer is on, told by the name itself. Over a name the interface answers "the
-    // pointer is over a window", which hides the ground — so without this a name shown by hovering the sparkle
+    // pointer is over a window", which hides the ground — so without this a name shown by hovering the icon
     // would vanish the moment the cursor moved up onto it.
     internal static GroundDrop nameUnderPointer;
 
-    /// <summary>The drop the cursor is pointing at — its sparkle, or its name — or null. Frame-memoized, because the
+    /// <summary>The drop the cursor is pointing at — its icon, or its name — or null. Frame-memoized, because the
     /// cursor picture, the name on the floor and the click all ask in the same frame and must get one answer.
     ///
     /// <para>A creature whose BODY the cursor is directly on wins over a drop: a fight going on over a pile must
@@ -354,7 +371,8 @@ public class GroundDrop : MonoBehaviour
             var d = all[i];
             if (d == null) { all.RemoveAt(i); continue; }
             if (!d.readable) continue;
-            Vector3 sp = cam.WorldToScreenPoint(d.transform.position);
+            // The middle of the icon standing there, which is what the eye aims at.
+            Vector3 sp = cam.WorldToScreenPoint(d.transform.position + Vector3.up * (iconSize * 0.5f));
             // behind the camera
             if (sp.z <= 0f) continue;
             float sqr = ((Vector2)sp - mp).sqrMagnitude;
@@ -375,7 +393,6 @@ public class GroundDrop : MonoBehaviour
     void OnDestroy()
     {
         all.Remove(this);
-        StopSparkle();
         if (plate != null) Destroy(plate.gameObject);
     }
 
@@ -393,10 +410,6 @@ public class GroundDrop : MonoBehaviour
 
     // ---- the words on the floor --------------------------------------------------------------------------
 
-    /// <summary>The sparkle that marks the spot. ONE registered effect, played through the
-    /// game's own effect system — so it is pooled, it is stopped the same way every other attached effect is, and
-    /// a server (which draws nothing) skips it without this having to ask.</summary>
-    const string SparkleEffect = "loot.drop";
 
     static Transform host;
     RectTransform plate;       // the plate + rounded edge the name sits on
@@ -410,15 +423,14 @@ public class GroundDrop : MonoBehaviour
         if (plateFill != null) plateFill.color = fill;
         if (label != null) label.color = UiKit.Readable(Rarities.Color(rarity), fill);
     }
-    Vfx.EffectHandle sparkle;
 
-    // Can this machine reach for it: false while its map is not the one this player is standing in. The sparkle
+    // Can this machine reach for it: false while its map is not the one this player is standing in. The icon
     // goes out and the name cannot be shown at the same moment, so a drop in another map is neither seen, read
     // nor picked up.
     bool readable = true;
 
     // How far above the drop's own position the plate sits, in world units. Head height for a thing on the floor:
-    // clear of the sparkle underneath it, low enough to read as belonging to that spot rather than floating.
+    // clear of the icon underneath it, low enough to read as belonging to that spot rather than floating.
     const float LabelHeight = 0.45f;
 
     // Glyphs are rendered into a big atlas and scaled down — a large atlas downscaled stays crisp where a small
@@ -435,12 +447,122 @@ public class GroundDrop : MonoBehaviour
 
     static bool NobodyToShowItTo => GameServer.CaughtDrawing("GroundDrop");
 
-    /// <summary>A WATCHING MACHINE: put this drop's plate and sparkle up.</summary>
+    /// <summary>A WATCHING MACHINE: put this drop's plate and icon up.</summary>
     public void ShowOnScreen()
     {
         if (NobodyToShowItTo) return;
         BuildPlate();
-        StartSparkle();
+        BuildIcon();
+    }
+
+    // ---- the picture on the floor ----------------------------------------------------------------------
+
+    // EVERY picture on the floor is one head tall — the head of this machine's own character, measured once from its
+    // body. Zero until that body exists.
+    static float iconSize;
+
+    SpriteRenderer icon;
+    Transform iconTransform;
+    // The scale that makes the icon one head tall.
+    float restScale = 1f;
+    // The throw: where it started (the dropper's waist, or the spot itself), how high above the higher end the arc
+    // rises, and when on this machine's clock it began. Not tossing = lying on the ground.
+    bool tossing;
+    Vector3 tossFrom;
+    float tossRise, tossStart;
+
+    // THE THROW'S SHAPE, in parts of TossSeconds and of one icon. It flies for FlyShare of the time, spinning
+    // SpinTurns whole turns and growing from PopFrom of its size to all of it, then bounces once BounceIcons high.
+    const float FlyShare = 0.7f, SpinTurns = 1f, PopFrom = 0.4f, BounceIcons = 0.6f;
+    // The least the arc rises above the higher end, in icons — so a throw from a small body still reads.
+    const float LeastRiseIcons = 2.5f;
+
+    static float IconSize()
+    {
+        if (iconSize <= 0f && HeadSocket.OnMyAvatar != null) iconSize = HeadSocket.OnMyAvatar.HeadSize();
+        return iconSize;
+    }
+
+    // The item's own icon, standing upright on its spot and turned to the camera as every billboard is.
+    void BuildIcon()
+    {
+        if (def == null || def.icon == null) return;
+        var go = new GameObject("Icon") { hideFlags = HideFlags.DontSaveInEditor };
+        iconTransform = go.transform;
+        iconTransform.SetParent(transform, false);
+        icon = go.AddComponent<SpriteRenderer>();
+        icon.sprite = def.icon;
+        SizeIcon();
+        RestIcon();
+    }
+
+    // One head tall, whatever the picture's own size. Re-run once the head is first measured.
+    void SizeIcon()
+    {
+        float size = IconSize();
+        float tall = icon.sprite.bounds.size.y;
+        if (size > 0f && tall > 0f) restScale = size / tall;
+        iconTransform.localScale = Vector3.one * restScale;
+        icon.enabled = size > 0f && readable;
+    }
+
+    // Lying on its spot: the bottom of the picture on the ground.
+    void RestIcon() => iconTransform.localPosition = Vector3.up * (IconSize() * 0.5f);
+
+    /// <summary>A WATCHING MACHINE: throw the icon from <paramref name="from"/> onto its spot, the arc rising
+    /// <paramref name="rise"/> above the higher end (never less than <see cref="LeastRiseIcons"/> icons) — started
+    /// <paramref name="elapsed"/> seconds ago, so a drop first seen part-way through its throw picks it up there.
+    /// Every drop is thrown this way, whatever dropped it: a kill's loot, a thing a player put down, anything.</summary>
+    public void Toss(Vector3 from, float rise, float elapsed)
+    {
+        if (icon == null || elapsed >= TossSeconds) return;
+        tossing = true;
+        tossFrom = from;
+        tossRise = rise;
+        tossStart = Time.time - Mathf.Max(0f, elapsed);
+        TickIcon(Quaternion.identity);
+    }
+
+    // Per frame, for every drop with a picture: face the camera, and carry the hop along while there is one.
+    void TickIcon(Quaternion facing)
+    {
+        if (iconSize <= 0f && icon.sprite != null && IconSize() > 0f) { SizeIcon(); if (!tossing) RestIcon(); }
+        if (!tossing) { iconTransform.rotation = facing; return; }
+        float t = (Time.time - tossStart) / TossSeconds;
+        if (t >= 1f) { tossing = false; iconTransform.rotation = facing; iconTransform.localScale = Vector3.one * restScale; RestIcon(); return; }
+        var land = transform.position + Vector3.up * (iconSize * 0.5f);
+        if (t < FlyShare)
+        {
+            // FLYING: a high arc from where it left to where it lands, spinning, growing to its full size.
+            float k = t / FlyShare;
+            var at = Vector3.Lerp(tossFrom, land, k);
+            // Its top is the higher end plus the rise: the bump added to the straight line peaks there at halfway.
+            float top = Mathf.Max(tossRise, LeastRiseIcons * iconSize);
+            float bump = Mathf.Max(tossFrom.y, land.y) - 0.5f * (tossFrom.y + land.y) + top;
+            at.y += 4f * bump * k * (1f - k);
+            iconTransform.position = at;
+            iconTransform.rotation = facing * Quaternion.Euler(0f, 0f, -360f * SpinTurns * k);
+            iconTransform.localScale = Vector3.one * (restScale * Mathf.Lerp(PopFrom, 1f, Mathf.Min(1f, k * 2f)));
+        }
+        else
+        {
+            // ONE BOUNCE where it landed, upright again.
+            float k = (t - FlyShare) / (1f - FlyShare);
+            iconTransform.position = land + Vector3.up * (4f * BounceIcons * iconSize * k * (1f - k));
+            iconTransform.rotation = facing;
+            iconTransform.localScale = Vector3.one * restScale;
+        }
+    }
+
+    static void TickIcons(Camera cam)
+    {
+        var facing = cam.transform.rotation;
+        for (int i = all.Count - 1; i >= 0; i--)
+        {
+            var d = all[i];
+            if (d == null) { all.RemoveAt(i); continue; }
+            if (d.icon != null) d.TickIcon(facing);
+        }
     }
 
     /// <summary>The name on a plate with a thin rounded edge — the same frame the right-click menu and the item
@@ -491,30 +613,12 @@ public class GroundDrop : MonoBehaviour
         pointer.Bind(this, fill);
 
         // NOTHING IS READ UNTIL IT IS ASKED FOR — by pointing at this one, or by holding Alt for all of them. A field
-        // where every drop shouts its name is unreadable; the sparkle says something is there, and pointing says
+        // where every drop shouts its name is unreadable; the icon says what lies there, and pointing names it
         // what. It is also what keeps these out of the cursor's way: a switched-off plate is not something the
         // pointer can find.
         plate.gameObject.SetActive(false);
     }
 
-    // The one colour every drop's sparkle is drawn in, whatever it is. A drop's rarity colours its name on the plate,
-    // never the sparkle; what a piece is worth is its grade and its folds, which are words on the label.
-    static readonly Color SparkleColor = new Color(0.85f, 0.82f, 0.62f);
-
-    /// <summary>Light the spot up. Through the game's own effect system, so it is pooled like every other effect
-    /// and a headless server plays nothing.</summary>
-    void StartSparkle()
-    {
-        if (sparkle != null) return;
-        sparkle = Vfx.Attach(SparkleEffect, transform, tint: SparkleColor);
-    }
-
-    void StopSparkle()
-    {
-        if (sparkle == null) return;
-        sparkle.Stop();
-        sparkle = null;
-    }
 
     static void EnsureHost()
     {
@@ -538,7 +642,7 @@ public class GroundDrop : MonoBehaviour
         readable = on;
         if (NobodyToShowItTo) return;
 
-        if (on) StartSparkle(); else StopSparkle();
+        if (icon != null) icon.enabled = on && iconSize > 0f;
         // The name follows whether Alt is being held as well, so walking back into the map does not put a name up
         // that nobody asked for.
         ShowName(on && (namesWanted || hovered == this));
@@ -583,6 +687,7 @@ public class GroundDrop : MonoBehaviour
 
         var cam = CameraRig.Cam;
         if (cam == null) return;
+        TickIcons(cam);
 
         // THE ONE BEING POINTED AT shows its name without Alt, lit as pointed-at — changed only on the frame the
         // pointed-at drop changes, so a still cursor costs one pick and nothing else.

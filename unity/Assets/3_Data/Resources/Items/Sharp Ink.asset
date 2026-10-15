@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.sharp-ink
   displayName: Sharp Ink
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8d74426ebf348584c91a116ea1f980cf, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 1
   value: 138000
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 4
   materialStep: 5
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: Every line exact. Nothing written with it is ever in doubt.

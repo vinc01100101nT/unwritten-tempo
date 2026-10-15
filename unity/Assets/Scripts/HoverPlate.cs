@@ -8,8 +8,7 @@ using UnityEngine;
 /// <para><b>Not over people.</b> Every person already wears a plate of their own all the time
 /// (<see cref="CharacterPlates"/>), so pointing at one adds nothing.</para>
 ///
-/// <para><b>No buff icons.</b> A unit's buffs and debuffs show only on the target panel at the top of the screen
-/// (<see cref="UnitStatusPanel"/>), for the unit you clicked.</para>
+/// <para><b>No buff icons.</b> Another unit's buffs and debuffs are not drawn anywhere.</para>
 ///
 /// <para><b>ONE widget, not one per unit.</b> Only one thing can be under the cursor, so this keeps a single plate and
 /// re-points it.</para>

@@ -2040,12 +2040,14 @@ public class Character : MonoBehaviour, ICombatUnit
         if (def == null || count <= 0) return;
 
         int folds = inst != null ? inst.upgrade : 0;
-        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds)) return;
+        var rarity = Rarities.Of(def, inst);
+        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, folds, rarity)) return;
 
         // A server holds several people and has no chat of its own; one that could not reach the owner above has
         // nobody to tell.
         if (GameServer.IsServer || this != Instance) return;
         ChatController.ItemArrived(def, count, folds);
+        LootCards.Show(def, count, folds, rarity);
     }
 
     // ---- HOW MUCH THE BAG HOLDS (BagRoom) -------------------------------------------------------------------

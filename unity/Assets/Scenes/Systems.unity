@@ -1154,7 +1154,6 @@ GameObject:
   - component: {fileID: 1559929210}
   - component: {fileID: 1559929209}
   - component: {fileID: 1559929208}
-  - component: {fileID: 1559929207}
   - component: {fileID: 1559929219}
   m_Layer: 0
   m_Name: GameSystems
@@ -1163,18 +1162,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1559929207
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1559929206}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 514da80b5068e404f81c9b20617b0f01, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MobHoverPanel
 --- !u!114 &1559929208
 MonoBehaviour:
   m_ObjectHideFlags: 0

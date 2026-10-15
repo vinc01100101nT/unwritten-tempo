@@ -30,6 +30,8 @@ public class SystemWindow : MonoBehaviour
     bool wasDead;
     bool deathWindowPending;
     float deathWindowAt;
+    // When the person at this keyboard died, for the fade to grey; below zero while they are alive.
+    float diedAt = -1f;
 
     static SystemWindow instance;
 
@@ -55,7 +57,11 @@ public class SystemWindow : MonoBehaviour
         Entry(deathList, "Quit game", () => GameExit.Quit());
     }
 
-    void OnDestroy() { if (instance == this) instance = null; }
+    void OnDestroy()
+    {
+        if (instance == this) instance = null;
+        HandDrawnFX.DeathGrey = 0f;
+    }
 
     // A window's column of menu lines, filling its body.
     static Transform EntryList(RectTransform content)
@@ -121,13 +127,18 @@ public class SystemWindow : MonoBehaviour
                 var body = StanceController.Player;
                 deathWindowAt = Time.time + (body != null ? body.NaturalDurationOf(StanceId.Die) : 0f);
                 deathWindowPending = true;
+                diedAt = Time.time;
             }
             else
             {
                 deathWindowPending = false;
                 if (UiAnim.IsOpen(deathRoot)) UiAnim.Close(deathRoot);
+                diedAt = -1f;
+                HandDrawnFX.DeathGrey = 0f;
             }
         }
+        // THE SCREEN FADES TO GREY from the moment of death, and comes back at once when they stand up.
+        if (diedAt >= 0f) HandDrawnFX.DeathGrey = DeathScreenMath.GreyAt(Time.time - diedAt);
         if (deathWindowPending && Time.time >= deathWindowAt)
         {
             deathWindowPending = false;

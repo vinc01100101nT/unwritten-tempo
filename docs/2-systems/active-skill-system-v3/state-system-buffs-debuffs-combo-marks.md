@@ -28,7 +28,7 @@ and stacking require. Companion to **Active Skill System — V3**; combos are co
 ## One store, one pile per thing
 
 Every unit — player or mob, no distinction — carries **one state store**. It is the single source for both gameplay and the
-on-screen icons (player buff tray, the target panel), and it replaced the old scattered ailment arrays, the hand-written buff
+on-screen icons (the player's buff tray), and it replaced the old scattered ailment arrays, the hand-written buff
 windows and the separate vulnerability field.
 
 Inside it, each tracked thing is its own **pile**:
@@ -187,7 +187,7 @@ longest-wins before the store landed).
 
 ## What the on-screen icons show
 
-The buff tray and the target panel populate from **one rule**: any effect with a duration tags the state it applied with
+The buff tray populates from **one rule**: any effect with a duration tags the state it applied with
 the source skill's icon; instant effects tag nothing. It falls straight out of the classification — *has a duration ⇒ it's a
 state ⇒ it's on the tray* — so no hand-maintained list can drift, and a new durational effect appears for free. Stacked piles
 show their count.

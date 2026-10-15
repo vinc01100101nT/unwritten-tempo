@@ -766,7 +766,7 @@ public static class UiKit
     }
 
     // One title-bar button slot, `fromRight` units in from the bar's right edge.
-    static Image BarButton(Transform bar, string name, string glyph, float fromRight, float slot, float barHeight)
+    internal static Image BarButton(Transform bar, string name, string glyph, float fromRight, float slot, float barHeight)
     {
         var hit = Img(name, bar, new Color(0f, 0f, 0f, 0f));
         hit.rectTransform.anchorMin = hit.rectTransform.anchorMax = new Vector2(1, 0.5f);

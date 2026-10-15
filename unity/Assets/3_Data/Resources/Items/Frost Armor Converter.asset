@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.frost-armor-converter
   displayName: Frost Armor Converter
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4893b20dad7fed04d9b5f029a2baf9ba, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 8
   value: 0
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: A cold salve for cloth and plate. It keeps the chill on your side.

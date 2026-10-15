@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.temper-dust
   displayName: Temper Dust
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: b1090d85b23e8274b875c0d02efac59d, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -37,4 +37,5 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: Ground fine from things that were once sharp. Every fold drinks a little.
+  description: Ground fine from things that were once sharp. Every fold drinks a
+    little.

@@ -149,6 +149,8 @@ public class HotbarPanel : MonoBehaviour
                 // and building in the same frame would hand the new cell the component already on its way out — a
                 // cell that can no longer be clicked until the next rebuild.
                 HoverRelay.Set(cell.gameObject, null, null);
+                var box = cell.GetComponent<ItemSlot>();
+                if (box != null) box.SetItem(null);
             }
         slots.Clear();
         SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating
@@ -346,14 +348,21 @@ public class HotbarPanel : MonoBehaviour
         s.kind = Kind.Item;
         s.itemId = itemId;
         s.itemNoneLeft = stack == null;
-        s.cell.color = s.itemNoneLeft ? UiKit.Bad : UiKit.SlotFill;
-        var name = NameOnTile(s.cell.transform, def.displayName);
-        if (s.itemNoneLeft) name.color = UiKit.TextOnDim;
+        s.cell.color = s.itemNoneLeft ? UiKit.Bad : ItemIcon.Back(def, null);
+        // Its picture, as the bag draws it; only a thing with no picture writes its name.
+        if (!ItemIcon.Show(ItemIcon.Make(s.cell.transform, 3f), def))
+        {
+            var name = NameOnTile(s.cell.transform, def.displayName);
+            if (s.itemNoneLeft) name.color = UiKit.TextOnDim;
+        }
         // How many are carried (bottom-right), exactly as the bag the server sent says.
         var count = NewText("Count", s.cell.transform, s.itemNoneLeft ? "0" : stack.count.ToString(), 11, FontStyle.Bold,
                             TextAnchor.LowerRight, s.itemNoneLeft ? UiKit.TextOnDim : UiKit.TitleText);
         Stretch(count.rectTransform, 3, 2);
-        HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowFor(def), ItemTooltip.HideTip);
+        // Hover: its name. Right-click: its card — the same box behaviour as the bag's.
+        var box = ItemBoxOn(s.cell.gameObject);
+        box.SetItem(def);
+        box.previewOnHover = false;
     }
 
     void BuildGear(Slot s, string copyId)
@@ -368,12 +377,24 @@ public class HotbarPanel : MonoBehaviour
         if (inst == null || inst.def == null) return;
         s.kind = Kind.Gear;
         s.copyId = copyId;
-        s.cell.color = UiKit.SlotFill;
-        // The copy's own name, exactly as its bag row reads ("+15 Petal Storm [C]"), not the bare design's.
-        NameOnTile(s.cell.transform, ItemTooltip.CopyTitle(inst));
+        s.cell.color = ItemIcon.Back(inst.def, inst);
+        // Its picture, as the bag draws it; with none, the copy's own name ("+15 Petal Storm [C]"), not the bare design's.
+        if (!ItemIcon.Show(ItemIcon.Make(s.cell.transform, 3f), inst.def))
+            NameOnTile(s.cell.transform, ItemTooltip.CopyTitle(inst));
         // The same tooltip its row shows: in the bag, the equip preview; worn, the plain card.
-        if (worn) HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowFor(inst), ItemTooltip.HideTip);
-        else HoverRelay.Set(s.cell.gameObject, () => ItemTooltip.ShowForPreview(inst, inst.def.slot), ItemTooltip.HideTip);
+        // Hover: its name. Right-click: its card — in the bag, with the "if equipped" lines; worn, the plain card.
+        var box = ItemBoxOn(s.cell.gameObject);
+        box.SetInstance(inst);
+        box.previewOnHover = !worn;
+        box.previewSlot = inst.def.slot;
+    }
+
+    // The item box behaviour on a tile, kept on the tile across rebuilds as its button is.
+    static ItemSlot ItemBoxOn(GameObject cell)
+    {
+        var box = cell.GetComponent<ItemSlot>();
+        if (box == null) box = cell.AddComponent<ItemSlot>();
+        return box;
     }
 
     // A name on a light tile: largest size that fits between NameMinSize and NameMaxSize, then cut with "…".

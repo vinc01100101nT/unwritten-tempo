@@ -124,7 +124,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Anything lasting that sits on you or an enemy is a **state** — buffs and debuffs work the same way underneath. Your own states show as icons on the right edge of the screen, counting down; a monster's or another player's show on the panel at the top of the screen when you click them."
+      "text": "Anything lasting that sits on you or an enemy is a **state** — buffs and debuffs work the same way underneath. Your own states show as icons on the right edge of the screen, counting down; a monster's or another player's are not shown."
     },
     {
       "type": "paragraph",

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.grand-mana-draught
   displayName: Grand Mana Draught
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 3155712c87494ff45a36af98db5e3eff, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -24,20 +24,10 @@ MonoBehaviour:
   cardSlots: 0
   weight: 15
   value: 5625
-  bonusHP: 0
-  bonusAttack: 0
-  bonusDefense: 0
-  bonusMP: 0
-  bonusMAtk: 0
-  bonusMDef: 0
-  bonusStr: 0
-  bonusAgi: 0
-  bonusVit: 0
-  bonusInt: 0
-  bonusDex: 0
-  bonusLuk: 0
-  bonusCritPercent: 0
-  bonusAspdPercent: 0
+  madeOf: 0
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
   useSkillId: skill.item.grand-mana-draught
   attackSfx:
     clips: []
@@ -47,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: Poured once a season, and never for the careless.

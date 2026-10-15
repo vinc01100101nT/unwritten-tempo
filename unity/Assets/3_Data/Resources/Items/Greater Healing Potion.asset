@@ -14,31 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.greater-healing-potion
   displayName: Greater Healing Potion
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 25e0eadbc1de73b409fe13b158c65543, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
   equipModel: {fileID: 0}
   element: 0
-  rarity: 2
   category: 1
   cardSlots: 0
   weight: 10
   value: 600
-  bonusHP: 0
-  bonusAttack: 0
-  bonusDefense: 0
-  bonusMP: 0
-  bonusMAtk: 0
-  bonusMDef: 0
-  bonusStr: 0
-  bonusAgi: 0
-  bonusVit: 0
-  bonusInt: 0
-  bonusDex: 0
-  bonusLuk: 0
-  bonusCritPercent: 0
-  bonusAspdPercent: 0
+  madeOf: 0
+  materialKind: 0
+  materialStep: 0
+  mergesInto: {fileID: 0}
   useSkillId: skill.item.greater-healing-potion
   attackSfx:
     clips: []
@@ -48,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: Thick as syrup and twice as unpleasant. Brings you back from the edge.

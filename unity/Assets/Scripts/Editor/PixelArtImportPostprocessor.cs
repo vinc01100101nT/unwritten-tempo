@@ -89,6 +89,23 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
             return;
         }
 
+        // Item icons: drawn SMALLER than they are stored (a 64 icon in a ~44 bag box, and at head size on the ground
+        // at every zoom), so Point would drop whole rows of pixels. Bilinear + mipmaps shrink them cleanly; still
+        // uncompressed, because compression bleeds across their hard outlines.
+        if (path.Contains("/Icons/"))
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = PixelsPerUnit;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.mipmapEnabled = true;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.alphaIsTransparency = true;
+            return;
+        }
+
         importer.textureType = TextureImporterType.Sprite;
         importer.spritePixelsPerUnit = PixelsPerUnit;
         importer.filterMode = FilterMode.Point;                       // crisp, no blur

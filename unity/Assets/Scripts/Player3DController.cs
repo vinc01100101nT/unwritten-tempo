@@ -111,7 +111,7 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Another person this player clicked to see their details — the one wearing the target arrow when
     /// nobody is being fought — or null. Selecting somebody is not fighting them: nothing acts on this but the target
-    /// panel (<see cref="UnitStatusPanel"/>). Let go the same way a fight is: a ground click, an attack, a stop, or
+    /// arrow. Let go the same way a fight is: a ground click, an attack, a stop, or
     /// the person leaving.</summary>
     public Health SelectedPerson => selectedPerson != null && !selectedPerson.IsDead ? selectedPerson : null;
     Health selectedPerson;
@@ -1061,7 +1061,7 @@ public partial class Player3DController : MonoBehaviour
     static Health cursorPick;
 
     /// <summary>The living mob under the cursor (camera raycast), or null. Static so GameCursor3D shares it.
-    /// Frame-memoized: it's read up to 3× per frame (GameCursor3D, UnitStatusPanel, click/target handlers), so the
+    /// Frame-memoized: it's read several times per frame (GameCursor3D, click/target handlers), so the
     /// raycast + snap scan runs ONCE and the rest of the frame reads the cached pick. All callers pass the one
     /// gameplay camera, so the memo doesn't key on <paramref name="cam"/>.</summary>
     public static Health MonsterUnderCursor(Camera cam)
@@ -1084,8 +1084,8 @@ public partial class Player3DController : MonoBehaviour
     {
         if (cam == null) return null;
         // The cursor is over a HUD element (e.g. an open Inventory or Character window): don't
-        // pick the mob "behind" it. This single guard makes the sword cursor (GameCursor3D), the hover
-        // panel (UnitStatusPanel), and click-to-attack all ignore mobs occluded by the UI.
+        // pick the mob "behind" it. This single guard makes the sword cursor (GameCursor3D) and click-to-attack
+        // ignore mobs occluded by the UI.
         if (PointerOverUI()) return null;
         Vector2 mp = MousePos();
 

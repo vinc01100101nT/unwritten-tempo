@@ -166,7 +166,7 @@ background and veil), not to any window.
 | TextDim | `#6C7380` | labels, units, secondary copy |
 | TitleText | `#22324D` | a window's title and headings |
 | ButtonText | `#222222` | a button's label |
-| TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice |
+| TextOnDim | `#FFFFFF` | text laid straight over a darkened screen — the world map, the reconnect notice, the loading screen's percentage |
 | Accent | `#5B86C9` | hover edge, text caret, checkbox tick, slider fill, a selected border, highlighted numbers, the fill of a chosen tab (its word bold and white) and of the equipment slot a dragged piece belongs in |
 | Good | `#2E7D41` | a stat that went up |
 | Bad | `#B83A3A` | a stat that went down; a refusal |
@@ -189,8 +189,10 @@ them; a corner-radius change means re-running that script.
 rare as its own copy says — rolled when a creature dropped it, Common otherwise — a material goes by its kind and
 tier, and everything else is Common (see
 [V4 §4](gameplay-system-v4/README.md)) — and one function answers both the rarity and its colour (`Rarities`), so
-every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), the bag's boxes, an item
-linked in chat, the worn list of a unit you select, and the names on the floor. A drop's sparkle is one colour for everything. What a
+every screen agrees. It colours the name in the item tooltip (whose next line names the rarity), an item linked in chat,
+the worn list of a unit you select, the shop's rows and the names on the floor, and it fills the square behind an item's
+picture in the bag, worn, storage and shop boxes (Common keeps the plain slot white). The card that pops up as a thing
+arrives in the bag shows its picture on nothing and colours only its name. What a
 piece is worth is still written in words — its **grade and its folds**, "B +6" — and a grade is never coloured.
 
 ### Fonts
@@ -220,7 +222,7 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 ## Asset sourcing (settled with GPT)
 
-- **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for boss drops, quest artifacts and named relics.
+- **Item icons** — one 64×64 picture per item in `1_Authored/Art/Icons/Items/`, cut from two generated sheets (the gear redrawn from the real 3D models) and set on each item's `icon`. Every creature drop shows one of five boxes, coloured by its rarity. A bag, worn, storage or crafting box shows only the picture (hovering shows the name; right-clicking opens the item card); a shop row shows the picture at its left and the name beside it; a thing on the ground stands as its picture, one head tall, with no sparkle — every drop is thrown there in 0.85 seconds, spinning through a high arc out of the waist of whatever dropped it (or up off its own spot when nothing did), and bouncing once where it lands.
 - **Stat icons** — reuse the approved brand-sheet family (Might/Magic/Finesse) for BOTH base (STR/AGI/VIT/INT/DEX/LUK) and derived (ATK/MATK/DEF/MDEF/CRIT/ASPD/HIT/FLEE). One icon language, no second set.
 - **Built in uGUI** — the palette, two corner radii and the title bar fade above; no painted frame art.
 

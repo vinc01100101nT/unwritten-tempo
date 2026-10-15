@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.spear
   displayName: Spear
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 2df80c4663f320549830f764fb126d49, type: 3}
   slot: 3
   weaponType: 7
   attackRange: 1
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 90
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

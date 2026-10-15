@@ -57,8 +57,7 @@ A few cells, to read the shape:
   converter says otherwise.
 - **A skill keeps its own authored element** — a fire bolt is Fire whoever casts it. Only ordinary attacks, and
   skill strikes that resolve as one, take the attacker's element.
-- **The target panel** shows what the target is hit as right now and its level, e.g. `FIRE Lv 3` — a converter's
-  element while one runs on it.
+- **Nothing on screen shows a target's element.**
 
 ## 3. Converters
 

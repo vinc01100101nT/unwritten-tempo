@@ -1684,13 +1684,13 @@ public class GameNetwork : NetworkManager
     /// <summary>Server-only: tell whoever is playing <paramref name="who"/> that something just arrived in their
     /// bag. True when it was sent — false when there is no world, or nobody is playing that character here, which
     /// is the caller's signal to say it on this machine instead.</summary>
-    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int folds)
+    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int folds, Rarity rarity)
     {
         if (!NetworkServer.active || who == null || string.IsNullOrEmpty(itemId)) return false;
         var identity = IdentityOfFighter(who);
         var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
         if (shell == null || identity.connectionToClient == null) return false;
-        shell.TellOwnerTheyGot(itemId, count, folds);
+        shell.TellOwnerTheyGot(itemId, count, folds, rarity);
         return true;
     }
 

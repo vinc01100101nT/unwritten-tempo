@@ -93,7 +93,6 @@ public static class SystemsSceneBuilder
         gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
         gameSystems.AddComponent<WeatherChannels>();    // the 4 independent weather channels (rain/cloud/snow/puddle) every renderer follows
         gameSystems.AddComponent<WeatherDirector>();    // deterministic per-day weather: season-gated weighted pick → plays a composed WeatherSequence on the channels
-        gameSystems.AddComponent<UnitStatusPanel>();    // engaged target (top-center): name, element, HP, MP, states, its gear
         gameSystems.AddComponent<HoverPlate>();        // whoever is under the cursor: name, HP, MP and buff icons, floating over them
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems

@@ -25,15 +25,15 @@ Shader "Unwritten/HandDrawnGrade"
             // (Core 17.x moved Blit.hlsl from ShaderLibrary/ to Runtime/Utilities/.)
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float _Saturation;   // 1 = unchanged, <1 = muted (clamped >0 on the C# side so it never reaches grey)
+            float _Saturation;   // 1 = unchanged, <1 = muted, 0 = grey (only while the player is dead; see HandDrawnFX.DeathGrey)
             float _Contrast;     // 0 = unchanged; small +/- shifts around mid-grey
 
             half4 frag (Varyings IN) : SV_Target
             {
                 half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, IN.texcoord);
 
-                // Saturation: lerp each pixel toward its OWN luminance (Rec.709). _Saturation never hits 0, so a tint
-                // always remains — the image mutes but never goes greyscale.
+                // Saturation: lerp each pixel toward its OWN luminance (Rec.709). The art style's mute keeps a tint;
+                // only a death takes it to 0, which is pure greyscale.
                 float luma = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 col.rgb = lerp(luma.xxx, col.rgb, _Saturation);
 

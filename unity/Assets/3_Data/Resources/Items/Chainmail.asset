@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.chainmail
   displayName: Chainmail
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f341a18225579a34dba95935181eed33, type: 3}
   slot: 2
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 100
   value: 8
   madeOf: 1
-  forgeMaterialCost: 5
-  forgeGoldCost: 400
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: 

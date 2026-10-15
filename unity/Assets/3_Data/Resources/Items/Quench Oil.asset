@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.quench-oil
   displayName: Quench Oil
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 74dee004082c04d4587ac75fecba1d83, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -37,4 +37,5 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  description: Dark, heavy, and cold to the touch. A blade goes into it to find out what it is.
+  description: Dark, heavy, and cold to the touch. A blade goes into it to find out
+    what it is.

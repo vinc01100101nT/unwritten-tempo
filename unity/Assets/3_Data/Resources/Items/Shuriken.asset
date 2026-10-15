@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.shuriken
   displayName: Shuriken
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 13bae26ba0100f84db221456f5cd3ba0, type: 3}
   slot: 3
   weaponType: 15
   attackRange: 3
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 90
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

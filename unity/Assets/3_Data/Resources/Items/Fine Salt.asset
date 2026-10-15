@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.fine-salt
   displayName: Fine Salt
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 5d4e264913e4cd84a9bb576e7cc1fdd5, type: 3}
   slot: 0
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 1
   value: 96000
   madeOf: 0
-  forgeMaterialCost: 0
-  forgeGoldCost: 0
   materialKind: 5
   materialStep: 2
   mergesInto: {fileID: 11400000, guid: de658c967f73ee6ab477f4e4f6b65c1d, type: 2}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 0.9
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: Milled small and even, and it works into everything.

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.bow
   displayName: Bow
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: b22f5495220c7784296bbafb8b28059b, type: 3}
   slot: 3
   weaponType: 9
   attackRange: 5
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 60
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

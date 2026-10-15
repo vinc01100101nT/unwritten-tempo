@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.greatsword
   displayName: Greatsword
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 59aebdce760fb9c4fad23bcb4ffb7a33, type: 3}
   slot: 3
   weaponType: 2
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 133
   value: 8
   madeOf: 1
-  forgeMaterialCost: 8
-  forgeGoldCost: 800
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}

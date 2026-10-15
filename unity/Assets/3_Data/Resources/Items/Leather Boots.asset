@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.leather-boots
   displayName: Leather Boots
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4d99f144e067f58419a5d0b7c291ff1f, type: 3}
   slot: 5
   weaponType: 0
   attackRange: 0
@@ -25,8 +25,6 @@ MonoBehaviour:
   weight: 30
   value: 8
   madeOf: 3
-  forgeMaterialCost: 5
-  forgeGoldCost: 400
   materialKind: 0
   materialStep: 0
   mergesInto: {fileID: 0}
@@ -39,9 +37,4 @@ MonoBehaviour:
     clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
-  guardSfx:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  blockChance: 0
   description: 

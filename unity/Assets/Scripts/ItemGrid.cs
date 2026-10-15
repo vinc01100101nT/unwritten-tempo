@@ -57,14 +57,49 @@ public static class ItemDrag
 /// hotbar's empty grey. It carries an <see cref="ItemSlot"/> and a <see cref="SlotDragHandler"/>, so hovering shows the
 /// item's tooltip and the box can be dragged — the same two components every bag row carried.
 /// </summary>
+/// <summary>THE ONE WAY a thing's picture is put on screen in a window — a bag box and a shop row alike: its icon on a
+/// square filled in its rarity's colour (the window's plain slot white for Common).</summary>
+public static class ItemIcon
+{
+    /// <summary>The square behind <paramref name="def"/>'s icon.</summary>
+    public static Color Back(Item def, EquipmentInstance copy)
+    {
+        var r = Rarities.Of(def, copy);
+        return r == Rarity.Common ? UiKit.SlotFill : Rarities.Color(r);
+    }
+
+    /// <summary>An icon image filling <paramref name="parent"/> less <paramref name="inset"/> on every side.</summary>
+    public static Image Make(Transform parent, float inset)
+    {
+        var img = UiKit.Img("Icon", parent, Color.white);
+        img.raycastTarget = false;
+        img.preserveAspect = true;
+        UiKit.Fill(img.rectTransform, new Vector2(inset, inset), new Vector2(-inset, -inset));
+        img.enabled = false;
+        return img;
+    }
+
+    /// <summary>Show <paramref name="def"/>'s icon, or nothing. False when it has none, so the caller writes its name.</summary>
+    public static bool Show(Image icon, Item def)
+    {
+        var s = def != null ? def.icon : null;
+        if (icon.sprite != s) icon.sprite = s;
+        bool on = s != null;
+        if (icon.enabled != on) icon.enabled = on;
+        return on;
+    }
+}
+
 public class ItemBox : MonoBehaviour, IItemDropTarget
 {
     public const float Size = 48f;
     // The hotbar's own tile text: as large as fits between these, then cut (HotbarPanel.NameOnTile).
     const float NameMinSize = 9f, NameMaxSize = 12f;
 
-    public Image edge, fill;
+    public Image edge, fill, icon;
     public TMP_Text title, count, corner;
+    // The fill a shown thing's rarity gave the box, put back when a drag stops lighting it.
+    Color shownFill = UiKit.SlotFill;
     public ItemSlot slot;
     public GuideMarker guide;
     public IItemBoxOwner owner;
@@ -90,6 +125,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         box.owner = owner;
         box.edge = edgeImg;
         box.fill = fillImg;
+        box.icon = ItemIcon.Make(fillImg.transform, 3f);
 
         var t = UiKit.MakeText("Name", fillImg.transform, "", NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, null, true);
         t.raycastTarget = false;
@@ -134,8 +170,11 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         slot.previewOnHover = from == ItemBoxSource.Bag;
         slot.previewSlot = e.def.slot;
         edge.color = UiKit.ButtonEdge;
-        fill.color = UiKit.SlotFill;
-        Write(title, e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName);
+        shownFill = ItemIcon.Back(e.def, e.instance);
+        fill.color = shownFill;
+        // The picture is the box; the name is in the card on hover. A thing with no picture still writes its name.
+        bool pictured = ItemIcon.Show(icon, e.def);
+        Write(title, pictured ? "" : e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName);
         title.color = Rarities.Color(Rarities.Of(e.def, e.instance));
         // A stack shows how many, always — as the hotbar does; a piece of gear is one of itself.
         Write(count, e.IsEquip ? "" : e.count.ToString());
@@ -150,6 +189,8 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         slot.SetItem(null);
         edge.color = new Color(0, 0, 0, 0);   // still caught by the pointer, so a drop on an empty box lands
         fill.color = UiKit.SlotEmpty;
+        shownFill = UiKit.SlotFill;
+        ItemIcon.Show(icon, null);
         Write(title, "");
         Write(count, "");
         guide.spot = GuideSpot.None;
@@ -167,7 +208,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
     public void Light(bool on)
     {
         if (on) { edge.color = UiKit.Accent; fill.color = UiKit.Hover; }
-        else if (Entry != null) { edge.color = UiKit.ButtonEdge; fill.color = UiKit.SlotFill; }
+        else if (Entry != null) { edge.color = UiKit.ButtonEdge; fill.color = shownFill; }
         else { edge.color = new Color(0, 0, 0, 0); fill.color = UiKit.SlotEmpty; }
     }
 
