@@ -46,6 +46,7 @@ public class SystemWindow : MonoBehaviour
         var list = EntryList(UiKit.Window(canvas.transform, "System", new Vector2(240, 262), Vector2.zero, out root));
         Entry(list, "Settings", OpenSettings);
         Entry(list, "Auto-Combat", AutoCombatWindow.Open);
+        Entry(list, "Emblem", EmblemWindow.Open);
         Entry(list, "Select character", GameRoot.BackToCharacterSelect);
         Entry(list, "Log out", () => GameRoot.LogOut());
         Entry(list, "Quit game", () => GameExit.Quit());

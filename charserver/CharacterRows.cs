@@ -4,8 +4,8 @@ using Npgsql;
 namespace CharServer;
 
 /// <summary>
-/// THE ROWS A CHARACTER KEEPS BESIDE ITS PROGRESS — the hotbar (008_character_hotbar.sql) and the auto-combat settings
-/// (013_character_auto_combat.sql). Each is written only when it changes, through a server-to-server door of its own, so
+/// THE ROWS A CHARACTER KEEPS BESIDE ITS PROGRESS — the hotbar (008_character_hotbar.sql), the auto-combat settings
+/// (013_character_auto_combat.sql) and the cape emblem (014_character_emblem.sql). Each is written only when it changes, through a server-to-server door of its own, so
 /// the fifteen-second progress save never rewrites it; each is read in the same query that reads the character when it
 /// is handed to a map server, and travels beside the progress in the announcement.
 ///
@@ -28,11 +28,16 @@ public static class CharacterRows
     const int MaxSlotLength = 160;
     const int AutoSkillSlots = 4;
     const int MaxHuntMode = 2;
+    // An emblem is a 24 x 24 PNG the map server re-encoded itself: 127 bytes for a simple picture, 2,396 for random
+    // noise (measured 2026-10-16). The bound stops a malformed or hostile body.
+    const int MaxEmblemPngBytes = 4096;
+    const int EmblemSide = 24;
 
     public static readonly Row[] All =
     {
         new("hotbar", "character_hotbar", "slots", "slots", "hotbar", CheckHotbar),
         new("auto-combat", "character_auto_combat", "settings", "settings", "autoCombat", CheckAutoCombat),
+        new("emblem", "character_emblem", "emblem", "emblem", "emblem", CheckEmblem),
     };
 
     /// <summary>Every row as one more column of a select over <c>character c</c>, in <see cref="All"/>'s order — a
@@ -153,6 +158,30 @@ public static class CharacterRows
                 return $"{name} is true or false";
         if (!s.TryGetProperty("huntMode", out var m) || m.ValueKind != JsonValueKind.Number || !m.TryGetInt32(out int mode) || mode < 0 || mode > MaxHuntMode)
             return $"huntMode is a whole number from 0 to {MaxHuntMode}";
+        return null;
+    }
+
+    // The map server checked and re-encoded the picture; this only makes sure what is stored is a 24 x 24 PNG of a sane
+    // size (or "" for removed), whoever sent it. A check of shape, not a second decoder.
+    static string? CheckEmblem(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Object) return "send { emblem: { … } }";
+        if (!e.TryGetProperty("v", out var v) || v.ValueKind != JsonValueKind.Number || !v.TryGetInt32(out int version) || version != 1)
+            return "emblem must say v: 1";
+        if (!e.TryGetProperty("png", out var p) || p.ValueKind != JsonValueKind.String) return "emblem.png is a string";
+        string text = p.GetString() ?? "";
+        if (text.Length == 0) return null;
+        byte[] png;
+        try { png = Convert.FromBase64String(text); }
+        catch (FormatException) { return "emblem.png is base64"; }
+        if (png.Length > MaxEmblemPngBytes) return $"an emblem is at most {MaxEmblemPngBytes} bytes";
+        // The PNG signature, then the IHDR chunk: width and height are the big-endian words at bytes 16 and 20.
+        byte[] signature = { 137, 80, 78, 71, 13, 10, 26, 10 };
+        if (png.Length < 24) return "emblem.png is not a PNG";
+        for (int i = 0; i < 8; i++) if (png[i] != signature[i]) return "emblem.png is not a PNG";
+        int width = (png[16] << 24) | (png[17] << 16) | (png[18] << 8) | png[19];
+        int height = (png[20] << 24) | (png[21] << 16) | (png[22] << 8) | png[23];
+        if (width != EmblemSide || height != EmblemSide) return $"an emblem is {EmblemSide} x {EmblemSide} pixels";
         return null;
     }
 }

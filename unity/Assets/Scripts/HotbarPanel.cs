@@ -87,6 +87,8 @@ public class HotbarPanel : MonoBehaviour
         if (GetComponent<KillComboHud>() == null) gameObject.AddComponent<KillComboHud>();
         // The Auto-Combat window (opened from the System window) — added the same way. Idempotent.
         if (GetComponent<AutoCombatWindow>() == null) gameObject.AddComponent<AutoCombatWindow>();
+        // The Emblem window (opened from the System window) — added the same way. Idempotent.
+        if (GetComponent<EmblemWindow>() == null) gameObject.AddComponent<EmblemWindow>();
         TryBuild();
     }
 

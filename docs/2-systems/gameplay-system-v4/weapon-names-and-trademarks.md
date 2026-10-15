@@ -233,7 +233,7 @@ A dropped piece nobody wants sells to a shop for 5u; recycling a Raw piece retur
   the grade (`CraftingMath.TrademarkLift`) — a player's machine never works out the percentage, it shows what it was
   sent. Both ride the text the grade and the Ink lines already travel in, so there is no new array in the save or on
   the wire; the copy's rarity rides the same text as its sixth part, and its base roll as its seventh. The save today is **v19**, and both
-  servers' build string is `unwritten-character-v27`.
+  servers' build string is `unwritten-character-v28`.
 - **In a fight** the lift is added to the per-cast skill-level lift (`Character.SkillOutputLift` = skill level + trademark,
   and the same on a creature in `Health`), which every main-number effect of the cast reads. An efficient cast adds
   `SkillEfficiency.OutputBonus` on top (`SkillEfficiency.OutputLift`); the roll — for any skill `Trademarks.Qualifies`

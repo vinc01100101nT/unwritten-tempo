@@ -1836,9 +1836,68 @@ static class Checks
         That(BagRoom.MostThatFits(5, 24, true, 0, 1, 2000) == 5, BagRoomF, "a full tab should take all of a held pile that is light enough");
     }
 
+    // ---- cape emblems: what is read from an upload is exactly what is stored and drawn --------------------
+    // A wrong decode is silent: a picture that comes out shifted, mirrored or with pink left solid still looks like
+    // "an emblem" until someone compares it with what they drew.
+    const string EmblemF = "unity/Assets/Scripts/EmblemImage.cs";
+
+    static byte[] Bmp24(int width, int height, Func<int, int, (byte r, byte g, byte b)> pixel)
+    {
+        int stride = (width * 3 + 3) & ~3;
+        var f = new byte[54 + stride * height];
+        f[0] = (byte)'B'; f[1] = (byte)'M';
+        BitConverter.GetBytes(f.Length).CopyTo(f, 2);
+        BitConverter.GetBytes(54).CopyTo(f, 10);
+        BitConverter.GetBytes(40).CopyTo(f, 14);
+        BitConverter.GetBytes(width).CopyTo(f, 18);
+        BitConverter.GetBytes(height).CopyTo(f, 22);
+        BitConverter.GetBytes((short)1).CopyTo(f, 26);
+        BitConverter.GetBytes((short)24).CopyTo(f, 28);
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+            {
+                var (r, g, b) = pixel(x, y);
+                int at = 54 + (height - 1 - y) * stride + x * 3;
+                f[at] = b; f[at + 1] = g; f[at + 2] = r;
+            }
+        return f;
+    }
+
+    static void EmblemPictures()
+    {
+        int side = EmblemImage.Side;
+        // Pink everywhere except a red pixel in the top-left corner and a blue one in the bottom-right.
+        var bmp = Bmp24(side, side, (x, y) => x == 0 && y == 0 ? ((byte)255, (byte)0, (byte)0)
+                                             : x == side - 1 && y == side - 1 ? ((byte)0, (byte)0, (byte)255)
+                                             : ((byte)255, (byte)0, (byte)255));
+        var rgba = EmblemImage.Decode(bmp, out string why);
+        That(rgba != null, EmblemF, "a 24 x 24, 24-bit BMP is refused: " + why);
+        if (rgba == null) return;
+        That(rgba[0] == 255 && rgba[1] == 0 && rgba[2] == 0 && rgba[3] == 255, EmblemF, "the BMP's top-left pixel is not solid red — rows read upside down?");
+        int last = (side * side - 1) * 4;
+        That(rgba[last + 2] == 255 && rgba[last + 3] == 255, EmblemF, "the BMP's bottom-right pixel is not solid blue");
+        That(rgba[4 + 3] == 0, EmblemF, "pink #FF00FF is not see-through");
+
+        var png = EmblemImage.EncodePng(rgba);
+        var back = EmblemImage.Decode(png, out why);
+        That(back != null, EmblemF, "the PNG it writes is refused by its own reader: " + why);
+        if (back != null)
+        {
+            bool same = back.Length == rgba.Length;
+            for (int i = 0; same && i < back.Length; i++) same = back[i] == rgba[i];
+            That(same, EmblemF, "writing the PNG and reading it back changes a pixel");
+        }
+        That(EmblemImage.Id(png) == EmblemImage.Id(EmblemImage.EncodePng(rgba)), EmblemF, "the same picture gets two different ids");
+
+        That(EmblemImage.Decode(Bmp24(side + 1, side, (x, y) => ((byte)1, (byte)2, (byte)3)), out _) == null, EmblemF, "a 25 x 24 picture is accepted");
+        That(EmblemImage.Decode(new byte[EmblemImage.MaxFileBytes + 1], out _) == null, EmblemF, "a file over the size limit is accepted");
+        That(EmblemImage.Decode(new byte[] { 1, 2, 3, 4 }, out _) == null, EmblemF, "a file that is neither BMP nor PNG is accepted");
+    }
+
     static int Main()
     {
         WeaponDrawRules();
+        EmblemPictures();
         ExperienceCurve();
         CreationSpreads();
         StatPoints();

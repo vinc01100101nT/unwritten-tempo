@@ -57,9 +57,11 @@ public static class SaveOutbox
     // server (charserver/CharacterRows.cs) with a dot in front.
     const string HotbarSuffix = ".hotbar";
     const string AutoCombatSuffix = ".auto-combat";
+    const string EmblemSuffix = ".emblem";
 
     static string RowSuffixOf(string key)
-        => key.EndsWith(HotbarSuffix) ? HotbarSuffix : key.EndsWith(AutoCombatSuffix) ? AutoCombatSuffix : null;
+        => key.EndsWith(HotbarSuffix) ? HotbarSuffix : key.EndsWith(AutoCombatSuffix) ? AutoCombatSuffix
+         : key.EndsWith(EmblemSuffix) ? EmblemSuffix : null;
     // The progress document is the one with no row suffix — the only one that carries a storage move.
     static bool IsProgress(string key) => RowSuffixOf(key) == null;
     static string IdOf(string key)
@@ -114,6 +116,10 @@ public static class SaveOutbox
     public static void SubmitAutoCombat(string characterId, string body, Action<bool> whenDone)
         => SubmitKey(Keyed(characterId, AutoCombatSuffix), body, whenDone, null);
 
+    /// <summary>Send this character's newest cape EMBLEM, the same way — kept, retried and landed on its own.</summary>
+    public static void SubmitEmblem(string characterId, string body, Action<bool> whenDone)
+        => SubmitKey(Keyed(characterId, EmblemSuffix), body, whenDone, null);
+
     static void SubmitKey(string characterId, string body, Action<bool> whenDone, Action whenSettled)
     {
         if (string.IsNullOrEmpty(characterId) || body == null) { whenDone?.Invoke(false); return; }
@@ -140,10 +146,10 @@ public static class SaveOutbox
     /// over reads the newest copy rather than one this server never managed to send.</summary>
     public static void Flush(string characterId, Action<bool> whenDone)
     {
-        // EVERY DOCUMENT, and the answer only once all three have answered: whoever takes over reads the rows and the
+        // EVERY DOCUMENT, and the answer only once all four have answered: whoever takes over reads the rows and the
         // progress together, so none may still be in the air.
         bool allOk = true;
-        int waiting = 3;
+        int waiting = 4;
         void One(bool ok)
         {
             allOk &= ok;
@@ -152,6 +158,7 @@ public static class SaveOutbox
         FlushKey(characterId, One);
         FlushKey(Keyed(characterId, HotbarSuffix), One);
         FlushKey(Keyed(characterId, AutoCombatSuffix), One);
+        FlushKey(Keyed(characterId, EmblemSuffix), One);
     }
 
     /// <summary>Make sure the hotbar waiting for this character, if any, has landed, then say so — yes at once when
@@ -162,6 +169,10 @@ public static class SaveOutbox
     /// <summary>The same for the auto-combat settings.</summary>
     public static void FlushAutoCombat(string characterId, Action<bool> whenDone)
         => FlushKey(Keyed(characterId, AutoCombatSuffix), whenDone);
+
+    /// <summary>The same for the cape emblem.</summary>
+    public static void FlushEmblem(string characterId, Action<bool> whenDone)
+        => FlushKey(Keyed(characterId, EmblemSuffix), whenDone);
 
     static void FlushKey(string characterId, Action<bool> whenDone)
     {

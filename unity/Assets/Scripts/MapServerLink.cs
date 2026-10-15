@@ -60,7 +60,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v27";
+    public const string CharacterBuild = "unwritten-character-v28";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -93,6 +93,8 @@ public class MapServerLink : MonoBehaviour
         public string[] hotbar;
         // The auto-combat settings' own row (v24); the defaults when the character has never changed one.
         public AutoCombatSettings autoCombat;
+        // The cape emblem's own row (v28); png empty when the character has none.
+        public EmblemWire emblem;
         // Every quest record the character has, open and finished (v19); empty for one that has never had any.
         public QuestRowWire[] quests;
         public int handover;
@@ -381,6 +383,7 @@ public class MapServerLink : MonoBehaviour
                 progress = msg.progress,
                 hotbar = msg.hotbar,
                 autoCombat = msg.autoCombat,
+                emblem = msg.emblem,
                 quests = msg.quests,
                 handover = msg.handover,
                 signingIn = msg.signingIn,
@@ -797,6 +800,8 @@ public class MapServerLink : MonoBehaviour
         public string[] hotbar;
         // The auto-combat settings' own row (v24). Null in the message reads as the defaults.
         public AutoCombatSettings autoCombat;
+        // The cape emblem's own row (v28). Null in the message reads as none.
+        public EmblemWire emblem;
         // Every quest record (v19).
         public QuestRowWire[] quests;
         // Which hand-over this is — every save of this character from here carries it back.

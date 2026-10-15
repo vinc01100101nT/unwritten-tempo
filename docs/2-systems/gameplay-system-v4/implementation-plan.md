@@ -17,11 +17,11 @@ smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill le
 - One save version bump covered both slices: **v14** carries a weapon's trademark ([Weapon Names &
   Trademarks](weapon-names-and-trademarks.md)). The save today is **v19** (a copy's rarity rides its roll text since v19; skill levels bought with mastery points ride
   it since v17; since v18 the hotbar lives in a row of its own and every piece of gear carries its own id) and both
-  sides' build string is **unwritten-character-v27** (v19 carried quests; v20 the world events and the
+  sides' build string is **unwritten-character-v28** (v19 carried quests; v20 the world events and the
   sign-in flag on an arrival; v24 the auto-combat settings row; v25 dropped gear and the saved rarity; v26 numbers every sale kept for buy-back;
   v27 a piece's base roll and its finished base numbers, riding the roll text as its seventh part, and the character
   server refusing progress saves, storage reads and the per-character row doors from a map server whose
-  `x-character-build` differs, with a 409).
+  `x-character-build` differs, with a 409); v28 the cape emblem's row.
 - Open question 1 was taken as recommended — the server writes a copy's finished attack, magic attack, defence
   and magic defence onto it, and a player's machine only adds them.
 - Open question 2 was NOT taken as written: instead of the bag wire carrying costs for every copy, a station asks

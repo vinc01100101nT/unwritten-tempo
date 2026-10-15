@@ -111,25 +111,40 @@ public class HandDrawnFX : MonoBehaviour
     /// with the hand-drawn look. Flip to false here to make it opt-in.</summary>
     public const bool BootEnabled = true;
 
-    // Spawn the filter at startup and re-create it after a map swap destroys it, so the look persists everywhere
-    // without DontDestroyOnLoad (matches the on-demand pattern the weather overlays use).
+    // Spawn the filter at startup and re-create it whenever a scene change has taken it, so the look persists
+    // everywhere without DontDestroyOnLoad (matches the on-demand pattern the weather overlays use).
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
         if (BootEnabled)
         {
             Ensure();
-            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => { if (Instance == null) Ensure(); };
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
         }
     }
 
-    /// <summary>Find the live hand-drawn FX, creating one if none exists yet (so it works even on a
-    /// Systems scene baked before this component joined the rig).</summary>
+    // MEASURED 2026-10-16: reloading Systems after sign-in leaves the filter in no scene, and the map manager's sweep
+    // deletes it at the end of that frame — so here it is still alive and was never replaced. A filter in no scene
+    // is therefore treated as already gone.
+    static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (Instance == null || !Instance.gameObject.scene.IsValid()) Create();
+    }
+
+    /// <summary>Find the live hand-drawn FX, creating one if none exists yet.</summary>
     public static HandDrawnFX Ensure()
     {
-        var f = Instance != null ? Instance : FindAnyObjectByType<HandDrawnFX>();
-        if (f == null) f = new GameObject("HandDrawnFX") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<HandDrawnFX>();
-        return f;
+        // No scene search: FindAnyObjectByType cannot see an object carrying a do-not-save flag, which this one does.
+        return Instance != null ? Instance : Create();
+    }
+
+    // Parked in Systems: built in a map, it was deleted with that map at the next door.
+    static HandDrawnFX Create()
+    {
+        var go = new GameObject("HandDrawnFX") { hideFlags = HideFlags.DontSaveInEditor };
+        MapManager.KeepAcrossMaps(go);
+        return go.AddComponent<HandDrawnFX>();
     }
 
     void Awake()
@@ -183,6 +198,8 @@ public class HandDrawnFX : MonoBehaviour
         var go = new GameObject("InkQuad") { hideFlags = HideFlags.DontSave };
         go.layer = LayerMask.NameToLayer("TransparentFX");   // excluded from the planar-reflection camera
         quad = go.transform;
+        // A child, so it lives and goes wherever the filter does.
+        quad.SetParent(transform, false);
 
         mesh = new Mesh { name = "InkFullscreen" };
         mesh.vertices = new[]

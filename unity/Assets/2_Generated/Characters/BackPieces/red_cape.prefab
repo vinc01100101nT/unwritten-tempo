@@ -57,7 +57,7 @@ Transform:
   m_GameObject: {fileID: 419707267805303477}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.00069938763, y: 0, z: -0.00372867}
+  m_LocalPosition: {x: -0.00076303585, y: 0, z: -0.00372867}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -120,7 +120,7 @@ Transform:
   m_GameObject: {fileID: 1144708866692190997}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.00088680675, y: 0, z: -0.0037286691}
+  m_LocalPosition: {x: -0.0009095697, y: 0, z: -0.0037286691}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 1968325318611299313}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00088680675, y: 0, z: -0.0037286691}
+  m_LocalPosition: {x: 0.0009095697, y: 0, z: -0.0037286691}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -214,7 +214,7 @@ Transform:
   m_GameObject: {fileID: 3263725274099688022}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0007479524, y: 0, z: -0.00372867}
+  m_LocalPosition: {x: 0.00094379135, y: 0, z: -0.00372867}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -246,7 +246,7 @@ Transform:
   m_GameObject: {fileID: 3656519017724702600}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.0022373488, y: 0, z: 0.018491264}
+  m_LocalPosition: {x: 0.0019550987, y: 0, z: 0.018491264}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -278,7 +278,7 @@ Transform:
   m_GameObject: {fileID: 4050555491944990990}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0022373488, y: 0, z: 0.018491264}
+  m_LocalPosition: {x: -0.0019550987, y: 0, z: 0.018491264}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -342,7 +342,7 @@ Transform:
   m_GameObject: {fileID: 5185595774965724651}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.0007479524, y: 0, z: -0.00372867}
+  m_LocalPosition: {x: -0.00094379135, y: 0, z: -0.00372867}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -374,7 +374,7 @@ Transform:
   m_GameObject: {fileID: 7566460422179575630}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00069938763, y: 0, z: -0.00372867}
+  m_LocalPosition: {x: 0.00076303585, y: 0, z: -0.00372867}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -443,6 +443,7 @@ SkinnedMeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 1deacbb5c71ac444ba02ea44a441f311, type: 2}
+  - {fileID: 2100000, guid: db31a35e8e8827e4a9f7fce460a5b0fe, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -487,8 +488,8 @@ SkinnedMeshRenderer:
   m_BlendShapeWeights: []
   m_RootBone: {fileID: 2374618837130670025}
   m_AABB:
-    m_Center: {x: -0.000010523014, y: -0.000023799948, z: 0.012038292}
-    m_Extent: {x: 0.015484256, y: 0.012789874, z: 0.016923416}
+    m_Center: {x: -0.000010523014, y: 0.0015689896, z: 0.012038292}
+    m_Extent: {x: 0.015484256, y: 0.011197085, z: 0.016923416}
   m_DirtyAABB: 0
 --- !u!114 &4653779233959794162
 MonoBehaviour:
@@ -516,18 +517,19 @@ MonoBehaviour:
   - {fileID: 3398231431473689038}
   - {fileID: 3670568819081506165}
   tips:
-  - {x: -0.0007479524, y: 0, z: -0.00372867}
-  - {x: -0.00069938763, y: 0, z: -0.00372867}
-  - {x: -0.00088680675, y: 0, z: -0.0037286691}
+  - {x: -0.00094379135, y: 0, z: -0.00372867}
+  - {x: -0.00076303585, y: 0, z: -0.00372867}
+  - {x: -0.0009095697, y: 0, z: -0.0037286691}
   - {x: 0.00055257743, y: 0, z: -0.00372867}
   - {x: 0, y: 0, z: -0.00372867}
   - {x: 0, y: 0, z: -0.00372867}
   - {x: 0, y: 0, z: -0.0037286691}
   - {x: 0, y: 0, z: -0.00372867}
-  - {x: 0.0007479524, y: 0, z: -0.00372867}
-  - {x: 0.00069938763, y: 0, z: -0.00372867}
-  - {x: 0.00088680675, y: 0, z: -0.0037286691}
+  - {x: 0.00094379135, y: 0, z: -0.00372867}
+  - {x: 0.00076303585, y: 0, z: -0.00372867}
+  - {x: 0.0009095697, y: 0, z: -0.0037286691}
   - {x: -0.00055257743, y: 0, z: -0.00372867}
   backClearance: -0.0004
   backward: {x: 0, y: 1, z: 0}
-  armRadius: 0.0013719981
+  armRadius: 0.0022479792
+  rows: 4

@@ -1,12 +1,13 @@
 {
-  "bcd2e086-c48f-4acf-a854-14cc8f9fec27": {
-    "counts": {
-      "unwritten-server.app globalgamemanagers": 1
-    }
-  },
   "bff6691d-46a5-4cd8-9a3c-b326485dbd62": {
     "counts": {
       "build-game.sh server": 1
+    }
+  },
+  "c0a7c5af-02aa-408c-ae5b-9a5bdc4ecd4d": {
+    "counts": {
+      "build-game.sh server": 3,
+      "npm run migrate": 1
     }
   },
   "c660f476-5d5f-4023-aebc-9ab9e054d5f4": {

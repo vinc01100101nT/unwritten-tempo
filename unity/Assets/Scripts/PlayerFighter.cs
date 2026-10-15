@@ -34,11 +34,11 @@ public static class PlayerFighter
     {
         if (announced == null) return false;
         return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.hotbar,
-                     announced.autoCombat, announced.quests, announced.isGm, announced.map);
+                     announced.autoCombat, announced.emblem, announced.quests, announced.isGm, announced.map);
     }
 
     static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, string[] hotbar,
-                      AutoCombatSettings autoCombat, QuestRowWire[] quests, bool isGm, string sentToMap)
+                      AutoCombatSettings autoCombat, EmblemWire emblem, QuestRowWire[] quests, bool isGm, string sentToMap)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -149,6 +149,9 @@ public static class PlayerFighter
         // Stored exactly as it now stands only if nothing had to be emptied; otherwise the trimmed slots are written.
         if (settings.ToJson() == storedAs) shell.AutoCombatAlreadyStored();
         else shell.SaveAutoCombatSoon();
+
+        // THEIR CAPE EMBLEM, from its own row: worn at once, so everyone who can see them is told its id.
+        shell.EmblemArrived(emblem);
 
         // AND THE SHARED COOLDOWN, if one was still running when they left, reaches their screen.
         if (character.Skills.SharedUltimateRemaining > 0f)

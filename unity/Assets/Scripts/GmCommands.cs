@@ -235,6 +235,8 @@ public static class GmCommands
         Register(new GmCommand("save", "save", "Make where you stand your save point.", "save", CmdSave, false, true));
         Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", "invuln", CmdInvuln, false, true, "nodmg"));
         Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", "model Viking_Male", CmdModel, false, true, "body"));
+        Register(new GmCommand("clearemblem", "clearemblem", "Remove your cape emblem (an offensive upload: run it as that player).",
+            "clearemblem", CmdClearEmblem, false, true));
 
         // --- Economy & items ---
         // THE FOUR BELOW CHANGE WHAT SOMEBODY OWNS, and what somebody owns is the server's. Run on a player's own
@@ -376,6 +378,17 @@ public static class GmCommands
         c.Ch.Heal(c.Ch.MaxHP);
         c.Ch.GainMana(c.Ch.MaxMP);
         c.Reply("Full HP/MP.");
+    }
+
+    // The removal for an offensive emblem: run as that player (from a terminal, tools/gm.py --as <name>). The row is
+    // written empty, so it stays gone after they sign in again.
+    static void CmdClearEmblem(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        var shell = GameNetwork.ShellFor(c.Ch);
+        if (shell == null) { c.Reply("No player shell for that character."); return; }
+        shell.RemoveEmblemOnServer();
+        c.Reply("Emblem removed.");
     }
 
     static void CmdRevive(GmContext c)

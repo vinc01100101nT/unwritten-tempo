@@ -19,6 +19,30 @@ public class GarmentSocket : MonoBehaviour
 
     SkinnedMeshRenderer body;
     GameObject shown, prefabShown;
+    Texture2D emblem;
+
+    // THIS MACHINE'S OWN PERSON'S EMBLEM: set by their player shell, read by whichever avatar body is theirs now (a
+    // model swap builds a new one), so a rebuilt avatar puts it straight back on.
+    static Texture2D myEmblem;
+    static event System.Action MyEmblemChanged;
+
+    /// <summary>The emblem this machine's own person wears, or null — from their player shell.</summary>
+    public static void ShowMyEmblem(Texture2D texture)
+    {
+        myEmblem = texture;
+        MyEmblemChanged?.Invoke();
+    }
+
+    /// <summary>Draw <paramref name="texture"/> on the worn cape's back (or nothing when null), now and on every cape
+    /// worn after it.</summary>
+    public void ShowEmblem(Texture2D texture)
+    {
+        emblem = texture;
+        var piece = shown != null ? shown.GetComponent<BackPiece>() : null;
+        if (piece != null) piece.ShowEmblem(emblem);
+    }
+
+    void MineChanged() => ShowEmblem(myEmblem);
 
     bool told;
     UnitEquipment gear;
@@ -42,6 +66,8 @@ public class GarmentSocket : MonoBehaviour
     void Start()
     {
         if (told) return;
+        MyEmblemChanged += MineChanged;
+        emblem = myEmblem;
         subscribed = Character.Instance;
         if (subscribed != null)
         {
@@ -59,6 +85,7 @@ public class GarmentSocket : MonoBehaviour
             subscribed.OnStatsChanged -= Refresh;
         }
         if (gear != null) gear.OnChanged -= Refresh;
+        MyEmblemChanged -= MineChanged;
     }
 
     void Refresh()
@@ -85,6 +112,11 @@ public class GarmentSocket : MonoBehaviour
         if (shown != null) Destroy(shown);
         shown = prefab != null ? Wear(body, prefab) : null;
         prefabShown = prefab;
+        if (shown != null)
+        {
+            var piece = shown.GetComponent<BackPiece>();
+            if (piece != null) piece.ShowEmblem(emblem);
+        }
 
         // The outline that shows a person through a wall takes the new piece into their shape.
         var silhouette = GetComponentInParent<OccludedSilhouetteTarget>();
@@ -116,7 +148,8 @@ public class GarmentSocket : MonoBehaviour
         go.hideFlags = HideFlags.DontSaveInEditor;
         var piece = go.GetComponent<BackPiece>();
         if (piece != null)
-            piece.PushedBy(Bone(all, "LeftArm"), Bone(all, "LeftForeArm"), Bone(all, "RightArm"), Bone(all, "RightForeArm"));
+            piece.PushedBy(Bone(all, "LeftArm"), Bone(all, "LeftForeArm"), Bone(all, "RightArm"), Bone(all, "RightForeArm"),
+                           body.GetComponentInParent<WeaponSocket>());
         return go;
     }
 

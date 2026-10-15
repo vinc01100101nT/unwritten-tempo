@@ -1316,6 +1316,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (pointedAtStates != null) pointedAtStates.OnChanged -= PushPointedAtStates;
         pointedAtStates = null;
         pointedAt = null;
+        ReleaseEmblemOnServer();
         base.OnStopServer();
     }
 
@@ -1680,10 +1681,10 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         // HANDED TO THE SERVER'S ONE OUTBOX, which outlives this shell. One document on the wire per character, the
         // newest waiting behind it, and a save the character server cannot take right now is kept and tried again
         // until it lands — even after this person has logged out, or this server has restarted.
-        // AND THE BAR AND THE AUTO-COMBAT SETTINGS, IF EITHER CHANGED, in the same breath — and the answer waits for all
-        // three, because a hand-over reads the rows together.
+        // AND THE BAR AND THE AUTO-COMBAT SETTINGS, IF EITHER CHANGED, in the same breath, and the emblem's row if it is
+        // still in the air — and the answer waits for all four, because a hand-over reads the rows together.
         bool allOk = true;
-        int waiting = 3;
+        int waiting = 4;
         void One(bool ok)
         {
             allOk &= ok;
@@ -1694,6 +1695,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveOutbox.Submit(ServerCharacterId, body, One, () => questLog.Acknowledge(questsUpTo));
         SaveHotbarNow(One);
         SaveAutoCombatNow(One);
+        SaveOutbox.FlushEmblem(ServerCharacterId, One);
     }
 
 
@@ -4216,6 +4218,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         bodySocket = null;
         bodyDye = null;
         bodyHead = null;
+        ReleaseBodyEmblem();
         bodyVisual = null;
         bodyLoading = false;
     }
@@ -4317,9 +4320,11 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             bodyHead = pose.gameObject.AddComponent<HeadSocket>();
             bodyHead.ShowHair(hair);
             bodyHead.ShowHeadgearOf(bodyGear);
-            // …and the Garment in that same worn set on their back.
+            // …and the Garment in that same worn set on their back, with their emblem on it.
             // perf-ok: once per body built.
-            pose.gameObject.AddComponent<GarmentSocket>().ShowGarmentOf(bodyGear);
+            var garment = pose.gameObject.AddComponent<GarmentSocket>();
+            garment.ShowGarmentOf(bodyGear);
+            GiveBodyItsEmblem(garment);
 
             // AND THE NUMBERS, on the body that shows them. Marked as a watched copy first thing: this body does
             // not get to decide it died or how hard it was hit — both arrive from the server like every other fact
@@ -4447,6 +4452,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         base.OnStartLocalPlayer();
         Mine = this;
         GameNetwork.ConfirmedInTheWorld();
+        ShowMyEmblemOnStart();
         // AND THIS WORLD KNOWS NOTHING ABOUT WHAT THIS BODY IS DOING. Poses are reported only when they CHANGE, and
         // a world we have only just arrived in starts out believing this body is doing nothing — so whatever it is
         // holding right now has to be said again, or it would be held on this screen and on no other until the next

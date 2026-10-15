@@ -29,6 +29,11 @@ public static class BackPieceBaker
     const int Columns = 3;
     // A side column hangs this far out toward the cloth's edge, as a share of the cloth's half-width at that height.
     const float SideColumnShare = 0.65f;
+    // THE EMBLEM PATCH: a square on the upper back, in the shared mesh space, where a wearer's emblem is drawn.
+    const float EmblemSize = 0.0042f;
+    const float EmblemMiddleHeight = 0.0150f;
+    // How far the patch stands off the cloth, so the two never fight over which is in front.
+    const float EmblemLift = 0.00004f;
 
     public static string Bake(string name, float scale, float topHeight, float clothTop, int rows, float frontSlack)
     {
@@ -92,6 +97,40 @@ public static class BackPieceBaker
             tris.AddRange(idx);
         }
 
+        // ONLY WHAT IS SEEN FROM BEHIND. Looking at the plain body from straight behind in its idle pose, every
+        // triangle hidden by the cape's own back panel or by an arm is cut away, with the points nothing uses any more.
+        // What is left is the panel that hangs behind the back and the arms; nothing wraps forward round the sides or
+        // under the arms, so an arm has no cloth to pass through.
+        float arm = ArmRadius();
+        IdleArms(out var leftShoulder, out var leftElbow, out var rightShoulder, out var rightElbow);
+        var visible = SeenFromBehind(verts, tris, new[] { (leftShoulder, leftElbow), (rightShoulder, rightElbow) }, arm);
+        var keptTris = new List<int>();
+        for (int i = 0; i < tris.Count; i += 3)
+            if (visible[i / 3] && !HangsForward(verts[tris[i]], verts[tris[i + 1]], verts[tris[i + 2]], pivotTop))
+                keptTris.AddRange(new[] { tris[i], tris[i + 1], tris[i + 2] });
+        var remap = new Dictionary<int, int>();
+        var keptVerts = new List<Vector3>();
+        var keptUvs = new List<Vector2>();
+        var keptNormals = new List<Vector3>();
+        for (int i = 0; i < keptTris.Count; i++)
+        {
+            int old = keptTris[i];
+            if (!remap.TryGetValue(old, out int now))
+            {
+                now = keptVerts.Count;
+                remap[old] = now;
+                keptVerts.Add(verts[old]);
+                keptUvs.Add(uvs[old]);
+                keptNormals.Add(normals[old]);
+            }
+            keptTris[i] = now;
+        }
+        int cut = tris.Count / 3 - keptTris.Count / 3;
+        verts = keptVerts;
+        uvs = keptUvs;
+        normals = keptNormals;
+        tris = keptTris;
+
         // Where each side column hangs at each row's pivot, and at the hem: a share of the cloth's half-width there.
         var side = new float[rows + 1];
         for (int k = 0; k <= rows; k++)
@@ -100,16 +139,50 @@ public static class BackPieceBaker
             foreach (var v in verts) if (Mathf.Abs(v.z - z) < step * 0.5f) half = Mathf.Max(half, Mathf.Abs(v.x));
             side[k] = Mathf.Max(half * SideColumnShare, 1e-5f);
         }
-        var weights = new BoneWeight[verts.Count];
-        for (int i = 0; i < verts.Count; i++) weights[i] = WeightAt(verts[i], pivotTop, step, rows, side);
+        var weightList = new List<BoneWeight>();
+        for (int i = 0; i < verts.Count; i++) weightList.Add(WeightAt(verts[i], pivotTop, step, rows, side));
+
+        // The emblem's own copy of every cloth triangle that touches the square on the upper back: the same points and
+        // weights, so it bends with the cloth, lifted a hair off it, with a picture laid flat from behind across the
+        // square (left to right is +X, bottom to top is height). It is drawn by the second material; a wearer with no
+        // emblem shows nothing there (BackPiece.ShowEmblem).
+        var emblemTris = new List<int>();
+        var copyOf = new Dictionary<int, int>();
+        float emblemHalf = EmblemSize * 0.5f;
+        bool InSquare(Vector3 v) => Mathf.Abs(v.x) <= emblemHalf && Mathf.Abs(v.z - EmblemMiddleHeight) <= emblemHalf;
+        int clothCount = verts.Count;
+        for (int i = 0; i < tris.Count; i += 3)
+        {
+            if (!InSquare(verts[tris[i]]) && !InSquare(verts[tris[i + 1]]) && !InSquare(verts[tris[i + 2]])) continue;
+            for (int k = 0; k < 3; k++)
+            {
+                int old = tris[i + k];
+                if (!copyOf.TryGetValue(old, out int at))
+                {
+                    at = verts.Count;
+                    copyOf[old] = at;
+                    var v = verts[old];
+                    verts.Add(v + Vector3.up * EmblemLift);
+                    normals.Add(normals[old]);
+                    uvs.Add(new Vector2(v.x / EmblemSize + 0.5f, (v.z - EmblemMiddleHeight) / EmblemSize + 0.5f));
+                    weightList.Add(weightList[old]);
+                }
+                emblemTris.Add(at);
+            }
+        }
+        var weights = weightList.ToArray();
 
         Directory.CreateDirectory(OutDir);
         var mesh = new Mesh { name = name + "_mesh" };
         mesh.indexFormat = verts.Count > 65000 ? UnityEngine.Rendering.IndexFormat.UInt32 : UnityEngine.Rendering.IndexFormat.UInt16;
         mesh.SetVertices(verts);
-        mesh.SetUVs(0, uvs);
+        // The model's own normals, not worked out again: at this size a triangle's sides are about a ten-thousandth of
+        // a unit, and Unity's own normal sum comes out as zero (measured), which draws the cloth black.
         mesh.SetNormals(normals);
+        mesh.SetUVs(0, uvs);
+        mesh.subMeshCount = 2;
         mesh.SetTriangles(tris, 0);
+        mesh.SetTriangles(emblemTris, 1);
         mesh.boneWeights = weights;
 
         // Bone 0 is the piece's root (fixed). Then each column top to bottom: left, middle, right.
@@ -147,6 +220,21 @@ public static class BackPieceBaker
         if (mat.HasProperty("_Cull")) mat.SetFloat("_Cull", 0f);
         EditorUtility.SetDirty(mat);
 
+        // The emblem's material: the same character shader, cut out where the picture is see-through.
+        var emblemPath = OutDir + name + "_emblem.mat";
+        var emblemMat = AssetDatabase.LoadAssetAtPath<Material>(emblemPath);
+        if (emblemMat == null)
+        {
+            emblemMat = new Material(mat) { name = name + "_emblem" };
+            AssetDatabase.CreateAsset(emblemMat, emblemPath);
+        }
+        emblemMat.SetTexture("_BaseMap", Texture2D.whiteTexture);
+        if (emblemMat.HasProperty("_MainTex")) emblemMat.SetTexture("_MainTex", Texture2D.whiteTexture);
+        emblemMat.SetFloat("_AlphaClip", 1f);
+        emblemMat.SetFloat("_Cutoff", 0.5f);
+        emblemMat.EnableKeyword("_ALPHATEST_ON");
+        EditorUtility.SetDirty(emblemMat);
+
         var root = new GameObject(name);
         var chain = new Transform[Columns * rows];
         var tips = new Vector3[Columns * rows];
@@ -173,7 +261,7 @@ public static class BackPieceBaker
         }
         var smr = root.AddComponent<SkinnedMeshRenderer>();
         smr.sharedMesh = mesh;
-        smr.sharedMaterial = mat;
+        smr.sharedMaterials = new[] { mat, emblemMat };
         smr.bones = allBones;
         smr.rootBone = root.transform;
         smr.quality = SkinQuality.Bone4;
@@ -183,16 +271,17 @@ public static class BackPieceBaker
         var piece = root.AddComponent<BackPiece>();
         piece.chain = chain;
         piece.tips = tips;
+        piece.rows = rows;
         piece.backward = Vector3.up;
         piece.backClearance = -frontSlack;
-        piece.armRadius = ArmRadius();
+        piece.armRadius = arm;
 
         var prefabPath = OutDir + name + ".prefab";
         PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
         Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();
-        return prefabPath + ": " + verts.Count + " points, " + tris.Count / 3 + " triangles, " + Columns + "x" + rows +
-               " bones, cloth from " + pivotTop.ToString("F5") + " to hem " + hem.ToString("F5") + ", side columns at " +
+        return prefabPath + ": " + cut + " triangles cut as unseen from behind or hanging forward, " + verts.Count + " points, " + tris.Count / 3 + " triangles, " + Columns + "x" + rows +
+               " bones, " + emblemTris.Count / 3 + " emblem triangles, cloth from " + pivotTop.ToString("F5") + " to hem " + hem.ToString("F5") + ", side columns at " +
                side[0].ToString("F5") + ".." + side[rows].ToString("F5") + ", arm radius " + piece.armRadius.ToString("F5");
     }
 
@@ -224,28 +313,139 @@ public static class BackPieceBaker
         };
     }
 
-    // How thick the upper arm is, in the shared mesh space: the middle distance of the plain body's upper-arm skin from
-    // the line between shoulder joint and elbow. Every body shares this skeleton.
+    // Which triangles can be seen from straight behind (looking along -Y): each is drawn into a grid over the cape's
+    // width and height keeping the nearest depth, the arms included as solid tubes, and a triangle is seen when one of
+    // its middle or its corners (pulled a little toward the middle) is the nearest thing at its grid square.
+    static bool[] SeenFromBehind(List<Vector3> verts, List<int> tris, (Vector3 a, Vector3 b)[] arms, float armRadius)
+    {
+        const int Grid = 384;
+        const float Pull = 0.15f;
+        float minX = float.MaxValue, maxX = float.MinValue, minZ = float.MaxValue, maxZ = float.MinValue;
+        foreach (var v in verts) { minX = Mathf.Min(minX, v.x); maxX = Mathf.Max(maxX, v.x); minZ = Mathf.Min(minZ, v.z); maxZ = Mathf.Max(maxZ, v.z); }
+        float cell = Mathf.Max(maxX - minX, maxZ - minZ) / (Grid - 1);
+        var depth = new float[Grid, Grid];
+        for (int gx = 0; gx < Grid; gx++)
+            for (int gz = 0; gz < Grid; gz++)
+            {
+                depth[gx, gz] = float.MinValue;
+                var at = new Vector2(minX + gx * cell, minZ + gz * cell);
+                foreach (var (a, b) in arms)
+                {
+                    Vector2 a2 = new Vector2(a.x, a.z), b2 = new Vector2(b.x, b.z), ab = b2 - a2;
+                    float t = Mathf.Clamp01(Vector2.Dot(at - a2, ab) / Mathf.Max(ab.sqrMagnitude, 1e-12f));
+                    float d = (at - (a2 + ab * t)).magnitude;
+                    if (d < armRadius)
+                        depth[gx, gz] = Mathf.Max(depth[gx, gz], Mathf.Lerp(a.y, b.y, t) + Mathf.Sqrt(armRadius * armRadius - d * d));
+                }
+            }
+        int count = tris.Count / 3;
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 p0 = verts[tris[3 * i]], p1 = verts[tris[3 * i + 1]], p2 = verts[tris[3 * i + 2]];
+            int x0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(p0.x, Mathf.Min(p1.x, p2.x)) - minX) / cell));
+            int x1 = Mathf.Min(Grid - 1, Mathf.CeilToInt((Mathf.Max(p0.x, Mathf.Max(p1.x, p2.x)) - minX) / cell));
+            int z0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(p0.z, Mathf.Min(p1.z, p2.z)) - minZ) / cell));
+            int z1 = Mathf.Min(Grid - 1, Mathf.CeilToInt((Mathf.Max(p0.z, Mathf.Max(p1.z, p2.z)) - minZ) / cell));
+            for (int gx = x0; gx <= x1; gx++)
+                for (int gz = z0; gz <= z1; gz++)
+                    if (DepthAt(p0, p1, p2, minX + gx * cell, minZ + gz * cell, out float y) && y > depth[gx, gz])
+                        depth[gx, gz] = y;
+        }
+        var seen = new bool[count];
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 p0 = verts[tris[3 * i]], p1 = verts[tris[3 * i + 1]], p2 = verts[tris[3 * i + 2]];
+            Vector3 mid = (p0 + p1 + p2) / 3f;
+            foreach (var q in new[] { mid, Vector3.Lerp(p0, mid, Pull), Vector3.Lerp(p1, mid, Pull), Vector3.Lerp(p2, mid, Pull) })
+            {
+                int gx = Mathf.Clamp(Mathf.RoundToInt((q.x - minX) / cell), 0, Grid - 1);
+                int gz = Mathf.Clamp(Mathf.RoundToInt((q.z - minZ) / cell), 0, Grid - 1);
+                if (q.y >= depth[gx, gz] - cell) { seen[i] = true; break; }
+            }
+        }
+        return seen;
+    }
+
+    // A strand of the hem that curls forward round the legs: below the collar, its middle is in front of the body's
+    // middle (in front of depth 0; +Y is the back). The back view still catches it under the hem, so it is cut by depth.
+    static bool HangsForward(Vector3 p0, Vector3 p1, Vector3 p2, float collarBottom)
+    {
+        Vector3 mid = (p0 + p1 + p2) / 3f;
+        return mid.z < collarBottom && mid.y < 0f;
+    }
+
+    // The depth of triangle p0-p1-p2 straight behind the point (x, z), when that point lies inside it seen from behind.
+    static bool DepthAt(Vector3 p0, Vector3 p1, Vector3 p2, float x, float z, out float y)
+    {
+        y = 0f;
+        float d = (p1.z - p2.z) * (p0.x - p2.x) + (p2.x - p1.x) * (p0.z - p2.z);
+        if (Mathf.Abs(d) < 1e-14f) return false;
+        float a = ((p1.z - p2.z) * (x - p2.x) + (p2.x - p1.x) * (z - p2.z)) / d;
+        float b = ((p2.z - p0.z) * (x - p2.x) + (p0.x - p2.x) * (z - p2.z)) / d;
+        float c = 1f - a - b;
+        if (a < 0f || b < 0f || c < 0f) return false;
+        y = a * p0.y + b * p1.y + c * p2.y;
+        return true;
+    }
+
+    // The plain body's shoulder joints and elbows in its idle pose, in the space a back piece is worn in (the upper-back
+    // bone at its resting offset), so a cape can be shaped round the arms as they really hang.
+    static void IdleArms(out Vector3 leftShoulder, out Vector3 leftElbow, out Vector3 rightShoulder, out Vector3 rightElbow)
+    {
+        var stage = new PreviewRenderUtility();
+        try
+        {
+            var go = stage.InstantiatePrefabInScene(AssetDatabase.LoadAssetAtPath<GameObject>(PlainBody));
+            var anim = go.GetComponentInChildren<Animator>();
+            var controller = CharacterSpec.Active.animatorController;
+            AnimationClip idle = null;
+            foreach (var c in controller.animationClips)
+                if (idle == null && c.name.ToLowerInvariant().Contains("idle")) idle = c;
+            anim.runtimeAnimatorController = controller;
+            idle.SampleAnimation(anim.gameObject, 0f);
+            var smr = go.GetComponentInChildren<SkinnedMeshRenderer>();
+            var bones = smr.bones;
+            int back = Find(bones, GarmentSocket.BackBone);
+            var bind = smr.sharedMesh.bindposes[back];
+            var worn = new GameObject("worn").transform;
+            worn.SetParent(bones[back], false);
+            worn.localPosition = bind.GetColumn(3);
+            worn.localRotation = bind.rotation;
+            worn.localScale = bind.lossyScale;
+            Vector3 At(string bone) => worn.InverseTransformPoint(bones[Find(bones, bone)].position);
+            leftShoulder = At("LeftArm");
+            leftElbow = At("LeftForeArm");
+            rightShoulder = At("RightArm");
+            rightElbow = At("RightForeArm");
+        }
+        finally { stage.Cleanup(); }
+    }
+
+    static int Find(Transform[] bones, string name)
+    {
+        for (int i = 0; i < bones.Length; i++) if (bones[i] != null && bones[i].name.EndsWith(name)) return i;
+        return -1;
+    }
+
+    // How far the cloth must stay from the line between shoulder joint and elbow, in the shared mesh space: the
+    // furthest point of the plain body's upper-arm skin from that line, on either arm. Every body shares this skeleton.
     static float ArmRadius()
     {
         var body = AssetDatabase.LoadAssetAtPath<GameObject>(PlainBody).GetComponentInChildren<SkinnedMeshRenderer>();
         var bones = body.bones;
-        int arm = -1, fore = -1;
-        for (int i = 0; i < bones.Length; i++)
-        {
-            if (bones[i].name.EndsWith("LeftArm")) arm = i;
-            if (bones[i].name.EndsWith("LeftForeArm")) fore = i;
-        }
         var mesh = body.sharedMesh;
-        Vector3 a = mesh.bindposes[arm].inverse.GetColumn(3), b = mesh.bindposes[fore].inverse.GetColumn(3);
         var w = mesh.boneWeights;
         var v = mesh.vertices;
-        var d = new List<float>();
-        for (int i = 0; i < v.Length; i++)
-            if (w[i].boneIndex0 == arm && w[i].weight0 > 0.5f)
-                d.Add(Vector3.Cross(b - a, v[i] - a).magnitude / (b - a).magnitude);
-        d.Sort();
-        return d.Count > 0 ? d[d.Count / 2] : 0f;
+        float furthest = 0f;
+        foreach (var (upper, lower) in new[] { ("LeftArm", "LeftForeArm"), ("RightArm", "RightForeArm") })
+        {
+            int arm = Find(bones, upper), fore = Find(bones, lower);
+            Vector3 a = mesh.bindposes[arm].inverse.GetColumn(3), b = mesh.bindposes[fore].inverse.GetColumn(3);
+            for (int i = 0; i < v.Length; i++)
+                if (w[i].boneIndex0 == arm && w[i].weight0 > 0.5f)
+                    furthest = Mathf.Max(furthest, Vector3.Cross(b - a, v[i] - a).magnitude / (b - a).magnitude);
+        }
+        return furthest;
     }
 
     static Mesh SaveOrUpdate(Mesh made, string path)
@@ -256,8 +456,20 @@ public static class BackPieceBaker
             AssetDatabase.CreateAsset(made, path);
             return made;
         }
-        EditorUtility.CopySerialized(made, existing);
-        existing.name = Path.GetFileNameWithoutExtension(path);
+        // Rewritten through the mesh's own calls: copying serialized data over a live mesh leaves its old drawing data
+        // and bone weights in the running editor (docs/5-ai-learnings/rebuilding-an-asset-blanks-open-scene-references.md).
+        existing.Clear();
+        existing.indexFormat = made.indexFormat;
+        existing.SetVertices(made.vertices);
+        existing.SetNormals(made.normals);
+        existing.SetUVs(0, made.uv);
+        existing.subMeshCount = made.subMeshCount;
+        for (int i = 0; i < made.subMeshCount; i++) existing.SetTriangles(made.GetTriangles(i), i);
+        existing.boneWeights = made.boneWeights;
+        existing.bindposes = made.bindposes;
+        existing.RecalculateBounds();
+        existing.RecalculateTangents();
+        Object.DestroyImmediate(made);
         EditorUtility.SetDirty(existing);
         return existing;
     }
