@@ -224,7 +224,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear:
-  - {fileID: 11400000, guid: 4d90ebd6ffaa644fab83c014d6c24531, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 6
@@ -250,7 +249,7 @@ MonoBehaviour:
     intel: 39
     dex: 59
     luk: 38
-    baseMaxHP: 20
+    baseMaxHP: 160
     hpPerLevel: 6
     baseAttack: 4
     attackPerLevel: 1

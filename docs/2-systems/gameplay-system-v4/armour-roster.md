@@ -15,7 +15,9 @@ slot. The material decides what a piece's base buys; the slot decides how much, 
 
 **Head, Body, Garment, Shoes** — the names a player reads (`EquipSlots.Label`). In the code they are `Head`, `Armor`,
 `Garment` and `Boots`; the numbers are pinned for saved data, only the words changed. Shoes are shown in the
-equipment window.
+equipment window. **No armour design is made for the Head** (decided 2026-10-16): the Iron Helm, Leather Cap and
+Padded Hood were removed from the game, the Head slot holds only the headgear items that have a 3D model, and a new
+headgear system with special stats, never worn by a creature, comes later.
 
 **There is no off-hand (built 2026-10-06).** Shields are gone. Blocking and sending damage back belong to the Fist's
 defence skills (block chance is a sub-stat only a skill grants), and extra ordinary-attack reach to the Sniper's own
@@ -41,17 +43,16 @@ effects such as a Haste or a Slow; a creature moves at that pace times its own m
 **Worn accuracy and evasion reach the hit roll** — Ink's Accuracy and Evasion lines and leather's evasion are added into
 HIT and FLEE before the ring's lift (`UnitStatMath.Hit` / `Flee`), for players and creatures alike.
 
-## 3. The roster — twelve designs
+## 3. The roster — nine designs
 
 | Slot | Metal (Smith) | Leather (Tannery) | Cloth (Loom) |
 | --- | --- | --- | --- |
-| Head | Iron Helm | Leather Cap | Padded Hood |
 | Body | Chainmail | Leather Jerkin | Padded Vest |
 | Garment | Chain Mantle | Hide Cloak | Traveller's Cloak |
 | Shoes | Iron Sabatons | Leather Boots | Woven Shoes |
 
 No design is made from materials: a piece is dropped by a creature that wears it. Every piece sells to a shop for
-5u. Weight copies an existing design (shoes copy the Leather Cap's).
+5u. Every pair of shoes weighs 30.
 
 ## 4. Words — the armour's trademark
 
@@ -62,8 +63,10 @@ No design is made from materials: a piece is dropped by a creature that wears it
 - **Part of the name**: `+7 Tireless Iron Sabatons [C]`. The card adds one line: the word, then what it does at this
   piece's size.
 - **Its size grows with grade** — the finished amount is written by the server; a player's machine only shows it.
-- **Saved by name** in the copy's roll text, beside the trademark. A new character's starting Chainmail and Iron
-  Sabatons are made with none.
+- **Saved by name** in the copy's roll text, beside the trademark. A new character's starting Chainmail, Iron
+  Sabatons and Chain Mantle are made with none.
+- **The three Head words (Ironblood, Steadfast, Wellspring) have no piece to roll on** while no armour is made for
+  the Head; which of them the new headgear system carries is to be decided.
 
 | Slot | Word | Its one job | Raw → A |
 | --- | --- | --- | --- |

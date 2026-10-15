@@ -151,6 +151,8 @@ public class HotbarPanel : MonoBehaviour
                 HoverRelay.Set(cell.gameObject, null, null);
                 var box = cell.GetComponent<ItemSlot>();
                 if (box != null) box.SetItem(null);
+                var skillCard = cell.GetComponent<SkillRightClick>();
+                if (skillCard != null) skillCard.def = null;
             }
         slots.Clear();
         SkillHoverCard.Hide();   // the hovered cell may be torn down — don't leave a stale tooltip floating

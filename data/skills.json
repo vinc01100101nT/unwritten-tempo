@@ -584,6 +584,29 @@
       ]
     },
     {
+      "id": "skill.item.newbie-potion",
+      "name": "Newbie Potion",
+      "symbol": "",
+      "weapon": "None",
+      "form": "",
+      "archetype": "Buff",
+      "family": "Might",
+      "ultimate": false,
+      "passive": true,
+      "published": false,
+      "cost": "MP **0**  CD **0s**  Instant",
+      "manaCost": 0,
+      "cooldown": 0,
+      "castTime": 0,
+      "castRange": 0,
+      "trigger": "Passive",
+      "description": "Restores 30 HP at once.",
+      "trademark": "",
+      "effects": [
+        "Heals **30** HP"
+      ]
+    },
+    {
       "id": "skill.item.sage-stew",
       "name": "Sage Stew",
       "symbol": "",

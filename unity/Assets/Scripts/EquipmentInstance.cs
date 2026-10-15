@@ -127,10 +127,11 @@ public class EquipmentInstance
         return made;
     }
 
-    /// <summary>A NEW CHARACTER'S PIECE (<see cref="StarterKit.Worn"/>): Raw, unfolded, Common, and made with NO trademark
+    /// <summary>A NEW CHARACTER'S PIECE (<see cref="StarterKit.Worn"/>): Raw, folded as the kit says, Common, and made with NO trademark
     /// and NO word — never through the rolling door, so making a character again can never roll its starting weapon's
     /// trademark again.</summary>
-    public static EquipmentInstance CreateStarter(Item def) => new EquipmentInstance(def);
+    public static EquipmentInstance CreateStarter(Item def, int folds) =>
+        new EquipmentInstance(def, Mathf.Clamp(folds, 0, CraftingMath.FoldCap(Quality.Raw)));
 
     /// <summary>THE PIECE A KILL DROPS: a fresh copy of <paramref name="def"/> exactly as <see cref="CreateFresh"/>
     /// makes one — Raw, unfolded, its own trademark or word rolled — at <paramref name="rarity"/>, with its base rolled

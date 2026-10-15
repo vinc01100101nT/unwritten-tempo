@@ -37,12 +37,11 @@ MonoBehaviour:
   luk: 3
   startingGear:
   - {fileID: 11400000, guid: 5c65838bbb620394296e8e14e37b84ea, type: 2}
-  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
   gearQuality: 0
-  gearFolds: 8
+  gearFolds: 0
   gearInkTier: 1
   weaponMastery: 0
   ringRankStats: 
@@ -59,6 +58,5 @@ MonoBehaviour:
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
   material: {fileID: 11400000, guid: 4994dcb16f5b4bcdb96a2f4991b8bd70, type: 2}
-  rareMaterial: {fileID: 0}
   itemDropNames: []
   itemDropChances: []

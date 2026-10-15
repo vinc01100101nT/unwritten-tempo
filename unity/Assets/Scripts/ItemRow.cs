@@ -43,6 +43,7 @@ public sealed class ItemRow
 
         r.back = UiKit.Round(UiKit.Img("IconBack", fill.transform, UiKit.SlotFill), 3);
         r.back.raycastTarget = false;
+        r.back.gameObject.AddComponent<DragFace>();   // dragging this row carries the item's picture, not the row
         var square = r.back.gameObject.AddComponent<LayoutElement>();
         square.minWidth = square.preferredWidth = square.minHeight = square.preferredHeight = height - 6f;
         r.icon = ItemIcon.Make(r.back.transform, 1f);

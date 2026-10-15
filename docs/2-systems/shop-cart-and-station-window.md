@@ -72,7 +72,7 @@ number. At most ten are kept; the oldest goes first.
 Carrying it out: the buy-backs come off the list first; the sales are taken highest bag position first, each kept for
 buy-back with exactly what it paid; the purse moves once; the buys come in through the one door into the bag (free
 tutorial units taken first, and each counted for a Buy step); the buy-backs return — a piece of gear as the very copy
-that was sold. Then the whole sentence in chat ("Bought 10 Healing Potion, sold 23 Blinkbat Wing — you got 6,316u.") and its short
+that was sold. Then the whole sentence in chat ("Bought 10 Healing Potion, sold 23 Plopling Jelly — you got 6,316u.") and its short
 form in the stacking notice on screen ("Trade done — got 6,316u"; a refused cart says "Trade refused" there and gives
 its reason in chat and under the cart), the bag and buy-backs pushed (the hotbar too when a stack was sold to its last one), one save.
 

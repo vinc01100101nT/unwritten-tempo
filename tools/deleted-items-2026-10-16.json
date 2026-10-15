@@ -1,0 +1,217 @@
+[
+ {
+  "id": "item.abyss-maw-fang",
+  "name": "Abyss Maw Fang",
+  "value": 7797
+ },
+ {
+  "id": "item.autumn-stalk-leaf",
+  "name": "Autumn Stalk Leaf",
+  "value": 1418
+ },
+ {
+  "id": "item.bandit-bosss-mask",
+  "name": "Bandit Boss's Mask",
+  "value": 1914
+ },
+ {
+  "id": "item.blazeskull-jaw",
+  "name": "Blazeskull Jaw",
+  "value": 4617
+ },
+ {
+  "id": "item.blinkbat-wing",
+  "name": "Blinkbat Wing",
+  "value": 486
+ },
+ {
+  "id": "item.blood-ronin-blade-shard",
+  "name": "Blood Ronin Blade Shard",
+  "value": 4725
+ },
+ {
+  "id": "item.canewick-stalk",
+  "name": "Canewick Stalk",
+  "value": 2480
+ },
+ {
+  "id": "item.chomper-tooth",
+  "name": "Chomper Tooth",
+  "value": 3528
+ },
+ {
+  "id": "item.deep-maw-tongue",
+  "name": "Deep Maw Tongue",
+  "value": 1890
+ },
+ {
+  "id": "item.elder-stalk-bark",
+  "name": "Elder Stalk Bark",
+  "value": 3702
+ },
+ {
+  "id": "item.emberlurk-scale",
+  "name": "Emberlurk Scale",
+  "value": 5964
+ },
+ {
+  "id": "item.frost-ronin-blade-shard",
+  "name": "Frost Ronin Blade Shard",
+  "value": 2600
+ },
+ {
+  "id": "item.frostskull-shard",
+  "name": "Frostskull Shard",
+  "value": 5529
+ },
+ {
+  "id": "item.gloop-kings-jelly",
+  "name": "Gloop King's Jelly",
+  "value": 696
+ },
+ {
+  "id": "item.glowcoil-gland",
+  "name": "Glowcoil Gland",
+  "value": 6468
+ },
+ {
+  "id": "item.gnasher-fin",
+  "name": "Gnasher Fin",
+  "value": 4242
+ },
+ {
+  "id": "item.golden-bandits-mask",
+  "name": "Golden Bandit's Mask",
+  "value": 3828
+ },
+ {
+  "id": "item.great-croak-skin",
+  "name": "Great Croak Skin",
+  "value": 5198
+ },
+ {
+  "id": "item.grubble-spine",
+  "name": "Grubble Spine",
+  "value": 7560
+ },
+ {
+  "id": "item.grumbear-pelt",
+  "name": "Grumbear Pelt",
+  "value": 2279
+ },
+ {
+  "id": "item.horngore-tusk",
+  "name": "Horngore Tusk",
+  "value": 5366
+ },
+ {
+  "id": "item.hornscale-horn",
+  "name": "Hornscale Horn",
+  "value": 3098
+ },
+ {
+  "id": "item.inferno-mask-fragment",
+  "name": "Inferno Mask Fragment",
+  "value": 6960
+ },
+ {
+  "id": "item.inky-ink-sac",
+  "name": "Inky Ink Sac",
+  "value": 4043
+ },
+ {
+  "id": "item.kappi-dish",
+  "name": "Kappi Dish",
+  "value": 816
+ },
+ {
+  "id": "item.karasu-feather",
+  "name": "Karasu Feather",
+  "value": 4568
+ },
+ {
+  "id": "item.lovebite-petal",
+  "name": "Lovebite Petal",
+  "value": 7056
+ },
+ {
+  "id": "item.mossgore-antler",
+  "name": "Mossgore Antler",
+  "value": 1785
+ },
+ {
+  "id": "item.mossmaw-moss",
+  "name": "Mossmaw Moss",
+  "value": 2757
+ },
+ {
+  "id": "item.mudpup-gill",
+  "name": "Mudpup Gill",
+  "value": 1502
+ },
+ {
+  "id": "item.octi-tentacle",
+  "name": "Octi Tentacle",
+  "value": 3308
+ },
+ {
+  "id": "item.oculord-pupil",
+  "name": "Oculord Pupil",
+  "value": 1103
+ },
+ {
+  "id": "item.oni-tengu-mask",
+  "name": "Oni Tengu Mask",
+  "value": 7245
+ },
+ {
+  "id": "item.pilfer-pouch",
+  "name": "Pilfer Pouch",
+  "value": 2058
+ },
+ {
+  "id": "item.toadmaw-wart",
+  "name": "Toadmaw Wart",
+  "value": 7635
+ },
+ {
+  "id": "item.venom-gloop-core",
+  "name": "Venom Gloop Core",
+  "value": 9299
+ },
+ {
+  "id": "item.webber-silk",
+  "name": "Webber Silk",
+  "value": 1596
+ },
+ {
+  "id": "item.willo-ember",
+  "name": "Willo Ember",
+  "value": 4536
+ },
+ {
+  "id": "item.wisp-light",
+  "name": "Wisp Light",
+  "value": 5547
+ },
+ {
+  "id": "item.wraithmother-veil",
+  "name": "Wraithmother Veil",
+  "value": 7088
+ },
+ {
+  "id": "item.leather-cap",
+  "name": "Leather Cap",
+  "value": 8
+ },
+ {
+  "id": "item.iron-helm",
+  "name": "Iron Helm",
+  "value": 8
+ },
+ {
+  "id": "item.padded-hood",
+  "name": "Padded Hood",
+  "value": 8
+ }
+]

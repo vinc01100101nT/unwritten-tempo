@@ -10,8 +10,8 @@ using UnityEngine;
 /// <para><b>Two shapes, and only the server makes the second.</b> A typed line names a thing the sender holds by a
 /// REFERENCE — <c>␁g:copyId␂</c> for a piece of gear, <c>␁i:itemId␂</c> for a stack. The server that first receives the
 /// line looks each reference up in the SENDER'S OWN bag and worn gear (<see cref="Resolve"/>) and replaces it with the
-/// finished LINK: <c>␁title␟colour␟tooltip␂</c> — the name, its rarity's colour and the very tooltip the sender's bag
-/// shows for it, all worked out there. A reference to anything they do not hold is dropped. Every other control
+/// finished LINK: <c>␁title␟colour␟itemId␟tooltip␂</c> — the name, its rarity's colour, which item it is (so a card can
+/// show its picture) and the very tooltip the sender's bag shows for it, all worked out there. A reference to anything they do not hold is dropped. Every other control
 /// character in a typed line becomes a space, so a player can never type a link of their own; a server passing a line on
 /// (<see cref="CleanRelayed"/>) keeps finished links and cleans everything else the same way.</para>
 ///
@@ -58,7 +58,7 @@ public static class ChatLinks
                 string title = piece != null ? ItemTooltip.CopyTitle(piece) : def.displayName;
                 int width = title.Length + 2;
                 if (shown + width > mostShown) break;
-                AppendLink(sb, title, ColorUtility.ToHtmlStringRGB(Rarities.Color(Rarities.Of(def, piece))),
+                AppendLink(sb, title, ColorUtility.ToHtmlStringRGB(Rarities.Color(Rarities.Of(def, piece))), def.id,
                            ItemTooltip.BodyFor(def, piece));
                 shown += width;
                 links++;
@@ -88,9 +88,9 @@ public static class ChatLinks
                 if (end < 0) { i++; continue; }
                 string inner = text.Substring(i + 1, end - i - 1);
                 i = end + 1;
-                if (links >= MostLinksInALine || !SplitLink(inner, out var title, out var hex, out var body)) continue;
+                if (links >= MostLinksInALine || !SplitLink(inner, out var title, out var hex, out var id, out var body)) continue;
                 if (shown + title.Length + 2 > mostShown) break;
-                AppendLink(sb, title, hex, body);
+                AppendLink(sb, title, hex, id, body);
                 shown += title.Length + 2;
                 links++;
                 continue;
@@ -102,23 +102,26 @@ public static class ChatLinks
         return sb.ToString().Trim();
     }
 
-    static void AppendLink(StringBuilder sb, string title, string hex, string body)
-        => sb.Append(Open).Append(Strip(title)).Append(Sep).Append(Strip(hex)).Append(Sep).Append(Strip(body)).Append(Close);
+    static void AppendLink(StringBuilder sb, string title, string hex, string itemId, string body)
+        => sb.Append(Open).Append(Strip(title)).Append(Sep).Append(Strip(hex)).Append(Sep).Append(Strip(itemId))
+             .Append(Sep).Append(Strip(body)).Append(Close);
 
     // Nothing inside a link may be read as the link's own edges.
     static string Strip(string s)
         => string.IsNullOrEmpty(s) ? "" : s.Replace(Open, ' ').Replace(Close, ' ').Replace(Sep, ' ');
 
-    // A finished link's three parts; false for anything that is not one (wrong count of parts, a colour that is not one).
-    static bool SplitLink(string inner, out string title, out string hex, out string body)
+    // A finished link's four parts; false for anything that is not one (wrong count of parts, a colour that is not one).
+    static bool SplitLink(string inner, out string title, out string hex, out string itemId, out string body)
     {
-        title = hex = body = "";
+        title = hex = itemId = body = "";
         int a = inner.IndexOf(Sep);
         int b = a >= 0 ? inner.IndexOf(Sep, a + 1) : -1;
-        if (a <= 0 || b < 0) return false;
+        int c = b >= 0 ? inner.IndexOf(Sep, b + 1) : -1;
+        if (a <= 0 || c < 0) return false;
         title = inner.Substring(0, a);
         hex = inner.Substring(a + 1, b - a - 1);
-        body = inner.Substring(b + 1);
+        itemId = inner.Substring(b + 1, c - b - 1);
+        body = inner.Substring(c + 1);
         if (hex.Length != 6) return false;
         for (int k = 0; k < hex.Length; k++)
             if (!System.Uri.IsHexDigit(hex[k])) return false;
@@ -167,7 +170,7 @@ public static class ChatLinks
     /// "[name]" in its colour, tagged so the row can tell which one the pointer is over. The tooltips go into
     /// <paramref name="titles"/>, <paramref name="colours"/> and <paramref name="bodies"/>, one per link, in order.</summary>
     public static string ToRichText(string text, System.Func<string, string> sanitize,
-                                    List<string> titles, List<Color> colours, List<string> bodies)
+                                    List<string> titles, List<Color> colours, List<string> bodies, List<string> itemIds)
     {
         if (string.IsNullOrEmpty(text) || text.IndexOf(Open) < 0) return sanitize(text);
         var sb = new StringBuilder(text.Length + 32);
@@ -180,13 +183,14 @@ public static class ChatLinks
             int end = text.IndexOf(Close, open + 1);
             if (end < 0) break;
             from = end + 1;
-            if (!SplitLink(text.Substring(open + 1, end - open - 1), out var title, out var hex, out var body)) continue;
+            if (!SplitLink(text.Substring(open + 1, end - open - 1), out var title, out var hex, out var id, out var body)) continue;
             ColorUtility.TryParseHtmlString("#" + hex, out var colour);
             sb.Append("<link=\"").Append(titles.Count).Append("\"><color=#").Append(hex).Append('>')
               .Append('[').Append(sanitize(title)).Append(']').Append("</color></link>");
             titles.Add(title);
             colours.Add(colour);
             bodies.Add(body);
+            itemIds.Add(id);
         }
         return sb.ToString();
     }
@@ -206,7 +210,7 @@ public static class ChatLinks
             int end = text.IndexOf(Close, open + 1);
             if (end < 0) break;
             from = end + 1;
-            if (SplitLink(text.Substring(open + 1, end - open - 1), out var title, out _, out _))
+            if (SplitLink(text.Substring(open + 1, end - open - 1), out var title, out _, out _, out _))
                 sb.Append('[').Append(title).Append(']');
         }
         return sb.ToString();

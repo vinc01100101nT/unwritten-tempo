@@ -170,14 +170,15 @@ public class ChatController : MonoBehaviour
     // is on it. The same for every kind of line that can carry one.
     void AddLinkedLine(string lead, string text, LineKind kind)
     {
-        linkTitles.Clear(); linkColours.Clear(); linkBodies.Clear();
-        string body = ChatLinks.ToRichText(text, Sanitize, linkTitles, linkColours, linkBodies);
+        linkTitles.Clear(); linkColours.Clear(); linkBodies.Clear(); linkItems.Clear();
+        string body = ChatLinks.ToRichText(text, Sanitize, linkTitles, linkColours, linkBodies, linkItems);
         var row = AddLine(lead + body, kind);
-        if (row != null && linkTitles.Count > 0) ChatLinkRow.Attach(row, linkTitles, linkColours, linkBodies);
+        if (row != null && linkTitles.Count > 0) ChatLinkRow.Attach(row, linkTitles, linkColours, linkBodies, linkItems);
     }
 
     static readonly List<string> linkTitles = new List<string>(ChatLinks.MostLinksInALine);
     static readonly List<Color> linkColours = new List<Color>(ChatLinks.MostLinksInALine);
+    static readonly List<string> linkItems = new List<string>(ChatLinks.MostLinksInALine);
     static readonly List<string> linkBodies = new List<string>(ChatLinks.MostLinksInALine);
 
     /// <summary>Shift-click on a thing you hold: its name goes into the chat field as a link, where the caret is, and the

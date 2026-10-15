@@ -114,6 +114,7 @@ public class Item : ScriptableObject
     [Tooltip("The 3D model shown on the body while this is equipped. A weapon: wielded in-hand (WeaponSocket mounts " +
              "it on the hand bone; its root WeaponGrip authors how it sits — Tools ▸ unwritten ▸ Weapons ▸ Weapon " +
              "Grip Tuner). A Head item: a headgear piece (its root HeadPiece) that HeadSocket puts on the head. " +
+             "A Garment: a back piece such as a cape (its root BackPiece) that GarmentSocket hangs on the upper back. " +
              "None = nothing shown.")]
     public GameObject equipModel;
 
@@ -134,11 +135,30 @@ public class Item : ScriptableObject
              "per point.")]
     public int weight;
     [Tooltip("What one is worth, in Unsigned — the ONE price of this item. A shop sells it for this plus Tax, and buys " +
-             "it for this less Tax (ShopMath). 0 = no shop sells it and no shop buys it.")]
+             "it for this less Tax (ShopMath). Whether a shop buys it at all is the Unsellable tag, never this price.")]
     public int value;
 
-    /// <summary>Can a shop buy this: it is worth something. The one rule, for every kind of item.</summary>
-    public bool CanBeSold => value > 0;
+    // THE TAGS ARE THE ONE RULE for each thing a player may do with an item (decided 2026-10-16): nothing else —
+    // not its price, not its category — decides whether it can be sold, dropped, stored or traded. Each is checked by
+    // the server at the one place that action is decided, and every window reads the same tag.
+    [Header("Tags")]
+    [Tooltip("Cannot be put on the ground.")]
+    public bool undroppable;
+    [Tooltip("No shop buys it. An item priced 0 without this tag sells for 0.")]
+    public bool unsellable;
+    [Tooltip("Cannot go into account storage.")]
+    public bool unstorable;
+    [Tooltip("Cannot be handed to another player.")]
+    public bool untradeable;
+
+    /// <summary>Can a shop buy this: it is not tagged Unsellable. The one rule, for every kind of item.</summary>
+    public bool CanBeSold => !unsellable;
+    /// <summary>Can this be put on the ground: it is not tagged Undroppable.</summary>
+    public bool CanBeDropped => !undroppable;
+    /// <summary>Can this go into account storage: it is not tagged Unstorable.</summary>
+    public bool CanBeStored => !unstorable;
+    /// <summary>Can this be handed to another player: it is not tagged Untradeable. Nothing trades yet; trading reads this.</summary>
+    public bool CanBeTraded => !untradeable;
 
     /// <summary>What every readout says in place of a sell value of 0.</summary>
     public const string CannotBeSoldText = "Cannot be sold to NPC";

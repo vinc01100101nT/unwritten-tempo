@@ -14,10 +14,12 @@ public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandl
     readonly List<string> titles = new List<string>(ChatLinks.MostLinksInALine);
     readonly List<Color> colours = new List<Color>(ChatLinks.MostLinksInALine);
     readonly List<string> bodies = new List<string>(ChatLinks.MostLinksInALine);
+    readonly List<string> items = new List<string>(ChatLinks.MostLinksInALine);
     int showing = -1;
 
     /// <summary>Give <paramref name="row"/> the tooltips of the links in it, in the order its text numbers them.</summary>
-    public static void Attach(TMP_Text row, List<string> linkTitles, List<Color> linkColours, List<string> linkBodies)
+    public static void Attach(TMP_Text row, List<string> linkTitles, List<Color> linkColours, List<string> linkBodies,
+                              List<string> linkItems)
     {
         row.raycastTarget = true;   // the pointer has to land on the row to find a link in it
         var hover = row.gameObject.AddComponent<ChatLinkRow>();
@@ -25,6 +27,7 @@ public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandl
         hover.titles.AddRange(linkTitles);
         hover.colours.AddRange(linkColours);
         hover.bodies.AddRange(linkBodies);
+        hover.items.AddRange(linkItems);
     }
 
     public void OnPointerMove(PointerEventData e)
@@ -45,7 +48,7 @@ public class ChatLinkRow : MonoBehaviour, IPointerMoveHandler, IPointerExitHandl
     public void OnPointerClick(PointerEventData e)
     {
         if (e.button != PointerEventData.InputButton.Right || showing < 0) return;
-        ItemTooltip.PinText(titles[showing], colours[showing], bodies[showing]);
+        ItemTooltip.PinText(titles[showing], colours[showing], bodies[showing], ItemCatalog.Resolve(items[showing]));
     }
 
     public void OnPointerExit(PointerEventData e)

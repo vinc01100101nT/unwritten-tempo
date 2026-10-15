@@ -156,12 +156,12 @@ public class InventoryStore : MonoBehaviour
     /// as a sparkle, named to anybody holding Alt (see <see cref="GroundDrop"/>).
     ///
     /// <para>A wearable always goes down one at a time, because each copy is its own stack. A worn piece cannot
-    /// be dropped at all — take it off first — and neither can a quest item.</para></summary>
+    /// be dropped at all — take it off first — and neither can anything tagged Undroppable.</para></summary>
     public void Drop(BagEntry e, int count)
     {
         if (e == null || e.def == null || count <= 0 || Character.Instance == null) return;
         if (e.worn) return;
-        if (e.def.category == ItemCategory.Quest) return;
+        if (!e.def.CanBeDropped) return;
 
         var me = GameNetwork.MyPlayer;
         if (me != null) { me.AskToDrop(Entries.IndexOf(e), e.def.id, count); return; }

@@ -511,6 +511,17 @@ public class ProgressionWindows : MonoBehaviour
         picture.raycastTarget = false;
         Place(picture.rectTransform, Pad, Pad, PicW - Pad, TopH - Pad);
         var icon = ItemIcon.Make(picture.transform, 8f);
+        // A skill has no picture: its badge — its colour, its letters — stands in the panel instead.
+        var badge = UiKit.Round(UiKit.Img("Badge", picture.transform, Color.white), 6);
+        badge.raycastTarget = false;
+        var badgeRt = badge.rectTransform;
+        badgeRt.anchorMin = badgeRt.anchorMax = badgeRt.pivot = new Vector2(0.5f, 0.5f);
+        badgeRt.sizeDelta = new Vector2(64f, 64f);
+        var badgeText = UiKit.Label("Letters", badge.transform, "", 26, FontStyle.Bold, TextAnchor.MiddleCenter);
+        badgeText.raycastTarget = false;
+        badgeText.color = UiKit.TextOnDim;
+        UiKit.Fill(badgeText.rectTransform, Vector2.zero, Vector2.zero);
+        badge.gameObject.SetActive(false);
 
         // The thin rule between the picture and the words.
         var rule = UiKit.Img("Rule", border.transform, UiKit.WindowEdge);
@@ -585,6 +596,9 @@ public class ProgressionWindows : MonoBehaviour
         stripLayout.padding = new RectOffset(8, 8, 4, 4);
         stripLayout.childControlWidth = stripLayout.childControlHeight = true;
         stripLayout.childForceExpandWidth = stripLayout.childForceExpandHeight = false;
+        // Hidden until something is hovered.
+        var stripFade = strip.gameObject.AddComponent<CanvasGroup>();
+        stripFade.alpha = 0f; stripFade.blocksRaycasts = false; stripFade.interactable = false;
         var stripFit = strip.gameObject.AddComponent<ContentSizeFitter>();
         stripFit.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
         stripFit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -596,6 +610,7 @@ public class ProgressionWindows : MonoBehaviour
         var tip = border.gameObject.AddComponent<ItemTooltip>();
         tip.panel = rt; tip.titleText = title; tip.bodyText = body; tip.skillRow = skillRow;
         tip.icon = icon;
+        tip.badge = badge; tip.badgeText = badgeText;
         tip.detailsScroll = scroll;
         tip.slotDiamonds = diamonds;
         tip.namePanel = stripRt; tip.nameText = name;

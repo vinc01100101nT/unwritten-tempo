@@ -27,7 +27,7 @@ user decided the open questions the same day.
   - Which hats exist, what they do and how they are obtained is still to be planned. Until then a GM gives them.
 - **Townsfolk** wear the hair their body was made with, and the hat their body had now comes from the matching Head
   item.
-- **Shadow creatures** wear hair only, no headgear. Their Leather Cap has no model, so nothing shows.
+- **No creature wears headgear** (decided 2026-10-16), shadows included: they wear hair only. The three model-less head pieces they once carried (Iron Helm, Leather Cap, Padded Hood) were removed from the game.
 - **Beards and moustaches are gone from everybody**, the wizard Kaelen included.
 - **One height for everyone.** A character is sized by its body alone, so a hat or a big hairstyle never shrinks it.
   The Witch, Wizard and Elf bodies, drawn at 73–77% of a bald body before, now stand as tall as everyone else.

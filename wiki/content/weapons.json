@@ -229,7 +229,7 @@
     {
       "type": "list",
       "items": [
-        "**Head**, **Body**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**. There is no off-hand: blocking and sending damage back come from the Fist's defence skills."
+        "**Body**, **Garment** and **Shoes** — each in **metal**, **leather** or **cloth**. On your **Head** you wear headgear, which is not armour. There is no off-hand: blocking and sending damage back come from the Fist's defence skills."
       ]
     },
     {
@@ -241,12 +241,6 @@
         "Cloth (Loom)"
       ],
       "rows": [
-        [
-          "**Head**",
-          "Iron Helm",
-          "Leather Cap",
-          "Padded Hood"
-        ],
         [
           "**Body**",
           "Chainmail",
@@ -345,7 +339,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Every piece has a base.** A weapon's base follows how long its swing takes, so every weapon deals the same damage a second at equal gear: a Common sword's is **50** attack, a dagger's **40**, a greatsword's **65** (a staff, wand or scythe gives magic attack instead). On armour, the **material** decides what the base buys — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and a head piece or shoes give half of what body armour or a garment give. A piece a monster drops rolls its base at **85% to 115%**; anything else — what you start in, what a shop sells, a reward — has the usual 100%. Hover a piece to see it: *Base 54 (108%)*."
+      "text": "**Every piece has a base.** A weapon's base follows how long its swing takes, so every weapon deals the same damage a second at equal gear: a Common sword's is **50** attack, a dagger's **40**, a greatsword's **65** (a staff, wand or scythe gives magic attack instead). On armour, the **material** decides what the base buys — **metal** defence and HP, **leather** attack speed and evasion, **cloth** magic defence and MP — and shoes give half of what body armour or a garment give. A piece a monster drops rolls its base at **85% to 115%**; anything else — what you start in, what a shop sells, a reward — has the usual 100%. Hover a piece to see it: *Base 54 (108%)*."
     },
     {
       "type": "paragraph",
@@ -448,7 +442,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +7 at grade C it reads **+7 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The trademark has nothing to do with the weapon's rarity, and the Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Hover the weapon to see which skill and which numbers; hover the skill to see the bonus on its own line."
+      "text": "**A weapon has a trademark.** As it drops it rolls one skill of its type and is named for it — a sword that empowers Thousand Petals is itself called **Thousand Petals**, and folded to +7 at grade C it reads **+7 Thousand Petals [C]** in your bag and on its card. The name never changes. Any skill of the weapon's pool that has a number to raise can come up: **1%** of weapons carry an ultimate's, the other **99%** an active's or a passive's, and inside each group every skill is equally likely — on a sword each of the fifteen actives and passives comes up **6.6%** of the time and each of the three ultimates **0.33%**. The trademark has nothing to do with the weapon's rarity, and the Sword you start with has none. *Database ▸ Equipment* lists every trademark's chance. While you hold the weapon, **every** number that skill puts out is raised by **+5%** at Raw, rising with the grade to **+20%** at A — a Thousand Petals sword raises Thousand Petals' strike and its damage buff alike. Every trademark skill, on any weapon or none, is also **efficient** one cast in twenty, raising those numbers by a further +20% (see *Skills*). Right-click the weapon to see which skill and which numbers; right-click the skill to see the bonus on its own line."
     },
     {
       "type": "paragraph",

@@ -70,8 +70,8 @@ public class WorldShops : ScriptableObject
         return false;
     }
 
-    /// <summary>Would <paramref name="shop"/> buy this stack: it buys at all, and the thing has a sell value. ONE RULE,
-    /// whatever kind of item it is: a sell value of 0 is what makes a thing unsellable (<see cref="Item.CanBeSold"/>).</summary>
+    /// <summary>Would <paramref name="shop"/> buy this stack: it buys at all, and the thing is not tagged Unsellable. ONE
+    /// RULE, whatever kind of item it is: the Unsellable tag (<see cref="Item.CanBeSold"/>), never its price.</summary>
     public static bool Buys(Row shop, BagEntry e)
         => shop != null && shop.buysLoot && e != null && e.def != null && e.count > 0 && e.def.CanBeSold;
 }

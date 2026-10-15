@@ -82,8 +82,8 @@ that element's two converters; a creature of any other element gives up that ele
 - The kill's roll: `LootDropper.GiveLoot`. What `/mobinfo`, `/whodrops` and the wiki say a creature drops:
   `CreatureDrops.cs` — both read `CreatureFinds`.
 - A converter's element is read off the effect it runs (`ItemCatalog.ConvertersOf`); the item carries no copy.
-- Values and weights: the item files in `unity/Assets/3_Data/Resources/Items/`. A value of 0 is what makes a shop
-  refuse an item.
+- Values and weights: the item files in `unity/Assets/3_Data/Resources/Items/`. The Unsellable tag, never the value, is
+  what makes a shop refuse an item; an item priced 0 without it sells for 0.
 - The Tool Dealer's stock: `unity/Assets/3_Data/Resources/WorldShops.asset`.
 
 ## Still open

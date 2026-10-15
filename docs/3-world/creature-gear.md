@@ -1,7 +1,7 @@
 ---
-status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay; and on the 14 shadows: weapon, armour and stat build. Weapons re-spread 2026-10-14 so no two creatures on one map share one. Not play-tested."
+status: "BUILT 2026-10-13 on all 84 normal creatures and elites: weapon, armour, stat build, grade, folds and what they pay; and on the 14 shadows: weapon, armour and stat build. Weapons re-spread 2026-10-14 so no two creatures on one map share one. 2026-10-16: grade decides the material, newbie maps are Raw +0 only, no creature wears headgear. Not play-tested."
 owner: vince
-last-updated: 2026-10-14
+last-updated: 2026-10-16
 tags:
   - world-content
 ---
@@ -13,15 +13,23 @@ tags:
 
 ## The rules
 
-- **Every normal creature and elite wears a full set**: a weapon, a head piece, a body piece, shoes and a garment.
+- **Every normal creature and elite wears a full set**: a weapon, a body piece, shoes and a garment. No creature wears
+  headgear (decided 2026-10-16): the headgear items with no 3D model were removed from the game, and a new headgear
+  system with special stats, never worn by a creature, comes later.
   How strong the set is comes from the creature's own grade and folds ([Mob Roster](mob-roster.md)).
 - **Grade and folds are the only difficulty dial.** Level sets a creature's body; the grade and folds of its set
   decide how hard it is for that level. Neither follows its level.
-- **Its grade follows the rarest thing it drops.** A normal creature with no rare material wears Raw; one with an
-  Uncommon material wears F, a Rare one E, an Epic one D, a Legendary one C. An elite wears D for a Rare material,
-  C for an Epic one, B for a Legendary one. The more a creature's drop is worth, the harder it is to take.
+- **Its grade decides what it drops** (decided 2026-10-16). A creature drops ONE material of its own, and its grade
+  sets that material's tier: a normal creature in Raw drops a Common, F an Uncommon, E a Rare, D an Epic, C a
+  Legendary; a normal creature never wears B or A. An elite is never below D — it hits hard, it is tough, and it is
+  meant for a party — and wears D for a Rare, C for an Epic, B for a Legendary. Any creature can be given any grade
+  its kind allows, and its drop follows ([Creature Materials](creature-materials.md)).
+- **The newbie maps hold only Raw +0 normal creatures**: Lastline Field 1 and Parley Field 1. A level 1 player in
+  the starting armour takes at least 5 blows from anything there; an F +0 creature would kill them in 2, because F
+  carries everything Raw +10 gives plus the quench that reached F.
 - **Its Ink follows its grade**: F Watery, E Thin, D Faint, C Clear, B Sharp. Raw writes nothing.
-- **Its folds run up to the +10 every grade stops at.** The Raw creatures wear +2 to +10 and every higher grade
+- **Its folds run up to the +10 every grade stops at.** The Raw creatures off the newbie maps wear +2 to +10, the
+  ones on them +0, and every higher grade
   +7 to +10, so a higher grade is never the weaker gear, and the harder a creature is to find the higher it sits:
   a normal creature by how few are alive in the whole world, an elite by how few maps it lives on. Every creature's
   folds are in the tables below.
@@ -42,11 +50,11 @@ tags:
 - **Its grade and its folds each multiply what it pays** ([What a Kill Pays](what-a-kill-pays.md)): its
   experience, its material prices and its saved-character Unsigned. Its stat build and its armour material do not.
 
-| Set | Head | Body | Shoes | Garment |
-| --- | --- | --- | --- | --- |
-| Metal | Iron Helm | Chainmail | Iron Sabatons | Chain Mantle |
-| Leather | Leather Cap | Leather Jerkin | Leather Boots | Hide Cloak |
-| Cloth | Padded Hood | Padded Vest | Woven Shoes | Traveller's Cloak |
+| Set | Body | Shoes | Garment |
+| --- | --- | --- | --- |
+| Metal | Chainmail | Iron Sabatons | Chain Mantle |
+| Leather | Leather Jerkin | Leather Boots | Hide Cloak |
+| Cloth | Padded Vest | Woven Shoes | Traveller's Cloak |
 
 ## The builds
 
@@ -75,12 +83,12 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 
 | Creature | Level | Lives around | Weapon | Armour | Grade and folds | Build | STR / AGI / VIT / INT / DEX / LUK | Pays |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plopling | 1 | Lastline | Warhammer | Cloth | Raw +8 | Breaker | 7 / 3 / 9 / 3 / 5 / 3 | ×1.40 |
-| Flutterby | 2 | Lastline | Greatsword | Leather | Raw +6 | Cleaver | 10 / 3 / 7 / 3 / 3 / 5 | ×1.30 |
-| Squeak | 3 | Lastline | Shuriken | Leather | Raw +8 | Thrower | 4 / 8 / 5 / 3 / 10 / 3 | ×1.40 |
-| Crawlet | 4 | Lastline | Dagger | Metal | Raw +6 | Cutthroat | 8 / 10 / 4 / 3 / 6 / 3 | ×1.30 |
+| Plopling | 1 | Lastline | Warhammer | Cloth | Raw +0 | Breaker | 7 / 3 / 9 / 3 / 5 / 3 | ×1.00 |
+| Flutterby | 2 | Lastline | Greatsword | Leather | Raw +0 | Cleaver | 10 / 3 / 7 / 3 / 3 / 5 | ×1.00 |
+| Squeak | 3 | Lastline | Shuriken | Leather | Raw +0 | Thrower | 4 / 8 / 5 / 3 / 10 / 3 | ×1.00 |
+| Crawlet | 4 | Lastline | Dagger | Metal | Raw +0 | Cutthroat | 8 / 10 / 4 / 3 / 6 / 3 | ×1.00 |
 | Capling | 5 | Old Oak | Sniper | Cloth | Raw +10 | Marksman | 4 / 4 / 3 / 11 / 8 / 6 | ×1.50 |
-| Hisser | 6 | Lastline | Sword | Leather | Raw +8 | Duelist | 9 / 9 / 6 / 4 / 6 / 4 | ×1.40 |
+| Hisser | 6 | Lastline | Sword | Leather | Raw +0 | Duelist | 9 / 9 / 6 / 4 / 6 / 4 | ×1.00 |
 | Blinkbat | 8 | Gemmara | Katar | Leather | E +7 | Assassin | 10 / 10 / 4 / 4 / 4 / 10 | ×2.03 |
 | Mossnail | 10 | Old Oak | Staff | Metal | Raw +10 | Mage | 5 / 4 / 8 / 15 / 8 / 4 | ×1.50 |
 | Tarantix | 11 | Gemmara | Fist | Leather | Raw +2 | Striker | 13 / 9 / 5 / 8 / 8 / 5 | ×1.10 |
@@ -167,13 +175,13 @@ The six numbers are the shares of STR, AGI, VIT, INT, DEX and LUK the stat budge
 
 ## The shadows
 
-Every shadow wears a full set — head, body, shoes and garment — of one material, at grade A +9 with Sharp Ink. Its
+Every shadow wears a full set — body, shoes and garment — of one material, at grade A +9 with Sharp Ink. Its
 weapon is the one it stands for, and its stats are spent in that weapon's build.
 
 **Its armour is the material that buys what its weapon's mastery raises:** leather (attack speed and evasion) for a
 weapon whose mastery raises attack speed or evasion; otherwise cloth (magic defence and mana) for one whose mastery
 raises mana or magic attack; otherwise metal (defence and health). Asterion is the one exception: the Fist shadow
-wears metal and takes the Fist's Guardian build (decided 2026-10-13). Between them the fourteen wear all twelve
+wears metal and takes the Fist's Guardian build (decided 2026-10-13). Between them the fourteen wear all nine
 armour pieces.
 
 | Shadow | Level | Weapon | Armour | Build | STR / AGI / VIT / INT / DEX / LUK |
@@ -195,11 +203,12 @@ armour pieces.
 
 ## Still open
 
-- **The grade ladder and the fold shares are first guesses**: which grade each drop tier gives, and how many
+- **The fold shares are first guesses**: how many
   folds being hard to find adds. The folds each creature wears were set on a smaller limit per grade and scaled to
   +10; a rule of their own for the +10 limit is to be decided.
 - **A low-level creature in high-grade gear is far harder for its level than a high-level one in the same gear**,
-  because a piece's base and its folds give the same amount at every level. Gloop King, level 8, wears C +9.
+  because a piece's base and its folds give the same amount at every level. Gloop King, level 8, wears C +9 —
+  which is why it no longer lives on a newbie map.
 - **A weapon's skill is rolled fresh each life**, and what a creature pays does not count it.
 - **Each armour material is a first reading of the creature's portrait, and each build's shares are first guesses.**
 

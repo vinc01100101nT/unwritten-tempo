@@ -5,7 +5,6 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 Keep the always-on list SHORT (~10). A line earns its place only if it changes what I do on almost ANY task; a fact that matters only inside one area belongs in that area's sub-index, and a rule already enforced by a check or written in CLAUDE.md does not need a second home here.
 
 ## Top-level (always-on)
-- [Clock command on Windows](clock-command-on-windows.md) — `TZ=Asia/Manila date` silently prints UTC here; the GMT+8 reply timestamps use `TZ=UTC-8 date`.
 - [THE FOUR — anti-invention protocol](the-five-anti-invention.md) — an invention disguises itself as continuity: the contract must list what STAYS, a meaning-branch is a design decision, a question gets an answer NOT an edit, ask once then decide. No "new words" report section (removed 2026-10-04).
 - [Never widen a snapshot into a verdict](never-widen-a-snapshot-into-a-verdict.md) — today's files prove today only; if the user tested it working, believe them and hunt what CHANGED — never say "it never worked / can't be done".
 - [Delete scaffolding EVERY response](delete-scaffolding-every-response.md) — probes, before-copies, copied checkers, /tmp files: delete once the edit is verified, same reply; never carry them over.

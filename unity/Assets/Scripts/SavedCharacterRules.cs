@@ -58,8 +58,9 @@ public static class SavedCharacterRules
                                  gearGrade, gearFolds)
             : 0;
 
-    /// <summary>How many of its creature's ordinary material a saved never-fights character of <paramref name="tier"/>
-    /// hands over with the gold. Each is worth two kills, so gold and material together come to 10, 20 or 30.</summary>
+    /// <summary>How many COMMON pieces' worth of its creature's material a saved never-fights character of
+    /// <paramref name="tier"/> hands over with the gold. Each Common piece is worth two kills, so gold and material
+    /// together come to 10, 20 or 30. <see cref="RescuePieces"/> turns that worth into pieces of the material's real tier.</summary>
     public static int RescueMaterials(SavedBehaviour behaviour, GoldTier tier)
     {
         if (behaviour != SavedBehaviour.NeverFights) return 0;
@@ -70,6 +71,19 @@ public static class SavedCharacterRules
             case GoldTier.Wealthy: return 9;
             default: return 0;
         }
+    }
+
+    /// <summary>How many pieces of a <paramref name="materialTier"/> material that worth comes to: the whole pieces, plus
+    /// one more on <paramref name="roll0To9999"/> below the remainder in ten-thousandths, so the average is exactly the worth
+    /// at every tier. A Wealthy rescue (9 Common's worth) gives 9 Common, or 1 Uncommon + an 80% chance of a 2nd, or a
+    /// 36% / 9% / 1.8% chance of one Rare / Epic / Legendary.</summary>
+    public static int RescuePieces(SavedBehaviour behaviour, GoldTier tier, Rarity materialTier, int roll0To9999)
+    {
+        int common = RescueMaterials(behaviour, tier);
+        if (common <= 0) return 0;
+        long parts = (long)common * CreatureMaterials.SellValue(1, Rarity.Common) * 10000
+                     / CreatureMaterials.SellValue(1, materialTier);
+        return (int)(parts / 10000) + (roll0To9999 < parts % 10000 ? 1 : 0);
     }
 
     /// <summary>The kind whose drops a rebel from a creature of <paramref name="kind"/> gives up: one kind up.</summary>

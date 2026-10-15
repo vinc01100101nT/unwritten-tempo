@@ -2987,7 +2987,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         TradeAnswered(version, true);
     }
 
-    // "Bought 10 Healing Potion, sold 23 Blinkbat Wing — you got 6,316u." One sentence for the whole cart.
+    // "Bought 10 Healing Potion, sold 23 Plopling Jelly — you got 6,316u." One sentence for the whole cart.
     static string TradeSentence(ShopCart.Plan plan)
     {
         var sb = new System.Text.StringBuilder(128);
@@ -3249,7 +3249,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (RefusedByKeeper(c)) return;
         var e = c.Bag[index];
         if (e.instance != null && (e.instance.copyId ?? "") != (expectedCopyId ?? "")) return;
-        if (e.def.category == ItemCategory.Quest) { KeeperSaid("That cannot be stored.", false); return; }
+        if (!e.def.CanBeStored) { KeeperSaid("That cannot be stored.", false); return; }
         if (StorageMoves.InFlight(ServerCharacterId)) { KeeperSaid("Your last storage move is still being written down.", false, "Still saving your last move"); return; }
         if (!serverStorage.Known) { KeeperSaid("Storage is not open.", false); return; }
         var piece = e.instance;
@@ -3389,9 +3389,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         if (!StillTheSameStack(c, index, expectedItemId)) return;
         var e = c.Bag[index];
 
-        // THE ONE THING THAT IS NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
+        // AN UNDROPPABLE ITEM IS NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
         // A screen can be got round; this is the answer that counts.
-        if (e.def.category == ItemCategory.Quest) return;
+        if (!e.def.CanBeDropped) return;
         var owing = c.Quests.FirstRunOwing(e.def.id);
         if (owing != null) { TellOwner(StillNeeded(e.def, owing)); return; }
 
@@ -4317,6 +4317,9 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             bodyHead = pose.gameObject.AddComponent<HeadSocket>();
             bodyHead.ShowHair(hair);
             bodyHead.ShowHeadgearOf(bodyGear);
+            // …and the Garment in that same worn set on their back.
+            // perf-ok: once per body built.
+            pose.gameObject.AddComponent<GarmentSocket>().ShowGarmentOf(bodyGear);
 
             // AND THE NUMBERS, on the body that shows them. Marked as a watched copy first thing: this body does
             // not get to decide it died or how hard it was hit — both arrive from the server like every other fact

@@ -37,7 +37,6 @@ MonoBehaviour:
   luk: 12
   startingGear:
   - {fileID: 11400000, guid: f1204015c4ba457f8ab0049fecae8d55, type: 2}
-  - {fileID: 11400000, guid: e3a27de86c33e4e32bd605bef7f5cb0e, type: 2}
   - {fileID: 11400000, guid: 34d740017b2be40bf95191662e240a7c, type: 2}
   - {fileID: 11400000, guid: 7264280a7423842d7987bb0064642107, type: 2}
   - {fileID: 11400000, guid: 2faa1bf0080b949219fa599a50af627b, type: 2}
@@ -58,7 +57,6 @@ MonoBehaviour:
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  material: {fileID: 11400000, guid: 8621ecd009f4477c9726e56c84fdab48, type: 2}
-  rareMaterial: {fileID: 11400000, guid: 8ead3862e19e47d0a1a1ef467b656e90, type: 2}
+  material: {fileID: 11400000, guid: 8ead3862e19e47d0a1a1ef467b656e90, type: 2}
   itemDropNames: []
   itemDropChances: []

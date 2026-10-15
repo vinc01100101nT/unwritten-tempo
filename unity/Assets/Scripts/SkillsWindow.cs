@@ -286,6 +286,7 @@ public class SkillsWindow : MonoBehaviour
         var tile = UiKit.Round(UiKit.Img("Tile", node.transform, learned ? SkillSymbol.ColorFor(def) : LockedTile), 3);
         tile.raycastTarget = false;
         TopLeft(tile.rectTransform, 4, 3, TileSize, TileSize);
+        tile.gameObject.AddComponent<DragFace>();   // dragging this skill carries its badge, not the whole card
         var sym = UiKit.Label("Symbol", tile.transform, def.Symbol, 12, FontStyle.Bold, TextAnchor.MiddleCenter);
         UiKit.Fill(sym.rectTransform, Vector2.zero, Vector2.zero);
         sym.color = learned ? UiKit.TextOnDim : LockedText; sym.raycastTarget = false;

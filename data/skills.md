@@ -33,6 +33,7 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | — | Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +15 MP regen for **5s** |
 | — | Minor Healing Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **50** HP |
 | — | Minor Mana Draught *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +5 MP regen for **5s** |
+| — | Newbie Potion *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Heals **30** HP |
 | — | Sage Stew *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | +**15%** magic attack for **300s** |
 | — | Seismic Armor Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your armor is **Earth** (level 1) for **5:00** |
 | — | Seismic Elemental Converter *(unpublished)* | passive | MP **0**  CD **0s**  Instant | Passive | Your weapon strikes as **Earth** for **5:00** |

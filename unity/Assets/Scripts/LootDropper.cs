@@ -152,16 +152,12 @@ public class LootDropper : MonoBehaviour
             if (find != null) Won(find, 1, null, findChance);
         }
 
-        // THE MATERIALS ONLY THIS CREATURE DROPS. A rebel rolls them AGAIN at the creature's own chances — its own kind,
-        // never the one-kind-up its grade loot above is lifted to, or a normal creature's rarest material would fall
+        // THE MATERIAL ONLY THIS CREATURE DROPS. A rebel rolls it AGAIN at the creature's own chances — its own kind,
+        // never the one-kind-up its grade loot above is lifted to, or a normal creature's rare material would fall
         // fifty times as often from its rebel.
         pileItems.Clear();
         pileCounts.Clear();
-        if (def != null)
-        {
-            RollOwnMaterial(def.material, health.kind);
-            RollOwnMaterial(def.rareMaterial, health.kind);
-        }
+        if (def != null) RollOwnMaterial(def.material, health.kind);
 
         // NOTHING AN ELITE DROPS IS AUTO-LOOTED: all of it falls, so an elite is hunted by hand and never farmed by
         // standing in its field with auto-combat on.
@@ -177,7 +173,7 @@ public class LootDropper : MonoBehaviour
         if (material != null && units > 0) Won(material, units, null, 1f);
     }
 
-    // Piles that go down APART, one entry each — an elite's ordinary material. Filled and emptied inside one death.
+    // Piles that go down APART, one entry each — a grade-D elite's two Rare. Filled and emptied inside one death.
     static readonly List<Item> pileItems = new List<Item>(8);
     static readonly List<int> pileCounts = new List<int>(8);
 

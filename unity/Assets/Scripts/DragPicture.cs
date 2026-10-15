@@ -4,8 +4,9 @@ using UnityEngine.UI;
 /// <summary>
 /// THE PICTURE THAT FOLLOWS THE CURSOR WHILE ANYTHING IS DRAGGED — a box in the bag or storage, a row in the shop or the
 /// station, a hotbar cell, a skill out of the Skills window. One look for every drag in the game: a see-through copy of
-/// exactly what was grabbed (its icon, name, count, price — whatever it shows), with the thing left behind dimmed so it
-/// reads as lifted out of its place. Every drag handler calls <see cref="Begin"/>, <see cref="Move"/> and
+/// THE THING'S PICTURE — the part of what was grabbed marked <see cref="DragFace"/> (an item's picture on a shop row, a
+/// skill's badge on its Skills-window card), or the whole of it when nothing is marked (a bag box, a hotbar cell, which
+/// are their picture) — with the thing left behind dimmed so it reads as lifted out of its place. Every drag handler calls <see cref="Begin"/>, <see cref="Move"/> and
 /// <see cref="End"/>; none builds a picture of its own, so a new kind of drag gets this look by calling the same three.
 ///
 /// <para><b>The copy is a picture and nothing else.</b> It is made under a switched-off holder, so none of the copied
@@ -21,7 +22,8 @@ public static class DragPicture
     public static GameObject Begin(RectTransform source, Canvas canvas, Vector2 screenPos)
     {
         if (source == null || canvas == null) return null;
-        var copy = Copy(source, canvas.transform);
+        var face = source.GetComponentInChildren<DragFace>(true);
+        var copy = Copy(face != null && face.gameObject.activeInHierarchy ? (RectTransform)face.transform : source, canvas.transform);
         UiLayers.Raise(copy.transform, UiLayers.Layer.DragGhost);
         Dim(source, true);
         Move(copy, screenPos);
@@ -84,3 +86,7 @@ public static class DragPicture
         return copy;
     }
 }
+
+/// <summary>Marks the part of a dragged thing that IS its picture — what <see cref="DragPicture"/> carries under the
+/// cursor instead of the whole row or card it sits on.</summary>
+public class DragFace : MonoBehaviour { }

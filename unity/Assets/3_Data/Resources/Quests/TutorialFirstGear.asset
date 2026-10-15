@@ -15,8 +15,8 @@ MonoBehaviour:
   id: tutorial.first-gear
   title: Your First Gear
   category: 0
-  description: Gunnar the smith shows you how to fold the gear you arrived in. A fold
-    makes a piece worth more, and the first time you play this your folds are free.
+  description: Gunnar the smith shows you how to fold the Sword you arrived with. A
+    fold makes a piece worth more, and the first time you play this your folds are free.
   unlockCondition: 1
   steps:
   - id: talk-gunnar
@@ -45,38 +45,6 @@ MonoBehaviour:
       text: Pick your Sword.
     - spot: 6
       text: Fold it. What a fold costs is on the button.
-  - id: fold-chainmail
-    text: Fold your Chainmail five times.
-    objective:
-      kind: 2
-      townspersonId: 
-      itemId: item.chainmail
-      folds: 5
-    hints:
-    - spot: 3
-      text: Go back to the smith's list.
-    - spot: 2
-      text: Folding makes a piece stronger, one fold at a time.
-    - spot: 5
-      text: Pick your Chainmail.
-    - spot: 6
-      text: Fold it. What a fold costs is on the button.
-  - id: fold-sabatons
-    text: Fold your Iron Sabatons five times.
-    objective:
-      kind: 2
-      townspersonId: 
-      itemId: item.iron-sabatons
-      folds: 5
-    hints:
-    - spot: 3
-      text: Go back to the smith's list.
-    - spot: 2
-      text: Folding makes a piece stronger, one fold at a time.
-    - spot: 5
-      text: Pick your Iron Sabatons.
-    - spot: 6
-      text: Fold it. What a fold costs is on the button.
   - id: wear-sword
     text: Wear your Sword.
     objective:
@@ -89,27 +57,3 @@ MonoBehaviour:
       text: Open your bag with B.
     - spot: 7
       text: Double-click your Sword to wear it.
-  - id: wear-chainmail
-    text: Wear your Chainmail.
-    objective:
-      kind: 3
-      townspersonId: 
-      itemId: item.chainmail
-      folds: 1
-    hints:
-    - spot: 0
-      text: Open your bag with B.
-    - spot: 7
-      text: Double-click your Chainmail to wear it.
-  - id: wear-sabatons
-    text: Wear your Iron Sabatons.
-    objective:
-      kind: 3
-      townspersonId: 
-      itemId: item.iron-sabatons
-      folds: 1
-    hints:
-    - spot: 0
-      text: Open your bag with B.
-    - spot: 7
-      text: Double-click your Iron Sabatons to wear them.

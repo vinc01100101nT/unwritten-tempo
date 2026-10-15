@@ -1,5 +1,5 @@
 ---
-status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial), the first-gear tutorial reworked 2026-10-13 (it folds the gear a character arrives in); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
+status: "BUILT 2026-10-04, tutorials reworked 2026-10-07 (unlock conditions, free first runs, replays, the healing tutorial), the first-gear tutorial reworked 2026-10-16 (it folds only the Sword a character arrives with); not yet play-tested. Three quests exist: two tutorials and Torvald's Ploplings."
 owner: vince
 last-updated: 2026-10-14
 tags:
@@ -57,9 +57,10 @@ Every quest that is not offered by somebody has an **Unlock Condition** — the 
   folds**, so gear already folded cannot finish it at once. **Play refuses to start a replay unless the character
   holds, worn or carried, a Raw unfolded copy of every piece it folds**, and says which piece is missing; the first
   fold of such a copy makes it the replay's copy.
-- A new character arrives **wearing a Sword, a Chainmail and Iron Sabatons** — Raw, unfolded, Common, with no
-  trademark and no word — and carrying nothing: no items, no Unsigned (`StarterKit`). The tutorials give the first folds
-  and the first potions free.
+- A new character arrives **wearing a Raw +0 Sword and a Raw +5 Chainmail, Iron Sabatons and Chain Mantle** —
+  Common, with no trademark and no word — and carrying **100 Newbie Potions**, which can never leave them, and no
+  Unsigned (`StarterKit`). The armour comes folded so a new player survives the newbie maps; the Sword is left at +0 for
+  the crafting tutorial, whose first run's folds are free, as are the healing tutorial's first potions.
 
 ## Play, Show path and requirements
 
@@ -165,11 +166,10 @@ potions are their reward.
 
 ## The crafting tutorial — "Your First Gear"
 
-Unlocks on entering the world. Seven steps: talk to Gunnar the Smith; fold your Sword five times; fold your
-Chainmail five times; fold your Iron Sabatons five times; wear each of the three. The pieces are the ones a new
-character arrives wearing, and the station lists worn pieces beside carried ones, so nothing has to be taken off.
-The first run's fifteen folds are free; a replay's bill is 15 Temper Dust and 630u, and it needs a Raw unfolded
-(+0) copy of each piece.
+Unlocks on entering the world. Three steps: talk to Gunnar the Smith; fold your Sword five times; wear your Sword.
+The Sword is the one a new character arrives wearing, and the station lists worn pieces beside carried ones, so
+nothing has to be taken off. The first run's five folds are free; a replay needs a Raw unfolded (+0) Sword and pays
+for its five folds.
 
 ## The healing tutorial — "Low on Health"
 
@@ -178,8 +178,8 @@ Two steps:
 
 1. **Buy a Minor Healing Potion from a Tool Dealer.** The guide frames the health bar over your head (the red bar is
    your health, the blue bar under it your mana) while the arrows lead to a Tool Dealer, then lights the
-   potion's row in the shop's For sale list, then the "how many?" box, then Confirm once the potion is in the cart. On the first run the potions it takes to get back to 80% cost nothing — 2 for a level-1
-   character in the +5 starter set, who comes back on 7 of 76 health.
+   potion's row in the shop's For sale list, then the "how many?" box, then Confirm once the potion is in the cart. On the first run the potions it takes to get back to 80% cost nothing — 5 for a level-1
+   character in the starting set with an even stat spread, who has 301 health and comes back on a tenth of it.
 2. **Drink potions until your health is back to 80%.** The guide lights the potion in your bag; double-click drinks.
 
 A character who signs out from the death window without pressing "Return to last saved point" comes back on a tenth of

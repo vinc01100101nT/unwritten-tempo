@@ -41,21 +41,25 @@ player as an enemy — a mob, a rebel, and later a player in PvP — is an enemy
 
 - **A mob's death pays no Unsigned.** Normals, elites and shadows all stop paying Unsigned on death.
 - **A never-fights character pays the player who saved it**, the moment it appears: Unsigned, and some of its creature's
-  own ordinary material. Only a normal can become one.
+  own material. Only a normal can become one.
 - **The Unsigned is worth a number of kills of that creature**, at 10u a level of the level its file gives it — never
   the level it grew to in the fight — times its gear's grade multiplier and fold multiplier ([What a Kill Pays](what-a-kill-pays.md)). The saver's run of kills
   multiplies the Unsigned, as it does a kill's experience.
 - **The material goes into the saver's bag**, and whatever the bag has no room for falls where the character stands,
   kept for the saver like any drop. The run of kills does not multiply it.
+- **The material is counted in Common pieces' worth** (the Material column below), handed over in the creature's real
+  tier: the whole pieces that worth buys, plus one more on a chance equal to the remainder, so it is worth the same at
+  every tier. A Wealthy rescue gives 9 Common, or 1 Uncommon and an 80% chance of a 2nd, or a 36% / 9% / 1.8% chance
+  of one Rare / Epic / Legendary; an Ordinary one 3 Common, a 60% chance of an Uncommon, or a 12% / 3% / 0.6% chance.
 
-| Tier | Unsigned worth | Material | Together worth | Characters |
+| Tier | Unsigned worth | Material (Common pieces' worth) | Together worth | Characters |
 | --- | --- | --- | --- | --- |
 | **Wealthy** | 12 kills | 9 | 30 kills | Princess, Noble, Sultan, SultanWhite |
 | **Helpless** | 8 kills | 6 | 20 kills | Child, Boy, EggBoy, EggGirl, OldMan, OldManCap, OldManStraw, OldWoman |
 | **Ordinary** | 4 kills | 3 | 10 kills | Villager, VillagerBlond, VillagerCap, VillagerGreen, VillagerRedCap, VillagerSpiky, Woman, Eskimo, Hunter, Inspector, ManGreen |
 
 **What that comes to:** a normal kill turns back (15%) into one of the 23 never-fights characters out of the 73 a normal
-can become — 1 kill in about 21. One ordinary material sells for two kills' worth, so over many kills a rescue adds
+can become — 1 kill in about 21. One Common piece's worth is two kills' worth, so over many kills a rescue adds
 about 0.8 of a kill's worth to every kill: roughly 44% of all the Unsigned hunting earns, arriving as rare large sums,
 with selling what creatures drop as the larger part. Prices and chances: [Creature Materials](creature-materials.md).
 

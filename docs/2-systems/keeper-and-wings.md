@@ -66,7 +66,8 @@ One storage per **account**: every character of the account opens the same one.
 - It holds **600 things** (`KeeperMath.StorageLimit`). A stack of one item is one thing however many it holds; each
   piece of gear is one thing. Storing more of a stack already stored always fits.
 - A piece of gear goes in and comes out as itself: its folds, grade, written stats, cards, trademark and its own id.
-- **Quest items cannot be stored** ("That cannot be stored."); the window does not offer them.
+- **An item tagged Unstorable cannot be stored** ("That cannot be stored."); the window does not offer it. The tag is
+  the one rule (decided 2026-10-16); the Newbie Potion carries it.
 - The page lists what is stored — **Take 1** / **Take all** for a stack, **Take** for a piece — then what is carried —
   **Store 1** / **Store all**, or **Store**.
 - One move at a time per character. A second press while one is still being written down is answered "Your last storage

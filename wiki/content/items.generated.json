@@ -11,34 +11,6 @@
     ],
     "items": [
         {
-            "id": "item.abyss-maw-fang",
-            "name": "Abyss Maw Fang",
-            "description": "Dropped only by Abyss Maw.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 5198,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Abyss Maw",
-                    "level": 99,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.abyss-maw-heart",
             "name": "Abyss Maw Heart",
             "description": "Dropped only by Abyss Maw.",
@@ -55,13 +27,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 32484,
+            "sellsFor": 129938,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Abyss Maw",
                     "level": 99,
-                    "chance": "50%",
+                    "chance": "100%",
                     "count": "1"
                 }
             ]
@@ -137,34 +109,6 @@
             "droppedBy": []
         },
         {
-            "id": "item.autumn-stalk-leaf",
-            "name": "Autumn Stalk Leaf",
-            "description": "Dropped only by Autumn Stalk.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 945,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Autumn Stalk",
-                    "level": 15,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.autumn-stalk-seed",
             "name": "Autumn Stalk Seed",
             "description": "Dropped only by Autumn Stalk.",
@@ -181,13 +125,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 118125,
+            "sellsFor": 472500,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
-                    "chance": "5%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -215,43 +159,43 @@
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -273,42 +217,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 31900,
+            "sellsFor": 127600,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Bandit Boss",
                     "level": 22,
-                    "chance": "20%",
+                    "chance": "50%",
                     "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.bandit-bosss-mask",
-            "name": "Bandit Boss's Mask",
-            "description": "Dropped only by Bandit Boss.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1276,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Bandit Boss",
-                    "level": 22,
-                    "chance": "100%",
-                    "count": "4–7"
                 }
             ]
         },
@@ -357,41 +273,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 19238,
+            "sellsFor": 76950,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Blazeskull",
                     "level": 76,
                     "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.blazeskull-jaw",
-            "name": "Blazeskull Jaw",
-            "description": "Dropped only by Blazeskull.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3078,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Blazeskull",
-                    "level": 76,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -413,7 +301,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2025,
+            "sellsFor": 8100,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -421,62 +309,6 @@
                     "level": 8,
                     "chance": "2%",
                     "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.blinkbat-wing",
-            "name": "Blinkbat Wing",
-            "description": "Dropped only by Blinkbat.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 324,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Blinkbat",
-                    "level": 8,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.blood-ronin-blade-shard",
-            "name": "Blood Ronin Blade Shard",
-            "description": "Dropped only by Blood Ronin.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3150,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Blood Ronin",
-                    "level": 60,
-                    "chance": "100%",
-                    "count": "4–7"
                 }
             ]
         },
@@ -497,13 +329,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 19688,
+            "sellsFor": 78750,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Blood Ronin",
                     "level": 60,
-                    "chance": "50%",
+                    "chance": "100%",
                     "count": "1"
                 }
             ]
@@ -559,43 +391,43 @@
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oculord",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -666,41 +498,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 10331,
+            "sellsFor": 41325,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Canewick",
                     "level": 38,
                     "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.canewick-stalk",
-            "name": "Canewick Stalk",
-            "description": "Dropped only by Canewick.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1653,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Canewick",
-                    "level": 38,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -756,169 +560,169 @@
                 {
                     "name": "Abyss Maw",
                     "level": 99,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blood Ronin",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Deep Maw",
                     "level": 24,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Elder Stalk",
                     "level": 47,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossgore",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossmaw",
                     "level": 35,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -946,169 +750,169 @@
                 {
                     "name": "Abyss Maw",
                     "level": 99,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blood Ronin",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Deep Maw",
                     "level": 24,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Elder Stalk",
                     "level": 47,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossgore",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossmaw",
                     "level": 35,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -1151,41 +955,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 58800,
+            "sellsFor": 235200,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Chomper",
                     "level": 48,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.chomper-tooth",
-            "name": "Chomper Tooth",
-            "description": "Dropped only by Chomper.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2352,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Chomper",
-                    "level": 48,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -1778,7 +1554,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 104,
+            "sellsFor": 80,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -1840,43 +1616,43 @@
                 {
                     "name": "Blood Ronin",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -1898,42 +1674,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 7875,
+            "sellsFor": 31500,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Deep Maw",
                     "level": 24,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.deep-maw-tongue",
-            "name": "Deep Maw Tongue",
-            "description": "Dropped only by Deep Maw.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1260,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Deep Maw",
-                    "level": 24,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },
@@ -2022,34 +1770,6 @@
             ]
         },
         {
-            "id": "item.elder-stalk-bark",
-            "name": "Elder Stalk Bark",
-            "description": "Dropped only by Elder Stalk.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2468,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Elder Stalk",
-                    "level": 47,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.elder-stalk-heartwood",
             "name": "Elder Stalk Heartwood",
             "description": "Dropped only by Elder Stalk.",
@@ -2066,13 +1786,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 15422,
+            "sellsFor": 61688,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Elder Stalk",
                     "level": 47,
-                    "chance": "50%",
+                    "chance": "100%",
                     "count": "1"
                 }
             ]
@@ -2122,41 +1842,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 497000,
+            "sellsFor": 1988000,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Emberlurk",
                     "level": 71,
                     "chance": "0.1%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.emberlurk-scale",
-            "name": "Emberlurk Scale",
-            "description": "Dropped only by Emberlurk.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3976,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Emberlurk",
-                    "level": 71,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -2712,43 +2404,43 @@
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Deep Maw",
                     "level": 24,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -2958,7 +2650,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 52,
+            "sellsFor": 40,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -3227,34 +2919,6 @@
             ]
         },
         {
-            "id": "item.frost-ronin-blade-shard",
-            "name": "Frost Ronin Blade Shard",
-            "description": "Dropped only by Frost Ronin.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1733,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Frost Ronin",
-                    "level": 33,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.frost-ronin-crest",
             "name": "Frost Ronin Crest",
             "description": "Dropped only by Frost Ronin.",
@@ -3271,13 +2935,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 10828,
+            "sellsFor": 43313,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Frost Ronin",
                     "level": 33,
-                    "chance": "50%",
+                    "chance": "100%",
                     "count": "1"
                 }
             ]
@@ -3327,41 +2991,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 23034,
+            "sellsFor": 92138,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Frostskull",
                     "level": 91,
                     "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.frostskull-shard",
-            "name": "Frostskull Shard",
-            "description": "Dropped only by Frostskull.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3686,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Frostskull",
-                    "level": 91,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -3439,68 +3075,12 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 11600,
+            "sellsFor": 46400,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Gloop King",
                     "level": 8,
-                    "chance": "20%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.gloop-kings-jelly",
-            "name": "Gloop King's Jelly",
-            "description": "Dropped only by Gloop King.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 464,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Gloop King",
-                    "level": 8,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
-            "id": "item.glowcoil-gland",
-            "name": "Glowcoil Gland",
-            "description": "Dropped only by Glowcoil.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 4312,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Glowcoil",
-                    "level": 88,
                     "chance": "50%",
                     "count": "1"
                 }
@@ -3523,41 +3103,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 107800,
+            "sellsFor": 431200,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Glowcoil",
                     "level": 88,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.gnasher-fin",
-            "name": "Gnasher Fin",
-            "description": "Dropped only by Gnasher.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2828,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Gnasher",
-                    "level": 65,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -3579,7 +3131,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 17672,
+            "sellsFor": 70688,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -3607,42 +3159,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 63800,
+            "sellsFor": 255200,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Golden Bandit",
                     "level": 44,
-                    "chance": "20%",
+                    "chance": "50%",
                     "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.golden-bandits-mask",
-            "name": "Golden Bandit's Mask",
-            "description": "Dropped only by Golden Bandit.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2552,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Golden Bandit",
-                    "level": 44,
-                    "chance": "100%",
-                    "count": "4–7"
                 }
             ]
         },
@@ -3738,34 +3262,6 @@
             "droppedBy": []
         },
         {
-            "id": "item.great-croak-skin",
-            "name": "Great Croak Skin",
-            "description": "Dropped only by Great Croak.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3465,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Great Croak",
-                    "level": 66,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.great-croak-throat-sac",
             "name": "Great Croak Throat Sac",
             "description": "Dropped only by Great Croak.",
@@ -3782,13 +3278,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 21656,
+            "sellsFor": 86625,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Great Croak",
                     "level": 66,
-                    "chance": "50%",
+                    "chance": "100%",
                     "count": "1"
                 }
             ]
@@ -3858,43 +3354,43 @@
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -3968,41 +3464,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 630000,
+            "sellsFor": 2520000,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Grubble",
                     "level": 90,
                     "chance": "0.1%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.grubble-spine",
-            "name": "Grubble Spine",
-            "description": "Dropped only by Grubble.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 5040,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Grubble",
-                    "level": 90,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4024,41 +3492,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 37975,
+            "sellsFor": 151900,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Grumbear",
                     "level": 31,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.grumbear-pelt",
-            "name": "Grumbear Pelt",
-            "description": "Dropped only by Grumbear.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1519,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Grumbear",
-                    "level": 31,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4255,253 +3695,253 @@
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Great Croak",
                     "level": 66,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Karasu",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -4523,7 +3963,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 168,
+            "sellsFor": 120,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -4600,69 +4040,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 89425,
+            "sellsFor": 357700,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Horngore",
                     "level": 73,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.horngore-tusk",
-            "name": "Horngore Tusk",
-            "description": "Dropped only by Horngore.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3577,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Horngore",
-                    "level": 73,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.hornscale-horn",
-            "name": "Hornscale Horn",
-            "description": "Dropped only by Hornscale.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2065,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Hornscale",
-                    "level": 59,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4684,7 +4068,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2581,
+            "sellsFor": 10325,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -4712,42 +4096,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 116000,
+            "sellsFor": 464000,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "20%",
+                    "chance": "50%",
                     "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.inferno-mask-fragment",
-            "name": "Inferno Mask Fragment",
-            "description": "Dropped only by Inferno Mask.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 4640,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Inferno Mask",
-                    "level": 80,
-                    "chance": "100%",
-                    "count": "4–7"
                 }
             ]
         },
@@ -4768,41 +4124,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 3369,
+            "sellsFor": 13475,
             "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Inky",
                     "level": 77,
                     "chance": "10%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.inky-ink-sac",
-            "name": "Inky Ink Sac",
-            "description": "Dropped only by Inky.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2695,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Inky",
-                    "level": 77,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -4836,196 +4164,6 @@
             ]
         },
         {
-            "id": "item.iron-helm",
-            "name": "Iron Helm",
-            "description": "",
-            "type": "Armor",
-            "slot": "Head",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "Metal",
-            "reach": "",
-            "materialKind": "",
-            "mergesInto": "",
-            "rarity": "",
-            "slotOrder": 0,
-            "materialKindOrder": 0,
-            "cardSlots": 0,
-            "weight": 30,
-            "sellsFor": 5,
-            "materialStep": 0,
-            "droppedBy": [
-                {
-                    "name": "Abyss Maw",
-                    "level": 99,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Blazeskull",
-                    "level": 76,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Blood Ronin",
-                    "level": 60,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Chomper",
-                    "level": 48,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Crawlet",
-                    "level": 4,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Cyclo",
-                    "level": 69,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Deep Maw",
-                    "level": 24,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Elder Stalk",
-                    "level": 47,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Emberlurk",
-                    "level": 71,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Frost Ronin",
-                    "level": 33,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Frostskull",
-                    "level": 91,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Gnasher",
-                    "level": 65,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Grubble",
-                    "level": 90,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Horngore",
-                    "level": 73,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Hornscale",
-                    "level": 59,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Kappi",
-                    "level": 15,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mossgore",
-                    "level": 34,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mossmaw",
-                    "level": 35,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mossnail",
-                    "level": 10,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Rivershell",
-                    "level": 60,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Scaly",
-                    "level": 37,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Asterion, the Light Beyond Night",
-                    "level": 110,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mordane, King Beneath the Waves",
-                    "level": 160,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Orion, the River That Remembers",
-                    "level": 130,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Tharos, the Starbreaker",
-                    "level": 125,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Shellby",
-                    "level": 18,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Sunscale",
-                    "level": 50,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Swampfang",
-                    "level": 80,
-                    "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
             "id": "item.iron-sabatons",
             "name": "Iron Sabatons",
             "description": "",
@@ -5048,169 +4186,169 @@
                 {
                     "name": "Abyss Maw",
                     "level": 99,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blood Ronin",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Deep Maw",
                     "level": 24,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Elder Stalk",
                     "level": 47,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberlurk",
                     "level": 71,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostskull",
                     "level": 91,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gnasher",
                     "level": 65,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Horngore",
                     "level": 73,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hornscale",
                     "level": 59,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossgore",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossmaw",
                     "level": 35,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Scaly",
                     "level": 37,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Asterion, the Light Beyond Night",
                     "level": 110,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mordane, King Beneath the Waves",
                     "level": 160,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sunscale",
                     "level": 50,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Swampfang",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -5232,41 +4370,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 680,
+            "sellsFor": 2719,
             "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Kappi",
                     "level": 15,
                     "chance": "10%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.kappi-dish",
-            "name": "Kappi Dish",
-            "description": "Dropped only by Kappi.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 544,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Kappi",
-                    "level": 15,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -5288,42 +4398,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 19031,
+            "sellsFor": 76125,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Karasu",
                     "level": 58,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.karasu-feather",
-            "name": "Karasu Feather",
-            "description": "Dropped only by Karasu.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3045,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Karasu",
-                    "level": 58,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },
@@ -5350,43 +4432,43 @@
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Chomper",
                     "level": 48,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -5414,527 +4496,253 @@
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Great Croak",
                     "level": 66,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Karasu",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.leather-cap",
-            "name": "Leather Cap",
-            "description": "",
-            "type": "Armor",
-            "slot": "Head",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "Leather",
-            "reach": "",
-            "materialKind": "",
-            "mergesInto": "",
-            "rarity": "",
-            "slotOrder": 0,
-            "materialKindOrder": 0,
-            "cardSlots": 0,
-            "weight": 30,
-            "sellsFor": 5,
-            "materialStep": 0,
-            "droppedBy": [
-                {
-                    "name": "Adder",
-                    "level": 57,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Bandit Boss",
-                    "level": 22,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Blinkbat",
-                    "level": 8,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Burrowbo",
-                    "level": 25,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Coily",
-                    "level": 43,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Digger",
-                    "level": 36,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Emberhoot",
-                    "level": 45,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Emberwyrm",
-                    "level": 46,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Flutterby",
-                    "level": 2,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Gillie",
-                    "level": 17,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Glowcoil",
-                    "level": 88,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Golden Bandit",
-                    "level": 44,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Great Croak",
-                    "level": 66,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Grumbear",
-                    "level": 31,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Hisser",
-                    "level": 6,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Hootie",
-                    "level": 13,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Inky",
-                    "level": 77,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Karasu",
-                    "level": 58,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Lovebite",
-                    "level": 96,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Mudpup",
-                    "level": 23,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Newtie",
-                    "level": 20,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Nightsqueak",
-                    "level": 92,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Octi",
-                    "level": 63,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Oni Tengu",
-                    "level": 92,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Pando",
-                    "level": 21,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Pilfer",
-                    "level": 28,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Rascal",
-                    "level": 14,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Celestia, the Wandering Sky",
-                    "level": 165,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Nysara, the Face Without a Name",
-                    "level": 115,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Riven, the Red Autumn",
-                    "level": 105,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Varkhaz, the Ever-Burning",
-                    "level": 135,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Velmora, the Poisoned Rose",
-                    "level": 150,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Veyra, the Last Petal",
-                    "level": 170,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Skywing",
-                    "level": 87,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Squeak",
-                    "level": 3,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Squirt",
-                    "level": 79,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Sucker",
-                    "level": 78,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Tarantix",
-                    "level": 11,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Toadmaw",
-                    "level": 78,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Viper",
-                    "level": 42,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Webber",
-                    "level": 19,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Wyrmlet",
-                    "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -5962,253 +4770,253 @@
                 {
                     "name": "Adder",
                     "level": 57,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Blinkbat",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberwyrm",
                     "level": 46,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Glowcoil",
                     "level": 88,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Great Croak",
                     "level": 66,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grumbear",
                     "level": 31,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hootie",
                     "level": 13,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inky",
                     "level": 77,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Karasu",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Lovebite",
                     "level": 96,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mudpup",
                     "level": 23,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Newtie",
                     "level": 20,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Octi",
                     "level": 63,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Celestia, the Wandering Sky",
                     "level": 165,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nysara, the Face Without a Name",
                     "level": 115,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Varkhaz, the Ever-Burning",
                     "level": 135,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Velmora, the Poisoned Rose",
                     "level": 150,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Sucker",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tarantix",
                     "level": 11,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wyrmlet",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -6370,41 +5178,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 117600,
+            "sellsFor": 470400,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Lovebite",
                     "level": 96,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.lovebite-petal",
-            "name": "Lovebite Petal",
-            "description": "Dropped only by Lovebite.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 4704,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Lovebite",
-                    "level": 96,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -6559,34 +5339,6 @@
             ]
         },
         {
-            "id": "item.mossgore-antler",
-            "name": "Mossgore Antler",
-            "description": "Dropped only by Mossgore.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1190,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Mossgore",
-                    "level": 34,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
             "id": "item.mossgore-moss-tuft",
             "name": "Mossgore Moss Tuft",
             "description": "Dropped only by Mossgore.",
@@ -6603,7 +5355,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 1488,
+            "sellsFor": 5950,
             "materialStep": 2,
             "droppedBy": [
                 {
@@ -6631,42 +5383,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 11484,
+            "sellsFor": 45938,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Mossmaw",
                     "level": 35,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.mossmaw-moss",
-            "name": "Mossmaw Moss",
-            "description": "Dropped only by Mossmaw.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1838,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Mossmaw",
-                    "level": 35,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },
@@ -6715,7 +5439,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 6253,
+            "sellsFor": 25013,
             "materialStep": 3,
             "droppedBy": [
                 {
@@ -6727,32 +5451,25 @@
             ]
         },
         {
-            "id": "item.mudpup-gill",
-            "name": "Mudpup Gill",
-            "description": "Dropped only by Mudpup.",
-            "type": "Misc",
+            "id": "item.newbie-potion",
+            "name": "Newbie Potion",
+            "description": "You just woke up holding these",
+            "type": "Consumable",
             "slot": "",
             "weaponType": "",
             "element": "Neutral",
             "madeOf": "",
             "reach": "",
-            "materialKind": "Creature",
+            "materialKind": "",
             "mergesInto": "",
             "rarity": "Common",
             "slotOrder": 99,
-            "materialKindOrder": 6,
+            "materialKindOrder": 0,
             "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1001,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Mudpup",
-                    "level": 23,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
+            "weight": 0,
+            "sellsFor": 0,
+            "materialStep": 0,
+            "droppedBy": []
         },
         {
             "id": "item.newtie-tail",
@@ -6848,41 +5565,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 2756,
+            "sellsFor": 11025,
             "materialStep": 2,
             "droppedBy": [
                 {
                     "name": "Octi",
                     "level": 63,
                     "chance": "10%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.octi-tentacle",
-            "name": "Octi Tentacle",
-            "description": "Dropped only by Octi.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 2205,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Octi",
-                    "level": 63,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -6904,42 +5593,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 4594,
+            "sellsFor": 18375,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Oculord",
                     "level": 14,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.oculord-pupil",
-            "name": "Oculord Pupil",
-            "description": "Dropped only by Oculord.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 735,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Oculord",
-                    "level": 14,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },
@@ -6960,42 +5621,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 30188,
+            "sellsFor": 120750,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Oni Tengu",
                     "level": 92,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.oni-tengu-mask",
-            "name": "Oni Tengu Mask",
-            "description": "Dropped only by Oni Tengu.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 4830,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Oni Tengu",
-                    "level": 92,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },
@@ -7021,196 +5654,6 @@
             "droppedBy": []
         },
         {
-            "id": "item.padded-hood",
-            "name": "Padded Hood",
-            "description": "",
-            "type": "Armor",
-            "slot": "Head",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "Cloth",
-            "reach": "",
-            "materialKind": "",
-            "mergesInto": "",
-            "rarity": "",
-            "slotOrder": 0,
-            "materialKindOrder": 0,
-            "cardSlots": 0,
-            "weight": 30,
-            "sellsFor": 5,
-            "materialStep": 0,
-            "droppedBy": [
-                {
-                    "name": "Autumn Stalk",
-                    "level": 15,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Bittersweet",
-                    "level": 68,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Bloodshot",
-                    "level": 58,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Canewick",
-                    "level": 38,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Capling",
-                    "level": 5,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Cinder",
-                    "level": 67,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Dewdrop",
-                    "level": 39,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Drizzle",
-                    "level": 74,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Frostcap",
-                    "level": 93,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Frostwick",
-                    "level": 95,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Gloop King",
-                    "level": 8,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Goopie",
-                    "level": 94,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Inferno Mask",
-                    "level": 80,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Iris",
-                    "level": 64,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Moldy",
-                    "level": 72,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Oculord",
-                    "level": 14,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Peeper",
-                    "level": 41,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Plopling",
-                    "level": 1,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Kaelen, the Ember Beneath Snow",
-                    "level": 155,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Morwen, the Last Bloom",
-                    "level": 145,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Seraphine, Before the Dawn",
-                    "level": 120,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Vael, the Moonless Eye",
-                    "level": 140,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Shootling",
-                    "level": 16,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Snapper",
-                    "level": 62,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Venom Gloop",
-                    "level": 95,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Willo",
-                    "level": 54,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Wisp",
-                    "level": 85,
-                    "chance": "2%",
-                    "count": "1"
-                },
-                {
-                    "name": "Wraithmother",
-                    "level": 90,
-                    "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
             "id": "item.padded-vest",
             "name": "Padded Vest",
             "description": "",
@@ -7233,169 +5676,169 @@
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gloop King",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oculord",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -7473,41 +5916,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 34300,
+            "sellsFor": 137200,
             "materialStep": 4,
             "droppedBy": [
                 {
                     "name": "Pilfer",
                     "level": 28,
                     "chance": "0.5%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.pilfer-pouch",
-            "name": "Pilfer Pouch",
-            "description": "Dropped only by Pilfer.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1372,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Pilfer",
-                    "level": 28,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -7550,7 +5965,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 28,
+            "sellsFor": 20,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -7972,7 +6387,7 @@
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "8%",
+                    "chance": "6%",
                     "count": "1"
                 },
                 {
@@ -8032,7 +6447,7 @@
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "8%",
+                    "chance": "6%",
                     "count": "1"
                 },
                 {
@@ -8116,7 +6531,7 @@
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "8%",
+                    "chance": "6%",
                     "count": "1"
                 },
                 {
@@ -8254,7 +6669,7 @@
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "8%",
+                    "chance": "6%",
                     "count": "1"
                 },
                 {
@@ -8386,7 +6801,7 @@
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "8%",
+                    "chance": "6%",
                     "count": "1"
                 },
                 {
@@ -8496,6 +6911,27 @@
                     "count": "1"
                 }
             ]
+        },
+        {
+            "id": "item.red-cape",
+            "name": "Red Cape",
+            "description": "",
+            "type": "Armor",
+            "slot": "Garment",
+            "weaponType": "",
+            "element": "Neutral",
+            "madeOf": "",
+            "reach": "",
+            "materialKind": "",
+            "mergesInto": "",
+            "rarity": "",
+            "slotOrder": 3,
+            "materialKindOrder": 0,
+            "cardSlots": 0,
+            "weight": 0,
+            "sellsFor": 0,
+            "materialStep": 0,
+            "droppedBy": []
         },
         {
             "id": "item.rivershell-carapace",
@@ -8628,43 +7064,43 @@
                 {
                     "name": "Burrowbo",
                     "level": 25,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gloop King",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Golden Bandit",
                     "level": 44,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kappi",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9174,43 +7610,43 @@
                 {
                     "name": "Digger",
                     "level": 36,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Elder Stalk",
                     "level": 47,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Riven, the Red Autumn",
                     "level": 105,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shellby",
                     "level": 18,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Squirt",
                     "level": 79,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9294,43 +7730,43 @@
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossmaw",
                     "level": 35,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Nightsqueak",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oni Tengu",
                     "level": 92,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pilfer",
                     "level": 28,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9358,43 +7794,43 @@
                 {
                     "name": "Cyclo",
                     "level": 69,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gillie",
                     "level": 17,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Great Croak",
                     "level": 66,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rascal",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Orion, the River That Remembers",
                     "level": 130,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Skywing",
                     "level": 87,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9480,7 +7916,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 84,
+            "sellsFor": 60,
             "materialStep": 1,
             "droppedBy": [
                 {
@@ -9542,43 +7978,43 @@
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Coily",
                     "level": 43,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossnail",
                     "level": 10,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Toadmaw",
                     "level": 78,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9732,43 +8168,43 @@
                 {
                     "name": "Blazeskull",
                     "level": 76,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Emberhoot",
                     "level": 45,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frost Ronin",
                     "level": 33,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Rivershell",
                     "level": 60,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Veyra, the Last Petal",
                     "level": 170,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -9935,7 +8371,7 @@
                 {
                     "name": "Crawlet",
                     "level": 4,
-                    "chance": "78%",
+                    "chance": "60%",
                     "count": "1"
                 },
                 {
@@ -9995,7 +8431,7 @@
                 {
                     "name": "Flutterby",
                     "level": 2,
-                    "chance": "78%",
+                    "chance": "60%",
                     "count": "1"
                 },
                 {
@@ -10079,7 +8515,7 @@
                 {
                     "name": "Hisser",
                     "level": 6,
-                    "chance": "84%",
+                    "chance": "60%",
                     "count": "1"
                 },
                 {
@@ -10217,7 +8653,7 @@
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "84%",
+                    "chance": "60%",
                     "count": "1"
                 },
                 {
@@ -10349,7 +8785,7 @@
                 {
                     "name": "Squeak",
                     "level": 3,
-                    "chance": "84%",
+                    "chance": "60%",
                     "count": "1"
                 },
                 {
@@ -10687,42 +9123,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 636188,
+            "sellsFor": 2544750,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Toadmaw",
                     "level": 78,
-                    "chance": "5%",
+                    "chance": "10%",
                     "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.toadmaw-wart",
-            "name": "Toadmaw Wart",
-            "description": "Dropped only by Toadmaw.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 5090,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Toadmaw",
-                    "level": 78,
-                    "chance": "100%",
-                    "count": "4–7"
                 }
             ]
         },
@@ -10770,169 +9178,169 @@
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gloop King",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oculord",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -10984,34 +9392,6 @@
             ]
         },
         {
-            "id": "item.venom-gloop-core",
-            "name": "Venom Gloop Core",
-            "description": "Dropped only by Venom Gloop.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 6199,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Venom Gloop",
-                    "level": 95,
-                    "chance": "100%",
-                    "count": "4–7"
-                }
-            ]
-        },
-        {
             "id": "item.venom-gloop-eye",
             "name": "Venom Gloop Eye",
             "description": "Dropped only by Venom Gloop.",
@@ -11028,13 +9408,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 774844,
+            "sellsFor": 3099375,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Venom Gloop",
                     "level": 95,
-                    "chance": "5%",
+                    "chance": "10%",
                     "count": "1"
                 }
             ]
@@ -11090,43 +9470,43 @@
                 {
                     "name": "Abyss Maw",
                     "level": 99,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bandit Boss",
                     "level": 22,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Viper",
                     "level": 42,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Webber",
                     "level": 19,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -11154,43 +9534,43 @@
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Grubble",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Karasu",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Mossgore",
                     "level": 34,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Pando",
                     "level": 21,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Tharos, the Starbreaker",
                     "level": 125,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -11548,34 +9928,6 @@
             ]
         },
         {
-            "id": "item.webber-silk",
-            "name": "Webber Silk",
-            "description": "Dropped only by Webber.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 1064,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Webber",
-                    "level": 19,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
             "id": "item.webber-spinneret",
             "name": "Webber Spinneret",
             "description": "Dropped only by Webber.",
@@ -11592,41 +9944,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 133000,
+            "sellsFor": 532000,
             "materialStep": 5,
             "droppedBy": [
                 {
                     "name": "Webber",
                     "level": 19,
                     "chance": "0.1%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.willo-ember",
-            "name": "Willo Ember",
-            "description": "Dropped only by Willo.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3024,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Willo",
-                    "level": 54,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -11648,7 +9972,7 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 378000,
+            "sellsFor": 1512000,
             "materialStep": 5,
             "droppedBy": [
                 {
@@ -11676,41 +10000,13 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 23109,
+            "sellsFor": 92438,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Wisp",
                     "level": 85,
                     "chance": "2%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.wisp-light",
-            "name": "Wisp Light",
-            "description": "Dropped only by Wisp.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 3698,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Wisp",
-                    "level": 85,
-                    "chance": "50%",
                     "count": "1"
                 }
             ]
@@ -11759,169 +10055,169 @@
                 {
                     "name": "Autumn Stalk",
                     "level": 15,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bittersweet",
                     "level": 68,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Bloodshot",
                     "level": 58,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Canewick",
                     "level": 38,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Capling",
                     "level": 5,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Cinder",
                     "level": 67,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Dewdrop",
                     "level": 39,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Drizzle",
                     "level": 74,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostcap",
                     "level": 93,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Frostwick",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Gloop King",
                     "level": 8,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Goopie",
                     "level": 94,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Inferno Mask",
                     "level": 80,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Iris",
                     "level": 64,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Moldy",
                     "level": 72,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Oculord",
                     "level": 14,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Peeper",
                     "level": 41,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Plopling",
                     "level": 1,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Kaelen, the Ember Beneath Snow",
                     "level": 155,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Morwen, the Last Bloom",
                     "level": 145,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Seraphine, Before the Dawn",
                     "level": 120,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Vael, the Moonless Eye",
                     "level": 140,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Shootling",
                     "level": 16,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Snapper",
                     "level": 62,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Venom Gloop",
                     "level": 95,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Willo",
                     "level": 54,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wisp",
                     "level": 85,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 },
                 {
                     "name": "Wraithmother",
                     "level": 90,
-                    "chance": "2%",
+                    "chance": "2.5%",
                     "count": "1"
                 }
             ]
@@ -11943,42 +10239,14 @@
             "materialKindOrder": 6,
             "cardSlots": 0,
             "weight": 10,
-            "sellsFor": 29531,
+            "sellsFor": 118125,
             "materialStep": 3,
             "droppedBy": [
                 {
                     "name": "Wraithmother",
                     "level": 90,
-                    "chance": "50%",
-                    "count": "1"
-                }
-            ]
-        },
-        {
-            "id": "item.wraithmother-veil",
-            "name": "Wraithmother Veil",
-            "description": "Dropped only by Wraithmother.",
-            "type": "Misc",
-            "slot": "",
-            "weaponType": "",
-            "element": "Neutral",
-            "madeOf": "",
-            "reach": "",
-            "materialKind": "Creature",
-            "mergesInto": "",
-            "rarity": "Common",
-            "slotOrder": 99,
-            "materialKindOrder": 6,
-            "cardSlots": 0,
-            "weight": 10,
-            "sellsFor": 4725,
-            "materialStep": 1,
-            "droppedBy": [
-                {
-                    "name": "Wraithmother",
-                    "level": 90,
                     "chance": "100%",
-                    "count": "4–7"
+                    "count": "1"
                 }
             ]
         },

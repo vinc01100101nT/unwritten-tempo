@@ -59,7 +59,7 @@ on 2026-10-02).
 
 What stays the same: the save format and every saved bag; requests naming a bag position plus the item expected
 there; the whole bag sent back after each change; pick-up rules (reach, the 10-second owner-only window, first
-request wins); quest items cannot be dropped; using an item costs no mana and no cooldown.
+request wins); an item tagged Undroppable cannot be dropped; using an item costs no mana and no cooldown.
 
 Rollout: map server rebuild and restart only. No database change, and no change to what the two sides send each
 other.

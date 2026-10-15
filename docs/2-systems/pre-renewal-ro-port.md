@@ -57,7 +57,7 @@ The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning)
 
 ## Phase 4 — HP/SP + ASPD (DONE)
 
-- **HP/SP — one curve for every unit:** the level-driven base curve is the same for the player and every creature (`UnitStatInputs.Default`: HP 20 + 6 per level, SP 10 + 3 per level), and VIT/INT scale it as a PERCENT (authentic — they multiply, not add flat). `MaxHP = round((20 + 6×(lvl−1)) × (1 + VIT×0.02)) + equipFlat`; SP analogous with INT×0.015. There are no classes and no per-unit curve.
+- **HP/SP — one curve for every unit:** the level-driven base curve is the same for the player and every creature (`UnitStatInputs.Default`: HP 160 + 6 per level — 160, not RO's 20, since 2026-10-16, SP 10 + 3 per level), and VIT/INT scale it as a PERCENT (authentic — they multiply, not add flat). `MaxHP = round((160 + 6×(lvl−1)) × (1 + VIT×0.02)) + equipFlat`; SP analogous with INT×0.015. There are no classes and no per-unit curve.
 - **ASPD:** AGI is primary, **DEX adds ¼** (`DexAspdShare`). Kept as the game's speed-MULTIPLIER model, not the RO 0–200 scale. The base swing interval every unit divides by that multiplier is shared per weapon (`CharacterSpec.SwingInterval`): 1 s bare-handed and each weapon its own: Dagger and Fist 0.8 s, Katar 0.85 s, Shuriken 0.9 s, Sword and Wand 1 s, Axe, Spear and Bow 1.1 s, Staff 1.2 s, Scythe 1.25 s, Warhammer and Greatsword 1.3 s, Sniper 1.4 s.
 - **Tuning dials:** `VitHpPercent`, `IntSpPercent`, `DexAspdShare` (consts in `UnitStatMath`), and the curve in `UnitStatInputs.Default`.
 

@@ -24,6 +24,10 @@ MonoBehaviour:
   cardSlots: 0
   weight: 1
   value: 138000
+  undroppable: 0
+  unsellable: 0
+  unstorable: 0
+  untradeable: 0
   madeOf: 0
   materialKind: 4
   materialStep: 5

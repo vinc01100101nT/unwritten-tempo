@@ -133,8 +133,11 @@ public static class SavedCharacters
         bool saverHere = !PlayerUnits.Gone(c.saver);
         restItems.Clear();
         restCounts.Clear();
-        int handed = SavedCharacterRules.RescueMaterials(behaviour, c.who.goldTier);
-        if (handed > 0 && saverHere && CreatureMaterials.Is(c.def.material))
+        int handed = CreatureMaterials.Is(c.def.material)
+            ? SavedCharacterRules.RescuePieces(behaviour, c.who.goldTier,
+                                               CreatureMaterials.TierOfStep(c.def.material.materialStep), CombatRng.Range(0, 10000))
+            : 0;
+        if (handed > 0 && saverHere)
         {
             int fits = c.saver.MostThatFits(c.def.material, handed);
             if (fits > 0)

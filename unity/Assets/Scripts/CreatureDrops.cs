@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public static class CreatureDrops
 {
     /// <summary>One thing a kill may give up: the item, its chance, how many come in a pile when it does, and how many
-    /// separate piles of it fall (one for everything but an elite's ordinary material).</summary>
+    /// separate piles of it fall (one for everything but a grade-D elite's two Rare).</summary>
     public readonly struct Drop
     {
         public readonly Item item;
@@ -38,7 +38,6 @@ public static class CreatureDrops
                 if (item != null) into.Add(new Drop(item, def.itemDropChances[i], 1, 1));
             }
         AddOwnMaterial(def.material, def.kind, into);
-        AddOwnMaterial(def.rareMaterial, def.kind, into);
         var lines = CreatureLoot.LinesFor(def.kind);
         for (int i = 0; i < lines.Count; i++)
         {

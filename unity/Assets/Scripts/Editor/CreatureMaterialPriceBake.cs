@@ -22,7 +22,6 @@ public static class CreatureMaterialPriceBake
         {
             if (d == null) continue;
             prices += Price(d, d.material, write, said);
-            prices += Price(d, d.rareMaterial, write, said);
         }
         if (write) AssetDatabase.SaveAssets();
         said.Append(write ? "wrote " : "would write ").Append(prices).Append(" price(s)");

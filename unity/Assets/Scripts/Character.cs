@@ -2319,11 +2319,11 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def == null) continue;
             bag.Add(new BagEntry { def = def, count = count });
         }
-        foreach (var itemId in StarterKit.Worn)
+        foreach (var (itemId, folds) in StarterKit.Worn)
         {
             var def = ItemCatalog.Resolve(itemId);
             if (def == null || def.slot == EquipSlotType.None) continue;
-            SetEquipped(def.slot, EquipmentInstance.CreateStarter(def));
+            SetEquipped(def.slot, EquipmentInstance.CreateStarter(def, folds));
         }
         SetGold(StarterKit.Gold);
     }

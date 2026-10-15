@@ -33,15 +33,15 @@ tags:
 
 ## The rules behind the numbers
 
-- **The sizes follow how big a health bar can be.** Maximum health runs from 20 on a new character to its most on
+- **The sizes follow how big a health bar can be.** They were sized when every unit started on 20 health; since
+  2026-10-16 every unit starts on 160 (see Still open). Maximum health runs from a new character's to its most on
   a level 99 character with every stat point in VIT, a full set of grade A +10 metal armour, a top health Ink and a
   top VIT Ink on each piece, and a level 70 weapon mastery that raises health. Size 1 fills a new character's bar (20 to 74 health
   over the first ten levels); size 2 fills a level 25 bar with nothing invested (167); size 3 a level 25 to 50 bar
   with the points in VIT (295 to 785); size 4 a level 50 to 75 bar with the points in VIT (785 to 1,383); size 5 is
   for geared characters (1,400 and up).
-- **Mana is half the points for the same price** because the mana bar is about half the health bar: a character has
-  20 health and 10 mana at level 1 and gains 6 health and 3 mana a level, so each size fills the same share of
-  either bar.
+- **Mana is half the points for the same price.** It was set when the mana bar was about half the health bar (20
+  health and 10 mana at level 1, gaining 6 and 3 a level); a character now starts on 160 health and 10 mana.
 - **A bigger potion costs more for each point:** 1u a health point at size 1, then 1.5, 2, 2.5 and 3. A big bar
   can still be filled with small potions, at the cost of more drinks and more weight carried.
 - **Each potion has one value; the shop adds Tax when it sells one and takes Tax when it buys one back** — a third of
@@ -57,6 +57,9 @@ tags:
   converter ([Town Supplies and Hunting Finds](town-supplies-and-hunting-finds.md)).
 - **Torvald's side quest pays 5 Minor Healing Potions** — the one potion not bought
   ([Quests and Tutorials](quests-and-tutorials.md)).
+- **A new character starts with 100 Newbie Potions** — not one of the ten: "You just woke up holding these", the
+  Minor Healing Potion's picture, heals 30 at once (a Minor heals 50), weighs nothing, and can never be dropped, sold,
+  stored or traded, so a throwaway character's potions are worth nothing to anybody else.
 
 ## Where it lives
 
@@ -69,5 +72,7 @@ tags:
 - **The amounts and the price for each point are first picks.** How much health a player loses for each kill has
   not been measured, so nothing says yet how many potions an hour of hunting uses.
 - **The five new potions' descriptions are drafts.**
+- **The sizes and the mana price are not re-checked since starting health went from 20 to 160** (2026-10-16): size 1
+  no longer fills a new character's bar in one or two drinks, and the mana bar is no longer half the health bar.
 - **The top of the health range is not measured since gear gained a base.** A full Common A +10 metal set alone gives
   5,000 health, so size 5's reach, and whether a sixth size is needed, is checked again.

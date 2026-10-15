@@ -64,3 +64,5 @@
 - [Website shows a published copy](../website-shows-published-copy.md) — any wiki/website edit is invisible until `publish-update.py --site-only`; run it in the same turn.
 - [Publishing one platform leaves the other stale](../publish-one-platform-leaves-other-stale.md) — the launcher shows the shared version.txt, not the platform manifest; check that platform's manifest and DLL before calling a fix live.
 - [Check standing decisions before OFFERING a rework](../feedback-check-standing-decisions-before-offering.md) — 2026-10-10: I offered to rework a locked animation, the user approved the list, I built it; grep memory + handoffs for a lock while writing the offer.
+- [Filter red-team findings](../filter-red-team-findings.md) — drop obvious implementation steps, already-decided items and non-problems before relaying; only real design holes, as Example → Problem → Solution.
+- [No doc-keeper for sweeps](../no-doc-keeper-for-sweeps.md) — user killed it for token burn 2026-10-16; update docs inline by grep + slice edits.

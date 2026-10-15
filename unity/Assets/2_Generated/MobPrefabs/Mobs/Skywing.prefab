@@ -248,7 +248,7 @@ MonoBehaviour:
     intel: 34
     dex: 46
     luk: 32
-    baseMaxHP: 20
+    baseMaxHP: 160
     hpPerLevel: 6
     baseAttack: 4
     attackPerLevel: 1

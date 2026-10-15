@@ -37,7 +37,7 @@ map, and the map generator no longer puts any there.
 | --- | --- | --- | --- |
 | How many | the rest of the roster | 18 | 14, one per weapon type |
 | Levels | **1 to 96**, each set by what the creature is | **8 to 99**, each set by what the creature is | **105 to 170**, one every 5 levels |
-| Wears | a full set, **Raw to C** by the rarest thing it drops, folded by how hard it is to find | a full set, **D to B** by the rarest thing it drops, folded by how few maps it lives on | a complete set at **A +9**, plus ring ranks |
+| Wears | a full set, **Raw to C**, its grade deciding the tier of what it drops, folded by how hard it is to find (Raw +0 on the newbie maps) | a full set, **D to B**, its grade deciding the tier of what it drops, folded by how few maps it lives on | a complete set at **A +9**, plus ring ranks |
 | Element level | **1** | **2** | **3** |
 | Weapon mastery | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today | in its one weapon, set in the Mob Table — 0 today |
 | Summons, once it has bought the summon skill | nothing | normals | elites |
@@ -56,7 +56,7 @@ map, and the map generator no longer puts any there.
   as a station rolls them, at every grade — a Raw piece included, as a dropped one is.
 - **A creature wears exactly the pieces authored for it and nothing else.** An empty slot stays empty.
 - **Grade and folds are the only difficulty dial, and neither follows level.** A normal creature's or an elite's
-  grade comes from the rarest thing it drops and its folds from how hard it is to find; the rule and every
+  grade decides the tier of the one material it drops, and its folds come from how hard it is to find; the rule and every
   creature's values are in [Creature Gear](creature-gear.md). The Ink follows the grade — F Watery, E Thin, D Faint,
   C Clear, B and A Sharp (Raw writes nothing). Every shadow is A +9.
   Any single creature can be changed after that.
@@ -251,9 +251,9 @@ Elemental Converter or the Flame Armor Converter; a creature of any other elemen
 are sold by the Tool Dealer and never dropped. Materials are never in that roll.
 Several of one material go down as one pile.
 
-**Every normal creature and elite also drops a material nothing else does**, and 22 normal creatures and all 18 elites a
-second, rarer one — the chances, the prices and the full list are [Creature Materials](creature-materials.md). An
-elite's ordinary material is the one thing that falls as several separate piles. A rebel rolls them again at the creature's own chances; only its
+**Every normal creature and elite also drops ONE material nothing else does**, its tier set by the creature's grade
+— the chances, the prices and the full list are [Creature Materials](creature-materials.md). A grade-D elite's two
+Rare are the one thing that falls as separate piles. A rebel rolls it again at the creature's own chances; only its
 Temper Dust, Quench Oil, Inks and Salts are lifted one kind up, and a piece of gear it drops takes its rarity from the
 creature's own kind.
 

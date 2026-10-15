@@ -1343,44 +1343,66 @@ static class Checks
              "levels a creature grew in the fight are multiplied by its gear");
         That(CreatureKinds.KillExperience(CreatureKind.Elite, 50, 50, Quality.C, 10) == 30 * at50, F, "an elite's ten times and its gear do not multiply");
         That(CreatureMaterials.SellValue(40, Rarity.Common, Quality.Raw, 0) == 800 && CreatureMaterials.SellValue(40, Rarity.Common, Quality.D, 10) == 2100
-             && CreatureMaterials.SellValue(1, Rarity.Uncommon, Quality.Raw, 1) == 26, F, "a material's price is not its plain price x what the gear pays, half up");
+             && CreatureMaterials.SellValue(1, Rarity.Uncommon, Quality.Raw, 1) == 105, F, "a material's price is not its plain price x what the gear pays, half up");
         That(SavedCharacterRules.RescueGold(SavedBehaviour.NeverFights, GoldTier.Ordinary, 5, Quality.C, 10) == 600, F, "a rescue from a creature in C +10 does not pay 3 times");
     }
 
-    // A CREATURE'S OWN MATERIAL: what a tier sells for, how often it falls and in how many piles. Pinned from
-    // docs/3-world/creature-materials.md, agreed 2026-10-13.
+    // A CREATURE'S OWN MATERIAL: the tier its grade gives it, what a tier sells for, how often it falls and in how many
+    // piles. Pinned from docs/3-world/creature-materials.md, agreed 2026-10-16.
     static void CreatureMaterialNumbers()
     {
         const string F = "unity/Assets/Scripts/CreatureMaterials.cs";
         That(CreatureMaterials.SellValue(1, Rarity.Common) == 20 && CreatureMaterials.SellValue(99, Rarity.Common) == 1980, F,
              "an ordinary material sells for 20 x its creature's level");
-        That(CreatureMaterials.SellValue(40, Rarity.Uncommon) == 1000 && CreatureMaterials.SellValue(40, Rarity.Rare) == 5000
-             && CreatureMaterials.SellValue(40, Rarity.Epic) == 20000 && CreatureMaterials.SellValue(40, Rarity.Legendary) == 100000, F,
-             "a rare material sells for 25, 125, 500 or 2,500 x level by its tier");
+        That(CreatureMaterials.SellValue(40, Rarity.Uncommon) == 4000 && CreatureMaterials.SellValue(40, Rarity.Rare) == 20000
+             && CreatureMaterials.SellValue(40, Rarity.Epic) == 80000 && CreatureMaterials.SellValue(40, Rarity.Legendary) == 400000, F,
+             "a rarer material sells for 100, 500, 2,000 or 10,000 x level by its tier");
         That(CreatureMaterials.SellValue(0, Rarity.Common) == 20, F, "a creature with no level still sells as level 1");
         That(CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Common) == 0.5f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Uncommon) == 0.1f
              && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Rare) == 0.02f && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Epic) == 0.005f
              && CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Legendary) == 0.001f, F,
              "a normal creature drops its tiers at 1 in 2, 10, 50, 200 and 1,000");
-        That(CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Common) == 1f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Uncommon) == 0f
-             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Rare) == 0.5f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Epic) == 0.2f
-             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Legendary) == 0.05f, F,
-             "an elite always drops its ordinary material, never an Uncommon, and its rare tiers at 1 in 2, 5 and 20");
+        That(CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Common) == 0f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Uncommon) == 0f
+             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Rare) == 1f && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Epic) == 0.5f
+             && CreatureMaterials.Chance(CreatureKind.Elite, Rarity.Legendary) == 0.1f, F,
+             "an elite drops no Common or Uncommon, a sure Rare, a 1 in 2 Epic and a 1 in 10 Legendary");
         foreach (Rarity tier in System.Enum.GetValues(typeof(Rarity)))
             That(CreatureMaterials.Chance(CreatureKind.Shadow, tier) == 0f, F, "a shadow dropped a " + tier + " material of its own");
-        // The rule the whole table rests on: a normal kill's ordinary material is worth 10 gold x level on average, and
-        // a rare one adds a quarter of that whatever its tier.
-        foreach (Rarity tier in new[] { Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary })
-            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Normal, tier) * CreatureMaterials.SellValue(40, tier) - 100.0) < 0.01, F,
-                 "a normal creature's " + tier + " material no longer adds a quarter of a kill's gold");
-        That(CreatureMaterials.Chance(CreatureKind.Normal, Rarity.Common) * CreatureMaterials.SellValue(40, Rarity.Common) == 400f, F,
-             "a normal kill is no longer worth 10 gold x level");
-        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Common, out int pMin, out int pMax);
-        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Common, out int sMin, out int sMax);
-        That(pMin == 3 && pMax == 5 && sMin == 4 && sMax == 7, F, "an elite's ordinary material falls as 3 to 5 piles of 4 to 7");
+        // The rule the whole table rests on: a normal kill's material is worth 10 gold x level on average at EVERY tier,
+        // and an elite kill's 100 times that, so rarity changes how the value arrives and never how much.
+        foreach (Rarity tier in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary })
+            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Normal, tier) * CreatureMaterials.SellValue(40, tier) - 400.0) < 0.01, F,
+                 "a normal creature's " + tier + " material is no longer worth 10 gold x level a kill");
+        foreach (Rarity tier in new[] { Rarity.Rare, Rarity.Epic, Rarity.Legendary })
+        {
+            CreatureMaterials.Piles(CreatureKind.Elite, tier, out int piles, out int _);
+            That(System.Math.Abs(CreatureMaterials.Chance(CreatureKind.Elite, tier) * piles * CreatureMaterials.SellValue(40, tier) - 40000.0) < 0.01, F,
+                 "an elite's " + tier + " material is no longer worth 100 normal kills");
+        }
+        CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Rare, out int pMin, out int pMax);
+        CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Rare, out int sMin, out int sMax);
+        That(pMin == 2 && pMax == 2 && sMin == 1 && sMax == 1, F, "a grade-D elite's Rare does not fall as 2 piles of 1");
         CreatureMaterials.Piles(CreatureKind.Elite, Rarity.Legendary, out pMin, out pMax);
         CreatureMaterials.PileSize(CreatureKind.Elite, Rarity.Legendary, out sMin, out sMax);
-        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "an elite's rare material is one single drop");
+        That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "an elite's Legendary is not one single drop");
+        // THE GRADE DECIDES THE TIER: a normal creature Raw..C gives Common..Legendary, an elite D/C/B gives Rare/Epic/
+        // Legendary, and nothing else is allowed.
+        Rarity got;
+        That(CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.Raw, out got) && got == Rarity.Common
+             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.F, out got) && got == Rarity.Uncommon
+             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.E, out got) && got == Rarity.Rare
+             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.D, out got) && got == Rarity.Epic
+             && CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.C, out got) && got == Rarity.Legendary, F,
+             "a normal creature's grade no longer gives Raw Common .. C Legendary");
+        That(!CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.B, out got) && !CreatureMaterials.TierOfGrade(CreatureKind.Normal, Quality.A, out got), F,
+             "a normal creature may wear B or A");
+        That(CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.D, out got) && got == Rarity.Rare
+             && CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.C, out got) && got == Rarity.Epic
+             && CreatureMaterials.TierOfGrade(CreatureKind.Elite, Quality.B, out got) && got == Rarity.Legendary, F,
+             "an elite's grade no longer gives D Rare, C Epic, B Legendary");
+        foreach (var g in new[] { Quality.Raw, Quality.F, Quality.E, Quality.A })
+            That(!CreatureMaterials.TierOfGrade(CreatureKind.Elite, g, out got), F, "an elite may wear " + g);
+        That(!CreatureMaterials.TierOfGrade(CreatureKind.Shadow, Quality.A, out got), F, "a shadow has a material tier");
         CreatureMaterials.Piles(CreatureKind.Normal, Rarity.Common, out pMin, out pMax);
         CreatureMaterials.PileSize(CreatureKind.Normal, Rarity.Common, out sMin, out sMax);
         That(pMin == 1 && pMax == 1 && sMin == 1 && sMax == 1, F, "a normal creature's material is one single drop");
@@ -1409,6 +1431,20 @@ static class Checks
              && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Helpless) == 6
              && SavedCharacterRules.RescueMaterials(SavedBehaviour.NeverFights, GoldTier.Wealthy) == 9, F,
              "a rescue hands over 3, 6 or 9 of the creature's material");
+        // In the material's REAL tier: whole pieces plus a chance of one more, so the worth is the same at every tier.
+        That(SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Common, 0) == 9
+             && SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Common, 9999) == 9, F,
+             "a Wealthy rescue of a Common material is not 9 pieces");
+        That(SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Uncommon, 7999) == 2
+             && SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Uncommon, 8000) == 1, F,
+             "a Wealthy rescue of an Uncommon is not 1 + an 80% chance of a 2nd");
+        That(SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Ordinary, Rarity.Rare, 1199) == 1
+             && SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Ordinary, Rarity.Rare, 1200) == 0, F,
+             "an Ordinary rescue of a Rare is not a 12% chance of one");
+        That(SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Legendary, 179) == 1
+             && SavedCharacterRules.RescuePieces(SavedBehaviour.NeverFights, GoldTier.Wealthy, Rarity.Legendary, 180) == 0, F,
+             "a Wealthy rescue of a Legendary is not a 1.8% chance of one");
+        That(SavedCharacterRules.RescuePieces(SavedBehaviour.Rebel, GoldTier.Wealthy, Rarity.Common, 0) == 0, F, "a rebel hands over material");
         That(SavedCharacterRules.RescueMaterials(SavedBehaviour.Rebel, GoldTier.Wealthy) == 0
              && SavedCharacterRules.RescueMaterials(SavedBehaviour.Ally, GoldTier.Wealthy) == 0, F, "an ally or a rebel hands over material");
         foreach (GoldTier tier in new[] { GoldTier.Ordinary, GoldTier.Helpless, GoldTier.Wealthy })

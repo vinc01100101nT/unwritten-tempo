@@ -70,14 +70,20 @@ public class ItemTooltip : MonoBehaviour
         group.alpha = 0f;
         group.blocksRaycasts = false;
         group.interactable = false;
-        if (namePanel != null)
+    }
+
+    // The hover strip's fade. Looked up on first use, NOT in Awake: the card is built by adding this component and
+    // only then handing it its parts, and Awake runs inside that AddComponent — before namePanel is set.
+    CanvasGroup NameGroup()
+    {
+        if (nameGroup == null && namePanel != null)
         {
             nameGroup = namePanel.GetComponent<CanvasGroup>();
             if (nameGroup == null) nameGroup = namePanel.gameObject.AddComponent<CanvasGroup>();
-            nameGroup.alpha = 0f;
             nameGroup.blocksRaycasts = false;
             nameGroup.interactable = false;
         }
+        return nameGroup;
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }
@@ -119,7 +125,7 @@ public class ItemTooltip : MonoBehaviour
     public static void ShowName(string title)
     {
         var t = Instance;
-        if (Suppressed || t == null || t.nameGroup == null || string.IsNullOrEmpty(title)) return;
+        if (Suppressed || t == null || t.NameGroup() == null || string.IsNullOrEmpty(title)) return;
         if (t.nameText.text != title) t.nameText.text = title;
         t.nameGroup.alpha = 1f;
         t.FollowName();
@@ -143,13 +149,42 @@ public class ItemTooltip : MonoBehaviour
         Instance.PinHere();
     }
 
-    /// <summary>RIGHT-CLICK on words built elsewhere — an item linked in chat. The same card, with no picture.</summary>
-    public static void PinText(string title, Color titleColour, string body)
+    /// <summary>RIGHT-CLICK on words built elsewhere — an item linked in chat, whose words the server built from the
+    /// sender's own copy. The same card, with <paramref name="def"/>'s picture and slots.</summary>
+    public static void PinText(string title, Color titleColour, string body, Item def)
     {
         if (Instance == null) return;
         Suppressed = false;
         ShowText(title, titleColour, body);
+        Instance.ShowPicture(def, null);
+        Instance.ShowSlots(def, null);
         Instance.PinHere();
+    }
+
+    /// <summary>RIGHT-CLICK on a skill, wherever it is drawn: the same card — the skill's badge in the picture panel,
+    /// its name in the title bar, its full description in the details, and no card-slot diamonds.</summary>
+    public static void PinSkill(SkillDef def)
+    {
+        if (Instance == null || def == null) return;
+        Suppressed = false;
+        string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
+        ShowText(name, UiKit.TextMain, SkillTooltip.Build(def));
+        Instance.ShowBadge(def);
+        Instance.PinHere();
+    }
+
+    [Tooltip("The skill badge in the picture panel: its colour, and its letters on it.")]
+    public Image badge;
+    public TMP_Text badgeText;
+
+    // A skill's badge in the picture panel, in place of an item's picture.
+    void ShowBadge(SkillDef def)
+    {
+        ShowPicture(null, null);
+        if (badge == null) return;
+        badge.gameObject.SetActive(true);
+        badge.color = SkillSymbol.ColorFor(def);
+        badgeText.text = def.Symbol;
     }
 
     /// <summary>Close the card.</summary>
@@ -232,10 +267,11 @@ public class ItemTooltip : MonoBehaviour
         Follow();
     }
 
-    // The item's picture in the panel at the card's left; an empty panel when there is none.
+    // The item's picture in the panel at the card's left; an empty panel when there is none. Never a skill's badge.
     void ShowPicture(Item def, EquipmentInstance copy)
     {
         if (icon != null) ItemIcon.Show(icon, def);
+        if (badge != null && badge.gameObject.activeSelf) badge.gameObject.SetActive(false);
     }
 
     // A diamond per card slot the piece has: grey when empty, the accent colour with the card's name on hover when

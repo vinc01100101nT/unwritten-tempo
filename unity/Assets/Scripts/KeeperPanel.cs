@@ -402,7 +402,7 @@ public class KeeperPanel : MonoBehaviour, UiListView.ISource
             for (int i = 0; i < c.Bag.Count; i++)
             {
                 var e = c.Bag[i];
-                if (e != null && e.def != null && e.def.category != ItemCategory.Quest) carriedShown.Add(e);
+                if (e != null && e.def != null && e.def.CanBeStored) carriedShown.Add(e);
             }
 
         storedCaption.text = storage.Known ? "In storage (" + storedRows + " of " + storageLimit + ")" : "In storage";

@@ -23,7 +23,9 @@ public struct UnitStatInputs
     {
         level = Mathf.Max(1, level),
         str = 1, agi = 1, vit = 1, intel = 1, dex = 1, luk = 1,
-        baseMaxHP = 20, hpPerLevel = 6,
+        // 160, not RO's 20 (decided 2026-10-16): a level 1 player in the Raw +5 starter armour must take at least 5
+        // blows from a Raw +0 newbie-map creature, at any creation spread.
+        baseMaxHP = 160, hpPerLevel = 6,
         baseAttack = 4, attackPerLevel = 1,
         baseDefense = 1, defensePerLevel = 1,
         baseMaxMP = 10, mpPerLevel = 3,

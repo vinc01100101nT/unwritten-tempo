@@ -157,11 +157,10 @@ public class MonsterDef : ScriptableObject
     public float onHitAilmentMagnitude = 0f;
 
     [Header("Loot")]
-    [Tooltip("The material only this creature drops, on a chance and in an amount its kind decides " +
-             "(CreatureMaterials). Empty = it has none.")]
+    [Tooltip("The ONE material only this creature drops. Its tier must be the one this creature's gear grade gives " +
+             "(CreatureMaterials.TierOfGrade); its chance and amount follow from that tier and the creature's kind. " +
+             "Empty = it has none (a shadow).")]
     public Item material;
-    [Tooltip("Its second, rarer material of its own. The item's own tier decides the chance. Empty = it has none.")]
-    public Item rareMaterial;
     [Tooltip("Item drops. Each entry is rolled independently on death. Names must match a Resources/Items/*.asset.")]
     public string[] itemDropNames = System.Array.Empty<string>();
     [Tooltip("Drop chance (0–1) parallel to Item Drop Names.")]

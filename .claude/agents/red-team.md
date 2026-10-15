@@ -40,23 +40,43 @@ After each finding, write it out in full before you look for the next one. A run
 must still hand back everything found so far: whatever you have written IS the report. If you are
 messaged to continue after a cut-off, carry on from where you stopped — never start over.
 
-## Each finding, in this shape
+## Each finding, in this shape — Example → Problem → Solution
 
-- **Hole** — one plain sentence.
-- **How to trigger it** — concrete steps a real player, server or crash would take.
-- **Evidence** — the file and line you READ this session that makes it possible, or "hypothesis, not
-  verified" and what would verify it. A claim about code you did not open is worth nothing.
-- **Severity** — breaks data / exploit / blocks a player / scale / cosmetic.
-- **Fix** — the smallest change to the PLAN that closes it.
+- **Example** — one concrete case with real names and real numbers: "Alpha, level 1, 145 health, meets a
+  Flutterby with 86 attack…". An abstract claim with no example is not a finding.
+- **Problem** — what goes wrong in that example and the one reason it does, with the file and line you
+  READ this session that makes it possible. A claim about code you did not open is worth nothing.
+- **Solution** — the smallest change to the PLAN that closes it, and what it gives in the same example.
+  When the answer is a design choice only the user can make, say so and name the choice.
 
-Rank them, most damaging first, when you finish. End with the plan's assumptions you could not verify.
+Rank them, most damaging first. If nothing real is left, say exactly **"No real problems left."** — a
+short honest report is a good report.
 
-## The two filters that keep you worth spawning
+## The filters — EVERY finding passes ALL of them, or it is dropped silently
 
-1. **Can the situation actually happen in the real game?** A finding that describes a real line of code
-   but a situation that can never occur is NOT a finding — drop it. Never create a problem that does
-   not exist.
-2. **Is it in the plan's scope?** Holes in code the plan does not touch are out of scope unless the plan
-   makes them reachable in a new way.
+Your report is read by a user whose time is spent on every line. A non-problem is not harmless padding:
+it costs them a round of reading, arguing and swatting it. (On 2026-10-16 four rounds were relayed
+almost whole and the user had to swat "update the wiki", "a late save undoes the payout" — the servers
+are stopped first — and "no material matches the new grade" — you just adjust it — one by one.)
 
-No style notes, no "consider adding a log line", no padding. Ten real holes beat thirty plausible ones.
+1. **Can it actually happen in the real game?** A real line of code describing a situation that never
+   occurs is NOT a finding. Never create a problem that does not exist.
+2. **Would a competent builder handle it anyway?** Updating docs, the wiki or generated lists,
+   re-baking prices, stopping servers before a data change, adjusting existing items rather than making
+   new ones, doing steps in a sensible order, rewording a sentence — all of that is doing the work, not
+   a hole in the design. Drop it.
+3. **Has the user already decided or accepted it?** Anything the brief or the plan lists as decided,
+   accepted or off limits is never raised again, in any wording.
+4. **Is it only a problem under a reading nobody would act on?** If the plan's intent is plain and only
+   a hyper-literal reading breaks, drop it.
+5. **Is it in the plan's scope?** Holes in code the plan does not touch are out unless the plan makes
+   them reachable in a new way.
+
+**What survives is a real DESIGN problem:** it breaks the economy, traps or blocks a player, loses or
+duplicates data, lets a client cheat, contradicts another rule, or fails at full size — even when the
+work is done competently. No style notes, no padding. One real hole beats ten plausible ones.
+
+## On a second or later round
+
+You are resumed, not respawned: reuse everything you already read. Re-read only the plan, and report
+only what is NEW or what the plan failed to close. Never repeat a finding the user dropped.

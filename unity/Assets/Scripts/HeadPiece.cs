@@ -37,8 +37,10 @@ public class HeadPiece : MonoBehaviour
 
     public bool BendsWithBody => bones != null && bones.Length > 0;
 
-    /// <summary>True for a renderer that belongs to a worn head piece rather than to the body under it. Whatever
-    /// measures a body or reads its colours asks this, so a hat never makes a person shorter and a hair's texture
-    /// never becomes part of which body somebody is wearing.</summary>
-    public static bool IsPiece(Renderer r) => r != null && r.GetComponentInParent<HeadPiece>(true) != null;
+    /// <summary>True for a renderer that belongs to a worn piece — on the head, or on the back
+    /// (<see cref="BackPiece"/>) — rather than to the body under it. Whatever measures a body or reads its colours asks
+    /// this, so a hat never makes a person shorter and a hair's or a cape's texture never becomes part of which body
+    /// somebody is wearing.</summary>
+    public static bool IsPiece(Renderer r) =>
+        r != null && (r.GetComponentInParent<HeadPiece>(true) != null || BackPiece.IsPiece(r));
 }
