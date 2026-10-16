@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 /// <summary>
@@ -36,6 +37,12 @@ public class CharacterPreview : MonoBehaviour
     GameObject body;
     CharacterDye3D dye;
     string shownModel;
+
+    DayNightLight dayNight;
+    Light worldSun;
+    bool sunWasOn, ambientSet;
+    Color ambientWas;
+    AmbientMode ambientModeWas;
 
     // How the body is being held right now. The camera and the lights never move sideways — it is the BODY that
     // turns, which keeps the lighting steady while it does.
@@ -121,14 +128,22 @@ public class CharacterPreview : MonoBehaviour
         camGo.transform.localRotation = Quaternion.Euler(6f, 0f, 0f);
         ApplyView();
 
+        // ALWAYS NOON. The world's sun and ambient follow the clock, and the preview used to take them along, so
+        // at night the body was filmed in the night's dark. The studio's key is the world's MIDDAY sun, read from
+        // the one place that owns it, and while this camera films, the world sun is off and the ambient is midday's.
+        dayNight = FindFirstObjectByType<DayNightLight>();
+        worldSun = dayNight != null ? dayNight.GetComponent<Light>() : RenderSettings.sun;
         var lightGo = new GameObject("Light") { hideFlags = HideFlags.DontSaveInEditor };
         lightGo.transform.SetParent(stageRoot, false);
         var light = lightGo.AddComponent<Light>();
         light.type = LightType.Directional;
-        light.intensity = 1.2f;
-        light.color = new Color(1f, 0.97f, 0.9f);
-        lightGo.transform.localRotation = Quaternion.Euler(35f, 160f, 0f);
+        light.intensity = dayNight != null ? dayNight.dayIntensity : 1.2f;
+        light.color = dayNight != null ? dayNight.dayColor : new Color(1f, 0.97f, 0.9f);
+        // From the front, high and to one side: the body faces the camera, so the key travels away from it.
+        lightGo.transform.localRotation = Quaternion.Euler(35f, 30f, 0f);
         light.cullingMask = ~0;
+        RenderPipelineManager.beginCameraRendering += BeforeCamera;
+        RenderPipelineManager.endCameraRendering += AfterCamera;
 
         // A second, softer light from the other side. One light leaves half of a body in darkness, which reads
         // as "this model is broken" rather than "this side is unlit".
@@ -294,6 +309,8 @@ public class CharacterPreview : MonoBehaviour
             // exists under this screen, so the world body is bound to the same colours — which is why a body only
             // SHOWS colours stamped for it and never erases them. Nothing is saved until the character is created.
             dye = body.AddComponent<CharacterDye3D>();
+            // A body the player has not coloured yet starts with light clothes, saved like a pick of their own.
+            if (!dye.WearsOwnDye) dye.StartLight();
             // …and the hair being chosen, held by that same character.
             body.AddComponent<HeadSocket>();
             // A body just paged to is shown as itself, not still held at the last one's angle — framed the way the
@@ -339,8 +356,36 @@ public class CharacterPreview : MonoBehaviour
         return new Vector2Int(Mathf.Max(64, Mathf.RoundToInt(r.x)), Mathf.Max(64, Mathf.RoundToInt(r.y)));
     }
 
+    // Only around this camera's own render: the world's camera, before and after, sees the clock's lighting.
+    void BeforeCamera(ScriptableRenderContext _, Camera c)
+    {
+        if (c != cam || !Application.isPlaying) return;
+        sunWasOn = worldSun != null && worldSun.enabled;
+        if (sunWasOn) worldSun.enabled = false;
+        if (dayNight == null) return;
+        ambientWas = RenderSettings.ambientLight;
+        ambientModeWas = RenderSettings.ambientMode;
+        RenderSettings.ambientMode = AmbientMode.Flat;
+        RenderSettings.ambientLight = dayNight.dayAmbient;
+        ambientSet = true;
+    }
+
+    void AfterCamera(ScriptableRenderContext _, Camera c)
+    {
+        if (c != cam) return;
+        if (sunWasOn && worldSun != null) worldSun.enabled = true;
+        sunWasOn = false;
+        if (!ambientSet) return;
+        RenderSettings.ambientMode = ambientModeWas;
+        RenderSettings.ambientLight = ambientWas;
+        ambientSet = false;
+    }
+
     void OnDestroy()
     {
+        RenderPipelineManager.beginCameraRendering -= BeforeCamera;
+        RenderPipelineManager.endCameraRendering -= AfterCamera;
+        if (sunWasOn && worldSun != null) worldSun.enabled = true;
         if (HandDrawnFX.PreviewCamera == cam) HandDrawnFX.PreviewCamera = null;
         if (cam != null) cam.targetTexture = null;
         if (picture != null) { picture.Release(); Destroy(picture); }

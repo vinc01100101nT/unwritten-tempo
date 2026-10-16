@@ -2523,7 +2523,7 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     /// <summary>Recycle a piece: it is destroyed, and half of what it provably consumed comes back — the folds and
     /// the quench of every grade it climbed, the folds standing on it, and the Inks written on it
     /// (<see cref="CraftingMath.RecycleYield"/>). Failed quenches and the folds they spent are not recorded anywhere,
-    /// and folds made at Raw were free on a first run, so all of those come back as nothing.</summary>
+    /// so those come back as nothing.</summary>
     [Command]
     void CmdRecycle(int index, string expectedItemId)
     {
@@ -2610,6 +2610,126 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
         SaveSoon();
     }
 
+    // ---- recycling several carried pieces at once ----------------------------------------------------------
+    // The Recycle page's ticked pieces, judged together by the SAME rules one recycle uses, and refused together:
+    // nothing is half-done. Worn pieces are never in a batch, so a batch never strips what someone is wearing.
+
+    /// <summary>The most pieces one batch may name — more than any bag holds, so it only stops a malformed ask.</summary>
+    const int MostRecycledAtOnce = 200;
+
+    // Reused by every batch: the bag positions named, and the totals of what comes back.
+    readonly System.Collections.Generic.List<int> batchIndices = new System.Collections.Generic.List<int>(32);
+    readonly int[] batchInkTiers = new int[6];
+    int batchDust, batchOil, batchGold;
+
+    // Find every named piece in the bag and total what recycling them gives back. Returns the refusal sentence, or
+    // null when the batch may go through. Nothing is changed.
+    string JudgeRecycleBatch(Character c, string[] copyIds)
+    {
+        batchIndices.Clear();
+        batchDust = batchOil = batchGold = 0;
+        System.Array.Clear(batchInkTiers, 0, batchInkTiers.Length);
+        if (c == null || copyIds == null || copyIds.Length == 0) return "Pick a piece.";
+        if (copyIds.Length > MostRecycledAtOnce) return "Too many pieces at once.";
+        for (int i = 0; i < copyIds.Length; i++)
+        {
+            if (!c.FindCopy(copyIds[i], out int index, out bool worn) || worn || batchIndices.Contains(index))
+                return "One of those pieces is no longer in your bag.";
+            var inst = c.Bag[index].instance;
+            if (inst == null || inst.def == null) return "One of those pieces is no longer in your bag.";
+            if (!AtTheRightStation(inst.def)) return NotAtStation(inst.def);
+            var owing = c.Quests.FirstRunOwing(inst.def.id);
+            if (owing != null) return StillNeeded(inst.def, owing);
+            batchIndices.Add(index);
+            CraftingMath.AddRecycleYield(inst.quality, inst.upgrade, inst.inkStats, inst.inkValues,
+                                         ref batchDust, ref batchOil, ref batchGold, batchInkTiers);
+        }
+        return null;
+    }
+
+    /// <summary>What recycling the pieces named by <paramref name="copyIds"/> together would give back, or why it would
+    /// be refused. Asked whenever the ticked pieces change.</summary>
+    [Command]
+    void CmdAskRecycleQuote(int ask, string[] copyIds)
+    {
+        if (Leaving || connectionToClient == null) return;
+        var c = ServerCharacter;
+        string refusal = JudgeRecycleBatch(c, copyIds);
+        var ids = new System.Collections.Generic.List<string>(8);
+        var counts = new System.Collections.Generic.List<int>(8);
+        var dustItem = MaterialCatalog.TemperDust;
+        var oilItem = MaterialCatalog.QuenchOil;
+        if (refusal == null)
+        {
+            if (batchDust > 0 && dustItem != null) { ids.Add(dustItem.id); counts.Add(batchDust); }
+            if (batchOil > 0 && oilItem != null) { ids.Add(oilItem.id); counts.Add(batchOil); }
+            for (int t = 1; t < batchInkTiers.Length; t++)
+            {
+                var ink = batchInkTiers[t] > 0 ? MaterialCatalog.Ink(t) : null;
+                if (ink != null) { ids.Add(ink.id); counts.Add(batchInkTiers[t]); }
+            }
+        }
+        TargetRecycleQuote(connectionToClient, new RecycleBatchQuote
+        {
+            ask = ask, ids = ids.ToArray(), counts = counts.ToArray(), gold = refusal == null ? batchGold : 0,
+            pieces = refusal == null ? batchIndices.Count : 0, refusal = refusal ?? "",
+        });
+    }
+
+    [TargetRpc]
+    void TargetRecycleQuote(NetworkConnectionToClient target, RecycleBatchQuote quote) => CraftStationPanel.TakeRecycleQuote(quote);
+
+    /// <summary>Recycle every carried piece named by <paramref name="copyIds"/> at once — all of them, or none.</summary>
+    [Command]
+    void CmdRecycleMany(string[] copyIds)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        string refusal = JudgeRecycleBatch(c, copyIds);
+        if (refusal != null) { Refused(refusal + " Nothing was recycled."); return; }
+
+        var dustItem = MaterialCatalog.TemperDust;
+        var oilItem = MaterialCatalog.QuenchOil;
+
+        // ROOM FOR ALL OF WHAT COMES BACK, judged before anything is destroyed: every piece's own weight and entry are
+        // counted off first, as one recycle counts off its one.
+        System.Array.Clear(recycleTabSlots, 0, recycleTabSlots.Length);
+        int addedWeight = 0;
+        for (int i = 0; i < batchIndices.Count; i++)
+        {
+            var def = c.Bag[batchIndices[i]].def;
+            recycleTabSlots[(int)def.category] -= 1;
+            addedWeight -= def.weight;
+        }
+        if (batchDust > 0 && !RoomForRecycled(c, dustItem, batchDust, ref addedWeight)) return;
+        if (batchOil > 0 && !RoomForRecycled(c, oilItem, batchOil, ref addedWeight)) return;
+        for (int t = 1; t < batchInkTiers.Length; t++)
+            if (batchInkTiers[t] > 0 && !RoomForRecycled(c, MaterialCatalog.Ink(t), batchInkTiers[t], ref addedWeight)) return;
+
+        // THE PIECES GO FIRST, highest position first so each removal leaves the positions still to come in place.
+        int count = batchIndices.Count;
+        batchIndices.Sort();
+        for (int i = batchIndices.Count - 1; i >= 0; i--) c.Bag.RemoveAt(batchIndices[i]);
+
+        var got = new System.Text.StringBuilder();
+        if (batchDust > 0 && dustItem != null) { c.TakeIntoBag(dustItem, batchDust); Join(got, batchDust + " " + dustItem.displayName); }
+        if (batchOil > 0 && oilItem != null) { c.TakeIntoBag(oilItem, batchOil); Join(got, batchOil + " " + oilItem.displayName); }
+        for (int t = 1; t < batchInkTiers.Length; t++)
+        {
+            if (batchInkTiers[t] <= 0) continue;
+            var ink = MaterialCatalog.Ink(t);
+            if (ink == null) continue;
+            c.TakeIntoBag(ink, batchInkTiers[t]);
+            Join(got, batchInkTiers[t] + " " + ink.displayName);
+        }
+        if (batchGold > 0) { c.AddGold(batchGold); Join(got, Wallet.Amount(batchGold)); }
+
+        PushBagToOwner();
+        Done("Recycled " + count + (count == 1 ? " piece" : " pieces") + ": got back "
+             + (got.Length > 0 ? got.ToString() : "nothing") + ".", "Recycled " + count, pieceGone: true);
+        SaveSoon();
+    }
+
     // Reused across recycles; a craft is a cold path but there is no reason to allocate in it.
     static readonly int[] recycleTiers = new int[6];
 
@@ -2633,13 +2753,21 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
 
     // Spend `units` of `material` and `gold` from this character, or nothing at all. All-or-nothing on purpose:
     // a craft that took the metal and then found the purse short would leave the player worse off for pressing.
+    // How many of `material` the bag holds, over every stack of it.
+    static int Held(Character c, Item material)
+    {
+        int held = 0;
+        if (c == null || material == null) return 0;
+        for (int i = 0; i < c.Bag.Count; i++)
+            if (c.Bag[i] != null && c.Bag[i].def == material) held += Mathf.Max(1, c.Bag[i].count);
+        return held;
+    }
+
     bool Spend(Character c, Item material, int units, int gold)
     {
         if (units > 0)
         {
-            int held = 0;
-            for (int i = 0; i < c.Bag.Count; i++)
-                if (c.Bag[i] != null && c.Bag[i].def == material) held += Mathf.Max(1, c.Bag[i].count);
+            int held = Held(c, material);
             if (held < units)
             { Refused("Needs " + units + " " + material.displayName + " — you have " + held + "."); return false; }
         }
@@ -2799,6 +2927,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
             quenchMaterialId = oilItem != null ? oilItem.id : "",
             quenchMaterialCost = CraftingMath.QuenchMaterialCost(inst.quality),
             quenchGoldCost = CraftingMath.QuenchGoldCost(inst.quality),
+            foldMaterialHeld = Held(c, dustItem),
+            quenchMaterialHeld = Held(c, oilItem),
             foldChance = foldChance,
             foldsIfFoldFails = foldChance >= 100 ? inst.upgrade : CraftingMath.FoldFailFolds(inst.upgrade),
             upChancePercent = CraftingMath.QuenchUpChance(inst.quality, saltTier) * 100f / CraftingMath.QuenchChanceDen,
@@ -2830,6 +2960,8 @@ public partial class NetPlayer : NetworkBehaviour, IWatchedShell
     public void AskToInkWorn(EquipSlotType slot, string itemId, int inkIndex, int inkSlot) => CmdInkWorn((int)slot, itemId, inkIndex, inkSlot);
     public void AskToRecycleWorn(EquipSlotType slot, string itemId) => CmdRecycleWorn((int)slot, itemId);
     public void AskToRecycle(int index, string itemId) => CmdRecycle(index, itemId);
+    public void AskToRecycleMany(string[] copyIds) => CmdRecycleMany(copyIds);
+    public void AskForRecycleQuote(int ask, string[] copyIds) => CmdAskRecycleQuote(ask, copyIds);
 
     /// <summary>Swap the two bag positions <paramref name="a"/> and <paramref name="b"/> — a box dropped on another box.
     /// Both are named by position AND item id, so a bag that moved under the asker swaps nothing.</summary>

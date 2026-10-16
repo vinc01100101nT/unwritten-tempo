@@ -21,7 +21,18 @@ using UnityEngine;
 public class CharacterDye3D : MonoBehaviour
 {
     // Must match the eight colour pairs in CharacterLitInput.hlsl.
-    const int MaxParts = 8;
+    public const int MaxParts = 8;
+
+    /// <summary>The colour every body's skin is painted in — never a part, never changed. A cloth colour close to it
+    /// (a black suit) would otherwise drag the skin along, since the shader recolours every pixel near a part; so the
+    /// skin is handed to the shader as a part of its own that keeps its colour, and takes one of the eight slots.</summary>
+    public static readonly Color Skin = new Color32(0x1f, 0x1f, 0x1f, 0xff);
+
+    /// <summary>The body's colours that are never recoloured, handed to the shader beside the parts.</summary>
+    public static readonly IReadOnlyList<Color> Unchangeable = new[] { Skin };
+
+    // How light a clothing part starts in character creation: its own hue and saturation, at this brightness at least.
+    const float StartingBrightness = 0.85f;
 
     static readonly int CountId = Shader.PropertyToID("_DyeCount");
     static readonly int[] SrcIds = PropertyIds("_DyeSrc");
@@ -174,6 +185,34 @@ public class CharacterDye3D : MonoBehaviour
         PushToCharacter();   // writes the SSOT + fires OnAppearanceChanged → PullFromCharacter → Apply
     }
 
+    /// <summary>Give every clothing part of this body its starting colour (<see cref="StartingColour"/>), in one save —
+    /// what character creation shows a body in before the player picks anything.</summary>
+    public void StartLight()
+    {
+        var p = DetectableParts();
+        sources.Clear();
+        targets.Clear();
+        for (int i = 0; i < p.Count; i++) { sources.Add(p[i]); targets.Add(StartingColour(p[i])); }
+        PushToCharacter();
+    }
+
+    /// <summary>Whether the colours this body shows were chosen on this body.</summary>
+    public bool WearsOwnDye
+    {
+        get
+        {
+            EnsureRenderers();
+            return boundCharacter != null && boundCharacter.DyeModel == SignatureOf(renderers);
+        }
+    }
+
+    /// <summary>A clothing part's starting colour: its own hue and saturation, raised to a light brightness.</summary>
+    public static Color StartingColour(Color part)
+    {
+        Color.RGBToHSV(part, out float h, out float s, out float v);
+        return Color.HSVToRGB(h, s, Mathf.Max(v, StartingBrightness));
+    }
+
     /// <summary>The chosen color for a part, or the part's own color if it hasn't been dyed.</summary>
     public Color TargetFor(Color source) => ChosenFor(source, sources, targets);
 
@@ -283,7 +322,7 @@ public class CharacterDye3D : MonoBehaviour
         if (mpb == null) return;
         EnsureRenderers();
         if (renderers == null) return;
-        Paint(renderers, sources.Count > 0 ? DetectableParts() : null, sources, targets, mpb);
+        Paint(renderers, sources.Count > 0 ? DetectableParts() : null, sources, targets, mpb, Unchangeable);
     }
 
     /// <summary>THE ONE COLOURING ROUTINE — hand <paramref name="renderers"/> their model's
@@ -291,27 +330,35 @@ public class CharacterDye3D : MonoBehaviour
     /// does the Mob Table's preview in the editor, so the two can never show one look two ways.
     /// <paramref name="sources"/> and <paramref name="targets"/> are index-matched original→chosen colours; a part
     /// missing from them keeps its own colour. Null or empty parts hands over a count of zero, which shows the
-    /// model's own colours.</summary>
+    /// model's own colours. <paramref name="keep"/> are colours that must never change (a body's skin): each is handed
+    /// over mapped to itself, so a part close to it cannot take its pixels.</summary>
     public static void Paint(Renderer[] renderers, IReadOnlyList<Color> parts, IReadOnlyList<Color> sources,
-                             IReadOnlyList<Color> targets, MaterialPropertyBlock block)
+                             IReadOnlyList<Color> targets, MaterialPropertyBlock block, IReadOnlyList<Color> keep = null)
     {
         if (renderers == null || block == null) return;
 
         // Hand over EVERY part (dyed or not), so the shader's nearest-part match can give each part its own pixels
         // and no dyed part bleeds into a neighbor. Undyed parts map to themselves and pass through. Nothing dyed →
         // a count of zero, and the shader skips the swap entirely.
-        int n = parts != null && sources != null && sources.Count > 0 ? Mathf.Min(parts.Count, MaxParts) : 0;
+        int kept = keep != null ? keep.Count : 0;
+        int n = parts != null && sources != null && sources.Count > 0 ? Mathf.Min(parts.Count, MaxParts - kept) : 0;
+        int total = n > 0 ? n + kept : 0;
 
         foreach (var r in renderers)
         {
             if (r == null) continue;
             // Read first and write back: the fade and other effects keep their own values in this same block.
             r.GetPropertyBlock(block);
-            block.SetFloat(CountId, n);
+            block.SetFloat(CountId, total);
             for (int i = 0; i < n; i++)
             {
                 block.SetVector(SrcIds[i], (Vector4)parts[i]);
                 block.SetVector(DstIds[i], (Vector4)ChosenFor(parts[i], sources, targets));
+            }
+            for (int i = n; i < total; i++)
+            {
+                block.SetVector(SrcIds[i], (Vector4)keep[i - n]);
+                block.SetVector(DstIds[i], (Vector4)keep[i - n]);
             }
             r.SetPropertyBlock(block);
         }

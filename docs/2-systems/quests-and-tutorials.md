@@ -14,7 +14,10 @@ Quests button in the status box) lists them under three tabs — **Tutorial**, *
 Quests**. Choosing a quest shows its steps. A **tutorial** has a **Play** button (**Stop** while it plays): playing it
 turns on its **guide** — the part of the screen to press next lit, with an arrow and a short text — and its path. Any
 other quest has a **Show path** button. A path is **arrows on the ground** to where the step happens, and the same whole
-route drawn on the minimap and in the Map window's zone view (M).
+route drawn on the minimap and in the Map window's zone view (M). While a path shows — a quest's, or a spot picked on the
+zone view — a location pin stands on the ground where the route ends in this map, and the left of the screen names the
+map the place is on with the metres of route left ("124 m", or "124 m to the next door" when the place is on another
+map), measured once per route.
 
 ## Unlock conditions
 

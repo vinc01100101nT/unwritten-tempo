@@ -34,6 +34,8 @@ public static class CostumeBaker
     // How far out of the skin, in the body's own units, cloth still counts as covering it — about a twentieth of a
     // body's height (0.031).
     const float CoverReach = 0.0015f;
+    // How far inside each end of the cloth the body is still drawn — about a fiftieth of a body's height (0.031).
+    const float KeepInsideEnds = 0.0006f;
 
     public static string Bake(string name, string[] bodies, float wide, float tall, float topHeight, float margin)
     {
@@ -120,7 +122,7 @@ public static class CostumeBaker
 
     /// <summary>Fit the baked costume <paramref name="name"/> to more bodies — work out what each hides under the
     /// costume — without changing the costume's shape. <paramref name="bodies"/> null = every body in the cast. A body
-    /// already fitted is fitted again. Split into batches of about ten: each body took 0.3-0.5 s, and one editor call may take at most 30 s.</summary>
+    /// already fitted is fitted again. Split into batches of five: each body took 0.3-0.5 s, and a call of ten sometimes came back with no answer.</summary>
     public static string FitBodies(string name, string[] bodies)
     {
         var prefabPath = OutDir + name + "/" + name + ".prefab";
@@ -213,14 +215,26 @@ public static class CostumeBaker
     // within `CoverReach`, and a triangle with any corner covered is hidden — it would only poke through when the two
     // bend apart. (Asking which side of the nearest cloth a point is on hid only 216 of the soldier's 2,594 triangles
     // under a tunic and trousers, measured 2026-10-16.) One bit per triangle, part by part in the body's own order.
+    // THE ENDS STAY: a covered body point within `KeepInsideEnds` of an uncovered one — just inside a wrist, the neck,
+    // a trouser end — stays drawn, so looking into the end of the cloth shows the arm, neck or leg, not a hole. (The
+    // cloth's own edges cannot find the ends: the model is closed, its outer sheet turning into the inner one there.)
     static byte[] Covered(Mesh plain, List<Vector3> verts, List<int> tris, out int cut, out int all)
     {
         var bodyN = plain.normals;
         var bigBody = Big(plain.vertices);
         var big = Big(verts.ToArray());
         var tArr = tris.ToArray();
+        var covered = new bool[bigBody.Length];
+        for (int i = 0; i < bigBody.Length; i++) covered[i] = Hits(big, tArr, bigBody[i], bodyN[i], CoverReach * Work);
+        float keep2 = KeepInsideEnds * Work * KeepInsideEnds * Work;
         var inside = new bool[bigBody.Length];
-        for (int i = 0; i < bigBody.Length; i++) inside[i] = Hits(big, tArr, bigBody[i], bodyN[i], CoverReach * Work);
+        for (int i = 0; i < bigBody.Length; i++)
+        {
+            if (!covered[i]) continue;
+            inside[i] = true;
+            for (int j = 0; j < bigBody.Length; j++)
+                if (!covered[j] && (bigBody[j] - bigBody[i]).sqrMagnitude <= keep2) { inside[i] = false; break; }
+        }
 
         all = plain.triangles.Length / 3;
         var bits = new byte[(all + 7) / 8];

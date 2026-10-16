@@ -60,6 +60,9 @@ def verdict(file_path, transcript_text):
 
 
 def main():
+    # Its lines carry arrows; a Windows console that is not UTF-8 crashed on the first one before any case was judged.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     failures = 0
     for name, path, doc in CASES:
         with open(doc, encoding="utf-8") as f:

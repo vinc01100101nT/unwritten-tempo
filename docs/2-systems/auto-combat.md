@@ -6,7 +6,9 @@ walks there, swings, presses up to four chosen skills, drinks potions and picks 
 ## Switching it on and off
 
 - **T**, or the **Start** / **Stop** button in the Auto-Combat window (System menu ▸ Auto-Combat), asks the server to
-  switch it on. The server says yes or no; the player's machine never switches it on by itself.
+  switch it on. The server says yes or no; the player's machine never switches it on by itself. When the server says
+  yes to the window's **Start**, every open window closes — the System menu and Settings included; a refusal leaves
+  them up.
 - **Never in a town.** Free Roam only in a field or a dungeon. A refusal is said on screen.
 - **It stops** when the player gives any order of their own (a click, WASD, a skill aimed by hand that has to walk
   into range, T again), when the character dies, and on every trip: a door, a Butterfly Wing, a Keeper's teleport, a
@@ -20,10 +22,10 @@ walks there, swings, presses up to four chosen skills, drinks potions and picks 
 ## The three hunts
 
 - **Standing** — fights only what comes within weapon reach, and never takes a step.
-- **Radius** (the default) — starts a fight only with a creature within **10** of the spot it was switched on at, drops a
+- **Radius** — starts a fight only with a creature within **10** of the spot it was switched on at, drops a
   fight once the character or the creature is more than **14** from that spot, and walks back to the spot when there is
   nothing to fight.
-- **Free Roam** — goes for the nearest creature anywhere on the map.
+- **Free Roam** (the default) — goes for the nearest creature anywhere on the map.
 
 Whichever hunt, the nearest qualifying creature to the character is chosen. A target that has neither lost health
 nor been walked any closer for **6 seconds** — one the hunt cannot reach or cannot hurt — is given up on and left
@@ -58,8 +60,8 @@ is never drunk while one of its kind is still running. 0% = never.
 The settings are one row per character, `character_auto_combat` (`accounts/sql/013_character_auto_combat.sql`),
 written only when the player changes a setting, the same way the hotbar's row is — through the character server's
 `PUT /server/characters/{id}/auto-combat` door, guarded by the server secret and the hand-over number. The row travels
-to a map server with the character. A character that never changed a setting has no row and reads as: empty slots, no
-auto-loot, no auto-potion, Radius. The shared character build string is `unwritten-character-v28`.
+to a map server with the character. A character that never changed a setting has no row and reads as: empty slots,
+auto-loot everything at 100%, a healing item below 70% health, no mana draught, Free Roam. The shared character build string is `unwritten-character-v28`.
 
 ## Where it lives in the code
 

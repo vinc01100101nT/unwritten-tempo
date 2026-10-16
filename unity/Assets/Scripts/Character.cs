@@ -709,14 +709,25 @@ public class Character : MonoBehaviour, ICombatUnit
         var r = Rig(); if (r != null) r.Teleport(dest, look);
     }
 
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
-                        RelocationLook look = default)
+    public float GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                         RelocationLook look = default)
     {
+        // The trip's length, from where this body stands and the speed every person's glide runs at — the same
+        // multiple of the shared full speed the owner's machine moves it by. An effect authoring no speed leaves it unknown.
+        float seconds = 0f;
+        var body = Body;
+        if (body != null && speedMult > 0f)
+        {
+            Vector3 flat = dest - body.position; flat.y = 0f;
+            seconds = GlideEase.Seconds(speedMult * CharacterSpec.Active.FullSpeed, flat.magnitude, easeIn, easeOut,
+                                        Mathf.Max(0.01f, easeSeconds));
+        }
         if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
             { kind = NetPlayer.Motion.Kind.Glide, destination = dest, speed = speedMult,
               easeIn = easeIn, easeOut = easeOut, seconds = easeSeconds,
-              facing = faceAt.HasValue, faceAt = faceAt ?? Vector3.zero, look = look })) return;
+              facing = faceAt.HasValue, faceAt = faceAt ?? Vector3.zero, look = look })) return seconds;
         var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt, look);
+        return seconds;
     }
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
 

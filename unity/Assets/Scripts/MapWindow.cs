@@ -786,13 +786,13 @@ public class MapWindow : MonoBehaviour
         doorRoot.SetParent(zone.picture, false);
         doorRoot.anchorMin = doorRoot.anchorMax = doorRoot.pivot = new Vector2(0.5f, 0.5f);
 
-        pinSprite = BuildPinSprite();
+        pinSprite = GuidePin.Sprite;
         guidePin = NewImage("GuidePin", zone.picture, UiKit.Accent);
         guidePin.sprite = pinSprite;
         var gprt = guidePin.rectTransform;
         // The pin's point is its bottom (4 of its 64 pixels up), so that is the spot it stands on.
         gprt.anchorMin = gprt.anchorMax = new Vector2(0.5f, 0.5f);
-        gprt.pivot = new Vector2(0.5f, 4f / 64f);
+        gprt.pivot = new Vector2(0.5f, GuidePin.TipFromBottom);
         gprt.sizeDelta = new Vector2(GuidePinSize, GuidePinSize);
         guidePin.gameObject.SetActive(false);
         zone.marker.SetAsLastSibling();
@@ -1102,33 +1102,6 @@ public class MapWindow : MonoBehaviour
     }
 
     // A map pin — a round head with a hole, narrowing to a point — baked once when the map is built.
-    static Sprite BuildPinSprite()
-    {
-        const int size = 64, samples = 4;
-        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
-        var px = new Color32[size * size];
-        var head = new Vector2(32f, 42f);
-        const float radius = 18f, hole = 7f, tipY = 4f;
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            int inside = 0;
-            for (int sy = 0; sy < samples; sy++)
-            for (int sx = 0; sx < samples; sx++)
-            {
-                var p = new Vector2(x + (sx + 0.5f) / samples, y + (sy + 0.5f) / samples);
-                float d = Vector2.Distance(p, head);
-                bool body = d <= radius
-                            || (p.y >= tipY && p.y <= head.y && Mathf.Abs(p.x - head.x) <= (p.y - tipY) / (head.y - tipY) * radius * 0.82f);
-                if (body && d > hole) inside++;
-            }
-            px[y * size + x] = new Color32(255, 255, 255, (byte)(255 * inside / (samples * samples)));
-        }
-        tex.SetPixels32(px);
-        tex.Apply();
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-    }
-
     // ── tiny uGUI helpers ─────────────────────────────────────────────────────────────────────────────────────────
     static Image NewImage(string name, Transform parent, Color c)
     {

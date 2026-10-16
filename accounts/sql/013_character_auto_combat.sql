@@ -6,8 +6,8 @@
 --   { "v": 1, "slots": [4 skill ids or ""], "lootRateAtMostPercent": 0-100, "lootGears": bool, "lootConsumables": bool,
 --     "lootMaterials": bool, "lootAll": bool, "hpPotionBelowPercent": 0-100, "mpPotionBelowPercent": 0-100,
 --     "huntMode": 0 Standing / 1 Radius / 2 Free Roam }
--- A character that never changed a setting has NO row, and the game reads that as "never set": empty slots, no
--- auto-loot, no auto-potion, Radius.
+-- A character that never changed a setting has NO row, and the game reads that as "never set": empty slots,
+-- auto-loot everything at 100%, a healing item below 70% health, no mana draught, Free Roam.
 --
 -- NOTHING IS LEFT BEHIND: the row is deleted with its character (`on delete cascade`), so it cannot outlive the
 -- character it belongs to. A soft-deleted character keeps its row, exactly as it keeps its progress and its hotbar, until

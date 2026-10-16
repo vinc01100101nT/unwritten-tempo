@@ -217,8 +217,10 @@ public interface ICombatUnit : IDamageable
     /// reads as a swing at empty air — and nothing must re-turn it on landing. Null = face the travel direction.</param>
     /// <param name="look">The authored effect behind the glide (its afterimage and fade), read by every screen from
     /// its own copy of the skill. <see cref="RelocationLook.None"/> for a glide no effect authored.</param>
-    void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
-                 RelocationLook look = default);
+    /// <returns>How many seconds the trip takes (<see cref="GlideEase.Seconds"/>) — what a strike riding the dash waits
+    /// for before it lands. 0 when there is no trip, or its length cannot be known.</returns>
+    float GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                  RelocationLook look = default);
 
     /// <summary>True while this unit is mid-relocation — travelling a fixed A→B glide rather than walking. Lets a
     /// presentation effect last exactly as long as the hop does, without anyone having to author its length or guess

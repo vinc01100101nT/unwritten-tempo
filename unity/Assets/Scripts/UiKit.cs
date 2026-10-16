@@ -307,15 +307,21 @@ public static class UiKit
     public static void SeeThroughBody(Image edge, Image body, float alpha, int radius)
     {
         if (edge == null || body == null) return;
-        if (!_rims.TryGetValue(radius, out var rim) || rim == null)
-        {
-            rim = Resources.Load<Sprite>("UI/Theme/RoundedRim" + radius);
-            if (rim == null) Debug.LogError($"[UiKit] no rim image for corner radius {radius} — run tools/ui-theme-sprites.py");
-            _rims[radius] = rim;
-        }
+        var rim = RimSprite(radius);
         if (rim == null) return;
         edge.sprite = rim;
         var c = body.color; c.a = alpha; body.color = c;
+    }
+
+    /// <summary>The rim of a rounded rectangle of <paramref name="radius"/> — its one-unit edge and nothing inside, 9-sliced,
+    /// white to be tinted. Stored beside the filled shapes (tools/ui-theme-sprites.py); a radius with none is reported once.</summary>
+    public static Sprite RimSprite(int radius)
+    {
+        if (_rims.TryGetValue(radius, out var rim) && rim != null) return rim;
+        rim = Resources.Load<Sprite>("UI/Theme/RoundedRim" + radius);
+        if (rim == null) Debug.LogError($"[UiKit] no rim image for corner radius {radius} — run tools/ui-theme-sprites.py");
+        _rims[radius] = rim;
+        return rim;
     }
 
     /// <summary>Draw <paramref name="img"/> as a text field or slot well: a thin <see cref="ButtonEdge"/> rim around a

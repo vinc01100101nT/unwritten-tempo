@@ -47,7 +47,7 @@ smallest risk first. **All six landed on 2026-09-20 (slice 6 rebuilt as skill le
     and carrying the numbers it was refused on. The bag's Merge answers the same way.
   - **Recycle**: at the station of its craft a piece can be taken apart for HALF of what it provably consumed —
     `CraftingMath.RecycleYield` counts one successful quench per rung climbed, the folds standing on it, and
-    (`RecycleInks`) one Ink per written stat; folds made at Raw return nothing. Failed folds and quenches are recorded nowhere, so they
+    (`RecycleInks`) one Ink per written stat; every grade's folds count, Raw included, and every recycle gives at least 1 Temper Dust. Failed folds and quenches are recorded nowhere, so they
     return nothing; Salt never returns. Halved and floored per material.
   - **A station is an interaction like a conversation**: the same side-on camera, the townsperson halts and turns,
     the player is held, and Esc or the window's X ends it. `PlayerInteractor` owns both kinds so they cannot

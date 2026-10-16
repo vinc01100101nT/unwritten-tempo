@@ -183,6 +183,13 @@ Builds the Windows game and the Mac game, then publishes both as one update into
 tools/build-and-publish.sh --dev
 ```
 
+Publishes what is already built — both games, the website, the wiki and `launcher/news.json` — without building
+anything:
+
+```
+tools/publish.sh
+```
+
 Serves the update folder — the website with its Download page, the launcher and every update — to this computer and every device
 on your Wi-Fi. Leave that terminal open (Ctrl+C stops it). It prints only the addresses that answered when it tried
 them from this computer, and a red line when `PATCH_URL` — the address players are given — does not answer. Another

@@ -18,13 +18,12 @@ public static class CharacterDyePartsBaker
     const string TablePath = "Assets/3_Data/Resources/" + CharacterDyeParts.ResourcePath + ".asset";
     const string BareBodyFolder = "Assets/2_Generated/Characters/Bodies";
 
-    // Must match the eight colour pairs the character shader takes.
-    const int MaxParts = 8;
+    // The shader takes eight colour pairs; the colours a body never changes (its skin) take theirs first.
+    static readonly int MaxParts = CharacterDye3D.MaxParts - CharacterDye3D.Unchangeable.Count;
 
     // Skin / eyes / mouth families never offered as dyeable parts (so character creation only offers clothing).
-    // Deliberately NO near-black entry: a dark OUTFIT sits close to eye/outline black, and filtering black would
-    // wrongly hide dark clothing. True outline black is dropped as background in Tally, and eye pixels are too few to
-    // survive the coverage cut.
+    // The pitch-black skin is matched EXACTLY instead (CharacterDye3D.Unchangeable, in IsProtected) — a black suit
+    // sits right beside it and is clothing. True outline black is dropped as background in Tally.
     static readonly Color[] Protected =
     {
         new Color(0.9373f, 0.5686f, 0.3098f),   // skin / tan
@@ -153,7 +152,8 @@ public static class CharacterDyePartsBaker
     static void Tally(Color32 p, float w, Dictionary<int, float> counts, Dictionary<int, Color32> reps)
     {
         if (p.a < 128) return;
-        if (p.r < 24 && p.g < 24 && p.b < 24) return;
+        // Outline black only: a black suit (#111111) is clothing and must stay.
+        if (p.r < 12 && p.g < 12 && p.b < 12) return;
         const int quant = 12;
         int key = (p.r / quant) << 16 | (p.g / quant) << 8 | (p.b / quant);
         if (counts.TryGetValue(key, out float c)) counts[key] = c + w;
@@ -183,6 +183,8 @@ public static class CharacterDyePartsBaker
 
     static bool IsProtected(Color c)
     {
+        foreach (var k in CharacterDye3D.Unchangeable)
+            if (((Color32)c).Equals((Color32)k)) return true;
         float t2 = ProtectFilterTol * ProtectFilterTol * 3f;
         foreach (var p in Protected)
         {

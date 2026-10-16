@@ -1939,6 +1939,8 @@ public class GameNetwork : NetworkManager
         if (!NetworkServer.active) return;
         // Everything in the air — arrows, thrown blades, bouncing skills — on the same server frame.
         Flights.Tick();
+        // Strikes riding a dash, landing as the dash arrives.
+        DashLandings.Tick();
         if (pendingBlows.Count == 0) return;
 
         // IN THE ORDER THEY CONNECT: a pair weapon's two hits can both fall due in one frame at a high attack speed,

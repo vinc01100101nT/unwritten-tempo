@@ -123,7 +123,7 @@ Every behavior is a **natural effect authored on the skill** (composed in the Sk
 | **SubStatBuff** | self/others | no | sub-stat + magnitude, duration | magnitude, duration | **THE single path for every timed sub-stat RISE** — move speed, both regens, leech, reflect, accuracy, evasion, attack, defence, crit, max HP/MP, damage, damage reduction. Percent-or-amount is the stat's own answer |
 | Cleanse | self | no | debuffs_removed | — | Strips up to N active debuffs |
 | Execute | mobs | yes | execute_scale, proc_chance | base roll (scale raw) | Proc per hit: bonus = roll × magnitude × target's missing HP fraction; huge near death |
-| Dash | self (point) | no | dash_speed, ease | — | Visible fast glide to the aimed point; blocked by geometry |
+| Dash | self (point) | no | dash_speed, ease | — | Visible fast glide to the aimed point; blocked by geometry. The binding's target effects (its damage, ailments, knockback) wait for the trip and land on arrival (`DashLandings`) |
 | Knockback | mobs | no | shove_speed, duration | duration only | Shoves the mob away from the caster |
 | Pull | mobs | no | shove_speed, duration | duration only | Drags the mob toward the caster |
 | Shield | self | no | shield_amount, duration | shield_amount, duration | Finite HP barrier; soaks hits until drained; DoT bypasses |

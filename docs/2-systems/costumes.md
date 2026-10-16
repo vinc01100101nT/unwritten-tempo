@@ -25,8 +25,8 @@
    "Casual_Female" }, 0.02505, 0.02989, 0.02209, 0.00015)`. `wide` puts the cuffs at the wrists, `tall` puts the
    sleeves on the arms and the hem above the ground, `topHeight` puts the collar at the neck. It took 4.6 s.
 4. **Every other body.** `CostumeBaker.FitBodies(name, bodies)` works out what each body hides, without changing the
-   costume's shape; `null` = every body. About 0.4 s per body, so run it ten bodies at a time through the live
-   editor (one call may take at most 30 s). The test costume: 51 bodies in five calls of 3.3–4.7 s.
+   costume's shape; `null` = every body. About 0.4 s per body; run it five bodies at a time through the live
+   editor, because a call of ten sometimes came back with no answer and had to be repeated.
 5. **The item.** An item in the Costume Body slot whose model is the costume's prefab.
 
 ## How it is built
@@ -39,8 +39,12 @@
   `margin`. Bodies fitted later with `FitBodies` do not change the costume's shape.
 - For each body, one bit per triangle marks what the costume covers: a body point is covered when looking straight
   out of the skin there meets the cloth within 0.0015 (a twentieth of a body's height), and a triangle with any
-  covered corner is hidden. Test costume, for example: 1,370 of the soldiers' 2,594, 1,548 of the Ninja Female's
-  2,792, 2,484 of the zombies' 3,886 and 4,046.
+  covered corner is hidden.
+- **The ends stay drawn.** A covered body point within 0.0006 (a fiftieth of a body's height) of an uncovered one —
+  just inside a wrist, the neck, a trouser end — is not hidden, so looking into the end of the cloth shows the arm,
+  neck or leg instead of a hole. The cloth's own edges cannot find the ends: the Trellis model is closed, its outer
+  sheet turning into the inner one there. Test costume, for example: 954 of the soldiers' 2,594 hidden, 1,362 of the
+  Ninja Female's 2,792, 1,225 of the zombies' 3,886 and 4,046.
 - The costume's picture is held at 512, the size of the bodies' own.
 
 ### On the body
@@ -69,7 +73,8 @@ wearing it, and let go when the last of them takes it off or leaves.
 ## Known limits
 
 - **The same costume shape on every body.** A body whose own clothes stand further out than the costume shows them
-  where the costume does not cover: the Witch's skirt bands show at the waist and thighs.
+  where the costume does not cover: the Witch's skirt bands show at the waist and thighs, and the Ninja Female's
+  knees and collar show through when a knee bends.
 - **The test costume's hem** carries a ragged cream edge, already on the Trellis model before fitting.
 - **Mobs and townsfolk** do not wear costumes, as they do not wear capes.
 - **License:** Trellis models may not be sold — the install's own note: "Trellis uses some nvidia code that disallows

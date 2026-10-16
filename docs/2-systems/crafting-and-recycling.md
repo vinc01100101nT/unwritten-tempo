@@ -20,8 +20,10 @@ tags:
 Gear is dropped, never made: a kill has a 10% chance to drop one piece of what the creature wears, always Raw
 and unfolded, its base rolled, at a rarity the creature's kind decides. At a station in town you **fold** it with
 Temper Dust to make it worth more, up to +10 — from +4 a fold can fail and take one fold back — and at +10 you
-**quench** it with Quench Oil to move its grade one rung along the F-to-A ladder, to +0, or fail. **Recycling** a
-piece returns half of what its folds and quenches took. **Ink** writes a stat onto it, one roll of one stat, and
+**quench** it with Quench Oil to move its grade one rung along the F-to-A ladder, to +0, or fail. A piece ready to
+quench glows gold at the edge of its picture wherever the picture is drawn — bag, storage, station, hotbar, shop, the
+floor — but not on its card. **Recycling** a
+piece returns half of what its folds and quenches took, and never less than 1 Temper Dust. **Ink** writes a stat onto it, one roll of one stat, and
 better Ink writes a bigger number. **Salt** decides what a failed quench costs — and the better ones raise the
 chance — and is spent either way.
 Skills are not on the weapon at all: you buy and level them with the mastery points a weapon's mastery earns, and

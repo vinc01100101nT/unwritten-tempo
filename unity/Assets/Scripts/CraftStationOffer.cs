@@ -3,6 +3,20 @@
 /// number in it is finished: the window shows these and works nothing out, so what a player is quoted and what
 /// the station actually charges can never drift apart.
 /// </summary>
+public struct RecycleBatchQuote
+{
+    /// <summary>Which ask this answers — the window drops an answer to an ask it has since replaced.</summary>
+    public int ask;
+    /// <summary>What recycling every picked piece together gives back: item ids and counts, parallel, and gold.</summary>
+    public string[] ids;
+    public int[] counts;
+    public int gold;
+    /// <summary>How many pieces that is.</summary>
+    public int pieces;
+    /// <summary>Why the batch would be refused, as the server would say it; empty when it would go through.</summary>
+    public string refusal;
+}
+
 public struct CraftStationOffer
 {
     /// <summary>Which bag position this is about, so a reply that arrives late can be matched to what is shown.
@@ -23,6 +37,9 @@ public struct CraftStationOffer
     /// <summary>What ONE quench costs: the material, how many, and the gold beside it.</summary>
     public string quenchMaterialId;
     public int quenchMaterialCost, quenchGoldCost;
+    /// <summary>How much of the fold's material and of the quench's material the player carries right now, counted on
+    /// the server over every stack in the bag.</summary>
+    public int foldMaterialHeld, quenchMaterialHeld;
 
     /// <summary>The chance, in whole percent, that the next fold succeeds, and the folds the piece stands at if it
     /// fails. 100 and the same folds while a fold cannot fail.</summary>

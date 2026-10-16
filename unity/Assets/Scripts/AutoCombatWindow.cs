@@ -63,7 +63,7 @@ public class AutoCombatWindow : MonoBehaviour
 
         // ---- Hunt ----
         var onOffRow = Row(hunt, "Auto-combat", 0.6f);
-        var onOff = ChoiceButton(onOffRow, "Start", () => AutoCombatClient.Toggle());
+        var onOff = ChoiceButton(onOffRow, "Start", PressStartOrStop);
         onOffLabel = onOff.GetComponentInChildren<TMPro.TMP_Text>();
         stateLabel = UiKit.Label("State", hunt, "", 12, FontStyle.Italic, TextAnchor.MiddleLeft);
         stateLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 18;
@@ -127,6 +127,14 @@ public class AutoCombatWindow : MonoBehaviour
     {
         if (root == null || !root.activeSelf) return;
 
+        if (closeWindowsIfOnBefore > 0f && AutoCombatClient.On)
+        {
+            closeWindowsIfOnBefore = 0f;
+            WindowCloseButton.CloseEveryWindow();
+            return;
+        }
+        if (closeWindowsIfOnBefore > 0f && Time.unscaledTime >= closeWindowsIfOnBefore) closeWindowsIfOnBefore = 0f;
+
         // THE PLAYER'S CHANGES GO a moment after they stop — the whole document, which the server answers in full.
         if (dirty && Time.unscaledTime >= sendAt)
         {
@@ -141,6 +149,21 @@ public class AutoCombatWindow : MonoBehaviour
             draft = AutoCombatClient.Settings.Clone();
             DrawAll();
         }
+    }
+
+    // START CLOSES EVERY WINDOW once the server says yes — a refusal leaves them up, so its reason can be read.
+    float closeWindowsIfOnBefore;
+    const float SecondsToWaitForTheServersYes = 3f;
+
+    void PressStartOrStop()
+    {
+        if (!AutoCombatClient.On)
+        {
+            // A change still waiting to be sent goes first, or closing the window would drop it.
+            if (dirty) { dirty = false; AutoCombatClient.AskToKeep(draft); }
+            closeWindowsIfOnBefore = Time.unscaledTime + SecondsToWaitForTheServersYes;
+        }
+        AutoCombatClient.Toggle();
     }
 
     void Changed()

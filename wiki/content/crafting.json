@@ -28,7 +28,7 @@
         "**Fold** — Temper Dust and Unsigned: **1** Temper Dust a fold at Raw and one more for each grade, up to **7** at A. Each fold makes the piece worth more. **+0 to +4 always work**; from +4 a fold can fail, more often the higher the grade and the folds, and a failed fold takes **one fold off**, never below **+4**. Every grade stops at **+10**, and only a quench moves you on.",
         "**Quench** — at **+10** only. Quench Oil and more Unsigned: **1** Quench Oil at Raw and one more for each grade, up to **6** at B. It either lifts the piece **one grade, to +0**, or fails. With no Salt, a failure drops the piece one grade, to +0 (a Raw piece just goes back to +0), and takes the last stat Ink wrote on it. **A is the top.**",
         "**Ink** — writes one stat onto the piece at a slot you pick. An empty slot is filled; an occupied one is replaced.",
-        "**Recycle** — destroys the piece and gives back half of what its folds and quenches took (below)."
+        "**Recycle** — destroys the piece and gives back half of what its folds and quenches took, and never less than 1 Temper Dust (below)."
       ]
     },
     {
@@ -65,7 +65,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, Unsigned and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. **Folds made at Raw return nothing.** A shop pays 5u for any piece of gear. A piece your first tutorial still needs cannot be recycled, sold or dropped."
+      "text": "Take any piece to the station of its craft and **recycle** it. The piece is destroyed, and **half of what it provably cost** comes back, as Temper Dust, Quench Oil, Unsigned and Ink: every quench it successfully climbed and the folds each of those took, the folds standing on it now, and the Ink for the stats written on it. Every fold counts, Raw ones included, and every recycle gives at least 1 Temper Dust — so a Raw piece straight from a creature gives exactly that. A shop pays 5u for any piece of gear. On the Recycle page you can tick as many carried pieces as you like and recycle them all with one press; worn pieces are recycled one at a time. A piece your first tutorial still needs cannot be recycled, sold or dropped."
     },
     {
       "type": "paragraph",

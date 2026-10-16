@@ -431,7 +431,7 @@ public class ShopPanel : MonoBehaviour
             return;
         }
         var def = stock[row].def;
-        AskHowMany("Buy how many?", 1, 0, at, n =>
+        AskHowMany("Buy how many?", 1, 0, false, at, n =>
         {
             var line = FindLine(CartKind.Buy, def.id, "");
             if (line != null) line.count = Mathf.Min(ShopCart.MostInOneLine, line.count + n);
@@ -458,7 +458,7 @@ public class ShopPanel : MonoBehaviour
         }
         int left = entry.count - (existing != null ? existing.count : 0);
         if (left <= 0) return;
-        AskHowMany("Sell how many? (1–" + left + ")", left, left, at, n =>
+        AskHowMany("Sell how many? (1–" + left + ")", left, left, true, at, n =>
         {
             if (existing != null && cart.Contains(existing)) existing.count = Mathf.Min(entry.count, existing.count + n);
             else cart.Add(Line(CartKind.Sell, entry, entry.def.id, "", Mathf.Min(entry.count, n), entry.def.value));
@@ -473,12 +473,28 @@ public class ShopPanel : MonoBehaviour
             row = new BagEntry { def = shown.def, count = count, instance = shown.instance },
         };
 
-    void TakeOut(int line)
+    /// <summary>Take cart line <paramref name="line"/> back out. A stack of more than one asks how many go back, starting
+    /// at the whole line; a piece of gear, or a buy-back (one sale, whole), goes back at once.</summary>
+    void TakeOut(int line, Vector2 at)
     {
         if (trading || line < 0 || line >= cart.Count) return;
-        cart.RemoveAt(line);
-        UISounds.PlayClick();
-        CartChanged();
+        var it = cart[line];
+        if (it.kind == CartKind.BuyBack || it.row.instance != null || it.count <= 1)
+        {
+            cart.RemoveAt(line);
+            UISounds.PlayClick();
+            CartChanged();
+            return;
+        }
+        var box = DropAmountPrompt.Shared(GetComponentInParent<Canvas>());
+        if (box == null) return;
+        box.Ask("Return how many? (1–" + it.count + ")", it.count, it.count, at, n =>
+        {
+            if (trading || !cart.Contains(it)) return;
+            it.count -= Mathf.Min(it.count, n);
+            if (it.count <= 0) cart.Remove(it);
+            CartChanged();
+        });
     }
 
     CartItem FindLine(CartKind kind, string itemId, string copyId)
@@ -495,11 +511,10 @@ public class ShopPanel : MonoBehaviour
         return null;
     }
 
-    void AskHowMany(string heading, int start, int most, Vector2 at, System.Action<int> confirmed)
+    void AskHowMany(string heading, int start, int most, bool selling, Vector2 at, System.Action<int> confirmed)
     {
-        // TICKED "DON'T ASK QUANTITY": straight in, at what the box would have opened holding — the whole stack to sell,
-        // one to buy.
-        if (GameSettings.DontAskQuantity) { UISounds.PlayClick(); confirmed(start); return; }
+        // TICKED "DON'T ASK QUANTITY": a sale goes straight in, the whole stack. A purchase always asks.
+        if (selling && GameSettings.DontAskQuantity) { UISounds.PlayClick(); confirmed(start); return; }
         var box = DropAmountPrompt.Shared(GetComponentInParent<Canvas>());
         if (box != null) box.Ask(heading, start, most, at, confirmed, GuideSpot.ShopAmountBox);
     }
@@ -588,7 +603,7 @@ public class ShopPanel : MonoBehaviour
     {
         if (purse == null) return;
         var c = Character.Instance;
-        Write(purse, "<color=" + UiKit.Hex(UiKit.TextDim) + ">You have</color> " + Wallet.Amount(c != null ? c.Gold : 0));
+        Write(purse, Wallet.YouHave(c != null ? c.Gold : 0));
     }
 
     static void Write(TMP_Text t, string s)
@@ -652,7 +667,7 @@ public class ShopPanel : MonoBehaviour
         public void Press(int index, int which) { }
         public void ItemClicked(int index, PointerEventData e)
         {
-            if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2) p.TakeOut(index);
+            if (e.button == PointerEventData.InputButton.Left && e.clickCount >= 2) p.TakeOut(index, e.position);
         }
     }
 
@@ -696,7 +711,7 @@ public class ShopPanel : MonoBehaviour
         int fromCart = -1;
         for (int i = 0; i < cart.Count && fromCart < 0; i++) if (cart[i].row == entry) fromCart = i;
 
-        if (fromCart >= 0) { if (into != ColumnDrop.Into.Cart) TakeOut(fromCart); return; }
+        if (fromCart >= 0) { if (into != ColumnDrop.Into.Cart) TakeOut(fromCart, at); return; }
         if (fromShop >= 0) { if (into != ColumnDrop.Into.Shop) AddFromShop(fromShop, at); return; }
         var c = Character.Instance;
         if (c != null && c.Bag.Contains(entry) && into != ColumnDrop.Into.Bag) AddFromBag(entry, at);

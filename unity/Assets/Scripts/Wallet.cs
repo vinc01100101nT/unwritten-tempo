@@ -24,6 +24,16 @@ public static class Wallet
     /// so a price, a purse, a reward and a server's sentence can never write money two ways.</summary>
     public static string Amount(long n) => n.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + "u";
 
+    /// <summary>THE "You have" LINE every window that takes payment shows beside its price — "You have 1,220u", or with
+    /// the material the price is also in, "You have 12 Temper Dust · 1,220u". Both figures are ones the server sent;
+    /// this only writes them, the one way every window writes them.</summary>
+    public static string YouHave(long gold, string material = null, int materialHeld = 0)
+    {
+        string dim = "<color=" + UiKit.Hex(UiKit.TextDim) + ">You have</color> ";
+        return string.IsNullOrEmpty(material) ? dim + Amount(gold)
+            : dim + materialHeld.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " " + material + " · " + Amount(gold);
+    }
+
     /// <summary>What the local player has. Nothing, before there is a character.</summary>
     public static long Gold => Character.Instance != null ? Character.Instance.Gold : 0;
 

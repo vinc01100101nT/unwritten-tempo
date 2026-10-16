@@ -462,6 +462,9 @@ public class GroundDrop : MonoBehaviour
     static float iconSize;
 
     SpriteRenderer icon;
+    // A gold copy of the icon just behind it, a little larger, while the piece is ready to quench (ItemIcon.QuenchGlows).
+    SpriteRenderer iconGlow;
+    const float GlowScale = 1.18f;
     Transform iconTransform;
     // The scale that makes the icon one head tall.
     float restScale = 1f;
@@ -492,6 +495,19 @@ public class GroundDrop : MonoBehaviour
         iconTransform.SetParent(transform, false);
         icon = go.AddComponent<SpriteRenderer>();
         icon.sprite = def.icon;
+        if (ItemIcon.QuenchGlows(quality, upgrade))
+        {
+            var glowGo = new GameObject("QuenchGlow") { hideFlags = HideFlags.DontSaveInEditor };
+            glowGo.transform.SetParent(iconTransform, false);
+            glowGo.transform.localScale = Vector3.one * GlowScale;
+            iconGlow = glowGo.AddComponent<SpriteRenderer>();
+            iconGlow.sprite = def.icon;
+            var gold = UiKit.NoticeWarning;
+            gold.a = 0.7f;
+            iconGlow.color = gold;
+            iconGlow.sortingLayerID = icon.sortingLayerID;
+            iconGlow.sortingOrder = icon.sortingOrder - 1;
+        }
         SizeIcon();
         RestIcon();
     }
@@ -504,6 +520,7 @@ public class GroundDrop : MonoBehaviour
         if (size > 0f && tall > 0f) restScale = size / tall;
         iconTransform.localScale = Vector3.one * restScale;
         icon.enabled = size > 0f && readable;
+        if (iconGlow != null) iconGlow.enabled = icon.enabled;
     }
 
     // Lying on its spot: the bottom of the picture on the ground.
@@ -643,6 +660,7 @@ public class GroundDrop : MonoBehaviour
         if (NobodyToShowItTo) return;
 
         if (icon != null) icon.enabled = on && iconSize > 0f;
+        if (iconGlow != null) iconGlow.enabled = icon.enabled;
         // The name follows whether Alt is being held as well, so walking back into the map does not put a name up
         // that nobody asked for.
         ShowName(on && (namesWanted || hovered == this));

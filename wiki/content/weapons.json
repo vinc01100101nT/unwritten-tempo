@@ -347,7 +347,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Every grade stops at +10**, and a piece is quenched only from there. From +4 a fold can fail and take one fold back. Nothing is wasted for good: half of what a piece's folds and quenches took comes back if you recycle it, except for folds made at Raw (see *Crafting & Recycling*)."
+      "text": "**Every grade stops at +10**, and a piece is quenched only from there. From +4 a fold can fail and take one fold back. Nothing is wasted for good: half of what a piece's folds and quenches took comes back if you recycle it, and never less than 1 Temper Dust (see *Crafting & Recycling*)."
     },
     {
       "type": "heading",

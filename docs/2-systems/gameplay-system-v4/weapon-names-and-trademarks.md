@@ -211,7 +211,7 @@ wears, so a wanted trademark is hunted from creatures that carry that weapon typ
 | *Any* ultimate's | 1% | ~100 |
 | A specific ultimate's | 0.33% | ~300 |
 
-A dropped piece nobody wants sells to a shop for 5u; recycling a Raw piece returns nothing.
+A dropped piece nobody wants sells to a shop for 5u; recycling an untouched Raw piece returns 1 Temper Dust.
 
 ## 6. How it is built
 

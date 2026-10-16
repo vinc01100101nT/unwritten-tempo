@@ -253,14 +253,19 @@ public class Health : MonoBehaviour, ICombatUnit
         if (a != null) a.Teleport(dest, look);
         else transform.position = dest;
     }
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
-                        RelocationLook look = default)
+    public float GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt,
+                         RelocationLook look = default)
     {
         var a = Agent;
-        if (a == null) return;
+        if (a == null) return 0f;
         // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
         // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
-        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds, faceAt, look);
+        float speed = (speedMult > 0f ? speedMult : 1f) * a.moveSpeed;
+        Vector3 flat = dest - a.transform.position; flat.y = 0f;
+        float seconds = flat.magnitude < 0.05f ? 0f
+            : GlideEase.Seconds(speed, flat.magnitude, easeIn, easeOut, Mathf.Max(0.05f, easeSeconds));
+        a.GlideTo(dest, speed, easeIn, easeOut, easeSeconds, faceAt, look);
+        return seconds;
     }
     public bool IsRelocating { get { var a = Agent; return a != null && a.Gliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)

@@ -21,6 +21,10 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     /// SlotDragHandler uses it to reorder and drop against the store rather than against the row.</summary>
     public BagEntry boundEntry;
 
+    /// <summary>How many of a stack the box shows when it is bound to no bag entry — a hotbar tile; -1 when it shows
+    /// none. Hovering names the stack with this count, the same as a bag box does with its entry's.</summary>
+    public int shownCount = -1;
+
     /// <summary>The click handling for this row, set by the list that owns it.</summary>
     public System.Action<PointerEventData> clickOverride;
     /// <summary>When true, hovering an equipment instance shows the live equip→stat-delta preview
@@ -44,6 +48,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     {
         item = newItem;
         instance = null;             // a plain item clears any prior instance data
+        shownCount = -1;
     }
 
     /// <summary>Hold a full equipment instance (def + refine + cards). Use <see cref="SetItem"/> for plain
@@ -52,6 +57,7 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
     {
         instance = inst;
         item = inst != null ? inst.def : null;
+        shownCount = -1;
     }
 
     public void OnPointerClick(PointerEventData e)
@@ -80,8 +86,10 @@ public class ItemSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHandle
         if (!nameOnHover) return;
         if (instance != null) ItemTooltip.ShowName(ItemTooltip.CopyTitle(instance));
         else if (item != null)
-            ItemTooltip.ShowName(boundEntry != null && boundEntry.def == item && !boundEntry.IsEquip
-                ? item.displayName + " x" + boundEntry.count : item.displayName);
+        {
+            int n = boundEntry != null && boundEntry.def == item && !boundEntry.IsEquip ? boundEntry.count : shownCount;
+            ItemTooltip.ShowName(n >= 0 ? item.displayName + " x" + n : item.displayName);
+        }
     }
 
     public void OnPointerExit(PointerEventData e)

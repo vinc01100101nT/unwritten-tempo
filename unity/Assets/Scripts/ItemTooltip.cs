@@ -356,6 +356,7 @@ public class ItemTooltip : MonoBehaviour
         if (group.alpha <= 0f) { previewing = null; pinned = false; return; }
         if (pinned)
         {
+            if (Hotkeys.CancelDown()) { Hotkeys.MarkCancelHandled(); Unpin(); return; }
             // A click anywhere off the card closes it — not the click that opened it, and not a click on the card.
             if ((PointerInput.PrimaryDown || PointerInput.SecondaryDown) && Time.frameCount != pinnedFrame
                 && !RectTransformUtility.RectangleContainsScreenPoint(panel, PointerInput.Position, EventCamera()))

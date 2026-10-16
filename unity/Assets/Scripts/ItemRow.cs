@@ -16,6 +16,7 @@ public sealed class ItemRow
 
     TextMeshProUGUI name, count, price, tagBefore, tagAfter;
     Image back, icon;
+    GameObject glow;
     GameObject tagBeforeBox, tagAfterBox;
     // False: the picture stands on nothing, and only the name carries the rarity's colour.
     bool square;
@@ -47,6 +48,7 @@ public sealed class ItemRow
         var square = r.back.gameObject.AddComponent<LayoutElement>();
         square.minWidth = square.preferredWidth = square.minHeight = square.preferredHeight = height - 6f;
         r.icon = ItemIcon.Make(r.back.transform, 1f);
+        r.glow = ItemIcon.MakeGlow(r.back.transform);
         r.back.gameObject.SetActive(false);
         r.tagBeforeBox = MakeTag(fill.transform, "Before", out r.tagBefore);
         r.name = Part(fill.transform, "Name", 13, FontStyles.Bold);
@@ -54,6 +56,9 @@ public sealed class ItemRow
         var grow = r.name.gameObject.AddComponent<LayoutElement>();
         grow.flexibleWidth = 1f;
         grow.minWidth = 0f;
+        // THE NAME TAKES ONLY WHAT IS LEFT. Asking for its full width made a long name squeeze the count and the price
+        // below their own widths, so their words ran into each other; it is cut with "…" instead.
+        grow.preferredWidth = 0f;
         r.count = Part(fill.transform, "Count", 12, FontStyles.Normal);
         r.count.color = UiKit.TextDim;
         r.tagAfterBox = MakeTag(fill.transform, "After", out r.tagAfter);
@@ -80,6 +85,7 @@ public sealed class ItemRow
         Write(name, title ?? "");
         name.color = Rarities.Color(rarity);
         bool pictured = ItemIcon.Show(icon, def);
+        ItemIcon.ShowGlow(glow, copy);
         if (back.gameObject.activeSelf != pictured) back.gameObject.SetActive(pictured);
         if (pictured) back.color = !square ? Color.clear : rarity == Rarity.Common ? UiKit.SlotFill : Rarities.Color(rarity);
         Write(count, countText ?? "");

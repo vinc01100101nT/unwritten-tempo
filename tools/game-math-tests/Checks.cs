@@ -236,6 +236,22 @@ static class Checks
         That(FlightMath.TotalJumps(3, 100f) == FlightMath.MaxJumps, FlightF, "a chain passed the jump cap");
     }
 
+    // ---- a dash's trip -------------------------------------------------------------------------------
+    // Decided 2026-10-16: a dash's strike lands when the dash arrives, so how long the trip takes is the wait. An
+    // un-eased glide is its length over its speed; easing only ever slows it.
+    const string GlideF = "unity/Assets/Scripts/GlideEase.cs";
+
+    static void GlideTripSeconds()
+    {
+        That(Math.Abs(GlideEase.Seconds(20f, 10f, false, false, 0.3f) - 0.5f) < 0.0001f, GlideF,
+             "10 metres at 20 a second should take half a second");
+        That(GlideEase.Seconds(20f, 0f, false, false, 0.3f) == 0f && GlideEase.Seconds(0f, 10f, true, true, 0.3f) == 0f,
+             GlideF, "no trip should take no time");
+        float eased = GlideEase.Seconds(20f, 10f, true, true, 0.3f);
+        That(eased > 0.5f && eased < 0.5f / 0.2f, GlideF,
+             "an eased 10-metre glide at 20 should take longer than half a second and less than its slowest pace, took " + eased);
+    }
+
     // ---- armour words --------------------------------------------------------------------------------
     // Decided 2026-09-23: each armour slot rolls one of ITS OWN words, and no word lives on two slots, so a character
     // can never wear the same word twice. A wrong answer here is silent — a word that does nothing reads as a word.
@@ -777,23 +793,39 @@ static class Checks
                 CraftingMath.RecycleYield(grade, folds, out int dust, out int oil, out int gold);
                 string piece = grade + " +" + folds;
                 That(dust >= 0 && oil >= 0 && gold >= 0, CraftF, "recycling " + piece + " gives back less than nothing");
-                That(2 * dust <= spentDust, CraftF, "recycling " + piece + " gives back " + dust + " Temper Dust of the " + spentDust + " it took");
+                That(2 * dust <= spentDust || dust == CraftingMath.RecycleLeastDust, CraftF,
+                     "recycling " + piece + " gives back " + dust + " Temper Dust of the " + spentDust + " it took");
+                That(dust >= CraftingMath.RecycleLeastDust, CraftF,
+                     "recycling " + piece + " gives back " + dust + " Temper Dust, under the least of " + CraftingMath.RecycleLeastDust);
                 That(2 * oil <= spentOil, CraftF, "recycling " + piece + " gives back " + oil + " Quench Oil of the " + spentOil + " it took");
                 That(2 * gold <= spentGold, CraftF, "recycling " + piece + " gives back " + gold + " gold of the " + spentGold + " it took");
-                if (grade == Quality.Raw)
-                    That(dust == 0 && oil == 0 && gold == 0, CraftF,
-                         "recycling " + piece + " gives back " + dust + " Temper Dust, " + oil + " Quench Oil and " + gold + " gold — a Raw fold returns nothing");
+                That(dust == Math.Max(CraftingMath.RecycleLeastDust, spentDust / 2) && oil == spentOil / 2 && gold == spentGold / 2,
+                     CraftF, "recycling " + piece + " should give back half of all it took, Raw folds included, got "
+                     + dust + " Temper Dust, " + oil + " Quench Oil and " + gold + " gold");
             }
 
-        // The ten Raw folds an F piece climbed through return nothing either: an unfolded F piece gives back only half
-        // of its one quench — 1 Quench Oil halves to none, 420 gold to 210.
+        // An unfolded F piece took ten Raw folds (10 Temper Dust, 420 gold) and one quench (1 Quench Oil, 420 gold):
+        // half back is 5 Temper Dust, no Quench Oil and 420 gold.
         CraftingMath.RecycleYield(Quality.F, 0, out int fDust, out int fOil, out int fGold);
-        That(fDust == 0 && fOil == 0 && fGold == 210, CraftF,
-             "an unfolded F piece should recycle to 0 Temper Dust, 0 Quench Oil and 210 gold, got " + fDust + ", " + fOil + " and " + fGold);
-        // The top of the ladder: an A +10 piece took 270 Temper Dust, 21 Quench Oil and 35,700 gold above its Raw folds.
+        That(fDust == 5 && fOil == 0 && fGold == 420, CraftF,
+             "an unfolded F piece should recycle to 5 Temper Dust, 0 Quench Oil and 420 gold, got " + fDust + ", " + fOil + " and " + fGold);
+        CraftingMath.RecycleYield(Quality.Raw, 0, out int rawDust, out int rawOil, out int rawGold);
+        That(rawDust == 1 && rawOil == 0 && rawGold == 0, CraftF,
+             "an untouched Raw piece should recycle to 1 Temper Dust and nothing else, got " + rawDust + ", " + rawOil + " and " + rawGold);
+        // The top of the ladder: an A +10 piece took 280 Temper Dust, 21 Quench Oil and 36,120 gold, its Raw folds included.
         CraftingMath.RecycleYield(Quality.A, 10, out int aDust, out int aOil, out int aGold);
-        That(aDust == 135 && aOil == 10 && aGold == 17850, CraftF,
-             "an A +10 piece should recycle to 135 Temper Dust, 10 Quench Oil and 17,850 gold, got " + aDust + ", " + aOil + " and " + aGold);
+        That(aDust == 140 && aOil == 10 && aGold == 18060, CraftF,
+             "an A +10 piece should recycle to 140 Temper Dust, 10 Quench Oil and 18,060 gold, got " + aDust + ", " + aOil + " and " + aGold);
+
+        // Several pieces recycled together give back exactly the sum of each alone: a Raw +0 and an F +0 make
+        // 1 + 5 Temper Dust and 0 + 420 gold.
+        int sumDust = 0, sumOil = 0, sumGold = 0;
+        var sumInks = new int[6];
+        CraftingMath.AddRecycleYield(Quality.Raw, 0, null, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
+        CraftingMath.AddRecycleYield(Quality.F, 0, null, null, ref sumDust, ref sumOil, ref sumGold, sumInks);
+        That(sumDust == 6 && sumOil == 0 && sumGold == 420, CraftF,
+             "a Raw +0 and an F +0 recycled together should give 6 Temper Dust, 0 Quench Oil and 420 gold, got "
+             + sumDust + ", " + sumOil + " and " + sumGold);
 
         // Merging: Ink ten into one; Salt at its worth, 20 Coarse into a Fine and 5 Fine into a Pure; nothing past Pure.
         That(CraftingMath.MergeCount(MaterialKind.Ink, 1) == 10 && CraftingMath.MergeCount(MaterialKind.Salt, 1) == 20
@@ -1908,6 +1940,7 @@ static class Checks
         ArmourWordRules();
         StrikeGrowthRules();
         FlightRules();
+        GlideTripSeconds();
         Ring();
         QualityLadder();
         CraftCosts();

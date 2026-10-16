@@ -86,11 +86,15 @@ of the whole lot on a buy-back row, which always comes back whole. A row
 carries the item card on hover and can be dragged.
 
 - For sale → Inventory or Cart, or a double-click, puts it in the cart to buy; Inventory → For sale or Cart, or a
-  double-click, puts it in to sell; a cart row double-clicked or dragged out comes out. Shift-click links it in chat.
+  double-click, puts it in to sell; a cart row double-clicked or dragged out comes out — a stack of more than one asks
+  how many go back, opening at the whole line; a piece of gear or a buy-back comes out whole. Shift-click links it in chat.
 - The same thing again **stacks onto its line** already in the cart — never a second line. A piece of gear or a
   buy-back is in at most once.
 - A stack asks how many in the ONE "how many?" box (`DropAmountPrompt`, its buttons now **Confirm / Cancel**
-  everywhere, the bag's drop included); an empty field means the number it opened with.
+  everywhere, the bag's drop included); an empty field means the number it opened with. The number is selected when
+  the box opens and whenever the field is clicked, so typing replaces it.
+- **Don't ask quantity** (the tick box beside the purse) skips the box for a SALE only — the whole stack goes in. A
+  purchase always asks.
 - The Inventory list shows each stack's count as the bag holds it; the cart's own line says how many of it are going.
 - Under the cart: the server's Buying, Selling, Tax (33%) and You pay / You get, or the server's reason in red.
   Confirm waits for the quote of the cart as it stands and stays off until the server answers the trade. A done trade
@@ -102,10 +106,14 @@ carries the item card on hover and can be dragged.
 Tabs **Fold / Quench / Ink / Recycle** over the bag's own grid (`ItemGrid`) of what this station works on — what is
 carried, then what is worn with its slot's word on its box. The picked box is lit. Under the grid, a section that
 never scrolls: the piece's name in its rarity colour, bold, its folds small beside it; "Costs …" with the amounts
-bold; a fold that can fail, "Chance: X% · If it fails: back to +N"; Quench's "Chance to rise" in green with what a
+bold, and under it what you carry of the same — "You have 12 Temper Dust · 1,220u" on Fold, Quench Oil on Quench,
+both counts the server's (`CraftStationOffer.foldMaterialHeld / quenchMaterialHeld`, written by the one `Wallet.YouHave`
+the shop's purse uses too); a fold that can fail, "Chance: X% · If it fails: back to +N"; Quench's "Chance to rise" in green with what a
 failure does — "drops to E +0" in red, or "stays F, back to +4" in grey; warnings in red; Salt as the game's checkbox; Ink as one
 small button per slot showing the stat it holds ("+80 Max HP"), the next empty one "Slot N"; Recycle's "Gives back
-…"; and the **fold preview** — each of the piece's own stats now → after one more fold, both numbers the server's
+…" — on the Recycle page a click TICKS a carried piece (any number of them; a worn one is still picked alone), the
+section shows "N pieces" and the server's total for all of them, and **Recycle N** breaks them all down in one
+request, judged by the single-recycle rules and refused whole if any piece or the bag's room fails; and the **fold preview** — each of the piece's own stats now → after one more fold, both numbers the server's
 (`CraftStationOffer.pieceNow / pieceNext`). One button, fixed to the bottom, one word: Fold / Quench / Write /
 Replace / Recycle. What a press did is said in full in chat, and in short in the stacking notice on screen ("Folded to +5",
 "Quench: up to E", "Wrote +80 Max HP").

@@ -16,8 +16,8 @@ public enum HuntMode
 /// A CHARACTER'S AUTO-COMBAT SETTINGS — exactly the document the character server keeps in its own row
 /// (accounts/sql/013_character_auto_combat.sql), so the field names here ARE the stored keys and nothing translates
 /// between them. Written only when the player changes a setting; read with the character when it is handed to a map
-/// server. A character that never changed one has no row, which reads as these defaults: empty slots, no auto-loot,
-/// no auto-potion, Radius.
+/// server. A character that never changed one has no row, which reads as these defaults: empty slots, auto-loot
+/// everything at 100%, a healing item below 70% health, no mana draught, Free Roam.
 ///
 /// <para>Whether auto-combat is ON is not in here and is never saved: it is the server's to decide while somebody is
 /// playing (see <c>NetPlayer</c>'s auto-combat half), and a sign-in always starts with it off.</para>
@@ -33,17 +33,17 @@ public class AutoCombatSettings
     public string[] slots = { "", "", "", "" };
     /// <summary>Auto-loot takes a thing only when its drop chance was at most this many percent — 100 takes everything
     /// the filters below allow, 5 only the rare ones, 0 nothing.</summary>
-    public float lootRateAtMostPercent;
+    public float lootRateAtMostPercent = 100f;
     public bool lootGears;
     public bool lootConsumables;
     public bool lootMaterials;
     /// <summary>Every kind of thing, whatever the three above say.</summary>
-    public bool lootAll;
+    public bool lootAll = true;
     /// <summary>Drink a healing item when health falls below this many percent of the most; 0 = never.</summary>
-    public float hpPotionBelowPercent;
+    public float hpPotionBelowPercent = 70f;
     /// <summary>Drink a mana draught when mana falls below this many percent of the most; 0 = never.</summary>
     public float mpPotionBelowPercent;
-    public int huntMode = (int)HuntMode.Radius;
+    public int huntMode = (int)HuntMode.FreeRoam;
 
     public HuntMode Hunt => (HuntMode)Mathf.Clamp(huntMode, 0, (int)HuntMode.FreeRoam);
 

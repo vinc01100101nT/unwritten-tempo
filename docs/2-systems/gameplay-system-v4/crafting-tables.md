@@ -262,17 +262,21 @@ type. Training speed applies to Weapon Mastery.
 Recycling destroys the piece and returns, each halved and rounded down: for **every grade below the current
 one**, that grade's ten folds AND one quench (both at that grade's own prices — the gate above is what makes
 those folds provable); the folds standing on the piece now, at its own grade's price; and one Ink per written stat,
-its tier read off the value. **Folds made at Raw return nothing**, standing or climbed — no Temper Dust and no Unsigned
-— though the Raw quench does. Failed tries, folds or quenches, and Salt are not recorded and come back as nothing.
+its tier read off the value. **Every grade counts, Raw included** — the tutorial's up to 5 free Raw folds then pay
+back 2 Temper Dust and 105u once per character, less than four kills earn, so they are not guarded. Failed tries, folds or quenches, and Salt are not recorded and come back as nothing.
+**Every recycle gives at least 1 Temper Dust** (`CraftingMath.RecycleLeastDust`), so an untouched Raw piece a creature
+dropped gives exactly that — and a piece with even one fold gives that fold's Unsigned on top, so an untouched piece
+always gives the least.
 A piece the first tutorial still needs cannot be recycled.
 
 | Piece | Comes back |
 | --- | --- |
-| Raw +10 Sword (ready to quench) | nothing |
-| F +0 Sword | 210u |
-| F +4 Sword | 4 Temper Dust, 462u |
-| E +0 Sword | 10 Temper Dust, 1 Quench Oil, 1,470u |
-| A +10 Sword | 135 Temper Dust, 10 Quench Oil, 17,850u |
+| Raw +0 Sword | 1 Temper Dust |
+| Raw +10 Sword (ready to quench) | 5 Temper Dust, 210u |
+| F +0 Sword | 5 Temper Dust, 420u |
+| F +4 Sword | 9 Temper Dust, 672u |
+| E +0 Sword | 15 Temper Dust, 1 Quench Oil, 1,680u |
+| A +10 Sword | 140 Temper Dust, 10 Quench Oil, 18,060u |
 | … with 2 Watery Ink stats written | + 1 Watery Ink |
 
 ## 8. Worked example — a dropped Common sword from Raw to A

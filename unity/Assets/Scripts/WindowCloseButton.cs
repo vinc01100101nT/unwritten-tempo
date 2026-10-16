@@ -26,6 +26,27 @@ public class WindowCloseButton : MonoBehaviour,
     /// <summary>The window root to hide on click.</summary>
     public GameObject window;
 
+    // Every ✕ on an open window. A button is enabled exactly while its window is up, so this holds the open windows
+    // and nothing else; it changes only when a window opens or closes, never per frame.
+    static readonly System.Collections.Generic.List<WindowCloseButton> shown = new System.Collections.Generic.List<WindowCloseButton>(16);
+
+    void OnEnable() => shown.Add(this);
+    void OnDisable() => shown.Remove(this);
+
+    /// <summary>Close every open window, exactly as clicking each one's ✕ would.</summary>
+    public static void CloseEveryWindow()
+    {
+        bool any = false;
+        for (int i = shown.Count - 1; i >= 0; i--)
+        {
+            var w = shown[i].window;
+            if (w == null || !UiAnim.IsOpen(w)) continue;
+            UiAnim.Close(w);
+            any = true;
+        }
+        if (any) UISounds.PlayClose();
+    }
+
     // Close on pointer DOWN, not click. A click only fires when press+release land on the same object
     // WITHOUT crossing the EventSystem drag threshold — nudge the mouse a few pixels between press and
     // release and the gesture becomes a drag, eligibleForClick flips false, and the click is silently

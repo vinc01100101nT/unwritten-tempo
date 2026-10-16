@@ -38,6 +38,16 @@ public class QuestArrows : MonoBehaviour
     /// <summary>Where the route starts — the player's spot when it was made.</summary>
     public static Vector2 RouteStart { get; private set; }
 
+    /// <summary>How long the route is on this map, in metres along it — to the place itself, or to the door on the way
+    /// there (<see cref="ThroughADoor"/>). Measured once per route, never per frame.</summary>
+    public static float RouteMetres { get; private set; }
+
+    /// <summary>The map the place being led to is on, by scene name. Null when nothing is shown.</summary>
+    public static string DestinationMap { get; private set; }
+
+    /// <summary>True when the place is on another map, so the route here ends at the door on the way.</summary>
+    public static bool ThroughADoor { get; private set; }
+
     /// <summary>THE ROUTE AS MAP ARROWS — one every <see cref="MapMarkSpacing"/> metres along the whole of it, for a
     /// map seen from straight above with north up: x and y are the ground's X and Z, z is the turn (degrees) that
     /// points an upward arrow along the route. Worked out once per route, never per frame. Empty when nothing is shown.</summary>
@@ -81,6 +91,9 @@ public class QuestArrows : MonoBehaviour
         }
     }
     Transform host;
+    // THE PIN standing on the ground where the route ends on this map, turned to the camera while it is up.
+    SpriteRenderer pin;
+    const float PinHeight = 1.2f, PinGroundSearch = 80f;
     int shownCount;
     float nextReroute;
     Vector3 routedFrom, routedGoal;
@@ -105,6 +118,16 @@ public class QuestArrows : MonoBehaviour
             a.SetActive(false);
             arrows[i] = sr;
         }
+
+        var pinGo = new GameObject("DestinationPin") { hideFlags = HideFlags.DontSaveInEditor };
+        pinGo.transform.SetParent(host, false);
+        pin = pinGo.AddComponent<SpriteRenderer>();
+        pin.sprite = GuidePin.Sprite;
+        pin.color = UiKit.Accent;
+        pinGo.transform.localScale = Vector3.one * PinHeight / pin.sprite.bounds.size.y;
+        pinGo.SetActive(false);
+
+        if (GetComponent<RouteDestinationHud>() == null) gameObject.AddComponent<RouteDestinationHud>();
     }
 
     void OnDestroy()
@@ -121,6 +144,7 @@ public class QuestArrows : MonoBehaviour
         var me = player.position;
         var flat = goal - me; flat.y = 0f;
         if (flat.sqrMagnitude <= CloseEnough * CloseEnough) { Hide(); return; }
+        if (pin.gameObject.activeSelf) pin.transform.rotation = Quaternion.LookRotation(CameraRig.ForwardXZ);
 
         // A NEW PLACE TO LEAD TO is routed at once; a new quest list that leads to the same place is not, so a burst of
         // kills — one list each — never runs a route search each.
@@ -139,8 +163,10 @@ public class QuestArrows : MonoBehaviour
     void Hide()
     {
         Show(0);
+        if (pin != null && pin.gameObject.activeSelf) pin.gameObject.SetActive(false);
         if (!routeShown) return;
         routeShown = false;
+        DestinationMap = null;
         route.Clear();
         RouteVersion++;
     }
@@ -157,6 +183,8 @@ public class QuestArrows : MonoBehaviour
 
         if (MapGuide.Active)
         {
+            DestinationMap = MapGuide.Map;
+            ThroughADoor = MapGuide.Map != here;
             if (MapGuide.Map == here)
             {
                 // Held at one height, so walking up a slope is never read as the goal moving (which re-routes at once).
@@ -174,6 +202,8 @@ public class QuestArrows : MonoBehaviour
 
         var t = QuestStore.Target;
         if (!t.any || string.IsNullOrEmpty(t.map)) return false;
+        DestinationMap = t.map;
+        ThroughADoor = t.map != here;
         if (t.map == here) { goal = MapManager.InWorld(t.at, here); return true; }
         if (string.IsNullOrEmpty(t.nextMap)) return false;
         return DoorInto(t.nextMap, out goal);
@@ -207,6 +237,19 @@ public class QuestArrows : MonoBehaviour
         RouteStart = new Vector2(from.x, from.z);
         routeShown = true;
         RouteVersion++;
+
+        float metres = 0f;
+        Vector2 walkedFrom = RouteStart;
+        // A length is a sum of real distances, worked out once per route (at most twice a second), never per frame.
+        for (int r = 0; r < route.Count; r++) { metres += (route[r] - walkedFrom).magnitude; walkedFrom = route[r]; }   // perf-ok: a length, not a comparison
+        RouteMetres = metres;
+
+        // The pin stands on the ground where the route ends. A spot picked on the map has no height of its own, so the
+        // ground is looked for well above and below the player's.
+        var pinAt = new Vector3(goal.x, from.y, goal.z);
+        if (GroundSnap.TryGroundY(pinAt, GroundSnap.GroundMask, PinGroundSearch, 2f * PinGroundSearch, out float groundY)) pinAt.y = groundY;
+        pin.transform.SetPositionAndRotation(pinAt, Quaternion.LookRotation(CameraRig.ForwardXZ));
+        if (!pin.gameObject.activeSelf) pin.gameObject.SetActive(true);
 
         int placed = 0;
         Vector2 prev = new Vector2(from.x, from.z);

@@ -314,6 +314,13 @@ GROUPS = {
                     "until this passes:",
         "mine_by_construction": True,
     },
+    "order-gate-checker": {
+        "files": [os.path.join(TOOLS, "hook-analytics", "order_gate.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove_order_gate.py")],
+        "headline": "The order gate no longer refuses a build, publish, push or commit nobody ordered, or refuses "
+                    "one that was ordered, until this passes:",
+        "mine_by_construction": True,
+    },
     "skill-router-checker": {
         "files": [os.path.join(TOOLS, "hook-analytics", "skill_router.py")],
         "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove_skill_router.py")],

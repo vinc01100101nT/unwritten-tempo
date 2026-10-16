@@ -532,6 +532,13 @@ agreed, and "I was preserving current behaviour" is exactly how the scar above h
 Mechanical, no interpretation. "Why is this confusing?", "what does X mean?", "is this a bug?" get an answer and
 a proposal — never an edit. Editing on a question was done TWICE in one afternoon while this rule's softer
 sibling was already in the global file.
+**"How to X" / "how do I X" is a question even with no question mark — answer with the command, RUN NOTHING.**
+And take the user's verb literally: **"publish" means publish only (`tools/publish.sh`), never build** — building is
+`tools/build-and-publish.sh`, and only when they say build. *(Scar, 2026-10-16: asked "how to publish all", I
+explained a build; told "i only want a publish", I STARTED a 15-minute build of both games, which had to be killed
+half-way and left the editor on the Mac build profile.)* **Enforced, not trusted:** `tools/hook-analytics/order_gate.py`
+(run inside the read-first gate, proved by `prove_order_gate.py`) refuses a build, publish, push, commit, deploy or
+server start whenever the user's latest message is a "how to" question or does not say that action's verb.
 
 **4. Ask AT MOST ONCE per task, then decide and move.**
 One question, batched, covering everything genuinely ambiguous. After that, ambiguity gets MY decision, labelled

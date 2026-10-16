@@ -142,7 +142,8 @@ public class OverheadNotice : MonoBehaviour
 
         var t = go.AddComponent<TextMeshProUGUI>();
         t.font = UiKit.Font;
-        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.Font);   // dark edge, reads on any backdrop
+        t.fontSharedMaterial = UiKit.WorldNameMaterial();
+        // The same heavy bold and thick dark edge as a name over the world: read at a glance over any backdrop.
         t.fontSize = FontSize;
         t.fontStyle = FontStyles.Bold;
         t.alignment = TextAlignmentOptions.Bottom;

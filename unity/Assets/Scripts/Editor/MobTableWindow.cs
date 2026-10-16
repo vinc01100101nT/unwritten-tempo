@@ -476,7 +476,8 @@ public class MobTableWindow : EditorWindow
         CharacterDye3D.DecodePairs(def.dyeSources, def.dyeTargets, _lookSources, _lookTargets);
         bool stampFits = string.IsNullOrEmpty(look.signature) || look.signature == def.modelName;
         _lookBlock ??= new MaterialPropertyBlock();
-        CharacterDye3D.Paint(look.renderers, stampFits ? look.parts : null, _lookSources, _lookTargets, _lookBlock);
+        CharacterDye3D.Paint(look.renderers, stampFits ? look.parts : null, _lookSources, _lookTargets, _lookBlock,
+                             CharacterDye3D.Unchangeable);
         ShowHair(look, def);
 
         look.root.transform.rotation = Quaternion.Euler(0f, look.yaw, 0f);

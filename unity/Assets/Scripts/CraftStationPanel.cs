@@ -38,6 +38,12 @@ public class CraftStationPanel : MonoBehaviour
     int saltPicked = -1;             // bag position of the Salt to put in the next quench, or -1 for none
     int inkSlotPicked = -1;          // which stat slot the next Ink writes, or -1 for "the first one offered"
     CraftStationOffer offer;
+    // THE RECYCLE PAGE PICKS SEVERAL: the copies of the carried pieces ticked there, and the server's total for them.
+    // Worn pieces are never ticked — one of those is still picked alone, as on every other page.
+    readonly List<string> ticked = new List<string>(16);
+    RecycleBatchQuote batchQuote;
+    bool haveBatchQuote;
+    int batchAsk;
     bool haveOffer;
 
     enum Page { Fold, Quench, Ink, Recycle }
@@ -137,8 +143,21 @@ public class CraftStationPanel : MonoBehaviour
     {
         if (Instance == null) return;
         // The piece it was showing no longer exists; pointing at its old position would show whatever slid in.
-        if (pieceGone) { Instance.picked = -1; Instance.pickedWorn = EquipSlotType.None; Instance.haveOffer = false; }
+        if (pieceGone)
+        {
+            Instance.picked = -1; Instance.pickedWorn = EquipSlotType.None; Instance.haveOffer = false;
+            Instance.ticked.Clear(); Instance.haveBatchQuote = false;
+        }
         if (IsOpen) Instance.Rebuild();
+    }
+
+    /// <summary>THE SERVER'S TOTAL for the ticked pieces. An answer to an ask since replaced is dropped.</summary>
+    public static void TakeRecycleQuote(RecycleBatchQuote q)
+    {
+        if (Instance == null || q.ask != Instance.batchAsk) return;
+        Instance.batchQuote = q;
+        Instance.haveBatchQuote = true;
+        Instance.Rebuild();
     }
 
     /// <summary>THE SERVER'S ANSWER about one piece. Kept and drawn; nothing here is worked out from it.</summary>
@@ -164,6 +183,8 @@ public class CraftStationPanel : MonoBehaviour
         picked = -1;
         pickedWorn = EquipSlotType.None;
         haveOffer = false;
+        ticked.Clear();
+        haveBatchQuote = false;
         page = Page.Fold;
         Build();
         if (root == null) return;
@@ -286,6 +307,14 @@ public class CraftStationPanel : MonoBehaviour
 
     void Open(Page which)
     {
+        // Into Recycle, a piece picked in the bag becomes the first ticked one; out of it, the ticks are let go.
+        if (which == Page.Recycle && page != Page.Recycle && picked >= 0 && pickedWorn == EquipSlotType.None)
+        {
+            var c = Character.Instance;
+            string copy = c != null && picked < c.Bag.Count && c.Bag[picked].instance != null ? c.Bag[picked].instance.copyId : null;
+            if (!string.IsNullOrEmpty(copy)) { ticked.Clear(); ticked.Add(copy); picked = -1; haveOffer = false; AskBatchQuote(); }
+        }
+        else if (which != Page.Recycle) { ticked.Clear(); haveBatchQuote = false; }
         page = which;
         inkSlotPicked = -1;
         UISounds.PlayClick();
@@ -320,10 +349,27 @@ public class CraftStationPanel : MonoBehaviour
             shown.Add(new BagEntry { def = kv.Value.def, count = 1, instance = kv.Value, worn = true, wornSlot = kv.Key });
             shownBagIndex.Add(-1); shownWorn.Add(kv.Key);
         }
+        // A ticked piece no longer carried is let go, and the total asked for again.
+        bool pruned = false;
+        for (int t = ticked.Count - 1; t >= 0; t--)
+            if (ShownBagIndexOf(ticked[t]) < 0) { ticked.RemoveAt(t); pruned = true; }
+        if (pruned) AskBatchQuote();
     }
 
+    // Where in the grid the carried piece with this copy is, or -1.
+    int ShownBagIndexOf(string copyId)
+    {
+        for (int i = 0; i < shown.Count; i++)
+            if (shownWorn[i] == EquipSlotType.None && shown[i].instance != null && shown[i].instance.copyId == copyId) return i;
+        return -1;
+    }
+
+    static string CopyOf(BagEntry e) => e != null && e.instance != null ? e.instance.copyId : null;
+
     bool IsPicked(int i) =>
-        shownWorn[i] != EquipSlotType.None ? shownWorn[i] == pickedWorn : pickedWorn == EquipSlotType.None && shownBagIndex[i] == picked;
+        page == Page.Recycle && ticked.Count > 0
+            ? shownWorn[i] == EquipSlotType.None && ticked.Contains(CopyOf(shown[i]))
+            : shownWorn[i] != EquipSlotType.None ? shownWorn[i] == pickedWorn : pickedWorn == EquipSlotType.None && shownBagIndex[i] == picked;
 
     void DrawDetail()
     {
@@ -340,6 +386,7 @@ public class CraftStationPanel : MonoBehaviour
             Write(lines, DimTag + "You are carrying nothing this station works on.</color>");
             return;
         }
+        if (page == Page.Recycle && ticked.Count > 0) { DrawBatchRecycle(); return; }
         var inst = PickedPiece(c);
         if (inst == null || !haveOffer)
         {
@@ -356,14 +403,14 @@ public class CraftStationPanel : MonoBehaviour
 
         switch (page)
         {
-            case Page.Fold:    DrawFold(inst); break;
+            case Page.Fold:    DrawFold(c, inst); break;
             case Page.Quench:  DrawQuench(c); break;
             case Page.Ink:     DrawInk(c, inst); break;
             case Page.Recycle: DrawRecycle(); break;
         }
     }
 
-    void DrawFold(EquipmentInstance inst)
+    void DrawFold(Character c, EquipmentInstance inst)
     {
         if (!offer.canFold)
         {
@@ -373,6 +420,7 @@ public class CraftStationPanel : MonoBehaviour
         sb.Clear();
         if (offer.foldFree) sb.Append(DimTag).Append("Costs</color> <b>").Append(NumTag).Append("nothing</color></b> — your first time");
         else Costs(offer.foldMaterialCost, offer.foldMaterialId, offer.foldGoldCost);
+        YouHave(c, offer.foldMaterialId, offer.foldMaterialHeld);
         // A fold that can fail says how likely it is to land and where a failure leaves the piece, both as the server sent them.
         if (offer.foldChance < 100)
             sb.Append("\n<size=13>").Append(DimTag).Append("Chance:</color> <b>").Append(NumTag).Append(offer.foldChance)
@@ -420,6 +468,7 @@ public class CraftStationPanel : MonoBehaviour
             return;
         }
         Costs(offer.quenchMaterialCost, offer.quenchMaterialId, offer.quenchGoldCost);
+        YouHave(c, offer.quenchMaterialId, offer.quenchMaterialHeld);
         sb.Append('\n');
         Odds();
         Write(lines, sb.ToString());
@@ -484,26 +533,57 @@ public class CraftStationPanel : MonoBehaviour
     void DrawRecycle()
     {
         sb.Clear();
-        sb.Append(DimTag).Append("Gives back</color> ");
-        int parts = 0;
-        if (offer.recycleIds != null && offer.recycleCounts != null)
-            for (int i = 0; i < offer.recycleIds.Length && i < offer.recycleCounts.Length; i++)
-            {
-                if (offer.recycleCounts[i] <= 0) continue;
-                if (parts++ > 0) sb.Append(", ");
-                sb.Append("<b>").Append(NumTag).Append(offer.recycleCounts[i]).Append("</color></b> ").Append(MaterialName(offer.recycleIds[i]));
-            }
-        if (offer.recycleGold > 0)
-        {
-            if (parts++ > 0) sb.Append(", ");
-            sb.Append("<b>").Append(NumTag).Append(Wallet.Amount(offer.recycleGold)).Append("</color></b>");
-        }
-        if (parts == 0) sb.Append("nothing");
-        sb.Append("\n<size=11>").Append(BadTag).Append("Breaks the piece down.</color> ").Append(DimTag)
-          .Append("You get back half the Temper Dust, Quench Oil and ").Append(Wallet.Name)
-          .Append(" its folds and quenches took. Folds made at Raw return nothing.</color></size>");
+        GivesBack(offer.recycleIds, offer.recycleCounts, offer.recycleGold);
+        RecycleFinePrint();
         Write(lines, sb.ToString());
         SetAction("Recycle");
+    }
+
+    // SEVERAL TICKED PIECES: how many, and the server's total for them — or its reason for refusing them.
+    void DrawBatchRecycle()
+    {
+        int n = ticked.Count;
+        Write(head, "<b>" + n + (n == 1 ? " piece" : " pieces") + "</b>");
+        if (!haveBatchQuote) { Write(lines, ""); return; }
+        sb.Clear();
+        if (!string.IsNullOrEmpty(batchQuote.refusal))
+        {
+            sb.Append(BadTag).Append(batchQuote.refusal).Append("</color>");
+            Write(lines, sb.ToString());
+            return;
+        }
+        GivesBack(batchQuote.ids, batchQuote.counts, batchQuote.gold);
+        RecycleFinePrint();
+        Write(lines, sb.ToString());
+        SetAction("Recycle " + n);
+    }
+
+    // "Gives back 5 Temper Dust, 420u", the amounts bold — as the server sent them.
+    void GivesBack(string[] ids, int[] counts, int gold)
+    {
+        sb.Append(DimTag).Append("Gives back</color> ");
+        int parts = 0;
+        if (ids != null && counts != null)
+            for (int i = 0; i < ids.Length && i < counts.Length; i++)
+            {
+                if (counts[i] <= 0) continue;
+                if (parts++ > 0) sb.Append(", ");
+                sb.Append("<b>").Append(NumTag).Append(counts[i]).Append("</color></b> ").Append(MaterialName(ids[i]));
+            }
+        if (gold > 0)
+        {
+            if (parts++ > 0) sb.Append(", ");
+            sb.Append("<b>").Append(NumTag).Append(Wallet.Amount(gold)).Append("</color></b>");
+        }
+        if (parts == 0) sb.Append("nothing");
+    }
+
+    void RecycleFinePrint()
+    {
+        sb.Append("\n<size=11>").Append(BadTag).Append("Breaks the piece down.</color> ").Append(DimTag)
+          .Append("You get back half the Temper Dust, Quench Oil and ").Append(Wallet.Name)
+          .Append(" its folds and quenches took, and never less than ").Append(CraftingMath.RecycleLeastDust)
+          .Append(" Temper Dust.</color></size>");
     }
 
     // "Costs 4 Temper Dust · 120u", the amounts bold.
@@ -511,6 +591,12 @@ public class CraftStationPanel : MonoBehaviour
     {
         sb.Append(DimTag).Append("Costs</color> <b>").Append(NumTag).Append(units).Append("</color></b> ")
           .Append(MaterialName(materialId)).Append(" · <b>").Append(NumTag).Append(Wallet.Amount(gold)).Append("</color></b>");
+    }
+
+    // "You have 12 Temper Dust · 1,220u" on its own line under the price, both figures the server's.
+    void YouHave(Character c, string materialId, int held)
+    {
+        sb.Append("\n<size=12>").Append(Wallet.YouHave(c != null ? c.Gold : 0, MaterialName(materialId), held)).Append("</size>");
     }
 
     // The name of the material a price is in, by the id the server sent.
@@ -568,6 +654,13 @@ public class CraftStationPanel : MonoBehaviour
     {
         var c = Character.Instance;
         var me = GameNetwork.MyPlayer;
+        if (page == Page.Recycle && ticked.Count > 0)
+        {
+            if (me == null || !haveBatchQuote || !string.IsNullOrEmpty(batchQuote.refusal)) return;
+            UISounds.PlayClick();
+            me.AskToRecycleMany(ticked.ToArray());
+            return;
+        }
         var inst = c != null ? PickedPiece(c) : null;
         if (me == null || inst == null) return;
         string itemId = inst.def.id;
@@ -604,6 +697,24 @@ public class CraftStationPanel : MonoBehaviour
     void Pick(int index)
     {
         if (index < 0 || index >= shown.Count) return;
+        // ON THE RECYCLE PAGE a carried piece is ticked or unticked; a worn one is picked alone, letting the ticks go.
+        if (page == Page.Recycle)
+        {
+            string copy = shownWorn[index] == EquipSlotType.None ? CopyOf(shown[index]) : null;
+            if (!string.IsNullOrEmpty(copy))
+            {
+                if (!ticked.Remove(copy)) ticked.Add(copy);
+                picked = -1;
+                pickedWorn = EquipSlotType.None;
+                haveOffer = false;
+                UISounds.PlayClick();
+                AskBatchQuote();
+                Rebuild();
+                return;
+            }
+            ticked.Clear();
+            haveBatchQuote = false;
+        }
         picked = shownBagIndex[index];
         pickedWorn = shownWorn[index];
         saltPicked = -1;
@@ -612,6 +723,15 @@ public class CraftStationPanel : MonoBehaviour
         UISounds.PlayClick();
         AskForOffer();
         Rebuild();
+    }
+
+    // Ask the server for the ticked pieces' total. Each ask is numbered, so only the newest answer is drawn.
+    void AskBatchQuote()
+    {
+        batchAsk++;
+        haveBatchQuote = false;
+        var me = GameNetwork.MyPlayer;
+        if (me != null && ticked.Count > 0) me.AskForRecycleQuote(batchAsk, ticked.ToArray());
     }
 
     // Ask the server what this piece costs and what a quench of it would do, with the Salt currently chosen.

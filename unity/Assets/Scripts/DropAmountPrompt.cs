@@ -74,6 +74,9 @@ public class DropAmountPrompt
     // What the box opened holding — what an empty or unreadable field means on Confirm.
     int startedAt = 1;
     int openedFrame = -1;
+    // THE NUMBER IS SELECTED, ready to be typed over, when the box opens and whenever the field is clicked. Done once
+    // the field has the keyboard, which the text package hands it a frame or so after it is asked to.
+    bool selectAllPending;
 
     public bool IsOpen => root != null && root.gameObject.activeSelf;
 
@@ -200,6 +203,24 @@ public class DropAmountPrompt
 
         field.Select();
         field.ActivateInputField();
+        selectAllPending = true;
+    }
+
+    /// <summary>Select the whole number once the field has the keyboard. Run after the frame's clicks are handled, so a
+    /// click into the field — which puts the caret where it landed — ends with the number selected instead.</summary>
+    public void TickSelectAll()
+    {
+        if (!IsOpen) return;
+        if (PointerInput.PrimaryDown)
+        {
+            var cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            if (RectTransformUtility.RectangleContainsScreenPoint((RectTransform)field.transform, PointerInput.Position, cam))
+                selectAllPending = true;
+        }
+        if (!selectAllPending || !field.isFocused) return;
+        selectAllPending = false;
+        field.selectionStringAnchorPosition = field.text.Length;
+        field.selectionStringFocusPosition = 0;
     }
 
     public void Close()
@@ -257,4 +278,5 @@ public class DropAmountPromptTicker : MonoBehaviour
 {
     internal DropAmountPrompt box;
     void Update() { if (box != null) box.TickDismiss(); }
+    void LateUpdate() { if (box != null) box.TickSelectAll(); }
 }

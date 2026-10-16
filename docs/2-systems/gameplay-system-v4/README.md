@@ -134,8 +134,8 @@ A Raw piece caps mastery **below F**.
 **half** of what it provably consumed comes back — for each rung it climbed, that grade's ten folds and one
 quench (priced at the grade it was made from, which the gate above makes provable); the folds standing on it now
 (at its own grade's price); and the Inks whose stats are written on it. That is Temper Dust, Quench Oil, Unsigned and
-Ink. **Folds made at Raw return nothing** — no Temper Dust and no Unsigned, standing or climbed — because the first
-tutorial gives its Raw folds free. Nothing records a failed try, fold or quench, so those come back as nothing;
+Ink, and never less than 1 Temper Dust. **Raw folds count like every other grade's** — the first tutorial's up to 5
+free Raw folds pay back only 2 Temper Dust and 105u once per character, less than four kills earn. Nothing records a failed try, fold or quench, so those come back as nothing;
 Salt is never returned. Each material is halved and rounded down on its own, so a single unit never comes
 back whole. A piece the first tutorial still needs cannot be recycled, sold or dropped
 ([Quests & Tutorials](../quests-and-tutorials.md)).

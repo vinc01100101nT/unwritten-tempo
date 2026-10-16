@@ -433,6 +433,11 @@ public static class CraftingMath
     /// single unit never comes back whole.</summary>
     public const float RecycleShare = 0.5f;
 
+    /// <summary>THE LEAST TEMPER DUST ANY RECYCLE GIVES, so breaking down a piece is never for nothing — a Raw +0 piece
+    /// a creature dropped gives exactly this and nothing else. A piece with a single fold already gives its fold's gold
+    /// on top, so an untouched piece always gives the least.</summary>
+    public const int RecycleLeastDust = 1;
+
     /// <summary>What recycling a piece of grade <paramref name="q"/> at <paramref name="folds"/> folds gives back:
     /// half, floored, of what it provably consumed, counted from what SUCCEEDED — nothing records the quenches that
     /// failed or the folds they spent, so those are not counted. Counted: for every grade climbed, one successful
@@ -440,8 +445,10 @@ public static class CraftingMath
     /// the grade it was made from; and the folds standing on the piece now. Priced by the same two functions the
     /// spend reads (<see cref="FoldMaterialCost"/>, <see cref="QuenchMaterialCost"/>).
     ///
-    /// <para>FOLDS BOUGHT AT RAW RETURN NOTHING, standing or climbed — no Temper Dust and no gold. A tutorial's first
-    /// run gives its Raw folds free, so a Raw fold that paid back would pay out of nothing.</para></summary>
+    /// <para>EVERY GRADE COUNTS, Raw included. A tutorial's first run gives up to 5 Raw folds free, so those pay back
+    /// out of nothing — 2 Temper Dust and 105u once per character, less than four kills earn; not worth guarding.</para>
+    ///
+    /// <para>The Temper Dust is never below <see cref="RecycleLeastDust"/>.</para></summary>
     public static void RecycleYield(Quality q, int folds, out int dust, out int oil, out int gold)
     {
         int spentDust = 0, spentOil = 0, spentGold = 0;
@@ -450,18 +457,30 @@ public static class CraftingMath
             var from = (Quality)g;
             spentOil += QuenchMaterialCost(from);
             spentGold += QuenchGoldCost(from);
-            if (from == Quality.Raw) continue;
             spentDust += FoldCap(from) * FoldMaterialCost(from);
             spentGold += FoldCap(from) * FoldGoldCost(from);
         }
-        if (q != Quality.Raw)
-        {
-            spentDust += Mathf.Max(0, folds) * FoldMaterialCost(q);
-            spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);
-        }
-        dust = Mathf.FloorToInt(spentDust * RecycleShare);
+        spentDust += Mathf.Max(0, folds) * FoldMaterialCost(q);
+        spentGold += Mathf.Max(0, folds) * FoldGoldCost(q);
+        dust = Mathf.Max(RecycleLeastDust, Mathf.FloorToInt(spentDust * RecycleShare));
         oil = Mathf.FloorToInt(spentOil * RecycleShare);
         gold = Mathf.FloorToInt(spentGold * RecycleShare);
+    }
+
+    // Scratch for AddRecycleYield's Inks — a recycle is never run from two threads.
+    static readonly int[] addInkScratch = new int[6];
+
+    /// <summary>ADD one piece's recycle to a running total — several pieces recycled together give back exactly the sum
+    /// of what each gives alone (<see cref="RecycleYield"/>, <see cref="RecycleInks"/>), the minimum included per piece.
+    /// <paramref name="inkTotals"/> is indexed by tier, 1..5.</summary>
+    public static void AddRecycleYield(Quality q, int folds, System.Collections.Generic.List<InkStat> stats,
+                                       System.Collections.Generic.List<float> values,
+                                       ref int dust, ref int oil, ref int gold, int[] inkTotals)
+    {
+        RecycleYield(q, folds, out int d, out int o, out int g);
+        dust += d; oil += o; gold += g;
+        RecycleInks(stats, values, addInkScratch);
+        for (int t = 1; t < addInkScratch.Length && t < inkTotals.Length; t++) inkTotals[t] += addInkScratch[t];
     }
 
     /// <summary>How many Inks of each tier (places 1..5) a piece gives back for the stats written on it — one Ink
