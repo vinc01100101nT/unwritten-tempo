@@ -771,7 +771,7 @@ psql "$(grep '^DATABASE_URL=' settings.env | cut -d= -f2-)" -c "select email, is
 ### Where each command actually runs
 
 **Every command except `/help` and `/where` is carried out by the server** — `/summon`, `/unsummon`, `/dummy`, `/kill`, `/killall`,
-`/log`, `/gold`, `/item`, `/weapon`, `/mastery`, `/resetskills`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
+`/log`, `/gold`, `/item`, `/weapon`, `/armor`, `/mastery`, `/resetskills`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`,
 `/revive`, `/save`, `/invuln`, `/bind`, `/tp`, `/exprate`, `/speed`, `/model`, `/time`, `/weather`, `/whereis`, `/mobinfo`, `/whodrops`
 and `/iteminfo`. Your game
 hands the typed line over, the server checks its own copy of the mark, does the work on your

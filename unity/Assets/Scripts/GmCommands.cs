@@ -250,6 +250,12 @@ public static class GmCommands
             "rarity = Common to Legendary. Anything left out is random but the rarity, which is Common; the trademark " +
             "is rolled exactly as a new weapon's is.", "weapon sword 3 C Epic",
             CmdWeapon, false, true));
+        Register(new GmCommand("armor", "armor [slot|item] [folds] [grade] [rarity]",
+            "Put a new armour piece in your bag. Slot = body, garment or shoes (a hat never folds or grades, so it is " +
+            "not one); or name the exact piece (quote a name with spaces); folds = a number up to the grade's cap; " +
+            "grade = Raw or F to A; rarity = Common to Legendary. Anything left out is random but the rarity, which is " +
+            "Common.", "armor body 7 C Epic",
+            CmdArmor, false, true, "armour"));
         Register(new GmCommand("mastery", "mastery [weapon] <n>",
             "Testing: set your Weapon Mastery level in a weapon (default: the one in your hands) — one mastery " +
             "point per level, to spend in the Skills window. No arguments reports what you have practised.", "mastery sword 70",
@@ -527,6 +533,95 @@ public static class GmCommands
         var rolled = Trademarks.SkillOf(inst);
         c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {Rarities.Label(rarity)} {pick.displayName}" +
                 (rolled != null ? $", trademark {rolled.displayName}." : $", no trademark ({WeaponTypes.Label(pick.weaponType)} has no skill a new weapon can roll)."));
+    }
+
+    // /armor [slot|item] [folds] [grade] [rarity] — /weapon's twin for the three armour slots a grade can sit on, in
+    // any order. Each word is read as a slot, a grade, a rarity, a number of folds, or else an armour piece's id or
+    // name. Whatever is left out is random — the slot, the piece within it, the grade drawn from Raw to A, the folds
+    // from none to that grade's cap — except the rarity, which is Common unless named. The word is rolled exactly as
+    // a new piece's is.
+    static void CmdArmor(GmContext c)
+    {
+        if (c.Ch == null) { c.Reply("No character."); return; }
+
+        EquipSlotType? slot = null;
+        Item named = null;
+        Quality? grade = null;
+        int folds = -1;
+        var rarity = Rarity.Common;
+        for (int i = 0; i < c.ArgCount; i++)
+        {
+            var a = c.Arg(i);
+            if (TryArmorSlot(a, out var s)) { slot = s; continue; }
+            if (TryName<Quality>(a, out var q)) { grade = q; continue; }
+            if (TryName<Rarity>(a, out var r)) { rarity = r; continue; }
+            if (int.TryParse(a, out var f) && f >= 0) { folds = f; continue; }
+            var it = FindItem(a);
+            if (it != null && IsGradedArmorSlot(it.slot)) { named = it; continue; }
+            c.Reply($"Don't know '{a}' — expected a slot (body, garment, shoes), a grade (Raw, F to A), " +
+                    "a rarity (Common to Legendary), a number of folds, or a body, garment or shoes piece.");
+            return;
+        }
+        if (named != null && slot.HasValue && named.slot != slot.Value)
+        {
+            c.Reply($"{named.displayName} is not a {ArmorSlotLabel(slot.Value)} piece.");
+            return;
+        }
+
+        var quality = grade ?? (Quality)CombatRng.Range((int)Quality.Raw, (int)Quality.A + 1);
+        int cap = CraftingMath.FoldCap(quality);
+        if (folds > cap)
+        {
+            c.Reply($"A {(quality == Quality.Raw ? "Raw" : quality.ToString())} piece folds to +{cap} at most.");
+            return;
+        }
+        if (folds < 0) folds = CombatRng.Range(0, cap + 1);
+
+        var pick = named;
+        if (pick == null)
+        {
+            int seen = 0;
+            foreach (var it in Resources.LoadAll<Item>("Items"))
+            {
+                if (it == null || !IsGradedArmorSlot(it.slot)) continue;
+                if (slot.HasValue && it.slot != slot.Value) continue;
+                if (CombatRng.Range(0, ++seen) == 0) pick = it;   // reservoir pick — one pass, no list
+            }
+        }
+        if (pick == null)
+        {
+            c.Reply(slot.HasValue ? $"No {ArmorSlotLabel(slot.Value)} piece authored." : "No armour items authored.");
+            return;
+        }
+
+        var noRoom = c.Ch.RoomFor(pick, 1);
+        if (noRoom != BagRefusal.None) { c.Reply(c.Ch.RefusalLine(pick, noRoom, "make")); return; }
+        var inst = EquipmentInstance.CreateFresh(pick);
+        inst.quality = quality;
+        inst.upgrade = folds;
+        inst.rarity = rarity;
+        inst.Recompute();
+        c.Ch.TakeIntoBag(inst);
+        AfterChangingTheirBag(c.Ch);
+        c.Reply($"Made {ItemTooltip.CopyTitle(inst)} — a {Rarities.Label(rarity)} {pick.displayName} ({ArmorSlotLabel(pick.slot)}).");
+    }
+
+    // The three armour slots a piece can be folded, graded and given a rarity in — the three the set's aura reads.
+    static bool IsGradedArmorSlot(EquipSlotType s) =>
+        s == EquipSlotType.Armor || s == EquipSlotType.Garment || s == EquipSlotType.Boots;
+
+    static string ArmorSlotLabel(EquipSlotType s) =>
+        s == EquipSlotType.Armor ? "body" : s == EquipSlotType.Garment ? "garment" : s == EquipSlotType.Boots ? "shoes" : s.ToString();
+
+    static bool TryArmorSlot(string typed, out EquipSlotType slot)
+    {
+        switch (typed?.ToLowerInvariant())
+        {
+            case "body": case "armor": case "armour": case "chest": slot = EquipSlotType.Armor; return true;
+            case "garment": case "cape": case "mantle": case "back": slot = EquipSlotType.Garment; return true;
+            case "shoes": case "shoe": case "boots": case "feet": slot = EquipSlotType.Boots; return true;
+            default: slot = EquipSlotType.None; return false;
+        }
     }
 
     /// <summary>The skill a player typed: its id, or its name as shown, either case.</summary>
