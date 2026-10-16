@@ -21,7 +21,11 @@ public static class StanceCatalog
         int count = System.Enum.GetValues(typeof(StanceId)).Length;
         _byId = new StanceBinding[count];
         var lib = Resources.Load<StanceLibrary>(ResourcePath);
-        _byWeapon = new WeaponStanceBinding[System.Enum.GetValues(typeof(WeaponType)).Length];
+        // Sized by the HIGHEST weapon number, not by how many there are: the numbers skip 5 (the removed off-hand), so
+        // a count-sized table was one short and silently dropped the last weapon's row — Shuriken lost its put-away.
+        int weaponSlots = 0;
+        foreach (WeaponType w in System.Enum.GetValues(typeof(WeaponType))) weaponSlots = Mathf.Max(weaponSlots, (int)w + 1);
+        _byWeapon = new WeaponStanceBinding[weaponSlots];
         if (lib != null && lib.weaponStances != null)
             for (int i = 0; i < lib.weaponStances.Count; i++)
             {
