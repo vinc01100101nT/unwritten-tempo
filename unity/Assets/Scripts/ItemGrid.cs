@@ -79,45 +79,6 @@ public static class ItemIcon
         return img;
     }
 
-    /// <summary>THE QUENCH GLOW'S RULE: a piece at its grade's last fold, which only a quench moves on, glows. Read off
-    /// the grade and folds the server sent; it decides nothing, it only picks what to draw.</summary>
-    public static bool QuenchGlows(Quality grade, int folds) => CraftingMath.ReadyToQuench(grade, folds);
-    public static bool QuenchGlows(EquipmentInstance copy) => copy != null && QuenchGlows(copy.quality, copy.upgrade);
-
-    // The glow: three gold rims stepping inward from the square's edge, each fainter than the one outside it.
-    static readonly float[] GlowRimAlphas = { 1f, 0.65f, 0.3f };
-
-    /// <summary>THE QUENCH GLOW wherever a piece's picture is drawn in a window — a bag, storage or station box, the
-    /// equipment panel, a hotbar tile, a shop row; never the item's card. Laid over the square <paramref name="square"/>
-    /// fills, hidden until <see cref="ShowGlow"/> lights it. Nothing in it moves, so it costs nothing per frame.</summary>
-    public static GameObject MakeGlow(Transform square)
-    {
-        var glow = new GameObject("QuenchGlow", typeof(RectTransform));
-        glow.transform.SetParent(square, false);
-        UiKit.Fill((RectTransform)glow.transform, Vector2.zero, Vector2.zero);
-        var rimSprite = UiKit.RimSprite(UiKit.ButtonRadius);
-        for (int i = 0; i < GlowRimAlphas.Length; i++)
-        {
-            var c = UiKit.NoticeWarning;
-            c.a = GlowRimAlphas[i];
-            var rim = UiKit.Img("Rim" + i, glow.transform, c);
-            rim.sprite = rimSprite;
-            rim.type = Image.Type.Sliced;
-            rim.raycastTarget = false;
-            UiKit.Fill(rim.rectTransform, new Vector2(i, i), new Vector2(-i, -i));
-        }
-        glow.SetActive(false);
-        return glow;
-    }
-
-    /// <summary>Light <paramref name="glow"/> when <paramref name="copy"/> is ready to quench; null puts it out.</summary>
-    public static void ShowGlow(GameObject glow, EquipmentInstance copy)
-    {
-        if (glow == null) return;
-        bool on = QuenchGlows(copy);
-        if (glow.activeSelf != on) glow.SetActive(on);
-    }
-
     /// <summary>Show <paramref name="def"/>'s icon, or nothing. False when it has none, so the caller writes its name.</summary>
     public static bool Show(Image icon, Item def)
     {
@@ -136,7 +97,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
     const float NameMinSize = 9f, NameMaxSize = 12f;
 
     public Image edge, fill, icon;
-    public GameObject glow;
+    public Image glow;
     public TMP_Text title, count, corner;
     // The fill a shown thing's rarity gave the box, put back when a drag stops lighting it.
     Color shownFill = UiKit.SlotFill;
@@ -166,7 +127,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         box.edge = edgeImg;
         box.fill = fillImg;
         box.icon = ItemIcon.Make(fillImg.transform, 3f);
-        box.glow = ItemIcon.MakeGlow(fillImg.transform);
+        box.glow = GradeGlow.MakeForSquare(fillImg.transform);
 
         var t = UiKit.MakeText("Name", fillImg.transform, "", NameMaxSize, FontStyle.Bold, TextAnchor.MiddleCenter, null, true);
         t.raycastTarget = false;
@@ -215,7 +176,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         fill.color = shownFill;
         // The picture is the box; the name is in the card on hover. A thing with no picture still writes its name.
         bool pictured = ItemIcon.Show(icon, e.def);
-        ItemIcon.ShowGlow(glow, e.instance);
+        GradeGlow.Show(glow, e.instance);
         Write(title, pictured ? "" : e.instance != null ? ItemTooltip.CopyTitle(e.instance) : e.def.displayName);
         title.color = Rarities.Color(Rarities.Of(e.def, e.instance));
         // A stack shows how many, always — as the hotbar does; a piece of gear is one of itself.
@@ -233,7 +194,7 @@ public class ItemBox : MonoBehaviour, IItemDropTarget
         fill.color = UiKit.SlotEmpty;
         shownFill = UiKit.SlotFill;
         ItemIcon.Show(icon, null);
-        ItemIcon.ShowGlow(glow, null);
+        GradeGlow.Show(glow, null);
         Write(title, "");
         Write(count, "");
         guide.spot = GuideSpot.None;

@@ -20,9 +20,14 @@ tags:
 Gear is dropped, never made: a kill has a 10% chance to drop one piece of what the creature wears, always Raw
 and unfolded, its base rolled, at a rarity the creature's kind decides. At a station in town you **fold** it with
 Temper Dust to make it worth more, up to +10 — from +4 a fold can fail and take one fold back — and at +10 you
-**quench** it with Quench Oil to move its grade one rung along the F-to-A ladder, to +0, or fail. A piece ready to
-quench glows gold at the edge of its picture wherever the picture is drawn — bag, storage, station, hotbar, shop, the
-floor — but not on its card. **Recycling** a
+**quench** it with Quench Oil to move its grade one rung along the F-to-A ladder, to +0, or fail. Grades glow in one
+sky blue, Flyff's, for every grade and rarity (`GradeGlow`); Raw shows nothing. A graded piece's picture glows at its
+edge wherever it is drawn — bag, storage, station, hotbar, shop — but not on its card, and a graded piece on the floor
+has a glowing sphere behind it. A graded weapon puts a sphere of light with a strong outline on the hand where the fist
+holds the handle, small and faint at F and largest at A, and it stays there whether the weapon is drawn or put away.
+An armour set — Body, Garment and Shoes, the hat not counting — raises an aura of light around the body from the hips
+up past the head, at the LOWEST grade of the three (a missing piece is Raw, so nothing shows). Every body gets both,
+a person's or a creature's. **Recycling** a
 piece returns half of what its folds and quenches took, and never less than 1 Temper Dust. **Ink** writes a stat onto it, one roll of one stat, and
 better Ink writes a bigger number. **Salt** decides what a failed quench costs — and the better ones raise the
 chance — and is spent either way.

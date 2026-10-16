@@ -23,6 +23,10 @@ public class WeaponSocket : MonoBehaviour
     GameObject mounted;     // the live instantiated weapon, or null
     GameObject mountedPair; // the same weapon in the other hand, when it is wielded as a pair; otherwise null
     int bladesOut;          // how many of this body's thrown weapons are in the air — the hand is empty while any are
+    // THE GRADE LOOKS (GradeGlow): the weapon's themed enchant on each copy of the weapon, for the weapon copy's grade,
+    // and the armour set's lightning aura around the body, for the set's lowest grade. Null at Raw.
+    GameObject enchant, pairEnchant, aura;
+    Quality glowGrade, auraGrade;
 
     // ---- Drawn or put away: what the server last said, and where each copy sits because of it ----
     DrawSaid said;          // default = Sheathed: a body nobody has spoken for yet starts at peace
@@ -88,6 +92,54 @@ public class WeaponSocket : MonoBehaviour
         bool canRest = grip != null && grip.stowAuthored;   // a weapon with nowhere to rest is hidden while put away
         if (mounted != null) mounted.SetActive(!fallen && bladesOut == 0 && (mainInHand || canRest));
         if (mountedPair != null) mountedPair.SetActive(!fallen && bladesOut == 0 && (pairInHand || canRest));
+        // The enchant rides the weapon, so it shows and hides with it; the aura goes while the body lies dead.
+        if (aura != null && aura.activeSelf == fallen) aura.SetActive(!fallen);
+    }
+
+    // The armour set's grade on this body — the worn set's, or the person at this keyboard's.
+    Quality SetGrade()
+    {
+        if (gear != null)
+            return GradeGlow.SetGrade(gear.Get(EquipSlotType.Armor), gear.Get(EquipSlotType.Garment), gear.Get(EquipSlotType.Boots));
+        var c = Character.Instance;
+        return c == null ? Quality.Raw
+            : GradeGlow.SetGrade(c.GetEquippedInstance(EquipSlotType.Armor), c.GetEquippedInstance(EquipSlotType.Garment),
+                                 c.GetEquippedInstance(EquipSlotType.Boots));
+    }
+
+    // (Re)build the aura for the set's grade, sized to this body. On a change of the set's grade only.
+    void BuildAura()
+    {
+        if (aura != null) { Destroy(aura); aura = null; }
+        if (Application.isBatchMode || anim == null || !anim.isHuman || !GradeGlow.Glows(auraGrade)) return;
+        var root = anim.transform;
+        var hips = anim.GetBoneTransform(HumanBodyBones.Hips);
+        if (hips == null) return;
+        // The top of the drawn body, not the head bone: on a big-headed body the head bone sits at the neck.
+        float height = 0f;
+        foreach (var skin in anim.GetComponentsInChildren<SkinnedMeshRenderer>())   // perf-ok: on a change of the set's grade only
+            height = Mathf.Max(height, skin.bounds.max.y - root.position.y);
+        var centre = root.InverseTransformPoint(hips.position);
+        aura = GradeGlow.MakeSetAura(root, new Vector3(centre.x, 0f, centre.z), height, auraGrade);
+        if (aura != null && fallen) aura.SetActive(false);
+    }
+
+    // The grade of the weapon this body holds — the copy the worn set or the person at this keyboard carries.
+    Quality HeldGrade()
+    {
+        var copy = gear != null ? gear.Get(EquipSlotType.Weapon)
+                 : Character.Instance != null ? Character.Instance.GetEquippedInstance(EquipSlotType.Weapon) : null;
+        return copy != null ? copy.quality : Quality.Raw;
+    }
+
+    // (Re)build the weapon's enchant for the held grade, on each copy of the weapon. On a weapon or grade change only.
+    void BuildHandGlows()
+    {
+        if (enchant != null) { Destroy(enchant); enchant = null; }
+        if (pairEnchant != null) { Destroy(pairEnchant); pairEnchant = null; }
+        if (Application.isBatchMode || shown == null) return;
+        enchant = GradeGlow.MakeWeaponEnchant(mounted, shown.weaponType, glowGrade);
+        pairEnchant = GradeGlow.MakeWeaponEnchant(mountedPair, shown.weaponType, glowGrade);
     }
 
     // ---- Dropped: while this body shows its death, its weapon lies on the ground instead of in its hand ----
@@ -138,6 +190,7 @@ public class WeaponSocket : MonoBehaviour
         {
             if (d.copy != null) Destroy(d.copy);
             d.copy = Instantiate(held, transform, true);
+            GradeGlow.StripEnchant(d.copy);
             d.copy.name = held.name + " (dropped)";
             d.copy.hideFlags = HideFlags.DontSaveInEditor;
             d.madeFrom = model;
@@ -410,8 +463,17 @@ public class WeaponSocket : MonoBehaviour
     {
         var weapon = gear != null ? WeaponReach.WeaponOf(gear)
                    : Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-        // Same weapon still equipped → nothing to rebuild (the common case: OnStatsChanged fired for level/stats).
-        if (weapon == shown) return;
+        var set = SetGrade();
+        if (set != auraGrade) { auraGrade = set; BuildAura(); }
+        var grade = HeldGrade();
+        // Same weapon still equipped → nothing to rebuild (the common case: OnStatsChanged fired for level/stats). A
+        // new grade on the same weapon (a quench) rebuilds the hand glow alone.
+        if (weapon == shown)
+        {
+            if (grade != glowGrade) { glowGrade = grade; BuildHandGlows(); }
+            return;
+        }
+        glowGrade = grade;
         Remount(weapon);
     }
 
@@ -419,6 +481,8 @@ public class WeaponSocket : MonoBehaviour
     {
         if (mounted != null) { Destroy(mounted); mounted = null; }
         if (mountedPair != null) { Destroy(mountedPair); mountedPair = null; }
+        if (enchant != null) { Destroy(enchant); enchant = null; }
+        if (pairEnchant != null) { Destroy(pairEnchant); pairEnchant = null; }
         shown = weapon;
         grip = null; handBone = pairHandBone = stowBone = null;
         placedOnce = false;
@@ -459,6 +523,8 @@ public class WeaponSocket : MonoBehaviour
         // gets the coverage bit (so it hides the body behind it) but never the paint bit (it must not x-ray itself).
         var silhouette = GetComponentInParent<OccludedSilhouetteTarget>();
         if (silhouette != null) silhouette.Refresh();
+
+        BuildHandGlows();
 
         // A weapon swapped while a blade is in the air mounts empty-handed, like the one it replaced; and the new
         // weapon goes straight to wherever the server says this body's weapon is.

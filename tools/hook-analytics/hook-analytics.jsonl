@@ -6614,3 +6614,8 @@
 {"ts": "2026-10-16T20:26:32+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\QuestArrows.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-16T20:26:49+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "d:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\QuestArrows.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-10-16T20:45:42+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\CraftingMath.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-16T21:41:34+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\GradeGlow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-16T21:41:58+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\ItemGrid.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-16T22:31:53+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\GradeGlow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-16T22:36:39+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\WeaponSocket.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-10-17T00:00:16+08:00", "session_id": "3321ff4c-75c9-435b-91a5-e723a3c56338", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\GradeGlow.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}

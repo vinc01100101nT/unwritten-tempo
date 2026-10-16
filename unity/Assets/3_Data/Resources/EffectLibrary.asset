@@ -526,6 +526,15 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+  - id: portal.purple
+    prefab: {fileID: 5607819269926399345, guid: b422fc6c6a8205a4a99b07217a506942, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
   - id: portal.red
     prefab: {fileID: 4617036660772024948, guid: 52c7d057cba585641bb68312c10d7791, type: 3}
     scale: 1
@@ -984,4 +993,139 @@ MonoBehaviour:
     groundRingRadius: 0
     measuredPlaySeconds: 2.65
     measuredFadeSeconds: 1.15
+    measuredLoops: 0
+  - id: weaponenchant.dark-lvl-1
+    prefab: {fileID: 2720650084040897827, guid: 9c7c37d36aca431daabc30d11f4ed42c, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.dark-lvl-2
+    prefab: {fileID: 6397433411572311964, guid: 5c04149ae6014f1caedaf6bae7ece9a8, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.dark-lvl-3
+    prefab: {fileID: 6098213378169517917, guid: f8a00c4a94624705a9638ff76007731c, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.fire-lvl-1
+    prefab: {fileID: 2415447811048438670, guid: afede32446094d73aaa2be720d83e8ff, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.fire-lvl-2
+    prefab: {fileID: 7569748353520111345, guid: fbe29c6d0b6c43c0944613e98a02e8f8, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.fire-lvl-3
+    prefab: {fileID: 1537971033341231097, guid: b4a04be0c7714e1eace7c9aceb0cb786, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.ice-lvl-1
+    prefab: {fileID: 1693668491800532447, guid: 8b21457dfe5f4b77a58d1bfbf4cbc028, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.ice-lvl-2
+    prefab: {fileID: 8662731430913487513, guid: f001d2be85f8450db4a602781645c973, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.ice-lvl-3
+    prefab: {fileID: 7538291151217991452, guid: cd77dbaf5aac400eae44f94de833cb01, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.nature-lvl-1
+    prefab: {fileID: 4915863843663251042, guid: f6382d77dd09452dbf3e4cc6b5f86aae, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.nature-lvl-2
+    prefab: {fileID: 2055196806654080230, guid: 9000186b9b4b4eb2a88d23e6728fea82, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.nature-lvl-3
+    prefab: {fileID: 7570097330636046783, guid: c4c3c8c21e334282a94e96eeaefa6ac3, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.water-lvl-1
+    prefab: {fileID: 3155125002801167478, guid: 8b41e03e66694345aae58bf85e472df6, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.water-lvl-2
+    prefab: {fileID: 138147253843667403, guid: 9b322f678c084b4089d82ae0e9312253, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
+    measuredLoops: 0
+  - id: weaponenchant.water-lvl-3
+    prefab: {fileID: 6762456411764577992, guid: 4b0e191b229944e5802eecc3402d830d, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 0
+    measuredFadeSeconds: 0
     measuredLoops: 0

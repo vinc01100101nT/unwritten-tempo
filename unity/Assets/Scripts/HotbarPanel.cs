@@ -387,7 +387,7 @@ public class HotbarPanel : MonoBehaviour
         // Its picture, as the bag draws it; with none, the copy's own name ("+15 Petal Storm [C]"), not the bare design's.
         if (!ItemIcon.Show(ItemIcon.Make(s.cell.transform, 3f), inst.def))
             NameOnTile(s.cell.transform, ItemTooltip.CopyTitle(inst));
-        ItemIcon.ShowGlow(ItemIcon.MakeGlow(s.cell.transform), inst);
+        GradeGlow.Show(GradeGlow.MakeForSquare(s.cell.transform), inst);
         // The same tooltip its row shows: in the bag, the equip preview; worn, the plain card.
         // Hover: its name. Right-click: its card — in the bag, with the "if equipped" lines; worn, the plain card.
         var box = ItemBoxOn(s.cell.gameObject);

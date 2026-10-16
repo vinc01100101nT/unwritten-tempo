@@ -16,7 +16,7 @@ public sealed class ItemRow
 
     TextMeshProUGUI name, count, price, tagBefore, tagAfter;
     Image back, icon;
-    GameObject glow;
+    Image glow;
     GameObject tagBeforeBox, tagAfterBox;
     // False: the picture stands on nothing, and only the name carries the rarity's colour.
     bool square;
@@ -48,7 +48,7 @@ public sealed class ItemRow
         var square = r.back.gameObject.AddComponent<LayoutElement>();
         square.minWidth = square.preferredWidth = square.minHeight = square.preferredHeight = height - 6f;
         r.icon = ItemIcon.Make(r.back.transform, 1f);
-        r.glow = ItemIcon.MakeGlow(r.back.transform);
+        r.glow = GradeGlow.MakeForSquare(r.back.transform);
         r.back.gameObject.SetActive(false);
         r.tagBeforeBox = MakeTag(fill.transform, "Before", out r.tagBefore);
         r.name = Part(fill.transform, "Name", 13, FontStyles.Bold);
@@ -85,7 +85,7 @@ public sealed class ItemRow
         Write(name, title ?? "");
         name.color = Rarities.Color(rarity);
         bool pictured = ItemIcon.Show(icon, def);
-        ItemIcon.ShowGlow(glow, copy);
+        GradeGlow.Show(glow, copy);
         if (back.gameObject.activeSelf != pictured) back.gameObject.SetActive(pictured);
         if (pictured) back.color = !square ? Color.clear : rarity == Rarity.Common ? UiKit.SlotFill : Rarities.Color(rarity);
         Write(count, countText ?? "");

@@ -3,7 +3,7 @@
 **Reach for this when:** you have made a new pose, animation or other look and are about to put it in the game —
 or the user says something you added "looks awkward" and asks whether you checked it first — or the user plays the
 game and still sees the OLD look you replaced — or the user says your picture shows the opposite of what you
-reported.
+reported — or a glow or aura you reported done is too small, washed out, or cut by lines in the game.
 
 ## The rule
 
@@ -51,3 +51,11 @@ cape's side panel drawn over the arm, with the lining showing between arm and bo
 - Wire it in only after the yes. A system change that needs no look (a fix, a data layer) can go ahead in parallel.
 - When wiring it in, read back what the game loads — for an animation, the rebuilt controller's states — and confirm
   the new name is there and the old one is gone. Name both in the report.
+- **A glow, an aura or any see-through effect: render it IN the running game, on the real scene, before reporting.**
+  Sign a test character in through Play mode (the sign-in and play-as calls the agent link uses), set the look on the
+  local copy only, and render a temporary camera at the game camera's own angle into a picture. Then, when part of it
+  is missing, render the effect ALONE (a spare layer, camera culling only that layer) and once with each suspect turned
+  off — that splits "not drawn" from "drawn and then covered" in two pictures. Measured 2026-10-16: the grade glow
+  shipped unseen was fine in isolation but in the game (1) only added light, so it vanished on the pale town floor, and
+  (2) was cut by the full-screen ink outlines drawn after it in the Overlay queue — neither was visible to any check
+  short of the game's own picture. The user found the first; the second took six renders to name.
