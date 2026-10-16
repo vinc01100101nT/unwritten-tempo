@@ -23,11 +23,14 @@ Temper Dust to make it worth more, up to +10 — from +4 a fold can fail and tak
 **quench** it with Quench Oil to move its grade one rung along the F-to-A ladder, to +0, or fail. Grades glow in one
 sky blue, Flyff's, for every grade and rarity (`GradeGlow`); Raw shows nothing. A graded piece's picture glows at its
 edge wherever it is drawn — bag, storage, station, hotbar, shop — but not on its card, and a graded piece on the floor
-has a glowing sphere behind it. A graded weapon puts a sphere of light with a strong outline on the hand where the fist
-holds the handle, small and faint at F and largest at A, and it stays there whether the weapon is drawn or put away.
-An armour set — Body, Garment and Shoes, the hat not counting — raises an aura of light around the body from the hips
-up past the head, at the LOWEST grade of the three (a missing piece is Raw, so nothing shows). Every body gets both,
-a person's or a creature's. **Recycling** a
+has a glowing sphere behind it. A graded weapon streams its weapon's enchant off its own model, drawn or put away —
+Fire for Axe, Knuckle and Staff; Water for Greatsword and Spear; Ice for Bow, Sword and Katar; Nature for Wand, Mace
+and Shuriken; Dark for Sniper, Dagger and Scythe — at Lvl 1 for F and E, Lvl 2 for D and C, Lvl 3 for B and A
+(`GradeGlow.MakeWeaponEnchant`). An armour set — Body, Garment and Shoes, the hat not counting — raises a lightning
+aura around the body at the LOWEST grade of the three (a missing piece is Raw, so nothing shows): a cloud that grows
+from F and is full from D, then lightning from C, full at A (`GradeGlow.MakeSetAura`). Every body gets both, a
+person's or a creature's. Neither effect fades when ground or a body sits close behind it, so both show from the top
+camera, and neither is drawn into the blue see-through body shown behind a wall — only the body's own models are. **Recycling** a
 piece returns half of what its folds and quenches took, and never less than 1 Temper Dust. **Ink** writes a stat onto it, one roll of one stat, and
 better Ink writes a bigger number. **Salt** decides what a failed quench costs — and the better ones raise the
 chance — and is spent either way.
