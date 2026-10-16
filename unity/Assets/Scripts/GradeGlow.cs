@@ -159,6 +159,13 @@ public static class GradeGlow
         look.name = LookName;
         look.hideFlags = HideFlags.DontSaveInEditor;
         var box = model.sharedMesh.bounds;
+        // A MIRRORED model (a pair weapon's other-hand copy carries a negative x scale) would mirror every particle
+        // too, turning each one back to front, and the enchant materials cull back faces — so the whole effect
+        // vanished from the second hand. Mirroring the effect again cancels it; the box centre flips with it.
+        var s = model.transform.lossyScale;
+        bool mirrored = s.x * s.y * s.z < 0f;
+        if (mirrored) look.transform.localScale = new Vector3(-1f, 1f, 1f);
+        var boxCentre = mirrored ? new Vector3(-box.center.x, box.center.y, box.center.z) : box.center;
         foreach (var ps in look.GetComponentsInChildren<ParticleSystem>(true))   // perf-ok: on a weapon or grade change only
         {
             var main = ps.main;
@@ -169,7 +176,7 @@ public static class GradeGlow
                 // A box the size of the model instead of the model's surface: the same streaming along the weapon, with
                 // no need to keep a second readable copy of every weapon's mesh in memory.
                 shape.shapeType = ParticleSystemShapeType.Box;
-                shape.position = box.center;
+                shape.position = boxCentre;
                 shape.rotation = Vector3.zero;
                 shape.scale = box.size;
             }
